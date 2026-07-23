@@ -1,7 +1,8 @@
 /*
- * ContinuousTraitData.java
+ * EmptyTraitDataModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
@@ -54,13 +56,29 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public boolean bufferTips() { return true; } // TODO maybe should be false
+    public boolean bufferTips() {
+        return true;
+    } // TODO maybe should be false
 
     @Override
-    public int getTraitCount() {  return 1; }
+    public int getTraitCount() {
+        return 1;
+    }
 
     @Override
-    public int getTraitDimension() { return dimTrait; }
+    public int getTraitDimension() {
+        return dimTrait;
+    }
+
+    @Override
+    public String getTipTraitName() {
+        return null;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        // do nothing
+    }
 
     @Override
     public PrecisionType getPrecisionType() {
@@ -68,7 +86,9 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public CompoundParameter getParameter() { return traitParameter; }
+    public CompoundParameter getParameter() {
+        return traitParameter;
+    }
 
     @Override
     public String getModelName() {
@@ -76,16 +96,28 @@ public class EmptyTraitDataModel implements ContinuousTraitPartialsProvider {
     }
 
     @Override
-    public List<Integer> getMissingIndices() { return null; }
+    public boolean usesMissingIndices() {
+        return false;
+    }
 
     @Override
-    public boolean[] getMissingIndicator() {
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
+    }
+
+    @Override
+    public List<Integer> getMissingIndices() {
+        return null;
+    }
+
+    @Override
+    public boolean[] getDataMissingIndicators() {
         return null;
     }
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
-        return new double[dimTrait + precisionType.getMatrixLength(dimTrait)];
+        return new double[precisionType.getPartialsDimension(dimTrait)];
     }
 //
 //    private static final String EMPTY_TRAIT_MODEL = "emptyTraitModel";

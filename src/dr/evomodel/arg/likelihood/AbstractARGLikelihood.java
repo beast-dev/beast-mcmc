@@ -1,7 +1,8 @@
 /*
  * AbstractARGLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -45,7 +47,6 @@ import dr.inference.model.*;
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
  *
  * @author Andrew Rambaut
- * @version $Id: AbstractARGLikelihood.java,v 1.1 2006/10/10 22:57:55 msuchard Exp $
  */
 
 public abstract class AbstractARGLikelihood extends AbstractModelLikelihood implements ParallelLikelihood {

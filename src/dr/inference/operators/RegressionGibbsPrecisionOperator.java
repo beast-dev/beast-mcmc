@@ -1,7 +1,8 @@
 /*
  * RegressionGibbsPrecisionOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -85,8 +87,8 @@ public class RegressionGibbsPrecisionOperator extends SimpleMCMCOperator impleme
                 }
             }
 
-            final double shape = priorParametrization.getShape() + n / 2.0;
-            final double rate = priorParametrization.getRate() + 0.5 * SSE;
+            final double shape = priorParametrization.getShape(k) + n / 2.0;
+            final double rate = priorParametrization.getRate(k) + 0.5 * SSE;
 
             final double draw = MathUtils.nextGamma(shape, rate); // Gamma( \alpha + n/2 , \beta + (1/2)*SSE )
             precision.setParameterValue(k, draw);

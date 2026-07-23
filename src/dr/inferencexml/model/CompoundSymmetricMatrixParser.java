@@ -1,7 +1,8 @@
 /*
  * CompoundSymmetricMatrixParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
@@ -39,6 +41,7 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
     public static final String OFF_DIAGONAL = "offDiagonal";
     public static final String AS_CORRELATION = "asCorrelation";
     public static final String IS_CHOLESKY = "isCholesky";
+    public static final String IS_STRICTLY_UPPER = "isStrictlyUpperTriangular";
 
     public String getParserName() {
         return MATRIX_PARAMETER;
@@ -56,7 +59,26 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
 
         boolean isCholesky = xo.getAttribute(IS_CHOLESKY, false);
 
-        return new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation, isCholesky);
+
+        boolean isStrictlyUpperTriangular = xo.getAttribute(IS_STRICTLY_UPPER, true);
+
+        CompoundSymmetricMatrix compoundSymmetricMatrix =
+                new CompoundSymmetricMatrix(diagonalParameter, offDiagonalParameter, asCorrelation, isCholesky);
+
+        if (!isStrictlyUpperTriangular) {
+            System.err.println("Warning: attribute " + IS_STRICTLY_UPPER + " in " + MATRIX_PARAMETER + " should only be set to 'false' " +
+                    "for debugging and testing purposes.");
+            compoundSymmetricMatrix.setStrictlyUpperTriangular(false);
+        }
+
+        int dimOff = diagonalParameter.getDimension() * (diagonalParameter.getDimension() - 1) / 2;
+        if (!isStrictlyUpperTriangular) dimOff = dimOff + diagonalParameter.getDimension();
+
+        if (dimOff != offDiagonalParameter.getDimension()) {
+            throw new XMLParseException("The vector '" + OFF_DIAGONAL + "' must be of dimension n*(n-1)/2 = " + dimOff + ", where n=" + diagonalParameter.getDimension() + " is the dimension of the vector '" + DIAGONAL + "'.");
+        }
+
+        return compoundSymmetricMatrix;
     }
 
     //************************************************************************
@@ -77,7 +99,8 @@ public class CompoundSymmetricMatrixParser extends AbstractXMLObjectParser {
             new ElementRule(OFF_DIAGONAL,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             AttributeRule.newBooleanRule(AS_CORRELATION, true),
-            AttributeRule.newBooleanRule(IS_CHOLESKY, true)
+            AttributeRule.newBooleanRule(IS_CHOLESKY, true),
+            AttributeRule.newBooleanRule(IS_STRICTLY_UPPER, true)
     };
 
     public Class getReturnType() {

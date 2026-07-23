@@ -1,7 +1,8 @@
 /*
  * MaskedMatrixParameterParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
 
-import dr.inference.model.MaskedParameter;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
+
+import java.util.ArrayList;
 
 /**
  * @author Marc A. Suchard
@@ -44,7 +46,7 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
+        MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
 
 
 //        System.err.println("colDim " + matrix.getColumnDimension());
@@ -86,7 +88,7 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
             maskedParameters[col].addMask(mask, ones);
         }
 
-        MatrixParameter maskedMatrix = new MatrixParameter(matrix.getId() + ".masked", maskedParameters);
+        MaskedMatrixParameter maskedMatrix = new MaskedMatrixParameter(matrix, mask);
 
 //        for (int col = 0; col < matrix.getColumnDimension(); ++col) {
 //            maskedMatrix.addParameter(matrix.getParameter(col));
@@ -100,7 +102,7 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(MatrixParameter.class),
+            new ElementRule(MatrixParameterInterface.class),
             new ElementRule(MASKING,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)

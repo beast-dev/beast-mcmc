@@ -1,7 +1,8 @@
 /*
  * BirthDeathLikelihoodTest.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,15 +13,16 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package test.dr.evomodel.speciation;
@@ -29,7 +31,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodelxml.tree.TreeModelParser;
@@ -43,7 +45,6 @@ import junit.framework.TestSuite;
  * Birth-Death tester.
  *
  * @author Alexei Drummond
- * @version 1.0
  */
 public class BirthDeathLikelihoodTest extends TestCase {
 
@@ -83,7 +84,7 @@ public class BirthDeathLikelihoodTest extends TestCase {
         Parameter b = new Parameter.Default("b", birthRate, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", deathRate, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, BirthDeathGernhard08Model.TreeType.ORIENTED,
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel(b, d, null, Gernhard08BirthDeathModel.TreeType.ORIENTED,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "bd.like");
 

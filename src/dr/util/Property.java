@@ -1,7 +1,8 @@
 /*
  * Property.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.util;
@@ -33,7 +35,6 @@ import java.lang.reflect.Method;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Property.java,v 1.19 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Property implements Attribute {
 
@@ -51,6 +52,7 @@ public class Property implements Attribute {
         this.name = name;
         this.argument = argument;
 
+        if (object instanceof Property) object = ((Property) object).getAttributeValue();
         this.object = object;
 
         StringBuffer getterName = new StringBuffer("get");
@@ -66,6 +68,11 @@ public class Property implements Attribute {
             else
                 getter = c.getMethod(getterName.toString(), (Class[]) null);
         } catch (NoSuchMethodException e) {
+            try {
+                if (argument != null && argument instanceof Integer)
+                    getter = c.getMethod(getterName.toString(), new Class[]{int.class});
+            } catch (NoSuchMethodException e2) {
+            }
         }
 
     }

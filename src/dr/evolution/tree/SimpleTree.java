@@ -1,7 +1,8 @@
 /*
  * SimpleTree.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
@@ -39,7 +41,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  *
- * @version $Id: SimpleTree.java,v 1.65 2006/08/23 10:46:33 rambaut Exp $
  */
 public class SimpleTree implements MutableTree {
 
@@ -407,7 +408,7 @@ public class SimpleTree implements MutableTree {
     // **************************************************************
 
     public int addTaxon(Taxon taxon) { throw new IllegalArgumentException("Cannot add taxon to a MutableTree"); }
-    public boolean removeTaxon(Taxon taxon) { throw new IllegalArgumentException("Cannot add taxon to a MutableTree"); }
+    public boolean removeTaxon(Taxon taxon) { throw new IllegalArgumentException("Cannot remove taxon to a MutableTree"); }
 
     /**
      * Sets the ID of the taxon of the ith external node. If it doesn't have

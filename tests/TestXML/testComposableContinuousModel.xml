@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon1">
+            <attr name="trait1">0.6161109857603313 -3.2602569254736204</attr>
+            <attr name="trait2">0.42993066951497727 -2.9486654536360777 -4.057033299418535</attr>
+            <attr name="trait3">3.4678011726657467 0.8863191402500052 -2.6600383868277264 -2.2183318084380526
+                1.8189980404545938 -2.29133552807135
+            </attr>
+        </taxon>
+        <taxon id="taxon2">
+            <attr name="trait1">0.14235084027566275 -3.91591655904778</attr>
+            <attr name="trait2">-0.8637975323369211 -4.259385675424384 -5.678966719263365</attr>
+            <attr name="trait3">3.173375670176406 1.2813599910134097 -0.6881012738308594 -3.0867336997208668
+                2.815737176293176 -4.915486206498403
+            </attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="trait1">2.3449041383664317 0.9722340059227484</attr>
+            <attr name="trait2">9.256880465255662 -2.487396604751713 -2.0680874725706184</attr>
+            <attr name="trait3">1.283643704876766 2.8513096233737603 0.9708425448487273 -2.441471802594642
+                1.173180678839264 -1.7603750280019597
+            </attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="trait1">1.813714920924903 0.39674460647288123</attr>
+            <attr name="trait2">2.8127444097741146 -1.7841457523163833 0.5750599739693499</attr>
+            <attr name="trait3">2.4926684326346047 3.141533052089204 2.1694254223223037 -1.3919262439366116
+                -0.28897700463936593 -6.217061635911254
+            </attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="trait1">1.2805936511229543 1.3638556864102687</attr>
+            <attr name="trait2">9.162902712021545 -1.827052256870099 -3.114941272898032</attr>
+            <attr name="trait3">0.310485244451206 2.019670079835947 -0.2328560668224443 -1.1680301897828358
+                -0.169794880275567 -4.51512265786732
+            </attr>
+        </taxon>
+        <taxon id="taxon6">
+            <attr name="trait1">0.8142903555974006 -4.817316126456728</attr>
+            <attr name="trait2">-4.901391200213806 -2.751126928637177 -2.4254554332105376</attr>
+            <attr name="trait3">1.345687457452557 -1.213562335693784 -0.8837634132548726 -1.11674616410668
+                2.3567759275445193 -0.269174568289571
+            </attr>
+        </taxon>
+        <taxon id="taxon7">
+            <attr name="trait1">0.5537342826706193 -1.9601398886629764</attr>
+            <attr name="trait2">-1.9003929413559715 -1.180721888259613 -0.4348486999592236</attr>
+            <attr name="trait3">2.7126597161955437 -0.6289199169529813 -0.09557967938854506 0.20869076878417675
+                -0.9389908132916613 -1.1337383511630141
+            </attr>
+        </taxon>
+        <taxon id="taxon8">
+            <attr name="trait1">1.9283974425711239 -0.5873562093054292</attr>
+            <attr name="trait2">3.588560410152809 -2.19448080201238 -2.7158658300416465</attr>
+            <attr name="trait3">-1.2924283665094718 1.6943907950946782 2.19407882497502 -1.42228247112324
+                -0.4484624547540542 1.1444926622987146
+            </attr>
+        </taxon>
+        <taxon id="taxon9">
+            <attr name="trait1">1.7199674427711251 -4.026480323777455</attr>
+            <attr name="trait2">1.9442524369925174 -3.917564256498128 -4.961084588733641</attr>
+            <attr name="trait3">3.9004288986948668 2.7387837406049877 -4.615424402780565 -4.971638687502833
+                5.028472260449842 -7.691835666782411
+            </attr>
+        </taxon>
+        <taxon id="taxon10">
+            <attr name="trait1">0.40940700074267505 -2.2495354378495644</attr>
+            <attr name="trait2">-0.16784519819182986 -1.1337506486494466 -2.863705683591497</attr>
+            <attr name="trait3">-3.112332086507164 -2.4616107952948543 0.04796951247778125 2.4409311713200568
+                -1.252912212199225 0.6769242891580838
+            </attr>
+        </taxon>
+    </taxa>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (((taxon10:0.0104828508210571,taxon7:0.06945686994340126):0.05472171377912479,(taxon6:0.09666701733874086,(taxon1:0.025715465624764816,(taxon9:0.14154200426014169,taxon2:0.013832276521980338):0.08913272474958198):0.1193630006138079):0.453503452970523):0.1964588174059454,(((taxon3:0.004017979531503662,taxon5:0.0496801467418641):0.01371646355496644,taxon4:0.07279286149575269):0.15588410980923004,taxon8:0.006692284455141036):0.0833467339290923);
+    </newick>
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="2"
+                    name="trait1">
+            <parameter id="leafTraits1"/>
+        </nodeTraits>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="3"
+                    name="trait2">
+            <parameter id="leafTraits2"/>
+        </nodeTraits>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="6"
+                    name="trait3">
+            <parameter id="leafTraits3"/>
+        </nodeTraits>
+    </treeModel>
+
+
+    <!--########################################### unextended model alone ##############################################-->
+    <multivariateDiffusionModel id="diffusionModel1">
+        <precisionMatrix>
+            <matrixParameter id="diffusion.precision.1">
+                <parameter value="0.10054779183490098 0.04229555554363032"/>
+                <parameter value="0.04229555554363032 0.20642821875358533"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <continuousTraitDataModel id="dataModel1" traitName="trait1" standardize="false" forceFullPrecision="true">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits1"/>
+        </traitParameter>
+    </continuousTraitDataModel>
+    <traitDataLikelihood allowIdentical="true" cacheBranches="true" id="traitLikelihood1"
+                         traitName="traits" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="false">
+        <multivariateDiffusionModel idref="diffusionModel1"/>
+        <treeModel idref="treeModel"/>
+        <continuousTraitDataModel idref="dataModel1"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <likelihood id="likelihood1">
+        <traitDataLikelihood idref="traitLikelihood1"/>
+    </likelihood>
+
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of unextended model
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihood1"/>
+        </actual>
+        <expected>
+            -36.27071651148219
+        </expected>
+    </assertEqual>
+
+
+    <!--########################################## residual variance alone ##############################################-->
+
+
+    <multivariateDiffusionModel id="diffusionModel2">
+        <precisionMatrix>
+            <matrixParameter>
+                <parameter value="0.08813359023946594 0.013292000972644304 -0.06504957346302227"/>
+                <parameter value="0.013292000972644302 0.1903044451554799 -0.02805667669498203"/>
+                <parameter value="-0.06504957346302227 -0.02805667669498203 0.2429870524199809"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <continuousTraitDataModel id="dataModel2" traitName="trait2" standardize="false" forceFullPrecision="true">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits2"/>
+        </traitParameter>
+    </continuousTraitDataModel>
+
+    <repeatedMeasuresModel id="repeatedMeasures2" traitName="trait2">
+        <treeModel idref="treeModel"/>
+        <continuousTraitDataModel idref="dataModel2"/>
+        <samplingPrecision>
+            <matrixParameter id="samplingPrecision">
+                <parameter value="609.4354013526467 1899.3615048003203 480.5264831160701"/>
+                <parameter value="1899.3615048003198 5935.449308923385 1495.2008328663253"/>
+                <parameter value="480.5264831160702 1495.200832866326 379.47028809374524"/>
+            </matrixParameter>
+        </samplingPrecision>
+    </repeatedMeasuresModel>
+
+    <traitDataLikelihood allowIdentical="true" cacheBranches="true" id="traitLikelihood2"
+                         traitName="traits" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="false">
+        <multivariateDiffusionModel idref="diffusionModel2"/>
+        <treeModel idref="treeModel"/>
+        <repeatedMeasuresModel idref="repeatedMeasures2"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <likelihood id="likelihood2">
+        <traitDataLikelihood idref="traitLikelihood2"/>
+    </likelihood>
+
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of residual variance model
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihood2"/>
+        </actual>
+        <expected>
+            -69.89723893416877
+        </expected>
+    </assertEqual>
+
+
+    <!--########################################### latent factor alone #################################################-->
+
+    <multivariateDiffusionModel id="diffusionModel3">
+        <precisionMatrix>
+            <matrixParameter>
+                <parameter value="0.3218142111239733 -0.05742470780142263"/>
+                <parameter value="-0.05742470780142263 0.10243895758960378"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+
+    <integratedFactorModel id="latentFactor3" traitName="trait3" standardize="false">
+        <loadings>
+            <matrixParameter id="loadings3">
+                <parameter id="loadings3.1"
+                           value="-0.4610512153911994 -0.7843481379875182 -0.05900362900660431 1.0967410594142262 -0.6599553595763668 1.8442254442835384"/>
+                <parameter id="loadings3.2"
+                           value="-0.18619602047080708 0.1541752575515798 0.8187862274235069 0.12742681718988713 -0.664671554899534 0.5053735588863635"/>
+            </matrixParameter>
+        </loadings>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits3"/>
+        </traitParameter>
+        <precision>
+            <parameter id="residualPrecision3"
+                       value="0.7036540520637207 0.4633276679113552 0.6012011178718482 1.123836801405012 2.314196926326778 0.8614221514630234"
+                       lower="0"/>
+        </precision>
+    </integratedFactorModel>
+
+    <traitDataLikelihood allowIdentical="true" cacheBranches="true" id="traitLikelihood3"
+                         traitName="traits" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="false">
+        <multivariateDiffusionModel idref="diffusionModel3"/>
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="latentFactor3"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <likelihood id="likelihood3">
+        <traitDataLikelihood idref="traitLikelihood3"/>
+        <integratedFactorModel idref="latentFactor3"/>
+    </likelihood>
+
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of latent factor model
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihood3"/>
+        </actual>
+        <expected>
+            -122.30489986705037
+        </expected>
+    </assertEqual>
+
+
+    <!--############################################## joint model ######################################################-->
+
+
+    <multivariateDiffusionModel id="diffusionModelJoint">
+        <precisionMatrix>
+            <matrixParameter id="diffusionPrecision">
+                <parameter
+                        value="1.433855871857991 2.1455723660946653 1.3029939676270414 -0.7144080731340798 -1.6829881495823165 3.6415371469697195 -2.1367438002901324"/>
+                <parameter
+                        value="2.1455723660946644 4.271087746599094 1.8938274394948302 -1.4999651070203344 -3.139422515349817 5.635711261847497 -3.5244690395598974"/>
+                <parameter
+                        value="1.302993967627041 1.8938274394948307 1.449030685358493 -0.6547494867025123 -1.6539214393320185 3.6344648878012187 -2.11898940866807"/>
+                <parameter
+                        value="-0.7144080731340796 -1.4999651070203348 -0.6547494867025123 0.7590349333500019 1.0717198595052542 -2.0384986525423066 1.2155391431371365"/>
+                <parameter
+                        value="-1.682988149582315 -3.1394225153498163 -1.6539214393320174 1.0717198595052535 2.6372812514672153 -4.528926135295166 2.8162897931641506"/>
+                <parameter
+                        value="3.6415371469697186 5.635711261847499 3.6344648878012187 -2.0384986525423066 -4.52892613529517 10.0947470564181 -5.789036599594804"/>
+                <parameter
+                        value="-2.1367438002901324 -3.5244690395598988 -2.1189894086680705 1.2155391431371367 2.816289793164153 -5.789036599594805 3.531971990198071"/>
+            </matrixParameter>
+
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+
+    <traitDataLikelihood allowIdentical="true" cacheBranches="true" id="traitLikelihoodJoint"
+                         traitName="traits.joint" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="false">
+        <multivariateDiffusionModel idref="diffusionModelJoint"/>
+        <treeModel idref="treeModel"/>
+        <jointPartialsProvider>
+            <continuousTraitDataModel idref="dataModel1"/>
+            <repeatedMeasuresModel idref="repeatedMeasures2"/>
+            <integratedFactorModel idref="latentFactor3"/>
+        </jointPartialsProvider>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0 0 0 0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <likelihood id="likelihoodJoint">
+        <traitDataLikelihood idref="traitLikelihoodJoint"/>
+        <integratedFactorModel idref="latentFactor3"/>
+    </likelihood>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of joint model
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihoodJoint"/>
+        </actual>
+        <expected>
+            -219.13465006512465
+        </expected>
+    </assertEqual>
+
+
+    <!--############################################## tree -> residual -> factor ######################################################-->
+
+    <repeatedMeasuresModel id="repeatedMeasures3" traitName="trait3">
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="latentFactor3"/>
+        <samplingPrecision>
+            <matrixParameter id="samplingPrecision3">
+                <parameter value="1.3534670681033156 -0.22717502822231528"/>
+                <parameter value="-0.22717502822231528 1.1166382635809298"/>
+            </matrixParameter>
+        </samplingPrecision>
+    </repeatedMeasuresModel>
+
+
+    <traitDataLikelihood allowIdentical="true" cacheBranches="true" id="traitLikelihoodHierarchical"
+                         traitName="traits.joint" useTreeLength="false" scaleByTime="false" reportAsMultivariate="true"
+                         allowSingular="false">
+        <multivariateDiffusionModel idref="diffusionModelJoint"/>
+        <treeModel idref="treeModel"/>
+        <jointPartialsProvider>
+            <continuousTraitDataModel idref="dataModel1"/>
+            <repeatedMeasuresModel idref="repeatedMeasures2"/>
+            <repeatedMeasuresModel idref="repeatedMeasures3"/>
+        </jointPartialsProvider>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0 0 0 0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <likelihood id="likelihoodHierarchical">
+        <traitDataLikelihood idref="traitLikelihoodHierarchical"/>
+        <integratedFactorModel idref="latentFactor3"/>
+    </likelihood>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check log likelihood of joint model
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood idref="likelihoodHierarchical"/>
+        </actual>
+        <expected>
+            -219.43720322982512
+        </expected>
+    </assertEqual>
+
+    <!--############################################## MCMC ######################################################-->
+
+    <loadingsGibbsOperator id="loadingsOperator1" weight="1" traitName="traits.joint" newMode="true">
+        <traitDataLikelihood idref="traitLikelihoodHierarchical"/>
+        <integratedFactorModel idref="latentFactor3"/>
+        <normalPrior id="loadings3.prior" mean="0" stdev="1">
+            <parameter idref="loadings3"/>
+        </normalPrior>
+    </loadingsGibbsOperator>
+
+    <cachedReport id="loadingsOpReport">
+        <loadingsGibbsOperator idref="loadingsOperator1"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="loadingsOpReport"/>
+    </report>
+
+    <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check tree traits of joint model
+        </message>
+        <actual regex="tree trait mean:\s+(.*)\n">
+            <cachedReport idref="loadingsOpReport"/>
+        </actual>
+        <expected>
+            0.4094070007299706 -2.24953543781794 0.48055688839804134 -1.2450733457121714 -3.2469439563030846
+            0.04928935034422466 0.22661236170041593 0.5537342826605709 -1.96013988863524 1.0399035619529968
+            -1.5077368382590066 -2.871273657193001 -0.15273913720193377 0.40122987143877253 0.8142903555954035
+            -4.817316126423066 -1.8698289223184474 -3.114350566098892 -4.835016486088989 -0.6659232857946336
+            -2.7635628060625095 0.6161109857603151 -3.26025692543908 0.057446483772309875 -2.8555356817882966
+            -3.9554763023260193 -1.3399296398856677 -2.074714013598168 1.7199674427752143 -4.026480323740543
+            0.39830231666701366 -3.646974806747039 -4.073446946916874 -2.6010057516632514 -3.692093879588291
+            0.14235084027268385 -3.915916559009929 -1.3290168738908505 -4.363954789791933 -4.668275958335926
+            -1.323223546578447 -2.7321226935628147 2.3449041383646545 0.972234005959308 6.199575018956239
+            -1.9123076901469176 -0.46811846986497585 -2.4041753233595955 1.9848993152781986 1.2805936511058462
+            1.3638556864384555 6.036626207796871 -1.5105776917480398 -0.3996418639328567 -2.059326195034373
+            2.0011912748568648 1.813714920917846 0.39674460651667687 5.219790433608523 -2.1343417424236577
+            -1.0921154829916304 -2.0660124489186273 1.646180446420658 1.928397442565256 -0.5873562092792781
+            3.0817066766585413 -2.1874097633690326 -2.099117291701873 -1.1988262214827046 1.7053062655149915
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check extended traits of joint model
+        </message>
+        <actual regex="Factor mean:\s+(.*)\n">
+            <cachedReport idref="loadingsOpReport"/>
+        </actual>
+        <expected>
+            1.0020035507295688 0.47666956608333655 -0.27842820595651574 0.5312273751569592 -0.170931044867757
+            -2.571386657932635 -1.1714343741350604 -2.0624271010428856 -3.2932663317787956 -4.346789729563105
+            -2.0307293191999634 -2.4245227236415303 -2.1588074254268577 1.447402369415613 -2.144887085395567
+            1.6037674333356335 -2.7958635434342796 1.9993932831866914 -0.7148946458337377 2.046801494311694
+        </expected>
+    </assertEqual>
+
+
+    <operators id="operators">
+        <fireParameterChanged weight="1">
+            <parameter idref="diffusionPrecision"/>
+        </fireParameterChanged>
+    </operators>
+
+
+    <!--    <report>-->
+    <!--        <loadingsGibbsOperator idref="loadingsOperatorAll"/>-->
+    <!--    </report>-->
+
+    <!--        <report>-->
+    <!--            <likelihood>-->
+    <!--                <traitDataLikelihood idref="traitLikelihoodFactor"/>-->
+    <!--                <integratedFactorModel idref="latentFactor3"/>-->
+    <!--            </likelihood>-->
+    <!--        </report>-->
+
+    <!--    <report>-->
+    <!--        <likelihood>-->
+    <!--            <traitDataLikelihood idref="traitLikelihoodFactorCombo"/>-->
+    <!--            <integratedFactorModel idref="latentFactorCombo"/>-->
+    <!--        </likelihood>-->
+    <!--    </report>-->
+
+    <!--    <mcmc id="mcmc" chainLength="10000">-->
+    <!--        <posterior id="posterior">-->
+    <!--            <likelhood idref="likelihoodHierarchical"/>-->
+    <!--            &lt;!&ndash;            <prior id="prior">&ndash;&gt;-->
+    <!--            &lt;!&ndash;                <normalPrior idref="loadings3.prior"/>&ndash;&gt;-->
+    <!--            &lt;!&ndash;            </prior>&ndash;&gt;-->
+    <!--        </posterior>-->
+    <!--        <operators idref="operators"/>-->
+    <!--        <log id="screenLog" logEvery="1000">-->
+    <!--            <column label="Posterior" dp="4" width="12">-->
+    <!--                <posterior idref="posterior"/>-->
+    <!--            </column>-->
+    <!--            &lt;!&ndash;            <column label="Prior" dp="4" width="12">&ndash;&gt;-->
+    <!--            &lt;!&ndash;                <prior idref="prior"/>&ndash;&gt;-->
+    <!--            &lt;!&ndash;            </column>&ndash;&gt;-->
+    <!--            &lt;!&ndash;            <column label="Likelihood" dp="4" width="12">&ndash;&gt;-->
+    <!--            &lt;!&ndash;                <likelihood idref="likelihood"/>&ndash;&gt;-->
+    <!--            &lt;!&ndash;            </column>&ndash;&gt;-->
+    <!--        </log>-->
+    <!--        <log id="fileLog" fileName="out.log" logEvery="1">-->
+    <!--            <traitLogger traitName="traits.hierarchical" nodes="external">-->
+    <!--                <treeModel idref="treeModel"/>-->
+    <!--                <traitDataLikelihood idref="traitLikelihoodFactor"/>-->
+    <!--            </traitLogger>-->
+    <!--        </log>-->
+
+    <!--    </mcmc>-->
+
+
+</beast>

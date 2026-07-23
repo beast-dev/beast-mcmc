@@ -1,7 +1,8 @@
 /*
  * DirichletDistribution.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,17 +22,19 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.GammaFunction;
 
 /**
  * @author Marc A. Suchard
  * @author Guy Baele
  */
-public class DirichletDistribution implements MultivariateDistribution {
+public class DirichletDistribution implements MultivariateDistribution, GradientProvider {
 
     public static final String TYPE = "dirichletDistribution";
     public static final boolean DEBUG = false;
@@ -117,6 +120,24 @@ public class DirichletDistribution implements MultivariateDistribution {
         }
 
         return logPDF;
+    }
+
+    @Override
+    public int getDimension() {
+        return dim;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object input) {
+        double[] x = (double[]) input;
+
+        double[] gradient = new double[dim];
+
+        for (int i = 0; i < dim; i++) {
+            gradient[i] = (counts[i] - 1) / x[i];
+        }
+
+        return gradient;
     }
 
     public double[][] getScaleMatrix() {

@@ -1,7 +1,8 @@
 /*
  * AutoCorrelatedBranchRatesDistributionParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,22 +22,24 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
+import dr.evomodel.branchratemodel.*;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
+import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.xml.*;
 
 /**
  */
 public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObjectParser {
 
-    private static final String AUTO_CORRELATED_RATES = "autoCorrelatedRatesPrior";
-    private static final String SCALING = "scaling";
-    private static final String LOG = "log";
+    public static final String AUTO_CORRELATED_RATES = "autoCorrelatedRatesPrior";
+    public static final String SCALING = "scaling";
+    public static final String LOG = "log";
+    public static final String OPERATE_ON_INCREMENTS = "operateOnIncrements";
 
     public String getParserName() {
         return AUTO_CORRELATED_RATES;
@@ -44,7 +47,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        ArbitraryBranchRates branchRates = (ArbitraryBranchRates) xo.getChild(ArbitraryBranchRates.class);
+        DifferentiableBranchRates branchRates = (DifferentiableBranchRates) xo.getChild(BranchRateModel.class);
 
         ParametricMultivariateDistributionModel distribution = (ParametricMultivariateDistributionModel)
                            xo.getChild(ParametricMultivariateDistributionModel.class);
@@ -53,8 +56,17 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
         boolean log = xo.getAttribute(LOG, false);
 
-        return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution,
-                scaling, log);
+        boolean operateOnIncrements = xo.getAttribute(OPERATE_ON_INCREMENTS, false);
+
+        if (distribution instanceof BayesianBridgeDistributionModel) {
+            return new BayesianBridgeAutoCorrelatedBranchRates(xo.getId(), branchRates,
+                    (BayesianBridgeDistributionModel) distribution, scaling, log, operateOnIncrements);
+        } else {
+
+        // TODO Change parser to accept Tree and then pass to ACBRD
+            return new AutoCorrelatedBranchRatesDistribution(xo.getId(), branchRates, distribution,
+                    scaling, log, operateOnIncrements);
+        }
     }
 
     //************************************************************************
@@ -83,7 +95,7 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     }
 
     public Class getReturnType() {
-        return ArbitraryBranchRates.class;
+        return AutoCorrelatedBranchRatesDistribution.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -91,9 +103,10 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(ArbitraryBranchRates.class),
+            new ElementRule(DifferentiableBranchRates.class),
             new ElementRule(ParametricMultivariateDistributionModel.class),
             AttributeRule.newStringRule(SCALING, true),
             AttributeRule.newBooleanRule(LOG, true),
+            AttributeRule.newBooleanRule(OPERATE_ON_INCREMENTS, true),
     };
 }

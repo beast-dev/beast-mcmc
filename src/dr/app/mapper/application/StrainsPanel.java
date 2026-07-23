@@ -1,7 +1,8 @@
 /*
  * StrainsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.mapper.application;
 
 import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.options.GuessDatesException;
 import dr.app.beauti.tipdatepanel.GuessDatesDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
@@ -48,7 +51,6 @@ import java.awt.event.ItemListener;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: StrainsPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class StrainsPanel extends JPanel implements Exportable, MapperDocument.Listener {
 
@@ -251,15 +253,22 @@ public class StrainsPanel extends JPanel implements Exportable, MapperDocument.L
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        String warningMessage = null;
+//        String warningMessage = null;
 
-        guesser.guessDates(document.getTaxa());
-
-        if (warningMessage != null) {
-            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-                    "Error guessing dates",
-                    JOptionPane.WARNING_MESSAGE);
+        try {
+            guesser.guessDates(document.getTaxa());
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+//        if (warningMessage != null) {
+//            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+//                    "Error guessing dates",
+//                    JOptionPane.WARNING_MESSAGE);
+//        }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();

@@ -1,7 +1,8 @@
 /*
  * LKJTransformTest.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package test.dr.util;
@@ -250,7 +252,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(Jac.columns()));
 
         // Determinant
-        double jacobianDet = (new Transform.InverseMultivariate(transform)).getLogJacobian(CPCs, 0, CPCs.length);
+        double jacobianDet = (new Transform.InverseMultivariate(transform)).logJacobian(CPCs, 0, CPCs.length);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {
@@ -283,7 +285,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(Jac.columns()));
 
         // Determinant
-        double jacobianDet = (new Transform.InverseMultivariate(transformChol)).getLogJacobian(CPCs, 0, CPCs.length);
+        double jacobianDet = (new Transform.InverseMultivariate(transformChol)).logJacobian(CPCs, 0, CPCs.length);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {
@@ -317,7 +319,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
                 format.format(Jac.columns()));
 
         // Determinant
-        double jacobianDet = (new Transform.InverseMultivariate(transformCorrToChol)).getLogJacobian(cholValues, 0, cholValues.length);
+        double jacobianDet = (new Transform.InverseMultivariate(transformCorrToChol)).logJacobian(cholValues, 0, cholValues.length);
 
         double jacobianDetBis = 0;
         for (int i = 0; i < jacobianMat[0].length; i++) {
@@ -368,7 +370,7 @@ public class LKJTransformTest extends TraceCorrelationAssert {
             }
             EuclideanToInfiniteNormUnitBallTransform transform2ToInf = new EuclideanToInfiniteNormUnitBallTransform(k);
             double[] cholValuesBis = transform2ToInf.inverse(tempCPC, 0, tempCPC.length);
-            jacobianDet2ToInf += transform2ToInf.getLogJacobian(tempChol, 0, tempChol.length);
+            jacobianDet2ToInf += transform2ToInf.logJacobian(tempChol, 0, tempChol.length);
             for (int i = 0; i < k; i++) {
                 assertEquals("spherical=" + k + i,
                         format.format(tempChol[i]),
@@ -377,10 +379,10 @@ public class LKJTransformTest extends TraceCorrelationAssert {
         }
 
         // Determinant
-        double jacobianDetCholToCPC = transformChol.getLogJacobian(cholValues, 0, CPCs.length);
-        double jacobianDetCorrToChol = transformCorrToChol.getLogJacobian(corrValues, 0, CPCs.length);
-        double jacobianDetCorrToCPC = transform.getLogJacobian(corrValues, 0, CPCs.length);
-        double jacobianDetCorrToCPCComp = transformComposition.getLogJacobian(corrValues, 0, CPCs.length);
+        double jacobianDetCholToCPC = transformChol.logJacobian(cholValues, 0, CPCs.length);
+        double jacobianDetCorrToChol = transformCorrToChol.logJacobian(corrValues, 0, CPCs.length);
+        double jacobianDetCorrToCPC = transform.logJacobian(corrValues, 0, CPCs.length);
+        double jacobianDetCorrToCPCComp = transformComposition.logJacobian(corrValues, 0, CPCs.length);
 
         System.out.println("Log Jacobiant Det Chol to CPC=" + jacobianDetCholToCPC);
         System.out.println("Log Jacobiant Det Corr to Chol=" + jacobianDetCorrToChol);

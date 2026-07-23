@@ -1,7 +1,8 @@
 /*
  * PartitionData.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.bss;
@@ -53,6 +55,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.aminoacid.*;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.TaxaParser;
@@ -67,7 +70,6 @@ import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 @SuppressWarnings("serial")
 public class PartitionData implements Serializable {
@@ -279,10 +281,10 @@ public class PartitionData implements Serializable {
 	// //////////////////
 
 //	public Tree tree = null;
-	public String treeModelIdref = TreeModel.TREE_MODEL;
+	public String treeModelIdref = DefaultTreeModel.TREE_MODEL;
 
 	public void resetTreeModelIdref() {
-	this.treeModelIdref = TreeModel.TREE_MODEL;
+	this.treeModelIdref = DefaultTreeModel.TREE_MODEL;
 	}
 	
 	public TreeModel createTreeModel() {
@@ -290,19 +292,19 @@ public class PartitionData implements Serializable {
 		TreeModel treeModel = null;
 		if (this.demographicModelIndex == 0 && this.record.isTreeSet()) {
 			
-			treeModel = new TreeModel(this.record.getTree());
+			treeModel = new DefaultTreeModel(this.record.getTree());
 			
 		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTreeSet()) {
 			
 			Taxa taxa = new Taxa(this.record.getTree().asList()); 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));			
+			treeModel = new DefaultTreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
 			
 		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTaxaSet()) {
 			
 			Taxa taxa = this.record.getTaxa();
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
+			treeModel = new DefaultTreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
 		
 //			} else if (this.demographicModelIndex == 0 && this.record.taxaSet) { 
 //			throw new RuntimeException("Data and demographic model incompatible for partition ");	
@@ -1057,7 +1059,7 @@ public class PartitionData implements Serializable {
 	};
 
 	public static int[][] siteRateModelParameterIndices = { {}, // NoModel
-			{ 0, 1, 2 }, // GammaSiteRateModel
+			{ 0, 1, 2 }, // GammaSiteRateModelParser
 	};
 
 	public double[] siteRateModelParameterValues = new double[] { 4.0, // GammaCategories
@@ -1074,11 +1076,12 @@ public class PartitionData implements Serializable {
 
 			siteModel = new GammaSiteRateModel(name);
 
-		} else if (this.siteRateModelIndex == 1) { // GammaSiteRateModel
+		} else if (this.siteRateModelIndex == 1) { // GammaSiteRateModelParser
 
 			siteModel = new GammaSiteRateModel(name,
 					siteRateModelParameterValues[1],
-					(int) siteRateModelParameterValues[0], siteRateModelParameterValues[2]);
+					(int) siteRateModelParameterValues[0],
+					siteRateModelParameterValues[2]);
 
 		} else {
 

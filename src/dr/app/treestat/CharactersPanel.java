@@ -1,7 +1,8 @@
 /*
  * CharactersPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.treestat;
@@ -34,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 import dr.app.gui.table.TableSorter;
+import dr.evolution.util.Taxon;
 import jam.table.TableRenderer;
 import jam.framework.Exportable;
 
@@ -408,7 +411,10 @@ public class CharactersPanel extends JPanel implements Exportable {
             int saved1 = charactersTable.getSelectedRow();
             int saved2 = statesTable.getSelectedRow();
             int[] rows = excludedTaxaTable.getSelectedRows();
-            ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
+            ArrayList<String> exclList = new ArrayList<>();
+            for (Taxon taxon : treeStatData.allTaxa) {
+                exclList.add(taxon.getId());
+            }
             exclList.removeAll(selectedState.taxa);
             for (int row : rows) {
                 selectedState.taxa.add(exclList.get(row));
@@ -556,7 +562,10 @@ public class CharactersPanel extends JPanel implements Exportable {
             if (included) {
                 return selectedState.taxa.get(row);
             } else {
-                ArrayList<String> exclList = new ArrayList<String>(treeStatData.allTaxa);
+                ArrayList<String> exclList = new ArrayList<>();
+                for (Taxon taxon : treeStatData.allTaxa) {
+                    exclList.add(taxon.getId());
+                }
                 exclList.removeAll(selectedState.taxa);
                 return exclList.get(row);
             }

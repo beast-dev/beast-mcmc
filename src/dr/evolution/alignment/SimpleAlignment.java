@@ -1,7 +1,8 @@
 /*
  * SimpleAlignment.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.alignment;
@@ -49,7 +51,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: SimpleAlignment.java,v 1.46 2005/06/21 16:25:15 beth Exp $
  */
 @SuppressWarnings("serial")
 public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHTMLable {
@@ -188,7 +189,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
         
-        int invalidCharAt = sequence.getInvalidChar();
+        int invalidCharAt = sequence.getInvalidChar(dataType);
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
@@ -214,7 +215,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
 
-        int invalidCharAt = sequence.getInvalidChar();
+        int invalidCharAt = sequence.getInvalidChar(dataType);
         if (invalidCharAt >= 0)
             throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
                     + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);

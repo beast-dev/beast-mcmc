@@ -1,7 +1,8 @@
 /*
  * IntegratedMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -336,7 +338,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
 
         double logLikelihood = 0;
-        double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
+        double[][] traitPrecision = diffusionModel.getPrecisionMatrix();
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
         double[] conditionalRootMean = tmp2;
 
@@ -402,7 +404,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 System.err.println("Conditional root MVN precision = \n" + new Matrix(T));
                 System.err.println("Conditional root MVN density = " + MultivariateNormalDistribution.logPdf(
                         conditionalRootMean, new double[dimTrait], T,
-                        Math.log(MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(T)), 1.0));
+                        MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(T), 1.0));
             }
 
             if (integrateRoot) {
@@ -975,7 +977,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     public void redrawAncestralStates() {
 
-        double[][] treePrecision = diffusionModel.getPrecisionmatrix();
+        double[][] treePrecision = diffusionModel.getPrecisionMatrix();
         double[][] treeVariance = new SymmetricMatrix(treePrecision).inverse().toComponents();
 
         preOrderTraverseSample(treeModel, treeModel.getRoot(), 0, treePrecision, treeVariance);

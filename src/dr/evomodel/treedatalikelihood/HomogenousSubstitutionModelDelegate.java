@@ -1,7 +1,8 @@
 /*
- * SubstitutionModelDelegate.java
+ * HomogenousSubstitutionModelDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
@@ -29,6 +31,7 @@ import beagle.Beagle;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 
 import java.io.Serializable;
@@ -36,11 +39,11 @@ import java.io.Serializable;
 /**
  * A simple substitution model delegate with the same substitution model over the whole tree
  * @author Andrew Rambaut
- * @version $Id$
  */
 public final class HomogenousSubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
 
     private final SubstitutionModel substitutionModel;
+    private final FrequencyModel rootFrequencyModel;
 
     private final int eigenCount = 1;
     private final int nodeCount;
@@ -49,6 +52,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     private final BufferIndexHelper matrixBufferHelper;
 
     private final PreOrderSettings settings;
+
+    private final BranchModel branchModel;
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -77,6 +82,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         assert(branchModel.getSubstitutionModels().size() == 1) : "this delegate should only be used with simple branch models";
 
         this.substitutionModel = branchModel.getRootSubstitutionModel();
+        this.rootFrequencyModel = branchModel.getRootFrequencyModel();
 
         this.nodeCount = tree.getNodeCount();
 
@@ -87,6 +93,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
 
         this.settings = settings;
+        this.branchModel = branchModel;
 
     }// END: Constructor
 
@@ -98,6 +105,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     public HomogenousSubstitutionModelDelegate(SubstitutionModel substitutionModel, int matrixCount) {
 
         this.substitutionModel = substitutionModel;
+        this.rootFrequencyModel = substitutionModel.getFrequencyModel();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0, 1);
@@ -108,8 +116,12 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         nodeCount = 0;
         settings = PreOrderSettings.getDefault();
 
+        branchModel = null;
 
     }// END: Constructor
+
+    @Override
+    public BranchModel getBranchSubstitutionModel() { return branchModel; }
 
     @Override
     public boolean canReturnComplexDiagonalization() {
@@ -209,7 +221,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     @Override
     public double[] getRootStateFrequencies() {
-        return substitutionModel.getFrequencyModel().getFrequencies();
+        return rootFrequencyModel.getFrequencies();
     }
 
     @Override

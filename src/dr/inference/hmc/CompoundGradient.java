@@ -1,7 +1,8 @@
 /*
  * CompoundGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.hmc;
@@ -30,13 +32,14 @@ import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
 
-public class CompoundGradient implements GradientWrtParameterProvider, DerivativeWrtParameterProvider, Reportable {
+public class CompoundGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, DerivativeWrtParameterProvider, Reportable {
 
     protected final int dimension;
     final List<GradientWrtParameterProvider> derivativeList;
@@ -45,8 +48,13 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
 
     private final List<DerivativeWrtParameterProvider> newDerivativeList;
     private final DerivativeOrder highestOrder;
+    private final ParallelGradientExecutor parallelExecutor;
 
-    CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList) {
+        this(derivativeList, 0);
+    }
+
+    public CompoundGradient(List<GradientWrtParameterProvider> derivativeList, int threadCount) {
 
         this.derivativeList = derivativeList;
 
@@ -56,7 +64,17 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
             dimension = parameter.getDimension();
         } else {
             List<Likelihood> likelihoodList = new ArrayList<>();
-            CompoundParameter compoundParameter = new CompoundParameter("hmc");
+
+            CompoundParameter compoundParameter = new CompoundParameter("hmc") {
+                public void fireParameterChangedEvent() {
+                    doNotPropagateChangeUp = true;
+                    for (Parameter p : uniqueParameters) {
+                        p.fireParameterChangedEvent();
+                    }
+                    doNotPropagateChangeUp = false;
+                    fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+                }
+            };
 
             int dim = 0;
             for (GradientWrtParameterProvider grad : derivativeList) {
@@ -86,6 +104,15 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
             }
         }
         this.highestOrder = DerivativeWrtParameterProvider.getHighestOrder(newDerivativeList);
+
+        // Parallel threading
+
+        if (threadCount > 1 || threadCount < 0) {
+            parallelExecutor = new ParallelGradientExecutor(threadCount, derivativeList);
+        } else {
+            parallelExecutor = null;
+        }
+
     }
 
     @Override
@@ -133,13 +160,35 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
     
     @Override
     public double[] getGradientLogDensity() {
+        if (parallelExecutor != null)
+            return getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType.GRADIENT);
+        else {
+            return getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType.GRADIENT);
+        }
+    }
+
+    private double[] getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType derivativeType) {
+
+        return parallelExecutor.getDerivativeLogDensityInParallel(derivativeType, (gradients, length) -> {
+            double[] reduction = new double[length];
+            int offset = 0;
+            for (Future<double[]> result : gradients) {
+                double[] tmp = result.get();
+                System.arraycopy(tmp, 0, reduction, offset, tmp.length);
+                offset += tmp.length;
+            }
+            return reduction;
+        }, dimension);
+    }
+
+    private double[] getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType derivativeType) {
 
         double[] result = new double[dimension];
 
         int offset = 0;
         for (GradientWrtParameterProvider grad : derivativeList) {
             
-            double[] tmp = grad.getGradientLogDensity();
+            double[] tmp = derivativeType.getDerivativeLogDensity(grad);
             System.arraycopy(tmp, 0, result, offset, grad.getDimension());
             offset += grad.getDimension();
         }
@@ -157,5 +206,19 @@ public class CompoundGradient implements GradientWrtParameterProvider, Derivativ
 
     public List<GradientWrtParameterProvider> getDerivativeList() {
         return derivativeList;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        if (parallelExecutor != null)
+            return getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType.DIAGONAL_HESSIAN);
+        else {
+            return getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType.DIAGONAL_HESSIAN);
+        }
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not implemented yet");
     }
 }

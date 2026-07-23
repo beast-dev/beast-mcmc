@@ -1,7 +1,8 @@
 /*
  * BaseComponentGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -32,7 +34,6 @@ import dr.app.beauti.util.XMLWriter;
  * This is an abstract base class for component generators. Currently it simply
  * wraps each insertion with a pair of comments.
  * @author Andrew Rambaut
- * @version $Id$
  */
 public abstract class BaseComponentGenerator extends Generator implements ComponentGenerator {
     private Generator callingGenerator;
@@ -48,17 +49,17 @@ public abstract class BaseComponentGenerator extends Generator implements Compon
 
     public void generateAtInsertionPoint(Generator generator, final InsertionPoint point, final Object item, final XMLWriter writer) {
         callingGenerator = generator;
-        writer.writeComment("START " + getCommentLabel());
+        //writer.writeComment("START " + getCommentLabel());
         generate(point, item, "", writer);
-        writer.writeComment("END " + getCommentLabel());
+        //writer.writeComment("END " + getCommentLabel());
         writer.writeBlankLine();
     }
 
     public void generateAtInsertionPoint(Generator generator, final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
         callingGenerator = generator;
-        writer.writeComment("START " + getCommentLabel());
+        //writer.writeComment("START " + getCommentLabel());
         generate(point, item, prefix, writer);
-        writer.writeComment("END " + getCommentLabel());
+        //writer.writeComment("END " + getCommentLabel());
         writer.writeBlankLine();
     }
 

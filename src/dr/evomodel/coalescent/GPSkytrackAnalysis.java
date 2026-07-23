@@ -1,7 +1,8 @@
 /*
  * GPSkytrackAnalysis.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
@@ -28,31 +30,17 @@ package dr.evomodel.coalescent;
 import dr.evolution.io.Importer;
 import dr.inference.model.Parameter;
 
-//import dr.evolution.io.NexusImporter;
-//import dr.evolution.io.TreeImporter;
-//import dr.evolution.tree.Tree;
-//import dr.inference.operators.AdaptationMode;
-//import dr.inference.trace.AbstractTraceList;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
-//import dr.inference.trace.TraceFactory;
 import dr.stats.DiscreteStatistics;
-//import dr.util.FileHelpers;
-//import dr.util.HeapSort;
 import dr.util.TabularData;
-//import no.uib.cipr.matrix.SymmTridiagEVD;
-//import no.uib.cipr.matrix.*;
-
-
 import java.io.*;
-//import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.StringTokenizer;
 
 /**
  * @author Joseph Heled
  */
+@Deprecated
 public class GPSkytrackAnalysis extends TabularData {
 //    TabularData
 

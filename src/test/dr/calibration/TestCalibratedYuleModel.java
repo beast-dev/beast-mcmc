@@ -1,3 +1,30 @@
+/*
+ * TestCalibratedYuleModel.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.calibration;
 
 
@@ -10,14 +37,14 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ConstantPopulationModel;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.*;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.loggers.ArrayLogFormatter;
@@ -49,7 +76,7 @@ import java.util.List;
 
 public class TestCalibratedYuleModel {
     protected static final String TL = "TL";
-    protected static final String TREE_HEIGHT = TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
+    protected static final String TREE_HEIGHT = DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
     //    private final int treeSize;
     private final BufferedWriter out;
     Taxa taxa;
@@ -60,7 +87,7 @@ public class TestCalibratedYuleModel {
         this.out = out;
 //        out.write(Integer.toString(treeSize) + "\t");
 
-        TreeModel treeModel = createTreeModel(treeSize);
+        DefaultTreeModel treeModel = createTreeModel(treeSize);
 
         Parameter brParameter = new Parameter.Default("birthRate", 2.0, 0.0, 100.0);
 
@@ -82,7 +109,7 @@ public class TestCalibratedYuleModel {
     }
 
 
-    protected TreeModel createTreeModel(int treeSize) throws Exception {
+    protected DefaultTreeModel createTreeModel(int treeSize) throws Exception {
         taxa = new Taxa();
         for (int i = 0; i < treeSize; i++) {
             taxa.addTaxon(new Taxon("T" + Integer.toString(i)));
@@ -96,7 +123,7 @@ public class TestCalibratedYuleModel {
 
         Tree tree = calibration(taxa, startingTree);
 
-        return new TreeModel(tree);//treeModel
+        return new DefaultTreeModel(tree);//treeModel
     }
 
     private Tree calibration(final TaxonList taxa, DemographicModel demoModel) throws Exception {
@@ -142,8 +169,8 @@ public class TestCalibratedYuleModel {
         TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model("yule", brParameter, null, null,
-                BirthDeathGernhard08Model.TreeType.UNSCALED, Units.Type.SUBSTITUTIONS, false);
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel("yule", brParameter, null, null,
+                Gernhard08BirthDeathModel.TreeType.UNSCALED, Units.Type.SUBSTITUTIONS, false);
         Likelihood speciationLikelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 
         Taxa halfTaxa = new Taxa();

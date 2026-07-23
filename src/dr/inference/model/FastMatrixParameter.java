@@ -1,7 +1,8 @@
 /*
  * FastMatrixParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -76,6 +78,14 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
     }
 
+    @Override
+    public String getDimensionName(int dim) {
+        int pNum = dim / getRowDimension();
+        int index = dim % getRowDimension();
+        String name = getParameter(pNum).getParameterName() + (index + 1);
+        return name;
+    }
+
     private void checkParameterLengths(List<Parameter> parameters) {
         final int length = parameters.get(0).getDimension();
         for (Parameter p : parameters) {
@@ -91,6 +101,17 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         for (Parameter p : original) {
             proxyParameterNames.add(p.getParameterName());
         }
+    }
+
+    private void setProxyParameterName(String name, int column) {
+        if (proxyParameterNames == null) {
+            proxyParameterNames = new ArrayList<>();
+            for (int i = 0; i < getColumnDimension(); ++i) {
+                proxyParameterNames.add(null);
+            }
+        }
+
+        proxyParameterNames.set(column, name);
     }
 
     private List<String> proxyParameterNames;
@@ -170,6 +191,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
 
         @Override
+        public void setId(String name) {
+            matrix.setProxyParameterName(name, column);
+        }
+
+        @Override
         public String getParameterName() {
             String proxyName = matrix.getProxyParameterName(column);
             return proxyName != null ? proxyName : getId();
@@ -186,7 +212,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
 
         @Override
-        public void fireParameterChangedEvent(int index, ChangeType type){
+        public void fireParameterChangedEvent(int index, ChangeType type) {
             matrix.fireParameterChangedEvent(index + column * getDimension(), type);
             super.fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
         }
@@ -210,16 +236,6 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     }
 
-    private int index(int row, int col) {
-        // column-major
-        if(col > getColumnDimension()){
-            throw new RuntimeException("Column " + col + " out of bounds: Compared to " + getColumnDimension() + "maximum size.");
-        }
-        if(row > getRowDimension()){
-            throw new RuntimeException("Row " + row + " out of bounds: Compared to " + getRowDimension() + "maximum size.");
-        }
-        return col * rowDimension + row;
-    }
 
     @Override
     public double getParameterValue(int row, int col) {
@@ -281,13 +297,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     @Override
     public double[][] getParameterAsMatrix() {
-        double[][] rtn = new double[getRowDimension()][getColumnDimension()];
-        for (int j = 0; j < getColumnDimension(); ++j) {
-            for (int i = 0; i < getRowDimension(); ++i) {
-                rtn[i][j] = getParameterValue(i, j);
-            }
-        }
-        return rtn;
+        return MatrixParameterInterface.getParameterAsMatrix(this);
     }
 
     @Override
@@ -315,11 +325,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         return super.getParameter(0);
     }
 
-    public void addBounds(Bounds<Double> boundary){
+    public void addBounds(Bounds<Double> boundary) {
         singleParameter.addBounds(boundary);
     }
 
-    public Bounds<Double> getBounds(){
+    public Bounds<Double> getBounds() {
         return singleParameter.getBounds();
     }
 

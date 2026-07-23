@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <parameter id="data" value="1.0076468633234201 1.0586825397716604 0.5778730843301396 1.4212340569707114" lower="0"/>
+    <parameter id="scale" value="0.4561517229719674 1.2776438454216257 1.3581383912451293 0.3568305034220363"
+               lower="0"/>
+    <parameter id="shape" value="0.8054953547666583 0.11854687937339217 0.6750134244545326 5.545286775089883"
+               lower="0"/>
+
+    <multivariateGammaLikelihood id="gammaLike">
+        <data>
+            <parameter idref="data"/>
+        </data>
+        <scale>
+            <parameter idref="scale"/>
+        </scale>
+        <shape>
+            <parameter idref="shape"/>
+        </shape>
+    </multivariateGammaLikelihood>
+
+    <cachedReport id="report">
+        <multivariateGammaLikelihood idref="gammaLike"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="report"/>
+    </report>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check likelihood
+        </message>
+        <actual regex="\s*loglikelihood:\s*(.*)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            -6.155821824089744
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check gradient
+        </message>
+        <actual regex="\s*gradient:\s*(.*)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            -2.3852816190092683 -1.6152851031389792 -1.2986859879503436 0.3956758372788247
+        </expected>
+    </assertEqual>
+
+    <mcmc chainLength="10">
+        <likelihood idref="gammaLike"/>
+        <operators>
+            <fireParameterChanged weight="1"
+                                  value="0.9422811175280449 1.231202337345968 4.08018076687343 0.4421410902646532">
+                <parameter idref="data"/>
+            </fireParameterChanged>
+            <fireParameterChanged weight="1"
+                                  value="1.0476904930321695 2.7225525670385915 0.6511698273904002 1.0953137690468582">
+                <parameter idref="shape"/>
+            </fireParameterChanged>
+            <fireParameterChanged weight="1"
+                                  value="0.36260410473936944 2.8773615136269255 0.8007804329506805 0.8399762645021225">
+                <parameter idref="scale"/>
+            </fireParameterChanged>
+        </operators>
+        <log id="screenLog" logEvery="1">
+            <column label="likelihood" dp="4" width="12">
+                <parameter idref="gammaLike"/>
+            </column>
+        </log>
+    </mcmc>
+
+    <cachedReport id="report2">
+        <multivariateGammaLikelihood idref="gammaLike"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="report2"/>
+    </report>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check likelihood
+        </message>
+        <actual regex="\s*loglikelihood:\s*(.*)\n">
+            <cachedReport idref="report2"/>
+        </actual>
+        <expected>
+            -11.043207366692624
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check gradient
+        </message>
+        <actual regex="\s*gradient:\s*(.*)\n">
+            <cachedReport idref="report2"/>
+        </actual>
+        <expected>
+            -2.7072169348008663 1.0515410066957578 -1.3342755654270413 -0.9749366316025183
+        </expected>
+    </assertEqual>
+
+</beast>

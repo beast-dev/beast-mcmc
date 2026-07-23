@@ -1,7 +1,8 @@
 /*
  * MatrixSufficientStatistics.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.math.matrixAlgebra.missingData.MissingOps;
+import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.data.DenseMatrix64F;
 
 /**
@@ -39,14 +42,31 @@ public class MatrixSufficientStatistics extends NormalSufficientStatistics {
     private final DenseMatrix64F actualization;
 
     MatrixSufficientStatistics(double[] displacement,
+                               PreOrderPrecision precision,
+                               double[] actualization,
+                               int index,
+                               int dim,
+                               DenseMatrix64F Pd,
+                               SparseSquareUpperTriangular cPd,
+                               PrecisionType precisionType) {
+
+        super(displacement, precision, index, dim, precisionType);
+
+        int actualizationOffset = (dim * dim) * index;
+        this.actualization = MissingOps.wrap(actualization, actualizationOffset, dim, dim);
+
+    }
+
+    MatrixSufficientStatistics(double[] displacement,
                                double[] precision,
                                double[] actualization,
                                int index,
                                int dim,
                                DenseMatrix64F Pd,
+                               SparseSquareUpperTriangular cPd,
                                PrecisionType precisionType) {
 
-        super(displacement, precision, index, dim, Pd, precisionType);
+        super(displacement, precision, index, dim, Pd, cPd, precisionType);
 
         int actualizationOffset = (dim * dim) * index;
         this.actualization = MissingOps.wrap(actualization, actualizationOffset, dim, dim);

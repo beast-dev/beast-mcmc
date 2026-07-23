@@ -1,7 +1,8 @@
 /*
  * ARGModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -38,6 +40,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.evomodel.arg.likelihood.ARGLikelihood;
+import dr.evomodel.tree.NewTreeModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.loggers.LogColumn;
@@ -1142,9 +1145,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         final int index;
 
         int size = 0;
+        final boolean nodeOrderChanged;
 
         public ARGTreeChangedEvent() {
-            this(null, null, -1);
+            this(null, null, -1,false);
         }
 
 //        public TreeChangedEvent(ARGModel arg) {
@@ -1153,17 +1157,21 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
 //        }
 
         public ARGTreeChangedEvent(Node node) {
-            this(node, null, -1);
+            this(node, null, -1,false);
         }
 
         public ARGTreeChangedEvent(Node node, Parameter parameter, int index) {
+            this(node, parameter, index,false);
+        }
+
+        public ARGTreeChangedEvent(Node node, Parameter parameter, int index, boolean nodeOrderChanged) {
             this.node = node;
             this.parameter = parameter;
             this.index = index;
+            this.nodeOrderChanged = nodeOrderChanged;
         }
-
         public ARGTreeChangedEvent(int sizeChanged) {
-            this(null, null, -1);
+            this(null, null, -1,false);
             size = sizeChanged;
         }
 
@@ -1203,6 +1211,10 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             return parameter == node.heightParameter;
         }
 
+        public boolean isOnlyHeightChanged() {
+            return false;
+        }
+
         public boolean isRateChanged() {
             return parameter == node.rateParameter;
         }
@@ -1210,6 +1222,8 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         public boolean isTraitChanged() {
             return parameter == node.traitParameter;
         }
+
+        public boolean isNodeOrderChanged(){ return nodeOrderChanged;}
     }
 
     // *****

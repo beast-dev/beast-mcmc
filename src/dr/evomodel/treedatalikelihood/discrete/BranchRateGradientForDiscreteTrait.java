@@ -1,7 +1,8 @@
 /*
  * BranchRateGradientForDiscreteTrait.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,26 +22,23 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
 
-import dr.evolution.tree.*;
-import dr.evomodel.treedatalikelihood.*;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
-import dr.util.Author;
-import dr.util.Citable;
-import dr.util.Citation;
-
-import java.util.Collections;
-import java.util.List;
 
 
 /**
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateGradient implements Citable {
+public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateGradient {
 
     public BranchRateGradientForDiscreteTrait(String traitName,
                                               TreeDataLikelihood treeDataLikelihood,
@@ -56,38 +54,13 @@ public class BranchRateGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     }
 
     @Override
+    double[] updateBranchRateGradientLogDensity(double[] result) {
+        return branchRateModel.updateGradientLogDensity(result, null, 0, result.length);
+    }
+
+    @Override
     protected double getChainSecondDerivative(Tree tree, NodeRef node) {
         return branchRateModel.getBranchRateSecondDifferential(tree, node) * tree.getBranchLength(node);
     }
 
-
-    @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
-    public String getDescription() {
-        return "Using linear-time branch-rate differential calculations";
-    }
-
-    @Override
-    public List<Citation> getCitations() {
-        return Collections.singletonList(CITATION);
-    }
-
-    private static final Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("X", "Ji"),
-                    new Author( "Z", "Zhang"),
-                    new Author("A", "Holbrook"),
-                    new Author("A", "Nishimura"),
-                    new Author("G", "Beale"),
-                    new Author("A", "Rambaut"),
-                    new Author("P", "Lemey"),
-                    new Author("MA", "Suchard"),
-            },
-            "Gradients do grow on trees: a linear-time O(N)-dimensional gradient for statistical phylogenetics",
-            "Annals of Applied Statistics",
-            Citation.Status.IN_SUBMISSION);
 }

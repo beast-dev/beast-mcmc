@@ -1,7 +1,8 @@
 /*
  * CaseToCaseTransmissionLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.app.tools.NexusExporter;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.loggers.LogColumn;
@@ -34,7 +35,6 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.xml.*;
 
-import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -46,7 +46,6 @@ import java.util.*;
  * Latent periods are not implemented currently
  *
  * @author Matthew Hall
- * @version $Id: $
  */
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
@@ -283,7 +282,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                                     }
 
                                     if(!previouslyInfectious.contains(infector)){
-                                        throw new RuntimeException("Infector not previously infected");
+                                        throw new BadPartitionException("Infector not previously infected");
                                     }
                                 }
 

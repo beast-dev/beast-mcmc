@@ -1,0 +1,6 @@
+Setting up signing certificates in Xcode
+
+Xcode menu -> Settings -> Account
+Click on user (login?)
+Click "Manage Certificates..." button
+Use "+" button to create new "Developer ID Application" and "Developer ID Installer"

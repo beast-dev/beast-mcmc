@@ -1,7 +1,8 @@
 /*
  * HiddenCodons.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,18 +22,23 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.datatype;
+
+import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
  */
 public class HiddenCodons extends Codons implements HiddenDataType {
-    public static final String DESCRIPTION = "hiddenCodon";
+    public static final String DESCRIPTION = HiddenDataType.DESCRIPTION + "Codon";
 
     public static final HiddenCodons UNIVERSAL_HIDDEN_2 = new HiddenCodons(GeneticCode.UNIVERSAL, 2);
     public static final HiddenCodons UNIVERSAL_HIDDEN_3 = new HiddenCodons(GeneticCode.UNIVERSAL, 3);
+    public static final HiddenCodons UNIVERSAL_HIDDEN_4 = new HiddenCodons(GeneticCode.UNIVERSAL, 4);
+    public static final HiddenCodons UNIVERSAL_HIDDEN_5 = new HiddenCodons(GeneticCode.UNIVERSAL, 5);
 
     /**
      * Private constructor - DEFAULT_INSTANCE provides the only instance
@@ -62,10 +68,27 @@ public class HiddenCodons extends Codons implements HiddenDataType {
         return stateSet;
     }
 
-    public final String getTriplet(int state) {
-        int codonState = state % stateCount;
-        int hiddenState = state / stateCount;
-        return super.getTriplet(codonState) + hiddenState;
+    public String getTriplet(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getTriplet);
+    }
+
+    public String getTripletWithoutHiddenCode(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getTriplet);
+    }
+
+    public String getCode(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getCode);
+    }
+
+    public String getCodeWithoutHiddenState(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
+    static public void registerHiddenDataType(GeneticCode geneticCode, int hiddenClassCount) {
+        String registeredName = DESCRIPTION + hiddenClassCount + "-" + geneticCode.getName();
+        if (!Arrays.asList(DataType.getRegisteredDataTypeNames()).contains(registeredName)) {
+            DataType.registerDataType(registeredName, new HiddenCodons(geneticCode, hiddenClassCount));
+        }
     }
 
     public int getStateCount() {

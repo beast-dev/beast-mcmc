@@ -1,7 +1,8 @@
 /*
  * DataPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.coalgen;
 
+import dr.app.beauti.options.GuessDatesException;
 import dr.evolution.util.*;
 import dr.app.gui.table.DateCellEditor;
 import dr.app.gui.table.TableSorter;
@@ -50,7 +53,6 @@ import dr.app.gui.table.TableEditorStopper;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id$
  */
 public class DataPanel extends JPanel implements Exportable {
 
@@ -254,15 +256,22 @@ public class DataPanel extends JPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        String warningMessage = null;
+//        String warningMessage = null;
 
-        guesser.guessDates(data.taxonList);
-
-        if (warningMessage != null) {
-            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-                    "Error guessing dates",
-                    JOptionPane.WARNING_MESSAGE);
+        try {
+            guesser.guessDates(data.taxonList);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+//        if (warningMessage != null) {
+//            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+//                    "Error guessing dates",
+//                    JOptionPane.WARNING_MESSAGE);
+//        }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();

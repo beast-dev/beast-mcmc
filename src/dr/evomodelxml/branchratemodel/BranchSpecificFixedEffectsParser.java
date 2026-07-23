@@ -1,7 +1,8 @@
 /*
- * CountableMixtureBranchRatesParser.java
+ * BranchSpecificFixedEffectsParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchratemodel;
@@ -33,6 +35,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.branchratemodel.ContinuousBranchValueProvider;
 import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
+import dr.evomodel.branchratemodel.PiecewiseLinearTimeDependentModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -52,10 +55,15 @@ import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.*;
  */
 public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
-    private static final String FIXED_EFFECTS = "fixedEffects";
+    public static final String FIXED_EFFECTS = "fixedEffects";
+    public static final String FIXED_EFFECTS_MODEL = "fixedEffectsModel";
+    public static final String FIXED_EFFECTS_LIKELIHOOD = "fixedEffectsLikelihood";
+    public static final String INTERCEPT = "intercept";
+    public static final String COEFFICIENT = "coefficient";
     private static final String INCLUDE_INTERCEPT = "includeIntercept";
     private static final String TIME_DEPENDENT_EFFECT = "timeEffect";
-    private static final String CATEGORY = "category";
+    private static final String TIME_MODEL = "model";
+    public static final String CATEGORY = "category";
 
     public String getParserName() {
         return FIXED_EFFECTS;
@@ -69,7 +77,7 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
 
         boolean includeIntercept = xo.getAttribute(INCLUDE_INTERCEPT, true);
 
-        List<CountableBranchCategoryProvider> categories = new ArrayList<CountableBranchCategoryProvider>();
+        List<CountableBranchCategoryProvider> categories = new ArrayList<>();
 
         for (XMLObject xoc : xo.getAllChildren(CATEGORY)) {
             CountableBranchCategoryProvider.CladeBranchCategoryModel cladeModel =
@@ -81,14 +89,9 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
             categories.add(cladeModel);
         }
 
-        List<ContinuousBranchValueProvider> values = new ArrayList<ContinuousBranchValueProvider>();
+        List<ContinuousBranchValueProvider> values = getValueProviders(xo);
 
-        boolean timeDependentEffect = xo.getAttribute(TIME_DEPENDENT_EFFECT, false);
-        if (timeDependentEffect) {
-            values.add(new ContinuousBranchValueProvider.MidPoint());
-        }
-
-        List<BranchRates> branchRates = new ArrayList<BranchRates>();
+        List<BranchRates> branchRates = new ArrayList<>();
 
         for (int i = 0; i < xo.getChildCount(); ++i) {
             Object obj = xo.getChild(i);
@@ -120,6 +123,26 @@ public class BranchSpecificFixedEffectsParser extends AbstractXMLObjectParser {
         } else {
             return fixedEffects;
         }
+    }
+
+    List<ContinuousBranchValueProvider> getValueProviders(XMLObject xo) throws XMLParseException {
+        List<ContinuousBranchValueProvider> values = new ArrayList<>();
+
+        boolean timeDependentEffect = xo.getAttribute(TIME_DEPENDENT_EFFECT, false);
+        if (timeDependentEffect) {
+            if (xo.hasChildNamed(TIME_DEPENDENT_EFFECT)) {
+                Parameter timeThreshold = (Parameter) xo.getChild(TIME_DEPENDENT_EFFECT).getChild(Parameter.class);
+                values.add(new ContinuousBranchValueProvider.ConstrainedMidPoint(timeThreshold));
+            } else if (xo.getChild(PiecewiseLinearTimeDependentModel.class) != null) {
+                PiecewiseLinearTimeDependentModel model = (PiecewiseLinearTimeDependentModel)
+                        xo.getChild(PiecewiseLinearTimeDependentModel.class);
+                values.add(model);
+            } else {
+                values.add(new ContinuousBranchValueProvider.MidPoint());
+            }
+        }
+
+        return values;
     }
 
     private String annotateDesignMatrix(double[][] matrix, Tree tree) {

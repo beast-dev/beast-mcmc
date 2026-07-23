@@ -1,7 +1,8 @@
 /*
  * GibbsIndependentCoalescentOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -29,7 +31,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentSimulator;
-import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
@@ -51,13 +54,13 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
 	public static final String HEIGHT = "height";
 
 	private XMLObject xo;
-	private TreeModel treeModel;
+	private DefaultTreeModel treeModel;
     private DemographicModel demoModel;
 	private double rootHeight;
 
     private final dr.evolution.coalescent.CoalescentSimulator simulator = new dr.evolution.coalescent.CoalescentSimulator();
 
-	public GibbsIndependentCoalescentOperator(XMLObject xo, TreeModel treeModel, DemographicModel model, double rootHeight, double weight) {
+	public GibbsIndependentCoalescentOperator(XMLObject xo, DefaultTreeModel treeModel, DemographicModel model, double rootHeight, double weight) {
 
 		this.xo = xo;
 		this.treeModel = treeModel;
@@ -181,7 +184,7 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+			DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
 			DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
 			double height = xo.getAttribute(HEIGHT, Double.NaN);
 
@@ -201,7 +204,7 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
 		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
 				AttributeRule.newDoubleRule(HEIGHT, true, ""),
-                new ElementRule(TreeModel.class),
+                new ElementRule(DefaultTreeModel.class),
                 new ElementRule(DemographicModel.class),
 				new ElementRule(Tree.class, 0, Integer.MAX_VALUE),
 				new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE)

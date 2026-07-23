@@ -1,7 +1,8 @@
 /*
  * Units.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.util;
@@ -34,13 +36,12 @@ import java.io.Serializable;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: Units.java,v 1.17 2005/05/24 20:25:57 rambaut Exp $
  */
 public interface Units extends Serializable {
 
     public enum Type {
         SUBSTITUTIONS(XMLUnits.SUBSTITUTIONS), GENERATIONS(XMLUnits.GENERATIONS),
-        DAYS(XMLUnits.DAYS), MONTHS(XMLUnits.MONTHS), YEARS(XMLUnits.YEARS);
+        DAYS(XMLUnits.DAYS), WEEKS(XMLUnits.WEEKS), MONTHS(XMLUnits.MONTHS), YEARS(XMLUnits.YEARS);
 
         Type(String name) {
             this.name = name;
@@ -67,7 +68,7 @@ public interface Units extends Serializable {
 
     // array of unit names
     // second dimension is to allow synonyms -- first element is default
-    final public String[][] UNIT_NAMES = {{"substitutions", "mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
+    final public String[][] UNIT_NAMES = {{"substitutions", "mutations"}, {"generations"}, {"days"}, {"weeks"}, {"months"}, {"years"}};
 
     public class Utils {
 

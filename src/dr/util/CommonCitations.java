@@ -1,7 +1,8 @@
 /*
  * CommonCitations.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.util;
@@ -127,13 +129,19 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-    public static Citation SUCHARD_2012 = new Citation(
+    public static Citation SUCHARD_2020_MMM = new Citation(
             new Author[]{
-                    new Author("MA", "Suchard"),
+                    new Author("G", "Baele"),
+                    new Author("MS", "Gill"),
+                    new Author("P", "Bastide"),
                     new Author("P", "Lemey"),
-                    new Author("V", "Minin"),
+                    new Author("MA", "Suchard")
             },
-            Citation.Status.IN_PREPARATION
+            "Markov-modulated continuous-time Markov chains to identify site- and branch-specific evolutionary variation in BEAST",
+            2020,
+            "Systematic Biology",
+            "https://doi.org/10.1093/sysbio/syaa037",
+            "10.1093/sysbio/syaa037"
     );
 
     public static Citation SHAPIRO_2012 = new Citation(
@@ -182,6 +190,30 @@ public class CommonCitations {
             "e100392"
     );
 
+    public static Citation LEMEY_2020_ACCOMMODATING = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("SL", "Hong"),
+                    new Author("V", "Hill"),
+                    new Author("G", "Baele"),
+                    new Author("C", "Poletto"),
+                    new Author("V", "Colizza"),
+                    new Author("A", "O'Toole"),
+                    new Author("JT", "McCrone"),
+                    new Author("KG", "Andersen"),
+                    new Author("M", "Worobey"),
+                    new Author("MI", "Nelson"),
+                    new Author("A", "Rambaut"),
+                    new Author("MA", "Suchard"),
+            },
+            "Accommodating individual travel history and unsampled diversity in Bayesian phylogeographic inference of SARS-CoV-2",
+            2020,
+            "Nature Communications",
+            11,
+            5110, -1,
+            Citation.Status.PUBLISHED
+    );
+
     public static Citation MININ_2008_COUNTING = new Citation(
             new Author[] {
                     new Author("VN", "Minin"),
@@ -208,17 +240,22 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-//    Minin VN, Suchard MA (2008) . Philos Trans R Soc Lond B Biol Sci 363(1512):3985-3995.
+    public static Citation TAO_LUMPING_2025 = new Citation(
+            new Author[]{
+                    new Author("X", "Tao"),
+                    new Author("NS", "Trovao"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
 
-//    public static Citation LEMEY_2012 = new Citation(
-//            new Author[]{
-//                    new Author("P", "Lemey"),
-//                    new Author("T", "Bedford"),
-//                    new Author("A", "Rambaut"),
-//                    new Author("MA", "Suchard"),
-//            },
-//            Citation.Status.IN_PREPARATION
-//    );
+    public static Citation MONTI_GENERIC_RATES_2024 = new Citation(
+            new Author[]{
+                    new Author("F", "Monti"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
 
     public static Citation LEMEY_MIXTURE_2012 = new Citation(
             new Author[]{
@@ -239,17 +276,6 @@ public class CommonCitations {
             "eLife",
             2,
             "e00631"
-    );
-
-
-//    Gong LI, Suchard MA, Bloom JD. Stability-mediated epistasis constrains the evolution of an influenza protein. eLife, 2, e00631, 2013.
-
-    public static Citation SUCHARD_2012_LATENT = new Citation(
-            new Author[]{
-                    new Author("MA", "Suchard"),
-                    new Author("J", "Felsenstein"),
-            },
-            Citation.Status.IN_PREPARATION
     );
 
     public static Citation SUCHARD_GENERIC = new Citation(
@@ -298,6 +324,27 @@ public class CommonCitations {
             61, 170, 173,
             "10.1093/sysbio/syr100");
 
+    public static Citation AYRES_2019_BEAGLE = new Citation(
+            new Author[] {
+                    new Author("DL", "Ayres"),
+                    new Author("MP", "Cummings"),
+                    new Author("G", "Baele"),
+                    new Author("AE", "Darling"),
+                    new Author("PO", "Lewis"),
+                    new Author("DL", "Swofford"),
+                    new Author("JP", "Huelsenbeck"),
+                    new Author("P", "Lemey"),
+                    new Author("A", "Rambaut"),
+                    new Author("MA", "Suchard")
+            },
+            "BEAGLE 3: Improved performance, scaling and usability for a high-performance computing library for statistical phylogenetics",
+            2019,
+            "Systematic Biology",
+            68,
+            1052, 1061,
+            Citation.Status.PUBLISHED
+    );
+
     public static Citation VRANCKEN_2015_SIMULTANEOUSLY = new Citation(
             new Author[] {
                     new Author("B", "Vrancken"),
@@ -336,5 +383,20 @@ public class CommonCitations {
             109,
             15066, 15071,
             Citation.Status.PUBLISHED
+    );
+
+    public static Citation GILL_2013_IMPROVING = new Citation(
+            new Author[]{
+                    new Author("MS", "Gill"),
+                    new Author("P", "Lemey"),
+                    new Author("NR", "Faria"),
+                    new Author("A", "Rambaut"),
+                    new Author("B", "Shapiro"),
+                    new Author("MA", "Suchard")
+            },
+            "Improving Bayesian population dynamics inference: a coalescent-based model for multiple loci",
+            2013,
+            "Mol Biol Evol",
+            30, 713, 724
     );
 }

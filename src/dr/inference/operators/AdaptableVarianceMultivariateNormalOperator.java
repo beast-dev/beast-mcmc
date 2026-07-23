@@ -1,7 +1,8 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -54,7 +56,7 @@ import dr.xml.XMLSyntaxRule;
  * @author Guy Baele
  * @author Marc A. Suchard
  */
-public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator implements Citable {
+public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator implements Citable, CheckpointableMCMCOperator {
 
     public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -432,10 +434,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                     for (int k = 0; k < temp.length; k++) {
                         parameter.setParameterValueQuietly(currentIndex + k, temp[k]);
                     }
-                    logJacobian += transformations[i].getLogJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].getLogJacobian(temp, 0, transformationSizes[i] - 1);
+                    logJacobian += transformations[i].logJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].logJacobian(temp, 0, transformationSizes[i] - 1);
                 } else {
                     parameter.setParameterValueQuietly(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);
@@ -446,7 +448,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
                     throw new RuntimeException("Transformations on more than 1 parameter value should be set quietly");
                 } else {
                     parameter.setParameterValue(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);
@@ -593,6 +595,67 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
 
     public double getScaleFactor() {
         return scaleFactor;
+    }
+
+    @Override
+    public String getCheckpointStateType() {
+        return "adaptableVarianceMultivariateNormal";
+    }
+
+    @Override
+    public void writeCheckpointState(CheckpointStateWriter writer) {
+        writer.writeInt(iterations);
+        writer.writeInt(updates);
+        writer.writeVector(oldMeans);
+        writer.writeVector(newMeans);
+        writer.writeMatrix(empirical);
+        writer.writeMatrix(proposal);
+        writer.writeMatrix(cholesky);
+    }
+
+    @Override
+    public void readCheckpointState(CheckpointStateReader reader) {
+        restoreAdaptiveState(
+                reader.readInt(),
+                reader.readInt(),
+                reader.readVector(),
+                reader.readVector(),
+                reader.readMatrix(),
+                reader.readMatrix(),
+                reader.readMatrix());
+    }
+
+    private void restoreAdaptiveState(int iterations, int updates, double[] oldMeans, double[] newMeans,
+                                      double[][] empirical, double[][] proposal, double[][] cholesky) {
+        if (oldMeans.length != dim || newMeans.length != dim ||
+                empirical.length != dim || proposal.length != dim || cholesky.length != dim) {
+            throw new RuntimeException("Dimension mismatch restoring AdaptableVarianceMultivariateNormalOperator state");
+        }
+        validateMatrixDimensions(empirical, dim, "empirical");
+        validateMatrixDimensions(proposal, dim, "proposal");
+        validateMatrixDimensions(cholesky, dim, "cholesky");
+
+        this.iterations = iterations;
+        this.updates = updates;
+        System.arraycopy(oldMeans, 0, this.oldMeans, 0, dim);
+        System.arraycopy(newMeans, 0, this.newMeans, 0, dim);
+        copyMatrix(empirical, this.empirical);
+        copyMatrix(proposal, this.proposal);
+        copyMatrix(cholesky, this.cholesky);
+    }
+
+    private void validateMatrixDimensions(double[][] matrix, int dim, String name) {
+        for (int i = 0; i < dim; i++) {
+            if (matrix[i].length != dim) {
+                throw new RuntimeException("Dimension mismatch restoring " + name + " matrix");
+            }
+        }
+    }
+
+    private void copyMatrix(double[][] source, double[][] destination) {
+        for (int i = 0; i < source.length; i++) {
+            System.arraycopy(source[i], 0, destination[i], 0, source[i].length);
+        }
     }
 
     public String getAdaptableParameterName() {
@@ -886,7 +949,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
 
     @Override
     public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
+        return Citation.Category.ADVANCED_ESTIMATION_METHODS;
     }
 
     @Override

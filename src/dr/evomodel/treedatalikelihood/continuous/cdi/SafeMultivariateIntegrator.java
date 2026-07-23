@@ -1,11 +1,39 @@
+/*
+ * SafeMultivariateIntegrator.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.InversionResult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.matrixAlgebra.missingData.InversionResult.Code.NOT_OBSERVED;
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
 import static dr.math.matrixAlgebra.missingData.InversionResult.mult;
 import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 
@@ -24,6 +52,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
         allocateStorage();
 
         effectiveDimensionOffset = PrecisionType.FULL.getEffectiveDimensionOffset(dimTrait);
+        determinantOffset = PrecisionType.FULL.getDeterminantOffset(dimTrait);
 
         System.err.println("Trying SafeMultivariateIntegrator");
     }
@@ -41,8 +70,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     private static final boolean TIMING = false;
 
     @Override
-    public void getBranchPrecision(int bufferIndex, int precisionIndex, double[] precision) {
-        getBranchPrecision(bufferIndex, precision);
+    public void getBranchPrecision(int bufferIndex, int precisionIndex, DiffusionRepresentation precision) {
+        getBranchPrecision(bufferIndex, ((DiffusionRepresentation.Dense) precision).matrix);
     }
 
     public void getBranchPrecision(int bufferIndex, double[] precision) {
@@ -77,8 +106,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     @Override
-    public void getRootPrecision(int priorBufferIndex, int precisionIndex, double[] precision) {
-        getRootPrecision(priorBufferIndex, precision);
+    public void getRootPrecision(int priorBufferIndex, int precisionIndex, DiffusionRepresentation precision) {
+        getRootPrecision(priorBufferIndex, ((DiffusionRepresentation.Dense) precision).matrix);
     }
 
     private void getRootPrecision(int priorBufferIndex, double[] precision) {
@@ -99,6 +128,10 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     @SuppressWarnings("unused")
     private void setEffectiveDimension(int iBuffer, double effDim) {
         partials[iBuffer * dimPartial + effectiveDimensionOffset] = effDim;
+    }
+
+    private double getPartialDeterminant(int iBuffer) {
+        return partials[iBuffer * dimPartial + determinantOffset];
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -220,7 +253,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             CommonOps.add(Pk, Pjp, Pip);
 
             final DenseMatrix64F Vip = matrix1;
-            safeInvert2(Pip, Vip, false);
+            safeInvertPrecision(Pip, Vip, false);
 
             final double[] delta = vectorDelta;
             computeDelta(jbo, jdo, delta);
@@ -361,8 +394,8 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F Pjp = matrixPjp;
 
 
-            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, true);
-            InversionResult cj = increaseVariances(jbo, jBuffer, Vdj, Pdj, Pjp, true);
+            InversionResult ci = increaseVariances(ibo, iBuffer, Vdi, Pdi, Pip, computeRemainders);
+            InversionResult cj = increaseVariances(jbo, jBuffer, Vdj, Pdj, Pjp, computeRemainders);
 
             if (TIMING) {
                 endTime("peel2");
@@ -402,47 +435,50 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             // Computer remainder at node k
             double remainder = 0.0;
 
-            if (DEBUG) {
-                reportInversions(ci, cj, Pip, Pjp);
-            }
-
-            if (TIMING) {
-                startTime("remain");
-            }
-
-            if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
-
-                // Inner products
-                double SS = computeSS(ibo, Pip, jbo, Pjp, kbo, Pk, dimTrait);
-
-                remainder += -0.5 * SS;
+            if (computeRemainders) {
 
                 if (DEBUG) {
-                    System.err.println("\t\t\tSS = " + (SS));
+                    reportInversions(ci, cj, Pip, Pjp);
                 }
-            } // End if remainder
 
-            double effectiveDimension = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
-            remainder += -effectiveDimension * LOG_SQRT_2_PI;
+                if (TIMING) {
+                    startTime("remain");
+                }
 
-            double deti = 0;
-            double detj = 0;
-            if (!(ci.getReturnCode() == NOT_OBSERVED)) {
-                deti = ci.getLogDeterminant(); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
-            }
-            if (!(cj.getReturnCode() == NOT_OBSERVED)) {
-                detj = cj.getLogDeterminant();
-            }
-            remainder += -0.5 * (deti + detj);
+                if (!(ci.getReturnCode() == NOT_OBSERVED || cj.getReturnCode() == NOT_OBSERVED)) {
 
-            if (DEBUG) {
-                System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
-                System.err.println("\t\t\tdetj = " + cj.getLogDeterminant());
-                System.err.println("\t\tremainder: " + remainder);
-            }
+                    // Inner products
+                    double SS = computeSS(ibo, Pip, jbo, Pjp, kbo, Pk, dimTrait);
 
-            if (TIMING) {
-                endTime("remain");
+                    remainder += -0.5 * SS;
+
+                    if (DEBUG) {
+                        System.err.println("\t\t\tSS = " + (SS));
+                    }
+                } // End if remainder
+
+                double effectiveDimension = getEffectiveDimension(iBuffer) + getEffectiveDimension(jBuffer);
+                remainder += -effectiveDimension * LOG_SQRT_2_PI;
+
+                double deti = 0;
+                double detj = 0;
+                if (!(ci.getReturnCode() == NOT_OBSERVED)) {
+                    deti = ci.getLogDeterminant(); // TODO: for OU, use det(exp(M)) = exp(tr(M)) ? (Qdi = exp(-A l_i))
+                }
+                if (!(cj.getReturnCode() == NOT_OBSERVED)) {
+                    detj = cj.getLogDeterminant();
+                }
+                remainder += -0.5 * (deti + detj);
+
+                if (DEBUG) {
+                    System.err.println("\t\t\tdeti = " + ci.getLogDeterminant());
+                    System.err.println("\t\t\tdetj = " + cj.getLogDeterminant());
+                    System.err.println("\t\tremainder: " + remainder);
+                }
+
+                if (TIMING) {
+                    endTime("remain");
+                }
             }
 
             // Accumulate remainder up tree and store
@@ -508,13 +544,24 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
             final DenseMatrix64F tmp1 = matrix0;
             CommonOps.add(Pi, Pdi, tmp1);
             final DenseMatrix64F tmp2 = matrix1;
-            safeInvert2(tmp1, tmp2, false);
+            safeInvertPrecision(tmp1, tmp2, false);
             CommonOps.mult(tmp2, Pi, tmp1);
             idMinusA(tmp1);
             if (getDeterminant) ci = safeDeterminant(tmp1, true);
             CommonOps.mult(Pi, tmp1, Pip);
-            if (getDeterminant && getEffectiveDimension(iBuffer) > 0) {
-                InversionResult cP = safeDeterminant(Pi, true);
+            int effDim = (int) Math.round(getEffectiveDimension(iBuffer));
+            if (getDeterminant && effDim > 0) {
+                // effectiveDimension > 0 => a tip node & determinant not included earlier
+                final InversionResult cP;
+                double preCalculatedDeterminant = getPartialDeterminant(iBuffer);
+
+                if (PrecisionType.FULL.isMissingDeterminantValue(preCalculatedDeterminant)) {
+                    cP = safeDeterminant(Pi, true);
+                } else {
+                    InversionResult.Code code = InversionResult.getCode(dimTrait, effDim);
+                    cP = new InversionResult(code, effDim, -preCalculatedDeterminant);
+                }
+
                 ci = mult(ci, cP);
             }
         }
@@ -702,6 +749,7 @@ public class SafeMultivariateIntegrator extends MultivariateIntegrator {
     }
 
     private final int effectiveDimensionOffset;
+    private final int determinantOffset;
 
     private DenseMatrix64F matrixQjPjp;
     private double[] vectorDelta;

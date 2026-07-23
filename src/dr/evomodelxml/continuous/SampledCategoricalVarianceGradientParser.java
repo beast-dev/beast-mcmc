@@ -1,0 +1,74 @@
+/*
+ * SampledCategoricalVarianceModelParser.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.evomodelxml.continuous;
+
+import dr.evomodel.continuous.SampledCategoricalVarianceGradient;
+import dr.evomodel.continuous.SampledCategoricalVarianceModel;
+import dr.inference.model.Parameter;
+import dr.xml.*;
+
+public class SampledCategoricalVarianceGradientParser extends AbstractXMLObjectParser {
+
+    private static final String PARSER_NAME = "sampledCategoricalVarianceGradient";
+
+    @Override
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        SampledCategoricalVarianceModel model = (SampledCategoricalVarianceModel)
+                xo.getChild(SampledCategoricalVarianceModel.class);
+
+        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
+        return new SampledCategoricalVarianceGradient(xo.getId(), model, parameter);
+    }
+
+    private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new ElementRule(SampledCategoricalVarianceModel.class),
+            new ElementRule(Parameter.class),
+    };
+
+    @Override
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    @Override
+    public String getParserDescription() {
+        return "parses continuous traits from a tree";
+    }
+
+    @Override
+    public Class getReturnType() {
+        return SampledCategoricalVarianceGradient.class;
+    }
+
+    @Override
+    public String getParserName() {
+        return PARSER_NAME;
+    }
+}

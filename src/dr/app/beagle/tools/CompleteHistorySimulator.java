@@ -1,7 +1,8 @@
 /*
  * CompleteHistorySimulator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beagle.tools;
 
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.sequence.DelimitedSequence;
 import dr.evolution.tree.*;
+import dr.evolution.util.Taxon;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.SimpleAlignment;
@@ -105,6 +110,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private Map<Integer,Sequence> alignmentTraitList;
 
     private boolean alignmentOnly = false;
+
+    private final String attributeName;
     
     /**
      * Constructor
@@ -114,12 +121,12 @@ public class CompleteHistorySimulator extends SimpleAlignment
      * @param branchRateModel
      * @param nReplications:  nr of samples to generate
      */
-//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
+//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModelParser siteModel, BranchRateModel branchRateModel,
 //                                    int nReplications) {
 //        this(tree, siteModel, branchRateModel, nReplications, false);
 //    }
 //
-//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
+//    public CompleteHistorySimulator(Tree tree, GammaSiteRateModelParser siteModel, BranchRateModel branchRateModel,
 //                                    int nReplications, boolean sumAcrossSites) {
 //        this(tree, siteModel, branchRateModel, nReplications, sumAcrossSites, null, null);
 //
@@ -127,7 +134,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
                                     int nReplications, boolean sumAcrossSites,
-                                    Parameter branchVariableParameter, Parameter branchPossibleValuesParameter) {
+                                    Parameter branchVariableParameter, Parameter branchPossibleValuesParameter,
+                                    String attributeName) {
         
     	this.tree = tree;
         this.siteModel = siteModel;
@@ -142,6 +150,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
 //			System.out.println("Codon models give exception when put inside report and when count statistics are done on them. "
 //							+ "You can supress this by setting alignmentOnly to true.");
 //		}
+
+        this.attributeName = attributeName;
          
         this.sumAcrossSites = sumAcrossSites;
 
@@ -199,9 +209,16 @@ public class CompleteHistorySimulator extends SimpleAlignment
             } else {
                 String c = dataType.getCode(seq[i]);
                 sSeq += c;
+                if (dataType.isDelimited() && i < nReplications - 1) {
+                    sSeq += dataType.getDelimiter();
+                }
             }
         }
-        return new Sequence(tree.getNodeTaxon(node), sSeq);
+        if (dataType.isDelimited()) {
+            return new DelimitedSequence(tree.getNodeTaxon(node), sSeq, dataType);
+        } else {
+            return new Sequence(tree.getNodeTaxon(node), sSeq);
+        }
     }
 
     public void addAlignmentTrait() {
@@ -350,6 +367,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
 									: null), 
 									idMap, 
 									sb);
+            sb.append(";");
 			sb.append("\n");
 
 		}
@@ -427,7 +445,13 @@ public class CompleteHistorySimulator extends SimpleAlignment
             processHistory(child, histories);
 
             if (tree.getChildCount(child) == 0) {
-                alignment.addSequence(intArray2Sequence(seq, child));
+                Sequence sequence = intArray2Sequence(seq, child);
+                alignment.addSequence(sequence);
+
+                if (attributeName != null) {
+                    Taxon taxon = tree.getNodeTaxon(child);
+                    taxon.setAttribute(attributeName, sequence.getSequenceString());
+                }
             }
             traverse(tree.getChild(node, iChild), seq, category, alignment, lambda);
         }

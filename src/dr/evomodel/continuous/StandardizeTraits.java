@@ -1,7 +1,8 @@
 /*
- * StandarizeTraits.java
+ * StandardizeTraits.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -28,7 +30,6 @@ package dr.evomodel.continuous;
 import dr.inference.model.MatrixParameterInterface;
 import dr.xml.*;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -47,15 +48,13 @@ public class StandardizeTraits {
         this(matrix, null, 1.0);
     }
 
-    public StandardizeTraits(MatrixParameterInterface matrix, List<Integer> missingIndices, double targetSd) {
+    public StandardizeTraits(MatrixParameterInterface matrix, boolean[] missingIndicators, double targetSd) {
 
         this.matrix = matrix;
         this.missing = new boolean[matrix.getDimension()];
 
-        if (missingIndices != null) {
-            for (int m : missingIndices) {
-                missing[m] = true;
-            }
+        if (missingIndicators != null) {
+            System.arraycopy(missingIndicators, 0, missing, 0, missingIndicators.length);
         }
 
         this.targetSd = targetSd;
@@ -298,7 +297,7 @@ public class StandardizeTraits {
             return STANDARDIZE_TRAITS;
         }
 
-        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
+        private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
 //                AttributeRule.newStringRule(TRAIT_NAME),
 //                new ElementRule(Taxa.class),
                 new ElementRule(MatrixParameterInterface.class),

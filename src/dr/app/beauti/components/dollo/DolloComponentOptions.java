@@ -1,7 +1,8 @@
 /*
  * DolloComponentOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.dollo;
@@ -32,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Marc Suchard
- * @version $Id$
  */
 
 public class DolloComponentOptions implements ComponentOptions {
@@ -49,7 +50,8 @@ public class DolloComponentOptions implements ComponentOptions {
 
 	public void createParameters(ModelOptions modelOptions) {
         for (AbstractPartitionData partition : options.dataPartitions) {
-            if (partition.getPartitionSubstitutionModel().isDolloModel()) {
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+            if (model != null && model.isDolloModel()) {
                 String prefix = partition.getName() + ".";
                 modelOptions.createParameterExponentialPrior(prefix + DEATH_RATE, "Stochastic Dollo death rate",
                         PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-5, 1.0E-4, 0.0);
@@ -61,7 +63,7 @@ public class DolloComponentOptions implements ComponentOptions {
 	public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-            if (model.isDolloModel()) {
+            if (model != null && model.isDolloModel()) {
                 String prefix = partition.getName() + ".";
                 ops.add(modelOptions.getOperator(prefix + DEATH_RATE));
             }
@@ -72,7 +74,7 @@ public class DolloComponentOptions implements ComponentOptions {
 			List<Parameter> params) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-            if (model.isDolloModel()) {
+            if (model != null && model.isDolloModel()) {
                 String prefix = partition.getName() + ".";
                 params.add(modelOptions.getParameter(prefix + DEATH_RATE));
                 break;

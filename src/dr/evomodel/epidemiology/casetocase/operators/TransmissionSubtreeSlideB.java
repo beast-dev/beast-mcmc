@@ -1,7 +1,8 @@
 /*
  * TransmissionSubtreeSlideB.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.epidemiology.casetocase.operators;
@@ -30,8 +32,10 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
+import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
 import dr.evomodel.operators.AbstractAdaptableTreeOperator;
 import dr.evomodel.operators.AbstractTreeOperator;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
@@ -49,7 +53,7 @@ import java.util.List;
 public class TransmissionSubtreeSlideB extends AbstractAdaptableTreeOperator {
 
     private CaseToCaseTreeLikelihood c2cLikelihood;
-    private TreeModel tree;
+    private PartitionedTreeModel tree;
     private double size = 1.0;
     private boolean gaussian = false;
     private final boolean swapInRandomRate;

@@ -1,7 +1,8 @@
 /*
  * OldStructuredCoalescentLikelihood.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -34,6 +37,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -65,7 +69,7 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
                                           GeneralSubstitutionModel generalSubstitutionModel, int subIntervals,
                                           TaxonList includeSubtree, List<TaxonList> excludeSubtrees) throws TreeUtils.MissingTaxonException {
 
-        super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, tree, includeSubtree, excludeSubtrees);
+        super(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, new TreeIntervals(tree, includeSubtree, excludeSubtrees));
 
         this.treeModel = (TreeModel)tree;
         this.patternList = patternList;
@@ -135,14 +139,6 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
         }
 
         logLikelihood = traverseTree(treeModel, treeModel.getRoot(), patternList);
-        return logLikelihood;
-    }
-
-    public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
         return logLikelihood;
     }
 
@@ -660,11 +656,15 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
+    public OldStructuredCoalescentLikelihood(String name, IntervalList intervalList) {
+        super(name, intervalList);
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (DEBUG) {
             System.out.println("handleModelChangedEvent: " + model.getModelName() + ", " + object + " (class " + object.getClass() + ")");
         }
-        if (model == treeModel) {
+        if (model == treeModel || model == intervalList) {
             //for all the nodes that are older than the event, set updateProbDist (still to implement) to true
             //then trigger a recalculation that makes use of an adjusted traverseTree method (that checks whether
             //or not the ProbDist needs to be updated
@@ -726,6 +726,16 @@ public class OldStructuredCoalescentLikelihood extends AbstractCoalescentLikelih
     public void makeDirty() {
         likelihoodKnown = false;
         matricesKnown = false;
+    }
+
+    @Override
+    public int getNumberOfCoalescentEvents() {
+        throw new RuntimeException("Method getNumberOfCoalescentEvents() in OldStructuredCoalescentLikelihood not supported.");
+    }
+
+    @Override
+    public double getCoalescentEventsStatisticValue(int i) {
+        throw new RuntimeException("Method getNumberOfCoalescentEvents() in OldStructuredCoalescentLikelihood not supported.");
     }
 
     /**

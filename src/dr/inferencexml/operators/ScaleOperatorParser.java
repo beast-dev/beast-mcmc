@@ -1,7 +1,8 @@
 /*
  * ScaleOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.operators;
@@ -40,10 +42,11 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
     public static final String SCALE_ALL = "scaleAll";
     public static final String SCALE_ALL_IND = "scaleAllIndependently";
     public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String DEGREES_OF_FREEDOM = "df";
+    private static final String DEGREES_OF_FREEDOM = "df";
     public static final String INDICATORS = "indicators";
     public static final String PICKONEPROB = "pickoneprob";
     public static final String IGNORE_BOUNDS = "ignoreBounds";
+    private static final String FIXED_DIMENSION = "fixedDimension";
 
     public String getParserName() {
         return SCALE_OPERATOR;
@@ -110,7 +113,23 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
         double indicatorOnProb = 1.0;
         final XMLObject inds = xo.getChild(INDICATORS);
 
-        if (inds != null) {
+        if (inds != null && xo.hasAttribute(FIXED_DIMENSION)){
+            throw new XMLParseException("Cannot include indicators when specifying a single fixed dimension.");
+        }
+
+        if (xo.hasAttribute(FIXED_DIMENSION)) {
+            int idx = xo.getIntegerAttribute(FIXED_DIMENSION);
+            if (idx < 1 || idx > parameter.getDimension()) {
+                throw new XMLParseException("Invalid dimension");
+            }
+            --idx;
+            indicator = new Parameter.Default(parameter.getDimension());
+            for (int i = 0; i < indicator.getDimension(); ++i) {
+                if (i != idx) {
+                    indicator.setParameterValue(i, 0.0);
+                }
+            }
+        } else if (inds != null) {
             indicator = (Parameter) inds.getChild(Parameter.class);
             if (inds.hasAttribute(PICKONEPROB)) {
                 indicatorOnProb = inds.getDoubleAttribute(PICKONEPROB);
@@ -119,11 +138,11 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
                 }
             }
         }
+        
         ScaleOperator operator = new ScaleOperator(parameter, scaleAll,
                 degreesOfFreedom, scaleFactor,
-                mode, indicator, indicatorOnProb,
+                mode, weight, indicator, indicatorOnProb,
                 scaleAllInd);
-        operator.setWeight(weight);
         return operator;
     }
 
@@ -157,5 +176,6 @@ public class ScaleOperatorParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             AttributeRule.newDoubleRule(PICKONEPROB, true),
                             new ElementRule(Parameter.class)}, true),
+            AttributeRule.newIntegerRule(FIXED_DIMENSION, true),
     };
 }

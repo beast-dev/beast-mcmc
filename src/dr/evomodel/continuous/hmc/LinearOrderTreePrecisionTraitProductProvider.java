@@ -1,3 +1,30 @@
+/*
+ * LinearOrderTreePrecisionTraitProductProvider.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.TreeTrait;
@@ -7,15 +34,11 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.math.MaximumEigenvalue;
 import dr.math.matrixAlgebra.*;
+import dr.util.TaskPool;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
-
-import static dr.math.matrixAlgebra.ReadableMatrix.Utils.product;
-import static dr.math.matrixAlgebra.ReadableVector.Utils.innerProduct;
-import static dr.math.matrixAlgebra.ReadableVector.Utils.norm;
 
 /**
  * @author Marc A. Suchard
@@ -26,7 +49,6 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
     private static final boolean DEBUG = false;
     private static final boolean NEW_DATA = false; // Maybe not useful
-    private static final boolean SMART_POOL = true;
 
     public LinearOrderTreePrecisionTraitProductProvider(TreeDataLikelihood treeDataLikelihood,
                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate,
@@ -50,7 +72,9 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         this.optimalTravelTimeScalar = optimalTravelTimeScalar;
         this.eigenvalueReplicates = eigenvalueReplicates;
 
-        this.taxonTaskPool = new TaxonTaskPool(tree.getExternalNodeCount(), threadCount);
+        this.taxonTaskPool = new TaskPool(tree.getExternalNodeCount(), threadCount);
+
+        this.eigenvalue = new MaximumEigenvalue.PowerMethod(50, 0.01);
     }
     
     @Override
@@ -89,31 +113,8 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
             final List<WrappedNormalSufficientStatistics> allStatistics = fullConditionalDensity.getTrait(tree, null);
             assert (allStatistics.size() == tree.getExternalNodeCount());
 
-            List<Callable<Object>> calls = new ArrayList<Callable<Object>>();
-
-            if (SMART_POOL) {
-                taxonTaskPool.fork((taxon, thread) ->
+            taxonTaskPool.fork((taxon, thread) ->
                         computeProductForOneTaxon(taxon, allStatistics.get(taxon), result));
-            } else {
-
-                for (int taxon = 0; taxon < tree.getExternalNodeCount(); ++taxon) {
-
-                    final int t = taxon;
-                    calls.add(Executors.callable(
-                            new Runnable() {
-                                public void run() {
-                                    computeProductForOneTaxon(t, allStatistics.get(t), result);
-                                }
-                            }
-                    ));
-                }
-            }
-
-            try {
-                taxonTaskPool.getPool().invokeAll(calls);
-            } catch (InterruptedException exception) {
-                exception.printStackTrace();
-            }
         }
 
         if (DEBUG) {
@@ -179,60 +180,19 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
 
     @Override
     public double getTimeScaleEigen() {
-        return maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false); //TODO: magic numbers
+        return eigenvalue.find(likelihoodDelegate.getTraitVariance());
     }
 
     private double getMaxEigenvalueAsTravelTime() {
 
-        // TODO Lots of bad magic numbers
-        double treeCovEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTreeVariance(), 50, 0.01, false);
-        double traitCovEigenValue = maxEigenvalueByPowerMethod(likelihoodDelegate.getTraitVariance(), 50, 0.01, false);
-        return optimalTravelTimeScalar * Math.sqrt(treeCovEigenValue * traitCovEigenValue);
+        double treeCovEigenvalue = eigenvalue.find(likelihoodDelegate.getTreeVariance());
+        double traitCovEigenvalue = eigenvalue.find(likelihoodDelegate.getTraitVariance());
+
+        return optimalTravelTimeScalar * Math.sqrt(treeCovEigenvalue * traitCovEigenvalue);
     }
 
-    private static double maxEigenvalueByPowerMethod(double[][] matrix, int numIterations, double err, boolean inverseflag) {
-
-        double[][] matrixForUse;
-
-        if (inverseflag) {
-            matrixForUse = (new SymmetricMatrix(matrix)).inverse().toComponents();
-        } else {
-            matrixForUse = (new SymmetricMatrix(matrix)).toComponents();
-        }
-
-        double[] y0 = new double[matrixForUse.length];
-        ReadableVector diff;
-        double maxEigenvalue = 10.0; // TODO Bad magic number
- 
-        for (int i = 0; i < matrixForUse.length; ++i) {
-            y0[i] = MathUtils.nextDouble();
-        }
-        WrappedVector y = new WrappedVector.Raw(y0);
-
-        final ReadableMatrix mat = new WrappedMatrix.ArrayOfArray(matrixForUse);
-
-        for (int i = 0; i < numIterations; ++i) {
-
-            ReadableVector v = new ReadableVector.Scale(1 / norm(y), y);
-            y = product(mat, v);
-            maxEigenvalue = innerProduct(v, y);
-            diff = new ReadableVector.Sum(y,
-                    new ReadableVector.Scale(-maxEigenvalue, v));
-
-            if (ReadableVector.Utils.norm(diff) < err) {
-                break;
-            }
-        }
-
-        if (inverseflag) {
-            return 1.0 / maxEigenvalue;
-        } else {
-            return maxEigenvalue;
-        }
-
-    }
-
-    private double getRoughLowerBoundforTravelTime() {
+    @SuppressWarnings("unused")
+    private double getRoughLowerBoundForTravelTime() {
 
         ReadableVector savedDataParameter = new WrappedVector.Raw(dataParameter.getParameterValues());
 
@@ -278,10 +238,12 @@ public class LinearOrderTreePrecisionTraitProductProvider extends TreePrecisionT
         return trait;
     }
 
-    private final TaxonTaskPool taxonTaskPool;
+    private final TaskPool taxonTaskPool;
 
     private final double[][] delta;
     private final double roughTimeGuess;
     private final int eigenvalueReplicates;
     private final double optimalTravelTimeScalar;
+
+    private final MaximumEigenvalue eigenvalue;
 }

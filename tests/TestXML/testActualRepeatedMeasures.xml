@@ -1,0 +1,215 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="taxon1">
+            <attr name="X">0.6208852031301316 -1.2991371493463548 -2.6910514790332054 1.109417180690863
+                1.099166772266214 NA
+            </attr>
+        </taxon>
+        <taxon id="taxon2">
+            <attr name="X">-0.7057152253938193 NA NA NA NA NA</attr>
+        </taxon>
+        <taxon id="taxon3">
+            <attr name="X">0.8225821150789747 0.2138202366939677 -1.5229118225528515 -0.8078400648319927
+                -1.1594623872491492 0.17048275938533758
+            </attr>
+        </taxon>
+        <taxon id="taxon4">
+            <attr name="X">1.2335230762207288 0.5070164014346852 -0.8270985241304889 NA NA NA</attr>
+        </taxon>
+        <taxon id="taxon5">
+            <attr name="X">NA NA NA NA NA NA</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree" usingDates="false" usingHeights="true">
+        (taxon1:0.034093632223924954,((taxon2:1.5104298872950768,(taxon3:0.39480816393853035,taxon4:2.492954320135449):2.920160090709784):0.7911157035133156,taxon5:3.8691942903231844):0.9572420218437911);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="6">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="diffusionPrecision">
+                <parameter value="2.548821185734364 2.555133831152609 0.32188915087110415"/>
+                <parameter value="2.555133831152609 3.995880672605147 0.6935229186165055"/>
+                <parameter value="0.32188915087110415 0.6935229186165055 0.8569431001135701"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+
+    <continuousTraitDataModel id="traits" traitName="X" numTraits="2" standardize="false">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+    </continuousTraitDataModel>
+
+    <repeatedMeasuresModel id="repeatedMeasures" numTraits="1">
+        <continuousTraitDataModel idref="traits"/>
+        <!--<samplingPrecision>-->
+        <!--<parameter id="gamma" value="2 3"/>-->
+        <!--</samplingPrecision>-->
+        <samplingPrecision>
+            <matrixParameter id="residualPrecision">
+                <parameter value="3.4852474371652304 0.40649861235323664 -2.439744747816666"/>
+                <parameter value="0.40649861235323664 1.6902922876733173 0.24083326541940484"/>
+                <parameter value="-2.439744747816666 0.24083326541940484 2.963752826198275"/>
+            </matrixParameter>
+        </samplingPrecision>
+        <multivariateDiffusionModel idref="diffusionModel"/>
+    </repeatedMeasuresModel>
+
+
+    <traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="false"
+                         useTreeLength="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <repeatedMeasuresModel idref="repeatedMeasures"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter id="mean" value="0.0 0.0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <matrixInverse id="diffVariance">
+        <matrixParameter idref="diffusionPrecision"/>
+    </matrixInverse>
+
+    <varianceProportionStatistic id="varianceLog" matrixRatio="coheritability">
+        <traitDataLikelihood idref="traitLikelihood"/>
+        <treeModel idref="treeModel"/>
+        <repeatedMeasuresModel idref="repeatedMeasures"/>
+        <multivariateDiffusionModel idref="diffusionModel"/>
+    </varianceProportionStatistic>
+
+
+    <multivariateWishartPrior id="precisionPrior" df="4">
+        <scaleMatrix>
+            <matrixParameter>
+                <parameter value="1 0 0"/>
+                <parameter value="0 1 0"/>
+                <parameter value="0 0 1"/>
+            </matrixParameter>
+        </scaleMatrix>
+        <data>
+            <matrixParameter idref="diffusionPrecision"/>
+        </data>
+    </multivariateWishartPrior>
+
+
+    <multivariateWishartPrior id="samplingPrior" df="4">
+        <scaleMatrix>
+            <matrixParameter>
+                <parameter value="1 0 0"/>
+                <parameter value="0 1 0"/>
+                <parameter value="0 0 1"/>
+            </matrixParameter>
+        </scaleMatrix>
+        <data>
+            <matrixParameter idref="residualPrecision"/>
+        </data>
+    </multivariateWishartPrior>
+
+    <precisionGibbsOperator id="diffOp" weight="1">
+        <wishartStatistics id="treeWishartStatistics" traitName="X">
+            <traitDataLikelihood idref="traitLikelihood"/>
+        </wishartStatistics>
+        <multivariateWishartPrior idref="precisionPrior"/>
+    </precisionGibbsOperator>
+
+    <precisionGibbsOperator id="resOp" weight="1">
+        <repeatedMeasuresWishartStatistics forceResample="false">
+            <repeatedMeasuresModel idref="repeatedMeasures"/>
+            <traitDataLikelihood idref="traitLikelihood"/>
+        </repeatedMeasuresWishartStatistics>
+        <multivariateWishartPrior idref="samplingPrior"/>
+    </precisionGibbsOperator>
+
+    <operators id="operators" optimizationSchedule="log">
+
+        <compoundPrecisionOperator weight="1">
+            <diffusionOperator>
+                <precisionGibbsOperator idref="diffOp"/>
+            </diffusionOperator>
+            <residualOperator>
+                <precisionGibbsOperator idref="resOp"/>
+            </residualOperator>
+        </compoundPrecisionOperator>
+    </operators>
+
+    <!--    <report>-->
+    <!--        <likelihood>-->
+    <!--            <traitDataLikelihood idref="traitLikelihood"/>-->
+    <!--        </likelihood>-->
+    <!--    </report>-->
+
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            Check log likelihood of observed data
+        </message>
+        <actual regex="likelihood:\s+(.*)\n">
+            <likelihood>
+                <traitDataLikelihood idref="traitLikelihood"/>
+            </likelihood>
+        </actual>
+        <expected>
+            -42.01874315757184
+        </expected>
+    </assertEqual>
+
+    <mcmc id="mcmc" chainLength="1" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <multivariateWishartPrior idref="samplingPrior"/>
+                <multivariateWishartPrior idref="precisionPrior"/>
+            </prior>
+            <likelihood>
+                <traitDataLikelihood idref="traitLikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <posterior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <posterior idref="traitLikelihood"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="100" fileName="precision_log.log">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="traitLikelihood"/>
+            <matrixParameter idref="residualPrecision"/>
+            <matrixParameter idref="diffusionPrecision"/>
+            <variancePorportionStatistic idref="varianceLog"/>
+            <matrixInverse idref="diffVariance"/>
+        </log>
+    </mcmc>
+
+</beast>
+

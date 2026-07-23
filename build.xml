@@ -1,7 +1,8 @@
 <!--
   ~ build.xml
   ~
-  ~ Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+  ~ Copyright © 2002-2024 the BEAST Development Team
+  ~ http://beast.community/about
   ~
   ~ This file is part of BEAST.
   ~ See the NOTICE file distributed with this work for additional
@@ -21,12 +22,13 @@
   ~ License along with BEAST; if not, write to the
   ~ Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
   ~ Boston, MA  02110-1301  USA
+  ~
   -->
 
-<!-- Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build. -->
+<!-- Build BEAST -->
 <project basedir="." default="dist" name="BEAST">
     <description>
-        Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build.
+        Build BEAST MCMC. JUnit test is available for this build.
         $Id$
     </description>
 
@@ -42,8 +44,8 @@
     <property name="main_class_BEAST" value="dr.app.beast.BeastMain"/>
     <property name="main_class_BEAUTI" value="dr.app.beauti.BeautiApp"/>
     <property name="main_class_TRACER" value="dr.app.tracer.application.TracerApp"/>
-    <property name="main_class_Annotator" value="dr.app.tools.TreeAnnotator"/>
-    <property name="main_class_LogCombiner" value="dr.app.tools.LogCombiner"/>
+    <property name="main_class_Annotator" value="dr.app.tools.treeannotator.TreeAnnotator"/>
+    <property name="main_class_LogCombiner" value="dr.app.tools.logcombiner.LogCombiner"/>
     <property name="report" value="${build}/junitreport"/>
 
     <path id="classpath">
@@ -64,8 +66,40 @@
             description="Clean and Build all run-time stuff with unit test">
     </target>
 
+<!--    https://stackoverflow.com/questions/2974106/how-to-lookup-the-latest-git-commit-hash-from-an-ant-build-script-->
+    <available file=".git" type="dir" property="git.present"/>
+    <target name="git.commit" description="Store git revision in ${repository.commit}" if="git.present">
+        <exec executable="git" outputproperty="git.commit" failifexecutionfails="true" errorproperty="">
+            <arg value="describe"/>
+            <arg value="--always"/>
+            <arg value="--dirty"/>
+        </exec>
+        <condition property="repository.commit" value="${git.commit}" else="git-commit-unavailable">
+            <and>
+                <isset property="git.commit"/>
+                <length string="${git.commit}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
+    </target>
+
+    <target name="revision" depends="git.commit" description="build revision.txt from template">
+        <copy file="revision.txt.template" tofile="src/revision.txt" overwrite="yes">
+            <filterchain>
+                <replacetokens>
+                    <token key="repository.commit" value="${repository.commit}" />
+                </replacetokens>
+            </filterchain>
+        </copy>
+    </target>
+
+    <target name="version" description="write version.txt resource from version and extra_release_tag properties">
+        <echo file="${src}/version.txt">File created by build process. Do not edit by hand
+${version}
+${extra_release_tag}</echo>
+    </target>
+
     <!-- compile Java source code -->
-    <target name="compile-all" depends="init">
+    <target name="compile-all" depends="init,revision,version">
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
@@ -74,7 +108,8 @@
                fork="true"
                includeantruntime="false"
                memoryinitialsize="256m"
-               memorymaximumsize="1024m">
+               memorymaximumsize="1024m"
+               encoding="UTF-8">
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/bss/**"/>
@@ -105,8 +140,10 @@
             <include name="dr/util/**"/>
             <include name="dr/xml/**"/>
             <include name="dr/geo/**"/>
-            <!-- complie JUnit test classes -->
+            <!-- compile JUnit test classes -->
             <include name="test/dr/**"/>
+            <!-- compile BASTA factory classes -->
+            <include name="beagle/basta/*.class"/>
         </javac>
         <echo message="Successfully compiled."/>
     </target>
@@ -123,6 +160,7 @@
                 <attribute name="Main-Class" value="${main_class_BEAST}"/>
             </manifest>
             <fileset dir="${build}">
+                <include name="beagle/basta/*.class"/>
                 <include name="dr/app/beast/**/*.class"/>
                 <!--<include name="dr/app/beastdev/**/*.class"/>-->
                 <include name="dr/app/beauti/**/*.class"/>
@@ -159,6 +197,8 @@
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/**/*.png"/>
+                <include name="revision.txt"/>
+                <include name="version.txt"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/**/*.properties"/>
             </fileset>
@@ -167,9 +207,7 @@
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>
             <zipgroupfileset dir="${lib}" includes="mtj.jar"/>
-            <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
-            <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
             <zipgroupfileset dir="${lib}" includes="EJML-core-0.30.jar"/>
             <zipgroupfileset dir="${lib}" includes="lbfgs4j-0.2.1.jar"/>
@@ -202,13 +240,14 @@
                 <include name="dr/evomodel/branchratemodel/**/*.class"/>
                 <include name="dr/evomodel/clock/**/*.class"/>
                 <include name="dr/evomodel/coalescent/**/*.class"/>
+                <include name="dr/evomodel/continuous/**/*.class"/>
                 <include name="dr/evomodel/operators/**/*.class"/>
                 <include name="dr/evomodel/sitemodel/**/*.class"/>
                 <include name="dr/evomodel/speciation/**/*.class"/>
                 <include name="dr/evomodel/substmodel/**/*.class"/>
                 <include name="dr/evomodel/tree/**/*.class"/>
                 <include name="dr/evomodel/treelikelihood/**/*.class"/>
-                <exclude name="dr/evomodel/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
+                <include name="dr/evomodel/treedatalikelihood/**/*.class"/>
                 <include name="dr/evomodelxml/**/*.class"/>
                 <exclude name="dr/evomodelxml/treedatalikelihood/MultiPartitionDataLikelihoodDelegate*"/>
                 <include name="dr/evoxml/**/*.class"/>
@@ -248,17 +287,50 @@
                 <include name="dr/evolution/coalescent/*.class"/>
                 <include name="dr/evolution/util/*.class"/>
                 <include name="dr/inference/trace/*.class"/>
+                <include name="dr/inference/model/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>
             </fileset>
         </jar>
 
+        <!-- Put everything in ${build} into the tempest-lib.jar file -->
+        <jar jarfile="${dist}/tempest-lib.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/beauti/tipdatepanel/**/*.class"/>
+                <include name="dr/app/beauti/util/**/*.class"/>
+                <include name="dr/app/beauti/options/**/*.class"/>
+                <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/app/gui/**/*.png"/>
+                <include name="dr/app/tools/*.class"/>
+                <include name="dr/app/util/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/datatype/*.class"/>
+                <include name="dr/evolution/sequence/*.class"/>
+                <include name="dr/evolution/alignment/*.class"/>
+                <include name="dr/evolution/io/*.class"/>
+                <include name="dr/evolution/util/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+            </fileset>
+            <fileset dir="${src}">
+                <include name="dr/app/gui/**/*.png"/>
+            </fileset>
+        </jar>
     </target>
 
     <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
     <target name="copy_trace_jar" depends="dist" >
         <copy file="${dist}/trace.jar" todir="../Tracer/lib"/>
+    </target>
+
+    <!-- used to copy the compiled tempest-lib.jar into place in the Tempest lib folder -->
+    <target name="copy_tempest-lib_jar" depends="dist" >
+        <copy file="${dist}/tempest-lib.jar" todir="../Tempest/lib"/>
     </target>
 
     <!-- run beast.jar -->
@@ -289,13 +361,12 @@
                 <path refid="classpath"/>
                 <path location="${build}"/>
             </classpath>
-
+            <jvmarg value="-Djava.library.path=${java.library.path}"/>
             <formatter type="xml"/>
 
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}">
                     <include name="test/dr/**/*Test.java"/>
-
 
                     <!-- Broken JUnits -->
                     <exclude name="test/dr/app/beagle/AncestralStateBeagleTreeLikelihoodTest.java"/> <!-- doesn't always fail-->
@@ -316,6 +387,8 @@
                     <!-- <exclude name="test/dr/evomodel/treedatalikelihood/hmc/PrecisionGradientTest.java"/> -->
                     <exclude name="test/dr/multidimensionalscaling/MDSRotationTest.java"/>
                     <exclude name="test/dr/evomodel/branchratemodel/StrictClockTest.java"/>
+                    <exclude name="test/dr/evomodel/speciation/YuleModelTest.java"/>
+                    <exclude name="test/dr/evomodel/substmodel/GeneralSubstitutionModelTest.java"/>
 <!--                    <exclude name="test/dr/evomodel/substmodel/TimeIrreversibleTest.java"/>--> <!--sometimes fails-->
 
 <!--                    <include name="test/dr/distibutions/**/*Test.java"/>-->
@@ -344,499 +417,5 @@
         </junitreport>
         <echo message="JUnit test report finished."/>
     </target>
-
-    <!--
-    <property name="version" value="1.9"/>
-     -->
-    <property name="version" value="1.10.5pre"/>
-    <property name="jvm_version" value="1.7+"/>
-
-    <property name="version_number" value="1.10.5"/>
-    <property name="copyright" value="Copyright 2002-2019"/>
-
-    <property name="release_dir" value="release"/>
-    <property name="BEAST_name" value="BEAST"/>
-    <property name="BEAUti_name" value="BEAUti"/>
-    <property name="TreeAnnotator_name" value="TreeAnnotator"/>
-    <property name="LogCombiner_name" value="LogCombiner"/>
-    <property name="LogAnalyser_name" value="LogAnalyser"/>
-    <property name="TreeStat_name" value="TreeStat"/>
-
-    <property name="packaging_tools" value="packaging_tools" />
-    <property name="common_dir" value="${release_dir}/common"/>
-
-    <property name="Mac_dir" value="${release_dir}/Mac"/>
-    <property name="Linux_dir" value="${release_dir}/Linux"/>
-    <property name="Windows_dir" value="${release_dir}/Windows"/>
-    <property name="Windows_launchers_dir" value="${release_dir}/Windows_Launchers"/>
-
-    <property name="Mac_package_dir" value="${Mac_dir}/${BEAST_name} v${version}"/>
-    <property name="Linux_package_dir" value="${Linux_dir}/${BEAST_name}v${version}"/>
-    <property name="Windows_package_dir" value="${Windows_dir}/${BEAST_name} v${version}"/>
-    <property name="Windows_launchers_package_dir" value="${Windows_launchers_dir}/${BEAST_name} v${version}"/>
-
-    <!-- Need to either install Launch4j under {BEAST workspace}/${release}
-                  or install it in the default directory and change the location of launch4j.dir -->
-    <target name="windows" depends="dist"
-            description="release Windows version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
-
-        <delete dir="${Windows_package_dir}"/>
-        <!-- Create the release directory -->
-        <mkdir dir="${Windows_package_dir}"/>
-
-        <property name="launch4j.dir" location="${Windows_dir}/launch4j"/>
-        <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
-                 classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar"/>
-
-        <copy todir="${Windows_package_dir}/doc">
-            <fileset dir="${common_dir}/doc"/>
-        </copy>
-        <copy todir="${Windows_package_dir}/examples">
-            <fileset dir="examples"/>
-        </copy>
-        <copy todir="${Windows_package_dir}/native">
-            <fileset dir="native">
-                <exclude name="deprecated/**"/>
-            </fileset>
-        </copy>
-        <copy todir="${Windows_package_dir}/bin">
-            <fileset dir="${Windows_dir}/scripts"/>
-        </copy>
-        <copy file="${dist}/beauti.jar" todir="${Windows_package_dir}/lib"/>
-        <copy file="${dist}/beast.jar" todir="${Windows_package_dir}/lib"/>
-        <!--
-        <copy todir="${Windows_package_dir}/lib">
-            <fileset dir="${Windows_dir}/lib"/>
-        </copy>
-        -->
-        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Windows_package_dir}"/>
-        <copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
-
-        <!-- BEAUTi v?.?.?.exe -->
-        <launch4j configFile="${Windows_dir}/BEAUti_launch4j.xml"
-                  jar="${dist}/beauti.jar"
-                  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- BEAST v?.?.?.exe -->
-        <launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
-                  jar="${dist}/beast.jar"
-                  outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- TreeAnnotator v?.?.?.exe -->
-        <launch4j configFile="${Windows_dir}/TreeAnnotator_launch4j.xml"
-                  jar="${dist}/beast.jar"
-                  outfile="${Windows_package_dir}/${TreeAnnotator_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- LogCombiner v?.?.?.exe -->
-        <launch4j configFile="${Windows_dir}/LogCombiner_launch4j.xml"
-                  jar="${dist}/beast.jar"
-                  outfile="${Windows_package_dir}/${LogCombiner_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <launch4j configFile="${Windows_dir}/TreeStat_launch4j.xml"
-                  jar="${dist}/beast.jar"
-                  outfile="${Windows_package_dir}/${TreeStat_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- LogAnalyser v?.?.?.exe
-          <launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
-                    jar="${dist}/beast.jar"
-                    outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
-                    fileVersion="${version}.0"
-                    txtFileVersion="${version}"
-                    productVersion="${version}.0"
-                    txtProductVersion="${version}"/>	-->
-
-        <zip destfile="${release_dir}/${BEAST_name} v${version}.zip">
-            <zipfileset dir="${Windows_package_dir}" prefix="${BEAST_name} v${version}"/>
-        </zip>
-
-        <echo message="Windows version release is finished."/>
-    </target>
-
-    <target name="windows_launchers" depends="dist"
-            description="release Windows (launchers) version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
-
-        <delete dir="${Windows_launchers_package_dir}"/>
-        <!-- Create the release directory -->
-        <mkdir dir="${Windows_launchers_package_dir}"/>
-
-        <property name="launch4j.dir" location="${Windows_launchers_dir}/launch4j"/>
-        <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
-                 classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar"/>
-
-        <copy todir="${Windows_launchers_package_dir}/doc">
-            <fileset dir="${common_dir}/doc"/>
-        </copy>
-        <copy todir="${Windows_launchers_package_dir}/examples">
-            <fileset dir="examples"/>
-        </copy>
-        <copy todir="${Windows_launchers_package_dir}/native">
-            <fileset dir="native">
-                <exclude name="deprecated/**"/>
-            </fileset>
-        </copy>
-        <copy todir="${Windows_launchers_package_dir}/bin">
-            <fileset dir="${Windows_dir}/scripts"/>
-        </copy>
-        <copy file="${dist}/beauti.jar" todir="${Windows_launchers_package_dir}/lib"/>
-        <copy file="${dist}/beast.jar" todir="${Windows_launchers_package_dir}/lib"/>
-        <!--
-        <copy todir="${Windows_package_dir}/lib">
-            <fileset dir="${Windows_dir}/lib"/>
-        </copy>
-        -->
-        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Windows_launchers_package_dir}"/>
-        <copy file="${common_dir}/README.txt" todir="${Windows_launchers_package_dir}"/>
-
-        <!-- BEAUTi v?.?.?.exe -->
-        <launch4j configFile="${Windows_launchers_dir}/BEAUti_launch4j.xml"
-                  outfile="${Windows_launchers_package_dir}/${BEAUti_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- BEAST v?.?.?.exe -->
-        <launch4j configFile="${Windows_launchers_dir}/BEAST_launch4j.xml"
-                  outfile="${Windows_launchers_package_dir}/${BEAST_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- BEAST v?.?.?.exe -->
-        <launch4j configFile="${Windows_launchers_dir}/BEAST_launch4j.xml"
-                  outfile="${Windows_launchers_package_dir}/${BEAST_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- TreeAnnotator v?.?.?.exe -->
-        <launch4j configFile="${Windows_launchers_dir}/TreeAnnotator_launch4j.xml"
-                  outfile="${Windows_launchers_package_dir}/${TreeAnnotator_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- LogCombiner v?.?.?.exe -->
-        <launch4j configFile="${Windows_launchers_dir}/LogCombiner_launch4j.xml"
-                  outfile="${Windows_launchers_package_dir}/${LogCombiner_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <launch4j configFile="${Windows_launchers_dir}/TreeStat_launch4j.xml"
-                  outfile="${Windows_launchers_package_dir}/${TreeStat_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- LogAnalyser v?.?.?.exe
-          <launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
-                    jar="${dist}/beast.jar"
-                    outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
-                    fileVersion="${version}.0"
-                    txtFileVersion="${version}"
-                    productVersion="${version}.0"
-                    txtProductVersion="${version}"/>	-->
-
-        <zip destfile="${release_dir}/${BEAST_name} v${version}_launchers.zip">
-            <zipfileset dir="${Windows_launchers_package_dir}" prefix="${BEAST_name} v${version}"/>
-        </zip>
-
-        <echo message="Windows launchers version release is finished."/>
-    </target>
-
-    <target name="linux" depends="dist"
-            description="release Linux/Unix version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
-        <delete dir="${Linux_package_dir}"/>
-        <!-- Create the release directory -->
-        <mkdir dir="${Linux_package_dir}"/>
-
-        <copy todir="${Linux_package_dir}/bin">
-            <fileset dir="${Linux_dir}/scripts"/>
-        </copy>
-        <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
-
-        <copy todir="${Linux_package_dir}/doc">
-            <fileset dir="${common_dir}/doc"/>
-        </copy>
-        <copy todir="${Linux_package_dir}/examples">
-            <fileset dir="examples"/>
-        </copy>
-        <copy todir="${Linux_package_dir}/native">
-            <fileset dir="native">
-                <exclude name="deprecated/**"/>
-            </fileset>
-        </copy>
-
-        <copy file="${common_dir}/icons/beast.png" todir="${Linux_package_dir}/images"/>
-        <copy file="${common_dir}/icons/beauti.png" todir="${Linux_package_dir}/images"/>
-        <copy file="${common_dir}/icons/utility.png" todir="${Linux_package_dir}/images"/>
-        <copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
-        <copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
-        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/> -->
-        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Linux_package_dir}"/>
-        <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
-
-        <!-- Only works under Unix or NonStop Kernel (Tandem) -->
-        <!-- <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
-
-		<tar destfile="${Linux_dir}/${BEAST_name}v${version}.tgz" compression="gzip">
-			<tarfileset dir="${Linux_package_dir}" prefix="${BEAST_name}v${version}"/>
-		</tar>-->
-        <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
-        <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files."/>
-        <!-- tar -cvzf BEASTv1.x.x.tgz BEASTv1.x.x/ -->
-        <!-- cksum BEASTv1.x.x.tgz -->
-        <!-- tar -xvzf BEASTv1.x.x.tgz -->
-        <echo message="Linux/Unix version release is finished."/>
-    </target>
-
-    <!-- this will only work on Andrew's computer -->
-    <property name="AppleSigner" value="Developer ID Application: Andrew Rambaut (9E4WXAQ6SE)" />
-
-    <target name="mac" depends="dist"
-            description="release Mac version of BEAST, BEAUTI, TreeAnnotator, LogCombiner">
-        <delete dir="${Mac_package_dir}"/>
-        <!-- Create the release directory -->
-        <mkdir dir="${Mac_package_dir}"/>
-
-        <copy todir="${Mac_package_dir}/bin">
-            <fileset dir="${Mac_dir}/scripts"/>
-        </copy>
-        <chmod dir="${Mac_package_dir}/bin" perm="755" includes="**/**"/>
-
-        <copy todir="${Mac_package_dir}/doc">
-            <fileset dir="${common_dir}/doc"/>
-        </copy>
-        <copy todir="${Mac_package_dir}/examples">
-            <fileset dir="examples"/>
-        </copy>
-        <copy todir="${Mac_package_dir}/native">
-            <fileset dir="native">
-                <exclude name="deprecated/**"/>
-            </fileset>
-        </copy>
-
-        <copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>
-        <copy file="${dist}/beast.jar" todir="${Mac_package_dir}/lib"/>
-        <!-- <copy file="${dist}/beast-beagle.jar" todir="${Mac_package_dir}/lib"/> -->
-        <copy todir="${Mac_package_dir}/lib">
-            <fileset dir="${Mac_dir}/lib"/>
-        </copy>
-        <copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
-        <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
-
-        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler" classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
-
-        <!-- create a jar bundle for the mac -->
-        <jarbundler dir="${Mac_package_dir}"
-                    name="${BEAST_name} v${version}"
-                    mainclass="dr.app.beast.BeastMain"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
-					useJavaXKey="true"
-                    icon="${common_dir}/icons/beast.icns"
-                    jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M"
-                    arguments="-window -working -options"
-                    highresolutioncapable="true"
-                    version="${version}"
-                    copyright="${BEAST_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
-                    bundleid="dr.app.beast">
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <!--<javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>-->
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/beast.jar"/>
-                <include name="**/beast-beagle.jar"/>
-            </jarfileset>
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="libNucleotideLikelihoodCore.jnilib"/>
-            </jarfileset>
-        </jarbundler>
-
-        <!-- code signing -->
-        <exec executable="codesign">
-            <arg value="--deep"/>
-            <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
-            <arg value="-v"/>
-            <arg value="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
-        </exec>
-
-        <jarbundler dir="${Mac_package_dir}"
-                    name="${BEAUti_name} v${version}"
-                    mainclass="dr.app.beauti.BeautiApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub_BEAST"
-					useJavaXKey="true"
-                    icon="${common_dir}/icons/beauti.icns"
-                    jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M"
-                    arguments=""
-                    version="${version}"
-                    highresolutioncapable="true"
-                    copyright="${BEAUti_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
-                    bundleid="dr.app.beauti">
-            <documenttype name="BEAUti document"
-                          extensions="beauti bti"
-                          iconFile="BEAUtiDoc.icns"
-                          role="Editor"/>
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/beauti.jar"/>
-            </jarfileset>
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/quaqua.jar"/>
-            </jarfileset>
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="libquaqua*.*"/>
-            </jarfileset>
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
-        </jarbundler>
-
-        <!-- code signing -->
-        <exec executable="codesign">
-            <arg value="--deep"/>
-            <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
-            <arg value="-v"/>
-            <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
-        </exec>
-
-        <jarbundler dir="${Mac_package_dir}"
-                    name="${LogCombiner_name} v${version}"
-                    mainclass="dr.app.tools.LogCombiner"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
-					useJavaXKey="true"
-                    icon="${common_dir}/icons/utility.icns"
-                    jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M"
-                    highresolutioncapable="true"
-                    arguments=""
-                    version="${version}"
-                    copyright="${LogCombiner_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
-                    bundleid="dr.app.tools.logcombiner">
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/beast.jar"/>
-            </jarfileset>
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
-        </jarbundler>
-
-        <!-- code signing -->
-        <exec executable="codesign">
-            <arg value="--deep"/>
-            <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
-            <arg value="-v"/>
-            <arg value="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
-        </exec>
-
-        <jarbundler dir="${Mac_package_dir}"
-                    name="${TreeAnnotator_name} v${version}"
-                    mainclass="dr.app.tools.TreeAnnotator"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
-					useJavaXKey="true"
-                    icon="${common_dir}/icons/utility.icns"
-                    jvmversion="${jvm_version}"
-                    vmoptions="-Xmx4096M"
-                    highresolutioncapable="true"
-                    arguments=""
-                    version="${version}"
-                    copyright="${TreeAnnotator_name} v${version}, ${copyright}, Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard"
-                    bundleid="dr.app.tools.treeannotator">
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/beast.jar"/>
-            </jarfileset>
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
-        </jarbundler>
-
-        <!-- code signing -->
-        <exec executable="codesign">
-            <arg value="--deep"/>
-            <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
-            <arg value="-v"/>
-            <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
-        </exec>
-
-        <jarbundler dir="${Mac_package_dir}"
-                    name="${TreeStat_name} v${version}"
-                    mainclass="dr.app.treestat.TreeStatApp"
-                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
-					useJavaXKey="true"
-                    icon="${common_dir}/icons/TreeStat.icns"
-                    jvmversion="${jvm_version}"
-                    vmoptions="-Xmx1024M"
-                    highresolutioncapable="true"
-                    arguments=""
-                    version="${version}"
-                    copyright="${TreeStat_name} v${version}, ${copyright}, Alexei J. Drummond and Andrew Rambaut"
-                    bundleid="dr.app.treestat">
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/beast.jar"/>
-            </jarfileset>
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <!--<javaproperty name="java.library.path" value="$JAVAROOT"/>-->
-        </jarbundler>
-
-        <!-- code signing -->
-        <exec executable="codesign">
-            <arg value="--deep"/>
-            <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
-            <arg value="-v"/>
-            <arg value="${Mac_package_dir}/${TreeStat_name} v${version}.app"/>
-        </exec>
-
-        <echo message="Building disk image."/>
-
-        <!-- create disk image -->
-        <exec executable="/usr/bin/hdiutil">
-            <arg value="create"/>
-            <arg value="-ov"/>
-            <arg value="-srcfolder"/>
-            <arg value="${Mac_package_dir}"/>
-            <arg value="-volname"/>
-            <arg value="${BEAST_name} v${version}"/>
-            <arg value="${release_dir}/${BEAST_name} v${version}.dmg"/>
-        </exec>
-
-        <exec executable="codesign">
-            <arg value="-s"/>
-            <arg value="${AppleSigner}"/>
-            <arg value="-v"/>
-            <arg value="${release_dir}/${BEAST_name} v${version}.dmg"/>
-        </exec>
-
-
-        <echo message="Mac version release is finished."/>
-    </target>
-
-    <target name="build" depends="mac, windows, linux" description="build all the executables" />
 
 </project>

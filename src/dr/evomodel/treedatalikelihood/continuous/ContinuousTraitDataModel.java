@@ -1,7 +1,8 @@
 /*
- * ContinuousTraitData.java
+ * ContinuousTraitDataModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,71 +22,137 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
+import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.inference.model.*;
+import org.ejml.data.DenseMatrix64F;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider {
+public class ContinuousTraitDataModel extends AbstractModel implements ContinuousTraitPartialsProvider,
+        ModelExtensionProvider {
 
     private final CompoundParameter parameter;
-    //TODO: fix missingIndices so that it stores a boolean value for each rather than an array of missing inds
-    private final List<Integer> missingIndices;
-    private final List<Integer> originalMissingIndices;
+    private final boolean[] originalMissingIndicators;
 
     final int numTraits;
     final int dimTrait;
     final PrecisionType precisionType;
 
-    private final boolean[] missingIndicator;
+    private final boolean[] missingIndicators;
+    private boolean useMissingIndices;
+
+    private String tipTraitName = null;
 
     public ContinuousTraitDataModel(String name,
                                     CompoundParameter parameter,
-                                    List<Integer> missingIndices,
+                                    boolean[] missingIndicators,
                                     boolean useMissingIndices,
                                     final int dimTrait, PrecisionType precisionType) {
+
+        this(name, parameter, missingIndicators, useMissingIndices, dimTrait,
+                parameter.getParameter(0).getDimension() / dimTrait,
+                precisionType);
+    }
+
+    public ContinuousTraitDataModel(String name,
+                                    CompoundParameter parameter,
+                                    boolean[] missingIndicators,
+                                    boolean useMissingIndices,
+                                    final int dimTrait, final int numTraits,
+                                    PrecisionType precisionType) {
         super(name);
         this.parameter = parameter;
-        this.originalMissingIndices = missingIndices;
-        this.missingIndices = (useMissingIndices? missingIndices : new ArrayList<>());
         addVariable(parameter);
 
+        this.originalMissingIndicators = missingIndicators;
+        this.useMissingIndices = true;
+        this.missingIndicators = (useMissingIndices ? missingIndicators : new boolean[missingIndicators.length]);
+
         this.dimTrait = dimTrait;
-        this.numTraits = getParameter().getParameter(0).getDimension() / dimTrait;
+        this.numTraits = numTraits;
         this.precisionType = precisionType;
 
 
-        this.missingIndicator = ContinuousTraitPartialsProvider.indicesToIndicator(
-                this.missingIndices, parameter.getDimension());
     }
 
-    public boolean bufferTips() { return true; }
+    public boolean bufferTips() {
+        return true;
+    }
 
-    public int getTraitCount() {  return numTraits; }
+    @Override
+    public int getTraitCount() {
+        return numTraits;
+    }
 
-    public int getTraitDimension() { return dimTrait; }
+    @Override
+    public int getTraitDimension() {
+        return dimTrait;
+    }
 
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
+    }
+
+    @Override
     public PrecisionType getPrecisionType() {
         return precisionType;
     }
 
-    public String getName() { return super.getModelName(); }
+    public String getName() {
+        return super.getModelName();
+    }
 
-    public CompoundParameter getParameter() { return parameter; }
+    @Override
+    public CompoundParameter getParameter() {
+        return parameter;
+    }
 
-    public List<Integer> getMissingIndices() { return missingIndices; }
+    @Override
+    public boolean usesMissingIndices() {
+        return useMissingIndices;
+    }
 
-    public boolean[] getMissingIndicator() {return missingIndicator; }
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
+    }
 
-    List<Integer> getOriginalMissingIndices() { return originalMissingIndices; }
+    @Override
+    public List<Integer> getMissingIndices() {
+        return ContinuousTraitPartialsProvider.indicatorToIndices(missingIndicators); // TODO: finish deprecating
+    }
+
+    @Override
+    public boolean[] getDataMissingIndicators() {
+        return missingIndicators;
+    }
+
+    List<Integer> getOriginalMissingIndices() {
+        return ContinuousTraitPartialsProvider.indicatorToIndices(originalMissingIndicators); // TODO: finish deprecating
+    }
+
+    boolean[] getOriginalMissingIndicators() {
+        return originalMissingIndicators;
+    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -97,9 +164,9 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         if (variable == parameter) {
             if (type == Parameter.ChangeType.VALUE_CHANGED) {
                 fireModelChanged(this, getTaxonIndex(index));
-            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED){
+            } else if (type == Parameter.ChangeType.ALL_VALUES_CHANGED) {
 //                if (!allDataChange) {
-                    fireModelChanged(this);
+                fireModelChanged(this);
 //                    allDataChange = true;
 //                }
             } else {
@@ -110,7 +177,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
 //    private boolean allDataChange = false;
 
-    private int getTaxonIndex(int parameterIndex) {
+    protected int getTaxonIndex(int parameterIndex) {
         return parameterIndex / (dimTrait * numTraits);
     }
 
@@ -120,12 +187,14 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     @Override
-    protected void restoreState() { }
+    protected void restoreState() {
+    }
 
     @Override
-    protected void acceptState() { }
+    protected void acceptState() {
+    }
 
-    private double[] getScalarTipPartial(int taxonIndex) {
+    private double[] getScalarTipPartial(int taxonIndex) { // TODO: test
         double[] partial = new double[numTraits * (dimTrait + 1)];
         final Parameter p = parameter.getParameter(taxonIndex);
         int offset = 0;
@@ -135,7 +204,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
                 final int index = i * dimTrait + j;
                 final int missingIndex = index + dimTrait * numTraits * taxonIndex;
                 partial[offset + j] = p.getParameterValue(index);
-                if (missingIndices != null && missingIndices.contains(missingIndex)) {
+                if (missingIndicators != null && missingIndicators[missingIndex]) {
                     missing = true;
                 }
             }
@@ -147,11 +216,12 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
     private static final boolean OLD = false;
 
+    @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
         if (fullyObserved) {
 
             final PrecisionType precisionType = PrecisionType.SCALAR;
-            final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+            final int offsetInc = precisionType.getPartialsDimension(dimTrait);
             final double precision = PrecisionType.getObservedPrecisionValue(false);
 
             double[] tipPartial = getTipPartial(taxonIndex, precisionType);
@@ -172,7 +242,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
             return getScalarTipPartial(taxonIndex);
         }
 
-        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final int offsetInc = precisionType.getPartialsDimension(dimTrait);
         final double[] partial = new double[numTraits * offsetInc];
         final Parameter p = parameter.getParameter(taxonIndex);
 
@@ -189,7 +259,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
                 partial[offset + j] = p.getParameterValue(pIndex);
 
-                final boolean missing = missingIndicator != null && missingIndicator[missingIndex];
+                final boolean missing = missingIndicators != null && missingIndicators[missingIndex];
                 if (!missing) ++effDim;
                 final double precision = PrecisionType.getObservedPrecisionValue(missing);
 
@@ -197,6 +267,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
             }
 
             precisionType.fillEffDimInPartials(partial, offset, effDim, dimTrait);
+            precisionType.fillNoDeterminantInPartials(partial, offset, dimTrait);
 
             offset += offsetInc;
         }
@@ -205,7 +276,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
     }
 
     double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
-        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final int offsetInc = precisionType.getPartialsDimension(dimTrait);
 
         final double[] partial = getTipPartial(taxonIndex, precisionType);
         final double[] data = new double[numTraits * dimTrait];
@@ -216,7 +287,29 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
 
         return data;
     }
-    
+
+    @Override
+    public ContinuousExtensionDelegate getExtensionDelegate(ContinuousDataLikelihoodDelegate delegate,
+                                                            TreeTrait treeTrait, Tree tree) {
+        return new ContinuousExtensionDelegate.NullExtensionDelegate(delegate, this, treeTrait, tree);
+    }
+
+    @Override
+    public double[] transformTreeTraits(double[] treeTraits) {
+        return treeTraits.clone();
+    }
+
+    @Override
+    public void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                      int offset, int dimGradient) {
+        // do nothing
+    }
+
+    @Override
+    public boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        return false;
+    }
+
     /*
      * For partially observed tips: (y_1, y_2)^t \sim N(\mu, \Sigma) where
      *

@@ -1,7 +1,8 @@
 /*
  * Parameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -36,7 +38,6 @@ import java.util.*;
  * Represents a multi-dimensional continuous parameter.
  *
  * @author Alexei Drummond
- * @version $Id: Parameter.java,v 1.22 2005/06/08 11:23:25 alexei Exp $
  */
 public interface Parameter extends Statistic, Variable<Double> {
 
@@ -176,6 +177,15 @@ public interface Parameter extends Statistic, Variable<Double> {
     double getParameterUntransformedValue(int dim);
 
     void setParameterUntransformedValue(int dim, double a);
+
+    default void setAllParameterValuesQuietly(double[] values) {
+        if (values.length != getDimension()) {
+            throw new IllegalArgumentException("supplied values must be of same dimension as parameter");
+        }
+        for (int i = 0; i < this.getDimension(); i++) {
+            setParameterValueQuietly(i, values[i]);
+        }
+    }
 
     boolean isImmutable();
 

@@ -1,7 +1,8 @@
 /*
  * DirichletProcessOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchmodel.lineagespecific;
 
+import dr.math.matrixAlgebra.WrappedVector;
 import org.apache.commons.math.MathException;
 
 import dr.inference.model.CompoundLikelihood;
@@ -242,7 +245,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 			if (DEBUG) {
 				System.out.println("N[-index]: ");
-				dr.app.bss.Utils.printArray(occupancy);
+				System.out.println(new WrappedVector.Raw(occupancy));
 			}
 
 			Likelihood clusterLikelihood = (Likelihood) likelihood.getLikelihood(index);
@@ -286,11 +289,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				clusterProbs[i] = logprob;
 			}// END: i loop
 
-			dr.app.bss.Utils.exponentiate(clusterProbs);
+			exponentiate(clusterProbs);
 
 			if (DEBUG) {
 				System.out.println("P(z[index] | z[-index]): ");
-				dr.app.bss.Utils.printArray(clusterProbs);
+				System.out.println(new WrappedVector.Raw(clusterProbs));
 			}
 
 			// sample
@@ -305,6 +308,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		}// END: index loop
 
 	}// END: doOperate
+
+	public static void exponentiate(double[] array) {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = Math.exp(array[i]);
+		}
+	}// END: exponentiate
 
 	@Override
 	public String getOperatorName() {

@@ -1,7 +1,8 @@
 /*
  * MatrixVectorProductParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -37,6 +39,9 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
 
         matrix.addVariableListener(this);
         vector.addVariableListener(this);
+
+        Parameter.CONNECTED_PARAMETER_SET.add(matrix);
+        Parameter.CONNECTED_PARAMETER_SET.add(vector);
     }
 
     public int getDimension() {
@@ -46,6 +51,10 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
     public void setDimension(int dim) {
         throwError("setDimension()");
     }
+
+    public Parameter getVector() { return vector; }
+
+    public MatrixParameter getMatrix() { return matrix; }
 
     protected void storeValues() {
         matrix.storeParameterValues();
@@ -84,6 +93,10 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
 
     public void setParameterValueNotifyChangedAll(int dim, double value) {
         throwError("setParameterValueNotifyChangedAll()");
+    }
+
+    public boolean isImmutable() {
+        return true;
     }
 
     private void throwError(String functionName) throws RuntimeException {

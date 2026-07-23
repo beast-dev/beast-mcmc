@@ -1,7 +1,8 @@
 /*
  * DesignMatrix.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -29,6 +31,8 @@ import dr.stats.DiscreteStatistics;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
@@ -41,6 +45,7 @@ public class DesignMatrix extends MatrixParameter {
     public static final String COL_DIMENSION = "colDimension";
     public static final String CHECK_IDENTIFABILITY = "checkIdentifiability";
     public static final String STANDARDIZE = "standardize";
+    private static final String IGNORE_STANDARDIZATION_COLUMN = "ignoreStandardizationColumn";
     public static final String DYNAMIC_STANDARDIZATION = "dynamicStandardization";
 
     public static final String INTERCEPT = "intercept";
@@ -161,9 +166,9 @@ public class DesignMatrix extends MatrixParameter {
         throw new RuntimeException("Not implemented yet!");
     }
 
-    public static void standardize(double[] vector) {
+    public static void standardize(double[] vector, boolean withScale) {
         double mean = DiscreteStatistics.mean(vector);
-        double stDev = Math.sqrt(DiscreteStatistics.variance(vector, mean));
+        double stDev = withScale ? Math.sqrt(DiscreteStatistics.variance(vector, mean)) : 1.0;
         for (int i = 0; i < vector.length; ++i) {
             vector[i] = (vector[i] - mean) / stDev;
         }
@@ -184,6 +189,7 @@ public class DesignMatrix extends MatrixParameter {
             DesignMatrix designMatrix = new DesignMatrix(name, dynamicStandardization);
             boolean addIntercept = xo.getAttribute(ADD_INTERCEPT, false);
             boolean standardize = xo.getAttribute(STANDARDIZE, false);
+            boolean centerOnly = xo.getAttribute("centerOnly", false);
 
             int dim = 0;
 
@@ -211,23 +217,29 @@ public class DesignMatrix extends MatrixParameter {
                 }
             }
 
-            if (standardize) {
-                // Standardize all covariates except intercept
-                for (int j = 0; j < designMatrix.getColumnDimension(); ++j) {
-                    Parameter columnParameter = designMatrix.getParameter(j);
-                    double[] column = columnParameter.getParameterValues();
-                    standardize(column);
-                    for (int i = 0; i < column.length; ++i) {
-                        columnParameter.setParameterValueQuietly(i, column[i]);
-                    }
-                    columnParameter.setParameterValueNotifyChangedAll(0, columnParameter.getParameterValue(0));
-                }
-            }
-
             if (addIntercept) {
                 Parameter intercept = new Parameter.Default(dim);
                 intercept.setId(INTERCEPT);
                 designMatrix.addParameter(intercept);
+            }
+
+            if (standardize) {
+                // Standardize all covariates except intercept
+                for (int j = 0; j < designMatrix.getColumnDimension(); ++j) {
+                    Parameter columnParameter = designMatrix.getParameter(j);
+
+                    if ((columnParameter.getId()).toLowerCase().indexOf(INTERCEPT) >= 0) {
+                        Logger.getLogger("dr.inference.model").info("\nNot standardizing column '" + columnParameter.getId() +
+                                "' in design matrix '" + designMatrix.getId() + "'\n");
+                    } else {
+                        double[] column = columnParameter.getParameterValues();
+                        standardize(column, !centerOnly);
+                        for (int i = 0; i < column.length; ++i) {
+                            columnParameter.setParameterValueQuietly(i, column[i]);
+                        }
+                        columnParameter.setParameterValueNotifyChangedAll(0, columnParameter.getParameterValue(0));
+                    }
+                }
             }
 
             return designMatrix;

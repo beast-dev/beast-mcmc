@@ -1,7 +1,8 @@
 /*
  * ContinuousTraitPartialsProvider.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,20 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.preorder.NormalSufficientStatistics;
+import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
 import dr.inference.model.CompoundParameter;
+import org.ejml.data.DenseMatrix64F;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,17 +50,83 @@ public interface ContinuousTraitPartialsProvider {
 
     int getTraitDimension();
 
+    String getTipTraitName();
+
+    void setTipTraitName(String name);
+
+    default int getDataDimension() {
+        return getTraitDimension();
+    }
+
     PrecisionType getPrecisionType();
 
     double[] getTipPartial(int taxonIndex, boolean fullyObserved);
 
-    List<Integer> getMissingIndices();
+    @Deprecated
+    List<Integer> getMissingIndices(); // use getTraitMissingIndicators() instead
 
-    boolean[] getMissingIndicator();
+    boolean[] getDataMissingIndicators(); // returns null for no missing data
+
+    default boolean[] getTraitMissingIndicators() { // returns null for no missing traits
+        return getDataMissingIndicators();
+    }
 
     CompoundParameter getParameter();
 
     String getModelName();
+
+    boolean usesMissingIndices();
+
+    ContinuousTraitPartialsProvider[] getChildModels();
+
+    default double[] drawTraitsBelowConditionalOnDataAndTraitsAbove(double[] aboveTraits) {
+        throw new RuntimeException("Conditional sampling not yet implemented for " + this.getClass());
+    }
+
+    default double[] transformTreeTraits(double[] traits) {
+        return traits;
+    }
+
+    default boolean getDefaultAllowSingular() {
+        return false;
+    }
+
+    default boolean suppliesWishartStatistics() {
+        return true;
+    }
+
+    default int[] getPartitionDimensions() {
+        return new int[]{getTraitDimension()};
+    }
+
+    default void addTreeAndRateModel(Tree treeModel, ContinuousRateTransformation rateTransformation) {
+        // Do nothing
+    }
+
+    default WrappedNormalSufficientStatistics partitionNormalStatistics(WrappedNormalSufficientStatistics statistic,
+                                                                        ContinuousTraitPartialsProvider provider) {
+        if (this == provider) {
+            return statistic;
+        }
+        throw new RuntimeException("This class does not currently support 'partitionNormalStatistics' with " +
+                "a provider other than itself.");
+    }
+
+    default ContinuousTraitPartialsProvider getProviderForTrait(String trait) {
+        if (trait.equals(getTipTraitName())) {
+            return this;
+        }
+        throw new RuntimeException("Partials provider does not have trait '" + trait + "'");
+    }
+
+    default void updateTipDataGradient(DenseMatrix64F precision, DenseMatrix64F variance, NodeRef node,
+                                       int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    default boolean needToUpdateTipDataGradient(int offset, int dimGradient) {
+        throw new RuntimeException("not yet implemented");
+    }
 
     static boolean[] indicesToIndicator(List<Integer> indices, int n) {
 
@@ -69,4 +143,17 @@ public interface ContinuousTraitPartialsProvider {
         return indicator;
 
     }
+
+    static List<Integer> indicatorToIndices(boolean[] indicators) { //TODO: test
+        List<Integer> indices = new ArrayList<>();
+
+        for (int i = 0; i < indicators.length; i++) {
+            if (indicators[i]) {
+                indices.add(i);
+            }
+        }
+
+        return indices;
+    }
+
 }

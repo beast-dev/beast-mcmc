@@ -1,7 +1,8 @@
 /*
- * BranchSpecificRateBranchModel.java
+ * BranchSpecificSubstitutionParameterBranchModel.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchmodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.ParameterReplaceableSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -42,12 +45,12 @@ import java.util.Map;
  * @author Marc Suchard
  * @author Xiang Ji
  */
-public class BranchSpecificSubstitutionParameterBranchModel extends AbstractModel implements BranchModel{
+public class BranchSpecificSubstitutionParameterBranchModel extends AbstractModel implements BranchModel {
 
     private final ParameterReplaceableSubstitutionModel substitutionModel;
     private final TreeModel tree;
     private final List<SubstitutionModel> substitutionModelList;
-    private Map<BranchRateModel, CompoundParameter> substitutionParameterMap = new HashMap<BranchRateModel, CompoundParameter>();
+    private Map<BranchRateModel, CompoundParameter> substitutionParameterMap = new HashMap<>();
 
     public BranchSpecificSubstitutionParameterBranchModel(String name,
                                                           List<Parameter> substitutionParameterList,
@@ -64,11 +67,14 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
         for (BranchRateModel branchRateModel : branchRateModelList) {
             addModel(branchRateModel);
         }
+        for (SubstitutionModel singleSubstitutionModel : substitutionModelList) {
+            addModel(singleSubstitutionModel);
+        }
     }
 
     private List<SubstitutionModel> constructSubstitutionModels(List<Parameter> substitutionParameterList,
                                                                 List<BranchRateModel> branchRateModelList) {
-        List<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
+        List<SubstitutionModel> substitutionModelList = new ArrayList<>();
         for (int i = 0; i < tree.getNodeCount(); i++) {
             List<Parameter> newSubstitutionParameterList = new ArrayList<>();
             for (int j = 0; j < branchRateModelList.size(); j++) {
@@ -82,7 +88,7 @@ public class BranchSpecificSubstitutionParameterBranchModel extends AbstractMode
         return substitutionModelList;
     }
 
-    public CompoundParameter getBranchSpecificParameters(BranchRateModel branchRateModel) {
+    public CompoundParameter getBranchSpecificParameters(DifferentiableBranchRates branchRateModel) {
         return substitutionParameterMap.get(branchRateModel);
     }
 

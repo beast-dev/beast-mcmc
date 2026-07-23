@@ -1,7 +1,8 @@
 /*
  * AbstractNodeHeightTransformDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
 
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
@@ -45,10 +48,17 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
                                                Parameter nodeHeights) {
         super(NodeHeightTransformParser.NAME);
         this.tree = treeModel;
-        this.nodeHeights = new NodeHeightProxyParameter("internalNodeHeights", tree, false);
+        this.nodeHeights = nodeHeights;
         indexHelper = new TreeParameterModel(treeModel, new Parameter.Default(tree.getNodeCount() - 1), false);
         addVariable(nodeHeights);
+        treeModel.addModel(this);
+        treeModel.addModelRestoreListener(this);
+        treeModel.addModelListener(this);
     }
+
+    abstract public double[] setMaskByHeightDifference(double threshold);
+
+    abstract public double[] setMaskByRatio(double threshold);
 
     public void setNodeHeights(double[] nodeHeights) {
         if (nodeHeights.length != this.nodeHeights.getDimension()) {
@@ -58,7 +68,7 @@ public abstract class AbstractNodeHeightTransformDelegate extends AbstractModel 
         for (int i = 0; i < nodeHeights.length; i++) {
             this.nodeHeights.setParameterValueQuietly(i, nodeHeights[i]);
         }
-        tree.pushTreeChangedEvent();
+        tree.pushTreeChangedEvent(TreeChangedEvent.create());
     }
 
     public Parameter getNodeHeights() {

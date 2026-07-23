@@ -1,7 +1,8 @@
 /*
  * NewickParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -38,7 +40,6 @@ import java.io.IOException;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: NewickParser.java,v 1.7 2006/04/25 14:41:08 rambaut Exp $
  */
 public class NewickParser extends AbstractXMLObjectParser {
 
@@ -46,6 +47,7 @@ public class NewickParser extends AbstractXMLObjectParser {
     public static final String UNITS = "units";
     public static final String RESCALE_HEIGHT = "rescaleHeight";
     public static final String RESCALE_LENGTH = "rescaleLength";
+    public static final String SCALE = "scale";
     public static final String USING_DATES = SimpleTreeParser.USING_DATES;
     public static final String USING_HEIGHTS = "usingHeights";
 
@@ -55,6 +57,7 @@ public class NewickParser extends AbstractXMLObjectParser {
                 AttributeRule.newBooleanRule(USING_HEIGHTS, true),
                 AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
                 AttributeRule.newDoubleRule(RESCALE_LENGTH, true, "Attempt to rescale the tree to the given total length"),
+                AttributeRule.newDoubleRule(SCALE, true, "Attempt to rescale the branch lengths by a factor."),
                 new StringAttributeRule(UNITS, "The branch length units of this tree", Units.UNIT_NAMES, true),
                 new ElementRule(String.class, "The NEWICK format tree. Tip labels are taken to be Taxon IDs")
         };
@@ -119,6 +122,13 @@ public class NewickParser extends AbstractXMLObjectParser {
         }
 
         tree.setUnits(units);
+
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if  (tree.getBranchLength(node) < 0.0) {
+                throw new XMLParseException("Starting tree has one or more negative branch lengths");
+            }
+        }
 
         for (int i = 0; i < tree.getTaxonCount(); i++) {
 
@@ -236,6 +246,16 @@ public class NewickParser extends AbstractXMLObjectParser {
         if (xo.hasAttribute(RESCALE_LENGTH)) {
             double rescaleLength = xo.getDoubleAttribute(RESCALE_LENGTH);
             double scale = rescaleLength / TreeUtils.getTreeLength(tree, tree.getRoot());
+            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                NodeRef n = tree.getInternalNode(i);
+                tree.setNodeHeight(n, tree.getNodeHeight(n) * scale);
+            }
+        }
+        if(xo.hasAttribute(SCALE)){
+            double scale = xo.getDoubleAttribute(SCALE);
+            if(scale<=0){
+                throw new IllegalArgumentException("Scale must be greater than 0.");
+            }
             for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                 NodeRef n = tree.getInternalNode(i);
                 tree.setNodeHeight(n, tree.getNodeHeight(n) * scale);

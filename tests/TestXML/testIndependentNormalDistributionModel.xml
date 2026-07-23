@@ -1,0 +1,129 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testML.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the ML engine -->
+
+<beast>
+
+    <independentNormalDistributionModel id="normalPrecision">
+        <mean>
+            <parameter
+                    value="-1.8291978615348037 0.2910883001389204 0.3878858848911486 -0.13033122600597666 -1.086793217682186"/>
+        </mean>
+        <precision>
+            <parameter
+                    value="0.30195598460249 2.0161549865032535 0.2929250758097045 2.699614080721487 3.8330118247326497"
+            />
+        </precision>
+        <data>
+            <parameter
+                    value="0.22969858016034805 -0.9730596951190368 1.0535543835361854 -0.3978725455730989 1.5411712624879053"/>
+        </data>
+    </independentNormalDistributionModel>
+
+    <independentNormalDistributionModel id="normalVariance">
+        <mean>
+            <parameter
+                    value="-1.8291978615348037 0.2910883001389204 0.3878858848911486 -0.13033122600597666 -1.086793217682186"/>
+        </mean>
+        <variance>
+            <parameter
+                    value="3.3117409522995547 0.4959936149226126 3.4138422503972956 0.37042331611070295 0.260891446654942"
+            />
+        </variance>
+        <data>
+            <parameter
+                    value="0.22969858016034805 -0.9730596951190368 1.0535543835361854 -0.3978725455730989 1.5411712624879053"/>
+        </data>
+    </independentNormalDistributionModel>
+
+
+    <cachedReport id="reportPrec">
+        <independentNormalDistributionModel idref="normalPrecision"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="reportPrec"/>
+    </report>
+
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            Check log likelihood (precision parameterized)
+        </message>
+        <actual regex="logLikelihood\s*:(.*?)\n">
+            <cachedReport idref="reportPrec"/>
+        </actual>
+        <expected>
+            -19.93664004895008
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            Check gradient (precision parameterized)
+        </message>
+        <actual regex="gradient\s*:(.*?)\n">
+            <cachedReport idref="reportPrec"/>
+        </actual>
+        <expected>
+            -0.6216961022466229 2.5487182843174216 -0.19499099542972953 0.7222583134782101 -10.07301892746935
+        </expected>
+    </assertEqual>
+
+    <cachedReport id="reportVar">
+        <independentNormalDistributionModel idref="normalVariance"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="reportVar"/>
+    </report>
+
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            Check log likelihood (variance parameterized)
+        </message>
+        <actual regex="logLikelihood\s*:(.*?)\n">
+            <cachedReport idref="reportVar"/>
+        </actual>
+        <expected>
+            -19.93664004895008
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" verbose="true">
+        <message>
+            Check gradient (variance parameterized)
+        </message>
+        <actual regex="gradient\s*:(.*?)\n">
+            <cachedReport idref="reportVar"/>
+        </actual>
+        <expected>
+            -0.6216961022466229 2.5487182843174216 -0.19499099542972953 0.7222583134782101 -10.07301892746935
+        </expected>
+    </assertEqual>
+
+
+    <!---
+    #JULIA CODE for reproducing example
+    u = [-1.8291978615348037, 0.2910883001389204, 0.3878858848911486, -0.13033122600597666, -1.086793217682186]
+    prec = [0.30195598460249, 2.0161549865032535, 0.2929250758097045, 2.699614080721487, 3.8330118247326497]
+    var = 1 ./ prec
+    sd = sqrt.(var)
+    x = [0.22969858016034805, -0.9730596951190368, 1.0535543835361854, -0.3978725455730989, 1.5411712624879053]
+
+
+    function normalPDF(x::Float64, u::Float64, sd::Float64)
+        return 1 / sd / sqrt(2 * π) * exp(-0.5 * ((x - u) / sd)^2)
+    end
+
+    function normalGradient(x::Float64, u::Float64, sd::Float64)
+        return  -(x - u) / sd^2
+    end
+
+    ll = sum(log.(normalPDF.(x, u, sd)))
+    grad = normalGradient.(x, u, sd)
+    -->
+
+
+</beast>

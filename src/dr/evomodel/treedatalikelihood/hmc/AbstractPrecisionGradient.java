@@ -2,7 +2,8 @@
 /*
  * AbstractPrecisionGradient.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -22,6 +23,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.hmc;
@@ -40,7 +42,7 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
 
     private final GradientWrtPrecisionProvider gradientWrtPrecisionProvider;
     //    final Likelihood likelihood;
-    final CompoundSymmetricMatrix compoundSymmetricMatrix;
+    protected final CompoundSymmetricMatrix compoundSymmetricMatrix;
     private final int dim;
     private Parametrization parametrization;
 
@@ -146,12 +148,16 @@ public abstract class AbstractPrecisionGradient extends AbstractDiffusionGradien
         return ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_VARIANCE;
     }
 
-    int getDimensionCorrelation() {
+    protected int getDimensionCorrelation() {
         return dim * (dim - 1) / 2;
     }
 
-    int getDimensionDiagonal() {
+    protected int getDimensionDiagonal() {
         return dim;
+    }
+
+    protected int getDimensionFull() {
+        return dim * dim;
     }
 
     @Override

@@ -1,3 +1,30 @@
+/*
+ * AbstractValuesViaFullConditionalDelegate.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.NodeRef;
@@ -61,16 +88,21 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                     cdi.getPreOrderPartial(nodeBuffer, conditionalNodeBuffer);
                 }
 
-                System.err.println("Missing tip = " + node.getNumber() + " (" + nodeBuffer + "), trait = " + trait);
+                if (DEBUG)
+                    System.err.println("Missing tip = " + node.getNumber() + " (" + nodeBuffer + "), trait = " + trait);
+
 
                 final WrappedVector preMean = new WrappedVector.Raw(conditionalNodeBuffer, partialOffset, dimTrait);
                 final DenseMatrix64F preVar = wrap(conditionalNodeBuffer, partialOffset + dimTrait + dimTrait * dimTrait, dimTrait, dimTrait);
 
                 final WrappedVector postObs = new WrappedVector.Raw(partialNodeBuffer, partialOffset, dimTrait);
 
-                System.err.println("post: " + postObs);
-                System.err.println("pre : " + preMean);
-                System.err.println("V: " + preVar);
+                if (DEBUG) {
+                    System.err.println("post: " + postObs);
+                    System.err.println("pre : " + preMean);
+                    System.err.println("V: " + preVar);
+                }
+
 
                 if (!missingInformation.isCompletelyMissing(node.getNumber(), trait)) {
 
@@ -90,12 +122,15 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
 
                     computeValueWithMissing(cM, // input mean
                             transform.getConditionalCholesky(), // input variance,
-                            new WrappedVector.Indexed(sample, sampleOffset, missing, missing.length), // output sample
+                            new WrappedVector.Indexed(sample, sampleOffset, missing), // output sample
                             transform.getTemporaryStorage());
 
-                    System.err.println("cM: " + cM);
-                    System.err.println("CV: " + transform.getConditionalVariance());
-                    System.err.println("value: " + new WrappedVector.Raw(sample, sampleOffset, dimTrait));
+                    if (DEBUG) {
+                        System.err.println("cM: " + cM);
+                        System.err.println("CV: " + transform.getConditionalVariance());
+                        System.err.println("value: " + new WrappedVector.Raw(sample, sampleOffset, dimTrait));
+                    }
+
                 }
 
             } else {
@@ -118,4 +153,6 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                                                     final double[][] cholesky,
                                                     final WrappedVector output,
                                                     final double[] buffer);
+
+    private static Boolean DEBUG = false;
 }

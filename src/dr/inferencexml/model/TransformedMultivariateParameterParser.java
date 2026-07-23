@@ -1,7 +1,8 @@
 /*
- * TransformedMultivariateParameter.java
+ * TransformedMultivariateParameterParser.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
 
-import dr.inference.model.Bounds;
-import dr.inference.model.Parameter;
-import dr.inference.model.TransformedMultivariateParameter;
+import dr.inference.model.*;
 import dr.util.Transform;
 import dr.xml.*;
 
@@ -36,6 +36,7 @@ public class TransformedMultivariateParameterParser extends AbstractXMLObjectPar
     private static final String TRANSFORMED_MULTIVARIATE_PARAMETER = "transformedMultivariateParameter";
     public static final String INVERSE = "inverse";
     private static final String BOUNDS = "bounds";
+    private static final String AS_MATRIX = "asMatrix";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -44,8 +45,19 @@ public class TransformedMultivariateParameterParser extends AbstractXMLObjectPar
                 xo.getChild(Transform.MultivariableTransform.class);
         final boolean inverse = xo.getAttribute(INVERSE, false);
 
-        TransformedMultivariateParameter transformedParameter
-                = new TransformedMultivariateParameter(parameter, transform, inverse);
+        final TransformedMultivariateParameter transformedParameter;
+        final boolean asMatrix = xo.getAttribute(AS_MATRIX, false);
+        if (asMatrix) {
+            if (parameter instanceof MatrixParameterInterface) {
+                transformedParameter = new TransformedMatrixParameter((MatrixParameterInterface) parameter, transform, inverse);
+            } else {
+                throw new XMLParseException("'asMatrix' is 'true' but the supplied parameter is not a matrix. " +
+                        "Not currently implemented.");
+            }
+        } else {
+            transformedParameter = new TransformedMultivariateParameter(parameter, transform, inverse);
+        }
+
         if (xo.hasChildNamed(BOUNDS)) {
             Bounds<Double> bounds = ((Parameter) xo.getElementFirstChild(BOUNDS)).getBounds();
             transformedParameter.addBounds(bounds);
@@ -64,6 +76,7 @@ public class TransformedMultivariateParameterParser extends AbstractXMLObjectPar
             new ElementRule(Parameter.class),
             new ElementRule(Transform.MultivariableTransform.class),
             AttributeRule.newBooleanRule(INVERSE, true),
+            AttributeRule.newBooleanRule(AS_MATRIX, true),
 
     };
 

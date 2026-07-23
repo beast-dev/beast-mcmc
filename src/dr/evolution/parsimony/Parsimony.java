@@ -1,7 +1,8 @@
 /*
  * Parsimony.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.parsimony;
@@ -33,7 +35,6 @@ import dr.evolution.tree.Tree;
 /**
  * Utility class for doing parsimony reconstruction of patterns on a tree.
  *
- * @version $Id: Parsimony.java,v 1.7 2005/06/27 21:18:40 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond

@@ -1,7 +1,8 @@
 /*
  * TreeShape.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
@@ -30,11 +32,11 @@ import dr.evolution.io.NexusImporter;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * A collection of tree shape summary statistics.
  *
- * @version $Id: TreeShape.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Alexei Drummond
  */
@@ -216,12 +218,12 @@ public class TreeShape {
 		NexusImporter importer = new NexusImporter(new FileReader(args[0]));
 		
 		
-		Tree[] trees = importer.importTrees(null);
+		List<Tree> trees = importer.importTrees(null);
 		
 		System.out.println("File = " + args[0]);
-		double[] treeness = new double[trees.length];
+		double[] treeness = new double[trees.size()];
 		for (int i = 0; i < treeness.length; i++) {
-			treeness[i] =  getTreeness(trees[i]);
+			treeness[i] =  getTreeness(trees.get(i));
 		}
 		System.out.println("Mean treeness = " + dr.stats.DiscreteStatistics.mean(treeness));
 		System.out.println("Lower (95%) treeness = " + dr.stats.DiscreteStatistics.quantile(0.025, treeness));

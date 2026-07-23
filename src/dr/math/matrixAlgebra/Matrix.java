@@ -1,7 +1,8 @@
 /*
  * Matrix.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.matrixAlgebra;
@@ -506,11 +508,18 @@ public class Matrix {
      * @return java.lang.String
      */
     public String toString() {
+        return toString(0);
+    }
+
+    public String toString(int indent) {
         StringBuffer sb = new StringBuffer();
         char[] separator = {'[', ' '};
         int n = rows();
         int m = columns();
         for (int i = 0; i < n; i++) {
+            for (int ind = 0; ind < indent; ind++) {
+                sb.append("\t");
+            }
             separator[0] = '{';
             for (int j = 0; j < m; j++) {
                 sb.append(separator);

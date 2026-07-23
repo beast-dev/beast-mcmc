@@ -1,7 +1,8 @@
 /*
  * BeastImporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.util;
@@ -52,7 +54,6 @@ import java.util.Locale;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class BeastImporter {
 
@@ -203,15 +204,18 @@ public class BeastImporter {
         if (direction != null && direction.equalsIgnoreCase(DateParser.FORWARDS)) {
             backwards = false;
         }
+        String uncertainty = e.getAttributeValue(DateParser.UNCERTAINTY);
+        Date date;
         try {
-            return new Date(dateFormat.parse(value));
+            date = new Date(dateFormat.parse(value));
         } catch (ParseException e1) {
-            // ignore the parse exception and try it just as a number
+            // try just parsing it as a number
+            date = new Date(Double.parseDouble(value), Units.Type.YEARS, backwards);
         }
-
-        // try just parsing it as a number
-        return new Date(Double.valueOf(value), Units.Type.YEARS, backwards);
-
+        if (uncertainty != null) {
+            date.setUncertainty(Double.parseDouble(uncertainty));
+        }
+        return date;
     }
 
 

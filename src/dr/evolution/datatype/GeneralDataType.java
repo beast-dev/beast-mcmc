@@ -1,7 +1,8 @@
 /*
  * GeneralDataType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.datatype;
@@ -34,7 +36,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: GeneralDataType.java,v 1.11 2005/05/24 20:25:56 rambaut Exp $
  */
 public class GeneralDataType extends DataType implements Identifiable {
 
@@ -42,6 +43,8 @@ public class GeneralDataType extends DataType implements Identifiable {
     public static final String DESCRIPTION = GENERAL_DATA_TYPE;
     public static final int TYPE = GENERAL;
     public static final GeneralDataType INSTANCE = new GeneralDataType();
+
+    public static final String DELIMITER = ":";
 
     // for BEAUti trait PartitionSubstitutionModel
     public GeneralDataType() {}
@@ -125,10 +128,48 @@ public class GeneralDataType extends DataType implements Identifiable {
         stateMap.put(code, state);
     }
 
+    public void addAmbiguityWithValue(String code, String[] ambiguousStates, double[] ambiguousValues) {
+
+        int n = ambiguousStateCount + stateCount;
+
+        int[] indices = new int[ambiguousStates.length];
+        int i = 0;
+        for (String stateCode : ambiguousStates) {
+            State state =stateMap.get(stateCode);
+            if (state == null) {
+                throw new IllegalArgumentException("DataType doesn't contain the state, " + stateCode);
+            }
+            indices[i] = state.number;
+            i++;
+        }
+        State state = new State(n, code, indices, ambiguousValues);
+        states.add(state);
+        ambiguousStateCount++;
+
+        stateMap.put(code, state);
+    }
+
     @Override
     public char[] getValidChars() {
-        return null;
+        if (validChars == null) {
+            boolean multiCharacterStateName = false;
+            validChars = new char[stateMap.size()];
+            int i = 0;
+            for (String state : stateMap.keySet()) {
+                if (state.length() > 1) {
+                    multiCharacterStateName = true;
+                }
+                validChars[i] = state.charAt(0);
+                i++;
+            }
+            if (multiCharacterStateName) {
+                validChars = null;
+            }
+        }
+        return validChars;
     }
+
+    private char[] validChars = null;
 
     /**
      * Get state corresponding to a code
@@ -141,10 +182,22 @@ public class GeneralDataType extends DataType implements Identifiable {
             return getUnknownState();
         }
         if (!stateMap.containsKey(code)) {
-            return -1;
+            throw new IllegalArgumentException("Unknown state code, " + code + " for GeneralDataType with id=" + getId());
+//            return -1;
         }
         return stateMap.get(code).number;
     }
+
+    public boolean isDelimited() {
+        for (State state : states) {
+            if (state.code.length() > 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getDelimiter() { return DELIMITER; }
 
     /**
      * Override this function to cast to string codes...
@@ -192,32 +245,43 @@ public class GeneralDataType extends DataType implements Identifiable {
         return states.get(state).ambiguities;
     }
 
+    public double[] getAmbiguityValues(int state) {
+
+        return states.get(state).ambiguityValues;
+    }
+
     /**
      * returns an array containing the non-ambiguous states that this state represents.
      */
     public boolean[] getStateSet(int state) {
 
-        boolean[] stateSet = new boolean[stateCount];
+        boolean[] stateSet = stateSetMap.get(state);
 
-        if (state < states.size()) {
-            State s = states.get(state);
+        if (stateSet == null) {
+            stateSet = new boolean[stateCount];
+            if (state >= 0 && state < states.size()) {
+                State s = states.get(state);
 
-            for (int i = 0; i < stateCount; i++) {
-                stateSet[i] = false;
+                for (int i = 0; i < stateCount; i++) {
+                    stateSet[i] = false;
+                }
+                for (int i = 0, n = s.ambiguities.length; i < n; i++) {
+                    stateSet[s.ambiguities[i]] = true;
+                }
+            } else if (state == states.size()) {
+                for (int i = 0; i < stateCount; i++) {
+                    stateSet[i] = true;
+                }
+            } else {
+                throw new IllegalArgumentException("invalid state index");
             }
-            for (int i = 0, n = s.ambiguities.length; i < n; i++) {
-                stateSet[s.ambiguities[i]] = true;
-            }
-        } else if (state == states.size()) {
-            for (int i = 0; i < stateCount; i++) {
-                stateSet[i] = true;
-            }
-        } else {
-            throw new IllegalArgumentException("invalid state index");
+            stateSetMap.put(state, stateSet);
         }
 
         return stateSet;
     }
+
+    private Map<Integer, boolean[]> stateSetMap = new HashMap<>();
 
     /**
      * description of data type
@@ -263,18 +327,28 @@ public class GeneralDataType extends DataType implements Identifiable {
         String code;
 
         int[] ambiguities;
+        double[] ambiguityValues;
 
         State(int number, String code) {
             this.number = number;
             this.code = code;
             this.ambiguities = new int[]{number};
+            this.ambiguityValues = null;
         }
 
         State(int number, String code, int[] ambiguities) {
             this.number = number;
 			this.code = code;
 			this.ambiguities = ambiguities;
+            this.ambiguityValues = null;
 		}
+
+        State(int number, String code, int[] ambiguities, double[] ambiguityValues) {
+            this.number = number;
+            this.code = code;
+            this.ambiguities = ambiguities;
+            this.ambiguityValues = ambiguityValues;
+        }
 	}
 
 }

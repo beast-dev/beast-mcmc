@@ -1,7 +1,8 @@
 /*
  * SpeciesDelimitationAnalyser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -317,10 +319,10 @@ public class SpeciesDelimitationAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
-                        new Arguments.RealOption("collapseheight", "the height below which nodes get collapsed [default = .001]"),
-                        new Arguments.RealOption("simcutoff", "the value above which two clusters are regarded as similar enough to support one another's credibility [default = .9]"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.RealOption("collapseheight", "c", "the height below which nodes get collapsed [default = .001]"),
+                        new Arguments.RealOption("simcutoff", "s", "the value above which two clusters are regarded as similar enough to support one another's credibility [default = .9]"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

@@ -1,7 +1,8 @@
 /*
  * GeneralSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.substmodel;
@@ -49,6 +51,8 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String RELATIVE_TO = "relativeTo";
     public static final String FREQUENCIES = "frequencies";
     public static final String INDICATOR = "rateIndicator";
+    public static final String NORMALIZED = "normalized";
+    public static final String COMPUTE_STATIONARY = "computeStationary";
 
     public String getParserName() {
         return GENERAL_SUBSTITUTION_MODEL;
@@ -62,6 +66,8 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         if (xo.hasChildNamed(FREQUENCIES)) {
             XMLObject cxo = xo.getChild(FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        } else if (!xo.getAttribute(COMPUTE_STATIONARY, false)) {
+            throw new XMLParseException("No frequency model found in " + getParserName());
         }
 
         DataType dataType = DataTypeUtils.getDataType(xo);
@@ -81,10 +87,16 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 //            }
 //        }
 
-        if (dataType == null) dataType = freqModel.getDataType();
+        if (dataType == null && freqModel != null) {
+            dataType = freqModel.getDataType(); 
+        } else if (freqModel != null) {
+           if (dataType != freqModel.getDataType()) {
+                throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
+            }
+        }
 
-        if (dataType != freqModel.getDataType()) {
-            throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
+        if (dataType == null) {
+            throw new XMLParseException("Data type of " + getParserName() + " element can not be found.");
         }
 
         XMLObject cxo = xo.getChild(RATES);
@@ -100,6 +112,8 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 
         boolean isNonReversible = ratesParameter.getDimension() == nonReversibleRateCount;
         boolean hasIndicator = xo.hasChildNamed(INDICATOR);
+
+        GeneralSubstitutionModel model;
 
         if (!hasRelativeRates) {
             Parameter indicatorParameter = null;
@@ -142,10 +156,10 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 //                    throw new XMLParseException("Non-reversible model missing " + ROOT_FREQ + " element");
 //                }
                 Logger.getLogger("dr.evomodel").info("  Using BSSVS Complex Substitution Model");
-                return new SVSComplexSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
+                model = new SVSComplexSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
             } else {
                 Logger.getLogger("dr.evomodel").info("  Using BSSVS General Substitution Model");
-                return new SVSGeneralSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
+                model = new SVSGeneralSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
             }
 
 
@@ -187,8 +201,15 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                 }
             }
 
-            return new GeneralSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, relativeTo);
+            model = new GeneralSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, relativeTo);
         }
+
+        if (!xo.getAttribute(NORMALIZED, true)) {
+            model.setNormalization(false);
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");
+        }
+
+        return model;
     }
 
     //************************************************************************
@@ -213,7 +234,9 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                             DataType.getRegisteredDataTypeNames(), false),
                     new ElementRule(DataType.class)
                     , true),
-            new ElementRule(FREQUENCIES, FrequencyModel.class),
+            new ElementRule(FREQUENCIES, 
+                    new XMLSyntaxRule[]{
+                            new ElementRule(FrequencyModel.class)}, true),
             new ElementRule(RATES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)}
@@ -223,5 +246,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class),
                     }, true),
             AttributeRule.newBooleanRule(ComplexSubstitutionModelParser.RANDOMIZE,true),
+            AttributeRule.newBooleanRule(NORMALIZED, true),
+            AttributeRule.newBooleanRule(COMPUTE_STATIONARY, true),
     };
 }

@@ -1,7 +1,8 @@
 /*
- * CheckPointUpdater.java
+ * CheckPointModifier.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.realtime;
@@ -163,7 +165,7 @@ public class CheckPointModifier extends BeastCheckpointer {
                         }
                     } else {
                         if (DEBUG) {
-                            System.out.print("restoring " + fields[1] + " with values ");
+                            System.out.print("restoring " + fields[1] + " with dimension " + parameter.getDimension() + " and value(s) ");
                         }
                         if (fields[1].equals("branchRates.categories")) {
                             for (int dim = 0; dim < (fields.length-3); dim++) {
@@ -175,9 +177,15 @@ public class CheckPointModifier extends BeastCheckpointer {
                             }
                         } else {
                             for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                                parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
-                                if (DEBUG) {
-                                    System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                if ((dim + 3) < fields.length) {
+                                    parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 3]));
+                                    if (DEBUG) {
+                                        System.out.print(Double.parseDouble(fields[dim + 3]) + " ");
+                                    }
+                                } else {
+                                    if (DEBUG) {
+                                        System.out.println("  unable to restore index " + dim + " for " + parameter.getId() + " (moving on ...)");
+                                    }
                                 }
                             }
                         }

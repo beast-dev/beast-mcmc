@@ -1,7 +1,8 @@
 /*
- * TaxonMarkovJumpHistory.java
+ * TaxaMarkovJumpHistoryAnalyzer.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -275,14 +277,14 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption("taxaToProcess", "list", "a list of taxon names to process MJHs"),
-                        new Arguments.StringOption("endState", "end_state", "a state at which the MJH processing stops"),
-                        new Arguments.RealOption("endTime", "a time at which the MJH processing stops"),
-                        new Arguments.StringOption("endSister", "end_sister", "to stop at node that is the common ancestor of the relevant taxon and the specified sister taxon"),
-                        new Arguments.StringOption("stateAnnotation", "state_annotation_name", "The annotation name for the discrete state string"),
-                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.IntegerOption(BURN_IN, "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.StringOption("taxaToProcess",null,  "list", "a list of taxon names to process MJHs"),
+                        new Arguments.StringOption("endState", null, "end_state", "a state at which the MJH processing stops"),
+                        new Arguments.RealOption("endTime",null,  "a time at which the MJH processing stops"),
+                        new Arguments.StringOption("endSister", null, "end_sister", "to stop at node that is the common ancestor of the relevant taxon and the specified sister taxon"),
+                        new Arguments.StringOption("stateAnnotation", null, "state_annotation_name", "The annotation name for the discrete state string"),
+                        new Arguments.RealOption("mrsd",null,  "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
 

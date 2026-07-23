@@ -1,7 +1,8 @@
 /*
  * StatisticsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.treestat;
@@ -326,7 +328,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
         if (factory.allowsTaxonList()) {
 
-            for (Object taxonSet : treeStatData.taxonSets) {
+            for (Object taxonSet : treeStatData.taxonSets.values()) {
                 taxonSetCombo.addItem(taxonSet);
             }
 
@@ -413,9 +415,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
             taxa.setId(t.name);
             //Iterator iter = t.taxa.iterator();
             for (Object aTaxa : t.taxa) {
-                String id = (String) aTaxa;
-                Taxon taxon = new Taxon(id);
-                taxa.addTaxon(taxon);
+                taxa.addTaxon((Taxon) aTaxa);
             }
             statistic.setTaxonList(taxa);
         } else {

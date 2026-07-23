@@ -1,7 +1,8 @@
 /*
- * MultivariateNormalDistributionModel.java
+ * BayesianBridgeLikelihood.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution.shrinkage;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.*;
+import dr.xml.Reportable;
 
 import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.BAYESIAN_BRIDGE;
 
@@ -38,8 +42,9 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  * @author Xiang Ji
  */
 
-public class BayesianBridgeLikelihood extends AbstractModelLikelihood
-        implements BayesianBridgeStatisticsProvider, GradientWrtParameterProvider {
+public class BayesianBridgeLikelihood extends AbstractModelLikelihood implements
+        BayesianBridgeStatisticsProvider, PriorPreconditioningProvider,
+        GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable {
 
     public BayesianBridgeLikelihood(Parameter coefficients,
                                     BayesianBridgeDistributionModel distribution) {
@@ -60,6 +65,8 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
 
     public Parameter getLocalScale() {return distribution.getLocalScale(); }
 
+    public Parameter getSlabWidth() {return distribution.getSlabWidth(); }
+
     public double getCoefficient(int i) { return coefficients.getParameterValue(i); }
 
     @Override
@@ -70,6 +77,16 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     @Override
     public double[] getGradientLogDensity() {
         return distribution.gradientLogPdf(coefficients.getParameterValues());
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity() {
+        return distribution.getDiagonalHessianLogDensity(coefficients.getParameterValues());
+    }
+
+    @Override
+    public double[][] getHessianLogDensity() {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
@@ -103,25 +120,39 @@ public class BayesianBridgeLikelihood extends AbstractModelLikelihood
     }
 
     @Override
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    public final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
        // no intermediates need to be recalculated...
     }
 
     @Override
-    protected void storeState() {
+    public void storeState() {
        // Do nothing
     }
 
     @Override
-    protected void restoreState() {
+    public void restoreState() {
         // Do nothing
     }
 
     @Override
-    protected void acceptState() {
+    public void acceptState() {
     } // no additional state needs accepting
+
+    @Override
+    public double getStandardDeviation(int index) {
+        if (distribution instanceof PriorPreconditioningProvider) {
+            return ((PriorPreconditioningProvider) distribution).getStandardDeviation(index);
+        } else {
+            throw new RuntimeException("Not a prior conditioner");
+        }
+    }
 
     private final Parameter coefficients;
     private final BayesianBridgeDistributionModel distribution;
     private final int dim;
+
+    @Override
+    public String getReport() {
+        return prettyName() + " = " + getLogLikelihood();
+    }
 }

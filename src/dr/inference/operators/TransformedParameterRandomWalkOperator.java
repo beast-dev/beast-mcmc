@@ -1,7 +1,8 @@
 /*
  * TransformedParameterRandomWalkOperator.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
 
+import dr.inference.model.BoundedSpace;
 import dr.inference.model.TransformedParameter;
 import dr.math.matrixAlgebra.Matrix;
 
@@ -35,10 +38,14 @@ import dr.math.matrixAlgebra.Matrix;
 public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
 
     private static boolean DEBUG = false;
+    private static boolean checkValid = true;
+
+    private final BoundedSpace generalBounds;
 
     public TransformedParameterRandomWalkOperator(TransformedParameter parameter, double windowSize,
                                                   BoundaryCondition bc, double weight, AdaptationMode mode) {
         super(parameter, windowSize, bc, weight, mode);
+        this.generalBounds = null; //TODO: implement if needed
     }
 
     public TransformedParameterRandomWalkOperator(TransformedParameter parameter, RandomWalkOperator randomWalkOperator) {
@@ -46,15 +53,19 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
                 randomWalkOperator.getWindowSize(),
                 randomWalkOperator.getBoundaryCondition(),
                 randomWalkOperator.getWeight(),
-                randomWalkOperator.getMode());
+                randomWalkOperator.getMode(),
+                randomWalkOperator.getUpdateMap());
+        this.generalBounds = null; //TODO: implement if needed
     }
 
-    public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator) {
+    public TransformedParameterRandomWalkOperator(RandomWalkOperator randomWalkOperator, BoundedSpace bounds) {
         super((TransformedParameter) randomWalkOperator.getParameter(),
                 randomWalkOperator.getWindowSize(),
                 randomWalkOperator.getBoundaryCondition(),
                 randomWalkOperator.getWeight(),
-                randomWalkOperator.getMode());
+                randomWalkOperator.getMode(),
+                randomWalkOperator.getUpdateMap());
+        this.generalBounds = bounds;
     }
 
     @Override
@@ -73,6 +84,15 @@ public class TransformedParameterRandomWalkOperator extends RandomWalkOperator {
             System.err.println("newValues: " + new Matrix(newValues, newValues.length, 1));
             System.err.println("newValuesTrans: " + new Matrix(parameter.getParameterValues(), newValues.length, 1));
         }
+
+        if (checkValid) { // GH: below is sloppy, but best I could do without refactoring how Parameter handles bounds
+            if (generalBounds == null && !parameter.isWithinBounds()) {
+                return Double.NEGATIVE_INFINITY;
+            } else if (generalBounds != null &&  !generalBounds.isWithinBounds(parameter.getParameterValues())) {
+                return Double.NEGATIVE_INFINITY;
+            }
+        }
+
         // Compute Jacobians
         ratio += ((TransformedParameter) parameter).diffLogJacobian(oldValues, newValues);
         if (DEBUG) {

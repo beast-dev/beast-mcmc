@@ -1,3 +1,30 @@
+/*
+ * GeneralSubstitutionModelTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.evomodel.substmodel;
 
 import dr.evolution.alignment.SitePatterns;
@@ -5,6 +32,7 @@ import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.GeneralSubstitutionModel;
@@ -71,6 +99,8 @@ public class GeneralSubstitutionModelTest extends TraceCorrelationAssert {
 
     public void testGeneralSubstitutionModel() {
 
+        MathUtils.setSeed(666);
+
         // Sub model
         FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
         Parameter ratesPara = new Parameter.Default(GeneralSubstitutionModelParser.RATES, 5, 1.0); // dimension="5" value="1.0"
@@ -95,17 +125,17 @@ public class GeneralSubstitutionModelTest extends TraceCorrelationAssert {
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-        Parameter rootHeight = treeModel.getRootHeightParameter();
+        Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
         rootHeight.setId(TREE_HEIGHT);         
         operator = new ScaleOperator(rootHeight, 0.5);
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
+        Parameter internalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(false, true, false);
         operator = new UniformOperator(internalHeights, 10.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
+        operator = new SubtreeSlideOperator(((DefaultTreeModel)treeModel), 1, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 1.0);

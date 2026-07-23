@@ -1,7 +1,8 @@
 /*
- * FullyConjugateTreeTipsPotentialDerivativeParser.java
+ * TreePrecisionDataProductProviderParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous.hmc;
 
 import dr.evomodel.continuous.hmc.CubicOrderTreePrecisionTraitProductProvider;
-import dr.evomodel.continuous.hmc.OldLinearOrderTreePrecisionTraitProductProvider;
 import dr.evomodel.continuous.hmc.LinearOrderTreePrecisionTraitProductProvider;
 import dr.evomodel.continuous.hmc.TreePrecisionTraitProductProvider;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
@@ -94,8 +95,6 @@ public class TreePrecisionDataProductProviderParser extends AbstractXMLObjectPar
 
         if (mode.toLowerCase().compareTo("cubic") == 0) {
             return new CubicOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData);
-        } else if (mode.toLowerCase().compareTo("old") == 0) {
-            return new OldLinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName);
         } else {
             return new LinearOrderTreePrecisionTraitProductProvider(treeDataLikelihood, continuousData, traitName,
                     threadCount, roughTimeGuess, optimalTravelTimeScalar, eigenvalueReplicates);

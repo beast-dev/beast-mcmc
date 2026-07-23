@@ -1,7 +1,8 @@
 /*
  * SampledMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -149,9 +151,9 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
                 System.err.println("parent trait value = " + new Vector(parentTrait));
                 System.err.println("child trait value = " + new Vector(childTrait));
 
-                double[][] precisionMatrix = diffusionModel.getPrecisionmatrix();
+                double[][] precisionMatrix = diffusionModel.getPrecisionMatrix();
                 if (precisionMatrix != null) {
-                    System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
+                    System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionMatrix()));
                     if (diffusionModel.getPrecisionParameter() instanceof CompoundSymmetricMatrix) {
                         CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix) diffusionModel.getPrecisionParameter();
 //                        System.err.println("diagonals = " + new Vector(csMatrix.getDiagonals()));

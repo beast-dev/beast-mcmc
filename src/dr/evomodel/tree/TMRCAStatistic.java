@@ -1,7 +1,8 @@
 /*
  * TMRCAStatistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -30,7 +32,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.inference.model.Statistic;
 
 import java.util.Set;
 
@@ -39,7 +40,6 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class TMRCAStatistic extends TreeStatistic {
 
@@ -70,6 +70,10 @@ public class TMRCAStatistic extends TreeStatistic {
 
     public Tree getTree() {
         return tree;
+    }
+
+    public Set<String> getLeafSet() {
+        return leafSet;
     }
 
     public int getDimension() {

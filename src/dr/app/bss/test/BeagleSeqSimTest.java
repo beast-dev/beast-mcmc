@@ -1,7 +1,8 @@
 /*
  * BeagleSeqSimTest.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.bss.test;
@@ -45,6 +47,7 @@ import dr.evomodel.substmodel.codon.GY94CodonModel;
 import dr.evomodel.substmodel.codon.MG94K80CodonModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.substmodel.codon.MG94HKYCodonModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
@@ -115,7 +118,7 @@ public class BeagleSeqSimTest {
 			
 	        File treeFile = new File("/home/filip/Dropbox/BeagleSequenceSimulator/SimTree/SimTree.figtree");
 	        Tree tree = Utils.importTreeFromFile(treeFile);
-	        TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 			
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(Utils.UNIFORM_CODON_FREQUENCIES);
@@ -184,7 +187,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			for (NodeRef node : treeModel.getNodes()) {
 
@@ -271,7 +274,7 @@ public class BeagleSeqSimTest {
 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
 
-			TreeModel treeModel = new TreeModel(topologySimulator.simulateTree(
+			DefaultTreeModel treeModel = new DefaultTreeModel(topologySimulator.simulateTree(
 					taxa, exponentialGrowth));
 
 			System.out.println(treeModel.toString());
@@ -335,7 +338,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
@@ -406,7 +409,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
@@ -484,7 +487,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create Frequency Model
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
@@ -575,7 +578,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
@@ -645,7 +648,7 @@ public class BeagleSeqSimTest {
 			NewickImporter importer = new NewickImporter(
 					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
 			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+			DefaultTreeModel treeModel = new DefaultTreeModel(tree);
 
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(

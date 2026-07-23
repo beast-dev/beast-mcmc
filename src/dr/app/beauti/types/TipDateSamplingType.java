@@ -1,7 +1,8 @@
 /*
  * TipDateSamplingType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.types;
@@ -33,7 +35,7 @@ public enum TipDateSamplingType {
     NO_SAMPLING("Off"),
     SAMPLE_INDIVIDUALLY("Sampling with individual priors"),
     SAMPLE_JOINT("Sampling with joint priors"),
-    SAMPLE_PRECISION("Sampling uniformly from precision");
+    SAMPLE_PRECISION("Sampling uniformly from date uncertainty");
 
     TipDateSamplingType(String displayName) {
         this.displayName = displayName;

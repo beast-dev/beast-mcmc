@@ -1,7 +1,8 @@
 /*
  * VariableDemographicModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.model.Model;
@@ -41,8 +44,8 @@ import java.util.List;
 
 /**
  * @author Joseph Heled
- * @version $Id$
  */
+@Deprecated
 public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet, Citable {
 
     private final Parameter popSizeParameter;

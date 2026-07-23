@@ -1,7 +1,8 @@
 /*
- * FullyConjugateTreeTipsPotentialDerivativeParser.java
+ * BranchRateGradientParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,25 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.branchratemodel.LocalBranchRates;
+import dr.evomodel.branchratemodel.*;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
-import dr.evomodel.treedatalikelihood.discrete.LocalBranchRateGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.SumDerivative;
+import dr.inference.hmc.JointBranchRateGradient;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -56,9 +53,9 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "branchRateGradient";
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String USE_HESSIAN = "useHessian";
+    public static final String NAME = "branchRateGradient";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String USE_HESSIAN = "useHessian";
 
     @Override
     public String getParserName() {
@@ -93,14 +90,14 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
             checkBranchRateModels(providers);
 
-            return new SumDerivative(providers);
+            return new JointBranchRateGradient(providers);
         }
     }
 
     static void checkBranchRateModels(List<GradientWrtParameterProvider> providers) throws XMLParseException {
-        BranchRateModel rateModel = ((TreeDataLikelihood)providers.get(0).getLikelihood()).getBranchRateModel();
+        BranchRateModel rateModel = ((TreeDataLikelihood) providers.get(0).getLikelihood()).getBranchRateModel();
         for (GradientWrtParameterProvider provider : providers) {
-            if (rateModel != ((TreeDataLikelihood)provider.getLikelihood()).getBranchRateModel()) {
+            if (rateModel != ((TreeDataLikelihood) provider.getLikelihood()).getBranchRateModel()) {
                 throw new XMLParseException("All TreeDataLikelihoods must use the same BranchRateModel");
             }
         }
@@ -111,15 +108,11 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
                                                                  boolean useHessian) throws XMLParseException {
 
 
-
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
-        if (branchRateModel instanceof DefaultBranchRateModel || branchRateModel instanceof ArbitraryBranchRates) {
+        if (branchRateModel instanceof DifferentiableBranchRates) {
 
-            Parameter branchRates = null;
-            if (branchRateModel instanceof ArbitraryBranchRates) {
-                branchRates = ((ArbitraryBranchRates) branchRateModel).getRateParameter();
-            }
+            Parameter branchRates = ((DifferentiableBranchRates) branchRateModel).getRateParameter();
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
@@ -131,17 +124,17 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
                 BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
-                if (branchRateModel instanceof LocalBranchRates) {
-                    return new LocalBranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
-                } else {
-                    return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
+                if (!beagleData.isUsePreOrder()) {
+                    throw new XMLParseException("To use gradients TreeDataLikelihood must have attribute usePreOrder=\"true\"");
                 }
+                return new BranchRateGradientForDiscreteTrait(traitName, treeDataLikelihood, beagleData, branchRates, useHessian);
+
             } else {
                 throw new XMLParseException("Unknown likelihood delegate type");
             }
 
         } else {
-            throw new XMLParseException("Only implemented for an arbitrary rates model");
+            throw new XMLParseException("Only implemented for differentiable rates models");
         }
     }
 

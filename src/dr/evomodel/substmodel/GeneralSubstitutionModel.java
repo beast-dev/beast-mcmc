@@ -1,7 +1,8 @@
 /*
  * GeneralSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -115,6 +117,10 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         ratesParameter.setDimensionNames(rateNames.toArray(tmp));
     }
 
+    public void setNormalization(boolean doNormalization) {
+        this.doNormalization = doNormalization;
+    }
+
     protected String getDimensionString(int i, int j, String prefix) {
         String codes =  dataType.getCode(i) + "." + dataType.getCode(j);
         if (prefix == null) {
@@ -122,6 +128,14 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         } else {
             return prefix + "." + codes;
         }
+    }
+
+    protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        double norm = 1.0;
+        if (doNormalization) {
+            norm = super.getNormalizationValue(matrix, pi);
+        }
+        return norm;
     }
 
     /**
@@ -155,4 +169,5 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      */
 
     protected Parameter ratesParameter = null;
+    private boolean doNormalization = true;
 }

@@ -1,7 +1,8 @@
 /*
- * TaxonInsertionTest.java
+ * DistanceMatrixInsertionTest.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.realtime;
@@ -130,7 +132,7 @@ public class DistanceMatrixInsertionTest extends JPanel {
             for (int i = 0; i < matrix.getRowCount(); i++) {
                 data[i][0] = new String(columnNames[i+1]);
                 for (int j = 1; j < matrix.getColumnCount()+1; j++) {
-                    data[i][j] = new Double(matrix.getElement(i, j-1));
+                    data[i][j] = Double.valueOf(matrix.getElement(i, j-1));
                 }
             }
 
@@ -171,9 +173,9 @@ public class DistanceMatrixInsertionTest extends JPanel {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("BEAST_XML", "FILENAME", "Specify a BEAST XML file"),
-                        new Arguments.StringOption("update_choice", "UPDATECHOICE", "Specify a function by which to update the tree"),
-                        new Arguments.Option("help", "Print this information and stop")
+                        new Arguments.StringOption("BEAST_XML", null, "FILENAME", "Specify a BEAST XML file"),
+                        new Arguments.StringOption("update_choice", null, "UPDATECHOICE", "Specify a function by which to update the tree"),
+                        new Arguments.Option("help", "h", "Print this information and stop")
                 });
 
         try {

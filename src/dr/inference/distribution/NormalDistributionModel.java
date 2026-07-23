@@ -1,7 +1,8 @@
 /*
  * NormalDistributionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
@@ -38,11 +40,10 @@ import org.w3c.dom.Element;
  * A class that acts as a model for normally distributed data.
  *
  * @author Alexei Drummond
- * @version $Id: NormalDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel,
-        GaussianProcessRandomGenerator, GradientProvider, HessianProvider {
+        GaussianProcessRandomGenerator, GradientProvider, HessianProvider, NormalStatisticsProvider, PriorPreconditioningProvider {
     /**
      * Constructor.
      */
@@ -86,6 +87,16 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
 
     public Variable<Double> getMean() {
         return mean;
+    }
+
+    @Override
+    public double getNormalMean(int dim) {
+        return mean.getValue(0);
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        return getStdev();
     }
 
     public Variable<Double> getPrecision() {
@@ -195,7 +206,14 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     @Override
-    public int getDimension() { return 1; }
+    public double getStandardDeviation(int index) {
+        return getStdev();
+    }
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
 
     @Override
     public double[] getGradientLogDensity(Object obj) {

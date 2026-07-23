@@ -1,7 +1,8 @@
 /*
  * TreeMetrics.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
@@ -29,11 +31,11 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.util.TaxonList;
 
 import java.io.FileReader;
+import java.util.List;
 
 /**
  * various utility functions on trees.
  *
- * @version $Id: TreeMetrics.java,v 1.7 2005/05/24 20:25:57 rambaut Exp $
  *
  * @author Alexei Drummond
  * @author Korbinian Strimmer
@@ -127,18 +129,18 @@ public class TreeMetrics {
 	 * @param trees an array of trees
 	 * @param update the step size between instances of tree
 	 */
-	private static void analyze(Tree[] trees, int update) {
+	private static void analyze(List<Tree> trees, int update) {
 	
-		TaxonList masterList = trees[0];
+		TaxonList masterList = trees.get(0);
 	
 		System.out.println("Calculating splits...");
-		SplitSystem[] splits = new SplitSystem[trees.length];
+		SplitSystem[] splits = new SplitSystem[trees.size()];
 		for (int i =0; i < splits.length; i++) {
-			splits[i] = SplitUtils.getSplits(masterList, trees[i]);
+			splits[i] = SplitUtils.getSplits(masterList, trees.get(i));
 		}
 		
 		int maxOffset = MAX_OFFSET;
-		int samples = trees.length;
+		int samples = trees.size();
 		if ((samples/3) < maxOffset) {
 			maxOffset = (samples/3);
 		}	
@@ -149,7 +151,7 @@ public class TreeMetrics {
 		for (int i=0; i < maxOffset; i++) {
 			meanDistances[i] = 0;
 			for (int j = 0; j < samples-i; j++) {
-    			double distance = getRobinsonFouldsRescaledDistance(splits[i], trees[j]);
+    			double distance = getRobinsonFouldsRescaledDistance(splits[i], trees.get(j));
     			meanDistances[i] += distance;
 			}
 			meanDistances[i] /= ((double) samples-i);
@@ -162,8 +164,8 @@ public class TreeMetrics {
 		FileReader reader = new FileReader(args[0]);
 		NewickImporter importer = new NewickImporter(reader);
 		
-		Tree[] trees = importer.importTrees(null);
-		System.out.println("Imported " + trees.length + " trees...");
+		List<Tree> trees = importer.importTrees(null);
+		System.out.println("Imported " + trees.size() + " trees...");
 		analyze(trees, 1000);
 	}
 	

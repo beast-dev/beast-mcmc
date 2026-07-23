@@ -1,7 +1,8 @@
 /*
  * GaussianProcessMultilocusSkytrackLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,23 +22,19 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
-//import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-//import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-//import no.uib.cipr.matrix.DenseVector;
-//import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;
-//import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -213,10 +210,10 @@ public class GaussianProcessMultilocusSkytrackLikelihood extends GaussianProcess
                 intervalsKnown = false;
                 likelihoodKnown = false;
             } else {
-                throw new RuntimeException("Unknown tree modified in GMRFMultilocusSkyrideLikelihood");
+                throw new RuntimeException("Unknown tree modified in GMRFSkygridLikelihood");
             }
         } else {
-            throw new RuntimeException("Unknown object modified in GMRFMultilocusSkyrideLikelihood");
+            throw new RuntimeException("Unknown object modified in GMRFSkygridLikelihood");
         }
     }
 

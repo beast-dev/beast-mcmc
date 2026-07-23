@@ -1,7 +1,8 @@
 /*
  * CompleteHistorySimulatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beagle.tools.parsers;
@@ -35,6 +37,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evoxml.AttributePatternsParser;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -65,6 +68,8 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
     public static final String ANNOTATE_WITH_ALIGNMENT = "annotateWithAlignment";
 
     public static final String ALIGNMENT_ONLY = "alignmentOnly";
+
+    public static final String ATTRIBUTE = AttributePatternsParser.ATTRIBUTE;
     
     public String getParserName() {
         return HISTORY_SIMULATOR;
@@ -87,6 +92,9 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
 
         boolean sumAcrossSites = xo.getAttribute(SUM_SITES, false);
 
+
+        String attribute = xo.hasAttribute(ATTRIBUTE) ? xo.getStringAttribute(ATTRIBUTE): null;
+
         Parameter branchSpecificParameter = null;
         Parameter variableValueParameter = null;
 
@@ -97,7 +105,7 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
         }
 
         CompleteHistorySimulator history = new CompleteHistorySimulator(tree, siteModel, rateModel, nReplications,
-                sumAcrossSites, branchSpecificParameter, variableValueParameter);
+                sumAcrossSites, branchSpecificParameter, variableValueParameter, attribute);
 
         XMLObject cxo = xo.getChild(COUNTS);
         if (cxo != null) {
@@ -171,6 +179,7 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SUM_SITES, true),
             AttributeRule.newBooleanRule(ANNOTATE_WITH_ALIGNMENT, true),
             AttributeRule.newBooleanRule(ALIGNMENT_ONLY, true),
+            AttributeRule.newStringRule(ATTRIBUTE, true),
             new ElementRule(BRANCH_SPECIFIC_SPECIFICATION, new XMLSyntaxRule[] {
                     new ElementRule(VARIABLE_VALUE_PARAMETER, Parameter.class),
                     new ElementRule(BRANCH_VARIABLE_PARAMETER, Parameter.class),

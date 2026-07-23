@@ -1,6 +1,34 @@
+/*
+ * MissingOps.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.math.matrixAlgebra.missingData;
 
 import dr.inference.model.MatrixParameterInterface;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.*;
 import org.ejml.alg.dense.decomposition.lu.LUDecompositionAlt_D64;
 import org.ejml.alg.dense.linsol.lu.LinearSolverLu_D64;
@@ -128,6 +156,14 @@ public class MissingOps {
                 ++index;
             }
         }
+    }
+
+    public static DenseMatrix64F gatherRowsAndColumns(final DenseMatrix64F source,
+                                                      final int[] rowIndices, final int[] colIndices) {
+
+        DenseMatrix64F destination = new DenseMatrix64F(rowIndices.length, colIndices.length);
+        gatherRowsAndColumns(source, destination, rowIndices, colIndices);
+        return destination;
     }
 
     public static void copyRowsAndColumns(final DenseMatrix64F source, final DenseMatrix64F destination,
@@ -495,48 +531,24 @@ public class MissingOps {
         return result;
     }
 
-//    public static InversionResult safeInvert(DenseMatrix64F source, DenseMatrix64F destination, boolean getDeterminant) {
-//
-//        final int dim = source.getNumCols();
-//        final int finiteCount = countFiniteNonZeroDiagonals(source);
-//        double logDet = 0;
-//
-//        if (finiteCount == dim) {
-//            if (getDeterminant) {
-//                logDet = invertAndGetDeterminant(source, destination, true);
-//            } else {
-////                CommonOps.invert(copyOfSource, result);
-//                symmPosDefInvert(source, destination);
-//            }
-//            return new InversionResult(FULLY_OBSERVED, dim, logDet, true);
-//        } else {
-//            if (finiteCount == 0) {
-//                Arrays.fill(destination.getData(), 0);
-//                return new InversionResult(NOT_OBSERVED, 0, 0);
-//            } else {
-//                final int[] finiteIndices = new int[finiteCount];
-//                getFiniteNonZeroDiagonalIndices(source, finiteIndices);
-//
-//                final DenseMatrix64F subSource = new DenseMatrix64F(finiteCount, finiteCount);
-//                gatherRowsAndColumns(source, subSource, finiteIndices, finiteIndices);
-//
-//                final DenseMatrix64F inverseSubSource = new DenseMatrix64F(finiteCount, finiteCount);
-//                if (getDeterminant) {
-//                    logDet = invertAndGetDeterminant(subSource, inverseSubSource, true);
-//                } else {
-//                    CommonOps.invert(subSource, inverseSubSource);
-//                }
-//
-//                scatterRowsAndColumns(inverseSubSource, destination, finiteIndices, finiteIndices, true);
-//
-//                return new InversionResult(PARTIALLY_OBSERVED, finiteCount, logDet, true);
-//            }
-//        }
-//    }
+    public static InversionResult safeInvertPrecision(DenseMatrix64F source, DenseMatrix64F destination,
+                                                      boolean getLogDeterminant) {
+        return safeInvert2(source, destination, getLogDeterminant, false);
+    }
 
-    //TODO: Just have one safeInvert function after checking to make sure it doesn't break anything
-    // TODO: change all inversion to return logDeterminant
-    public static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination, boolean getLogDeterminant) {
+    public static InversionResult safeInvertVariance(DenseMatrix64F source, DenseMatrix64F destination,
+                                                     boolean getLogDeterminant) {
+        return safeInvert2(source, destination, getLogDeterminant, true);
+    }
+
+    public static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination,
+                                              boolean getLogDeterminant) {
+        return safeInvert2(source, destination, getLogDeterminant, true);
+    }
+
+    private static InversionResult safeInvert2(DenseMatrix64F source, DenseMatrix64F destination,
+                                               boolean getLogDeterminant,
+                                               boolean isInputVariance) {
 
         final int dim = source.getNumCols();
         final PermutationIndices permutationIndices = new PermutationIndices(source);
@@ -560,7 +572,9 @@ public class MissingOps {
 
                 if (infCount == dim) { //All infinity on diagonals of original matrix
 
-                    return new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
+                    return isInputVariance ?
+                            new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true) :
+                            new InversionResult(FULLY_OBSERVED, dim, Double.POSITIVE_INFINITY, true);
 
                 } else {
 
@@ -570,19 +584,19 @@ public class MissingOps {
                         for (int i = 0; i < dim; i++) {
                             destination.set(i, i, Double.POSITIVE_INFINITY);
                         }
-                        return new InversionResult(FULLY_OBSERVED, dim, Double.POSITIVE_INFINITY, true);
+                        return isInputVariance ?
+                                new InversionResult(FULLY_OBSERVED, dim, Double.POSITIVE_INFINITY, true) :
+                                new InversionResult(NOT_OBSERVED, 0, Double.NEGATIVE_INFINITY, true);
 
                     } else { //Both zeros and infinities (but no non-zero finite entries) on diagonal
                         int[] zeroInds = permutationIndices.getZeroIndices();
-                        int[] infInds = permutationIndices.getInfiniteIndices();
                         for (int i : zeroInds) {
                             destination.set(i, i, Double.POSITIVE_INFINITY);
                         }
-                        //TODO: not sure what to do here with regard to dimension (it could be zeroCount or infCount
-                        //TODO: depending on whether this is a variance or precision matrix respectively.
-                        System.err.println("Warning: safeInvert2 in MissingOps is not designed to invert matrices " +
-                                "with both zero and infinite diagonal entries.");
-                        return new InversionResult(PARTIALLY_OBSERVED, zeroCount, Double.POSITIVE_INFINITY, true);
+
+                        return isInputVariance ?
+                                new InversionResult(PARTIALLY_OBSERVED, zeroCount, Double.POSITIVE_INFINITY, true) :
+                                new InversionResult(PARTIALLY_OBSERVED, infCount, Double.POSITIVE_INFINITY, true);
                     }
                 }
 
@@ -609,7 +623,12 @@ public class MissingOps {
                     destination.set(index, index, Double.POSITIVE_INFINITY);
                 }
 
-                return new InversionResult(PARTIALLY_OBSERVED, finiteNonZeroCount, logDet, true);
+                int fullyObsCount = isInputVariance ? permutationIndices.getNumberOfZeroDiagonals() :
+                        permutationIndices.getNumberOfInfiniteDiagonals();
+                logDet = fullyObsCount == 0 ? logDet : Double.POSITIVE_INFINITY;
+
+
+                return new InversionResult(PARTIALLY_OBSERVED, fullyObsCount + finiteNonZeroCount, logDet, true);
             }
         }
     }
@@ -684,11 +703,11 @@ public class MissingOps {
 
     private static double[] buffer = new double[16];
 
-    public static void safeWeightedAverage(final WrappedVector mi,
+    public static void safeWeightedAverage(final ReadableVector mi,
                                            final DenseMatrix64F Pi,
-                                           final WrappedVector mj,
+                                           final ReadableVector mj,
                                            final DenseMatrix64F Pj,
-                                           final WrappedVector mk,
+                                           final WritableVector mk,
                                            final DenseMatrix64F Vk,
                                            final int dimTrait) {
 //        countZeroDiagonals(Vk);
@@ -1068,6 +1087,60 @@ public class MissingOps {
             }
         }
     }
+
+    public static double[] nextPossiblyDegenerateNormal(ReadableVector mean, DenseMatrix64F variance) {
+        int dim = mean.getDim();
+
+        if (variance.numCols != dim || variance.numRows != dim) {
+            throw new RuntimeException("Variance is a " + variance.numRows + "x" + variance.numCols +
+                    " matrix but mean has dimension " + dim);
+        }
+
+        int zeroCount = countZeroDiagonals(variance);
+        int nonZeroCount = countFiniteNonZeroDiagonals(variance);
+        if (zeroCount + nonZeroCount != dim) {
+            throw new RuntimeException("At least one diagonal element of the variance is infinity. " +
+                    "Cannot sample from distribution with infinite variance");
+        }
+
+
+        double[] buffer = ReadableVector.Utils.toArray(mean);
+
+
+        if (nonZeroCount == dim) {
+            double[][] cholesky = CholeskyDecomposition.execute(variance.data, 0, dim);
+            return MultivariateNormalDistribution.nextMultivariateNormalCholesky(buffer, cholesky);
+        }
+
+        int[] latentIndices = new int[nonZeroCount];
+
+        int latI = 0;
+        for (int i = 0; i < dim; i++) {
+            if (variance.get(i, i) > 0) {
+                latentIndices[latI] = i;
+                latI++;
+            }
+        }
+
+        WrappedMatrix.Indexed subVar = new WrappedMatrix.Indexed(variance.data, 0,
+                latentIndices, latentIndices,
+                dim, dim);
+
+
+        WrappedVector.Indexed subMean = new WrappedVector.Indexed(buffer, 0, latentIndices);
+
+
+        double[] latentDraw = MultivariateNormalDistribution.nextMultivariateNormalVariance(
+                ReadableVector.Utils.toArray(subMean), ReadableMatrix.Utils.toMatrixArray(subVar));
+
+        for (int i = 0; i < latentIndices.length; i++) {
+            buffer[latentIndices[i]] = latentDraw[i];
+        }
+
+        return buffer;
+    }
+
+
 }
 
 //    public static void safeSolveSymmPosDef(DenseMatrix64F A,

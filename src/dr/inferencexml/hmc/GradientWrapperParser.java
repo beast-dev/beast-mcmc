@@ -1,7 +1,8 @@
 /*
  * GradientWrapperParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,16 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.hmc;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.GradientProvider;
+import dr.inference.hmc.CompoundGradient;
+import dr.inference.model.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -54,9 +60,30 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
             }
 
             final GradientProvider provider = (GradientProvider) mdl.getDistribution();
-            final Parameter parameter = mdl.getDataParameter();
+            Parameter parameter = mdl.getDataParameter();
+
+            if (parameter == null) {
+                parameter = (Parameter) xo.getChild(Parameter.class);
+            }
+
+            if (parameter == null) {
+                Parameter[] slices = (Parameter[]) xo.getChild(Parameter[].class);
+                if (slices[0] instanceof DataSliceFromMatrixParameter) {
+
+                    List<GradientWrtParameterProvider> gradients = new ArrayList<>();
+                    for (Parameter p : slices) {
+                        gradients.add(new GradientWrtParameterProvider.ParameterWrapper(
+                                provider, p, mdl
+                        ));
+                    }
+                    return new CompoundGradient(gradients);
+                }
+            }
 
             return new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
+        } else if (obj instanceof EmpiricalDistributionLikelihood) {
+            final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+            return new GradientWrtParameterProvider.ParameterWrapper((GradientProvider)obj, parameter, (Likelihood)obj);
         } else {
             DistributionLikelihood dl = (DistributionLikelihood) obj;
             if (!(dl.getDistribution() instanceof GradientProvider)) {
@@ -76,11 +103,14 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
                 new XORRule(
-                        new ElementRule(MultivariateDistributionLikelihood.class),
-                        new AndRule(
-                                new ElementRule(DistributionLikelihood.class),
-                                new ElementRule(Parameter.class)
-                        )
+                        new XMLSyntaxRule[]{
+                                new ElementRule(MultivariateDistributionLikelihood.class),
+                                new ElementRule(EmpiricalDistributionLikelihood.class),
+                                new AndRule(
+                                        new ElementRule(DistributionLikelihood.class),
+                                        new ElementRule(Parameter.class)
+                                ),
+                        }
                 )
         };
     }

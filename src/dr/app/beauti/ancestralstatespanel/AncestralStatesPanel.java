@@ -1,7 +1,8 @@
 /*
  * AncestralStatesPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.ancestralstatespanel;
@@ -46,7 +48,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
@@ -126,7 +127,7 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
     }
 
     private void resetPanel() {
-        if (!options.hasData()) {
+        if (options.getDataPartitionsExceptTrees().size() == 0) {
             currentPartition = null;
             optionsPanels.clear();
             optionsPanelParent.removeAll();
@@ -143,13 +144,13 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
         int selRow = partitionTable.getSelectedRow();
         partitionTableModel.fireTableDataChanged();
-        if (options.getDataPartitions().size() > 0) {
+        if (options.getDataPartitionsExceptTrees().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
             partitionTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
-            setCurrentPartition(options.getDataPartitions().get(selRow));
+            setCurrentPartition(options.getDataPartitionsExceptTrees().get(selRow));
         }
 
         AncestralStatesOptionsPanel panel = optionsPanels.get(currentPartition);
@@ -231,9 +232,13 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             case DataType.CONTINUOUS:
                 title = "Continuous Traits";
                 break;
-            case DataType.MICRO_SAT:
-                title = "Microsatellite";
+            case DataType.TREE:
+                title = "Tree";
                 break;
+            case DataType.DUMMY:
+                title = "NA";
+                break;
+
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 
@@ -263,11 +268,11 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.getDataPartitions().size();
+            return options.getDataPartitionsExceptTrees().size();
         }
 
         public Object getValueAt(int row, int col) {
-            AbstractPartitionData partition = options.getDataPartitions().get(row);
+            AbstractPartitionData partition = options.getDataPartitionsExceptTrees().get(row);
             switch (col) {
                 case 0:
                     return partition.getName();

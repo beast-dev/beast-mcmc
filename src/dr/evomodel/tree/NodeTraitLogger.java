@@ -1,7 +1,8 @@
 /*
  * NodeTraitLogger.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -52,7 +54,7 @@ public class NodeTraitLogger extends TreeTraitProvider.Helper {
         // need to find all the traits here....
 	}
 
-	public static String[] getAllNodeTraitLabels(TreeModel tree) {
+	public static String[] getAllNodeTraitLabels(DefaultTreeModel tree) {
 
 		Map<String, Parameter> traits = tree.getTraitMap(tree.getRoot());
 		List<String> labels = new ArrayList<String>();
@@ -69,7 +71,7 @@ public class NodeTraitLogger extends TreeTraitProvider.Helper {
 		return labels.toArray(new String[labels.size()]);
 	}
 
-	public static String[] getAllNodeTraitValues(TreeModel tree, NodeRef node) {
+	public static String[] getAllNodeTraitValues(DefaultTreeModel tree, NodeRef node) {
 
 		Map<String, Parameter> traits = tree.getTraitMap(node);
 		List<String> values = new ArrayList<String>();

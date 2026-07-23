@@ -1,7 +1,8 @@
 /*
  * TaxaParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -30,11 +32,12 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: TaxaParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public class TaxaParser extends AbstractXMLObjectParser {
 
@@ -80,6 +83,11 @@ public class TaxaParser extends AbstractXMLObjectParser {
                 taxonList.removeTaxa(exclude);
             }
         }
+
+        final Logger logger = Logger.getLogger("dr.evoxml");
+        String idString = xo.hasId() ? "'" + xo.getId() + "' " : "";
+        logger.info("\nTaxon list " + idString + "created with " + taxonList.getTaxonCount() + " taxa.");
+        logger.info("    most recent taxon date = " + Taxon.getMostRecentDate());
 
         return taxonList;
     }

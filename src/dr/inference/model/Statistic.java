@@ -1,7 +1,8 @@
 /*
  * Statistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -30,11 +32,11 @@ import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.util.Attribute;
 import dr.util.Identifiable;
+import dr.xml.Reportable;
 
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: Statistic.java,v 1.8 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
 
@@ -76,7 +78,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
     /**
      * Abstract base class for Statistics
      */
-    public abstract class Abstract implements Statistic {
+    public abstract class Abstract implements Statistic, Reportable {
 
         private String name = null;
 
@@ -199,6 +201,17 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
 
             public double getDoubleValue() {
                 return getStatisticValue(dim); }
+        }
+
+        @Override
+        public String getReport() {
+            StringBuilder sb = new StringBuilder("\n\n");
+            sb.append("Report for " + getStatisticName() + " with id=" + getId() + "\n");
+            for (int i = 0; i < getDimension(); i++) {
+                sb.append("\t" + getDimensionName(i) + ":\t" + getStatisticValue(i) + "\n");
+            }
+            sb.append("\n");
+            return sb.toString();
         }
     }
 }

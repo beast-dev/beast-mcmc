@@ -1,7 +1,8 @@
 /*
  * PanelUtils.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.util;
@@ -30,7 +32,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class PanelUtils {
 	public static JPanel createAddRemoveButtonPanel(Action addAction,
@@ -80,6 +81,8 @@ public class PanelUtils {
 		if (comp instanceof JComboBox) {
 			comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
 			// comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+			ComboBoxRenderer renderer= new ComboBoxRenderer();
+			((JComboBox)comp).setRenderer(renderer);
 		}
         if (comp instanceof JTextArea) {
             ((JTextArea) comp).setEditable(false);
@@ -101,5 +104,17 @@ public class PanelUtils {
 		}
 		return result;
 	}// END: getActiveFrame
+
+	static class ComboBoxRenderer extends JLabel implements ListCellRenderer<Object> {
+		public Component getListCellRendererComponent(JList<? extends Object> list,
+													  Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			if (value instanceof JSeparator){
+				return (Component)value;
+			}else{
+				setText("  " + value.toString() + " ");
+			}
+			return this;
+		}
+	}
 
 }

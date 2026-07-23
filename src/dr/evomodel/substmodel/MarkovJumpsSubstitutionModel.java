@@ -1,7 +1,8 @@
 /*
  * MarkovJumpsSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -65,7 +67,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
     protected void setupStorage() {
         rateMatrix = new double[stateCount * stateCount];
-        transitionProbs = new double[stateCount * stateCount];
+        transitionProbabilities = new double[stateCount * stateCount];
         rateReg = new double[stateCount * stateCount];
         if (PRECOMPUTE) {
             ievcRateRegEvec = new double[stateCount * stateCount];
@@ -137,8 +139,6 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         }
 
         if (PRECOMPUTE) {
-//            matrixMultiply(rateReg, evec, stateCount, tmp1);
-//            matrixMultiply(ievc, tmp1, stateCount, tmp2);
             MarkovJumpsCore.matrixMultiply(rateReg, eigenDecomposition.getEigenVectors(),
                     stateCount, tmp1);
             MarkovJumpsCore.matrixMultiply(eigenDecomposition.getInverseEigenVectors(), tmp1,
@@ -169,8 +169,8 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     public void computeCondStatMarkovJumps(double time,
                                            double[] countMatrix) {
 
-        substModel.getTransitionProbabilities(time, transitionProbs);
-        computeCondStatMarkovJumps(time, transitionProbs, countMatrix);
+        substModel.getTransitionProbabilities(time, transitionProbabilities);
+        computeCondStatMarkovJumps(time, transitionProbabilities, countMatrix);
     }
 
 
@@ -186,7 +186,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
 
     public void computeCondStatMarkovJumps(double time,
-                                           double[] transitionProbs,
+                                           double[] transitionProbabilities,
                                            double[] countMatrix) {
 
         if (regRateChanged) {
@@ -199,9 +199,9 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
         if (PRECOMPUTE) {
             markovJumpsCore.computeCondStatMarkovJumpsPrecompute(
-                    evec, ievc, eval, ievcRateRegEvec, time, transitionProbs, countMatrix);
+                    evec, ievc, eval, ievcRateRegEvec, time, transitionProbabilities, countMatrix);
         } else {
-            markovJumpsCore.computeCondStatMarkovJumps(evec, ievc, eval, rateReg, time, transitionProbs, countMatrix);
+            markovJumpsCore.computeCondStatMarkovJumps(evec, ievc, eval, rateReg, time, transitionProbabilities, countMatrix);
         }
     }
 
@@ -231,6 +231,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         if (model == substModel) {
             regRateChanged = true;
         }
+        fireModelChanged();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -253,14 +254,14 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     private double[] rateReg;
     private double[] ievcRateRegEvec;
     private double[] tmp1;
-    private double[] transitionProbs;
+    private double[] transitionProbabilities;
     private double[] rateMatrix;
     protected double[] reward;
     protected double[] registration;
 
     protected SubstitutionModel substModel;
-    private EigenDecomposition eigenDecomposition;
-    private MarkovJumpsCore markovJumpsCore;
+    private final EigenDecomposition eigenDecomposition;
+    private final MarkovJumpsCore markovJumpsCore;
 
     private boolean regRateChanged = true;
 

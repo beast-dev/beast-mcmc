@@ -1,7 +1,8 @@
 /*
  * MCMCMCRunner.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.mcmcmc;
@@ -42,28 +44,34 @@ public class MCMCMCRunner extends Thread {
         this.disableCoerce = disableCoerce;
     }
 
+    public void runSubChain() {
+        markovChain.runChain(length, disableCoerce);
+    }
+
 	public void run() {
         long i = 0;
         while (i < totalLength) {
-            markovChain.runChain(length, disableCoerce/*, 0*/);
+            runSubChain();
 
             i += length;
 
 	        chainDone();
 
-	        if (i < totalLength) {
-		        while (isChainDone()) {
-			        try {
-				        synchronized(this) {
-					        wait();
-				        }
-			        } catch (InterruptedException e) {
-				        // continue...
-			        }
-		        }
-	        }
+            if (i < totalLength) {
+                synchronized(this) {
+                    while (isChainDone()) { //DM. This test needs to be synchronized too. Otherwise, there is a nonzero chance that the MCMCMC.run thread calls continueChain, setting this.chainDone=false and notifies the thread to continue right before it starts listening, making the MC3 hang forever 
+                        try {
+                            //synchronized(this) {
+                                wait();
+                            //}
+                        } catch (InterruptedException e) {
+                            // continue...
+                        }
+                    }
+                }
+            }
         }
-	}
+    }
 
 	private synchronized void chainDone() {
 		chainDone = true;

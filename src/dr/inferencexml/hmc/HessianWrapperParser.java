@@ -1,7 +1,8 @@
 /*
  * HessianWrapperParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.hmc;
@@ -57,7 +59,7 @@ public class HessianWrapperParser  extends AbstractXMLObjectParser {
             final Parameter parameter = mdl.getDataParameter();
 
             return new HessianWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
-        } else {
+        } else if (obj instanceof DistributionLikelihood) {
             DistributionLikelihood dl = (DistributionLikelihood) obj;
             if (!(dl.getDistribution() instanceof HessianProvider)) {
                 throw new XMLParseException("Not a hessian provider");
@@ -66,9 +68,12 @@ public class HessianWrapperParser  extends AbstractXMLObjectParser {
             final HessianProvider provider = (HessianProvider) dl.getDistribution();
             final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            // TODO Ensure that parameter and data inside provider are the same
+            // TODO Ensure that parameter and data inside provider are the same.
 
             return new HessianWrtParameterProvider.ParameterWrapper(provider, parameter, dl);
+        } else {
+            assert(obj instanceof HessianWrtParameterProvider);
+            return obj;
         }
     }
 
@@ -77,11 +82,14 @@ public class HessianWrapperParser  extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
                 new XORRule(
-                        new ElementRule(MultivariateDistributionLikelihood.class),
-                        new AndRule(
-                                new ElementRule(DistributionLikelihood.class),
-                                new ElementRule(Parameter.class)
-                        )
+                        new XORRule(
+                                new ElementRule(MultivariateDistributionLikelihood.class),
+                                new AndRule(
+                                        new ElementRule(DistributionLikelihood.class),
+                                        new ElementRule(Parameter.class)
+                                )
+                        ),
+                        new ElementRule(HessianWrtParameterProvider.class)
                 )
         };
     }

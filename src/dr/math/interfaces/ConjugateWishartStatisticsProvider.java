@@ -1,7 +1,8 @@
 /*
  * ConjugateWishartStatisticsProvider.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.interfaces;
 
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.distributions.WishartSufficientStatistics;
+
+import java.util.List;
 
 /**
  * An interface for classes that return conjugate outer products for Gibbs sampling of precision matrices
@@ -40,4 +44,39 @@ public interface ConjugateWishartStatisticsProvider {
     WishartSufficientStatistics getWishartStatistics();
 
     MatrixParameterInterface getPrecisionParameter();
+
+    class CompoundWishartStatistics implements ConjugateWishartStatisticsProvider {
+
+        private final List<ConjugateWishartStatisticsProvider> providers;
+        private final int length;
+
+        public CompoundWishartStatistics(List<ConjugateWishartStatisticsProvider> providers) {
+            this.providers = providers;
+            this.length = providers.get(0).getWishartStatistics().getScaleMatrix().length;
+        }
+
+        @Override
+        public WishartSufficientStatistics getWishartStatistics() {
+
+            int df = 0;
+            double[] scale = new double[length];
+
+            for (ConjugateWishartStatisticsProvider stat : providers) {
+                df += stat.getWishartStatistics().getDf();
+                double[] increment = stat.getWishartStatistics().getScaleMatrix();
+                for (int i = 0; i < length; ++i) {
+                    scale[i] += increment[i];
+                }
+            }
+
+            return new WishartSufficientStatistics(df, scale);
+        }
+
+        @Override
+        public MatrixParameterInterface getPrecisionParameter() {
+            return providers.get(0).getPrecisionParameter();
+        }
+    };
+
+
 }

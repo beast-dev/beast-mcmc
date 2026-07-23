@@ -1,7 +1,8 @@
 /*
- * CoalescentLikelihoodParser.java
+ * MultiTreeIntervalsParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.coalescent;
@@ -46,6 +48,7 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
     public static final String MULTI_TREE_INTERVALS = "multiTreeIntervals";
     public static final String TREES = "trees";
     public static final String SINGLETONS = "singletons";
+    public static final String INCLUDE_STEMS = "includeStems";
     public static final String CUTOFF = "cutoff";
 
     public String getParserName() {
@@ -57,11 +60,24 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(TREES);
 
         List<Tree> trees = new ArrayList<Tree>(cxo.getAllChildren(Tree.class));
-        Taxa singletonTaxa = (Taxa)xo.getElementFirstChild(SINGLETONS);
 
-        double cutoffTime = xo.getDoubleAttribute(CUTOFF);
+        Taxa singletonTaxa = null;
+        if(xo.hasChildNamed(SINGLETONS)){
+            singletonTaxa = (Taxa)xo.getElementFirstChild(SINGLETONS);
+        }
 
-        return new MultiTreeIntervals(trees, singletonTaxa, cutoffTime);
+
+        boolean includeStems = xo.getBooleanAttribute(INCLUDE_STEMS);
+
+        double cutoffTime = 0.0;
+        if (includeStems) {
+            if (!xo.hasAttribute(CUTOFF)) {
+                throw new XMLParseException("MultiTreeIntervals needs a cutoff time if it is to include stems");
+            }
+            cutoffTime = xo.getDoubleAttribute(CUTOFF);
+        }
+
+        return new MultiTreeIntervals(trees, singletonTaxa, includeStems, cutoffTime);
     }
 
     //************************************************************************
@@ -81,10 +97,11 @@ public class MultiTreeIntervalsParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newDoubleRule(CUTOFF, false),
+            AttributeRule.newDoubleRule(INCLUDE_STEMS, false),
+            AttributeRule.newDoubleRule(CUTOFF, true),
 
             new ElementRule(TREES, new XMLSyntaxRule[] {
-                    new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)
+                    new ElementRule(Tree.class, 1, Integer.MAX_VALUE)
             }, "Tree(s) to compute intervals for for", false),
 
             new ElementRule(SINGLETONS, new XMLSyntaxRule[]{

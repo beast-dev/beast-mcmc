@@ -1,7 +1,8 @@
 /*
- * NodeHeightGradientParser.java
+ * LocationScaleGradientParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous.hmc;
@@ -38,7 +40,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.discrete.*;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.SumDerivative;
+import dr.inference.hmc.JointGradient;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -53,12 +55,16 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 
 public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "locationScaleGradient";
-    private static final String LOCATION = "location";
-    private static final String SCALE = "scale";
+    public static final String NAME = "locationScaleGradient";
+    public static final String USE_HESSIAN = "useHessian";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String LOCATION = "location";
+    public static final String SCALE = "scale";
 
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String USE_HESSIAN = "useHessian";
+    //declaring String constants for use in BEAUti
+    public static final String LOCATION_SCALE = "locationScale";
+    public static final String LOCATION_SCALE_JOINT_GRADIENT = "locationScaleJointGradient";
+    public static final String LOCATION_SCALE_PRIOR_GRADIENT = "locationScalePriorGradient";
 
     public String getParserName(){ return NAME; }
 
@@ -89,14 +95,13 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
             checkBranchRateModels(providers);
 
-            return new SumDerivative(providers);
+            return new JointGradient(providers);
         }
     }
 
     private GradientWrtParameterProvider parseTreeDataLikelihood(XMLObject xo, TreeDataLikelihood treeDataLikelihood,
                                                                  String traitName,
                                                                  boolean useHessian) throws XMLParseException {
-
 
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
 
@@ -128,17 +133,19 @@ public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 
                 BranchParameter branchParameter = (BranchParameter) xo.getChild(BranchParameter.class);
 
+                Double tolerance = xo.getAttribute(BranchSubstitutionParameterGradientParser.GRADIENT_CHECK_TOLERANCE, null);
+
                 if (xo.hasChildNamed(LOCATION)) {
 
                     BranchSpecificFixedEffects location = parseLocation(xo);
 
                     return new BranchSubstitutionParameterLocationGradient(traitName, treeDataLikelihood, beagleData, branchParameter,
-                            useHessian, location);
+                            tolerance, useHessian, location);
 
                 } else if (xo.hasChildNamed(SCALE)) {
 
                     Parameter scale = (Parameter) xo.getElementFirstChild(SCALE);
-                    return new BranchSubstitutionParameterScaleGradient(traitName, treeDataLikelihood, beagleData, branchParameter, scale, useHessian);
+                    return new BranchSubstitutionParameterScaleGradient(traitName, treeDataLikelihood, beagleData, branchParameter, scale, tolerance, useHessian);
 
                 } else {
                     throw new XMLParseException("Not yet implemented.");

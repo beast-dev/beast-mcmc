@@ -1,3 +1,30 @@
+/*
+ * BaseTreeTool.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.app.tools;
 
 import dr.app.util.Arguments;
@@ -13,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-class BaseTreeTool {
+public class BaseTreeTool {
 
     static final String NAME_CONTENT = "nameContent";
 
@@ -23,13 +50,51 @@ class BaseTreeTool {
     int totalTrees = 0;
     private int totalUsedTrees = 0;
 
+    public static class TreeProgressPrinter {
+        private final PrintStream stream;
+        private static long stepSize = 10000 / 60;
+
+        public TreeProgressPrinter(PrintStream stream) {
+            this.stream = stream;
+        }
+
+        public void printReadingTrees() {
+            stream.println("Reading trees (bar assumes 10,000 trees)...");
+            stream.println("0              25             50             75            100");
+            stream.println("|--------------|--------------|--------------|--------------|");
+        }
+
+        public void printProgress(int totalTrees) {
+            if (totalTrees > 0 && totalTrees % stepSize == 0) {
+                progressStream.print("*");
+                progressStream.flush();
+            }
+        }
+
+        public void printSummary(int totalTrees, int totalUsedTrees, int burnIn) {
+            stream.println();
+            stream.println();
+
+            if (totalTrees < 1) {
+                System.err.println("No trees");
+                return;
+            }
+            if (totalUsedTrees < 1) {
+                System.err.println("No trees past burn-in (=" + burnIn + ")");
+                return;
+            }
+
+            stream.println("Total trees read: " + totalTrees);
+            stream.println("Total trees used: " + totalUsedTrees);
+        }
+
+    }
+
     void readTrees(List<Tree> trees, String inputFileName, int burnIn) throws IOException {
 
-        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
-        progressStream.println("0              25             50             75            100");
-        progressStream.println("|--------------|--------------|--------------|--------------|");
+        TreeProgressPrinter progressPrinter = new TreeProgressPrinter(progressStream);
+        progressPrinter.printReadingTrees();
 
-        long stepSize = 10000 / 60;
 
         FileReader fileReader = new FileReader(inputFileName);
         TreeImporter importer = new NexusImporter(fileReader, false);
@@ -44,10 +109,8 @@ class BaseTreeTool {
                 }
                 trees.add(tree);
 
-                if (totalTrees > 0 && totalTrees % stepSize == 0) {
-                    progressStream.print("*");
-                    progressStream.flush();
-                }
+                progressPrinter.printProgress(totalTrees);
+
                 totalTrees++;
                 if (totalTrees > burnIn) {
                     totalUsedTrees++;
@@ -61,20 +124,8 @@ class BaseTreeTool {
 
         fileReader.close();
 
-        progressStream.println();
-        progressStream.println();
+        progressPrinter.printSummary(totalTrees, totalUsedTrees, burnIn);
 
-        if (totalTrees < 1) {
-            System.err.println("No trees");
-            return;
-        }
-        if (totalUsedTrees < 1) {
-            System.err.println("No trees past burn-in (=" + burnIn + ")");
-            return;
-        }
-
-        progressStream.println("Total trees read: " + totalTrees);
-        progressStream.println("Total trees used: " + totalUsedTrees);
     }
 
     protected PrintStream openOutputFile(String outputFileName) {
@@ -149,7 +200,7 @@ class BaseTreeTool {
         return nameContentString != null && nameContentString.compareToIgnoreCase("true") == 0;
     }
 
-    protected static void centreLine(String line, int pageWidth) {
+    public static void centreLine(String line, int pageWidth) {
         centreLine(line, pageWidth, progressStream);
     }
 
@@ -175,6 +226,8 @@ class BaseTreeTool {
             case 1:
                 result[0] = args2[0];
                 break;
+            case 0:
+                return null;
             default: {
                 System.err.println("Unknown option: " + args2[2]);
                 System.err.println();

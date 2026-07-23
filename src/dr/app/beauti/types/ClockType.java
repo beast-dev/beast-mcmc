@@ -1,7 +1,8 @@
 /*
  * ClockType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.types;
@@ -32,8 +34,12 @@ public enum ClockType {
 
     STRICT_CLOCK("Strict clock"),
     UNCORRELATED("Uncorrelated relaxed clock"),
-    RANDOM_LOCAL_CLOCK("Random local clock"),
+    HMC_CLOCK("Hamiltonian Monte Carlo relaxed clock"),
+
+    SHRINKAGE_LOCAL_CLOCK("Shrinkage local clock"),
+    RANDOM_LOCAL_CLOCK("Classic random local clock"),
     FIXED_LOCAL_CLOCK("Fixed local clock"),
+    MIXED_EFFECTS_CLOCK("Mixed effects clock"),
     AUTOCORRELATED("Autocorrelated relaxed clock");
 
     ClockType(String displayName) {
@@ -46,13 +52,23 @@ public enum ClockType {
 
     private final String displayName;
 
+    //maintain unique parameter IDs to enable correct prior and transition kernel retrieval
     final public static String LOCAL_CLOCK = "localClock";
     final public static String UCED_MEAN = "uced.mean";
     final public static String UCLD_MEAN = "ucld.mean";
     final public static String UCLD_STDEV = "ucld.stdev";
     final public static String UCGD_MEAN = "ucgd.mean";
     final public static String UCGD_SHAPE = "ucgd.shape";
+    final public static String SHRINKAGE_CLOCK_LOCATION = "branchRatesShrinkage.rate";
+    final public static String HMC_CLOCK_LOCATION = "branchRatesHMC.rate";
+    final public static String HMC_CLOCK_BRANCH_RATES = "branchRatesHMC.rates";
+    final public static String HMCLN_SCALE = "branchRatesHMC.scale";
+    final public static String ME_CLOCK_LOCATION = "branchRatesME.rate";
+    final public static String ME_CLOCK_SCALE = "branchRatesME.scale";
 
     final public static String ACLD_MEAN = "acld.mean";
     final public static String ACLD_STDEV = "acld.stdev";
+
+    final public static String HMC_CLOCK_RATES_DESCRIPTION = "HMC relaxed clock branch rates";
+    final public static String HMC_CLOCK_LOCATION_SCALE_DESCRIPTION = "HMC relaxed clock location and scale";
 }

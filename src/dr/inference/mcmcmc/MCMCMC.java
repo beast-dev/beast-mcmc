@@ -1,7 +1,8 @@
 /*
  * MCMCMC.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.mcmcmc;
@@ -49,7 +51,6 @@ import java.util.List;
  * An MCMC analysis that estimates parameters of a probabilistic model.
  *
  * @author Andrew Rambaut
- * @version $Id: ParallelMCMC.java,v 1.12 2005/01/10 10:56:59 rambaut Exp $
  */
 public class MCMCMC implements Runnable {
 
@@ -68,7 +69,7 @@ public class MCMCMC implements Runnable {
         this.mcmcOptions = mcmcs[coldChain].getOptions();
 
         // Get all the loggers out of all the chains. We will only use the
-        // loggers of the cold chain but we need to swap the formatters around
+        // loggers of the cold chain, but we need to swap the formatters around
         // so that which every chain is cold always writes to the same destination.
         mcLoggers = new MCLogger[mcmcs.length][];
         for (int i = 0; i < mcmcs.length; i++) {
@@ -96,9 +97,17 @@ public class MCMCMC implements Runnable {
             chains[i] = mcmcs[i].getMarkovChain();
             MCMCCriterion acceptor = ((MCMCCriterion) chains[i].getAcceptor());
             acceptor.setTemperature(mcmcmcOptions.getChainTemperatures()[i]);
+            acceptor.setRank(i);
         }
 
+        if (USE_PARALLEL_TEMPERING_SCHEME) {
+            scheme = mcmcmcOptions.getSwapScheme().factory(chains, schedules, mcmcmcOptions);
+        } else {
+            scheme = null;
+        }
     }
+
+    private static final boolean DEBUG_IN_SERIES = false;
 
     public void run() {
         currentState = 0;
@@ -142,33 +151,45 @@ public class MCMCMC implements Runnable {
         MCMCMCRunner[] threads = new MCMCMCRunner[chains.length];
         for (int i = 0; i < chains.length; i++) {
             threads[i] = new MCMCMCRunner(chains[i], mcmcmcOptions.getSwapChainsEvery(), getChainLength(), false);
-            threads[i].start();
+            if (!DEBUG_IN_SERIES) {
+                threads[i].start();
+            }
         }
 
         while (chains[coldChain].getCurrentLength() < getChainLength()) {
 
-            // wait for all the threads to complete their alloted chain length
-            boolean allDone;
-            do {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    //
+            if (DEBUG_IN_SERIES) {
+                for (int i = 0; i < chains.length; ++i) {
+                    threads[i].runSubChain();
                 }
-
-                allDone = true;
-                for (int i = 0; i < chains.length; i++) {
-                    if (!threads[i].isChainDone()) {
-                        allDone = false;
+            } else {
+                // wait for all the threads to complete their alloted chain length
+                boolean allDone;
+                do {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        //
                     }
-                }
-            } while (!allDone);
+
+                    allDone = true;
+                    for (int i = 0; i < chains.length; i++) {
+                        if (!threads[i].isChainDone()) {
+                            allDone = false;
+                        }
+                    }
+                } while (!allDone);
+            }
 
             if (chains[coldChain].getCurrentLength() < getChainLength()) {
                 int oldColdChain = coldChain;
 
-                // attempt to swap two chains' temperatures
-                coldChain = swapChainTemperatures();
+                // attempt to swap two or more chains' temperatures
+                if (USE_PARALLEL_TEMPERING_SCHEME) {
+                    coldChain = scheme.swapChainTemperatures(coldChain);
+                } else {
+                    coldChain = swapChainTemperatures();
+                }
 
                 // if the cold chain was involved in a swap then we need to change the
                 // listener that does the logging and the destinations for the coldChainLoggers.
@@ -358,6 +379,11 @@ public class MCMCMC implements Runnable {
                 formatter.setPadding(false);
 
                 //System.out.print("State " + currentState + ": ");
+//                if (coldChain != 0) {
+//                    MCMCCriterion acceptor = ((MCMCCriterion) chains[coldChain].getAcceptor());
+//                    int rank = acceptor.getRank();
+//                    System.err.println("here");
+//                }
                 for (int i = 0; i < chains.length; i++) {
                     String score;
                     if (i == coldChain) {
@@ -379,7 +405,7 @@ public class MCMCMC implements Runnable {
         }
 
         /**
-         * Called when a new new best posterior state is found.
+         * Called when a new best posterior state is found.
          */
         public synchronized void bestState(long state, MarkovChain markovChain, Model bestModel) {
             currentState = state;
@@ -460,5 +486,8 @@ public class MCMCMC implements Runnable {
     private final MCLogger[][] mcLoggers;
     private final OperatorSchedule[] schedules;
     private int coldChain;
+
+    private final ParallelTempering scheme;
+    private static final boolean USE_PARALLEL_TEMPERING_SCHEME = false;
 }
 

@@ -5,6 +5,13 @@ bin/
 build/
 dist/
 out/
+packaging_tools/**/.*
+Testing/
+tests
+test*
+examples/**/.*
+benchmarking
+problem_cases
 .idea
 .DS_Store
 
@@ -13,3 +20,21 @@ out/
 *.tree
 *.xml
 !examples/**/*.xml
+!examples/data
+benchmarking/Results/
+!tests/**/*.xml
+!build*.xml
+
+zig_zag
+src/revision.txt
+src/version.txt
+*.dmg
+*.zip
+*.tgz
+release*
+!release.yml
+src/revision.txt
+
+*.citations.txt
+*.ops
+*.MLE

@@ -1,7 +1,8 @@
 /*
  * RLCNarrowExchangeOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -46,9 +49,9 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
     private static final int MAX_TRIES = 10000;
 
-    private final TreeModel tree;
+    private final DefaultTreeModel tree;
 
-    public RLCNarrowExchangeOperator(TreeModel tree, double weight) {
+    public RLCNarrowExchangeOperator(DefaultTreeModel tree, double weight) {
         this.tree = tree;
         setWeight(weight);
     }
@@ -148,7 +151,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
             double weight = xo.getDoubleAttribute("weight");
 
             return new RLCNarrowExchangeOperator(treeModel, weight);
@@ -173,7 +176,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
-                new ElementRule(TreeModel.class)
+                new ElementRule(DefaultTreeModel.class)
         };
 
     };

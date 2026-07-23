@@ -1,7 +1,8 @@
 /*
  * XMLWriter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.util;
@@ -32,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
- * @version $Id: XMLWriter.java,v 1.3 2005/06/27 21:18:40 rambaut Exp $
  */
 public class XMLWriter extends java.io.PrintWriter {
 
@@ -83,6 +84,10 @@ public class XMLWriter extends java.io.PrintWriter {
 
     public void writeOpenTag(String tagname, List<Attribute> attributes) {
         writeTag(tagname, attributes.toArray(new Attribute[attributes.size()]), false);
+    }
+
+    public void writeTag(String tagname, boolean close) {
+        writeTag(tagname, new Attribute[]{null}, close);
     }
 
     public void writeTag(String tagname, Attribute attribute, boolean close) {

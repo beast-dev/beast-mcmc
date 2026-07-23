@@ -1,7 +1,8 @@
 /*
  * RandomLocalYuleModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.speciation;
@@ -29,6 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.randomlocalmodel.RandomLocalTreeVariable;
 import dr.evomodelxml.speciation.RandomLocalYuleModelParser;
@@ -107,11 +110,11 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
     }
 
     public final double getVariable(Tree tree, NodeRef node) {
-        return ((TreeModel)tree).getNodeTrait(node, birthRatesName);
+        return ((DefaultTreeModel)tree).getNodeTrait(node, birthRatesName);
     }
 
     public final boolean isVariableSelected(Tree tree, NodeRef node) {
-        return ((TreeModel)tree).getNodeTrait(node, indicatorsName) > 0.5;
+        return ((DefaultTreeModel)tree).getNodeTrait(node, indicatorsName) > 0.5;
     }
 
     //

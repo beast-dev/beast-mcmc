@@ -1,7 +1,8 @@
 /*
  * TraceCorrelation.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
@@ -35,7 +37,6 @@ import java.util.Map;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TraceCorrelation.java,v 1.2 2006/11/29 14:53:53 rambaut Exp $
  */
 public class TraceCorrelation extends TraceDistribution {
     private final long stepSize;

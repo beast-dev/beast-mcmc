@@ -1,7 +1,8 @@
 /*
- * ProductParameterParser.java
+ * SumParameterParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
 
+import dr.inference.model.Statistic;
 import dr.inference.model.SumParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -41,30 +44,33 @@ public class SumParameterParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        List<Parameter> paramList = new ArrayList<Parameter>();
+        List<Statistic> statisticList = new ArrayList<>();
         int dim = -1;
         for (int i = 0; i < xo.getChildCount(); ++i) {
-            Parameter parameter = (Parameter) xo.getChild(i);
+            Statistic s = (Statistic) xo.getChild(i);
             if (dim == -1) {
-                dim = parameter.getDimension();
+                dim = s.getDimension();
             } else {
-                if (parameter.getDimension() != dim) {
-                    throw new XMLParseException("All parameters in sum '" + xo.getId() + "' must be the same length");
+                if (s.getDimension() != dim) {
+                    throw new XMLParseException("All statistics/parameters in sum '" + xo.getId() + "' must be the same length");
                 }
             }
-            paramList.add(parameter);
+            statisticList.add(s);
         }
 
-        boolean sumAll = xo.getBooleanAttribute(SUM_ALL);
+        boolean sumAll = statisticList.size() == 1;
+        if (xo.hasAttribute(SUM_ALL)) {
+            sumAll = xo.getBooleanAttribute(SUM_ALL);
+        }
 
-        if (sumAll && paramList.size() > 1) {
+        if (sumAll && statisticList.size() > 1) {
             throw new XMLParseException("To sum all the elements, only one parameter should be given");
         }
-        if (!sumAll && paramList.size() < 2) {
+        if (!sumAll && statisticList.size() < 2) {
             throw new XMLParseException("For an element-wise sum, more than one parameter should be given");
         }
 
-        return new SumParameter(paramList);
+        return new SumParameter(statisticList);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -72,11 +78,11 @@ public class SumParameterParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(Parameter.class,1,Integer.MAX_VALUE),
+            new ElementRule(Statistic.class,1,Integer.MAX_VALUE),
     };
 
     public String getParserDescription() {
-        return "A element-wise sum of parameters.";
+        return "A element-wise sum of statistics or parameters.";
     }
 
     public Class getReturnType() {

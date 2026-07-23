@@ -1,7 +1,8 @@
 /*
  * TipDatesPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.tipdatepanel;
@@ -61,7 +63,6 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Tommy Lam
- * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TipDatesPanel extends BeautiPanel implements Exportable {
 
@@ -72,6 +73,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
     private JScrollPane scrollPane = new JScrollPane();
     private JTable dataTable = null;
+    private TableSorter dataTableSorter = null;
     private DataTableModel dataTableModel = null;
 
     private SetDatesAction setDatesAction = new SetDatesAction();
@@ -96,9 +98,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     //    JComboBox tipDateSamplingCombo = new JComboBox( TipDateSamplingType.values() );
     private JComboBox tipDateSamplingCombo = new JComboBox(new TipDateSamplingType[] {
             TipDateSamplingType.NO_SAMPLING,
-            TipDateSamplingType.SAMPLE_INDIVIDUALLY,
+            TipDateSamplingType.SAMPLE_PRECISION,
+            TipDateSamplingType.SAMPLE_INDIVIDUALLY
 //            TipDateSamplingType.SAMPLE_JOINT,
-            TipDateSamplingType.SAMPLE_PRECISION
     });
     private JComboBox tipDateTaxonSetCombo = new JComboBox();
 
@@ -111,16 +113,17 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     private GuessDatesDialog guessDatesDialog = null;
     private SetValueDialog dateValueDialog = null;
     private SetValueDialog precisionValueDialog = null;
+    private boolean shownTipDateSamplingDialog = false;
 
     public TipDatesPanel(BeautiFrame parent) {
 
         this.frame = parent;
 
         dataTableModel = new DataTableModel();
-        TableSorter sorter = new TableSorter(dataTableModel);
-        dataTable = new JTable(sorter);
+        dataTableSorter = new TableSorter(dataTableModel);
+        dataTable = new JTable(dataTableSorter);
 
-        sorter.setTableHeader(dataTable.getTableHeader());
+        dataTableSorter.setTableHeader(dataTable.getTableHeader());
 
         dataTable.getTableHeader().setReorderingAllowed(false);
 //        dataTable.getTableHeader().setDefaultRenderer(
@@ -368,7 +371,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             options.originDate = null;
         }
         if ( options.originDate != null) {
-            originDateLabel.setText(" date value: " + Double.toString(options.originDate.getTimeValue()));
+            originDateLabel.setText(" date value: " + options.originDate.getTimeValue());
         } else {
             originDateLabel.setText(" unable to parse date");
         }
@@ -381,7 +384,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             }
         }
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
         frame.setDirty();
     }
 
@@ -402,8 +405,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         calculateHeights();
         usingTipDates.setSelected(options.useTipDates);
 
-        dataTableModel.fireTableDataChanged();
-
         Object item = tipDateTaxonSetCombo.getSelectedItem();
 
         tipDateTaxonSetCombo.removeAllItems();
@@ -420,6 +421,31 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     }
 
     private void setupTable() {
+        boolean hasVariableUncertainty = false;
+        double uncertainty = -1.0;
+
+        if (options.taxonList != null) {
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                Date date = options.taxonList.getTaxon(i).getDate();
+                if (uncertainty < 0.0) {
+                    uncertainty = date.getUncertainty();
+                } else if (date.getUncertainty() != uncertainty) {
+                    hasVariableUncertainty = true;
+                }
+            }
+            if (hasVariableUncertainty &&
+                    tipDateSamplingCombo.getSelectedItem().equals(TipDateSamplingType.NO_SAMPLING) &&
+                    !shownTipDateSamplingDialog) {
+                int result = JOptionPane.showConfirmDialog(this.frame, "Some dates have less precision than others:\n" +
+                                "Switch on \"Sampling uniformly from precision\" option for these tips?",
+                        "Tip date precision", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    tipDateSamplingCombo.setSelectedItem(TipDateSamplingType.SAMPLE_PRECISION);
+                }
+                shownTipDateSamplingDialog = true;
+            }
+        }
+
         dataTableModel.fireTableDataChanged();
     }
 
@@ -475,18 +501,16 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 return;
             }
 
-//            currentTrait.guessTrait = true; // ?? no use?
             String value = dateValueDialog.getValue();
 
-            java.util.Date origin = new java.util.Date(0);
             double d = Double.parseDouble(value);
-            Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-
             if (selRows.length > 0) {
                 for (int row : selRows) {
-                    options.taxonList.getTaxon(row).setAttribute("date", date);
+                    dataTableSorter.setValueAt(d, row, 1);
                 }
             } else {
+                java.util.Date origin = new java.util.Date(0);
+                Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
                 for (Taxon taxon : options.taxonList) {
                     taxon.setAttribute("date", date);
                 }
@@ -495,7 +519,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             // adjust the dates to the current timescale...
             timeScaleChanged();
 
-            dataTableModel.fireTableDataChanged();
+            setupTable();
         } while (result < 0);
     }
 
@@ -511,7 +535,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             }
 
             int[] selRows = dataTable.getSelectedRows();
-
             if (selRows.length == 1) {
                 precisionValueDialog.setDescription("Set precision value for selected taxon");
             } else if (selRows.length > 1) {
@@ -538,7 +561,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
             if (selRows.length > 0) {
                 for (int row : selRows) {
-                    options.taxonList.getTaxon(row).getDate().setUncertainty(value);
+                    dataTableSorter.setValueAt(value, row, 2);
                 }
             } else {
                 for (Taxon taxon : options.taxonList) {
@@ -546,7 +569,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 }
             }
 
-            dataTableModel.fireTableDataChanged();
+            setupTable();
         } while (result < 0);
     }
 
@@ -563,7 +586,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         // adjust the dates to the current timescale...
         timeScaleChanged();
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
     }
 
     private void guessDates() {
@@ -592,22 +615,29 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        if (selRows.length > 0) {
-            Taxa selectedTaxa = new Taxa();
+        try {
+            if (selRows.length > 0) {
+                Taxa selectedTaxa = new Taxa();
 
-            for (int row : selRows) {
-                Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
-                selectedTaxa.addTaxon(taxon);
+                for (int row : selRows) {
+                    Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
+                    selectedTaxa.addTaxon(taxon);
+                }
+                guesser.guessDates(selectedTaxa);
+            } else {
+                guesser.guessDates(options.taxonList);
             }
-            guesser.guessDates(selectedTaxa);
-        } else {
-            guesser.guessDates(options.taxonList);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
     }
 
     private void importDates() {
@@ -721,12 +751,19 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        guesser.guessDates(options.taxonList, taxonDateMap);
+        try {
+            guesser.guessDates(options.taxonList, taxonDateMap);
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();
 
-        dataTableModel.fireTableDataChanged();
+        setupTable();
     }
 
     public class SetDatesAction extends AbstractAction {
@@ -835,7 +872,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 Date date = taxon.getDate();
                 if (date != null) {
                     heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
-                    taxon.setAttribute("height", heights[i]);
+                    taxon.setAttribute("_height", heights[i]);
                     if (heights[i] > options.maximumTipHeight) options.maximumTipHeight = heights[i];
                 }
             }

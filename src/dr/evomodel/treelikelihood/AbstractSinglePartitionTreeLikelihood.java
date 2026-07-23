@@ -1,7 +1,8 @@
 /*
  * AbstractSinglePartitionTreeLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood;
@@ -28,7 +30,6 @@ package dr.evomodel.treelikelihood;
  * ${CLASS_NAME}
  *
  * @author Andrew Rambaut
- * @version $Id$
  *
  * $HeadURL$
  *
@@ -39,10 +40,12 @@ package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 
 public abstract class AbstractSinglePartitionTreeLikelihood extends AbstractTreeLikelihood {
-    public AbstractSinglePartitionTreeLikelihood(String name, PatternList patternList, TreeModel treeModel) {
+    public AbstractSinglePartitionTreeLikelihood(String name, PatternList patternList, MutableTreeModel treeModel) {
         super(name, treeModel);
 
         this.patternList = patternList;

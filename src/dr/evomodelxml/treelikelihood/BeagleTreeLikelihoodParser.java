@@ -1,7 +1,8 @@
 /*
  * BeagleTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,16 +22,18 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.treelikelihood;
 
-//import dr.app.beagle.evomodel.treelikelihood.RestrictedPartialsSequenceLikelihood;
-
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
@@ -56,20 +59,14 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc Suchard
- * @version $Id$
  */
 public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 
-    public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
     public static final String BEAGLE_THREAD_COUNT = "beagle.thread.count";
     public static final String THREAD_COUNT = "thread.count";
-    public static final String THREADS = "threads";
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
-    public static final String INSTANCE_COUNT = "instanceCount";
-    //    public static final String DEVICE_NUMBER = "deviceNumber";
-//    public static final String PREFER_SINGLE_PRECISION = "preferSinglePrecision";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
     public static final String PARTIALS_RESTRICTION = "partialsRestriction";
@@ -78,9 +75,9 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
-                                                        GammaSiteRateModel siteRateModel,
+                                                        SiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
@@ -104,19 +101,10 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
-        int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
-        if (instanceCount < 1) {
-            instanceCount = 1;
-        }
-
-        String ic = System.getProperty(BEAGLE_INSTANCE_COUNT);
-        if (ic != null && ic.length() > 0) {
-            instanceCount = Integer.parseInt(ic);
-        }
 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
+        SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
@@ -133,6 +121,11 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+        if (branchModel instanceof EpochBranchModel && rootFreqModel != null) {
+            EpochBranchModel epochBranchModel = (EpochBranchModel) branchModel;
+            epochBranchModel.setRootFrequencyModel(rootFreqModel);
+        }
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 //        if (xo.getChild(TipStatesModel.class) != null) {
@@ -173,67 +166,27 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         if (beagleThreadCount == -1) {
-            // the default is -1 threads (automatic thread pool size) but an XML attribute can override it
-            int threadCount = xo.getAttribute(THREADS, -1);
+            // no beagle_thread_count is given so use the number of available processors
+            // (actually logical threads - so 2 x number of cores when hyperthreads are used).
 
-            if (System.getProperty(THREAD_COUNT) != null) {
-                threadCount = Integer.parseInt(System.getProperty(THREAD_COUNT));
-            }
-        
-            // Todo: allow for different number of threads per beagle instance according to pattern counts
-            if (threadCount >= 0) {
-                System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(threadCount / instanceCount));
-            }
+            beagleThreadCount = Runtime.getRuntime().availableProcessors();
         }
 
-        if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
-            return createTreeLikelihood(
-                    patternList,
-                    treeModel,
-                    branchModel,
-                    siteRateModel,
-                    branchRateModel,
-                    tipStatesModel,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayScaling,
-                    partialsRestrictions,
-                    xo
-            );
-        }
+        System.setProperty(BEAGLE_THREAD_COUNT, Integer.toString(beagleThreadCount));
 
-        // using multiple instances of BEAGLE...
-
-//        if (!(patternList instanceof SitePatterns)) {
-//            throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with BEAUti-selected codon partitioning.");
-//        }
-
-        if (tipStatesModel != null) {
-            throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
-        }
-
-        List<Likelihood> likelihoods = new ArrayList<Likelihood>();
-        for (int i = 0; i < instanceCount; i++) {
-
-            Patterns subPatterns = new Patterns(patternList, i, instanceCount);
-
-            AbstractTreeLikelihood treeLikelihood = createTreeLikelihood(
-                    subPatterns,
-                    treeModel,
-                    branchModel,
-                    siteRateModel,
-                    branchRateModel,
-                    null,
-                    useAmbiguities,
-                    scalingScheme,
-                    delayScaling,
-                    partialsRestrictions,
-                    xo);
-            treeLikelihood.setId(xo.getId() + "_" + instanceCount);
-            likelihoods.add(treeLikelihood);
-        }
-
-        return new CompoundLikelihood(likelihoods);
+        return createTreeLikelihood(
+                patternList,
+                treeModel,
+                branchModel,
+                siteRateModel,
+                branchRateModel,
+                tipStatesModel,
+                useAmbiguities,
+                scalingScheme,
+                delayScaling,
+                partialsRestrictions,
+                xo
+        );
     }
 
     //************************************************************************
@@ -252,7 +205,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
-            new ElementRule(GammaSiteRateModel.class),
+            new ElementRule(SiteRateModel.class),
             new ElementRule(BranchModel.class, true),
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(BranchRateModel.class, true),

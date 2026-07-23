@@ -1,7 +1,8 @@
 /*
- * MaximumLikelihoodEstimator.java
+ * MaximizerWrtParameter.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
@@ -65,11 +67,13 @@ public class MaximizerWrtParameter implements Reportable {
         int numberIterations;
         boolean startAtCurrentState;
         boolean printToScreen;
+        boolean includeJacobian;
 
-        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen) {
+        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
             this.numberIterations = numberIterations;
             this.startAtCurrentState = startAtCurrentState;
             this.printToScreen = printToScreen;
+            this.includeJacobian = includeJacobian;
         }
     }
 
@@ -96,6 +100,30 @@ public class MaximizerWrtParameter implements Reportable {
 
     public Likelihood getLikelihood() {
         return likelihood;
+    }
+
+    public double[] getMinimumPoint(boolean inParameterSpace) {
+        if (inParameterSpace && (transform != null)) {
+            return transform.inverse(minimumPoint, 0, minimumPoint.length);
+        } else {
+            return minimumPoint;
+        }
+    }
+
+    public GradientWrtParameterProvider getGradient() {
+        return gradient;
+    }
+
+    public boolean wasExecuted() {
+        return function != null;
+    }
+
+    public Transform getTransform() {
+        return transform;
+    }
+
+    public Function getFunction() {
+        return function;
     }
 
     public void maximize() {
@@ -182,6 +210,10 @@ public class MaximizerWrtParameter implements Reportable {
                 }
 
                 setParameter(new WrappedVector.Raw(argument), parameter);
+
+                if (settings.includeJacobian) {
+                    return -evaluateLogLikelihood() - transform.logJacobian(argument, 0, argument.length);
+                }
                 return -evaluateLogLikelihood();
             }
 
@@ -198,7 +230,12 @@ public class MaximizerWrtParameter implements Reportable {
 
                 if (transform != null) {
 
-                    result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                    if (settings.includeJacobian) {
+                        result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
+                    } else {
+                        result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                    }
+
 
                 }
                 for (int i = 0; i < result.length; ++i) {

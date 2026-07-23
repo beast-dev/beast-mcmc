@@ -1,7 +1,8 @@
 /*
- * GradientWrtParameterProvider.java
+ * PrecisionMatrixVectorProductProvider.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.hmc;
 
+import dr.inference.distribution.AutoRegressiveNormalDistributionModel;
+import dr.inference.distribution.CompoundSymmetryNormalDistributionModel;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 
@@ -42,11 +46,82 @@ public interface PrecisionMatrixVectorProductProvider {
 
     double getTimeScaleEigen();
 
-    class Generic implements PrecisionMatrixVectorProductProvider {
+    abstract class Base implements  PrecisionMatrixVectorProductProvider {
+
+        private final double roughTimeGuess;
+
+        private Base(double roughTimeGuess) {
+            this.roughTimeGuess = roughTimeGuess;
+        }
+
+        @Override
+        public double getTimeScale() {
+            return roughTimeGuess;
+//            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
+//
+//            double max = Double.MIN_VALUE;
+//            for (int i = 0; i < dim; ++i) {
+//                max = Math.max(max, matrix.getParameterValue(i,i));
+//            }
+//
+//            return Math.sqrt(max);
+        }
+
+        @Override
+        public double getTimeScaleEigen() {
+            return 0;
+        }
+
+    }
+
+    class AutoRegressive extends Base {
+
+        private final AutoRegressiveNormalDistributionModel ar;
+
+        public AutoRegressive(AutoRegressiveNormalDistributionModel ar, double roughTimeGuess) {
+            super(roughTimeGuess);
+            this.ar = ar;
+
+        }
+
+        @Override
+        public double[] getProduct(Parameter vector) {
+            return ar.getPrecisionVectorProduct(vector.getParameterValues());
+        }
+
+        @Override
+        public double[] getMassVector() {
+            return ar.getDiagonal();
+        }
+    }
+
+    class CompoundSymmetry extends Base {
+
+        private final CompoundSymmetryNormalDistributionModel cs;
+
+        public CompoundSymmetry(CompoundSymmetryNormalDistributionModel cs, double roughTimeGuess) {
+            super(roughTimeGuess);
+            this.cs = cs;
+        }
+
+        @Override
+        public double[] getProduct(Parameter vector) {
+            return cs.getPrecisionVectorProduct(vector.getParameterValues());
+        }
+
+        @Override
+        public double[] getMassVector() {
+            return cs.getDiagonal();
+        }
+    }
+
+    class Generic extends Base {
 
         private final MatrixParameterInterface matrix;
 
-        public Generic(MatrixParameterInterface matrix) {
+        public Generic(MatrixParameterInterface matrix, double roughTimeGuess) {
+
+            super(roughTimeGuess);
             this.matrix = matrix;
         }
 
@@ -81,23 +156,6 @@ public interface PrecisionMatrixVectorProductProvider {
             }
 
             return mass;
-        }
-
-        @Override
-        public double getTimeScale() {
-            final int dim = Math.min(matrix.getRowDimension(), matrix.getColumnDimension());
-
-            double max = Double.MIN_VALUE;
-            for (int i = 0; i < dim; ++i) {
-                max = Math.max(max, matrix.getParameterValue(i,i));
-            }
-
-            return Math.sqrt(max);
-        }
-
-        @Override
-        public double getTimeScaleEigen() {
-            return 0;
         }
     }
 }

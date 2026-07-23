@@ -1,7 +1,8 @@
 /*
  * KDENumericalDensityPlot.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.gui.chart;
@@ -114,7 +116,14 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot {
             x -= frequency.getBinSize();
             extraEdgeCount += 1;
         }
-        xData.add(x);
+        // take the raw X min
+        double rawXMin = Double.parseDouble(raw.getMin().toString());
+        // here sometime final x < lowerBoundary from above loop
+        // rawXMin >= lowerBoundary to ignore the negative X, e.g. likelihoods
+        if (rawXMin >= lowerBoundary && x < lowerBoundary)
+            xData.add(lowerBoundary); // set min x to lowerBoundary
+        else
+            xData.add(x);
         yData.add(0.0);
         x += frequency.getBinSize();
         int count = 0;

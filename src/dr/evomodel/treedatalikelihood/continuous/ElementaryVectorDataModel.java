@@ -1,7 +1,8 @@
 /*
- * ContinuousTraitData.java
+ * ElementaryVectorDataModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
@@ -45,6 +47,8 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
 
     private final PrecisionType precisionType;
 
+    private String tipTraitName;
+
     public ElementaryVectorDataModel(String name,
                                      Parameter tipIndicator,
                                      Parameter dimIndicator,
@@ -66,13 +70,29 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    public boolean bufferTips() { return true; }
+    public boolean bufferTips() {
+        return true;
+    }
 
     @Override
-    public int getTraitCount() {  return numTraits; }
+    public int getTraitCount() {
+        return numTraits;
+    }
 
     @Override
-    public int getTraitDimension() { return dimTrait; }
+    public int getTraitDimension() {
+        return dimTrait;
+    }
+
+    @Override
+    public String getTipTraitName() {
+        return tipTraitName;
+    }
+
+    @Override
+    public void setTipTraitName(String name) {
+        tipTraitName = name;
+    }
 
     @Override
     public PrecisionType getPrecisionType() {
@@ -80,7 +100,19 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    public CompoundParameter getParameter() { return traitParameter; }
+    public CompoundParameter getParameter() {
+        return traitParameter;
+    }
+
+    @Override
+    public boolean usesMissingIndices() {
+        return false;
+    }
+
+    @Override
+    public ContinuousTraitPartialsProvider[] getChildModels() {
+        return new ContinuousTraitPartialsProvider[0];
+    }
 
     public void setTipTraitDimParameters(int tip, int trait, int dim) {
         tipIndicator.setParameterValue(trait, tip);
@@ -93,10 +125,12 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    public List<Integer> getMissingIndices() { return noMissingIndices; }
+    public List<Integer> getMissingIndices() {
+        return noMissingIndices;
+    }
 
     @Override
-    public boolean[] getMissingIndicator() {
+    public boolean[] getDataMissingIndicators() {
         return null;
     }
 
@@ -114,18 +148,21 @@ public class ElementaryVectorDataModel extends AbstractModel implements Continuo
     }
 
     @Override
-    protected void storeState() { }
+    protected void storeState() {
+    }
 
     @Override
-    protected void restoreState() { }
+    protected void restoreState() {
+    }
 
     @Override
-    protected void acceptState() { }
+    protected void acceptState() {
+    }
 
     @Override
     public double[] getTipPartial(int taxonIndex, boolean fullyObserved) {
 
-        final int offsetInc = dimTrait + precisionType.getMatrixLength(dimTrait);
+        final int offsetInc = precisionType.getPartialsDimension(dimTrait);
         final double[] partial = new double[numTraits * offsetInc]; // zeros all values
         final double precision = PrecisionType.getObservedPrecisionValue(false);
 

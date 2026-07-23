@@ -1,7 +1,8 @@
 /*
  * PartiallyMissingInformation.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
@@ -42,7 +44,7 @@ public class PartiallyMissingInformation {
         this.numTraits = dataModel.getTraitCount();
         this.dimTrait = dataModel.getTraitDimension();
 
-        this.rawMissingIndices = dataModel.getMissingIndices();
+        this.rawMissingIndicators = dataModel.getTraitMissingIndicators();
 
         final int length = tipCount * numTraits;
         anyMissing = new boolean[length];
@@ -116,8 +118,11 @@ public class PartiallyMissingInformation {
     }
 
     private boolean isObservationMissing(final int index, final int dim) {
+        if (rawMissingIndicators == null) {
+            return false;
+        }
         final int id = index * dimTrait + dim;
-        return rawMissingIndices.contains(id);
+        return rawMissingIndicators[id];
     }
 
     public class HashedIntArray {
@@ -168,7 +173,7 @@ public class PartiallyMissingInformation {
     final private int numTraits;
     final private int dimTrait;
 
-    final private List<Integer> rawMissingIndices;
+    final private boolean[] rawMissingIndicators;
 
     final private boolean[] anyMissing;
     final private boolean[] allMissing;

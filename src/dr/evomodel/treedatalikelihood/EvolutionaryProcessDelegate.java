@@ -1,7 +1,8 @@
 /*
  * EvolutionaryProcessDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 
 /**
@@ -34,7 +37,6 @@ import dr.evomodel.substmodel.SubstitutionModel;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface EvolutionaryProcessDelegate {
 
@@ -65,6 +67,8 @@ public interface EvolutionaryProcessDelegate {
     SubstitutionModel getSubstitutionModel(int index);
 
     SubstitutionModel getSubstitutionModelForBranch(int branchIndex);
+
+    BranchModel getBranchSubstitutionModel();
 
     int getEigenIndex(int bufferIndex);
 

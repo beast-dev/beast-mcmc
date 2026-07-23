@@ -1,7 +1,8 @@
 /*
  * DiscreteStatistics.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.stats;
@@ -32,7 +34,6 @@ import dr.util.HeapSort;
  *
  * @author Korbinian Strimmer
  * @author Alexei Drummond
- * @version $Id: DiscreteStatistics.java,v 1.11 2006/07/02 21:14:53 rambaut Exp $
  */
 public class DiscreteStatistics {
     /**
@@ -391,5 +392,15 @@ public class DiscreteStatistics {
         }
 
         return Math.exp(gm/(double) len);
+    }
+
+    public static double negativeProbability(double[] values) {
+
+        double negativeCount = 0;
+        for (int i = 1; i < values.length; i++) {
+            if (values[i] < 0) negativeCount = negativeCount + 1;
+        }
+        return negativeCount / values.length;
+
     }
 }

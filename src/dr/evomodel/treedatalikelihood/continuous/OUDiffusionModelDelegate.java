@@ -1,7 +1,8 @@
 /*
- * AbstractOUDiffusionModelDelegate.java
+ * OUDiffusionModelDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
@@ -48,7 +50,6 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
  *
  * @author Marc A. Suchard
  * @author Paul Bastide
- * @version $Id$
  */
 public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegate {
 
@@ -191,7 +192,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     private static double factorFunction(double x, double l) {
         if (x == 0) return l;
-        return - Math.expm1(-x * l) / x;
+        return -Math.expm1(-x * l) / x;
     }
 
 //    private void actualizeGradientOld(ContinuousDiffusionIntegrator cdi, int nodeIndex, DenseMatrix64F gradient) {
@@ -255,7 +256,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 //                0, dim, dim);
         // Branch variance
         double[] branchVariance = new double[dim * dim];
-        cdi.getBranchVariance(getMatrixBufferOffsetIndex(nodeIndex), getEigenBufferOffsetIndex(0) , branchVariance);
+        cdi.getBranchVariance(getMatrixBufferOffsetIndex(nodeIndex), getEigenBufferOffsetIndex(0), branchVariance);
         DenseMatrix64F Sigma_i = wrap(branchVariance, 0, dim, dim);
 
         // factor
@@ -287,7 +288,7 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     }
 
     private DenseMatrix64F getGradientBranchVarianceWrtAttenuationDiagonal(ContinuousDiffusionIntegrator cdi,
-                                                                        int nodeIndex, DenseMatrix64F gradient) {
+                                                                           int nodeIndex, DenseMatrix64F gradient) {
 
         double[] attenuation = elasticModel.getEigenValuesStrengthOfSelection();
         DenseMatrix64F variance = wrap(
@@ -313,8 +314,8 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
 
     private double computeAttenuationFactorActualized(double lambda, double ti) {
         if (lambda == 0) return ti * ti;
-        double em1 = Math.expm1(- lambda * ti);
-        return 2.0 * (em1 * em1 - (em1 + lambda * ti) * Math.exp(- lambda * ti)) / lambda / lambda;
+        double em1 = Math.expm1(-lambda * ti);
+        return 2.0 * (em1 * em1 - (em1 + lambda * ti) * Math.exp(-lambda * ti)) / lambda / lambda;
 //        return 2.0 * (1 - (1 + lambda * ti) * Math.exp( - lambda * ti)) / (lambda * lambda);
     }
 
@@ -556,5 +557,74 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
             }
         }
         return jointVariance;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    /// Model Heritability Functions
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public void getMeanTipVariances(final double priorSampleSize,
+                                    final double[] treeLengths,
+                                    final DenseMatrix64F traitVariance,
+                                    final DenseMatrix64F varSum) {
+        if (hasDiagonalActualization()) {
+            getMeanTipVariancesDiagonal(priorSampleSize, treeLengths, traitVariance, varSum);
+        }
+        getMeanTipVariancesFull(priorSampleSize, treeLengths, traitVariance, varSum);
+    }
+
+    private void getMeanTipVariancesFull(final double priorSampleSize,
+                                         final double[] treeLengths,
+                                         final DenseMatrix64F traitVariance,
+                                         final DenseMatrix64F varSum) {
+
+        DenseMatrix64F V = wrap(this.getEigenVectorsStrengthOfSelection(), 0, dim, dim);
+        DenseMatrix64F Vinv = new DenseMatrix64F(dim, dim);
+        CommonOps.invert(V, Vinv);
+
+        DenseMatrix64F transTraitVariance = new DenseMatrix64F(traitVariance);
+
+        DenseMatrix64F tmp = new DenseMatrix64F(dim, dim);
+        CommonOps.mult(Vinv, transTraitVariance, tmp);
+        CommonOps.multTransB(tmp, Vinv, transTraitVariance);
+
+        // Diagonal Computations
+        getMeanTipVariancesDiagonal(priorSampleSize, treeLengths, transTraitVariance, varSum);
+
+        // Back to original space
+        CommonOps.mult(V, varSum, tmp);
+        CommonOps.multTransB(tmp, V, varSum);
+    }
+
+    private void getMeanTipVariancesDiagonal(final double priorSampleSize,
+                                             final double[] treeLengths,
+                                             final DenseMatrix64F traitVariance,
+                                             final DenseMatrix64F varSum) {
+
+        // Eigen of strength of selection matrix
+        double[] eigVals = this.getEigenValuesStrengthOfSelection();
+        int ntaxa = tree.getExternalNodeCount();
+        double ti;
+        double ep;
+        double eq;
+        double var;
+
+        for (int i = 0; i < ntaxa; ++i) {
+            ti = treeLengths[i];
+            for (int p = 0; p < dim; ++p) {
+                ep = eigVals[p];
+                for (int q = 0; q < dim; ++q) {
+                    eq = eigVals[q];
+                    if (ep + eq == 0.0) {
+                        var = (ti + 1 / priorSampleSize) * traitVariance.get(p, q);
+                    } else {
+                        var = Math.exp(-(ep + eq) * ti) * (Math.expm1((ep + eq) * ti) / (ep + eq) + 1 / priorSampleSize) * traitVariance.get(p, q);
+                    }
+                    varSum.set(p, q, varSum.get(p, q) + var);
+                }
+            }
+        }
+        CommonOps.scale(1.0 / treeLengths.length, varSum);
     }
 }

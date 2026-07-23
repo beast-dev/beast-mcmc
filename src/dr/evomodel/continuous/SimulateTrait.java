@@ -1,7 +1,8 @@
 /*
  * SimulateTrait.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -35,7 +37,6 @@ import dr.xml.*;
  * This class simulates a trait on a tree.
  *
  * @author Alexei Drummond
- * @version $Id: SimulateTrait.java,v 1.5 2004/10/01 22:40:04 alexei Exp $
  */
 
 public class SimulateTrait {	

@@ -1,7 +1,8 @@
 /*
  * TransformedMultivariateDistribution.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
@@ -46,7 +48,7 @@ public class TransformedMultivariateDistribution implements MultivariateDistribu
 
     @Override
     public double logPdf(double[] x) {
-        return distribution.logPdf(transform.transform(x, 0, x.length)) + transform.getLogJacobian(x, 0, x.length);
+        return distribution.logPdf(transform.transform(x, 0, x.length)) + transform.logJacobian(x, 0, x.length);
     }
 
     @Override

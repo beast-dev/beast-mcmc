@@ -1,7 +1,8 @@
 /*
  * RandomLocalClockModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchratemodel;
@@ -50,7 +52,6 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class RandomLocalClockModel extends AbstractBranchRateModel
         implements RandomLocalTreeVariable, Citable {
@@ -61,10 +62,21 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
                                  Parameter ratesParameter,
                                  boolean ratesAreMultipliers,
                                  double threshold) {
+        this(treeModel, meanRateParameter, rateIndicatorParameter, ratesParameter, ratesAreMultipliers, threshold, false);
+    }
+
+    public RandomLocalClockModel(TreeModel treeModel,
+                                 Parameter meanRateParameter,
+                                 Parameter rateIndicatorParameter,
+                                 Parameter ratesParameter,
+                                 boolean ratesAreMultipliers,
+                                 double threshold,
+                                 boolean simulation) {
 
         super(RandomLocalClockModelParser.LOCAL_BRANCH_RATES);
 
         this.ratesAreMultipliers = ratesAreMultipliers;
+        this.simulation = simulation;
 
         indicators = new TreeParameterModel(treeModel, rateIndicatorParameter, false);
         rates = new TreeParameterModel(treeModel, ratesParameter, false);
@@ -72,8 +84,14 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         if (Double.isNaN(threshold)) { // NaN == binary values
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
             this.threshold = 0.5;
-            for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
-                rateIndicatorParameter.setParameterValue(i, 0.0);
+            if (simulation) {
+                for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
+                    rateIndicatorParameter.setParameterValue(i, 1.0);
+                }
+            } else {
+                for (int i = 0; i < rateIndicatorParameter.getDimension(); ++i) {
+                    rateIndicatorParameter.setParameterValue(i, 0.0);
+                }
             }
         } else {
             rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, rateIndicatorParameter.getDimension()));
@@ -81,8 +99,14 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
         }
         ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, ratesParameter.getDimension()));
 
-        for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
-            ratesParameter.setParameterValue(i, 1.0);
+        if (simulation) {
+            for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
+                ratesParameter.setParameterValue(i, treeModel.getNodeRate(treeModel.getNode(i)));
+            }
+        } else {
+            for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
+                ratesParameter.setParameterValue(i, 1.0);
+            }
         }
 
         this.meanRateParameter = meanRateParameter;
@@ -114,7 +138,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
      * @param tree the tree
      * @param node the node
      * @return true of the variable at this node is included in function, thus representing a change in the
-     *         function looking down the tree.
+     * function looking down the tree.
      */
     public final boolean isVariableSelected(Tree tree, NodeRef node) {
         return indicators.getNodeValue(tree, node) > threshold;
@@ -147,6 +171,10 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
             recalculationNeeded = false;
         }
         return unscaledBranchRates[node.getNumber()] * scaleFactor;
+    }
+
+    public double getUnscaledBranchRate(Tree tree, NodeRef node) {
+        return getBranchRate(tree, node) / scaleFactor;
     }
 
     private void calculateUnscaledBranchRates(TreeModel tree) {
@@ -250,6 +278,8 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     private boolean recalculationNeeded = true;
 
     private final double threshold;
+
+    private boolean simulation;
 
     @Override
     public Citation.Category getCategory() {

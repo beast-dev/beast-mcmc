@@ -1,7 +1,8 @@
 /*
  * PatristicDistanceMatrix.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.distance;
@@ -33,6 +35,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.matrix.Matrix;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.io.*;
 
@@ -124,9 +127,9 @@ public class PatristicDistanceMatrix extends DistanceMatrix {
 
         NexusImporter importer = new NexusImporter(new FileReader(file));
 
-        Tree[] trees = importer.importTrees(null);
+        List<Tree> trees = importer.importTrees(null);
 
-        System.out.println("Found " + trees.length + " trees.");
+        System.out.println("Found " + trees.size() + " trees.");
 
         for (Tree tree : trees) {
 

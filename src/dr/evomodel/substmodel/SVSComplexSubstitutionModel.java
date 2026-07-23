@@ -1,7 +1,8 @@
 /*
  * SVSComplexSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -89,9 +91,13 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == ratesParameter && indicatorsParameter.getParameterValue(index) == 0)
-            return; // Does not affect likelihood
-        super.handleVariableChangedEvent(variable,index,type);
+        if (index > -1){
+            if (variable == ratesParameter && indicatorsParameter.getParameterValue(index) == 0)
+                return; // Does not affect likelihood
+            super.handleVariableChangedEvent(variable,index,type);
+        } else {
+            super.handleVariableChangedEvent(variable,index,type);
+        }
     }
 
     public Model getModel() {
@@ -126,4 +132,9 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     private double[] probability = null;
 
     private final Parameter indicatorsParameter;
+
+    public Parameter getRatesParameter() {
+        return ratesParameter;
+    }
+
 }

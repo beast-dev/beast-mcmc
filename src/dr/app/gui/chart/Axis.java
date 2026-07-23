@@ -1,7 +1,8 @@
 /*
  * Axis.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.gui.chart;
@@ -32,7 +34,6 @@ import dr.util.NumberFormatter;
  *
  * Description:	Provides an interface for axis
  * @author Andrew Rambaut
- * @version	$Id: Axis.java,v 1.11 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public interface Axis {
@@ -429,6 +430,10 @@ public interface Axis {
             isCalibrated = false;
         }
 
+        public void setEpsilon(double epsilon) {
+            this.epsilon = epsilon;
+        }
+
         /**
          *	A static method that uses the natural log to obtain log to base10.
          *	This is required for the linear autoCalibrate but will also be
@@ -614,11 +619,11 @@ public interface Axis {
 
             // Trim down any excess major ticks either side of the data range
             // Epsilon allows for any inprecision in the calculation
-            while ((minTick + majorTick - epsilon)<minData) {
+            while ((minTick + majorTick - epsilon)<minData && majorTickCount > 0) {
                 minTick+=majorTick;
                 majorTickCount--;
             }
-            while ((maxTick - majorTick + epsilon)>maxData) {
+            while ((maxTick - majorTick + epsilon)>maxData && majorTickCount > 0) {
                 maxTick-=majorTick;
                 majorTickCount--;
             }

@@ -1,3 +1,30 @@
+/*
+ * MultivariateIntegrator.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
@@ -79,6 +106,17 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     }
 
     @Override
+    public void setPostOrderPartial(int bufferIndex, double[] partial) {
+        super.setPostOrderPartial(bufferIndex, partial);
+
+        int remOffset = PrecisionType.FULL.getRemainderOffset(dimTrait);
+        for (int trait = 0; trait < numTraits; trait++) {
+            remainders[bufferIndex * numTraits + trait] = partial[dimPartialForTrait * trait + remOffset];
+        }
+
+    }
+
+    @Override
     public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
         super.setDiffusionPrecision(precisionIndex, matrix, logDeterminant);
 
@@ -152,8 +190,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = iMatrix;
+        final int jmo = jMatrix;
 
         // Read variance increments along descendant branches of k
         final double vi = branchLengths[imo];
@@ -284,8 +322,8 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
         int jbo = dimPartial * jBuffer;
 
         // Determine matrix offsets
-        final int imo = dimMatrix * iMatrix;
-        final int jmo = dimMatrix * jMatrix;
+        final int imo = iMatrix;
+        final int jmo = jMatrix;
 
         // Read variance increments along descendant branches of k
         final double vi = branchLengths[imo];
@@ -374,7 +412,7 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
 //                final DenseMatrix64F Vk = new DenseMatrix64F(dimTrait, dimTrait);
             final DenseMatrix64F Vk = matrix5;
             //TODO: should saveInvert put an infinity on the diagonal of Vk?
-            InversionResult ck = safeInvert2(Pk, Vk, true);
+            InversionResult ck = safeInvertPrecision(Pk, Vk, true);
 
             // B. Partial mean
 //                for (int g = 0; g < dimTrait; ++g) {
@@ -695,10 +733,10 @@ public class MultivariateIntegrator extends ContinuousDiffusionIntegrator.Basic 
     public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
                                            final double[] logLikelihoods,
                                            boolean incrementOuterProducts, boolean isIntegratedProcess) {
-        assert(logLikelihoods.length == numTraits);
+        assert (logLikelihoods.length == numTraits);
 
         assert (!incrementOuterProducts);
-        assert(!isIntegratedProcess);
+        assert (!isIntegratedProcess);
 
         if (DEBUG) {
             System.err.println("Root calculation for " + rootBufferIndex);

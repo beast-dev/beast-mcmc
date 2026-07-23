@@ -1,7 +1,8 @@
 /*
  * TreeTraitProvider.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,21 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * An interface for objects that can provide TreeTraits (i.e., information about the nodes and
  * branches of a tree).
  *
  * @author Andrew Rambaut
- * @version $Id$
  */
 public interface TreeTraitProvider {
 
@@ -58,7 +59,7 @@ public interface TreeTraitProvider {
      * class or as a delegate. It is itself a TreeTraitProvider so can be instantiated and
      * passed as is.
      */
-    public class Helper implements TreeTraitProvider {
+    class Helper implements TreeTraitProvider {
 
         /**
          * Default constructor
@@ -159,9 +160,7 @@ public interface TreeTraitProvider {
 
             Helper helper = (Helper) o;
 
-            if (traits != null ? !traits.equals(helper.traits) : helper.traits != null) return false;
-
-            return true;
+            return Objects.equals(traits, helper.traits);
         }
 
         @Override
@@ -171,6 +170,6 @@ public interface TreeTraitProvider {
 
         // Private members
 
-        private Map<String, TreeTrait> traits = new HashMap<String, TreeTrait>();
+        private Map<String, TreeTrait> traits = new HashMap<>();
     }
 }

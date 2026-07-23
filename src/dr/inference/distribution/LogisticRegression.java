@@ -1,7 +1,8 @@
 /*
  * LogisticRegression.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
 
 import dr.inference.model.Parameter;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -52,6 +56,11 @@ public class LogisticRegression extends GeneralizedLinearModel {
 		return false;
 	}
 
+	@Override
+	public GeneralizedLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter) {
+		throw new RuntimeException("Not yet implemented!");
+	}
+
 	protected double calculateLogLikelihood() {
 		// logLikelihood calculation for logistic regression
 		double logLikelihood = 0;
@@ -66,7 +75,6 @@ public class LogisticRegression extends GeneralizedLinearModel {
 		}
 		return logLikelihood;
 	}
-
 
 	public boolean confirmIndependentParameters() {
 		// todo -- check that independent parameters \in {0,1} only

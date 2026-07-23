@@ -1,7 +1,8 @@
 /*
  * KernelDensityEstimatorDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
@@ -33,10 +35,19 @@ import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.SimpsonIntegrator;
 import org.apache.commons.math.analysis.solvers.NewtonSolver;
 
+import java.util.Arrays;
+
 /**
  * @author Marc Suchard
  */
 public abstract class KernelDensityEstimatorDistribution implements Distribution {
+
+    KernelDensityEstimatorDistribution(double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
+
+        this.sample = Arrays.copyOf(sample, sample.length);
+        processBounds(lowerBound, upperBound);
+        setBandWidth(bandWidth);
+    }
 
     KernelDensityEstimatorDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
 

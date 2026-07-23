@@ -1,7 +1,8 @@
 /*
  * OperatorAnalysisPrinter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -56,7 +58,7 @@ public class OperatorAnalysisPrinter {
                 formatter.formatToFieldWidth("Tuning", 9) +
                 formatter.formatToFieldWidth("Count", 11) +
                 formatter.formatToFieldWidth("Time", 9) +
-                formatter.formatToFieldWidth("Time/Op", 9) +
+                formatter.formatToFieldWidth("Time/Op (ns)", 9) +
                 formatter.formatToFieldWidth("Pr(accept)", 11) +
                 formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
                 (useAdaptation ? "" : " Performance suggestion"));

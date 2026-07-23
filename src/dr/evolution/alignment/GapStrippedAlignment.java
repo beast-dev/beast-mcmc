@@ -1,7 +1,8 @@
 /*
  * GapStrippedAlignment.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.alignment;
@@ -34,7 +36,6 @@ import java.util.*;
 /**
  * Provides bootstrap replicate patterns
  *
- * @version $Id: GapStrippedAlignment.java,v 1.4 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  */
@@ -101,6 +102,10 @@ public class GapStrippedAlignment extends Alignment.Abstract
 
     public final Object getSequenceAttribute(int index, String name) {
         throw new UnsupportedOperationException();
+    }
+
+    public List<Sequence> getSequences() {
+        return alignment.getSequences();
     }
 
     public final int getTaxonCount() {

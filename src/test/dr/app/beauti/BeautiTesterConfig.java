@@ -1,7 +1,8 @@
 /*
  * BeautiTesterConfig.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,19 +13,21 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package test.dr.app.beauti;
 
+import dr.app.beauti.util.CharSet;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.generator.BeastGenerator;
@@ -45,11 +48,11 @@ import dr.evoxml.util.DateUnitsType;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiTester.java,v 1.2 2005/07/11 14:07:25 rambaut Exp $
  */
 public class BeautiTesterConfig {
 
@@ -66,7 +69,7 @@ public class BeautiTesterConfig {
     }
 
     public BeautiOptions createOptions() {
-        BeautiOptions beautiOptions = new BeautiOptions();
+        BeautiOptions beautiOptions = BeautiOptions.getInstance();
 
         beautiOptions.fileNameStem = "";
         beautiOptions.treeFileName.clear();
@@ -174,7 +177,7 @@ public class BeautiTesterConfig {
         PartitionSubstitutionModel model = beautiOptions.getPartitionSubstitutionModels().get(0);
 
         model.setGammaHetero(false);
-        model.setGammaCategories(4);
+        model.setRateCategories(4);
         model.setInvarHetero(false);
         buildTreePriorModels(key + "", beautiOptions);
 
@@ -274,7 +277,7 @@ public class BeautiTesterConfig {
         Alignment alignment = null;
         Tree tree = null;
         PartitionSubstitutionModel model = null;
-        java.util.List<NexusApplicationImporter.CharSet> charSets = new ArrayList<NexusApplicationImporter.CharSet>();
+        java.util.List<CharSet> charSets = new ArrayList<CharSet>();
 
         try {
             FileReader reader = new FileReader(fileName);
@@ -338,9 +341,9 @@ public class BeautiTesterConfig {
                             throw new NexusImporter.MissingBlockException("TREES block already defined");
                         }
 
-                        Tree[] trees = importer.parseTreesBlock(taxa);
-                        if (trees.length > 0) {
-                            tree = trees[0];
+                        List<Tree> trees = importer.parseTreesBlock(taxa);
+                        if (!trees.isEmpty()) {
+                            tree = trees.get(0);
                         }
 
                     } else if (block == NexusApplicationImporter.PAUP_BLOCK) {
@@ -440,7 +443,7 @@ public class BeautiTesterConfig {
 
             java.util.List<PartitionData> partitions = new ArrayList<PartitionData>();
             if (charSets != null && charSets.size() > 0) {
-                for (NexusApplicationImporter.CharSet charSet : charSets) {
+                for (CharSet charSet : charSets) {
                     partitions.add(new PartitionData(options, charSet.getName(), fileName,
                             new CharSetAlignment(charSet, alignment)));
                 }

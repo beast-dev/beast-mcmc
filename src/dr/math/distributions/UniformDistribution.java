@@ -1,7 +1,8 @@
 /*
  * UniformDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.UnivariateFunction;
 import dr.util.DataTable;
 
@@ -33,9 +36,8 @@ import dr.util.DataTable;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: UniformDistribution.java,v 1.3 2005/07/11 14:06:25 rambaut Exp $
  */
-public class UniformDistribution implements Distribution {
+public class UniformDistribution implements Distribution, GradientProvider {
     //
     // Public stuff
     //
@@ -177,4 +179,23 @@ public class UniformDistribution implements Distribution {
 
     private final double upper;
     private final double lower;
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i]);
+        }
+        return result;
+    }
+
+    private double gradLogPdf(double x) {
+        return (x < lower || x > upper) ? Double.NaN : 0.0;
+    }
 }

@@ -1,7 +1,8 @@
 /*
  * OldAbstractCoalescentLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
@@ -31,6 +33,7 @@ import dr.evolution.coalescent.ScaledDemographic;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.inference.model.*;
@@ -54,8 +57,8 @@ import java.util.Arrays;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
+@Deprecated
 public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood implements  Units {
 
     // PUBLIC STUFF
@@ -452,9 +455,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                                         ArrayList<Integer> nodeNumbers) {
 
         times.add(new ComparableDouble(tree.getNodeHeight(top)));
-        if (Double.isNaN(tree.getNodeHeight(top))) {
-            System.err.println("why");
-        }
         childs.add(tree.getChildCount(top));
         nodeNumbers.add(top.getNumber());
 
@@ -518,9 +518,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             }
 
             public void addNode(int nodeNumber) {
-                if (nextIndex > 500) {
-                    System.err.println("why");
-                }
                 nodeNumbersInIntervals[nextIndex] = nodeNumber;
                 nextIndex++;
             }

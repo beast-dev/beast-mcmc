@@ -1,7 +1,8 @@
 /*
  * Timer.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.util;
@@ -28,16 +30,20 @@ package dr.util;
 public class Timer {
 
 	private long start = 0, stop = 0;
+	private long nanoStart = 0, nanoStop = 0;
 
 	public void start() {
+		nanoStart = System.nanoTime(); // One wants the hihest precision first.  TODO Do we really need this?
 		start = System.currentTimeMillis();
 	}
 
 	public void stop() {
+		nanoStop = System.nanoTime();
 		stop = System.currentTimeMillis();
 	}
 
 	public void update() {
+		nanoStop = System.nanoTime();
 		stop = System.currentTimeMillis();
 	}
 
@@ -53,6 +59,16 @@ public class Timer {
 	public double toSeconds() {
 		update();
 		return toSeconds(stop - start);
+	}
+
+	public double toMilliSeconds() {
+		update();
+		return stop - start;
+	}
+
+	public double toNanoSeconds() {
+		update();
+		return nanoStop - nanoStart;
 	}
 
 	public static double toSeconds(long millis) {

@@ -1,7 +1,8 @@
 /*
  * BeautiOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -30,15 +32,15 @@ import java.util.*;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -69,20 +71,36 @@ public class BeautiOptions extends ModelOptions {
     // Switches to a dirichlet prior & delta exchange on state frequencies
     private static final boolean FREQUENCIES_DIRICHLET_PRIOR = true;
 
+    // Switches to a gamma prior on population size parameters
+    private static final boolean POPSIZE_GAMMA_PRIOR = true;
+
+    private final String DEFAULT_NAME = "default";
+
     private static final long serialVersionUID = -3676802825545741012L;
 
-    public BeautiOptions() {
+    private static BeautiOptions INSTANCE;
+
+    private BeautiOptions() {
         this(new ComponentFactory[]{});
     }
 
-    public BeautiOptions(ComponentFactory[] components) {
+    private BeautiOptions(ComponentFactory[] components) {
 
         // Install all the component's options from the given list of factories:
         registerComponents(components);
     }
 
+    public static BeautiOptions getInstance() {
+        if(INSTANCE == null) {
+            INSTANCE = new BeautiOptions();
+        }
+
+        return INSTANCE;
+    }
+
     /**
      * This will register the list of components if not already there...
+     *
      * @param components
      */
     public void registerComponents(ComponentFactory[] components) {
@@ -95,9 +113,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-
     /**
-     *
      * resets the options to the initial conditions
      */
     public void reset() {
@@ -108,7 +124,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsIncludeStem.clear();
         taxonSetsTreeModel.clear();
 
-//        meanDistance = 1.0;
+        // meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
         maximumTipHeight = 0.0;
@@ -116,16 +132,16 @@ public class BeautiOptions extends ModelOptions {
 
         dataPartitions.clear();
         traits.clear();
-//        partitionModels.clear();
-//        partitionTreeModels.clear();
-//        partitionTreePriors.clear();
-//        partitionClockTreeLinks.clear();
-//        activedSameTreePrior = null;
-//        shareSameTreePrior = true;
+        // partitionModels.clear();
+        // partitionTreeModels.clear();
+        // partitionTreePriors.clear();
+        // partitionClockTreeLinks.clear();
+        // activedSameTreePrior = null;
+        // shareSameTreePrior = true;
         userTrees.clear();
 
-//        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-//        meanSubstitutionRate = 1.0;
+        // rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
+        // meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
         units = Units.Type.SUBSTITUTIONS;
@@ -137,6 +153,7 @@ public class BeautiOptions extends ModelOptions {
         chainLength = 10000000;
         logEvery = 1000;
         echoEvery = 1000;
+        checkpointEvery = 1000000;
         burnIn = 100000;
         fileName = null;
         autoOptimize = true;
@@ -146,6 +163,7 @@ public class BeautiOptions extends ModelOptions {
 
         fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
         logFileName = null;
+        checkpointFileName = null;
         allowOverwriteLog = false;
 //        mapTreeLog = false;
 //        mapTreeFileName = null;
@@ -162,13 +180,9 @@ public class BeautiOptions extends ModelOptions {
 
 //        traitsOptions = new TraitsOptions(this);
 
-        microsatelliteOptions = new MicrosatelliteOptions(this);
-
         parameters.clear();
         operators.clear();
         statistics.clear();
-
-        shareMicroSat = true;
 
         clearDataPartitionCaches();
     }
@@ -247,7 +261,7 @@ public class BeautiOptions extends ModelOptions {
         }
 
         for (PartitionClockModel model : getPartitionClockModels()) {
-            Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<PartitionSubstitutionModel>();
+            Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<>();
             for (AbstractPartitionData partition : getDataPartitions()) {
                 if (partition.getPartitionClockModel() == model) {
                     substitutionModels.add(partition.getPartitionSubstitutionModel());
@@ -259,7 +273,7 @@ public class BeautiOptions extends ModelOptions {
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
                 relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
             }
-            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus" );
+            Parameter allMuNus = model.getParameter(useNuRelativeRates() ? "allNus" : "allMus");
             allMuNus.clearSubParameters();
             if (relativeRateParameters.size() > 1) {
 
@@ -286,11 +300,10 @@ public class BeautiOptions extends ModelOptions {
         treeModelOptions.selectParameters(parameters);
 
         for (PartitionTreePrior prior : getPartitionTreePriors()) {
-            prior.selectParameters(parameters);
-        }
+            //refresh prior choices
+            prior.alternatePopulationSizePriors();
 
-        if (contains(Microsatellite.INSTANCE)) {
-            microsatelliteOptions.selectParameters(parameters);
+            prior.selectParameters(parameters);
         }
 
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
@@ -338,10 +351,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectOperators(ops);
         }
 
-        if (contains(Microsatellite.INSTANCE)) {
-            microsatelliteOptions.selectOperators(ops);
-        }
-
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
 //        	if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
 //                trait.getTraitData().selectOperators(ops);
@@ -377,9 +386,6 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
-
-
-
     public boolean hasData() {
         return dataPartitions.size() > 0;
     }
@@ -391,30 +397,6 @@ public class BeautiOptions extends ModelOptions {
             }
         }
         return false;
-    }
-
-    public void shareMicroSat() {
-        Microsatellite microsatellite = null;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
-            if (microsatellite == null) {
-                microsatellite = model.getMicrosatellite();
-            } else {
-                model.setMicrosatellite(microsatellite);
-            }
-        }
-    }
-
-    public void unshareMicroSat() {
-        Microsatellite microsatellite = null;
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
-            if (microsatellite == null) {
-                microsatellite = model.getMicrosatellite();
-            } else {
-                microsatellite = new Microsatellite(model.getName() + ".microsat",
-                        microsatellite.getMin(), microsatellite.getMax(), 1);
-                model.setMicrosatellite(microsatellite);
-            }
-        }
     }
 
     public boolean hasPartitionData(String name) {
@@ -435,26 +417,13 @@ public class BeautiOptions extends ModelOptions {
     }
 
     /**
-     * exclude microsatellite and traits
+     * exclude traits
      */
     public List<PartitionData> getPartitionData() {
-        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        List<PartitionData> pdList = new ArrayList<>();
         for (AbstractPartitionData partition : dataPartitions) {
             if (partition instanceof PartitionData && partition.getTraits() == null) {
                 pdList.add((PartitionData) partition);
-            }
-        }
-        return pdList;
-    }
-
-    /**
-     * exclude PartitionData and traits
-     */
-    public List<PartitionPattern> getPartitionPattern() {
-        List<PartitionPattern> pdList = new ArrayList<PartitionPattern>();
-        for (AbstractPartitionData partition : dataPartitions) {
-            if (partition instanceof PartitionPattern) {
-                pdList.add((PartitionPattern) partition);
             }
         }
         return pdList;
@@ -478,6 +447,16 @@ public class BeautiOptions extends ModelOptions {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getDataType().getType() == dataType.getType()) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
+    public List<AbstractPartitionData> getDataPartitionsExceptTrees() {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getDataType().getType() != DataType.TREE) {
                 pdList.add(pd);
             }
         }
@@ -583,22 +562,6 @@ public class BeautiOptions extends ModelOptions {
         pcmlCache.clear();
     }
 
-    public boolean isEBSPSharingSamePrior() {
-        return getPartitionTreePriors().size() >= 1 &&
-                (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
-    }
-
-    // ++++++++++++++ Partition Substitution Model ++++++++++++++
-//    public void addPartitionSubstitutionModel(PartitionSubstitutionModel model) {
-//        if (!partitionModels.contains(model)) {
-//            partitionModels.add(model);
-//        }
-//    }
-
-//    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
-//        return partitionModels;
-//    }
-
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType) {
         List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(dataPartitions)) {
@@ -702,7 +665,7 @@ public class BeautiOptions extends ModelOptions {
         List<PartitionTreeModel> ptmList = ptmlCache.get(givenDataPartitions);
 
         if (ptmList == null) {
-            Set<PartitionTreeModel> activeTrees = new LinkedHashSet<PartitionTreeModel>();
+            Set<PartitionTreeModel> activeTrees = new LinkedHashSet<>();
 
             for (AbstractPartitionData partition : givenDataPartitions) {
                 if (partition.getPartitionTreeModel() != null) {
@@ -710,7 +673,7 @@ public class BeautiOptions extends ModelOptions {
                 }
             }
 
-            ptmList = new ArrayList<PartitionTreeModel>(activeTrees);
+            ptmList = new ArrayList<>(activeTrees);
 
             ptmlCache.put(givenDataPartitions, ptmList);
         }
@@ -792,96 +755,6 @@ public class BeautiOptions extends ModelOptions {
 
     // ++++++++++++++ Partition Clock Model ++++++++++++++
 
-//    public List<PartitionClockModelTreeModelLink> getPartitionClockTreeLinks() {
-//        return partitionClockTreeLinks;
-//    }
-//
-//    public List<PartitionClockModelSubstModelLink> getTraitClockSubstLinks() {
-//        return partitionClockSubstLinks;
-//    }
-//
-//    public PartitionClockModelTreeModelLink getPartitionClockTreeLink(PartitionClockModel model, PartitionTreeModel tree) {
-//        for (PartitionClockModelTreeModelLink clockTree : getPartitionClockTreeLinks()) {
-//            if (clockTree.getPartitionClockModel().equals(model) && clockTree.getPartitionTreeTree().equals(tree)) {
-//                return clockTree;
-//            }
-//        }
-//
-//        return null;
-//    }
-//
-//    public void updatePartitionAllLinks() {
-//        clearDataPartitionCaches();
-//        partitionClockTreeLinks.clear();
-//        partitionClockSubstLinks.clear();
-//
-//        for (PartitionClockModel model : getPartitionClockModels()) {
-//            for (PartitionTreeModel tree : getPartitionTreeModels(getDataPartitions(model))) {
-//                PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
-//
-//                if (!partitionClockTreeLinks.contains(clockTree)) {
-//                    partitionClockTreeLinks.add(clockTree);
-//                }
-//            }
-//        }
-//
-//    }
-
-//    public void updateAll() {
-//        updatePartitionAllLinks();
-//        for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
-//            if (clockModelGroup.contain(Microsatellite.INSTANCE, this)) {
-//                if (getPartitionClockModels(clockModelGroup).size() == 1) {
-//                    clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-//                    getPartitionClockModels(clockModelGroup).get(0).setEstimatedRate(true);
-//                } else {
-//                    clockModelOptions.fixMeanRate(clockModelGroup);
-//                }
-//            } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
-//                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
-//                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
-//                //TODO correct?
-//                clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-//            }
-//        }
-//    }
-
-    // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
-
-//    public void updateLinksBetweenPDPCMPSMPTMPTPP() {
-//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-//            model.clearAllPartitionData();
-//        }
-//
-//        for (PartitionClockModel model : getPartitionClockModels()) {
-//            model.clearAllPartitionData();
-//        }
-//
-//        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-//            tree.clearAllPartitionData();
-//        }
-//
-//        //TODO update PartitionTreePrior ?
-//
-//        for (PartitionData partition : dataPartitions) {
-//            PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
-//            if (!psm.getDataPartitions().contains(partition)) {
-//                psm.addPartitionData(partition);
-//            }
-//
-//            PartitionClockModel pcm = partition.getPartitionClockModel();
-//            if (!pcm.getDataPartitions().contains(partition)) {
-//                pcm.addPartitionData(partition);
-//            }
-//
-//            PartitionTreeModel ptm = partition.getPartitionTreeModel();
-//            if (!ptm.getDataPartitions().contains(partition)) {
-//                ptm.addPartitionData(partition);
-//            }
-//        }
-//
-//    }
-
     public double getAveWeightedMeanDistance(List<AbstractPartitionData> partitions) {
         double meanDistance = 0;
         double totalSite = 0;
@@ -896,31 +769,6 @@ public class BeautiOptions extends ModelOptions {
             return meanDistance / totalSite;
         }
     }
-
-//    public boolean hasDifferentTaxa(List<AbstractPartitionData> partitionDataList) {
-//        if (partitionDataList.size() < 2)
-//            return false;
-//
-//        TaxonList ref = null;
-//        boolean hasDiff = false;
-//        for (AbstractPartitionData partition : partitionDataList) {
-//            final TaxonList a = partition.getTaxonList();
-//            if (ref == null) {
-//                ref = a;
-//            } else {
-//                if (a.getTaxonCount() != ref.getTaxonCount()) {
-//                    hasDiff = true;
-//                } else {
-//                    for (int k = 0; k < a.getTaxonCount(); ++k) {
-//                        if (ref.getTaxonIndex(a.getTaxonId(k)) == -1) {
-//                            hasDiff = true;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return hasDiff;
-//    }
 
     /**
      * check if all taxa are same across partitions.
@@ -940,8 +788,6 @@ public class BeautiOptions extends ModelOptions {
                     }
                     for (int k = 0; k < taxa1.getTaxonCount(); ++k) {
                         if (taxa.getTaxonIndex(taxa1.getTaxonId(k)) == -1) {
-//                for (Taxon taxon : taxa1) {
-//                    if (taxa.getTaxonIndex(taxon) == -1) { // this is wrong code
                             return false;
                         }
                     }
@@ -971,24 +817,19 @@ public class BeautiOptions extends ModelOptions {
     /**
      * given a list of BEAUti AbstractPartitionData, take the union of taxon list from them
      * but if partition instanceof PartitionPattern and taxon is masked in Patterns class, then not count.
-     * @param partitionDataList    can be BEAUti PartitionData or PartitionPattern or both
-     * @return  num of taxon
+     *
+     * @param partitionDataList can be BEAUti PartitionData or PartitionPattern or both
+     * @return num of taxon
      */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
-        if (partitionDataList == null || partitionDataList.size() == 0) return 0;
+        if (partitionDataList == null || partitionDataList.isEmpty()) return 0;
 
-        List<String> taxonNameList = new ArrayList<String>();
+        List<String> taxonNameList = new ArrayList<>();
         for (AbstractPartitionData partition : partitionDataList) {
             if (partition.getTaxonList() != null) { // not a trait partition
                 for (Taxon t : partition.getTaxonList()) {
                     if (!taxonNameList.contains(t.getId())) {
-                        if (partition instanceof PartitionPattern) {
-                            Patterns patterns = ((PartitionPattern) partition).getPatterns();
-                            if (!patterns.isMasked(patterns.getTaxonIndex(t)))
-                                taxonNameList.add(t.getId());
-                        } else {
-                            taxonNameList.add(t.getId());
-                        }
+                        taxonNameList.add(t.getId());
                     }
                 }
             }
@@ -1079,8 +920,14 @@ public class BeautiOptions extends ModelOptions {
         }
 
         if (partition.getPartitionTreeModel() == null) {
-            partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
-//            getPartitionTreeModels().get(0).addPartitionData(newTrait);
+            if (getPartitionTreeModels().isEmpty()) {
+                PartitionTreeModel treeModel = new PartitionTreeModel(this, DEFAULT_NAME);
+                partition.setPartitionTreeModel(treeModel);
+                PartitionTreePrior ptp = new PartitionTreePrior(this, treeModel);
+                treeModel.setPartitionTreePrior(ptp);
+            } else {
+                partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
+            }
         }
 
         if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
@@ -1094,6 +941,23 @@ public class BeautiOptions extends ModelOptions {
         return selRow; // only for trait panel
     }
 
+    public boolean onlyContinuousPartitions() {
+        if (dataPartitions.isEmpty()) {
+            return false;
+        }
+
+        boolean onlyContinuous = true;
+
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (partition.getDataType().getType() != DataType.CONTINUOUS) {
+                onlyContinuous = false;
+                break;
+            }
+        }
+
+        return onlyContinuous;
+    }
+
     private void updateTraitParameters(AbstractPartitionData partition) {
         if (partition.isCreatedFromTrait()) {
             ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
@@ -1105,6 +969,36 @@ public class BeautiOptions extends ModelOptions {
             AncestralStatesComponentOptions comp3 = (AncestralStatesComponentOptions) getComponentOptions(AncestralStatesComponentOptions.class);
             comp3.setReconstructAtNodes(partition, true);
             comp3.setReconstructAtMRCA(partition, false);
+        }
+    }
+    public void setClockAndTree(AbstractPartitionData partition) {
+
+        PartitionTreeModel treeModel;
+
+        // use same tree model and same tree prior in beginning
+        if (getPartitionTreeModels().isEmpty()) {
+            // PartitionTreeModel based on PartitionData
+            treeModel = new PartitionTreeModel(this, DEFAULT_NAME);
+            partition.setPartitionTreeModel(treeModel);
+
+            // PartitionTreePrior always based on PartitionTreeModel
+            PartitionTreePrior ptp = new PartitionTreePrior(this, treeModel);
+            treeModel.setPartitionTreePrior(ptp);
+        } else { //if (options.getPartitionTreeModels() != null) {
+//                        && options.getPartitionTreeModels().size() == 1) {
+            treeModel = getPartitionTreeModels().get(0); // same tree model,
+            partition.setPartitionTreeModel(treeModel); // if same tree model, therefore same prior
+        }
+
+        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+        if (getPartitionClockModels(partition.getDataType()).isEmpty()) {
+            // PartitionClockModel based on PartitionData
+            PartitionClockModel pcm = new PartitionClockModel(this, DEFAULT_NAME, partition, treeModel);
+            partition.setPartitionClockModel(pcm);
+        } else { //if (options.getPartitionClockModels() != null) {
+//                        && options.getPartitionClockModels().size() == 1) {
+            PartitionClockModel pcm = getPartitionClockModels(partition.getDataType()).get(0);
+            partition.setPartitionClockModel(pcm);
         }
     }
 
@@ -1208,10 +1102,30 @@ public class BeautiOptions extends ModelOptions {
         return type;
     }
 
+    // ++++++++++++++++++++ tree partition +++++++++++++++++
+
+    public int createPartitionForTree(TreeHolder trees, String partitionName) {
+        int selRow = -1;
+
+        TreePartitionData partition = new TreePartitionData(this, partitionName, trees.getFileName(), trees);
+        dataPartitions.add(partition);
+        selRow = dataPartitions.size() - 1;
+
+        if (partition.getPartitionTreeModel() == null) {
+            PartitionTreeModel treeModel = new PartitionTreeModel(this, partition);
+            PartitionTreePrior partitionTreePrior = new PartitionTreePrior(this, treeModel);
+            treeModel.setPartitionTreePrior(partitionTreePrior);
+            partition.setPartitionTreeModel(treeModel);// always use 1st tree
+            treeModel.setEmpiricalTreesFilename(trees.getFileName());
+        }
+
+        return selRow;
+    }
+
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
-//        String message = "<html><p>";
+        // String message = "<html><p>";
         String message = "";
         if (hasData()) {
             message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
@@ -1222,11 +1136,11 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-//            if (hasPhylogeographic()) {
-//                message += ";    Phylogeographic Analysis";
-//            }
+            // if (hasPhylogeographic()) {
+            //      message += ";    Phylogeographic Analysis";
+            // }
 
-//            message += "; " + clockModelOptions.statusMessageClockModel();
+            // message += "; " + clockModelOptions.statusMessageClockModel();
 
         } else if (userTrees.size() > 0) { // TODO
             message += "Trees only : " + userTrees.size() +
@@ -1237,7 +1151,7 @@ public class BeautiOptions extends ModelOptions {
         } else {
             message += "No data loaded - select 'Import Data...' from the 'File' menu.";
         }
-//        message += "</p></html>";
+        // message += "</p></html>";
         return message;
     }
 
@@ -1286,20 +1200,20 @@ public class BeautiOptions extends ModelOptions {
 
 
     public DateGuesser dateGuesser = new DateGuesser();
-//    public TraitGuesser traitGuesser = new TraitGuesser();
-//
-//    public List<String> selecetedTraits = new ArrayList<String>();
-//    public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
+    // public TraitGuesser traitGuesser = new TraitGuesser();
+    //
+    // public List<String> selecetedTraits = new ArrayList<String>();
+    // public Map<String, TraitGuesser.TraitType> traitTypes = new HashMap<String, TraitGuesser.TraitType>();
 
     // Data
     public List<AbstractPartitionData> dataPartitions = new ArrayList<AbstractPartitionData>();
-    public List<TraitData> traits = new ArrayList<TraitData>();
+    public List<TraitData> traits = new ArrayList<>();
 
     public List<List<PartitionData>> multiPartitionLists = new ArrayList<List<PartitionData>>();
     public List<AbstractPartitionData> otherPartitions = new ArrayList<AbstractPartitionData>();
 
     // list of starting tree from user import
-    public List<Tree> userTrees = new ArrayList<Tree>();
+    public Map<String, TreeHolder> userTrees = new HashMap<>();
 
     public boolean unlinkPartitionRates = true;
 
@@ -1312,6 +1226,7 @@ public class BeautiOptions extends ModelOptions {
     public int chainLength = 10000000;
     public int logEvery = 1000;
     public int echoEvery = 1000;
+    public int checkpointEvery = 1000000;
     public int burnIn = 100000;
     public String fileName = null;
     public boolean autoOptimize = true;
@@ -1321,18 +1236,19 @@ public class BeautiOptions extends ModelOptions {
 
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
+    public String checkpointFileName = null;
 
     public boolean generateDemographicLogFile = false;
     public String demographicModelName = null;
     public String demographicLogFileName = null;
 
     public boolean allowOverwriteLog = false;
-    //    public boolean mapTreeLog = false;
-    //    public String mapTreeFileName = null;
+    // public boolean mapTreeLog = false;
+    // public String mapTreeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
-    public boolean operatorAnalysis = true;
+    public boolean operatorAnalysis = false;
     public String operatorAnalysisFileName = null;
 
     public GlobalModelOptions globalModelOptions = new GlobalModelOptions(this);
@@ -1343,12 +1259,20 @@ public class BeautiOptions extends ModelOptions {
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
 
+    //map that indicate for each partition whether a coalescent model is required
+    //if not, a backward-in-time model has already been specified for that partition
+    public HashMap<String, Boolean> needCoalescentModel = new HashMap<>();
+
     public boolean useClassicOperatorsAndPriors() {
         return useClassicOperatorsAndPriors;
     }
-    
+
     public boolean useNuRelativeRates() {
         return !useClassicOperatorsAndPriors() || !NEW_RELATIVE_RATE_PARAMETERIZATION;
+    }
+
+    public boolean useGammaPriorPopSize() {
+        return !useClassicOperatorsAndPriors() || !POPSIZE_GAMMA_PRIOR;
     }
 
     public boolean useNewGTR() {
@@ -1362,10 +1286,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean useNewFrequenciesPrior() {
         return !useClassicOperatorsAndPriors() || !FREQUENCIES_DIRICHLET_PRIOR;
     }
-
-    public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
-
-    public boolean shareMicroSat = true;
 
     public boolean logCoalescentEventsStatistic = false;
 

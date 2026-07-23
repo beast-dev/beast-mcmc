@@ -1,7 +1,8 @@
 /*
  * GeneralizedLinearModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.distribution;
@@ -121,7 +123,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 //        System.err.println("START 2");
 
         boolean checkIdentifiability = xo.getAttribute(CHECK_IDENTIFIABILITY, true);
-        if (checkIdentifiability) {
+        if (glm.getNumberOfFixedEffects() > 0 && checkIdentifiability) {
             if (!glm.getAllIndependentVariablesIdentifiable()) {
                 throw new XMLParseException("All design matrix predictors are not identifiable in "+  xo.getId());
             }
@@ -262,7 +264,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                                     new XMLSyntaxRule[]{
                                             new ElementRule(Parameter.class)
                                     }, true),
-                    }, 1, 3),
+                    }, 0, 10),
             new ElementRule(RANDOM_EFFECTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, 0, 3),
 //				new ElementRule(BASIS_MATRIX,

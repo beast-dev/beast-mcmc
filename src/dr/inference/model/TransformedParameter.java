@@ -1,7 +1,8 @@
 /*
  * TransformedParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -39,6 +41,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     }
 
     public TransformedParameter(Parameter parameter, Transform transform, boolean inverse) {
+
         this.parameter = parameter;
         this.transform = transform;
         this.inverse = inverse;
@@ -47,10 +50,6 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         if (bounds != null && !(transform instanceof Transform.MultivariateTransform)) {
             addBounds(bounds);
         }
-    }
-
-    public int getDimension() {
-        return parameter.getDimension();
     }
 
     protected void storeValues() {
@@ -172,7 +171,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
 //        }
 //        System.err.println("\n");
 //
-        parameter.addBounds(transformedBounds);
+//        parameter.addBounds(transformedBounds);
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
     }
 
@@ -193,24 +192,42 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         throw new RuntimeException("Not yet implemented.");
     }
 
-    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        // Propogate change up model graph
-        fireParameterChangedEvent(index, type);
+    @Override
+    public void fireParameterChangedEvent() {
+
+        doNotPropagateChangeUp = true;
+        parameter.fireParameterChangedEvent();
+        doNotPropagateChangeUp = false;
+
+        fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+    }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (!doNotPropagateChangeUp) {
+            fireParameterChangedEvent(index, type);
+        }
     }
 
     public double diffLogJacobian(double[] oldValues, double[] newValues) {
         // Takes **untransformed** values
         if (inverse) {
-            return -transform.getLogJacobian(oldValues, 0, oldValues.length)
-                    + transform.getLogJacobian(newValues, 0, newValues.length);
+            return -transform.logJacobian(transform(oldValues), 0, oldValues.length)
+                    + transform.logJacobian(transform(newValues), 0, newValues.length);
         } else {
-            return transform.getLogJacobian(oldValues, 0, oldValues.length)
-                    - transform.getLogJacobian(newValues, 0, newValues.length);
+            return transform.logJacobian(oldValues, 0, oldValues.length)
+                    - transform.logJacobian(newValues, 0, newValues.length);
         }
+    }
+
+    public Transform getTransform() {
+        return transform;
     }
 
     protected final Parameter parameter;
     protected final Transform transform;
     protected final boolean inverse;
     protected Bounds<Double> transformedBounds;
+
+    protected boolean doNotPropagateChangeUp = false;
 }

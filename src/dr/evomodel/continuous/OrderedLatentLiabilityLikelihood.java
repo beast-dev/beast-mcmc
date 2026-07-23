@@ -1,7 +1,8 @@
 /*
  * OrderedLatentLiabilityLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -36,6 +38,7 @@ import dr.util.CommonCitations;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -46,7 +49,6 @@ import java.util.logging.Logger;
  * @author Gabrila Cybis
  * @author Marc A. Suchard
  * @author Joe Felsenstein
- * @version $Id$
  */
 
 public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable,
@@ -65,6 +67,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         this.isUnordered = isUnordered;
         this.NAcode = setNAcode();
 
+        this.thresholdIndices = setupThresholdIndices();
+
         addVariable(tipTraitParameter);
         addVariable(thresholdParameter);
 
@@ -75,6 +79,30 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         sb.append("\tBinary patterns: ").append(patternList.getId()).append("\n");
         sb.append("\tPlease cite:\n").append(Citable.Utils.getCitationString(this));
         Logger.getLogger("dr.evomodel.continous").info(sb.toString());
+    }
+
+    private HashMap<Integer, Integer> setupThresholdIndices() {
+        int index = 0;
+        HashMap<Integer, Integer> indices = new HashMap<>();
+        for (int i = 0; i < numClasses.getDimension(); i++) {
+            if (numClasses.getParameterValue(i) > 2) {
+                indices.put(i, index);
+                index++;
+            }
+        }
+
+        return indices;
+    }
+
+    public ArrayList<Integer> getConstrainedTraits() {
+        ArrayList<Integer> constrainedTraits = new ArrayList<>();
+        for (int i = 0; i < numClasses.getDimension(); i++) {
+            if (numClasses.getParameterValue(i) > 1) {
+                constrainedTraits.add(i);
+            }
+        }
+
+        return constrainedTraits;
     }
 
     public CompoundParameter getTipTraitParameter() {
@@ -270,6 +298,64 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         return tipData[tip];
     }
 
+    private boolean validTraitForTipOrdered(double trait, int tip, int index) {
+
+        int datum = tipData[tip][index];
+
+        if (datum == -1.0) {
+            return true; //TODO: this is really really bad. find some other way to deal with missingness
+        }
+
+
+        int dim = (int) numClasses.getParameterValue(index);
+
+        if (dim == 1.0) {
+            return true;
+        } else if (dim == 2.0) {
+            if (trait == 0) { //TODO: why is this necessary?
+                return true;
+            } else if (datum > 1) {
+                return true;
+            } else {
+                boolean positive = trait > 0.0;
+                if (positive) {
+                    return (datum == 1.0);
+                } else {
+                    return (datum == 0.0);
+                }
+            }
+        } else {
+            int threshNum = thresholdIndices.get(index);
+            if (datum == 0) {
+                return trait <= 0.0;
+            } else if (datum == 1) {
+                return (trait >= 0 &&
+                        trait <= thresholdParameter.getParameter(threshNum).getParameterValue(0));
+            } else if (datum == (dim - 1)) {
+                return trait >= thresholdParameter.getParameter(threshNum).getParameterValue(dim - 3);
+            } else if (datum > (dim - 1)) {
+                return true;
+            } else {
+                return (trait >= thresholdParameter.getParameter(threshNum).getParameterValue(datum - 2) &&
+                        trait <= thresholdParameter.getParameter(threshNum).getParameterValue(datum - 1));
+            }
+
+        }
+    }
+
+    private boolean validTraitForTipUnordered(double traitValue, int tip, int index) {
+        throw new RuntimeException("not yet implemented");
+    }
+
+    public boolean validTraitForTip(double traitValue, int tip, int trait) {
+
+        if (isUnordered) {
+            return validTraitForTipUnordered(traitValue, tip, trait);
+        } else {
+            return validTraitForTipOrdered(traitValue, tip, trait);
+        }
+    }
+
 
     public boolean validTraitForTip(int tip) { //TODO rewrite, to make it more readable.
         boolean valid = true;
@@ -278,46 +364,9 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
         if (!isUnordered) {
 
-            int threshNum = 0;
-
             for (int index = 0; index < data.length && valid; ++index) {
-
-                int datum = data[index];
-                double trait = oneTipTraitParameter.getParameterValue(index);
-                int dim = (int) numClasses.getParameterValue(index);
-
-                if (dim == 1.0) {
-                    valid = true;
-                } else if (dim == 2.0) {
-                    if (trait == 0) {
-                        valid = true;
-                    } else if (datum > 1) {
-                        valid = true;
-                    } else {
-                        boolean positive = trait > 0.0;
-                        if (positive) {
-                            valid = (datum == 1.0);
-                        } else {
-                            valid = (datum == 0.0);
-                        }
-                    }
-                } else {
-                    if (datum == 0) {
-                        valid = trait <= 0.0;
-                    } else if (datum == 1) {
-                        valid = (trait >= 0 &&
-                                trait <= thresholdParameter.getParameter(threshNum).getParameterValue(0));
-                    } else if (datum == (dim - 1)) {
-                        valid = trait >= thresholdParameter.getParameter(threshNum).getParameterValue(dim - 3);
-                    } else if (datum > (dim - 1)) {
-                        valid = true;
-                    } else {
-                        valid = (trait >= thresholdParameter.getParameter(threshNum).getParameterValue(datum - 2) &&
-                                trait <= thresholdParameter.getParameter(threshNum).getParameterValue(datum - 1));
-                    }
-
-                    threshNum++;
-                }
+                double traitValue = oneTipTraitParameter.getParameterValue(index);
+                valid = validTraitForTipOrdered(traitValue, tip, index);
             }
         } else {
             int LLpointer = 0;
@@ -549,6 +598,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
     private PatternList patternList;
     public CompoundParameter tipTraitParameter;
     private CompoundParameter thresholdParameter;
+    private final HashMap<Integer, Integer> thresholdIndices;
+
     public Parameter numClasses;
     private Parameter containsMissing;
     private int NAcode;

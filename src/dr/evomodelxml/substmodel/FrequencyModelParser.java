@@ -1,7 +1,8 @@
 /*
  * FrequencyModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.substmodel;
 
-import dr.app.bss.Utils;
+//import dr.app.bss.Utils;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.HiddenDataType;
@@ -35,9 +38,11 @@ import dr.evomodel.substmodel.CodonFromNucleotideFrequencyModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedVector;
 import dr.xml.*;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -69,6 +74,8 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
         Parameter freqsParam = (Parameter) xo.getElementFirstChild(FREQUENCIES);
         double[] frequencies = null;
 
+        List<PatternList> multiplePatterns = new ArrayList<>();
+
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object obj = xo.getChild(i);
             if (obj instanceof PatternList) {
@@ -89,7 +96,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
                                     * baseStateCount];
                         }
                     }
-
+                    break;
                 } else {
 
                     // TODO
@@ -101,16 +108,41 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
                             frequencies = getEmpirical3x4Freqs(patternList);
 
                         }
-
+                        break;
                     } else {
 
+                        multiplePatterns.add(patternList);
                         frequencies = patternList.getStateFrequencies();
 
                     } // END: composition check
 
                 }
-                break;
             }// END: patternList check
+        }
+
+        if (multiplePatterns.size() > 1) {
+            StringBuilder sb = new StringBuilder("\n Concatenating multiple pattern lists to calculate initial frequencies from: \n\t");
+            for (PatternList patterns : multiplePatterns) {
+                sb.append(" " + patterns.getId());
+            }
+
+            int totalWeight = 0;
+            for (PatternList p : multiplePatterns) {
+                totalWeight += p.getPatternCount();
+            }
+
+            Arrays.fill(frequencies, 0.0);
+
+            for (PatternList p : multiplePatterns) {
+                double[] increment = p.getStateFrequencies();
+                double weight = (double) p.getPatternCount() / (double) totalWeight;
+
+                for (int i = 0; i < frequencies.length; ++i) {
+                    frequencies[i] += increment[i] * weight;
+                }
+            }
+
+            Logger.getLogger("dr.evomodel").info(sb.toString());
         }
 
         StringBuilder sb = new StringBuilder(
@@ -176,13 +208,13 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
 
         DataType nucleotideDataType = Nucleotides.INSTANCE;
         Codons codonDataType = Codons.UNIVERSAL;
-        List<String> stopCodonsList = Arrays.asList(Utils.STOP_CODONS);
+        List<String> stopCodonsList = Arrays.asList(STOP_CODONS);
 
         int cStateCount = codonDataType.getStateCount();
         int nStateCount = nucleotideDataType.getStateCount();
         int nPosition = 3;
 
-        double[] stopCodonFreqs = new double[Utils.STOP_CODONS.length];
+        double[] stopCodonFreqs = new double[STOP_CODONS.length];
         double counts[][] = new double[nStateCount][nPosition];
         int countsPos[] = new int[nPosition];
 
@@ -293,4 +325,6 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
             new ElementRule(FREQUENCIES, new XMLSyntaxRule[]{new ElementRule(
                     Parameter.class)}),
     };
+
+    public static final String STOP_CODONS[] = new String[] { "TAA", "TAG", "TGA" };
 }

@@ -1,7 +1,8 @@
 /*
  * Intervals.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent;
 
 import dr.evolution.util.Units;
+import dr.inference.model.Variable;
 
 import java.util.Arrays;
 
@@ -34,11 +37,13 @@ import java.util.Arrays;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Intervals.java,v 1.19 2005/09/21 18:47:58 gerton Exp $
  */
-public class Intervals implements IntervalList {
+public class Intervals implements MutableIntervalList {
 
-    public Intervals(int maxEventCount) {
+
+    public Intervals(int maxEventCount,boolean eventsNeedSorting) {
+        startTime = Double.POSITIVE_INFINITY;
+
         events = new Event[maxEventCount];
         for (int i = 0; i < maxEventCount; i++) {
             events[i] = new Event();
@@ -51,19 +56,20 @@ public class Intervals implements IntervalList {
         lineageCounts = new int[maxEventCount - 1];
 
         intervalsKnown = false;
+        this.eventsNeedSorting=eventsNeedSorting;
+    }
+    public Intervals(int maxEventCount) {
+        this(maxEventCount, true);
     }
 
-    public void copyIntervals(Intervals source) {
+    @Override
+    public void copyIntervals(MutableIntervalList intervalList) {
+        Intervals source = (Intervals)intervalList;
         intervalsKnown = source.intervalsKnown;
         eventCount = source.eventCount;
         sampleCount = source.sampleCount;
-
-        //don't copy the actual events..
-        /*
-          for (int i = 0; i < events.length; i++) {
-              events[i].time = source.events[i].time;
-              events[i].type = source.events[i].type;
-          }*/
+        intervalCount = source.intervalCount;
+        startTime = source.startTime;
 
         if (intervalsKnown) {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);
@@ -73,22 +79,36 @@ public class Intervals implements IntervalList {
     }
 
     public void resetEvents() {
+        startTime = Double.POSITIVE_INFINITY;
+
         intervalsKnown = false;
         eventCount = 0;
         sampleCount = 0;
     }
 
     public void addSampleEvent(double time) {
+        this.addSampleEvent(time,-1);
+    }
+    public void addSampleEvent(double time,int nodeNumber) {
+        if (time < startTime) {
+            startTime = time;
+        }
+
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.SAMPLE;
+        events[eventCount].nodeNumber=nodeNumber;
         eventCount++;
         sampleCount++;
         intervalsKnown = false;
     }
-
     public void addCoalescentEvent(double time) {
+        this.addCoalescentEvent(time, -1);
+    }
+
+    public void addCoalescentEvent(double time, int nodeNumber) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.COALESCENT;
+        events[eventCount].nodeNumber=nodeNumber;
         eventCount++;
         intervalsKnown = false;
     }
@@ -97,6 +117,7 @@ public class Intervals implements IntervalList {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.MIGRATION;
         events[eventCount].info = destination;
+        events[eventCount].nodeNumber=-1;
         eventCount++;
         intervalsKnown = false;
     }
@@ -104,6 +125,7 @@ public class Intervals implements IntervalList {
     public void addNothingEvent(double time) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.NOTHING;
+        events[eventCount].nodeNumber = -1;
         eventCount++;
         intervalsKnown = false;
     }
@@ -113,22 +135,37 @@ public class Intervals implements IntervalList {
     }
 
     public int getIntervalCount() {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervalCount;
     }
 
     public double getInterval(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return intervals[i];
     }
 
+    public double getIntervalTime(int i){
+        if (!intervalsKnown){
+            calculateIntervals();
+        }
+        return events[i].time;
+    }
+
     public int getLineageCount(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return lineageCounts[i];
     }
 
     public int getCoalescentEvents(int i) {
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         if (i < intervalCount - 1) {
             return lineageCounts[i] - lineageCounts[i + 1];
         } else {
@@ -136,14 +173,31 @@ public class Intervals implements IntervalList {
         }
     }
 
-    public IntervalType getIntervalType(int i) {
-        if (!intervalsKnown) calculateIntervals();
-        return intervalTypes[i];
+    public double getStartTime() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return startTime;
     }
 
+    public IntervalType getIntervalType(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return intervalTypes[i];
+    }
+    //Return the node that triggers the event
+    public int getNodeForEvent(int i){
+        if (!intervalsKnown){
+            calculateIntervals();
+        }
+        return events[i].nodeNumber;
+    }
     public double getTotalDuration() {
 
-        if (!intervalsKnown) calculateIntervals();
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
         return events[eventCount - 1].time;
     }
 
@@ -155,14 +209,15 @@ public class Intervals implements IntervalList {
         return true;
     }
 
-    private void calculateIntervals() {
+    public void calculateIntervals() {
 
         if (eventCount < 2) {
             throw new IllegalArgumentException("Too few events to construct intervals");
         }
 
-        Arrays.sort(events, 0, eventCount);
-
+        if(eventsNeedSorting) {
+            Arrays.sort(events, 0, eventCount);
+        }
         if (events[0].type != IntervalType.SAMPLE) {
             throw new IllegalArgumentException("First event is not a sample event");
         }
@@ -225,17 +280,20 @@ public class Intervals implements IntervalList {
          * Some extra information for the event (e.g., destination of a migration)
          */
         int info;
+        int nodeNumber;
 
     }
+
+    private double startTime;
 
     private Event[] events;
     private int eventCount;
     private int sampleCount;
 
     private boolean intervalsKnown = false;
+    private final boolean eventsNeedSorting;
     private double[] intervals;
     private int[] lineageCounts;
     private IntervalType[] intervalTypes;
-    //private int[] destinations;
     private int intervalCount = 0;
 }

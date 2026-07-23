@@ -1,7 +1,8 @@
 /*
  * BeautiFrame.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -87,7 +89,6 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiFrame.java,v 1.22 2006/09/09 16:07:06 rambaut Exp $
  */
 public class BeautiFrame extends DocumentFrame {
 
@@ -147,7 +148,7 @@ public class BeautiFrame extends DocumentFrame {
 
         getZoomWindowAction().setEnabled(false);
 
-        components = new ComponentFactory[] {
+        components = new ComponentFactory[]{
                 AncestralStatesComponentFactory.INSTANCE,
                 ContinuousComponentFactory.INSTANCE,
                 DiscreteTraitsComponentFactory.INSTANCE,
@@ -160,7 +161,9 @@ public class BeautiFrame extends DocumentFrame {
                 TipDateSamplingComponentFactory.INSTANCE
         };
 
-        options = new BeautiOptions(components);
+        options = BeautiOptions.getInstance();
+        options.registerComponents(components);
+
         generator = new BeastGenerator(options, components);
 
         this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener() {
@@ -173,9 +176,13 @@ public class BeautiFrame extends DocumentFrame {
         });
     }
 
+    public DataPanel getDataPanel() {
+        return dataPanel;
+    }
+
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction()/*, getImportTraitsAction()*/);
+        dataPanel = new DataPanel(this, getImportAction(), getRemoveAction()/*, getImportTraitsAction()*/);
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, dataPanel, getImportTraitsAction());
         taxonSetPanel = new TaxonSetPanel(this);
@@ -483,11 +490,9 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-        File[] files = selectImportFiles("Import Aligment...", true, new FileNameExtensionFilter[] {
-                new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt"),
+        File[] files = selectImportFiles("Import Alignment...", true, new FileNameExtensionFilter[]{
                 new FileNameExtensionFilter(
                         "NEXUS, BEAST or FASTA Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa")});
-        // new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt");
         if (files != null && files.length != 0) {
             importFiles(files);
             tabbedPane.setSelectedComponent(dataPanel);
@@ -509,25 +514,23 @@ public class BeautiFrame extends DocumentFrame {
 //                        JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
 //                                "Unable to open file", JOptionPane.ERROR_MESSAGE);
                 } catch (IOException ioe) {
-                    JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
+                    JOptionPane.showMessageDialog(this, "File I/O Error unable to read file:\n    " + ioe.getMessage(),
                             "Unable to read file", JOptionPane.ERROR_MESSAGE);
                     ioe.printStackTrace();
-                    // there may be other files in the list so don't return
-//                    return;
 
                 } catch (MissingBlockException ex) {
-                    JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
+                    JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file:\n    " + ex.getMessage(),
                             "Missing Block in Nexus File",
                             JOptionPane.ERROR_MESSAGE);
                     ex.printStackTrace();
 
                 } catch (ImportException ime) {
-                    JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
+                    JOptionPane.showMessageDialog(this, "Error parsing imported file:\n    " + ime.getMessage(),
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     ime.printStackTrace();
                 } catch (JDOMException jde) {
-                    JOptionPane.showMessageDialog(this, "Error parsing imported file: " + jde,
+                    JOptionPane.showMessageDialog(this, "Error parsing imported file:\n    " + jde.getMessage(),
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     jde.printStackTrace();
@@ -546,47 +549,42 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final boolean doImportTraits() {
-        if (options.taxonList != null) { // validation of check empty taxonList
-            File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[] {
-                    new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat") });
+        File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[]{
+                new FileNameExtensionFilter("Tab-delimited text files", "tsv", "txt", "tab", "dat")});
 
-            if (files != null && files.length != 0) {
-                try {
-                    BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
-                    beautiImporter.importTraits(files[0]);
-                } catch (FileNotFoundException fnfe) {
-                    JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                            "Unable to open file",
-                            JOptionPane.ERROR_MESSAGE);
-                    return false;
-                } catch (IOException ioe) {
-                    JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
-                            "Unable to read file",
-                            JOptionPane.ERROR_MESSAGE);
-                    return false;
-                } catch (Exception ex) {
-                    ex.printStackTrace(System.err);
-                    JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-                            "Error reading file",
-                            JOptionPane.ERROR_MESSAGE);
-                    ex.printStackTrace();
-                    return false;
+        if (files != null && files.length != 0) {
+            try {
+                BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                if (options.taxonList == null) {
+                    beautiImporter.importTaxaFromTraits(files[0]);
+                    setDirty();
                 }
-            } else {
+                beautiImporter.importTraits(files[0]);
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (ImportException ex) {
+                ex.printStackTrace(System.err);
                 return false;
             }
-
-            traitsPanel.fireTraitsChanged();
-            setAllOptions();
-
-            tabbedPane.setSelectedComponent(traitsPanel);
-            return true;
-
         } else {
-            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file.",
-                    "No taxa loaded", JOptionPane.ERROR_MESSAGE);
             return false;
         }
+
+        traitsPanel.fireTraitsChanged();
+        setAllOptions();
+
+        tabbedPane.setSelectedComponent(traitsPanel);
+        return true;
+
+
     }
 
     public boolean validateTraitName(String traitName) {
@@ -629,17 +627,9 @@ public class BeautiFrame extends DocumentFrame {
         setStatusMessage();
     }
 
-    public void setupEBSP() {
-        dataPanel.selectAll();
-
-        dataPanel.unlinkAll();
-
-        setAllOptions();
-    }
-
     public PartitionTreePrior getCurrentPartitionTreePrior() {
         treesPanel.setOptions(options); // need this to refresh the currentTreeModel
-        return treesPanel.currentTreeModel.getPartitionTreePrior();
+        return treesPanel.getCurrentTreeModel().getPartitionTreePrior();
     }
 
     public void setStatusMessage() {
@@ -668,6 +658,14 @@ public class BeautiFrame extends DocumentFrame {
         if (!defaultPriorDialog.showDialog(options)) {
             return false;
         }
+        //TODO make remove this or put warnings in check above? Seems more appropriate here for now
+        if(!generator.checkUserTreeIsBifurcating()){
+            JOptionPane.showMessageDialog(this, "At least one  user-specified starting tree " +
+                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree.",
+                        "Unresolved user-specified starting tree",
+                        JOptionPane.WARNING_MESSAGE);
+        }
+
 
         File file = selectExportFile("Generate BEAST XML File...", new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
 
@@ -703,6 +701,7 @@ public class BeautiFrame extends DocumentFrame {
     /**
      * Use the native file dialog on the Mac because the Swing one is bad. On linux, the native
      * one is bad. No preference on Windows.
+     *
      * @param title
      * @return
      */
@@ -716,7 +715,7 @@ public class BeautiFrame extends DocumentFrame {
 
             importDialog.setVisible(true);
             if (importDialog.getFile() != null) {
-                return new File[] { new File(importDialog.getDirectory(), importDialog.getFile()) };
+                return new File[]{new File(importDialog.getDirectory(), importDialog.getFile())};
             }
         } else {
             JFileChooser importChooser = fileChoosers.get(title);
@@ -737,7 +736,7 @@ public class BeautiFrame extends DocumentFrame {
                 if (importChooser.isMultiSelectionEnabled()) {
                     return importChooser.getSelectedFiles();
                 } else {
-                    return new File[] { importChooser.getSelectedFile() };
+                    return new File[]{importChooser.getSelectedFile()};
                 }
             }
         }
@@ -748,6 +747,7 @@ public class BeautiFrame extends DocumentFrame {
     /**
      * Use the native file dialog on the Mac because the Swing one is bad. On linux, the native
      * one is bad. No preference on Windows.
+     *
      * @param title
      * @return
      */
@@ -827,14 +827,26 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public Action getImportAction() {
-        return importAlignmentAction;
+        return importDataAction;
     }
 
-    protected AbstractAction importAlignmentAction = new AbstractAction("Import Data...") {
+    protected AbstractAction importDataAction = new AbstractAction("Import Data...") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
             doImport();
+        }
+    };
+
+    public Action getRemoveAction() {
+        return removeDataAction;
+    }
+
+    protected AbstractAction removeDataAction = new AbstractAction("Remove Partition") {
+        private static final long serialVersionUID = 3217702096314745005L;
+
+        public void actionPerformed(java.awt.event.ActionEvent ae) {
+            doDelete();
         }
     };
 

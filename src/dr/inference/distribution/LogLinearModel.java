@@ -1,7 +1,8 @@
 /*
  * LogLinearModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,17 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
 
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
 import dr.inference.model.Parameter;
+
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
  */
-@Deprecated // GLM stuff is now in inference.glm - this is here for backwards compatibility temporarily
-public class LogLinearModel extends GeneralizedLinearModel {
+
+public class LogLinearModel extends GeneralizedLinearModel implements LogAdditiveCtmcRateProvider.Integrated {
 
     public LogLinearModel(Parameter dependentParam) {
         super(dependentParam);
@@ -39,10 +44,11 @@ public class LogLinearModel extends GeneralizedLinearModel {
 
     @Override
     public double[] getXBeta() {
-        double[] xBeta = super.getXBeta();
-        for(int i=0; i<xBeta.length; i++)
-            xBeta[i] = Math.exp(xBeta[i]);
-        return xBeta;
+        return super.getXBeta();
+    }
+
+    public Parameter getLogRateParameter() {
+        throw new RuntimeException("Not yet implemented.");
     }
 
     protected double calculateLogLikelihood(double[] beta) {
@@ -59,5 +65,23 @@ public class LogLinearModel extends GeneralizedLinearModel {
 
     public boolean requiresScale() {
         return false;
+    }
+
+    @Override
+    public LogLinearModel factory(List<Parameter> oldIndependentParameter, List<Parameter> newIndependentParameter)  {
+        LogLinearModel newGLM = new LogLinearModel(dependentParam);
+        for (int i = 0; i < numRandomEffects; i++) {
+            newGLM.addRandomEffectsParameter(randomEffects.get(i));
+        }
+        for (int i = 0; i < numIndependentVariables; i++) {
+            Parameter currentIndependentParameter = independentParam.get(i);
+            final int index = oldIndependentParameter.indexOf(currentIndependentParameter);
+            if (index != -1) {
+                newGLM.addIndependentParameter(newIndependentParameter.get(index), designMatrix.get(i), indParamDelta.get(i));
+            } else {
+                newGLM.addIndependentParameter(currentIndependentParameter, designMatrix.get(i), indParamDelta.get(i));
+            }
+        }
+        return newGLM;
     }
 }

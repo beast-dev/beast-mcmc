@@ -1,7 +1,8 @@
 /*
  * CreateTraitDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.traitspanel;
@@ -41,7 +43,6 @@ import java.awt.event.ItemListener;
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class CreateTraitDialog {
     public static final String EXAMPLE_FORMAT = "<html>A trait file is tab delimited. " +
@@ -98,13 +99,17 @@ public class CreateTraitDialog {
         exampleButton.setEnabled(false);
         exampleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(EXAMPLE_FORMAT, new Dimension(400,300));
-
-                JOptionPane.showMessageDialog(frame, scrollPane,
-                        "Example of mapping file format",
-                        JOptionPane.PLAIN_MESSAGE);
+                showExampleTraitFormat(frame);
             }
         });
+    }
+
+    public static void showExampleTraitFormat(BeautiFrame frame) {
+        JScrollPane scrollPane = TextUtil.createHTMLScrollPane(EXAMPLE_FORMAT, new Dimension(400,300));
+
+        JOptionPane.showMessageDialog(frame, scrollPane,
+                "Example of mapping file format",
+                JOptionPane.PLAIN_MESSAGE);
     }
 
     public void setTraitName(String traitName) {

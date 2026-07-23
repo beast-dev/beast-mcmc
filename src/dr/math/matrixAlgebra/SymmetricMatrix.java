@@ -1,7 +1,8 @@
 /*
  * SymmetricMatrix.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.matrixAlgebra;
@@ -107,9 +109,13 @@ public class SymmetricMatrix extends Matrix {
      *          if n <= 0
 	 */
 	public static SymmetricMatrix compoundCorrelationSymmetricMatrix(double[] offdiag, int n) {
-        if (n <= 0)
-            throw new NegativeArraySizeException(
-                    "Requested matrix size: " + n);
+		return compoundSymmetricMatrix(1.0, offdiag, n);
+	}
+
+	public static SymmetricMatrix compoundSymmetricMatrix(double diagonal, double[] offdiag, int n) {
+		if (n <= 0)
+			throw new NegativeArraySizeException(
+					"Requested matrix size: " + n);
 
 		assert n * (n - 1) / 2 == offdiag.length
 				: "Requested matrix size: " + n + " doesn't match off diagonal array size: " + offdiag.length;
@@ -117,7 +123,7 @@ public class SymmetricMatrix extends Matrix {
 		double[][] a = new double[n][n];
 		int k = 0;
 		for (int i = 0; i < n; i++) {
-			a[i][i] = 1.0;
+			a[i][i] = diagonal;
 			for (int j = i + 1; j < n; j++) {
 				a[i][j] = a[j][i] = offdiag[k];
 				k++;
@@ -221,11 +227,11 @@ public class SymmetricMatrix extends Matrix {
 	}
 
 	/**
-	 * @return Matrix		inverse of the receiver.
+	 * @return SymmetricMatrix		inverse of the receiver.
 	 * @throws java.lang.ArithmeticException if the receiver is
 	 *                                       a singular matrix.
 	 */
-	public Matrix inverse() throws ArithmeticException {
+	public SymmetricMatrix inverse() throws ArithmeticException {
 		return rows() < lupCRLCriticalDimension
 				? new SymmetricMatrix(
 				(new LUPDecomposition(this)).inverseMatrixComponents())
@@ -315,7 +321,7 @@ public class SymmetricMatrix extends Matrix {
 	 *                          the receivers are not equal to the number of rows
 	 *                          of the supplied matrix.
 	 */
-	public SymmetricMatrix product(SymmetricMatrix a) throws IllegalDimension {
+	public Matrix product(SymmetricMatrix a) throws IllegalDimension {
 		return new SymmetricMatrix(productComponents(a));
 	}
 

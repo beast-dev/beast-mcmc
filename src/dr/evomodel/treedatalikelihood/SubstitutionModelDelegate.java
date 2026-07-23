@@ -1,7 +1,8 @@
 /*
  * SubstitutionModelDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
@@ -42,9 +44,8 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @author Marc A. Suchard
- * @version $Id$
  */
-public final class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
+public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;
     public static final boolean MEASURE_RUN_TIME = false;
@@ -54,7 +55,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     public double updateTime;
     public double convolveTime;
 
-    private static final int BUFFER_POOL_SIZE_DEFAULT = 100;
+    static final int BUFFER_POOL_SIZE_DEFAULT = 100;
 
     private final Tree tree;
     private final List<SubstitutionModel> substitutionModelList;
@@ -69,7 +70,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
-    private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
+    private final Deque<Integer> availableBuffers = new ArrayDeque<>();
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -147,6 +148,11 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         this.settings = settings;
 
     }// END: Constructor
+
+    @Override
+    public BranchModel getBranchSubstitutionModel() {
+        return branchModel;
+    }
 
     @Override
     public boolean canReturnComplexDiagonalization() {
@@ -247,11 +253,6 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     @Override
     public int getEigenIndex(int bufferIndex) {
-
-        if (bufferIndex == 5) {
-            System.err.println();
-        }
-
         return eigenBufferHelper.getOffsetIndex(bufferIndex);
     }
 

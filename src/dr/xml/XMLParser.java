@@ -1,7 +1,8 @@
 /*
  * XMLParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.xml;
 
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -163,11 +166,15 @@ public class XMLParser {
 
         Element e = document.getDocumentElement();
         if (e.getTagName().equals("beast")) {
-            // If the 'version' is attribute is present then check it is not an more recent version...
+            // If the 'version' is attribute is present then check it is not a more recent version...
             if (e.hasAttribute(VERSION)) {
                 String xmlVersion = e.getAttribute(VERSION);
-                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion())) {
-                   throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
+                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion()) &&
+                        !Boolean.parseBoolean(System.getProperty("ignore.versions"))) {
+                    throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than \n" +
+                            "the version of BEAST running it (" + version.getVersion() + "). \n" +
+                            "This may be incompatible and cause unpredictable errors. \n" +
+                            "To override this behaviour use the `-ignore_versions` command line option." );
                 }
             }
 
@@ -261,7 +268,6 @@ public class XMLParser {
 
             if (verbose) System.out.println("  Restoring idref=" + idref);
 
-
             return new Reference(restoredXMLObject);
 
         } else {
@@ -332,7 +338,9 @@ public class XMLParser {
                     addCitable((Citable)obj);
                 }
 
-                if (obj instanceof Likelihood) {
+                if (obj instanceof CompoundLikelihood) {
+                    Likelihood.FULL_LIKELIHOOD_SET.addAll(((CompoundLikelihood) obj).getLikelihoods());
+                } else if (obj instanceof Likelihood) {
                     Likelihood.FULL_LIKELIHOOD_SET.add((Likelihood) obj);
                 } else if (obj instanceof Model) {
                     Model.FULL_MODEL_SET.add((Model) obj);
@@ -341,6 +349,14 @@ public class XMLParser {
                 }
 
                 xo.setNativeObject(obj);
+            } else {
+                // The element doesn't have a specific parser so is likely to be an internal
+                // element to another parser. However, it has an ID then it is likely to be
+                // something that was intended to parse so give a warning.
+                if (e.hasAttribute(ID)) { // object has ID
+                    java.util.logging.Logger.getLogger("dr.xml").warning("Element called, " + xo.getName() +
+                            ", has an ID, " + e.getAttribute(ID) + ", but no parser.");
+                }
             }
 
             if (id != null) {

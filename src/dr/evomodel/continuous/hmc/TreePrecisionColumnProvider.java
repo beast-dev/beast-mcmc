@@ -1,7 +1,8 @@
 /*
- * FullyConjugateTreeTipsPotentialDerivative.java
+ * TreePrecisionColumnProvider.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous.hmc;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
@@ -57,7 +58,7 @@ public class TreePrecisionColumnProvider extends AbstractModel
     final Tree tree;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final ContinuousTraitPartialsProvider tipData;
-    private final Map<Integer, double[]> treeCache = new HashMap<Integer, double[]>();
+    private final Map<Integer, double[]> treeCache = new HashMap<>();
 
     private final int numTaxa;
     private final int dimTrait;
@@ -77,8 +78,8 @@ public class TreePrecisionColumnProvider extends AbstractModel
 
         assert (likelihoodDelegate.getTraitCount() == 1);
 
-        if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
+        if (tree instanceof Model) {
+            addModel((Model) tree);
         }
     }
 
@@ -111,8 +112,12 @@ public class TreePrecisionColumnProvider extends AbstractModel
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            treeCache.clear();
+            clearTreeCache();
         }
+    }
+
+    protected void clearTreeCache() {
+        treeCache.clear();
     }
 
     @Override

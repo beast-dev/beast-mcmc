@@ -1,7 +1,8 @@
 /*
  * DiscreteRatePriorGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.phylogeography.tools;
@@ -826,15 +828,15 @@ public class DiscreteRatePriorGenerator {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption(COORDINATES, "coordinate file", "specifies a tab-delimited file with coordinates for the locations"),
-                        new Arguments.StringOption(DENSITIES, "density file", "specifies a tab-delimited file with densities for the locations"),
-                        new Arguments.StringOption(GENERICS, "generics file", "specifies a tab-delimited file-list to use as measures for the locations"),
-                        new Arguments.StringOption(FORMAT, TimeSlicer.enumNamesToStringArray(OutputFormat.values()),false,
+                        new Arguments.StringOption(COORDINATES, null, "coordinate file", "specifies a tab-delimited file with coordinates for the locations"),
+                        new Arguments.StringOption(DENSITIES, null, "density file", "specifies a tab-delimited file with densities for the locations"),
+                        new Arguments.StringOption(GENERICS, null, "generics file", "specifies a tab-delimited file-list to use as measures for the locations"),
+                        new Arguments.StringOption(FORMAT, null, TimeSlicer.enumNamesToStringArray(OutputFormat.values()),false,
                                 "prior output format [default = XML]"),
-                        new Arguments.StringOption(MODEL, TimeSlicer.enumNamesToStringArray(Model.values()),false,
+                        new Arguments.StringOption(MODEL, null, TimeSlicer.enumNamesToStringArray(Model.values()),false,
                                 "model output [default = rate priors]"),
                         //example: new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=0]"),
-                        new Arguments.Option(HELP, "option to print this message"),
+                        new Arguments.Option(HELP, "h", "option to print this message"),
                 });
 
         try {

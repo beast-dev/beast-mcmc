@@ -1,3 +1,30 @@
+/*
+ * GetNSCountsFromTrees.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
@@ -155,45 +182,13 @@ public class GetNSCountsFromTrees {
             NodeRef node = tree.getNode(x);
             if (!tree.isRoot(node)){
                 count ++;
-
-                boolean proceed = false;
-                if (branchSet == BranchSet.ALL) {
-                    proceed = true;
-                } else if (branchSet == BranchSet.EXT && tree.isExternal(node)) {
-                    proceed = true;
-                } else if (branchSet == BranchSet.INT && !tree.isExternal(node)) {
-                    proceed = true;
-                } else if (branchSet == BranchSet.BACKBONE) {
-                    for (Set inclusionSet: inclusionSets){
-                        if (onBackbone(tree, node, inclusionSet)){
-                            proceed = true;
-                        }
-                    }
-                } else if (branchSet == BranchSet.CLADE) {
-                    for (Set inclusionSet: inclusionSets){
-                        if (inClade(tree, node, inclusionSet, cladeStem)){
-                            proceed = true;
-                        }
-                    }
-                }
-
-                //if the node falls in one of the clades we are excluding, do not proceed.
-                if (proceed && exclusionSets.size()>0){
-                    for(Set exclusionSet: exclusionSets){
-                        if(inClade(tree, node, exclusionSet, excludeCladeStems)){
-                            proceed = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (proceed){
+                if (nodeToConsider(tree, node, branchSet, inclusionSets, exclusionSets)){
                     double branchLength = tree.getBranchLength(node);
                     length += branchLength;
                     Object totalNObject = tree.getNodeAttribute(node, totalcN);
                     Object totalSObject = tree.getNodeAttribute(node, totalcS);
                     if (totalNObject!=null && totalSObject!=null) {
-                        double totalN = (Double) totalNObject;
+                         double totalN = (Double) totalNObject;
                         double totalS = (Double) totalSObject;
                         double totaluNObject = (Double) tree.getNodeAttribute(node, totaluN);
                         double totaluSObject = (Double) tree.getNodeAttribute(node, totaluS);
@@ -292,6 +287,45 @@ public class GetNSCountsFromTrees {
         }
     }
 
+    private boolean nodeToConsider(Tree tree, NodeRef node, BranchSet branchSet, List<Set> inclusionSets,  List<Set> exclusionSets){
+        boolean nodeToConsider = false;
+        if (branchSet == BranchSet.ALL) {
+            nodeToConsider = true;
+        } else if (branchSet == BranchSet.EXT && tree.isExternal(node)) {
+            nodeToConsider = true;
+        } else if (branchSet == BranchSet.INT && !tree.isExternal(node)) {
+            nodeToConsider = true;
+        } else if (branchSet == BranchSet.BACKBONE) {
+            for (Set inclusionSet: inclusionSets){
+                if (onBackbone(tree, node, inclusionSet)){
+                    nodeToConsider = true;
+                }
+            }
+        } else if (branchSet == BranchSet.CLADE) {
+            for (Set inclusionSet: inclusionSets){
+                if (inClade(tree, node, inclusionSet, cladeStem)){
+                    nodeToConsider = true;
+                }
+            }
+        } else if (branchSet == BranchSet.SINGLEBRANCH) {
+            Set inclusionSet = inclusionSets.get(0); //the issue with multiple inclusion sets is caught in the main method
+            if (exclusionSets.size()>0){
+                System.err.println("exclusion sets are ignored for a single branch");
+            }
+            nodeToConsider = isMRCAnode(tree, node, inclusionSet);
+        }
+
+        //if the node falls in one of the clades we are excluding, do not proceed.
+        if (nodeToConsider && exclusionSets.size()>0 && (branchSet != BranchSet.SINGLEBRANCH)){
+            for(Set exclusionSet: exclusionSets){
+                if(inClade(tree, node, exclusionSet, excludeCladeStems)){
+                    nodeToConsider = false;
+                    break;
+                }
+            }
+        }
+        return nodeToConsider;
+    }
 
     private boolean inSiteList(Integer site, double[] siteList){
         boolean returnBoolean = false;
@@ -352,7 +386,6 @@ public class GetNSCountsFromTrees {
     }
 
     private static boolean inClade(Tree tree, NodeRef node, Set targetSet, boolean includeStem) {
-
         Set leafSet = TreeUtils.getDescendantLeaves(tree, node);
 
         leafSet.removeAll(targetSet);
@@ -375,6 +408,15 @@ public class GetNSCountsFromTrees {
         }
     }
 
+    private static boolean isMRCAnode(Tree tree, NodeRef node, Set targetSet) {
+        NodeRef mrca = TreeUtils.getCommonAncestorNode(tree, targetSet);
+        if (node.equals(mrca)){
+            return true;
+        } else {
+            return false;
+         }
+    }
+
     private boolean branchInfo;
     private boolean zeroBranches;
     private boolean summary;
@@ -390,7 +432,8 @@ public class GetNSCountsFromTrees {
         INT,
         EXT,
         BACKBONE,
-        CLADE
+        CLADE,
+        SINGLEBRANCH
     }
 
     private static String[] parseVariableLengthStringArray(String inString) {
@@ -470,22 +513,22 @@ public class GetNSCountsFromTrees {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption(BRANCHINFO, falseTrue, false, "include a summary for the root [default=off]"),
-                        new Arguments.StringOption(BRANCHSET, TimeSlicer.enumNamesToStringArray(BranchSet.values()), false,
+                        new Arguments.IntegerOption(BURNIN, "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.StringOption(BRANCHINFO,null,  falseTrue, false, "include a summary for the root [default=off]"),
+                        new Arguments.StringOption(BRANCHSET,null,  TimeSlicer.enumNamesToStringArray(BranchSet.values()), false,
                                 "branch set [default = all]"),
-//                        new Arguments.StringOption(CLADETAXA, "clade taxa file", "specifies a file with taxa that define the clade"),
-                        new Arguments.StringOption(INCLUDECLADES, "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
-                        new Arguments.StringOption(CLADESTEM, falseTrue, false, "include clade stem [default=false]"),
-                        new Arguments.StringOption(EXCLUDECLADESTEM, falseTrue, true, "include clade stem in the exclusion [default=true]"),
-                        new Arguments.StringOption(BACKBONETAXA, "Backbone taxa file", "specifies a file with taxa that define the backbone"),
-                        new Arguments.StringOption(ZEROBRANCHES, falseTrue, true, "include branches with 0 N and S subtitutions [default=included]"),
-                        new Arguments.StringOption(SUMMARY, falseTrue, true, "provide a summary of the N and S counts per tree [default=detailed output]"),
-                        new Arguments.RealOption(MRSD, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
-                        new Arguments.StringOption(EXCLUDECLADES, "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
-                        new Arguments.IntegerOption(SITESUM, "the number of nucleotide sites to summarize rates in per site per time unit [default = 1]"),
-                        new Arguments.StringOption(CODONSITELIST, "list of sites", "sites for which the summary is restricted to"),
-                        new Arguments.Option("help", "option to print this message")
+//                        new Arguments.StringOption(CLADETAXA, null, "clade taxa file", "specifies a file with taxa that define the clade"),
+                        new Arguments.StringOption(INCLUDECLADES,null,  "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
+                        new Arguments.StringOption(CLADESTEM, null, falseTrue, false, "include clade stem [default=false]"),
+                        new Arguments.StringOption(EXCLUDECLADESTEM, null, falseTrue, true, "include clade stem in the exclusion [default=true]"),
+                        new Arguments.StringOption(BACKBONETAXA,null,  "Backbone taxa file", "specifies a file with taxa that define the backbone"),
+                        new Arguments.StringOption(ZEROBRANCHES,null,  falseTrue, true, "include branches with 0 N and S subtitutions [default=included]"),
+                        new Arguments.StringOption(SUMMARY,null,  falseTrue, true, "provide a summary of the N and S counts per tree [default=detailed output]"),
+                        new Arguments.RealOption(MRSD, null, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
+                        new Arguments.StringOption(EXCLUDECLADES,null,  "clade exclusion files", "specifies files with taxa that define clades to be excluded"),
+                        new Arguments.IntegerOption(SITESUM, null, "the number of nucleotide sites to summarize rates in per site per time unit [default = 1]"),
+                        new Arguments.StringOption(CODONSITELIST, null, "list of sites", "sites for which the summary is restricted to"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {
@@ -546,6 +589,23 @@ public class GetNSCountsFromTrees {
                 }
             } else {
                 progressStream.println("you want to get summaries for one or more clades, but no files with taxa to define it are provided??");
+                System.exit(-1);
+            }
+        }
+        if (set == set.SINGLEBRANCH) {
+            if (arguments.hasOption(INCLUDECLADES)) {
+                String[] fileList = parseVariableLengthStringArray(arguments.getStringOption(INCLUDECLADES));
+                if (fileList.length > 1){
+                    progressStream.println("more than one clade set is specified for a summary of a single branch??");
+                    System.exit(-1);
+                } else {
+                    String singleSet = fileList[0];
+                    inclusionSets.add(getTargetSet(singleSet));
+                    progressStream.println("getting target set for a single branch summary specification: " + singleSet);
+                }
+            } else {
+                progressStream.println("you want to get summaries for a single branch, but no files with taxa to define to child node of the branch are provided??");
+                System.exit(-1);
             }
         }
 

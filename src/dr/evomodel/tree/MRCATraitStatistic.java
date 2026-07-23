@@ -1,7 +1,8 @@
 /*
  * MRCATraitStatistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -38,11 +40,10 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TMRCAStatistic.java,v 1.21 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MRCATraitStatistic extends TreeStatistic {
 
-    public MRCATraitStatistic(String name, String trait, TreeModel tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
+    public MRCATraitStatistic(String name, String trait, DefaultTreeModel tree, TaxonList taxa) throws TreeUtils.MissingTaxonException {
         super(name);
         this.tree = tree;
         this.trait = trait;
@@ -51,7 +52,7 @@ public class MRCATraitStatistic extends TreeStatistic {
     }
 
     public void setTree(Tree tree) {
-        this.tree = (TreeModel) tree;
+        this.tree = (DefaultTreeModel) tree;
     }
 
     public Tree getTree() {
@@ -75,7 +76,7 @@ public class MRCATraitStatistic extends TreeStatistic {
         return tree.getNodeTrait(node, trait);
     }
 
-    private TreeModel tree = null;
+    private DefaultTreeModel tree = null;
     private Set<String> leafSet = null;
     private String trait;
     private boolean isRate;

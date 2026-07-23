@@ -1,7 +1,8 @@
 /*
  * Utils.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.bss;
@@ -53,8 +55,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import dr.evolution.datatype.HiddenDataType;
+import dr.evolution.sequence.DelimitedSequence;
 import dr.evolution.tree.TreeUtils;
-import org.apache.commons.math.random.MersenneTwister;
 
 import dr.app.bss.test.AncestralSequenceTrait;
 import dr.evolution.datatype.Codons;
@@ -75,7 +77,6 @@ import dr.math.MathUtils;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class Utils {
 
@@ -95,13 +96,10 @@ public class Utils {
 	// ////////////////////////////////
 	// ---RANDOM NUMB3R GENERATION---//
 	// ////////////////////////////////
-	
-	private static MersenneTwister random = new MersenneTwister(
-			MathUtils.nextLong());
 
     public static double rLogNormal(double stdev, double mean) {
     	
-    	double rNorm = random.nextGaussian() * stdev + mean;
+    	double rNorm = MathUtils.nextGaussian() * stdev + mean;
     	double rLognormal = Math.exp(rNorm);
     	
     	return rLognormal;
@@ -127,7 +125,7 @@ public class Utils {
 
 		distribution[range - 1] = 1.0;
 
-		double key = random.nextDouble();
+		double key = MathUtils.nextDouble();
 
 		int mindex = 1;
 		int maxdex = range - 1;
@@ -165,7 +163,7 @@ public class Utils {
 
 		int samplePos = -Integer.MAX_VALUE;
 		double cumProb = 0.0;
-		double u = random.nextDouble();
+		double u = MathUtils.nextDouble();
 
 		for (int i = 0; i < probabilities.length; i++) {
 
@@ -365,7 +363,6 @@ public class Utils {
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344 };
 
-	public static final String STOP_CODONS[] = new String[] { "TAA", "TAG", "TGA" };
 	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
@@ -1270,7 +1267,7 @@ public class Utils {
 	}// END: printTaxonList
 
 	public static Sequence intArray2Sequence(Taxon taxon, int[] seq,
-			int gapFlag, DataType dataType) {
+			int gapFlag, DataType dataType, String attributeName) {
 
 		StringBuilder sSeq = new StringBuilder();
 		int partitionSiteCount = seq.length;
@@ -1298,11 +1295,14 @@ public class Utils {
 				if (state == gapFlag) {
 					sSeq.append(dataType.getCode(dataType.getGapState()));
 				} else {
-					if(dataType instanceof HiddenDataType){
+					if (dataType instanceof HiddenDataType) {
 						sSeq.append(dataType.getCode(seq[i] %
 								(dataType.getStateCount()/((HiddenDataType) dataType).getHiddenClassCount())));
-					}else{
+					} else {
 						sSeq.append(dataType.getCode(seq[i]));
+					}
+					if (dataType.isDelimited() && i < partitionSiteCount - 1) {
+						sSeq.append(dataType.getDelimiter());
 					}
 				}// END: gap check
 
@@ -1310,7 +1310,15 @@ public class Utils {
 
 		}// END: dataType check
 
-		return new Sequence(taxon, sSeq.toString());
+		Sequence sequence = dataType.isDelimited() ?
+				new DelimitedSequence(taxon, sSeq.toString(), dataType) :
+				new Sequence(taxon, sSeq.toString());
+
+		if (attributeName != null) {
+			taxon.setAttribute(attributeName, sequence.getSequenceString());
+		}
+
+		return sequence;
 	}// END: intArray2Sequence
 
 	// //////////////////////

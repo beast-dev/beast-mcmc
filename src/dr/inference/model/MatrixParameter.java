@@ -1,7 +1,8 @@
 /*
  * MatrixParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -77,6 +79,13 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
             parameters[i] = compoundParameter.getParameter(i);
         }
         return new MatrixParameter(name, parameters);
+    }
+
+    public static MatrixParameterInterface checkMatrixAndRecast(CompoundParameter compoundParameter) {
+        if (compoundParameter instanceof MatrixParameterInterface) {
+            return (MatrixParameterInterface) compoundParameter;
+        }
+        return recast(compoundParameter.getId(), compoundParameter);
     }
 
     public double getParameterValue(int row, int col) {
@@ -497,8 +506,8 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
 
 
     private boolean dimensionsEstablished = false;
-    private int columnDimension = 0;
-    private int rowDimension = 0;
+    protected int columnDimension = 0;
+    protected int rowDimension = 0;
 
     // **************************************************************
     // XMLElement IMPLEMENTATION

@@ -1,7 +1,8 @@
 /*
  * GaussianProcessFromTree.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -71,7 +73,7 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 //        treeVariance = traitModel.computeTreeVariance(includeRoot);
 //        long estimatedTime2 = System.nanoTime() - startTime2;
 
-        double[][] traitPrecision = traitModel.getDiffusionModel().getPrecisionmatrix();
+        double[][] traitPrecision = traitModel.getDiffusionModel().getPrecisionMatrix();
 
 
 //        for (int i = 0; i < treeVariance2.length; ++i) {
@@ -114,7 +116,7 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
         NodeRef root = traitModel.getTreeModel().getRoot();
         double[] traitStart = traitModel.getPriorMean();
         double[][] varianceCholesky = null;
-        double[][] temp = new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
+        double[][] temp = new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionMatrix()).inverse().toComponents();
         try {
             varianceCholesky = (new CholeskyDecomposition(temp).getL());
         } catch (IllegalDimension illegalDimension) {

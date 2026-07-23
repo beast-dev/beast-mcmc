@@ -1,7 +1,8 @@
 /*
- * MatrixInverseStatistic.java
+ * CorrelationMatrixStatistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -38,12 +40,12 @@ public class CorrelationMatrixStatistic extends Statistic.Abstract implements Va
 
 
     private static final String CORRELATION_MATRIX = "correlationMatrix";
-    private final MatrixParameter matrix;
+    private final MatrixParameterInterface matrix;
     private final double[][] correlation;
     private boolean corrKnown = false;
     private final boolean invert;
 
-    public CorrelationMatrixStatistic(MatrixParameter matrix, Boolean invert) {
+    public CorrelationMatrixStatistic(MatrixParameterInterface matrix, Boolean invert) {
         this.matrix = matrix;
         this.invert = invert;
         correlation = new double[matrix.getRowDimension()][matrix.getColumnDimension()];
@@ -100,7 +102,7 @@ public class CorrelationMatrixStatistic extends Statistic.Abstract implements Va
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
+            MatrixParameterInterface matrix = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
             if (matrix.getColumnDimension() != matrix.getRowDimension()) {
                 throw new XMLParseException("Only square matrices can be converted to correlation matrices");
             }
@@ -114,7 +116,7 @@ public class CorrelationMatrixStatistic extends Statistic.Abstract implements Va
         @Override
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameter.class),
+                    new ElementRule(MatrixParameterInterface.class),
                     AttributeRule.newBooleanRule(INVERT, true)
             };
         }

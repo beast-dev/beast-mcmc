@@ -1,7 +1,8 @@
 /*
- * TreeModel.java
+ * NewTreeModel.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -47,7 +49,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
 public class NewTreeModel extends AbstractModel implements MutableTree, Citable {
 
@@ -224,19 +225,24 @@ public class NewTreeModel extends AbstractModel implements MutableTree, Citable 
         final Node node;
         final Parameter parameter;
         final int index;
+        final boolean nodeOrderChanged;
 
         public TreeChangedEvent() {
-            this(null, null, -1);
+            this(null, null, -1,false);
         }
 
         public TreeChangedEvent(Node node) {
-            this(node, null, -1);
+            this(node, null, -1,false);
+        }
+        public TreeChangedEvent(Node node, Parameter parameter, int index) {
+            this(node, parameter, -index,false);
         }
 
-        public TreeChangedEvent(Node node, Parameter parameter, int index) {
+        public TreeChangedEvent(Node node, Parameter parameter, int index,boolean nodeOrderChanged) {
             this.node = node;
             this.parameter = parameter;
             this.index = index;
+            this.nodeOrderChanged = nodeOrderChanged;
         }
 
         @Override
@@ -260,6 +266,8 @@ public class NewTreeModel extends AbstractModel implements MutableTree, Citable 
         public boolean isNodeChanged() {
             return node != null;
         }
+        public boolean isNodeOrderChanged(){return nodeOrderChanged;};
+
 
         public boolean isNodeParameterChanged() {
             return parameter != null;
@@ -268,6 +276,8 @@ public class NewTreeModel extends AbstractModel implements MutableTree, Citable 
         public boolean isHeightChanged() {
             return parameter == node.heightParameter;
         }
+
+        public boolean isOnlyHeightChanged() { return false; }
 
         public boolean areAllInternalHeightsChanged() {
             if (parameter != null) {

@@ -1,7 +1,8 @@
 /*
- * BranchSpecificSubstitutionRateModelParser.java
+ * BranchSpecificSubstitutionParameterBranchModelParser.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchmodel;
@@ -46,15 +48,18 @@ public class BranchSpecificSubstitutionParameterBranchModelParser extends Abstra
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
         List<Parameter> parameters = new ArrayList<>();
-        for (XMLObject xoc : xo.getAllChildren(OLD_PARAMETER)) {
-            Parameter parameter = (Parameter) xoc.getChild(Parameter.class);
+        XMLObject xoc = xo.getChild(OLD_PARAMETER);
+        for (int i = 0; i < xoc.getChildCount(); ++i) {
+            Parameter parameter = (Parameter) xoc.getChild(i);
             parameters.add(parameter);
         }
 
         List<BranchRateModel> branchRateModels = new ArrayList<>();
-        for (XMLObject xoc : xo.getAllChildren(NEW_PARAMETER)) {
-            BranchRateModel branchRateModel = (BranchRateModel) xoc.getChild(BranchRateModel.class);
+        xoc = xo.getChild(NEW_PARAMETER);
+        for (int i = 0; i < xoc.getChildCount(); ++i) {
+            BranchRateModel branchRateModel = (BranchRateModel) xoc.getChild(i);
             branchRateModels.add(branchRateModel);
         }
 

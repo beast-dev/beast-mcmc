@@ -1,7 +1,8 @@
 /*
- * DiscreteTraitBranchSubstitutionParameterGradient.java
+ * HyperParameterBranchSubstitutionParameterGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
@@ -29,6 +31,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -36,7 +39,6 @@ import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.BranchParameter;
 import dr.inference.model.Parameter;
-import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
 
 /**
@@ -56,9 +58,10 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
                                                              BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                              BranchParameter branchParameter,
                                                              Parameter hyperParameter,
+                                                             Double tolerance,
                                                              boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, useHessian);
+        super(traitName, treeDataLikelihood, likelihoodDelegate,  null, null, tolerance, useHessian, 0, DifferentialMassProvider.Mode.EXACT);
 
         throw new RuntimeException("Not yet fixed.");
 //        locationScaleTransform = branchParameter.getTransform();
@@ -100,9 +103,9 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        // cannot avoid calculating full hessian in this case, use numerical method for now
-        // TODO: maybe add Hessian into BEAGLE ?
-        return NumericalDerivative.diagonalHessian(numeric, branchParameter.getParameterValues());
+        // cannot avoid calculating full hessian in this case
+        // TODO: maybe add full Hessian into BEAGLE ?
+        throw new RuntimeException("Not yet implemented");
     }
 
     protected double getChainGradient(Tree tree, NodeRef node) {
@@ -114,11 +117,6 @@ public abstract class HyperParameterBranchSubstitutionParameterGradient extends 
 
     public int getDimension() {
         return hyperParameter.getDimension();
-    }
-
-    @Override
-    public String getReport() {
-        return getReport(hyperParameter);
     }
 
     public Parameter getParameter() {

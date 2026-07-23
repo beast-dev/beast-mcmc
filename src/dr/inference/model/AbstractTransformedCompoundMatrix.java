@@ -1,7 +1,8 @@
 /*
- * TransformedCompoundMatrix.java
+ * AbstractTransformedCompoundMatrix.java
  *
- * Copyright (c) 2002-2018 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -36,6 +38,8 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
 
     final Parameter diagonalParameter;
     final Parameter offDiagonalParameter;
+
+    protected boolean isStrictlyUpperTriangular = true;
 
     final CompoundParameter untransformedCompoundParameter;
 
@@ -59,7 +63,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         diagonalParameter = diagonals;
         dim = diagonalParameter.getDimension();
         offDiagonalParameter =
-                (transform == null) ? offDiagonal: new TransformedMultivariateParameter(offDiagonal, transform, inverse);
+                (transform == null) ? offDiagonal : new TransformedMultivariateParameter(offDiagonal, transform, inverse);
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
 
@@ -149,7 +153,7 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
         return offDiagonalParameter;
     }
 
-    public CompoundParameter getUntransformedCompoundParameter(){
+    public CompoundParameter getUntransformedCompoundParameter() {
         return untransformedCompoundParameter;
     }
 
@@ -185,7 +189,6 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     }
 
     int getUpperTriangularIndex(int i, int j) {
-        assert i != j;
         if (i < j) {
             return upperTriangularTransformation(i, j);
         } else {
@@ -194,6 +197,22 @@ abstract public class AbstractTransformedCompoundMatrix extends MatrixParameter 
     }
 
     private int upperTriangularTransformation(int i, int j) {
+        if (isStrictlyUpperTriangular) {
+            assert i != j;
+            return strictlyUpperTriangularTransformation(i, j);
+        }
+        return weaklyUpperTriangularTransformatino(i, j);
+    }
+
+    private int strictlyUpperTriangularTransformation(int i, int j) {
         return i * (2 * dim - i - 1) / 2 + (j - i - 1);
+    }
+
+    private int weaklyUpperTriangularTransformatino(int i, int j) {
+        return i * (2 * dim - i + 1) / 2 + (j - i);
+    }
+
+    public void setStrictlyUpperTriangular(boolean b) {
+        this.isStrictlyUpperTriangular = b;
     }
 }

@@ -1,7 +1,8 @@
 /*
  * PartitionModelPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2025 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,31 +22,35 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
+import dr.app.beauti.components.discrete.BASTAModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
+import dr.app.beauti.options.BeautiOptions;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
-import dr.app.beauti.components.discrete.DiscreteSubstModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelStructureType;
 import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
-import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.logging.Logger;
@@ -66,23 +71,23 @@ public class PartitionModelPanel extends OptionsPanel {
             NucModelType.JC, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(
-            new BinaryModelType[] { BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION });
+            new BinaryModelType[]{BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION});
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck = new JCheckBox(
             "Use ambiguities in the tree likelihood associated with this model");
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType
             .values());
 
-    private JComboBox heteroCombo = new JComboBox(new String[] { "None",
-            "Gamma", "Invariant Sites", "Gamma + Invariant Sites" });
+    private JComboBox heteroCombo = new JComboBox(new String[]{"None",
+            "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
 
-    private JComboBox gammaCatCombo = new JComboBox(new String[] { "4", "5",
-            "6", "7", "8", "9", "10" });
+    private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
+            "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
     private JLabel gammaCatLabel;
 
-    private JComboBox codingCombo = new JComboBox(new String[] { "Off",
+    private JComboBox codingCombo = new JComboBox(new String[]{"Off",
             "2 partitions: positions (1 + 2), 3",
-            "3 partitions: positions 1, 2, 3" });
+            "3 partitions: positions 1, 2, 3"});
 
     private JCheckBox substUnlinkCheck = new JCheckBox(
             "Unlink substitution rate parameters across codon positions");
@@ -98,19 +103,39 @@ public class PartitionModelPanel extends OptionsPanel {
     // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical",
     // "Sample"});
 
+    //combo box to choose between FIT CTMC and BIT CTMC
     private JComboBox discreteTraitSiteModelCombo = new JComboBox(
             DiscreteSubstModelType.values());
+
+    private JPanel fitPanel = new JPanel();
+    private JPanel bitPanel = new JPanel();
+
+    //combo box to select approach for BASTA
+    private JComboBox bitModelCombo = new JComboBox(BASTAModelType.values());
+
+    //checkbox for sharing the coalescent model across demes
+    private JCheckBox bitDemeSharing = new JCheckBox("Share coalescent model across demes");
+
+    //combo box to select a model structure for FIT CTMC
+    private JComboBox discreteTraitSiteModelStructureCombo = new JComboBox(
+            DiscreteSubstModelStructureType.values());
+
     private JCheckBox activateBSSVS = new JCheckBox(
             // "Activate BSSVS"
             "Infer social network with BSSVS");
     private JButton setupGLMButton;
     private GLMSettingsDialog glmSettingsDialog = null;
 
+    // =========== continuous traits =============
+
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
 
     private JCheckBox latLongCheck = new JCheckBox(
             "Bivariate trait represents latitude and longitude");
+
+    private JCheckBox treatIndependentCheck = new JCheckBox(
+            "Each site is independent");
 
     private JCheckBox useLambdaCheck = new JCheckBox(
             "Estimate phylogenetic signal using tree transform");
@@ -120,26 +145,17 @@ public class PartitionModelPanel extends OptionsPanel {
     private JLabel jitterWindowLabel = new JLabel("Jitter window size:");
     private RealNumberField jitterWindowText = new RealNumberField(0, Double.POSITIVE_INFINITY);
 
-    private JTextArea citationText;
+    private JComboBox modelExtensionCombo = new JComboBox(ContinuousModelExtensionType.values());
+    private OptionsPanel latentFactorOptions = new OptionsPanel(12, 12);
+    private JSpinner factorDimSpinner = new JSpinner(
+            new SpinnerNumberModel(1, 1, 20, 1)
+    );
 
-    // =========== micro sat ===========
-    private JTextField microsatName = new JTextField();
-    private WholeNumberField microsatMax = new WholeNumberField(2,
-            Integer.MAX_VALUE);
-    private WholeNumberField microsatMin = new WholeNumberField(1,
-            Integer.MAX_VALUE);
-    private JComboBox rateProportionCombo = new JComboBox(
-            MicroSatModelType.RateProportionality.values());
-    private JComboBox mutationBiasCombo = new JComboBox(
-            MicroSatModelType.MutationalBias.values());
-    private JComboBox phaseCombo = new JComboBox(MicroSatModelType.Phase
-            .values());
-    JCheckBox shareMicroSatCheck = new JCheckBox(
-            "Share one microsatellite among all substitution model(s)");
+    private JTextArea citationText;
 
     protected final PartitionSubstitutionModel model;
 
-    final BeautiFrame frame;
+    private final BeautiFrame frame;
 
     public PartitionModelPanel(final BeautiFrame frame, final PartitionSubstitutionModel partitionModel) {
 
@@ -216,16 +232,17 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(heteroCombo);
         heteroCombo
-                .setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model.</html>");
+                .setToolTipText("<html>Select the type of site-specific rate<br>heterogeneity model." +
+//                        "<br>\"Felsenstein weights\" uses the quadrature method to calculate the category weights described in <br>" +
+//                        "Felsenstein (2001) <i>J Mol Evol</i> <b>53</b>: 447-455." +
+                        "</html>");
         heteroCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
 
-                boolean gammaHetero = heteroCombo.getSelectedIndex() == 1
-                        || heteroCombo.getSelectedIndex() == 3;
-
+                boolean gammaHetero = heteroCombo.getSelectedItem().toString().contains("Gamma");
                 model.setGammaHetero(gammaHetero);
-                model.setInvarHetero(heteroCombo.getSelectedIndex() == 2
-                        || heteroCombo.getSelectedIndex() == 3);
+                model.setInvarHetero(heteroCombo.getSelectedItem().toString().contains("Invariant"));
+                model.setGammaHeteroEqualWeights(heteroCombo.getSelectedItem().toString().contains("equal"));
 
                 if (gammaHetero) {
                     gammaCatLabel.setEnabled(true);
@@ -250,7 +267,7 @@ public class PartitionModelPanel extends OptionsPanel {
         gammaCatCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
 
-                model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
+                model.setRateCategories(gammaCatCombo.getSelectedIndex() + 4);
             }
         });
 
@@ -326,15 +343,81 @@ public class PartitionModelPanel extends OptionsPanel {
                         + "Alekseyenko, Lee & Suchard (2008) <i>Syst Biol</i> <b>57</b>: 772-784.</html>");
 
         PanelUtils.setupComponent(discreteTraitSiteModelCombo);
+        discreteTraitSiteModelCombo.setToolTipText("Select Backward-in-time CTMC for structured coalescent model options.");
         discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                model
-                        .setDiscreteSubstType((DiscreteSubstModelType) discreteTraitSiteModelCombo
-                                .getSelectedItem());
-                activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST);
-                setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST);
+                model.setDiscreteSubstModelType((DiscreteSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
+                setupPanel();
             }
         });
+
+        PanelUtils.setupComponent(discreteTraitSiteModelStructureCombo);
+        discreteTraitSiteModelStructureCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setDiscreteSubstType((DiscreteSubstModelStructureType) discreteTraitSiteModelStructureCombo
+                        .getSelectedItem());
+                activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST);
+                setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST);
+            }
+        });
+
+        PanelUtils.setupComponent(bitModelCombo);
+        bitModelCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setBastaModelType((BASTAModelType) bitModelCombo.getSelectedItem());
+            }
+        });
+
+        PanelUtils.setupComponent(bitDemeSharing);
+        bitDemeSharing.setToolTipText("<html>Specify whether to share the coalescent model across all demes.</html>");
+        bitDemeSharing.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setSharedCoalescentModel(bitDemeSharing.isSelected());
+            }
+        });
+        bitDemeSharing.setEnabled(true);
+        bitDemeSharing.setSelected(true);
+
+        fitPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Forward-in-time CTMC"),
+                BorderFactory.createEmptyBorder(5,5,5,5)));
+        fitPanel.setOpaque(false);
+        fitPanel.setLayout(new BoxLayout(fitPanel, BoxLayout.PAGE_AXIS));
+        String fitText = "P. Lemey, A. Rambaut, A.J. Drummond, M.A. Suchard (2009)" +
+                "\nBayesian phylogeography finds its roots." +
+                "\nPLOS Computational Biology 5(9): e1000520.";
+        JTextArea fitTextArea = new JTextArea(fitText);
+        fitTextArea.setEditable(false);
+        fitTextArea.setEnabled(false);
+        fitTextArea.setBackground(Color.lightGray);
+        fitTextArea.setOpaque(false);
+        fitPanel.add(fitTextArea);
+
+        PanelUtils.setupComponent(fitPanel);
+
+        bitPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Backward-in-time CTMC"),
+                BorderFactory.createEmptyBorder(5,5,5,5)));
+        bitPanel.setOpaque(false);
+        bitPanel.setLayout(new BoxLayout(bitPanel, BoxLayout.PAGE_AXIS));
+        String bitText = "N. De Maio, C.H. Wu, K.M. O’Reilly, D. Wilson (2015)" +
+                "\nNew routes to phylogeography: a Bayesian structured" +
+                "\ncoalescent approximation." +
+                "\nPLOS Genetics 11(8): e1005421.\n";
+        bitText += "Y. Shao, M.A. Suchard, A. Rambaut, P. Lemey, T. Vasylyeva, G. Baele (2025)" +
+                "\nParallel algorithms for phylogenetic inference" +
+                "\nunder a structured coalescent approximation." +
+                "\nbioRxiv 2025.09.22.677844.";
+        JTextArea bitTextArea = new JTextArea(bitText);
+        bitTextArea.setEditable(false);
+        bitTextArea.setEnabled(false);
+        bitTextArea.setBackground(Color.lightGray);
+        bitTextArea.setOpaque(false);
+        bitPanel.add(bitTextArea);
+
+        PanelUtils.setupComponent(bitPanel);
+
+        BeautiOptions.getInstance().needCoalescentModel.put(partitionModel.getName(), true);
 
         PanelUtils.setupComponent(continuousTraitSiteModelCombo);
         continuousTraitSiteModelCombo
@@ -347,6 +430,17 @@ public class PartitionModelPanel extends OptionsPanel {
                                 .getSelectedItem());
             }
         });
+
+        PanelUtils.setupComponent(treatIndependentCheck);
+        treatIndependentCheck
+                .setToolTipText("<html>Specify whether the traits should be treated as independent.</html>");
+
+        treatIndependentCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setIsIndependent(treatIndependentCheck.isSelected());
+            }
+        });
+        treatIndependentCheck.setEnabled(true);
 
         PanelUtils.setupComponent(latLongCheck);
         latLongCheck
@@ -388,6 +482,47 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
+        modelExtensionCombo.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.DESELECTED) {
+                    // do nothing
+                    return;
+                }
+                if (modelExtensionCombo.getSelectedItem() == ContinuousModelExtensionType.LATENT_FACTORS) {
+                    latentFactorOptions = new OptionsPanel();
+                    factorDimSpinner.setValue(1);
+                    latentFactorOptions.addComponentWithLabel("Latent dimension:",
+                            factorDimSpinner);
+
+                    JOptionPane optionPane = new JOptionPane(latentFactorOptions,
+                            JOptionPane.QUESTION_MESSAGE,
+                            JOptionPane.OK_CANCEL_OPTION,
+                            null,
+                            null,
+                            null);
+                    optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+                    final JDialog dialog = optionPane.createDialog(frame, "Select Latent Factor Dimension");
+                    dialog.pack();
+                    dialog.setVisible(true);
+
+                    Integer value = (Integer) optionPane.getValue();
+                    if (value == JOptionPane.CANCEL_OPTION) {
+                        modelExtensionCombo.setSelectedIndex(0);
+                        factorDimSpinner.setValue(1);
+                        model.setContinuousLatentDimension(model.getExtendedTraitCount());
+                    } else {
+                        Integer k = (Integer) factorDimSpinner.getValue();
+                        model.setContinuousLatentDimension(k);
+                    }
+                } else { // just in case they originally set a factor model then changed their mind
+                    model.setContinuousLatentDimension(model.getExtendedTraitCount());
+                }
+                model.setContinuousExtensionType((ContinuousModelExtensionType) modelExtensionCombo.getSelectedItem());
+            }
+        });
+
         PanelUtils.setupComponent(useLambdaCheck);
         useLambdaCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -409,7 +544,7 @@ public class PartitionModelPanel extends OptionsPanel {
         activateBSSVS
                 .setToolTipText("<html>Activates Bayesian stochastic search variable selection on the rates as described in<br>"
                         + "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
-        activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST);
+        activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST);
 
         setupGLMButton = new JButton("Setup GLM");
         setupGLMButton.addActionListener(new ActionListener() {
@@ -420,86 +555,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(setupGLMButton);
         setupGLMButton
                 .setToolTipText("<html>Set-up design of phylogenetic GLM.</html>");
-        setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST);
-
-        // ============ micro-sat ================
-        microsatName.setColumns(30);
-        microsatName.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {
-            }
-
-            public void keyPressed(KeyEvent e) {
-            }
-
-            public void keyReleased(KeyEvent e) {
-                model.getMicrosatellite().setName(microsatName.getText());
-            }
-        });
-        microsatMax.setColumns(10);
-        microsatMax.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {
-            }
-
-            public void keyPressed(KeyEvent e) {
-            }
-
-            public void keyReleased(KeyEvent e) {
-                model.getMicrosatellite().setMax(
-                        Integer.parseInt(microsatMax.getText()));
-            }
-        });
-        microsatMin.setColumns(10);
-        microsatMin.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {
-            }
-
-            public void keyPressed(KeyEvent e) {
-            }
-
-            public void keyReleased(KeyEvent e) {
-                model.getMicrosatellite().setMin(
-                        Integer.parseInt(microsatMin.getText()));
-            }
-        });
-
-        PanelUtils.setupComponent(shareMicroSatCheck);
-        shareMicroSatCheck.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                model.getOptions().shareMicroSat = shareMicroSatCheck
-                        .isSelected();
-                if (shareMicroSatCheck.isSelected()) {
-                    model.getOptions().shareMicroSat();
-                } else {
-                    model.getOptions().unshareMicroSat();
-                }
-                setOptions();
-            }
-        });
-
-        PanelUtils.setupComponent(rateProportionCombo);
-        rateProportionCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                model
-                        .setRatePorportion((MicroSatModelType.RateProportionality) rateProportionCombo
-                                .getSelectedItem());
-            }
-        });
-        // rateProportionCombo.setToolTipText("<html>Select the type of microsatellite substitution model.</html>");
-        PanelUtils.setupComponent(mutationBiasCombo);
-        mutationBiasCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                model
-                        .setMutationBias((MicroSatModelType.MutationalBias) mutationBiasCombo
-                                .getSelectedItem());
-            }
-        });
-        PanelUtils.setupComponent(phaseCombo);
-        phaseCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                model.setPhase((MicroSatModelType.Phase) phaseCombo
-                        .getSelectedItem());
-            }
-        });
+        setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST);
 
         setupPanel();
         setOpaque(false);
@@ -544,9 +600,9 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.GENERAL:
-                discreteTraitSiteModelCombo.setSelectedItem(model
+                discreteTraitSiteModelStructureCombo.setSelectedItem(model
                         .getDiscreteSubstType());
-                activateBSSVS.setSelected(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST ?
+                activateBSSVS.setSelected(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST ?
                         model.isActivateBSSVS() : false);
                 break;
 
@@ -554,27 +610,24 @@ public class PartitionModelPanel extends OptionsPanel {
                 continuousTraitSiteModelCombo.setSelectedItem(model
                         .getContinuousSubstModelType());
 
+                modelExtensionCombo.setSelectedItem(model.getContinuousExtensionType());
+
                 ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
                         .getComponentOptions(ContinuousComponentOptions.class);
 
                 latLongCheck.setSelected(model.isLatitudeLongitude());
                 latLongCheck.setEnabled(model.getContinuousTraitCount() == 2);
+
+                treatIndependentCheck.setSelected(model.isIndependent());
+                treatIndependentCheck.setEnabled(model.getContinuousTraitCount() > 1);
+
                 useLambdaCheck.setSelected(component.useLambda(model));
                 break;
-            case DataType.MICRO_SAT:
-                microsatName.setText(model.getMicrosatellite().getName());
-                microsatMax.setText(Integer.toString(model.getMicrosatellite()
-                        .getMax()));
-                microsatMin.setText(Integer.toString(model.getMicrosatellite()
-                        .getMin()));
-                shareMicroSatCheck.setSelected(model.getOptions().shareMicroSat);
-                rateProportionCombo.setSelectedItem(model.getRatePorportion());
-                mutationBiasCombo.setSelectedItem(model.getMutationBias());
-                phaseCombo.setSelectedItem(model.getPhase());
-                shareMicroSatCheck.setEnabled(model.getOptions()
-                        .getPartitionSubstitutionModels(Microsatellite.INSTANCE)
-                        .size() > 1);
+
+            case DataType.DUMMY:
+                //Do nothing
                 break;
+
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
@@ -590,7 +643,7 @@ public class PartitionModelPanel extends OptionsPanel {
             heteroCombo.setSelectedIndex(0);
         }
 
-        gammaCatCombo.setSelectedIndex(model.getGammaCategories() - 4);
+        gammaCatCombo.setSelectedIndex(model.getRateCategories() - 4);
 
         if (model.getCodonHeteroPattern() == null) {
             codingCombo.setSelectedIndex(0);
@@ -720,16 +773,33 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.GENERAL:
-                addComponentWithLabel("Discrete Trait Substitution Model:",
-                        discreteTraitSiteModelCombo);
+                removeAll();
+                addComponentWithLabel("Discrete Trait Substitution Model:", discreteTraitSiteModelCombo);
+                //use the mapping to the partition tree and not the model name itself for the HashMap
+                String modelName = model.getPartitionData().getPartitionTreeModel().getName();
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, true);
+                    addComponentWithLabel("Forward-in-time Model Structure:", discreteTraitSiteModelStructureCombo);
+                } else {
+                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, false);
+                    addComponentWithLabel("Backward-in-time Coalescent Model:", bitModelCombo);
+                    addComponentWithLabel("Backward-in-time Model structure:", discreteTraitSiteModelStructureCombo);
+                    addComponent(bitDemeSharing);
+                }
                 addComponent(activateBSSVS);
                 addComponent(setupGLMButton);
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    addComponentWithLabel("Citation:", fitPanel);
+                } else {
+                    addComponentWithLabel("Citations:", bitPanel);
+                }
                 break;
 
             case DataType.CONTINUOUS:
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
                 addComponent(latLongCheck);
+                addComponent(treatIndependentCheck);
                 addSeparator();
                 addComponent(addJitterCheck);
                 OptionsPanel panel = new OptionsPanel();
@@ -740,19 +810,14 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addSeparator();
                 addComponent(useLambdaCheck);
-                break;
-
-            case DataType.MICRO_SAT:
-                addComponentWithLabel("Microsatellite Name:", microsatName);
-                addComponentWithLabel("Max of Length:", microsatMax);
-                addComponentWithLabel("Min of Length:", microsatMin);
-                addComponent(shareMicroSatCheck);
 
                 addSeparator();
+                addComponentWithLabel("Model Extension:", modelExtensionCombo);
 
-                addComponentWithLabel("Rate Proportionality:", rateProportionCombo);
-                addComponentWithLabel("Mutational Bias:", mutationBiasCombo);
-                addComponentWithLabel("Phase:", phaseCombo);
+                break;
+
+            case DataType.DUMMY:
+                //Do nothing
                 break;
 
             default:

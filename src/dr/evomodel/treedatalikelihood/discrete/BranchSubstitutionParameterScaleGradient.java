@@ -1,7 +1,8 @@
 /*
  * BranchSubstitutionParameterScaleGradient.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 
@@ -47,15 +49,16 @@ public class BranchSubstitutionParameterScaleGradient extends HyperParameterBran
                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                     BranchParameter branchParameter,
                                                     Parameter hyperParameter,
+                                                    Double tolerance,
                                                     boolean useHessian) {
 
-        super(traitName, treeDataLikelihood, likelihoodDelegate, branchParameter, hyperParameter, useHessian);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, branchParameter, hyperParameter, tolerance, useHessian);
         this.locationScaleTransform = (ArbitraryBranchRates.BranchRateTransform.LocationScaleLogNormal) branchParameter.getTransform();
     }
 
     @Override
     double[] getDifferential(Tree tree, NodeRef node) {
-        double rate = branchParameter.getParameterValue(node.getNumber());
+        double rate = branchRateModel.getBranchRate(tree, node);
         double tmp = (Math.log(rate / locationScaleTransform.getLocation(tree, node)) - locationScaleTransform.getTransformMu())
                 /(locationScaleTransform.getTransformSigma() * locationScaleTransform.getTransformSigma()) - 1.0;
 

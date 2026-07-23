@@ -1,7 +1,8 @@
 /*
  * AncestralStatesOptionsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.ancestralstatespanel;
 
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
@@ -243,16 +246,24 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 dNdSRobustCountingAvailable = true; // but will be disabled if not codon partitioned
                 break;
             case DataType.AMINO_ACIDS:
-            case DataType.GENERAL:
             case DataType.TWO_STATES:
+                break;
+            case DataType.GENERAL:
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    countingAvailable = false;
+                }
                 break;
             case DataType.CONTINUOUS:
                 countingAvailable = false;
                 break;
-            case DataType.MICRO_SAT:
+            case DataType.TREE:
                 ancestralReconstructionAvailable = false;
                 countingAvailable = false;
                 break;
+            case DataType.DUMMY:
+                //Do nothing
+                break;
+
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 

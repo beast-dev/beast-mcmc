@@ -1,7 +1,8 @@
 /*
  * GMRFTestLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.tree.Tree;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
@@ -39,8 +41,8 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
  */
 public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
-	public GMRFTestLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
-		super(tree, popParameter, null, precParameter, lambda, beta, design, false, true);
+	public GMRFTestLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
+		super(intervalList, popParameter, null, precParameter, lambda, beta, design, false, true);
 	}
 
 

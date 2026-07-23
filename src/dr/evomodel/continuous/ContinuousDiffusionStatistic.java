@@ -1,7 +1,8 @@
 /*
  * ContinuousDiffusionStatistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -72,6 +74,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String SPEARMAN = "spearman";
     public static final String CORRELATION_COEFFICIENT = "correlationCoefficient";
     public static final String DISTANCE_TIME_CORRELATION = "distanceTimeCorrelation";
+    public static final String SQUAREDDISTANCE_TIME4_CORRELATION = "squaredDistanceTimeFourCorrelation";
     public static final String R_SQUARED = "Rsquared";
     public static final String STATISTIC = "statistic";
     public static final String TRAIT = "trait";
@@ -456,6 +459,17 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 Regression r = new Regression(convertDoubles(times),convertDoubles(distances));
                 return r.getCorrelationCoefficient();
             }
+        }  else if (summaryStat == summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION)  {
+            List<Double> squareddistances = squareElements(distances);
+            if (summaryMode == Mode.SPEARMAN) {
+                return getSpearmanRho(convertDoubles(times),convertDoubles(squareddistances));
+            } else if (summaryMode == Mode.R_SQUARED) {
+                Regression r = new Regression(convertDoubles(times), convertDoubles(squareddistances));
+                return r.getRSquared();
+            } else {
+                Regression r = new Regression(convertDoubles(times),convertDoubles(squareddistances));
+                return r.getCorrelationCoefficient();
+            }
          }  else {
             return treeLength;
         }
@@ -474,7 +488,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return Math.sqrt(sum);
     }
 
-    public double getGreatCircleDistance(double[] loc1, double[] loc2){
+    public static double getGreatCircleDistance(double[] loc1, double[] loc2){
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(loc1[0], loc1[1]);
         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(loc2[0], loc2[1]);
         return coord1.distance(coord2);
@@ -486,6 +500,14 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             returnArray[i] = Double.valueOf(list.get(i).toString());
         }
         return returnArray;
+    }
+
+    private static List<Double> squareElements(List<Double> inputList) {
+        List<Double> squaredList = new ArrayList<>();
+        for (Double number : inputList) {
+            squaredList.add(number * number);
+        }
+        return squaredList;
     }
 
     private double[] imputeValue(double[] nodeValue, double[] parentValue, double time, double nodeHeight, double parentHeight, double[] precisionArray, double rate, boolean trueNoise) {
@@ -930,7 +952,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         WAVEFRONT_DISTANCE,
         WAVEFRONT_DISTANCE_PHYLO,
         WAVEFRONT_RATE,
-        DISTANCE_TIME_CORRELATION
+        DISTANCE_TIME_CORRELATION,
+        SQUAREDDISTANCE_TIME4_CORRELATION
     }
 
     enum BranchSet {
@@ -1021,6 +1044,12 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                     System.err.println(name+": mode = "+mode+" ignored for "+DISTANCE_TIME_CORRELATION+", reverting to correlation coefficient mode");
                     statMode = Mode.CORRELATION_COEFFICIENT;
                 }
+            } else if (statistic.equals(SQUAREDDISTANCE_TIME4_CORRELATION)) {
+                summaryStat = summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION;
+                if (mode.equals(AVERAGE) || mode.equals(WEIGHTED_AVERAGE) || mode.equals(COEFFICIENT_OF_VARIATION) || mode.equals(MEDIAN)){
+                    System.err.println(name+": mode = "+mode+" ignored for "+SQUAREDDISTANCE_TIME4_CORRELATION+", reverting to correlation coefficient mode");
+                    statMode = Mode.CORRELATION_COEFFICIENT;
+                }
             } else if (statistic.equals(WAVEFRONT_DISTANCE)) {
                 summaryStat = summaryStatistic.WAVEFRONT_DISTANCE;
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
@@ -1063,6 +1092,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 summaryStat = summaryStatistic.DIFFUSION_COEFFICIENT;
             } else if (statistic.equals(DISTANCE_TIME_CORRELATION)) {
                 summaryStat = summaryStatistic.DISTANCE_TIME_CORRELATION;
+            } else if (statistic.equals(SQUAREDDISTANCE_TIME4_CORRELATION)) {
+                summaryStat = summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION;
             } else {
                 System.err.println(name+": unknown statistic: "+statistic+". Reverting to diffusion rate.");
                 summaryStat = summaryStatistic.DIFFUSION_RATE;

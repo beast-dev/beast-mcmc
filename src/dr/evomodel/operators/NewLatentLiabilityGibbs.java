@@ -1,7 +1,8 @@
 /*
  * NewLatentLiabilityGibbs.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 
@@ -39,6 +41,7 @@ import dr.evomodel.continuous.DummyLatentTruncationProvider;
 import dr.evomodel.continuous.LatentTruncation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
 import dr.evomodel.treedatalikelihood.preorder.ConditionalPrecisionAndTransform;
 import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics;
@@ -74,7 +77,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     private final LatentTruncation latentLiability;
     private final CompoundParameter tipTraitParameter;
     private final TreeTrait<List<WrappedNormalSufficientStatistics>> fullConditionalDensity;
-    private final RepeatedMeasuresTraitDataModel repeatedMeasuresModel;
+    private final ContinuousTraitPartialsProvider extensionProvider;
 
     private int maxAttempts;
 
@@ -97,14 +100,14 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     public NewLatentLiabilityGibbs(
             TreeDataLikelihood treeDataLikelihood,
             LatentTruncation LatentLiability, CompoundParameter tipTraitParameter,
-            RepeatedMeasuresTraitDataModel repeatedMeasuresModel, Parameter mask,
+            ContinuousTraitPartialsProvider extensionProvider, Parameter mask,
             double weight, String traitName, int maxAttempts, boolean missingByColumn) {
         super();
 
         this.latentLiability = LatentLiability;
         this.tipTraitParameter = tipTraitParameter;
         this.treeModel = treeDataLikelihood.getTree();
-        this.repeatedMeasuresModel = repeatedMeasuresModel;
+        this.extensionProvider = extensionProvider;
         ContinuousDataLikelihoodDelegate likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeDataLikelihood
                 .getDataLikelihoodDelegate();
         this.dim = likelihoodDelegate.getTraitDim();
@@ -198,10 +201,10 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
             }
         }
 
-        if (repeatedMeasuresModel != null) {
+        if (extensionProvider != null) {
             //TODO: preallocate memory for all these matrices/vectors
             DenseMatrix64F Q = new DenseMatrix64F(fcdPrecision); //storing original fcd precision
-            double[] tipPartial = repeatedMeasuresModel.getTipPartial(thisNumber, false);
+            double[] tipPartial = extensionProvider.getTipPartial(thisNumber, false);
             int offset = dim;
             DenseMatrix64F P = MissingOps.wrap(tipPartial, offset, dim, dim);
 

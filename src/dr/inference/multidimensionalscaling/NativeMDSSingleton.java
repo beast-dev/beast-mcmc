@@ -1,7 +1,8 @@
 /*
  * NativeMDSSingleton.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.multidimensionalscaling;
@@ -30,7 +32,6 @@ package dr.inference.multidimensionalscaling;
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  *          <p/>
  *          $HeadURL$
  *          <p/>
@@ -40,7 +41,7 @@ package dr.inference.multidimensionalscaling;
  */
 public class NativeMDSSingleton {
 
-    private static final String LIBRARY_NAME = "mds_jni";
+    private static final String LIBRARY_NAME = "mds2_jni";
     private static final String LIBRARY_PATH_LABEL = "mds.library.path";
     private static final String LIBRARY_PLATFORM_NAME = getPlatformSpecificLibraryName();
     private static final String LIBRARY_PLATFORM_EXTENSION = getPlatformSpecificLibraryExtension();
@@ -115,12 +116,25 @@ public class NativeMDSSingleton {
 
     private static NativeMDSSingleton INSTANCE = null;
 
+    public int initialize(int dimensionCount, MultiDimensionalScalingLayout layout,
+                          MultiDimensionalScalingCore.CoreInformation information) {
+        if (layout.isSymmetric()) {
+            return initialize(dimensionCount, layout.rowLocationCount, information);
+        } else {
+            return initialize(dimensionCount, layout.rowLocationCount, layout.columnLocationCount,
+                    information.flags, information.deviceNumber, information.numThreads);
+        }
+    }
+
     public int initialize(int dimensionCount, int locationCount, MultiDimensionalScalingCore.CoreInformation information) {
         return initialize(dimensionCount, locationCount,
                 information.flags, information.deviceNumber, information.numThreads);
     }
 
     private native int initialize(int dimensionCount, int locationCount, long flags, int deviceNumber, int threads);
+
+    private native int initialize(int dimensionCount, int rowLocationCount, int columnLocationCount, long flags,
+                                  int deviceNumber, int threads);
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 
@@ -141,6 +155,8 @@ public class NativeMDSSingleton {
     public native double[] getPairwiseData(int instance);
 
     public native void getLocationGradient(int instance, double[] gradient);
+
+    public native void getObservationGradient(int instance, double[] gradient);
 
     public native int getInternalDimension(int instance);
 

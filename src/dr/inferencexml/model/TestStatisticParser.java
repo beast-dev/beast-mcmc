@@ -1,7 +1,8 @@
 /*
  * TestStatisticParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
 
+import dr.inference.model.BranchParameter;
 import dr.inference.model.Statistic;
 import dr.inference.model.TestStatistic;
 import dr.util.Attribute;
@@ -34,7 +37,8 @@ import dr.xml.*;
  */
 public class TestStatisticParser extends AbstractXMLObjectParser {
 
-    public static String TEST_STATISTIC = "test";
+    public static String TEST_STATISTIC = "testStatistic";
+    public static String TEST = "test";
 
     private static final String SEQUALS = "equals";
     private static final String SGREATER_THAN = "greaterThan";
@@ -55,14 +59,17 @@ public class TestStatisticParser extends AbstractXMLObjectParser {
         TestStatistic statistic;
 
         if (xo.hasChildNamed(SEQUALS)) {
-            Attribute attr2 = (Attribute) xo.getElementFirstChild(SEQUALS);
-            statistic = new TestStatistic(name, attr, attr2, TestStatistic.EQUALS);
+//            Attribute attr2 = (Attribute) xo.getElementFirstChild(SEQUALS);
+//            statistic = new TestStatistic(name, attr, attr2, TestStatistic.EQUALS);
+            statistic = parseTestStatistic(xo, name, attr, SEQUALS, TestStatistic.EQUALS);
         } else if (xo.hasChildNamed(SGREATER_THAN)) {
-            Attribute attr2 = (Attribute) xo.getElementFirstChild(SGREATER_THAN);
-            statistic = new TestStatistic(name, attr, attr2, TestStatistic.GREATER_THAN);
+//            Attribute attr2 = (Attribute) xo.getElementFirstChild(SGREATER_THAN);
+//            statistic = new TestStatistic(name, attr, attr2, TestStatistic.GREATER_THAN);
+            statistic = parseTestStatistic(xo, name, attr, SGREATER_THAN, TestStatistic.GREATER_THAN);
         } else if (xo.hasChildNamed(SLESS_THAN)) {
-            Attribute attr2 = (Attribute) xo.getElementFirstChild(SLESS_THAN);
-            statistic = new TestStatistic(name, attr, attr2, TestStatistic.LESS_THAN);
+//            Attribute attr2 = (Attribute) xo.getElementFirstChild(SLESS_THAN);
+//            statistic = new TestStatistic(name, attr, attr2, TestStatistic.LESS_THAN);
+            statistic = parseTestStatistic(xo, name, attr, SLESS_THAN, TestStatistic.LESS_THAN);
         } else if (xo.hasAttribute(SEQUALS)) {
             testValue1 = xo.getDoubleAttribute(SEQUALS);
             statistic = new TestStatistic(name, attr, testValue1, TestStatistic.EQUALS);
@@ -87,6 +94,53 @@ public class TestStatisticParser extends AbstractXMLObjectParser {
         return statistic;
     }
 
+    private TestStatistic parseTestStatistic(XMLObject xo, String name, Attribute attr, String attr2String, int mode) throws XMLParseException {
+        Attribute attr2 = (Attribute) xo.getElementFirstChild(attr2String);
+        if (attr2 instanceof BranchParameter) {
+            class MultivariateTestStatistic extends TestStatistic {
+                BranchParameter branchParameter;
+                Attribute attribute;
+                public MultivariateTestStatistic(String name, Attribute attr, BranchParameter attr2, int mode) {
+                    super(name, attr, attr2, mode);
+                    this.branchParameter = attr2;
+                    this.attribute = attr;
+                }
+
+                public int getDimension() {
+                    return branchParameter.getDimension();
+                }
+
+                public boolean getBoolean(int i) {
+
+                    double num;
+                    if (attribute instanceof Statistic) {
+                        num = ((Statistic) attribute).getStatisticValue(0);
+                    } else {
+                        num = ((Number) attribute.getAttributeValue()).doubleValue();
+                    }
+
+                    double testValue1 = branchParameter.getParameterValue(i);
+
+
+                    switch (mode) {
+                        case EQUALS:
+                            if (num == testValue1) return true;
+                            break;
+                        case GREATER_THAN:
+                            if (num > testValue1) return true;
+                            break;
+                        case LESS_THAN:
+                            if (num < testValue1) return true;
+                            break;
+                    }
+                    return false;
+                }
+            }
+            return new MultivariateTestStatistic(name, attr, (BranchParameter) attr2, mode);
+        }
+        return new TestStatistic(name, attr, attr2, mode);
+    }
+
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
@@ -98,6 +152,11 @@ public class TestStatisticParser extends AbstractXMLObjectParser {
 
     public Class getReturnType() {
         return TestStatistic.class;
+    }
+
+    @Override
+    public String[] getParserNames() {
+        return new String[]{getParserName(), TEST};
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

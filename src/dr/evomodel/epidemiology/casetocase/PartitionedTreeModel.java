@@ -1,7 +1,8 @@
 /*
  * PartitionedTreeModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.epidemiology.casetocase;
@@ -29,6 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.math.MathUtils;
@@ -43,7 +46,7 @@ import java.util.*;
  *
  * todo a lot of methods should eventually move here
  */
-public class PartitionedTreeModel extends TreeModel {
+public class PartitionedTreeModel extends DefaultTreeModel {
 
     private final AbstractOutbreak outbreak;
     private BranchMapModel branchMap;
@@ -216,7 +219,7 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
     public boolean checkPartitions(){
-        return checkPartitions(branchMap, true);
+        return checkPartitions(branchMap, hasNodeHeights());
     }
 
     protected boolean checkPartitions(BranchMapModel map, boolean verbose){
@@ -225,11 +228,11 @@ public class PartitionedTreeModel extends TreeModel {
             boolean foundTip = false;
             for(Integer nodeNumber : samePartitionElement(getInternalNode(i))){
                 if(isExternal(getNode(nodeNumber))){
-                    foundTip = true;
+                    foundTip = hasNodeHeights();
                 }
             }
             if(!foundProblem && !foundTip){
-                foundProblem = true;
+                foundProblem = hasNodeHeights();
                 if(verbose){
                     System.out.println("Node "+(i+getExternalNodeCount()) + " is not connected to a tip");
                 }
@@ -336,12 +339,12 @@ public class PartitionedTreeModel extends TreeModel {
             while (!transmissionFound) {
 
                 if (branchMap.get(child.getNumber()) != branchMap.get(parent.getNumber())) {
-                    transmissionFound = true;
+                    transmissionFound = hasNodeHeights();
                 } else {
                     child = parent;
                     parent = getParent(child);
                     if (parent == null) {
-                        transmissionFound = true;
+                        transmissionFound = hasNodeHeights();
                     }
                 }
 
@@ -498,7 +501,7 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
     public NodeRef caseMRCA(AbstractCase aCase){
-        return caseMRCA(aCase, true);
+        return caseMRCA(aCase, hasNodeHeights());
     }
 
     private HashSet<NodeRef> getDescendantTips(NodeRef node){
@@ -518,7 +521,7 @@ public class PartitionedTreeModel extends TreeModel {
 
         for(NodeRef tip : getDescendantTips(node)){
             if(branchMap.get(tip.getNumber())==currentCase){
-                return true;
+                return hasNodeHeights();
             }
         }
 
@@ -533,7 +536,7 @@ public class PartitionedTreeModel extends TreeModel {
         for(AbstractCase anotherCase : outbreak.getCases()){
             if(anotherCase.wasEverInfected && anotherCase!=aCase){
                 if(isRootBlockedBy(aCase, anotherCase)){
-                    return true;
+                    return hasNodeHeights();
                 }
             }
         }
@@ -558,7 +561,7 @@ public class PartitionedTreeModel extends TreeModel {
 
         while(currentNode!=null){
             if(currentNode==possibleAncestor){
-                return true;
+                return hasNodeHeights();
             }
             currentNode = getParent(currentNode);
         }
@@ -573,7 +576,7 @@ public class PartitionedTreeModel extends TreeModel {
 
     private AbstractCase[] prepareExternalNodeMap(AbstractCase[] map){
         for(int i=0; i< getExternalNodeCount(); i++){
-            TreeModel.Node currentExternalNode = (TreeModel.Node) getExternalNode(i);
+            DefaultTreeModel.Node currentExternalNode = (DefaultTreeModel.Node) getExternalNode(i);
             Taxon currentTaxon = currentExternalNode.taxon;
             for(AbstractCase thisCase : outbreak.getCases()){
                 if(thisCase.wasEverInfected()) {
@@ -617,7 +620,7 @@ public class PartitionedTreeModel extends TreeModel {
 
 
     private void partitionAccordingToSpecificTT(HashMap<AbstractCase, AbstractCase> map){
-        branchMap.setAll(prepareExternalNodeMap(new AbstractCase[getNodeCount()]), true);
+        branchMap.setAll(prepareExternalNodeMap(new AbstractCase[getNodeCount()]), hasNodeHeights());
 
         //various sanity checks
 
@@ -659,13 +662,13 @@ public class PartitionedTreeModel extends TreeModel {
         if(isExternal(node)){
             return;
         }
-        branchMap.set(node.getNumber(), thisCase, true);
+        branchMap.set(node.getNumber(), thisCase, hasNodeHeights());
         if(isAncestral(node)){
             for(int i=0; i<getChildCount(node); i++){
                 specificallyPartitionDownwards(getChild(node, i), thisCase, map);
             }
         } else {
-            branchMap.set(node.getNumber(), null, true);
+            branchMap.set(node.getNumber(), null, hasNodeHeights());
             HashSet<AbstractCase> children = new HashSet<AbstractCase>();
             for(AbstractCase aCase : outbreak.getCases()){
                 if(map.get(aCase)==thisCase){
@@ -701,11 +704,11 @@ public class PartitionedTreeModel extends TreeModel {
             if(relevantChildren.size()==1){
                 //this ends an infection branch
                 AbstractCase child = relevantChildren.iterator().next();
-                branchMap.set(node.getNumber(), child, true);
+                branchMap.set(node.getNumber(), child, hasNodeHeights());
             } else {
 
                 //this can't end an infection branch
-                branchMap.set(node.getNumber(), thisCase, true);
+                branchMap.set(node.getNumber(), thisCase, hasNodeHeights());
             }
             for(int i=0; i<getChildCount(node); i++){
                 specificallyPartitionDownwards(getChild(node, i), branchMap.get(node.getNumber()), map);
@@ -728,7 +731,7 @@ public class PartitionedTreeModel extends TreeModel {
 
         System.out.println("Generating a random starting partition of the tree");
 
-        branchMap.setAll(prepareExternalNodeMap(new AbstractCase[getNodeCount()]), true);
+        branchMap.setAll(prepareExternalNodeMap(new AbstractCase[getNodeCount()]), hasNodeHeights());
 
         NodeRef root = getRoot();
         randomlyAssignNode(root, allowCreep);
@@ -765,7 +768,7 @@ public class PartitionedTreeModel extends TreeModel {
             if(forcedByTopology.size()>1){
                 throw new RuntimeException("Starting phylogeny is incompatible with this tip partition");
             } else if(forcedByTopology.size()==1){
-                branchMap.set(node.getNumber(), forcedByTopology.get(0), true);
+                branchMap.set(node.getNumber(), forcedByTopology.get(0), hasNodeHeights());
 
                 for (int i = 0; i < getChildCount(node); i++) {
                     if(!isExternal(getChild(node, i))){
@@ -832,7 +835,7 @@ public class PartitionedTreeModel extends TreeModel {
                     if(winner!=null) {
                         fillDownTree(node, winner);
                     } else {
-                        branchMap.set(node.getNumber(), null, true);
+                        branchMap.set(node.getNumber(), null, hasNodeHeights());
                     }
 
                     return winner;
@@ -847,7 +850,7 @@ public class PartitionedTreeModel extends TreeModel {
 
     private void fillDownTree(NodeRef node, AbstractCase aCase){
         if(branchMap.get(node.getNumber())==null){
-            branchMap.set(node.getNumber(), aCase, true);
+            branchMap.set(node.getNumber(), aCase, hasNodeHeights());
             for(int i=0; i<2; i++){
                 fillDownTree(getChild(node, i), aCase);
             }

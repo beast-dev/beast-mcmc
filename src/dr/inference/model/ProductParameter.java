@@ -1,7 +1,8 @@
 /*
  * ProductParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -36,6 +38,7 @@ public class ProductParameter extends Parameter.Abstract implements VariableList
         this.paramList = parameter;
         for (Parameter p : paramList) {
             p.addVariableListener(this);
+            Parameter.CONNECTED_PARAMETER_SET.add(p);
         }
     }
 
@@ -45,7 +48,7 @@ public class ProductParameter extends Parameter.Abstract implements VariableList
 
     @Override
     public boolean isImmutable() {
-        return false;
+        return true;
     }
 
     protected void storeValues() {

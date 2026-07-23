@@ -1,7 +1,8 @@
 /*
  * PartitionClockModelPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.clockmodelspanel;
@@ -28,14 +30,18 @@ package dr.app.beauti.clockmodelspanel;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.MatteBorder;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.EnumSet;
+import java.util.Vector;
 
 /**
  * @author Andrew Rambaut
@@ -45,14 +51,17 @@ public class PartitionClockModelPanel extends OptionsPanel {
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
-    private JComboBox clockTypeCombo = new JComboBox(EnumSet.range(
-            ClockType.STRICT_CLOCK, ClockType.FIXED_LOCAL_CLOCK).toArray());
+    private JComboBox<ClockType> clockTypeCombo = new JComboBox<>();
+
     private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
             ClockDistributionType.LOGNORMAL,
             ClockDistributionType.GAMMA,
 //            ClockDistributionType.CAUCHY,
             ClockDistributionType.EXPONENTIAL,
             //ClockDistributionType.MODEL_AVERAGING
+    });
+    private JComboBox clockHMCDistributionCombo = new JComboBox (new ClockDistributionType[] {
+            ClockDistributionType.LOGNORMAL
     });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
 
@@ -69,7 +78,17 @@ public class PartitionClockModelPanel extends OptionsPanel {
 
         this.model = partitionModel;
 
-        PanelUtils.setupComponent(clockTypeCombo);
+        for (ClockType clockType : EnumSet.range(ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK)) {
+            clockTypeCombo.addItem(clockType);
+            /*if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.HMC_CLOCK) {
+                clockTypeCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
+            }*/
+        }
+
+        //PanelUtils.setupComponent(clockTypeCombo);
+        clockTypeCombo.putClientProperty("JButton.buttonType", "textured");
+        clockTypeCombo.setRenderer(new ClockComboBoxRenderer());
+
         clockTypeCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setClockType((ClockType) clockTypeCombo.getSelectedItem());
@@ -119,7 +138,6 @@ public class PartitionClockModelPanel extends OptionsPanel {
 
     }
 
-
     /**
      * Lays out the appropriate components in the panel for this partition model.
      */
@@ -140,12 +158,22 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(continuousQuantileCheck);
                 break;
 
+            case HMC_CLOCK:
+                addComponent(new JLabel(
+                        "<html>" +
+                                "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
+                                "Nishimura, Baele, Rambaut, Lemey & Suchard (2020) Mol Biol Evol 37, 3047–3060.<html>"));
+                addComponentWithLabel("Relaxed Distribution:", clockHMCDistributionCombo);
+                break;
+
             case AUTOCORRELATED:
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 break;
 
+            case SHRINKAGE_LOCAL_CLOCK:
             case RANDOM_LOCAL_CLOCK:
             case FIXED_LOCAL_CLOCK:
+            case MIXED_EFFECTS_CLOCK:
                 break;
 
             default:
@@ -170,6 +198,27 @@ public class PartitionClockModelPanel extends OptionsPanel {
         setupPanel();
         setOpaque(false);
 
+    }
+
+    /**
+     *
+     */
+    static class ClockComboBoxRenderer extends JLabel implements ListCellRenderer<Object> {
+
+        public Component getListCellRendererComponent(JList<? extends Object> list,
+                                                      Object value, int index, boolean isSelected, boolean cellHasFocus) {
+
+            if (value == ClockType.UNCORRELATED || value == ClockType.HMC_CLOCK){
+                setBackground(new Color(0, 100, 255, 30));
+                setOpaque(true);
+            } else {
+                setOpaque(false);
+            }
+
+            setText("  " + value.toString() + " ");
+
+            return this;
+        }
     }
 
 }

@@ -1,19 +1,47 @@
+/*
+ * StrictClockTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.evomodel.branchratemodel;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.CoalescentLikelihood;
-import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
+import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.HKY;
 import dr.oldevomodel.treelikelihood.TreeLikelihood;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -61,7 +89,8 @@ public class StrictClockTest extends TraceCorrelationAssert {
         Parameter popSize = new Parameter.Default(ConstantPopulationModelParser.POPULATION_SIZE, 380.0, 0, 38000.0);
         ConstantPopulationModel constantModel = createRandomInitialTree(popSize);
 
-        CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
+        TreeIntervals intervalList = new TreeIntervals(treeModel, null, null);
+        CoalescentLikelihood coalescent = new CoalescentLikelihood(intervalList, constantModel);
         coalescent.setId("coalescent");
 
         // clock model
@@ -99,7 +128,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter allInternalHeights = treeModel.createNodeHeightsParameter(true, true, false);
+        Parameter allInternalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(true, true, false);
         operator = new UpDownOperator(new Scalable[]{new Scalable.Default(rateParameter)},
                 new Scalable[] {new Scalable.Default(allInternalHeights)}, 0.75, 3.0, AdaptationMode.ADAPTATION_ON);
         schedule.addOperator(operator);
@@ -108,17 +137,17 @@ public class StrictClockTest extends TraceCorrelationAssert {
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter rootHeight = treeModel.getRootHeightParameter();
+        Parameter rootHeight = ((DefaultTreeModel)treeModel).getRootHeightParameter();
         rootHeight.setId(TREE_HEIGHT);
         operator = new ScaleOperator(rootHeight, 0.75);
         operator.setWeight(3.0);
         schedule.addOperator(operator);
 
-        Parameter internalHeights = treeModel.createNodeHeightsParameter(false, true, false);
+        Parameter internalHeights = ((DefaultTreeModel)treeModel).createNodeHeightsParameter(false, true, false);
         operator = new UniformOperator(internalHeights, 30.0);
         schedule.addOperator(operator);
 
-        operator = new SubtreeSlideOperator(treeModel, 15.0, 1.0, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
+        operator = new SubtreeSlideOperator(((DefaultTreeModel)treeModel), 15.0, 1.0, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         operator = new ExchangeOperator(ExchangeOperator.NARROW, treeModel, 15.0);

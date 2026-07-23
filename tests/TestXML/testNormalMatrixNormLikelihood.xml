@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+
+    <matrixParameter id="U">
+        <parameter id="U1" value="0.017278817739934282 -0.7124036620921945 -0.179565423053583 0.6781878232014553"/>
+        <parameter id="U2" value="-0.7164479170320468 -0.4831528743751593 0.2872581041560559 -0.4132172113551555"/>
+        <parameter id="U3" value="0.4996889230707622 -0.2223150646872821 0.8368256690511638 -0.024693962633477937"/>
+    </matrixParameter>
+
+    <compoundParameter id="scale">
+        <parameter id="scale1" value="2.919754280767762"/>
+        <parameter id="scale2" value="1.0783808540856827"/>
+        <parameter id="scale3" value="0.504281522191253"/>
+    </compoundParameter>
+
+    <scaledMatrixParameter id="L">
+        <scale>
+            <parameter idref="scale"/>
+        </scale>
+        <matrix>
+            <parameter idref="U"/>
+        </matrix>
+    </scaledMatrixParameter>
+
+
+    <productParameter id="L1">
+        <scale>
+            <parameter idref="scale1"/>
+        </scale>
+        <parameter idref="U1"/>
+    </productParameter>
+
+    <productParameter id="L2">
+        <scale>
+            <parameter idref="scale2"/>
+        </scale>
+        <parameter idref="U2"/>
+    </productParameter>
+
+    <productParameter id="L3">
+        <scale>
+            <parameter idref="scale3"/>
+        </scale>
+        <parameter idref="U3"/>
+    </productParameter>
+
+    <parameter id="localScale1" value="1 1 1 1" lower="0"/>
+    <parameter id="localScale2" value="1 1 1 1" lower="0"/>
+    <parameter id="localScale3" value="1 1 1 1" lower="0"/>
+
+    <parameter id="globalPrecision1" value="23.92925721987897" lower="0"/>
+    <parameter id="rowMult2" value="1.8258808062948788" lower="0"/>
+    <parameter id="rowMult3" value="8.218349344740684" lower="0"/>
+
+    <productParameter id="globalPrecision2">
+        <parameter idref="globalPrecision1"/>
+        <parameter idref="rowMult2"/>
+    </productParameter>
+
+    <productParameter id="globalPrecision3">
+        <productParameter idref="globalPrecision2"/>
+        <parameter idref="rowMult3"/>
+    </productParameter>
+
+    <transformedParameter id="globalScale1" type="power">
+        <parameter idref="globalPrecision1"/>
+        <powerTransform power="-0.5">
+            <transform type="power"/>
+        </powerTransform>
+    </transformedParameter>
+
+    <transformedParameter id="globalScale2" type="power">
+        <productParameter idref="globalPrecision2"/>
+        <powerTransform power="-0.5">
+            <transform type="power"/>
+        </powerTransform>
+    </transformedParameter>
+
+    <transformedParameter id="globalScale3" type="power">
+        <productParameter idref="globalPrecision3"/>
+        <powerTransform power="-0.5">
+            <transform type="power"/>
+        </powerTransform>
+    </transformedParameter>
+
+    <bayesianBridge id="bb1">
+        <parameter idref="L1"/>
+        <globalScale>
+            <transformedParameter idref="globalScale1"/>
+        </globalScale>
+        <localScale>
+            <parameter idref="localScale1"/>
+        </localScale>
+        <exponent>
+            <parameter value="0.5"/>
+        </exponent>
+    </bayesianBridge>
+
+    <bayesianBridge id="bb2">
+        <parameter idref="L2"/>
+        <globalScale>
+            <transformedParameter idref="globalScale2"/>
+        </globalScale>
+        <localScale>
+            <parameter idref="localScale2"/>
+        </localScale>
+        <exponent>
+            <parameter value="0.5"/>
+        </exponent>
+    </bayesianBridge>
+
+    <bayesianBridge id="bb3">
+        <parameter idref="L3"/>
+        <globalScale>
+            <transformedParameter idref="globalScale3"/>
+        </globalScale>
+        <localScale>
+            <parameter idref="localScale3"/>
+        </localScale>
+        <exponent>
+            <parameter value="0.5"/>
+        </exponent>
+    </bayesianBridge>
+
+    <matrixShrinkageLikelihood id="L.prior">
+        <matrixParameter idref="L"/>
+        <rowPriors>
+            <bayesianBridge idref="bb1"/>
+            <bayesianBridge idref="bb2"/>
+            <bayesianBridge idref="bb3"/>
+        </rowPriors>
+    </matrixShrinkageLikelihood>
+
+    <compoundParameter id="globalMults">
+        <parameter idref="globalPrecision1"/>
+        <parameter idref="rowMult2"/>
+        <parameter idref="rowMult3"/>
+    </compoundParameter>
+
+    <multivariateGammaLikelihood id="globalMults.prior">
+        <data>
+            <parameter idref="globalMults"/>
+        </data>
+        <shape>
+            <parameter value="3.6909415587242362 1.6141286382585205 3.2189760005499313"/>
+        </shape>
+        <scale>
+            <parameter value="6.4832392599979425 1.131186674356275 2.5530943204723044"/>
+        </scale>
+    </multivariateGammaLikelihood>
+
+
+    <compoundLikelihood id="shrinkageLikes">
+        <bayesianBridge idref="bb1"/>
+        <bayesianBridge idref="bb2"/>
+        <bayesianBridge idref="bb3"/>
+    </compoundLikelihood>
+
+    <report>
+        <compoundLikelihood idref="shrinkageLikes"/>
+    </report>
+
+    <report>
+        <matrixShrinkageLikelihood idref="L.prior"/>
+    </report>
+
+
+    <compoundParameter id="localScales">
+        <parameter idref="localScale1"/>
+        <parameter idref="localScale2"/>
+        <parameter idref="localScale3"/>
+    </compoundParameter>
+
+    <normalGammaPrecisionGibbsOperator id="shrinkageOp" weight="1.0">
+        <prior>
+            <gammaPrior idref="globalMults.prior"/>
+        </prior>
+        <multiplicativeGammaGibbsProvider>
+            <compoundParameter>
+                <parameter idref="globalPrecision1"/>
+                <parameter idref="rowMult2"/>
+                <parameter idref="rowMult3"/>
+            </compoundParameter>
+            <matrixShrinkageLikelihood idref="L.prior"/>
+        </multiplicativeGammaGibbsProvider>
+    </normalGammaPrecisionGibbsOperator>
+
+
+    <cachedReport id="shrinkReport">
+        <normalGammaPrecisionGibbsOperator idref="shrinkageOp"/>
+    </cachedReport>
+
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Checking multiplicative gamma gibbs operator sse
+        </message>
+        <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
+            <cachedReport idref="shrinkReport"/>
+        </actual>
+        <expected>
+            14.464245474349687, 77.83781298566016, 11.110861948497549
+        </expected>
+    </assertEqual>
+
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Checking multiplicative gamma gibbs operator obs count
+        </message>
+        <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
+            <cachedReport idref="shrinkReport"/>
+        </actual>
+        <expected>
+            12 8 4
+        </expected>
+    </assertEqual>
+
+    <normalMatrixNormLikelihood id="scale.likelihood">
+        <globalPrecision>
+            <compoundParameter>
+                <parameter idref="globalPrecision1"/>
+                <parameter idref="globalPrecision2"/>
+                <parameter idref="globalPrecision3"/>
+            </compoundParameter>
+        </globalPrecision>
+        <matrix>
+            <scaledMatrixParameter idref="L"/>
+        </matrix>
+    </normalMatrixNormLikelihood>
+
+    <normalGammaPrecisionGibbsOperator id="normOp" weight="1.0">
+        <prior>
+            <gammaPrior idref="globalMults.prior"/>
+        </prior>
+        <multiplicativeGammaGibbsProvider>
+            <compoundParameter>
+                <parameter idref="globalPrecision1"/>
+                <parameter idref="rowMult2"/>
+                <parameter idref="rowMult3"/>
+            </compoundParameter>
+            <normalMatrixNormLikelihood idref="scale.likelihood"/>
+        </multiplicativeGammaGibbsProvider>
+    </normalGammaPrecisionGibbsOperator>
+
+    <cachedReport id="normReport">
+        <normalGammaPrecisionGibbsOperator idref="normOp"/>
+    </cachedReport>
+
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Checking multiplicative gamma gibbs operator sse
+        </message>
+        <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">
+            <cachedReport idref="normReport"/>
+        </actual>
+        <expected>
+            14.464245474349687, 77.83781298566016, 11.110861948497549
+        </expected>
+    </assertEqual>
+
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Checking multiplicative gamma gibbs operator obs count
+        </message>
+        <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">
+            <cachedReport idref="normReport"/>
+        </actual>
+        <expected>
+            12 8 4
+        </expected>
+    </assertEqual>
+
+
+    <!--    <operators id="operators">-->
+    <!--        <fireParameterChanged weight="1" value="-0.22810736862142622 0.33843549337705325 -0.9301176929999639 -0.8408646228434634-->
+    <!--                                                -0.36102624175872333 -1.4660359110700705 -0.9013173946991421 -0.49047549281835845-->
+    <!--                                                 0.15025373690353006 -0.8513008338421888 0.43324557843170103 0.16500342204575794">-->
+    <!--            <parameter idref="L"/>-->
+    <!--        </fireParameterChanged>-->
+
+    <!--        <fireParameterChanged weight="1" value="1.404750630010335 3.366088159615457 14.937147511576983">-->
+    <!--            <parameter idref="globalMults"/>-->
+    <!--        </fireParameterChanged>-->
+
+    <!--        <fireParameterChanged weight="1" value="0.5314641418997111 0.4811004086672102 0.7724237401034166 0.4037059765140477-->
+    <!--                                                0.455398416504663 0.7888157114252803 1.4434496193588457 1.6327489876230252-->
+    <!--                                                0.15802613325676979 0.7345775228177849 0.741238107553125 1.9006499541725042">-->
+    <!--            <parameter idref="localScales"/>-->
+    <!--        </fireParameterChanged>-->
+    <!--    </operators>-->
+    <!--    <mcmc id="mcmc" chainLength="10" autoOptimize="true">-->
+    <!--        <posterior id="posterior">-->
+    <!--            <prior id="prior">-->
+    <!--                <matrixShrinkageLikelihood idref="L.prior"/>-->
+    <!--                <gammaPrior idref="globalPrecisionPrior1"/>-->
+    <!--                <gammaPrior idref="rowMultPrior2"/>-->
+    <!--                <gammaPrior idref="rowMultPrior3"/>-->
+    <!--                <gammaPrior idref="factorPrecision.prior"/>-->
+    <!--            </prior>-->
+    <!--            <likelihood id="likelihood">-->
+    <!--                <traitDataLikelihood idref="traitLikelihood"/>-->
+    <!--                <integratedFactorModel idref="factorModel"/>-->
+    <!--            </likelihood>-->
+    <!--        </posterior>-->
+    <!--        <operators idref="operators"/>-->
+    <!--        <log id="screenLog" logEvery="1000">-->
+    <!--            <column label="posterior" dp="4" width="12">-->
+    <!--                <posterior idref="posterior"/>-->
+    <!--            </column>-->
+    <!--            <column label="prior" dp="4" width="12">-->
+    <!--                <prior idref="prior"/>-->
+    <!--            </column>-->
+    <!--            <column label="likelihood" dp="4" width="12">-->
+    <!--                <likelihood idref="likelihood"/>-->
+    <!--            </column>-->
+    <!--        </log>-->
+    <!--        &lt;!&ndash;            <log id="fileLog" logEvery="10" fileName="testMatrixShrinkageLikelihood.log" overwrite="true">&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <posterior idref="posterior"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <prior idref="prior"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <likelihood idref="likelihood"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <matrixParameter idref="L"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <parameter idref="factorPrecision"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <transformedParameter idref="globalScale1"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <transformedParameter idref="globalScale2"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <transformedParameter idref="globalScale3"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <parameter idref="rowMult2"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <parameter idref="rowMult3"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <parameter idref="localScale1"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <parameter idref="localScale2"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;                <parameter idref="localScale3"/>&ndash;&gt;-->
+    <!--        &lt;!&ndash;            </log>&ndash;&gt;-->
+    <!--    </mcmc>-->
+
+
+    <!--    <assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">-->
+    <!--        <message>-->
+    <!--            Check log likelihood MatrixShrinkageLikelihood-->
+    <!--        </message>-->
+    <!--        <actual regex="Likelihood:\s+(.*)\n">-->
+    <!--            <matrixShrinkageLikelihood idref="L.prior"/>-->
+    <!--        </actual>-->
+    <!--        <expected>-->
+    <!--            -101.23677107486252-->
+    <!--        </expected>-->
+    <!--    </assertEqual>-->
+
+    <!--    <assertEqual tolerance="1e-4" toleranceType="absolute" verbose="true">-->
+    <!--        <message>-->
+    <!--            Check log likelihood of Bayesian bridge likelihood-->
+    <!--        </message>-->
+    <!--        <actual regex="likelihood:\s+(.*)\n">-->
+    <!--            <compoundLikelihood idref="shrinkageLikes"/>-->
+    <!--        </actual>-->
+    <!--        <expected>-->
+    <!--            -101.23677107486252-->
+    <!--        </expected>-->
+    <!--    </assertEqual>-->
+
+    <!--    <cachedReport id="globalOp1.2">-->
+    <!--        <normalGammaPrecisionGibbsOperator idref="g1"/>-->
+    <!--    </cachedReport>-->
+
+
+    <!--    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">-->
+    <!--        <message>-->
+    <!--            Checking multiplicative gamma gibbs operator sse-->
+    <!--        </message>-->
+    <!--        <actual regex="Sum of squared errors:\s*\[\s*(.*)\s*\]">-->
+    <!--            <cachedReport idref="globalOp1.2"/>-->
+    <!--        </actual>-->
+    <!--        <expected>-->
+    <!--            152.36534995962523 60.88677632369482 12.27645607958311-->
+    <!--        </expected>-->
+    <!--    </assertEqual>-->
+
+
+    <!--    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">-->
+    <!--        <message>-->
+    <!--            Checking multiplicative gamma gibbs operator obs count-->
+    <!--        </message>-->
+    <!--        <actual regex="Observation counts:\s*\[\s*(.*)\s*\]">-->
+    <!--            <cachedReport idref="globalOp1.2"/>-->
+    <!--        </actual>-->
+    <!--        <expected>-->
+    <!--            12 8 4-->
+    <!--        </expected>-->
+    <!--    </assertEqual>-->
+
+
+</beast>

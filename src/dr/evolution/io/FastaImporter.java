@@ -1,7 +1,8 @@
 /*
  * FastaImporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.io;
@@ -41,7 +43,6 @@ import java.util.StringTokenizer;
 /**
  * Class for importing PHYLIP sequential file format
  *
- * @version $Id: PhylipSequentialImporter.java,v 1.5 2005/05/24 20:25:56 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -78,7 +79,7 @@ public class FastaImporter extends Importer implements SequenceImporter {
 
             do {
                 final String name = readLine().trim();
-                StringBuffer seq = new StringBuffer();
+                StringBuilder seq = new StringBuilder();
 
                 readSequence(seq, dataType, "" + FASTA_FIRST_CHAR, Integer.MAX_VALUE, "-", "?", "", "");
 

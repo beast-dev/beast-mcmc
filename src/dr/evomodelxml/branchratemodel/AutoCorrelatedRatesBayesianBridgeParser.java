@@ -1,7 +1,8 @@
 /*
- * MultivariateNormalDistributionModelParser.java
+ * AutoCorrelatedRatesBayesianBridgeParser.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchratemodel;
@@ -30,15 +32,15 @@ import dr.evomodel.branchratemodel.shrinkage.AutoCorrelatedRatesWithBayesianBrid
 import dr.inference.distribution.shrinkage.*;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.ParameterParser;
 import dr.xml.*;
+
+import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodParser.*;
 
 @Deprecated
 public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectParser {
 
     private static final String BAYESIAN_BRIDGE = "autoCorrelatedRatesBayesianBridge";
-    private static final String GLOBAL_SCALE = "globalScale";
-    private static final String LOCAL_SCALE = "localScale";
-    private static final String EXPONENT = "exponent";
 
     public String getParserName() {
         return BAYESIAN_BRIDGE;
@@ -66,9 +68,15 @@ public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectPa
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
+        Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
+
+        boolean includeNormalizingConstant = xo.getAttribute(NORMALIZATION_CONSTANT, false);
+
         BayesianBridgeDistributionModel distributionModel = (localScale != null) ?
-                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, 1) :
-                new MarginalBayesianBridgeDistributionModel(globalScale, exponent, 1);
+                new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth,
+                        1, includeNormalizingConstant) :
+                new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
+                        1, includeNormalizingConstant);
 
         return new AutoCorrelatedRatesWithBayesianBridge(ratesDistribution,
                 distributionModel);
@@ -90,6 +98,9 @@ public class AutoCorrelatedRatesBayesianBridgeParser extends AbstractXMLObjectPa
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LOCAL_SCALE,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
+            new ElementRule(SLAB_WIDTH,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            AttributeRule.newBooleanRule(NORMALIZATION_CONSTANT, true),
     };
 
     public String getParserDescription() {

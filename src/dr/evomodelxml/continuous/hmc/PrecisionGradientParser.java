@@ -1,7 +1,8 @@
 /*
  * PrecisionGradientParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous.hmc;
@@ -56,6 +58,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
     private final static String PRECISION_DIAGONAL = "diagonal";
     private final static String PRECISION_DIAGONAL_OLD = "precisionDiagonal";
     private final static String PRECISION_BOTH = "both";
+    private final static String PRECISION_CORRELATION_DECOMPOSED = "decomposedCorrelation";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
@@ -71,6 +74,8 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             mode = ParameterMode.WRT_CORRELATION;
         } else if (parameterString.compareTo(PRECISION_DIAGONAL) == 0 || parameterString.compareToIgnoreCase(PRECISION_DIAGONAL_OLD) == 0) {
             mode = ParameterMode.WRT_DIAGONAL;
+        } else if (parameterString.equalsIgnoreCase(PRECISION_CORRELATION_DECOMPOSED)) {
+            mode = ParameterMode.WRT_CORRELATION_DECOMPOSED;
         }
         return mode;
     }
@@ -98,6 +103,14 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                                                      TreeDataLikelihood treeDataLikelihood,
                                                      MatrixParameterInterface parameter) {
                 return new DiagonalPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
+            }
+        },
+        WRT_CORRELATION_DECOMPOSED {
+            @Override
+            public AbstractPrecisionGradient factory(GradientWrtPrecisionProvider gradientWrtPrecisionProvider,
+                                                     TreeDataLikelihood treeDataLikelihood,
+                                                     MatrixParameterInterface parameter) {
+                return new FullCorrelationPrecisionGradient(gradientWrtPrecisionProvider, treeDataLikelihood, parameter);
             }
         };
 

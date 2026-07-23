@@ -1,7 +1,8 @@
 /*
  * TreeTraceAnalysis.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -45,7 +47,6 @@ import java.util.Set;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TreeTraceAnalysis.java,v 1.20 2005/06/07 16:28:18 alexei Exp $
  */
 public class TreeTraceAnalysis {
 
@@ -491,7 +492,7 @@ public class TreeTraceAnalysis {
         }
 
         if (trees.size() > 0) {
-            exporter.exportTrees(trees.toArray(new Tree[trees.size()]), true);
+            exporter.exportTrees(trees, true);
         }
     }
 

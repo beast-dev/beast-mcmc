@@ -1,7 +1,8 @@
 /*
  * ContinuousRateTransformation.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,11 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.inference.model.AbstractModel;
@@ -87,14 +88,7 @@ public interface ContinuousRateTransformation {
         }
 
         private double getTreeLength() {
-            double treeLength = 0;
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                NodeRef node = tree.getNode(i);
-                if (!tree.isRoot(node)) {
-                    treeLength += tree.getBranchLength(node);
-                }
-            }
-            return treeLength;
+            return Tree.getTreeLength(tree);
         }
 
         @Override

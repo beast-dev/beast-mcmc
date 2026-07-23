@@ -1,7 +1,8 @@
 /*
- * DebugChainListener.java
+ * StateSaverChainListener.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.state;
@@ -29,12 +31,9 @@ import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-
 public class StateSaverChainListener implements MarkovChainListener {
 
-    private StateSaver stateSaver;
+    protected StateSaver stateSaver;
 
     public StateSaverChainListener(StateSaver stateSaver, final long writeState, final boolean isRepeating) {
         this.stateSaver = stateSaver;

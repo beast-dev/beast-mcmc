@@ -1,7 +1,8 @@
 /*
  * CovariateGMRFSkylineLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,17 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-
-import java.util.ArrayList;
-import java.util.logging.Logger;
 
 /**
  * @author Erik Bloomquist
@@ -43,14 +41,14 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	private Parameter covariateData;
 	private Parameter covariateTimes;
 
-	private ArrayList<CoalescentIntervalWithData> intervals;
-	private ArrayList<CoalescentIntervalWithData> storedIntervals;
+	//private ArrayList<CoalescentIntervalWithData> intervals;
+	//private ArrayList<CoalescentIntervalWithData> storedIntervals;
 
 
-	public CovariateGMRFSkylineLikelihood(Tree tree, Parameter popParameter, Parameter precParameter,
-	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
-	                                      Parameter data, Parameter times) {
-		super(tree, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
+	public CovariateGMRFSkylineLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,
+										  Parameter lambda, Parameter beta, MatrixParameter dMatrix,
+										  Parameter data, Parameter times) {
+		super(intervalList, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
 
 		covariateData = data;
 		covariateTimes = times;
@@ -62,6 +60,7 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	}
 
 	//	@Override
+    /*
 	public void sSetupIntervals() {
 
 		intervals.clear();
@@ -94,23 +93,24 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 		intervalsKnown = true;
 
 	}
+*/
 
 	public void setupGMRFWeights() {
 		super.setupGMRFWeights();
 	}
 
 	public void storeState() {
-		storedIntervals = new ArrayList<CoalescentIntervalWithData>(intervals.size());
+	    /*		storedIntervals = new ArrayList<CoalescentIntervalWithData>(intervals.size());
 		for (CoalescentIntervalWithData interval : intervals) {
 			storedIntervals.add(interval.clone());
-		}
+		} */
 	}
 
 	public void restoreState() {
-		intervals = storedIntervals;
-		storedIntervals.clear();
+		//intervals = storedIntervals;
+		//storedIntervals.clear();
 	}
-
+/*
 	private class CoalescentIntervalWithData implements Comparable<CoalescentIntervalWithData>, Cloneable {
 		public final CoalescentEventType type;
 		public double length;
@@ -142,6 +142,6 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 			return new CoalescentIntervalWithData(length, datum, type);
 		}
 
-	}
+	} */
 
 }

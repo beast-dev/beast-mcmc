@@ -1,7 +1,8 @@
 /*
  * DistributionLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
@@ -29,6 +31,7 @@ import dr.inference.model.Parameter;
 import dr.math.distributions.Distribution;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Attribute;
+import dr.xml.Reportable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -37,10 +40,9 @@ import org.w3c.dom.Element;
  * being distributed according to the given parametric distribution.
  *
  * @author Alexei Drummond
- * @version $Id: DistributionLikelihood.java,v 1.11 2005/05/25 09:35:28 rambaut Exp $
  */
 
-public class DistributionLikelihood extends AbstractDistributionLikelihood {
+public class DistributionLikelihood extends AbstractDistributionLikelihood implements Reportable {
 
     public final static boolean DEBUG = false;
 
@@ -124,14 +126,6 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
                 final double value = attributeValue[j] - offset;
 
-                if (offset > 0.0 && value < 0.0) {
-                    // fixes a problem with the offset on exponential distributions not
-                    // actually bounding the distribution. This only performs this check
-                    // if a non-zero offset is actually given otherwise it assumes the
-                    // parameter is either legitimately allowed to go negative or is bounded
-                    // at zero anyway.
-                    return Double.NEGATIVE_INFINITY;
-                }
                 logL += getLogPDF(value, count);
                 count += 1;
             }
@@ -181,5 +175,10 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     protected Distribution distribution;
     private final double offset;
     private final double scale;
+
+    @Override
+    public String getReport() {
+        return "Distribution " + getId() + " " + getLogLikelihood();
+    }
 }
 

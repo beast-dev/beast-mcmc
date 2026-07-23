@@ -1,7 +1,8 @@
 /*
  * LogNormalDistributionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
@@ -37,11 +39,10 @@ import org.w3c.dom.Element;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: LogNormalDistributionModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class LogNormalDistributionModel extends AbstractModel implements
-        ParametricDistributionModel, GradientProvider, HessianProvider {
+        ParametricDistributionModel, GradientProvider, HessianProvider, PriorPreconditioningProvider {
 
     public enum Parameterization {
         MU_SIGMA,
@@ -362,6 +363,11 @@ public class LogNormalDistributionModel extends AbstractModel implements
             return Double.POSITIVE_INFINITY;
         }
     };
+
+    @Override
+    public double getStandardDeviation(int index) {
+        return getStdev();
+    }
 
     @Override
     public int getDimension() { return 1; }

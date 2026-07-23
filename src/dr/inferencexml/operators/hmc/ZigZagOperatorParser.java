@@ -1,7 +1,8 @@
 /*
- * HamiltonianMonteCarloOperatorParser.java
+ * ZigZagOperatorParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,23 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.operators.hmc;
 
-import dr.evolution.alignment.PatternList;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.hmc.AbstractParticleOperator;
-import dr.inference.operators.hmc.ZigZagOperator;
+import dr.inference.operators.hmc.*;
 import dr.xml.*;
 
-import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseMask;
-import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRuntimeOptions;
+import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
+import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.*;
 
 /**
  * @author Aki Nishimura
@@ -48,6 +47,9 @@ import static dr.inferencexml.operators.hmc.BouncyParticleOperatorParser.parseRu
 public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final static String ZIG_ZAG_PARSER = "zigZagOperator";
+    private final static String REVERSIBLE_FLG = "reversibleFlag";
+    private final static String REFRESH_VELOCITY = "refreshVelocity";
+    private final static String CATE_CLASS = "categoryClasses";
 
     @Override
     public String getParserName() {
@@ -59,8 +61,6 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        @SuppressWarnings("unused") AdaptationMode coercionMode = AdaptationMode.parseMode(xo);
-
         GradientWrtParameterProvider derivative =
                 (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
 
@@ -71,10 +71,32 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
                 xo.getChild(PrecisionColumnProvider.class);
 
         Parameter mask = parseMask(xo);
-        AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
-        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
-        return new ZigZagOperator(derivative, productProvider, columnProvider, weight, runtimeOptions, mask);
+        Parameter categoryClass = null;
+        if (xo.hasChildNamed(CATE_CLASS)) {
+            categoryClass = (Parameter) xo.getElementFirstChild(CATE_CLASS);
+        }
+
+        AbstractParticleOperator.Options runtimeOptions = parseRuntimeOptions(xo);
+        AbstractParticleOperator.NativeCodeOptions nativeCodeOptions = parseNativeCodeOptions(xo);
+
+        int threadCount = xo.getAttribute(THREAD_COUNT, 1);
+
+        boolean reversible = xo.getAttribute(REVERSIBLE_FLG, true);
+        boolean refreshVelocity = xo.getAttribute(REFRESH_VELOCITY, true);
+
+        MassPreconditioner.Type preconditioningType = PreconditionHandlerParser.parsePreconditioning(xo);
+        MassPreconditionScheduler.Type preconditionSchedulerType = PreconditionHandlerParser.parsePreconditionScheduler(xo, preconditioningType);
+        MassPreconditioner preconditioner = preconditioningType.factory(derivative, null, runtimeOptions);
+
+
+        if (reversible){
+            return new ReversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
+                    runtimeOptions, nativeCodeOptions, refreshVelocity, mask, categoryClass, threadCount, preconditioner, preconditionSchedulerType);
+        } else {
+            return new IrreversibleZigZagOperator(derivative, productProvider, columnProvider, weight,
+                    runtimeOptions, nativeCodeOptions, refreshVelocity, mask, categoryClass, threadCount,preconditioner, preconditionSchedulerType);
+        }
     }
 
     @Override
@@ -84,6 +106,7 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] additionalRules = {
             new ElementRule(PrecisionColumnProvider.class),
+            AttributeRule.newIntegerRule(THREAD_COUNT, true),
     };
 
     @Override
@@ -93,6 +116,6 @@ public class ZigZagOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return ZigZagOperator.class;
+        return ReversibleZigZagOperator.class;
     }
 }

@@ -1,7 +1,8 @@
 /*
  * BranchJumpPlotter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -146,8 +148,7 @@ public class BranchJumpPlotter {
                 count++;
                 System.out.println();
             }
-            Tree[] treeArray = trees.toArray(new Tree[trees.size()]);
-            treesOut.exportTrees(treeArray);
+            treesOut.exportTrees(trees);
         } catch(IOException e){
             System.out.println("Problem reading file ("+e.toString()+")");
         } catch(Importer.ImportException e){

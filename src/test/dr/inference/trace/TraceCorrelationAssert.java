@@ -1,3 +1,30 @@
+/*
+ * TraceCorrelationAssert.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.inference.trace;
 
 import dr.evolution.alignment.SimpleAlignment;
@@ -12,7 +39,8 @@ import dr.evolution.tree.SimpleTree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ConstantPopulationModel;
+import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.Parameter;
@@ -24,7 +52,7 @@ import test.dr.math.MathTestCase;
  */
 public class TraceCorrelationAssert extends MathTestCase {
 
-    protected static final String TREE_HEIGHT = TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
+    protected static final String TREE_HEIGHT = DefaultTreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT;
 
     protected TreeModel treeModel;
     protected SimpleAlignment alignment;
@@ -43,8 +71,8 @@ public class TraceCorrelationAssert extends MathTestCase {
 //        alignment.setDataType(Nucleotides.INSTANCE);
 
         taxa = new Taxon[taxa_sequence[0].length]; // 6, 17
-        System.out.println("Taxon len = " + taxa_sequence[0].length);
-        System.out.println("Alignment len = " + taxa_sequence[1].length);
+        System.out.println("Taxon count = " + taxa_sequence[0].length);
+        System.out.println("Alignment length = " + taxa_sequence[1][0].toString().length());
         if (taxa_sequence.length > 2) System.out.println("Date len = " + taxa_sequence[2].length);                          
 
         for (int i=0; i < taxa_sequence[0].length; i++) {
@@ -83,7 +111,7 @@ public class TraceCorrelationAssert extends MathTestCase {
     private void createTreeModel (ConstantPopulation constant) {
         CoalescentSimulator simulator = new CoalescentSimulator();
         Tree tree = simulator.simulateTree(alignment, constant);
-        treeModel = new TreeModel(tree);//treeModel
+        treeModel = new DefaultTreeModel(tree);//treeModel
     }
 
     protected void createSpecifiedTree(String t) throws Exception {
@@ -92,7 +120,7 @@ public class TraceCorrelationAssert extends MathTestCase {
         NewickImporter importer = new NewickImporter(t);
         Tree tree = importer.importTree(null);          
 
-        treeModel = new TreeModel(tree);//treeModel
+        treeModel = new DefaultTreeModel(tree);//treeModel
     }
 
     /**
@@ -158,7 +186,7 @@ public class TraceCorrelationAssert extends MathTestCase {
         Tree tree = new SimpleTree(root);
         tree.setUnits(Units.Type.YEARS);
 
-        return new TreeModel(tree); //treeModel
+        return new DefaultTreeModel(tree); //treeModel
     }
 
     protected static final String[][] PRIMATES_TAXON_SEQUENCE = {{"human", "chimp", "bonobo", "gorilla", "orangutan", "siamang"},

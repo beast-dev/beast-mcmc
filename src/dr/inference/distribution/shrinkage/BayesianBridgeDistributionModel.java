@@ -1,7 +1,8 @@
 /*
- * MultivariateNormalDistributionModel.java
+ * BayesianBridgeDistributionModel.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution.shrinkage;
@@ -38,17 +40,21 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  * @author Xiang Ji
  */
 
-public abstract class BayesianBridgeDistributionModel extends AbstractModel
-        implements ParametricMultivariateDistributionModel, GradientProvider {
+public abstract class BayesianBridgeDistributionModel extends AbstractModel implements
+        BayesianBridgeStatisticsProvider, ParametricMultivariateDistributionModel,
+        GradientProvider, HessianProvider {
     
     BayesianBridgeDistributionModel(Parameter globalScale,
-                Parameter exponent, int dim) {
+                                    Parameter exponent,
+                                    int dim,
+                                    boolean includeNormalizingConstant) {
 
         super(BAYESIAN_BRIDGE);
 
         this.globalScale = globalScale;
         this.exponent = exponent;
         this.dim = dim;
+        this.includeNormalizingConstant = includeNormalizingConstant;
 
         addVariable(globalScale);
         addVariable(exponent);
@@ -60,6 +66,9 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
 
     public abstract Parameter getLocalScale();
 
+    @SuppressWarnings("unused")
+    public abstract Parameter getSlabWidth();
+
     abstract double[] gradientLogPdf(double[] x);
 
     @Override
@@ -70,6 +79,16 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
     @Override
     public int getDimension() {
         return dim;
+    }
+
+    abstract double[] hessianLogPdf(double[] x);
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) { return hessianLogPdf((double[]) obj); }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override
@@ -124,6 +143,7 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel
     final Parameter globalScale;
     final Parameter exponent;
     final int dim;
+    final boolean includeNormalizingConstant;
 
     private static final String TYPE = "BayesianBridge";
 }

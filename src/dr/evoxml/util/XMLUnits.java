@@ -1,7 +1,8 @@
 /*
  * XMLUnits.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml.util;
@@ -33,12 +35,13 @@ import dr.xml.XMLSyntaxRule;
 
 /**
  * @author Alexei Drummond
- * @version $Id: XMLUnits.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
+ * @author Andrew Rambaut
  */
 public interface XMLUnits extends Units {
 
     final static String GENERATIONS = "generations";
     final static String DAYS = "days";
+    final static String WEEKS = "weeks";
     final static String MONTHS = "months";
     final static String YEARS = "years";
     public final static String SUBSTITUTIONS = "substitutions";
@@ -53,20 +56,21 @@ public interface XMLUnits extends Units {
 
     class Utils {
 
-        public static Units.Type getUnitsAttr(XMLObject
-                xo) throws XMLParseException {
+        public static Units.Type getUnitsAttr(XMLObject xo) throws XMLParseException {
 
-            Units.Type units = dr.evolution.util.Units.Type.GENERATIONS;
+            Units.Type units = Type.GENERATIONS;
             if (xo.hasAttribute(UNITS)) {
                 String unitsAttr = (String) xo.getAttribute(UNITS);
                 if (unitsAttr.equals(YEARS)) {
-                    units = dr.evolution.util.Units.Type.YEARS;
+                    units = Type.YEARS;
                 } else if (unitsAttr.equals(MONTHS)) {
-                    units = dr.evolution.util.Units.Type.MONTHS;
+                    units = Type.MONTHS;
+                } else if (unitsAttr.equals(WEEKS)) {
+                    units = Type.WEEKS;
                 } else if (unitsAttr.equals(DAYS)) {
-                    units = dr.evolution.util.Units.Type.DAYS;
+                    units = Type.DAYS;
                 } else if (unitsAttr.equals(SUBSTITUTIONS) || unitsAttr.equals(MUTATIONS)) {
-                    units = dr.evolution.util.Units.Type.SUBSTITUTIONS;
+                    units = Type.SUBSTITUTIONS;
                 }
             }
             return units;

@@ -1,7 +1,8 @@
 /*
  * MultivariateDiffusionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -31,16 +33,14 @@ import dr.inference.model.*;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.xml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 
+import static dr.evomodel.continuous.MultivariateDiffusionModel.PreferredSimulationSpace.VARIANCE;
 import static dr.evomodel.treedatalikelihood.hmc.AbstractPrecisionGradient.flatten;
 
 /**
  * @author Marc Suchard
  */
-
 
 public class MultivariateDiffusionModel extends AbstractModel implements TreeAttributeProvider {
 
@@ -68,9 +68,9 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         super(DIFFUSION_PROCESS);
     }
 
-
-//    public void randomize(Parameter trait) {
-//    }
+    public int getDimension() {
+        return diffusionPrecisionMatrixParameter.getColumnDimension();
+    }
 
     public void check(Parameter trait) throws XMLParseException {
         assert trait != null;
@@ -81,7 +81,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return diffusionPrecisionMatrixParameter;
     }
 
-    public double[][] getPrecisionmatrix() {
+    public double[][] getPrecisionMatrix() {
         if (diffusionPrecisionMatrixParameter != null) {
             checkVariableChanged();
             return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
@@ -89,13 +89,26 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
         return null;
     }
 
-    public double[] getPrecisionmatrixAsVector() {
-        return(flatten(getPrecisionmatrix()));
+    public double[] getPrecisionMatrixAsVector() {
+        return(flatten(getPrecisionMatrix()));
     }
 
     public double getDeterminantPrecisionMatrix() {
         checkVariableChanged();
         return determinatePrecisionMatrix;
+    }
+
+    public double getLogDeterminantPrecisionMatrix() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    public enum PreferredSimulationSpace {
+        VARIANCE,
+        PRECISION
+    }
+
+    public PreferredSimulationSpace getPreferredSimulationSpace() {
+        return VARIANCE;
     }
 
     /**
@@ -149,8 +162,8 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     protected void calculatePrecisionInfo() {
         diffusionPrecisionMatrix = diffusionPrecisionMatrixParameter.getParameterAsMatrix();
         determinatePrecisionMatrix =
-                MultivariateNormalDistribution.calculatePrecisionMatrixDeterminate(
-                        diffusionPrecisionMatrix);
+                Math.exp(MultivariateNormalDistribution.calculatePrecisionMatrixLogDeterminate(
+                        diffusionPrecisionMatrix));
     }
 
     // *****************************************************************
@@ -189,21 +202,25 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             return new String[]{diffusionPrecisionMatrixParameter.toSymmetricString()};
         }
 
-        diffusionPrecisionMatrixParameter.toString();
         return new String[]{"null"};
-    }
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
     }
 
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
+
+    public static void checkIsPositiveDefinite(double[][] matrix) throws XMLParseException {
+        CholeskyDecomposition chol;
+        try {
+            chol = new CholeskyDecomposition(matrix);
+        } catch (IllegalDimension illegalDimension) {
+            throw new XMLParseException(DIFFUSION_CONSTANT + " must be a square matrix.");
+        }
+
+        if (!chol.isSPD()) {
+            throw new XMLParseException(DIFFUSION_CONSTANT + " must be a positive definite matrix.");
+        }
+    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -217,16 +234,7 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             MatrixParameterInterface diffusionParam = (MatrixParameterInterface)
                     cxo.getChild(MatrixParameterInterface.class);
 
-            CholeskyDecomposition chol;
-            try {
-                chol = new CholeskyDecomposition(diffusionParam.getParameterAsMatrix());
-            } catch (IllegalDimension illegalDimension) {
-                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a square matrix.");
-            }
-
-            if (!chol.isSPD()) {
-                throw new XMLParseException(DIFFUSION_CONSTANT + " must be a positive definite matrix.");
-            }
+            checkIsPositiveDefinite(diffusionParam.getParameterAsMatrix());
 
             return new MultivariateDiffusionModel(diffusionParam);
         }

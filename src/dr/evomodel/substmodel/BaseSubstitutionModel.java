@@ -1,7 +1,8 @@
 /*
  * BaseSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -39,7 +41,6 @@ import java.util.Arrays;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @author Alexei Drummond
- * @version $Id: AbstractSubstitutionModel.java,v 1.41 2005/05/24 20:25:58 rambaut Exp $
  */
 @SuppressWarnings({"SuspiciousNameCombination", "UnusedAssignment"})
 public abstract class BaseSubstitutionModel extends AbstractModel
@@ -199,10 +200,12 @@ public abstract class BaseSubstitutionModel extends AbstractModel
      * @param matrix   an array to store the matrix
      */
     public void getTransitionProbabilities(double distance, double[] matrix) {
+        getTransitionProbabilities(distance, matrix, getEigenDecomposition());
+    }
+
+    public void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
+
         double temp;
-
-        EigenDecomposition eigen = getEigenDecomposition();
-
         if (eigen == null) {
             Arrays.fill(matrix, 0.0);
             return;
@@ -277,12 +280,16 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         updateMatrix = false;
     }
 
-    protected double setupMatrix() {
+    public double setupMatrix() {
         setupRelativeRates(relativeRates);
-        double[] pi = freqModel.getFrequencies();
+        double[] pi = getPi();
         setupQMatrix(relativeRates, pi, q);
         makeValid(q, stateCount);
         return getNormalizationValue(q, pi);
+    }
+
+    protected double[] getPi() {
+        return freqModel.getFrequencies();
     }
 
     public void getInfinitesimalMatrix(double[] out) {

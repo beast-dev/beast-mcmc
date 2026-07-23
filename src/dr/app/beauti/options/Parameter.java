@@ -1,7 +1,8 @@
 /*
  * Parameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -49,9 +51,12 @@ public class Parameter implements Serializable {
 
     private boolean meanInRealSpace = false;
 
-    // Required para
+    // Required parameters
     private String baseName;
     private final String description;
+
+    //TODO think about have an optional (could be public) parameter priorID to idref to the prior later on
+    //private String priorID;
 
     private int dimensionWeight = 1;
 
@@ -70,14 +75,14 @@ public class Parameter implements Serializable {
     public final boolean isAdaptiveMultivariateCompatible;
     public boolean isMaintainedSum;
     public boolean isCalibratedYule = false;
-//    public final double lower;
-//    public final double upper;
+    // public final double lower;
+    // public final double upper;
 
     private PartitionOptions options;
 
-    public final PriorScaleType scaleType;
-
-    public final boolean isPriorFixed;
+    public PriorScaleType scaleType;
+    public boolean isPriorFixed;
+    public boolean isPriorParametersFixed;
     public PriorType priorType;
 
     private Parameter parent;
@@ -92,9 +97,18 @@ public class Parameter implements Serializable {
         this.initial = initial;
     }
 
+    public boolean isInitialSet() {
+        return isInitialSet;
+    }
+
+    public void setInitialSet(boolean isInitialSet) {
+        this.isInitialSet = isInitialSet;
+    }
+
     // Editable fields
     private boolean isFixed;
     private double initial;
+    private boolean isInitialSet = false;
     public double maintainedSum;
     public double dimension;
     public boolean isTruncated;
@@ -114,11 +128,11 @@ public class Parameter implements Serializable {
     public String linkedName;
 
     public static class Builder {
-        // Required para
+        // Required parameters
         private final String baseName;
         private final String description;
 
-        // Optional para - initialized to default values
+        // Optional parameters - initialized to default values
         private PriorScaleType scaleType = PriorScaleType.NONE;
 
         private String taxaId = null;
@@ -138,14 +152,15 @@ public class Parameter implements Serializable {
 
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private boolean isPriorFixed = false;
+        private boolean isPriorParametersFixed = false;
 
         private boolean isAdaptiveMultivariateCompatible = false;
 
         private double maintainedSum = 1.0;
         private double dimension = 1;
         private double initial = Double.NaN;
-        //        private double upper = Double.NaN;
-//        private double lower = Double.NaN;
+        // private double upper = Double.NaN;
+        // private double lower = Double.NaN;
         private boolean isTruncated = false;
         public double truncationUpper = Double.POSITIVE_INFINITY;
         public double truncationLower = Double.NEGATIVE_INFINITY;
@@ -184,6 +199,7 @@ public class Parameter implements Serializable {
             options = source.options;
             priorType = source.priorType;
             isPriorFixed = source.isPriorFixed;
+            isPriorParametersFixed = source.isPriorParametersFixed;
             isAdaptiveMultivariateCompatible = source.isAdaptiveMultivariateCompatible;
             initial = source.initial;
             dimension = source.dimension;
@@ -254,6 +270,7 @@ public class Parameter implements Serializable {
             this.taxonSet = taxonSet;
             return this;
         }
+
         public Builder prior(PriorType priorType) {
             this.priorType = priorType;
             return this;
@@ -309,6 +326,11 @@ public class Parameter implements Serializable {
 
         public Builder isPriorFixed(boolean priorFixed) {
             this.isPriorFixed = priorFixed;
+            return this;
+        }
+
+        public Builder isPriorParametersFixed(boolean priorParametersFixed) {
+            this.isPriorParametersFixed = priorParametersFixed;
             return this;
         }
 
@@ -405,8 +427,8 @@ public class Parameter implements Serializable {
 
         taxonSet = builder.taxonSet;
         
-//        upper = builder.upper;
-//        lower = builder.lower;
+        // upper = builder.upper;
+        // lower = builder.lower;
         isTruncated = builder.isTruncated;
         truncationUpper = builder.truncationUpper;
         truncationLower = builder.truncationLower;
@@ -507,7 +529,6 @@ public class Parameter implements Serializable {
         this.taxonSet = taxonSet;
     }
 
-
     public void setPriorEdited(boolean priorEdited) {
         this.priorEdited = priorEdited;
     }
@@ -583,9 +604,9 @@ public class Parameter implements Serializable {
     }
 
     public int[] getParameterDimensionWeights() {
-//        if (getOptions() != null && getOptions() instanceof PartitionSubstitutionModel) {
-//            return ((PartitionSubstitutionModel)getOptions()).getPartitionCodonWeights();
-//        }
+        // if (getOptions() != null && getOptions() instanceof PartitionSubstitutionModel) {
+        //      return ((PartitionSubstitutionModel)getOptions()).getPartitionCodonWeights();
+        // }
         if (getSubParameters().size() > 0) {
             int[] weights = new int[getSubParameters().size()];
             for (int i = 0; i < weights.length; i++) {

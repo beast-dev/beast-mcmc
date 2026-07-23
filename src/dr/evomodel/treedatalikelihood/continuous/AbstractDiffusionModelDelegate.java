@@ -1,7 +1,8 @@
 /*
- * HomogenousDiffusionModelDelegate.java
+ * AbstractDiffusionModelDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.continuous.LogDeterminantProvider;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
@@ -44,7 +48,6 @@ import java.io.Serializable;
  *
  * @author Marc A. Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public abstract class AbstractDiffusionModelDelegate extends AbstractModel implements DiffusionProcessDelegate, Serializable {
 
@@ -67,7 +70,7 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
         this.diffusionModel = diffusionModel;
         addModel(diffusionModel);
 
-        dim = diffusionModel.getPrecisionParameter().getColumnDimension();
+        dim = diffusionModel.getDimension(); // getPrecisionParameter().getColumnDimension();
 
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(1, 0, partitionNumber);
@@ -123,11 +126,21 @@ public abstract class AbstractDiffusionModelDelegate extends AbstractModel imple
             eigenBufferHelper.flipOffset(0);
         }
 
-        cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
-                diffusionModel.getPrecisionmatrixAsVector(),
-                Math.log(diffusionModel.getDeterminantPrecisionMatrix())
-
-        );
+        if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+            cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                    ((SparseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
+                    diffusionModel.getLogDeterminantPrecisionMatrix());
+        } else {
+            if (diffusionModel instanceof LogDeterminantProvider) {
+                cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                        diffusionModel.getPrecisionMatrixAsVector(),
+                        ((LogDeterminantProvider) diffusionModel).getLogDeterminantPrecisionMatrix());
+            } else {
+                cdi.setDiffusionPrecision(eigenBufferHelper.getOffsetIndex(0),
+                        diffusionModel.getPrecisionMatrixAsVector(),
+                        Math.log(diffusionModel.getDeterminantPrecisionMatrix()));
+            }
+        }
     }
 
     @Override

@@ -1,7 +1,8 @@
 /*
  * CompoundLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
 
+import dr.util.BenchmarkTimer;
 import dr.util.Keywordable;
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
@@ -37,11 +40,13 @@ import java.util.concurrent.*;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
 public class CompoundLikelihood implements Likelihood, Profileable, Reportable, Keywordable {
 
     public final static boolean UNROLL_COMPOUND = true;
+
+    public final static boolean BENCHMARK_TIME = false;
+    public BenchmarkTimer timer = new BenchmarkTimer();
 
     public final static boolean EVALUATION_TIMERS = true;
     public final long[] evaluationTimes;
@@ -113,18 +118,18 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 //        evaluationCounts = null;
 //        
 //    }
-    
+
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
         // unroll any compound likelihoods
         if (UNROLL_COMPOUND && addToPool && likelihood instanceof CompoundLikelihood) {
-        	
+
             for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
                 addLikelihood(l, index, addToPool);
             }
-            
+
         } else {
-        	
+
             if (!likelihoods.contains(likelihood)) {
 
                 likelihoods.add(likelihood);
@@ -133,11 +138,11 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
                 }
 
                 if (likelihood.evaluateEarly()) {
-                	
+
                     earlyLikelihoods.add(likelihood);
-                    
+
                 } else {
-                	
+
                     // late likelihood list is used to evaluate them if the thread pool is not being used...
                     lateLikelihoods.add(likelihood);
 
@@ -149,9 +154,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
             } else {
                 throw new IllegalArgumentException("Attempted to add the same likelihood multiple times to CompoundLikelihood.");
             } // END: contains check
-            
+
         }//END: if unroll check
-        
+
     }//END: addLikelihood
 
     public Set<Likelihood> getLikelihoodSet() {
@@ -191,7 +196,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 //    static int DEBUG = 0;
 
     public double getLogLikelihood() {
-
+        if(BENCHMARK_TIME) {
+            timer.startTimer(getId());
+        }
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
 
         if( logLikelihood == Double.NEGATIVE_INFINITY ) {
@@ -226,6 +233,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
         if (DEBUG_PARALLEL_EVALUATION) {
             System.err.println("");
+        }
+        if(BENCHMARK_TIME) {
+            timer.stopTimer(getId());
         }
         return logLikelihood;
     }
@@ -333,6 +343,8 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
         return message;
     }
 
+
+
     public String toString() {
         return getId();
         // really bad for debugging
@@ -357,20 +369,20 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
     public int getThreadCount() {
         return threadCount;
     }
-    
+
     public long[] getEvaluationTimes() {
-    	return evaluationTimes;
+        return evaluationTimes;
     }
-    
+
     public int[] getEvaluationCounts() {
-    	return evaluationCounts;
+        return evaluationCounts;
     }
-    
+
     public void resetEvaluationTimes() {
-    	for (int i = 0; i < evaluationTimes.length; i++) {
-    		evaluationTimes[i] = 0;
-    		evaluationCounts[i] = 0;
-    	}
+        for (int i = 0; i < evaluationTimes.length; i++) {
+            evaluationTimes[i] = 0;
+            evaluationCounts[i] = 0;
+        }
     }
     
     // **************************************************************
@@ -442,11 +454,16 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
     }
 
     public String getReport(int indent) {
+        String message = "\n";
+        if(BENCHMARK_TIME) {
+            message += "Wall-clock time: (CompoundLikelihood)" + timer.toString();
+        }
         if (EVALUATION_TIMERS) {
-            String message = "\n";
             boolean first = true;
 
             final NumberFormatter nf = new NumberFormatter(6);
+
+            double logLikelihood = this.getLogLikelihood();
 
             int index = 0;
             for( Likelihood lik : likelihoods ) {
@@ -486,11 +503,28 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
                 }
                 index++;
             }
+            message += "\n\n";
+            for (int i = 0; i < indent; i++) {
+                message += " ";
+            }
+            message += this.getId() + " log-likelihood = " + logLikelihood;
 
-            return message;
+            if (indent == 0) message += "\n\n";
+
         } else {
-            return "No evaluation timer report available";
+            message += "No evaluation timer report available";
         }
+
+        if (indent == 0) {
+            message += "\n";
+            message += "likelihood: ";
+            message += getLogLikelihood();
+            message += "\n\n";
+
+        }
+
+        return message;
+
     }
 
 

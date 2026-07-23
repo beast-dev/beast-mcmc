@@ -1,7 +1,8 @@
 /*
  * TreeTrace.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.io;
@@ -33,11 +35,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TreeTrace.java,v 1.10 2005/05/24 20:25:58 rambaut Exp $
  */
 public class TreeTrace implements Identifiable {
 
@@ -122,14 +124,14 @@ public class TreeTrace implements Identifiable {
 
         if (line.toUpperCase().startsWith("#NEXUS")) {
             NexusImporter importer = new NexusImporter(reader);
-            Tree[] trees = importer.importTrees(null);
+            List<Tree> trees = importer.importTrees(null);
 
-            if (trees.length < 2) {
+            if (trees.size() < 2) {
                 throw new Importer.ImportException("Less than two trees in the trace file");
             }
 
-            String id1 = trees[0].getId();
-            String id2 = trees[1].getId();
+            String id1 = trees.get(0).getId();
+            String id2 = trees.get(1).getId();
 
             minState = getStateNumber(id1);
             stepSize = getStateNumber(id2) - minState;

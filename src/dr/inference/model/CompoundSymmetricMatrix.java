@@ -1,7 +1,8 @@
 /*
  * CompoundSymmetricMatrix.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -74,8 +76,11 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
                         Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
             }
             return offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, col));
+        } else if (isStrictlyUpperTriangular) {
+            return diagonalParameter.getParameterValue(row);
         }
-        return diagonalParameter.getParameterValue(row);
+        return diagonalParameter.getParameterValue(row) *
+                offDiagonalParameter.getParameterValue(getUpperTriangularIndex(row, row));
     }
 
     @Override
@@ -135,6 +140,24 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
         }
 
         return updateGradientCorrelation(vechuGradient);
+    }
+
+    public double[] updateGradientFullOffDiagonal(double[] gradient) {
+        assert gradient.length == dim * dim;
+
+        double[] diagQ = diagonalParameter.getParameterValues();
+
+        double[] offDiagGradient = new double[gradient.length];
+
+        int k = 0;
+        for (int i = 0; i < dim; ++i) {
+            for (int j = 0; j < dim; ++j) {
+                offDiagGradient[k] = gradient[i * dim + j] * Math.sqrt(diagQ[i] * diagQ[j]);
+                ++k;
+            }
+        }
+
+        return offDiagGradient;
     }
 
     public double[] updateGradientCorrelation(double[] gradient) {

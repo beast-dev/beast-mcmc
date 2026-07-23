@@ -1,7 +1,8 @@
 /*
  * MatrixParameterInterface.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -51,6 +53,10 @@ public interface MatrixParameterInterface extends Parameter {
 
     double[] getParameterValues();
 
+    default int getParameterCount() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     int getUniqueParameterCount();
 
     Parameter getUniqueParameter(int index);
@@ -64,4 +70,27 @@ public interface MatrixParameterInterface extends Parameter {
     String toSymmetricString();
 
     boolean isConstrainedSymmetric();
+
+    default int index(int row, int col) {
+        // column-major
+        if (col > getColumnDimension()) {
+            throw new RuntimeException("Column " + col + " out of bounds: Compared to " + getColumnDimension() + "maximum size.");
+        }
+        if (row > getRowDimension()) {
+            throw new RuntimeException("Row " + row + " out of bounds: Compared to " + getRowDimension() + "maximum size.");
+        }
+        return col * getRowDimension() + row;
+    }
+
+    static double[][] getParameterAsMatrix(MatrixParameterInterface parameter) {
+        int rowDim = parameter.getRowDimension();
+        int colDim = parameter.getColumnDimension();
+        double[][] rtn = new double[rowDim][colDim];
+        for (int j = 0; j < colDim; ++j) {
+            for (int i = 0; i < rowDim; ++i) {
+                rtn[i][j] = parameter.getParameterValue(i, j);
+            }
+        }
+        return rtn;
+    }
 }

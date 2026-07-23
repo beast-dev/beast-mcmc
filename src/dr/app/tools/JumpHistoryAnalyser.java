@@ -1,7 +1,8 @@
 /*
  * JumpHistoryAnalyser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -42,7 +44,6 @@ import java.util.regex.Pattern;
 /**
  * @author Andrew Rambaut
  * @author Marc A. Suchard
- * @version $Id$
  */
 public class JumpHistoryAnalyser {
 
@@ -365,17 +366,17 @@ public class JumpHistoryAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.StringOption("from", "from_states", "set of 'from' states to limit the history [default all states]"),
-                        new Arguments.StringOption("to", "to_states", "set of 'to' states to limit the history [default all states]"),
-                        new Arguments.Option("iterateFrom", "iterate over 'from' states [default combine states]"),
-                        new Arguments.Option("iterateTo", "iterate over 'to' states [default combine states]"),
-                        new Arguments.Option("backwardsTime", "time runs backwards [default false]"),
-                        new Arguments.IntegerOption("bins", "the number of discrete bins [default 100]"),
-                        new Arguments.RealOption("min", "the minimum bound of the time range"),
-                        new Arguments.RealOption("max", "the maximum bound of the time range"),
-                        new Arguments.RealOption("mrsd", "the date of the most recently sampled tip"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.IntegerOption("burnin","b","the number of states to be considered as 'burn-in'"),
+                        new Arguments.StringOption("from","f", "from_states", "set of 'from' states to limit the history [default all states]"),
+                        new Arguments.StringOption("to", "t","to_states", "set of 'to' states to limit the history [default all states]"),
+                        new Arguments.Option("iterateFrom", "if", "iterate over 'from' states [default combine states]"),
+                        new Arguments.Option("iterateTo", "it", "iterate over 'to' states [default combine states]"),
+                        new Arguments.Option("backwardsTime", "bt", "time runs backwards [default false]"),
+                        new Arguments.IntegerOption("bins", null, "the number of discrete bins [default 100]"),
+                        new Arguments.RealOption("min", null, "the minimum bound of the time range"),
+                        new Arguments.RealOption("max", null, "the maximum bound of the time range"),
+                        new Arguments.RealOption("mrsd", null, "the date of the most recently sampled tip"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
         try {

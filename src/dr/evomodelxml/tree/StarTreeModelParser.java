@@ -1,7 +1,8 @@
 /*
  * StarTreeModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.tree;
@@ -28,6 +30,7 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.StarTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -68,7 +71,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
                 new ElementRule(Tree.class),
                 new XORRule(
                         new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
-                        new ElementRule(SHARE_ROOT, TreeModel.class)
+                        new ElementRule(SHARE_ROOT, DefaultTreeModel.class)
                 ),
                 new ElementRule(LEAF_HEIGHT,
                         new XMLSyntaxRule[]{
@@ -114,7 +117,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
                     }
 
                 } else if (cxo.getName().equals(SHARE_ROOT)) {
-                    TreeModel sharedRoot = (TreeModel) cxo.getChild(TreeModel.class);
+                    DefaultTreeModel sharedRoot = (DefaultTreeModel) cxo.getChild(DefaultTreeModel.class);
                     treeModel.setSharedRootHeightParameter(sharedRoot);
                 } else if (cxo.getName().equals(LEAF_HEIGHT)) {
 

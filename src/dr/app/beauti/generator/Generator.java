@@ -1,7 +1,8 @@
 /*
  * Generator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2025 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -88,7 +90,6 @@ public abstract class Generator {
 //        parameter.initial = value;
 //    }
 
-
     /**
      * write a parameter
      *
@@ -122,7 +123,6 @@ public abstract class Generator {
         }
         writeParameter(prefix + id, parameter, writer);
     }
-
 
     public void writeParameter(int num, String id, PartitionSubstitutionModel model, XMLWriter writer) {
         Parameter parameter = model.getParameter(model.getPrefixCodon(num) + id);
@@ -240,6 +240,22 @@ public abstract class Generator {
         }
     }
 
+    public void writeParameter(String id, double value, XMLWriter writer) {
+        ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
+        if (id != null && id.length() > 0) {
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
+        }
+        if (!Double.isNaN(value)) {
+            attributes.add(new Attribute.Default<String>(ParameterParser.VALUE, "" + value));
+        }
+
+        Attribute[] attrArray = new Attribute[attributes.size()];
+        for (int i = 0; i < attrArray.length; i++) {
+            attrArray[i] = attributes.get(i);
+        }
+
+        writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
+    }
 
     /**
      * write a parameter
@@ -317,7 +333,6 @@ public abstract class Generator {
 
         return multi;
     }
-
 
     /**
      * Write the distribution for *DistributionModel

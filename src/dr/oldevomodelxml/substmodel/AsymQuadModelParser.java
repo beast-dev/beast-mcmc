@@ -1,7 +1,8 @@
 /*
  * AsymQuadModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.oldevomodelxml.substmodel;
 
 import dr.evolution.datatype.Microsatellite;
+import dr.inference.model.ParameterParser;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.inference.model.Parameter;
@@ -91,12 +94,7 @@ public class AsymQuadModelParser extends AbstractXMLObjectParser{
 
     private Parameter processModelParameter(XMLObject xo,
                                           String parameterName)throws XMLParseException{
-        Parameter param = null;
-        if(xo.hasChildNamed(parameterName)){
-            XMLObject paramXO = xo.getChild(parameterName);
-            param =(Parameter) paramXO.getChild(Parameter.class);           
-        }
-        return param;
+        return ParameterParser.getOptionalParameter(xo, parameterName);
     }
 
     public String getParserDescription() {

@@ -1,7 +1,8 @@
 /*
  * MultiPartitionDataLikelihoodParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.treedatalikelihood;
@@ -48,7 +50,6 @@ import java.util.List;
 
 /**
  * @author Guy Baele
- * @version $Id$
  */
 public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser {
 
@@ -141,14 +142,19 @@ public class MultiPartitionDataLikelihoodParser extends AbstractXMLObjectParser 
             if (DEBUG) {
                 System.out.println("branchModels == null");
             }
-            branchModels = new ArrayList<BranchModel>();
+            branchModels = new ArrayList<>();
             List<SubstitutionModel> substitutionModels = xo.getAllChildren(SubstitutionModel.class);
             if (substitutionModels.size() == 0) {
+                // no explicitly defined BranchModels so create one
                 if (DEBUG) {
                     System.out.println("substitutionModels == null");
                 }
                 for (SiteRateModel siteRateModel : siteRateModels) {
-                    SubstitutionModel substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
+                    SubstitutionModel substitutionModel = null;
+                    if (substitutionModel == null && siteRateModel instanceof GammaSiteRateModel) {
+                        // for backwards compatibility the old GammaSiteRateModelParser can provide the substitution model...
+                        substitutionModel = ((GammaSiteRateModel)siteRateModel).getSubstitutionModel();
+                    }
                     if (substitutionModel == null) {
                         throw new XMLParseException("No substitution model available for TreeDataLikelihood: "+xo.getId());
                     }

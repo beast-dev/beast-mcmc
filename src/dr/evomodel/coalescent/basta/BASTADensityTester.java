@@ -1,7 +1,8 @@
 /*
  * BASTADensityTester.java
  *
- * Copyright (c) 2002-2020 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.basta;
@@ -39,6 +41,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -48,7 +51,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Guy Baele
+ * @author Guy Baele
  */
 public class BASTADensityTester {
 
@@ -58,7 +61,7 @@ public class BASTADensityTester {
         NewickImporter importer = new NewickImporter(t);
         Tree tree = importer.importTree(null);
 
-        return new TreeModel(tree);//treeModel
+        return new DefaultTreeModel(tree);//treeModel
     }
 
     static private String sequences[][] = {
@@ -98,7 +101,6 @@ public class BASTADensityTester {
 
         SimpleAlignment alignment = new SimpleAlignment();
         alignment.setDataType(dataType);
-//        alignment.setDataType(Nucleotides.INSTANCE);
 
         Taxon[] taxa = new Taxon[taxa_sequence[0].length]; // 6, 17
         System.out.println("Taxon len = " + taxa_sequence[0].length);
@@ -205,10 +207,7 @@ public class BASTADensityTester {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
-
-
-
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
 
         System.out.println("EXAMPLE 2: 5 taxa (2 identical sampling dates) with 2 demes");
@@ -239,10 +238,7 @@ public class BASTADensityTester {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
-
-
-
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
 
         System.out.println("EXAMPLE 3: 6 taxa (2 identical sampling dates) with 3 demes");
@@ -309,10 +305,7 @@ public class BASTADensityTester {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
-
-
-
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
 
         System.out.println("EXAMPLE 4: 6 taxa (2 identical sampling dates) with 3 demes and simple branch lengths");
@@ -329,8 +322,10 @@ public class BASTADensityTester {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
+
+        System.out.println("EXAMPLE 5: 6 taxa (2 identical sampling dates) with 3 demes and simple (but different than in EXAMPLE 4) branch lengths");
 
         try {
             treeModel = createSpecifiedTree("(((((AF189018Indonesia2005:1.5,AJ842306France2004:0.5):0.75,AB192965Japan2004:1.25):3.25,FM212660Cameroon2007:7.5):5.0,AF071228Spain1997:2.5):1.0,AF105975Portugal1995:1.5)");
@@ -344,7 +339,7 @@ public class BASTADensityTester {
             System.out.println("Error thrown in test class dr.evomodel.coalescent.basta.SCLikelihoodTester: " + missing);
         }
 
-        System.out.println("\nStructured coalescent lnL = " + structured.calculateLogLikelihood());
+        System.out.println("Structured coalescent lnL = " + structured.calculateLogLikelihood() + "\n");
 
     }
 

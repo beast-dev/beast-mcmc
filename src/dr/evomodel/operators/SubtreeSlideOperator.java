@@ -1,7 +1,8 @@
 /*
  * SubtreeSlideOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
 import dr.inference.model.Statistic;
@@ -40,13 +43,12 @@ import java.util.List;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
- * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 
     private static final boolean DEBUG = false;
 
-    private TreeModel tree = null;
+    private DefaultTreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
     private final boolean swapInRandomRate;
@@ -55,7 +57,7 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
     private AdaptationMode mode = AdaptationMode.DEFAULT;
     private final double targetAcceptance;
 
-    public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
+    public SubtreeSlideOperator(DefaultTreeModel tree, double weight, double size, boolean gaussian,
                                 boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches,
                                 AdaptationMode mode, double targetAcceptance) {
         super(mode, targetAcceptance);

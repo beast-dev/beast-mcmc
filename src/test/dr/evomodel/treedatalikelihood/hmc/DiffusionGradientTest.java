@@ -1,7 +1,8 @@
 /*
  * DiffusionGradientTest.java
  *
- * Copyright (c) 2002-2019 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package test.dr.evomodel.treedatalikelihood.hmc;
@@ -58,7 +60,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
     private CompoundSymmetricMatrix precisionMatrix;
     private CachedMatrixInverse precisionMatrixInv;
 
-    protected List<Integer> missingIndices = new ArrayList<Integer>();
+    //    protected List<Integer> missingIndices = new ArrayList<Integer>();
+    protected boolean[] missingIndicators;
 
     private MultivariateDiffusionModel diffusionModelVar;
     private ContinuousTraitPartialsProvider dataModelMissing;
@@ -114,17 +117,20 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
         dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0, 4.0, -5.2, 1.0});
         traitParameter = new CompoundParameter("trait", dataTraits);
 
+        this.missingIndicators = new boolean[traitParameter.getDimension()];
+
         traitParameter.setParameterValue(2, 0);
-        missingIndices.add(6);
-        missingIndices.add(7);
-        missingIndices.add(8);
-        missingIndices.add(9);
-        missingIndices.add(10);
-        missingIndices.add(11);
-        missingIndices.add(13);
-        missingIndices.add(15);
-        missingIndices.add(25);
-        missingIndices.add(29);
+
+        missingIndicators[6] = true;
+        missingIndicators[7] = true;
+        missingIndicators[8] = true;
+        missingIndicators[9] = true;
+        missingIndicators[10] = true;
+        missingIndicators[11] = true;
+        missingIndicators[13] = true;
+        missingIndicators[15] = true;
+        missingIndicators[25] = true;
+        missingIndicators[29] = true;
 
 
         // Tree
@@ -154,12 +160,12 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
         // Data Model
         dataModelMissing = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
-                missingIndices, true,
+                missingIndicators, true,
                 6, precisionType);
 
         dataModel = new ContinuousTraitDataModel("dataModel",
                 traitParameter,
-                missingIndices, false,
+                missingIndicators, false,
                 6, precisionType);
 
         //// Factor Model //// *****************************************************************************************
@@ -174,9 +180,10 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         dataModelFactor = new IntegratedFactorAnalysisLikelihood("dataModelFactors",
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 loadingsMatrixParameters,
-                factorPrecisionParameters, 0.0, null);
+                factorPrecisionParameters, 0.0, null,
+                IntegratedFactorAnalysisLikelihood.CacheProvider.NO_CACHE);
 
         //// Repeated Measures Model //// *****************************************************************************************
         Parameter offDiagonalSampling = new Parameter.Default(new double[]{0.16, -0.15, 0.14, -0.13, 0.12,
@@ -197,18 +204,24 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
                 new CompoundSymmetricMatrix(diagonalVarSampling, offDiagonalSampling, true, false));
 
         dataModelRepeatedMeasures = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasures",
+                dataModel,
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 true,
                 dimTrait,
-                samplingPrecision);
+                1,
+                samplingPrecision,
+                PrecisionType.FULL);
 
         dataModelRepeatedMeasuresInv = new RepeatedMeasuresTraitDataModel("dataModelRepeatedMeasuresInv",
+                dataModel,
                 traitParameter,
-                missingIndices,
+                missingIndicators,
                 true,
                 dimTrait,
-                samplingPrecisionInv);
+                1,
+                samplingPrecisionInv,
+                PrecisionType.FULL);
 
     }
 
@@ -238,8 +251,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         // Repeated Measures Model
         System.out.println("\nTest gradient precision repeated measures.");
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null,null, samplingPrecision);
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null,null, samplingPrecisionInv);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null, null, samplingPrecision);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null, null, samplingPrecisionInv);
     }
 
     public void testGradientDriftWithMissing() {
@@ -282,8 +295,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         // Repeated Measures Model
         System.out.println("\nTest gradient precision repeated measures.");
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null,null, samplingPrecision);
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null,null, samplingPrecisionInv);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null, null, samplingPrecision);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null, null, samplingPrecisionInv);
     }
 
     public void testGradientSingleDriftWithMissing() {
@@ -345,8 +358,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         // Repeated Measures Model
         System.out.println("\nTest gradient precision repeated measures.");
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null,meanRoot, samplingPrecision);
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null,meanRoot, samplingPrecisionInv);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null, meanRoot, samplingPrecision);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null, meanRoot, samplingPrecisionInv);
     }
 
     public void testGradientOUWithMissing() {
@@ -408,8 +421,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         // Repeated Measures Model
         System.out.println("\nTest gradient precision repeated measures.");
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null,null, samplingPrecision);
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null,null, samplingPrecisionInv);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, null, null, samplingPrecision);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, null, null, samplingPrecisionInv);
 
         //************//
         // Single opt
@@ -527,8 +540,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         // Repeated Measures Model
         System.out.println("\nTest gradient precision repeated measures.");
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, strengthOfSelectionMatrixParam,null, samplingPrecision);
-        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, strengthOfSelectionMatrixParam,null, samplingPrecisionInv);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasures, rootPrior, meanRoot, precisionMatrix, false, strengthOfSelectionMatrixParam, null, samplingPrecision);
+        testGradient(diffusionModel, diffusionProcessDelegate, dataModelRepeatedMeasuresInv, rootPrior, meanRoot, precisionMatrix, false, strengthOfSelectionMatrixParam, null, samplingPrecisionInv);
     }
 
     private void testGradient(MultivariateDiffusionModel diffusionModel,

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+  <taxa id="taxa">
+    <taxon id="t1">
+      <attr name="trait">
+        0
+      </attr>
+    </taxon>
+    <taxon id="t2">
+      <attr name="trait">
+        1
+      </attr>
+    </taxon>
+    <taxon id="t3">
+      <attr name="trait">
+        2
+      </attr>
+    </taxon>
+    <taxon id="t4">
+      <attr name="trait">
+        3
+      </attr>
+    </taxon>
+  </taxa>
+
+
+  <generalDataType id="trait.dataType">
+    <state code="0"/>
+    <state code="1"/>
+    <state code="2"/>
+    <state code="3"/>
+  </generalDataType>
+
+  <attributePatterns id="trait.pattern" attribute="trait">
+    <taxa idref="taxa"/>
+    <generalDataType idref="trait.dataType"/>
+  </attributePatterns>
+
+  <newick id="startingTree" usingHeights="true" usingDates="false">
+    (((t1:1.0,t2:1.0):1.0,t3:2.0):1.0,t4:3.0);
+  </newick>
+
+  <treeModel id="treeModel" fixHeights="true">
+    <tree idref="startingTree"/>
+    <rootHeight>
+      <parameter id="treeModel.rootHeight"/>
+    </rootHeight>
+    <nodeHeights internalNodes="true">
+      <parameter id="treeModel.internalNodeHeights"/>
+    </nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true">
+      <parameter id="treeModel.allInternalNodeHeights"/>
+    </nodeHeights>
+  </treeModel>
+
+  <strictClockBranchRates id="trait.branchRates">
+    <rate>
+      <parameter id="trait.clock.rate" value="1E-4" lower="0.0"/>
+    </rate>
+  </strictClockBranchRates>
+
+  <!-- The random effects model -->
+  <glmSubstitutionModel id="trait.model">
+    <dataType idref="trait.dataType"/>
+    <rootFrequencies>
+      <frequencyModel id="frequencyModel" normalize="true">
+        <dataType idref="trait.dataType"/>
+        <frequencies>
+          <parameter id="frequencies" dimension="4" value = "0.25 0.25 0.25 0.25"/>
+        </frequencies>
+      </frequencyModel>
+    </rootFrequencies>
+
+    <glmModel family="logLinear" checkIdentifiability="false" id="trait.glm">
+      <independentVariables>
+        <parameter id="fixed.effects" dimension="4" value="0.0"/>
+        <designMatrix id="fixed.effects.designMatrix">
+          <parameter id="r..01" value="1 0 0 0 0 1 	0 0 0 0 0 0"/>
+          <parameter id="r..10" value="0 0 0 0 0 0 	1 0 0 0 0 1"/>
+          <parameter id="r01.." value="0 1 0 0 1 0 	0 0 0 0 0 0"/>
+          <parameter id="r10.." value="0 0 0 0 0 0 	0 1 0 0 1 0"/>
+        </designMatrix>
+      </independentVariables>
+      <independentVariables>
+        <parameter id="random.effect.fixed0" dimension="1" value="0.0"/> <!-- this ensures no double substitutionsl leave at 0.0, no moves!-->
+        <designMatrix id="random.effect.fixed0.designMatrix">
+          <parameter id="random.effect.fixed0.design" value="0 0 1 1 0 0	0 0 1 1 0 0"/>
+        </designMatrix>
+      </independentVariables>
+      <independentVariables>
+        <parameter id="random.effects" dimension="8" value="0.0"/>
+        <designMatrix id="random.effects.designMatrix">
+          <parameter id="r.00.01" value="1 0 0 0 0 0 	0 0 0 0 0 0"/>
+          <parameter id="r.00.10" value="0 1 0 0 0 0 	0 0 0 0 0 0"/>
+          <parameter id="r.01.11" value="0 0 0 0 1 0 	0 0 0 0 0 0"/>
+          <parameter id="r.10.11" value="0 0 0 0 0 1 	0 0 0 0 0 0"/>
+          <parameter id="r.01.00" value="0 0 0 0 0 0 	1 0 0 0 0 0"/>
+          <parameter id="r.10.00" value="0 0 0 0 0 0 	0 1 0 0 0 0"/>
+          <parameter id="r.11.01" value="0 0 0 0 0 0 	0 0 0 0 1 0"/>
+          <parameter id="r.11.10" value="0 0 0 0 0 0 	0 0 0 0 0 1"/>
+        </designMatrix>
+      </independentVariables>
+    </glmModel>
+  </glmSubstitutionModel>
+
+  <siteModel id="trait.siteModel">
+    <substitutionModel>
+      <glmSubstitutionModel idref="trait.model"/>
+    </substitutionModel>
+  </siteModel>
+
+  <treeDataLikelihood id="treeLikelihood" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true"
+                      scalingScheme="never" delayScaling="false">
+    <patterns idref="trait.pattern"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="trait.siteModel"/>
+    <strictClockBranchRates idref="trait.branchRates"/>
+  </treeDataLikelihood>
+
+	<bayesianBridge id="fixed.effects.prior">
+		<parameter idref="fixed.effects"/>
+    <globalScale>
+      <parameter value="0.587405" lower="0"/> <!-- Normal sigma parameter -->
+    </globalScale>
+    <exponent>
+      <parameter value="2.0"/>
+    </exponent>
+    <localScale>
+      <parameter value="1.0" dimension="4"/> <!-- Leave fixed for Normal prior-->
+    </localScale>
+  </bayesianBridge>
+
+  <bayesianBridge id="random.effects.prior">
+    <parameter idref="random.effects"/>
+    <globalScale>
+      <parameter id="globalScale" value="0.1" lower="0"/>
+    </globalScale>
+    <exponent>
+      <parameter id="exponent" value="0.25"/>
+    </exponent>
+    <localScale>
+      <parameter id="localScale" value="0.1" dimension="8"/>
+    </localScale>
+    <slabWidth>
+      <parameter value="2.0"/>
+    </slabWidth>
+  </bayesianBridge>
+  <gammaPrior id="globalScalePrior" shape="1" scale="2">
+ 		<parameter idref="globalScale"/>
+ 	</gammaPrior>
+
+  <bayesianBridge id="random.effect.fixed0.dummyPrior">
+  <parameter idref="random.effect.fixed0"/>
+  <globalScale>
+    <parameter value="1.0" lower="0"/>
+  </globalScale>
+  <exponent>
+    <parameter value="2.0"/>
+  </exponent>
+  <localScale>
+    <parameter value="1.0" dimension="1"/>
+  </localScale>
+  </bayesianBridge>
+
+  <glmSubstitutionModelGradient id="trait.gradient" traitName="trait" effects="fixed">
+    <treeDataLikelihood idref="treeLikelihood"/>
+    <glmSubstitutionModel idref="trait.model"/>
+  </glmSubstitutionModelGradient>
+
+  <numericalHessian id="trait.hessian">
+    <glmSubstitutionModel idref="trait.gradient"/>
+  </numericalHessian>
+
+  <compoundGradient id="compoundPriorGradient">
+    <bayesianBridge idref="fixed.effects.prior"/>
+    <bayesianBridge idref="random.effect.fixed0.dummyPrior"/>
+    <bayesianBridge idref="random.effects.prior"/>
+  </compoundGradient>
+
+	<!-- Define operators                                                        -->
+	<operators id="operators" optimizationSchedule="power">
+    <!-- HMC on the random effects -->
+    <hamiltonianMonteCarloOperator id="traitOperatorHMC" weight="2" nSteps="10" stepSize="1E-3" mode="vanilla"
+		                 drawVariance="1.0" autoOptimize="true" targetAcceptanceProbability="0.3"
+		                 preconditioningUpdateFrequency="10" preconditioningUpdateDelay="0">
+			<jointGradient>
+				<glmSubstitutionModelGradient idref="trait.hessian"/>
+                <compoundGradient idref="compoundPriorGradient"/>
+			</jointGradient>
+            <mask>
+              <parameter id="mask.dummy" value="1 1 1 1 0 1 1 1 1 1 1 1 1"/>
+            </mask>
+			<preconditioner>
+				<compoundPriorPreconditioner id="priorPreconditioner">
+                    <bayesianBridge idref="fixed.effects.prior"/>
+                    <bayesianBridge idref="random.effect.fixed0.dummyPrior"/>
+                    <bayesianBridge idref="random.effects.prior"/>
+				</compoundPriorPreconditioner>
+			</preconditioner>
+		</hamiltonianMonteCarloOperator>
+
+    <bayesianBridgeGibbsOperator weight="1">
+			<bayesianBridge idref="random.effects.prior"/>
+			<gammaPrior idref="globalScalePrior"/>
+		</bayesianBridgeGibbsOperator>
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="trait.clock.rate"/>
+		</scaleOperator>
+		<!-- <deltaExchange delta="0.01" weight="3.0">
+			<parameter idref="frequencies"/>
+		</deltaExchange> -->
+  </operators>
+
+  <report>
+    <compoundPriorPreconditioner idref="priorPreconditioner"/>
+  </report>
+
+  <cachedReport id="priorPreconditionerReport">
+    <compoundPriorPreconditioner idref="priorPreconditioner"/>
+  </cachedReport>
+
+  <assertEqual tolerance="1e-12" verbose="true" charactersToStrip="\[\]:\n">
+    <message>
+      Check SDs
+    </message>
+    <actual regex="Prior SDs:\s*(.*)\n">
+      <cachedReport idref="priorPreconditionerReport"/>
+    </actual>
+    <expected>
+      0.587405, 0.587405, 0.587405, 0.587405, 1.0, 0.009999875002343703, 0.009999875002343703, 0.009999875002343703, 0.009999875002343703, 0.009999875002343703, 0.009999875002343703, 0.009999875002343703, 0.009999875002343703
+    </expected>
+  </assertEqual>
+
+</beast>

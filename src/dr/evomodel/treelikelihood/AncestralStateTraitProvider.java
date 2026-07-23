@@ -1,7 +1,8 @@
 /*
  * AncestralStateTraitProvider.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 
@@ -33,12 +37,12 @@ import dr.evomodel.tree.TreeModel;
  */
 public interface AncestralStateTraitProvider {
 
-    public String getId();
+    String getId();
 
-    public TreeModel getTreeModel();
+    MutableTreeModel getTreeModel();
 
-    public TreeTrait getTreeTrait(String key);
+    TreeTrait getTreeTrait(String key);
 
-    public String formattedState(int[] state);
+    String formattedState(int[] state);
 
 }

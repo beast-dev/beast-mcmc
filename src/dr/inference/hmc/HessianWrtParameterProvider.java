@@ -1,7 +1,8 @@
 /*
  * HessianWrtParameterProvider.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.hmc;
@@ -90,14 +92,22 @@ public interface HessianWrtParameterProvider extends GradientWrtParameterProvide
 
         private final boolean checkValues;
         private final double tolerance;
+        private final double smallThreshold;
 
         CheckHessianNumerically(HessianWrtParameterProvider provider,
-                                        Double nullableTolerance) {
+                                Double nullableTolerance,
+                                Double nullableSmallNumberThreshold) {
             this.provider = provider;
             this.numericProvider = new NumericalHessianFromGradient(provider);
 
             this.checkValues = nullableTolerance != null;
             this.tolerance = checkValues ? nullableTolerance : 0.0;
+            this.smallThreshold = nullableSmallNumberThreshold != null ? nullableSmallNumberThreshold : 0.0;
+        }
+
+        CheckHessianNumerically(HessianWrtParameterProvider provider,
+                                Double nullableTolerance) {
+            this(provider, nullableTolerance, null);
         }
 
         public String getReport() throws MismatchException {
@@ -105,7 +115,7 @@ public interface HessianWrtParameterProvider extends GradientWrtParameterProvide
             double[] analytic = provider.getDiagonalHessianLogDensity();
             double[] numeric = numericProvider.getDiagonalHessianLogDensity();
 
-            return GradientWrtParameterProvider.makeReport("Hessian\n", analytic, numeric, checkValues, tolerance);
+            return GradientWrtParameterProvider.makeReport("Hessian\n", analytic, numeric, checkValues, tolerance, smallThreshold);
         }
     }
 

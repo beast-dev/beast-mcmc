@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <randomField id="test.field">
+        <data>
+            <parameter id="loc.coefficients0" value="1 0 -1 0"/>
+        </data>
+        <distribution>
+            <gaussianProcessField id="test.gp" dim="4">
+                <orderVariance>
+                    <parameter id="orderVariance" value="1"/>
+                </orderVariance>
+                <gaussianNoise>
+                    <parameter id="loc.noise" value="0.0001"/>
+                </gaussianNoise>
+                <basis orthogonalProjection="true">
+                    <designMatrix id="loc.designMatrix0">
+                        <parameter value="1 1 0 0"/>
+                    </designMatrix>
+                    <kernel type="SquaredExponential">
+                            <parameter id="scale" value="1.0" lower="0.0"/>
+                            <parameter id="length" value="1.0" lower="0.0"/>
+                    </kernel>
+                </basis>
+            </gaussianProcessField>
+        </distribution>
+    </randomField>
+    <report>
+        <gaussianProcessField idref="test.gp"/>
+    </report>
+
+    <assertEqual tolerance="1e-3" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check precision
+        </message>
+        <actual regex="precision: (.*?)\n">
+            <gaussianProcessField idref="test.gp"/>
+        </actual>
+        <expected>
+            10000.0 0.0 0.0 0.0 0.0 10000.0 0.0 0.0 0.0 0.0 5000.249987508814 -4999.750012507564 0.0 0.0 -4999.750012507564 5000.249987508813
+        </expected>
+    </assertEqual>
+
+<!--    R implementation-->
+<!--    x <- c(1,1,0,0)-->
+<!--    dim <- length(x)-->
+<!--    H <- diag(dim) - outer(x,x)/sum(x^2)-->
+<!--    K <- matrix(0, dim, dim)-->
+<!--    for (i in 1:dim) {-->
+<!--    for (j in 1:dim) {-->
+<!--    K[i,j] <- exp(-0.5 * (x[i]-x[j])^2)-->
+<!--    }-->
+<!--    }-->
+<!--    solve(H %*% K %*% H + 0.0001*diag(dim))-->
+</beast>

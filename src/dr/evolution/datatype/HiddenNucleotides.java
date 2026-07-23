@@ -1,7 +1,8 @@
 /*
- * NewHiddenNucleotides.java
+ * HiddenNucleotides.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,22 +22,25 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.datatype;
+
+import java.util.Arrays;
 
 /**
  * @author Marc A. Suchard
  */
 public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
 
-    public static final String DESCRIPTION = "hiddenNucleotide";
+    public static final String DESCRIPTION = HiddenDataType.DESCRIPTION + "Nucleotide";
 
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new HiddenNucleotides(1);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new HiddenNucleotides(2);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new HiddenNucleotides(3);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_4 = new HiddenNucleotides(4);
-    public static final HiddenNucleotides NUCLEOTIDE_HIDDEN_8 = new HiddenNucleotides(8);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new HiddenNucleotides(1);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new HiddenNucleotides(2);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_3 = new HiddenNucleotides(3);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_4 = new HiddenNucleotides(4);
+    static final HiddenNucleotides NUCLEOTIDE_HIDDEN_8 = new HiddenNucleotides(8);
 
     /**
      * Private constructor - DEFAULT_INSTANCE provides the only instance
@@ -51,6 +55,21 @@ public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
      */
     public boolean[] getStateSet(int state) {
         return HiddenDataType.Utils.getStateSet(state, stateCount, hiddenClassCount, Nucleotides.INSTANCE);
+    }
+
+    public String getCode(int state) {
+        return HiddenDataType.getCodeImpl(state, stateCount, super::getCode);
+    }
+
+    public String getCodeWithoutHiddenState(int state) {
+        return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
+    static public void registerHiddenDataType(GeneticCode geneticCode, int hiddenClassCount) {
+        String registeredName = DESCRIPTION + hiddenClassCount;
+        if (!Arrays.asList(DataType.getRegisteredDataTypeNames()).contains(registeredName)) {
+            DataType.registerDataType(registeredName, new HiddenNucleotides(hiddenClassCount));
+        }
     }
 
     public int getStateCount() {

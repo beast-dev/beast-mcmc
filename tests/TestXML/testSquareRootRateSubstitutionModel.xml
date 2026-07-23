@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="taxon_1">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_6">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_7">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_8">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_9">
+            <attr name="loc">
+                B
+            </attr>
+        </taxon>
+        <taxon id="taxon_10">
+            <attr name="loc">
+                A
+            </attr>
+        </taxon>
+    </taxa>
+
+    <generalDataType id="loc.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+    </generalDataType>
+
+    <attributePatterns id="loc.pattern" attribute="loc">
+        <taxa idref="taxa"/>
+        <generalDataType idref="loc.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        (taxon_6:1,((((taxon_8:1,taxon_4:1):1,taxon_7:1):1,taxon_10:1):1,((taxon_1:1,(taxon_2:1,taxon_5:1):1):1,(taxon_9:1,taxon_3:1):1):1):1);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="loc.branchRates">
+        <rate>
+            <parameter id="loc.clock.rate" value="1E-4" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <randomField id="test.field">
+        <data>
+            <parameter id="loc.coefficients0" value="2 1 -1 1 -3 1"/>
+        </data>
+        <distribution>
+            <gaussianProcessField id="test.gp" dim="6">
+                <orderVariance>
+                    <parameter id="orderVariance" value="1.0"/>
+                </orderVariance>
+                <gaussianNoise>
+                    <parameter id="loc.noise" value="1"/>
+                </gaussianNoise>
+                <basis>
+                    <designMatrix id="loc.designMatrix0">
+                        <parameter value="1 0 0 0 0 0"/>
+                    </designMatrix>
+                    <kernel type="dotProduct"/>
+                </basis>
+                <basis>
+                    <designMatrix id="loc.designMatrix1">
+                        <parameter value="0 1 0 0 0 0"/>
+                    </designMatrix>
+                    <kernel type="dotProduct"/>
+                </basis>
+            </gaussianProcessField>
+        </distribution>
+    </randomField>
+    
+    <randomFieldGradient id="test.gradient">
+        <randomField idref="test.field"/>
+        <parameter idref="loc.coefficients0"/>
+    </randomFieldGradient>
+
+    <report>
+        <randomField idref="test.field"/>
+        <randomFieldGradient idref="test.gradient"/>       
+    </report>
+
+    <transformedRateSubstitutionModel id="loc.model" 
+    		normalize="true" scaleRatesByFrequencies="true">
+        <generalDataType idref="loc.dataType"/>
+        <rootFrequencies>
+            <frequencyModel id="loc.frequencyModel" normalize="true">
+                <generalDataType idref="loc.dataType"/>
+                <frequencies>
+                    <parameter id="loc.frequencies" dimension="3"/>
+                </frequencies>
+            </frequencyModel>
+        </rootFrequencies>
+        <transformedRates>
+            <parameter idref="loc.coefficients0"/>
+            <transform type="squared"/>
+        </transformedRates>
+    </transformedRateSubstitutionModel>
+
+<!-- 
+    <logRateSubstitutionModel id="loc.model" normalize="true">
+        <generalDataType idref="loc.dataType"/>
+        <rootFrequencies>
+            <frequencyModel id="loc.frequencyModel" normalize="true">
+                <generalDataType idref="loc.dataType"/>
+                <frequencies>
+                    <parameter id="loc.frequencies" dimension="3"/>
+                </frequencies>
+            </frequencyModel>
+        </rootFrequencies>
+        <logRates>
+            <parameter idref="loc.coefficients0"/>
+        </logRates>
+    </logRateSubstitutionModel>
+ -->
+
+    <siteModel id="loc.siteModel">
+        <substitutionModel>
+            <logRateSubstitutionModel idref="loc.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="true" usePreOrder="true"
+                        branchInfinitesimalDerivative="true"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="loc.siteModel"/>
+        <strictClockBranchRates idref="loc.branchRates"/>
+    </treeDataLikelihood>
+
+    <approximateTransformedCtmcRateGradient id="gradient1" traitName="loc">
+        <treeDataLikelihood idref="treeLikelihood"/>
+        <transformedRateSubstitutionModel idref="loc.model"/>
+    </approximateTransformedCtmcRateGradient>
+
+    <report>
+    	<approximateLogCtmcRateGradient idref="gradient1"/>
+    </report>
+
+    <jointGradient id="joint.gradient">
+        <approximateTransformedCtmcRateGradient idref="gradient1"/>
+        <randomFieldGradient idref="test.gradient"/>
+    </jointGradient>
+   
+</beast>

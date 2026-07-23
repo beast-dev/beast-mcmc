@@ -1,7 +1,8 @@
 /*
- * DiscontinuousHamiltonianMonteCarloOperator.java
+ * NodeHeightBounds.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.discrete;
@@ -67,10 +69,12 @@ public class NodeHeightBounds implements GraphicalParameterBound {
             nodeCount++;
         }
         int[] connectedIndices = new int[nodeCount];
+        int nodeIndex = 0;
         for (int i = 0; i < treeModel.getChildCount(nodeRef); i++) {
             NodeRef childNode = treeModel.getChild(nodeRef, i);
             if (!treeModel.isExternal(childNode)) {
-                connectedIndices[i] = childNode.getNumber() - externalNodeCount;
+                connectedIndices[nodeIndex] = childNode.getNumber() - externalNodeCount;
+                nodeIndex++;
             }
         }
         if (!treeModel.isRoot(nodeRef)) {

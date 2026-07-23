@@ -1,7 +1,8 @@
 /*
  * SpeciationLikelihoodParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.speciation;
@@ -30,6 +32,8 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.CalibrationPoints;
+import dr.evomodel.birthdeath.BirthDeathModel;
+import dr.evomodel.speciation.EfficientBirthDeathSpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.inference.distribution.DistributionLikelihood;
@@ -56,6 +60,8 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public static final String CALIBRATION = "calibration";
     public static final String CORRECTION = "correction";
     public static final String POINT = "point";
+
+    private static final String USE_NEW_LOOP = "useNewLoop";
 
     private final String EXACT = CalibrationPoints.CorrectionType.EXACT.toString();
     private final String APPROX = CalibrationPoints.CorrectionType.APPROXIMATED.toString();
@@ -188,6 +194,11 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
+        boolean useNewLoop = xo.getAttribute(USE_NEW_LOOP, false);
+        if (useNewLoop && specModel instanceof BirthDeathModel) {
+            return new EfficientBirthDeathSpeciationLikelihood(tree, (BirthDeathModel) specModel, excludeTaxa, null);
+        }
+
         return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
     }
 
@@ -244,6 +255,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true),
 
             new ElementRule(CALIBRATION, calibration, true),
+            AttributeRule.newBooleanRule(USE_NEW_LOOP, true),
     };
 
 }

@@ -1,7 +1,8 @@
 /*
  * BeastRemote.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
@@ -38,7 +40,7 @@ import java.io.File;
 public class BeastRemote extends BeastMain {
 
     public BeastRemote(File inputFile, BeastConsoleApp consoleApp, boolean verbose, boolean parserWarning) {
-        super(inputFile, consoleApp, 0, verbose, parserWarning, true, null, false, null, 0);
+        super(inputFile, consoleApp, 0, verbose, parserWarning, true, null,  null);
     }
 
     public static void terminateSlaves() {
@@ -80,12 +82,12 @@ public class BeastRemote extends BeastMain {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.Option("verbose", "verbose XML parsing messages"),
-                        new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
-                        new Arguments.Option("window", "provide a console window"),
-                        new Arguments.Option("working", "change working directory to input file's directory"),
-                        new Arguments.LongOption("seed", "specify a random number generator seed"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.Option("verbose", "vb", "verbose XML parsing messages"),
+                        new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
+                        new Arguments.Option("window", "w", "provide a console window"),
+                        new Arguments.Option("working", "wd", "change working directory to input file's directory"),
+                        new Arguments.LongOption("seed", null, "specify a random number generator seed"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

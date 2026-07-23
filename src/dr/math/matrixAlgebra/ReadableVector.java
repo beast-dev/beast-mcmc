@@ -1,7 +1,8 @@
 /*
- * WrappedVector.java
+ * ReadableVector.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,11 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.matrixAlgebra;
 
-
-import dr.inference.model.FastMatrixParameter;
 import dr.inference.model.Parameter;
 
 /**
@@ -119,6 +119,27 @@ public interface ReadableVector {
         public int getDim() { return vector.getDim(); }
     }
 
+    class View implements ReadableVector {
+
+        final private ReadableVector buffer;
+        final private int offset;
+        final private int length;
+
+        public View(ReadableVector buffer, int offset, int length) {
+            this.buffer = buffer;
+            this.offset = offset;
+            this.length = length;
+        }
+
+        @Override
+        public double get(int i) {
+            return buffer.get(offset + i);
+        }
+
+        @Override
+        public int getDim() { return length; }
+    }
+
     class Utils {
 
         public static void setParameter(double[] value, Parameter parameter) {
@@ -185,6 +206,15 @@ public interface ReadableVector {
         public static double norm(ReadableVector vector) {
 
             return Math.sqrt(innerProduct(vector, vector));
+        }
+
+        public static double[] toArray(ReadableVector v) {
+            int dim = v.getDim();
+            double[] x = new double[dim];
+            for (int i = 0; i < dim; i++) {
+                x[i] = v.get(i);
+            }
+            return x;
         }
     }
 }

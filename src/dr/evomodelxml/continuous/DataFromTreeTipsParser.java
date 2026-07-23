@@ -1,7 +1,8 @@
 /*
  * DataFromTreeTipsParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.continuous;
 
-import dr.evolution.tree.MutableTreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -48,22 +50,21 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-        String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
-
-        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
-
+        DataAndMissingFromTreeTipsParser dataAndMissingFromTreeTipsParser = new DataAndMissingFromTreeTipsParser();
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
-        MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
-                returnValue.traitParameter);
+                (TreeTraitParserUtilities.TraitsAndMissingIndices) dataAndMissingFromTreeTipsParser.parseXMLObject(xo);
+
+
+        MatrixParameterInterface dataParameter = MatrixParameter.checkMatrixAndRecast(returnValue.traitParameter);
 
         if (xo.hasChildNamed(TreeTraitParserUtilities.MISSING)) {
             Parameter missing = (Parameter) xo.getChild(TreeTraitParserUtilities.MISSING).getChild(Parameter.class);
             missing.setDimension(dataParameter.getDimension());
 
+            boolean[] missingIndicators = returnValue.getMissingIndicators();
+
             for (int i = 0; i < missing.getDimension(); i++) {
-                if (returnValue.missingIndices.contains(i)) {
+                if (missingIndicators[i]) {
                     missing.setParameterValue(i, 1);
                 } else {
                     missing.setParameterValue(i, 0);
@@ -74,18 +75,15 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
         return dataParameter;
     }
 
-    private static final XMLSyntaxRule[] rules = {
-            new ElementRule(MutableTreeModel.class),
-            AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
-            new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }),
-            new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
-            }, true),
-    };
 
     public XMLSyntaxRule[] getSyntaxRules() {
+        XMLSyntaxRule[] dataAndMissingRules = DataAndMissingFromTreeTipsParser.rules;
+        XMLSyntaxRule[] rules = new XMLSyntaxRule[dataAndMissingRules.length + 1];
+        System.arraycopy(dataAndMissingRules, 0, rules, 0, dataAndMissingRules.length);
+        rules[dataAndMissingRules.length] =
+                new ElementRule(TreeTraitParserUtilities.MISSING, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }, true);
         return rules;
     }
 

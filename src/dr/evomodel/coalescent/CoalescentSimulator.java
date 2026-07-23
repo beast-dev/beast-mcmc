@@ -1,7 +1,8 @@
 /*
  * CoalescentSimulator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,15 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
 import dr.evolution.tree.*;
-import dr.evolution.util.Date;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evolution.util.TimeScale;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.math.UnivariateFunction;
 
@@ -37,7 +37,6 @@ import dr.math.UnivariateFunction;
  * Simulates a set of coalescent intervals given a demographic model.
  *
  * @author Alexei Drummond
- * @version $Id: CoalescentSimulator.java,v 1.43 2005/10/27 10:40:48 rambaut Exp $
  */
 public class CoalescentSimulator {
 
@@ -85,6 +84,38 @@ public class CoalescentSimulator {
 
         return tree;
     }
+
+    /**
+     * A recursive method that simulates a coalescent tree from a constraints tree
+     * @param constraintsTree - Tree providing the topology for the coalescent tree - does not have to be resolved
+     * @param root - The root of the current subtree
+     * @param model - Demographic model
+     * @return SimpleTree
+     */
+
+    public SimpleTree simulateTree(Tree constraintsTree, NodeRef root ,DemographicModel model){
+
+        SimpleNode[] roots = new SimpleNode[constraintsTree.getChildCount(root)];
+        SimpleTree tree;
+
+        for (int i = 0; i < constraintsTree.getChildCount(root); i++) {
+            NodeRef child = constraintsTree.getChild(root,i);
+            if(constraintsTree.isExternal(child)){
+                roots[i] = new SimpleNode(constraintsTree,child);
+            }else{
+                Tree subTree = simulateTree(constraintsTree, child, model);
+                roots[i] = new SimpleNode(subTree, subTree.getRoot());
+            }
+        }
+        // if just one taxonList then finished
+        if (roots.length == 1) {
+            tree = new SimpleTree(roots[0]);
+        } else {
+            tree = new SimpleTree(simulator.simulateCoalescent(roots, model.getDemographicFunction()));
+        }
+        return tree;
+    }
+
 
 
     /**

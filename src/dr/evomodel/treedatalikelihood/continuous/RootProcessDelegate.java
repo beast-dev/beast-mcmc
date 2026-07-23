@@ -1,7 +1,8 @@
 /*
  * RootProcessDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
@@ -35,7 +37,6 @@ import dr.inference.model.Variable;
 
 /**
  * @author Marc A. Suchard
- * @version $Id$
  */
 public interface RootProcessDelegate extends Model {
 
@@ -112,7 +113,7 @@ public interface RootProcessDelegate extends Model {
             double[] mean = prior.getMean();
             final int dimTrait = mean.length;
 
-            final int length = dimTrait + precisionType.getMatrixLength(dimTrait);
+            final int length = precisionType.getPartialsDimension(dimTrait);
             double[] partial = new double[length * numTraits];
 
             int offset = 0;

@@ -1,7 +1,8 @@
 /*
  * GMRFSkyrideBlockUpdateOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
@@ -38,7 +40,6 @@ import java.util.logging.Logger;
  *
  * @author Erik Bloomquist
  * @author Marc Suchard
- * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 public class GMRFSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
 
@@ -55,11 +56,11 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
 
-    GMRFSkyrideLikelihood gmrfField;
+    OldGMRFSkyrideLikelihood gmrfField;
 
     private double[] zeros;
 
-    public GMRFSkyrideBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
+    public GMRFSkyrideBlockUpdateOperator(OldGMRFSkyrideLikelihood gmrfLikelihood,
                                           double weight, AdaptationMode mode, double scaleFactor,
                                           int maxIterations, double stopValue) {
         super(mode);

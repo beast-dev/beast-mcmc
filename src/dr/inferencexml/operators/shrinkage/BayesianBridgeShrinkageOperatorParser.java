@@ -1,19 +1,44 @@
+/*
+ * BayesianBridgeShrinkageOperatorParser.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.inferencexml.operators.shrinkage;
 
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.shrinkage.BayesianBridgeShrinkageOperator;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
-import static dr.inference.operators.MCMCOperator.WEIGHT;
-
 public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectParser {
 
     public final static String BAYESIAN_BRIDGE_PARSER = "bayesianBridgeGibbsOperator";
+    public final static String MASK = "mask";
+    public final static String WEIGHT = "weight";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -23,55 +48,25 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
         BayesianBridgeStatisticsProvider bayesianBridge =
                 (BayesianBridgeStatisticsProvider) xo.getChild(BayesianBridgeStatisticsProvider.class);
 
-        if (bayesianBridge == null) {
-            bayesianBridge = parseAutoCorrelatedRates(xo);
-        }
 
+        GammaDistribution globalScalePrior = null;
+
+        // This prior is actually on phi = globalScale^-exponent
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
-        if (!(prior.getDistribution() instanceof GammaDistribution)) {
-            throw new XMLParseException("Gibbs sampler only implemented for a gamma distributed global scale");
-        }
-        GammaDistribution globalScalePrior = (GammaDistribution) prior.getDistribution();
-
-        return new BayesianBridgeShrinkageOperator(bayesianBridge, globalScalePrior, weight);
-    }
-
-    private BayesianBridgeStatisticsProvider parseAutoCorrelatedRates(XMLObject xo) throws XMLParseException {
-
-        final AutoCorrelatedBranchRatesDistribution rates =
-                (AutoCorrelatedBranchRatesDistribution) xo.getChild(AutoCorrelatedBranchRatesDistribution.class);
-
-        if (!(rates.getPrior() instanceof BayesianBridgeDistributionModel)) {
-            throw new XMLParseException("Gibbs sampler only implemented for a Bayesian Bridge prior");
+        if (prior != null) {
+            if (prior.getDistribution() instanceof GammaDistribution) {
+                globalScalePrior = (GammaDistribution) prior.getDistribution();
+            } else {
+                throw new XMLParseException("Gibbs sampler only implemented for a gamma prior on globalScale^(-exponent).");
+            }
         }
 
-        final BayesianBridgeDistributionModel prior = (BayesianBridgeDistributionModel) rates.getPrior();
+        Parameter mask = null;
+        if (xo.hasChildNamed(MASK)) {
+            mask = (Parameter) xo.getElementFirstChild(MASK);
+        }
 
-        return new BayesianBridgeStatisticsProvider() {
-
-            @Override
-            public double getCoefficient(int i) { return rates.getIncrement(i); }
-
-            @Override
-            public Parameter getGlobalScale() {
-                return prior.getGlobalScale();
-            }
-
-            @Override
-            public Parameter getLocalScale() {
-                return prior.getLocalScale();
-            }
-
-            @Override
-            public Parameter getExponent() {
-                return prior.getExponent();
-            }
-
-            @Override
-            public int getDimension() {
-                return rates.getDimension();
-            }
-        };
+        return new BayesianBridgeShrinkageOperator(bayesianBridge, globalScalePrior, mask, weight);
     }
 
     @Override
@@ -79,13 +74,14 @@ public class BayesianBridgeShrinkageOperatorParser extends AbstractXMLObjectPars
         return rules;
     }
 
-    private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WEIGHT),
-            new XORRule(
-                    new ElementRule(BayesianBridgeStatisticsProvider.class),
-                    new ElementRule(AutoCorrelatedBranchRatesDistribution.class)
-            ),
-            new ElementRule(DistributionLikelihood.class),
+            new ElementRule(BayesianBridgeStatisticsProvider.class),
+            new ElementRule(DistributionLikelihood.class, true),
+            new ElementRule(MASK, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class),
+
+            }, true),
     };
 
     @Override

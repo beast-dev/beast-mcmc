@@ -1,7 +1,8 @@
 /*
  * MarkovJumpsTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
@@ -36,7 +40,6 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
@@ -64,15 +67,16 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     public static final String COMPACT_HISTORY = "compactHistory";
     public static final String NUMBER_OF_SIMULANTS = "numberOfSimulants";
     public static final String REPORT_UNCONDITIONED_COLUMNS = "reportUnconditionedValues";
+    private static final String ALLOW_COMPRESSED_SITES = "allowCompressedSites";
 
 
     public String getParserName() {
         return MARKOV_JUMP_TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
-                                                        GammaSiteRateModel siteRateModel,
+                                                        SiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
@@ -89,12 +93,13 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+        boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
 
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
         boolean reportUnconditionedColumns = xo.getAttribute(REPORT_UNCONDITIONED_COLUMNS, false);
         int nSimulants = xo.getAttribute(NUMBER_OF_SIMULANTS, 1);
 
-        if (patternList.areUnique()) {
+        if (patternList.areUnique() && !xo.getAttribute(ALLOW_COMPRESSED_SITES, false)) {
             throw new XMLParseException("Markov Jumps reconstruction cannot be used with compressed (unique) patterns.");
         }
 
@@ -115,7 +120,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 useMarginalLogLikelihood,
                 useUniformization,
                 reportUnconditionedColumns,
-                nSimulants
+                nSimulants,
+                conditionalProbabilitiesInLogSpace
         );
 
         int registersFound = parseAllChildren(xo, treeLikelihood, dataType.getStateCount(), jumpTag,
@@ -187,7 +193,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             }
                         }
                     } else {
-                        throw new XMLParseException("Markov Jumps register parameter " + registerParameter.getId() + " is of the wrong dimension");
+                        throw new XMLParseException("Markov Jumps register parameter " + registerParameter.getId() + " is of the wrong dimension (" + registerParameter.getDimension() + " vs " + (stateCount * stateCount) + ")");
                     }
                 }
                 if (type == MarkovJumpsType.REWARDS &&
@@ -199,7 +205,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             registerParameter.setParameterValueQuietly(j, 1.0);
                         }
                     } else {
-                        throw new XMLParseException("Markov Rewards register parameter " + registerParameter.getId() + " is of the wrong dimension");
+                        throw new XMLParseException("Markov Rewards register parameter " + registerParameter.getId() + " is of the wrong dimension (" + registerParameter.getDimension() + " vs " + stateCount + ")");
                     }
                 }
 
@@ -225,13 +231,14 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     AttributeRule.newBooleanRule(SAVE_HISTORY, true),
                     AttributeRule.newBooleanRule(LOG_HISTORY, true),
                     AttributeRule.newBooleanRule(COMPACT_HISTORY, true),
+                    AttributeRule.newBooleanRule(ALLOW_COMPRESSED_SITES, true),
                     new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                             new ElementRule(TaxonList.class),
                             new ElementRule(Parameter.class),
                     }, true),
                     new ElementRule(PatternList.class),
-                    new ElementRule(TreeModel.class),
-                    new ElementRule(GammaSiteRateModel.class),
+                    new ElementRule(MutableTreeModel.class),
+                    new ElementRule(SiteRateModel.class),
                     new ElementRule(BranchModel.class, true),
                     new ElementRule(SubstitutionModel.class, true),
                     new ElementRule(BranchRateModel.class, true),

@@ -1,7 +1,8 @@
 /*
- * FullyConjugateTreeTipsPotentialDerivative.java
+ * TreeKroneckerPrecisionColumnProvider.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous.hmc;
@@ -43,7 +45,7 @@ public class TreeKroneckerPrecisionColumnProvider extends TreePrecisionColumnPro
     private final int precisionDim;
     private final MatrixParameterInterface diffusionPrecision;
     private final double[] buffer;
-    private final Map<Integer, double[]> kroneckerCache = new HashMap<Integer, double[]>();
+    private final Map<Integer, double[]> kroneckerCache = new HashMap<>();
 
     public TreeKroneckerPrecisionColumnProvider(TreePrecisionTraitProductProvider productProvider,
                                                 MultivariateDiffusionModel diffusionModel) {

@@ -1,7 +1,8 @@
 /*
  * TaxonList.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.util;
 
 import dr.util.Identifiable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +39,6 @@ import java.util.Set;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TaxonList.java,v 1.16 2006/09/05 13:29:34 rambaut Exp $
  */
 public interface TaxonList extends Identifiable, Iterable<Taxon> {
 
@@ -84,6 +86,22 @@ public interface TaxonList extends Identifiable, Iterable<Taxon> {
         public static boolean hasAttribute(TaxonList taxa, int index, String name) {
             return taxa.getTaxonAttribute(index, name) != null;
         }
+
+        public static List<Taxon> asList(TaxonList taxonList) {
+            List<Taxon> taxa = new ArrayList<>();
+            for (int i = 0, n = taxonList.getTaxonCount(); i < n; i++) {
+                taxa.add(taxonList.getTaxon(i));
+            }
+            return taxa;
+        }
+
+        public static int getTaxonIndex(TaxonList taxonList, String id) {
+            for (int i = 0, n = taxonList.getTaxonCount(); i < n; i++) {
+                if (taxonList.getTaxonId(i).equals(id)) return i;
+            }
+            return -1;
+        }
+
 
         public static Set<String> getTaxonListIdSet(TaxonList taxa) {
             Set<String> taxaSet = new HashSet<String>();

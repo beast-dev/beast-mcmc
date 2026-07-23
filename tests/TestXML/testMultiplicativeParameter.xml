@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+
+    <parameter id="mults" value="1 2 3 4 5" lower="0"/>
+    <multiplicativeParameter id="precisions">
+        <parameter idref="mults"/>
+    </multiplicativeParameter>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check multiplicative parameter
+        </message>
+        <actual>
+            <parameterValues>
+                <parameter idref="precisions"/>
+            </parameterValues>
+        </actual>
+        <expected>
+            1 2 6 24 120
+        </expected>
+    </assertEqual>
+
+    <mcmc chainLength="1">
+        <dummyLikelihood>
+            <parameter idref="mults"/>
+        </dummyLikelihood>
+        <operators>
+            <fireParameterChanged weight="1" value="0.5 0.1 2 0.5 0.25">
+                <parameter idref="mults"/>
+            </fireParameterChanged>
+        </operators>
+        <log id="screenLog" logEvery="1">
+            <column label="parameter" dp="4" width="12">
+                <parameter idref="mults"/>
+            </column>
+        </log>
+    </mcmc>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check multiplicative parameter
+        </message>
+        <actual>
+            <parameterValues>
+                <parameter idref="precisions"/>
+            </parameterValues>
+        </actual>
+        <expected>
+            0.5 0.05 0.1 0.05 0.0125
+        </expected>
+    </assertEqual>
+
+    <mcmc chainLength="1">
+        <dummyLikelihood>
+            <parameter idref="mults"/>
+        </dummyLikelihood>
+        <operators>
+            <fireParameterChanged weight="1" value="3 6 1.5 -3 -30">
+                <parameter idref="precisions"/>
+            </fireParameterChanged>
+        </operators>
+        <log logEvery="1">
+            <column label="parameter" dp="4" width="12">
+                <parameter idref="precisions"/>
+            </column>
+        </log>
+    </mcmc>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check multiplicative parameter
+        </message>
+        <actual>
+            <parameterValues>
+                <parameter idref="mults"/>
+            </parameterValues>
+        </actual>
+        <expected>
+            3 2 0.25 -2 10
+        </expected>
+    </assertEqual>
+
+</beast>

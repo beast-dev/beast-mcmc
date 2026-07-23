@@ -1,7 +1,8 @@
 /*
  * AntigenicPlotter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -830,10 +832,10 @@ public class AntigenicPlotter {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.Option("discrete", "generated under the discrete antigenic model [default = continuous]"),
-                        new Arguments.Option("tab", "generate tab delimited file [default = KML]"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.Option("discrete", "d", "generated under the discrete antigenic model [default = continuous]"),
+                        new Arguments.Option("tab", "t","generate tab delimited file [default = KML]"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

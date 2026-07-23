@@ -1,7 +1,8 @@
 /*
  * TreeLoggerParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.tree;
@@ -170,6 +172,11 @@ public class TreeLoggerParser extends LoggerParser {
                 if (xco.getName().equals(TREE_TRAIT)) {
 
                     TreeTraitProvider ttp = (TreeTraitProvider)xco.getChild(TreeTraitProvider.class);
+
+                    if (ttp == null) {
+                        throw new XMLParseException("The child element of <" + TREE_TRAIT + "> does not implement TreeTraitProvider. " +
+                                "Check that the referenced element (e.g. ancestralTreeLikelihood) is a TreeTraitProvider.");
+                    }
 
                     if (xco.hasAttribute(NAME)) {
                         // a specific named trait is required (optionally with a tag to name it in the tree file)

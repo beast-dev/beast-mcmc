@@ -1,7 +1,8 @@
 /*
- * CheckPointUpdater.java
+ * CheckPointUpdaterApp.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.realtime;
@@ -232,12 +234,12 @@ public class CheckPointUpdaterApp {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("BEAST_XML", "FILENAME", "Specify a BEAST XML file"),
-                        new Arguments.LongOption("seed", "Specify a random number generator seed"),
-                        new Arguments.StringOption("load_state", "FILENAME", "Specify a filename to load a state from"),
-                        new Arguments.StringOption("output_file", "FILENAME", "Specify a filename for the output file"),
-                        new Arguments.StringOption("update_choice", "UPDATECHOICE", "Specify a function by which to update the tree"),
-                        new Arguments.Option("help", "Print this information and stop")
+                        new Arguments.StringOption("BEAST_XML", null,"FILENAME", "Specify a BEAST XML file"),
+                        new Arguments.LongOption("seed", null,"Specify a random number generator seed"),
+                        new Arguments.StringOption("load_state", null,"FILENAME", "Specify a filename to load a state from"),
+                        new Arguments.StringOption("output_file",null, "FILENAME", "Specify a filename for the output file"),
+                        new Arguments.StringOption("update_choice",null, "UPDATECHOICE", "Specify a function by which to update the tree"),
+                        new Arguments.Option("help", "h", "Print this information and stop")
                 });
 
         try {

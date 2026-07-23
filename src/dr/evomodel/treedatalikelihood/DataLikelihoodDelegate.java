@@ -1,7 +1,8 @@
 /*
  * DataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
 
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Model;
 import dr.inference.model.Profileable;
 import dr.xml.Reportable;
@@ -36,7 +39,6 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Profileable, Reportable {
 
@@ -46,12 +48,16 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Pr
 
     void restoreState();
 
+    double[] getSiteLogLikelihoods();
+
     double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
                                int rootNodeNumber) throws LikelihoodException;
 
     int getTraitCount();
 
     int getTraitDim();
+
+    int getPartitionCat();
 
     RateRescalingScheme getRateRescalingScheme();
 
@@ -70,4 +76,14 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Pr
     void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistics);
 
     boolean providesPostOrderStatisticsOnly();
+
+    PreOrderSettings getPreOrderSettings();
+
+    boolean getPreferGPU();
+
+    boolean getUseAmbiguities();
+
+    PartialsRescalingScheme getRescalingScheme();
+
+    boolean getDelayRescalingUntilUnderflow();
 }

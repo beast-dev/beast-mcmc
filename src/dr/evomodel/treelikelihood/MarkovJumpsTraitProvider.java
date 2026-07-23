@@ -1,7 +1,8 @@
 /*
  * MarkovJumpsTraitProvider.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood;
@@ -30,8 +32,12 @@ package dr.evomodel.treelikelihood;
  */
 public interface MarkovJumpsTraitProvider extends AncestralStateTraitProvider {
 
-    public int getPatternCount();
+    int getPatternCount();
 
-    public double getLogLikelihood();
+    double getLogLikelihood();
 
+    enum ValueScaling {
+        RAW,
+        BY_TIME
+    }
 }

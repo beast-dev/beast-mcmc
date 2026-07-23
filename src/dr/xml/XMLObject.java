@@ -1,7 +1,8 @@
 /*
  * XMLObject.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2025 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,11 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.xml;
 
-import dr.inference.model.AbstractModel;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 
@@ -39,7 +40,6 @@ import java.util.Vector;
  * This class wraps a DOM Element for the purposes of parsing.
  *
  * @author Alexei Drummond
- * @version $Id: XMLObject.java,v 1.30 2005/07/11 14:06:25 rambaut Exp $
  */
 public class XMLObject {
 
@@ -314,12 +314,26 @@ public class XMLObject {
         return getBoolean(getAndTest(name));
     }
 
+    /**
+     * @return the named attribute as a boolean.
+     */
+    public boolean getBooleanAttribute(String name, boolean defaultValue) throws XMLParseException {
+        return getBoolean(getOrDefault(name, defaultValue));
+    }
+
 
     /**
      * @return the named attribute as a double.
      */
     public double getDoubleAttribute(String name) throws XMLParseException {
         return getDouble(getAndTest(name));
+    }
+
+    /**
+     * @return the named attribute as a double.
+     */
+    public double getDoubleAttribute(String name, double defaultValue) throws XMLParseException {
+        return getDouble(getOrDefault(name, defaultValue));
     }
 
     /**
@@ -330,10 +344,19 @@ public class XMLObject {
     }
 
     /**
-     * @return the named attribute as a double[].
+     * @return the named attribute as an int[].
      */
     public int[] getIntegerArrayAttribute(String name) throws XMLParseException {
         return getIntegerArray(getAndTest(name));
+    }
+
+    /**
+     * @param i the index of the child to return
+     * @return the ith child as an int[].
+     * @throws XMLParseException if getChild(i) would
+     */
+    public int[] getIntegerArrayChild(int i) throws XMLParseException {
+        return getIntegerArray(getChild(i));
     }
 
     /**
@@ -344,6 +367,13 @@ public class XMLObject {
     }
 
     /**
+     * @return the named attribute as an integer.
+     */
+    public int getIntegerAttribute(String name, int defaultValue) throws XMLParseException {
+        return getInteger(getOrDefault(name, defaultValue));
+    }
+
+    /**
      * @return the named attribute as a long integer.
      */
     public long getLongIntegerAttribute(String name) throws XMLParseException {
@@ -351,10 +381,24 @@ public class XMLObject {
     }
 
     /**
+     * @return the named attribute as a long integer.
+     */
+    public long getLongIntegerAttribute(String name, long defaultValue) throws XMLParseException {
+        return getLongInteger(getOrDefault(name, defaultValue));
+    }
+
+    /**
      * @return the named attribute as a string.
      */
     public String getStringAttribute(String name) throws XMLParseException {
         return getString(getAndTest(name));
+    }
+
+    /**
+     * @return the named attribute as a string.
+     */
+    public String getStringAttribute(String name, String defaultValue) throws XMLParseException {
+        return getString(getOrDefault(name, defaultValue));
     }
 
     /**
@@ -378,7 +422,7 @@ public class XMLObject {
                 if (token.compareToIgnoreCase(missingValue) == 0)
                     d = Double.NaN;
                 else
-                    d = new Double(token);
+                    d = Double.parseDouble(token);
                 if (valueList != null) valueList.add(d);
             }
             return true;
@@ -396,7 +440,7 @@ public class XMLObject {
         try {
             StringTokenizer st = new StringTokenizer(s);
             while (st.hasMoreTokens()) {
-                Integer d = new Integer(st.nextToken());
+                Integer d = Integer.parseInt(st.nextToken());
                 if (valueList != null) valueList.add(d);
             }
             return true;
@@ -517,7 +561,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double if possible
+     * @return the object as a double if possible
      */
     private double getDouble(Object obj) throws XMLParseException {
         try {
@@ -534,7 +578,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private double[] getDoubleArray(Object obj) throws XMLParseException {
 
@@ -556,7 +600,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private int[] getIntegerArray(Object obj) throws XMLParseException {
 
@@ -611,7 +655,7 @@ public class XMLObject {
     }
 
     /**
-     * @return the object as an double[] if possible
+     * @return the object as a double[] if possible
      */
     private String[] getStringArray(Object obj) throws XMLParseException {
 
@@ -641,6 +685,15 @@ public class XMLObject {
         }
         throw new XMLParseException("'" + name + "' attribute was not found in " + element.getTagName() + " element.");
     }
+    /**
+     * @return the named attribute if it exists, return defaultValue otherwise.
+     */
+    private Object getOrDefault(String name, Object defaultValue) throws XMLParseException {
+        if (element.hasAttribute(name)) {
+            return element.getAttribute(name);
+        }
+        return defaultValue;
+    }
 
     public XMLObject getParent() {
         return parent;
@@ -657,5 +710,5 @@ public class XMLObject {
     private Object nativeObject;
 
     // The objectStore representing the local scope of this element.
-//	private ObjectStore store;
+    // private ObjectStore store;
 }

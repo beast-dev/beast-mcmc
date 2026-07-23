@@ -1,7 +1,8 @@
 /*
  * XMLGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.bss;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.substmodel.MG94CodonModelParser;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
@@ -47,8 +50,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
-import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
 import dr.oldevomodelxml.substmodel.EmpiricalAminoAcidModelParser;
 import dr.oldevomodelxml.substmodel.FrequencyModelParser;
@@ -73,7 +76,6 @@ import dr.xml.XMLParser;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class XMLGenerator {
 
@@ -499,7 +501,7 @@ public class XMLGenerator {
 									PartitionParser.EVERY, String
 											.valueOf(data.every)) });
 
-			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
+			writer.writeIDref(DefaultTreeModel.TREE_MODEL, data.treeModelIdref);
 
 			int substitutionModelIndex = data.substitutionModelIndex;
 			switch (substitutionModelIndex) {
@@ -818,7 +820,7 @@ public class XMLGenerator {
 
 			);
 
-			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
+			writer.writeIDref(DefaultTreeModel.TREE_MODEL, data.treeModelIdref);
 
 			writer.writeOpenTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 
@@ -868,7 +870,7 @@ public class XMLGenerator {
 
 			);
 
-			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
+			writer.writeIDref(DefaultTreeModel.TREE_MODEL, data.treeModelIdref);
 
 			writer.writeOpenTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 
@@ -911,7 +913,7 @@ public class XMLGenerator {
 
 			);
 
-			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
+			writer.writeIDref(DefaultTreeModel.TREE_MODEL, data.treeModelIdref);
 
 			writer.writeOpenTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 			
@@ -969,9 +971,9 @@ public class XMLGenerator {
 //			TreeModel tree, 
 			XMLWriter writer, String suffix) {
 
-		final String treeModelName = TreeModel.TREE_MODEL + suffix;
+		final String treeModelName = DefaultTreeModel.TREE_MODEL + suffix;
 
-		writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(
+		writer.writeTag(DefaultTreeModel.TREE_MODEL, new Attribute.Default<String>(
 				XMLParser.ID, treeModelName), false);
 
 		writer.writeIDref("tree", Utils.TOPOLOGY + suffix);
@@ -1000,7 +1002,7 @@ public class XMLGenerator {
 
 		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
-		writer.writeCloseTag(TreeModel.TREE_MODEL);
+		writer.writeCloseTag(DefaultTreeModel.TREE_MODEL);
 
 	}// END: writeTreeModel
 
@@ -1122,7 +1124,7 @@ public class XMLGenerator {
 
 			break;
 
-		case 1: // GammaSiteRateModel
+		case 1: // GammaSiteRateModelParser
 			
 			writer.writeOpenTag(
 					GammaSiteModelParser.GAMMA_SHAPE,

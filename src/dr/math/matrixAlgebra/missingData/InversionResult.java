@@ -1,7 +1,8 @@
 /*
  * InversionResult.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,9 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.matrixAlgebra.missingData;
+
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
 
 /**
  * @author Marc A. Suchard
@@ -77,6 +81,18 @@ public class InversionResult {
         }
         return new InversionResult(Code.PARTIALLY_OBSERVED, -1, logDet, true);
         // Effective dimension is unknown in this last case (<= min(dim1, dim2)), but should never be used.
+    }
+
+    public static Code getCode(int fullDim, int effectiveDim) {
+        final InversionResult.Code code;
+        if (effectiveDim == 0) {
+            code = NOT_OBSERVED;
+        } else if (effectiveDim == fullDim) {
+            code = FULLY_OBSERVED;
+        } else {
+            code = PARTIALLY_OBSERVED;
+        }
+        return code;
     }
 
     public String toString() {

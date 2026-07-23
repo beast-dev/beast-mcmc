@@ -1,7 +1,8 @@
 /*
  * MultiDimensionalScalingCore.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.multidimensionalscaling;
@@ -30,7 +32,6 @@ package dr.inference.multidimensionalscaling;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
 public interface MultiDimensionalScalingCore {
@@ -50,6 +51,10 @@ public interface MultiDimensionalScalingCore {
      * initializes arrays.
      */
     void initialize(int embeddingDimension, int locationCount, long flags);
+
+    void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags);
+
+    void setNonMissingObservationCount(int count);
 
     /**
      * sets the observation data
@@ -95,6 +100,12 @@ public interface MultiDimensionalScalingCore {
      * Get gradient of MDS likelihood w.r.t. locations
      */
     void getGradient(double[] location);
+
+    default void getLocationGradient(double[] location) {
+        getGradient(location);
+    }
+
+    void getObservationGradient(double[] observation);
 
     /**
      * Get pair-wise data

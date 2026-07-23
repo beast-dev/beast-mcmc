@@ -231,6 +231,10 @@ class BiClade implements Clade {
         return cladeKeys.getParentKey(key1, key2);
     }
 
+    public static boolean isSubset(Object key1, Object key2) {
+        return cladeKeys.isSubset(key1, key2);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

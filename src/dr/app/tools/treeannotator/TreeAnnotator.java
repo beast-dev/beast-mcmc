@@ -75,7 +75,7 @@ public class TreeAnnotator extends BaseTreeTool {
     private static PrintStream progressStream = System.err;
     private static final boolean extendedMetrics = false;
 
-    private final CollectionAction collectionAction;
+    private final CollectAttributesAction collectAttributesAction;
     private final AnnotateHeightsAction annotateHeightsAction;
     private final AnnotateAction annotateAction;
     private final int threadCount;
@@ -149,10 +149,10 @@ public class TreeAnnotator extends BaseTreeTool {
 
         long totalStartTime = System.currentTimeMillis();
 
-        collectionAction = new CollectionAction();
+        collectAttributesAction = new CollectAttributesAction();
 
         // length is explicitly collected from the tree so add this attribute name
-        collectionAction.addAttributeName("length");
+        collectAttributesAction.addAttributeName("length");
 
         annotateHeightsAction = new AnnotateHeightsAction(heightsOption, hpdIntervals, hpdLimit, useKDEs, kdeIntervals, kdeCount, kdeLimit);
         annotateAction = new AnnotateAction(posteriorLimit, countLimit, hpd2D, computeESS, true);
@@ -454,12 +454,12 @@ public class TreeAnnotator extends BaseTreeTool {
                         futures.add(pool.submit(() -> {
                             cladeSystem.collectCladeHeights(tree);
                             rootHeights.add(tree.getNodeHeight(tree.getRoot()));
-                            cladeSystem.traverseTree(tree, collectionAction);
+                            cladeSystem.traverseTree(tree, collectAttributesAction);
                         }));
                     } else {
                         cladeSystem.collectCladeHeights(tree);
                         rootHeights.add(tree.getNodeHeight(tree.getRoot()));
-                        cladeSystem.traverseTree(tree, collectionAction);
+                        cladeSystem.traverseTree(tree, collectAttributesAction);
                     }
                     totalTreesUsed += 1;
                 }
@@ -505,7 +505,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 }
             }
         }
-        collectionAction.addAttributeNames(attributeNames);
+        collectAttributesAction.addAttributeNames(attributeNames);
         annotateAction.addAttributeNames(attributeNames);
     }
 

@@ -92,7 +92,9 @@ public class BitsetKey {
 
         int wordIndex = wordIndex(bitIndex);
 
-        wordsInUse = Math.max(wordsInUse, wordIndex + 1);
+        if (wordsInUse < wordIndex + 1) {
+            wordsInUse = wordIndex + 1;
+        }
 
         words[wordIndex] |= (1L << bitIndex);
 
@@ -110,9 +112,8 @@ public class BitsetKey {
     }
 
     public void clear() {
-        while (wordsInUse > 0) {
-            words[--wordsInUse] = 0;
-        }
+        Arrays.fill(words, 0, wordsInUse, 0L);
+        wordsInUse = 0;
         hashCache = 0;
     }
 
@@ -149,25 +150,26 @@ public class BitsetKey {
     public void and(BitsetKey key1, BitsetKey key2) {
         assert this != key1 && this != key2 && key1 != key2;
 
-        if (key1.wordsInUse >= key2.wordsInUse) {
-            wordsInUse = key1.wordsInUse;
-            words = Arrays.copyOf(key1.words, key1.wordsInUse);
-            for (int i = 0; i < key2.wordsInUse; i++) {
-                words[i] &= key2.words[i];
-            }
-            for (int i = key2.wordsInUse; i < wordsInUse; i++) {
-                words[i] = 0;
-            }
-        } else {
-            wordsInUse = key2.wordsInUse;
-            words = Arrays.copyOf(key2.words, key2.wordsInUse);
-            for (int i = 0; i < key1.wordsInUse; i++) {
-                words[i] &= key1.words[i];
-            }
-            for (int i = key1.wordsInUse; i < wordsInUse; i++) {
-                words[i] = 0;
-            }
+        final int maxInUse = Math.max(key1.wordsInUse, key2.wordsInUse);
+        if (maxInUse == 0) {
+            wordsInUse = 0;
+            hashCache = 0;
+            return;
         }
+
+        final boolean key1Longer = key1.wordsInUse >= key2.wordsInUse;
+        final long[] baseWords = key1Longer ? key1.words : key2.words;
+        final long[] otherWords = key1Longer ? key2.words : key1.words;
+        final int otherInUse = key1Longer ? key2.wordsInUse : key1.wordsInUse;
+
+        System.arraycopy(baseWords, 0, words, 0, maxInUse);
+        for (int i = 0; i < otherInUse; i++) {
+            words[i] &= otherWords[i];
+        }
+        Arrays.fill(words, otherInUse, maxInUse, 0L);
+
+        wordsInUse = maxInUse;
+        recalculateWordsInUse();
         hashCache = 0;
     }
 
@@ -254,6 +256,9 @@ public class BitsetKey {
     }
 
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         BitsetKey key = (BitsetKey)obj;
 
         if (wordsInUse != key.wordsInUse)

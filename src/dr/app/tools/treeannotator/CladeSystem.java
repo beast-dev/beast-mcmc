@@ -28,6 +28,7 @@ package dr.app.tools.treeannotator;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.stats.DiscreteStatistics;
@@ -260,6 +261,7 @@ public final class CladeSystem {
 //    }
     public void collectCladeHeights(Tree tree) {
         collectCladeHeights(tree, tree.getRoot());
+
     }
 
     private Object collectCladeHeights(Tree tree, NodeRef node) {
@@ -281,27 +283,16 @@ public final class CladeSystem {
             Object key1 = collectCladeHeights(tree, tree.getChild(node, 0));
             Object key2 = collectCladeHeights(tree, tree.getChild(node, 1));
 
-            Clade child1 = getClade(key1);
-            Clade child2 = getClade(key2);
-
             key = BiClade.getParentKey(key1, key2);
 
             BiClade clade = (BiClade) getClade(key);
             if (clade != null) {
                 // parent is in the Clade set
-
-                if (child1 != null && child1.getSize() > 1 &&
-                        (clade.getBestLeft() == child1 || clade.getBestRight() == child1)) {
-                    child1.addHeightValue(tree.getNodeHeight(tree.getChild(node, 0)));
-                }
-
-                if (child2 != null && child2.getSize() > 1 &&
-                        (clade.getBestLeft() == child2 || clade.getBestRight() == child2)) {
-                    child2.addHeightValue(tree.getNodeHeight(tree.getChild(node, 1)));
-                }
+                clade.addHeightValue(tree.getNodeHeight(node));
+            } else {
             }
-        }
 
+        }
         return key;
     }
 
@@ -515,6 +506,14 @@ public final class CladeSystem {
 
     Map<Object, BiClade> getCladeMap() {
         return cladeMap;
+    }
+
+    public boolean isSubset(Clade clade1, Clade clade2) {
+        return isSubset(clade1.getKey(), clade2.getKey());
+    }
+
+    public boolean isSubset(Object key1, Object key2) {
+        return BiClade.isSubset(key1, key2);
     }
 
     //

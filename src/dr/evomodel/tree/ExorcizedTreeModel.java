@@ -30,6 +30,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -49,6 +50,10 @@ public class ExorcizedTreeModel extends TreeModel {
     private final Tree hauntedTree;
     private boolean hauntedTreeChanged;
     private NodeRef exorcizedRoot;
+    private final List<NodeRef> exorcizedTips = new ArrayList<>();
+    private final List<NodeRef> exorcizedNodes = new ArrayList<>();
+    private final Map<NodeRef, NodeRef> exorcizedParentMap = new HashMap<>();
+    private final Map<NodeRef, NodeRef[]> exorcizedChildMap = new HashMap<>();
 
     //
     // Public stuff
@@ -60,38 +65,191 @@ public class ExorcizedTreeModel extends TreeModel {
         this(EXORCIZED_TREE_MODEL, ghostTreeModel, corporealLineages);
     }
 
-    public ExorcizedTreeModel(String name, Tree hauntedTree, TaxonList corporealLineages) {
+    public ExorcizedTreeModel(String name, TreeModel hauntedTree, TaxonList corporealLineages) {
 
         super(name, true);
 
         this.hauntedTree = hauntedTree;
         this.corporealLineages = corporealLineages.asList();
 
-//        createCorporealTree(ExorcizedTreeModel, ghostLineages);
-
-        if (hauntedTree instanceof TreeModel) {
-            addModel((TreeModel) hauntedTree);
+        for (int i = 0; i < hauntedTree.getExternalNodeCount(); i++) {
+            NodeRef tip = hauntedTree.getExternalNode(i);
+            if (corporealLineages.asList().contains(hauntedTree.getNodeTaxon(tip))) {
+                exorcizedTips.add(tip);
+            }
         }
 
-        hauntedTreeChanged = true;
+        updateExorcizedTree();
+
+        addModel(hauntedTree);
     }
 
     private void updateExorcizedTree() {
+        exorcizedNodes.clear();
         updateExorcizedTree(hauntedTree, hauntedTree.getRoot());
         hauntedTreeChanged = false;
     }
 
-    private void updateExorcizedTree(Tree hauntedTree, NodeRef hauntedNode) {
+    private NodeRef updateExorcizedTree(Tree hauntedTree, NodeRef node) {
+        if (hauntedTree.isExternal(node)) {
+            if (exorcizedTips.contains(node)) {
+                return node;
+            }
+        } else {
+            assert hauntedTree.getChildCount(node) == 2;
 
+            NodeRef child1 = updateExorcizedTree(hauntedTree, hauntedTree.getChild(node, 0));
+            NodeRef child2 = updateExorcizedTree(hauntedTree, hauntedTree.getChild(node, 1));
+
+            if (child1 != null && child2 != null) {
+                // both children have non-ghost tips so this is a exorcized internal node
+                exorcizedNodes.add(node);
+                exorcizedRoot = node;
+
+                exorcizedParentMap.put(child1, node);
+                exorcizedParentMap.put(child2, node);
+                exorcizedChildMap.put(node, new NodeRef[]{child1, child2});
+
+                return node;
+            }
+
+            if (child1 != null) {
+                return child1;
+            }
+
+            if (child2 != null) {
+                return child2;
+            }
+
+        }
+        return null;
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         assert model == hauntedTree;
+        if (object instanceof TreeChangedEvent) {
+            final TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
+
+            if (treeChangedEvent.isNodeChanged()) {
+                fireModelChanged(treeChangedEvent);
+            } else if (treeChangedEvent.isTreeChanged()) {
+                fireModelChanged(treeChangedEvent);
+            }
+            // Other event types are ignored (probably trait changes).
+        }
+
         hauntedTreeChanged = true;
-        fireModelChanged();
     }
 
+    @Override
+    public NodeRef[] getNodes() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public NodeRef getRoot() {
+        if (hauntedTreeChanged) {
+            updateExorcizedTree();
+        }
+        return exorcizedRoot;
+    }
+
+    @Override
+    public int getNodeCount() {
+        // this needs to be the haunted tree's node count because
+        // the node numbers are unchanged and thus go to hauntedTree.getNodeCount() - 1.
+        return hauntedTree.getNodeCount();
+    }
+
+    @Override
+    public NodeRef getNode(int i) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public NodeRef getInternalNode(int i) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public NodeRef getExternalNode(int i) {
+        assert !hauntedTreeChanged;
+        return exorcizedTips.get(i);
+    }
+
+    @Override
+    public int getExternalNodeCount() {
+        assert !hauntedTreeChanged;
+        return exorcizedTips.size();
+    }
+
+    @Override
+    public int getInternalNodeCount() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Taxon getNodeTaxon(NodeRef node) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public double getNodeHeight(NodeRef node) {
+        assert !hauntedTreeChanged;
+        return hauntedTree.getNodeHeight(node);
+    }
+
+    @Override
+    public double getNodeRate(NodeRef node) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Object getNodeAttribute(NodeRef node, String name) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Iterator getNodeAttributeNames(NodeRef node) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean isExternal(NodeRef node) {
+        assert !hauntedTreeChanged;
+        return hauntedTree.isExternal(node);
+    }
+
+    @Override
+    public boolean isRoot(NodeRef node) {
+        assert !hauntedTreeChanged;
+        return node == exorcizedRoot;
+    }
+
+    @Override
+    public int getChildCount(NodeRef node) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public NodeRef getChild(NodeRef node, int j) {
+        assert !hauntedTreeChanged;
+        return exorcizedChildMap.get(node)[j];
+    }
+
+    @Override
+    public NodeRef getParent(NodeRef node) {
+        assert !hauntedTreeChanged;
+        return exorcizedParentMap.get(node);
+    }
+
+    @Override
+    public Taxon getTaxon(int taxonIndex) {
+        return corporealLineages.get(taxonIndex);
+    }
+
+    // Unused methods
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // nothing to do
@@ -196,186 +354,10 @@ public class ExorcizedTreeModel extends TreeModel {
     }
 
 
-//    /**
-//     * @param ExorcizedTreeModel
-//     * @param ghostLineages
-//     */
-//    public void createCorporealTree(TreeModel ExorcizedTreeModel, TaxonList ghostLineages) {
-//
-//        //start with setting the external node heights
-//        for (int i = 0; i < this.getExternalNodeCount(); i++) {
-//            this.setNodeHeight(this.getExternalNode(nodeMap[i]), nodeHeights[i]);
-//        }
-//        //set the internal node heights
-//        for (int i = 0; i < (this.getExternalNodeCount() - 1); i++) {
-//            //No just restart counting, will fix later on in the code by adding additionalTaxa variable
-//            this.setNodeHeight(this.getInternalNode(i), nodeHeights[this.getExternalNodeCount() + i]);
-//        }
-//
-//        int newRootIndex = -1;
-//        //now add the parent-child links again to ALL the nodes
-//        for (int i = 0; i < edges.length; i++) {
-//            if (edges[i] != -1) {
-//                //make distinction between external nodes and internal nodes
-//                if (i < this.getExternalNodeCount()) {
-//                    //external node
-//                    this.addChild(this.getNode(edges[i]), this.getExternalNode(nodeMap[i]));
-//                    System.out.println("external: " + edges[i] + " > " + nodeMap[i]);
-//                } else {
-//                    //internal node
-//                    this.addChild(this.getNode(edges[i]), this.getNode(i));
-//                    System.out.println("internal: " + edges[i] + " > " + i);
-//                }
-//            } else {
-//                newRootIndex = i;
-//            }
-//        }
-//
-//        //not possible to determine correct ordering of child nodes in the loop where they're being assigned
-//        //hence perform possible swaps in a separate loop
-//
-//        for (int i = 0; i < edges.length; i++) {
-//                if (edges[i] != -1) {
-//                    if(i < this.externalNodeCount) {
-//                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[nodeMap[i]]) {
-//                            //swap child nodes
-//                            Node childOne = nodes[edges[i]].removeChild(0);
-//                            Node childTwo = nodes[edges[i]].removeChild(1);
-//                            nodes[edges[i]].addChild(childTwo);
-//                            nodes[edges[i]].addChild(childOne);
-//                        }
-//                    }else{
-//                        if (childOrder[i] == 0 && nodes[edges[i]].getChild(0) != nodes[i]) {
-//                            //swap child nodes
-//                            Node childOne = nodes[edges[i]].removeChild(0);
-//                            Node childTwo = nodes[edges[i]].removeChild(1);
-//                            nodes[edges[i]].addChild(childTwo);
-//                            nodes[edges[i]].addChild(childOne);
-//                        }
-//                    }
-//                }
-//
-//        }
-//
-//        this.setRoot(nodes[newRootIndex]);
-//    }
-
-//    NodeRef createCorporealNodes(NodeRef node) {
-//        if (isExternal(node)) {
-//            Taxon taxon = getNodeTaxon(node);
-//            if (ghostLineages.contains(taxon)) {
-//                return null;
-//            } else {
-//                ExorcizedTreeModel.addTaxon(taxon);
-//            }
-//        } else {
-//            for (int i = 0; i < getChildCount(node); i++) {
-//                createCorporealNodes(getChild(node, i));
-//            }
-//        }
-//    }
-
     @Override
     public List<Citation> getCitations() {
         // @todo add a citation in here
         return Collections.EMPTY_LIST;
     }
 
-    @Override
-    public NodeRef[] getNodes() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public NodeRef getRoot() {
-        if (hauntedTreeChanged) {
-            updateExorcizedTree();
-        }
-        return exorcizedRoot;
-    }
-
-    @Override
-    public int getNodeCount() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public NodeRef getNode(int i) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public NodeRef getInternalNode(int i) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public NodeRef getExternalNode(int i) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public int getExternalNodeCount() {
-        return corporealLineages.size();
-    }
-
-    @Override
-    public int getInternalNodeCount() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Taxon getNodeTaxon(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public double getNodeHeight(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public double getNodeRate(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Object getNodeAttribute(NodeRef node, String name) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Iterator getNodeAttributeNames(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean isExternal(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean isRoot(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public int getChildCount(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public NodeRef getChild(NodeRef node, int j) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public NodeRef getParent(NodeRef node) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public Taxon getTaxon(int taxonIndex) {
-        return corporealLineages.get(taxonIndex);
-    }
 }

@@ -29,6 +29,7 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.ExorcizedTreeModel;
+import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -54,9 +55,9 @@ public class ExorcizedTreeModelParser extends AbstractXMLObjectParser {
         Tree tree = (Tree) xo.getChild(Tree.class);
 
         TaxonList corporealTaxa = (TaxonList) xo.getElementFirstChild(CORPOREAL_TAXA);
-        Tree ghostlyTree = (Tree) xo.getElementFirstChild(HAUNTED_TREE);
+        TreeModel hauntedTree = (TreeModel) xo.getElementFirstChild(HAUNTED_TREE);
 
-        ExorcizedTreeModel treeModel = new ExorcizedTreeModel(xo.getId(), tree, corporealTaxa);
+        ExorcizedTreeModel treeModel = new ExorcizedTreeModel(xo.getId(), hauntedTree, corporealTaxa);
 
         Logger.getLogger("dr.evomodel").info("\nCreating the corporeal tree model, '" + xo.getId() + "'" +
                 "\n\nwith " + corporealTaxa.getTaxonCount() + " taxa.");
@@ -82,7 +83,7 @@ public class ExorcizedTreeModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(HAUNTED_TREE, Tree.class, "The tree containing ghost lineages", false),
+            new ElementRule(HAUNTED_TREE, TreeModel.class, "The tree containing ghost lineages", false),
             new ElementRule(CORPOREAL_TAXA, TaxonList.class, "A list of taxa which are the non-ghost lineages", false),
     };
 }

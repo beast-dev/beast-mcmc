@@ -45,6 +45,10 @@ import java.util.*;
  * @author Andrew Rambaut
  */
 public class ExorcizedTreeModel extends TreeModel {
+    private final List<Taxon> corporealLineages;
+    private final Tree hauntedTree;
+    private boolean hauntedTreeChanged;
+    private NodeRef exorcizedRoot;
 
     //
     // Public stuff
@@ -66,14 +70,26 @@ public class ExorcizedTreeModel extends TreeModel {
 //        createCorporealTree(ExorcizedTreeModel, ghostLineages);
 
         if (hauntedTree instanceof TreeModel) {
-            addModel((TreeModel)hauntedTree);
+            addModel((TreeModel) hauntedTree);
         }
+
+        hauntedTreeChanged = true;
+    }
+
+    private void updateExorcizedTree() {
+        updateExorcizedTree(hauntedTree, hauntedTree.getRoot());
+        hauntedTreeChanged = false;
+    }
+
+    private void updateExorcizedTree(Tree hauntedTree, NodeRef hauntedNode) {
+
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         assert model == hauntedTree;
-
+        hauntedTreeChanged = true;
+        fireModelChanged();
     }
 
     @Override
@@ -262,12 +278,8 @@ public class ExorcizedTreeModel extends TreeModel {
     @Override
     public List<Citation> getCitations() {
         // @todo add a citation in here
-        return  Collections.EMPTY_LIST;
+        return Collections.EMPTY_LIST;
     }
-
-    private final List<Taxon> corporealLineages;
-    private final Tree hauntedTree;
-    private final Map<NodeRef, NodeRef> corporealNodeMap = new HashMap<>();
 
     @Override
     public NodeRef[] getNodes() {
@@ -276,12 +288,15 @@ public class ExorcizedTreeModel extends TreeModel {
 
     @Override
     public NodeRef getRoot() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if (hauntedTreeChanged) {
+            updateExorcizedTree();
+        }
+        return exorcizedRoot;
     }
 
     @Override
     public int getNodeCount() {
-        return corporealLineages.size();
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -301,7 +316,7 @@ public class ExorcizedTreeModel extends TreeModel {
 
     @Override
     public int getExternalNodeCount() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return corporealLineages.size();
     }
 
     @Override
@@ -361,6 +376,6 @@ public class ExorcizedTreeModel extends TreeModel {
 
     @Override
     public Taxon getTaxon(int taxonIndex) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return corporealLineages.get(taxonIndex);
     }
 }

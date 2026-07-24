@@ -1,7 +1,8 @@
 /*
- * TreeModelParser.java
+ * CorporealTreeModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2026, the BEAST Development Team.
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,15 +26,9 @@
 
 package dr.evomodelxml.tree;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Date;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.GhostTreeModel;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
+import dr.evomodel.tree.ExorcizedTreeModel;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -41,12 +36,14 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  */
-public class CorporealTreeModelParser extends AbstractXMLObjectParser {
+public class ExorcizedTreeModelParser extends AbstractXMLObjectParser {
 
-    public static final String CORPOREAL_TREE_MODEL = "corporealTreeModel";
+    public static final String EXORCIZED_TREE_MODEL = "exorcizedTreeModel";
+    public static final String CORPOREAL_TAXA = "corporealTaxa";
+    public static final String HAUNTED_TREE = "hauntedTree";
 
     public String getParserName() {
-        return CORPOREAL_TREE_MODEL;
+        return ExorcizedTreeModelParser.EXORCIZED_TREE_MODEL;
     }
 
     /**
@@ -54,28 +51,38 @@ public class CorporealTreeModelParser extends AbstractXMLObjectParser {
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        GhostTreeModel ghostTreeModel = (GhostTreeModel) xo.getChild(GhostTreeModel.class);
+        Tree tree = (Tree) xo.getChild(Tree.class);
 
-        return ghostTreeModel.getCorporealTreeModel();
+        TaxonList corporealTaxa = (TaxonList) xo.getElementFirstChild(CORPOREAL_TAXA);
+        Tree ghostlyTree = (Tree) xo.getElementFirstChild(HAUNTED_TREE);
+
+        ExorcizedTreeModel treeModel = new ExorcizedTreeModel(xo.getId(), tree, corporealTaxa);
+
+        Logger.getLogger("dr.evomodel").info("\nCreating the corporeal tree model, '" + xo.getId() + "'" +
+                "\n\nwith " + corporealTaxa.getTaxonCount() + " taxa.");
+
+        return treeModel;
     }
+
 
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element extracts the corporeal TreeModel from a GhostTreeModel.";
+        return "This a tree with ghost lineages (branches without sequence data) and extracts the non-ghost subtree.";
     }
 
     public Class getReturnType() {
-        return TreeModel.class;
+        return ExorcizedTreeModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;
     }
 
-    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            new ElementRule(TreeModel.class),
+    private final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new ElementRule(HAUNTED_TREE, Tree.class, "The tree containing ghost lineages", false),
+            new ElementRule(CORPOREAL_TAXA, TaxonList.class, "A list of taxa which are the non-ghost lineages", false),
     };
 }

@@ -231,10 +231,6 @@ class BiClade implements Clade {
         return cladeKeys.getParentKey(key1, key2);
     }
 
-    public static boolean isSubset(Object key1, Object key2) {
-        return cladeKeys.isSubset(key1, key2);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -273,8 +269,6 @@ class BiClade implements Clade {
 
     private final List<Object[]> attributeValues = new ArrayList<>();
     private final List<Double> heightValues = new ArrayList<>();
-//    private final List<Double> leftHeightValues = new ArrayList<>();
-//    private final List<Double> rightHeightValues = new ArrayList<>();
 
     static {
         if (USE_BITSET_CLADE_KEYS) {

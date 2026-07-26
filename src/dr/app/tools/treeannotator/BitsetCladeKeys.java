@@ -69,19 +69,6 @@ public class BitsetCladeKeys implements CladeKeys {
         return taxon;
     }
 
-    @Override
-    public boolean isSubset(Object key1, Object key2) {
-        int maxIndex = getMaxIndex(key1);
-        maxIndex = Math.max(maxIndex, getMaxIndex(key2));
-
-        BitsetKey subset = asBitsetKey(key1, maxIndex);
-        BitsetKey superset = asBitsetKey(key2, maxIndex);
-
-        BitsetKey intersection = new BitsetKey(maxIndex);
-        intersection.and(subset, superset);
-        return intersection.equals(subset);
-    }
-
     private int getMaxIndex(Object key) {
         if (key instanceof Integer) {
             return (Integer) key;

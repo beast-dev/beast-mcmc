@@ -57,10 +57,10 @@ public final class CladeSystem {
     /**
      * Constructor adding a single target tree
      */
-    public CladeSystem(Tree targetTree, CladeSystem sourceCladeSystem) {
+    public CladeSystem(Tree targetTree, CladeSystem sourceCladeSystem, boolean storeBitsets) {
         this.keepSubClades = false;
         this.keepParents = false;
-        add(targetTree);
+        add(targetTree, storeBitsets);
         for (Clade clade : this.getClades()) {
             Clade sourceClade = sourceCladeSystem.getClade(clade.getKey());
             assert sourceClade != null;
@@ -73,6 +73,13 @@ public final class CladeSystem {
      * adds all the clades in the tree
      */
     public void add(Tree tree) {
+        add(tree, false);
+    }
+
+    /**
+     * adds all the clades in the tree
+     */
+    public void add(Tree tree, boolean storeBitsets) {
         synchronized (taxonNumberMap) {
             if (taxonList == null) {
                 setTaxonList(tree);
@@ -89,7 +96,7 @@ public final class CladeSystem {
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
-        Clade rootClade = addClades(tree, tree.getRoot());
+        Clade rootClade = addClades(tree, tree.getRoot(), storeBitsets);
         if (this.rootClade == null) {
             this.rootClade = rootClade;
         }
@@ -130,7 +137,7 @@ public final class CladeSystem {
     /**
      * recursively add all the clades in a tree
      */
-    private BiClade addClades(Tree tree, NodeRef node) {
+    private BiClade addClades(Tree tree, NodeRef node, boolean storeBitsets) {
         BiClade clade;
         if (tree.isExternal(node)) {
             // all tip clades should already be there
@@ -140,11 +147,17 @@ public final class CladeSystem {
             }
             clade = tipClades.get(index);
             assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
+
+            if (storeBitsets) {
+                BitsetKey bitset = new BitsetKey(tree.getExternalNodeCount());
+                bitset.set(index);
+                bitsetKeyMap.put(clade.getKey(), bitset);
+            }
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
-            BiClade clade1 = addClades(tree, tree.getChild(node, 0));
-            BiClade clade2 = addClades(tree, tree.getChild(node, 1));
+            BiClade clade1 = addClades(tree, tree.getChild(node, 0), storeBitsets);
+            BiClade clade2 = addClades(tree, tree.getChild(node, 1), storeBitsets);
             synchronized (cladeMap) {
                 clade = getOrAddClade(clade1, clade2);
             }
@@ -152,6 +165,10 @@ public final class CladeSystem {
             if (keepParents) {
                 clade1.addParent(clade);
                 clade2.addParent(clade);
+            }
+
+            if (storeBitsets) {
+                getOrStoreBitset(clade, clade1, clade2);
             }
         }
         assert clade != null;
@@ -162,6 +179,41 @@ public final class CladeSystem {
 
         return clade;
     }
+
+    /**
+     * Store the bitset for the parent of two clades
+     *
+     * @param cladeKey
+     * @param clade1
+     * @param clade2
+     */
+    private BitsetKey getOrStoreBitset(BiClade clade, BiClade clade1, BiClade clade2) {
+        return getOrStoreBitset(clade.getKey(), clade1.getKey(), clade2.getKey());
+    }
+
+    /**
+     * Store the bitset for the parent of two clades
+     *
+     * @param cladeKey
+     * @param key1
+     * @param key2
+     */
+    private BitsetKey getOrStoreBitset(Object cladeKey, Object key1, Object key2) {
+        BitsetKey bitset = bitsetKeyMap.get(cladeKey);
+        if (bitset == null) {
+            BitsetKey bitset1 = bitsetKeyMap.get(key1);
+            BitsetKey bitset2 = bitsetKeyMap.get(key2);
+            assert bitset1 != null && bitset2 != null;
+
+            bitset = new BitsetKey(bitset1);
+            bitset.or(bitset2);
+
+            bitsetKeyMap.put(cladeKey, bitset);
+        }
+        return bitset;
+    }
+
+    private final Map<Object, BitsetKey> bitsetKeyMap = new HashMap<>();
 
     /**
      * see if a clade exists otherwise create it
@@ -259,12 +311,21 @@ public final class CladeSystem {
 //
 //        return key;
 //    }
-    public void collectCladeHeights(Tree tree) {
-        collectCladeHeights(tree, tree.getRoot());
+    public void collectCladeHeights(Tree tree, boolean mrcaCladeHeights) {
+        if (mrcaCladeHeights) {
+            requiresMrcaKeyList.clear();
+            requiresMrcaKeyList.addAll(cladeMap.values());
+            // sort in descending size
+            requiresMrcaKeyList.sort((o1, o2) -> {
+                return o2.getSize() - o1.getSize();
+            });
+        }
+        collectCladeHeights(tree, tree.getRoot(), mrcaCladeHeights);
 
+        assert requiresMrcaKeyList.isEmpty();
     }
 
-    private Object collectCladeHeights(Tree tree, NodeRef node) {
+    private Object collectCladeHeights(Tree tree, NodeRef node, boolean mrcaCladeHeights) {
 
         Object key;
 
@@ -277,24 +338,69 @@ public final class CladeSystem {
 
             BiClade tip = (BiClade) getClade(key);
             tip.addHeightValue(tree.getNodeHeight(node));
+
+            if (!mrcaCladeHeights) {
+                BitsetKey bitset = bitsetKeyMap.get(key);
+                assert bitset != null;
+            }
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Object key1 = collectCladeHeights(tree, tree.getChild(node, 0));
-            Object key2 = collectCladeHeights(tree, tree.getChild(node, 1));
+            Object key1 = collectCladeHeights(tree, tree.getChild(node, 0), mrcaCladeHeights);
+            Object key2 = collectCladeHeights(tree, tree.getChild(node, 1), mrcaCladeHeights);
 
             key = BiClade.getParentKey(key1, key2);
 
-            BiClade clade = (BiClade) getClade(key);
-            if (clade != null) {
-                // parent is in the Clade set
-                clade.addHeightValue(tree.getNodeHeight(node));
+            BiClade nodeClade = (BiClade) getClade(key);
+
+            if (mrcaCladeHeights) {
+                // if the clade matching the node doesn't exist then find the
+                // node which is the MRCA of the tips in the clade and add that
+                // as the height of the clade.
+                // This is the CA (clade ancestor) method of:
+                // Heled and Bouckaert, (2013) Looking for trees in the forest:
+                // summary tree from posterior samples'. BMC Evolutionary Biology 13:221;
+
+                // get the bitset for clade and store it in the cache if not there
+                BitsetKey nodeBitset = getOrStoreBitset(key, key1, key2);
+
+                if (nodeClade != null) {
+                    // parent is in the Clade set...
+                    nodeClade.addHeightValue(tree.getNodeHeight(node));
+                    requiresMrcaKeyList.remove(nodeClade);
+                }
+
+                // but this nodeClade may still be the MRCA of other unmatched clades...
+                int nodeCladeSize = nodeBitset.cardinality();
+
+                // then check if this node is the MRCA of one of the
+                // clades in the list.
+
+                List<BiClade> rmk = new ArrayList<>(requiresMrcaKeyList);
+                for (BiClade clade : rmk) {
+                    if (clade.getSize() < nodeCladeSize) {
+                        BitsetKey cladeBitset = bitsetKeyMap.get(clade.getKey());
+                        if (nodeBitset.isSubset(cladeBitset)) {
+                            clade.addHeightValue(tree.getNodeHeight(node));
+                            requiresMrcaKeyList.remove(clade);
+                        }
+                    }
+                }
+
+//                }
             } else {
+                // only add the node height to the height list of the matching clade
+                if (nodeClade != null) {
+                    // parent is in the Clade set
+                    nodeClade.addHeightValue(tree.getNodeHeight(node));
+                }
             }
 
         }
         return key;
     }
+
+    private final List<BiClade> requiresMrcaKeyList = new ArrayList<>();
 
 
     public void calculateCladeCredibilities(int totalTreesUsed) {
@@ -506,14 +612,6 @@ public final class CladeSystem {
 
     Map<Object, BiClade> getCladeMap() {
         return cladeMap;
-    }
-
-    public boolean isSubset(Clade clade1, Clade clade2) {
-        return isSubset(clade1.getKey(), clade2.getKey());
-    }
-
-    public boolean isSubset(Object key1, Object key2) {
-        return BiClade.isSubset(key1, key2);
     }
 
     //

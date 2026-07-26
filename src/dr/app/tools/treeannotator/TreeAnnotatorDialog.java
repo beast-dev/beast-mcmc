@@ -42,30 +42,32 @@ import java.awt.event.ItemListener;
 import java.io.File;
 
 public class TreeAnnotatorDialog {
-	private JFrame frame;
+    private JFrame frame;
 
-	private OptionsPanel optionPanel;
+    private OptionsPanel optionPanel;
 
     private WholeNumberField burninStatesText = new WholeNumberField(0, Long.MAX_VALUE);
     private WholeNumberField burninTreesText = new WholeNumberField(0, Long.MAX_VALUE);
-	private RealNumberField limitText = new RealNumberField(0.0, 1.0);
+    private RealNumberField limitText = new RealNumberField(0.0, 1.0);
 
     private JComboBox summaryTreeCombo = new JComboBox(TreeAnnotator.Target.values());
     private JComboBox nodeHeightsCombo = new JComboBox(TreeAnnotator.HeightsSummary.values());
+    private JComboBox hpdHeightsCombo = new JComboBox(new String[]{"0.95", "0.95, 0.99", "0.5, 0.95, 0.99"});
+    private JCheckBox kdeHeightsCheck = new JCheckBox();
 
-	private File targetFile = null;
-	private File inputFile = null;
-	private File outputFile = null;
+    private File targetFile = null;
+    private File inputFile = null;
+    private File outputFile = null;
 
-	public TreeAnnotatorDialog(final JFrame frame) {
-		this.frame = frame;
+    public TreeAnnotatorDialog(final JFrame frame) {
+        this.frame = frame;
 
-		optionPanel = new OptionsPanel(12, 12);
+        optionPanel = new OptionsPanel(12, 12);
 
-		this.frame = frame;
+        this.frame = frame;
 
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.setOpaque(false);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
 
         final JRadioButton burninStatesRadio = new JRadioButton("Specify the burnin as the number of states");
         optionPanel.addSpanningComponent(burninStatesRadio);
@@ -99,62 +101,66 @@ public class TreeAnnotatorDialog {
         burninStatesRadio.setSelected(true);
 
         limitText.setColumns(12);
-		limitText.setValue(0.0);
+        limitText.setValue(0.0);
         limitText.setToolTipText("<html>Specify a lower limit on the posterior probability<br>" +
                 "below which a clade will not be annotated</html>");
         optionPanel.addComponentWithLabel("Posterior probability limit: ", limitText);
 
         optionPanel.addComponentWithLabel("Target tree type: ", summaryTreeCombo);
         optionPanel.addComponentWithLabel("Node heights: ", nodeHeightsCombo);
+        optionPanel.addComponentWithLabel("Height HPD intervals: ", hpdHeightsCombo);
+        optionPanel.addComponentWithLabel("Include heights density curve: ", kdeHeightsCheck);
 
         optionPanel.addSeparator();
 
         final JButton targetFileButton = new JButton("Choose File...");
-		final JTextField targetFileNameText = new JTextField("not selected", 16);
+        final JTextField targetFileNameText = new JTextField("not selected", 16);
 
-		targetFileButton.addActionListener( new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				FileDialog dialog = new FileDialog(frame,
-						"Select target file...",
-						FileDialog.LOAD);
+        targetFileButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                FileDialog dialog = new FileDialog(frame,
+                        "Select target file...",
+                        FileDialog.LOAD);
 
-				dialog.setVisible(true);
-				if (dialog.getFile() == null) {
-					// the dialog was cancelled...
-					return;
-				}
+                dialog.setVisible(true);
+                if (dialog.getFile() == null) {
+                    // the dialog was cancelled...
+                    return;
+                }
 
-				targetFile = new File(dialog.getDirectory(), dialog.getFile());
-				targetFileNameText.setText(targetFile.getName());
+                targetFile = new File(dialog.getDirectory(), dialog.getFile());
+                targetFileNameText.setText(targetFile.getName());
 
-			}});
-		targetFileNameText.setEditable(false);
+            }
+        });
+        targetFileNameText.setEditable(false);
 
-		JPanel panel1 = new JPanel(new BorderLayout(0,0));
-		panel1.add(targetFileNameText, BorderLayout.CENTER);
-		panel1.add(targetFileButton, BorderLayout.EAST);
-		final JLabel label1 = optionPanel.addComponentWithLabel("Target Tree File: ", panel1);
+        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
+        panel1.add(targetFileNameText, BorderLayout.CENTER);
+        panel1.add(targetFileButton, BorderLayout.EAST);
+        final JLabel label1 = optionPanel.addComponentWithLabel("Target Tree File: ", panel1);
 
-		JButton inputFileButton = new JButton("Choose File...");
-		final JTextField inputFileNameText = new JTextField("not selected", 16);
+        JButton inputFileButton = new JButton("Choose File...");
+        final JTextField inputFileNameText = new JTextField("not selected", 16);
 
-		inputFileButton.addActionListener( new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				FileDialog dialog = new FileDialog(frame,
-						"Select input tree file...",
-						FileDialog.LOAD);
+        inputFileButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                FileDialog dialog = new FileDialog(frame,
+                        "Select input tree file...",
+                        FileDialog.LOAD);
 
-				dialog.setVisible(true);
-				if (dialog.getFile() == null) {
-					// the dialog was cancelled...
-					return;
-				}
+                dialog.setVisible(true);
+                if (dialog.getFile() == null) {
+                    // the dialog was cancelled...
+                    return;
+                }
 
-				inputFile = new File(dialog.getDirectory(), dialog.getFile());
-				inputFileNameText.setText(inputFile.getName());
+                inputFile = new File(dialog.getDirectory(), dialog.getFile());
+                inputFileNameText.setText(inputFile.getName());
 
-			}});
-		inputFileNameText.setEditable(false);
+            }
+        });
+        inputFileNameText.setEditable(false);
 
         label1.setEnabled(false);
         targetFileNameText.setEnabled(false);
@@ -169,15 +175,14 @@ public class TreeAnnotatorDialog {
             }
         });
 
-        JPanel panel2 = new JPanel(new BorderLayout(0,0));
-		panel2.add(inputFileNameText, BorderLayout.CENTER);
-		panel2.add(inputFileButton, BorderLayout.EAST);
+        JPanel panel2 = new JPanel(new BorderLayout(0, 0));
+        panel2.add(inputFileNameText, BorderLayout.CENTER);
+        panel2.add(inputFileButton, BorderLayout.EAST);
 
         Color focusColor = UIManager.getColor("Focus.color");
-        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
-        new FileDrop( null, inputFileNameText, focusBorder, new FileDrop.Listener()
-        {   public void filesDropped( File[] files )
-            {
+        Border focusBorder = BorderFactory.createMatteBorder(2, 2, 2, 2, focusColor);
+        new FileDrop(null, inputFileNameText, focusBorder, new FileDrop.Listener() {
+            public void filesDropped(File[] files) {
                 inputFile = files[0];
                 inputFileNameText.setText(inputFile.getName());
             }   // end filesDropped
@@ -185,51 +190,52 @@ public class TreeAnnotatorDialog {
 
         optionPanel.addComponentWithLabel("Input Tree File: ", panel2);
 
-		JButton outputFileButton = new JButton("Choose File...");
-		final JTextField outputFileNameText = new JTextField("not selected", 16);
+        JButton outputFileButton = new JButton("Choose File...");
+        final JTextField outputFileNameText = new JTextField("not selected", 16);
 
-		outputFileButton.addActionListener( new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				FileDialog dialog = new FileDialog(frame,
-						"Select output file...",
-						FileDialog.SAVE);
+        outputFileButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                FileDialog dialog = new FileDialog(frame,
+                        "Select output file...",
+                        FileDialog.SAVE);
 
-				dialog.setVisible(true);
-				if (dialog.getFile() == null) {
-					// the dialog was cancelled...
-					return;
-				}
+                dialog.setVisible(true);
+                if (dialog.getFile() == null) {
+                    // the dialog was cancelled...
+                    return;
+                }
 
-				outputFile = new File(dialog.getDirectory(), dialog.getFile());
-				outputFileNameText.setText(outputFile.getName());
+                outputFile = new File(dialog.getDirectory(), dialog.getFile());
+                outputFileNameText.setText(outputFile.getName());
 
-			}});
-		outputFileNameText.setEditable(false);
+            }
+        });
+        outputFileNameText.setEditable(false);
 
-		JPanel panel3 = new JPanel(new BorderLayout(0,0));
-		panel3.add(outputFileNameText, BorderLayout.CENTER);
-		panel3.add(outputFileButton, BorderLayout.EAST);
-		optionPanel.addComponentWithLabel("Output File: ", panel3);
-	}
+        JPanel panel3 = new JPanel(new BorderLayout(0, 0));
+        panel3.add(outputFileNameText, BorderLayout.CENTER);
+        panel3.add(outputFileButton, BorderLayout.EAST);
+        optionPanel.addComponentWithLabel("Output File: ", panel3);
+    }
 
-	public boolean showDialog(String title) {
+    public boolean showDialog(String title) {
 
-		JOptionPane optionPane = new JOptionPane(optionPanel,
-				JOptionPane.PLAIN_MESSAGE,
-				JOptionPane.OK_CANCEL_OPTION,
-				null,
-				new String[] { "Run", "Quit" },
-				null);
-		optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+        JOptionPane optionPane = new JOptionPane(optionPanel,
+                JOptionPane.PLAIN_MESSAGE,
+                JOptionPane.OK_CANCEL_OPTION,
+                null,
+                new String[]{"Run", "Quit"},
+                null);
+        optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-		final JDialog dialog = optionPane.createDialog(frame, title);
-		//dialog.setResizable(true);
-		dialog.pack();
+        final JDialog dialog = optionPane.createDialog(frame, title);
+        //dialog.setResizable(true);
+        dialog.pack();
 
-		dialog.setVisible(true);
+        dialog.setVisible(true);
 
-		return optionPane.getValue().equals("Run");
-	}
+        return optionPane.getValue().equals("Run");
+    }
 
     public long getBurninStates() {
         return burninStatesText.getLongValue();
@@ -240,30 +246,48 @@ public class TreeAnnotatorDialog {
     }
 
     public double getPosteriorLimit() {
-		return limitText.getValue();
-	}
+        return limitText.getValue();
+    }
 
     public TreeAnnotator.Target getTargetOption() {
-        return (TreeAnnotator.Target)summaryTreeCombo.getSelectedItem();
+        return (TreeAnnotator.Target) summaryTreeCombo.getSelectedItem();
     }
 
     public TreeAnnotator.HeightsSummary getHeightsOption() {
-        return (TreeAnnotator.HeightsSummary)nodeHeightsCombo.getSelectedItem();
+        return (TreeAnnotator.HeightsSummary) nodeHeightsCombo.getSelectedItem();
+    }
+
+    public double[] getHeightsHPDIntevals() {
+        String hpds = (String) hpdHeightsCombo.getSelectedItem();
+        switch (hpds) {
+            case "0.95":
+                return new double[] {0.95};
+            case "0.95, 0.99":
+                return new double[] {0.95, 0.99};
+            case "0.5, 0.95, 0.99":
+                return new double[] {0.5, 0.95, 0.99};
+            default:
+                throw new IllegalArgumentException("Invalid hpd values");
+        }
+    }
+
+    public boolean getHeightsKDE() {
+        return kdeHeightsCheck.isSelected();
     }
 
     public String getTargetFileName() {
-		if (targetFile == null) return null;
-		return targetFile.getPath();
-	}
+        if (targetFile == null) return null;
+        return targetFile.getPath();
+    }
 
-	public String getInputFileName() {
-		if (inputFile == null) return null;
-		return inputFile.getPath();
-	}
+    public String getInputFileName() {
+        if (inputFile == null) return null;
+        return inputFile.getPath();
+    }
 
-	public String getOutputFileName() {
-		if (outputFile == null) return null;
-		return outputFile.getPath();
-	}
+    public String getOutputFileName() {
+        if (outputFile == null) return null;
+        return outputFile.getPath();
+    }
 
 }

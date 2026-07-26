@@ -34,9 +34,4 @@ public interface CladeKeys {
     Object getParentKey(Object key1, Object key2);
 
     Object getTaxonKey(int taxon);
-
-    /**
-     * Returns true if key1 is a subset of key2.
-     */
-    boolean isSubset(Object key1, Object key2);
 }

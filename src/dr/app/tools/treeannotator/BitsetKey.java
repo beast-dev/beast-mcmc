@@ -68,6 +68,15 @@ public class BitsetKey {
     }
 
     /**
+     * Creates a new bit set copying an existing one.
+     */
+    public BitsetKey(BitsetKey source) {
+        this.maxIndex = source.maxIndex;
+        initWords(maxIndex);
+        setTo(source);
+    }
+
+    /**
      * Sets the field wordsInUse to the logical size in words of the bit set.
      * WARNING:This method assumes that the number of words actually in use is
      * less than or equal to the current value of wordsInUse!
@@ -101,11 +110,11 @@ public class BitsetKey {
         hashCache = 0;
     }
 
-    public void setTo(BitsetKey key) {
-        assert this != key;
+    public void setTo(BitsetKey source) {
+        assert this != source;
 
-        wordsInUse = key.wordsInUse;
-        System.arraycopy(key.words, 0,
+        wordsInUse = source.wordsInUse;
+        System.arraycopy(source.words, 0,
                 words, 0,
                 wordsInUse);
         hashCache = 0;
@@ -221,6 +230,13 @@ public class BitsetKey {
         hashCache = 0;
     }
 
+    public boolean isSubset(BitsetKey query) {
+        int maxIndex = Math.max(query.getMaxIndex(), getMaxIndex());
+
+        BitsetKey intersection = new BitsetKey(maxIndex);
+        intersection.and(query, this);
+        return intersection.equals(query);
+    }
 
     /**
      * Returns the hash code value for this bit set. The hash code depends

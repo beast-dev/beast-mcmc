@@ -20,7 +20,7 @@ All issues are tracked at https://github.com/beast-dev/beast-mcmc/issues
 
 - Can specify multiple HPD intervals e.g., using `--hpd 0.95,0.90,0.5'
 - Can generate a KDE curve of the distribution of height values for visualisation in PearTree
-
+- Clade MRCA heights can be calculated to avoid negative branch lengths (CA method of Heled and Bouckaert, (2013))
 
 ### Bug fixes
 

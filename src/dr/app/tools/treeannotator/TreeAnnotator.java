@@ -128,6 +128,7 @@ public class TreeAnnotator extends BaseTreeTool {
     public TreeAnnotator(final int burninTrees,
                          final long burninStates,
                          final HeightsSummary heightsOption,
+                         final boolean mrcaCladeHeights,
                          final double[] hpdIntervals,
                          final int hpdLimit,
                          final boolean useKDEs,
@@ -246,7 +247,7 @@ public class TreeAnnotator extends BaseTreeTool {
         }
 
         // collect all the attributes for the clades across all trees
-        collectNodeAttributes(targetCladeSystem, inputFileName, burnin, heightsOption == HeightsSummary.MRCA_HEIGHTS);
+        collectNodeAttributes(targetCladeSystem, inputFileName, burnin, mrcaCladeHeights);
 
         // annotate the target tree with the summaries of attributes for each clade
         annotateTargetTree(targetCladeSystem, targetTree);
@@ -496,6 +497,7 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("Average clade heights estimated using Clade Ancestor method of:");
             progressStream.println("Heled and Bouckaert, (2013) Looking for trees in the forest: summary tree from posterior samples");
             progressStream.println("BMC Evolutionary Biology 13:221. DOI: 10.1186/1471-2148-13-221");
+            progressStream.println(CladeSystem.getMrcaTimingSummary());
             progressStream.println("");
         }
     }
@@ -968,6 +970,7 @@ public class TreeAnnotator extends BaseTreeTool {
             double[] hpd2D = {0.80};
             Target targetOption = dialog.getTargetOption();
             HeightsSummary heightsOption = dialog.getHeightsOption();
+            boolean mrcaCladeHeights = heightsOption == HeightsSummary.MRCA_HEIGHTS;
             double[] hpdIntervals = dialog.getHeightsHPDIntevals();
             boolean heightsKDE = dialog.getHeightsKDE();
 
@@ -994,6 +997,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninTrees,
                         burninStates,
                         heightsOption,
+                        mrcaCladeHeights,
                         hpdIntervals,
                         10,
                         heightsKDE,
@@ -1222,6 +1226,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 burninTrees,
                 burninStates,
                 heightsOption,
+                mrcaHeights,
                 hpdIntervals,
                 hpdLimit,
                 useKDEs,

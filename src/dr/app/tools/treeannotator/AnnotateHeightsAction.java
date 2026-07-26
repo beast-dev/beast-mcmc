@@ -128,7 +128,8 @@ public class AnnotateHeightsAction implements CladeAction {
              }
         }
 
-        if (heightsOption == TreeAnnotator.HeightsSummary.MEAN_HEIGHTS) {
+        if (heightsOption == TreeAnnotator.HeightsSummary.MEAN_HEIGHTS ||
+                heightsOption == TreeAnnotator.HeightsSummary.MRCA_HEIGHTS) {
             tree.setNodeHeight(node, mean);
         } else if (heightsOption == TreeAnnotator.HeightsSummary.MEDIAN_HEIGHTS) {
             tree.setNodeHeight(node, median);

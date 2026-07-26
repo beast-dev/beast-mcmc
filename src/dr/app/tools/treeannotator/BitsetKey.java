@@ -231,11 +231,22 @@ public class BitsetKey {
     }
 
     public boolean isSubset(BitsetKey query) {
-        int maxIndex = Math.max(query.getMaxIndex(), getMaxIndex());
+        final int wordsInCommon = Math.min(wordsInUse, query.wordsInUse);
 
-        BitsetKey intersection = new BitsetKey(maxIndex);
-        intersection.and(query, this);
-        return intersection.equals(query);
+        // Preserve existing semantics: return true iff query is a subset of this key.
+        for (int i = 0; i < wordsInCommon; i++) {
+            if ((query.words[i] & words[i]) != query.words[i]) {
+                return false;
+            }
+        }
+
+        for (int i = wordsInCommon; i < query.wordsInUse; i++) {
+            if (query.words[i] != 0L) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

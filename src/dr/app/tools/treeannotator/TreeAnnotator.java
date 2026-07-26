@@ -1042,7 +1042,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         // new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
                         new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
-                        new Arguments.Option("mrcaHeights", "mr", "Use clade MRCA height method of Heled and Bouckaert, (2013) (default off)"),
+                        new Arguments.Option("mrcaHeights", "ca", "Use clade MRCA height method of Heled and Bouckaert, (2013) (default off)"),
                         new Arguments.RealArrayOption("hpdIntervals", "hi", -1, 0.0, 1.0, "the highest posterior density (HPD) interval (default 0.95)"),
                         new Arguments.IntegerOption("hpdLimit", "hl", 1, Integer.MAX_VALUE, "the highest posterior density (HPD) minimum number of height values (default 10)"),
                         new Arguments.Option("kde", "k", "construct kernal density estimates (KDE) of node heights (default off)"),

@@ -34,6 +34,7 @@ import dr.evolution.util.TaxonList;
 import dr.stats.DiscreteStatistics;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Andrew Rambaut
@@ -46,9 +47,7 @@ public final class CladeSystem {
     }
 
     // Compile-time strategy switch for MRCA clade height collection.
-    private static final MrcaCollectionMode MRCA_COLLECTION_MODE = MrcaCollectionMode.ALTERNATIVE_BY_CLADE;
-    private static final boolean PARALLELIZE_ALTERNATIVE_BY_CLADE = true;
-    private static final int PARALLELIZE_ALTERNATIVE_MIN_CLADES = 64;
+    private static final MrcaCollectionMode MRCA_COLLECTION_MODE = MrcaCollectionMode.LEGACY;
     private static final boolean ENABLE_MRCA_TIMING = true;
     private static final int MRCA_TIMING_REPORT_EVERY = 1000;
 
@@ -200,7 +199,7 @@ public final class CladeSystem {
     /**
      * Store the bitset for the parent of two clades
      *
-     * @param cladeKey
+     * @param clade
      * @param clade1
      * @param clade2
      */
@@ -217,20 +216,22 @@ public final class CladeSystem {
      */
     private BitsetKey getOrStoreBitset(Object cladeKey, Object key1, Object key2) {
         BitsetKey bitset = bitsetKeyMap.get(cladeKey);
-        if (bitset == null) {
+        if (bitset != null) {
+            return bitset;
+        }
+
+        return bitsetKeyMap.computeIfAbsent(cladeKey, k -> {
             BitsetKey bitset1 = bitsetKeyMap.get(key1);
             BitsetKey bitset2 = bitsetKeyMap.get(key2);
             assert bitset1 != null && bitset2 != null;
 
-            bitset = new BitsetKey(bitset1);
-            bitset.or(bitset2);
-
-            bitsetKeyMap.put(cladeKey, bitset);
-        }
-        return bitset;
+            BitsetKey combined = new BitsetKey(bitset1);
+            combined.or(bitset2);
+            return combined;
+        });
     }
 
-    private final Map<Object, BitsetKey> bitsetKeyMap = new HashMap<>();
+    private final Map<Object, BitsetKey> bitsetKeyMap = new ConcurrentHashMap<>();
 
     /**
      * see if a clade exists otherwise create it
@@ -339,11 +340,10 @@ public final class CladeSystem {
         final long mrcaStartTime = ENABLE_MRCA_TIMING ? System.nanoTime() : 0;
 
         if (MRCA_COLLECTION_MODE == MrcaCollectionMode.LEGACY) {
-            requiresMrcaKeySet.clear();
-            requiresMrcaKeySet.addAll(requiresMrcaKeyList);
-            collectCladeHeightsLegacy(tree, tree.getRoot(), true);
+            final Set<BiClade> unresolved = new LinkedHashSet<>(requiresMrcaKeyList);
+            collectCladeHeightsLegacy(tree, tree.getRoot(), true, unresolved);
 
-            assert requiresMrcaKeySet.isEmpty();
+            assert unresolved.isEmpty();
             if (ENABLE_MRCA_TIMING) {
                 recordMrcaTiming(MrcaCollectionMode.LEGACY, System.nanoTime() - mrcaStartTime);
             }
@@ -394,7 +394,7 @@ public final class CladeSystem {
                 ", alt_mean_ms=" + alternativeMeanMs;
     }
 
-    private void ensureRequiresMrcaKeyList() {
+    private synchronized void ensureRequiresMrcaKeyList() {
         if (requiresMrcaKeyList == null) {
             requiresMrcaKeyList = new ArrayList<>(cladeMap.values());
             // sort in descending size
@@ -403,6 +403,13 @@ public final class CladeSystem {
     }
 
     private Object collectCladeHeightsLegacy(Tree tree, NodeRef node, boolean mrcaCladeHeights) {
+        return collectCladeHeightsLegacy(tree, node, mrcaCladeHeights, null);
+    }
+
+    private Object collectCladeHeightsLegacy(Tree tree,
+                                             NodeRef node,
+                                             boolean mrcaCladeHeights,
+                                             Set<BiClade> unresolved) {
 
         Object key;
 
@@ -425,8 +432,8 @@ public final class CladeSystem {
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Object key1 = collectCladeHeightsLegacy(tree, tree.getChild(node, 0), mrcaCladeHeights);
-            Object key2 = collectCladeHeightsLegacy(tree, tree.getChild(node, 1), mrcaCladeHeights);
+            Object key1 = collectCladeHeightsLegacy(tree, tree.getChild(node, 0), mrcaCladeHeights, unresolved);
+            Object key2 = collectCladeHeightsLegacy(tree, tree.getChild(node, 1), mrcaCladeHeights, unresolved);
 
             key = BiClade.getParentKey(key1, key2);
 
@@ -447,7 +454,7 @@ public final class CladeSystem {
                 if (nodeClade != null) {
                     // parent is in the Clade set...
                     nodeClade.addHeightValue(nodeHeight);
-                    requiresMrcaKeySet.remove(nodeClade);
+                    unresolved.remove(nodeClade);
                 }
 
                 // but this nodeClade may still be the MRCA of other unmatched clades...
@@ -456,7 +463,7 @@ public final class CladeSystem {
                 // then check if this node is the MRCA of one of the
                 // clades in the list.
 
-                for (Iterator<BiClade> iterator = requiresMrcaKeySet.iterator(); iterator.hasNext(); ) {
+                for (Iterator<BiClade> iterator = unresolved.iterator(); iterator.hasNext(); ) {
                     BiClade clade = iterator.next();
                     if (clade.getSize() < nodeCladeSize) {
                         BitsetKey cladeBitset = bitsetKeyMap.get(clade.getKey());
@@ -491,12 +498,7 @@ public final class CladeSystem {
         final List<BiClade> unresolvedList = new ArrayList<>(unresolved);
         final List<BiClade> stillUnresolved = Collections.synchronizedList(new ArrayList<>());
 
-        java.util.stream.Stream<BiClade> unresolvedStream = unresolvedList.stream();
-        if (PARALLELIZE_ALTERNATIVE_BY_CLADE && unresolvedList.size() >= PARALLELIZE_ALTERNATIVE_MIN_CLADES) {
-            unresolvedStream = unresolvedStream.parallel();
-        }
-
-        unresolvedStream.forEach(clade -> {
+        unresolvedList.forEach(clade -> {
             final BitsetKey cladeBitset = bitsetKeyMap.get(clade.getKey());
             if (cladeBitset == null) {
                 stillUnresolved.add(clade);
@@ -557,13 +559,11 @@ public final class CladeSystem {
     }
 
     private void ensureTipBitset(Tree tree, Object key, int index) {
-        if (bitsetKeyMap.containsKey(key)) {
-            return;
-        }
-
-        final BitsetKey bitset = new BitsetKey(tree.getExternalNodeCount());
-        bitset.set(index);
-        bitsetKeyMap.put(key, bitset);
+        bitsetKeyMap.computeIfAbsent(key, k -> {
+            final BitsetKey bitset = new BitsetKey(tree.getExternalNodeCount());
+            bitset.set(index);
+            return bitset;
+        });
     }
 
     private Double findMrcaHeight(List<NodeSummary> nodeSummaries, BiClade clade, BitsetKey cladeBitset) {
@@ -591,7 +591,6 @@ public final class CladeSystem {
     }
 
     private List<BiClade> requiresMrcaKeyList = null;
-    private final Set<BiClade> requiresMrcaKeySet = new LinkedHashSet<>();
 
 
     public void calculateCladeCredibilities(int totalTreesUsed) {

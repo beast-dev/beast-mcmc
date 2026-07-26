@@ -231,7 +231,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         // create a new CladeSystem containing only clades from the target tree,
         // copying the credibilities over from the full cladeSystem.
-        CladeSystem targetCladeSystem = new CladeSystem(targetTree, cladeSystem, true);
+        CladeSystem targetCladeSystem = new CladeSystem(targetTree, cladeSystem, mrcaCladeHeights);
 
         if (referenceTreeFileName != null) {
 
@@ -622,7 +622,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
 //        progressStream.println("Majority rule consensus tree's log clade credibility: " + String.format("%.4f", score));
-        reportStatistics(cladeSystem, tree);
+//        reportStatistics(cladeSystem, tree);
 //        reportStatisticTables(cladeSystem, tree);
         progressStream.println();
 
@@ -1036,13 +1036,14 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", "t", new String[]{"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default) or 'mcc'"),
+                        new Arguments.StringOption("type", "t", new String[]{"hipstr", "mrhipstr", "mcc"/*, "mrc"*/}, false,
+                                "an option of 'hipstr' (default) or 'mcc'"),
                         // new Arguments.Option("ccd0",null, "Use CCD0-MAP unobserved clade pair expansion"),
                         // new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
                         new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
                         new Arguments.Option("mrcaHeights", "mr", "Use clade MRCA height method of Heled and Bouckaert, (2013) (default off)"),
-                        new Arguments.RealArrayOption("hpd", "hi", -1, 0.0, 1.0, "the highest posterior density (HPD) interval (default 0.95)"),
+                        new Arguments.RealArrayOption("hpdIntervals", "hi", -1, 0.0, 1.0, "the highest posterior density (HPD) interval (default 0.95)"),
                         new Arguments.IntegerOption("hpdLimit", "hl", 1, Integer.MAX_VALUE, "the highest posterior density (HPD) minimum number of height values (default 10)"),
                         new Arguments.Option("kde", "k", "construct kernal density estimates (KDE) of node heights (default off)"),
 //                        new Arguments.RealArrayOption("kdeIntervals", "ki", -1, 0.0, 1.0, "the kernal density estimate (KDE) interval (default 0.95)"),

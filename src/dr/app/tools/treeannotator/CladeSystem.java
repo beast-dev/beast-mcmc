@@ -42,8 +42,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class CladeSystem {
 
-    private static final boolean MRCA_COLLECTION_BY_NODE = false;
-
     private final boolean keepSubClades;
     private final boolean keepParents;
     private double treeCount = 0;
@@ -145,11 +143,10 @@ public final class CladeSystem {
         BiClade clade;
         if (tree.isExternal(node)) {
             // all tip clades should already be there
-            int index = node.getNumber();
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(tree.getNodeTaxon(node));
-            }
+            final int index = (taxonNumberMap != null ?
+                    taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
             clade = tipClades.get(index);
+
             assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
 
             if (storeBitsets) {
@@ -265,10 +262,8 @@ public final class CladeSystem {
         Object key;
 
         if (tree.isExternal(node)) {
-            int index = node.getNumber();
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(tree.getNodeTaxon(node));
-            }
+            final int index = (taxonNumberMap != null ?
+                    taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
             key = BiClade.getTaxonKey(index);
         } else {
             assert tree.getChildCount(node) == 2;
@@ -289,6 +284,43 @@ public final class CladeSystem {
         return key;
     }
 
+    // use the more efficient algorithm
+    private static final boolean MRCA_COLLECTION_BY_NODE = false;
+
+    /**
+     * This method traverses the provided tree and then adds the node heights
+     * to the respective clades list (for later summarizing and annotating on
+     * the target tree). The simple algorithm simply sees if the clade is
+     * in the clade system and adds the height to that. This can result in very
+     * few height values for unsupported clades and produce negative branch lengths.
+     * <p>
+     * An alternative is provided when mrcaCladeHeights = true, this is the CA
+     * (clade ancestor) method of:
+     * Heled and Bouckaert, (2013) Looking for trees in the forest:
+     * summary tree from posterior samples'. BMC Evolutionary Biology 13:221;
+     * <p>
+     * For this, if the clade represented by the node is not present then the
+     * node representing the most recent common ancestor of the tips in the clade
+     * is found in the tree and that node's height is added to the clade heights.
+     * This means that all clades in the clade system get a height for every tree
+     * even if it is just the root height.
+     * <p>
+     * This method's algorithm keeps an ordered set of clades that haven't been
+     * matched yet. As each node is visited it check to see if this matches any
+     * of the clades or is the MRCA of a clade that hasn't been match - in which
+     * case the height is added and the clade removed from the `unresolved` set.
+     * As this is post-order traversal, the nodes of the tree are larger and
+     * larger clades (and ultimately the root) so will eventually be the MRCA of
+     * all clades.
+     * <p>
+     * A second, potentially more efficient algorithm `collectCladeHeightsByClade`
+     * collects all the clades from the tree (with their heights) once and then
+     * iterates through the clades and finds the MRCA height.
+     *
+     * @param tree
+     * @param mrcaCladeHeights
+     * @return
+     */
     public void collectCladeHeights(Tree tree, boolean mrcaCladeHeights) {
         if (!mrcaCladeHeights) {
             collectCladeHeightsByNode(tree, tree.getRoot(), false, null);
@@ -298,13 +330,14 @@ public final class CladeSystem {
         if (requiresMrcaKeyList == null) {
             requiresMrcaKeyList = new ArrayList<>(cladeMap.values());
             // sort in descending size
-            requiresMrcaKeyList.sort((o1, o2) -> o2.getSize() - o1.getSize());
+            requiresMrcaKeyList.sort(Comparator.comparingInt((BiClade clade) -> clade.getSize()).reversed());
         }
 
-        if (MRCA_COLLECTION_BY_NODE) {
-            final Set<BiClade> unresolved = new LinkedHashSet<>(requiresMrcaKeyList);
-            collectCladeHeightsByNode(tree, tree.getRoot(), true, unresolved);
+        final Set<BiClade> unresolved = new LinkedHashSet<>(requiresMrcaKeyList);
 
+        if (MRCA_COLLECTION_BY_NODE) {
+            // older slower algorithm
+            collectCladeHeightsByNode(tree, tree.getRoot(), true, unresolved);
             assert unresolved.isEmpty();
             return;
         }
@@ -313,416 +346,387 @@ public final class CladeSystem {
     }
 
 
+    /**
+     * The version of the algorithm that iterates through all clades for
+     * all nodes in the traversal. Simpler but less efficient.
+     *
+     * @param tree
+     * @param node
+     * @param mrcaCladeHeights
+     * @param unresolved
+     * @return
+     */
     private Object collectCladeHeightsByNode(Tree tree,
                                              NodeRef node,
                                              boolean mrcaCladeHeights,
                                              Set<BiClade> unresolved) {
 
-        Object key;
-
         if (tree.isExternal(node)) {
-            int index = node.getNumber();
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            return collectTipHeight(tree, node);
+        }
+
+        assert tree.getChildCount(node) == 2;
+
+        Object key1 = collectCladeHeightsByNode(tree, tree.getChild(node, 0), mrcaCladeHeights, unresolved);
+        Object key2 = collectCladeHeightsByNode(tree, tree.getChild(node, 1), mrcaCladeHeights, unresolved);
+
+        Object key = BiClade.getParentKey(key1, key2);
+
+        BiClade nodeClade = (BiClade) getClade(key);
+
+        if (!mrcaCladeHeights) {
+            // only add the node height to the height list of the matching clade
+            if (nodeClade != null) {
+                // parent is in the Clade set
+                nodeClade.addHeightValue(tree.getNodeHeight(node));
             }
-            key = BiClade.getTaxonKey(index);
+            return key;
+        }
 
-            BiClade tip = (BiClade) getClade(key);
-            tip.addHeightValue(tree.getNodeHeight(node));
+        final double nodeHeight = tree.getNodeHeight(node);
 
-            if (mrcaCladeHeights) {
-                ensureTipBitset(tree, key, index);
-            }
-        } else {
-            assert tree.getChildCount(node) == 2;
+        // get the bitset for clade and store it in the cache if not there
+        BitsetKey nodeBitset = getOrStoreBitset(key, key1, key2);
 
-            Object key1 = collectCladeHeightsByNode(tree, tree.getChild(node, 0), mrcaCladeHeights, unresolved);
-            Object key2 = collectCladeHeightsByNode(tree, tree.getChild(node, 1), mrcaCladeHeights, unresolved);
+        if (nodeClade != null) {
+            // parent is in the Clade set...
+            nodeClade.addHeightValue(nodeHeight);
+            unresolved.remove(nodeClade);
+        }
 
-            key = BiClade.getParentKey(key1, key2);
+        // but this nodeClade may still be the MRCA of other unmatched clades...
+        int nodeCladeSize = nodeBitset.cardinality();
 
-            BiClade nodeClade = (BiClade) getClade(key);
+        // then check if this node is the MRCA of one of the
+        // clades in the unresolved list. If it is then remove
+        // it from the list.
 
-            if (mrcaCladeHeights) {
-                final double nodeHeight = tree.getNodeHeight(node);
-                // if the clade matching the node doesn't exist then find the
-                // node which is the MRCA of the tips in the clade and add that
-                // as the height of the clade.
-                // This is the CA (clade ancestor) method of:
-                // Heled and Bouckaert, (2013) Looking for trees in the forest:
-                // summary tree from posterior samples'. BMC Evolutionary Biology 13:221;
-
-                // get the bitset for clade and store it in the cache if not there
-                BitsetKey nodeBitset = getOrStoreBitset(key, key1, key2);
-
-                if (nodeClade != null) {
-                    // parent is in the Clade set...
-                    nodeClade.addHeightValue(nodeHeight);
-                    unresolved.remove(nodeClade);
-                }
-
-                // but this nodeClade may still be the MRCA of other unmatched clades...
-                int nodeCladeSize = nodeBitset.cardinality();
-
-                // then check if this node is the MRCA of one of the
-                // clades in the list.
-
-                for (Iterator<BiClade> iterator = unresolved.iterator(); iterator.hasNext(); ) {
-                    BiClade clade = iterator.next();
-                    if (clade.getSize() < nodeCladeSize) {
-                        BitsetKey cladeBitset = bitsetKeyMap.get(clade.getKey());
-                        if (nodeBitset.isSubset(cladeBitset)) {
-                            clade.addHeightValue(nodeHeight);
-                            iterator.remove();
-                        }
-                    }
-                }
-
-//                }
-            } else {
-                // only add the node height to the height list of the matching clade
-                if (nodeClade != null) {
-                    // parent is in the Clade set
-                    nodeClade.addHeightValue(tree.getNodeHeight(node));
+        for (Iterator<BiClade> iterator = unresolved.iterator(); iterator.hasNext(); ) {
+            BiClade clade = iterator.next();
+            if (clade.getSize() < nodeCladeSize) {
+                BitsetKey cladeBitset = bitsetKeyMap.get(clade.getKey());
+                if (nodeBitset.isSubset(cladeBitset)) {
+                    clade.addHeightValue(nodeHeight);
+                    iterator.remove();
                 }
             }
-
         }
         return key;
     }
 
+    /**
+     * The version of the algorithm that traverses the tree once, and then iterates
+     * over the clades once.
+     *
+     * @param tree
+     */
     private void collectCladeHeightsByClade(Tree tree) {
-        // alternative algorithm - iterates the clades and finds the tmrca in the tree
-
-        final Set<BiClade> unresolved = new HashSet<>(requiresMrcaKeyList);
         final List<NodeSummary> nodeSummaries = new ArrayList<>(tree.getInternalNodeCount());
 
-        collectCladeHeightsByClade(tree, tree.getRoot(), unresolved, nodeSummaries);
+        collectCladeHeightsByClade(tree, tree.getRoot(), nodeSummaries);
 
         nodeSummaries.sort(Comparator.comparingInt(summary -> summary.cladeSize));
 
-        final List<BiClade> unresolvedList = new ArrayList<>(unresolved);
-        final List<BiClade> stillUnresolved = Collections.synchronizedList(new ArrayList<>());
-
-        unresolvedList.forEach(clade -> {
+        for (BiClade clade : requiresMrcaKeyList) {
             final BitsetKey cladeBitset = bitsetKeyMap.get(clade.getKey());
-            if (cladeBitset == null) {
-                stillUnresolved.add(clade);
-                return;
-            }
+            findMrcaHeight(nodeSummaries, clade, cladeBitset);
 
-            final Double mrcaHeight = findMrcaHeight(nodeSummaries, clade, cladeBitset);
-            if (mrcaHeight == null) {
-                stillUnresolved.add(clade);
-                return;
-            }
-
-            clade.addHeightValue(mrcaHeight);
-        });
-
-        assert stillUnresolved.isEmpty() : "Failed to resolve MRCA for " + stillUnresolved.size() + " clades";
-    }
-
-    private Object collectCladeHeightsByClade(Tree tree,
-                                                  NodeRef node,
-                                                  Set<BiClade> unresolved,
-                                                  List<NodeSummary> nodeSummaries) {
-
-        Object key;
-
-        if (tree.isExternal(node)) {
-            int index = node.getNumber();
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(tree.getNodeTaxon(node));
-            }
-            key = BiClade.getTaxonKey(index);
-
-            BiClade tip = (BiClade) getClade(key);
-            tip.addHeightValue(tree.getNodeHeight(node));
-
-            ensureTipBitset(tree, key, index);
-        } else {
-            assert tree.getChildCount(node) == 2;
-
-            Object key1 = collectCladeHeightsByClade(tree, tree.getChild(node, 0), unresolved, nodeSummaries);
-            Object key2 = collectCladeHeightsByClade(tree, tree.getChild(node, 1), unresolved, nodeSummaries);
-
-            key = BiClade.getParentKey(key1, key2);
-
-            final BitsetKey nodeBitset = getOrStoreBitset(key, key1, key2);
-            final int cladeSize = nodeBitset.cardinality();
-            final double nodeHeight = tree.getNodeHeight(node);
-            nodeSummaries.add(new NodeSummary(nodeBitset, cladeSize, nodeHeight));
-
-            final BiClade nodeClade = (BiClade) getClade(key);
-            if (nodeClade != null) {
-                nodeClade.addHeightValue(nodeHeight);
-                unresolved.remove(nodeClade);
-            }
         }
-
-        return key;
     }
-
-    private void ensureTipBitset(Tree tree, Object key, int index) {
-        bitsetKeyMap.computeIfAbsent(key, k -> {
-            final BitsetKey bitset = new BitsetKey(tree.getExternalNodeCount());
-            bitset.set(index);
-            return bitset;
-        });
-    }
-
-    private Double findMrcaHeight(List<NodeSummary> nodeSummaries, BiClade clade, BitsetKey cladeBitset) {
+    private void findMrcaHeight(List<NodeSummary> nodeSummaries, BiClade clade, BitsetKey cladeBitset) {
         for (NodeSummary nodeSummary : nodeSummaries) {
-            if (nodeSummary.cladeSize <= clade.getSize()) {
+            if (nodeSummary.cladeSize < clade.getSize()) {
                 continue;
             }
             if (nodeSummary.bitset.isSubset(cladeBitset)) {
-                return nodeSummary.height;
+                clade.addHeightValue(nodeSummary.height);
+                return;
             }
         }
-        return null;
-    }
-
-    private static final class NodeSummary {
-        private final BitsetKey bitset;
-        private final int cladeSize;
-        private final double height;
-
-        private NodeSummary(BitsetKey bitset, int cladeSize, double height) {
-            this.bitset = bitset;
-            this.cladeSize = cladeSize;
-            this.height = height;
-        }
-    }
-
-    private List<BiClade> requiresMrcaKeyList = null;
-
-
-    public void calculateCladeCredibilities(int totalTreesUsed) {
-        for (Clade clade : cladeMap.values()) {
-            assert clade.getCount() <= totalTreesUsed : "clade.getCount=(" + clade.getCount() +
-                    ") should be <= totalTreesUsed = (" + totalTreesUsed + ")";
-
-            clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
-        }
-    }
-
-    public double getLogCladeCredibility(Tree tree) {
-        final double[] logCladeCredibility = {0.0};
-        traverseTree(tree, new CladeAction() {
-            @Override
-            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                logCladeCredibility[0] += Math.log(clade.getCredibility());
-            }
-
-            @Override
-            public boolean expectAllClades() {
-                return true;
-            }
-        });
-        return logCladeCredibility[0];
-    }
-
-    public double getMinimumCladeCredibility(Tree tree) {
-        final double[] minCladeCredibility = {Double.MAX_VALUE};
-        traverseTree(tree, new CladeAction() {
-            @Override
-            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getCredibility() < minCladeCredibility[0]) {
-                    minCladeCredibility[0] = clade.getCredibility();
-                }
-            }
-
-            @Override
-            public boolean expectAllClades() {
-                return true;
-            }
-        });
-        return minCladeCredibility[0];
-    }
-
-    public double getMeanCladeCredibility(Tree tree) {
-        final double[] minCladeCredibility = {0.0};
-        traverseTree(tree, new CladeAction() {
-            @Override
-            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null) {
-                    minCladeCredibility[0] += clade.getCredibility();
-                }
-            }
-
-            @Override
-            public boolean expectAllClades() {
-                return true;
-            }
-        });
-        return minCladeCredibility[0] / tree.getInternalNodeCount();
-    }
-
-    public double getMedianCladeCredibility(Tree tree) {
-        final double[] cladeCredibility = new double[tree.getInternalNodeCount()];
-        final int[] i = {0};
-        traverseTree(tree, new CladeAction() {
-            @Override
-            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null) {
-                    cladeCredibility[i[0]] = clade.getCredibility();
-                    i[0] += 1;
-                }
-            }
-
-            @Override
-            public boolean expectAllClades() {
-                return true;
-            }
-        });
-
-
-        return DiscreteStatistics.median(cladeCredibility);
+        assert false;
     }
 
     /**
-     * Returns the number of clades in the tree with threshold credibility or higher
-     *
+     * Traverse the tree and collect node summaries for each node
      * @param tree
-     * @param threshold
+     * @param node
+     * @param nodeSummaries
      * @return
      */
-    public int getTopCladeCount(Tree tree, double threshold) {
-        final int[] count = {0};
-        traverseTree(tree, new CladeAction() {
-            @Override
-            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
-                    count[0] += 1;
-                }
-            }
+    private Object collectCladeHeightsByClade(Tree tree,
+                                              NodeRef node,
+                                              List<NodeSummary> nodeSummaries) {
 
-            @Override
-            public boolean expectAllClades() {
-                return true;
-            }
-        });
-        return count[0];
+        if (tree.isExternal(node)) {
+            return collectTipHeight(tree, node);
+        }
+
+        assert tree.getChildCount(node) == 2;
+
+        Object key1 = collectCladeHeightsByClade(tree, tree.getChild(node, 0), nodeSummaries);
+        Object key2 = collectCladeHeightsByClade(tree, tree.getChild(node, 1), nodeSummaries);
+
+        Object key = BiClade.getParentKey(key1, key2);
+
+        final BitsetKey nodeBitset = getOrStoreBitset(key, key1, key2);
+        final int cladeSize = nodeBitset.cardinality();
+        final double nodeHeight = tree.getNodeHeight(node);
+        nodeSummaries.add(new NodeSummary(nodeBitset, cladeSize, nodeHeight));
+
+        return key;
+}
+
+private Object collectTipHeight(Tree tree, NodeRef node) {
+    final int index = (taxonNumberMap != null ?
+            taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
+
+    Object key = BiClade.getTaxonKey(index);
+
+    BiClade tip = (BiClade) getClade(key);
+    tip.addHeightValue(tree.getNodeHeight(node));
+
+    return key;
+}
+
+private static final class NodeSummary {
+    private final BitsetKey bitset;
+    private final int cladeSize;
+    private final double height;
+
+    private NodeSummary(BitsetKey bitset, int cladeSize, double height) {
+        this.bitset = bitset;
+        this.cladeSize = cladeSize;
+        this.height = height;
     }
+}
 
-    /**
-     * Returns the set of clades in the tree with threshold credibility or higher
-     *
-     * @param tree
-     * @param threshold
-     * @return
-     */
-    public Set<BiClade> getTopClades(Tree tree, double threshold) {
-        Set<BiClade> clades = new HashSet<>();
-        traverseTree(tree, new CladeAction() {
-            @Override
-            public void actOnClade(Clade clade, Tree tree, NodeRef node) {
-                if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
-                    clades.add((BiClade) clade);
-                }
-            }
+private List<BiClade> requiresMrcaKeyList = null;
 
-            @Override
-            public boolean expectAllClades() {
-                return true;
-            }
-        });
-        return clades;
+
+public void calculateCladeCredibilities(int totalTreesUsed) {
+    for (Clade clade : cladeMap.values()) {
+        assert clade.getCount() <= totalTreesUsed : "clade.getCount=(" + clade.getCount() +
+                ") should be <= totalTreesUsed = (" + totalTreesUsed + ")";
+
+        clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
     }
+}
 
-    /**
-     * Returns the number of clades in the clade system with threshold credibility or higher
-     *
-     * @param threshold
-     * @return
-     */
-    public int getTopCladeCount(double threshold) {
-        int count = 0;
-        for (Clade clade : cladeMap.values()) {
-            if (clade.getCredibility() > threshold) {
-                count += 1;
+public double getLogCladeCredibility(Tree tree) {
+    final double[] logCladeCredibility = {0.0};
+    traverseTree(tree, new CladeAction() {
+        @Override
+        public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+            logCladeCredibility[0] += Math.log(clade.getCredibility());
+        }
+
+        @Override
+        public boolean expectAllClades() {
+            return true;
+        }
+    });
+    return logCladeCredibility[0];
+}
+
+public double getMinimumCladeCredibility(Tree tree) {
+    final double[] minCladeCredibility = {Double.MAX_VALUE};
+    traverseTree(tree, new CladeAction() {
+        @Override
+        public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+            if (clade.getCredibility() < minCladeCredibility[0]) {
+                minCladeCredibility[0] = clade.getCredibility();
             }
         }
-        return count;
-    }
 
-    public int getCladeFrequencyCount(int cladeCount) {
-        int count = 0;
-        for (Clade clade : cladeMap.values()) {
-            if (clade.getCount() == cladeCount) {
-                count += 1;
+        @Override
+        public boolean expectAllClades() {
+            return true;
+        }
+    });
+    return minCladeCredibility[0];
+}
+
+public double getMeanCladeCredibility(Tree tree) {
+    final double[] minCladeCredibility = {0.0};
+    traverseTree(tree, new CladeAction() {
+        @Override
+        public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+            if (clade.getTaxon() == null) {
+                minCladeCredibility[0] += clade.getCredibility();
             }
         }
-        return count;
-    }
 
-    /**
-     * Returns the set of clades in the clade system with threshold credibility or higher
-     *
-     * @param threshold
-     * @return
-     */
-    public Set<BiClade> getTopClades(double threshold) {
-        Set<BiClade> clades = new HashSet<>();
-        for (BiClade clade : cladeMap.values()) {
-            if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
-                clades.add(clade);
+        @Override
+        public boolean expectAllClades() {
+            return true;
+        }
+    });
+    return minCladeCredibility[0] / tree.getInternalNodeCount();
+}
+
+public double getMedianCladeCredibility(Tree tree) {
+    final double[] cladeCredibility = new double[tree.getInternalNodeCount()];
+    final int[] i = {0};
+    traverseTree(tree, new CladeAction() {
+        @Override
+        public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+            if (clade.getTaxon() == null) {
+                cladeCredibility[i[0]] = clade.getCredibility();
+                i[0] += 1;
             }
         }
-        return clades;
-    }
 
-    public List<BiClade> getTopCladeList(double threshold) {
-        List<BiClade> clades = new ArrayList<>();
-        for (BiClade clade : cladeMap.values()) {
-            if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
-                clades.add(clade);
+        @Override
+        public boolean expectAllClades() {
+            return true;
+        }
+    });
+
+
+    return DiscreteStatistics.median(cladeCredibility);
+}
+
+/**
+ * Returns the number of clades in the tree with threshold credibility or higher
+ *
+ * @param tree
+ * @param threshold
+ * @return
+ */
+public int getTopCladeCount(Tree tree, double threshold) {
+    final int[] count = {0};
+    traverseTree(tree, new CladeAction() {
+        @Override
+        public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+            if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
+                count[0] += 1;
             }
         }
-        return clades;
-    }
 
-    public int getCladeCount() {
-        return cladeMap.keySet().size();
-    }
+        @Override
+        public boolean expectAllClades() {
+            return true;
+        }
+    });
+    return count[0];
+}
 
-    public int getCommonCladeCount(CladeSystem referenceCladeSystem) {
-        int count = 0;
-        for (Object key : cladeMap.keySet()) {
-            if (referenceCladeSystem.cladeMap.containsKey(key)) {
-                count++;
+/**
+ * Returns the set of clades in the tree with threshold credibility or higher
+ *
+ * @param tree
+ * @param threshold
+ * @return
+ */
+public Set<BiClade> getTopClades(Tree tree, double threshold) {
+    Set<BiClade> clades = new HashSet<>();
+    traverseTree(tree, new CladeAction() {
+        @Override
+        public void actOnClade(Clade clade, Tree tree, NodeRef node) {
+            if (clade.getTaxon() == null && clade.getCredibility() > threshold) {
+                clades.add((BiClade) clade);
             }
         }
-        return count;
+
+        @Override
+        public boolean expectAllClades() {
+            return true;
+        }
+    });
+    return clades;
+}
+
+/**
+ * Returns the number of clades in the clade system with threshold credibility or higher
+ *
+ * @param threshold
+ * @return
+ */
+public int getTopCladeCount(double threshold) {
+    int count = 0;
+    for (Clade clade : cladeMap.values()) {
+        if (clade.getCredibility() > threshold) {
+            count += 1;
+        }
     }
+    return count;
+}
 
-    Collection<BiClade> getTipClades() {
-        return tipClades.values();
+public int getCladeFrequencyCount(int cladeCount) {
+    int count = 0;
+    for (Clade clade : cladeMap.values()) {
+        if (clade.getCount() == cladeCount) {
+            count += 1;
+        }
     }
+    return count;
+}
 
-    Collection<BiClade> getClades() {
-        return cladeMap.values();
+/**
+ * Returns the set of clades in the clade system with threshold credibility or higher
+ *
+ * @param threshold
+ * @return
+ */
+public Set<BiClade> getTopClades(double threshold) {
+    Set<BiClade> clades = new HashSet<>();
+    for (BiClade clade : cladeMap.values()) {
+        if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
+            clades.add(clade);
+        }
     }
+    return clades;
+}
 
-    Map<Object, BiClade> getCladeMap() {
-        return cladeMap;
+public List<BiClade> getTopCladeList(double threshold) {
+    List<BiClade> clades = new ArrayList<>();
+    for (BiClade clade : cladeMap.values()) {
+        if (clade.getSize() == 1 || clade.getCredibility() >= threshold) {
+            clades.add(clade);
+        }
     }
+    return clades;
+}
 
-    //
-    // Private stuff
-    //
-    TaxonList taxonList = null;
-    private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+public int getCladeCount() {
+    return cladeMap.keySet().size();
+}
 
-    // a map of taxon index to clade
-    private final Map<Integer, BiClade> tipClades = new HashMap<>();
-    private final Map<Object, BiClade> tipCladeMap = new HashMap<>();
+public int getCommonCladeCount(CladeSystem referenceCladeSystem) {
+    int count = 0;
+    for (Object key : cladeMap.keySet()) {
+        if (referenceCladeSystem.cladeMap.containsKey(key)) {
+            count++;
+        }
+    }
+    return count;
+}
 
-    // a map of clade key to clade (excluding tip clades)
-    private final Map<Object, BiClade> cladeMap = new HashMap<>();
+Collection<BiClade> getTipClades() {
+    return tipClades.values();
+}
 
-    Clade rootClade;
+Collection<BiClade> getClades() {
+    return cladeMap.values();
+}
+
+Map<Object, BiClade> getCladeMap() {
+    return cladeMap;
+}
+
+//
+// Private stuff
+//
+TaxonList taxonList = null;
+private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+
+// a map of taxon index to clade
+private final Map<Integer, BiClade> tipClades = new HashMap<>();
+private final Map<Object, BiClade> tipCladeMap = new HashMap<>();
+
+// a map of clade key to clade (excluding tip clades)
+private final Map<Object, BiClade> cladeMap = new HashMap<>();
+
+Clade rootClade;
 
 }

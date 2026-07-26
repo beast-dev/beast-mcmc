@@ -41,20 +41,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version $
  */
 public final class CladeSystem {
-    private enum MrcaCollectionMode {
-        LEGACY,
-        ALTERNATIVE_BY_CLADE
-    }
 
-    // Compile-time strategy switch for MRCA clade height collection.
-    private static final MrcaCollectionMode MRCA_COLLECTION_MODE = MrcaCollectionMode.LEGACY;
-    private static final boolean ENABLE_MRCA_TIMING = true;
-    private static final int MRCA_TIMING_REPORT_EVERY = 1000;
-
-    private static long legacyMrcaCallCount = 0;
-    private static long alternativeMrcaCallCount = 0;
-    private static long legacyMrcaNanos = 0;
-    private static long alternativeMrcaNanos = 0;
+    private static final boolean MRCA_COLLECTION_BY_NODE = false;
 
     private final boolean keepSubClades;
     private final boolean keepParents;
@@ -301,112 +289,31 @@ public final class CladeSystem {
         return key;
     }
 
-//    public void traverseNonBinaryTree(Tree tree, CladeAction action) {
-//        traverseNonBinaryTree(tree, tree.getRoot(), action);
-//    }
-
-//    private Object traverseNonBinaryTree(Tree tree, NodeRef node, CladeAction action) {
-//
-//        Object key;
-//
-//        if (tree.isExternal(node)) {
-
-    /// /            key = node.getNumber();
-//            key = taxonNumberMap.get(tree.getNodeTaxon(node));
-//        } else {
-//            List<Object> keys = new ArrayList<>();
-//            for (int i = 0; i < tree.getChildCount(node); i++) {
-//                keys.add(traverseNonBinaryTree(tree, tree.getChild(node, i), action));
-//            }
-//            key = BiClade.getParentKey(keys.toArray());
-//        }
-//
-//        Clade clade = getClade(key);
-//        if (clade != null) {
-//            action.actOnClade(clade, tree, node);
-//        } else {
-//            assert action.expectAllClades();
-//        }
-//
-//        return key;
-//    }
     public void collectCladeHeights(Tree tree, boolean mrcaCladeHeights) {
         if (!mrcaCladeHeights) {
-            collectCladeHeightsLegacy(tree, tree.getRoot(), false);
+            collectCladeHeightsByNode(tree, tree.getRoot(), false, null);
             return;
         }
 
-        ensureRequiresMrcaKeyList();
-        final long mrcaStartTime = ENABLE_MRCA_TIMING ? System.nanoTime() : 0;
-
-        if (MRCA_COLLECTION_MODE == MrcaCollectionMode.LEGACY) {
-            final Set<BiClade> unresolved = new LinkedHashSet<>(requiresMrcaKeyList);
-            collectCladeHeightsLegacy(tree, tree.getRoot(), true, unresolved);
-
-            assert unresolved.isEmpty();
-            if (ENABLE_MRCA_TIMING) {
-                recordMrcaTiming(MrcaCollectionMode.LEGACY, System.nanoTime() - mrcaStartTime);
-            }
-            return;
-        }
-
-        collectCladeHeightsAlternative(tree);
-        if (ENABLE_MRCA_TIMING) {
-            recordMrcaTiming(MrcaCollectionMode.ALTERNATIVE_BY_CLADE, System.nanoTime() - mrcaStartTime);
-        }
-    }
-
-    private static synchronized void recordMrcaTiming(MrcaCollectionMode mode, long elapsedNanos) {
-        if (mode == MrcaCollectionMode.LEGACY) {
-            legacyMrcaCallCount++;
-            legacyMrcaNanos += elapsedNanos;
-        } else {
-            alternativeMrcaCallCount++;
-            alternativeMrcaNanos += elapsedNanos;
-        }
-
-        final long totalCalls = legacyMrcaCallCount + alternativeMrcaCallCount;
-        if (MRCA_TIMING_REPORT_EVERY > 0 && totalCalls % MRCA_TIMING_REPORT_EVERY == 0) {
-            final double legacyMeanMs = legacyMrcaCallCount == 0 ? 0.0 : (legacyMrcaNanos / 1_000_000.0) / legacyMrcaCallCount;
-            final double alternativeMeanMs = alternativeMrcaCallCount == 0 ? 0.0 : (alternativeMrcaNanos / 1_000_000.0) / alternativeMrcaCallCount;
-
-            System.err.println("MRCA timing summary [calls=" + totalCalls + "]: " +
-                    "legacy_calls=" + legacyMrcaCallCount +
-                    ", legacy_mean_ms=" + legacyMeanMs +
-                    ", alt_calls=" + alternativeMrcaCallCount +
-                    ", alt_mean_ms=" + alternativeMeanMs);
-        }
-    }
-
-    public static synchronized String getMrcaTimingSummary() {
-        if (!ENABLE_MRCA_TIMING) {
-            return "MRCA timing is disabled.";
-        }
-
-        final long totalCalls = legacyMrcaCallCount + alternativeMrcaCallCount;
-        final double legacyMeanMs = legacyMrcaCallCount == 0 ? 0.0 : (legacyMrcaNanos / 1_000_000.0) / legacyMrcaCallCount;
-        final double alternativeMeanMs = alternativeMrcaCallCount == 0 ? 0.0 : (alternativeMrcaNanos / 1_000_000.0) / alternativeMrcaCallCount;
-
-        return "MRCA timing final summary [calls=" + totalCalls + "]: " +
-                "legacy_calls=" + legacyMrcaCallCount +
-                ", legacy_mean_ms=" + legacyMeanMs +
-                ", alt_calls=" + alternativeMrcaCallCount +
-                ", alt_mean_ms=" + alternativeMeanMs;
-    }
-
-    private synchronized void ensureRequiresMrcaKeyList() {
         if (requiresMrcaKeyList == null) {
             requiresMrcaKeyList = new ArrayList<>(cladeMap.values());
             // sort in descending size
             requiresMrcaKeyList.sort((o1, o2) -> o2.getSize() - o1.getSize());
         }
+
+        if (MRCA_COLLECTION_BY_NODE) {
+            final Set<BiClade> unresolved = new LinkedHashSet<>(requiresMrcaKeyList);
+            collectCladeHeightsByNode(tree, tree.getRoot(), true, unresolved);
+
+            assert unresolved.isEmpty();
+            return;
+        }
+
+        collectCladeHeightsByClade(tree);
     }
 
-    private Object collectCladeHeightsLegacy(Tree tree, NodeRef node, boolean mrcaCladeHeights) {
-        return collectCladeHeightsLegacy(tree, node, mrcaCladeHeights, null);
-    }
 
-    private Object collectCladeHeightsLegacy(Tree tree,
+    private Object collectCladeHeightsByNode(Tree tree,
                                              NodeRef node,
                                              boolean mrcaCladeHeights,
                                              Set<BiClade> unresolved) {
@@ -425,15 +332,12 @@ public final class CladeSystem {
 
             if (mrcaCladeHeights) {
                 ensureTipBitset(tree, key, index);
-            } else {
-                BitsetKey bitset = bitsetKeyMap.get(key);
-                assert bitset != null;
             }
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Object key1 = collectCladeHeightsLegacy(tree, tree.getChild(node, 0), mrcaCladeHeights, unresolved);
-            Object key2 = collectCladeHeightsLegacy(tree, tree.getChild(node, 1), mrcaCladeHeights, unresolved);
+            Object key1 = collectCladeHeightsByNode(tree, tree.getChild(node, 0), mrcaCladeHeights, unresolved);
+            Object key2 = collectCladeHeightsByNode(tree, tree.getChild(node, 1), mrcaCladeHeights, unresolved);
 
             key = BiClade.getParentKey(key1, key2);
 
@@ -487,11 +391,13 @@ public final class CladeSystem {
         return key;
     }
 
-    private void collectCladeHeightsAlternative(Tree tree) {
+    private void collectCladeHeightsByClade(Tree tree) {
+        // alternative algorithm - iterates the clades and finds the tmrca in the tree
+
         final Set<BiClade> unresolved = new HashSet<>(requiresMrcaKeyList);
         final List<NodeSummary> nodeSummaries = new ArrayList<>(tree.getInternalNodeCount());
 
-        collectCladeHeightsAlternative(tree, tree.getRoot(), unresolved, nodeSummaries);
+        collectCladeHeightsByClade(tree, tree.getRoot(), unresolved, nodeSummaries);
 
         nodeSummaries.sort(Comparator.comparingInt(summary -> summary.cladeSize));
 
@@ -517,7 +423,7 @@ public final class CladeSystem {
         assert stillUnresolved.isEmpty() : "Failed to resolve MRCA for " + stillUnresolved.size() + " clades";
     }
 
-    private Object collectCladeHeightsAlternative(Tree tree,
+    private Object collectCladeHeightsByClade(Tree tree,
                                                   NodeRef node,
                                                   Set<BiClade> unresolved,
                                                   List<NodeSummary> nodeSummaries) {
@@ -538,8 +444,8 @@ public final class CladeSystem {
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Object key1 = collectCladeHeightsAlternative(tree, tree.getChild(node, 0), unresolved, nodeSummaries);
-            Object key2 = collectCladeHeightsAlternative(tree, tree.getChild(node, 1), unresolved, nodeSummaries);
+            Object key1 = collectCladeHeightsByClade(tree, tree.getChild(node, 0), unresolved, nodeSummaries);
+            Object key2 = collectCladeHeightsByClade(tree, tree.getChild(node, 1), unresolved, nodeSummaries);
 
             key = BiClade.getParentKey(key1, key2);
 

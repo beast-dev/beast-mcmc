@@ -497,7 +497,6 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println("Average clade heights estimated using Clade Ancestor method of:");
             progressStream.println("Heled and Bouckaert, (2013) Looking for trees in the forest: summary tree from posterior samples");
             progressStream.println("BMC Evolutionary Biology 13:221. DOI: 10.1186/1471-2148-13-221");
-            progressStream.println(CladeSystem.getMrcaTimingSummary());
             progressStream.println("");
         }
     }

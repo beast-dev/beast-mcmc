@@ -293,18 +293,19 @@ public final class CladeSystem {
      * the target tree). The simple algorithm simply sees if the clade is
      * in the clade system and adds the height to that. This can result in very
      * few height values for unsupported clades and produce negative branch lengths.
-     * <p>
+     *
      * An alternative is provided when mrcaCladeHeights = true, this is the CA
      * (clade ancestor) method of:
      * Heled and Bouckaert, (2013) Looking for trees in the forest:
      * summary tree from posterior samples'. BMC Evolutionary Biology 13:221;
-     * <p>
+     *
      * For this, if the clade represented by the node is not present then the
      * node representing the most recent common ancestor of the tips in the clade
      * is found in the tree and that node's height is added to the clade heights.
      * This means that all clades in the clade system get a height for every tree
      * even if it is just the root height.
-     * <p>
+     *
+     * MRCA_COLLECTION_BY_NODE = true
      * This method's algorithm keeps an ordered set of clades that haven't been
      * matched yet. As each node is visited it check to see if this matches any
      * of the clades or is the MRCA of a clade that hasn't been match - in which
@@ -312,7 +313,8 @@ public final class CladeSystem {
      * As this is post-order traversal, the nodes of the tree are larger and
      * larger clades (and ultimately the root) so will eventually be the MRCA of
      * all clades.
-     * <p>
+     *
+     * MRCA_COLLECTION_BY_NODE = false
      * A second, potentially more efficient algorithm `collectCladeHeightsByClade`
      * collects all the clades from the tree (with their heights) once and then
      * iterates through the clades and finds the MRCA height.

@@ -11,6 +11,11 @@ All issues are tracked at https://github.com/beast-dev/beast-mcmc/issues
 
 ### New features
 
+#### BEAST
+
+- If the operator log file name has the extension `.csv` then a CSV file will be created (or if `format="csv"` is set).
+- The operators element can now be logged to provide information about operator performance.
+
 #### BEAUti
 
 - Added option to write doubling time in days to the log file when using a coalescent model with an exponential growth parameter.

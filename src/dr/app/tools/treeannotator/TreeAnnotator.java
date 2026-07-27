@@ -107,8 +107,7 @@ public class TreeAnnotator extends BaseTreeTool {
     enum HeightsSummary {
         MEAN_HEIGHTS("Mean heights"),
         MEDIAN_HEIGHTS("Median heights"),
-        MRCA_HEIGHTS("Clade MRCA mean heights"),
-        KEEP_HEIGHTS("Keep MCC heights");
+        MRCA_HEIGHTS("Clade MRCA mean heights");
 
         String desc;
 
@@ -1040,8 +1039,8 @@ public class TreeAnnotator extends BaseTreeTool {
                                 "an option of 'hipstr' (default) or 'mcc'"),
                         // new Arguments.Option("ccd0",null, "Use CCD0-MAP unobserved clade pair expansion"),
                         // new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
-                        new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
-                                "an option of 'keep', 'median' or 'mean' (default)"),
+                        new Arguments.StringOption("heights", "nh", new String[]{"median", "mean", "ca"}, false,
+                                "an option of 'median' or 'mean' (default)"),
                         new Arguments.Option("mrcaHeights", "ca", "Use clade MRCA height method of Heled and Bouckaert, (2013) (default off)"),
                         new Arguments.RealArrayOption("hpdIntervals", "hi", -1, 0.0, 1.0, "the highest posterior density (HPD) interval (default 0.95)"),
                         new Arguments.IntegerOption("hpdLimit", "hl", 1, Integer.MAX_VALUE, "the highest posterior density (HPD) minimum number of height values (default 10)"),
@@ -1092,8 +1091,6 @@ public class TreeAnnotator extends BaseTreeTool {
                 heightsOption = HeightsSummary.MEDIAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("mrca") || value.equalsIgnoreCase("ca")) {
                 mrcaHeights = true;
-            } else if (value.equalsIgnoreCase("keep")) {
-                heightsOption = HeightsSummary.KEEP_HEIGHTS;
             }
         }
         mrcaHeights = mrcaHeights || arguments.hasOption("mrcaHeights");

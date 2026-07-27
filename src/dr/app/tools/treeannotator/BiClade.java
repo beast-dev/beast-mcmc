@@ -146,15 +146,15 @@ class BiClade implements Clade {
     }
 
     @Override
-    public void addAttributeValues(Object[] values) {
-        synchronized (attributeValues) {
-            attributeValues.add(values);
+    public void addAttributeValue(String attributeName, Object value) {
+        synchronized (attributeValueMap) {
+            attributeValueMap.computeIfAbsent(attributeName, k -> new ArrayList<>()).add(value);
         }
     }
 
     @Override
-    public List<Object[]> getAttributeValues() {
-        return attributeValues;
+    public List<Object> getAttributeValues(String attributeName) {
+        return attributeValueMap.get(attributeName);
     }
 
     @Override
@@ -268,6 +268,7 @@ class BiClade implements Clade {
     double bestSubTreeScore = Double.NaN;
 
     private final List<Object[]> attributeValues = new ArrayList<>();
+    private final Map<String, List<Object>> attributeValueMap = new HashMap<>();
     private final List<Double> heightValues = new ArrayList<>();
 
     static {

@@ -138,7 +138,7 @@ public class TreeAnnotator extends BaseTreeTool {
                          final int minCladeCount,
                          final int countLimit,
                          final double[] hpd2D,
-                         final boolean computeESS,
+                         final boolean forceIntegerToDiscrete,
                          final int threadCount,
                          final Target targetOption,
                          final String targetTreeFileName,
@@ -157,7 +157,7 @@ public class TreeAnnotator extends BaseTreeTool {
         collectAttributesAction.addAttributeName("length");
 
         annotateHeightsAction = new AnnotateHeightsAction(heightsOption, hpdIntervals, hpdLimit, useKDEs, kdeIntervals, kdeCount, kdeLimit);
-        annotateAction = new AnnotateAction(posteriorLimit, countLimit, hpd2D, computeESS, true);
+        annotateAction = new AnnotateAction(posteriorLimit, countLimit, hpd2D, forceIntegerToDiscrete);
 
         int burnin = -1;
 
@@ -920,8 +920,8 @@ public class TreeAnnotator extends BaseTreeTool {
         String outputFileName = null;
         boolean includeNexusHeader = false;
 
-        boolean forceIntegerToDiscrete = false;
-        boolean computeESS = false;
+        boolean forceIntegerToDiscrete = true;
+//        boolean computeESS = false;
 
         if (args.length == 0) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -1006,7 +1006,7 @@ public class TreeAnnotator extends BaseTreeTool {
                         0,
                         0,
                         hpd2D,
-                        computeESS,
+                        forceIntegerToDiscrete,
                         -1,
                         targetOption,
                         targetTreeFileName,
@@ -1057,9 +1057,9 @@ public class TreeAnnotator extends BaseTreeTool {
                         new Arguments.StringOption("metrics", "tm", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
                         new Arguments.IntegerOption("threads", "nt", "max number of threads (default automatic)"),
                         new Arguments.Option("nexusHeader", "nx", "include the full nexus taxon block (default off)"),
-                        new Arguments.Option("forceDiscrete", null, "forces integer traits to be treated as discrete traits."),
+//                        new Arguments.Option("forceDiscrete", null, "forces integer traits to be treated as discrete traits."),
                         new Arguments.StringOption("hpd2D", null, "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
-                        new Arguments.Option("ess", null, "compute ess for branch parameters"),
+//                        new Arguments.Option("ess", null, "compute ess for branch parameters"),
                         new Arguments.Option("help", "h", "option to print this message")
                 });
 
@@ -1071,10 +1071,10 @@ public class TreeAnnotator extends BaseTreeTool {
             System.exit(1);
         }
 
-        if (arguments.hasOption("forceDiscrete")) {
-            progressStream.println("  Forcing integer traits to be treated as discrete traits.");
-            forceIntegerToDiscrete = true;
-        }
+//        if (arguments.hasOption("forceDiscrete")) {
+//            progressStream.println("  Forcing integer traits to be treated as discrete traits.");
+//            forceIntegerToDiscrete = true;
+//        }
 
         if (arguments.hasOption("help")) {
             printUsage(arguments);
@@ -1104,14 +1104,15 @@ public class TreeAnnotator extends BaseTreeTool {
             burninTrees = arguments.getIntegerOption("burninTrees");
         }
 
-        if (arguments.hasOption("ess")) {
-            if (burninStates != -1) {
-                progressStream.println(" Calculating ESS for branch parameters.");
-                computeESS = true;
-            } else {
-                throw new RuntimeException("Specify burnin as states to use 'ess' option.");
-            }
-        }
+//        if (arguments.hasOption("ess")) {
+//            if (burninStates != -1) {
+//                progressStream.println(" Calculating ESS for branch parameters.");
+//                computeESS = true;
+//            } else {
+//                throw new RuntimeException("Specify burnin as states to use 'ess' option.");
+//            }
+//        }
+
         double[] hpdIntervals = new double[]{ 0.95 };
         if (arguments.hasOption("hpd")) {
             hpdIntervals = arguments.getRealArrayOption("hpd");
@@ -1234,7 +1235,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 minCladeCount,
                 countLimit,
                 hpd2D,
-                computeESS,
+                forceIntegerToDiscrete,
                 threadCount,
                 target,
                 targetTreeFileName,

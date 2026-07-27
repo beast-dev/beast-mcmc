@@ -1,7 +1,7 @@
 /*
  * BiClade.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,7 +22,6 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.app.tools.treeannotator;
@@ -38,8 +37,11 @@ import java.util.*;
  */
 class BiClade implements Clade {
 
-    /**
+    private static final boolean USE_BITSET_CLADE_KEYS = false;
 
+    public static final CladeKeys cladeKeys;
+
+    /**
      * Clade for a tip
      * @param index number of the tip
      */
@@ -50,7 +52,7 @@ class BiClade implements Clade {
         credibility = 1.0;
         size = 1;
 
-        key = index;
+        key = getTaxonKey(index);
 
         this.taxon = taxon;
     }
@@ -80,7 +82,7 @@ class BiClade implements Clade {
         index = left.index;
         addSubClades(left, right);
 
-        key = BiClade.makeKey(left.key, right.key);
+        key = BiClade.getParentKey(left.key, right.key);
 
         this.taxon = null;
     }
@@ -155,58 +157,29 @@ class BiClade implements Clade {
         return attributeValues;
     }
 
+    @Override
     public void addHeightValue(double height) {
         synchronized (heightValues) {
             heightValues.add(height);
         }
     }
 
+    @Override
     public List<Double> getHeightValues() {
         return heightValues;
     }
-    public void addChildHeightValues(double leftHeight, double rightHeight) {
-        leftHeightValues.add(leftHeight);
-        rightHeightValues.add(rightHeight);
-    }
 
-    public List<Double> getLeftHeightValues() {
-        return leftHeightValues;
-    }
-    public List<Double> getRightHeightValues() {
-        return rightHeightValues;
-    }
-
-    public void setMeanHeight(double meanHeight) {
-        this.meanHeight = meanHeight;
-    }
-
-    public void setMedianHeight(double medianHeight) {
-        this.medianHeight = medianHeight;
-    }
-
-    public void setHeightRange(Double[] range) {
-        this.heightRange = range;
-    }
-
-    public void setHeightHPD(Double[] HPDs) {
-        this.heightHPDs = HPDs;
-    }
-
-    public double getMeanHeight() {
-        return meanHeight;
-    }
-
-    public double getMedianHeight() {
-        return medianHeight;
-    }
-
-    public Double[] getHeightRange() {
-        return heightRange;
-    }
-
-    public Double[] getHeightHPDs() {
-        return heightHPDs;
-    }
+//    public void addChildHeightValues(double leftHeight, double rightHeight) {
+//        leftHeightValues.add(leftHeight);
+//        rightHeightValues.add(rightHeight);
+//    }
+//
+//    public List<Double> getLeftHeightValues() {
+//        return leftHeightValues;
+//    }
+//    public List<Double> getRightHeightValues() {
+//        return rightHeightValues;
+//    }
 
     @Override
     public int getSize() {
@@ -250,65 +223,13 @@ class BiClade implements Clade {
         return key;
     }
 
-    public static Object makeKey(Object key1, Object key2) {
-        int maxIndex;
-        if (key1 instanceof Integer) {
-            maxIndex = (Integer) key1;
-        } else {
-            assert key1 instanceof CladeKey;
-            maxIndex = ((CladeKey) key1).getMaxIndex();
-        }
-        if (key2 instanceof Integer) {
-            maxIndex = Math.max(maxIndex, (Integer) key2);
-        } else {
-            assert key2 instanceof CladeKey;
-            maxIndex = Math.max(maxIndex, ((CladeKey) key2).getMaxIndex());
-        }
-
-        CladeKey key = new CladeKey(maxIndex);
-        if (key1 instanceof Integer) {
-            key.set((Integer) key1);
-        } else {
-            key.setTo((CladeKey) key1);
-        }
-        if (key2 instanceof Integer) {
-            key.set((Integer) key2);
-        } else {
-            key.or((CladeKey) key2);
-        }
-
-        return key;
-    }
-    public static Object makeKey(Object... keys) {
-        int maxIndex = 0;
-        for (Object key : keys) {
-            maxIndex = Math.max(maxIndex, key instanceof Integer ? (Integer) key : ((CladeKey) key).getMaxIndex());
-        }
-        CladeKey bits = new CladeKey(maxIndex);
-        for (Object key : keys) {
-            if (key instanceof Integer) {
-                bits.set((Integer) key);
-            } else {
-                assert key instanceof CladeKey;
-                bits.or((CladeKey) key);
-            }
-        }
-        return bits;
+    public static Object getTaxonKey(int index) {
+        return cladeKeys.getTaxonKey(index);
     }
 
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//
-//        if (((BiClade) o).size != size) return false;
-//
-//        return !(bits != null ? !Arrays.equals(bits, ((BiClade) o).bits) : ((BiClade) o).bits != null);
-//
-//    }
-//
-//    public int hashCode() {
-//        return left.hashCode() ^ right.hashCode();
-//    }
+    public static Object getParentKey(Object key1, Object key2) {
+        return cladeKeys.getParentKey(key1, key2);
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -320,7 +241,6 @@ class BiClade implements Clade {
     @Override
     public int hashCode() {
         return key.hashCode();
-//        return Objects.hash(key);
     }
 
     public String toString() {
@@ -349,12 +269,12 @@ class BiClade implements Clade {
 
     private final List<Object[]> attributeValues = new ArrayList<>();
     private final List<Double> heightValues = new ArrayList<>();
-    private final List<Double> leftHeightValues = new ArrayList<>();
-    private final List<Double> rightHeightValues = new ArrayList<>();
 
-    private double meanHeight;
-    private double medianHeight;
-    private Double[] heightRange;
-    private Double[] heightHPDs ;
-
+    static {
+        if (USE_BITSET_CLADE_KEYS) {
+            cladeKeys = BitsetCladeKeys.INSTANCE;
+        } else {
+            cladeKeys = FingerprintCladeKeys.INSTANCE;
+        }
+    }
 }

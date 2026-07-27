@@ -741,11 +741,11 @@ public class TreeSummary {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
-                        new Arguments.Option("clademap", "show states of all clades over chain length"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a subtree to be included"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burninTrees", "bt", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.Option("clademap", "cm", "show states of all clades over chain length"),
+                        new Arguments.RealOption("limit", "l", "the minimum posterior probability for a subtree to be included"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

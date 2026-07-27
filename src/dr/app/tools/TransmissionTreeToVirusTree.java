@@ -522,13 +522,13 @@ public class TransmissionTreeToVirusTree {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption(DEMOGRAPHIC_MODEL, demographics, false, "The type of within-host" +
+                        new Arguments.StringOption(DEMOGRAPHIC_MODEL,null,  demographics, false, "The type of within-host" +
                                 " demographic function to use, default = constant"),
-                        new Arguments.RealOption(STARTING_POPULATION_SIZE,"The effective population size at time zero" +
+                        new Arguments.RealOption(STARTING_POPULATION_SIZE,null, "The effective population size at time zero" +
                                 " (used in all models), default = 1"),
-                        new Arguments.RealOption(GROWTH_RATE,"The effective population size growth rate (used in" +
+                        new Arguments.RealOption(GROWTH_RATE,null, "The effective population size growth rate (used in" +
                                 " exponential and logistic models), default = 0"),
-                        new Arguments.RealOption(T50,"The time point, relative to the time of infection in backwards " +
+                        new Arguments.RealOption(T50,null, "The time point, relative to the time of infection in backwards " +
                                 "time, at which the population is equal to half its final asymptotic value, in the " +
                                 "logistic model default = 0")
                 });

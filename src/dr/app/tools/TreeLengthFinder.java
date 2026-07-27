@@ -183,7 +183,7 @@ public class TreeLengthFinder {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
                         /*new Arguments.Option("short", "use this option to produce a short report"),
                         new Arguments.Option("hpd", "use this option to produce hpds for each trace"),
                         new Arguments.Option("ess", "use this option to produce ESSs for each trace"),
@@ -191,7 +191,7 @@ public class TreeLengthFinder {
                         new Arguments.StringOption("marginal", "trace_name", "specify the trace to use to calculate the marginal likelihood"),*/
 //				new Arguments.Option("html", "format output as html"),
 //				new Arguments.Option("svg", "generate svg graphics"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

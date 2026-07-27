@@ -124,83 +124,83 @@ public class BeagleSequenceSimulatorConsoleApp {
         arguments = new Arguments(
                 new Arguments.Option[]{
 
-                        new Arguments.Option(HELP,
+                        new Arguments.Option(HELP, "h",
                                 "print this information and exit"),
 
-                        new Arguments.StringOption(TREE_FILE, "tree file",
+                        new Arguments.StringOption(TREE_FILE, null, "tree file",
                                 "specify tree topology"),
 
-                        new Arguments.StringOption(TAXA_SET, "taxa set",
+                        new Arguments.StringOption(TAXA_SET, null, "taxa set",
                                 "specify taxa set"),
 
-                        new Arguments.IntegerOption(FROM,
+                        new Arguments.IntegerOption(FROM,null,
                                 "specify 'from' attribute"),
-                        new Arguments.IntegerOption(TO,
+                        new Arguments.IntegerOption(TO,null,
                                 "specify 'to' attribute"),
-                        new Arguments.IntegerOption(EVERY,
+                        new Arguments.IntegerOption(EVERY,null,
                                 "specify 'every' attribute"),
 
-                        new Arguments.StringOption(DEMOGRAPHIC_MODEL,
+                        new Arguments.StringOption(DEMOGRAPHIC_MODEL,null,
                                 new String[]{NO_DEMOGRAPHIC_MODEL, //
                                         CONSTANT_POPULATION, //
                                         EXPONENTIAL_GROWTH_RATE, //
                                         EXPONENTIAL_DOUBLING_TIME //
                                 }, false, "specify demographic model"),
 
-                        new Arguments.RealArrayOption(CONSTANT_POPULATION_PARAMETER_VALUES, 1, "specify constant population model parameter values"),
-                        new Arguments.RealArrayOption(EXPONENTIAL_GROWTH_RATE_PARAMETER_VALUES, 2, "specify exponential growth (growth rate) population model parameter values"),
-                        new Arguments.RealArrayOption(EXPONENTIAL_GROWTH_DOUBLING_TIME_PARAMETER_VALUES, 2, "specify exponential growth (doubling time) population model parameter values"),
+                        new Arguments.RealArrayOption(CONSTANT_POPULATION_PARAMETER_VALUES, null, 1, "specify constant population model parameter values"),
+                        new Arguments.RealArrayOption(EXPONENTIAL_GROWTH_RATE_PARAMETER_VALUES, null, 2, "specify exponential growth (growth rate) population model parameter values"),
+                        new Arguments.RealArrayOption(EXPONENTIAL_GROWTH_DOUBLING_TIME_PARAMETER_VALUES, null, 2, "specify exponential growth (doubling time) population model parameter values"),
 
-                        new Arguments.StringOption(BRANCH_SUBSTITUTION_MODEL,
+                        new Arguments.StringOption(BRANCH_SUBSTITUTION_MODEL,null,
                                 new String[]{HKY, //
                                         GTR, //
                                         TN93, //
                                         GY94_CODON_MODEL //
                                 }, false, "specify substitution model"),
 
-                        new Arguments.RealArrayOption(HKY_SUBSTITUTION_PARAMETER_VALUES, 1, "specify HKY substitution model parameter values"),
-                        new Arguments.RealArrayOption(GTR_SUBSTITUTION_PARAMETER_VALUES, 6, "specify GTR substitution model parameter values"),
-                        new Arguments.RealArrayOption(TN93_SUBSTITUTION_PARAMETER_VALUES, 2, "specify TN93 substitution model parameter values"),
-                        new Arguments.RealArrayOption(GY94_SUBSTITUTION_PARAMETER_VALUES, 2, "specify GY94 substitution model parameter values"),
+                        new Arguments.RealArrayOption(HKY_SUBSTITUTION_PARAMETER_VALUES, null, 1, "specify HKY substitution model parameter values"),
+                        new Arguments.RealArrayOption(GTR_SUBSTITUTION_PARAMETER_VALUES, null, 6, "specify GTR substitution model parameter values"),
+                        new Arguments.RealArrayOption(TN93_SUBSTITUTION_PARAMETER_VALUES,null,  2, "specify TN93 substitution model parameter values"),
+                        new Arguments.RealArrayOption(GY94_SUBSTITUTION_PARAMETER_VALUES, null, 2, "specify GY94 substitution model parameter values"),
 
-                        new Arguments.StringOption(SITE_RATE_MODEL,
+                        new Arguments.StringOption(SITE_RATE_MODEL,null,
                                 new String[]{NO_SITE_RATE_MODEL, //
                                         GAMMA_SITE_RATE_MODEL, //
                                 }, false, "specify site rate model"),
 
                         new Arguments.RealArrayOption(
-                                GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES, 3, "specify Gamma Site Rate Model parameter values"),
+                                GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES, null, 3, "specify Gamma Site Rate Model parameter values"),
 
-                        new Arguments.StringOption(CLOCK_RATE_MODEL,
+                        new Arguments.StringOption(CLOCK_RATE_MODEL,null,
                                 new String[]{STRICT_CLOCK, //
                                         LOGNORMAL_RELAXED_CLOCK, //
                                         EXPONENTIAL_RELAXED_CLOCK, //
                                         INVERSE_GAUSSIAN_RELAXED_CLOCK},
                                 false, "specify clock rate model"),
 
-                        new Arguments.RealArrayOption(STRICT_CLOCK_PARAMETER_VALUES, 1, "specify Strict Clock parameter values"),
-                        new Arguments.RealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Lognormal Relaxed Clock parameter values"),
+                        new Arguments.RealArrayOption(STRICT_CLOCK_PARAMETER_VALUES, null, 1, "specify Strict Clock parameter values"),
+                        new Arguments.RealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES,null,  3, "specify Lognormal Relaxed Clock parameter values"),
                         
 //                        new Arguments.StringOption(LRC_PARAMETERS_IN_REAL_SPACE),
                         
-                        new Arguments.StringOption(LRC_PARAMETERS_IN_REAL_SPACE,
+                        new Arguments.StringOption(LRC_PARAMETERS_IN_REAL_SPACE,null,
                                 new String[]{TRUE, //
                                         FALSE //
                                },
                                 false, "Are the Lognormal Relaxed Clock parameter values in the real or log space"),
                         
-                        new Arguments.RealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Exponential Relaxed Clock parameter values"),
-                        new Arguments.RealArrayOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussian Relaxed Clock parameter values"),
+                        new Arguments.RealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, null, 2, "specify Exponential Relaxed Clock parameter values"),
+                        new Arguments.RealArrayOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES,null, 3, "specify Inverse Gaussian Relaxed Clock parameter values"),
 
-                        new Arguments.StringOption(BASE_FREQUENCIES,
+                        new Arguments.StringOption(BASE_FREQUENCIES,null,
                                 new String[]{NUCLEOTIDE_FREQUENCIES, //
                                         CODON_FREQUENCIES, //
                                 }, false, "specify frequency model"),
 
-                        new Arguments.RealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES, 4, "specify nucleotide frequency parameter values"),
-                        new Arguments.RealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES, 61, "specify codon frequency parameter values"),
+                        new Arguments.RealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES, null, 4, "specify nucleotide frequency parameter values"),
+                        new Arguments.RealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES, null, 61, "specify codon frequency parameter values"),
 
-                        new Arguments.StringOption(ROOT_SEQUENCE, "ancestral sequence",
+                        new Arguments.StringOption(ROOT_SEQUENCE, null, "ancestral sequence",
                                 "specify ancestral sequence"),
 
                 });

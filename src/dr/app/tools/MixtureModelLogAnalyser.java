@@ -287,9 +287,9 @@ public class MixtureModelLogAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.StringOption("discreteVariable", "variable_name", "indicates the name of a variable that is actually discrete in nature"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.StringOption("discreteVariable", null, "variable_name", "indicates the name of a variable that is actually discrete in nature"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

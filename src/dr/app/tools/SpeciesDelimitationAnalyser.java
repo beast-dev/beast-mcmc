@@ -319,10 +319,10 @@ public class SpeciesDelimitationAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
-                        new Arguments.RealOption("collapseheight", "the height below which nodes get collapsed [default = .001]"),
-                        new Arguments.RealOption("simcutoff", "the value above which two clusters are regarded as similar enough to support one another's credibility [default = .9]"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.RealOption("collapseheight", "c", "the height below which nodes get collapsed [default = .001]"),
+                        new Arguments.RealOption("simcutoff", "s", "the value above which two clusters are regarded as similar enough to support one another's credibility [default = .9]"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

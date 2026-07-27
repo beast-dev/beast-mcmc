@@ -27,15 +27,9 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-
-import java.util.ArrayList;
-import java.util.logging.Logger;
 
 /**
  * @author Erik Bloomquist

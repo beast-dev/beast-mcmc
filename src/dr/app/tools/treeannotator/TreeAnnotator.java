@@ -1,7 +1,7 @@
 /*
  * TreeAnnotator.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,7 +22,6 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.app.tools.treeannotator;
@@ -76,15 +75,16 @@ public class TreeAnnotator extends BaseTreeTool {
     private static PrintStream progressStream = System.err;
     private static final boolean extendedMetrics = false;
 
-    private final CollectionAction collectionAction;
-    private final AnnotationAction annotationAction;
+    private final CollectAttributesAction collectAttributesAction;
+    private final AnnotateHeightsAction annotateHeightsAction;
+    private final AnnotateAction annotateAction;
     private final int threadCount;
 
     private TaxonList taxa = null;
     private int totalTrees;
     private int totalTreesUsed;
 
-    List<Double> rootHeights = new ArrayList<>();
+//    List<Double> rootHeights = new ArrayList<>();
 
     enum Target {
         HIPSTR("Highest independent posterior subtree reconstruction (HIPSTR)"),
@@ -107,7 +107,8 @@ public class TreeAnnotator extends BaseTreeTool {
     enum HeightsSummary {
         MEAN_HEIGHTS("Mean heights"),
         MEDIAN_HEIGHTS("Median heights"),
-        KEEP_HEIGHTS("Keep target heights");
+        MRCA_HEIGHTS("Clade MRCA mean heights"),
+        KEEP_HEIGHTS("Keep MCC heights");
 
         String desc;
 
@@ -127,7 +128,15 @@ public class TreeAnnotator extends BaseTreeTool {
     public TreeAnnotator(final int burninTrees,
                          final long burninStates,
                          final HeightsSummary heightsOption,
+                         final boolean mrcaCladeHeights,
+                         final double[] hpdIntervals,
+                         final int hpdLimit,
+                         final boolean useKDEs,
+                         final double[] kdeIntervals,
+                         final int kdeCount,
+                         final int kdeLimit,
                          final double posteriorLimit,
+                         final int minCladeCount,
                          final int countLimit,
                          final double[] hpd2D,
                          final boolean computeESS,
@@ -137,20 +146,19 @@ public class TreeAnnotator extends BaseTreeTool {
                          final String referenceTreeFileName,
                          final String treeMetricFileName,
                          final String inputFileName,
-                         final String outputFileName
+                         final String outputFileName,
+                         boolean includeNexusHeader
     ) throws IOException {
 
         long totalStartTime = System.currentTimeMillis();
 
-        collectionAction = new CollectionAction();
+        collectAttributesAction = new CollectAttributesAction();
 
-        collectionAction.addAttributeName("height");
-        collectionAction.addAttributeName("length");
+        // length is explicitly collected from the tree so add this attribute name
+        collectAttributesAction.addAttributeName("length");
 
-        annotationAction = new AnnotationAction(heightsOption, posteriorLimit, countLimit, hpd2D, computeESS, true);
-
-        annotationAction.addAttributeName("height");
-        annotationAction.addAttributeName("length");
+        annotateHeightsAction = new AnnotateHeightsAction(heightsOption, hpdIntervals, hpdLimit, useKDEs, kdeIntervals, kdeCount, kdeLimit);
+        annotateAction = new AnnotateAction(posteriorLimit, countLimit, hpd2D, computeESS, true);
 
         int burnin = -1;
 
@@ -177,7 +185,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Size of trees: " + taxa.getTaxonCount() + " tips");
         if (burninTrees > 0) {
             progressStream.println("Ignoring first " + burninTrees + " trees" +
-                    (burninStates > 0 ? " (" + burninStates + " states)." : "." ));
+                    (burninStates > 0 ? " (" + burninStates + " states)." : "."));
         } else if (burninStates > 0) {
             progressStream.println("Ignoring first " + burninStates + " states (" + burnin + " trees).");
         }
@@ -204,12 +212,12 @@ public class TreeAnnotator extends BaseTreeTool {
             }
             case HIPSTR: {
                 progressStream.println("Finding highest independent posterior subtree reconstruction (HIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, false);
+                targetTree = getHIPSTRTree(cladeSystem, false, minCladeCount);
                 break;
             }
             case MRHIPSTR: {
                 progressStream.println("Finding majority rule highest independent posterior subtree reconstruction (MrHIPSTR) tree...");
-                targetTree = getHIPSTRTree(cladeSystem, true);
+                targetTree = getHIPSTRTree(cladeSystem, true, minCladeCount);
                 break;
             }
             case MAJORITY_RULE: {
@@ -217,17 +225,20 @@ public class TreeAnnotator extends BaseTreeTool {
                 targetTree = getMajorityRuleConsensusTree(cladeSystem);
                 break;
             }
-            default: throw new IllegalArgumentException("Unknown targetOption");
+            default:
+                throw new IllegalArgumentException("Unknown targetOption");
         }
 
+        // create a new CladeSystem containing only clades from the target tree,
+        // copying the credibilities over from the full cladeSystem.
+        CladeSystem targetCladeSystem = new CladeSystem(targetTree, cladeSystem, mrcaCladeHeights);
 
         if (referenceTreeFileName != null) {
-            CladeSystem targetCladeSystem = new CladeSystem(targetTree);
 
             progressStream.println("Reading reference tree: " + referenceTreeFileName);
 
             MutableTree referenceTree = readTreeFile(referenceTreeFileName);
-            CladeSystem referenceCladeSystem = new CladeSystem(referenceTree);
+            CladeSystem referenceCladeSystem = new CladeSystem(referenceTree, cladeSystem, false);
 
             int commonCladeCount = targetCladeSystem.getCommonCladeCount(referenceCladeSystem);
             progressStream.println("Clades in common with reference tree: " + commonCladeCount +
@@ -235,17 +246,20 @@ public class TreeAnnotator extends BaseTreeTool {
             progressStream.println();
         }
 
-        collectNodeAttributes(cladeSystem, inputFileName, burnin);
+        // collect all the attributes for the clades across all trees
+        collectNodeAttributes(targetCladeSystem, inputFileName, burnin, mrcaCladeHeights);
 
-        annotateTargetTree(cladeSystem, heightsOption, countLimit, targetTree);
+        // annotate the target tree with the summaries of attributes for each clade
+        annotateTargetTree(targetCladeSystem, targetTree);
 
-        writeAnnotatedTree(outputFileName, targetTree);
+        // write the annotated tree
+        writeAnnotatedTree(outputFileName, targetTree, includeNexusHeader);
 
         if (treeMetricFileName != null && !treeMetricFileName.isEmpty()) {
             writeTreeMetrics(burnin, targetTree, inputFileName, treeMetricFileName);
         }
 
-        long timeElapsed =  (System.currentTimeMillis() - totalStartTime) / 1000;
+        long timeElapsed = (System.currentTimeMillis() - totalStartTime) / 1000;
         progressStream.println("Total time: " + timeElapsed + " secs");
         progressStream.println();
 
@@ -380,7 +394,7 @@ public class TreeAnnotator extends BaseTreeTool {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             System.exit(1);
         }
-        timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
 
@@ -397,7 +411,7 @@ public class TreeAnnotator extends BaseTreeTool {
         return burnin;
     }
 
-    private void collectNodeAttributes(CladeSystem cladeSystem, String inputFileName, int burnin) throws IOException {
+    private void collectNodeAttributes(CladeSystem cladeSystem, String inputFileName, int burnin, boolean mrcaCladeHeights) throws IOException {
         progressStream.println("Collecting node information...");
         progressStream.println("0              25             50             75            100");
         progressStream.println("|--------------|--------------|--------------|--------------|");
@@ -439,14 +453,14 @@ public class TreeAnnotator extends BaseTreeTool {
 
                     if (THREADED_READING) {
                         futures.add(pool.submit(() -> {
-                            cladeSystem.collectCladeHeights(tree);
-                            rootHeights.add(tree.getNodeHeight(tree.getRoot()));
-                            cladeSystem.traverseTree(tree, collectionAction);
+                            cladeSystem.collectCladeHeights(tree, mrcaCladeHeights);
+//                            rootHeights.add(tree.getNodeHeight(tree.getRoot()));
+                            cladeSystem.traverseTree(tree, collectAttributesAction);
                         }));
                     } else {
-                        cladeSystem.collectCladeHeights(tree);
-                        rootHeights.add(tree.getNodeHeight(tree.getRoot()));
-                        cladeSystem.traverseTree(tree, collectionAction);
+                        cladeSystem.collectCladeHeights(tree, mrcaCladeHeights);
+//                        rootHeights.add(tree.getNodeHeight(tree.getRoot()));
+                        cladeSystem.traverseTree(tree, collectAttributesAction);
                     }
                     totalTreesUsed += 1;
                 }
@@ -474,10 +488,17 @@ public class TreeAnnotator extends BaseTreeTool {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             System.exit(1);
         }
-        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        long timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         reader.close();
+
+        if (mrcaCladeHeights) {
+            progressStream.println("Average clade heights estimated using Clade Ancestor method of:");
+            progressStream.println("Heled and Bouckaert, (2013) Looking for trees in the forest: summary tree from posterior samples");
+            progressStream.println("BMC Evolutionary Biology 13:221. DOI: 10.1186/1471-2148-13-221");
+            progressStream.println("");
+        }
     }
 
     public void setupAttributes(Tree tree) {
@@ -492,8 +513,8 @@ public class TreeAnnotator extends BaseTreeTool {
                 }
             }
         }
-        collectionAction.addAttributeNames(attributeNames);
-        annotationAction.addAttributeNames(attributeNames);
+        collectAttributesAction.addAttributeNames(attributeNames);
+        annotateAction.addAttributeNames(attributeNames);
     }
 
     private MutableTree readUserTargetTree(String targetTreeFileName, CladeSystem cladeSystem) throws IOException {
@@ -575,7 +596,7 @@ public class TreeAnnotator extends BaseTreeTool {
             System.exit(1);
         }
 
-        long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+        long timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("* [" + timeElapsed + " secs]");
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
@@ -597,27 +618,32 @@ public class TreeAnnotator extends BaseTreeTool {
         // majority rule tree may be non-bifurcating
         // double score = scoreTree(tree, cladeSystem);
 
-        double timeElapsed =  (double)(System.currentTimeMillis() - startTime) / 1000;
+        double timeElapsed = (double) (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
 //        progressStream.println("Majority rule consensus tree's log clade credibility: " + String.format("%.4f", score));
-        reportStatistics(cladeSystem, tree);
+//        reportStatistics(cladeSystem, tree);
 //        reportStatisticTables(cladeSystem, tree);
         progressStream.println();
 
         return tree;
     }
 
-    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule) {
+    private MutableTree getHIPSTRTree(CladeSystem cladeSystem, boolean majorityRule, int minCladeCount) {
 
         long startTime = System.currentTimeMillis();
+
+        if (minCladeCount > 0) {
+            Embiggulator embiggulator = new Embiggulator(cladeSystem);
+            embiggulator.embiggenBiClades(1, minCladeCount, threadCount);
+        }
 
         HIPSTRTreeBuilder treeBuilder = new HIPSTRTreeBuilder();
         MutableTree tree = treeBuilder.getHIPSTRTree(cladeSystem, taxa, majorityRule);
 
         double score = scoreTree(tree, cladeSystem);
 
-        double timeElapsed =  (double)(System.currentTimeMillis() - startTime) / 1000;
+        double timeElapsed = (double) (System.currentTimeMillis() - startTime) / 1000;
         progressStream.println("[" + timeElapsed + " secs]");
         progressStream.println();
         if (majorityRule) {
@@ -719,7 +745,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         long startTime = System.currentTimeMillis();
 
-        TreeMetric[] treeMetrics = new TreeMetric[] {
+        TreeMetric[] treeMetrics = new TreeMetric[]{
                 new BranchScoreMetric(),
                 new CladeHeightMetric(),
                 new KendallColijnPathDifferenceMetric(0.0),
@@ -779,7 +805,7 @@ public class TreeAnnotator extends BaseTreeTool {
                 System.exit(1);
             }
 
-            long timeElapsed =  (System.currentTimeMillis() - startTime) / 1000;
+            long timeElapsed = (System.currentTimeMillis() - startTime) / 1000;
             progressStream.println("* [" + timeElapsed + " secs]");
             progressStream.println();
             progressStream.println("Tree metric comparisons to target tree written to file: " + outputFileName);
@@ -790,13 +816,12 @@ public class TreeAnnotator extends BaseTreeTool {
         }
     }
 
-    private void annotateTargetTree(CladeSystem cladeSystem, HeightsSummary heightsOption, int countLimit, MutableTree targetTree) {
+    private void annotateTargetTree(CladeSystem cladeSystem, MutableTree targetTree) {
         progressStream.println("Annotating target tree...");
 
         try {
-            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLimit));
-
-            cladeSystem.traverseTree(targetTree, annotationAction);
+            cladeSystem.traverseTree(targetTree, annotateHeightsAction);
+            cladeSystem.traverseTree(targetTree, annotateAction);
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
             System.exit(1);
@@ -804,7 +829,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println();
     }
 
-    private void writeAnnotatedTree(String outputFileName, MutableTree targetTree) {
+    private void writeAnnotatedTree(String outputFileName, MutableTree targetTree, boolean includeNexusHeader) {
         progressStream.println("Writing annotated tree...");
 
         try {
@@ -812,7 +837,7 @@ public class TreeAnnotator extends BaseTreeTool {
                     new PrintStream(Files.newOutputStream(Paths.get(outputFileName))) :
                     System.out;
 
-            new NexusExporter(stream).exportTree(targetTree);
+            new NexusExporter(stream, includeNexusHeader).exportTree(targetTree, includeNexusHeader, includeNexusHeader);
         } catch (Exception e) {
             System.err.println("Error writing annotated tree file: " + e.getMessage());
             System.exit(1);
@@ -854,16 +879,17 @@ public class TreeAnnotator extends BaseTreeTool {
         arguments.printUsage("treeannotator", "<input-file-name> [<output-file-name>]");
         progressStream.println();
         progressStream.println("  Example: treeannotator test.trees out.tree");
-        progressStream.println("  Example: treeannotator -burnin 100 -heights mean test.trees out.tree");
-        progressStream.println("  Example: treeannotator -type hipstr -burnin 100 -heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator --type hipstr --burnin 100 --heights mean test.trees out.tree");
+        progressStream.println("  Example: treeannotator -b 100 -tf map.tree test.trees out.tree");
         progressStream.println();
     }
 
     public static double[] parseVariableLengthDoubleArray(String inString) throws Arguments.ArgumentException {
 
         List<Double> returnList = new ArrayList<Double>();
-        StringTokenizer st = new StringTokenizer(inString,",");
-        while(st.hasMoreTokens()) {
+        StringTokenizer st = new StringTokenizer(inString, ",");
+        while (st.hasMoreTokens()) {
             try {
                 returnList.add(Double.parseDouble(st.nextToken()));
             } catch (NumberFormatException e) {
@@ -874,7 +900,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
         if (!returnList.isEmpty()) {
             double[] doubleArray = new double[returnList.size()];
-            for(int i=0; i<doubleArray.length; i++)
+            for (int i = 0; i < doubleArray.length; i++)
                 doubleArray[i] = returnList.get(i);
             return doubleArray;
         }
@@ -893,6 +919,7 @@ public class TreeAnnotator extends BaseTreeTool {
         String treeMetricFileName = null;
         String inputFileName = null;
         String outputFileName = null;
+        boolean includeNexusHeader = false;
 
         boolean forceIntegerToDiscrete = false;
         boolean computeESS = false;
@@ -942,6 +969,9 @@ public class TreeAnnotator extends BaseTreeTool {
             double[] hpd2D = {0.80};
             Target targetOption = dialog.getTargetOption();
             HeightsSummary heightsOption = dialog.getHeightsOption();
+            boolean mrcaCladeHeights = heightsOption == HeightsSummary.MRCA_HEIGHTS;
+            double[] hpdIntervals = dialog.getHeightsHPDIntevals();
+            boolean heightsKDE = dialog.getHeightsKDE();
 
             targetTreeFileName = dialog.getTargetFileName();
             if (targetOption == Target.USER_TARGET_TREE && targetTreeFileName == null) {
@@ -966,8 +996,16 @@ public class TreeAnnotator extends BaseTreeTool {
                         burninTrees,
                         burninStates,
                         heightsOption,
+                        mrcaCladeHeights,
+                        hpdIntervals,
+                        10,
+                        heightsKDE,
+                        null,
+                        200,
+                        100,
                         posteriorLimit,
-                        5,
+                        0,
+                        0,
                         hpd2D,
                         computeESS,
                         -1,
@@ -976,7 +1014,9 @@ public class TreeAnnotator extends BaseTreeTool {
                         referenceTreeFileName,
                         null,
                         inputFileName,
-                        outputFileName);
+                        outputFileName,
+                        includeNexusHeader
+                );
 
             } catch (Exception ex) {
                 System.err.println("Exception: " + ex.getMessage());
@@ -996,21 +1036,32 @@ public class TreeAnnotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("type", new String[] {"hipstr", "mrhipstr", "mcc", "mrc"}, false, "an option of 'hipstr' (default), 'mrhipstr', 'mcc' or 'mrc'"),
-                        new Arguments.StringOption("heights", new String[] {"keep", "median", "mean", "ca"}, false,
+                        new Arguments.StringOption("type", "t", new String[]{"hipstr", "mrhipstr", "mcc"/*, "mrc"*/}, false,
+                                "an option of 'hipstr' (default) or 'mcc'"),
+                        // new Arguments.Option("ccd0",null, "Use CCD0-MAP unobserved clade pair expansion"),
+                        // new Arguments.IntegerOption("minCount", "mc", "the minimum clade count for inclusion in CCD0 expansion (default 1)"),
+                        new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep', 'median' or 'mean' (default)"),
-                        new Arguments.LongOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
-                        new Arguments.IntegerOption("limitCount", "the minimum sample count for a node to be annotated (default 5)"),
-                        new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
-                        new Arguments.StringOption("reference", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
-                        new Arguments.StringOption("metrics", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
-                        new Arguments.IntegerOption("threads", "max number of threads (default automatic)"),
-                        new Arguments.Option("help", "option to print this message"),
-                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
-                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
-                        new Arguments.Option("ess", "compute ess for branch parameters")
+                        new Arguments.Option("mrcaHeights", "ca", "Use clade MRCA height method of Heled and Bouckaert, (2013) (default off)"),
+                        new Arguments.RealArrayOption("hpdIntervals", "hi", -1, 0.0, 1.0, "the highest posterior density (HPD) interval (default 0.95)"),
+                        new Arguments.IntegerOption("hpdLimit", "hl", 1, Integer.MAX_VALUE, "the highest posterior density (HPD) minimum number of height values (default 10)"),
+                        new Arguments.Option("kde", "k", "construct kernal density estimates (KDE) of node heights (default off)"),
+//                        new Arguments.RealArrayOption("kdeIntervals", "ki", -1, 0.0, 1.0, "the kernal density estimate (KDE) interval (default 0.95)"),
+                        new Arguments.IntegerOption("kdeCount", "kc", 3, Integer.MAX_VALUE, "the kernal density estimate (KDE) curve value count (default 100)"),
+                        new Arguments.IntegerOption("kdeLimit", "kl", 1, Integer.MAX_VALUE, "the kernal density estimate (KDE) minimum number of height values (default 200)"),
+                        new Arguments.LongOption("burnin", "b", 0, Integer.MAX_VALUE, "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burninTrees", "bt", 0, Integer.MAX_VALUE, "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.RealOption("limitFrequency", "lf", 0.0, 1.0, "the minimum posterior probability for a node to be annotated (default 0.0)"),
+                        new Arguments.IntegerOption("limitCount", "lc", 0, Integer.MAX_VALUE, "the minimum sample count for a node to be annotated (default 1)"),
+                        new Arguments.StringOption("target", "tt", "target_file_name", "specifies a user target tree to be annotated"),
+                        new Arguments.StringOption("reference", "rt", "tree_file_name", "specifies a reference tree for sampled trees to be compared with"),
+                        new Arguments.StringOption("metrics", "tm", "output_file_name", "file name to write tree metrics for each tree compared to the target"),
+                        new Arguments.IntegerOption("threads", "nt", "max number of threads (default automatic)"),
+                        new Arguments.Option("nexusHeader", "nx", "include the full nexus taxon block (default off)"),
+                        new Arguments.Option("forceDiscrete", null, "forces integer traits to be treated as discrete traits."),
+                        new Arguments.StringOption("hpd2D", null, "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma separated) HPD proportion(s)"),
+                        new Arguments.Option("ess", null, "compute ess for branch parameters"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {
@@ -1031,19 +1082,21 @@ public class TreeAnnotator extends BaseTreeTool {
             System.exit(0);
         }
 
-        HeightsSummary heights = DEFAULT_HEIGHTS_SUMMARY;
+        HeightsSummary heightsOption = DEFAULT_HEIGHTS_SUMMARY;
+        boolean mrcaHeights = false;
         if (arguments.hasOption("heights")) {
             String value = arguments.getStringOption("heights");
             if (value.equalsIgnoreCase("mean")) {
-                heights = HeightsSummary.MEAN_HEIGHTS;
+                heightsOption = HeightsSummary.MEAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("median")) {
-                heights = HeightsSummary.MEDIAN_HEIGHTS;
-            } else if (value.equalsIgnoreCase("ca")) {
-                progressStream.println("CA heights are not supported - this has been superseded by the HIPSTR tree (--type hipstr)");
-                printUsage(arguments);
-                System.exit(1);
+                heightsOption = HeightsSummary.MEDIAN_HEIGHTS;
+            } else if (value.equalsIgnoreCase("mrca") || value.equalsIgnoreCase("ca")) {
+                mrcaHeights = true;
+            } else if (value.equalsIgnoreCase("keep")) {
+                heightsOption = HeightsSummary.KEEP_HEIGHTS;
             }
         }
+        mrcaHeights = mrcaHeights || arguments.hasOption("mrcaHeights");
 
         long burninStates = -1;
         int burninTrees = -1;
@@ -1062,17 +1115,42 @@ public class TreeAnnotator extends BaseTreeTool {
                 throw new RuntimeException("Specify burnin as states to use 'ess' option.");
             }
         }
-
-        double posteriorLimit = 0.0;
-        if (arguments.hasOption("limit")) {
-            posteriorLimit = arguments.getRealOption("limit");
+        double[] hpdIntervals = new double[]{ 0.95 };
+        if (arguments.hasOption("hpd")) {
+            hpdIntervals = arguments.getRealArrayOption("hpd");
+        }
+        int hpdLimit = 10;
+        if (arguments.hasOption("hpdLimit")) {
+            hpdLimit = arguments.getIntegerOption("hpdLimit");
         }
 
+        boolean useKDEs = arguments.hasOption("kde");
+
+        double[] kdeIntervals = null;
+        if (arguments.hasOption("kdeIntervals")) {
+            kdeIntervals = arguments.getRealArrayOption("kde");
+        }
+        int kdeCount = 100;
+        if (arguments.hasOption("kdeCount")) {
+            useKDEs = true;
+            kdeCount = arguments.getIntegerOption("kdeCount");
+        }
+        int kdeLimit = 200;
+        if (arguments.hasOption("kdeLimit")) {
+            useKDEs = true;
+            kdeLimit = arguments.getIntegerOption("kdeLimit");
+        }
+
+        double posteriorLimit = 0.0;
         if (arguments.hasOption("limitFrequency")) {
             posteriorLimit = arguments.getRealOption("limitFrequency");
         }
+        if (arguments.hasOption("limit")) {
+            // legacy
+            posteriorLimit = arguments.getRealOption("limit");
+        }
 
-        int countLimit = 5;
+        int countLimit = 0;
         if (arguments.hasOption("limitCount")) {
             countLimit = arguments.getIntegerOption("limitCount");
         }
@@ -1097,6 +1175,14 @@ public class TreeAnnotator extends BaseTreeTool {
             }
         }
 
+        int minCladeCount = 0; // ccd0 off
+        if (arguments.hasOption("ccd0")) {
+            minCladeCount = 1; // ccd0 on
+        }
+        if (arguments.hasOption("minCount")) {
+            minCladeCount = arguments.getIntegerOption("minCount");
+        }
+
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
             targetTreeFileName = arguments.getStringOption("target");
@@ -1113,6 +1199,10 @@ public class TreeAnnotator extends BaseTreeTool {
         int threadCount = -1;
         if (arguments.hasOption("threads")) {
             threadCount = arguments.getIntegerOption("threads");
+        }
+
+        if (arguments.hasOption("nexusHeader")) {
+            includeNexusHeader = true;
         }
 
         final String[] args2 = arguments.getLeftoverArguments();
@@ -1135,8 +1225,16 @@ public class TreeAnnotator extends BaseTreeTool {
         new TreeAnnotator(
                 burninTrees,
                 burninStates,
-                heights,
+                heightsOption,
+                mrcaHeights,
+                hpdIntervals,
+                hpdLimit,
+                useKDEs,
+                kdeIntervals,
+                kdeCount,
+                kdeLimit,
                 posteriorLimit,
+                minCladeCount,
                 countLimit,
                 hpd2D,
                 computeESS,
@@ -1146,21 +1244,29 @@ public class TreeAnnotator extends BaseTreeTool {
                 referenceTreeFileName,
                 treeMetricFileName,
                 inputFileName,
-                outputFileName);
+                outputFileName,
+                includeNexusHeader
+        );
 
         if (target == Target.MAX_CLADE_CREDIBILITY) {
             progressStream.println("Found Maximum Clade Credibility (MCC) tree - citation: " +
                     "Drummond and Rambaut: 'BEAST: Bayesian evolutionary analysis by sampling trees', BMC Ecology and Evolution 2007, 7: 214.");
         } else if (target == Target.HIPSTR) {
-            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Highest Independent Posterior Sub-Tree Reconstruction (HIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION.toString());
         } else if (target == Target.MRHIPSTR) {
-            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation: In prep.");
+            progressStream.println("Constructed Majority Rule Highest Independent Posterior Sub-Tree Reconstruction (MrHIPSTR) tree - citation:");
+            progressStream.println(HIPSTRTreeBuilder.CITATION);
         } else if (target == Target.MAJORITY_RULE) {
             progressStream.println("Constructed majority-rule consensus tree");
         } else if (target == Target.USER_TARGET_TREE) {
 //            progressStream.println("Loaded user target tree.");
         } else {
             throw new IllegalArgumentException("Unknown target option: " + target);
+        }
+        if (minCladeCount > 0) {
+            progressStream.println("  with CCD0-MAP expansion to unobserved subtrees  - citation:");
+            progressStream.println(Embiggulator.CITATION.toString());
         }
 
         System.exit(0);

@@ -208,7 +208,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             int bic = Math.min(partitionPatterns.getPatternCount(), beagleInstanceCount);
 
             for (int j = 0; j < bic; j++) {
-                PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
+                PatternList subPatterns = new Patterns(partitionPatterns, j, bic, partitionPatterns.areUnique());
                 DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                         treeModel,
                         subPatterns,
@@ -285,10 +285,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
         boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
+        boolean useRewardAwareBranchModelDelegate = xo.getAttribute("useRewardAwareBranchModelDelegate", false);
         if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
             throw new RuntimeException("Need to specify derivative types.");
         }
-        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities);
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, useRewardAwareBranchModelDelegate);
 
         int beagleInstanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
         String bic = System.getProperty(BEAGLE_INSTANCE_COUNT);

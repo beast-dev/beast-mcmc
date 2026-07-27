@@ -27,13 +27,15 @@
 
 package dr.evolution.datatype;
 
+import java.util.Arrays;
+
 /**
  * @author Marc A. Suchard
  */
 
 public class HiddenAminoAcids extends AminoAcids implements HiddenDataType {
 
-    public static final String DESCRIPTION = "hiddenAminoAcid";
+    public static final String DESCRIPTION = HiddenDataType.DESCRIPTION + "AminoAcid";
 
     public static final HiddenAminoAcids AMINO_ACIDS_HIDDEN_1 = new HiddenAminoAcids(1);
     public static final HiddenAminoAcids AMINO_ACIDS_HIDDEN_2 = new HiddenAminoAcids(2);
@@ -67,6 +69,13 @@ public class HiddenAminoAcids extends AminoAcids implements HiddenDataType {
     @Override
     public String getCodeWithoutHiddenState(int state) {
         return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
+    static public void registerHiddenDataType(GeneticCode geneticCode, int hiddenClassCount) {
+        String registeredName = DESCRIPTION + hiddenClassCount;
+        if (!Arrays.asList(DataType.getRegisteredDataTypeNames()).contains(registeredName)) {
+            DataType.registerDataType(registeredName, new HiddenAminoAcids(hiddenClassCount));
+        }
     }
 
     public int getHiddenClassCount() {

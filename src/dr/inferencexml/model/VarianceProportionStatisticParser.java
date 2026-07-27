@@ -34,10 +34,14 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModelParser;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.model.TaxonEffectVarianceProportionStatistic;
 import dr.inference.model.VarianceProportionStatistic;
 import dr.inference.model.VarianceProportionStatisticEmpirical;
 import dr.inference.model.VarianceProportionStatisticPopulation;
 import dr.xml.*;
+
+import java.util.Arrays;
 
 /**
  * @author Gabriel Hassler
@@ -62,8 +66,10 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         Tree tree = treeLikelihood.getTree();
 
         ContinuousTraitPartialsProvider dataModel = ((ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate()).getDataModel();
-        if (!(dataModel instanceof RepeatedMeasuresTraitDataModel)) {
-            throw new RuntimeException(
+        if (!(dataModel instanceof RepeatedMeasuresTraitDataModel)
+                && !(dataModel instanceof TaxonEffectTraitDataModel)
+        ) {
+            throw new XMLParseException(
                     "In " + PARSER_NAME + ": " +
                             "The provided likelihood does not have a " + RepeatedMeasuresTraitDataModelParser.REPEATED_MEASURES_MODEL + " element." +
                             "VarianceProportionStatistic is only implemented for repeated measures.");
@@ -106,7 +112,7 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
 
         String ratioString = xo.getStringAttribute(MATRIX_RATIO);
 
-        VarianceProportionStatistic.MatrixRatios ratio = null;
+        VarianceProportionStatistic.MatrixRatios ratio;
 
         if (ratioString.equalsIgnoreCase(ELEMENTWISE)) {
             ratio = VarianceProportionStatistic.MatrixRatios.ELEMENT_WISE;
@@ -115,12 +121,21 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
         } else if (ratioString.equalsIgnoreCase(CO_HERITABILITY)) {
             ratio = VarianceProportionStatistic.MatrixRatios.CO_HERITABILITY;
         } else {
-            throw new RuntimeException(PARSER_NAME + " must have attibute " + MATRIX_RATIO +
-                    " with one of the following values: " + VarianceProportionStatistic.MatrixRatios.values());
+            throw new RuntimeException(PARSER_NAME + " must have attribute " + MATRIX_RATIO +
+                    " with one of the following values: " + Arrays.toString(
+                            VarianceProportionStatistic.MatrixRatios.values()));
         }
 
         if (empirical && population) {
             throw new RuntimeException(PARSER_NAME + "cannot use both empirical and population variances. Please set one to false.");
+        }
+
+        if (dataModel instanceof TaxonEffectTraitDataModel) {
+            DistributionLikelihood prior = (DistributionLikelihood)
+                    xo.getChild(DistributionLikelihood.class);
+
+            return new TaxonEffectVarianceProportionStatistic(tree, treeLikelihood,
+                    (TaxonEffectTraitDataModel) dataModel, diffusionModel, prior, ratio);
         }
 
         if (empirical) {
@@ -142,7 +157,9 @@ public class VarianceProportionStatisticParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(RepeatedMeasuresTraitDataModel.class, true),
-            new ElementRule(MultivariateDiffusionModel.class, true)
+            new ElementRule(TaxonEffectTraitDataModel.class, true), // TODO XORRule with above
+            new ElementRule(MultivariateDiffusionModel.class, true),
+            new ElementRule(DistributionLikelihood.class, true),
     };
 
     @Override

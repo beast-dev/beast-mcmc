@@ -353,13 +353,13 @@ public class TaxaPicker {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("taxaToFind", "list","a list of taxon names to find"),
-                        new Arguments.IntegerOption("degree", "degree relatives"),
-                        new Arguments.RealOption("cutOff", "cut-off probability"),
-                        new Arguments.Option("asFile", "Boolean if taxaToFind is a file"),
-                        new Arguments.StringOption(NAMECONTENT, falseTrue, false,
+                        new Arguments.StringOption("taxaToFind", null, "list","a list of taxon names to find"),
+                        new Arguments.IntegerOption("degree", null, "degree relatives"),
+                        new Arguments.RealOption("cutOff", null, "cut-off probability"),
+                        new Arguments.Option("asFile", null, "Boolean if taxaToFind is a file"),
+                        new Arguments.StringOption(NAMECONTENT, null, falseTrue, false,
                                 "add true noise [default = true])"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
         try {

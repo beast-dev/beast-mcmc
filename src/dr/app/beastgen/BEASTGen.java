@@ -117,16 +117,16 @@ public class BEASTGen {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("date_order", "The order of the date field (negative numbers from last)"),
-                        new Arguments.StringOption("date_prefix", "prefix", "A string that is the prefix to the date field"),
-                        new Arguments.StringOption("date_regex", "regex", "A string that gives the regular expression to match the date"),
-                        new Arguments.StringOption("date_format", "format", "A string that gives the date format for parsing"),
-                        new Arguments.Option("date_precision", "Specifies the date is a variable precision yyyy-MM-dd format"),
-                        new Arguments.StringOption("tree", "tree-file-name", "Read a tree from a file"),
-                        new Arguments.StringOption("traits", "trait-file-name", "Assign traits to each taxon from a tsv file with headers."),
-                        new Arguments.StringOption("D", "\"key=value,key=value...\"", "Properties for exchange in templates"),
-                        new Arguments.Option("version", "Print the version and credits and stop"),
-                        new Arguments.Option("help", "Print this information and stop"),
+                        new Arguments.IntegerOption("date_order", "do", "The order of the date field (negative numbers from last)"),
+                        new Arguments.StringOption("date_prefix", "dp", "prefix", "A string that is the prefix to the date field"),
+                        new Arguments.StringOption("date_regex", "dr", "regex", "A string that gives the regular expression to match the date"),
+                        new Arguments.StringOption("date_format", "f", "format", "A string that gives the date format for parsing"),
+                        new Arguments.Option("date_precision", "p", "Specifies the date is a variable precision yyyy-MM-dd format"),
+                        new Arguments.StringOption("tree", "tf", "tree-file-name", "Read a tree from a file"),
+                        new Arguments.StringOption("traits", "t", "trait-file-name", "Assign traits to each taxon from a tsv file with headers."),
+                        new Arguments.StringOption("D", "D","\"key=value,key=value...\"", "Properties for exchange in templates"),
+                        new Arguments.Option("version", "v", "Print the version and credits and stop"),
+                        new Arguments.Option("help", "h", "Print this information and stop"),
                 });
 
 

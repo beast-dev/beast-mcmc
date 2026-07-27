@@ -39,7 +39,7 @@ import java.util.function.BinaryOperator;
 
 public class TaskPool {
 
-    class TaskIndices {
+    static class TaskIndices {
 
         final int start;
         final int stop;

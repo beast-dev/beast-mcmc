@@ -39,7 +39,6 @@ import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.BasisDimension;
 import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.computeAdditiveGramian;
 
 import java.util.ArrayList;
@@ -51,28 +50,25 @@ import java.util.List;
  */
 public class GaussianProcessPrediction implements Reportable, Loggable, VariableListener, ModelListener {
 
-    private final AdditiveGaussianProcessDistribution gp;
+    protected static AdditiveGaussianProcessDistribution gp;
     private final Parameter realizedValues;
-    private final List<DesignMatrix> predictiveDesigns;
+    private static List<DesignMatrix> predictiveDesigns;
     private final int realizedDim;
     private final int predictiveDim;
     private final Parameter orderVariance;
     private final double[] prediction;
-    private final double[] mean;
-    private final DenseMatrix64F variance;
+    protected double[] mean;
+    protected DenseMatrix64F variance;
 
     private final DenseMatrix64F crossGramian;
     private DenseMatrix64F realizedPrecision;
 
-    private final LinearSolver<DenseMatrix64F> solver;
+    protected final LinearSolver<DenseMatrix64F> solver;
 
-    private final List<BasisDimension> predictiveBases;
-    private final List<BasisDimension> crossBases;
-
-    private final DenseMatrix64F crossRealized;
+    protected final DenseMatrix64F crossRealized;
 
     private boolean predictionKnown;
-    private boolean meanKnown;
+    protected boolean meanKnown;
     private boolean varianceKnown;
     private boolean crossRealizedKnown; // crossRealized = crossGramian%*%inverse(realizedGramian) TODO I am actually using the realizedPrecision directly
     private boolean crossGramianKnown;
@@ -97,10 +93,6 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
 
         this.solver = LinearSolverFactory.symmPosDef(realizedDim);
 
-        List<BasisDimension> realizedBases = gp.getBases();
-        this.predictiveBases = makePredictiveBases(realizedBases, predictiveDesigns);
-        this.crossBases = makeCrossBases(realizedBases, predictiveDesigns);
-
         gp.addModelListener(this);
         realizedValues.addVariableListener(this);
 
@@ -115,14 +107,23 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         crossGramianKnown = false;
     }
 
-    private static List<BasisDimension> makeCrossBases(List<BasisDimension> originalBases,
-                                                            List<DesignMatrix> predictiveDesigns) {
+    protected List<BasisDimension> makeBases(boolean doPredictiveBases ) {
         List<BasisDimension> result = new ArrayList<>();
+        List<BasisDimension> originalBases = gp.getBases();
 
         for (int i = 0; i < originalBases.size(); ++i) {
             BasisDimension originalBasis = originalBases.get(i);
-            BasisDimension newBasis = new BasisDimension(
-                    originalBasis.getKernel(), predictiveDesigns.get(i), originalBasis.getDesignMatrix1());
+            GaussianProcessKernel kernel = originalBasis.getKernel();
+
+            DesignMatrix designMatrix1 = predictiveDesigns.get(i);
+            DesignMatrix designMatrix2;
+            if (!doPredictiveBases) {
+               designMatrix2 = originalBasis.getDesignMatrix1();
+            } else {
+                designMatrix2 = designMatrix1;
+            }
+
+            BasisDimension newBasis = new BasisDimension(kernel, designMatrix1, designMatrix2);
 
             result.add(newBasis);
         }
@@ -130,32 +131,29 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         return result;
     }
 
-    private static List<BasisDimension> makePredictiveBases(List<BasisDimension> originalBases,
-                                                            List<DesignMatrix> predictiveDesigns) {
-        List<BasisDimension> result = new ArrayList<>();
+    protected List<BasisDimension> makeCrossBases() {
+        return makeBases(false);
+    }
 
-        for (int i = 0; i < originalBases.size(); ++i) {
-            BasisDimension originalBasis = originalBases.get(i);
-            BasisDimension newBasis = new BasisDimension(
-                    originalBasis.getKernel(), predictiveDesigns.get(i), predictiveDesigns.get(i));
-
-            result.add(newBasis);
-        }
-
-        return result;
+    protected List<BasisDimension> makePredictiveBases() {
+        return makeBases(true);
     }
 
     // CHECK nextMultivariateNormalViaBackSolvePrecision
+
+    protected void computeCholesky() {
+        if (!solver.setA(variance)) {
+            throw new RuntimeException("Unable to decompose matrix");
+        }
+    }
 
     private void computePredictions() {
         // Compute: prediction ~ p(f(predictivePoints) | realizedValues)
         computeMean();
         computeVariance();
 
-        // TODO here I am overwriting the variance with the lowerTriangular matrix. I do not want that
-        if (!solver.setA(variance)) {
-            throw new RuntimeException("Unable to decompose matrix");
-        }
+        computeCholesky();
+
         DenseMatrix64F lowerTriangularVar =  ((CholeskyDecompositionCommon_D64) solver.getDecomposition()).getT();
 
         double[] standardGaussian = new double[predictiveDim];
@@ -173,6 +171,7 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         }
     }
 
+
     private double getPrediction(int index) {
         if (!predictionKnown) {
             computePredictions();
@@ -185,14 +184,15 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         return prediction[index];
     }
 
-    private void computeCrossGramian() {
+    private void computeCrossGramian() {  // K(x',x)
         if (!crossGramianKnown) {
+            List<BasisDimension> crossBases = makeCrossBases();
             computeAdditiveGramian(crossGramian, crossBases, orderVariance);
             crossGramianKnown = true;
         }
     }
 
-    private void computeCrossRealized() {
+    protected void computeCrossRealized() { // K(x',x) %*% (K(x,x))^-1
         if (!crossRealizedKnown) {
             computeCrossGramian();
 
@@ -202,37 +202,49 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
         }
     }
 
-    private void computeMean() {
+    private DenseMatrix64F getPredictiveGramian() { // TODO add lazy update if necessary
+        //  K(x',x')
+        DenseMatrix64F predictiveGramian = new DenseMatrix64F(predictiveDim, predictiveDim);
+        List<BasisDimension> predictiveBases = makePredictiveBases();
+        computeAdditiveGramian(predictiveGramian, predictiveBases, orderVariance);
+        return predictiveGramian;
+    }
+
+    protected void computeMean() {
         if (!meanKnown) {
             computeCrossRealized();
+            double[] meanOriginal = gp.getMean();
             for(int i = 0; i < predictiveDim; i += 1) {
                 mean[i] = 0;
                 for(int j = 0; j < realizedDim; j += 1) {
-                    mean[i] += crossRealized.get(i,j) * realizedValues.getParameterValue(j);
+                    mean[i] += crossRealized.get(i,j) * (realizedValues.getParameterValue(j) - meanOriginal[j]);
                 }
             }
             meanKnown = true;
         }
     }
 
-    private void computeVariance() {
+    protected void computeVariance() {
+        // variance =  predictiveGramian - [crossGramian %*% inverse(realizedGramian) %*% t(crossGramian)]
+        //         =   predictiveGramian - predictiveGramianCorrection
+        //          =   K(x',x') - K(x',x) %*% (K(x,x))^-1 %*% K(x,x')
         if (!varianceKnown) {
             computeCrossRealized();
 
-            DenseMatrix64F predictiveGramian = new DenseMatrix64F(predictiveDim, predictiveDim);
-            computeAdditiveGramian(predictiveGramian, predictiveBases, orderVariance);
+            DenseMatrix64F predictiveGramian = getPredictiveGramian(); // K(x',x')
 
             DenseMatrix64F predictiveGramianCorrection = new DenseMatrix64F(predictiveDim, predictiveDim);
+            // predictiveGramianCorrection = crossGramian %*% inverse(realizedGramian) %*% t(crossGramian)
+            //                             = crossRealized %*% t(crossGramian)
             for (int i = 0; i < crossRealized.numRows; i++) {
                 for (int j = 0; j < crossGramian.numRows; j++) {
                     double sum = 0.0;
                     for (int k = 0; k < crossRealized.numCols; k++) {
                         sum += crossRealized.get(i, k) * crossGramian.get(j, k); // multiplying for the transpose
                     }
-                    predictiveGramianCorrection.set(i, j, sum);
+                    predictiveGramianCorrection.set(i, j, sum); // TODO this can be directly substracted to predictiveGramian
                 }
             }
-            // variance: predictiveGramian - [crossGramian %*% inverse(realizedGramian) %*% t(crossGramian)]
             CommonOps.subtract(predictiveGramian, predictiveGramianCorrection, variance);
         }
     }

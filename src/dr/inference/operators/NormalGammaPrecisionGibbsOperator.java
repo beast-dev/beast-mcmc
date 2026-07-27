@@ -63,6 +63,13 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
 
         this.prior = prior;
         this.working = working;
+
+        if (indices == null) {
+            indices = new int[precisionParameter.getDimension()];
+            for (int i = 0; i < precisionParameter.getDimension(); ++i) {
+                indices[i] = i;
+            }
+        }
         this.indices = indices;
 
         setWeight(weight);
@@ -102,11 +109,11 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         return sb.toString();
     }
 
-    static class GammaParametrization implements GammaStatisticsProvider {
+    public static class GammaParametrization implements GammaStatisticsProvider {
         private final double rate;
         private final double shape;
 
-        GammaParametrization(double mean, double variance) {
+        public GammaParametrization(double mean, double variance) {
             if (mean == 0) {
                 rate = 0;
                 shape = -0.5; // Uninformative prior
@@ -116,7 +123,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             }
         }
 
-        GammaParametrization(Distribution distribution) {
+        public GammaParametrization(Distribution distribution) {
             this(distribution.mean(), distribution.variance());
         }
 

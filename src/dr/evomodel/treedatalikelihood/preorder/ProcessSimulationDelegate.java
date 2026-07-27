@@ -29,15 +29,19 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.*;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.math.matrixAlgebra.*;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 
@@ -55,6 +59,15 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
 public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTraitProvider, ModelListener {
 
     void simulate(int[] operations, int operationCount, int rootNodeNumber);
+
+    default boolean isVectorized() {
+        return true;
+    }
+
+    @SuppressWarnings("unused")
+    default void simulate(List<DataLikelihoodDelegate.NodeOperation> nodeOperations, NodeRef root) {
+        throw new RuntimeException("Not implemented");
+    }
 
     void setCallback(ProcessSimulation simulationProcess);
 
@@ -120,6 +133,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return node;
         }
 
+        @SuppressWarnings("unused")
         protected double getNormalization() {
             return 1.0;
         }
@@ -136,13 +150,17 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         protected abstract void setupStatistics();
 
-        protected abstract void simulateRoot(final int rootNumber);
+        protected void simulateRoot(final int rootNumber) {
+            throw new RuntimeException("Not implemented");
+        }
 
-        protected abstract void simulateNode(final int v0,
-                                             final int v1,
-                                             final int v2,
-                                             final int v3,
-                                             final int v4);
+        protected void simulateNode(final int v0,
+                                    final int v1,
+                                    final int v2,
+                                    final int v3,
+                                    final int v4) {
+            throw new RuntimeException("Not implemented");
+        }
 
         final TreeTraitProvider.Helper treeTraitHelper = new Helper();
 
@@ -168,8 +186,11 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
         double[] diffusionVariance;
         DenseMatrix64F Vd;
         DenseMatrix64F Pd;
+        DiffusionRepresentation diffusionRepresentation;
 
         double[][] cholesky;
+        SparseSquareUpperTriangular choleskyPrecision;
+
         Map<PartiallyMissingInformation.HashedIntArray,
                 ConditionalVarianceAndTransform> conditionalMap;
 
@@ -227,14 +248,28 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
         @Override
         protected void setupStatistics() {
-            if (diffusionVariance == null) {
-                double[][] diffusionPrecision = diffusionModel.getPrecisionmatrix();
-                diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
-                Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
-                Pd = new DenseMatrix64F(diffusionPrecision);
-            }
-            if (cholesky == null) {
-                cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
+            if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+                if (diffusionRepresentation == null) {
+                    diffusionRepresentation = new DiffusionRepresentation.Sparse(
+                            ((SparseBandedMultivariateDiffusionModel) diffusionModel).getSparsePrecisionMatrix(),
+                            ((SparseBandedMultivariateDiffusionModel) diffusionModel).getPrecisionCholeskyDecomposition(),
+                            1.0);
+                }
+            } else {
+                if (diffusionRepresentation == null) {
+                    diffusionRepresentation = new DiffusionRepresentation.Dense(
+                           diffusionModel.getPrecisionMatrixAsVector(), 1, diffusionModel.getDimension());
+                }
+                // TODO check is below is necessary
+                if (diffusionVariance == null) {
+                    double[][] diffusionPrecision = diffusionModel.getPrecisionMatrix();
+                    diffusionVariance = getVectorizedVarianceFromPrecision(diffusionPrecision);
+                    Vd = wrap(diffusionVariance, 0, dimTrait, dimTrait);
+                    Pd = new DenseMatrix64F(diffusionPrecision);
+                }
+                if (cholesky == null) {
+                    cholesky = getCholeskyOfVariance(diffusionVariance, dimTrait);
+                }
             }
         }
 
@@ -243,6 +278,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             Vd = null;
             Pd = null;
             cholesky = null;
+            diffusionRepresentation = null;
             conditionalMap = null;
         }
 
@@ -256,7 +292,7 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
             return cholesky;
         }
 
-        static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
+        public static double[][] getCholeskyOfVariance(double[] variance, final int dim) {
             return CholeskyDecomposition.execute(variance, 0, dim);
         }
 
@@ -268,10 +304,6 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
 
             return engine.getT(null);
         }
-
-//        static WrappedMatrix getCholeskyOfVariance(final ReadableMatrix variance, final int dim) {
-//            return CholeskyDecomposition.execute(variance, dim);
-//        }
 
         private static double[] getVectorizedVarianceFromPrecision(double[][] precision) {
             return new SymmetricMatrix(precision).inverse().toArrayComponents();

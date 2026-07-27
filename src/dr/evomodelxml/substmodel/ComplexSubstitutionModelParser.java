@@ -52,6 +52,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String CHECK_CONDITIONING = "checkConditioning";
     public static final String NORMALIZED = "normalized";
     public static final String COMPUTE_STATIONARY = "computeStationary";
+    public static final String SCALE_RATES_BY_FREQUENCIES = "scaleRatesByFrequencies";
 
     public static final int maxRandomizationTries = 100;
 
@@ -93,14 +94,12 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
         if (ratesParameter == null) {
-
-            if (rateCount == 1) {
+            if (rateCount != 1) {
                 // simplest model for binary traits...
-            } else {
                 throw new XMLParseException("No rates parameter found in " + getParserName());
             }
         } else if (ratesParameter.getDimension() != rateCount) {
-            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + rateCount + " dimensions.");
+            throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + rateCount + " dimensions, but has " + ratesParameter.getDimension());
         }
 
         boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);
@@ -194,6 +193,11 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             model.setNormalization(false);
             Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");
         }
+
+        if (!xo.getAttribute(SCALE_RATES_BY_FREQUENCIES, true)) {
+            model.setScaleRatesByFrequencies(false);
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tScale rates by frequencies: false");
+        }
         Logger.getLogger("dr.app.beagle.evomodel").info("\t\tPlease cite: Edwards, Suchard et al. (2011)\n");
         return model;
     }
@@ -238,5 +242,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(CHECK_CONDITIONING, true),
             AttributeRule.newBooleanRule(NORMALIZED, true),
             AttributeRule.newBooleanRule(COMPUTE_STATIONARY, true),
+            AttributeRule.newBooleanRule(SCALE_RATES_BY_FREQUENCIES, true),
     };
 }

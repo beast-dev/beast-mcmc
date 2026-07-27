@@ -450,6 +450,16 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                                         + " in " + xo.getName() + "element");
                             likelihood.addData(data);
                         }
+                    } else if (cxo.getChild(j) instanceof Attribute[]) {
+                        Attribute[] attributes = (Attribute[]) cxo.getChild(j);
+                        for (Attribute att : attributes) {
+                            Object value = att.getAttributeValue();
+                            if (value instanceof double[]) {
+                                likelihood.addData(att);
+                            } else {
+                                throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                            }
+                        }
                     } else {
                         throw new XMLParseException("illegal element in " + xo.getName() + " element");
                     }
@@ -470,7 +480,12 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 AttributeRule.newBooleanRule(DATA_AS_MATRIX, true),
                 new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
                 new ElementRule(DATA,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)
+                        new XMLSyntaxRule[]{
+                                new XORRule(
+                                        new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+                                        new ElementRule(Attribute[].class)
+                                ),
+                        }, true)
         };
 
         public String getParserDescription() {

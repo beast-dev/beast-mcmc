@@ -39,10 +39,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Alexander V. Alekseyenko (alexander.alekseyenko@gmail.com)
@@ -54,7 +51,7 @@ import java.util.Set;
 public class CTMCScalePrior extends AbstractModelLikelihood
         implements GradientWrtParameterProvider, HessianWrtParameterProvider, Citable {
     final private Parameter ctmcScale;
-    final private TreeModel treeModel;
+    final private List<TreeModel> treeModels;
     private Set<Taxon> taxa = null;
     private double treeLength;
     private double storedTreeLength;
@@ -68,25 +65,37 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     final private SubstitutionModel substitutionModel;
     final private boolean trial;
 
+    private final double proportion;
+
     private static final double shape = 0.5;
 
     private static final double logGammaOneHalf = GammaFunction.lnGamma(shape);
 
     public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, TaxonList taxonList, boolean reciprocal,
                           SubstitutionModel substitutionModel, boolean trial) {
+        this(name, ctmcScale, Collections.singletonList(treeModel), taxonList, reciprocal, substitutionModel, trial, 1.0);
+    }
+
+    public CTMCScalePrior(String name, Parameter ctmcScale, List<TreeModel> treeModels,
+                          TaxonList taxonList, boolean reciprocal,
+                          SubstitutionModel substitutionModel, boolean trial, double proportion) {
         super(name);
         this.ctmcScale = ctmcScale;
-        this.treeModel = treeModel;
+        this.treeModels = treeModels;
+        this.proportion = proportion;
 
         addVariable(ctmcScale);
 
-        if (taxonList != null && taxonList.getTaxonCount() < treeModel.getTaxonCount()) {
+        if (taxonList != null && taxonList.getTaxonCount() < this.treeModels.get(0).getTaxonCount()) {
             this.taxa = new HashSet<>();
             for (Taxon taxon : taxonList) {
                 this.taxa.add(taxon);
             }
         }
-        addModel(treeModel);
+
+        for (TreeModel treeModel : treeModels) {
+            addModel(treeModel);
+        }
 
         treeLengthKnown = false;
         likelihoodKnown = false;
@@ -195,11 +204,21 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     private double getTreeLength() {
         if (!treeLengthKnown) {
             if (taxa == null) {
-                treeLength = TreeUtils.getTreeLength(treeModel);
-//                assert Math.abs(treeLength - TreeUtils.getTreeLength(treeModel, treeModel.getRoot())) < 1E-6;
+                treeLength = 0.0;
+                for (TreeModel treeModel : treeModels) {
+                    treeLength += TreeUtils.getTreeLength(treeModel);
+                }
+                treeLength /= treeModels.size();
             } else {
-                treeLength = TreeUtils.getSubTreeLength(treeModel, taxa);
+                treeLength = 0.0;
+                for (TreeModel treeModel : treeModels) {
+                    treeLength += TreeUtils.getSubTreeLength(treeModel, taxa);
+                }
+                treeLength /= treeModels.size();
             }
+
+            treeLength *= proportion;
+
             treeLengthKnown = true;
         }
 
@@ -272,8 +291,6 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     public double[] getDiagonalHessianLogDensity() {
 
         double[] diagonalHessian = new double[ctmcScale.getDimension()];
-
-        final double totalTreeTime = scaledTotalTreeTime();
 
         for (int i = 0; i < ctmcScale.getDimension(); ++i) {
             final double ab = ctmcScale.getParameterValue(i);

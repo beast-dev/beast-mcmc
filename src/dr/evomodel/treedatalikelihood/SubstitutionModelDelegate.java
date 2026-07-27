@@ -45,7 +45,7 @@ import java.util.List;
  * @author Filip Bielejec
  * @author Marc A. Suchard
  */
-public final class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
+public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;
     public static final boolean MEASURE_RUN_TIME = false;
@@ -70,7 +70,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
-    private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
+    private final Deque<Integer> availableBuffers = new ArrayDeque<>();
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -148,6 +148,11 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         this.settings = settings;
 
     }// END: Constructor
+
+    @Override
+    public BranchModel getBranchSubstitutionModel() {
+        return branchModel;
+    }
 
     @Override
     public boolean canReturnComplexDiagonalization() {

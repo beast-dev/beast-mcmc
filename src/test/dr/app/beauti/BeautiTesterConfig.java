@@ -69,7 +69,7 @@ public class BeautiTesterConfig {
     }
 
     public BeautiOptions createOptions() {
-        BeautiOptions beautiOptions = new BeautiOptions();
+        BeautiOptions beautiOptions = BeautiOptions.getInstance();
 
         beautiOptions.fileNameStem = "";
         beautiOptions.treeFileName.clear();
@@ -177,7 +177,7 @@ public class BeautiTesterConfig {
         PartitionSubstitutionModel model = beautiOptions.getPartitionSubstitutionModels().get(0);
 
         model.setGammaHetero(false);
-        model.setGammaCategories(4);
+        model.setRateCategories(4);
         model.setInvarHetero(false);
         buildTreePriorModels(key + "", beautiOptions);
 

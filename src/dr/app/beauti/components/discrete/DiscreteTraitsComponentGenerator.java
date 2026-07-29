@@ -528,7 +528,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
             writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-            writeParameter("rateCopyNumber",2, writer);
+//            writeParameter("rateCopyNumber",2, writer);
+            writeParameter("", 2, writer);
             writer.writeCloseTag(DuplicatedParameterParser.COPIES);
             writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
         } else {
@@ -543,7 +544,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
                 writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
                 writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-                writeParameter("indicatorCopyNumber",2, writer);
+//                writeParameter("indicatorCopyNumber",2, writer);
+                writeParameter("", 2, writer);
                 writer.writeCloseTag(DuplicatedParameterParser.COPIES);
                 writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {

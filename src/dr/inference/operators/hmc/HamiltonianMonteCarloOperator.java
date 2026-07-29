@@ -169,6 +169,12 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             } else {
                 throw e;
             }
+        } catch (IllegalArgumentException e) {
+            if (REJECT_ILLEGAL_ARGUMENT_EXCEPTION) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                throw e;
+            }
         }
     }
 
@@ -184,6 +190,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     }
 
     private static final boolean REJECT_ARITHMETIC_EXCEPTION = true;
+    private static final boolean REJECT_ILLEGAL_ARGUMENT_EXCEPTION = true;
 
     @Override
     public void setPathParameter(double beta) {

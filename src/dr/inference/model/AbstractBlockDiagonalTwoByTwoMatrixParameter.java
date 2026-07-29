@@ -80,6 +80,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
     private boolean compositionKnown = false;
 
     private final CompoundParameter compoundParameter;
+    private final CompoundParameter checkpointableParameter;
 
     protected AbstractBlockDiagonalTwoByTwoMatrixParameter(final String name,
                                                                   final MatrixParameter RParam,
@@ -160,6 +161,26 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
             this.compoundParameter.addParameter(p);
         }
         this.compoundParameter.addParameter(RParam);
+
+        this.checkpointableParameter = new CompoundParameter(getClass().getSimpleName() + ".checkpointable");
+        this.checkpointableParameter.addParameter(scalarBlockParam);
+        for (final Parameter p : twoByTwoBlockParams) {
+            this.checkpointableParameter.addParameter(p);
+        }
+        addCheckpointableParameter(this.checkpointableParameter, RParam);
+    }
+
+    private static void addCheckpointableParameter(final CompoundParameter compound,
+                                                   final Parameter parameter) {
+        if (parameter instanceof CheckpointableStateProvider) {
+            final Parameter checkpointableState =
+                    ((CheckpointableStateProvider) parameter).getCheckpointableStateParameter();
+            if (checkpointableState != null && checkpointableState != parameter) {
+                compound.addParameter(checkpointableState);
+                return;
+            }
+        }
+        compound.addParameter(parameter);
     }
 
     private static List<Parameter> buildParameterList(final MatrixParameter RParam,
@@ -480,6 +501,11 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
 
     public CompoundParameter getParameter() {
         return compoundParameter;
+    }
+
+    @Override
+    public Parameter getCheckpointableStateParameter() {
+        return checkpointableParameter;
     }
 
     public int getNumberOfParameters() {

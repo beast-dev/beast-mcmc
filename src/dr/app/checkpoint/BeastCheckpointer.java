@@ -33,7 +33,10 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
+import dr.inference.model.CheckpointableStateProvider;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -292,19 +295,17 @@ public class BeastCheckpointer implements StateLoaderSaver {
             out.print("lnL\t");
             out.println(lnL);
 
-            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
-                if (!parameter.isImmutable()) {
-                    out.print("parameter");
+            for (Parameter parameter : getCheckpointParameters()) {
+                out.print("parameter");
+                out.print("\t");
+                out.print(parameter.getParameterName());
+                out.print("\t");
+                out.print(parameter.getDimension());
+                for (int dim = 0; dim < parameter.getDimension(); dim++) {
                     out.print("\t");
-                    out.print(parameter.getParameterName());
-                    out.print("\t");
-                    out.print(parameter.getDimension());
-                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                        out.print("\t");
-                        out.print(parameter.getParameterUntransformedValue(dim));
-                    }
-                    out.print("\n");
+                    out.print(parameter.getParameterUntransformedValue(dim));
                 }
+                out.print("\n");
 //                if (parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")) {
 //                }
             }
@@ -481,52 +482,50 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 throw new RuntimeException("Unable to read lnL from state file");
             }
 
-            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+            for (Parameter parameter : getCheckpointParameters()) {
 
-                if (!parameter.isImmutable()) {
-                    line = in.readLine();
-                    fields = line.split("\t");
-                    //if (!fields[0].equals(parameter.getParameterName())) {
-                    //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
-                    //}
-                    int dimension = Integer.parseInt(fields[2]);
+                line = in.readLine();
+                fields = line.split("\t");
+                //if (!fields[0].equals(parameter.getParameterName())) {
+                //  System.err.println("Unable to match state parameter: " + fields[0] + ", expecting " + parameter.getParameterName());
+                //}
+                int dimension = Integer.parseInt(fields[2]);
 
-                    if (dimension != parameter.getDimension()) {
-                        System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
-                        System.err.print("Read from file: ");
-                        for (int i = 0; i < fields.length; i++) {
-                            System.err.print(fields[i] + "\t");
-                        }
-                        System.err.println();
+                if (dimension != parameter.getDimension()) {
+                    System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension() + " for parameter: " + parameter.getParameterName());
+                    System.err.print("Read from file: ");
+                    for (int i = 0; i < fields.length; i++) {
+                        System.err.print(fields[i] + "\t");
                     }
+                    System.err.println();
+                }
 
-                    if (fields[1].endsWith(".rootNodeNumber")) {
-                        // System.out.println("eek");
-                        double value = parser.parseDouble(fields[3]);
-                        parameter.setParameterValue(0, value);
-                        if (DEBUG) {
-                            System.out.println("restoring " + fields[1] + " with value " + value);
-                        }
-                    } else {
-                        if (DEBUG) {
-                            System.out.print("restoring " + fields[1] + " with values ");
-                        }
-                        for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                            // parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")
+                if (fields[1].endsWith(".rootNodeNumber")) {
+                    // System.out.println("eek");
+                    double value = parser.parseDouble(fields[3]);
+                    parameter.setParameterValue(0, value);
+                    if (DEBUG) {
+                        System.out.println("restoring " + fields[1] + " with value " + value);
+                    }
+                } else {
+                    if (DEBUG) {
+                        System.out.print("restoring " + fields[1] + " with values ");
+                    }
+                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                        // parameter.getParameterName() != null && parameter.getParameterName().startsWith("leaf.")
 
-                            try {
-                                parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
-                            } catch (RuntimeException rte) {
-                                System.err.println(rte);
-                                continue;
-                            }
-                            if (DEBUG) {
-                                System.out.print(parser.parseDouble(fields[dim + 3]) + " ");
-                            }
+                        try {
+                            parameter.setParameterUntransformedValue(dim, parser.parseDouble(fields[dim + 3]));
+                        } catch (RuntimeException rte) {
+                            System.err.println(rte);
+                            continue;
                         }
                         if (DEBUG) {
-                            System.out.println();
+                            System.out.print(parser.parseDouble(fields[dim + 3]) + " ");
                         }
+                    }
+                    if (DEBUG) {
+                        System.out.println();
                     }
                 }
             }
@@ -775,6 +774,41 @@ public class BeastCheckpointer implements StateLoaderSaver {
         }
 
         return state;
+    }
+
+    private static List<Parameter> getCheckpointParameters() {
+        final LinkedHashSet<Parameter> parameters = new LinkedHashSet<Parameter>();
+        for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+            addCheckpointParameter(parameters, parameter, false);
+        }
+        return new ArrayList<Parameter>(parameters);
+    }
+
+    private static void addCheckpointParameter(final Set<Parameter> parameters,
+                                               final Parameter parameter,
+                                               final boolean flattenCompound) {
+        if (parameter == null) {
+            return;
+        }
+        if (parameter instanceof CheckpointableStateProvider) {
+            final Parameter checkpointableState =
+                    ((CheckpointableStateProvider) parameter).getCheckpointableStateParameter();
+            if (checkpointableState != null && checkpointableState != parameter) {
+                addCheckpointParameter(parameters, checkpointableState, true);
+                return;
+            }
+        }
+        if (flattenCompound && parameter instanceof CompoundParameter
+                && !(parameter instanceof MatrixParameterInterface)) {
+            final CompoundParameter compoundParameter = (CompoundParameter) parameter;
+            for (int i = 0; i < compoundParameter.getParameterCount(); i++) {
+                addCheckpointParameter(parameters, compoundParameter.getParameter(i), true);
+            }
+            return;
+        }
+        if (!parameter.isImmutable()) {
+            parameters.add(parameter);
+        }
     }
 
     class CheckpointPrintStream extends PrintStream {

@@ -1672,16 +1672,16 @@ public interface Transform {
         }
 
         public double updateGradientInverseUnWeightedLogDensity(double gradient, double value) {
-            throw new RuntimeException("not implemented yet");
+            return gradient * scale;
         }
 
         @Override
         public double gradientLogJacobianInverse(double value) {
-            throw new RuntimeException("not implemented yet");
+            return 0.0;
         }
 
         public double gradient(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return 1.0 / scale;
         }
     }
 

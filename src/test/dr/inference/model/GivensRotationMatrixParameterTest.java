@@ -2,6 +2,7 @@ package test.dr.inference.model;
 
 import dr.evomodel.treedatalikelihood.continuous.canonical.gradient.CanonicalSelectionGradientProjector;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.InvertibleMatrixParametrization;
 import dr.inference.model.OrthogonalMatrixProvider;
@@ -21,6 +22,7 @@ public class GivensRotationMatrixParameterTest extends MathTestCase {
         assertTrue(rotation.supportsNativeParameter(angles));
         assertTrue(rotation.supportsNativeParameter(rotation.getNativeParameter()));
         assertTrue(rotation.getNativeParameter().getParameter(0) == angles);
+        assertTrue(rotation.getCheckpointableStateParameter() == rotation.getNativeParameter());
         assertEquals(3, rotation.getNativeDimension());
         assertEquals(0.0, rotation.getLogAbsDeterminant(), 1e-15);
         assertEquals(1.0, rotation.getDeterminantSign(), 1e-15);
@@ -93,6 +95,13 @@ public class GivensRotationMatrixParameterTest extends MathTestCase {
         };
         final double[] expected = new double[1];
         rotation.fillPullBackGradientForParameter(rotation.getNativeParameter(), gradientR, 2, expected, 0);
+
+        final CompoundParameter checkpointableState = (CompoundParameter) block.getCheckpointableStateParameter();
+        assertTrue(checkpointableState.getParameter(0) == block.getScalarBlockParameter());
+        assertTrue(checkpointableState.getParameter(1) == block.getTwoByTwoBlockParameter(0));
+        assertTrue(checkpointableState.getParameter(2) == block.getTwoByTwoBlockParameter(1));
+        assertTrue(checkpointableState.getParameter(3) == block.getTwoByTwoBlockParameter(2));
+        assertTrue(checkpointableState.getParameter(4) == rotation.getNativeParameter());
 
         final double[] actual = CanonicalSelectionGradientProjector.assembleBlockGradientResultFlat(
                 2, rotation.getNativeParameter(), block, nativeBlockGradient, gradientR);

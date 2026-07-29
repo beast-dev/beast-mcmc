@@ -72,10 +72,10 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private JPanel treeModelPanelParent;
     private PartitionTreeModel currentTreeModel = null;
     private TitledBorder treeModelBorder;
-    private Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<PartitionTreeModel, PartitionTreeModelPanel>();
+    private Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<>();
     private JPanel treePriorPanelParent;
     private TitledBorder treePriorBorder;
-    private Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<PartitionTreePrior, PartitionTreePriorPanel>();
+    private Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<>();
 
     public TreesPanel(BeautiFrame parent, Action removeTreeAction) {
         super();

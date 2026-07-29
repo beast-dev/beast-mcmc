@@ -1,0 +1,578 @@
+/*
+ * EBDSPartitionTreePriorPanel.java
+ *
+ * Copyright © 2002-2026, the BEAST Development Team.
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.app.beauti.treespanel;
+
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.types.PopulationSizeModelType;
+import dr.app.beauti.types.TreePriorParameterizationType;
+import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.RealNumberField;
+import dr.app.gui.components.WholeNumberField;
+import dr.app.util.OSType;
+import dr.evolution.util.Taxa;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihood;
+import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
+import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
+import jam.panels.OptionsPanel;
+
+import javax.swing.*;
+import java.awt.event.ItemListener;
+import java.util.EnumSet;
+
+/**
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @author Walter Xie
+ */
+public class EBDSPartitionTreePriorPanel extends OptionsPanel {
+
+    private static final long serialVersionUID = 445373605669344881L;
+
+
+    private final WholeNumberField skyGridPointsField = new WholeNumberField(2, Integer.MAX_VALUE);
+    private final RealNumberField skyGridInterval = new RealNumberField(0.0, Double.MAX_VALUE);
+
+    // EBDS
+
+    private PartitionTreePrior partitionTreePrior;
+    private final TreesPanel treesPanel;
+
+    private boolean settingOptions = false;
+
+    public EBDSPartitionTreePriorPanel(PartitionTreePrior partitionTreePrior, final TreesPanel parent) {
+        super(12, (OSType.isMac() ? 6 : 24));
+
+        this.partitionTreePrior = partitionTreePrior;
+        this.treesPanel = parent;
+
+        setTreePriorChoices(false);
+        PanelUtils.setupComponent(treePriorCombo);
+        treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
+        treePriorCombo.addItemListener(ev -> {
+
+            if (treePriorCombo.getSelectedItem() != null) {
+                setupPanel();
+
+                EBDSPartitionTreePriorPanel.this.partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
+                parent.fireTreePriorsChanged();
+            }
+        });
+
+        // Parametric coalescent models
+        PanelUtils.setupComponent(parameterizationCombo);
+        parameterizationCombo.setToolTipText("<html>" +
+                "Select the parameterization of growth rate to use for<br>" +
+                "the parametric coalescent model. This does not affect<br>" +
+                "nature of the model but may assist with mixing.<html>");
+        parameterizationCombo.addItemListener(ev -> {
+            EBDSPartitionTreePriorPanel.this.partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+            parent.fireTreePriorsChanged();
+            setupPanel();
+        });
+
+        PanelUtils.setupComponent(doublingTimeCheckBox);
+        doublingTimeCheckBox.setToolTipText("<html>" +
+                "This will log the doubling time (in days) for the current<br/>" +
+                "exponential growth rate.<html>");
+        doublingTimeCheckBox.addItemListener(ev -> {
+                    EBDSPartitionTreePriorPanel.this.partitionTreePrior.setDoublingTimeLogging(doublingTimeCheckBox.isSelected());
+                    parent.fireTreePriorsChanged();
+                }
+        );
+
+        PanelUtils.setupComponent(growthRateCheckBox);
+        growthRateCheckBox.setToolTipText("<html>" +
+                "This will log the growth rate (/year) for the current<br/>" +
+                "doubling time.<html>");
+        growthRateCheckBox.addItemListener(ev -> {
+                    EBDSPartitionTreePriorPanel.this.partitionTreePrior.setGrowthRateLogging(growthRateCheckBox.isSelected());
+                    parent.fireTreePriorsChanged();
+                }
+        );
+
+        PanelUtils.setupComponent(r0CheckBox);
+        r0CheckBox.setToolTipText("<html>" +
+                "This will log an estimate of R0 for the current exponential<br/>" +
+                "growth rate using the Grassly and Fraser modification of<br/>" +
+                "Wallinga and Lipsitch (2007, Proc Roy Soc B, 274:599–604)<br/><br/>" +
+                "A mean and standard deviation of the gamma-distributed serial<br/>" +
+                "interval must be provided.<html>");
+
+        r0CheckBox.addItemListener(ev -> {
+                    boolean selected = r0CheckBox.isSelected();
+                    EBDSPartitionTreePriorPanel.this.partitionTreePrior.setR0Logging(selected);
+                    serialIntervalMean.setEnabled(selected);
+                    serialIntervalStdev.setEnabled(selected);
+                    siMeanLabel.setEnabled(selected);
+                    siStdevLabel.setEnabled(selected);
+                    parent.fireTreePriorsChanged();
+                }
+        );
+        PanelUtils.setupComponent(serialIntervalMean);
+        serialIntervalMean.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+                parent.fireTreePriorsChanged();
+            }
+        });
+        PanelUtils.setupComponent(serialIntervalStdev);
+        serialIntervalStdev.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+                parent.fireTreePriorsChanged();
+            }
+        });
+
+        // Skything coalescent models
+        PanelUtils.setupComponent(skyGridInterval);
+        skyGridInterval.setToolTipText("<html>" +
+                "This sets the time interval over which the change-points<br>" +
+                "of the Skygrid are placed. It is measured relative to the<br>" +
+                "most recent tip and should be commensurate with the predicted<br>" +
+                "age of the tree.<html>");
+        skyGridInterval.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+            }
+        });
+
+        PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
+        gmrfBayesianSkyrideCombo.addItemListener(ev -> {
+            EBDSPartitionTreePriorPanel.this.partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
+            parent.fireTreePriorsChanged();
+        });
+
+//        PanelUtils.setupComponent(skyGridPointsCombo);
+//        skyGridPointsCombo.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent itemEvent) {
+//                partitionTreePrior.setSkyGridCount((Integer) skyGridPointsCombo.getSelectedItem());
+//                parent.fireTreePriorsChanged();
+//            }
+//        });
+        PanelUtils.setupComponent(skyGridPointsField);
+        skyGridPointsField.setToolTipText("<html>" +
+                "This sets number of population size parameters for<br>" +
+                "the Skygrid. This determines the number of transition-points<br>" +
+                "at which the population size changes. The last one spans to<br>" +
+                "infinite time.<html>");
+        skyGridPointsField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+            }
+        });
+
+        PanelUtils.setupComponent(populationSizeCombo);
+        populationSizeCombo.addItemListener(ev -> {
+                    EBDSPartitionTreePriorPanel.this.partitionTreePrior.setPopulationSizeModel((PopulationSizeModelType) populationSizeCombo.getSelectedItem());
+                    parent.fireTreePriorsChanged();
+                }
+        );
+
+
+        PanelUtils.setupComponent(subtreePriorCheckBox);
+        subtreePriorCheckBox.setToolTipText("<html>" +
+                "Select this to specify a different tree prior model<br>" +
+                "for a specific subset of the tree as defined by a<br>" +
+                "taxon set. This should be specified as monophyletic.<br>" +
+                "<br>" +
+                "The rest of the tree will be have the prior defined above.<html>");
+        subtreePriorCheckBox.addItemListener(ev -> {
+                    boolean selected = subtreePriorCheckBox.isSelected();
+                    subtreeTaxonSetCombo.setEnabled(selected);
+                    subtreeTaxonSetComboLabel.setEnabled(selected);
+                    subtreePriorCombo.setEnabled(selected);
+                    subtreePriorComboLabel.setEnabled(selected);
+
+                    if (selected &&
+                            subtreeTaxonSetCombo.getSelectedItem() != null &&
+                            !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined") ) {
+                        EBDSPartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa)subtreeTaxonSetCombo.getSelectedItem());
+                        EBDSPartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType)subtreePriorCombo.getSelectedItem());
+                    } else {
+                        EBDSPartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
+                    }
+                    parent.fireTreePriorsChanged();
+                }
+        );
+
+        subtreeTaxonSetCombo.addItem("No monophyletic taxon sets defined");
+        PanelUtils.setupComponent(subtreeTaxonSetCombo);
+        ItemListener listener = ev -> {
+            if (subtreeTaxonSetCombo.getSelectedItem() != null && !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined")) {
+                EBDSPartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa) subtreeTaxonSetCombo.getSelectedItem());
+                EBDSPartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType) subtreePriorCombo.getSelectedItem());
+            } else {
+                EBDSPartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
+            }
+            parent.fireTreePriorsChanged();
+        };
+
+        subtreeTaxonSetCombo.addItemListener(listener);
+        subtreeTaxonSetCombo.setEnabled(false);
+        subtreeTaxonSetComboLabel.setEnabled(false);
+
+        subtreePriorCombo.addItem(TreePriorType.CONSTANT);
+        subtreePriorCombo.addItem(TreePriorType.EXPONENTIAL);
+        PanelUtils.setupComponent(subtreePriorCombo);
+        subtreePriorCombo.addItemListener(listener);
+        subtreePriorCombo.setEnabled(false);
+        subtreePriorComboLabel.setEnabled(false);
+
+        setOptions();
+    }
+
+    private void setupPanel() {
+
+        removeAll();
+
+        JTextArea citationText = new JTextArea(1, 40);
+        citationText.setLineWrap(true);
+        citationText.setWrapStyleWord(true);
+        citationText.setEditable(false);
+        citationText.setFont(this.getFont());
+        citationText.setOpaque(false);
+//        citationText.setBackground(this.getBackground());
+//        JScrollPane scrollPane = new JScrollPane(citation, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+//                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+//        scrollPane.setOpaque(true);
+        String calYule = "Heled J, Drummond AJ (2011), Syst Biol, doi: 10.1093/sysbio/syr087 [Calibrated Yule]";
+        String citation;
+
+        String citationCoalescent = "Kingman JFC (1982) Stoch Proc Appl 13, 235-248 [Constant Coalescent].";
+
+        addComponentWithLabel("Tree Prior:", treePriorCombo);
+
+        if (!treesPanel.linkTreePriorCheck.isEnabled()) {
+            treesPanel.updateLinkTreePriorEnablility();
+        }
+
+        TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();
+        switch (type) {
+            case CONSTANT:
+                citation = citationCoalescent;
+                break;
+
+            case EXPONENTIAL:
+            case LOGISTIC:
+            case EXPANSION:
+                addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+                TreePriorParameterizationType parameterizationType = (TreePriorParameterizationType) parameterizationCombo.getSelectedItem();
+                partitionTreePrior.setParameterization(parameterizationType);
+                if (parameterizationType == TreePriorParameterizationType.DOUBLING_TIME) {
+                    addComponent(growthRateCheckBox);
+                } else if (parameterizationType == TreePriorParameterizationType.GROWTH_RATE) {
+                    addComponent(doublingTimeCheckBox);
+                }
+                addComponent(r0CheckBox);
+                siMeanLabel = addComponentWithLabel("Serial interval mean:", serialIntervalMean);
+                serialIntervalMean.setColumns(10);
+                siStdevLabel = addComponentWithLabel("Serial interval stdev:", serialIntervalStdev);
+                serialIntervalStdev.setColumns(10);
+                serialIntervalMean.setEnabled(r0CheckBox.isSelected());
+                serialIntervalStdev.setEnabled(r0CheckBox.isSelected());
+                siMeanLabel.setEnabled(r0CheckBox.isSelected());
+                siStdevLabel.setEnabled(r0CheckBox.isSelected());
+
+                citation = //citationCoalescent +  "\n" +
+                        "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
+//                        + "\nDrummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
+                break;
+
+//            case SKYLINE:
+//                groupCountField.setColumns(6);
+//                addComponentWithLabel("Number of groups:", groupCountField);
+//                addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+//
+//                citation = //citationCoalescent + "\n" +
+//                        "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
+//                break;
+
+            case GMRF_SKYRIDE:
+                addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+                treesPanel.linkTreePriorCheck.setSelected(true);
+                treesPanel.linkTreePriorCheck.setEnabled(false);
+                //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
+                addLabel("<html>For the Skyride, tree model/tree prior combination not implemented by BEAST. "
+                        + "The Skyride is only available for a single tree<br>model partition in this release. "
+                        + "Please try the Skygrid or link all tree models." + "</html>");
+
+                citation = //citationCoalescent + "\n" +
+                        "Minin VN, Bloomquist EW, Suchard MA (2008) Mol Biol Evol 25, 1459-1471 [Skyride Coalescent].";
+                break;
+
+            case SKYGRID:
+            case SKYGRID_HMC:
+                skyGridPointsField.setColumns(6);
+                addComponentWithLabel("Number of parameters:", skyGridPointsField);
+                skyGridInterval.setColumns(6);
+                addComponentWithLabel("Time at last transition point:", skyGridInterval);
+                treesPanel.linkTreePriorCheck.setSelected(true);
+                treesPanel.linkTreePriorCheck.setEnabled(false);
+                treesPanel.updateShareSameTreePriorChanged();
+
+                citation = //citationCoalescent + "\n" +
+                        "Gill MS, Lemey P, Faria NR, Rambaut A, Shapiro B, Suchard MA (2013) Mol Biol Evol 30, 713-724 [SkyGrid Coalescent].";
+
+                if (type == TreePriorType.SKYGRID_HMC) {
+                    citation += "\nBaele G, Gill MS, Lemey P & Suchard MA (2020) Wellcome Open Res 5:53 [Hamiltonian SkyGrid]";
+                }
+                break;
+
+
+            case YULE:
+                citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
+                        "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
+                break;
+
+            case YULE_CALIBRATION:
+//                    addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
+                citation = calYule;
+                break;
+
+            case EPISODIC_BIRTH_DEATH_SAMPLING:
+                citation = "TBC";
+                break;
+
+            case BIRTH_DEATH:
+                citation = Gernhard08BirthDeathModelParser.getCitation();
+                break;
+
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+                citation = Gernhard08BirthDeathModelParser.getCitationRHO();
+                break;
+
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+                citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
+                break;
+
+//            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+//                citation = BirthDeathSerialSamplingModelParser.getCitationRT();
+//                break;
+
+            case SET_BY_BIT:
+                citation = StructuredCoalescentLikelihood.CITATIONS[0].toString() + "\n" +
+                        StructuredCoalescentLikelihood.CITATIONS[1].toString();
+                break;
+
+            default:
+                throw new RuntimeException("No such tree prior has been specified so cannot refer to it");
+        }
+
+        if (BeautiOptions.getInstance().maximumTipHeight > 0)
+            citation = citation
+//                    + "\n" +
+//                    "Rodrigo AG, Felsenstein J (1999) in Molecular Evolution of HIV (Crandall K), pp. 233-272 [Serially Sampled Data]."
+                    + "\n" +
+                    "Drummond AJ, Nicholls GK, Rodrigo AG, Solomon W (2002) Genetics 161, 1307-1320 [Serially Sampled Data].";
+
+//        addComponentWithLabel("Citation:", citationText);
+//        citationText.setText(citation);
+
+        for (PartitionTreeModel model : treesPanel.getPartitionTreeModels()) {
+            if (model != null) {
+                treesPanel.getPartitionTreeModelPanel(model).setOptions();
+                treesPanel.getPartitionTreeModelPanel(model).setupPanel();
+            }
+        }
+
+        addSeparator();
+        addSpanningComponent(subtreePriorCheckBox);
+        addComponents(subtreeTaxonSetComboLabel, subtreeTaxonSetCombo);
+        addComponents(subtreePriorComboLabel, subtreePriorCombo);
+
+        validate();
+        repaint();
+    }
+
+    public void setOptions() {
+
+        if (settingOptions) {
+            // make sure we don't go all recursive
+            return;
+        }
+
+        if (partitionTreePrior == null) {
+            return;
+        }
+
+        settingOptions = true;
+
+        treePriorCombo.setSelectedItem(partitionTreePrior.getNodeHeightPrior());
+
+        parameterizationCombo.setSelectedItem(partitionTreePrior.getParameterization());
+        doublingTimeCheckBox.setSelected(partitionTreePrior.isDoublingTimeLogging());
+        growthRateCheckBox.setSelected(partitionTreePrior.isGrowthRateLogging());
+        r0CheckBox.setSelected(partitionTreePrior.isR0Logging());
+        serialIntervalMean.setValue(partitionTreePrior.getSerialIntervalMean());
+        serialIntervalStdev.setValue(partitionTreePrior.getSerialIntervalStdev());
+
+        gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
+
+//        skyGridPointsCombo.setSelectedItem(partitionTreePrior.getSkyGridCount());
+        skyGridPointsField.setValue(partitionTreePrior.getSkyGridCount());
+
+        double initialCutOff = partitionTreePrior.getOptions().getPartitionTreeModels().get(0).getInitialRootHeight();
+        final double arbitraryScalar = 1.0;
+        initialCutOff = roundToSignificantFigures(arbitraryScalar * initialCutOff, 2);
+
+        skyGridInterval.setAllowEmpty(true);
+
+        if (Double.isNaN(partitionTreePrior.getSkyGridInterval())) {
+            if (initialCutOff > 0.0) {
+                skyGridInterval.setValue(initialCutOff);
+            } else {
+                skyGridInterval.setText((Double)null);
+            }
+        } else {
+            skyGridInterval.setValue(partitionTreePrior.getSkyGridInterval());
+        }
+
+        populationSizeCombo.setSelectedItem(partitionTreePrior.getPopulationSizeModel());
+
+//        calibrationCorrectionCombo.setSelectedItem(partitionTreePrior.getCalibCorrectionType());
+
+        subtreeTaxonSetCombo.removeAllItems();
+        for (Taxa taxonSet : partitionTreePrior.getOptions().taxonSets) {
+            if (taxonSet.getTaxonCount() > 1 && partitionTreePrior.getOptions().taxonSetsMono.get(taxonSet)) {
+                subtreeTaxonSetCombo.addItem(taxonSet);
+            }
+        }
+        if (subtreeTaxonSetCombo.getItemCount() == 0) {
+            subtreeTaxonSetCombo.addItem("No monophyletic taxon sets defined");
+        }
+
+        setupPanel();
+
+        settingOptions = false;
+
+        validate();
+        repaint();
+    }
+
+    private static double roundToSignificantFigures(double num, int n) {
+        if (num == 0) {
+            return 0;
+        }
+
+        final double d = Math.ceil(Math.log10(num < 0 ? -num : num));
+        final int power = n - (int) d;
+
+        final double magnitude = Math.pow(10, power);
+        final long shifted = Math.round(num * magnitude);
+        return shifted / magnitude;
+    }
+
+    public void getOptions() {
+        if (settingOptions) return;
+
+        if ((treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL ||
+                treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC ||
+                treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) &&
+                r0CheckBox.isSelected()) {
+            double mean = serialIntervalMean.getValue();
+            double stdev = serialIntervalStdev.getValue();
+            if (mean <= 0.0 || stdev <= 0.0) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid mean and standard deviation for the serial interval to log R0.");
+                return;
+            }
+            partitionTreePrior.setSerialIntervalMean(mean);
+            partitionTreePrior.setSerialIntervalStdev(stdev);
+        }
+//        partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
+
+//        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYLINE) {
+//            Integer groupCount = groupCountField.getValue();
+//            if (groupCount != null) {
+//                partitionTreePrior.setSkylineGroupCount(groupCount);
+//            } else {
+//                partitionTreePrior.setSkylineGroupCount(5);
+//            }
+//        } else
+        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID ||
+                partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC) {
+            Double interval = skyGridInterval.getValue();
+            if (interval != null) {
+                partitionTreePrior.setSkyGridInterval(interval);
+            } else {
+                partitionTreePrior.setSkyGridInterval(Double.NaN);
+            }
+            partitionTreePrior.setSkyGridCount(skyGridPointsField.getValue());
+        } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH) {
+//            Double samplingProportion = samplingProportionField.getValue();
+//            if (samplingProportion != null) {
+//                partitionTreePrior.birthDeathSamplingProportion = samplingProportion;
+//            } else {
+//                partitionTreePrior.birthDeathSamplingProportion = 1.0;
+//            }
+        }
+
+    }
+
+    public void setTreePriorChoices(boolean isTipCalibrated) {
+        TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();
+        treePriorCombo.removeAllItems();
+
+        for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
+            treePriorCombo.addItem(treePriorType);
+            if (treePriorType == TreePriorType.EXPANSION ||
+                    treePriorType == TreePriorType.GMRF_SKYRIDE) {
+                treePriorCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));
+            }
+        }
+
+        if (BeautiOptions.getInstance().needCoalescentModel.getOrDefault(this.partitionTreePrior.getName(), true)) {
+            //if FIT model, then remove the SET_BY_BIT option / TreePriorType
+            treePriorCombo.removeItem(TreePriorType.SET_BY_BIT);
+            treePriorCombo.setEnabled(true);
+        } else {
+            //if BIT model, select the SET_BY_BIT option / TreePriorType and disable the JComboBox
+            treePriorCombo.removeAllItems();
+            treePriorCombo.addItem(TreePriorType.SET_BY_BIT);
+            treePriorCombo.setEnabled(false);
+            //treePriorCombo.setEditable(false);
+        }
+
+        // would be much better to disable these rather than removing them
+//        if (isMultiLocus) {
+//            treePriorCombo.removeItem(TreePriorType.SKYLINE);
+//        }
+
+        if (isTipCalibrated) {
+            // remove models that require contemporaneous tips...
+            treePriorCombo.removeItem(TreePriorType.YULE);
+            treePriorCombo.removeItem(TreePriorType.YULE_CALIBRATION);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
+        }
+
+        // this makes sure treePriorCombo selects correct prior
+        treePriorCombo.setSelectedItem(type);
+        if (treePriorCombo.getSelectedItem() == null) {
+            treePriorCombo.setSelectedIndex(0);
+        }
+    }
+}
+

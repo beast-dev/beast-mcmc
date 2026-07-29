@@ -23,5 +23,5 @@ if [ -z "$BEASTGEN" ]; then
 fi
 
 BEASTGEN_LIB=$BEASTGEN/lib
-java -Xmx1024M -cp $BEASTGEN_LIB/beastgen.jar dr.app.beastgen.BEASTGen $*
+java -Xmx1024M -cp $BEASTGEN_LIB/beast.jar dr.app.beastgen.BEASTGen $*
 

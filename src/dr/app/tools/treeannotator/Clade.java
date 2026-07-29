@@ -59,14 +59,13 @@ public interface Clade extends Comparable<Clade> {
 
     List<Double> getHeightValues();
 
-    // todo - implement key based attribute lists
-//    void addAttributeValue(String key, Object value);
+//    void addAttributeValues(Object[] values);
 
-//    List<Object> getAttributeValues(String key);
+//    List<Object[]> getAttributeValues();
 
-    void addAttributeValues(Object[] values);
+    void addAttributeValue(String attributeName, Object value);
 
-    List<Object[]> getAttributeValues();
+    List<Object> getAttributeValues(String attributeName);
 
     /**
      * Comparable to sort by ascending size

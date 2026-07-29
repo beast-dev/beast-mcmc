@@ -54,8 +54,6 @@ class CollectAttributesAction implements CladeAction {
     }
 
     private void collectAttributesForClade(Clade clade, Set<String> attributeNames, Tree tree, NodeRef node) {
-        int i = 0;
-        Object[] values = new Object[attributeNames.size()];
         for (String attributeName : attributeNames) {
             assert(!attributeName.equals("height")) : "'height' should not be added as an attributeName";
 
@@ -69,14 +67,7 @@ class CollectAttributesAction implements CladeAction {
                 }
             }
 
-            // todo switch to using a keyed map of lists...
-//            clade.addAttributeValues(attributeName, values);
-
-            values[i] = value;
-            i++;
+            clade.addAttributeValue(attributeName, value);
         }
-        clade.addAttributeValues(values);
-        // heights added in AnnotateHeightsAction
-//        ((BiClade)clade).addHeightValue(tree.getNodeHeight(node));
     }
 }

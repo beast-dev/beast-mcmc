@@ -30,6 +30,7 @@ package dr.evomodelxml.coalescent.smooth;
 import dr.evomodel.coalescent.smooth.SkyGlideGradient;
 import dr.evomodel.coalescent.smooth.SkyGlideLikelihood;
 import dr.inference.model.Parameter;
+import dr.inference.hmc.NumericGradientStepSizeProvider;
 import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.xml.*;
 
@@ -51,8 +52,11 @@ public class SkyGlideGradientParser extends AbstractXMLObjectParser {
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         SkyGlideLikelihood likelihood = (SkyGlideLikelihood) xo.getChild(SkyGlideLikelihood.class);
         double gradientCheckTolerance = xo.getAttribute(GRADIENT_CHECK_TOLERANCE, 1E-3);
+        double numericStepSize = NumericGradientStepSizeProvider.parseStepSizeRatio(xo);
 
-        return new SkyGlideGradient(likelihood, parameter, gradientCheckTolerance);
+        SkyGlideGradient gradient = new SkyGlideGradient(likelihood, parameter, gradientCheckTolerance);
+        gradient.setNumericGradientStepSize(numericStepSize);
+        return gradient;
     }
 
     @Override

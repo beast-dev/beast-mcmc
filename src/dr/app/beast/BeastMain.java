@@ -83,8 +83,9 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
+                thread.interrupt();
                 //noinspection removal
-                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
+//                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
 

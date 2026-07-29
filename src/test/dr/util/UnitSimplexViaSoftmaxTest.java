@@ -45,18 +45,19 @@ public class UnitSimplexViaSoftmaxTest extends MathTestCase {
     public void testGetGradientLogDetJacobian() {
 
         System.out.println("\nTest gradient of log-det Jacobian");
-        double[] valuesOnReals = new double[] { -1.0, 1.0, 3.0, 2.0 };
-        int dim = valuesOnReals.length;
+        int dim = 4;
+        double[] valuesOnReals = new double[] { -1.0, 1.0, 3.0 };
+        int realDim = valuesOnReals.length;
 
         UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(dim);
         double[] numericalGradient = NumericalDerivative.gradient(new MultivariateFunction() {
             @Override
             public double evaluate(double[] argument) {
-                return -transform.getLogJacobian(transform.inverse(valuesOnReals, 0, dim));
+                return -transform.getLogJacobian(transform.inverse(argument, 0, realDim));
             }
 
             @Override
-            public int getNumArguments() { return dim; }
+            public int getNumArguments() { return realDim; }
 
             @Override
             public double getLowerBound(int n) { return Double.NEGATIVE_INFINITY; }
@@ -75,10 +76,10 @@ public class UnitSimplexViaSoftmaxTest extends MathTestCase {
 
         System.out.println("\nTest Unit-Simplex transform.");
 
-        double[] valuesOnReals = new double[]{ -1.0, 1.0, Double.NaN };
+        double[] valuesOnReals = new double[]{ 0.0, 0.0 };
         double[] valuesOnSimplex = new double[]{ 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
 
-        UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(valuesOnReals.length);
+        UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(valuesOnSimplex.length);
         double[] result1 = transform.inverse(valuesOnReals, 0, valuesOnReals.length);
 
         assertEquals(result1, valuesOnSimplex, 1E-10);
@@ -135,8 +136,9 @@ public class UnitSimplexViaSoftmaxTest extends MathTestCase {
 
         System.out.println("\nTest Jacobian matrix");
 
-        double[] valuesOnReals = new double[]{ -1.0, 0.0, 0.0, 1.0 };
-        int dim = valuesOnReals.length;
+        int dim = 4;
+        double[] valuesOnReals = new double[]{ -1.0, 0.0, 1.0 };
+        int realDim = valuesOnReals.length;
 
         UnitSimplexViaSoftmaxToRealsTransform transform = new UnitSimplexViaSoftmaxToRealsTransform(dim);
 
@@ -152,7 +154,7 @@ public class UnitSimplexViaSoftmaxTest extends MathTestCase {
 
                 @Override
                 public int getNumArguments() {
-                    return valuesOnReals.length;
+                    return realDim;
                 }
 
                 @Override
@@ -166,26 +168,24 @@ public class UnitSimplexViaSoftmaxTest extends MathTestCase {
                 }
             }, valuesOnReals);
         }
-        transpose(numericalJacobian);
+        numericalJacobian = transpose(numericalJacobian);
 
         double[][] jacobian = transform.computeJacobianMatrixInverse(valuesOnReals);
 
-        for (int i = 0; i < dim - 1; ++i) {
+        for (int i = 0; i < realDim; ++i) {
             assertEquals(jacobian[i], numericalJacobian[i], 1E-5);
         }
 
         System.out.println("Success");
     }
 
-    private static void transpose(double[][] matrix) {
-        assert matrix.length == matrix[0].length;
-
-        for (int i = 0; i < matrix.length; ++i) {
-            for (int j = 0; j < i; ++j) {
-                double tmp = matrix[i][j];
-                matrix[i][j] = matrix[j][i];
-                matrix[j][i] = tmp;
+    private static double[][] transpose(double[][] matrix) {
+        double[][] result = new double[matrix[0].length][matrix.length];
+        for (int i = 0; i < result.length; ++i) {
+            for (int j = 0; j < result[i].length; ++j) {
+                result[i][j] = matrix[j][i];
             }
         }
+        return result;
     }
 }

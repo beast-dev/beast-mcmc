@@ -110,8 +110,8 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────
   # 2. Build Mac and Linux packages on a macOS runner.
   #
-  #    • GNU tar format is used for the Linux archive (set in build_release.xml)
-  #      so the tarball is compatible with Linux GNU tar regardless of the host.
+  #    • GNU tar format is used for the Linux archive so the tarball is compatible
+  #      with Linux GNU tar regardless of the host.
   #    • Mac .app bundles are signed with Hardened Runtime (--options runtime)
   #      and a custom entitlements plist so Apple's notarisation service accepts
   #      them.
@@ -344,6 +344,8 @@ jobs:
             --main-class dr.app.beast.BeastMain \
             --java-options "-Xmx8192m" \
             --arguments "-window" \
+            --arguments "-working" \
+            --arguments "-options" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/beast.icns" \
             --dest staging-mac
@@ -662,6 +664,9 @@ jobs:
             --main-jar beast.jar \
             --main-class dr.app.beast.BeastMain \
             --java-options "-Xmx8192m" \
+            --arguments "-window" \
+            --arguments "-working" \
+            --arguments "-options" \
             --icon "release/common/icons/beast.ico" \
             --add-launcher "BEAUTi=beauti.properties" \
             --add-launcher "TreeAnnotator=treeannotator.properties" \

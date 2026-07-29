@@ -116,6 +116,8 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
             System.out.println("Node selected: " + i + " ; delta = " + delta);
         }
 
+        boolean topologyChanged = false;
+
         // 3. if the move is up
         if (delta > 0) {
 
@@ -173,6 +175,8 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
                 tree.setNodeHeight(iP, newHeight);
 
                 tree.endTreeEdit();
+
+                topologyChanged = true;
 
                 // 3.1.3 count the hypothetical sources of this destination.
                 final int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
@@ -271,12 +275,16 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 
                 tree.endTreeEdit();
 
+                topologyChanged = true;
+
                 logq = Math.log(possibleDestinations);
             } else {
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
             }
         }
+
+        setTopologyChanged(topologyChanged, delta);
 
         if (swapInRandomRate) {
             final NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));

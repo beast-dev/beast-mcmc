@@ -17,6 +17,7 @@ env:
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
     BEAGLE_BRANCH: v4_release
+    BEAGLE_CACHE_VERSION: beagle-portable-v1
 
 jobs:
     build:
@@ -39,8 +40,9 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Build BEAGLE
+              if: steps.cache.outputs.cache-hit != 'true'
               run: |
                   chmod +x ./.github/scripts/build_beagle.sh
                   ./.github/scripts/build_beagle.sh
@@ -73,9 +75,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Rebuild project
               run: ant dist                      
             - name: Run test for ${{ matrix.file }}
@@ -92,21 +92,19 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Rebuild project
               run: ant dist
             - name: checkpoint adaptive MCMC
               id: checkpoint-adaptive-mcmc
               run: |
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state testAdaptiveMCMC.chkpt -save_every 5000 tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -load_state testAdaptiveMCMC.chkpt -save_state testAdaptiveMCMC.chkpt -save_every 5000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state testAdaptiveMCMC.chkpt -save_state testAdaptiveMCMC.chkpt -save_every 5000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
             - name: checkpoint HMC
               id: checkpoint-hmc
               run: |
                   java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state testHMC.chkpt -save_every 5000 tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -load_state testHMC.chkpt -save_state testHMC.chkpt -save_every 5000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state testHMC.chkpt -save_state testHMC.chkpt -save_every 5000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
             - name: Check generated files
               run: ls -R
             - name: Upload checkpoint file
@@ -131,9 +129,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Rebuild project
               run: ant dist
             - name: Download checkpoint file
@@ -160,9 +156,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Rebuild project
               run: ant dist
             - name: Run JUnit tests

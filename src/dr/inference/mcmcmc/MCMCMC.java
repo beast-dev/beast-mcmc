@@ -349,15 +349,7 @@ public class MCMCMC implements Runnable {
         System.out.println("Time taken: " + timer.toString());
 
         if (showOperatorAnalysis) {
-            System.out.println();
-            System.out.println("Operator analysis");
-            System.out.println(
-                    formatter.formatToFieldWidth("Operator", 30) +
-                            formatter.formatToFieldWidth("", 8) +
-                            formatter.formatToFieldWidth("Pr(accept)", 11) +
-                            " Performance suggestion");
-
-            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedules[coldChain], mcmcOptions.useAdaptation());
+            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedules[coldChain], mcmcOptions.useAdaptation(), false);
             System.out.println();
         }
     }

@@ -793,8 +793,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 updateAllNodes();
             }
         } else {
-
-            throw new RuntimeException("Unknown componentChangedEvent");
+            throw new RuntimeException("Unknown componentChangedEvent (" + model.getModelName() + ")");
         }
 
         super.handleModelChangedEvent(model, object, index);

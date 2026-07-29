@@ -11,10 +11,21 @@ All issues are tracked at https://github.com/beast-dev/beast-mcmc/issues
 
 ### New features
 
+#### BEAST
+
+- If the operator log file name has the extension `.csv` then a CSV file will be created (or if `format="csv"` is set).
+- The operators element can now be logged to provide information about operator performance.
+
 #### BEAUti
 
 - Added option to write doubling time in days to the log file when using a coalescent model with an exponential growth parameter.
 - Added an option to write the epidemiological reproduction number (R0) to the log file when using a coalescent model with an exponential growth parameter. This requires an estimate of the mean and standard deviation of the generation time distribution to be specified in BEAUti.
+
+#### TreeAnnotator
+
+- Can specify multiple HPD intervals e.g., using `--hpd 0.95,0.90,0.5'
+- Can generate a KDE curve of the distribution of height values for visualisation in PearTree
+- Clade MRCA heights can be calculated to avoid negative branch lengths (CA method of Heled and Bouckaert, (2013))
 
 ### Bug fixes
 

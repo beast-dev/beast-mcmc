@@ -42,6 +42,7 @@ public class TwoPathogenModel extends CompartmentalModel {
         this.vMatrix = getVMatrix();
     }
 
+
     protected void setOriginTimeCompartmentCounts(int index){
 
         double origOne = originOne.getParameterValue(0);
@@ -73,6 +74,41 @@ public class TwoPathogenModel extends CompartmentalModel {
             compartmentCounts.get(0).setParameterValue(index, originTimeSS - 1); // starting with two sick
         }
     }
+
+    /*
+    // DEBUG ONLY - SET ALL COUNTS TO 50 INITIALLY
+    protected void setOriginTimeCompartmentCounts(int index){
+
+        double origOne = originOne.getParameterValue(0);
+        double origTwo = originTwo.getParameterValue(0);
+        double originTimeSS = originTimeNumSS.getParameterValue(0);
+
+        // initialize everything to 0
+        for (int i = 0; i < compartmentCounts.size(); i++) {
+            compartmentCounts.get(i).setParameterValue(index, 50);
+        }
+
+        // total compartment counts should be originTimeSS + 1 for the the infected individual?
+        // SS = originTimeSS
+        compartmentCounts.get(0).setParameterValue(index, originTimeSS);
+
+        if (origOne > origTwo) {
+            // pathogen 1 is older, start in IS
+            compartmentCounts.get(4).setParameterValue(index, 50);
+        } else if (origTwo > origOne) {
+            // pathogen 2 is older, start in SI
+            compartmentCounts.get(1).setParameterValue(index, 50);
+        } else {
+            // no need to "introduce" second pathogen while doing forward time simulation
+            secondPathogenIntroduced = true;
+            // origins equal
+            // choose whichever convention you want
+            compartmentCounts.get(1).setParameterValue(index, 50); // SI
+            compartmentCounts.get(4).setParameterValue(index, 50); // IS
+            compartmentCounts.get(0).setParameterValue(index, originTimeSS - 1); // starting with two sick
+        }
+    }
+    */
 
     protected void setDefaultCompartmentCounts(int index){
         // initialize everything to 0
@@ -632,9 +668,9 @@ public class TwoPathogenModel extends CompartmentalModel {
 
     // countsNew has each rxn
     protected double[] getUpdatedCompartmentCounts(double[] currentCounts, double[] countsNew){
-        throw new RuntimeException("getUpdatedCompartmentCounts is definitely being called");
+        //throw new RuntimeException("getUpdatedCompartmentCounts is definitely being called");
 
-        /*
+
         double[] updatedCounts = new double[numSpecies];
         // SS(t+tau) = SS(t) - rxn0 - rxn1 - rxn2 - rxn3 - rxn4 - rxn5 - rxn6 - rxn7 + rxn22 + rxn45
         updatedCounts[0] = currentCounts[0] - countsNew[0] - countsNew[1] - countsNew[2] - countsNew[3] - countsNew[4] - countsNew[5] - countsNew[6] - countsNew[7] + countsNew[22] + countsNew[45];
@@ -668,8 +704,9 @@ public class TwoPathogenModel extends CompartmentalModel {
         updatedCounts[14] = currentCounts[14] - countsNew[52] - countsNew[53] + countsNew[41] + countsNew[51];
         // RR(t+tau) = RR(t) - rxn54 - rxn55 + rxn43 + rxn53
         updatedCounts[15] = currentCounts[15] - countsNew[54] - countsNew[55] + countsNew[43] + countsNew[53];
-        //return updatedCounts;
+        return updatedCounts;
 
+        /*
         // ===== DEBUG BLOCK START =====
 
         System.out.println("----------------------------------------");
@@ -706,10 +743,10 @@ public class TwoPathogenModel extends CompartmentalModel {
         System.out.println("----------------------------------------");
 
         // ===== DEBUG BLOCK END =====
+        */
 
-        return updatedCounts;
+        //return updatedCounts;
 
-         */
     }
 
 

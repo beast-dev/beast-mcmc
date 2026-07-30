@@ -153,14 +153,14 @@ public class TauLeapingSimulator extends StochasticSimulator {
                         }
 
                         // DEBUGGING
-
+                        /*
                         double after = 0.0;
                         for (int s = 0; s < numSpecies; s++) {
                             after += currentCounts[s];
                         }
 
                         System.out.println("SSA total after = " + after);
-
+                        */
                         // END DEBUGGING
                     }
                     // end of 100 SSA steps

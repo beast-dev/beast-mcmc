@@ -621,9 +621,11 @@ jobs:
       # resulting properties files contain no leading whitespace.
       - name: Write add-launcher properties files
         run: |
+          # Clear inherited main-launcher args for non-BEAST tools.
           cat > beauti.properties << 'EOF'
           main-class=dr.app.beauti.BeautiApp
           main-jar=beauti.jar
+          arguments=
           java-options=-Xmx1024m
           icon=release/common/icons/beauti.ico
           win-console=false
@@ -632,6 +634,7 @@ jobs:
           cat > treeannotator.properties << 'EOF'
           main-class=dr.app.tools.treeannotator.TreeAnnotator
           main-jar=beast.jar
+          arguments=
           java-options=-Xmx4096m
           icon=release/common/icons/utility.ico
           win-console=false
@@ -640,6 +643,7 @@ jobs:
           cat > logcombiner.properties << 'EOF'
           main-class=dr.app.tools.logcombiner.LogCombiner
           main-jar=beast.jar
+          arguments=
           java-options=-Xmx2048m
           icon=release/common/icons/utility.ico
           win-console=false

@@ -34,6 +34,8 @@ src/version.txt
 release*
 !release.yml
 src/revision.txt
+.vscode/launch.json
+.vscode/settings.json
 
 *.citations.txt
 *.ops

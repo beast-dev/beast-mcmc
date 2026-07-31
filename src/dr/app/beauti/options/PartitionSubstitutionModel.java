@@ -550,7 +550,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 //Do nothing
                 break;
 
-
+            case DataType.TREE:
+                //Do nothing
+                break;
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -799,7 +801,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             case DataType.DUMMY:
                 //Do nothing
                 break;
-
+            case DataType.TREE:
+                //Do nothing
+                // System.out.println("Tree data type ParitionSubstutionModel selectOperators");
+                break;
 
             default:
                 throw new IllegalArgumentException("Unknown data type");

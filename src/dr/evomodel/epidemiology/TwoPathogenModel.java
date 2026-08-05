@@ -76,7 +76,7 @@ public class TwoPathogenModel extends CompartmentalModel {
     }
 
     /*
-    // DEBUG ONLY - SET ALL COUNTS TO 50 INITIALLY
+    // DEBUG AND SIMULATION ONLY - SET ALL COUNTS TO 50 INITIALLY
     protected void setOriginTimeCompartmentCounts(int index){
 
         double origOne = originOne.getParameterValue(0);

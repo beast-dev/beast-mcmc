@@ -10,6 +10,18 @@ public class TauLeapingSimulator extends StochasticSimulator {
     protected double epsilon;
     protected int criticalNumber;
 
+    // Count the number of times SSA is used instead of Tau or SAL
+    // Number of separate times the simulator reverts to SSA
+    protected long ssaCount = 0;
+    // Number of individual SSA reaction steps performed
+    protected long ssaStepCount = 0;
+    // Number of times SSA is used due to invalid counts
+    protected long invalidCountsCount = 0;
+    // number of times SSA used due to tauprime too small
+    protected long smallTauCount = 0;
+    // number of times a tau step is accepted
+    protected long successfulLeapCount = 0;
+
     public TauLeapingSimulator(CompartmentalModel compartmentalModel, double epsilon, int criticalNumber) {
         super(compartmentalModel);
         this.epsilon = epsilon;
@@ -100,6 +112,19 @@ public class TauLeapingSimulator extends StochasticSimulator {
                 if (tauPrime < 10.0 / r0) {
                     // abandon tau-leaping temporarily and execute
                     // 100 steps of the Gillespie single reaction stochastic simulation algorithm
+
+                    // Add to count of times SSA is used
+                    ssaCount++;
+                    smallTauCount++;
+
+                    // DEBUGGING: Print a note when SSA is used
+                    System.out.printf(
+                            getClass().getSimpleName() + " -> SSA (tauPrime too small): tauPrime=%f threshold=%f time=%f%n",
+                            tauPrime,
+                            10.0 / r0,
+                            simulationTime
+                    );
+
                     for (int k = 0; k < 100; k++) {
 
                         if (nextRecordIndex < 0) {
@@ -121,6 +146,9 @@ public class TauLeapingSimulator extends StochasticSimulator {
                         }
 
                         int sampledReactionChannel = sampleReactionChannel(reactionInt, r0);
+
+                        // Add to total number of SSA steps taken
+                        ssaStepCount++;
 
                         //update simulationTime and current compartment counts
                         //double previousSimulationTime = simulationTime;
@@ -287,6 +315,19 @@ public class TauLeapingSimulator extends StochasticSimulator {
                     if (!hasMinimalCounts) {
                         tauPrime = tauPrime * 0.5;
 
+                        // Add to total times SSA is used and total times used due to invalid counts
+                        ssaCount++;
+                        invalidCountsCount++;
+
+
+                        // DEBUGGING: print a note when the counts are invalid
+                        System.out.printf(
+                                getClass().getSimpleName() + " -> SSA (invalid counts): tauPrime=%f newTauPrime=%f time=%f%n",
+                                tauPrime * 2.0,
+                                tauPrime,
+                                simulationTime
+                        );
+
                         // step 3 (again)
                         for (int k = 0; k < 100; k++) {
 
@@ -375,6 +416,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
                 // We can proceed and update the currentCounts and simulationTime and other parameters as necessary
                 //double previousSimulationTime = simulationTime;
                 simulationTime = simulationTime + tau;
+                successfulLeapCount++;
 
                 currentCounts = compartmentalModel.introduceSecondPathogen(
                         //previousSimulationTime,
@@ -396,6 +438,17 @@ public class TauLeapingSimulator extends StochasticSimulator {
 
             }
         }
+
+        System.out.printf(
+                "%s SSA summary: Successful leaps: %d, fallbacks=%d, SSA steps=%d, " +
+                        "small-tau fallbacks=%d, invalid-count fallbacks=%d%n",
+                getClass().getSimpleName(),
+                successfulLeapCount,
+                ssaCount,
+                ssaStepCount,
+                smallTauCount,
+                invalidCountsCount
+        );
     }
 
     protected double computeTauPrime(List<Integer> noncritical, double[] reactionInt, double[] e, double[] currentCounts) {
@@ -471,6 +524,23 @@ public class TauLeapingSimulator extends StochasticSimulator {
 
     protected double[] getPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau) {
         return getTauLeapingPoissonIntensities(reactionInt, tau);
+    }
+
+    // get all SSA useage numbers
+    public long getSsaCount() {
+        return ssaCount;
+    }
+
+    public long getSsaStepCount() {
+        return ssaStepCount;
+    }
+
+    public long getSmallTauCount() {
+        return smallTauCount;
+    }
+
+    public long getInvalidCountsCount() {
+        return invalidCountsCount;
     }
 
 }

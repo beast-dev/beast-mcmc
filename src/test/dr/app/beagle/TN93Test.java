@@ -58,15 +58,6 @@ public class TN93Test extends MathTestCase {
         double[] probs = new double[16];
         tn.getTransitionProbabilities(time, probs);
         System.out.println("new probs = " + new Vector(probs));
-
-        // check against old implementation
-        dr.oldevomodel.substmodel.FrequencyModel oldFreq = new dr.oldevomodel.substmodel.FrequencyModel(Nucleotides.INSTANCE, pi);
-        dr.oldevomodel.substmodel.TN93 oldTN = new dr.oldevomodel.substmodel.TN93(kappa1, kappa2, oldFreq);
-
-        double[] oldProbs = new double[16];
-        oldTN.getTransitionProbabilities(time, oldProbs);
-        System.out.println("old probs = " + new Vector(oldProbs));
-        assertEquals(probs, oldProbs, 10E-6);
     }
 
 }

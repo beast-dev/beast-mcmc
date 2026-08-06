@@ -32,7 +32,6 @@ import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
 import dr.evolution.datatype.DataType;
-import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;

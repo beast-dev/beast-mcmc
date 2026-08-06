@@ -41,7 +41,7 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
     private final SumToZeroTransform sumToZeroTransform;
 
     public UnitSimplexViaSoftmaxToRealsTransform(int dim) {
-        super(dim);
+        super(dim, dim - 1);
 
         this.sumToZeroTransform = new SumToZeroTransform(dim);
     }
@@ -56,9 +56,9 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
 
         double[] z = sumToZeroTransform.inverse(valuesOnReals);
 
-        double total = sumExp(z, dim);
-        double[] valuesOnSimplex = new double[dim];
-        for (int i = 0; i < dim; ++i) {
+        double total = sumExp(z, inputDimension);
+        double[] valuesOnSimplex = new double[inputDimension];
+        for (int i = 0; i < inputDimension; ++i) {
             valuesOnSimplex[i] = Math.exp(z[i]) / total;
         }
 
@@ -114,15 +114,18 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
         double[] valuesOnSimplex = inverse(valuesOnReals);
 //        double[][] computeJacobianMatrixInverse
 
-        double[][] partial = new double[1][dim];
-        for (int i = 0; i < dim; ++i) {
+        double[][] partial = new double[1][inputDimension];
+        for (int i = 0; i < inputDimension; ++i) {
             partial[0][i] = 1 / valuesOnSimplex[i];
         }
 
-        double[][] chain = sumToZeroTransform.computeJacobianMatrixInverse(valuesOnReals);
-//        return multiply(jacobian, false, chain, true, dim, dim,  dim -1 ); // TODO compute everything in place!
-        double[][] product = multiply(partial, false, chain, true, 1, dim, dim - 1);
+        double[][] jacobianInverse = computeJacobianMatrixInverse(valuesOnReals);
+        double[][] product = multiply(partial, false, jacobianInverse, true,
+                1, inputDimension, outputDimension);
 
+        for (int i = 0; i < product[0].length; ++i) {
+            product[0][i] = -product[0][i];
+        }
         return product[0];
 
 //        return chain;
@@ -132,21 +135,14 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
     // Computation of the (transposed) Jacobian matrix
     // ************************************************************************* //
 
-    private static final boolean K_PLUS_ONE = true;
-
     public double[][] computeJacobianMatrixInverse(double[] valuesOnReals) {
 
         double[] valuesOnSimplex = inverse(valuesOnReals); // also computes z[]
 
-        double[][] jacobian;
-        if (K_PLUS_ONE) {
-            jacobian = new double[dim][dim];
-        } else {
-            jacobian = new double[dim - 1][dim - 1];
-        }
+        double[][] jacobian = new double[inputDimension][inputDimension];
 
-        for (int i = 0; i < dim; ++i) {
-            for (int j = 0; j < dim; ++j) {
+        for (int i = 0; i < inputDimension; ++i) {
+            for (int j = 0; j < inputDimension; ++j) {
                 if (i == j) {
                     jacobian[i][i] = valuesOnSimplex[i] * (1.0 - valuesOnSimplex[i]);
                 } else {
@@ -161,7 +157,7 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
 //        return jacobian;
         double[][] chain = sumToZeroTransform.computeJacobianMatrixInverse(valuesOnReals);
 //        return multiply(jacobian, false, chain, true, dim, dim,  dim -1 ); // TODO compute everything in place!
-        return multiply(chain, false, jacobian, false, dim - 1, dim, dim);
+        return multiply(chain, false, jacobian, false, outputDimension, inputDimension, inputDimension);
 //        return multiply(chain, true, jacobian, false, dim, dim - 1, dim - 1);
     }
 
@@ -221,4 +217,3 @@ public class UnitSimplexViaSoftmaxToRealsTransform extends Transform.Multivariat
         }
     };
 }
-

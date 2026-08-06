@@ -70,7 +70,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
-    private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
+    private final Deque<Integer> availableBuffers = new ArrayDeque<>();
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -148,6 +148,11 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         this.settings = settings;
 
     }// END: Constructor
+
+    @Override
+    public BranchModel getBranchSubstitutionModel() {
+        return branchModel;
+    }
 
     @Override
     public boolean canReturnComplexDiagonalization() {

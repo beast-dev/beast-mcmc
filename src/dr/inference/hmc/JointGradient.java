@@ -28,6 +28,7 @@
 package dr.inference.hmc;
 
 import dr.inference.model.*;
+import dr.util.BenchmarkTimer;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -46,6 +47,9 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     private final Likelihood likelihood;
     private final Parameter parameter;
     private final ParallelGradientExecutor parallelExecutor;
+
+    public final static boolean BENCHMARK_TIME = false;
+    public BenchmarkTimer timer = new BenchmarkTimer();
 
     final List<GradientWrtParameterProvider> derivativeList;
 
@@ -209,11 +213,20 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     }
 
     double[] getDerivativeLogDensity(DerivativeType derivativeType) {
-        if (parallelExecutor != null) {
-            return getDerivativeLogDensityParallelImpl(derivativeType);
-        } else {
-            return getDerivativeLogDensitySerialImpl(derivativeType);
+        if(BENCHMARK_TIME) {
+            timer.startTimer("jointGradient." + parameter.getParameterName() + getLikelihood().getId());
         }
+
+        double[] derivativeLogDensity;
+        if (parallelExecutor != null) {
+            derivativeLogDensity = getDerivativeLogDensityParallelImpl(derivativeType);
+        } else {
+            derivativeLogDensity = getDerivativeLogDensitySerialImpl(derivativeType);
+        }
+        if(BENCHMARK_TIME) {
+            timer.stopTimer("jointGradient." + parameter.getParameterName() + getLikelihood().getId());
+        }
+        return derivativeLogDensity;
     }
 
     private double[] getDerivativeLogDensityParallelImpl(DerivativeType derivativeType) {
@@ -258,6 +271,9 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
 
     @Override
     public String getReport() {
+        if(BENCHMARK_TIME) {
+            return "jointGradient." + parameter.getParameterName() + timer.toString();
+        }
         return  "jointGradient." + parameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,

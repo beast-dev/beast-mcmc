@@ -1,7 +1,7 @@
 /*
  * MarginalLikelihoodEstimator.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -128,12 +128,12 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
                     MCLogger mcLogger = (MCLogger) logger;
                     String timePerMillion = mcLogger.getTimePerMillion(hoursPerMillionStates);
                     String units = mcLogger.getUnits(hoursPerMillionStates);
-                    System.out.println("Time per million: " + timePerMillion + units);
+                    System.out.println("\tTime per million: " + timePerMillion + units);
                 }
             }
 
             if (SHOW_OPERATOR_ANALYSIS) {
-            	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
+            	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false, false);
             }
             ((CombinedOperatorSchedule) schedule).reset();
         }
@@ -417,7 +417,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         @Override
         public void finished(long chainLength, MarkovChain markovChain) {
             currentState = chainLength;
-            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
+            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false, false);
 //            logger.log(currentState);
             for (MCLogger logger : loggers) {
                 logger.stopLogging();

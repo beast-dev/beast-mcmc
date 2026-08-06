@@ -110,9 +110,17 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
 
         boolean hasGLM = false;
+        boolean isBIT = false;
+        boolean connected = false;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 hasGLM = true;
+            }
+            if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                isBIT = true;
+                connected = true;
+            } else if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                connected = true;
             }
         }
 
@@ -128,7 +136,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_OPERATORS:
                 return hasGLM;
             case IN_MCMC_PRIOR:
-                return hasGLM || hasBSSVS();
+                return hasGLM || connected || isBIT;
             default:
                 return false;
         }
@@ -161,15 +169,23 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                         writeGLMBinomialLikelihood(model, writer);
                     }
                 }
+                for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+                    if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                        writeTreeLikelihoodReference(model, writer);
+                    }
+                }
                 writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
             case IN_MCMC_LIKELIHOOD:
-                writeTreeLikelihoodReferences(writer);
+                writeTreeLikelihoodReferences(writer, false);
                 break;
 
             case IN_FILE_LOG_LIKELIHOODS:
-                writeTreeLikelihoodReferences(writer);
+                this.enableInsertionPointBIT = true;
+                writeTreeLikelihoodReferences(writer, true);
+                this.enableInsertionPointBIT = false;
+                writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
             case IN_SCREEN_LOG:
@@ -363,6 +379,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeCloseTag(ROOT_FREQUENCIES);
 
             writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD, new Attribute[] {
+                    new Attribute.Default<String>(XMLParser.ID, prefix + GeneralizedLinearModelParser.GLM_LIKELIHOOD),
                     new Attribute.Default<String>("family", "logLinear"),
                     new Attribute.Default<String>("checkIdentifiability", "true")
             });
@@ -447,13 +464,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    private boolean hasBSSVS() {
+    /*private boolean hasBSSVS() {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (model.isActivateBSSVS())
                 return true;
         }
         return false;
-    }
+    }*/
 
     private void writeDiscreteFrequencyModel(String prefix, String dataTypePrefix, int stateCount, Boolean normalize, XMLWriter writer) {
         if (normalize == null) {
@@ -509,11 +526,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             prefix = BACKWARD + "." + prefix;
         }
         if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
-            writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+            writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
+                    new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
-            writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-            writeParameter("rateCopyNumber",2, writer);
-            writer.writeCloseTag(DuplicatedParameterParser.COPIES);
+//            writer.writeOpenTag(DuplicatedParameterParser.COPIES);
+////            writeParameter("rateCopyNumber",2, writer);
+//            writeParameter("", 2, writer);
+//            writer.writeCloseTag(DuplicatedParameterParser.COPIES);
             writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
         } else {
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
@@ -524,11 +543,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
-                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
+                        new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
                 writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
-                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-                writeParameter("indicatorCopyNumber",2, writer);
-                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
+//                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
+////                writeParameter("indicatorCopyNumber",2, writer);
+//                writeParameter("", 2, writer);
+//                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
                 writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {
                 //asymmetric
@@ -544,14 +565,23 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + "nonZeroRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+            writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+        }
         writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 
         writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + "actualRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, false)});
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
-        writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+        if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+            writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+            writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "rates");
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+        }
         writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
     }
 
@@ -615,24 +645,24 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
-        writer.writeOpenTag(StructuredCoalescentLikelihoodParser.POPSIZES);
+        writer.writeOpenTag(StructuredCoalescentLikelihoodParser.POPULATION_SIZES);
         int stateCount = options.getStatesForDiscreteModel(substModel).size();
         if (substModel.getBastaModelType() == BASTAModelType.CONST) {
             if (substModel.isSharedCoalescentModel()) {
                 writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
-                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES, 1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
+                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPULATION_SIZES, 1, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
                 writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-                writeParameter(StructuredCoalescentLikelihoodParser.POPSIZES + "." + DuplicatedParameterParser.COPIES, stateCount, writer);
+                writeParameter(StructuredCoalescentLikelihoodParser.POPULATION_SIZES + "." + DuplicatedParameterParser.COPIES, stateCount, writer);
                 writer.writeCloseTag(DuplicatedParameterParser.COPIES);
                 writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {
-                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPSIZES,
+                writeParameter(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT + "." + StructuredCoalescentLikelihoodParser.POPULATION_SIZES,
                         stateCount, 1.0, 0.0, Double.POSITIVE_INFINITY, writer);
             }
         } else {
             throw new IllegalArgumentException("Unknown BASTAModelType");
         }
-        writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPSIZES);
+        writer.writeCloseTag(StructuredCoalescentLikelihoodParser.POPULATION_SIZES);
 
         this.enableInsertionPointBIT = false;
         getCallingGenerator().generateInsertionPoint(InsertionPoint.IN_MCMC_LIKELIHOOD, partition, writer);
@@ -698,6 +728,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     /**
      * Write Tree Likelihood reference for a specific partition / model
+     * Currently used for backward-in-time (BIT) models
      *
      * @param model PartitionSubstitutionModel
      * @param writer XMLWriter
@@ -719,6 +750,11 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
+    /**
+     * Write all Tree Likelihood references
+     *
+     * @param writer XMLWriter
+     */
     private void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getTraits() != null) {
@@ -728,6 +764,40 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
                 }
                 if (!enableInsertionPointBIT) {
+                    continue;
+                }
+                if (ancestralStatesOptions.isCountingStates(partition)) {
+                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                }
+
+                TraitData trait = partition.getTraits().get(0);
+                String prefix = partition.getName() + ".";
+                if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                    writer.writeIDref(treeLikelihoodTag,
+                            prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                }
+            }
+        }
+    }
+
+    /**
+     * Write all Tree Likelihood references, with a choice to include BIT models
+     *
+     * @param includeBIT boolean
+     * @param writer XMLWriter
+     */
+    private void writeTreeLikelihoodReferences(XMLWriter writer, boolean includeBIT) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            if (partition.getTraits() != null) {
+                AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
+                String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    if (!includeBIT) {
+                        continue;
+                    }
+                    treeLikelihoodTag = StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT;
+                }
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT && !enableInsertionPointBIT) {
                     continue;
                 }
                 if (ancestralStatesOptions.isCountingStates(partition)) {
@@ -828,21 +898,30 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             String prefix = model.getName() + ".";
             if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                prefix = BACKWARD + "." + prefix;
                 writer.writeIDref(ParameterParser.PARAMETER, StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT +
-                        "." + StructuredCoalescentLikelihoodParser.POPSIZES);
+                        "." + StructuredCoalescentLikelihoodParser.POPULATION_SIZES);
             }
 
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "includedPredictors");
                 writer.writeIDref(ProductStatisticParser.PRODUCT_STATISTIC, prefix + "coefficientsTimesIndicators");
             } else {
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "rates");
 
-                if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
-                    writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                    if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+                        writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+                        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                    }
+                } else {
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+
+                    if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
+                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+                        writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
+                    }
                 }
+
             }
         }
 
@@ -895,7 +974,9 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             }
             if (model.isActivateBSSVS()) {
                 //If "BSSVS" is not activated, rateIndicator should not be there.
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    writer.writeIDref(ParameterParser.PARAMETER, BACKWARD + "." + prefix + "indicators");
+                }
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
             }
         }

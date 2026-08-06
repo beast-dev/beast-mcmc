@@ -1,7 +1,7 @@
 /*
  * TreesPanel.java
  *
- * Copyright © 2002-2025 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -86,8 +86,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         treesTable.getTableHeader().setReorderingAllowed(false);
         treesTable.getTableHeader().setResizingAllowed(false);
-//        treesTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        //treesTable.getTableHeader().setDefaultRenderer(
+        //new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         final TableColumnModel model = treesTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);
@@ -187,7 +187,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void fireTreePriorsChanged() {
-//        options.updatePartitionAllLinks();
+        //options.updatePartitionAllLinks();
         frame.setDirty();
     }
 
@@ -202,7 +202,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         if (selRow >= 0) {
             PartitionTreeModel ptm = options.getPartitionTreeModels().get(selRow);
             setCurrentModelAndPrior(ptm);
-            //TODO            treeDisplayPanel.setTree(options.userTrees.get(selRow));
+            //TODO  treeDisplayPanel.setTree(options.userTrees.get(selRow));
         }
     }
 
@@ -249,7 +249,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 treePriorPanels.put(prior, panel1);
             }
 
-//            currentTreePrior = prior;
+            //currentTreePrior = prior;
             updateTreePriorBorder();
             treePriorPanelParent.add(panel1);
 
@@ -263,7 +263,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         if (!options.hasData()) {
             currentTreeModel = null;
             treeModelPanels.clear();
-//            currentTreePrior = null;
+            //currentTreePrior = null;
             treePriorPanels.clear();
 
             treeModelPanelParent.removeAll();
@@ -319,7 +319,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             treesTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
-//        fireShareSameTreePriorChanged();
+        //fireShareSameTreePriorChanged();
 
         validate();
         repaint();
@@ -328,11 +328,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
 
-//    	Set<PartitionTreeModel> models = treeModelPanels.keySet();
-//
-//        for (PartitionTreeModel model : models) {
-//        	treeModelPanels.get(model).getOptions(options);
-//     	}
+        //Set<PartitionTreeModel> models = treeModelPanels.keySet();
+        //
+        //for (PartitionTreeModel model : models) {
+        //  treeModelPanels.get(model).getOptions(options);
+        //}
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
@@ -347,7 +347,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public JComponent getExportableComponent() {
-//        return treeDisplayPanel;
+        //return treeDisplayPanel;
         return this;
     }
 
@@ -389,7 +389,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-//            Tree tree = options.userTrees.get(row);
+            //Tree tree = options.userTrees.get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();

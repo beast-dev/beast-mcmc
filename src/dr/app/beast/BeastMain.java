@@ -83,8 +83,9 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
+                thread.interrupt();
                 //noinspection removal
-                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
+//                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
 
@@ -377,7 +378,7 @@ public class BeastMain {
 
                         new Arguments.Option("verbose","vb","Give verbose XML parsing messages"),
                         new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
-                        new Arguments.Option("strict", "s", "Fail on non-conforming BEAST XML file"),
+                        new Arguments.Option("strict", "sx", "Fail on non-conforming BEAST XML file"),
                         new Arguments.Option("window", "w", "Provide a console window"),
                         new Arguments.Option("options", "o", "Display an options dialog"),
                         new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
@@ -410,6 +411,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_CPU", "bc", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "bg", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", null, "BEAGLE: use SSE extensions if available"),
+                        new Arguments.Option("beagle_tensor_core", null, "BEAGLE: use tensor cores on GPU if available"),
                         new Arguments.Option("beagle_SSE_off", null, "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_threading_off", null, "BEAGLE: turn off multi-threading for a CPU instance"),
                         new Arguments.StringOption("beagle_threading", null, new String[]{"none", "cpp", "openmp"}, false, "BEAGLE: specify threading implementation to use"),
@@ -621,6 +623,9 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_GPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+        }
+        if(arguments.hasOption("beagle_tensor_core")) {
+            beagleFlags |= BeagleFlag.VECTOR_TENSOR.getMask();
         }
         if (arguments.hasOption("beagle_cuda")) {
             beagleFlags |= BeagleFlag.FRAMEWORK_CUDA.getMask();
@@ -973,7 +978,7 @@ public class BeastMain {
             }
         }
 
-        if (inputFile != null && inputFile.getParent() != null && working) {
+        if (inputFile != null && inputFile.getParent() != null && (working || options)) {
             System.setProperty("user.dir", inputFile.getParent());
         }
 

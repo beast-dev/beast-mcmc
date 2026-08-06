@@ -107,8 +107,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
 //    private static int instanceCount = BeagleDataLikelihoodDelegate.instanceCount;
     private static List<Integer> resourceOrder = null;
-    private static List<Integer> preferredOrder = null;
-    private static List<Integer> requiredOrder = null;
+    private static List<Long> preferredOrder = null;
+    private static List<Long> requiredOrder = null;
     private static List<String> scalingOrder = null;
     private static List<Integer> extraBufferOrder = null;
 
@@ -194,10 +194,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
             }
             if (preferredOrder == null) {
-                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+                preferredOrder = parseSystemPropertyLongArray(PREFERRED_FLAGS_PROPERTY);
             }
             if (requiredOrder == null) {
-                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+                requiredOrder = parseSystemPropertyLongArray(REQUIRED_FLAGS_PROPERTY);
             }
             if (scalingOrder == null) {
                 scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
@@ -793,8 +793,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 updateAllNodes();
             }
         } else {
-
-            throw new RuntimeException("Unknown componentChangedEvent");
+            throw new RuntimeException("Unknown componentChangedEvent (" + model.getModelName() + ")");
         }
 
         super.handleModelChangedEvent(model, object, index);

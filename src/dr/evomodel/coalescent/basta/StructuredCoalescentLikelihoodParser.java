@@ -33,6 +33,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treedatalikelihood.markovjumps.MarkovJumpsParserUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -48,16 +49,14 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String TYPE = "type";
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
-    public static final String SUBINTERVALS = "subIntervals";
+    public static final String SUB_INTERVALS = "subIntervals";
     private static final String THREADS = "threads";
 
     public static final String MAP_RECONSTRUCTION = "useMAP";
-    public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
-    public static final String CONDITIONAL_PROBABILITIES_IN_LOG_SPACE = "conditionalProbabilitiesInLogSpace";
     public static final String RECONSTRUCTION_TAG = "states";
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String GROWTH_RATES = "growthRates";
-    public static final String POPSIZES = "popSizes";
+    public static final String POPULATION_SIZES = "popSizes";
     public static final String BACKWARD = "backward";
     public static final Boolean USE_OLD_CODE = false;
     private static final boolean USE_DELEGATE = true;
@@ -77,7 +76,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             includeSubtree = (TaxonList) xo.getElementFirstChild(INCLUDE);
         }
 
-        List<TaxonList> excludeSubtrees = new ArrayList<TaxonList>();
+        List<TaxonList> excludeSubtrees = new ArrayList<>();
 
         if (xo.hasChildNamed(EXCLUDE)) {
             XMLObject cxo = xo.getChild(EXCLUDE);
@@ -86,7 +85,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             }
         }
 
-        int subIntervals = xo.getAttribute(SUBINTERVALS, 1);
+        int subIntervals = xo.getAttribute(SUB_INTERVALS, 1);
 
         if (subIntervals != 1) {
             throw new XMLParseException("The number of sub-intervals currently has to be set to 1.");
@@ -94,8 +93,6 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         // Ancestral state reconstruction parameters
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
-        boolean useMarginalLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
-        boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
         String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
 
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, true);
@@ -111,12 +108,12 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         GeneralSubstitutionModel generalSubstitutionModel = (GeneralSubstitutionModel) xo.getChild(GeneralSubstitutionModel.class);
 
-        Parameter popSizes = (Parameter) xo.getElementFirstChild(POPSIZES);
+        Parameter popSizes = (Parameter) xo.getElementFirstChild(POPULATION_SIZES);
         Parameter r = xo.hasChildNamed(GROWTH_RATES) ? (Parameter) xo.getElementFirstChild(GROWTH_RATES) : null;
 
         if (r != null) {
             if (popSizes.getDimension() != r.getDimension()) {
-                throw new XMLParseException("Mismatch between popsizes and growth rates.");
+                throw new XMLParseException("Mismatch between population sizes and growth rates.");
             }
         }
 
@@ -138,6 +135,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         int threads = xo.getAttribute(THREADS, 1);
 
+        String name = xo.getId();
+
         if (treeModel != null) {
             try {
                 if (USE_OLD_CODE) {
@@ -147,18 +146,23 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                     if (USE_DELEGATE) {
                         final BastaLikelihoodDelegate delegate;
                         if (USE_BEAGLE) {
-                            delegate = new BeagleBastaLikelihoodDelegate("name", treeModel,
+                            delegate = new BeagleBastaLikelihoodDelegate(name, treeModel,
                                     generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         } else {
                             delegate = (threads != 1) ?
-                                    new ParallelBastaLikelihoodDelegate("name", treeModel,
+                                    new ParallelBastaLikelihoodDelegate(name, treeModel,
                                             generalSubstitutionModel.getDataType().getStateCount(), threads, TRANSPOSE) :
-                                    new GenericBastaLikelihoodDelegate("name", treeModel,
+                                    new GenericBastaLikelihoodDelegate(name, treeModel,
                                             generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         }
-                        return new BastaLikelihood("name", treeModel, patternList, generalSubstitutionModel,
+
+                        BastaLikelihood likelihood = new BastaLikelihood(name, treeModel, patternList, generalSubstitutionModel,
                                 popSizes, r, branchRateModel, delegate, subIntervals, useAmbiguities,
-                                dataType, tag, useMAP, useMarginalLikelihood, conditionalProbabilitiesInLogSpace);
+                                dataType, tag, useMAP);
+
+                        MarkovJumpsParserUtils.parseXMLObject(xo, treeModel, likelihood, tag);
+
+                        return likelihood;
                     } else {
                         return new FasterStructuredCoalescentLikelihood(treeModel, branchRateModel, popSizes, patternList,
                                 dataType, tag, generalSubstitutionModel, subIntervals, includeSubtree, excludeSubtrees,
@@ -191,11 +195,11 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(SUBINTERVALS, true),
+            AttributeRule.newIntegerRule(SUB_INTERVALS, true),
             AttributeRule.newIntegerRule(THREADS, true),
             AttributeRule.newBooleanRule(MAP_RECONSTRUCTION, true),
-            AttributeRule.newBooleanRule(MARGINAL_LIKELIHOOD, true),
-            AttributeRule.newBooleanRule(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, true),
+//            AttributeRule.newBooleanRule(MARGINAL_LIKELIHOOD, true),
+//            AttributeRule.newBooleanRule(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, true),
             AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             new ElementRule(PatternList.class),

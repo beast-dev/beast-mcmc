@@ -33,13 +33,12 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.coalescent.piecewise.PopulationSizeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static dr.evomodelxml.coalescent.TreeIntervalsParser.USE_FAST_INTERVALS;
 
 /**
  */

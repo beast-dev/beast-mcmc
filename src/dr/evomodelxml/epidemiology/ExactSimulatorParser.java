@@ -2,6 +2,7 @@ package dr.evomodelxml.epidemiology;
 
 import dr.evomodel.epidemiology.CompartmentalModel;
 import dr.evomodel.epidemiology.ExactSimulator;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 public class ExactSimulatorParser extends AbstractXMLObjectParser {
@@ -16,7 +17,15 @@ public class ExactSimulatorParser extends AbstractXMLObjectParser {
 
         CompartmentalModel compartmentalModel = (CompartmentalModel) xo.getChild(CompartmentalModel.class);
 
-        ExactSimulator simulator = new ExactSimulator(compartmentalModel);
+        Parameter elapsedTimeOneTrajectory = (Parameter) xo.getChild(Parameter.class);
+
+        ExactSimulator simulator;
+
+        if(elapsedTimeOneTrajectory == null){
+            simulator = new ExactSimulator(compartmentalModel);
+        }else {
+            simulator = new ExactSimulator(compartmentalModel, elapsedTimeOneTrajectory);
+        }
 
         return simulator;
     }
@@ -39,6 +48,7 @@ public class ExactSimulatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(CompartmentalModel.class),
+            new ElementRule(Parameter.class, true),
     };
 
 }

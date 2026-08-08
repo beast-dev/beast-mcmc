@@ -2,6 +2,7 @@ package dr.evomodelxml.epidemiology;
 
 import dr.evomodel.epidemiology.CompartmentalModel;
 import dr.evomodel.epidemiology.TauLeapingSimulator;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 public class TauLeapingSimulatorParser extends AbstractXMLObjectParser{
@@ -24,7 +25,15 @@ public class TauLeapingSimulatorParser extends AbstractXMLObjectParser{
 
         CompartmentalModel compartmentalModel = (CompartmentalModel) xo.getChild(CompartmentalModel.class);
 
-        TauLeapingSimulator simulator = new TauLeapingSimulator(compartmentalModel, epsilon, criticalNumber);
+        Parameter elapsedTimeOneTrajectory = (Parameter) xo.getChild(Parameter.class);
+
+        TauLeapingSimulator simulator;
+
+        if(elapsedTimeOneTrajectory == null) {
+            simulator = new TauLeapingSimulator(compartmentalModel, epsilon, criticalNumber);
+        }else{
+            simulator = new TauLeapingSimulator(compartmentalModel, epsilon, criticalNumber, elapsedTimeOneTrajectory);
+        }
 
         return simulator;
     }

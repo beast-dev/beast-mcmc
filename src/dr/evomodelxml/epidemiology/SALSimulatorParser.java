@@ -3,6 +3,7 @@ package dr.evomodelxml.epidemiology;
 import dr.evomodel.epidemiology.CompartmentalModel;
 import dr.evomodel.epidemiology.SALSimulator;
 import dr.evomodel.epidemiology.TauLeapingSimulator;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 public class SALSimulatorParser extends AbstractXMLObjectParser {
@@ -25,7 +26,15 @@ public class SALSimulatorParser extends AbstractXMLObjectParser {
 
         CompartmentalModel compartmentalModel = (CompartmentalModel) xo.getChild(CompartmentalModel.class);
 
-        SALSimulator simulator = new SALSimulator(compartmentalModel, epsilon, criticalNumber);
+        Parameter elapsedTimeOneTrajectory = (Parameter) xo.getChild(Parameter.class);
+
+        SALSimulator simulator;
+
+        if(elapsedTimeOneTrajectory == null) {
+            simulator = new SALSimulator(compartmentalModel, epsilon, criticalNumber);
+        }else{
+            simulator = new SALSimulator(compartmentalModel, epsilon, criticalNumber, elapsedTimeOneTrajectory);
+        }
 
         return simulator;
     }

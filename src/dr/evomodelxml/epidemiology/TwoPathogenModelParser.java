@@ -21,7 +21,7 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     public static final String RESUSCEPTIBILITY_RATE_TWO = "resusRateTwo";
     public static final String INFECTION_RATE_MODULATION_I = "infectionRateModulationI";
     public static final String INFECTION_RATE_MODULATION_C = "infectionRateModulationC";
-    public static final String RECOVERY_RATE_MODULATION = "recoveryRateModulation";
+    public static final String INFECTION_RATE_MODULATION_R = "infectionRateModulationR";
     public static final String NUM_SS = "numSS";
     public static final String NUM_SI = "numSI";
     public static final String NUM_SC = "numSC";
@@ -81,7 +81,7 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
 
         rateParams.add((Parameter) xo.getChild(INFECTION_RATE_MODULATION_C).getChild(Parameter.class));
 
-        rateParams.add((Parameter) xo.getChild(RECOVERY_RATE_MODULATION).getChild(Parameter.class));
+        rateParams.add((Parameter) xo.getChild(INFECTION_RATE_MODULATION_R).getChild(Parameter.class));
 
         final Parameter numGridPoints = (Parameter) xo.getChild(NUM_GRID_POINTS).getChild(Parameter.class);
 

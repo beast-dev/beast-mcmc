@@ -1,7 +1,7 @@
 /*
  * Arguments.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -147,6 +147,30 @@ public class Arguments {
         long maxValue = Long.MAX_VALUE;
 
         long value = 0;
+    }
+
+    public static class LongArrayOption extends LongOption {
+
+        public LongArrayOption(String label, String shortLabel, String description) {
+            this(label, shortLabel, Long.MIN_VALUE, Long.MAX_VALUE, description);
+        }
+
+        public LongArrayOption(String label, String shortLabel, int count, String description) {
+            this(label, shortLabel, count, Long.MIN_VALUE, Long.MAX_VALUE, description);
+        }
+
+        public LongArrayOption(String label, String shortLabel, long minValue, long maxValue, String description) {
+            this(label, shortLabel, 0, minValue, maxValue, description);
+        }
+
+        public LongArrayOption(String label, String shortLabel, int count, long minValue, long maxValue, String description) {
+            super(label, shortLabel, minValue, maxValue, description);
+            this.count = count;
+        }
+
+        int count;
+
+        long[] values = null;
     }
 
     public static class RealOption extends Option {
@@ -331,6 +355,50 @@ public class Arguments {
                     if (o.value > o.maxValue || o.value < o.minValue) {
                         throw new ArgumentException("Argument, " + arguments[index] +
                                 " has a bad integer value: " + arg);
+                    }
+                } else if (option instanceof LongArrayOption) {
+
+                    LongArrayOption o = (LongArrayOption) option;
+                    o.values = new long[o.count];
+                    int k = index;
+                    int j = 0;
+
+                    while (j < o.count) {
+                        if (!arg.isEmpty()) {
+                            StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
+                            while (tokenizer.hasMoreTokens()) {
+                                String token = tokenizer.nextToken();
+                                if (!token.isEmpty()) {
+                                    try {
+                                        o.values[j] = Long.parseLong(token);
+                                    } catch (NumberFormatException nfe) {
+                                        throw new ArgumentException("Argument, " + arguments[index] +
+                                                " has a bad long value: " + token);
+                                    }
+                                    if (o.values[j] > o.maxValue || o.values[j] < o.minValue) {
+                                        throw new ArgumentException("Argument, " + arguments[index] +
+                                                " has a bad long value: " + token);
+                                    }
+                                    j++;
+                                }
+                            }
+                        }
+
+                        k++;
+
+                        if (j < o.count) {
+                            if (k >= arguments.length) {
+                                throw new ArgumentException("Argument, " + arguments[index] +
+                                        " is missing one or more values: expecting " + o.count + " longs");
+                            }
+
+                            if (optionIndex[k] != -1) {
+                                throw new ArgumentException("Argument, " + arguments[index] + " overlaps with another argument");
+                            }
+
+                            arg = arguments[k];
+                            optionIndex[k] = i;
+                        }
                     }
                 } else if (option instanceof LongOption) {
 

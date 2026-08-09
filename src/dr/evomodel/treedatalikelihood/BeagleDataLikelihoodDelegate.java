@@ -1,7 +1,7 @@
 /*
  * BeagleDataLikelihoodDelegate.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -367,12 +367,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 }
             }
 
-//            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
-//                // if single precision not explicitly set then prefer double
-//                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-//            }
-
-//            requirementFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+            //TODO why was this commented out (in main)?
+            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
+                // if single precision not explicitly set then prefer double
+                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+            } else {
+                requirementFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+            }
 
             if (evolutionaryProcessDelegate.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();

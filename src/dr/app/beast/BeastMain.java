@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright © 2002-2025 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -418,6 +418,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("beagle_threads", "bt", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
                         new Arguments.Option("beagle_basta_threading_off", null, "BEAGLE-BIT: turn off multi-threading for a CPU instance"),
                         new Arguments.IntegerOption("beagle_basta_threads", null, 0, Integer.MAX_VALUE, "BEAGLE-BIT: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.StringOption("beagle_flags", "bf", "flags", "BEAGLE: set long flags"),
                         new Arguments.Option("beagle_cuda", null, "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", null, "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
@@ -1005,8 +1006,13 @@ public class BeastMain {
         additionalParsers.add("beagle");
 
         if (beagleFlags != 0) {
-            System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
-
+            //overrides previous command-line or GUI settings
+            //TODO come up with something better
+            if (arguments.hasOption("beagle_flags")) {
+                System.setProperty("beagle.preferred.flags", arguments.getStringOption("beagle_flags"));
+            } else {
+                System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
+            }
         }
 
         if (threadCount >= 0) {

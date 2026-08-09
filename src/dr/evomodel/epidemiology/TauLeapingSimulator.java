@@ -65,6 +65,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         elapsedTime.setParameterValue(0, elapsedTimeInSeconds);
     }
 
+    /*
     private SimulationState initializeSimulation(double T) {
 
         int nextRecordIndex = numGridPoints-1;
@@ -102,7 +103,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
 
         return state;
     }
-
+    */
 
     // A full run through Steps 1 - 6 of algorithm described in Cao et al. paper
     private void runOneLeapingIteration(SimulationState state, List<Integer> critical, List<Integer> noncritical) {
@@ -214,6 +215,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         return tauPrime;
     }
 
+    /*
     private double sumIntensities(double[] reactionInt) {
         double r0 = 0;
         for (int c = 0; c < numReactionChannels; c++) {
@@ -221,6 +223,8 @@ public class TauLeapingSimulator extends StochasticSimulator {
         }
         return r0;
     }
+    */
+
 
     // Checks if tauPrime is less than some small multiple (default 10) of 1/r0
     private boolean isTauPrimeTooSmall(double tauPrime, double r0, double multiple) {
@@ -274,6 +278,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         }
     }
 
+    /*
     private void recordCompartmentCountsUpTo(SimulationState state, double candidateTime) {
         while (candidateTime > state.nextIntervalStartTime && state.nextRecordIndex >= 0) {
             for (int s = 0; s < numSpecies; s++) {
@@ -283,6 +288,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
             state.nextIntervalStartTime = state.nextIntervalStartTime + intervalWidth;
         }
     }
+    */
 
     private void classifyReactions(SimulationState state, List<Integer> critical, List<Integer> noncritical) {
         critical.clear();
@@ -996,6 +1002,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         return invalidCountsCount;
     }
 
+    /*
     private static class SimulationState {
 
         // Time for forward time stochastic simulation. Will start at 0.0 simulate for total time of T.
@@ -1023,6 +1030,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         // exhausting one of its reactants
         double[] maxFiringTimes;
     }
+    */
 
     private static class LeapResult {
         // updated tau of successful tau leap
@@ -1059,7 +1067,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
     private static class StepSixResult {
         // new tauPrime computed, then return to Step 3 and evaluate
         double newTauPrime;
-        // return to Step 1 if we tau leap was successful and we need to continue simulation
+        // return to Step 1 if the tau leap was successful and we need to continue simulation
         boolean returnToStepOne;
     }
 

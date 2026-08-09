@@ -24,6 +24,8 @@ public class ExactSimulator extends StochasticSimulator {
 
         SimulationState state = initializeSimulation(T);
 
+        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts);
+
         while (state.nextRecordIndex >= 0) {
             runOneSSAStep(state);
         }
@@ -34,6 +36,7 @@ public class ExactSimulator extends StochasticSimulator {
         elapsedTime.setParameterValue(0, elapsedTimeInSeconds);
     }
 
+    /*
     private SimulationState initializeSimulation(double T) {
 
         int nextRecordIndex = numGridPoints-1;
@@ -48,10 +51,21 @@ public class ExactSimulator extends StochasticSimulator {
         compartmentalModel.setOriginTimeCompartmentCounts(nextRecordIndex);
 
         SimulationState state = new SimulationState();
-        state.simulationTime = 0.0;
-        state.nextIntervalStartTime = T-nextRecordIndex * intervalWidth;
 
+        // Initialize time for forward time stochastic simulation. Start at 0.0 simulate for total time of T.
+        // simulationTime = 0.0 corresponds to time of origin
+        // model time is "backward time" that increases into past, but simulation time is "forward time"
+        state.simulationTime = 0.0;
+
+        // start time (in forward time) of next interval that needs to have compartment counts set
+        // index of this interval will correspond to nextRecordIndex
+        // set compartment counts for this interval to whatever simulated values are at nextIntervalStartTime
+        state.nextIntervalStartTime = T-nextRecordIndex * intervalWidth;
+        // from now on, increase nextIntervalStartTime by simply adding intervalWidth
+
+        // keep track of current compartment counts (needed for simulation)
         state.currentCounts = new double[numSpecies];
+
         for (int s = 0; s < numSpecies; s++) {
             state.currentCounts[s] = compartmentalModel.compartmentCounts.get(s).getParameterValue(nextRecordIndex);
         }
@@ -62,7 +76,7 @@ public class ExactSimulator extends StochasticSimulator {
 
         return state;
     }
-
+    */
 
     private void runOneSSAStep(SimulationState state) {
 
@@ -86,6 +100,7 @@ public class ExactSimulator extends StochasticSimulator {
         state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts);
     }
 
+    /*
     private double sumIntensities(double[] reactionInt) {
         double r0 = 0;
         for (int c = 0; c < numReactionChannels; c++) {
@@ -93,7 +108,9 @@ public class ExactSimulator extends StochasticSimulator {
         }
         return r0;
     }
+    */
 
+    /*
     private void recordCompartmentCountsUpTo(SimulationState state, double candidateTime) {
         while (candidateTime > state.nextIntervalStartTime && state.nextRecordIndex >= 0) {
             for (int s = 0; s < numSpecies; s++) {
@@ -103,7 +120,7 @@ public class ExactSimulator extends StochasticSimulator {
             state.nextIntervalStartTime = state.nextIntervalStartTime + intervalWidth;
         }
     }
-
+    */
 
     /*
     public void simulateTrajectory() {
@@ -194,7 +211,7 @@ public class ExactSimulator extends StochasticSimulator {
     }
     */
 
-
+    /*
     private static class SimulationState {
 
         // Time for forward time stochastic simulation. Start at 0.0 simulate for total time of T.
@@ -218,5 +235,5 @@ public class ExactSimulator extends StochasticSimulator {
         // reaction intensities
         double[] reactionInt;
     }
-
+    */
 }

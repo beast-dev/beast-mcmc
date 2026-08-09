@@ -436,22 +436,22 @@ public class TwoPathogenModel extends CompartmentalModel {
 
     protected double[] getCompartmentDerivatives(double[] currentCounts){
         double[] returnVec = new double[numReactionChannels];
-        double SS = currentCounts[0];
-        double SI = currentCounts[1];
-        double SC = currentCounts[2];
-        double SR = currentCounts[3];
-        double IS = currentCounts[4];
-        double II = currentCounts[5];
-        double IC = currentCounts[6];
-        double IR = currentCounts[7];
-        double CS = currentCounts[8];
-        double CI = currentCounts[9];
-        double CC = currentCounts[10];
-        double CR = currentCounts[11];
-        double RS = currentCounts[12];
-        double RI = currentCounts[13];
-        double RC = currentCounts[14];
-        double RR = currentCounts[15];
+        double numSS = currentCounts[0];
+        double numSI = currentCounts[1];
+        double numSC = currentCounts[2];
+        double numSR = currentCounts[3];
+        double numIS = currentCounts[4];
+        double numII = currentCounts[5];
+        double numIC = currentCounts[6];
+        double numIR = currentCounts[7];
+        double numCS = currentCounts[8];
+        double numCI = currentCounts[9];
+        double numCC = currentCounts[10];
+        double numCR = currentCounts[11];
+        double numRS = currentCounts[12];
+        double numRI = currentCounts[13];
+        double numRC = currentCounts[14];
+        double numRR = currentCounts[15];
 
         double transRateOne = rateParameters.get(0).getParameterValue(0);
         double moveToCRateOne = rateParameters.get(1).getParameterValue(0);
@@ -465,40 +465,59 @@ public class TwoPathogenModel extends CompartmentalModel {
         // such as infectionRateModulationI, infectionRateModulationC, recoveryRateModulation
         double infectionRateModulationI = rateParameters.get(10).getParameterValue(0);
         double infectionRateModulationC = rateParameters.get(11).getParameterValue(0);
-        double recoveryRateModulation = rateParameters.get(12).getParameterValue(0);
+        double infectionRateModulationR = rateParameters.get(12).getParameterValue(0);
 
         // SS
-        returnVec[0] = -transRateOne*SS*(IS + II + IR + IC) - transRateTwo*SS*(SI + II + CI + RI) + resusRateOne*RS + resusRateTwo*SR;
+        returnVec[0] = -transRateOne*numSS*(numIS + numII + numIR + numIC)
+                - transRateTwo*numSS*(numSI + numII + numCI + numRI)
+                + resusRateOne*numRS + resusRateTwo*numSR;
         // SI
-        returnVec[1] = -infectionRateModulationI*transRateOne*SI*(IS + II + IC + IR) + resusRateOne*RI + transRateTwo*SS*(SI + II + CI + RI) - moveToCRateTwo*SI;
+        returnVec[1] = -infectionRateModulationI*transRateOne*numSI*(numIS + numII + numIC + numIR)
+                + resusRateOne*numRI
+                + transRateTwo*numSS*(numSI + numII + numCI + numRI) - moveToCRateTwo*numSI;
         // SC
-        returnVec[2] = -infectionRateModulationC*transRateOne*SC*(IS + II + IC + IR) + resusRateOne*RC + moveToCRateTwo*SI - moveToRRateTwo*SC;
+        returnVec[2] = -infectionRateModulationC*transRateOne*numSC*(numIS + numII + numIC + numIR)
+                + resusRateOne*numRC
+                + moveToCRateTwo*numSI - moveToRRateTwo*numSC;
         // SR
-        returnVec[3] = -transRateOne*SR*(IS + II + IC + IR) + resusRateOne*RR - resusRateTwo*SR + moveToRRateTwo;
+        returnVec[3] = -transRateOne*numSR*(numIS + numII + numIC + numIR)
+                + resusRateOne*numRR - resusRateTwo*numSR
+                + moveToRRateTwo;
         // IS
-        returnVec[4] = -infectionRateModulationI*transRateTwo*IS*(SI + II + CI + RI) + resusRateTwo*IR + transRateOne*SS*(IS + II + IC + IR) - moveToCRateOne;
+        returnVec[4] = -infectionRateModulationI*transRateTwo*numIS*(numSI + numII + numCI + numRI)
+                + resusRateTwo*numIR
+                + transRateOne*numSS*(numIS + numII + numIC + numIR) - moveToCRateOne;
         // II
-        returnVec[5] = infectionRateModulationI*transRateOne*SI*(IS + II + CI + RI) - recoveryRateModulation* moveToCRateOne*II + infectionRateModulationI*transRateTwo*IS*(SI + II + CI + RI) - recoveryRateModulation*moveToCRateTwo*II;
+        returnVec[5] = infectionRateModulationI*transRateOne*numSI*(numIS + numII + numCI + numRI)
+                - infectionRateModulationR* moveToCRateOne*numII
+                + infectionRateModulationI*transRateTwo*numIS*(numSI + numII + numCI + numRI)
+                - infectionRateModulationR*moveToCRateTwo*numII;
         // IC
-        returnVec[6] = infectionRateModulationC*transRateTwo*SC*(IS + II + IC + IR) - moveToCRateOne*IC + recoveryRateModulation* moveToCRateTwo*II - moveToRRateTwo*IC;
+        returnVec[6] = infectionRateModulationC*transRateTwo*numSC*(numIS + numII + numIC + numIR)
+                - moveToCRateOne*numIC + infectionRateModulationR*moveToCRateTwo*numII - moveToRRateTwo*numIC;
         // IR
-        returnVec[7] = transRateOne*SR*(IS + II + IC + IR) - moveToCRateOne*IR + moveToRRateTwo*IC - resusRateTwo*IR;
+        returnVec[7] = transRateOne*numSR*(numIS + numII + numIC + numIR)
+                - moveToCRateOne*numIR + moveToRRateTwo*numIC - resusRateTwo*numIR;
         // CS
-        returnVec[8] = -infectionRateModulationC*transRateTwo*CS*(SI + II + CI + RI) + resusRateTwo*CR + moveToCRateOne*IS - moveToRRateOne*CS;
+        returnVec[8] = -infectionRateModulationC*transRateTwo*numCS*(numSI + numII + numCI + numRI)
+                + resusRateTwo*numCR + moveToCRateOne*numIS - moveToRRateOne*numCS;
         // CI
-        returnVec[9] = infectionRateModulationC*transRateTwo*CS*(SI + II + CI + RI) - moveToCRateTwo*CI + recoveryRateModulation*moveToCRateOne*II - moveToRRateOne*CI;
+        returnVec[9] = infectionRateModulationC*transRateTwo*numCS*(numSI + numII + numCI + numRI)
+                - moveToCRateTwo*numCI + infectionRateModulationR*moveToCRateOne*numII - moveToRRateOne*numCI;
         // CC
-        returnVec[10] = moveToCRateOne*IC - moveToRRateOne*CC + moveToCRateTwo*CI - moveToRRateTwo*CC;
+        returnVec[10] = moveToCRateOne*numIC - moveToRRateOne*numCC + moveToCRateTwo*numCI - moveToRRateTwo*numCC;
         // CR
-        returnVec[11] = moveToCRateOne*IR - moveToRRateOne*CR + moveToRRateTwo*CC - resusRateTwo*CR;
+        returnVec[11] = moveToCRateOne*numIR - moveToRRateOne*numCR + moveToRRateTwo*numCC - resusRateTwo*numCR;
         // RS
-        returnVec[12] = -transRateTwo*RS*(SI + II + CI + RI) + resusRateTwo*RR - resusRateOne*RS + moveToRRateOne*CS;
+        returnVec[12] = -transRateTwo*numRS*(numSI + numII + numCI + numRI)
+                + resusRateTwo*numRR - resusRateOne*numRS + moveToRRateOne*numCS;
         // RI
-        returnVec[13] = transRateTwo*RS*(SI + II + CI + RI) - moveToCRateTwo*RI + moveToRRateOne*CI - resusRateOne*RI;
+        returnVec[13] = transRateTwo*numRS*(numSI + numII + numCI + numRI)
+                - moveToCRateTwo*numRI + moveToRRateOne*numCI - resusRateOne*numRI;
         // RC
-        returnVec[14] = moveToCRateTwo*RI - moveToRRateTwo*RC + moveToRRateOne*CC - resusRateOne*RC;
+        returnVec[14] = moveToCRateTwo*numRI - moveToRRateTwo*numRC + moveToRRateOne*numCC - resusRateOne*numRC;
         // RR
-        returnVec[15] = moveToRRateOne*CR - resusRateOne*RR + moveToRRateTwo*RC - resusRateTwo*RR;
+        returnVec[15] = moveToRRateOne*numCR - resusRateOne*numRR + moveToRRateTwo*numRC - resusRateTwo*numRR;
         return returnVec;
     }
 
@@ -525,22 +544,22 @@ public class TwoPathogenModel extends CompartmentalModel {
         double dRR = timeDerivatives[15];
 
         // compartment counts
-        double SS = currentCounts[0];
-        double SI = currentCounts[1];
-        double SC = currentCounts[2];
-        double SR = currentCounts[3];
-        double IS = currentCounts[4];
-        double II = currentCounts[5];
-        double IC = currentCounts[6];
-        double IR = currentCounts[7];
-        double CS = currentCounts[8];
-        double CI = currentCounts[9];
-        double CC = currentCounts[10];
-        double CR = currentCounts[11];
-        double RS = currentCounts[12];
-        double RI = currentCounts[13];
-        double RC = currentCounts[14];
-        double RR = currentCounts[15];
+        double numSS = currentCounts[0];
+        double numSI = currentCounts[1];
+        double numSC = currentCounts[2];
+        double numSR = currentCounts[3];
+        double numIS = currentCounts[4];
+        double numII = currentCounts[5];
+        double numIC = currentCounts[6];
+        double numIR = currentCounts[7];
+        double numCS = currentCounts[8];
+        double numCI = currentCounts[9];
+        double numCC = currentCounts[10];
+        double numCR = currentCounts[11];
+        double numRS = currentCounts[12];
+        double numRI = currentCounts[13];
+        double numRC = currentCounts[14];
+        double numRR = currentCounts[15];
 
         double transRateOne = rateParameters.get(0).getParameterValue(0);
         double moveToCRateOne = rateParameters.get(1).getParameterValue(0);
@@ -554,50 +573,50 @@ public class TwoPathogenModel extends CompartmentalModel {
         // such as infectionRateModulationI, infectionRateModulationC, recoveryRateModulation
         double infectionRateModulationI = rateParameters.get(10).getParameterValue(0);
         double infectionRateModulationC = rateParameters.get(11).getParameterValue(0);
-        double recoveryRateModulation = rateParameters.get(12).getParameterValue(0);
+        double infectionRateModulationR = rateParameters.get(12).getParameterValue(0);
 
         // SS to IS
-        returnVec[0] = transRateOne*dSS*IS + transRateOne*SS*dIS;
-        returnVec[1] = transRateOne*dSS*II + transRateOne*SS*dII;
-        returnVec[2] = transRateOne*dSS*IC + transRateOne*SS*dIC;
-        returnVec[3] = transRateOne*dSS*IR + transRateOne*SS*dIR;
+        returnVec[0] = transRateOne*dSS*numIS + transRateOne*numSS*dIS;
+        returnVec[1] = transRateOne*dSS*numII + transRateOne*numSS*dII;
+        returnVec[2] = transRateOne*dSS*numIC + transRateOne*numSS*dIC;
+        returnVec[3] = transRateOne*dSS*numIR + transRateOne*numSS*dIR;
         // SS to SI
-        returnVec[4] = transRateTwo*dSS*SI + transRateTwo*SS*dSI;
-        returnVec[5] = transRateTwo*dSS*II + transRateTwo*SS*dII;
-        returnVec[6] = transRateTwo*dSS*CI + transRateTwo*SS*dCI;
-        returnVec[7] = transRateTwo*dSS*RI + transRateTwo*SS*dRI;
+        returnVec[4] = transRateTwo*dSS*numSI + transRateTwo*numSS*dSI;
+        returnVec[5] = transRateTwo*dSS*numII + transRateTwo*numSS*dII;
+        returnVec[6] = transRateTwo*dSS*numCI + transRateTwo*numSS*dCI;
+        returnVec[7] = transRateTwo*dSS*numRI + transRateTwo*numSS*dRI;
         // SI to II
-        returnVec[8] = infectionRateModulationI*transRateOne*dSI*IS + infectionRateModulationI*transRateOne*SI*dIS;
-        returnVec[9] = infectionRateModulationI*transRateOne*dSI*II + infectionRateModulationI*transRateOne*SI*dII;
-        returnVec[10] = infectionRateModulationI*transRateOne*dSI*IC + infectionRateModulationI*transRateOne*SI*dIC;
-        returnVec[11] = infectionRateModulationI*transRateOne*dSI*IR + infectionRateModulationI*transRateOne*SI*dIR;
+        returnVec[8] = infectionRateModulationI*transRateOne*dSI*numIS + infectionRateModulationI*transRateOne*numSI*dIS;
+        returnVec[9] = infectionRateModulationI*transRateOne*dSI*numII + infectionRateModulationI*transRateOne*numSI*dII;
+        returnVec[10] = infectionRateModulationI*transRateOne*dSI*numIC + infectionRateModulationI*transRateOne*numSI*dIC;
+        returnVec[11] = infectionRateModulationI*transRateOne*dSI*numIR + infectionRateModulationI*transRateOne*numSI*dIR;
         // SI to SC
         returnVec[12] = moveToCRateTwo*dSI;
         // SC to IC
-        returnVec[13] = infectionRateModulationC*transRateOne*dSC*IS + infectionRateModulationC*transRateOne*SC*dIS;
-        returnVec[14] = infectionRateModulationC*transRateOne*dSC*II + infectionRateModulationC*transRateOne*SC*dII;
-        returnVec[15] = infectionRateModulationC*transRateOne*dSC*IC + infectionRateModulationC*transRateOne*SC*dIC;
-        returnVec[16] = infectionRateModulationC*transRateOne*dSC*IR + infectionRateModulationC*transRateOne*SC*dIR;
+        returnVec[13] = infectionRateModulationC*transRateOne*dSC*numIS + infectionRateModulationC*transRateOne*numSC*dIS;
+        returnVec[14] = infectionRateModulationC*transRateOne*dSC*numII + infectionRateModulationC*transRateOne*numSC*dII;
+        returnVec[15] = infectionRateModulationC*transRateOne*dSC*numIC + infectionRateModulationC*transRateOne*numSC*dIC;
+        returnVec[16] = infectionRateModulationC*transRateOne*dSC*numIR + infectionRateModulationC*transRateOne*numSC*dIR;
         // SC to SR
         returnVec[17] = moveToRRateTwo*dSC;
         // SR to IR
-        returnVec[18] = transRateOne*dSR*IS + transRateOne*SR*dIS;
-        returnVec[19] = transRateOne*dSR*II + transRateOne*SR*dII;
-        returnVec[20] = transRateOne*dSR*IC + transRateOne*SR*dIC;
-        returnVec[21] = transRateOne*dSR*IR + transRateOne*SR*dIR;
+        returnVec[18] = transRateOne*dSR*numIS + transRateOne*numSR*dIS;
+        returnVec[19] = transRateOne*dSR*numII + transRateOne*numSR*dII;
+        returnVec[20] = transRateOne*dSR*numIC + transRateOne*numSR*dIC;
+        returnVec[21] = transRateOne*dSR*numIR + transRateOne*numSR*dIR;
         // SR to SS
         returnVec[22] = resusRateTwo*dSR;
         // IS to CS
         returnVec[23] = moveToCRateOne*dIS;
         // IS to II
-        returnVec[24] = infectionRateModulationI*transRateTwo*dIS*SI + infectionRateModulationI*transRateTwo*IS*dSI;
-        returnVec[25] = infectionRateModulationI*transRateTwo*dIS*II + infectionRateModulationI*transRateTwo*IS*dII;
-        returnVec[26] = infectionRateModulationI*transRateTwo*dIS*CI + infectionRateModulationI*transRateTwo*IS*dCI;
-        returnVec[27] = infectionRateModulationI*transRateTwo*dIS*RI + infectionRateModulationI*transRateTwo*IS*dRI;
+        returnVec[24] = infectionRateModulationI*transRateTwo*dIS*numSI + infectionRateModulationI*transRateTwo*numIS*dSI;
+        returnVec[25] = infectionRateModulationI*transRateTwo*dIS*numII + infectionRateModulationI*transRateTwo*numIS*dII;
+        returnVec[26] = infectionRateModulationI*transRateTwo*dIS*numCI + infectionRateModulationI*transRateTwo*numIS*dCI;
+        returnVec[27] = infectionRateModulationI*transRateTwo*dIS*numRI + infectionRateModulationI*transRateTwo*numIS*dRI;
         // II to CI
-        returnVec[28] = recoveryRateModulation*moveToCRateOne*dII;
+        returnVec[28] = infectionRateModulationR*moveToCRateOne*dII;
         // II to IC
-        returnVec[29] = recoveryRateModulation*moveToCRateTwo*dII;
+        returnVec[29] = infectionRateModulationR*moveToCRateTwo*dII;
         // IC to CC
         returnVec[30] = moveToCRateOne*dIC;
         // IC to IR
@@ -609,10 +628,10 @@ public class TwoPathogenModel extends CompartmentalModel {
         // CS to RS
         returnVec[34] = moveToRRateOne*dCS;
         // CS to CI
-        returnVec[35] = infectionRateModulationC*transRateTwo*dCS*SI + infectionRateModulationC*transRateTwo*CS*dSI;
-        returnVec[36] = infectionRateModulationC*transRateTwo*dCS*II + infectionRateModulationC*transRateTwo*CS*dII;
-        returnVec[37] = infectionRateModulationC*transRateTwo*dCS*CI + infectionRateModulationC*transRateTwo*CS*dCI;
-        returnVec[38] = infectionRateModulationC*transRateTwo*dCS*RI + infectionRateModulationC*transRateTwo*CS*dRI;
+        returnVec[35] = infectionRateModulationC*transRateTwo*dCS*numSI + infectionRateModulationC*transRateTwo*numCS*dSI;
+        returnVec[36] = infectionRateModulationC*transRateTwo*dCS*numII + infectionRateModulationC*transRateTwo*numCS*dII;
+        returnVec[37] = infectionRateModulationC*transRateTwo*dCS*numCI + infectionRateModulationC*transRateTwo*numCS*dCI;
+        returnVec[38] = infectionRateModulationC*transRateTwo*dCS*numRI + infectionRateModulationC*transRateTwo*numCS*dRI;
         // CI to RI
         returnVec[39] = moveToRRateOne*dCI;
         // CI to CC
@@ -628,10 +647,10 @@ public class TwoPathogenModel extends CompartmentalModel {
         // RS to SS
         returnVec[45] = resusRateOne*dRS;
         // RS to RI
-        returnVec[46] = transRateTwo*dRS*SI + transRateTwo*RS*dSI;
-        returnVec[47] = transRateTwo*dRS*II + transRateTwo*RS*dII;
-        returnVec[48] = transRateTwo*dRS*CI + transRateTwo*RS*dCI;
-        returnVec[49] = transRateTwo*dRS*RI + transRateTwo*RS*dRI;
+        returnVec[46] = transRateTwo*dRS*numSI + transRateTwo*numRS*dSI;
+        returnVec[47] = transRateTwo*dRS*numII + transRateTwo*numRS*dII;
+        returnVec[48] = transRateTwo*dRS*numCI + transRateTwo*numRS*dCI;
+        returnVec[49] = transRateTwo*dRS*numRI + transRateTwo*numRS*dRI;
         // RI to SI
         returnVec[50] = resusRateOne*dRI;
         // RI to RC
@@ -669,7 +688,6 @@ public class TwoPathogenModel extends CompartmentalModel {
     // countsNew has each rxn
     protected double[] getUpdatedCompartmentCounts(double[] currentCounts, double[] countsNew){
         //throw new RuntimeException("getUpdatedCompartmentCounts is definitely being called");
-
 
         double[] updatedCounts = new double[numSpecies];
         // SS(t+tau) = SS(t) - rxn0 - rxn1 - rxn2 - rxn3 - rxn4 - rxn5 - rxn6 - rxn7 + rxn22 + rxn45

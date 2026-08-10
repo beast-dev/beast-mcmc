@@ -379,6 +379,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeCloseTag(ROOT_FREQUENCIES);
 
             writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD, new Attribute[] {
+                    new Attribute.Default<String>(XMLParser.ID, prefix + GeneralizedLinearModelParser.GLM_LIKELIHOOD),
                     new Attribute.Default<String>("family", "logLinear"),
                     new Attribute.Default<String>("checkIdentifiability", "true")
             });

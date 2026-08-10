@@ -58,7 +58,7 @@ public class NexusExporter implements TreeExporter {
     private final boolean useNumericalTaxa;
     private final AttributeType writeAttributesAs;
     public static final String DEFAULT_TREE_PREFIX = "TREE";
-    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.\\(\\);,\"\'].*";
 
     public enum AttributeType {
         NODE_ATTRIBUTES,

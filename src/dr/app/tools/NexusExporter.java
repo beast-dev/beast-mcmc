@@ -285,7 +285,11 @@ public class NexusExporter implements TreeExporter {
                 }
                 out.print(k);
             } else {
-                out.print(tree.getTaxonId(k - 1));
+                String name = tree.getTaxonId(k - 1);
+                if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                    name = "'" + name + "'";
+                }
+                out.print(name);
             }
 
         } else {

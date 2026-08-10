@@ -7,6 +7,8 @@ import java.util.List;
 public class TwoPathogenModel extends CompartmentalModel {
 
     protected Parameter originTimeNumSS;
+    protected double originTimeNumSI;
+    protected double originTimeNumIS;
     // keep track of introduction of "younger" pathogen
     private boolean secondPathogenIntroduced = false;
 
@@ -16,6 +18,8 @@ public class TwoPathogenModel extends CompartmentalModel {
             Parameter originOne,
             Parameter originTwo,
             Parameter originTimeNumSS,
+            double originTimeNumSI,
+            double originTimeNumIS,
             int numReactionChannels,
             int numGridPoints,
             double cutOff) {
@@ -35,6 +39,8 @@ public class TwoPathogenModel extends CompartmentalModel {
         addVariable(originTwo);
         this.originTimeNumSS = originTimeNumSS;
         addVariable(originTimeNumSS);
+        this.originTimeNumSI = originTimeNumSI;
+        this.originTimeNumIS = originTimeNumIS;
         this.numGridPoints = numGridPoints;
         this.cutOff = cutOff;
         this.numReactionChannels = numReactionChannels;
@@ -48,30 +54,32 @@ public class TwoPathogenModel extends CompartmentalModel {
         double origOne = originOne.getParameterValue(0);
         double origTwo = originTwo.getParameterValue(0);
         double originTimeSS = originTimeNumSS.getParameterValue(0);
+        double originTimeSI = originTimeNumSI;
+        double originTimeIS = originTimeNumIS;
 
         // initialize everything to 0
         for (int i = 0; i < compartmentCounts.size(); i++) {
             compartmentCounts.get(i).setParameterValue(index, 0);
         }
 
-        // total compartment counts should be originTimeSS + 1 for the the infected individual?
         // SS = originTimeSS
         compartmentCounts.get(0).setParameterValue(index, originTimeSS);
 
         if (origOne > origTwo) {
             // pathogen 1 is older, start in IS
-            compartmentCounts.get(4).setParameterValue(index, 1);
+            compartmentCounts.get(4).setParameterValue(index, originTimeIS);
+            // total compartment counts at origin time should be originTimeSS + originTimeIS
         } else if (origTwo > origOne) {
             // pathogen 2 is older, start in SI
-            compartmentCounts.get(1).setParameterValue(index, 1);
+            compartmentCounts.get(1).setParameterValue(index, originTimeSI);
+            // total compartment counts at origin time should be originTimeSS + originTimeSI
         } else {
             // no need to "introduce" second pathogen while doing forward time simulation
             secondPathogenIntroduced = true;
             // origins equal
-            // choose whichever convention you want
-            compartmentCounts.get(1).setParameterValue(index, 1); // SI
-            compartmentCounts.get(4).setParameterValue(index, 1); // IS
-            compartmentCounts.get(0).setParameterValue(index, originTimeSS - 1); // starting with two sick
+            compartmentCounts.get(1).setParameterValue(index, originTimeSI); // SI
+            compartmentCounts.get(4).setParameterValue(index, originTimeIS); // IS
+            // total compartment counts at origin time should be originTimeSS + originTimeIS + originTimeSI
         }
     }
 
@@ -88,7 +96,7 @@ public class TwoPathogenModel extends CompartmentalModel {
             compartmentCounts.get(i).setParameterValue(index, 50);
         }
 
-        // total compartment counts should be originTimeSS + 1 for the the infected individual?
+        // total compartment counts should be originTimeSS + 1 for the infected individual?
         // SS = originTimeSS
         compartmentCounts.get(0).setParameterValue(index, originTimeSS);
 
@@ -111,12 +119,35 @@ public class TwoPathogenModel extends CompartmentalModel {
     */
 
     protected void setDefaultCompartmentCounts(int index){
+        double origOne = originOne.getParameterValue(0);
+        double origTwo = originTwo.getParameterValue(0);
+        double originTimeSS = originTimeNumSS.getParameterValue(0);
+        double originTimeSI = originTimeNumSI;
+        double originTimeIS = originTimeNumIS;
+
         // initialize everything to 0
         for (int i = 0; i < compartmentCounts.size(); i++) {
             compartmentCounts.get(i).setParameterValue(index, 0);
         }
-        // default SS value
-        compartmentCounts.get(0).setParameterValue(index, originTimeNumSS.getParameterValue(0)+1);
+
+        if (origOne > origTwo) {
+            // pathogen 1 is older, start in IS
+            // total compartment counts at origin time should be originTimeSS + originTimeIS
+            // default SS value should be same
+            compartmentCounts.get(0).setParameterValue(index, originTimeSS + originTimeIS);
+        } else if (origTwo > origOne) {
+            // pathogen 2 is older, start in SI
+            // total compartment counts at origin time should be originTimeSS + originTimeSI
+            // default SS value should be same
+            compartmentCounts.get(0).setParameterValue(index, originTimeSS + originTimeSI);
+        } else {
+            // no need to "introduce" second pathogen while doing forward time simulation
+            secondPathogenIntroduced = true;
+            // origins equal
+            // total compartment counts at origin time should be originTimeSS + originTimeIS + originTimeSI
+            // default value should be same
+            compartmentCounts.get(0).setParameterValue(index, originTimeSS + originTimeIS + originTimeSI);
+        }
     }
 
     protected int[] getHighestOrdersOfReactions(){
@@ -790,7 +821,7 @@ public class TwoPathogenModel extends CompartmentalModel {
             // forward time of simulation start time is 0.0, corresponds to backward time of oldest origin
             // in forward time, time of younger origin is origTimeDif
             double origTimeDiff = Math.abs(origOne - origTwo);
-            // if check if time of younger origin (in forward time) is <= simulationTime
+            // check if time of younger origin (in forward time) is <= simulationTime
             if(origTimeDiff <= simulationTime){
 
                 currentCounts[0] = currentCounts[0] - 1; // SS

@@ -47,7 +47,8 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
     public static final String ORIGIN_TIME_NUM_SS = "originTimeNumSS";
-
+    public static final String ORIGIN_TIME_NUM_SI = "originTimeNumSI";
+    public static final String ORIGIN_TIME_NUM_IS = "originTimeNumIS";
 
     public String getParserName() {
         return TWO_PATHOGEN_MODEL;
@@ -194,9 +195,18 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
 
         Parameter originTimeNumSS = (Parameter) xo.getChild(ORIGIN_TIME_NUM_SS).getChild(Parameter.class);
 
-        //16 or 56? was originally 3
+        double originTimeNumSI = 1.0;
+        if(xo.getChild(ORIGIN_TIME_NUM_SI)!=null){
+            originTimeNumSI = (double)((Parameter) xo.getChild(ORIGIN_TIME_NUM_SI).getChild(Parameter.class)).getParameterValue(0);
+        }
+
+        double originTimeNumIS = 1.0;
+        if(xo.getChild(ORIGIN_TIME_NUM_IS)!=null){
+            originTimeNumIS = (double)((Parameter) xo.getChild(ORIGIN_TIME_NUM_IS).getChild(Parameter.class)).getParameterValue(0);
+        }
+
         TwoPathogenModel twoPathogenModel = new TwoPathogenModel(rateParams, compartmentCounts,
-                originOne, originTwo, originTimeNumSS,56, (int)(numGridPoints.getParameterValue(0)),
+                originOne, originTwo, originTimeNumSS, originTimeNumSI,originTimeNumIS, 56, (int)(numGridPoints.getParameterValue(0)),
                 cutOff.getParameterValue(0));
 
         return twoPathogenModel;
@@ -335,6 +345,14 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),
+            new ElementRule(ORIGIN_TIME_NUM_SI,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+            new ElementRule(ORIGIN_TIME_NUM_IS,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
     };
 
 }

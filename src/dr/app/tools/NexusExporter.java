@@ -58,7 +58,7 @@ public class NexusExporter implements TreeExporter {
     private final boolean useNumericalTaxa;
     private final AttributeType writeAttributesAs;
     public static final String DEFAULT_TREE_PREFIX = "TREE";
-    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.\\(\\);,\"\'].*";
 
     public enum AttributeType {
         NODE_ATTRIBUTES,
@@ -285,7 +285,11 @@ public class NexusExporter implements TreeExporter {
                 }
                 out.print(k);
             } else {
-                out.print(tree.getTaxonId(k - 1));
+                String name = tree.getTaxonId(k - 1);
+                if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
+                    name = "'" + name + "'";
+                }
+                out.print(name);
             }
 
         } else {

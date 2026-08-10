@@ -836,7 +836,7 @@ public class TreeAnnotator extends BaseTreeTool {
                     new PrintStream(Files.newOutputStream(Paths.get(outputFileName))) :
                     System.out;
 
-            new NexusExporter(stream, includeNexusHeader).exportTree(targetTree, includeNexusHeader, includeNexusHeader);
+            new NexusExporter(stream, includeNexusHeader).exportTree(targetTree, false, includeNexusHeader);
         } catch (Exception e) {
             System.err.println("Error writing annotated tree file: " + e.getMessage());
             System.exit(1);

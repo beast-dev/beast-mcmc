@@ -43,15 +43,40 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Structurally a sibling of {@link AgeDependentBirthDeathPDEModel}: field names, helper names
  * and method signatures are kept identical wherever behavior is identical, so the two classes
  * can be merged in the future with a minimal diff.
+ *
+ * Discretization: {@code maxTime} is the outer time/age bound the PDE grid is sized to
+ * ({@code Na = ceil(maxTime/deltaA)}, {@code Nt = max(Na, ceil(maxTime/deltaT))}); actual grid
+ * spacing may end up marginally finer than the requested deltas. {@code maxTime} additionally
+ * plays the role of the process's origin time whenever {@code conditionAt == ORIGIN}, since
+ * the root-branch survival term and the {@code p0} integration endpoint need an origin — when
+ * {@code conditionAt == MRCA} it is used only to size the grid.
+ *
+ * Root conditioning: {@code conditionAt} selects what the likelihood is conditioned on.
+ * {@code ORIGIN} includes the root branch (mrca to {@code maxTime}) and conditions on survival
+ * from the origin. {@code MRCA} excludes the root branch and conditions on survival of both
+ * mrca daughters instead; for {@code symmetric} models both daughters are age 0 at the mrca so
+ * no extra information is needed. For asymmetric models one daughter continues aging from an
+ * unknown pre-mrca age that can't be marginalized without a known origin time, so
+ * {@code conditionAt == MRCA} additionally requires a {@code rootAge} parameter giving that
+ * age explicitly (with a user-supplied prior).
  */
 public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihood implements Reportable {
+
+    /**
+     * What the likelihood is conditioned on: survival from the process {@link #ORIGIN}
+     * (root branch included), or survival of both {@link #MRCA} daughters (root branch
+     * excluded).
+     */
+    public enum ConditioningPoint { ORIGIN, MRCA }
+
     private static final boolean DIAG_INF = Boolean.getBoolean("beast.abd.diag");
 
     private static final double EPS = 1e-12;
 
     private final Tree tree;
     private final boolean symmetric;
-    private final boolean excludeRootBranch;
+    private final ConditioningPoint conditionAt;
+    private final Parameter rootAge;
 
     private final Parameter birthScale;
     private final Parameter deathScale;
@@ -66,7 +91,7 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
     private final int numEpochs;
     private final int numBoundaries;
 
-    private final double originTime;
+    private final double maxTime;
     private final int Na;
     private final int Nt;
     private final double da;
@@ -164,11 +189,12 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
                                                 Parameter samplingScale,
                                                 Parameter extantSamplingProb,
                                                 Parameter epochTimes,
-                                                double originTime,
-                                                int Na,
-                                                int Nt,
+                                                double maxTime,
+                                                double deltaA,
+                                                double deltaT,
                                                 boolean symmetric,
-                                                boolean excludeRootBranch,
+                                                ConditioningPoint conditionAt,
+                                                Parameter rootAge,
                                                 double rateZeroThreshold,
                                                 int numThreads) {
         super(name);
@@ -178,7 +204,12 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
             addModel((Model) tree);
         }
         this.symmetric = symmetric;
-        this.excludeRootBranch = excludeRootBranch;
+        this.conditionAt = conditionAt;
+        this.rootAge = rootAge;
+        if (rootAge != null) {
+            addVariable(rootAge);
+            rootAge.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
 
         this.birthScale = birthScale;
         this.constBirth = birthScale.getDimension() == 1;
@@ -203,13 +234,14 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         addModel(birthHazard);
         if (deathHazard != birthHazard) addModel(deathHazard);
 
-        this.originTime = originTime;
-        this.Na = Na;
-        this.Nt = Math.max(Na, Nt);
-        this.da = originTime / Na;
+        this.maxTime = maxTime;
+        this.Na = (int) Math.ceil(maxTime / deltaA);
+        int NtRaw = (int) Math.ceil(maxTime / deltaT);
+        this.Nt = Math.max(this.Na, NtRaw);
+        this.da = maxTime / this.Na;
         this.inv2da = 1.0 / (2.0 * da);
         this.inv6da = 1.0 / (6.0 * da);
-        this.dt = originTime / this.Nt;
+        this.dt = maxTime / this.Nt;
         this.dt05 = 0.5 * dt;
 
         this.rateZeroThreshold = rateZeroThreshold;
@@ -339,10 +371,14 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         for (int j = 1; j <= jHi; j++) {
             result[j] = (-2.0 * f[j - 1] - 3.0 * f[j] + 6.0 * f[j + 1] - f[j + 2]) * inv6da;
         }
+        // Second-order one-sided stencils, mirroring the left boundary above: the general
+        // interior formula needs f[j+2], which doesn't exist for these last two points, and
+        // simply dropping that term (as before) leaves stencil coefficients that don't sum to
+        // zero — injecting a spurious nonzero derivative even for a perfectly flat array.
         int j1 = NaTrunc - 1;
-        result[j1] = (-2.0 * f[j1 - 1] - 3.0 * f[j1] + 6.0 * f[j1 + 1]) * inv6da;
+        result[j1] = (f[j1 + 1] - f[j1 - 1]) * inv2da;
         int j2 = NaTrunc;
-        result[j2] = (-2.0 * f[j2 - 1] - 3.0 * f[j2]) * inv6da;
+        result[j2] = (3.0 * f[j2] - 4.0 * f[j2 - 1] + f[j2 - 2]) * inv2da;
     }
 
     //===============
@@ -612,7 +648,7 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
     private void solveLInternal(int worker, int rootNum) {
         NodeRef root = tree.getNode(rootNum);
         double rootHeight = tree.getNodeHeight(root);
-        double endTime = tree.isRoot(root) ? originTime : tree.getNodeHeight(tree.getParent(root));
+        double endTime = tree.isRoot(root) ? maxTime : tree.getNodeHeight(tree.getParent(root));
 
         int left = tree.getChild(root, 0).getNumber();
         int right = tree.getChild(root, 1).getNumber();
@@ -646,9 +682,9 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
     private double calculateLogLikelihood() {
         double rootH = tree.getNodeHeight(tree.getRoot());
 
-        if (originTime <= rootH) {
+        if (maxTime <= rootH) {
             if (DIAG_INF) System.err.println("ABD-Serial -Inf [rootHeight]: rootHeight="
-                    + rootH + " >= originTime=" + originTime);
+                    + rootH + " >= maxTime=" + maxTime);
             return Double.NEGATIVE_INFINITY;
         }
 
@@ -669,7 +705,7 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
             for (int nodeNum : postOrder) {
                 NodeRef node = tree.getNode(nodeNum);
                 if (nodeValid[nodeNum] || tree.isExternal(node)
-                        || (excludeRootBranch && tree.isRoot(node))) continue;
+                        || (conditionAt == ConditioningPoint.MRCA && tree.isRoot(node))) continue;
                 solveLInternal(0, nodeNum);
                 modifiedNodes[modifiedNodeCount++] = nodeNum;
             }
@@ -729,7 +765,7 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
 
         NodeRef root = tree.getRoot();
         int rootNum = root.getNumber();
-        if (excludeRootBranch) {
+        if (conditionAt == ConditioningPoint.MRCA) {
             double rootHeight = tree.getNodeHeight(root);
             int left = tree.getChild(root, 0).getNumber();
             int right = tree.getChild(root, 1).getNumber();
@@ -753,8 +789,43 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
                 return Double.NEGATIVE_INFINITY;
             }
 
-            double logLPartial = Math.log(branchTopL[left][0]) + Math.log(branchTopL[right][0]);
-            double logSurvival = -2.0 * Math.log(1.0 - p0Buf[0]);
+            double logLPartial;
+            double logSurvival;
+            if (symmetric) {
+                logLPartial = Math.log(leftL_0) + Math.log(rightL_0);
+                logSurvival = -2.0 * Math.log(1.0 - p0Root);
+            } else {
+                // Asymmetric mrca-conditioning: one daughter continues aging from an unknown
+                // pre-mrca age, given here via rootAge (with its own prior) since it cannot be
+                // marginalized without a known origin time. Symmetrized over which daughter is
+                // the continuing one, mirroring solveLInternal's Lmerged but without the
+                // birth-rate factor (the split is conditioned on as given, not scored).
+                double aStar = rootAge.getParameterValue(0);
+                if (!Double.isFinite(aStar) || aStar < 0.0 || aStar > NaTrunc * da) {
+                    if (DIAG_INF) System.err.println("ABD-Serial -Inf [rootAge]: rootAge="
+                            + aStar + " maxAge=" + (NaTrunc * da));
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+                double leftL_a = interpAge(branchTopL[left], aStar);
+                double rightL_a = interpAge(branchTopL[right], aStar);
+                double partial = leftL_0 * rightL_a + leftL_a * rightL_0;
+                if (!Double.isFinite(partial) || partial <= 0.0) {
+                    if (DIAG_INF) System.err.println("ABD-Serial -Inf [rootChildL_a]: leftL_a="
+                            + leftL_a + " rightL_a=" + rightL_a + " rootAge=" + aStar);
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+                double p0RootA = interpAge(p0Buf, aStar);
+                if (!Double.isFinite(p0RootA) || p0RootA >= 1.0) {
+                    if (DIAG_INF) System.err.println("ABD-Serial -Inf [p0RootA]: p0RootA="
+                            + p0RootA + " rootAge=" + aStar);
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+                logLPartial = Math.log(partial);
+                logSurvival = -Math.log(1.0 - p0Root) - Math.log(1.0 - p0RootA);
+            }
             logLik += logLPartial + logSurvival + totalLogScale + logSamplingFactor;
         } else {
             double LRoot_0 = branchTopL[rootNum][0];
@@ -793,6 +864,20 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
             epoch++;
         }
         return epoch;
+    }
+
+    /*
+     * Linear interpolation of a row indexed by age (spacing da) at age a. Clamps to
+     * [0, NaTrunc*da]. Used for both branchTopL rows and p0 rows, which share the same
+     * age indexing.
+     */
+    private double interpAge(double[] row, double a) {
+        double idx = a / da;
+        if (idx <= 0.0) return row[0];
+        if (idx >= NaTrunc) return row[NaTrunc];
+        int lo = (int) Math.floor(idx);
+        double frac = idx - lo;
+        return (1.0 - frac) * row[lo] + frac * row[lo + 1];
     }
 
     /*
@@ -849,7 +934,7 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
             nodeDepth[nodeNum] = lvl;
 
             if (nodeValid[nodeNum]) continue;
-            if (excludeRootBranch && tree.isRoot(node)) continue;
+            if (conditionAt == ConditioningPoint.MRCA && tree.isRoot(node)) continue;
 
             ensureDepthCapacity(lvl);
             int sz = depthBucketSizes[lvl];

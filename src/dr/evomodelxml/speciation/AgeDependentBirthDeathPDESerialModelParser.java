@@ -9,7 +9,7 @@ import dr.xml.*;
 public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "ageDependentBirthDeathPDESerialModel";
-    private static final String ORIGIN_TIME = "originTime";
+    private static final String MAX_TIME = "maxTime";
     private static final String EPOCH_TIMES = "epochTimes";
     private static final String BIRTH_SCALE = "birthScale";
     private static final String BIRTH_HAZARD = "birthHazard";
@@ -17,10 +17,11 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
     private static final String DEATH_HAZARD = "deathHazard";
     private static final String SAMPLING_SCALE = "samplingScale";
     private static final String EXTANT_SAMPLING_PROB = "extantSamplingProb";
-    private static final String AGE_STEPS = "ageSteps";
-    private static final String TIME_STEPS = "timeSteps";
+    private static final String AGE_STEP = "ageStep";
+    private static final String TIME_STEP = "timeStep";
     private static final String SYMMETRIC = "symmetric";
-    private static final String EXCLUDE_ROOT_BRANCH = "excludeRootBranch";
+    private static final String CONDITION_AT = "conditionAt";
+    private static final String ROOT_AGE = "rootAge";
     private static final String RATE_ZERO_THRESHOLD = "rateZeroThreshold";
     private static final String NUM_THREADS = "numThreads";
 
@@ -31,7 +32,7 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Tree tree = (Tree) xo.getChild(Tree.class);
 
-        double originTime = xo.getDoubleAttribute(ORIGIN_TIME);
+        double maxTime = xo.getDoubleAttribute(MAX_TIME);
 
         Parameter epochTimes = null;
         if (xo.hasChildNamed(EPOCH_TIMES)) {
@@ -45,16 +46,36 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
         AgeHazard birthHazard = (AgeHazard) xo.getElementFirstChild(BIRTH_HAZARD);
         AgeHazard deathHazard = (AgeHazard) xo.getElementFirstChild(DEATH_HAZARD);
 
-        int ageSteps = xo.getIntegerAttribute(AGE_STEPS);
-        int timeSteps = xo.getIntegerAttribute(TIME_STEPS);
+        double ageStep = xo.getDoubleAttribute(AGE_STEP);
+        double timeStep = xo.getDoubleAttribute(TIME_STEP);
         boolean symmetric = xo.getAttribute(SYMMETRIC, true);
-        boolean excludeRootBranch = xo.getAttribute(EXCLUDE_ROOT_BRANCH, true);
+        String conditionAtStr = xo.getAttribute(CONDITION_AT, "mrca");
+        AgeDependentBirthDeathPDESerialModel.ConditioningPoint conditionAt;
+        try {
+            conditionAt = AgeDependentBirthDeathPDESerialModel.ConditioningPoint.valueOf(
+                    conditionAtStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(CONDITION_AT + " must be one of 'origin' or 'mrca', got '"
+                    + conditionAtStr + "'");
+        }
         double rateZeroThreshold = xo.getAttribute(RATE_ZERO_THRESHOLD, 1e-12);
         int numThreads = xo.getAttribute(NUM_THREADS, 1);
 
-        if (excludeRootBranch && !symmetric) {
+        Parameter rootAge = null;
+        if (xo.hasChildNamed(ROOT_AGE)) {
+            rootAge = (Parameter) xo.getElementFirstChild(ROOT_AGE);
+        }
+
+        boolean mrcaAsymmetric = conditionAt == AgeDependentBirthDeathPDESerialModel.ConditioningPoint.MRCA
+                && !symmetric;
+        if (mrcaAsymmetric && rootAge == null) {
             throw new XMLParseException(
-                    EXCLUDE_ROOT_BRANCH + " is only supported when " + SYMMETRIC + "=true");
+                    CONDITION_AT + "=\"mrca\" with " + SYMMETRIC + "=false requires a " + ROOT_AGE
+                            + " parameter (the unknown age of the continuing lineage at the mrca event)");
+        }
+        if (!mrcaAsymmetric && rootAge != null) {
+            throw new XMLParseException(
+                    ROOT_AGE + " is only used when " + CONDITION_AT + "=\"mrca\" and " + SYMMETRIC + "=false");
         }
 
         if (extantSamplingProb.getDimension() != 1) {
@@ -88,11 +109,12 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
                 samplingScale,
                 extantSamplingProb,
                 epochTimes,
-                originTime,
-                ageSteps,
-                timeSteps,
+                maxTime,
+                ageStep,
+                timeStep,
                 symmetric,
-                excludeRootBranch,
+                conditionAt,
+                rootAge,
                 rateZeroThreshold,
                 numThreads
         );
@@ -124,7 +146,7 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Tree.class),
-            AttributeRule.newDoubleRule(ORIGIN_TIME),
+            AttributeRule.newDoubleRule(MAX_TIME),
             new ElementRule(EPOCH_TIMES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
@@ -146,10 +168,13 @@ public class AgeDependentBirthDeathPDESerialModelParser extends AbstractXMLObjec
             new ElementRule(EXTANT_SAMPLING_PROB, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            AttributeRule.newIntegerRule(AGE_STEPS),
-            AttributeRule.newIntegerRule(TIME_STEPS),
+            AttributeRule.newDoubleRule(AGE_STEP),
+            AttributeRule.newDoubleRule(TIME_STEP),
             AttributeRule.newBooleanRule(SYMMETRIC, true),
-            AttributeRule.newBooleanRule(EXCLUDE_ROOT_BRANCH, true),
+            AttributeRule.newStringRule(CONDITION_AT, true),
+            new ElementRule(ROOT_AGE, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
             AttributeRule.newDoubleRule(RATE_ZERO_THRESHOLD, true),
             AttributeRule.newIntegerRule(NUM_THREADS, true),
     };

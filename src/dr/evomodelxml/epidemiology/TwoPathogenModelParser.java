@@ -22,6 +22,9 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     public static final String INFECTION_RATE_MODULATION_I = "infectionRateModulationI";
     public static final String INFECTION_RATE_MODULATION_C = "infectionRateModulationC";
     public static final String INFECTION_RATE_MODULATION_R = "infectionRateModulationR";
+    public static final String BIRTH_MORTALITY_RATE = "birthMortalityRate";
+    public static final String IMPORTATION_RATE_ONE = "importationRateOne";
+    public static final String IMPORTATION_RATE_TWO = "importationRateTwo";
     public static final String NUM_SS = "numSS";
     public static final String NUM_SI = "numSI";
     public static final String NUM_SC = "numSC";
@@ -83,6 +86,12 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
         rateParams.add((Parameter) xo.getChild(INFECTION_RATE_MODULATION_C).getChild(Parameter.class));
 
         rateParams.add((Parameter) xo.getChild(INFECTION_RATE_MODULATION_R).getChild(Parameter.class));
+
+        rateParams.add((Parameter) xo.getChild(BIRTH_MORTALITY_RATE).getChild(Parameter.class));
+
+        rateParams.add((Parameter) xo.getChild(IMPORTATION_RATE_ONE).getChild(Parameter.class));
+
+        rateParams.add((Parameter) xo.getChild(IMPORTATION_RATE_TWO).getChild(Parameter.class));
 
         final Parameter numGridPoints = (Parameter) xo.getChild(NUM_GRID_POINTS).getChild(Parameter.class);
 
@@ -217,7 +226,7 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element represents an SIRS model";
+        return "This element represents an two-pathogen compartmental model (Shrestha et al., 2011)";
     }
 
     public Class getReturnType() {
@@ -266,6 +275,30 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class),
                     }),
             new ElementRule(RESUSCEPTIBILITY_RATE_TWO,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(INFECTION_RATE_MODULATION_I,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(INFECTION_RATE_MODULATION_C,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(INFECTION_RATE_MODULATION_R,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(BIRTH_MORTALITY_RATE,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(IMPORTATION_RATE_ONE,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(IMPORTATION_RATE_TWO,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),

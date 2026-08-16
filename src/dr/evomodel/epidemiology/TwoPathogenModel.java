@@ -9,6 +9,7 @@ public class TwoPathogenModel extends CompartmentalModel {
     protected Parameter originTimeNumSS;
     protected double originTimeNumSI;
     protected double originTimeNumIS;
+    //protected final boolean seasonalTransmission;
     // keep track of introduction of "younger" pathogen
     private boolean secondPathogenIntroduced = false;
 
@@ -275,7 +276,7 @@ public class TwoPathogenModel extends CompartmentalModel {
         double resusRateTwo = rateParameters.get(9).getParameterValue(0);
         double infectionRateModulationI = rateParameters.get(10).getParameterValue(0);
         double infectionRateModulationC = rateParameters.get(11).getParameterValue(0);
-        double recoveryRateModulation = rateParameters.get(12).getParameterValue(0);
+        double infectionRateModulationR = rateParameters.get(12).getParameterValue(0);
         // SS + IS -> 2IS
         rVec[0] = transmissionRateOne*currentCounts[0]*currentCounts[4];
         // SS + II -> IS + II
@@ -333,9 +334,9 @@ public class TwoPathogenModel extends CompartmentalModel {
         // IS + RI -> II + RI
         rVec[27] = infectionRateModulationI*transmissionRateTwo*currentCounts[4]*currentCounts[13];
         // II -> CI
-        rVec[28] = recoveryRateModulation*moveToCRateOne*currentCounts[5];
+        rVec[28] = infectionRateModulationR*moveToCRateOne*currentCounts[5];
         // II -> IC
-        rVec[29] = recoveryRateModulation* moveToCRateTwo *currentCounts[5];
+        rVec[29] = infectionRateModulationR*moveToCRateTwo*currentCounts[5];
         // IC -> CC
         rVec[30] = moveToCRateOne*currentCounts[6];
         // IC -> IR
@@ -355,15 +356,15 @@ public class TwoPathogenModel extends CompartmentalModel {
         // CS + RI -> CI + RI
         rVec[38] = infectionRateModulationC*transmissionRateTwo*currentCounts[8]*currentCounts[13];
         // CI -> RI
-        rVec[39] = moveToRRateOne *currentCounts[9];
+        rVec[39] = moveToRRateOne*currentCounts[9];
         // CI -> CC
-        rVec[40] = moveToCRateTwo *currentCounts[9];
+        rVec[40] = moveToCRateTwo*currentCounts[9];
         // CC -> RC
-        rVec[41] = moveToRRateOne *currentCounts[10];
+        rVec[41] = moveToRRateOne*currentCounts[10];
         // CC -> CR
-        rVec[42] = moveToRRateTwo *currentCounts[10];
+        rVec[42] = moveToRRateTwo*currentCounts[10];
         // CR -> RR
-        rVec[43] = moveToRRateOne *currentCounts[11];
+        rVec[43] = moveToRRateOne*currentCounts[11];
         // CR -> CS
         rVec[44] = resusRateTwo*currentCounts[11];
         // RS -> SS
@@ -391,79 +392,6 @@ public class TwoPathogenModel extends CompartmentalModel {
         return rVec;
     }
 
-    /*
-
-    Original getTimeDerivatives
-
-    protected double[] getTimeDerivatives(double[] currentCounts){
-        double[] returnVec = new double[numReactionChannels];
-        double SS = currentCounts[0];
-        double SI = currentCounts[1];
-        double SC = currentCounts[2];
-        double SR = currentCounts[3];
-        double IS = currentCounts[4];
-        double II = currentCounts[5];
-        double IC = currentCounts[6];
-        double IR = currentCounts[7];
-        double CS = currentCounts[8];
-        double CI = currentCounts[9];
-        double CC = currentCounts[10];
-        double CR = currentCounts[11];
-        double RS = currentCounts[12];
-        double RI = currentCounts[13];
-        double RC = currentCounts[14];
-        double RR = currentCounts[15];
-
-        double transRateOne = rateParameters.get(0).getParameterValue(0);
-        double moveToCRateOne = rateParameters.get(1).getParameterValue(0);
-        double moveToRRateOne = rateParameters.get(2).getParameterValue(0);
-        double resusRateOne = rateParameters.get(4).getParameterValue(0);
-        double transRateTwo = rateParameters.get(5).getParameterValue(0);
-        double moveToCRateTwo = rateParameters.get(6).getParameterValue(0);
-        double moveToRRateTwo = rateParameters.get(7).getParameterValue(0);
-        double resusRateTwo = rateParameters.get(9).getParameterValue(0);
-        // change alpha, chi and sigma to names that are consistent with what we used before,
-        // such as infectionRateModulationI, infectionRateModulationC, recoveryRateModulation
-        double alpha = rateParameters.get(10).getParameterValue(0);
-        double chi = rateParameters.get(11).getParameterValue(0);
-        double sigma = rateParameters.get(12).getParameterValue(0);
-
-        // SS
-        returnVec[0] = -transRateOne*SS*(IS + II + IR + IC) - transRateTwo*SS*(SI + II + CI + RI) + resusRateOne*RS + resusRateTwo*SR;
-        // SI
-        returnVec[1] = -alpha*transRateOne*SI*(IS + II + IC + IR) + resusRateOne*RI + transRateTwo*SS*(SI + II + CI + RI) - moveToCRateTwo*SI;
-        // SC
-        returnVec[2] = -chi*transRateOne*SC*(IS + II + IC + IR) + resusRateOne*RC + moveToCRateTwo*SI - moveToRRateTwo*SC;
-        // SR
-        returnVec[3] = -transRateOne*SR*(IS + II + IC + IR) + resusRateOne*RR - resusRateTwo*SR + moveToRRateTwo;
-        // IS
-        returnVec[4] = -alpha*transRateTwo*IS*(SI + II + CI + RI) + resusRateTwo*IR + transRateOne*SS*(IS + II + IC + IR) - moveToCRateOne;
-        // II
-        returnVec[5] = alpha*transRateOne*SI*(IS + II + CI + RI) - sigma* moveToCRateOne*II + alpha*transRateTwo*IS*(SI + II + CI + RI) - sigma*moveToCRateTwo*II;
-        // IC
-        returnVec[6] = chi*transRateTwo*SC*(IS + II + IC + IR) - moveToCRateOne*IC + sigma* moveToCRateTwo*II - moveToRRateTwo*IC;
-        // IR
-        returnVec[7] = transRateOne*SR*(IS + II + IC + IR) - moveToCRateOne*IR + moveToRRateTwo*IC - resusRateTwo*IR;
-        // CS
-        returnVec[8] = -chi*transRateTwo*CS*(SI + II + CI + RI) + resusRateTwo*CR + moveToCRateOne*IS - moveToRRateOne*CS;
-        // CI
-        returnVec[9] = chi*transRateTwo*CS*(SI + II + CI + RI) - moveToCRateTwo*CI + sigma*moveToCRateOne*II - moveToRRateOne*CI;
-        // CC
-        returnVec[10] = moveToCRateOne*IC - moveToRRateOne*CC + moveToCRateTwo*CI - moveToRRateTwo*CC;
-        // CR
-        returnVec[11] = moveToCRateOne*IR - moveToRRateOne*CR + moveToRRateTwo*CC - resusRateTwo*CR;
-        // RS
-        returnVec[12] = -transRateTwo*RS*(SI + II + CI + RI) + resusRateTwo*RR - resusRateOne*RS + moveToRRateOne*CS;
-        // RI
-        returnVec[13] = transRateTwo*RS*(SI + II + CI + RI) - moveToCRateTwo*RI + moveToRRateOne*CI - resusRateOne*RI;
-        // RC
-        returnVec[14] = moveToCRateTwo*RI - moveToRRateTwo*RC + moveToRRateOne*CC - resusRateOne*RC;
-        // RR
-        returnVec[15] = moveToRRateOne*CR - resusRateOne*RR + moveToRRateTwo*RC - resusRateTwo*RR;
-        return returnVec;
-    }
-
-     */
 
     protected double[] getCompartmentDerivatives(double[] currentCounts){
         double[] returnVec = new double[numReactionChannels];
@@ -492,8 +420,7 @@ public class TwoPathogenModel extends CompartmentalModel {
         double moveToCRateTwo = rateParameters.get(6).getParameterValue(0);
         double moveToRRateTwo = rateParameters.get(7).getParameterValue(0);
         double resusRateTwo = rateParameters.get(9).getParameterValue(0);
-        // change alpha, chi and sigma to names that are consistent with what we used before,
-        // such as infectionRateModulationI, infectionRateModulationC, recoveryRateModulation
+
         double infectionRateModulationI = rateParameters.get(10).getParameterValue(0);
         double infectionRateModulationC = rateParameters.get(11).getParameterValue(0);
         double infectionRateModulationR = rateParameters.get(12).getParameterValue(0);

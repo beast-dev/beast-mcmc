@@ -74,6 +74,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
     private int[] postBufferIndices;
     private int[] preBufferIndices;
     private int[] matrixBufferIndices;
+    private int[] postScaleIndices;
+    private int[] preScaleIndices;
     private double[] branchLengths;
 
     private static final boolean BEAGLE_OVERRIDE = true;
@@ -145,6 +147,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
     private int coverWholeTree(int[] postBufferIndices,
                                int[] preBufferIndices,
                                int[] matrixBufferIndices,
+                               int[] postScaleIndices,
+                               int[] preScaleIndices,
                                double[] branchLengths) {
         int u = 0;
         for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
@@ -153,6 +157,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
                 matrixBufferIndices[u] = likelihoodDelegate.getEvolutionaryProcessDelegate().getMatrixIndex(nodeNum);
+                postScaleIndices[u] = getPostCumulativeScaleBufferIndex(nodeNum);
+                preScaleIndices[u]  = getPreCumulativeScaleBufferIndex(nodeNum);
                 branchLengths[u] = getBranchLength(node);
                 u++;
             }
@@ -228,9 +234,11 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
 
             double[] buffer = new double[first.length];
 
-            int count = coverWholeTree(postBufferIndices, preBufferIndices, matrixBufferIndices, branchLengths);
+            int count = coverWholeTree(postBufferIndices, preBufferIndices, matrixBufferIndices,
+                    postScaleIndices, preScaleIndices, branchLengths);
             calculateCrossProductDifferentials(0, count,
-                    postBufferIndices, preBufferIndices, matrixBufferIndices, ed, ted, branchLengths,
+                    postBufferIndices, preBufferIndices, matrixBufferIndices, postScaleIndices, preScaleIndices,
+                    ed, ted, branchLengths,
                     patternWeights, categoryWeights, categoryRates, buffer);
 
 //            System.err.println("beagle-output : " + new WrappedVector.Raw(buffer));
@@ -270,6 +278,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             postBufferIndices = new int[branchCount];
             preBufferIndices = new int[branchCount];
             matrixBufferIndices = new int[branchCount];
+            postScaleIndices = new int[branchCount];
+            preScaleIndices = new int[branchCount];
             branchLengths = new double[branchCount];
         }
     }
@@ -279,6 +289,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                                                     int[] postBufferIndices,
                                                     int[] preBufferIndices,
                                                     int[] matrixBufferIndices,
+                                                    int[] postScaleIndices,
+                                                    int[] preScaleIndices,
                                                     EigenDecomposition ed,
                                                     EigenDecomposition ted,
                                                     double[] branchLengths,
@@ -292,7 +304,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                     postBufferIndices, preBufferIndices,
                     matrixBufferIndices,
                     new int[]{0}, new int[]{0}, getRootPostOrderBuffer(), 0,
-                    branchLengths.length, first, null);
+                    branchLengths.length, first, null,
+                    postScaleIndices, preScaleIndices, getRootCumulativeScaleBufferIndex());
 
         } else {
             for (int i = start; i < end; ++i) {

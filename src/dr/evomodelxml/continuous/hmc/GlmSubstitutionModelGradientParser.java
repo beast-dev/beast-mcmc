@@ -64,7 +64,7 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
-        ApproximationMode mode = parseMode(xo);
+        ApproximationMode mode = ApproximateLogCtmcRateGradientParser.parseGradientMode(xo);
 
         String effectsString = xo.getAttribute(EFFECTS, "fixed");
         if (effectsString.equalsIgnoreCase("fixed")) {
@@ -89,14 +89,14 @@ public class GlmSubstitutionModelGradientParser extends AbstractXMLObjectParser 
         }
     }
 
-    private ApproximationMode parseMode(XMLObject xo) throws XMLParseException {
-        String name = xo.getAttribute(MODE, ApproximationMode.FIRST_ORDER.getLabel());
-        try {
-            return ApproximationMode.factory(name);
-        } catch (Exception e) {
-            throw new XMLParseException(e.getMessage());
-        }
-    }
+//    private ApproximationMode parseMode(XMLObject xo) throws XMLParseException {
+//        String name = xo.getAttribute(MODE, ApproximationMode.FIRST_ORDER.getLabel());
+//        try {
+//            return ApproximationMode.factory(name);
+//        } catch (Exception e) {
+//            throw new XMLParseException(e.getMessage());
+//        }
+//    }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {

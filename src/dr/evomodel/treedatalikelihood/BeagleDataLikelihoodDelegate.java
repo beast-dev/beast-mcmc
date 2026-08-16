@@ -237,7 +237,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
             if (settings.usePreOrder){
                 numPartials += nodeCount;
-                numScaleBuffers += nodeCount - 1; // don't need to rescale at root
+                // Reserve two more scale buffers per node (indexed directly by node
+                // number, not double-buffered/store-restore -- rebuilt fresh every
+                // gradient evaluation): one for that node's own cumulative post-order
+                // scale (its own scale-write plus every rescaled descendant's) and one
+                // for the cumulative pre-order scale already baked into its pre-order
+                // partial. Used by AbstractBeagleGradientDelegate/
+                // SpectralBeagleCrossProductDelegate to correct the adjoint
+                // cross-product gradient for rescaling -- see beagle.h's
+                // beagleCalculateAdjointCrossProductDerivative. A couple of slots
+                // (root's) go unused; the waste is one scale buffer's worth of
+                // memory (O(patternCount) doubles) and not worth avoiding here.
+                numScaleBuffers += 2 * nodeCount;
                 numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount(settings);
             }
 
@@ -927,6 +938,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
 
+        // Cached for AbstractBeagleGradientDelegate/SpectralBeagleCrossProductDelegate,
+        // which run a separate pass (after this likelihood evaluation, against the
+        // same buffers) that needs to correct the adjoint cross-product gradient for
+        // whatever rescaling was applied here -- see getNodeIndividualScaleBufferIndex.
+        lastCumulativeScaleBufferIndex = cumulateScaleBufferIndex;
+
         double[] sumLogLikelihoods = new double[1];
 
         if (DEBUG) {
@@ -1179,6 +1196,39 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         return scaleBufferHelper.getBufferCount();
     }
 
+    /**
+     * @return whether the last likelihood evaluation actually applied rescaling
+     * (independent of the requested PartialsRescalingScheme -- e.g. underflow
+     * handling or a scheme-parsing fallback can still trigger it).
+     */
+    public final boolean isUsingScaleFactors() {
+        return useScaleFactors;
+    }
+
+    /**
+     * @return the scale buffer holding internal node nodeNumber's own individual
+     * (not cumulative) scale factor from the last likelihood evaluation, or
+     * Beagle.NONE if nodeNumber is a tip or rescaling was not applied. Callers
+     * needing a node's full CUMULATIVE post-order scale (its own factor plus
+     * every rescaled descendant's) must build that themselves, e.g. via
+     * beagleAccumulateScaleFactors over every rescaled node at-or-below it --
+     * see beagleCalculateAdjointCrossProductDerivative's contract in beagle.h.
+     */
+    public final int getNodeIndividualScaleBufferIndex(int nodeNumber) {
+        if (!useScaleFactors || nodeNumber < tipCount) {
+            return Beagle.NONE;
+        }
+        return scaleBufferIndices[nodeNumber - tipCount];
+    }
+
+    /**
+     * @return the cumulative (root) scale buffer used to correct the last
+     * likelihood evaluation's logL, or Beagle.NONE if rescaling was not applied.
+     */
+    public final int getRootCumulativeScaleBufferIndex() {
+        return useScaleFactors ? lastCumulativeScaleBufferIndex : Beagle.NONE;
+    }
+
     public final int getPartialBufferCount() {
         return partialBufferHelper.getBufferCount();
     }
@@ -1275,6 +1325,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
     private int[] scaleBufferIndices;
     private int[] storedScaleBufferIndices;
+    private int lastCumulativeScaleBufferIndex = Beagle.NONE;
 
     private final int[] operations;
 

@@ -59,7 +59,7 @@ public class LogCtmcRateHessian extends LogCtmcRateGradient implements HessianWr
                               TreeDataLikelihood treeDataLikelihood,
                               BeagleDataLikelihoodDelegate likelihoodDelegate,
                               GlmSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel);
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, ApproximationMode.FIRST_ORDER, false);
         this.hessian = new LogAdditiveSubstitutionModelHessian(this,
                 treeDataLikelihood.getTreeTrait(SpectralExactGradientDelegate.getBranchDifferentialTraitName(traitName)));
         this.branchLogRateScoreTraitProvider =

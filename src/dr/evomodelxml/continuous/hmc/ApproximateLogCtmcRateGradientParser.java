@@ -36,15 +36,14 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.GradientDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.AbstractGlmSubstitutionModelGradient;
-import dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient;
 import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.LumpableCtmcRateGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode;
 
 /**
  * @author Filippo Monti
@@ -66,6 +65,16 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
         return new String[] { PARSER_NAME, TRANSFORMED_PARSER_NAME, EXACT_PARSER_NAME };
     }
 
+    public static ApproximationMode parseGradientMode(XMLObject xo) throws XMLParseException {
+        ApproximationMode mode = ApproximationMode.FIRST_ORDER;
+        String modeString = xo.getAttribute(MODE, "firstOrder");
+        if (modeString.compareToIgnoreCase("exact") == 0) {
+            mode = ApproximationMode.EXACT_SPECTRAL;
+        }
+        return mode;
+        // TODO should use ApproximationMode.factory()
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
@@ -77,11 +86,13 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
+        ApproximationMode mode = parseGradientMode(xo);
+
         for (Object child : xo.getChildren()) {
             if (child instanceof GlmSubstitutionModel) {
                 final GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) child;
                 return new LogCtmcRateGradient(traitName, treeDataLikelihood,
-                        (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+                        (BeagleDataLikelihoodDelegate) delegate, substitutionModel, mode, forceAllReal);
             } else if (child instanceof LogRateSubstitutionModel) {
                 final LogRateSubstitutionModel substitutionModel = (LogRateSubstitutionModel) child;
                 LogAdditiveCtmcRateProvider rates = substitutionModel.getRateProvider();
@@ -95,11 +106,6 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
                     return new LumpableCtmcRateGradient(traitName, treeDataLikelihood,
                             (BeagleDataLikelihoodDelegate) delegate, substitutionModel, parameter);
                 } else {
-                    AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode mode = AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode.FIRST_ORDER;
-                    String modeString = xo.getAttribute(MODE, "firstOrder");
-                    if (modeString.compareToIgnoreCase("exact") == 0) {
-                        mode = AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode.EXACT_SPECTRAL;
-                    }
                     return new LogCtmcRateGradient(traitName, treeDataLikelihood,
                             (GradientDataLikelihoodDelegate) delegate, substitutionModel, mode, forceAllReal);
                 }

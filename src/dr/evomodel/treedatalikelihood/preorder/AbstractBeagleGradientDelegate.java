@@ -36,6 +36,7 @@ import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.PreOrd
 import dr.inference.model.Model;
 import dr.math.matrixAlgebra.WrappedVector;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -263,19 +264,141 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     }
 
     private int vectorizeNodeOperationsTop(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
+        final boolean scaling = likelihoodDelegate.isUsingScaleFactors();
+        if (scaling) {
+            initializeScaleBufferTracking();
+        }
+
         int k = 0;
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
-            operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getLeftChild());
+            final int nodeNumber = tmpNodeOperation.getLeftChild();
+            final int parentNumber = tmpNodeOperation.getNodeNumber();
+            final int siblingNumber = tmpNodeOperation.getRightChild();
+
+            operations[k++] = getPreOrderPartialIndex(nodeNumber);
             operations[k++] = Beagle.NONE;
             operations[k++] = Beagle.NONE;
-            operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
-            operations[k++] = (tmpNodeOperation.getNodeNumber() == rootNodeNumber) ? Beagle.NONE :
-                    evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getNodeNumber());
-            operations[k++] = getPostOrderPartialIndex(tmpNodeOperation.getRightChild());
-            operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getRightChild());
+            operations[k++] = getPreOrderPartialIndex(parentNumber);
+            operations[k++] = (parentNumber == rootNodeNumber) ? Beagle.NONE :
+                    evolutionaryProcessDelegate.getMatrixIndex(parentNumber);
+            operations[k++] = getPostOrderPartialIndex(siblingNumber);
+            operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(siblingNumber);
+
+            if (scaling) {
+                buildPreCumulativeScaleBuffer(nodeNumber, parentNumber, siblingNumber, rootNodeNumber);
+            }
         }
         return nodeOperations.size();
+    }
+
+    /**
+     * Builds, for every node touched by a pre-order traversal, the two
+     * rescaling-correction buffers beagleCalculateAdjointCrossProductDerivative
+     * needs (see its contract in beagle.h) -- a node's CUMULATIVE post-order
+     * scale (its own scale-write plus every rescaled descendant's) and the
+     * CUMULATIVE pre-order scale already baked into its pre-order partial by
+     * every sibling subtree incorporated while constructing it.
+     *
+     * Both are tracked as flat lists of RAW individual scale-write buffers
+     * (never as a previously-built cumulative buffer fed back into another
+     * beagleAccumulateScaleFactors call) because accumulateScaleFactors
+     * always LOG-transforms its inputs and treats its target as already-LOG:
+     * feeding it an already-cumulative buffer as an *input* would silently
+     * re-apply log() to an already-logged value and corrupt the sum.
+     */
+    private void initializeScaleBufferTracking() {
+        final int nodeCount = tree.getNodeCount();
+        if (scaleBufferBase < 0) {
+            // BeagleDataLikelihoodDelegate reserves 2*nodeCount extra scale
+            // buffers (beyond its own doubled/store-restore pool) specifically
+            // for this: [base, base+nodeCount) for post-cumulative buffers
+            // indexed directly by node number, [base+nodeCount, base+2*nodeCount)
+            // for pre-cumulative buffers. Root's slots in each half go unused.
+            scaleBufferBase = likelihoodDelegate.getScaleBufferCount();
+        }
+        postCumulativeRawList = new List[nodeCount];
+        preCumulativeRawList = new List[nodeCount];
+        postCumulativeScaleBufferIndex = new int[nodeCount];
+        preCumulativeScaleBufferIndex = new int[nodeCount];
+        Arrays.fill(postCumulativeScaleBufferIndex, Beagle.NONE);
+        Arrays.fill(preCumulativeScaleBufferIndex, Beagle.NONE);
+    }
+
+    private List<Integer> getPostCumulativeRawList(int nodeNumber) {
+        if (postCumulativeRawList[nodeNumber] == null) {
+            List<Integer> list = new ArrayList<>();
+            collectRescaledIndividualBuffers(nodeNumber, list);
+            postCumulativeRawList[nodeNumber] = list;
+            if (!list.isEmpty()) {
+                int slot = scaleBufferBase + nodeNumber;
+                beagle.resetScaleFactors(slot);
+                beagle.accumulateScaleFactors(toIntArray(list), list.size(), slot);
+                postCumulativeScaleBufferIndex[nodeNumber] = slot;
+            }
+        }
+        return postCumulativeRawList[nodeNumber];
+    }
+
+    private void collectRescaledIndividualBuffers(int nodeNumber, List<Integer> list) {
+        NodeRef node = tree.getNode(nodeNumber);
+        if (tree.isExternal(node)) {
+            return; // tips are never independently rescaled
+        }
+        int individual = likelihoodDelegate.getNodeIndividualScaleBufferIndex(nodeNumber);
+        if (individual != Beagle.NONE) {
+            list.add(individual);
+        }
+        for (int i = 0; i < tree.getChildCount(node); ++i) {
+            collectRescaledIndividualBuffers(tree.getChild(node, i).getNumber(), list);
+        }
+    }
+
+    private void buildPreCumulativeScaleBuffer(int nodeNumber, int parentNumber, int siblingNumber, int rootNodeNumber) {
+        List<Integer> list = new ArrayList<>();
+        if (parentNumber != rootNodeNumber) {
+            // parentNumber was already processed earlier in this same top-down
+            // traversal (its pre-order buffer must already exist for THIS
+            // node's beagle.updatePrePartials_v5 operation to reference it).
+            list.addAll(preCumulativeRawList[parentNumber]);
+        }
+        list.addAll(getPostCumulativeRawList(siblingNumber));
+        preCumulativeRawList[nodeNumber] = list;
+        if (!list.isEmpty()) {
+            int slot = scaleBufferBase + tree.getNodeCount() + nodeNumber;
+            beagle.resetScaleFactors(slot);
+            beagle.accumulateScaleFactors(toIntArray(list), list.size(), slot);
+            preCumulativeScaleBufferIndex[nodeNumber] = slot;
+        }
+    }
+
+    private static int[] toIntArray(List<Integer> list) {
+        int[] array = new int[list.size()];
+        for (int i = 0; i < array.length; ++i) {
+            array[i] = list.get(i);
+        }
+        return array;
+    }
+
+    /** @return the cumulative (LOG) post-order scale buffer for nodeNumber's
+     * OWN partial (its own scale-write plus every rescaled descendant's), or
+     * Beagle.NONE if nothing at-or-below it was ever independently rescaled.
+     * Only valid after simulate() has run for the current tree/model state. */
+    protected int getPostCumulativeScaleBufferIndex(int nodeNumber) {
+        return (postCumulativeScaleBufferIndex == null) ? Beagle.NONE : postCumulativeScaleBufferIndex[nodeNumber];
+    }
+
+    /** @return the cumulative (LOG) rescaling already baked into nodeNumber's
+     * pre-order partial, or Beagle.NONE if it carries no such scaling. Only
+     * valid after simulate() has run for the current tree/model state. */
+    protected int getPreCumulativeScaleBufferIndex(int nodeNumber) {
+        return (preCumulativeScaleBufferIndex == null) ? Beagle.NONE : preCumulativeScaleBufferIndex[nodeNumber];
+    }
+
+    /** @return the cumulative (LOG) scale buffer used to correct the last
+     * likelihood evaluation's logL, or Beagle.NONE if rescaling was not applied. */
+    protected int getRootCumulativeScaleBufferIndex() {
+        return likelihoodDelegate.getRootCumulativeScaleBufferIndex();
     }
 
     @Override
@@ -323,6 +446,14 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
 
     protected boolean substitutionProcessKnown;
     protected Tree tree;
+
+    // Rescaling-correction bookkeeping for beagleCalculateAdjointCrossProductDerivative
+    // (see initializeScaleBufferTracking); all by node number, rebuilt every simulate() call.
+    private int scaleBufferBase = -1;
+    private List<Integer>[] postCumulativeRawList;
+    private List<Integer>[] preCumulativeRawList;
+    private int[] postCumulativeScaleBufferIndex;
+    private int[] preCumulativeScaleBufferIndex;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     final boolean DEBUG = false;

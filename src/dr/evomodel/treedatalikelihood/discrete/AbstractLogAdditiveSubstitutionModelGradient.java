@@ -74,7 +74,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         EXACT_SPECTRAL("exactSpectral") {
             @Override
             String getInfo() {
-                return null;
+                return "an exact adjoint";
             }
 
             @Override
@@ -95,7 +95,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         FIRST_ORDER("firstOrder") {
             @Override
             public String getInfo() {
-                return "a first-order";
+                return "a first-order approximation";
             }
 
             @Override
@@ -114,7 +114,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         AFFINE_CORRECTED("affineCorrected") {
             @Override
             public String getInfo() {
-                return "an affine-corrected";
+                return "an affine-corrected approximation";
             }
 
             @Override
@@ -257,10 +257,10 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         if (likelihoodDelegate instanceof DiscreteDataLikelihoodDelegate
                 && ((DiscreteDataLikelihoodDelegate) likelihoodDelegate).isSpectralRepresentation()) {
             Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
-                    "Gradient wrt " + traitName + " using exact spectral Frechet derivative");
+                    "Gradient wrt " + traitName + " using an exact spectral Frechet derivative");
         } else {
             Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
-                    "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
+                    "Gradient wrt " + traitName + " using " + mode.getInfo());
         }
     }
 

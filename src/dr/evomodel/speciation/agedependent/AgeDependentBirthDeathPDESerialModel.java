@@ -589,8 +589,15 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
     }
 
     /*
-     * Compute L over all external branches in one pass, grouping by tip height so the
-     * cherry-sharing optimization is preserved within each sample-time group.
+     * Compute L over all external branches in one pass. Tips that share an identical
+     * (tipHeight, parentHeight) pair are true cherries: their L integral covers the exact same
+     * range, so the solved buffer is reused verbatim. Tips are NOT chained across different
+     * parentHeights (even within the same tipHeight group): the RK4 grid stepping in solveL
+     * switches to interpolated rates at a non-grid-aligned checkpoint, so splitting one
+     * grid-aligned step into two checkpoint-bounded steps is not numerically equivalent to
+     * taking it whole, even though the underlying continuous L(t) trajectory is tip-independent.
+     * Reusing a buffer across unrelated tips therefore made a tip's cached value depend on
+     * which other tips happened to be invalidated alongside it in that round.
      */
     private void solveLTips() {
         int numInvalid = 0;
@@ -617,23 +624,19 @@ public class AgeDependentBirthDeathPDESerialModel extends AbstractModelLikelihoo
         double[] L = LPool[worker];
 
         double groupTipHeight = Double.NaN;
-        double prevHeight = 0.0;
+        double groupParentHeight = Double.NaN;
 
         for (int i = 0; i < numInvalid; i++) {
             double tipHeight = invalidTipHeights[i];
             double parentHeight = invalidTipParentHeights[i];
             int tipNum = invalidTipNums[i];
 
-            if (tipHeight != groupTipHeight) {
+            if (tipHeight != groupTipHeight || parentHeight != groupParentHeight) {
                 Arrays.fill(L, 0, NaTrunc + 1, 1.0);
                 logScalePool[worker] = 0.0;
+                solveL(worker, L, tipHeight, parentHeight);
                 groupTipHeight = tipHeight;
-                prevHeight = tipHeight;
-            }
-
-            if (parentHeight != prevHeight) {
-                solveL(worker, L, prevHeight, parentHeight);
-                prevHeight = parentHeight;
+                groupParentHeight = parentHeight;
             }
 
             nodeLogScale[tipNum] = logScalePool[worker];

@@ -4,7 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.RewardsAwareMixtureBranchRates;
+import dr.evomodel.branchratemodel.RewardMixtureBranchRateModel;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
@@ -40,7 +40,7 @@ public final class BranchLocalContinuousRewardDependentEdgeEvidenceProvider
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
     private final TreeTrait<List<BranchSufficientStatistics>> treeTraitProvider;
     private final Tree tree;
-    private final RewardsAwareMixtureBranchRates rewardBranchRates;
+    private final RewardMixtureBranchRateModel rewardBranchRates;
     private final DiffusionProcessDelegate diffusionProcessDelegate;
     private final ContinuousDiffusionIntegrator cdi;
     private final Parameter continuousRewards;
@@ -78,9 +78,9 @@ public final class BranchLocalContinuousRewardDependentEdgeEvidenceProvider
         }
 
         final BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
-        if (!(branchRateModel instanceof RewardsAwareMixtureBranchRates)) {
+        if (!(branchRateModel instanceof RewardMixtureBranchRateModel)) {
             throw new IllegalArgumentException(
-                    "Continuous reward evidence requires RewardsAwareMixtureBranchRates, found " +
+                    "Continuous reward evidence requires a RewardMixtureBranchRateModel, found " +
                             branchRateModel.getClass().getName()
             );
         }
@@ -88,7 +88,7 @@ public final class BranchLocalContinuousRewardDependentEdgeEvidenceProvider
         this.treeDataLikelihood = treeDataLikelihood;
         this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) delegate;
         this.tree = treeDataLikelihood.getTree();
-        this.rewardBranchRates = (RewardsAwareMixtureBranchRates) branchRateModel;
+        this.rewardBranchRates = (RewardMixtureBranchRateModel) branchRateModel;
         this.diffusionProcessDelegate = likelihoodDelegate.getDiffusionProcessDelegate();
         this.cdi = likelihoodDelegate.getIntegrator();
         this.continuousRewards = rewardBranchRates.getRateParameter();

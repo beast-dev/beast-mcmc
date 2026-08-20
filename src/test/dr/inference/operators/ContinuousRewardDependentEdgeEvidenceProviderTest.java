@@ -30,6 +30,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RewardRates;
+import dr.evomodel.branchratemodel.RewardsAwareCategoricalMixtureBranchRates;
 import dr.evomodel.branchratemodel.RewardsAwareMixtureBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateElasticModel;
@@ -112,6 +113,38 @@ public class ContinuousRewardDependentEdgeEvidenceProviderTest extends Continuou
         assertLocalProviderMatchesExactDeltas(localLikelihood, exactLikelihood);
     }
 
+    // Scenario (c) in the dep-markov ctmc_bm4d_timeseries study wires up
+    // RewardsAwareCategoricalMixtureBranchRates (not the legacy
+    // RewardsAwareMixtureBranchRates above), so the branch-local provider must
+    // also be exact under that branch-rate-model representation.
+    //
+    // These two use a manual-perturbation oracle rather than the sibling
+    // ContinuousRewardDependentEdgeEvidenceProvider class used above: that
+    // class reads/writes RewardsAwareMixtureBranchRates.getIndicator()
+    // directly, a legacy-only raw parameter not on the shared
+    // RewardMixtureBranchRateModel interface (unlike the four methods
+    // BranchLocalContinuousRewardDependentEdgeEvidenceProvider itself calls,
+    // which are all interface methods with identical semantics on both
+    // classes -- see the generalization plan). Making that oracle categorical
+    // would need the same adapter pattern already used in
+    // BeagleRewardDependentCtmcEdgeEvidenceProvider; out of scope here since
+    // it is test-only infrastructure, not a scenario (c) production path.
+    public void testBranchLocalProviderMatchesExactBrownianDeltasCategorical() {
+        final RewardsAwareCategoricalMixtureBranchRates rewardBranchRates = newCategoricalRewardBranchRates();
+        final TreeDataLikelihood localLikelihood = newBrownianLikelihood(rewardBranchRates);
+        final TreeDataLikelihood exactLikelihood = newBrownianLikelihood(rewardBranchRates);
+
+        assertLocalProviderMatchesManualCategoricalDeltas(localLikelihood, exactLikelihood, rewardBranchRates);
+    }
+
+    public void testBranchLocalProviderMatchesExactDiagonalOUDeltasCategorical() {
+        final RewardsAwareCategoricalMixtureBranchRates rewardBranchRates = newCategoricalRewardBranchRates();
+        final TreeDataLikelihood localLikelihood = newOULikelihood(rewardBranchRates);
+        final TreeDataLikelihood exactLikelihood = newOULikelihood(rewardBranchRates);
+
+        assertLocalProviderMatchesManualCategoricalDeltas(localLikelihood, exactLikelihood, rewardBranchRates);
+    }
+
     private NodeRef firstNonRootNode() {
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             final NodeRef node = treeModel.getNode(i);
@@ -153,7 +186,68 @@ public class ContinuousRewardDependentEdgeEvidenceProviderTest extends Continuou
         }
     }
 
-    private TreeDataLikelihood newBrownianLikelihood(final RewardsAwareMixtureBranchRates rewardBranchRates) {
+    // Value 0.5 decodes to category 0 (continuous) under the {0,1,2,3,4,5}
+    // cut parameter used by newCategoricalRewardBranchRates() -- see
+    // RewardMixtureCategoryDecoder.CONTINUOUS_CATEGORY.
+    private static final double CONTINUOUS_CATEGORY_VALUE = 0.5;
+
+    private void assertLocalProviderMatchesManualCategoricalDeltas(
+            final TreeDataLikelihood localLikelihood,
+            final TreeDataLikelihood exactLikelihood,
+            final RewardsAwareCategoricalMixtureBranchRates rewardBranchRates) {
+        final BranchLocalContinuousRewardDependentEdgeEvidenceProvider localProvider =
+                new BranchLocalContinuousRewardDependentEdgeEvidenceProvider(localLikelihood);
+        final Parameter categories = rewardBranchRates.getCategoryParameter();
+        final Parameter ctsRewards = rewardBranchRates.getRateParameter();
+
+        final double referenceReward = 0.55;
+        final double[] candidateRewards = new double[]{0.25, 0.73, 1.15};
+
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            final NodeRef node = treeModel.getNode(i);
+            if (treeModel.isRoot(node)) {
+                continue;
+            }
+
+            final int parameterIndex = rewardBranchRates.getParameterIndexFromNode(node);
+
+            localProvider.prepare();
+            final double localReference = localProvider.logEvidence(node.getNumber(), referenceReward);
+            final double exactReference = manualCategoricalLogLikelihood(
+                    exactLikelihood, categories, ctsRewards, parameterIndex, referenceReward);
+
+            for (double candidateReward : candidateRewards) {
+                final double localDelta =
+                        localProvider.logEvidence(node.getNumber(), candidateReward) - localReference;
+                final double exactDelta = manualCategoricalLogLikelihood(
+                        exactLikelihood, categories, ctsRewards, parameterIndex, candidateReward) - exactReference;
+                assertEquals("node " + node.getNumber() + " candidate " + candidateReward,
+                        exactDelta, localDelta, DELTA_TOL);
+            }
+        }
+    }
+
+    private static double manualCategoricalLogLikelihood(final TreeDataLikelihood likelihood,
+                                                          final Parameter categories,
+                                                          final Parameter ctsRewards,
+                                                          final int parameterIndex,
+                                                          final double candidateReward) {
+        final double oldCategory = categories.getParameterValue(parameterIndex);
+        final double oldReward = ctsRewards.getParameterValue(parameterIndex);
+        try {
+            categories.setParameterValueQuietly(parameterIndex, CONTINUOUS_CATEGORY_VALUE);
+            ctsRewards.setParameterValueQuietly(parameterIndex, candidateReward);
+            likelihood.makeDirty();
+            final double logLikelihood = likelihood.getLogLikelihood();
+            return Double.isFinite(logLikelihood) ? logLikelihood : Double.NEGATIVE_INFINITY;
+        } finally {
+            categories.setParameterValueQuietly(parameterIndex, oldCategory);
+            ctsRewards.setParameterValueQuietly(parameterIndex, oldReward);
+            likelihood.makeDirty();
+        }
+    }
+
+    private TreeDataLikelihood newBrownianLikelihood(final BranchRateModel rewardBranchRates) {
         final DiffusionProcessDelegate diffusionProcessDelegate =
                 new HomogeneousDiffusionModelDelegate(treeModel, diffusionModel);
         final ContinuousDataLikelihoodDelegate likelihoodDelegate = new ContinuousDataLikelihoodDelegate(
@@ -167,7 +261,7 @@ public class ContinuousRewardDependentEdgeEvidenceProviderTest extends Continuou
         return new TreeDataLikelihood(likelihoodDelegate, treeModel, rewardBranchRates);
     }
 
-    private TreeDataLikelihood newOULikelihood(final RewardsAwareMixtureBranchRates rewardBranchRates) {
+    private TreeDataLikelihood newOULikelihood(final BranchRateModel rewardBranchRates) {
         final List<BranchRateModel> optimalTraitsModels = new ArrayList<BranchRateModel>();
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("ou.optimum.1", new double[]{1.0})));
         optimalTraitsModels.add(new StrictClockBranchRates(new Parameter.Default("ou.optimum.2", new double[]{2.0})));
@@ -215,6 +309,32 @@ public class ContinuousRewardDependentEdgeEvidenceProviderTest extends Continuou
         );
     }
 
+    private RewardsAwareCategoricalMixtureBranchRates newCategoricalRewardBranchRates() {
+        final int branchCount = treeModel.getNodeCount() - 1;
+        final Parameter ctsRewards = new Parameter.Default("categoricalCtsRewards", fill(branchCount, 0.50));
+        final Parameter categories =
+                new Parameter.Default("categoricalRewardState", cyclingCategoryValues(branchCount));
+        final Parameter categoryCuts = new Parameter.Default(
+                "categoricalRewardCuts", new double[]{0.0, 1.0, 2.0, 3.0, 4.0, 5.0});
+        final RewardRates rewardRates = new RewardRates(
+                new Parameter.Default("categoricalRewardRates", new double[]{0.20, 0.40, 0.60, 0.80}),
+                null,
+                new Parameter.Default("categoricalRewardRatesInternal", new double[0]),
+                new Parameter.Default("categoricalRewardRatesMapping", new double[]{0.0, 1.0, 2.0, 3.0})
+        );
+
+        return new RewardsAwareCategoricalMixtureBranchRates(
+                treeModel,
+                ctsRewards,
+                categories,
+                categoryCuts,
+                rewardRates,
+                new ArbitraryBranchRates.BranchRateTransform.None(),
+                false,
+                TreeParameterModel.Type.WITHOUT_ROOT
+        );
+    }
+
     private static double manualLogLikelihood(final TreeDataLikelihood likelihood,
                                               final Parameter rewards,
                                               final Parameter indicator,
@@ -246,6 +366,18 @@ public class ContinuousRewardDependentEdgeEvidenceProviderTest extends Continuou
         final double[] x = new double[n];
         for (int i = 0; i < n; i++) {
             x[i] = i % 4;
+        }
+        return x;
+    }
+
+    // Cycles branches through all 5 embedded categories under the {0,1,2,3,4,5}
+    // cut parameter: bin midpoint 0.5 decodes to category 0 (continuous), and
+    // 1.5/2.5/3.5/4.5 decode to atomic states 0/1/2/3 respectively (see
+    // RewardMixtureCategoryDecoder). Exercises both regimes, not just one.
+    private static double[] cyclingCategoryValues(final int n) {
+        final double[] x = new double[n];
+        for (int i = 0; i < n; i++) {
+            x[i] = 0.5 + (i % 5);
         }
         return x;
     }

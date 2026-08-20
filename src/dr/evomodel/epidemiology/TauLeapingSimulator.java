@@ -154,7 +154,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
     }
 
     private void stepOne(SimulationState state, List<Integer> critical, List<Integer> noncritical) {
-        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts);
+        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
         // Maximum number of times that a reaction with a positive intensity can fire before
         // exhausting one of its reactants
         state.maxFiringTimes = getMaxFiringTimes(state.currentCounts, state.reactionInt);
@@ -267,7 +267,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
                 state.currentCounts[s] = state.currentCounts[s] + vMatrix[s][sampledReactionChannel];
             }
 
-            state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts);
+            state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
 
             // check if we need this
             //r0 = 0;
@@ -385,7 +385,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         // determine tau
         double tau = Math.min(tauPrime, tauDoublePrime);
 
-        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts);
+        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
         double[] poissonIntensities = getPoissonIntensities(state.currentCounts, state.reactionInt, tau);
 
         double[] numFirings = new double[numReactionChannels];

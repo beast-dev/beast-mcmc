@@ -53,11 +53,60 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     public static final String ORIGIN_TIME_NUM_SI = "originTimeNumSI";
     public static final String ORIGIN_TIME_NUM_IS = "originTimeNumIS";
 
+    public static final String SEASONAL_MODEL = "seasonalModel";
+    public static final String SEASONAL_PERIOD = "seasonalPeriod";
+    public static final String SEASONAL_AMP_ONE = "seasonalAmplitudeOne";
+    public static final String SEASONAL_AMP_TWO = "seasonalAmplitudeTwo";
+    public static final String SEASONAL_PEAK_ONE = "seasonalPeakDayOne";
+    public static final String SEASONAL_PEAK_TWO = "seasonalPeakDayTwo";
+
     public String getParserName() {
         return TWO_PATHOGEN_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        boolean seasonal = xo.getBooleanAttribute(SEASONAL_MODEL, false);
+
+        Parameter seasonalPeriod = null;
+        if (xo.getChild(SEASONAL_PERIOD) != null) {
+            seasonalPeriod = (Parameter) xo.getChild(SEASONAL_PERIOD).getChild(Parameter.class);
+        }
+        if (seasonal && seasonalPeriod == null) {
+            throw new RuntimeException("seasonal model requires seasonalPeriod");
+        }
+
+        Parameter seasonalAmplitudeOne = null;
+        if(xo.getChild(SEASONAL_AMP_ONE) != null) {
+            seasonalAmplitudeOne = (Parameter) xo.getChild(SEASONAL_AMP_ONE).getChild(Parameter.class);
+        }
+        if (seasonal && seasonalAmplitudeOne == null) {
+            throw new RuntimeException("seasonal model requires seasonalAmplitudeOne");
+        }
+
+        Parameter seasonalAmplitudeTwo = null;
+        if(xo.getChild(SEASONAL_AMP_TWO) != null) {
+            seasonalAmplitudeTwo = (Parameter) xo.getChild(SEASONAL_AMP_TWO).getChild(Parameter.class);
+        }
+        if (seasonal && seasonalAmplitudeTwo == null) {
+            throw new RuntimeException("seasonal model requires seasonalAmplitudeTwo");
+        }
+
+        Parameter seasonalPeakDayOne = null;
+        if(xo.getChild(SEASONAL_PEAK_ONE) != null) {
+            seasonalPeakDayOne = (Parameter) xo.getChild(SEASONAL_PEAK_ONE).getChild(Parameter.class);
+        }
+        if (seasonal && seasonalPeakDayOne == null) {
+            throw new RuntimeException("seasonal model requires seasonalPeakDayOne");
+        }
+
+        Parameter seasonalPeakDayTwo = null;
+        if(xo.getChild(SEASONAL_PEAK_TWO) != null) {
+            seasonalPeakDayTwo = (Parameter) xo.getChild(SEASONAL_PEAK_TWO).getChild(Parameter.class);
+        }
+        if (seasonal && seasonalPeakDayTwo == null) {
+            throw new RuntimeException("seasonal model requires seasonalPeakDayTwo");
+        }
 
         ArrayList<Parameter> rateParams = new ArrayList<>();
 
@@ -215,8 +264,9 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
         }
 
         TwoPathogenModel twoPathogenModel = new TwoPathogenModel(rateParams, compartmentCounts,
-                originOne, originTwo, originTimeNumSS, originTimeNumSI,originTimeNumIS, 56, (int)(numGridPoints.getParameterValue(0)),
-                cutOff.getParameterValue(0));
+                originOne, originTwo, originTimeNumSS, originTimeNumSI,originTimeNumIS, 79, (int)(numGridPoints.getParameterValue(0)),
+                cutOff.getParameterValue(0),seasonal, seasonalPeriod, seasonalAmplitudeOne, seasonalPeakDayOne,
+                seasonalAmplitudeTwo, seasonalPeakDayTwo);
 
         return twoPathogenModel;
     }
@@ -238,10 +288,31 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(SEASONAL_MODEL, true),
             new ElementRule(TRANSMISSION_RATE_ONE,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),
+            new ElementRule(SEASONAL_PERIOD,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+            new ElementRule(SEASONAL_AMP_ONE,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+            new ElementRule(SEASONAL_AMP_TWO,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+            new ElementRule(SEASONAL_PEAK_ONE,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+            new ElementRule(SEASONAL_PEAK_TWO,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
             new ElementRule(MOVE_TO_C_RATE_ONE,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
@@ -383,6 +454,14 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class),
                     }, true),
             new ElementRule(ORIGIN_TIME_NUM_IS,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+            new ElementRule(NUM_GRID_POINTS,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+            new ElementRule(CUT_OFF,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }, true),

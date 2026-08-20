@@ -30,13 +30,9 @@ public abstract class CompartmentalModel extends AbstractModel {
 
     protected abstract void setDefaultCompartmentCounts(int index);
 
-    protected abstract double[] getReactionIntensities(double[] compartmentCounts);
+    protected abstract double[] getReactionIntensities(double[] compartmentCounts, double simTime);
 
-    //protected abstract double[] getMaxFiringTimes(double[] compartmentCounts, double[] reactionIntensities);
-
-    //protected abstract double[] getTauLeapingPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau);
-
-    protected abstract double[] getSALPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau);
+    protected abstract double[] getSALPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau, double simTime);
 
     protected abstract double[] getUpdatedCompartmentCounts(double[] currentCounts, double[] countsNew);
 
@@ -55,7 +51,6 @@ public abstract class CompartmentalModel extends AbstractModel {
     }
 
     public double[] introduceSecondPathogen(
-            //double previousTime,
             double simulationTime,
             double[] currentCounts) {
         return currentCounts;

@@ -78,7 +78,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         return v;
     }
 
-    protected double[] getReactionIntensities(double[] currentCounts){
+    protected double[] getReactionIntensities(double[] currentCounts, double simTime){
         double[] rVec = new double[numReactionChannels];
         // currentCounts[0] has number of S for current time step
         // currentCounts[1] has number of I for current time step
@@ -117,7 +117,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
     */
 
     // compute derivative of r_j(x) with respect to time for all reactions j
-    protected double[] getTimeDerivatives(double[] currentCounts){
+    protected double[] getTimeDerivatives(double[] currentCounts, double simTime){
         double[] returnVec = new double[numReactionChannels];
         double S = currentCounts[0];
         double I = currentCounts[1];
@@ -146,14 +146,14 @@ public class SIRCompartmentalModel extends CompartmentalModel {
     }
     */
 
-    protected double[] getSALPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau){
+    protected double[] getSALPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau, double simTime){
         double[] returnVal = new double[numReactionChannels];
         // for standard tau leaping
         for(int r = 0; r < numReactionChannels; r++) {
             returnVal[r] = reactionInt[r]*tau;
         }
         // for SAL algorithm, need to add extra terms to account for linear change in intensity
-        double[] timeDerivatives = getTimeDerivatives(currentCounts);
+        double[] timeDerivatives = getTimeDerivatives(currentCounts, simTime);
         for(int r = 0; r < numReactionChannels; r++) {
             returnVal[r] = returnVal[r] + timeDerivatives[r]*tau*tau*0.5;
         }

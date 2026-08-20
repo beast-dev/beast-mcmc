@@ -24,7 +24,7 @@ public class ExactSimulator extends StochasticSimulator {
 
         SimulationState state = initializeSimulation(T);
 
-        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts);
+        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
 
         while (state.nextRecordIndex >= 0) {
             runOneSSAStep(state);
@@ -97,7 +97,7 @@ public class ExactSimulator extends StochasticSimulator {
         for (int s = 0; s < numSpecies; s++) {
             state.currentCounts[s] = state.currentCounts[s] + vMatrix[s][sampledReactionChannel];
         }
-        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts);
+        state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
     }
 
     /*

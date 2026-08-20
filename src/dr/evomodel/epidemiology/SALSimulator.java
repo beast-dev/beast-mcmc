@@ -13,7 +13,7 @@ public class SALSimulator extends TauLeapingSimulator {
         this.elapsedTime = elapsedTime;
     }
 
-    protected double[] getPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau) {
-        return compartmentalModel.getSALPoissonIntensities(currentCounts, reactionInt, tau);
+    protected double[] getPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau, double simTime) {
+        return compartmentalModel.getSALPoissonIntensities(currentCounts, reactionInt, tau, simTime);
     }
 }

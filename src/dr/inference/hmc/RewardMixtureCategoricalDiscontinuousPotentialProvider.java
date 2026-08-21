@@ -155,6 +155,65 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProvider
         return currentLogWeight - proposedLogWeight;
     }
 
+    /**
+     * Overrides the default interface implementation, which evaluates two full
+     * {@link #getLogDensityAfterSingleCoordinateMove} calls -- each summing every
+     * branch's contribution via {@code getLogDensityWithoutRefresh} -- even though
+     * only branch {@code index}'s own weight differs across a boundary crossing and
+     * every other branch's contribution cancels in the caller's subtraction. This
+     * mirrors {@link #getPotentialDifference}: touch only branch {@code index}.
+     * At small branch counts the O(branchCount) waste in the default path is
+     * invisible; at real tree sizes (hundreds of branches) it turns every single
+     * boundary crossing the discontinuous coordinate integrator evaluates into an
+     * O(branchCount) pass, compounding across all crossings in a step.
+     */
+    @Override
+    public double getPotentialDifferenceAcrossBoundary(final int index,
+                                                        final double boundary,
+                                                        final double direction) {
+        checkIndex(index);
+        if (direction == 0.0) {
+            return 0.0;
+        }
+
+        categoryDecoder.refreshEmbedding();
+        final double before = Math.nextAfter(boundary, boundary - direction);
+        final double after = Math.nextAfter(boundary, boundary + direction);
+
+        final int currentCategory;
+        final int proposedCategory;
+        try {
+            currentCategory = categoryDecoder.getCategoryForValue(before);
+        } catch (IllegalArgumentException e) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        try {
+            proposedCategory = categoryDecoder.getCategoryForValue(after);
+        } catch (IllegalArgumentException e) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if (currentCategory == proposedCategory) {
+            return 0.0;
+        }
+
+        branchWeightProvider.refreshLikelihoodMessages();
+        final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
+                branchWeightProvider.computeBranchWeightsForParameterIndex(index);
+        final double currentLogWeight =
+                branchWeightProvider.getLogWeightForCategory(weights, currentCategory);
+        final double proposedLogWeight =
+                branchWeightProvider.getLogWeightForCategory(weights, proposedCategory);
+
+        if (isNegativeInfinity(proposedLogWeight)) {
+            return Double.POSITIVE_INFINITY;
+        }
+        if (isNegativeInfinity(currentLogWeight)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        return currentLogWeight - proposedLogWeight;
+    }
+
     @Override
     public double getNextDiscontinuity(final int index,
                                        final double currentValue,

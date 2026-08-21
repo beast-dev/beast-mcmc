@@ -150,11 +150,20 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         this.rotatedPost = new double[stateCount];
         this.transitionMatrix = new double[stateCount * stateCount];
         this.topPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
-        this.preBottomPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
         this.postPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
-        this.postTopPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
-        this.beagleTopPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
-        this.beagleBottomPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
+        // preBottomPartialsByNode, postTopPartialsByNode, and beagleBottomPartialsByNode are read
+        // only from writeDiagnosticRow, and beagleTopPartialsByNode only from the BEAGLE-preorder
+        // evidence/comparison paths; at real alignment scale (hundreds of nodes x thousands of
+        // patterns) each full table is tens to hundreds of MB, so skip allocating the ones this
+        // provider's configuration will never populate rather than paying for them unconditionally.
+        this.preBottomPartialsByNode = this.diagnostics.enabled
+                ? new double[tree.getNodeCount()][flattenedLength] : null;
+        this.postTopPartialsByNode = this.diagnostics.enabled
+                ? new double[tree.getNodeCount()][flattenedLength] : null;
+        this.beagleTopPartialsByNode = (this.diagnostics.compareBeaglePreOrder || this.diagnostics.useBeaglePreOrderEvidence)
+                ? new double[tree.getNodeCount()][flattenedLength] : null;
+        this.beagleBottomPartialsByNode = this.diagnostics.enabled
+                ? new double[tree.getNodeCount()][flattenedLength] : null;
         this.diagnosticMatrix = new double[stateCount * stateCount * categoryCount];
 
         final String providerName =
@@ -181,9 +190,13 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         baselineRewardState = rewardStateAdapter.snapshot();
         refreshSpectralStructures();
         fillPostPartialsForAllNodes();
-        fillPostTopPartialsForAllNodes();
+        if (postTopPartialsByNode != null) {
+            fillPostTopPartialsForAllNodes();
+        }
         fillTopPartialsFromRoot();
-        fillPreBottomPartialsForAllNodes();
+        if (preBottomPartialsByNode != null) {
+            fillPreBottomPartialsForAllNodes();
+        }
         beaglePreOrderAvailable = false;
         beaglePreOrderFailure = "";
         if (diagnostics.compareBeaglePreOrder || diagnostics.useBeaglePreOrderEvidence) {
@@ -383,12 +396,14 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
                 }
             }
 
-            preOrderBottomSimulation.cacheSimulatedTraits(null);
-            for (int i = 0; i < tree.getNodeCount(); i++) {
-                final double[] out = beagleBottomPartialsByNode[i];
-                preOrderBottomDelegate.getPreorderPartials(i, DiscretePartialsType.BOTTOM, out);
-                for (int j = 0; j < flattenedLength; j++) {
-                    out[j] = messageMagnitude(out[j]);
+            if (beagleBottomPartialsByNode != null) {
+                preOrderBottomSimulation.cacheSimulatedTraits(null);
+                for (int i = 0; i < tree.getNodeCount(); i++) {
+                    final double[] out = beagleBottomPartialsByNode[i];
+                    preOrderBottomDelegate.getPreorderPartials(i, DiscretePartialsType.BOTTOM, out);
+                    for (int j = 0; j < flattenedLength; j++) {
+                        out[j] = messageMagnitude(out[j]);
+                    }
                 }
             }
             beaglePreOrderAvailable = true;

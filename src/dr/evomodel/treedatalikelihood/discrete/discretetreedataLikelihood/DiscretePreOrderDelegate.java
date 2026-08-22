@@ -392,15 +392,16 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                                                   double parentNodeScale) {
         final double[] siblingBranchTopPostOrder =
                 postOrderMessageProvider.getPostOrderBranchTopBuffer(siblingNumber);
-        preOrderRepresentation.combinePreparedParentAndSibling(
+        final double combinationScale = preOrderRepresentation.combinePreparedParentAndSiblingWithScaling(
                 tmpPreparedParentPreOrder, 0,
                 siblingBranchTopPostOrder, off,
-                childPreOrderStart, off);
+                childPreOrderStart, off,
+                DEFAULT_SCALING_FLOOR, DEFAULT_SCALING_CEILING);
         finishChildPreOrderPattern(
                 childNumber,
                 childPreOrderStart, childPreOrderEnd, childPreOrderEndStandard,
                 childScale, siblingScale,
-                childEffectiveLength, off, pattern, parentNodeScale);
+                childEffectiveLength, off, pattern, parentNodeScale, combinationScale);
     }
 
     private void propagateChildFromParent(int parentNumber,
@@ -420,10 +421,16 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         if (nodePreOrderStandard == null) {
             final double[] siblingBranchTopPostOrder =
                     postOrderMessageProvider.getPostOrderBranchTopBuffer(siblingNumber);
-            preOrderRepresentation.combineParentAndSibling(
+            final double combinationScale = preOrderRepresentation.combineParentAndSiblingWithScaling(
                     parentPreOrder, parentOff,
                     siblingBranchTopPostOrder, off,
-                    childPreOrderStart, off);
+                    childPreOrderStart, off,
+                    DEFAULT_SCALING_FLOOR, DEFAULT_SCALING_CEILING);
+            finishChildPreOrderPattern(
+                    childNumber,
+                    childPreOrderStart, childPreOrderEnd, childPreOrderEndStandard,
+                    childScale, siblingScale,
+                    childEffectiveLength, off, pattern, parentNodeScale, combinationScale);
         } else {
             final double[] parentNodePreOrderStandard = nodePreOrderStandard[parentNumber];
             final double[] siblingBranchTopPostOrderStandard =
@@ -432,13 +439,12 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                     parentNodePreOrderStandard, parentOff,
                     siblingBranchTopPostOrderStandard, off,
                     childPreOrderStart, off);
+            finishChildPreOrderPattern(
+                    childNumber,
+                    childPreOrderStart, childPreOrderEnd, childPreOrderEndStandard,
+                    childScale, siblingScale,
+                    childEffectiveLength, off, pattern, parentNodeScale, 0.0);
         }
-
-        finishChildPreOrderPattern(
-                childNumber,
-                childPreOrderStart, childPreOrderEnd, childPreOrderEndStandard,
-                childScale, siblingScale,
-                childEffectiveLength, off, pattern, parentNodeScale);
     }
 
     private void finishChildPreOrderPattern(int childNumber,
@@ -450,8 +456,9 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                                             double childEffectiveLength,
                                             int off,
                                             int pattern,
-                                            double parentNodeScale) {
-        childScale[pattern] = parentNodeScale + siblingScale[pattern];
+                                            double parentNodeScale,
+                                            double combinationScale) {
+        childScale[pattern] = parentNodeScale + siblingScale[pattern] + combinationScale;
 
         final double extraScaleStart = normalizePatternSlice(childPreOrderStart, off);
         childScale[pattern] += extraScaleStart;

@@ -321,6 +321,22 @@ public final class SpectralRotatedPartialsRepresentation
     }
 
     @Override
+    public double combineParentAndSiblingWithScaling(double[] parentNodePreOrder,
+                                                     int parentOffset,
+                                                     double[] siblingBranchTopPostOrder,
+                                                     int siblingOffset,
+                                                     double[] outChildBranchTopPreOrder,
+                                                     int outOffset,
+                                                     double scalingFloor,
+                                                     double scalingCeiling) {
+        prepareParentForSiblingCombinations(parentNodePreOrder, parentOffset, tmpStandardA, 0);
+        return combinePreparedParentAndSiblingWithScaling(tmpStandardA, 0,
+                siblingBranchTopPostOrder, siblingOffset,
+                outChildBranchTopPreOrder, outOffset,
+                scalingFloor, scalingCeiling);
+    }
+
+    @Override
     public boolean supportsPreparedParentForSiblingCombinations() {
         return true;
     }
@@ -353,6 +369,54 @@ public final class SpectralRotatedPartialsRepresentation
             tmpStandardB[i] = preparedParent[preparedParentOffset + i] * sum;
         }
         multiplyMatrixVectorOffset(matrixRT, tmpStandardB, 0, outChildBranchTopPreOrder, outOffset, stateCount);
+    }
+
+    @Override
+    public double combinePreparedParentAndSiblingWithScaling(double[] preparedParent,
+                                                             int preparedParentOffset,
+                                                             double[] siblingBranchTopPostOrder,
+                                                             int siblingOffset,
+                                                             double[] outChildBranchTopPreOrder,
+                                                             int outOffset,
+                                                             double scalingFloor,
+                                                             double scalingCeiling) {
+        ensureEigenSystemCurrent();
+
+        double parentMax = 0.0;
+        for (int i = 0; i < stateCount; i++) {
+            parentMax = Math.max(parentMax, Math.abs(preparedParent[preparedParentOffset + i]));
+        }
+
+        double siblingMax = 0.0;
+        for (int i = 0; i < stateCount; i++) {
+            double sum = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                sum += matrixR[base + j] * siblingBranchTopPostOrder[siblingOffset + j];
+            }
+            tmpStandardB[i] = sum;
+            siblingMax = Math.max(siblingMax, Math.abs(sum));
+        }
+
+        if (!isPositiveFinite(parentMax) || !isPositiveFinite(siblingMax)) {
+            Arrays.fill(tmpStandardB, 0, stateCount, 1.0 / stateCount);
+            multiplyMatrixVectorOffset(matrixRT, tmpStandardB, 0,
+                    outChildBranchTopPreOrder, outOffset, stateCount);
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        final double productLogScale = Math.log(parentMax) + Math.log(siblingMax);
+        final boolean scaleProduct = productLogScale < Math.log(scalingFloor)
+                || productLogScale > Math.log(scalingCeiling);
+        final double parentNormalizer = scaleProduct ? parentMax : 1.0;
+        final double siblingNormalizer = scaleProduct ? siblingMax : 1.0;
+
+        for (int i = 0; i < stateCount; i++) {
+            tmpA[i] = (preparedParent[preparedParentOffset + i] / parentNormalizer)
+                    * (tmpStandardB[i] / siblingNormalizer);
+        }
+        multiplyMatrixVectorOffset(matrixRT, tmpA, 0, outChildBranchTopPreOrder, outOffset, stateCount);
+        return scaleProduct ? productLogScale : 0.0;
     }
 
     @Override
@@ -746,6 +810,10 @@ public final class SpectralRotatedPartialsRepresentation
             out[outOff + i] = sum * scale;
             base += dim;
         }
+    }
+
+    private static boolean isPositiveFinite(double value) {
+        return value > 0.0 && Double.isFinite(value);
     }
 
     private static void transposeSquare(double[] matrix, double[] transpose, int dim) {

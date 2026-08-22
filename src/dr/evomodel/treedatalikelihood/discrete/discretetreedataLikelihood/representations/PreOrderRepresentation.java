@@ -72,6 +72,48 @@ public interface PreOrderRepresentation {
     }
 
     /**
+     * Combine parent pre-order with sibling post-order while allowing
+     * representation-specific pre-product scaling.
+     *
+     * @return the log scale applied before writing {@code outChildBranchTopPreOrder}
+     */
+    default double combineParentAndSiblingWithScaling(double[] parentNodePreOrder, int parentOff,
+                                                      double[] siblingBranchTopPostOrder, int siblingOff,
+                                                      double[] outChildBranchTopPreOrder,
+                                                      int outOff,
+                                                      double scalingFloor,
+                                                      double scalingCeiling) {
+        final int K = getStateCount();
+        double parentMax = 0.0;
+        double siblingMax = 0.0;
+        for (int s = 0; s < K; s++) {
+            parentMax = Math.max(parentMax, Math.abs(parentNodePreOrder[parentOff + s]));
+            siblingMax = Math.max(siblingMax, Math.abs(siblingBranchTopPostOrder[siblingOff + s]));
+        }
+
+        if (!(parentMax > 0.0 && Double.isFinite(parentMax)) ||
+                !(siblingMax > 0.0 && Double.isFinite(siblingMax))) {
+            final double uniform = 1.0 / K;
+            for (int s = 0; s < K; s++) {
+                outChildBranchTopPreOrder[outOff + s] = uniform;
+            }
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        final double productLogScale = Math.log(parentMax) + Math.log(siblingMax);
+        final boolean scaleProduct = productLogScale < Math.log(scalingFloor)
+                || productLogScale > Math.log(scalingCeiling);
+        final double parentNormalizer = scaleProduct ? parentMax : 1.0;
+        final double siblingNormalizer = scaleProduct ? siblingMax : 1.0;
+        for (int s = 0; s < K; s++) {
+            outChildBranchTopPreOrder[outOff + s] =
+                    (parentNodePreOrder[parentOff + s] / parentNormalizer)
+                            * (siblingBranchTopPostOrder[siblingOff + s] / siblingNormalizer);
+        }
+        return scaleProduct ? productLogScale : 0.0;
+    }
+
+    /**
      * Whether this representation can reuse parent-side work across the two
      * sibling combinations emitted by a binary preorder step.
      */
@@ -107,6 +149,23 @@ public interface PreOrderRepresentation {
         combineParentAndSibling(preparedParent, preparedParentOff,
                 siblingBranchTopPostOrder, siblingOff,
                 outChildBranchTopPreOrder, outOff);
+    }
+
+    /**
+     * Prepared-parent version of {@link #combineParentAndSiblingWithScaling}.
+     */
+    default double combinePreparedParentAndSiblingWithScaling(double[] preparedParent,
+                                                              int preparedParentOff,
+                                                              double[] siblingBranchTopPostOrder,
+                                                              int siblingOff,
+                                                              double[] outChildBranchTopPreOrder,
+                                                              int outOff,
+                                                              double scalingFloor,
+                                                              double scalingCeiling) {
+        return combineParentAndSiblingWithScaling(preparedParent, preparedParentOff,
+                siblingBranchTopPostOrder, siblingOff,
+                outChildBranchTopPreOrder, outOff,
+                scalingFloor, scalingCeiling);
     }
 
     /**

@@ -44,6 +44,20 @@ public interface DiscontinuousPotentialProvider {
 
     int getDimension();
 
+    /**
+     * Called exactly once per HMC operator call, before any coordinate
+     * integration, by callers that own the top of that call (e.g.
+     * {@code MixedDiscontinuousHamiltonianMonteCarloOperator.doOperation}).
+     * Providers whose potential landscape depends on auxiliary state that
+     * must stay static for the duration of one trajectory (see
+     * {@code PerBranchRewardMixtureCategoryDecoder}) should snapshot that
+     * state here rather than inside per-crossing methods like
+     * {@link #getPotentialDifferenceAcrossBoundary}, which are called many
+     * times per operator call and must not repeat O(problem size) work.
+     */
+    default void refresh() {
+    }
+
     double getLogDensity();
 
     double getLogDensityAfterSingleCoordinateMove(int index, double proposedValue);

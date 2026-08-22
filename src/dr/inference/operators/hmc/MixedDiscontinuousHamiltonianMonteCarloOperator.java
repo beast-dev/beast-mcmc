@@ -29,6 +29,7 @@ package dr.inference.operators.hmc;
 
 import dr.inference.hmc.DiscontinuousPotentialProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.markovjumps.RewardDensityDomainException;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractAdaptableOperator;
@@ -257,44 +258,77 @@ public class MixedDiscontinuousHamiltonianMonteCarloOperator extends AbstractAda
 
     @Override
     public double doOperation(Likelihood joint) {
-        if (getCount() < gradientCheckCount) {
-            GradientCheckUtils.checkGradient(joint, parameter, smoothGradientProvider.getGradientLogDensity(),
-                    continuousMask, gradientCheckTolerance, transform);
-        }
+        discontinuousProvider.refresh();
 
-        final double[] continuousMomentum = drawContinuousMomentum();
-        final double[] discontinuousMomentum = drawDiscontinuousMomentum();
-
-        final double initialAuxiliaryEnergy =
-                getContinuousKineticEnergy(continuousMomentum) +
-                getDiscontinuousKineticEnergy(discontinuousMomentum) +
-                getParameterLogJacobian();
-        final double stepSizeThisOperation =
-                DiscontinuousHmcUtils.drawStepSize(stepSize, randomStepSizeFraction);
-
-        halfStepSmoothMomentum(continuousMomentum, stepSizeThisOperation);
-
-        for (int step = 0; step < nSteps; step++) {
-            halfStepSmoothPosition(continuousMomentum, stepSizeThisOperation);
-            DiscontinuousHmcUtils.shuffleInPlace(discontinuousOrder);
-            for (int i = 0; i < discontinuousOrder.length; i++) {
-                discontinuousIntegrator.step(discontinuousMomentum, discontinuousOrder[i], stepSizeThisOperation);
+        // A reward-mixture branch model can reach a mathematically invalid
+        // state partway through a trajectory (e.g. an unconstrained smooth
+        // coordinate landing arbitrarily close to an atomic reward value --
+        // see REWARD_CATEGORY_DYNAMIC_ORDERING_PLAN.md). Rather than crash
+        // the whole chain, treat this exactly like BEAST's other HMC
+        // operators treat numerical instability during a trajectory (see
+        // HamiltonianMonteCarloOperator.NumericInstabilityException): reject
+        // this one proposal via -Infinity and let MarkovChain restore state,
+        // leaving the chain to continue from its last valid position.
+        try {
+            if (getCount() < gradientCheckCount) {
+                GradientCheckUtils.checkGradient(joint, parameter, smoothGradientProvider.getGradientLogDensity(),
+                        continuousMask, gradientCheckTolerance, transform);
             }
-            halfStepSmoothPosition(continuousMomentum, stepSizeThisOperation);
 
-            if (step < nSteps - 1) {
-                fullStepSmoothMomentum(continuousMomentum, stepSizeThisOperation);
+            final double[] continuousMomentum = drawContinuousMomentum();
+            final double[] discontinuousMomentum = drawDiscontinuousMomentum();
+
+            final double initialAuxiliaryEnergy =
+                    getContinuousKineticEnergy(continuousMomentum) +
+                    getDiscontinuousKineticEnergy(discontinuousMomentum) +
+                    getParameterLogJacobian();
+            final double stepSizeThisOperation =
+                    DiscontinuousHmcUtils.drawStepSize(stepSize, randomStepSizeFraction);
+
+            halfStepSmoothMomentum(continuousMomentum, stepSizeThisOperation);
+
+            for (int step = 0; step < nSteps; step++) {
+                halfStepSmoothPosition(continuousMomentum, stepSizeThisOperation);
+                DiscontinuousHmcUtils.shuffleInPlace(discontinuousOrder);
+                for (int i = 0; i < discontinuousOrder.length; i++) {
+                    discontinuousIntegrator.step(discontinuousMomentum, discontinuousOrder[i], stepSizeThisOperation);
+                }
+                halfStepSmoothPosition(continuousMomentum, stepSizeThisOperation);
+
+                if (step < nSteps - 1) {
+                    fullStepSmoothMomentum(continuousMomentum, stepSizeThisOperation);
+                }
             }
+
+            halfStepSmoothMomentum(continuousMomentum, stepSizeThisOperation);
+
+            final double finalAuxiliaryEnergy =
+                    getContinuousKineticEnergy(continuousMomentum) +
+                    getDiscontinuousKineticEnergy(discontinuousMomentum) +
+                    getParameterLogJacobian();
+
+            return initialAuxiliaryEnergy - finalAuxiliaryEnergy;
+        } catch (RewardDensityDomainException e) {
+            // The exception can be thrown from deep inside a tree-likelihood
+            // traversal (e.g. RewardsAwareBranchModel.computeCtsTransitionMatrices
+            // via a boundary-crossing trial evaluation). Force everything dirty
+            // so the next evaluation fully recomputes rather than trusting
+            // whatever partial state the aborted traversal left behind, then
+            // reject this proposal exactly like BEAST's other HMC operators
+            // treat numerical instability (see
+            // HamiltonianMonteCarloOperator.NumericInstabilityException).
+            //
+            // Note: MarkovChain's own post-reject sanity check ("state was not
+            // correctly restored"), active only during its early full-evaluation
+            // warm-up window (<mcmc fullEvaluation="..."/>, default 1000 states),
+            // can still flag a discrepancy here and terminate the chain even
+            // though this reject itself is handled correctly -- see
+            // REWARD_CATEGORY_DYNAMIC_ORDERING_PLAN.md. Until that is root-caused,
+            // XML using this operator with a reward-mixture model should set
+            // fullEvaluation="0" to skip that warm-up check.
+            joint.makeDirty();
+            return Double.NEGATIVE_INFINITY;
         }
-
-        halfStepSmoothMomentum(continuousMomentum, stepSizeThisOperation);
-
-        final double finalAuxiliaryEnergy =
-                getContinuousKineticEnergy(continuousMomentum) +
-                getDiscontinuousKineticEnergy(discontinuousMomentum) +
-                getParameterLogJacobian();
-
-        return initialAuxiliaryEnergy - finalAuxiliaryEnergy;
     }
 
     @Override
@@ -403,16 +437,37 @@ public class MixedDiscontinuousHamiltonianMonteCarloOperator extends AbstractAda
                 position[i] += 0.5 * operationStepSize * velocity;
             }
         }
+        // Check before writing to the model: a NaN/Infinite position written
+        // into the parameter here would only surface later as an exception
+        // thrown from deep inside a tree-likelihood traversal (see
+        // REWARD_CATEGORY_DYNAMIC_ORDERING_PLAN.md), by which point BEAST's
+        // reject-and-restore cannot cleanly recover (the traversal's own
+        // per-node dirty-bit tracking is left mid-update). Catching it here,
+        // before any model state is touched, keeps the reject clean.
+        checkFinite(position, "smooth position update");
         setOperatorPosition(position);
     }
 
     private double[] getSmoothGradientInOperatorCoordinates() {
         final double[] gradient = smoothGradientProvider.getGradientLogDensity();
+        final double[] result;
         if (transform == null) {
-            return gradient;
+            result = gradient;
+        } else {
+            result = transform.updateGradientLogDensity(gradient, parameter.getParameterValues(),
+                    0, parameter.getDimension());
         }
-        return transform.updateGradientLogDensity(gradient, parameter.getParameterValues(),
-                0, parameter.getDimension());
+        checkFinite(result, "smooth gradient");
+        return result;
+    }
+
+    private void checkFinite(double[] values, String context) {
+        for (double value : values) {
+            if (Double.isNaN(value) || Double.isInfinite(value)) {
+                throw new RewardDensityDomainException(
+                        "Non-finite value encountered in " + context + ": " + value);
+            }
+        }
     }
 
     private double[] getOperatorPosition() {

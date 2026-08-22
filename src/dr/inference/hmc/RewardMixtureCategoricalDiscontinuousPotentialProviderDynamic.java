@@ -75,9 +75,23 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
         return categoryParameter.getDimension();
     }
 
+    /**
+     * Refreshes the decoder's per-branch insertion ranks once. Callers that
+     * own the top of an HMC operator call (e.g.
+     * MixedDiscontinuousHamiltonianMonteCarloOperator.doOperation) invoke
+     * this exactly once before any coordinate integration; the per-crossing
+     * methods below (getNextDiscontinuity, getPotentialDifferenceAcrossBoundary,
+     * etc.) deliberately do NOT refresh, since they run many times per
+     * operator call and refreshing there would reintroduce the O(branchCount)
+     * per-crossing cost documented on PerBranchRewardMixtureCategoryDecoder.
+     */
+    @Override
+    public void refresh() {
+        categoryDecoder.refreshEmbedding();
+    }
+
     @Override
     public double getLogDensity() {
-        categoryDecoder.refreshEmbedding();
         branchWeightProvider.refreshLikelihoodMessages();
 
         double logDensity = 0.0;
@@ -95,7 +109,6 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
     public double getLogDensityAfterSingleCoordinateMove(final int index, final double proposedValue) {
         checkIndex(index);
 
-        categoryDecoder.refreshEmbedding();
         branchWeightProvider.refreshLikelihoodMessages();
 
         final double currentLogDensity = getLogDensityWithoutRefresh();
@@ -121,7 +134,6 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
                                          final double proposedValue) {
         checkIndex(index);
 
-        categoryDecoder.refreshEmbedding();
         final int currentCategory;
         final int proposedCategory;
         try {
@@ -171,7 +183,6 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
             return 0.0;
         }
 
-        categoryDecoder.refreshEmbedding();
         final double before = Math.nextAfter(boundary, boundary - direction);
         final double after = Math.nextAfter(boundary, boundary + direction);
 
@@ -214,7 +225,6 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
                                        final double currentValue,
                                        final double direction) {
         checkIndex(index);
-        categoryDecoder.refreshEmbedding();
         return categoryDecoder.getNextBoundary(currentValue, direction);
     }
 

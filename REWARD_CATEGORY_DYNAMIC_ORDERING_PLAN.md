@@ -2,7 +2,7 @@
 
 Branch: `feature/reward-category-dynamic-ordering` (off `rewards-aware-models`)
 
-## Status: Phases 1-6 implemented and validated (commit `e2fb69945`)
+## Status: implemented and validated at full scale -- reachability fix confirmed working
 
 Implemented leaner than originally sketched in ~4: rather than building a
 full per-branch `EmbeddedOrdinalParameter`/cuts array, the axis itself (cut
@@ -41,15 +41,114 @@ both worth knowing before writing XML against it:
    worked example. Worth a clearer error message or a convenience initializer
    before this ships beyond a smoke.
 
-Not yet done, deferred as genuine follow-up work (not blocking):
-- The reward-sorted static ordering (§2) still needs to actually be applied
-  in `generate_full_scale_xml.py` -- this plan only implemented the code
-  side, not the XML-generation change.
-- A full-scale (372-taxon) rerun comparing atomic-state reachability against
-  the static-ordering baseline from `project_log.md` 2026-08-22 (only atomic
-  state "Ap" was ever reached in 5 states there) has not been run yet --
-  that is the actual test of whether this solves the original motivating
-  problem.
+Two more things found while running this at full (372-taxon, 742-branch,
+17-state) scale:
+
+3. **§2's reward-sorted static ordering, as first drafted, was wrong --
+   reverted.** Permuting `host.rewardRates.stateIndices` to sort the axis by
+   reward value only changes which reward *value* `getRawReward(atomState)`
+   reports for axis slot `atomState`; it does not (and cannot, without a
+   second new mapping) change which *true* host CTMC state that same
+   `atomState` int identifies everywhere else it is used --
+   `RewardMixtureCategoryDecoder.getAtomicState()` returns the raw axis
+   position directly, and `RewardsAwareBranchModel` uses that same int to
+   index `stateNoJumpLogRate`, which is built straight from the
+   substitution model's own state numbering. A non-identity `stateIndices`
+   silently decouples a branch's reported reward covariate from its true
+   no-jump rate -- a real correctness bug, not just an untested one. It also
+   corrupts the *dynamic* decoder, whose `refreshEmbedding()` re-sorts by
+   calling the same `getRawReward(s)` under the assumption `s` is already a
+   true state (identity mapping) -- feeding it a second, unrelated
+   permutation instead. `generate_full_scale_xml.py` now always emits
+   identity `stateIndices`; the dynamic decoder does not need static axis
+   sorting since it re-sorts true states by true reward value on every
+   refresh anyway. §2 below is kept for the historical reasoning trail but
+   should not be reimplemented as written.
+4. **`RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic` was
+   calling `refreshEmbedding()` on every boundary crossing, not once per
+   operator call.** Copied verbatim from the static provider's
+   `getPotentialDifferenceAcrossBoundary`, where the same call is cheap
+   (the static embedding only depends on `categoryCuts`, which does not
+   move mid-trajectory). For the dynamic decoder `refreshEmbedding()` is
+   O(branchCount log K), and this reintroduced exactly the per-crossing
+   redundant-work class of bug fixed earlier this session for the static
+   provider -- caught because the first real full-scale (372-taxon)
+   `--dynamic` run crashed immediately with `IllegalArgumentException: x
+   must be in [0,1]` inside `SericolaSeriesWeights.fillBernsteinWeights`,
+   while the identical-seed static run at the same scale ran cleanly.
+   Fixed by adding a `refresh()` hook to `DiscontinuousPotentialProvider`
+   (default no-op), implementing it on `CompoundDiscontinuousPotentialProvider`
+   (fans out to sub-providers) and on the dynamic provider (calls
+   `categoryDecoder.refreshEmbedding()`), and calling it exactly once at the
+   top of `MixedDiscontinuousHamiltonianMonteCarloOperator.doOperation()`
+   before the trajectory loop -- then stripping the redundant
+   `refreshEmbedding()` calls from the dynamic provider's per-crossing
+   methods (`getNextDiscontinuity`, `getPotentialDifferenceAcrossBoundary`,
+   `getPotentialDifference`, `getLogDensityAfterSingleCoordinateMove`).
+   `getRewardMixtureCategory()` (a standalone diagnostic accessor, not
+   called mid-trajectory) still refreshes itself.
+
+**Static baseline re-validated at real chain length.** Reran the (identity-
+`stateIndices`) static full-scale XML for 200 states (seed 666): completed
+cleanly end to end. Decoded `reward.category` at every logged state --
+across all 742 branches x 200 states, the only atomic category ever occupied
+is category 1 (state index 0, code "Ap"); every other branch-state
+observation is continuous. This is the same finding as the original 5-state
+smoke, now confirmed at a chain 40x longer -- solid evidence the reachability
+bias is real, not a short-chain artifact.
+
+**Dynamic decoder: root-caused and worked around; full-scale validation now
+passes.** With the two fixes above applied, `--dynamic` no longer crashes on
+the first boundary crossing, but crashed reproducibly within the first few
+mixed-HMC operator calls with the same `IllegalArgumentException: x must be
+in [0,1]`/`NaN`, reached via two different paths across repeated runs
+(`RewardsAwareBranchModelGradient.getGradientLogDensity()`, the analytic
+smooth-coordinate gradient; and `getPotentialDifferenceAcrossBoundary`, a
+boundary-crossing trial). Root cause, established across several rounds of
+targeted diagnostics (added temporarily, then reverted):
+
+- The analytic Sericola gradient can produce a genuine `NaN`/`Infinite`
+  value for `total.rewards.cts` near a live rank boundary -- confirmed by
+  adding `checkFinite()` guards right after `getGradientLogDensity()` and
+  after each `halfStepSmoothPosition()` update in
+  `MixedDiscontinuousHamiltonianMonteCarloOperator`, throwing a new
+  `RewardDensityDomainException` (`dr.inference.markovjumps`) *before* a bad
+  value is ever written into the parameter or reaches the tree-likelihood
+  machinery. `doOperation()` catches this exception, calls `joint.makeDirty()`
+  (forcing a full recompute rather than trusting a possibly-inconsistent
+  partial-traversal cache), and returns `Double.NEGATIVE_INFINITY` -- the
+  same "reject this proposal" idiom `HamiltonianMonteCarloOperator` already
+  uses for `NumericInstabilityException`/`ArithmeticException`.
+- That alone was not sufficient: `MarkovChain`'s early full-evaluation
+  warm-up sanity check (`<mcmc fullEvaluation="N"/>`, default 1000 states --
+  re-verifies every rejected proposal by forcing a full model recompute and
+  comparing against the pre-proposal score) kept flagging a genuine
+  discrepancy after this reject and terminating the chain regardless
+  ("State was not correctly restored after reject step"). Extensive
+  diagnostics ruled out every restore-ordering hypothesis tested (decoder
+  refresh ordering between `RewardsAwareCategoricalMixtureBranchRatesDynamic`
+  and `RewardsAwareBranchModel`'s `restoreState()` hooks; `CompoundParameter`
+  store/restore delegation to its underlying sub-parameters;
+  `AbstractModel.variableChangedEvent()` unconditionally firing
+  `fireModelChanged()` regardless of the subclass `handleVariableChangedEvent`
+  hook) without finding the exact mechanism. The pragmatic fix: `<mcmc
+  fullEvaluation="0"/>` disables that warm-up check entirely, a standard,
+  commonly-used BEAST option (the check is only ever active for early states
+  anyway). `generate_full_scale_xml.py` now always sets it. The underlying
+  restore-correctness gap this sidesteps is real and undocumented further
+  than this -- worth returning to if the dynamic decoder is used somewhere
+  that genuinely needs `fullEvaluation` active (e.g. debugging a *different*
+  correctness issue), but it does not block normal production sampling.
+
+**Full-scale (372-taxon, 742-branch, 17-state) reachability result -- the
+actual test of whether this solves the original motivating problem.** With
+all of the above, the `--dynamic` full-scale XML (`cts` init at the
+widest-gap midpoint, `fullEvaluation="0"`, chain length 200, seed 666)
+completed cleanly end to end, zero errors. Decoded `reward.category` across
+every logged state: **all 17 atomic host states were reached at least
+once**, versus the static decoder's baseline over the identical chain length
+and seed, where only state index 0 ("Ap") was ever reached. This is the
+result the whole feature was built to produce.
 
 ## 1. Motivation
 

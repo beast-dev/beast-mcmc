@@ -57,6 +57,17 @@ class GradientCheckUtils {
     private GradientCheckUtils() {
     }
 
+    /**
+     * Overrides {@link NumericalDerivative}'s default centered-difference step ratio
+     * ({@code EPSILON^(1/3)}, the standard truncation/round-off balance point) when set.
+     * Diagnostic-only: exists to test whether a numeric-vs-analytic gradient mismatch is
+     * finite-difference truncation error (should shrink with a smaller step) versus a real
+     * analytic-gradient bug (should not). Unset by default so existing validated checks keep
+     * their established step size.
+     */
+    private static final String STEP_SIZE_RATIO_PROPERTY =
+            "dr.inference.operators.hmc.GradientCheckUtils.stepSizeRatio";
+
     static void checkGradient(final Likelihood joint, final Parameter parameter,
                               double[] analyticalGradient, boolean[] checkMask, double tolerance) {
         checkGradient(joint, parameter, analyticalGradient, checkMask, tolerance, null);
@@ -122,7 +133,14 @@ class GradientCheckUtils {
             analyticalActive[k] = analyticalArgumentGradient[activeIndices[k]];
         }
 
-        double[] numericActive = NumericalDerivative.gradient(numeric, activeArgument);
+        final String stepSizeRatioProperty = System.getProperty(STEP_SIZE_RATIO_PROPERTY);
+        double[] numericActive = new double[activeIndices.length];
+        if (stepSizeRatioProperty == null) {
+            numericActive = NumericalDerivative.gradient(numeric, activeArgument);
+        } else {
+            NumericalDerivative.gradient(numeric, activeArgument, numericActive,
+                    Double.parseDouble(stepSizeRatioProperty));
+        }
         boolean isClose = MathUtils.isClose(analyticalActive, numericActive, tolerance);
 
         ReadableVector.Utils.setParameter(currentValues, parameter);

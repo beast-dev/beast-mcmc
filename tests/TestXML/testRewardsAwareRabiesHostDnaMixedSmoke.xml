@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast version="10.5.0-beta4">
+
+    <!-- Same 5-taxon real rabies host/DNA data as testRewardsAwareRabiesHostDnaSmoke.xml, but -->
+    <!-- using mixedDiscontinuousHamiltonianMonteCarloOperator (total.rewards.cts + reward.category -->
+    <!-- move together) instead of the categorical-only discontinuousHamiltonianMonteCarloOperator, -->
+    <!-- to isolate whether the full-scale mixed-HMC gradient-check failure is caused by scale/dynamic -->
+    <!-- BEAGLE rescaling or by the generalSubstitutionModel host CTMC itself. -->
+
+    <taxa id="taxa">
+        <taxon id="AZ4030_2005.5">
+            <attr name="host">Ap</attr>
+        </taxon>
+        <taxon id="AZ1968_2004.5">
+            <attr name="host">Ef</attr>
+        </taxon>
+        <taxon id="AZ7590_2005.5">
+            <attr name="host">Ef</attr>
+        </taxon>
+        <taxon id="FL701_2003.5">
+            <attr name="host">Lb</attr>
+        </taxon>
+        <taxon id="AZ2405_2005.5">
+            <attr name="host">Tb</attr>
+        </taxon>
+    </taxa>
+
+    <generalDataType id="host.dataType">
+        <state code="Ap"/>
+        <state code="Ef"/>
+        <state code="Lb"/>
+        <state code="Tb"/>
+    </generalDataType>
+
+    <attributePatterns id="host.pattern" attribute="host">
+        <taxa idref="taxa"/>
+        <generalDataType idref="host.dataType"/>
+    </attributePatterns>
+
+    <alignment id="dep.alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="AZ4030_2005.5"/>
+            ATGGATGCCGACAAGATTGTATTTAAAGTCAATAATCAGGTGGTTTCTCTGAAGCCTGAG
+        </sequence>
+        <sequence>
+            <taxon idref="AZ1968_2004.5"/>
+            ATGGATGCCGACAAGATTGTATTCAAAGTCAATAATAAGGTGGTCTCTCTGAAGCCTGAA
+        </sequence>
+        <sequence>
+            <taxon idref="AZ7590_2005.5"/>
+            ATGGATGCCGACAAGATTGTATTTAAAGTCAAGAATCAGGTGGTCTCCTTGAAGCCTGAG
+        </sequence>
+        <sequence>
+            <taxon idref="FL701_2003.5"/>
+            ATGGATGCTGACAAGATTGTATTTAAAGTCAAGAATCAGGTGGTCTCCTTGAAGCCTGAG
+        </sequence>
+        <sequence>
+            <taxon idref="AZ2405_2005.5"/>
+            ATGGATGCCGACAAGATTGTATTCAAGGTCAATAATCAGGTGGTCTCTCTGAAGCCTGAA
+        </sequence>
+    </alignment>
+
+    <patterns id="dep.patterns" from="1">
+        <alignment idref="dep.alignment"/>
+    </patterns>
+
+    <newick id="startingTree">
+        (((AZ4030_2005.5:0.3,AZ1968_2004.5:0.3):0.2,AZ7590_2005.5:0.5):0.2,(FL701_2003.5:0.4,AZ2405_2005.5:0.4):0.3);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <compoundParameter id="host.rewardRates.values">
+        <parameter id="host.rewardRates.fixedValues" dimension="2" value="0.0 1.0" lower="0.0" upper="1.0"/>
+        <parameter id="host.rewardRates.varyingValues" dimension="2" value="0.25 0.75" lower="0.0" upper="1.0"/>
+    </compoundParameter>
+    <parameter id="host.rewardRates.stateIndices" dimension="4" value="0 1 2 3" lower="0" upper="3"/>
+
+    <rewardRates id="host.rewardRates">
+        <fixedValues>
+            <parameter idref="host.rewardRates.fixedValues"/>
+        </fixedValues>
+        <varyingValues>
+            <parameter idref="host.rewardRates.varyingValues"/>
+        </varyingValues>
+        <stateIndices>
+            <parameter idref="host.rewardRates.stateIndices"/>
+        </stateIndices>
+    </rewardRates>
+
+    <parameter id="total.rewards.cts" dimension="8" value="0.50 0.50 0.50 0.50 0.50 0.50 0.50 0.50" lower="0.0" upper="1.0"/>
+    <parameter id="reward.category" dimension="8" value="0.50 0.50 0.50 0.50 0.50 0.50 0.50 0.50" lower="0.0" upper="5.0"/>
+    <parameter id="reward.category.cuts" dimension="6" value="0 1 2 3 4 5"/>
+
+    <compoundParameter id="mixedRewardParameter">
+        <parameter idref="total.rewards.cts"/>
+        <parameter idref="reward.category"/>
+    </compoundParameter>
+
+    <compoundTransform id="mixedRewardTransform">
+        <transform type="logit" start="1" end="8"/>
+        <compoundParameter idref="mixedRewardParameter"/>
+    </compoundTransform>
+
+    <rewardsAwareCategoricalMixtureBranchRates id="host.totalRewardsBranchRateModel">
+        <treeModel idref="treeModel"/>
+        <ctsParameter>
+            <parameter idref="total.rewards.cts"/>
+        </ctsParameter>
+        <categoryState>
+            <parameter idref="reward.category"/>
+        </categoryState>
+        <categoryCuts>
+            <parameter idref="reward.category.cuts"/>
+        </categoryCuts>
+        <rewardRates idref="host.rewardRates"/>
+    </rewardsAwareCategoricalMixtureBranchRates>
+
+    <strictClockBranchRates id="host.branchRates">
+        <rate>
+            <parameter id="host.clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <generalSubstitutionModel id="host.model">
+        <generalDataType idref="host.dataType"/>
+        <frequencies>
+            <frequencyModel id="host.frequencyModel" normalize="true">
+                <generalDataType idref="host.dataType"/>
+                <frequencies>
+                    <parameter id="host.frequencies" dimension="4" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="host.rates" dimension="6" value="1.0" lower="0.0"/>
+        </rates>
+    </generalSubstitutionModel>
+
+    <rewardsAwareBranchModel id="host.rewardModel">
+        <rewardsAwareCategoricalMixtureBranchRates idref="host.totalRewardsBranchRateModel"/>
+        <categoryState>
+            <parameter idref="reward.category"/>
+        </categoryState>
+        <categoryCuts>
+            <parameter idref="reward.category.cuts"/>
+        </categoryCuts>
+        <rewardRates idref="host.rewardRates"/>
+        <generalSubstitutionModel idref="host.model"/>
+    </rewardsAwareBranchModel>
+
+    <siteModel id="host.siteModel">
+        <substitutionModel>
+            <generalSubstitutionModel idref="host.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="host.treeLikelihood" useAmbiguities="false"
+                        usePreOrder="true" branchRateDerivative="true"
+                        useRewardAwareBranchModelDelegate="true"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="host.pattern"/>
+        <siteModel idref="host.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <rewardsAwareBranchModel idref="host.rewardModel"/>
+        <strictClockBranchRates idref="host.branchRates"/>
+    </treeDataLikelihood>
+
+    <hkyModel id="dna.submodel">
+        <frequencies>
+            <frequencyModel id="dna.frequencyModel" dataType="nucleotide">
+                <frequencies>
+                    <parameter id="dna.frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="dna.kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </hkyModel>
+
+    <siteModel id="dna.siteModel">
+        <substitutionModel>
+            <hkyModel idref="dna.submodel"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="dna.alpha" value="0.5" lower="0.0"/>
+        </gammaShape>
+    </siteModel>
+
+    <treeDataLikelihood id="dna.rewardTreeLikelihood" useAmbiguities="false"
+                        usePreOrder="true" branchRateDerivative="true"
+                        useSpectralRepresentation="false"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="dep.patterns"/>
+        <siteModel idref="dna.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <rewardsAwareCategoricalMixtureBranchRates idref="host.totalRewardsBranchRateModel"/>
+    </treeDataLikelihood>
+
+    <rewardAwareBranchModelGradient id="hostRewardGradient"
+                                    traitName="hostRewardGrad"
+                                    gradientCheckTolerance="1E-3">
+        <treeDataLikelihood idref="host.treeLikelihood"/>
+        <rewardsAwareBranchModel idref="host.rewardModel"/>
+        <rewardsAwareCategoricalMixtureBranchRates idref="host.totalRewardsBranchRateModel"/>
+    </rewardAwareBranchModelGradient>
+
+    <branchRateGradient id="dnaRewardGradient" traitName="dnaRewardGradient" useHessian="false">
+        <treeDataLikelihood idref="dna.rewardTreeLikelihood"/>
+    </branchRateGradient>
+
+    <jointGradient id="ctsRewardGradient">
+        <rewardAwareBranchModelGradient idref="hostRewardGradient"/>
+        <branchRateGradient idref="dnaRewardGradient"/>
+    </jointGradient>
+
+    <zeroGradient id="rewardCategoryZeroGradient">
+        <parameter idref="reward.category"/>
+        <treeDataLikelihood idref="host.treeLikelihood"/>
+    </zeroGradient>
+
+    <compoundGradient id="mixedRewardGradient">
+        <jointGradient idref="ctsRewardGradient"/>
+        <zeroGradient idref="rewardCategoryZeroGradient"/>
+    </compoundGradient>
+
+    <rewardMixtureCategoricalDiscontinuousPotential id="rewardCategoryPotential">
+        <categoryState>
+            <parameter idref="reward.category"/>
+        </categoryState>
+        <categoryCuts>
+            <parameter idref="reward.category.cuts"/>
+        </categoryCuts>
+        <rewardsAwareBranchModel idref="host.rewardModel"/>
+        <treeDataLikelihood idref="host.treeLikelihood"/>
+        <dependentCtmcLikelihoods>
+            <treeDataLikelihood idref="dna.rewardTreeLikelihood"/>
+        </dependentCtmcLikelihoods>
+    </rewardMixtureCategoricalDiscontinuousPotential>
+
+    <zeroDiscontinuousPotential id="ctsZeroPotential">
+        <parameter idref="total.rewards.cts"/>
+    </zeroDiscontinuousPotential>
+
+    <compoundDiscontinuousPotential id="mixedRewardPotential">
+        <zeroDiscontinuousPotential idref="ctsZeroPotential"/>
+        <rewardMixtureCategoricalDiscontinuousPotential idref="rewardCategoryPotential"/>
+    </compoundDiscontinuousPotential>
+
+    <operators id="operators">
+        <mixedDiscontinuousHamiltonianMonteCarloOperator id="mixedRewardDHMC"
+                                                        weight="1.0"
+                                                        stepSize="0.25"
+                                                        nSteps="2"
+                                                        gradientCheckCount="10"
+                                                        gradientCheckTolerance="1E-3">
+            <compoundGradient idref="mixedRewardGradient"/>
+            <compoundParameter idref="mixedRewardParameter"/>
+            <compoundTransform idref="mixedRewardTransform"/>
+            <compoundDiscontinuousPotential idref="mixedRewardPotential"/>
+            <mask>
+                <parameter id="mixedRewardMask" dimension="16" value="0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1"/>
+            </mask>
+            <continuousMasses>
+                <parameter id="mixedRewardContinuousMasses" dimension="16"
+                           value="10000 10000 10000 10000 10000 10000 10000 10000 1 1 1 1 1 1 1 1"/>
+            </continuousMasses>
+            <discontinuousScales>
+                <parameter id="mixedRewardDiscontinuousScales" dimension="16"
+                           value="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>
+            </discontinuousScales>
+        </mixedDiscontinuousHamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="4" autoOptimize="false"
+          operatorAnalysis="testRewardsAwareRabiesHostDnaMixedSmoke.ops">
+        <joint id="joint">
+            <prior id="prior">
+                <uniformPrior lower="0.0" upper="1.0">
+                    <parameter idref="total.rewards.cts"/>
+                </uniformPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="host.treeLikelihood"/>
+                <treeDataLikelihood idref="dna.rewardTreeLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <joint idref="joint"/>
+            <treeDataLikelihood idref="host.treeLikelihood"/>
+            <treeDataLikelihood idref="dna.rewardTreeLikelihood"/>
+            <parameter idref="total.rewards.cts"/>
+            <parameter idref="reward.category"/>
+        </log>
+    </mcmc>
+
+</beast>

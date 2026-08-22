@@ -66,13 +66,15 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
     }
 
     public static ApproximationMode parseGradientMode(XMLObject xo) throws XMLParseException {
-        ApproximationMode mode = ApproximationMode.FIRST_ORDER;
         String modeString = xo.getAttribute(MODE, "firstOrder");
         if (modeString.compareToIgnoreCase("exact") == 0) {
-            mode = ApproximationMode.EXACT_SPECTRAL;
+            return ApproximationMode.EXACT_SPECTRAL;
         }
-        return mode;
-        // TODO should use ApproximationMode.factory()
+        try {
+            return ApproximationMode.factory(modeString);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -143,4 +145,3 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
         return AbstractGlmSubstitutionModelGradient.class;
     }
 }
-

@@ -36,6 +36,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     private static final boolean COUNT_CALCULATIONS = true;
     private static final double DEFAULT_SCALING_FLOOR = 1.0e-200;
     private static final double DEFAULT_SCALING_CEILING = 1.0e200;
+    private static final double DEFAULT_SCALING_LOG_FLOOR = Math.log(DEFAULT_SCALING_FLOOR);
+    private static final double DEFAULT_SCALING_LOG_CEILING = Math.log(DEFAULT_SCALING_CEILING);
 
     @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
@@ -234,6 +236,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     // Scratch vectors reused everywhere
     private final double[] leftPropagated;
     private final double[] rightPropagated;
+    private final double[] leftScaledForCombine;
+    private final double[] rightScaledForCombine;
     private final double[] tmpVectorA;
 
     // Scratch buffer for exporting a whole node buffer
@@ -376,6 +380,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         this.leftPropagated = new double[stateCount];
         this.rightPropagated = new double[stateCount];
+        this.leftScaledForCombine = new double[stateCount];
+        this.rightScaledForCombine = new double[stateCount];
         this.tmpVectorA = new double[stateCount];
         this.tmpNodeExportBuffer = new double[nodeBufferLength];
 
@@ -913,17 +919,55 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
                 nodeScales[p] = leftScales[p] + rightScales[p];
 
+                double[] leftForCombine = leftBranchTop;
+                int leftForCombineOffset = leftBranchTopOffset;
+                double[] rightForCombine = rightBranchTop;
+                int rightForCombineOffset = rightBranchTopOffset;
+
+                final boolean scaledForCombine;
+                if (cacheSettings.applyPatternScaling) {
+                    final double leftBranchTopMax = maxAbsPatternSlice(leftBranchTop, leftBranchTopOffset);
+                    final double rightBranchTopMax = maxAbsPatternSlice(rightBranchTop, rightBranchTopOffset);
+                    scaledForCombine = shouldScaleBranchTopProduct(leftBranchTopMax, rightBranchTopMax);
+                    if (scaledForCombine) {
+                        copyNormalizedPatternSlice(leftBranchTop, leftBranchTopOffset,
+                                leftScaledForCombine, leftBranchTopMax);
+                        copyNormalizedPatternSlice(rightBranchTop, rightBranchTopOffset,
+                                rightScaledForCombine, rightBranchTopMax);
+                        nodeScales[p] += Math.log(leftBranchTopMax) + Math.log(rightBranchTopMax);
+                        leftForCombine = leftScaledForCombine;
+                        leftForCombineOffset = 0;
+                        rightForCombine = rightScaledForCombine;
+                        rightForCombineOffset = 0;
+                    }
+                } else {
+                    scaledForCombine = false;
+                }
+
                 if (postOrderAtBranchStartStandard != null) {
-                    postOrderRepresentation.combineBranchTopPartials(
-                            leftBranchTop, leftBranchTopOffset,
-                            rightBranchTop, rightBranchTopOffset,
-                            nodeBuffer, parentOffset,
-                            postOrderAtBranchStartStandard[leftNumber], childOffset,
-                            postOrderAtBranchStartStandard[rightNumber], childOffset);
+                    if (scaledForCombine) {
+                        postOrderRepresentation.combineBranchTopPartials(
+                                leftForCombine, leftForCombineOffset,
+                                rightForCombine, rightForCombineOffset,
+                                nodeBuffer, parentOffset);
+                        postOrderRepresentation.exportPostOrderPartialToStandard(
+                                leftBranchTop, leftBranchTopOffset,
+                                postOrderAtBranchStartStandard[leftNumber], childOffset);
+                        postOrderRepresentation.exportPostOrderPartialToStandard(
+                                rightBranchTop, rightBranchTopOffset,
+                                postOrderAtBranchStartStandard[rightNumber], childOffset);
+                    } else {
+                        postOrderRepresentation.combineBranchTopPartials(
+                                leftBranchTop, leftBranchTopOffset,
+                                rightBranchTop, rightBranchTopOffset,
+                                nodeBuffer, parentOffset,
+                                postOrderAtBranchStartStandard[leftNumber], childOffset,
+                                postOrderAtBranchStartStandard[rightNumber], childOffset);
+                    }
                 } else {
                     postOrderRepresentation.combineBranchTopPartials(
-                            leftBranchTop, leftBranchTopOffset,
-                            rightBranchTop, rightBranchTopOffset,
+                            leftForCombine, leftForCombineOffset,
+                            rightForCombine, rightForCombineOffset,
                             nodeBuffer, parentOffset);
                 }
 
@@ -1319,11 +1363,31 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         return nodeNumber - tipCount;
     }
 
-    private double normalizePatternSlice(double[] buffer, int off) {
+    private double maxAbsPatternSlice(double[] buffer, int off) {
         double max = 0.0;
         for (int s = 0; s < stateCount; s++) {
             max = Math.max(max, Math.abs(buffer[off + s]));
         }
+        return max;
+    }
+
+    private boolean shouldScaleBranchTopProduct(double leftMax, double rightMax) {
+        if (leftMax == 0.0 || rightMax == 0.0) {
+            return false;
+        }
+        final double logProduct = Math.log(leftMax) + Math.log(rightMax);
+        return logProduct < DEFAULT_SCALING_LOG_FLOOR || logProduct > DEFAULT_SCALING_LOG_CEILING;
+    }
+
+    private void copyNormalizedPatternSlice(double[] source, int sourceOffset,
+                                            double[] target, double scale) {
+        for (int s = 0; s < stateCount; s++) {
+            target[s] = source[sourceOffset + s] / scale;
+        }
+    }
+
+    private double normalizePatternSlice(double[] buffer, int off) {
+        double max = maxAbsPatternSlice(buffer, off);
 
         if (max == 0.0) {
             return Double.NEGATIVE_INFINITY;

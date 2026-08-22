@@ -2,6 +2,55 @@
 
 Branch: `feature/reward-category-dynamic-ordering` (off `rewards-aware-models`)
 
+## Status: Phases 1-6 implemented and validated (commit `e2fb69945`)
+
+Implemented leaner than originally sketched in ~4: rather than building a
+full per-branch `EmbeddedOrdinalParameter`/cuts array, the axis itself (cut
+values `0,1,...,K+1`) turns out to be branch-independent -- only the
+bucket-to-category *translation* needs a per-branch insertion rank. So the
+shared static-cuts decoding logic is reused unchanged, and each branch only
+carries one `int` (its rank). Decode stays O(log K) per call, matching the
+shared decoder's cost, not O(branchCount); refresh is O(branchCount log K),
+paid once per operator call as required.
+
+Two real, non-obvious things fell out of actually building and running this,
+both worth knowing before writing XML against it:
+
+1. **Exact-perturbation diagnostics don't work with the dynamic decoder yet.**
+   `BeagleRewardDependentCtmcEdgeEvidenceProvider`'s `CategoricalRewardStateAdapter`
+   dispatches on branch-rate-model *type*, not just the shared
+   `RewardMixtureBranchRateModel` interface, for its diagnostic
+   candidate-setting/exact-reevaluation path -- and that path is branch-index-
+   independent, incompatible with a branch-specific embedding. Rather than
+   silently computing wrong exact-comparison numbers, it now throws a clear
+   `UnsupportedOperationException` if `dependentCtmcCompareExact` /
+   `dependentCtmcDiagnostics` is used with `rewardsAwareCategoricalMixtureBranchRatesDynamic`.
+   Real production sampling (the actual point of this feature) is unaffected;
+   only the optional exact-comparison diagnostic path is blocked.
+2. **The XML convention for "start every branch in the continuous category"
+   changes.** With the static decoder, initializing `reward.category` to
+   `0.5` for every branch reliably starts everything continuous, because
+   category 0 is always the first axis bucket. With the dynamic decoder,
+   which bucket is continuous depends on that branch's insertion rank among
+   the sorted atomic rewards -- so the initial value needs to be
+   `rank(initial_cts) + 0.5`, not a fixed `0.5`. Discovered by hitting an
+   `-Inf` initial likelihood in the first real smoke run: with sorted atomic
+   rewards `[0.0, 0.25, 0.75, 1.0]` and `cts=0.5`, rank is `2` for every
+   branch, so `reward.category` needed `2.5`, not `0.5` -- see
+   `tests/TestXML/testRewardsAwareRabiesHostDnaMixedDynamicSmoke.xml` for a
+   worked example. Worth a clearer error message or a convenience initializer
+   before this ships beyond a smoke.
+
+Not yet done, deferred as genuine follow-up work (not blocking):
+- The reward-sorted static ordering (§2) still needs to actually be applied
+  in `generate_full_scale_xml.py` -- this plan only implemented the code
+  side, not the XML-generation change.
+- A full-scale (372-taxon) rerun comparing atomic-state reachability against
+  the static-ordering baseline from `project_log.md` 2026-08-22 (only atomic
+  state "Ap" was ever reached in 5 states there) has not been run yet --
+  that is the actual test of whether this solves the original motivating
+  problem.
+
 ## 1. Motivation
 
 Investigated in `dep-markov/private-code/notes/project_log.md` (2026-08-21/22): the

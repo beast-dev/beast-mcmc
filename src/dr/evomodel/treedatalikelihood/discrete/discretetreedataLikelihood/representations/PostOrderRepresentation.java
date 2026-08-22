@@ -80,6 +80,23 @@ public interface PostOrderRepresentation {
     }
 
     /**
+     * Scale-aware sparse-tip branch propagation.
+     *
+     * Implementations whose branch transition can introduce very large or very
+     * small finite factors may write a rescaled branch-top partial and return the
+     * corresponding log scale. The default preserves the legacy unscaled
+     * contract.
+     */
+    default double propagateSparseTipToBranchTopScaled(int nodeNumber,
+                                                       double branchLength,
+                                                       boolean[] stateSet,
+                                                       double[] outBranchTopPartial,
+                                                       int outOffset) {
+        propagateSparseTipToBranchTop(nodeNumber, branchLength, stateSet, outBranchTopPartial, outOffset);
+        return 0.0;
+    }
+
+    /**
      * Propagate a child partial from the child node to the top of its incident branch.
      *
      * @param nodeNumber          child node number identifying the branch
@@ -98,6 +115,24 @@ public interface PostOrderRepresentation {
                               int childOffset,
                               double[] outBranchTopPartial,
                               int outOffset);
+
+    /**
+     * Scale-aware branch propagation.
+     *
+     * Implementations may rescale the written branch-top partial and return the
+     * log scale that was removed from the vector. The default is the legacy
+     * unscaled operation.
+     */
+    default double propagateToBranchTopScaled(int nodeNumber,
+                                             double branchLength,
+                                             double[] childPartial,
+                                             int childOffset,
+                                             double[] outBranchTopPartial,
+                                             int outOffset) {
+        propagateToBranchTop(nodeNumber, branchLength, childPartial, childOffset,
+                outBranchTopPartial, outOffset);
+        return 0.0;
+    }
 
     /**
      * Combine the two child branch-top partials into the parent node partial.

@@ -139,7 +139,12 @@ public interface PreOrderRepresentation {
         final int K = getStateCount();
         double max = 0.0;
         for (int s = 0; s < K; s++) {
-            max = Math.max(max, Math.abs(src[srcOff + s]));
+            final double value = src[srcOff + s];
+            if (!Double.isFinite(value)) {
+                throw new IllegalStateException("Non-finite pre-order partial at offset " +
+                        srcOff + ", state " + s + ": value=" + value);
+            }
+            max = Math.max(max, Math.abs(value));
         }
 
         if (max == 0.0) {
@@ -169,6 +174,23 @@ public interface PreOrderRepresentation {
                                  double[] childBranchTopPreOrder,
                                  int childBranchTopOffset,
                                  double[] out, int outOff);
+
+    /**
+     * Scale-aware pre-order propagation from branch top to branch bottom.
+     *
+     * Implementations may rescale the written branch-bottom partial and return
+     * the log scale removed from the vector. The default preserves the legacy
+     * unscaled contract.
+     */
+    default double propagateToBranchBottomScaled(int childNodeNumber,
+                                                 double branchLength,
+                                                 double[] childBranchTopPreOrder,
+                                                 int childBranchTopOffset,
+                                                 double[] out, int outOff) {
+        propagateToBranchBottom(childNodeNumber, branchLength, childBranchTopPreOrder,
+                childBranchTopOffset, out, outOff);
+        return 0.0;
+    }
 
     /**
      * Export one internal pre-order slice to the representation's external/reporting coordinates.

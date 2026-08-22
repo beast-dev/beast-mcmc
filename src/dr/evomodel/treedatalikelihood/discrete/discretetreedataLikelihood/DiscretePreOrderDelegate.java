@@ -51,6 +51,8 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
     private double[][] storedNodePreOrderStandard;
 
     // log scales [node][pattern]
+    private double[][] branchStartPreOrderLogScales;
+    private double[][] storedBranchStartPreOrderLogScales;
     private double[][] nodePreOrderLogScales;
     private double[][] storedNodePreOrderLogScales;
 
@@ -114,6 +116,8 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             this.storedNodePreOrderStandard = new double[nodeCount][nodeBufferLength];
         }
 
+        this.branchStartPreOrderLogScales = new double[nodeCount][patternCount];
+        this.storedBranchStartPreOrderLogScales = new double[nodeCount][patternCount];
         this.nodePreOrderLogScales = new double[nodeCount][patternCount];
         this.storedNodePreOrderLogScales = new double[nodeCount][patternCount];
 
@@ -165,6 +169,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         if (nodePreOrderStandard != null) {
             copy2D(nodePreOrderStandard, storedNodePreOrderStandard);
         }
+        copy2D(branchStartPreOrderLogScales, storedBranchStartPreOrderLogScales);
         copy2D(nodePreOrderLogScales, storedNodePreOrderLogScales);
         preOrderRepresentation.storeState();
     }
@@ -186,6 +191,10 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             nodePreOrderStandard = storedNodePreOrderStandard;
             storedNodePreOrderStandard = tmpStandard;
         }
+
+        double[][] tmpStartScale = branchStartPreOrderLogScales;
+        branchStartPreOrderLogScales = storedBranchStartPreOrderLogScales;
+        storedBranchStartPreOrderLogScales = tmpStartScale;
 
         double[][] tmpB = nodePreOrderLogScales;
         nodePreOrderLogScales = storedNodePreOrderLogScales;
@@ -242,6 +251,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         if (rootStandardBuffer != null) {
             Arrays.fill(rootStandardBuffer, 0.0);
         }
+        Arrays.fill(branchStartPreOrderLogScales[rootNumber], 0.0);
         Arrays.fill(nodePreOrderLogScales[rootNumber], 0.0);
 
         for (int c = 0; c < categoryCount; c++) {
@@ -283,9 +293,10 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                         ? null
                         : nodePreOrderStandard[childNumber];
 
+        final double[] childStartScale = branchStartPreOrderLogScales[childNumber];
         final double[] childScale = nodePreOrderLogScales[childNumber];
         final double[] siblingScale = tmpSiblingScales;
-        postOrderMessageProvider.getPostOrderBranchScalesInto(siblingNumber, siblingScale);
+        postOrderMessageProvider.getPostOrderBranchTopScalesInto(siblingNumber, siblingScale);
 
         final double childLength = effectiveBranchLengths[childNumber];
 
@@ -328,27 +339,30 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                             childPreOrderStart, off);
                 }
 
-                childScale[p] = parentNodeScale + siblingScale[p];
+                childStartScale[p] = addScales(parentNodeScale, siblingScale[p]);
 
                 final double extraScaleStart = normalizePatternSlice(childPreOrderStart, off);
-                childScale[p] += extraScaleStart;
+                childStartScale[p] = addScales(childStartScale[p], extraScaleStart);
+                childScale[p] = childStartScale[p];
 
                 if (!cacheOnlyBranchTopPreOrder) {
                     // propagate down the child branch — writes directly to childPreOrderEnd at off
-                    preOrderRepresentation.propagateToBranchBottom(
+                    childScale[p] = addScales(childStartScale[p],
+                            preOrderRepresentation.propagateToBranchBottomScaled(
                             childNumber,
                             childEffectiveLength,
                             childPreOrderStart, off,
                             childPreOrderEnd, off
-                    );
+                    ));
 
                     if (childPreOrderEndStandard != null) {
-                        childScale[p] += preOrderRepresentation.normalizeAndExportPreOrderPartialToStandard(
+                        childScale[p] = addScales(childScale[p],
+                                preOrderRepresentation.normalizeAndExportPreOrderPartialToStandard(
                                 childPreOrderEnd, off,
                                 childPreOrderEndStandard, off,
-                                DEFAULT_SCALING_FLOOR, DEFAULT_SCALING_CEILING);
+                                DEFAULT_SCALING_FLOOR, DEFAULT_SCALING_CEILING));
                     } else {
-                        childScale[p] += normalizePatternSlice(childPreOrderEnd, off);
+                        childScale[p] = addScales(childScale[p], normalizePatternSlice(childPreOrderEnd, off));
                     }
                 }
             }
@@ -367,8 +381,8 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     }
 
-    private static final double DEFAULT_SCALING_FLOOR = 1.0e-200;
-    private static final double DEFAULT_SCALING_CEILING = 1.0e200;
+    private static final double DEFAULT_SCALING_FLOOR = 1.0e-100;
+    private static final double DEFAULT_SCALING_CEILING = 1.0e100;
 
     private double prepareParentNodePreOrder(NodeRef parent,
                                              int category,
@@ -377,35 +391,37 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
                                              double[] outParentNodePreOrder) {
         final int parentNumber = parent.getNumber();
         final int off = offset(category, pattern, 0);
-        double scale = nodePreOrderLogScales[parentNumber][pattern];
-
         if (tree.isRoot(parent)) {
-            return scale;
+            return nodePreOrderLogScales[parentNumber][pattern];
         }
 
         if (!cacheOnlyBranchTopPreOrder) {
-            return scale;
+            return nodePreOrderLogScales[parentNumber][pattern];
         }
 
-        preOrderRepresentation.propagateToBranchBottom(
+        double scale = branchStartPreOrderLogScales[parentNumber][pattern];
+        scale = addScales(scale, preOrderRepresentation.propagateToBranchBottomScaled(
                 parentNumber,
                 effectiveBranchLengths[parentNumber] * categoryRates[category],
                 branchStartPreOrder[parentNumber], off,
-                outParentNodePreOrder, 0);
-        scale += normalizePatternSlice(outParentNodePreOrder, 0);
+                outParentNodePreOrder, 0));
+        scale = addScales(scale, normalizePatternSlice(outParentNodePreOrder, 0));
         return scale;
     }
 
     private double normalizePatternSlice(double[] buffer, int off) {
         double max = 0.0;
         for (int s = 0; s < stateCount; s++) {
-            max = Math.max(max, Math.abs(buffer[off + s]));
+            final double value = buffer[off + s];
+            if (!Double.isFinite(value)) {
+                throw new IllegalStateException("Non-finite preorder partial at offset " + off +
+                        ", state " + s + ": value=" + value +
+                        ", slice=" + sliceToString(buffer, off));
+            }
+            max = Math.max(max, Math.abs(value));
         }
 
-//        if (max == 0.0) {
-//            return Double.NEGATIVE_INFINITY;
-//        }
-        if (max == 0.0) { // TODO recheck this
+        if (max == 0.0) {
             final double uniform = 1.0 / stateCount;
             for (int s = 0; s < stateCount; s++) {
                 buffer[off + s] = uniform;
@@ -421,6 +437,32 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         }
 
         return 0.0;
+    }
+
+    private double addScales(double left, double right) {
+        if (isImpossibleScale(left) || isImpossibleScale(right)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        if (!Double.isFinite(left) || !Double.isFinite(right)) {
+            throw new IllegalStateException("Invalid preorder scale addition: left=" +
+                    left + ", right=" + right);
+        }
+        final double sum = left + right;
+        if (!Double.isFinite(sum)) {
+            throw new IllegalStateException("Preorder scale addition overflowed: left=" +
+                    left + ", right=" + right);
+        }
+        return sum;
+    }
+
+    private static boolean isImpossibleScale(double scale) {
+        return scale == Double.NEGATIVE_INFINITY || Double.isNaN(scale);
+    }
+
+    private String sliceToString(double[] buffer, int off) {
+        final double[] slice = new double[stateCount];
+        System.arraycopy(buffer, off, slice, 0, stateCount);
+        return Arrays.toString(slice);
     }
 
     public void getPreOrderAtBranchStartInto(int nodeNumber, double[] out) {
@@ -486,7 +528,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
 
     public void getPreOrderBranchScalesInto(int nodeNumber, double[] out) {
         for (int p = 0; p < patternCount; p++) {
-            out[p] = nodePreOrderLogScales[nodeNumber][p];
+            out[p] = branchStartPreOrderLogScales[nodeNumber][p];
         }
     }
 
@@ -525,7 +567,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
             throw new IllegalStateException("Pre-order has not been computed yet");
         }
         final int off = offset(category, pattern, 0);
-        preOrderRepresentation.propagateToBranchBottom(
+        preOrderRepresentation.propagateToBranchBottomScaled(
                 nodeNumber,
                 effectiveBranchLengths[nodeNumber] * categoryRates[category],
                 branchStartPreOrder[nodeNumber], off,
@@ -563,6 +605,7 @@ public final class DiscretePreOrderDelegate extends AbstractModel {
         if (preOrderEndKnown != null) Arrays.fill(preOrderEndKnown, false);
 
         for (int i = 0; i < nodeCount; i++) {
+            Arrays.fill(branchStartPreOrderLogScales[i], 0.0);
             Arrays.fill(nodePreOrderLogScales[i], 0.0);
         }
     }

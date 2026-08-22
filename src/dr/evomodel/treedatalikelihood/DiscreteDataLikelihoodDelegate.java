@@ -34,8 +34,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
     private static final Logger LOGGER = Logger.getLogger("dr.evomodel");
     private static final boolean COUNT_CALCULATIONS = true;
-    private static final double DEFAULT_SCALING_FLOOR = 1.0e-200;
-    private static final double DEFAULT_SCALING_CEILING = 1.0e200;
+    private static final double DEFAULT_SCALING_FLOOR = 1.0e-100;
+    private static final double DEFAULT_SCALING_CEILING = 1.0e100;
 
     @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
@@ -201,6 +201,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     // post-order scaling [node][pattern]
     private double[][] nodePatternLogScales;
     private double[][] storedNodePatternLogScales;
+    private final double[][] postOrderBranchTopLogScales;
 
     // retained for API compatibility; not actively used in this first refactor
 //    private double[][] nodePreOrderPatternLogScales;
@@ -346,6 +347,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         this.nodePatternLogScales = new double[nodeCount][patternCount];
         this.storedNodePatternLogScales = new double[nodeCount][patternCount];
+        this.postOrderBranchTopLogScales = new double[nodeCount][patternCount];
 
         this.postOrderAtBranchStart = cacheSettings.cacheBranchStartPostOrder ? new double[nodeCount][nodeBufferLength] : null;
         this.postOrderAtBranchStartStandard =
@@ -874,8 +876,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
         final double[] nodeBuffer = partialsForNode(nodeNumber);
         final double[] nodeScales = nodePatternLogScales[nodeNumber];
-        final double[] leftScales = nodePatternLogScales[leftNumber];
-        final double[] rightScales = nodePatternLogScales[rightNumber];
+        final double[] leftScales = postOrderBranchTopLogScales[leftNumber];
+        final double[] rightScales = postOrderBranchTopLogScales[rightNumber];
 
         for (int c = 0; c < categoryCount; c++) {
             final double leftEffectiveLength = leftLength * categoryRates[c];
@@ -899,7 +901,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
                 propagatePostOrderToBranchTop(rightNumber, rightEffectiveLength, c, p,
                         rightBranchTop, rightBranchTopOffset);
 
-                nodeScales[p] = leftScales[p] + rightScales[p];
+                nodeScales[p] = addScales(leftScales[p], rightScales[p]);
 
                 if (postOrderAtBranchStartStandard != null) {
                     postOrderRepresentation.combineBranchTopPartials(
@@ -916,7 +918,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
                 }
 
                 if (cacheSettings.applyPatternScaling) {
-                    nodeScales[p] += normalizePatternSlice(nodeBuffer, parentOffset);
+                    nodeScales[p] = addScales(nodeScales[p],
+                            normalizePatternSlice(nodeBuffer, parentOffset));
                 }
                 if (postOrderAtBranchStart != null) {
                     postOrderStartKnown[leftNumber] = true;
@@ -934,17 +937,23 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
                                                int pattern,
                                                double[] outBranchTopPartial,
                                                int outOffset) {
+        final double branchScale;
         if (isSparseTipNode(childNumber)) {
-            postOrderRepresentation.propagateSparseTipToBranchTop(
+            branchScale = postOrderRepresentation.propagateSparseTipToBranchTopScaled(
                     childNumber, effectiveLength, getSparseTipStateSet(childNumber, pattern),
                     outBranchTopPartial, outOffset);
-            return;
+        } else {
+            final int off = offset(category, pattern, 0);
+            branchScale = postOrderRepresentation.propagateToBranchTopScaled(
+                    childNumber, effectiveLength, partialsForNode(childNumber), off,
+                    outBranchTopPartial, outOffset);
         }
 
-        final int off = offset(category, pattern, 0);
-        postOrderRepresentation.propagateToBranchTop(
-                childNumber, effectiveLength, partialsForNode(childNumber), off,
-                outBranchTopPartial, outOffset);
+        double scale = addScales(nodePatternLogScales[childNumber][pattern], branchScale);
+        if (cacheSettings.applyPatternScaling) {
+            scale = addScales(scale, normalizePatternSlice(outBranchTopPartial, outOffset));
+        }
+        postOrderBranchTopLogScales[childNumber][pattern] = scale;
     }
 
     private double computeRootLogLikelihood(NodeRef root, double[] rootFrequencies, double[] categoryWeights) {
@@ -1036,6 +1045,14 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         System.arraycopy(nodePatternLogScales[nodeNumber], 0, dest, 0, patternCount);
     }
 
+    @Override
+    public void getPostOrderBranchTopScalesInto(int nodeNumber, double[] dest) {
+        if (dest.length != patternCount) {
+            throw new IllegalArgumentException("Destination length must equal patternCount");
+        }
+        System.arraycopy(postOrderBranchTopLogScales[nodeNumber], 0, dest, 0, patternCount);
+    }
+
     public void getPreOrderBranchScalesInto(int nodeNumber, double[] dest) {
         ensurePreOrderComputed();
         preOrderDelegate.getPreOrderBranchScalesInto(nodeNumber, dest);
@@ -1075,6 +1092,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 
     private void initialiseTipNode(int nodeNumber, int sequenceIndex) {
         Arrays.fill(nodePatternLogScales[nodeNumber], 0.0);
+        Arrays.fill(postOrderBranchTopLogScales[nodeNumber], 0.0);
 
         if (useSparseTipPartials) {
             for (int p = 0; p < patternCount; p++) {
@@ -1200,6 +1218,9 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         for (int i = 0; i < tipCount; i++) {
             nodePartialKnown[i] = true;
         }
+        for (int i = 0; i < nodeCount; i++) {
+            Arrays.fill(postOrderBranchTopLogScales[i], 0.0);
+        }
     }
 
     private void markDirtyFromNodeOperations(List<NodeOperation> nodeOperations) {
@@ -1295,7 +1316,13 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     private double normalizePatternSlice(double[] buffer, int off) {
         double max = 0.0;
         for (int s = 0; s < stateCount; s++) {
-            max = Math.max(max, Math.abs(buffer[off + s]));
+            final double value = buffer[off + s];
+            if (!Double.isFinite(value)) {
+                throw new IllegalStateException("Non-finite post-order partial at offset " + off +
+                        ", state " + s + ": value=" + value +
+                        ", slice=" + sliceToString(buffer, off));
+            }
+            max = Math.max(max, Math.abs(value));
         }
 
         if (max == 0.0) {
@@ -1310,6 +1337,32 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
 
         return 0.0;
+    }
+
+    private double addScales(double left, double right) {
+        if (isImpossibleScale(left) || isImpossibleScale(right)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        if (!Double.isFinite(left) || !Double.isFinite(right)) {
+            throw new IllegalStateException("Invalid post-order scale addition: left=" +
+                    left + ", right=" + right);
+        }
+        final double sum = left + right;
+        if (!Double.isFinite(sum)) {
+            throw new IllegalStateException("Post-order scale addition overflowed: left=" +
+                    left + ", right=" + right);
+        }
+        return sum;
+    }
+
+    private static boolean isImpossibleScale(double scale) {
+        return scale == Double.NEGATIVE_INFINITY || Double.isNaN(scale);
+    }
+
+    private String sliceToString(double[] buffer, int off) {
+        final double[] slice = new double[stateCount];
+        System.arraycopy(buffer, off, slice, 0, stateCount);
+        return Arrays.toString(slice);
     }
 
     private void exportNodeBuffer(double[] source, double[] target) {

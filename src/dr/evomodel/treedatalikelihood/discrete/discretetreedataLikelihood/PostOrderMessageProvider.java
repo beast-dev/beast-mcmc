@@ -61,4 +61,10 @@ public interface PostOrderMessageProvider {
     void getPostOrderBranchTopExportInto(int childNodeNumber, int category, int pattern, double[] outPartial);
 
     void getPostOrderBranchScalesInto(int nodeNumber, double[] dest);
+
+    /**
+     * Log scale attached to the cached post-order message at the TOP of the
+     * branch leading into {@code nodeNumber}.
+     */
+    void getPostOrderBranchTopScalesInto(int nodeNumber, double[] dest);
 }

@@ -18,6 +18,9 @@ import java.util.Arrays;
 public final class RewardsAwarePartialsRepresentation
         implements BidirectionalRepresentation {
 
+    private static final double BRANCH_MATRIX_SCALING_FLOOR = 1.0e-100;
+    private static final double BRANCH_MATRIX_SCALING_CEILING = 1.0e100;
+
     private final RewardsAwareBranchModel branchModel;
     private final int stateCount;
 
@@ -123,6 +126,22 @@ public final class RewardsAwarePartialsRepresentation
     }
 
     @Override
+    public double propagateToBranchBottomScaled(
+            int childNodeNumber,
+            double branchLength,
+            double[] childBranchTopPreOrder,
+            int childBranchTopOffset,
+            double[] outChildNodePreOrder,
+            int outOffset
+    ) {
+        checkLength(childBranchTopPreOrder, childBranchTopOffset, "childBranchTopPreOrder");
+        checkLength(outChildNodePreOrder, outOffset, "outChildNodePreOrder");
+
+        return applyScaled(childNodeNumber, childBranchTopPreOrder, childBranchTopOffset,
+                outChildNodePreOrder, outOffset, true);
+    }
+
+    @Override
     public void initializeTipPartial(double[] standardTip, double[] outPartial) {
         initializeTipPartial(standardTip, outPartial, 0);
     }
@@ -161,6 +180,22 @@ public final class RewardsAwarePartialsRepresentation
         checkLength(outBranchTopPartial, outOffset, "outBranchTopPartial");
 
         apply(nodeNumber, childPartial, childOffset, outBranchTopPartial, outOffset);
+    }
+
+    @Override
+    public double propagateToBranchTopScaled(
+            int nodeNumber,
+            double branchLength,
+            double[] childPartial,
+            int childOffset,
+            double[] outBranchTopPartial,
+            int outOffset
+    ) {
+        checkLength(childPartial, childOffset, "childPartial");
+        checkLength(outBranchTopPartial, outOffset, "outBranchTopPartial");
+
+        return applyScaled(nodeNumber, childPartial, childOffset,
+                outBranchTopPartial, outOffset, false);
     }
 
     @Override
@@ -229,6 +264,14 @@ public final class RewardsAwarePartialsRepresentation
 //        }
     }
 
+    private double applyAtomicScaled(int nodeNum, double[] input, int inputOffset,
+                                     double[] output, int outputOffset) {
+        Arrays.fill(output, outputOffset, outputOffset + stateCount, 0.0);
+        final int stateIndex = branchModel.getAtomicBranchState(nodeNum);
+        output[outputOffset + stateIndex] = input[inputOffset + stateIndex];
+        return branchModel.getAtomicBranchLogScaleForState(nodeNum, stateIndex);
+    }
+
     public void apply(int nodeNum, double[] input, double[] output) {
         apply(nodeNum, input, 0, output, 0);
     }
@@ -289,6 +332,74 @@ public final class RewardsAwarePartialsRepresentation
                             " produced no nonzero entries in preorder output."
             );
         }
+    }
+
+    private double applyScaled(int nodeNum, double[] input, int inputOffset,
+                               double[] output, int outputOffset,
+                               boolean transpose) {
+        // branchLength is intentionally ignored because RewardsAwareBranchModel
+        // reads the current branch length directly from the tree when building
+        // transitions.
+
+        if (branchModel.isAtomicBranch(nodeNum)) {
+            return applyAtomicScaled(nodeNum, input, inputOffset, output, outputOffset);
+        }
+
+        final double[] matrix = branchModel.getTransitionMatrix(nodeNum);
+        final double matrixScale = branchMatrixScale(nodeNum, matrix);
+
+        Arrays.fill(output, outputOffset, outputOffset + stateCount, 0.0);
+        if (matrixScale == Double.NEGATIVE_INFINITY) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if (transpose) {
+            for (int i = 0; i < stateCount; i++) {
+                final double in = input[inputOffset + i];
+                final int rowOffset = i * stateCount;
+                for (int j = 0; j < stateCount; j++) {
+                    final double scaledMatrixEntry = matrixScale == 1.0
+                            ? matrix[rowOffset + j]
+                            : matrix[rowOffset + j] / matrixScale;
+                    output[outputOffset + j] += scaledMatrixEntry * in;
+                }
+            }
+        } else {
+            int k = 0;
+            for (int i = 0; i < stateCount; i++) {
+                double sum = 0.0;
+                for (int j = 0; j < stateCount; j++) {
+                    final double scaledMatrixEntry = matrixScale == 1.0
+                            ? matrix[k]
+                            : matrix[k] / matrixScale;
+                    sum += scaledMatrixEntry * input[inputOffset + j];
+                    k++;
+                }
+                output[outputOffset + i] = sum;
+            }
+        }
+
+        return matrixScale == 1.0 ? 0.0 : Math.log(matrixScale);
+    }
+
+    private double branchMatrixScale(int nodeNum, double[] matrix) {
+        double max = 0.0;
+        for (int i = 0; i < matrix.length; i++) {
+            final double value = matrix[i];
+            if (!Double.isFinite(value)) {
+                throw new IllegalStateException("Non-finite reward-aware transition matrix entry for node " +
+                        nodeNum + " at index " + i + ": value=" + value +
+                        ", matrix=" + Arrays.toString(matrix));
+            }
+            max = Math.max(max, Math.abs(value));
+        }
+
+        if (max == 0.0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        return max < BRANCH_MATRIX_SCALING_FLOOR || max > BRANCH_MATRIX_SCALING_CEILING
+                ? max
+                : 1.0;
     }
 
     @Override

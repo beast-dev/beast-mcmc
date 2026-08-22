@@ -411,7 +411,12 @@ public final class SpectralRotatedPartialsRepresentation
 
         double max = 0.0;
         for (int s = 0; s < stateCount; s++) {
-            max = Math.max(max, Math.abs(src[srcOff + s]));
+            final double value = src[srcOff + s];
+            if (!Double.isFinite(value)) {
+                throw new IllegalStateException("Non-finite spectral pre-order partial at offset " +
+                        srcOff + ", state " + s + ": value=" + value);
+            }
+            max = Math.max(max, Math.abs(value));
         }
 
         if (max == 0.0) {

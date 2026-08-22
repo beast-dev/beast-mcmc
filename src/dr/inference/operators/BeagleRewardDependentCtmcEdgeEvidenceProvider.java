@@ -9,7 +9,8 @@ import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RewardMixtureBranchRateModel;
-import dr.evomodel.branchratemodel.RewardsAwareCategoricalMixtureBranchRates;
+import dr.evomodel.branchratemodel.RewardMixtureCategoricalBranchRateModel;
+import dr.evomodel.branchratemodel.RewardsAwareCategoricalMixtureBranchRatesDynamic;
 import dr.evomodel.branchratemodel.RewardsAwareMixtureBranchRates;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
@@ -955,8 +956,8 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         if (branchRates instanceof RewardsAwareMixtureBranchRates) {
             return new LegacyRewardStateAdapter((RewardsAwareMixtureBranchRates) branchRates);
         }
-        if (branchRates instanceof RewardsAwareCategoricalMixtureBranchRates) {
-            return new CategoricalRewardStateAdapter((RewardsAwareCategoricalMixtureBranchRates) branchRates);
+        if (branchRates instanceof RewardMixtureCategoricalBranchRateModel) {
+            return new CategoricalRewardStateAdapter((RewardMixtureCategoricalBranchRateModel) branchRates);
         }
         throw new IllegalArgumentException(
                 "Unsupported reward-mixture branch-rate state class: " + branchRates.getClass().getName());
@@ -1043,9 +1044,9 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     }
 
     private static final class CategoricalRewardStateAdapter implements RewardStateAdapter {
-        private final RewardsAwareCategoricalMixtureBranchRates branchRates;
+        private final RewardMixtureCategoricalBranchRateModel branchRates;
 
-        private CategoricalRewardStateAdapter(final RewardsAwareCategoricalMixtureBranchRates branchRates) {
+        private CategoricalRewardStateAdapter(final RewardMixtureCategoricalBranchRateModel branchRates) {
             this.branchRates = branchRates;
         }
 
@@ -1069,6 +1070,14 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         }
 
         private double representativeValueForCategory(final int category) {
+            if (branchRates instanceof RewardsAwareCategoricalMixtureBranchRatesDynamic) {
+                throw new UnsupportedOperationException(
+                        "Exact-perturbation diagnostics (dependentCtmcCompareExact / dependentCtmcDiagnostics) " +
+                                "are not yet supported with dynamic reward-category ordering: which axis bucket " +
+                                "a category occupies is branch-specific there, and this candidate-setting path " +
+                                "does not thread a branch index through. Disable exact-comparison diagnostics " +
+                                "for rewardsAwareCategoricalMixtureBranchRatesDynamic runs.");
+            }
             final Parameter cuts = branchRates.getCategoryCutParameter();
             if (category < 0 || category + 1 >= cuts.getDimension()) {
                 throw new IllegalArgumentException("Reward category out of range: " + category);
@@ -1089,12 +1098,12 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     }
 
     private static final class CategoricalRewardStateSnapshot implements RewardStateSnapshot {
-        private final RewardsAwareCategoricalMixtureBranchRates branchRates;
+        private final RewardMixtureCategoricalBranchRateModel branchRates;
         private final double[] categoryState;
         private final double[] ctsRewards;
         private final double[] categoryCuts;
 
-        private CategoricalRewardStateSnapshot(final RewardsAwareCategoricalMixtureBranchRates branchRates) {
+        private CategoricalRewardStateSnapshot(final RewardMixtureCategoricalBranchRateModel branchRates) {
             this.branchRates = branchRates;
             this.categoryState = branchRates.getCategoryParameter().getParameterValues();
             this.ctsRewards = branchRates.getRateParameter().getParameterValues();
@@ -1113,6 +1122,13 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
 
         @Override
         public double rawRewardForParameterIndex(final int parameterIndex) {
+            if (branchRates instanceof RewardsAwareCategoricalMixtureBranchRatesDynamic) {
+                throw new UnsupportedOperationException(
+                        "Exact-perturbation diagnostics (dependentCtmcCompareExact / dependentCtmcDiagnostics) " +
+                                "are not yet supported with dynamic reward-category ordering: decoding a raw " +
+                                "axis value to a category is branch-specific there. Disable exact-comparison " +
+                                "diagnostics for rewardsAwareCategoricalMixtureBranchRatesDynamic runs.");
+            }
             final int category = new EmbeddedOrdinalParameter(categoryCuts).getStateIndex(
                     categoryState[parameterIndex]);
             if (category == 0) {

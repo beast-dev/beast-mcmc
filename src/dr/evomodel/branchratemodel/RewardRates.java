@@ -41,4 +41,18 @@ public final class RewardRates {
     public Parameter getStateIndices() {
         return stateIndices;
     }
+
+    /** Raw reward value for atomic state stateIndex, via the stateIndices -> values mapping. */
+    public double getRawReward(final int stateIndex) {
+        if (stateIndex < 0 || stateIndex >= stateIndices.getDimension()) {
+            throw new IllegalArgumentException("stateIndex out of range: " + stateIndex);
+        }
+        final int rewardRateIndex = (int) Math.round(stateIndices.getParameterValue(stateIndex));
+        if (rewardRateIndex < 0 || rewardRateIndex >= values.getDimension()) {
+            throw new IllegalArgumentException(
+                    "Reward-rate mapping for state " + stateIndex + " points outside rewardRates: " +
+                            rewardRateIndex);
+        }
+        return values.getParameterValue(rewardRateIndex);
+    }
 }

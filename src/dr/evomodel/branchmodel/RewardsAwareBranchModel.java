@@ -32,6 +32,7 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.RewardMixtureBranchRateModel;
 import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoder;
+import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoding;
 import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
@@ -63,6 +64,7 @@ public class RewardsAwareBranchModel extends AbstractModel
         implements TransitionMatrixProviderBranchModel, Citable, Reportable {
 
     public static final String REWARDS_AWARE_BRANCH_MODEL = "RewardsAwareBranchModel";
+    public static final boolean DEFAULT_SERICOLA_SERIES_RESCALING = true;
 
     private final Parameter atomIndices;
     private final RewardRates rewardRates;
@@ -70,7 +72,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     private final TreeModel tree;
     private final ArbitraryBranchRates branchRateModel;
     private final Parameter indicator;                  // 0/1, same indexing as rewardProportion
-    private final RewardMixtureCategoryDecoder categoryDecoder;
+    private final RewardMixtureCategoryDecoding categoryDecoder;
 
     private final int nstates;
     private final int dim2;
@@ -118,11 +120,35 @@ public class RewardsAwareBranchModel extends AbstractModel
                                    boolean conditional) {
         this(tree,
                 underlyingSubstitutionModel,
+                rewardRatesValues,
+                rewardRatesValuesInternal,
+                rewardRatesMapping,
+                indicator,
+                branchRateModel,
+                atomIndices,
+                conditional,
+                DEFAULT_SERICOLA_SERIES_RESCALING);
+    }
+
+    @Deprecated
+    public RewardsAwareBranchModel(TreeModel tree,
+                                   SubstitutionModel underlyingSubstitutionModel,
+                                   Parameter rewardRatesValues,
+                                   Parameter rewardRatesValuesInternal,
+                                   Parameter rewardRatesMapping,
+                                   Parameter indicator,
+                                   ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewardsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
+                                   Parameter atomIndices,
+                                   boolean conditional,
+                                   boolean sericolaSeriesRescaling) {
+        this(tree,
+                underlyingSubstitutionModel,
                 new RewardRates(rewardRatesValues, null, rewardRatesValuesInternal, rewardRatesMapping),
                 indicator,
                 branchRateModel,
                 atomIndices,
-                conditional);
+                conditional,
+                sericolaSeriesRescaling);
     }
 
     public RewardsAwareBranchModel(TreeModel tree,
@@ -133,7 +159,19 @@ public class RewardsAwareBranchModel extends AbstractModel
                                    Parameter atomIndices,
                                    boolean conditional) {
         this(tree, underlyingSubstitutionModel, rewardRates, indicator, branchRateModel,
-                atomIndices, null, null, conditional);
+                atomIndices, null, null, null, conditional, DEFAULT_SERICOLA_SERIES_RESCALING);
+    }
+
+    public RewardsAwareBranchModel(TreeModel tree,
+                                   SubstitutionModel underlyingSubstitutionModel,
+                                   RewardRates rewardRates,
+                                   Parameter indicator,
+                                   ArbitraryBranchRates branchRateModel,  // TODO? use directly the RewardsAwareMixtureBranchRates instead of the more general ArbitraryBranchRates, to avoid redundant checks and mappings
+                                   Parameter atomIndices,
+                                   boolean conditional,
+                                   boolean sericolaSeriesRescaling) {
+        this(tree, underlyingSubstitutionModel, rewardRates, indicator, branchRateModel,
+                atomIndices, null, null, null, conditional, sericolaSeriesRescaling);
     }
 
     public RewardsAwareBranchModel(TreeModel tree,
@@ -144,7 +182,41 @@ public class RewardsAwareBranchModel extends AbstractModel
                                    ArbitraryBranchRates branchRateModel,
                                    boolean conditional) {
         this(tree, underlyingSubstitutionModel, rewardRates, null, branchRateModel,
-                null, categoryParameter, categoryCuts, conditional);
+                null, categoryParameter, categoryCuts, null, conditional, DEFAULT_SERICOLA_SERIES_RESCALING);
+    }
+
+    public RewardsAwareBranchModel(TreeModel tree,
+                                   SubstitutionModel underlyingSubstitutionModel,
+                                   RewardRates rewardRates,
+                                   Parameter categoryParameter,
+                                   Parameter categoryCuts,
+                                   ArbitraryBranchRates branchRateModel,
+                                   boolean conditional,
+                                   boolean sericolaSeriesRescaling) {
+        this(tree, underlyingSubstitutionModel, rewardRates, null, branchRateModel,
+                null, categoryParameter, categoryCuts, null, conditional, sericolaSeriesRescaling);
+    }
+
+    /**
+     * Categorical-state constructor accepting a pre-built decoder (e.g. a
+     * PerBranchRewardMixtureCategoryDecoder shared with the branch-rate
+     * model that already owns it) instead of building its own
+     * RewardMixtureCategoryDecoder internally. Lets the dynamic
+     * reward-category-ordering variant reuse one decoder instance -- and
+     * one refreshEmbedding() cost -- across both the branch-rate model and
+     * this branch model, rather than each maintaining a separate one over
+     * the same categoryParameter/categoryCuts.
+     */
+    public RewardsAwareBranchModel(TreeModel tree,
+                                   SubstitutionModel underlyingSubstitutionModel,
+                                   RewardRates rewardRates,
+                                   RewardMixtureCategoryDecoding externalCategoryDecoder,
+                                   ArbitraryBranchRates branchRateModel,
+                                   boolean conditional,
+                                   boolean sericolaSeriesRescaling) {
+        this(tree, underlyingSubstitutionModel, rewardRates, null, branchRateModel,
+                null, externalCategoryDecoder.getCategoryParameter(), externalCategoryDecoder.getCutParameter(),
+                externalCategoryDecoder, conditional, sericolaSeriesRescaling);
     }
 
     private RewardsAwareBranchModel(TreeModel tree,
@@ -155,7 +227,9 @@ public class RewardsAwareBranchModel extends AbstractModel
                                     Parameter atomIndices,
                                     Parameter categoryParameter,
                                     Parameter categoryCuts,
-                                    boolean conditional) {
+                                    RewardMixtureCategoryDecoding externalCategoryDecoder,
+                                    boolean conditional,
+                                    boolean sericolaSeriesRescaling) {
 
         super(REWARDS_AWARE_BRANCH_MODEL);
         if (tree == null) throw new IllegalArgumentException("tree must be non-null");
@@ -197,9 +271,11 @@ public class RewardsAwareBranchModel extends AbstractModel
 
         this.nstates = underlyingSubstitutionModel.getDataType().getStateCount();
         this.dim2 = nstates * nstates;
-        this.categoryDecoder = useCategoricalState
-                ? new RewardMixtureCategoryDecoder(categoryParameter, categoryCuts, nstates, dim)
-                : null;
+        this.categoryDecoder = externalCategoryDecoder != null
+                ? externalCategoryDecoder
+                : (useCategoricalState
+                        ? new RewardMixtureCategoryDecoder(categoryParameter, categoryCuts, nstates, dim)
+                        : null);
 
         final int nodeCount = tree.getNodeCount();
         final int branchCount = nodeCount - 1; // all non-root nodes
@@ -225,7 +301,8 @@ public class RewardsAwareBranchModel extends AbstractModel
                 rewardRates.getStateIndices(),
                 nstates,
                 epsilon,
-                conditional
+                conditional,
+                sericolaSeriesRescaling
         );
 
         addModel(tree);
@@ -270,7 +347,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     }
     public Parameter getIndicator() { return indicator; }
 
-    public RewardMixtureCategoryDecoder getCategoryDecoder() { return categoryDecoder; }
+    public RewardMixtureCategoryDecoding getCategoryDecoder() { return categoryDecoder; }
 
     // -------------------- Basic accessors --------------------
 
@@ -286,6 +363,8 @@ public class RewardsAwareBranchModel extends AbstractModel
     public BranchRateModel getRateBranchModel() { return branchRateModel; }
 
     public SericolaSeriesMarkovRewardFastModel getSericolaModel() { return sericola; }
+
+    public boolean isSericolaSeriesRescalingEnabled() { return sericola.isSeriesRescalingEnabled(); }
 
     public Parameter getRewardRatesValues() { return rewardRates.getValues(); }
 
@@ -404,6 +483,17 @@ public class RewardsAwareBranchModel extends AbstractModel
         matrix[newIndex] = atomicScale[nodeNr];
         atomicNonZeroIndex[nodeNr] = newIndex;
 
+        if (DEBUG) {
+            if (!(atomicScale[nodeNr] > 0.0)) {
+                throw new IllegalStateException(
+                        "Atomic transition scale for node " + nodeNr +
+                                " (atomState=" + atomState + ", branch length=" +
+                                tree.getBranchLength(tree.getNode(nodeNr)) + ")" +
+                                " is non-positive: value=" + atomicScale[nodeNr]
+                );
+            }
+        }
+
         return matrix;
     }
 
@@ -469,7 +559,15 @@ public class RewardsAwareBranchModel extends AbstractModel
     }
 
     private void setZeroTimeContinuousTransition(int nodeNr) {
+        // P(X_t = j | X_0 = i, t = 0) = identity, not all-zero: an all-zero
+        // matrix is not a valid stochastic transition matrix (rows don't sum
+        // to 1) and produces a genuinely invalid (zero) likelihood contribution
+        // wherever it's actually used -- see the run README / project log for
+        // the ctmc_bm4d_timeseries scenario (c) diagnosis this fixed.
         Arrays.fill(W[nodeNr], 0.0);
+        for (int i = 0; i < nstates; i++) {
+            W[nodeNr][i * nstates + i] = 1.0;
+        }
     }
     public double[] getWPacked(int i) {
         return Wpacked[i];

@@ -9,7 +9,7 @@ import dr.inference.model.Parameter;
  * Category 0 is the continuous reward state. Categories 1..K are atomic
  * no-jump reward states 0..K-1.
  */
-public final class RewardMixtureCategoryDecoder {
+public final class RewardMixtureCategoryDecoder implements RewardMixtureCategoryDecoding {
 
     public static final int CONTINUOUS_CATEGORY = 0;
 

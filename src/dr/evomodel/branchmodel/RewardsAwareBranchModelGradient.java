@@ -3,7 +3,7 @@ package dr.evomodel.branchmodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoder;
+import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoding;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -39,7 +39,7 @@ public final class RewardsAwareBranchModelGradient implements GradientWrtParamet
 
     private final Parameter parameter;
     private final Parameter indicator;
-    private final RewardMixtureCategoryDecoder categoryDecoder;
+    private final RewardMixtureCategoryDecoding categoryDecoder;
 
     private final Double tolerance;
     private final boolean useHessian;

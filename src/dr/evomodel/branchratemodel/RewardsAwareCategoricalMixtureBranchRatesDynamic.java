@@ -9,27 +9,41 @@ import dr.inference.model.Variable;
 
 /**
  * Reward-mixture branch rates driven by one embedded categorical state per
- * branch.
+ * branch, exactly like {@link RewardsAwareCategoricalMixtureBranchRates},
+ * except atomic states are ordered along the embedded axis by reward value
+ * and the continuous category dynamically sits between whichever two atomic
+ * states currently bracket that branch's live total.rewards.cts value
+ * (see REWARD_CATEGORY_DYNAMIC_ORDERING_PLAN.md). New, opt-in sibling class:
+ * does not modify RewardsAwareCategoricalMixtureBranchRates.
  *
- * Category 0 uses the latent continuous reward parameter. Categories 1..K use
- * reward atom states 0..K-1.
+ * refreshEmbedding() is deliberately NOT called reactively when
+ * total.rewards.cts changes -- an HMC trajectory probes many candidate cts
+ * values per operator call, and re-deriving every branch's insertion rank on
+ * each of those would reintroduce, per HMC step, the same O(branchCount)
+ * redundant-recomputation cost fixed in
+ * RewardMixtureCategoricalDiscontinuousPotentialProvider earlier this
+ * session. Consumers must call refreshEmbedding() explicitly once per
+ * operator call instead, matching where refreshLikelihoodMessages()/
+ * refreshEmbedding() are already called today in
+ * RewardMixtureCategoricalDiscontinuousPotentialProvider and
+ * RewardsMixtureBranchWeightProvider.
  */
-public final class RewardsAwareCategoricalMixtureBranchRates extends ArbitraryBranchRates
+public final class RewardsAwareCategoricalMixtureBranchRatesDynamic extends ArbitraryBranchRates
         implements RewardMixtureCategoricalBranchRateModel {
 
-    public static final String ID = "rewardsAwareCategoricalMixtureBranchRates";
+    public static final String ID = "rewardsAwareCategoricalMixtureBranchRatesDynamic";
 
-    private final RewardMixtureCategoryDecoder categoryDecoder;
+    private final PerBranchRewardMixtureCategoryDecoder categoryDecoder;
     private final RewardRates rewardRates;
 
-    public RewardsAwareCategoricalMixtureBranchRates(final TreeModel tree,
-                                                     final Parameter ctsParameter,
-                                                     final Parameter categoryParameter,
-                                                     final Parameter categoryCuts,
-                                                     final RewardRates rewardRates,
-                                                     final BranchRateTransform transform,
-                                                     final boolean setRates,
-                                                     final TreeParameterModel.Type includeRoot) {
+    public RewardsAwareCategoricalMixtureBranchRatesDynamic(final TreeModel tree,
+                                                             final Parameter ctsParameter,
+                                                             final Parameter categoryParameter,
+                                                             final Parameter categoryCuts,
+                                                             final RewardRates rewardRates,
+                                                             final BranchRateTransform transform,
+                                                             final boolean setRates,
+                                                             final TreeParameterModel.Type includeRoot) {
         super(ID, tree, ctsParameter,
                 transform == null ? new BranchRateTransform.None() : transform,
                 setRates, includeRoot);
@@ -39,9 +53,11 @@ public final class RewardsAwareCategoricalMixtureBranchRates extends ArbitraryBr
         }
 
         this.rewardRates = rewardRates;
-        this.categoryDecoder = new RewardMixtureCategoryDecoder(
+        this.categoryDecoder = new PerBranchRewardMixtureCategoryDecoder(
                 categoryParameter,
                 categoryCuts,
+                ctsParameter,
+                rewardRates,
                 rewardRates.getStateIndices().getDimension(),
                 ctsParameter.getDimension());
 
@@ -83,7 +99,7 @@ public final class RewardsAwareCategoricalMixtureBranchRates extends ArbitraryBr
         return getTransform().transform(rawReward, tree, node);
     }
 
-    public RewardMixtureCategoryDecoder getCategoryDecoder() {
+    public PerBranchRewardMixtureCategoryDecoder getCategoryDecoder() {
         return categoryDecoder;
     }
 

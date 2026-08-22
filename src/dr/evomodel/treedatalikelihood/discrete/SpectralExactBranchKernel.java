@@ -715,32 +715,22 @@ final class SpectralExactBranchKernel {
                 final double wp = patternWeights[0];
                 if (wp == 0.0) continue;
 
-                double denom = 0.0;
                 if (useInternalRotatedMessages) {
                     likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, ws.rotatedPre);
                     likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, 0, ws.tmpPostTop);
                     likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, ws.rotatedPost);
-                    for (int s = 0; s < stateCount; s++) {
-                        denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
-                    }
                 } else {
                     likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, ws.tmpPreTop);
                     likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
                     likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, 0, ws.tmpPostBottom);
-                    for (int s = 0; s < stateCount; s++) {
-                        denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
-                    }
                 }
-                if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
-
-                if (!useInternalRotatedMessages) {
-                    multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
-                    multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
-                }
+                final double scale = prepareOuterProductScale(
+                        ws, evec, ievc, useInternalRotatedMessages, wp * wc);
+                if (!Double.isFinite(scale)) continue;
 
                 ComplexBlockKernelUtils.fillAndApplyToOuterProduct(
                         plan, eigenDecomp, tc, ws.rotatedPre, ws.rotatedPost,
-                        (wp * wc) / denom, eigenBasisAccum);
+                        scale, eigenBasisAccum);
             } else {
                 // Multi-pattern path: fill coefficients once, apply across all patterns.
                 ComplexBlockKernelUtils.fillTimeDependentCoefficients(plan, eigenDecomp, tc);
@@ -749,31 +739,21 @@ final class SpectralExactBranchKernel {
                     final double wp = patternWeights[p];
                     if (wp == 0.0) continue;
 
-                    double denom = 0.0;
                     if (useInternalRotatedMessages) {
                         likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, ws.rotatedPre);
                         likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, p, ws.tmpPostTop);
                         likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, ws.rotatedPost);
-                        for (int s = 0; s < stateCount; s++) {
-                            denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
-                        }
                     } else {
                         likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, ws.tmpPreTop);
                         likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
                         likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, ws.tmpPostBottom);
-                        for (int s = 0; s < stateCount; s++) {
-                            denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
-                        }
                     }
-                    if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
-
-                    if (!useInternalRotatedMessages) {
-                        multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
-                        multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
-                    }
+                    final double scale = prepareOuterProductScale(
+                            ws, evec, ievc, useInternalRotatedMessages, wp * wc);
+                    if (!Double.isFinite(scale)) continue;
 
                     ComplexBlockKernelUtils.applyPlanToOuterProduct(
-                            plan, ws.rotatedPre, ws.rotatedPost, (wp * wc) / denom, eigenBasisAccum);
+                            plan, ws.rotatedPre, ws.rotatedPost, scale, eigenBasisAccum);
                 }
             }
         }
@@ -806,28 +786,18 @@ final class SpectralExactBranchKernel {
                 final double wp = patternWeights[0];
                 if (wp == 0.0) continue;
 
-                double denom = 0.0;
                 if (useInternalRotatedMessages) {
                     likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, 0, ws.rotatedPre);
                     likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, 0, ws.tmpPostTop);
                     likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, 0, ws.rotatedPost);
-                    for (int s = 0; s < stateCount; s++) {
-                        denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
-                    }
                 } else {
                     likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, 0, ws.tmpPreTop);
                     likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, 0, ws.tmpPreBottom);
                     likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, 0, ws.tmpPostBottom);
-                    for (int s = 0; s < stateCount; s++) {
-                        denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
-                    }
                 }
-                if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
-
-                if (!useInternalRotatedMessages) {
-                    multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
-                    multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
-                }
+                final double scale = prepareOuterProductScale(
+                        ws, evec, ievc, useInternalRotatedMessages, wp * wc);
+                if (!Double.isFinite(scale)) continue;
 
                 if (useInternalRotatedMessages &&
                         likelihoodDelegate.borrowRealBranchExponentials(childNumber, tc, ws.realBranchExponentials)) {
@@ -838,13 +808,13 @@ final class SpectralExactBranchKernel {
                             tc,
                             ws.rotatedPre,
                             ws.rotatedPost,
-                            (wp * wc) / denom,
+                            scale,
                             eigenBasisAccum,
                             stateCount);
                 } else {
                     RealKernelUtils.fillAndApplyToOuterProduct(
                             plan, eigenDecomp, tc, ws.rotatedPre, ws.rotatedPost,
-                            (wp * wc) / denom, eigenBasisAccum, stateCount);
+                            scale, eigenBasisAccum, stateCount);
                 }
             } else {
                 if (useInternalRotatedMessages &&
@@ -863,34 +833,98 @@ final class SpectralExactBranchKernel {
                     final double wp = patternWeights[p];
                     if (wp == 0.0) continue;
 
-                    double denom = 0.0;
                     if (useInternalRotatedMessages) {
                         likelihoodDelegate.getInternalPreOrderBranchTopInto(childNumber, c, p, ws.rotatedPre);
                         likelihoodDelegate.getPostOrderBranchTopInto(childNumber, c, p, ws.tmpPostTop);
                         likelihoodDelegate.getInternalPostOrderBranchBottomInto(childNumber, c, p, ws.rotatedPost);
-                        for (int s = 0; s < stateCount; s++) {
-                            denom += ws.rotatedPre[s] * ws.tmpPostTop[s];
-                        }
                     } else {
                         likelihoodDelegate.getPreOrderBranchTopInto(childNumber, c, p, ws.tmpPreTop);
                         likelihoodDelegate.getPreOrderBranchBottomInto(childNumber, c, p, ws.tmpPreBottom);
                         likelihoodDelegate.getPostOrderBranchBottomInto(childNumber, c, p, ws.tmpPostBottom);
-                        for (int s = 0; s < stateCount; s++) {
-                            denom += ws.tmpPreBottom[s] * ws.tmpPostBottom[s];
-                        }
                     }
-                    if (denom <= 0.0 || Double.isNaN(denom) || Double.isInfinite(denom)) continue;
-
-                    if (!useInternalRotatedMessages) {
-                        multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
-                        multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
-                    }
+                    final double scale = prepareOuterProductScale(
+                            ws, evec, ievc, useInternalRotatedMessages, wp * wc);
+                    if (!Double.isFinite(scale)) continue;
 
                     RealKernelUtils.applyToOuterProduct(
-                            plan, ws.rotatedPre, ws.rotatedPost, (wp * wc) / denom, eigenBasisAccum, stateCount);
+                            plan, ws.rotatedPre, ws.rotatedPost, scale, eigenBasisAccum, stateCount);
                 }
             }
         }
+    }
+
+    private double prepareOuterProductScale(ThreadWorkspace ws,
+                                            double[] evec,
+                                            double[] ievc,
+                                            boolean useInternalRotatedMessages,
+                                            double weight) {
+        if (useInternalRotatedMessages) {
+            final double leftScale = maxAbsFinite(ws.rotatedPre);
+            final double denomRightMax = maxAbsFinite(ws.tmpPostTop);
+            final double outerRightMax = maxAbsFinite(ws.rotatedPost);
+            final double rightScale = Math.max(denomRightMax, outerRightMax);
+            final double denominator = normalizedDot(
+                    ws.rotatedPre, leftScale,
+                    ws.tmpPostTop, rightScale);
+            if (!isPositiveFinite(denominator)) {
+                return Double.NaN;
+            }
+
+            normalizeInPlace(ws.rotatedPre, leftScale);
+            normalizeInPlace(ws.rotatedPost, rightScale);
+            return weight / denominator;
+        }
+
+        final double denomLeftMax = maxAbsFinite(ws.tmpPreBottom);
+        final double denomRightMax = maxAbsFinite(ws.tmpPostBottom);
+        final double outerLeftMax = maxAbsFinite(ws.tmpPreTop);
+        final double leftScale = Math.max(denomLeftMax, outerLeftMax);
+        final double denominator = normalizedDot(
+                ws.tmpPreBottom, leftScale,
+                ws.tmpPostBottom, denomRightMax);
+        if (!isPositiveFinite(denominator)) {
+            return Double.NaN;
+        }
+
+        normalizeInPlace(ws.tmpPreTop, leftScale);
+        normalizeInPlace(ws.tmpPostBottom, denomRightMax);
+        multiplyTransposeMatrixVector(evec, ws.tmpPreTop, ws.rotatedPre);
+        multiplyMatrixVector(ievc, ws.tmpPostBottom, ws.rotatedPost);
+        return weight / denominator;
+    }
+
+    private double normalizedDot(double[] left, double leftMax,
+                                 double[] right, double rightMax) {
+        if (!isPositiveFinite(leftMax) || !isPositiveFinite(rightMax)) {
+            return Double.NaN;
+        }
+        double sum = 0.0;
+        for (int s = 0; s < stateCount; s++) {
+            sum += (left[s] / leftMax) * (right[s] / rightMax);
+        }
+        return sum;
+    }
+
+    private double maxAbsFinite(double[] values) {
+        double max = 0.0;
+        for (int s = 0; s < stateCount; s++) {
+            final double value = values[s];
+            if (!Double.isFinite(value)) {
+                return Double.NaN;
+            }
+            max = Math.max(max, Math.abs(value));
+        }
+        return max;
+    }
+
+    private void normalizeInPlace(double[] values, double normalizer) {
+        for (int s = 0; s < stateCount; s++) {
+            values[s] /= normalizer;
+        }
+    }
+
+    private static boolean isPositiveFinite(double value) {
+        return value > 0.0 && Double.isFinite(value);
     }
 
     private void addRawLogRateScoresFromEigenBasis(double[] eigenBasisAccum,

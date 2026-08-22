@@ -13,6 +13,7 @@ final class SericolaRewardDensityWorkspace {
     private final int dim2;
     private final int phi;
     private final double epsilon;
+    private final boolean seriesRescaling;
 
     private final double[] scalarRewardProportion = new double[1];
     private final double[] scalarTime = new double[1];
@@ -21,20 +22,25 @@ final class SericolaRewardDensityWorkspace {
     private int[] H;
     private int[] NN;
     private double[] lt;
-    private double[] premult;
     private double[] xh;
     private double[] oneMinus;
-    private double[] ratio;
-    private double[] w0;
     private boolean[] isZero;
     private boolean[] isOne;
     private double[] inc;
     private double[] contractionWeights;
+    private double[] poissonWeights;
+    private int poissonWeightStride = 0;
+    private double[] bernsteinWeights;
 
     SericolaRewardDensityWorkspace(int dim, double epsilon) {
+        this(dim, epsilon, true);
+    }
+
+    SericolaRewardDensityWorkspace(int dim, double epsilon, boolean seriesRescaling) {
         this.dim2 = dim * dim;
         this.phi = dim - 1;
         this.epsilon = epsilon;
+        this.seriesRescaling = seriesRescaling;
     }
 
     double[] scalarRewardProportions(double rewardProportion) {
@@ -74,12 +80,10 @@ final class SericolaRewardDensityWorkspace {
             maxT = time;
 
             final double lambdaTime = lambda * time;
-            final double premult0 = Math.exp(-lambdaTime);
             final int stepCount = (parsimonious ? determineNumberOfSteps(lambda, time) : Integer.MAX_VALUE);
 
             for (int t = 0; t < T; ++t) {
                 lt[t] = lambdaTime;
-                premult[t] = premult0;
                 NN[t] = stepCount;
 
                 H[t] = fillRewardProportionPrecomp(t, rewardProportions[t], sortedAlpha, invAlphaDiff);
@@ -98,7 +102,6 @@ final class SericolaRewardDensityWorkspace {
 
             final double lambdaTime = lambda * time;
             lt[t] = lambdaTime;
-            premult[t] = Math.exp(-lambdaTime);
             NN[t] = (parsimonious ? determineNumberOfSteps(lambda, time) : Integer.MAX_VALUE);
 
             H[t] = fillRewardProportionPrecomp(t, rewardProportions[t], sortedAlpha, invAlphaDiff);
@@ -158,21 +161,8 @@ final class SericolaRewardDensityWorkspace {
     }
 
     int determineNumberOfSteps(double lambda, double time) {
-        final double target = 1.0 - epsilon;
         final double lambdaTime = lambda * time;
-
-        double term = Math.exp(-lambdaTime);
-        double sum = term;
-
-        int i = 0;
-        final int hardCap = Math.max(5000, (int) (lambdaTime + 10.0 * Math.sqrt(lambdaTime + 1.0)));
-
-        while (sum < target && i < hardCap) {
-            i++;
-            term *= lambdaTime / i;
-            sum += term;
-        }
-        return i;
+        return SericolaSeriesWeights.determinePoissonUpperTruncation(lambdaTime, epsilon, seriesRescaling);
     }
 
     int[] intervals() {
@@ -185,18 +175,6 @@ final class SericolaRewardDensityWorkspace {
 
     double[] lambdaTimes() {
         return lt;
-    }
-
-    double[] premults() {
-        return premult;
-    }
-
-    double[] ratios() {
-        return ratio;
-    }
-
-    double[] bernsteinStartWeights() {
-        return w0;
     }
 
     double[] oneMinus() {
@@ -219,6 +197,36 @@ final class SericolaRewardDensityWorkspace {
         return contractionWeights;
     }
 
+    void preparePoissonWeights(int count, int maxN) {
+        ensurePoissonCapacity(count, maxN);
+        for (int t = 0; t < count; ++t) {
+            SericolaSeriesWeights.fillPoissonWeights(
+                    lt[t],
+                    maxN,
+                    poissonWeights,
+                    t * poissonWeightStride,
+                    seriesRescaling);
+        }
+    }
+
+    double poissonWeight(int index, int n) {
+        return poissonWeights[index * poissonWeightStride + n];
+    }
+
+    double[] preparePoissonWeights(double mean, int maxN) {
+        ensurePoissonCapacity(1, maxN);
+        SericolaSeriesWeights.fillPoissonWeights(mean, maxN, poissonWeights, 0, seriesRescaling);
+        return poissonWeights;
+    }
+
+    double[] prepareBernsteinWeights(int degree, double x) {
+        if (bernsteinWeights == null || bernsteinWeights.length < degree + 1) {
+            bernsteinWeights = new double[degree + 1];
+        }
+        SericolaSeriesWeights.fillBernsteinWeights(degree, x, bernsteinWeights, seriesRescaling);
+        return bernsteinWeights;
+    }
+
     double xh(int index) {
         return xh[index];
     }
@@ -235,12 +243,9 @@ final class SericolaRewardDensityWorkspace {
         if (H == null || H.length < T) H = new int[T];
         if (NN == null || NN.length < T) NN = new int[T];
         if (lt == null || lt.length < T) lt = new double[T];
-        if (premult == null || premult.length < T) premult = new double[T];
 
         if (xh == null || xh.length < T) xh = new double[T];
         if (oneMinus == null || oneMinus.length < T) oneMinus = new double[T];
-        if (ratio == null || ratio.length < T) ratio = new double[T];
-        if (w0 == null || w0.length < T) w0 = new double[T];
         if (isZero == null || isZero.length < T) isZero = new boolean[T];
         if (isOne == null || isOne.length < T) isOne = new boolean[T];
 
@@ -248,6 +253,21 @@ final class SericolaRewardDensityWorkspace {
         if (contractionWeights == null || contractionWeights.length != dim2) {
             contractionWeights = new double[dim2];
         }
+    }
+
+    private void ensurePoissonCapacity(int count, int maxN) {
+        if (maxN < 0) {
+            throw new IllegalArgumentException("maxN must be >= 0");
+        }
+        final int stride = maxN + 1;
+        final long required = (long) count * (long) stride;
+        if (required > Integer.MAX_VALUE) {
+            throw new IllegalStateException("Poisson weight array too large: " + required + " doubles");
+        }
+        if (poissonWeights == null || poissonWeights.length < (int) required || poissonWeightStride < stride) {
+            poissonWeights = new double[(int) required];
+        }
+        poissonWeightStride = stride;
     }
 
     private int fillRewardProportionPrecomp(
@@ -275,11 +295,7 @@ final class SericolaRewardDensityWorkspace {
         xh[index] = scaled;
         isZero[index] = false;
         isOne[index] = false;
-
-        final double om = 1.0 - scaled;
-        oneMinus[index] = om;
-        ratio[index] = scaled / om;
-        w0[index] = 1.0;
+        oneMinus[index] = 1.0 - scaled;
 
         return h;
     }

@@ -35,13 +35,11 @@ final class SericolaRewardDensityPdf {
         final int[] H = workspace.intervals();
         final int[] NN = workspace.stepCounts();
         final double[] lt = workspace.lambdaTimes();
-        final double[] premult = workspace.premults();
-        final double[] ratio = workspace.ratios();
-        final double[] w0 = workspace.bernsteinStartWeights();
-        final double[] oneMinus = workspace.oneMinus();
         final boolean[] isZero = workspace.isZero();
         final boolean[] isOne = workspace.isOne();
         final double[] incSorted = workspace.increments();
+
+        workspace.preparePoissonWeights(T, N);
 
         for (int n = 0; n <= N; ++n) {
             for (int t = 0; t < T; ++t) {
@@ -51,7 +49,8 @@ final class SericolaRewardDensityPdf {
 
                 final int h = H[t];
                 final double time = lt[t] / lambda;
-                final double base = (lambda * invAlphaDiff[h]) * premult[t] * time;
+                final double poissonWeight = workspace.poissonWeight(t, n);
+                final double base = (lambda * invAlphaDiff[h]) * poissonWeight * time;
 
                 if (isZero[t]) {
                     addDiffBlockToOriginalOrder(
@@ -71,27 +70,16 @@ final class SericolaRewardDensityPdf {
                     addInteriorToOriginalOrder(
                             h,
                             n,
-                            ratio[t],
-                            w0[t],
-                            premult[t],
+                            workspace.xh(t),
+                            poissonWeight,
                             time,
                             lambda,
                             invAlphaDiff[h],
                             cumulants,
                             C,
                             W[t],
-                            incSorted);
-                }
-            }
-
-            final double inv = 1.0 / (n + 1.0);
-            for (int t = 0; t < T; ++t) {
-                premult[t] *= lt[t] * inv;
-            }
-
-            for (int t = 0; t < T; ++t) {
-                if (!isZero[t] && !isOne[t]) {
-                    w0[t] *= oneMinus[t];
+                            incSorted,
+                            workspace);
                 }
             }
         }
@@ -100,31 +88,31 @@ final class SericolaRewardDensityPdf {
     private void addInteriorToOriginalOrder(
             int h,
             int n,
-            double ratio,
-            double w0,
-            double premult,
+            double xh,
+            double poissonWeight,
             double time,
             double lambda,
             double invAlphaDiff,
             SericolaCumulantMatrices cumulants,
             double[] C,
             double[] WtOriginal,
-            double[] incSorted) {
+            double[] incSorted,
+            SericolaRewardDensityWorkspace workspace) {
 
-        final double scale = (lambda * invAlphaDiff) * premult * time;
+        final double scale = (lambda * invAlphaDiff) * poissonWeight * time;
+        final double[] bernsteinWeights = workspace.prepareBernsteinWeights(n, xh);
 
         Arrays.fill(incSorted, 0.0);
 
         int aOff = cumulants.offset(h, n + 1, 1);
         int bOff = cumulants.offset(h, n + 1, 0);
         for (int uv = 0; uv < dim2; ++uv) {
-            incSorted[uv] += w0 * (C[aOff + uv] - C[bOff + uv]);
+            incSorted[uv] += bernsteinWeights[0] * (C[aOff + uv] - C[bOff + uv]);
         }
 
-        double w = w0;
         for (int k = 0; k < n; ++k) {
-            w *= ((double) (n - k) / (double) (k + 1)) * ratio;
             final int kp1 = k + 1;
+            final double w = bernsteinWeights[kp1];
 
             aOff = cumulants.offset(h, n + 1, kp1 + 1);
             bOff = cumulants.offset(h, n + 1, kp1);

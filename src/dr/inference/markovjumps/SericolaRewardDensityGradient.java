@@ -16,6 +16,7 @@ final class SericolaRewardDensityGradient {
     private final int phi;
     private final int[] outRowBaseBySorted;
     private final int[] outColBySorted;
+    private final boolean seriesRescaling;
 
     private double[] cumulantAdjoints;
     private double[] transitionMatrixAdjoint;
@@ -23,14 +24,25 @@ final class SericolaRewardDensityGradient {
     private double[] transitionPowerAdjoints;
     private double[] sortedDensityAdjoint;
     private double[] rewardRateAdjoint;
+    private double[] poissonWeights;
+    private double[] bernsteinWeights;
     private int allocatedN = -1;
 
     SericolaRewardDensityGradient(int dim, int[] outRowBaseBySorted, int[] outColBySorted) {
+        this(dim, outRowBaseBySorted, outColBySorted, true);
+    }
+
+    SericolaRewardDensityGradient(
+            int dim,
+            int[] outRowBaseBySorted,
+            int[] outColBySorted,
+            boolean seriesRescaling) {
         this.dim = dim;
         this.dim2 = dim * dim;
         this.phi = dim - 1;
         this.outRowBaseBySorted = outRowBaseBySorted;
         this.outColBySorted = outColBySorted;
+        this.seriesRescaling = seriesRescaling;
     }
 
     double computeWrtUniformizationMatrixInto(
@@ -171,16 +183,13 @@ final class SericolaRewardDensityGradient {
         mapDensityAdjointToSorted(densityAdjointOriginal, rawAdjointScale);
 
         final double[] C = cumulants.values();
-        double premult = Math.exp(-lambdaTime);
-        double previousPremult = 0.0;
+        SericolaSeriesWeights.fillPoissonWeights(lambdaTime, N, poissonWeights, 0, seriesRescaling);
         double directLambdaAdjoint = 0.0;
         double conditionalObjective = 0.0;
 
-        final double oneMinus = 1.0 - xh;
-        final double ratio = (!xIsZero && !xIsOne) ? (xh / oneMinus) : 0.0;
-        double w0 = 1.0;
-
         for (int n = 0; n <= N; ++n) {
+            final double premult = poissonWeights[n];
+            final double previousPremult = n == 0 ? 0.0 : poissonWeights[n - 1];
             final double scale = lambda * invAlphaDiff * premult * time;
             final double scaleLambdaDerivative =
                     invAlphaDiff * time * (premult + lambdaTime * (previousPremult - premult));
@@ -199,7 +208,7 @@ final class SericolaRewardDensityGradient {
                         cumulants.offset(h, n + 1, n),
                         C);
             } else {
-                innerDot = addInteriorCumulantAdjoints(h, n, ratio, w0, scale, cumulants, C);
+                innerDot = addInteriorCumulantAdjoints(h, n, xh, scale, cumulants, C);
             }
 
             directLambdaAdjoint += scaleLambdaDerivative * innerDot;
@@ -212,11 +221,6 @@ final class SericolaRewardDensityGradient {
                 rewardRateAdjoint[h] -= intervalScaleAdjoint;
             }
 
-            previousPremult = premult;
-            premult *= lambdaTime / (n + 1.0);
-            if (!xIsZero && !xIsOne) {
-                w0 *= oneMinus;
-            }
         }
 
         if (conditionalOnZ0) {
@@ -253,25 +257,21 @@ final class SericolaRewardDensityGradient {
     private double addInteriorCumulantAdjoints(
             int h,
             int n,
-            double ratio,
-            double w0,
+            double xh,
             double scale,
             SericolaCumulantMatrices cumulants,
             double[] C) {
 
         double innerDot = 0.0;
-        double w = w0;
+        SericolaSeriesWeights.fillBernsteinWeights(n, xh, bernsteinWeights, seriesRescaling);
 
         for (int k = 0; k <= n; ++k) {
+            final double w = bernsteinWeights[k];
             innerDot += w * addDiffCumulantAdjoints(
                     scale * w,
                     cumulants.offset(h, n + 1, k + 1),
                     cumulants.offset(h, n + 1, k),
                     C);
-
-            if (k < n) {
-                w *= ((double) (n - k) / (double) (k + 1)) * ratio;
-            }
         }
 
         return innerDot;
@@ -303,23 +303,15 @@ final class SericolaRewardDensityGradient {
         cumulants.ensureSecondDifferenceCapacity();
 
         final double lambdaTime = lambda * time;
-        final double oneMinus = 1.0 - xh;
-        final double ratio = xh / oneMinus;
         final double scaleBase = time * lambda * invAlphaDiff;
 
-        double premult = Math.exp(-lambdaTime);
-        double w0m = 1.0;
+        SericolaSeriesWeights.fillPoissonWeights(lambdaTime, N, poissonWeights, 0, seriesRescaling);
         double xhAdjoint = 0.0;
 
         for (int n = 0; n <= N; ++n) {
             if (n >= 1) {
-                final double innerDot = secondDifferenceInnerDot(h, n, ratio, w0m, cumulants);
-                xhAdjoint += scaleBase * premult * n * innerDot;
-            }
-
-            premult *= lambdaTime / (n + 1.0);
-            if (n >= 1) {
-                w0m *= oneMinus;
+                final double innerDot = secondDifferenceInnerDot(h, n, xh, cumulants);
+                xhAdjoint += scaleBase * poissonWeights[n] * n * innerDot;
             }
         }
 
@@ -329,16 +321,15 @@ final class SericolaRewardDensityGradient {
     private double secondDifferenceInnerDot(
             int h,
             int n,
-            double ratio,
-            double w0m,
+            double xh,
             SericolaCumulantMatrices cumulants) {
 
         cumulants.prepareSecondDifferenceRow(h, n);
         final double[] d2 = cumulants.secondDifferences();
         final int baseOffset = cumulants.secondDifferenceOffset(h, n, 0);
+        SericolaSeriesWeights.fillBernsteinWeights(n - 1, xh, bernsteinWeights, seriesRescaling);
 
         double innerDot = 0.0;
-        double w = w0m;
 
         for (int k = 0; k <= n - 1; ++k) {
             final int off = baseOffset + k * dim2;
@@ -347,11 +338,7 @@ final class SericolaRewardDensityGradient {
             for (int uv = 0; uv < dim2; ++uv) {
                 entryDot += sortedDensityAdjoint[uv] * d2[off + uv];
             }
-            innerDot += w * entryDot;
-
-            if (k < n - 1) {
-                w *= ((double) (n - 1 - k) / (double) (k + 1)) * ratio;
-            }
+            innerDot += bernsteinWeights[k] * entryDot;
         }
 
         return innerDot;
@@ -739,6 +726,8 @@ final class SericolaRewardDensityGradient {
         transitionMatrixAdjoint = new double[dim2];
         sortedDensityAdjoint = new double[dim2];
         rewardRateAdjoint = new double[dim];
+        poissonWeights = new double[n1];
+        bernsteinWeights = new double[n1];
         allocatedN = requiredN;
     }
 

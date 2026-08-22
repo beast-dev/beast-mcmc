@@ -32,6 +32,7 @@ final class SericolaRewardDensityDerivative {
             boolean xIsZero,
             boolean xIsOne,
             SericolaCumulantMatrices cumulants,
+            SericolaRewardDensityWorkspace workspace,
             double[] incSorted,
             double[] out) {
 
@@ -40,13 +41,9 @@ final class SericolaRewardDensityDerivative {
         }
 
         final double lt = lambda * branchLength;
-        final double oneMinus = 1.0 - xh;
-        final double ratio = (!xIsZero && !xIsOne) ? (xh / oneMinus) : 0.0;
         final double scaleBase = branchLength * lambda * invAlphaDiff * invAlphaDiff;
         final double[] C = cumulants.values();
-
-        double premult = Math.exp(-lt);
-        double w0m = 1.0;
+        final double[] poissonWeights = workspace.preparePoissonWeights(lt, N);
 
         for (int n = 0; n <= N; ++n) {
             if (n >= 1) {
@@ -57,15 +54,10 @@ final class SericolaRewardDensityDerivative {
                 } else if (xIsOne) {
                     addBoundarySecondDifference(h, n, n - 1, cumulants, C, incSorted);
                 } else {
-                    addInteriorSecondDifferences(h, n, ratio, w0m, cumulants, incSorted);
+                    addInteriorSecondDifferences(h, n, xh, cumulants, workspace, incSorted);
                 }
 
-                addSortedToOriginal(out, scaleBase * premult * n, incSorted);
-            }
-
-            premult *= lt / (n + 1.0);
-            if (n >= 1) {
-                w0m *= oneMinus;
+                addSortedToOriginal(out, scaleBase * poissonWeights[n] * n, incSorted);
             }
         }
     }
@@ -99,13 +91,9 @@ final class SericolaRewardDensityDerivative {
         fillSortedPairWeights(preOriginal, postOriginal, pairWeights);
 
         final double lt = lambda * branchLength;
-        final double oneMinus = 1.0 - xh;
-        final double ratio = (!xIsZero && !xIsOne) ? (xh / oneMinus) : 0.0;
         final double scaleBase = branchLength * lambda * invAlphaDiff * invAlphaDiff;
         final double[] C = cumulants.values();
-
-        double premult = Math.exp(-lt);
-        double w0m = 1.0;
+        final double[] poissonWeights = workspace.preparePoissonWeights(lt, N);
         double acc = 0.0;
         double cAcc = 0.0;
 
@@ -117,18 +105,13 @@ final class SericolaRewardDensityDerivative {
                 } else if (xIsOne) {
                     inner = contractBoundarySecondDifference(h, n, n - 1, cumulants, C, pairWeights);
                 } else {
-                    inner = contractInteriorSecondDifferences(h, n, ratio, w0m, cumulants, pairWeights);
+                    inner = contractInteriorSecondDifferences(h, n, xh, cumulants, pairWeights, workspace);
                 }
 
-                final double y = scaleBase * premult * n * inner - cAcc;
+                final double y = scaleBase * poissonWeights[n] * n * inner - cAcc;
                 final double t = acc + y;
                 cAcc = (t - acc) - y;
                 acc = t;
-            }
-
-            premult *= lt / (n + 1.0);
-            if (n >= 1) {
-                w0m *= oneMinus;
             }
         }
 
@@ -181,19 +164,19 @@ final class SericolaRewardDensityDerivative {
     private void addInteriorSecondDifferences(
             int h,
             int n,
-            double ratio,
-            double w0m,
+            double xh,
             SericolaCumulantMatrices cumulants,
+            SericolaRewardDensityWorkspace workspace,
             double[] incSorted) {
 
         cumulants.prepareSecondDifferenceRow(h, n);
         final int d2Base = cumulants.secondDifferenceOffset(h, n, 0);
         final double[] d2 = cumulants.secondDifferences();
+        final double[] bernsteinWeights = workspace.prepareBernsteinWeights(n - 1, xh);
 
-        double w = w0m;
         for (int k = 0; k <= n - 1; ++k) {
             final int off = d2Base + k * dim2;
-            final double wk = w;
+            final double wk = bernsteinWeights[k];
 
             int uv = 0;
             for (; uv <= dim2 - 4; uv += 4) {
@@ -205,30 +188,26 @@ final class SericolaRewardDensityDerivative {
             for (; uv < dim2; ++uv) {
                 incSorted[uv] += wk * d2[off + uv];
             }
-
-            if (k < n - 1) {
-                w *= ((double) (n - 1 - k) / (double) (k + 1)) * ratio;
-            }
         }
     }
 
     private double contractInteriorSecondDifferences(
             int h,
             int n,
-            double ratio,
-            double w0m,
+            double xh,
             SericolaCumulantMatrices cumulants,
-            double[] pairWeights) {
+            double[] pairWeights,
+            SericolaRewardDensityWorkspace workspace) {
 
         cumulants.prepareSecondDifferenceRow(h, n);
         final int d2Base = cumulants.secondDifferenceOffset(h, n, 0);
         final double[] d2 = cumulants.secondDifferences();
+        final double[] bernsteinWeights = workspace.prepareBernsteinWeights(n - 1, xh);
 
-        double w = w0m;
         double acc = 0.0;
         for (int k = 0; k <= n - 1; ++k) {
             final int off = d2Base + k * dim2;
-            final double wk = w;
+            final double wk = bernsteinWeights[k];
 
             double dot = 0.0;
             int uv = 0;
@@ -243,10 +222,6 @@ final class SericolaRewardDensityDerivative {
             }
 
             acc += wk * dot;
-
-            if (k < n - 1) {
-                w *= ((double) (n - 1 - k) / (double) (k + 1)) * ratio;
-            }
         }
 
         return acc;

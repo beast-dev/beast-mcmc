@@ -87,6 +87,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
     private final double[] out;
 
     private final boolean conditionalOnZ0;
+    private final boolean seriesRescaling;
 
     private final Parameter rewardRatesValues;   // distinct reward values
     private final Parameter rewardRatesValuesInternal;
@@ -103,6 +104,26 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
             int dim,
             double epsilon,
             boolean conditionalOnZ0
+    ) {
+        this(underlyingSubstitutionModel,
+                rewardRatesValues,
+                rewardRatesValuesInternal,
+                rewardRatesMapping,
+                dim,
+                epsilon,
+                conditionalOnZ0,
+                true);
+    }
+
+    public SericolaSeriesMarkovRewardFastModel(
+            SubstitutionModel underlyingSubstitutionModel,
+            Parameter rewardRatesValues,
+            Parameter rewardRatesValuesInternal,
+            Parameter rewardRatesMapping,
+            int dim,
+            double epsilon,
+            boolean conditionalOnZ0,
+            boolean seriesRescaling
     ) {
         super("SericolaSeriesMarkovRewardFastModel");
 
@@ -153,7 +174,9 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 new SericolaRewardDensityPdf(dim, outRowBaseBySorted, outColBySorted);
         this.rewardDensityDerivative =
                 new SericolaRewardDensityDerivative(dim, outRowBaseBySorted, outColBySorted);
-        this.workspaces = ThreadLocal.withInitial(() -> new SericolaRewardDensityWorkspace(dim, epsilon));
+        this.seriesRescaling = seriesRescaling;
+        this.workspaces = ThreadLocal.withInitial(
+                () -> new SericolaRewardDensityWorkspace(dim, epsilon, seriesRescaling));
 
         this.eigenSystem = new DefaultEigenSystem(dim);
         this.out = new double[dim2];
@@ -466,7 +489,11 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 local = gradientWorkspaces;
                 if (local == null) {
                     local = ThreadLocal.withInitial(
-                            () -> new SericolaRewardDensityGradient(dim, outRowBaseBySorted, outColBySorted));
+                            () -> new SericolaRewardDensityGradient(
+                                    dim,
+                                    outRowBaseBySorted,
+                                    outColBySorted,
+                                    seriesRescaling));
                     gradientWorkspaces = local;
                 }
             }
@@ -561,6 +588,10 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
 
     public double getUniformizationRate() {
         return getLambda();
+    }
+
+    public boolean isSeriesRescalingEnabled() {
+        return seriesRescaling;
     }
 
     /**
@@ -853,6 +884,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                 workspace.isZero(0),
                 workspace.isOne(0),
                 cumulantMatrices,
+                workspace,
                 workspace.increments(),
                 out);
     }
@@ -910,6 +942,7 @@ public class SericolaSeriesMarkovRewardFastModel extends AbstractModel {
                     workspace.isZero(t),
                     workspace.isOne(t),
                     cumulantMatrices,
+                    workspace,
                     workspace.increments(),
                     out[t]);
         }

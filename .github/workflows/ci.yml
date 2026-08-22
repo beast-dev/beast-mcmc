@@ -16,20 +16,19 @@ env:
     BEAGLE_DIR: beagle-lib
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
-    BEAGLE_BRANCH: v4_release
+    BEAGLE_BRANCH: matrix_vector
+    JAVA_VERSION: "8"
+    JAVA_DISTRIBUTION: temurin
 
 jobs:
     build:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-#            - name: Set up JDK 8
-#              uses: actions/setup-java@v4
-#              with:
-#                 java-version: "8"
-#                 distribution: "adopt"
-#                 java-version: "17"
-#                 distribution: "temurin"
+            - uses: actions/setup-java@v4
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
             - name: Setup cmake
               uses: lukka/get-cmake@latest
             - name: Cache BEAGLE
@@ -39,8 +38,9 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  key: beagle-beast-${{ env.BEAGLE_BRANCH }}-java${{ env.JAVA_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
             - name: Build BEAGLE
+              if: steps.cache.outputs.cache-hit != 'true'
               run: |
                   chmod +x ./.github/scripts/build_beagle.sh
                   ./.github/scripts/build_beagle.sh
@@ -68,14 +68,17 @@ jobs:
                 file: ${{fromJson(needs.build.outputs.xml-matrix)}}
         steps:
             - uses: actions/checkout@v4
+            - uses: actions/setup-java@v4
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
             - uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_BRANCH }}-java${{ env.JAVA_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  fail-on-cache-miss: true
             - name: Rebuild project
               run: ant dist                      
             - name: Run test for ${{ matrix.file }}
@@ -87,14 +90,17 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+            - uses: actions/setup-java@v4
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
             - uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_BRANCH }}-java${{ env.JAVA_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  fail-on-cache-miss: true
             - name: Rebuild project
               run: ant dist
             - name: checkpoint adaptive MCMC
@@ -127,14 +133,17 @@ jobs:
                 file: ${{fromJson(needs.build.outputs.xml-long-load-state-matrix)}}
         steps:
             - uses: actions/checkout@v4
+            - uses: actions/setup-java@v4
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
             - uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_BRANCH }}-java${{ env.JAVA_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  fail-on-cache-miss: true
             - name: Rebuild project
               run: ant dist
             - name: Download checkpoint file
@@ -154,16 +163,15 @@ jobs:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
               with:
-                  java-version: "8"
-                  distribution: "adopt"
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
             - uses: actions/cache@v4
               with:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: beagle-beast-${{ env.BEAGLE_BRANCH }}-java${{ env.JAVA_VERSION }}-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  fail-on-cache-miss: true
             - name: Rebuild project
               run: ant dist
             - name: Run JUnit tests

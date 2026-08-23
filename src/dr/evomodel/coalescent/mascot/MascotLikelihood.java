@@ -15,6 +15,7 @@ import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.coalescent.StructuredTipStates;
 import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
+import dr.evomodel.coalescent.basta.CoalescentIntervalTraversal;
 import dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -74,7 +75,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private final boolean checkProbabilities;
     private final String ancestralStateTagName;
 
-    private MascotEventTape eventTape;
+    private MascotCore.PreparedEvents eventTape;
     private MascotCore core;
     private boolean eventTapeKnown;
     private boolean coreKnown;
@@ -128,7 +129,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     // from this wrapper's point of view once built (MascotCore's internal
     // per-epoch rate cache is fully recomputed from theta at the start of every
     // evaluate() call regardless), so sharing the stored reference back in is safe.
-    private MascotEventTape storedEventTape;
+    private MascotCore.PreparedEvents storedEventTape;
     private MascotCore storedCore;
     private boolean storedEventTapeKnown;
     private boolean storedCoreKnown;
@@ -309,7 +310,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     /**
      * d(logLikelihood)/d(branchRate[lineageId]), indexed by tree node number (see
-     * {@link MascotEventTape#buildBranchRates}). Only valid when {@link
+     * {@link #writeBranchRates(double[])}). Only valid when {@link
      * #getBranchRateModel()} is non-null.
      */
     public double[] getClockGradientLogDensity() {
@@ -481,7 +482,23 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                     true, "tip-state attributePatterns");
         }
         if (!eventTapeKnown) {
-            eventTape = MascotEventTape.fromTree(treeIntervals, tipPartialsCache, dynamics.getStateCount());
+            final Tree tree = treeIntervals.getTree();
+            final MascotCore.Event[] events = new MascotCore.Event[treeIntervals.getIntervalCount() + 1];
+            CoalescentIntervalTraversal.walkEvents(
+                    treeIntervals, new CoalescentIntervalTraversal.EventVisitor() {
+                        @Override
+                        public void processSamplingEvent(int interval, NodeRef node) {
+                            events[interval + 1] = MascotCore.Event.sample(
+                                    tree.getNodeHeight(node), node.getNumber(), tipPartialsCache[node.getNumber()]);
+                        }
+
+                        @Override
+                        public void processCoalescentEvent(int interval, NodeRef node, NodeRef child1, NodeRef child2) {
+                            events[interval + 1] = MascotCore.Event.coalescence(
+                                    tree.getNodeHeight(node), child1.getNumber(), child2.getNumber(), node.getNumber());
+                        }
+            });
+            eventTape = MascotCore.prepareEvents(events);
             eventTapeKnown = true;
         }
     }
@@ -510,8 +527,16 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         if (branchRateBuffer == null) {
             branchRateBuffer = new double[treeModel.getNodeCount()];
         }
-        MascotEventTape.writeBranchRates(treeModel, branchRateModel, branchRateBuffer);
+        writeBranchRates(branchRateBuffer);
         return branchRateBuffer;
+    }
+
+    private void writeBranchRates(double[] destination) {
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            NodeRef node = treeModel.getNode(i);
+            destination[node.getNumber()] =
+                    treeModel.isRoot(node) ? 0.0 : branchRateModel.getBranchRate(treeModel, node);
+        }
     }
 
     /**
@@ -548,7 +573,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         ensureEventTape();
         ensureCore();
         try {
-            double value = core.evaluateLikelihood(eventTape.getPreparedEvents(), thetaBuffer(),
+            double value = core.evaluateLikelihood(eventTape, thetaBuffer(),
                     branchRateBufferOrNull(), checkProbabilities);
             return Double.isFinite(value) ? value : Double.NEGATIVE_INFINITY;
         } catch (MascotCore.NumericalException e) {
@@ -571,7 +596,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
         double logLikelihood;
         try {
-            logLikelihood = core.evaluateInto(eventTape.getPreparedEvents(), thetaBuffer(), branchRates,
+            logLikelihood = core.evaluateInto(eventTape, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, null, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             if (failOnGradientFailure) {
@@ -625,7 +650,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
         double logLikelihood;
         try {
-            logLikelihood = core.evaluateInto(eventTape.getPreparedEvents(), thetaBuffer(), branchRates,
+            logLikelihood = core.evaluateInto(eventTape, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, buffers.ancestralStateScores, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             throw new IllegalStateException("MASCOT ancestral states cannot be evaluated for the current " +

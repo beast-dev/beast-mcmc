@@ -91,6 +91,11 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
     }
 
     @Override
+    public void refreshAfterPositionUpdate() {
+        branchWeightProvider.refreshRewardCategoryEmbedding();
+    }
+
+    @Override
     public double getLogDensity() {
         branchWeightProvider.refreshLikelihoodMessages();
 

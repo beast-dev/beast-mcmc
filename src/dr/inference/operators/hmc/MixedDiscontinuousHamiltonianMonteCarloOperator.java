@@ -302,6 +302,12 @@ public class MixedDiscontinuousHamiltonianMonteCarloOperator extends AbstractAda
 
             halfStepSmoothMomentum(continuousMomentum, stepSizeThisOperation);
 
+            // The discontinuous landscape is intentionally frozen during the
+            // trajectory, but the proposal must be scored under the embedding
+            // implied by the final smooth coordinates.
+            discontinuousProvider.refreshAfterPositionUpdate();
+            joint.makeDirty();
+
             final double finalAuxiliaryEnergy =
                     getContinuousKineticEnergy(continuousMomentum) +
                     getDiscontinuousKineticEnergy(discontinuousMomentum) +

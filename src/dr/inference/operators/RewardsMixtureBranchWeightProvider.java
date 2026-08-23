@@ -116,6 +116,10 @@ public final class RewardsMixtureBranchWeightProvider {
         return nodeNumberByParameterIndex[parameterIndex];
     }
 
+    public void refreshRewardCategoryEmbedding() {
+        rewardsAwareBranchModel.refreshCategoryDecoderEmbedding();
+    }
+
     public void refreshLikelihoodMessages() {
         discreteDelegate.updatePostOrdersFromTreeDataLikelihood(treeDataLikelihood);
         discreteDelegate.ensurePreOrderComputed();

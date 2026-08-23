@@ -58,6 +58,14 @@ public interface DiscontinuousPotentialProvider {
     default void refresh() {
     }
 
+    /**
+     * Called after smooth position integration has written the final proposal
+     * coordinates, immediately before final proposal scoring. Most
+     * discontinuous providers have no final-position cache to synchronize.
+     */
+    default void refreshAfterPositionUpdate() {
+    }
+
     double getLogDensity();
 
     double getLogDensityAfterSingleCoordinateMove(int index, double proposedValue);

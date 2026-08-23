@@ -349,6 +349,15 @@ public class RewardsAwareBranchModel extends AbstractModel
 
     public RewardMixtureCategoryDecoding getCategoryDecoder() { return categoryDecoder; }
 
+    public void refreshCategoryDecoderEmbedding() {
+        if (categoryDecoder == null) {
+            return;
+        }
+        categoryDecoder.refreshEmbedding();
+        invalidateCtsMatrices();
+        invalidateAtomicScales();
+    }
+
     // -------------------- Basic accessors --------------------
 
     public FrequencyModel getRootFrequencyModel() { return underlyingSubstitutionModel.getFrequencyModel(); }
@@ -768,7 +777,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     @Override
     protected void restoreState() {
         if (categoryDecoder != null) {
-            categoryDecoder.refreshEmbedding();
+            refreshCategoryDecoderEmbedding();
         }
         // If continuous inputs were touched during the rejected proposal,
         // the cached W arrays may contain proposal values, so force recomputation.

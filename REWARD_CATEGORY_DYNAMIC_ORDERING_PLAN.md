@@ -150,6 +150,67 @@ once**, versus the static decoder's baseline over the identical chain length
 and seed, where only state index 0 ("Ap") was ever reached. This is the
 result the whole feature was built to produce.
 
+5. **Production cluster runs (10000 states, `autoOptimize="true"`) crash
+   deterministically at the adaptation-delay boundary (state ~100, or
+   `chainLength/100`) -- root cause precisely located, not fixed.** All 3
+   replicate seeds failed identically: `MarkovChain.runChain()`'s own
+   `likelihood.makeDirty(); evaluate(likelihood);` at the start of the
+   post-adaptation-delay chain segment (`MCMC.java` calls `runChain(...,
+   true)` then `runChain(..., false)`) throws `IllegalArgumentException: The
+   initial likelihood is zero`, uncaught, killing the thread. Not seen in any
+   `autoOptimize="false"` local validation this session (200+ states, fixed
+   small step size).
+   - Reproduces in seconds on the tiny 5-taxon
+     `testRewardsAwareRabiesHostDnaMixedDynamicSmoke.xml` with
+     `autoOptimize="true" adaptationDelay="5"` added -- state ~52,
+     `usingFullEvaluation`'s post-reject sanity check (active by default;
+     `fullEvaluation="0"` is not set on this tiny XML) reports
+     `host.treeLikelihood` mismatched after restore (a small, finite
+     discrepancy this time, not `-Inf`).
+   - Definitively ruled out via direct instrumentation (dumped every
+     element, not just sums, at each point):
+     - **`total.rewards.cts`/`reward.category` raw parameter values restore
+       byte-for-byte identical** to their pre-operator-call reference.
+     - **`PerBranchRewardMixtureCategoryDecoder`'s per-branch insertion-rank
+       cache also restores byte-for-byte identical** (both
+       `RewardsAwareCategoricalMixtureBranchRatesDynamic.restoreState()` and
+       `RewardsAwareBranchModel.restoreState()` correctly fire
+       `refreshEmbedding()` and land on the same ranks as the original
+       trajectory-start refresh).
+     - `computeAtomicScales()`/`atomicScale[]` never fires in this
+       repro at all (no branch goes atomic), ruling it out too.
+   - **Conclusion: the same confirmed-identical inputs (X[], times[])
+     produce a different `W[]` output from `computeCtsTransitionMatrices()`
+     depending on prior call history.** This narrows the bug to
+     `SericolaSeriesMarkovRewardFastModel.computePdfInto()` and its
+     downstream Bernstein/Poisson-weight computation in
+     `SericolaRewardDensityWorkspace`/`SericolaSeriesWeights` -- the
+     pre-existing, uncommitted "series rescaling" refactor committed earlier
+     this session (see item 4's sibling note above and `project_log.md`),
+     not BEAST's store/restore framework, not this feature's decoder/model
+     code. Most likely a non-idempotent internal cache (e.g. the reused
+     `ThreadLocal` workspace's weight arrays) that is not fully invalidated
+     between calls with different inputs, though the exact mechanism inside
+     that code was not identified.
+   - One real, if insufficient, improvement made along the way: `reward.category`
+     changes were invalidating `atomicScalesDirty` but not `ctsMatricesDirty` in
+     `RewardsAwareBranchModel.handleVariableChangedEvent` -- `computeCtsTransitionMatrices()`
+     computes `W[]` for every branch unconditionally using each branch's *current*
+     atomic/continuous classification, so a category boundary crossing without a
+     `total.rewards.cts` value change could in principle leave a stale `W[]` entry.
+     Fixed (now invalidates both), verified harmless via the full JUnit suite, but
+     confirmed empirically **not** the cause of this specific crash (the fast
+     tiny-tree repro reproduces identically with and without it).
+   - **Practical status: blocks `autoOptimize="true"` production runs at
+     scale.** `autoOptimize="false"` (this session's entire validated 200+
+     state local runs) does not trigger it. Fixing the actual root cause
+     needs someone with the intended caching invariants of the
+     series-rescaling refactor (likely whoever authored it) to review
+     `SericolaRewardDensityWorkspace`'s weight caching; the fast tiny-tree
+     repro (`chainLength="500" adaptationDelay="5" autoOptimize="true"`
+     on `testRewardsAwareRabiesHostDnaMixedDynamicSmoke.xml`, crashes in
+     under 15 seconds) makes that investigation fast to iterate on.
+
 ## 1. Motivation
 
 Investigated in `dep-markov/private-code/notes/project_log.md` (2026-08-21/22): the

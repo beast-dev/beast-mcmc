@@ -706,6 +706,18 @@ public class RewardsAwareBranchModel extends AbstractModel
             invalidateAtomicScales();
 //            invalidateCtsMatrices(); // safe, even if a bit conservative
         } else if (categoryDecoder != null && variable == categoryDecoder.getCategoryParameter()) {
+            // computeCtsTransitionMatrices() computes W[] for every branch
+            // unconditionally (no atomic/continuous filter), using
+            // getContinuousBranchRate() -- which itself depends on this
+            // branch's current atomic/continuous classification (an atomic
+            // branch's "rate" is its atomic reward value, not the raw cts
+            // parameter). A reward.category boundary crossing can flip that
+            // classification without total.rewards.cts's own value changing,
+            // so ctsMatricesDirty must also be invalidated here, not just
+            // atomicScalesDirty -- otherwise a stale W[] entry (computed
+            // under the branch's previous classification) can persist past
+            // a rejected proposal's restore.
+            invalidateCtsMatrices();
             invalidateAtomicScales();
         } else if (categoryDecoder != null && variable == categoryDecoder.getCutParameter()) {
             categoryDecoder.refreshEmbedding();

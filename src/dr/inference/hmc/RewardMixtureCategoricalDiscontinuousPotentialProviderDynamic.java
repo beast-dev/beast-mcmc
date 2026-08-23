@@ -88,6 +88,7 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
     @Override
     public void refresh() {
         categoryDecoder.refreshEmbedding();
+        branchWeightProvider.beginOperationCache();
     }
 
     @Override
@@ -96,9 +97,12 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
     }
 
     @Override
-    public double getLogDensity() {
-        branchWeightProvider.refreshLikelihoodMessages();
+    public void clearOperationCache() {
+        branchWeightProvider.clearOperationCache();
+    }
 
+    @Override
+    public double getLogDensity() {
         double logDensity = 0.0;
         for (int i = 0; i < getDimension(); i++) {
             final double contribution = getCurrentLogWeight(i);
@@ -114,15 +118,12 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
     public double getLogDensityAfterSingleCoordinateMove(final int index, final double proposedValue) {
         checkIndex(index);
 
-        branchWeightProvider.refreshLikelihoodMessages();
-
         final double currentLogDensity = getLogDensityWithoutRefresh();
         if (isNegativeInfinity(currentLogDensity)) {
             return Double.NEGATIVE_INFINITY;
         }
 
-        final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
-                branchWeightProvider.computeBranchWeightsForParameterIndex(index);
+        final RewardsMixtureBranchResamplingHelper.BranchWeights weights = getBranchWeights(index);
         final double currentContribution =
                 logWeightForValue(weights, index, categoryParameter.getParameterValue(index));
         final double proposedContribution = logWeightForValue(weights, index, proposedValue);
@@ -156,9 +157,7 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
             return 0.0;
         }
 
-        branchWeightProvider.refreshLikelihoodMessages();
-        final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
-                branchWeightProvider.computeBranchWeightsForParameterIndex(index);
+        final RewardsMixtureBranchResamplingHelper.BranchWeights weights = getBranchWeights(index);
         final double currentLogWeight =
                 branchWeightProvider.getLogWeightForCategory(weights, currentCategory);
         final double proposedLogWeight =
@@ -208,9 +207,7 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
             return 0.0;
         }
 
-        branchWeightProvider.refreshLikelihoodMessages();
-        final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
-                branchWeightProvider.computeBranchWeightsForParameterIndex(index);
+        final RewardsMixtureBranchResamplingHelper.BranchWeights weights = getBranchWeights(index);
         final double currentLogWeight =
                 branchWeightProvider.getLogWeightForCategory(weights, currentCategory);
         final double proposedLogWeight =
@@ -256,9 +253,12 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
     }
 
     private double getCurrentLogWeight(final int index) {
-        final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
-                branchWeightProvider.computeBranchWeightsForParameterIndex(index);
+        final RewardsMixtureBranchResamplingHelper.BranchWeights weights = getBranchWeights(index);
         return logWeightForValue(weights, index, categoryParameter.getParameterValue(index));
+    }
+
+    private RewardsMixtureBranchResamplingHelper.BranchWeights getBranchWeights(final int index) {
+        return branchWeightProvider.getOperationCachedBranchWeightsForParameterIndex(index);
     }
 
     private double logWeightForValue(final RewardsMixtureBranchResamplingHelper.BranchWeights weights,

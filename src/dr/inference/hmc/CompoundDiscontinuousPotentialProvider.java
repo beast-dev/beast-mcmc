@@ -98,6 +98,13 @@ public class CompoundDiscontinuousPotentialProvider implements DiscontinuousPote
     }
 
     @Override
+    public void clearOperationCache() {
+        for (DiscontinuousPotentialProvider provider : providers) {
+            provider.clearOperationCache();
+        }
+    }
+
+    @Override
     public double getLogDensity() {
         double total = 0.0;
         for (DiscontinuousPotentialProvider provider : providers) {

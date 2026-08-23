@@ -36,6 +36,12 @@ public final class RewardsMixtureBranchWeightProvider {
     private final double[] preScales;
     private final double[] postScales;
     private final double[] logAtomicWeights;
+    private final RewardsMixtureBranchResamplingHelper.BranchWeights[] cachedBranchWeightsByParameterIndex;
+    private final int[] cachedBranchWeightsEpoch;
+
+    private boolean operationCacheActive = false;
+    private boolean likelihoodMessagesFresh = false;
+    private int operationCacheEpoch = 1;
 
     public RewardsMixtureBranchWeightProvider(final RewardsAwareBranchModel rewardsAwareBranchModel,
                                               final TreeDataLikelihood treeDataLikelihood,
@@ -87,6 +93,9 @@ public final class RewardsMixtureBranchWeightProvider {
         this.preScales = new double[discreteDelegate.getPatternCount()];
         this.postScales = new double[discreteDelegate.getPatternCount()];
         this.logAtomicWeights = new double[nstates];
+        this.cachedBranchWeightsByParameterIndex =
+                new RewardsMixtureBranchResamplingHelper.BranchWeights[branchCount];
+        this.cachedBranchWeightsEpoch = new int[branchCount];
     }
 
     public Tree getTree() {
@@ -118,6 +127,17 @@ public final class RewardsMixtureBranchWeightProvider {
 
     public void refreshRewardCategoryEmbedding() {
         rewardsAwareBranchModel.refreshCategoryDecoderEmbedding();
+        clearOperationCache();
+    }
+
+    public void beginOperationCache() {
+        operationCacheActive = true;
+        clearOperationCache();
+    }
+
+    public void clearOperationCache() {
+        likelihoodMessagesFresh = false;
+        advanceOperationCacheEpoch();
     }
 
     public void refreshLikelihoodMessages() {
@@ -126,11 +146,43 @@ public final class RewardsMixtureBranchWeightProvider {
         for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
             provider.prepare();
         }
+        if (operationCacheActive) {
+            likelihoodMessagesFresh = true;
+            advanceOperationCacheEpoch();
+        }
     }
 
     public RewardsMixtureBranchResamplingHelper.BranchWeights computeBranchWeightsForParameterIndex(
             final int parameterIndex) {
         return computeBranchWeightsForNode(getNodeNumberForParameterIndex(parameterIndex));
+    }
+
+    public RewardsMixtureBranchResamplingHelper.BranchWeights getOperationCachedBranchWeightsForParameterIndex(
+            final int parameterIndex) {
+        final int branchNodeNumber = getNodeNumberForParameterIndex(parameterIndex);
+
+        if (!operationCacheActive) {
+            refreshLikelihoodMessages();
+            return computeBranchWeightsForNode(branchNodeNumber);
+        }
+
+        if (!likelihoodMessagesFresh) {
+            refreshLikelihoodMessages();
+        }
+        if (cachedBranchWeightsEpoch[parameterIndex] != operationCacheEpoch) {
+            cachedBranchWeightsByParameterIndex[parameterIndex] =
+                    computeBranchWeightsForNode(branchNodeNumber);
+            cachedBranchWeightsEpoch[parameterIndex] = operationCacheEpoch;
+        }
+        return cachedBranchWeightsByParameterIndex[parameterIndex];
+    }
+
+    private void advanceOperationCacheEpoch() {
+        operationCacheEpoch++;
+        if (operationCacheEpoch == Integer.MAX_VALUE) {
+            Arrays.fill(cachedBranchWeightsEpoch, 0);
+            operationCacheEpoch = 1;
+        }
     }
 
     public RewardsMixtureBranchResamplingHelper.BranchWeights computeBranchWeightsForNode(

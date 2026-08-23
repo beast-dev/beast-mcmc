@@ -66,6 +66,15 @@ public interface DiscontinuousPotentialProvider {
     default void refreshAfterPositionUpdate() {
     }
 
+    /**
+     * Called after an integrated position update has changed model state while
+     * the current operation is still in progress. Providers can drop derived
+     * likelihood/message caches here without changing any frozen discontinuity
+     * layout captured by {@link #refresh()}.
+     */
+    default void clearOperationCache() {
+    }
+
     double getLogDensity();
 
     double getLogDensityAfterSingleCoordinateMove(int index, double proposedValue);

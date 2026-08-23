@@ -292,6 +292,7 @@ public class MixedDiscontinuousHamiltonianMonteCarloOperator extends AbstractAda
                 DiscontinuousHmcUtils.shuffleInPlace(discontinuousOrder);
                 for (int i = 0; i < discontinuousOrder.length; i++) {
                     discontinuousIntegrator.step(discontinuousMomentum, discontinuousOrder[i], stepSizeThisOperation);
+                    discontinuousProvider.clearOperationCache();
                 }
                 halfStepSmoothPosition(continuousMomentum, stepSizeThisOperation);
 
@@ -452,6 +453,7 @@ public class MixedDiscontinuousHamiltonianMonteCarloOperator extends AbstractAda
         // before any model state is touched, keeps the reject clean.
         checkFinite(position, "smooth position update");
         setOperatorPosition(position);
+        discontinuousProvider.clearOperationCache();
     }
 
     private double[] getSmoothGradientInOperatorCoordinates() {

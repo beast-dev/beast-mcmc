@@ -292,7 +292,8 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                     postBufferIndices, preBufferIndices,
                     matrixBufferIndices,
                     new int[]{0}, new int[]{0}, getRootPostOrderBuffer(), 0,
-                    branchLengths.length, first, null);
+                    branchLengths.length, first, null,
+                    null, null, Beagle.NONE);
 
         } else {
             for (int i = start; i < end; ++i) {

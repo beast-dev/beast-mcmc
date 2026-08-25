@@ -35,6 +35,7 @@ import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.RewardRates;
@@ -56,6 +57,7 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RewardMixtureCategoricalGibbsOperator;
 import dr.inferencexml.operators.RewardMixtureCategoricalGibbsOperatorParser;
 import dr.math.MathUtils;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.XMLObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -92,7 +94,62 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         assertCategoryValuesAreInsideCuts(fixture.categoryState, fixture.categoryCuts);
     }
 
+    public void testAtomicPseudoPriorPullsOnlyAtomicBranches() {
+        final Fixture fixture = createFixture();
+        fixture.ctsRewards.setParameterValue(0, 0.50);
+        fixture.categoryState.setParameterValue(0, 2.50);
+
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+
+        final double expectedLogDensity = NormalDistribution.logPdf(0.50, 0.40, 0.10) -
+                Math.log(NormalDistribution.cdf(1.0, 0.40, 0.10) -
+                        NormalDistribution.cdf(0.0, 0.40, 0.10));
+
+        assertEquals(expectedLogDensity, pseudoPrior.getLogDensityForCurrentCategory(0), 1E-10);
+        assertEquals(0.0, pseudoPrior.getLogDensityForCurrentCategory(1), 1E-10);
+
+        final double[] gradient = pseudoPrior.getGradientLogDensity();
+        assertEquals(-10.0, gradient[0], 1E-10);
+        for (int i = 1; i < gradient.length; i++) {
+            assertEquals(0.0, gradient[i], 1E-10);
+        }
+    }
+
+    public void testParserAcceptsAtomicPseudoPriorAndProposalRuns() throws Exception {
+        MathUtils.setSeed(20260702);
+
+        final Fixture fixture = createFixture();
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+        final RewardMixtureCategoricalGibbsOperatorParser parser =
+                new RewardMixtureCategoricalGibbsOperatorParser();
+
+        final XMLObject xo = operatorXmlObject(fixture, pseudoPrior);
+        final Object parsed = parser.parseXMLObject(xo);
+
+        assertTrue(parsed instanceof RewardMixtureCategoricalGibbsOperator);
+
+        final RewardMixtureCategoricalGibbsOperator operator =
+                (RewardMixtureCategoricalGibbsOperator) parsed;
+
+        assertFinite(fixture.independentLikelihood.getLogLikelihood());
+        assertFinite(operator.doOperation());
+        assertCategoryValuesAreInsideCuts(fixture.categoryState, fixture.categoryCuts);
+    }
+
     private static XMLObject operatorXmlObject(final Fixture fixture) throws Exception {
+        return operatorXmlObject(fixture, null);
+    }
+
+    private static XMLObject operatorXmlObject(final Fixture fixture,
+                                               final RewardMixtureAtomicPseudoPrior pseudoPrior) throws Exception {
         final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         final XMLObject xo = xmlObject(document,
                 RewardMixtureCategoricalGibbsOperatorParser.OPERATOR_NAME,
@@ -103,6 +160,9 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         addChild(xo, wrapper(document, "categoryCuts", nativeObject(document, "parameter", fixture.categoryCuts)));
         addChild(xo, nativeObject(document, "rewardsAwareBranchModel", fixture.rewardsAwareBranchModel));
         addChild(xo, nativeObject(document, "treeDataLikelihood", fixture.independentLikelihood));
+        if (pseudoPrior != null) {
+            addChild(xo, nativeObject(document, "rewardMixtureAtomicPseudoPrior", pseudoPrior));
+        }
 
         return xo;
     }
@@ -115,6 +175,7 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
 
         final Parameter ctsRewards =
                 new Parameter.Default("rewardCts", new double[]{0.50, 0.50, 0.50, 0.50});
+        ctsRewards.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ctsRewards.getDimension()));
         final Parameter categoryState =
                 new Parameter.Default("rewardCategory", new double[]{0.50, 0.50, 0.50, 0.50});
         final Parameter categoryCuts =
@@ -165,7 +226,13 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         final TreeDataLikelihood independentLikelihood =
                 new TreeDataLikelihood(independentDelegate, tree, rewardBranchRates);
 
-        return new Fixture(rewardsAwareBranchModel, independentLikelihood, categoryState, categoryCuts);
+        return new Fixture(
+                rewardsAwareBranchModel,
+                rewardBranchRates,
+                independentLikelihood,
+                ctsRewards,
+                categoryState,
+                categoryCuts);
     }
 
     private static SitePatterns createSitePatterns(final String a, final String b, final String c) {
@@ -262,16 +329,22 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
 
     private static final class Fixture {
         final RewardsAwareBranchModel rewardsAwareBranchModel;
+        final ArbitraryBranchRates rewardBranchRates;
         final TreeDataLikelihood independentLikelihood;
+        final Parameter ctsRewards;
         final Parameter categoryState;
         final Parameter categoryCuts;
 
         private Fixture(final RewardsAwareBranchModel rewardsAwareBranchModel,
+                        final ArbitraryBranchRates rewardBranchRates,
                         final TreeDataLikelihood independentLikelihood,
+                        final Parameter ctsRewards,
                         final Parameter categoryState,
                         final Parameter categoryCuts) {
             this.rewardsAwareBranchModel = rewardsAwareBranchModel;
+            this.rewardBranchRates = rewardBranchRates;
             this.independentLikelihood = independentLikelihood;
+            this.ctsRewards = ctsRewards;
             this.categoryState = categoryState;
             this.categoryCuts = categoryCuts;
         }

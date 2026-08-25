@@ -1,5 +1,6 @@
 package dr.inferencexml.operators;
 
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.operators.MCMCOperator;
@@ -29,6 +30,7 @@ import java.util.List;
  *   <dependentContinuousLikelihoods>        (optional)
  *     <treeDataLikelihood idref="..."/>
  *   </dependentContinuousLikelihoods>
+ *   <rewardMixtureAtomicPseudoPrior idref="..."/>  (optional)
  * </oneZeroOneShuffleGibbsOperator>
  */
 
@@ -62,6 +64,7 @@ public final class OneZeroOneShuffleGibbsOperatorParser extends AbstractXMLObjec
                 parseTreeDataLikelihoods(xo, DEPENDENT_CTMC_LIKELIHOODS);
         final TreeDataLikelihood[] dependentContinuousLikelihoods =
                 parseTreeDataLikelihoods(xo, DEPENDENT_CONTINUOUS_LIKELIHOODS);
+        final RewardMixtureAtomicPseudoPrior atomicPseudoPrior = parseAtomicPseudoPrior(xo);
 
         return new OneZeroOneShuffleGibbsOperator(
                 rewardRates.getValues(),
@@ -69,6 +72,7 @@ public final class OneZeroOneShuffleGibbsOperatorParser extends AbstractXMLObjec
                 treeDataLikelihood,
                 dependentCtmcLikelihoods,
                 dependentContinuousLikelihoods,
+                atomicPseudoPrior,
                 weight,
                 tol);
     }
@@ -88,6 +92,20 @@ public final class OneZeroOneShuffleGibbsOperatorParser extends AbstractXMLObjec
         }
 
         return likelihoods.toArray(new TreeDataLikelihood[likelihoods.size()]);
+    }
+
+    private RewardMixtureAtomicPseudoPrior parseAtomicPseudoPrior(final XMLObject xo) {
+        RewardMixtureAtomicPseudoPrior atomicPseudoPrior = null;
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            final Object child = xo.getChild(i);
+            if (child instanceof RewardMixtureAtomicPseudoPrior) {
+                if (atomicPseudoPrior != null) {
+                    throw new IllegalArgumentException("Only one RewardMixtureAtomicPseudoPrior child is allowed");
+                }
+                atomicPseudoPrior = (RewardMixtureAtomicPseudoPrior) child;
+            }
+        }
+        return atomicPseudoPrior;
     }
 
     @Override
@@ -111,6 +129,7 @@ public final class OneZeroOneShuffleGibbsOperatorParser extends AbstractXMLObjec
 
             new ElementRule(RewardRates.class),
             new ElementRule(TreeDataLikelihood.class),
+            new ElementRule(RewardMixtureAtomicPseudoPrior.class, 0, 1),
             new ElementRule(DEPENDENT_CTMC_LIKELIHOODS,
                     new XMLSyntaxRule[]{
                             new ElementRule(TreeDataLikelihood.class, 1, Integer.MAX_VALUE)

@@ -35,6 +35,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractAdaptableOperator;
 import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.GeneralOperator;
+import dr.inference.operators.RewardMixturePerformanceStats;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.util.Transform;
@@ -291,8 +292,16 @@ public class MixedDiscontinuousHamiltonianMonteCarloOperator extends AbstractAda
                 halfStepSmoothPosition(continuousMomentum, stepSizeThisOperation);
                 DiscontinuousHmcUtils.shuffleInPlace(discontinuousOrder);
                 for (int i = 0; i < discontinuousOrder.length; i++) {
-                    discontinuousIntegrator.step(discontinuousMomentum, discontinuousOrder[i], stepSizeThisOperation);
-                    discontinuousProvider.clearOperationCache();
+                    final DiscontinuousCoordinateIntegrator.StepResult result =
+                            discontinuousIntegrator.step(discontinuousMomentum, discontinuousOrder[i], stepSizeThisOperation);
+                    RewardMixturePerformanceStats.recordDiscontinuousStep(result.isCrossed(), result.isReflected());
+                    if (result.isCrossed()) {
+                        RewardMixturePerformanceStats.recordCacheClearAfterAcceptedCrossing();
+                        discontinuousProvider.clearOperationCache(
+                                RewardMixturePerformanceStats.OperationCacheClearReason.ACCEPTED_CATEGORY_CROSSING);
+                    } else {
+                        RewardMixturePerformanceStats.recordSkippedCacheClearAfterNoCrossing();
+                    }
                 }
                 halfStepSmoothPosition(continuousMomentum, stepSizeThisOperation);
 
@@ -453,7 +462,8 @@ public class MixedDiscontinuousHamiltonianMonteCarloOperator extends AbstractAda
         // before any model state is touched, keeps the reject clean.
         checkFinite(position, "smooth position update");
         setOperatorPosition(position);
-        discontinuousProvider.clearOperationCache();
+        discontinuousProvider.clearOperationCache(
+                RewardMixturePerformanceStats.OperationCacheClearReason.SMOOTH_POSITION_UPDATE);
     }
 
     private double[] getSmoothGradientInOperatorCoordinates() {

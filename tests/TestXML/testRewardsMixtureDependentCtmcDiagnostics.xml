@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+    </taxa>
+
+    <alignment id="ind.alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            A
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            C
+        </sequence>
+        <sequence>
+            <taxon idref="C"/>
+            G
+        </sequence>
+    </alignment>
+
+    <alignment id="dep.alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            ACGT
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            CGTA
+        </sequence>
+        <sequence>
+            <taxon idref="C"/>
+            GTAC
+        </sequence>
+    </alignment>
+
+    <newick id="startingTree">
+        ((A:0.4,B:0.4):0.3,C:0.7);
+    </newick>
+
+    <patterns id="ind.patterns" from="1">
+        <alignment idref="ind.alignment"/>
+    </patterns>
+
+    <patterns id="dep.patterns" from="1">
+        <alignment idref="dep.alignment"/>
+    </patterns>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <compoundParameter id="ind.rewardRates.values">
+        <parameter id="ind.rewardRates.fixedValues" dimension="2" value="0.0 1.0" lower="0.0" upper="1.0"/>
+        <parameter id="ind.rewardRates.varyingValues" dimension="2" value="0.25 0.75" lower="0.0" upper="1.0"/>
+    </compoundParameter>
+    <parameter id="ind.rewardRates.stateIndices" dimension="4" value="0 1 2 3" lower="0" upper="3"/>
+
+    <rewardRates id="ind.rewardRates">
+        <fixedValues>
+            <parameter idref="ind.rewardRates.fixedValues"/>
+        </fixedValues>
+        <varyingValues>
+            <parameter idref="ind.rewardRates.varyingValues"/>
+        </varyingValues>
+        <stateIndices>
+            <parameter idref="ind.rewardRates.stateIndices"/>
+        </stateIndices>
+    </rewardRates>
+
+    <parameter id="total.rewards.cts" dimension="4" value="0.50 0.50 0.50 0.50" lower="0.0" upper="1.0"/>
+    <parameter id="bernoulliVar" dimension="4" value="0 0 0 0" lower="0" upper="1"/>
+    <parameter id="atomIndex" dimension="4" value="0 1 2 3" lower="0" upper="3"/>
+
+    <arbitraryBranchRates id="ind.totalRewardsBranchRateModel" centerAtOne="false">
+        <treeModel idref="treeModel"/>
+        <rates>
+            <parameter idref="total.rewards.cts"/>
+        </rates>
+    </arbitraryBranchRates>
+
+    <strictClockBranchRates id="ind.branchRates">
+        <rate>
+            <parameter id="ind.clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <hkyModel id="ind.submodel">
+        <frequencies>
+            <frequencyModel id="ind.frequencyModel" dataType="nucleotide">
+                <frequencies>
+                    <parameter id="ind.frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="ind.kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </hkyModel>
+
+    <rewardsAwareBranchModel id="ind.rewardModel">
+        <arbitraryBranchRates idref="ind.totalRewardsBranchRateModel"/>
+        <indicator>
+            <parameter idref="bernoulliVar"/>
+        </indicator>
+        <atomIndices>
+            <parameter idref="atomIndex"/>
+        </atomIndices>
+        <rewardRates idref="ind.rewardRates"/>
+        <hkyModel idref="ind.submodel"/>
+    </rewardsAwareBranchModel>
+
+    <siteModel id="ind.siteModel">
+        <substitutionModel>
+            <hkyModel idref="ind.submodel"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="ind.treeLikelihood" useAmbiguities="false"
+                        usePreOrder="true" branchRateDerivative="true"
+                        useRewardAwareBranchModelDelegate="true"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="ind.patterns"/>
+        <siteModel idref="ind.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <rewardsAwareBranchModel idref="ind.rewardModel"/>
+        <strictClockBranchRates idref="ind.branchRates"/>
+    </treeDataLikelihood>
+
+    <rewardsAwareMixtureBranchRates id="rhoBranchRates">
+        <atomic>
+            <atomIndices>
+                <parameter idref="atomIndex"/>
+            </atomIndices>
+            <rewardRates idref="ind.rewardRates"/>
+        </atomic>
+        <ctsParameter>
+            <parameter idref="total.rewards.cts"/>
+        </ctsParameter>
+        <indicator>
+            <parameter idref="bernoulliVar"/>
+        </indicator>
+        <treeModel idref="treeModel"/>
+    </rewardsAwareMixtureBranchRates>
+
+    <hkyModel id="dep.submodel">
+        <frequencies>
+            <frequencyModel id="dep.frequencyModel" dataType="nucleotide">
+                <frequencies>
+                    <parameter id="dep.frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="dep.kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </hkyModel>
+
+    <siteModel id="dep.siteModel">
+        <substitutionModel>
+            <hkyModel idref="dep.submodel"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="dep.treeLikelihood" useAmbiguities="false"
+                        usePreOrder="true" branchRateDerivative="true"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="dep.patterns"/>
+        <siteModel idref="dep.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <rewardsAwareMixtureBranchRates idref="rhoBranchRates"/>
+    </treeDataLikelihood>
+
+    <operators id="operators">
+        <rewardsMixtureIndicatorAndAtomIndicesOperator id="indicatorAtomGibbs" weight="1.0"
+                                                       updateProportion="1.0"
+                                                       autoOptimize="false"
+                                                       useClusterMoves="false"
+                                                       dependentCtmcDiagnostics="true"
+                                                       dependentCtmcDiagnosticFile="/private/tmp/dep_markov_tiny_branch_messages.tsv"
+                                                       dependentCtmcCompareBeaglePreorder="true"
+                                                       dependentCtmcCompareExact="true"
+                                                       dependentCtmcDiagnosticMaxBranches="4"
+                                                       dependentCtmcDiagnosticMaxRows="20">
+            <treeDataLikelihood idref="ind.treeLikelihood"/>
+            <rewardsAwareBranchModel idref="ind.rewardModel"/>
+            <dependentCtmcLikelihoods>
+                <treeDataLikelihood idref="dep.treeLikelihood"/>
+            </dependentCtmcLikelihoods>
+            <indicatorZ>
+                <parameter idref="bernoulliVar"/>
+            </indicatorZ>
+            <atomIndex>
+                <parameter idref="atomIndex"/>
+            </atomIndex>
+        </rewardsMixtureIndicatorAndAtomIndicesOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="2" autoOptimize="false">
+        <joint id="joint">
+            <prior id="prior"/>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="ind.treeLikelihood"/>
+                <treeDataLikelihood idref="dep.treeLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <joint idref="joint"/>
+            <treeDataLikelihood idref="ind.treeLikelihood"/>
+            <treeDataLikelihood idref="dep.treeLikelihood"/>
+            <parameter idref="bernoulliVar"/>
+            <parameter idref="atomIndex"/>
+        </log>
+    </mcmc>
+
+</beast>

@@ -7,6 +7,8 @@ import dr.math.MathUtils;
 public final class RewardsMixtureBranchResamplingHelper {
 
     private static final double SUPPORT_BOUNDARY_TOLERANCE = 1.0e-12;
+    private static final double MATRIX_SCALING_FLOOR = 1.0e-100;
+    private static final double MATRIX_SCALING_CEILING = 1.0e100;
 
     private RewardsMixtureBranchResamplingHelper() {
         // no instances
@@ -149,23 +151,31 @@ public final class RewardsMixtureBranchResamplingHelper {
                                          final double logLocalFactor,
                                          final double preScale,
                                          final double postScale) {
-        if (!(pre > 0.0) || !(post > 0.0)) {
+        // The partial vector may contain dummy normalized entries when its
+        // scale says the true outside evidence is zero.
+        if (!(pre > 0.0) || !(post > 0.0) ||
+                isImpossibleScale(preScale) || isImpossibleScale(postScale)) {
             return Double.NEGATIVE_INFINITY;
         }
 
-        return Math.log(pre) + Math.log(post) + logLocalFactor + safeScale(preScale) + safeScale(postScale);
+        return Math.log(pre) + Math.log(post) + logLocalFactor + preScale + postScale;
     }
 
     public static double logContinuousWeight(final double[] pre,
                                              final double[] D,
                                              final double[] post,
                                              final int nstates) {
-        final double inner = bilinearFormStable(pre, D, post, nstates);
+        final double matrixScale = matrixScale(D, nstates);
+        if (matrixScale == Double.NEGATIVE_INFINITY) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        final double inner = bilinearFormStable(pre, 0, D, post, 0, nstates, matrixScale);
         if (!(inner > 0.0) || Double.isNaN(inner)) {
             return Double.NEGATIVE_INFINITY;
         }
 
-        return Math.log(inner);
+        return Math.log(inner) + (matrixScale == 1.0 ? 0.0 : Math.log(matrixScale));
     }
 
     public static double logContinuousWeight(final double[] pre,
@@ -174,12 +184,22 @@ public final class RewardsMixtureBranchResamplingHelper {
                                              final int nstates,
                                              final double preScale,
                                              final double postScale) {
-        final double inner = bilinearFormStable(pre, D, post, nstates);
+        // The scales are part of the exact local conditional support.
+        if (isImpossibleScale(preScale) || isImpossibleScale(postScale)) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        final double matrixScale = matrixScale(D, nstates);
+        if (matrixScale == Double.NEGATIVE_INFINITY) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        final double inner = bilinearFormStable(pre, 0, D, post, 0, nstates, matrixScale);
         if (!(inner > 0.0) || Double.isNaN(inner)) {
             return Double.NEGATIVE_INFINITY;
         }
 
-        return Math.log(inner) + safeScale(preScale) + safeScale(postScale);
+        return Math.log(inner) + (matrixScale == 1.0 ? 0.0 : Math.log(matrixScale)) + preScale + postScale;
     }
 
     public static boolean isContinuousRewardOutsideOpenSupport(final double reward,
@@ -197,8 +217,67 @@ public final class RewardsMixtureBranchResamplingHelper {
         return reward <= minReward + tolerance || reward >= maxReward - tolerance;
     }
 
-    private static double safeScale(final double scale) {
-        return Double.isFinite(scale) ? scale : 0.0;
+    private static boolean isImpossibleScale(final double scale) {
+        return scale == Double.NEGATIVE_INFINITY || Double.isNaN(scale);
+    }
+
+    private static double bilinearFormStable(final double[] pre,
+                                             final int preOffset,
+                                             final double[] D,
+                                             final double[] post,
+                                             final int postOffset,
+                                             final int n,
+                                             final double matrixScale) {
+        double acc = 0.0;
+        double cAcc = 0.0;
+
+        for (int i = 0; i < n; i++) {
+            final double prei = pre[preOffset + i];
+            if (prei == 0.0) {
+                continue;
+            }
+
+            final int rowBase = i * n;
+            double rowDot = 0.0;
+            double cRow = 0.0;
+
+            for (int j = 0; j < n; j++) {
+                final double matrixEntry = matrixScale == 1.0
+                        ? D[rowBase + j]
+                        : D[rowBase + j] / matrixScale;
+                final double y = matrixEntry * post[postOffset + j] - cRow;
+                final double t = rowDot + y;
+                cRow = (t - rowDot) - y;
+                rowDot = t;
+            }
+
+            final double y = prei * rowDot - cAcc;
+            final double t = acc + y;
+            cAcc = (t - acc) - y;
+            acc = t;
+        }
+
+        return acc;
+    }
+
+    private static double matrixScale(final double[] matrix, final int nstates) {
+        double max = 0.0;
+        final int length = nstates * nstates;
+        for (int i = 0; i < length; i++) {
+            final double value = matrix[i];
+            if (!Double.isFinite(value)) {
+                throw new IllegalArgumentException("Non-finite continuous transition matrix entry at index " +
+                        i + ": " + value);
+            }
+            max = Math.max(max, Math.abs(value));
+        }
+
+        if (max == 0.0) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        return max < MATRIX_SCALING_FLOOR || max > MATRIX_SCALING_CEILING
+                ? max
+                : 1.0;
     }
 
     public static double logSum(final double[] x, final int n) {

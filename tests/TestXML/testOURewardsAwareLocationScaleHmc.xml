@@ -1,0 +1,190 @@
+<?xml version="1.0" standalone="yes"?>
+<beast version="10.5.0-beta4">
+
+    <taxa id="taxa">
+        <taxon id="A"><attr name="ou">0.1</attr></taxon>
+        <taxon id="B"><attr name="ou">0.9</attr></taxon>
+        <taxon id="C"><attr name="ou">-0.2</attr></taxon>
+    </taxa>
+
+    <newick id="tree" usingHeights="true" usingDates="false">
+        ((A:1.0,B:1.0):1.0,C:2.0);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="ou" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1">
+            <parameter id="observed.ou"/>
+        </nodeTraits>
+    </treeModel>
+
+    <compoundParameter id="rewardRates.values">
+        <parameter id="rewardRates.fixedValues" dimension="2" value="0 1" lower="0.0" upper="1.0"/>
+        <parameter id="rewardRates.varyingValues" dimension="2" value="0.25 0.75" lower="0.0" upper="1.0"/>
+    </compoundParameter>
+    <parameter id="rewardRates.stateIndices" dimension="4" value="0 2 3 1" lower="0" upper="3"/>
+
+    <rewardRates id="rewardRates">
+        <fixedValues>
+            <parameter idref="rewardRates.fixedValues"/>
+        </fixedValues>
+        <varyingValues>
+            <parameter idref="rewardRates.varyingValues"/>
+        </varyingValues>
+        <stateIndices>
+            <parameter idref="rewardRates.stateIndices"/>
+        </stateIndices>
+    </rewardRates>
+
+    <parameter id="total.rewards.cts" dimension="4" value="0.2 0.4 0.6 0.8" lower="0.0" upper="1.0"/>
+    <parameter id="bernoulliVar" dimension="4" value="0 1 0 1" lower="0" upper="1"/>
+    <parameter id="atomIndex" dimension="4" value="0 1 2 3" lower="0" upper="3"/>
+
+    <rewardsAwareMixtureBranchRates id="rewardBranchRates" linearLocationScale="true">
+        <atomic>
+            <atomIndices>
+                <parameter idref="atomIndex"/>
+            </atomIndices>
+            <rewardRates idref="rewardRates"/>
+        </atomic>
+        <ctsParameter>
+            <parameter idref="total.rewards.cts"/>
+        </ctsParameter>
+        <indicator>
+            <parameter idref="bernoulliVar"/>
+        </indicator>
+        <treeModel idref="treeModel"/>
+        <scale>
+            <parameter id="branchRates.scale" lower="0.0" upper="5" value="1.75"/>
+        </scale>
+        <location>
+            <parameter id="branchRates.location" lower="0.0" upper="5" value="0.25"/>
+        </location>
+    </rewardsAwareMixtureBranchRates>
+
+    <compoundParameter id="branchRates.locationScale">
+        <parameter idref="branchRates.location"/>
+        <parameter idref="branchRates.scale"/>
+    </compoundParameter>
+
+    <multivariateDiffusionModel id="ou.diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="ou.precisionMatrix">
+                <parameter id="ou.precision.col1" value="1"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <parameter id="ou.theta" value="0.5"/>
+    <diagonalMatrix id="ou.attenuation.matrix">
+        <parameter id="ou.alpha" value="0.7" lower="0.0"/>
+    </diagonalMatrix>
+
+    <continuousTraitDataModel id="ou.dataModel" traitName="ou" forceFullPrecision="true">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="observed.ou"/>
+        </traitParameter>
+    </continuousTraitDataModel>
+
+    <repeatedMeasuresModel id="ou.observationModel" forceFullPrecision="true">
+        <continuousTraitDataModel idref="ou.dataModel"/>
+        <samplingPrecision>
+            <matrixParameter id="ou.observationPrecision">
+                <parameter id="ou.observationPrecision.col1" value="1000"/>
+            </matrixParameter>
+        </samplingPrecision>
+        <multivariateDiffusionModel idref="ou.diffusionModel"/>
+    </repeatedMeasuresModel>
+
+    <traitDataLikelihood id="observedLikelihood" traitName="ou"
+                         useTreeLength="false" scaleByTime="false"
+                         forceFullPrecision="true" allowSingular="true"
+                         integrateInternalTraits="true">
+        <multivariateDiffusionModel idref="ou.diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter idref="ou.theta"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="1.4"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+        <optimalTraits id="ou.opt">
+            <strictClockBranchRates>
+                <rate>
+                    <parameter idref="ou.theta"/>
+                </rate>
+            </strictClockBranchRates>
+        </optimalTraits>
+        <strengthOfSelectionMatrix>
+            <matrixParameter idref="ou.attenuation.matrix"/>
+        </strengthOfSelectionMatrix>
+        <repeatedMeasuresModel idref="ou.observationModel"/>
+        <rewardsAwareMixtureBranchRates idref="rewardBranchRates"/>
+    </traitDataLikelihood>
+
+    <ouRewardsAwareMixtureBranchRatesLocationScaleGradient id="locationScaleGradient" traitName="ou">
+        <traitDataLikelihood idref="observedLikelihood"/>
+        <rewardsAwareMixtureBranchRates idref="rewardBranchRates"/>
+        <compoundParameter idref="branchRates.locationScale"/>
+    </ouRewardsAwareMixtureBranchRatesLocationScaleGradient>
+
+    <ouRewardsAwareMixtureBranchRatesRewardRateGradient id="rewardRateGradient" traitName="ou">
+        <traitDataLikelihood idref="observedLikelihood"/>
+        <rewardsAwareMixtureBranchRates idref="rewardBranchRates"/>
+        <rewardRates idref="rewardRates"/>
+    </ouRewardsAwareMixtureBranchRatesRewardRateGradient>
+
+    <compoundGradient id="locationScaleRewardRatesGradient">
+        <ouRewardsAwareMixtureBranchRatesLocationScaleGradient idref="locationScaleGradient"/>
+        <ouRewardsAwareMixtureBranchRatesRewardRateGradient idref="rewardRateGradient"/>
+    </compoundGradient>
+
+    <operators id="operators">
+        <hamiltonianMonteCarloOperator id="locationScaleRewardRatesHMC" weight="1.0"
+                                       nSteps="2" stepSize="1E-3"
+                                       mode="vanilla" autoOptimize="false"
+                                       gradientCheckCount="1"
+                                       gradientCheckTolerance="1E-4">
+            <compoundGradient idref="locationScaleRewardRatesGradient"/>
+            <compoundParameter id="locationScaleRewardRates">
+                <parameter idref="branchRates.location"/>
+                <parameter idref="branchRates.scale"/>
+                <parameter idref="rewardRates.varyingValues"/>
+            </compoundParameter>
+            <multivariateCompoundTransform>
+                <transform type="log" dim="2"/>
+                <transform type="logit" dim="2"/>
+            </multivariateCompoundTransform>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="2" autoOptimize="false">
+        <joint id="joint">
+            <prior id="prior"/>
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="observedLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <joint idref="joint"/>
+            <traitDataLikelihood idref="observedLikelihood"/>
+            <parameter idref="branchRates.location"/>
+            <parameter idref="branchRates.scale"/>
+            <parameter idref="rewardRates.varyingValues"/>
+        </log>
+    </mcmc>
+
+</beast>

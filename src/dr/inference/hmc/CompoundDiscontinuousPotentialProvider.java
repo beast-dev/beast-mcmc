@@ -29,6 +29,7 @@ package dr.inference.hmc;
 
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
+import dr.inference.operators.RewardMixturePerformanceStats;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,8 +100,13 @@ public class CompoundDiscontinuousPotentialProvider implements DiscontinuousPote
 
     @Override
     public void clearOperationCache() {
+        clearOperationCache(RewardMixturePerformanceStats.OperationCacheClearReason.UNKNOWN);
+    }
+
+    @Override
+    public void clearOperationCache(final RewardMixturePerformanceStats.OperationCacheClearReason reason) {
         for (DiscontinuousPotentialProvider provider : providers) {
-            provider.clearOperationCache();
+            provider.clearOperationCache(reason);
         }
     }
 

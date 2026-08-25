@@ -116,6 +116,165 @@ public class SericolaCumulantMatricesTest extends TestCase {
         assertSecondDifferenceRow(cache, 2, 4);
     }
 
+    public void testPoissonWeightsRemainFiniteWhenZeroTermUnderflows() {
+        final double mean = 760.0;
+        assertEquals(0.0, Math.exp(-mean), 0.0);
+
+        final int truncation = SericolaSeriesWeights.determinePoissonUpperTruncation(mean, 1.0e-10);
+        assertTrue(truncation > mean);
+
+        double[] weights = new double[truncation + 1];
+        SericolaSeriesWeights.fillPoissonWeights(mean, truncation, weights, 0);
+
+        double sum = 0.0;
+        for (double weight : weights) {
+            assertTrue(Double.isFinite(weight));
+            assertTrue(weight >= 0.0);
+            sum += weight;
+        }
+
+        assertTrue(weights[(int) mean] > 0.0);
+        assertEquals(1.0, sum, 1.0e-9);
+    }
+
+    public void testUnscaledPoissonWeightsExposeLegacyUnderflow() {
+        final double mean = 760.0;
+        final int truncation = SericolaSeriesWeights.determinePoissonUpperTruncation(
+                mean,
+                1.0e-10,
+                false);
+        assertTrue(truncation > 0);
+
+        double[] weights = new double[truncation + 1];
+        SericolaSeriesWeights.fillPoissonWeights(mean, truncation, weights, 0, false);
+
+        double sum = 0.0;
+        for (double weight : weights) {
+            assertEquals(0.0, weight, 0.0);
+            sum += weight;
+        }
+        assertEquals(0.0, sum, 0.0);
+    }
+
+    public void testStablePoissonWeightsMatchUnscaledWhenArithmeticIsSafe() {
+        final double mean = 20.0;
+        final int stableTruncation = SericolaSeriesWeights.determinePoissonUpperTruncation(
+                mean,
+                1.0e-12,
+                true);
+        final int unscaledTruncation = SericolaSeriesWeights.determinePoissonUpperTruncation(
+                mean,
+                1.0e-12,
+                false);
+        final int truncation = Math.max(stableTruncation, unscaledTruncation);
+
+        double[] stable = new double[truncation + 1];
+        double[] unscaled = new double[truncation + 1];
+        SericolaSeriesWeights.fillPoissonWeights(mean, truncation, stable, 0, true);
+        SericolaSeriesWeights.fillPoissonWeights(mean, truncation, unscaled, 0, false);
+
+        for (int n = 0; n <= truncation; n++) {
+            assertEquals("n=" + n, unscaled[n], stable[n], 1.0e-15);
+        }
+    }
+
+    public void testBernsteinWeightsNearUpperBoundaryRemainNormalized() {
+        final int degree = 1000;
+        final double x = 1.0 - 1.0e-12;
+        final double naiveStart = Math.pow(1.0 - x, degree);
+        assertEquals(0.0, naiveStart, 0.0);
+
+        double[] weights = new double[degree + 1];
+        SericolaSeriesWeights.fillBernsteinWeights(degree, x, weights);
+
+        double sum = 0.0;
+        for (double weight : weights) {
+            assertTrue(Double.isFinite(weight));
+            assertTrue(weight >= 0.0);
+            sum += weight;
+        }
+
+        assertTrue(weights[degree] > 0.999999999);
+        assertEquals(1.0, sum, 1.0e-12);
+    }
+
+    public void testUnscaledBernsteinWeightsExposeLegacyNearBoundaryUnderflow() {
+        final int degree = 1000;
+        final double x = 1.0 - 1.0e-12;
+
+        double[] weights = new double[degree + 1];
+        SericolaSeriesWeights.fillBernsteinWeights(degree, x, weights, false);
+
+        double sum = 0.0;
+        for (double weight : weights) {
+            assertEquals(0.0, weight, 0.0);
+            sum += weight;
+        }
+        assertEquals(0.0, sum, 0.0);
+    }
+
+    public void testStableBernsteinWeightsMatchUnscaledWhenArithmeticIsSafe() {
+        final int degree = 20;
+        final double x = 0.35;
+
+        double[] stable = new double[degree + 1];
+        double[] unscaled = new double[degree + 1];
+        SericolaSeriesWeights.fillBernsteinWeights(degree, x, stable, true);
+        SericolaSeriesWeights.fillBernsteinWeights(degree, x, unscaled, false);
+
+        for (int k = 0; k <= degree; k++) {
+            assertEquals("k=" + k, unscaled[k], stable[k], 1.0e-14);
+        }
+    }
+
+    public void testLargeMeanPdfRemainsFiniteWhenZeroPoissonTermUnderflows() {
+        final int dim = 2;
+        final double lambda = 760.0;
+        final double time = 1.0;
+        final double rewardProportion = 1.0 - 1.0e-12;
+        final double[] sortedAlpha = {0.0, 1.0};
+        final double[] invAlphaDiff = {0.0, 1.0};
+        final double[] transitionMatrix = {
+                0.97, 0.03,
+                0.02, 0.98
+        };
+        final int[] outRowBaseBySorted = {0, dim};
+        final int[] outColBySorted = {0, 1};
+
+        assertEquals(0.0, Math.exp(-lambda * time), 0.0);
+
+        SericolaRewardDensityWorkspace workspace = new SericolaRewardDensityWorkspace(dim, 1.0e-10);
+        int requiredN = workspace.determineNumberOfSteps(lambda, time) + 1;
+        SericolaCumulantMatrices cache = new SericolaCumulantMatrices(dim);
+        cache.ensureForTime(time, requiredN, transitionMatrix, sortedAlpha);
+
+        double[][] density = new double[][]{new double[dim * dim]};
+        workspace.preparePdf(
+                new double[]{rewardProportion},
+                new double[]{time},
+                false,
+                lambda,
+                sortedAlpha,
+                invAlphaDiff);
+
+        new SericolaRewardDensityPdf(dim, outRowBaseBySorted, outColBySorted).accumulateInto(
+                density,
+                1,
+                cache.computedN() - 1,
+                lambda,
+                invAlphaDiff,
+                cache,
+                workspace);
+
+        double total = 0.0;
+        for (double value : density[0]) {
+            assertTrue(Double.isFinite(value));
+            assertTrue(value >= 0.0);
+            total += value;
+        }
+        assertTrue(total > 0.0);
+    }
+
     public void testReverseUniformizationMatrixAdjointMatchesFiniteDifference() {
         final double lambda = 1.35;
         final double rewardProportion = 0.52;

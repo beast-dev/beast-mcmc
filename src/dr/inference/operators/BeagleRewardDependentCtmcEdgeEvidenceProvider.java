@@ -78,6 +78,8 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     private final double[][] postTopPartialsByNode;
     private final double[][] beagleTopPartialsByNode;
     private final double[][] beagleBottomPartialsByNode;
+    private final boolean[] topPartialsKnown;
+    private final boolean[] postPartialsKnown;
     private final double[] diagnosticMatrix;
     private RewardStateSnapshot baselineRewardState;
 
@@ -152,6 +154,8 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         this.transitionMatrix = new double[stateCount * stateCount];
         this.topPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
         this.postPartialsByNode = new double[tree.getNodeCount()][flattenedLength];
+        this.topPartialsKnown = new boolean[tree.getNodeCount()];
+        this.postPartialsKnown = new boolean[tree.getNodeCount()];
         // preBottomPartialsByNode, postTopPartialsByNode, and beagleBottomPartialsByNode are read
         // only from writeDiagnosticRow, and beagleTopPartialsByNode only from the BEAGLE-preorder
         // evidence/comparison paths; at real alignment scale (hundreds of nodes x thousands of
@@ -187,59 +191,232 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
 
     @Override
     public void prepare() {
-        baselineLogLikelihood = treeDataLikelihood.getLogLikelihood();
-        baselineRewardState = rewardStateAdapter.snapshot();
-        refreshSpectralStructures();
-        fillPostPartialsForAllNodes();
-        if (postTopPartialsByNode != null) {
-            fillPostTopPartialsForAllNodes();
+        final long prepareStart = RewardMixturePerformanceStats.startTimer();
+        try {
+            baselineLogLikelihood = treeDataLikelihood.getLogLikelihood();
+            baselineRewardState = rewardStateAdapter.snapshot();
+
+            long start = RewardMixturePerformanceStats.startTimer();
+            refreshSpectralStructures();
+            RewardMixturePerformanceStats.addBeagleRefreshSpectralNanos(
+                    RewardMixturePerformanceStats.elapsed(start));
+
+            resetLocalMessageCacheFlags();
+
+            if (useLazyLocalMessages()) {
+                start = RewardMixturePerformanceStats.startTimer();
+                fillRootTopPartials();
+                RewardMixturePerformanceStats.addBeagleFillTopNanos(
+                        RewardMixturePerformanceStats.elapsed(start));
+            } else {
+                start = RewardMixturePerformanceStats.startTimer();
+                fillPostPartialsForAllNodes();
+                RewardMixturePerformanceStats.addBeagleFillPostNanos(
+                        RewardMixturePerformanceStats.elapsed(start));
+
+                if (postTopPartialsByNode != null) {
+                    start = RewardMixturePerformanceStats.startTimer();
+                    fillPostTopPartialsForAllNodes();
+                    RewardMixturePerformanceStats.addBeagleFillPostTopNanos(
+                            RewardMixturePerformanceStats.elapsed(start));
+                }
+
+                start = RewardMixturePerformanceStats.startTimer();
+                fillTopPartialsFromRoot();
+                RewardMixturePerformanceStats.addBeagleFillTopNanos(
+                        RewardMixturePerformanceStats.elapsed(start));
+
+                if (preBottomPartialsByNode != null) {
+                    start = RewardMixturePerformanceStats.startTimer();
+                    fillPreBottomPartialsForAllNodes();
+                    RewardMixturePerformanceStats.addBeagleFillPreBottomNanos(
+                            RewardMixturePerformanceStats.elapsed(start));
+                }
+            }
+
+            beaglePreOrderAvailable = false;
+            beaglePreOrderFailure = "";
+            if (diagnostics.compareBeaglePreOrder || diagnostics.useBeaglePreOrderEvidence) {
+                start = RewardMixturePerformanceStats.startTimer();
+                fillBeaglePreOrderPartialsIfAvailable();
+                RewardMixturePerformanceStats.addBeagleFillPreOrderNanos(
+                        RewardMixturePerformanceStats.elapsed(start));
+            }
+            prepareCount++;
+        } finally {
+            RewardMixturePerformanceStats.recordBeaglePrepare(
+                    RewardMixturePerformanceStats.elapsed(prepareStart));
         }
-        fillTopPartialsFromRoot();
-        if (preBottomPartialsByNode != null) {
-            fillPreBottomPartialsForAllNodes();
-        }
-        beaglePreOrderAvailable = false;
-        beaglePreOrderFailure = "";
-        if (diagnostics.compareBeaglePreOrder || diagnostics.useBeaglePreOrderEvidence) {
-            fillBeaglePreOrderPartialsIfAvailable();
-        }
-        prepareCount++;
     }
 
     @Override
     public double logEvidence(final int branchNodeNumber, final double rawReward) {
-        final double manualLogEvidence = diagnostics.enabled || !diagnostics.useBeaglePreOrderEvidence
-                ? logEvidenceFromCachedMessages(
-                        branchNodeNumber, rawReward,
-                        topPartialsByNode[branchNodeNumber],
-                        postPartialsByNode[branchNodeNumber])
-                : Double.NaN;
-
-        final double logEvidence;
-        if (diagnostics.useBeaglePreOrderEvidence) {
-            if (!beaglePreOrderAvailable) {
-                throw new IllegalStateException("BEAGLE preorder evidence requested but unavailable: " +
-                        beaglePreOrderFailure);
+        final long start = RewardMixturePerformanceStats.startTimer();
+        final boolean atomicCandidate = RewardMixturePerformanceStats.ENABLED && matchingAtomState(rawReward) >= 0;
+        try {
+            validateBranchNodeNumber(branchNodeNumber);
+            if (diagnostics.enabled || !diagnostics.useBeaglePreOrderEvidence) {
+                ensureLocalMessagesForBranch(branchNodeNumber);
             }
-            logEvidence = logEvidenceFromCachedMessages(
-                    branchNodeNumber, rawReward,
-                    beagleTopPartialsByNode[branchNodeNumber],
-                    postPartialsByNode[branchNodeNumber]);
-        } else {
-            logEvidence = manualLogEvidence;
-        }
 
-        if (diagnostics.enabled) {
-            writeDiagnosticRow(branchNodeNumber, rawReward, manualLogEvidence);
-        }
+            final double manualLogEvidence = diagnostics.enabled || !diagnostics.useBeaglePreOrderEvidence
+                    ? logEvidenceFromCachedMessages(
+                            branchNodeNumber, rawReward,
+                            topPartialsByNode[branchNodeNumber],
+                            postPartialsByNode[branchNodeNumber])
+                    : Double.NaN;
 
-        return logEvidence;
+            final double logEvidence;
+            if (diagnostics.useBeaglePreOrderEvidence) {
+                if (!beaglePreOrderAvailable) {
+                    throw new IllegalStateException("BEAGLE preorder evidence requested but unavailable: " +
+                            beaglePreOrderFailure);
+                }
+                logEvidence = logEvidenceFromCachedMessages(
+                        branchNodeNumber, rawReward,
+                        beagleTopPartialsByNode[branchNodeNumber],
+                        postPartialsByNode[branchNodeNumber]);
+            } else {
+                logEvidence = manualLogEvidence;
+            }
+
+            if (diagnostics.enabled) {
+                writeDiagnosticRow(branchNodeNumber, rawReward, manualLogEvidence);
+            }
+
+            return logEvidence;
+        } finally {
+            RewardMixturePerformanceStats.recordBeagleLogEvidence(
+                    RewardMixturePerformanceStats.elapsed(start), atomicCandidate);
+        }
     }
 
     private double logEvidenceFromCachedMessages(final int branchNodeNumber,
                                                  final double rawReward,
                                                  final double[] topPartials,
                                                  final double[] postPartials) {
+        final long evidenceStart = RewardMixturePerformanceStats.startTimer();
+        try {
+            final NodeRef node = validateBranchNodeNumber(branchNodeNumber);
+
+            final BranchModel.Mapping mapping = branchModel.getBranchModelMapping(node);
+            final int[] order = mapping.getOrder();
+            if (order.length != 1) {
+                throw new UnsupportedOperationException(
+                        "Dependent CTMC reward evidence currently supports exactly one substitution model per branch; " +
+                                "branch " + branchNodeNumber + " has " + order.length
+                );
+            }
+
+            final int modelNumber = order[0];
+            final double modelWeight = relativeWeight(0, mapping.getWeights());
+            final double branchRate = rewardBranchRates.getBranchRateForRawReward(tree, node, rawReward);
+            final double candidateBranchLength = tree.getBranchLength(node) * branchRate * modelWeight;
+
+            final long copyStart = RewardMixturePerformanceStats.startTimer();
+            System.arraycopy(topPartials, 0, prePartials, 0, flattenedLength);
+            System.arraycopy(postPartials, 0, this.postPartials, 0, flattenedLength);
+            RewardMixturePerformanceStats.recordBeagleMessageCopy(
+                    RewardMixturePerformanceStats.elapsed(copyStart));
+
+            final double[] patternWeights = likelihoodDelegate.getPatternList().getPatternWeights();
+            final double[] categoryWeights = siteRateModel.getCategoryProportions();
+            final double[] categoryRates = siteRateModel.getCategoryRates();
+
+            double logEvidence = 0.0;
+
+            for (int p = 0; p < patternCount; p++) {
+                final double wp = patternWeights[p];
+                if (wp == 0.0) {
+                    continue;
+                }
+
+                double patternEvidence = 0.0;
+                for (int c = 0; c < categoryCount; c++) {
+                    final double wc = categoryWeights[c];
+                    if (wc == 0.0) {
+                        continue;
+                    }
+                    final double rate = categoryRates == null ? 1.0 : categoryRates[c];
+                    final int offset = ((c * patternCount) + p) * stateCount;
+                    final double time = candidateBranchLength * rate;
+                    final double inner = edgeInnerProduct(modelNumber, time, offset);
+                    patternEvidence += wc * inner;
+                }
+
+                if (!(patternEvidence > 0.0) || Double.isNaN(patternEvidence)) {
+                    return Double.NEGATIVE_INFINITY;
+                }
+                logEvidence += wp * Math.log(patternEvidence);
+            }
+
+            return logEvidence;
+        } finally {
+            RewardMixturePerformanceStats.recordBeagleCachedMessageEvidence(
+                    RewardMixturePerformanceStats.elapsed(evidenceStart));
+        }
+    }
+
+    private boolean useLazyLocalMessages() {
+        return !diagnostics.enabled &&
+                !diagnostics.compareBeaglePreOrder &&
+                !diagnostics.useBeaglePreOrderEvidence;
+    }
+
+    private void resetLocalMessageCacheFlags() {
+        Arrays.fill(postPartialsKnown, false);
+        Arrays.fill(topPartialsKnown, false);
+    }
+
+    private void ensureLocalMessagesForBranch(final int branchNodeNumber) {
+        ensurePostPartialsForNode(branchNodeNumber);
+        ensureTopPartialsForNode(branchNodeNumber);
+    }
+
+    private void ensurePostPartialsForNode(final int nodeNumber) {
+        if (postPartialsKnown[nodeNumber]) {
+            return;
+        }
+        final long start = RewardMixturePerformanceStats.startTimer();
+        try {
+            fillPostPartials(tree.getNode(nodeNumber), postPartialsByNode[nodeNumber]);
+            postPartialsKnown[nodeNumber] = true;
+        } finally {
+            RewardMixturePerformanceStats.addBeagleFillPostNanos(
+                    RewardMixturePerformanceStats.elapsed(start));
+        }
+    }
+
+    private void ensureTopPartialsForNode(final int nodeNumber) {
+        if (topPartialsKnown[nodeNumber]) {
+            return;
+        }
+
+        final NodeRef node = tree.getNode(nodeNumber);
+        if (tree.isRoot(node)) {
+            final long start = RewardMixturePerformanceStats.startTimer();
+            try {
+                fillRootTopPartials();
+            } finally {
+                RewardMixturePerformanceStats.addBeagleFillTopNanos(
+                        RewardMixturePerformanceStats.elapsed(start));
+            }
+            return;
+        }
+
+        final NodeRef parent = tree.getParent(node);
+        ensureTopPartialsForNode(parent.getNumber());
+
+        final long start = RewardMixturePerformanceStats.startTimer();
+        try {
+            fillTopPartialsForChild(parent, node);
+        } finally {
+            RewardMixturePerformanceStats.addBeagleFillTopNanos(
+                    RewardMixturePerformanceStats.elapsed(start));
+        }
+    }
+
+    private NodeRef validateBranchNodeNumber(final int branchNodeNumber) {
         if (branchNodeNumber < 0 || branchNodeNumber >= tree.getNodeCount()) {
             throw new IllegalArgumentException("branchNodeNumber out of range: " + branchNodeNumber);
         }
@@ -247,61 +424,13 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         if (tree.isRoot(node)) {
             throw new IllegalArgumentException("Root node has no branch: " + branchNodeNumber);
         }
-
-        final BranchModel.Mapping mapping = branchModel.getBranchModelMapping(node);
-        final int[] order = mapping.getOrder();
-        if (order.length != 1) {
-            throw new UnsupportedOperationException(
-                    "Dependent CTMC reward evidence currently supports exactly one substitution model per branch; " +
-                            "branch " + branchNodeNumber + " has " + order.length
-            );
-        }
-
-        final int modelNumber = order[0];
-        final double modelWeight = relativeWeight(0, mapping.getWeights());
-        final double branchRate = rewardBranchRates.getBranchRateForRawReward(tree, node, rawReward);
-        final double candidateBranchLength = tree.getBranchLength(node) * branchRate * modelWeight;
-
-        System.arraycopy(topPartials, 0, prePartials, 0, flattenedLength);
-        System.arraycopy(postPartials, 0, this.postPartials, 0, flattenedLength);
-
-        final double[] patternWeights = likelihoodDelegate.getPatternList().getPatternWeights();
-        final double[] categoryWeights = siteRateModel.getCategoryProportions();
-        final double[] categoryRates = siteRateModel.getCategoryRates();
-
-        double logEvidence = 0.0;
-
-        for (int p = 0; p < patternCount; p++) {
-            final double wp = patternWeights[p];
-            if (wp == 0.0) {
-                continue;
-            }
-
-            double patternEvidence = 0.0;
-            for (int c = 0; c < categoryCount; c++) {
-                final double wc = categoryWeights[c];
-                if (wc == 0.0) {
-                    continue;
-                }
-                final double rate = categoryRates == null ? 1.0 : categoryRates[c];
-                final int offset = ((c * patternCount) + p) * stateCount;
-                final double time = candidateBranchLength * rate;
-                final double inner = edgeInnerProduct(modelNumber, time, offset);
-                patternEvidence += wc * inner;
-            }
-
-            if (!(patternEvidence > 0.0) || Double.isNaN(patternEvidence)) {
-                return Double.NEGATIVE_INFINITY;
-            }
-            logEvidence += wp * Math.log(patternEvidence);
-        }
-
-        return logEvidence;
+        return node;
     }
 
     private void fillPostPartialsForAllNodes() {
         for (int i = 0; i < tree.getNodeCount(); i++) {
             fillPostPartials(tree.getNode(i), postPartialsByNode[i]);
+            postPartialsKnown[i] = true;
         }
     }
 
@@ -361,6 +490,11 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
             Arrays.fill(topPartialsByNode[i], 0.0);
         }
 
+        fillRootTopPartials();
+        fillTopPartialsBelow(tree.getRoot());
+    }
+
+    private void fillRootTopPartials() {
         final NodeRef root = tree.getRoot();
         final double[] rootFrequencies = likelihoodDelegate.getEvolutionaryProcessDelegate().getRootStateFrequencies();
         final double[] rootTop = topPartialsByNode[root.getNumber()];
@@ -372,8 +506,7 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
                 offset += stateCount;
             }
         }
-
-        fillTopPartialsBelow(root);
+        topPartialsKnown[root.getNumber()] = true;
     }
 
     private void fillPreBottomPartialsForAllNodes() {
@@ -509,10 +642,11 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
         final int childCount = tree.getChildCount(parent);
         for (int i = 0; i < childCount; i++) {
             final NodeRef sibling = tree.getChild(parent, i);
-            if (sibling != child) {
+            if (sibling.getNumber() != child.getNumber()) {
                 multiplyBySiblingContribution(sibling, childTop);
             }
         }
+        topPartialsKnown[child.getNumber()] = true;
     }
 
     private void fillParentNodeContext(final NodeRef parent, final double[] out) {
@@ -557,6 +691,8 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     }
 
     private void multiplyBySiblingContribution(final NodeRef sibling, final double[] top) {
+        ensurePostPartialsForNode(sibling.getNumber());
+
         final BranchModel.Mapping mapping = branchModel.getBranchModelMapping(sibling);
         final int[] order = mapping.getOrder();
         if (order.length != 1) {
@@ -815,30 +951,36 @@ public final class BeagleRewardDependentCtmcEdgeEvidenceProvider
     }
 
     private double edgeInnerProduct(final int modelNumber, final double time, final int offset) {
-        final EigenDecomposition eigen = eigenDecompositions[modelNumber];
-        if (eigen == null) {
+        final long start = RewardMixturePerformanceStats.startTimer();
+        try {
+            final EigenDecomposition eigen = eigenDecompositions[modelNumber];
+            if (eigen == null) {
+                return directEdgeInnerProduct(modelNumber, time, offset);
+            }
+
+            rotatePre(eigen.getEigenVectors(), prePartials, offset, rotatedPre);
+            rotatePost(eigen.getInverseEigenVectors(), postPartials, offset, rotatedPost);
+
+            final double spectralInner;
+            if (allRealEigen[modelNumber]) {
+                spectralInner = realSpectralInnerProduct(eigen, time, rotatedPre, rotatedPost);
+            } else {
+                final ComplexBlockKernelUtils.ComplexKernelPlan plan = complexPlans[modelNumber];
+                ComplexBlockKernelUtils.fillTransitionCoefficients(plan, eigen, time);
+                spectralInner = ComplexBlockKernelUtils.blockDiagonalTransitionInnerProduct(
+                        plan, rotatedPre, 0, rotatedPost, 0
+                );
+            }
+
+            if (spectralInner > 0.0 && !Double.isNaN(spectralInner)) {
+                return spectralInner;
+            }
+
             return directEdgeInnerProduct(modelNumber, time, offset);
+        } finally {
+            RewardMixturePerformanceStats.recordBeagleEdgeInnerProduct(
+                    RewardMixturePerformanceStats.elapsed(start));
         }
-
-        rotatePre(eigen.getEigenVectors(), prePartials, offset, rotatedPre);
-        rotatePost(eigen.getInverseEigenVectors(), postPartials, offset, rotatedPost);
-
-        final double spectralInner;
-        if (allRealEigen[modelNumber]) {
-            spectralInner = realSpectralInnerProduct(eigen, time, rotatedPre, rotatedPost);
-        } else {
-            final ComplexBlockKernelUtils.ComplexKernelPlan plan = complexPlans[modelNumber];
-            ComplexBlockKernelUtils.fillTransitionCoefficients(plan, eigen, time);
-            spectralInner = ComplexBlockKernelUtils.blockDiagonalTransitionInnerProduct(
-                    plan, rotatedPre, 0, rotatedPost, 0
-            );
-        }
-
-        if (spectralInner > 0.0 && !Double.isNaN(spectralInner)) {
-            return spectralInner;
-        }
-
-        return directEdgeInnerProduct(modelNumber, time, offset);
     }
 
     private double directEdgeInnerProduct(final int modelNumber, final double time, final int offset) {

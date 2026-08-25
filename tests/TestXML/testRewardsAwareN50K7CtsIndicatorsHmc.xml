@@ -1,0 +1,268 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast version="10.5.0-beta4">
+
+    <taxa id="taxa">
+        <taxon id="taxon01"><attr name="ind">A</attr></taxon>
+        <taxon id="taxon02"><attr name="ind">B</attr></taxon>
+        <taxon id="taxon03"><attr name="ind">C</attr></taxon>
+        <taxon id="taxon04"><attr name="ind">D</attr></taxon>
+        <taxon id="taxon05"><attr name="ind">E</attr></taxon>
+        <taxon id="taxon06"><attr name="ind">F</attr></taxon>
+        <taxon id="taxon07"><attr name="ind">G</attr></taxon>
+        <taxon id="taxon08"><attr name="ind">A</attr></taxon>
+        <taxon id="taxon09"><attr name="ind">B</attr></taxon>
+        <taxon id="taxon10"><attr name="ind">C</attr></taxon>
+        <taxon id="taxon11"><attr name="ind">D</attr></taxon>
+        <taxon id="taxon12"><attr name="ind">E</attr></taxon>
+        <taxon id="taxon13"><attr name="ind">F</attr></taxon>
+        <taxon id="taxon14"><attr name="ind">G</attr></taxon>
+        <taxon id="taxon15"><attr name="ind">A</attr></taxon>
+        <taxon id="taxon16"><attr name="ind">B</attr></taxon>
+        <taxon id="taxon17"><attr name="ind">C</attr></taxon>
+        <taxon id="taxon18"><attr name="ind">D</attr></taxon>
+        <taxon id="taxon19"><attr name="ind">E</attr></taxon>
+        <taxon id="taxon20"><attr name="ind">F</attr></taxon>
+        <taxon id="taxon21"><attr name="ind">G</attr></taxon>
+        <taxon id="taxon22"><attr name="ind">A</attr></taxon>
+        <taxon id="taxon23"><attr name="ind">B</attr></taxon>
+        <taxon id="taxon24"><attr name="ind">C</attr></taxon>
+        <taxon id="taxon25"><attr name="ind">D</attr></taxon>
+        <taxon id="taxon26"><attr name="ind">E</attr></taxon>
+        <taxon id="taxon27"><attr name="ind">F</attr></taxon>
+        <taxon id="taxon28"><attr name="ind">G</attr></taxon>
+        <taxon id="taxon29"><attr name="ind">A</attr></taxon>
+        <taxon id="taxon30"><attr name="ind">B</attr></taxon>
+        <taxon id="taxon31"><attr name="ind">C</attr></taxon>
+        <taxon id="taxon32"><attr name="ind">D</attr></taxon>
+        <taxon id="taxon33"><attr name="ind">E</attr></taxon>
+        <taxon id="taxon34"><attr name="ind">F</attr></taxon>
+        <taxon id="taxon35"><attr name="ind">G</attr></taxon>
+        <taxon id="taxon36"><attr name="ind">A</attr></taxon>
+        <taxon id="taxon37"><attr name="ind">B</attr></taxon>
+        <taxon id="taxon38"><attr name="ind">C</attr></taxon>
+        <taxon id="taxon39"><attr name="ind">D</attr></taxon>
+        <taxon id="taxon40"><attr name="ind">E</attr></taxon>
+        <taxon id="taxon41"><attr name="ind">F</attr></taxon>
+        <taxon id="taxon42"><attr name="ind">G</attr></taxon>
+        <taxon id="taxon43"><attr name="ind">A</attr></taxon>
+        <taxon id="taxon44"><attr name="ind">B</attr></taxon>
+        <taxon id="taxon45"><attr name="ind">C</attr></taxon>
+        <taxon id="taxon46"><attr name="ind">D</attr></taxon>
+        <taxon id="taxon47"><attr name="ind">E</attr></taxon>
+        <taxon id="taxon48"><attr name="ind">F</attr></taxon>
+        <taxon id="taxon49"><attr name="ind">G</attr></taxon>
+        <taxon id="taxon50"><attr name="ind">A</attr></taxon>
+    </taxa>
+
+    <generalDataType id="ind.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+        <state code="D"/>
+        <state code="E"/>
+        <state code="F"/>
+        <state code="G"/>
+        <ambiguity code="-" states="ABCDEFG"/>
+    </generalDataType>
+
+    <attributePatterns id="ind.pattern" attribute="ind">
+        <taxa idref="taxa"/>
+        <generalDataType idref="ind.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree" usingHeights="false" usingDates="false">
+        (((((taxon01:0.36,(taxon02:0.18,taxon03:0.18):0.18):0.18000000000000005,(taxon04:0.36,(taxon05:0.18,taxon06:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon07:0.36,(taxon08:0.18,taxon09:0.18):0.18):0.18000000000000005,(taxon10:0.36,(taxon11:0.18,taxon12:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994,(((taxon13:0.36,(taxon14:0.18,taxon15:0.18):0.18):0.18000000000000005,(taxon16:0.36,(taxon17:0.18,taxon18:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon19:0.36,(taxon20:0.18,taxon21:0.18):0.18):0.18000000000000005,((taxon22:0.18,taxon23:0.18):0.18,(taxon24:0.18,taxon25:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994):0.18000000000000016,((((taxon26:0.36,(taxon27:0.18,taxon28:0.18):0.18):0.18000000000000005,(taxon29:0.36,(taxon30:0.18,taxon31:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon32:0.36,(taxon33:0.18,taxon34:0.18):0.18):0.18000000000000005,(taxon35:0.36,(taxon36:0.18,taxon37:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994,(((taxon38:0.36,(taxon39:0.18,taxon40:0.18):0.18):0.18000000000000005,(taxon41:0.36,(taxon42:0.18,taxon43:0.18):0.18):0.18000000000000005):0.17999999999999994,((taxon44:0.36,(taxon45:0.18,taxon46:0.18):0.18):0.18000000000000005,((taxon47:0.18,taxon48:0.18):0.18,(taxon49:0.18,taxon50:0.18):0.18):0.18000000000000005):0.17999999999999994):0.17999999999999994):0.18000000000000016);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <compoundParameter id="ind.rewardRates.values">
+        <parameter id="ind.rewardRates.fixedValues" dimension="2" value="0 1" lower="0.0" upper="1.0"/>
+        <parameter id="ind.rewardRates.varyingValues" dimension="5"
+                   value="0.1666666667 0.3333333333 0.5 0.6666666667 0.8333333333"
+                   lower="0.0" upper="1.0"/>
+    </compoundParameter>
+    <parameter id="ind.rewardRates.stateIndices" dimension="7" value="0 1 2 3 4 5 6" lower="0" upper="6"/>
+
+    <arbitraryBranchRates id="ind.totalRewardsBranchRateModel" centerAtOne="false">
+        <treeModel idref="treeModel"/>
+        <rates>
+            <parameter id="total.rewards.cts" dimension="98" value="0.45" lower="0.0" upper="1.0"/>
+        </rates>
+    </arbitraryBranchRates>
+
+    <parameter id="bernoulliVar" dimension="98" value="0" lower="0" upper="1"/>
+    <parameter id="atomIndex" dimension="98" value="2" lower="0" upper="6"/>
+
+    <strictClockBranchRates id="ind.branchRates">
+        <rate>
+            <parameter id="ind.clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <rewardsAwareBranchModel id="ind.rewardModel">
+        <arbitraryBranchRates idref="ind.totalRewardsBranchRateModel"/>
+        <indicator>
+            <parameter idref="bernoulliVar"/>
+        </indicator>
+        <atomIndices>
+            <parameter idref="atomIndex"/>
+        </atomIndices>
+        <rewardRates id="ind.rewardRates">
+            <fixedValues>
+                <parameter idref="ind.rewardRates.fixedValues"/>
+            </fixedValues>
+            <varyingValues>
+                <parameter idref="ind.rewardRates.varyingValues"/>
+            </varyingValues>
+            <stateIndices>
+                <parameter idref="ind.rewardRates.stateIndices"/>
+            </stateIndices>
+        </rewardRates>
+        <logRateSubstitutionModel id="ind.submodel" normalize="true" scaleRatesByFrequencies="false">
+            <generalDataType idref="ind.dataType"/>
+            <rootFrequencies>
+                <frequencyModel id="ind.frequencyModel" normalize="true">
+                    <generalDataType idref="ind.dataType"/>
+                    <frequencies>
+                        <parameter id="ind.frequencies" dimension="7"
+                                   value="0.1428571429 0.1428571429 0.1428571429 0.1428571429 0.1428571429 0.1428571429 0.1428571426"/>
+                    </frequencies>
+                </frequencyModel>
+            </rootFrequencies>
+            <logRates>
+                <parameter id="ind.logRates" dimension="42" value="-2.0"/>
+            </logRates>
+        </logRateSubstitutionModel>
+    </rewardsAwareBranchModel>
+
+    <indexedParameter id="total.reward.pointMasses">
+        <values>
+            <parameter idref="ind.rewardRates.values"/>
+        </values>
+        <indices>
+            <parameter idref="atomIndex"/>
+        </indices>
+    </indexedParameter>
+
+    <sumParameter id="total.rewards">
+        <productParameter>
+            <parameter idref="bernoulliVar"/>
+            <indexedParameter idref="total.reward.pointMasses"/>
+        </productParameter>
+        <productParameter>
+            <differenceParameter>
+                <parameter dimension="98" value="1"/>
+                <parameter idref="bernoulliVar"/>
+            </differenceParameter>
+            <parameter idref="total.rewards.cts"/>
+        </productParameter>
+    </sumParameter>
+
+    <siteModel id="ind.siteModel">
+        <substitutionModel>
+            <logRateSubstitutionModel idref="ind.submodel"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="ind.treeLikelihood" useAmbiguities="false"
+                        usePreOrder="true" branchRateDerivative="true"
+                        scalingScheme="always" delayScaling="false">
+        <patterns idref="ind.pattern"/>
+        <siteModel idref="ind.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <rewardsAwareBranchModel idref="ind.rewardModel"/>
+        <strictClockBranchRates idref="ind.branchRates"/>
+    </treeDataLikelihood>
+
+    <rewardAwareBranchModelGradient id="rewardGrad" traitName="rewardGrad" isIndicatorBaseOne="true">
+        <treeDataLikelihood idref="ind.treeLikelihood"/>
+        <rewardsAwareBranchModel idref="ind.rewardModel"/>
+        <arbitraryBranchRates idref="ind.totalRewardsBranchRateModel"/>
+        <indicator>
+            <parameter idref="bernoulliVar"/>
+        </indicator>
+    </rewardAwareBranchModelGradient>
+
+    <jointGradient id="jointGradient">
+        <rewardAwareBranchModelGradient idref="rewardGrad"/>
+    </jointGradient>
+
+    <operators id="operators" optimizationSchedule="default">
+        <hamiltonianMonteCarloOperator id="totalRewardsCtsHMC" weight="10.0"
+                                       nSteps="20" stepSize="1E-2"
+                                       mode="vanilla" autoOptimize="true">
+            <jointGradient idref="jointGradient"/>
+            <parameter idref="total.rewards.cts"/>
+            <transform type="logit" dim="98"/>
+        </hamiltonianMonteCarloOperator>
+
+        <rewardsMixtureIndicatorAndAtomIndicesOperator id="indicatorAtomGibbs" weight="30.0"
+                                                       updateProportion="0.1"
+                                                       autoOptimize="true"
+                                                       useClusterMoves="true"
+                                                       clusterSize="4"
+                                                       clusterBorderBias="0.8">
+            <treeDataLikelihood idref="ind.treeLikelihood"/>
+            <rewardsAwareBranchModel idref="ind.rewardModel"/>
+            <indicatorZ>
+                <parameter idref="bernoulliVar"/>
+            </indicatorZ>
+            <atomIndex>
+                <parameter idref="atomIndex"/>
+            </atomIndex>
+        </rewardsMixtureIndicatorAndAtomIndicesOperator>
+    </operators>
+
+    <sumStatistic id="sumIndicators">
+        <parameter idref="bernoulliVar"/>
+    </sumStatistic>
+
+    <mcmc id="mcmc" chainLength="100000" autoOptimize="true"
+          operatorAnalysis="testRewardsAwareN50K7CtsIndicatorsHmc.ops"
+          smoothAcceptanceRatio="true" fullEvaluation="0">
+        <joint id="joint">
+            <prior id="prior">
+                <uniformPrior lower="0.0" upper="1.0">
+                    <parameter idref="total.rewards.cts"/>
+                </uniformPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="ind.treeLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+
+        <log id="screenLog" logEvery="1000">
+            <column label="Joint" dp="4" width="12">
+                <joint idref="joint"/>
+            </column>
+            <column label="ind.sum" dp="0" width="8">
+                <sumStatistic idref="sumIndicators"/>
+            </column>
+        </log>
+
+        <log id="fileLog" logEvery="1000" fileName="testRewardsAwareN50K7CtsIndicatorsHmc.log">
+            <joint idref="joint"/>
+            <treeDataLikelihood idref="ind.treeLikelihood"/>
+            <parameter idref="total.rewards.cts"/>
+            <parameter idref="bernoulliVar"/>
+            <parameter idref="atomIndex"/>
+            <sumParameter idref="total.rewards"/>
+            <sumStatistic idref="sumIndicators"/>
+        </log>
+    </mcmc>
+
+</beast>

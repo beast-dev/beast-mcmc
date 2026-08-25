@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast version="10.5.0-beta4">
+
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+    </taxa>
+
+    <alignment id="ind.alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            A
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            C
+        </sequence>
+        <sequence>
+            <taxon idref="C"/>
+            G
+        </sequence>
+    </alignment>
+
+    <alignment id="dep.alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            ACGT
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            CGTA
+        </sequence>
+        <sequence>
+            <taxon idref="C"/>
+            GTAC
+        </sequence>
+    </alignment>
+
+    <newick id="startingTree">
+        ((A:0.4,B:0.4):0.3,C:0.7);
+    </newick>
+
+    <patterns id="ind.patterns" from="1">
+        <alignment idref="ind.alignment"/>
+    </patterns>
+
+    <patterns id="dep.patterns" from="1">
+        <alignment idref="dep.alignment"/>
+    </patterns>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <compoundParameter id="ind.rewardRates.values">
+        <parameter id="ind.rewardRates.fixedValues" dimension="2" value="0.0 1.0" lower="0.0" upper="1.0"/>
+        <parameter id="ind.rewardRates.varyingValues" dimension="2" value="0.25 0.75" lower="0.0" upper="1.0"/>
+    </compoundParameter>
+    <parameter id="ind.rewardRates.stateIndices" dimension="4" value="0 1 2 3" lower="0" upper="3"/>
+
+    <rewardRates id="ind.rewardRates">
+        <fixedValues>
+            <parameter idref="ind.rewardRates.fixedValues"/>
+        </fixedValues>
+        <varyingValues>
+            <parameter idref="ind.rewardRates.varyingValues"/>
+        </varyingValues>
+        <stateIndices>
+            <parameter idref="ind.rewardRates.stateIndices"/>
+        </stateIndices>
+    </rewardRates>
+
+    <parameter id="total.rewards.cts" dimension="4" value="0.50 0.50 0.50 0.50" lower="0.0" upper="1.0"/>
+    <parameter id="reward.category" dimension="4" value="0.50 0.50 0.50 0.50" lower="0.0" upper="5.0"/>
+    <parameter id="reward.category.cuts" dimension="6" value="0 1 2 3 4 5"/>
+
+    <compoundParameter id="mixedRewardParameter">
+        <parameter idref="total.rewards.cts"/>
+        <parameter idref="reward.category"/>
+    </compoundParameter>
+
+    <compoundTransform id="mixedRewardTransform">
+        <transform type="logit" start="1" end="4"/>
+        <compoundParameter idref="mixedRewardParameter"/>
+    </compoundTransform>
+
+    <rewardsAwareCategoricalMixtureBranchRates id="ind.totalRewardsBranchRateModel">
+        <treeModel idref="treeModel"/>
+        <ctsParameter>
+            <parameter idref="total.rewards.cts"/>
+        </ctsParameter>
+        <categoryState>
+            <parameter idref="reward.category"/>
+        </categoryState>
+        <categoryCuts>
+            <parameter idref="reward.category.cuts"/>
+        </categoryCuts>
+        <rewardRates idref="ind.rewardRates"/>
+    </rewardsAwareCategoricalMixtureBranchRates>
+
+    <strictClockBranchRates id="ind.branchRates">
+        <rate>
+            <parameter id="ind.clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <hkyModel id="ind.submodel">
+        <frequencies>
+            <frequencyModel id="ind.frequencyModel" dataType="nucleotide">
+                <frequencies>
+                    <parameter id="ind.frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="ind.kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </hkyModel>
+
+    <rewardsAwareBranchModel id="ind.rewardModel">
+        <rewardsAwareCategoricalMixtureBranchRates idref="ind.totalRewardsBranchRateModel"/>
+        <categoryState>
+            <parameter idref="reward.category"/>
+        </categoryState>
+        <categoryCuts>
+            <parameter idref="reward.category.cuts"/>
+        </categoryCuts>
+        <rewardRates idref="ind.rewardRates"/>
+        <hkyModel idref="ind.submodel"/>
+    </rewardsAwareBranchModel>
+
+    <siteModel id="ind.siteModel">
+        <substitutionModel>
+            <hkyModel idref="ind.submodel"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="ind.treeLikelihood" useAmbiguities="false"
+                        usePreOrder="true" branchRateDerivative="true"
+                        useRewardAwareBranchModelDelegate="true"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="ind.patterns"/>
+        <siteModel idref="ind.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <rewardsAwareBranchModel idref="ind.rewardModel"/>
+        <strictClockBranchRates idref="ind.branchRates"/>
+    </treeDataLikelihood>
+
+    <hkyModel id="dep.submodel">
+        <frequencies>
+            <frequencyModel id="dep.frequencyModel" dataType="nucleotide">
+                <frequencies>
+                    <parameter id="dep.frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="dep.kappa" value="2.0" lower="0.0"/>
+        </kappa>
+    </hkyModel>
+
+    <siteModel id="dep.siteModel">
+        <substitutionModel>
+            <hkyModel idref="dep.submodel"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="dep.treeLikelihood" useAmbiguities="false"
+                        usePreOrder="true" branchRateDerivative="true"
+                        useSpectralRepresentation="false"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="dep.patterns"/>
+        <siteModel idref="dep.siteModel"/>
+        <treeModel idref="treeModel"/>
+        <rewardsAwareCategoricalMixtureBranchRates idref="ind.totalRewardsBranchRateModel"/>
+    </treeDataLikelihood>
+
+    <rewardAwareBranchModelGradient id="indRewardGradient"
+                                    traitName="rewardGrad"
+                                    gradientCheckTolerance="1E-3">
+        <treeDataLikelihood idref="ind.treeLikelihood"/>
+        <rewardsAwareBranchModel idref="ind.rewardModel"/>
+        <rewardsAwareCategoricalMixtureBranchRates idref="ind.totalRewardsBranchRateModel"/>
+    </rewardAwareBranchModelGradient>
+
+    <branchRateGradient id="depRewardGradient" traitName="depRewardGradient" useHessian="false">
+        <treeDataLikelihood idref="dep.treeLikelihood"/>
+    </branchRateGradient>
+
+    <jointGradient id="ctsRewardGradient">
+        <rewardAwareBranchModelGradient idref="indRewardGradient"/>
+        <branchRateGradient idref="depRewardGradient"/>
+    </jointGradient>
+
+    <zeroGradient id="rewardCategoryZeroGradient">
+        <parameter idref="reward.category"/>
+        <treeDataLikelihood idref="ind.treeLikelihood"/>
+    </zeroGradient>
+
+    <compoundGradient id="mixedRewardGradient">
+        <jointGradient idref="ctsRewardGradient"/>
+        <zeroGradient idref="rewardCategoryZeroGradient"/>
+    </compoundGradient>
+
+    <rewardMixtureCategoricalDiscontinuousPotential id="rewardCategoryPotential">
+        <categoryState>
+            <parameter idref="reward.category"/>
+        </categoryState>
+        <categoryCuts>
+            <parameter idref="reward.category.cuts"/>
+        </categoryCuts>
+        <rewardsAwareBranchModel idref="ind.rewardModel"/>
+        <treeDataLikelihood idref="ind.treeLikelihood"/>
+        <dependentCtmcLikelihoods>
+            <treeDataLikelihood idref="dep.treeLikelihood"/>
+        </dependentCtmcLikelihoods>
+    </rewardMixtureCategoricalDiscontinuousPotential>
+
+    <zeroDiscontinuousPotential id="ctsZeroPotential">
+        <parameter idref="total.rewards.cts"/>
+    </zeroDiscontinuousPotential>
+
+    <compoundDiscontinuousPotential id="mixedRewardPotential">
+        <zeroDiscontinuousPotential idref="ctsZeroPotential"/>
+        <rewardMixtureCategoricalDiscontinuousPotential idref="rewardCategoryPotential"/>
+    </compoundDiscontinuousPotential>
+
+    <operators id="operators">
+        <mixedDiscontinuousHamiltonianMonteCarloOperator id="mixedRewardDHMC"
+                                                        weight="1.0"
+                                                        stepSize="0.25"
+                                                        nSteps="2"
+                                                        gradientCheckCount="10"
+                                                        gradientCheckTolerance="1E-3">
+            <compoundGradient idref="mixedRewardGradient"/>
+            <compoundParameter idref="mixedRewardParameter"/>
+            <compoundTransform idref="mixedRewardTransform"/>
+            <compoundDiscontinuousPotential idref="mixedRewardPotential"/>
+            <mask>
+                <parameter id="mixedRewardMask" dimension="8" value="0 0 0 0 1 1 1 1"/>
+            </mask>
+            <continuousMasses>
+                <parameter id="mixedRewardContinuousMasses" dimension="8"
+                           value="10000 10000 10000 10000 1 1 1 1"/>
+            </continuousMasses>
+            <discontinuousScales>
+                <parameter id="mixedRewardDiscontinuousScales" dimension="8"
+                           value="1 1 1 1 1 1 1 1"/>
+            </discontinuousScales>
+        </mixedDiscontinuousHamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="4" autoOptimize="false">
+        <joint id="joint">
+            <prior id="prior">
+                <uniformPrior lower="0.0" upper="1.0">
+                    <parameter idref="total.rewards.cts"/>
+                </uniformPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="ind.treeLikelihood"/>
+                <treeDataLikelihood idref="dep.treeLikelihood"/>
+            </likelihood>
+        </joint>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <joint idref="joint"/>
+            <treeDataLikelihood idref="ind.treeLikelihood"/>
+            <treeDataLikelihood idref="dep.treeLikelihood"/>
+            <parameter idref="total.rewards.cts"/>
+            <parameter idref="reward.category"/>
+        </log>
+    </mcmc>
+
+</beast>

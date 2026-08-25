@@ -1,6 +1,7 @@
 package dr.inferencexml.hmc;
 
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.branchratemodel.PerBranchRewardMixtureCategoryDecoder;
 import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoding;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -60,7 +61,8 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
                 rewardsAwareBranchModel,
                 treeDataLikelihood,
                 parseTreeDataLikelihoods(xo, DEPENDENT_CTMC_LIKELIHOODS),
-                parseTreeDataLikelihoods(xo, DEPENDENT_CONTINUOUS_LIKELIHOODS));
+                parseTreeDataLikelihoods(xo, DEPENDENT_CONTINUOUS_LIKELIHOODS),
+                RewardMixtureCategoricalDiscontinuousPotentialProviderParser.parseAtomicPseudoPrior(xo));
     }
 
     private TreeDataLikelihood[] parseTreeDataLikelihoods(final XMLObject xo, final String childName) {
@@ -85,6 +87,7 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
         return new XMLSyntaxRule[] {
                 new ElementRule(RewardsAwareBranchModel.class),
                 new ElementRule(TreeDataLikelihood.class),
+                new ElementRule(RewardMixtureAtomicPseudoPrior.class, 0, 1),
                 new ElementRule(DEPENDENT_CTMC_LIKELIHOODS,
                         new XMLSyntaxRule[] {
                                 new ElementRule(TreeDataLikelihood.class, 1, Integer.MAX_VALUE)

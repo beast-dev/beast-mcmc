@@ -41,11 +41,18 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodelxml.branchmodel.RewardsAwareBranchModelParser;
 import dr.inference.markovjumps.SericolaSeriesMarkovRewardFastModel;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.RewardsMixtureIndicatorAndAtomIndicesOperatorParser;
+import dr.xml.XMLObject;
 import dr.xml.XMLSyntaxRule;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import test.dr.math.MathTestCase;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.lang.reflect.Method;
 
 /**
  * Focused smoke tests for the reward-aware transition-matrix path.
@@ -65,6 +72,23 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         assertTrue(acceptsElementName(rules, "dependentCtmcLikelihoods"));
     }
 
+    public void testRewardsAwareBranchModelParserThreadsSericolaRescalingAttribute() throws Exception {
+        RewardsAwareBranchModel parsedLegacy =
+                parseBranchModelWithSericolaSeriesRescaling(Boolean.FALSE);
+        assertFalse(parsedLegacy.isSericolaSeriesRescalingEnabled());
+        assertFalse(parsedLegacy.getSericolaModel().isSeriesRescalingEnabled());
+
+        RewardsAwareBranchModel parsedStable =
+                parseBranchModelWithSericolaSeriesRescaling(Boolean.TRUE);
+        assertTrue(parsedStable.isSericolaSeriesRescalingEnabled());
+        assertTrue(parsedStable.getSericolaModel().isSeriesRescalingEnabled());
+
+        RewardsAwareBranchModel parsedDefault =
+                parseBranchModelWithSericolaSeriesRescaling(null);
+        assertTrue(parsedDefault.isSericolaSeriesRescalingEnabled());
+        assertTrue(parsedDefault.getSericolaModel().isSeriesRescalingEnabled());
+    }
+
     public void testContinuousTransitionMatrixIsFiniteAndNonNegative() {
         Fixture fixture = createFixture(
                 new double[]{0.35, 0.65},
@@ -77,6 +101,213 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         assertEquals(4, matrix.length);
         assertFiniteNonNegative(matrix);
         assertTrue(accumulate(matrix) > 0.0);
+    }
+
+    public void testSericolaStableAndUnscaledModesMatchWhenArithmeticIsSafe() {
+        Fixture stable = createFixture(
+                createTwoStateSubstitutionFixture(7.0, 5.0),
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0},
+                new double[]{0.0, 1.0},
+                true
+        );
+        Fixture unscaled = createFixture(
+                createTwoStateSubstitutionFixture(7.0, 5.0),
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0},
+                new double[]{0.0, 1.0},
+                false
+        );
+
+        assertTrue(stable.branchModel.isSericolaSeriesRescalingEnabled());
+        assertFalse(unscaled.branchModel.isSericolaSeriesRescalingEnabled());
+
+        final double rewardProportion = 0.45;
+        final double time = 1.4;
+        final double[] upstream = new double[]{0.70, -0.25, 0.40, 1.10};
+
+        assertMatrixEntryEquals(
+                "pdf",
+                sericolaPdf(stable.branchModel.getSericolaModel(), rewardProportion, time),
+                sericolaPdf(unscaled.branchModel.getSericolaModel(), rewardProportion, time),
+                2.0e-11);
+        assertMatrixEntryEquals(
+                "d/drho",
+                sericolaRewardDerivative(stable.branchModel.getSericolaModel(), rewardProportion, time),
+                sericolaRewardDerivative(unscaled.branchModel.getSericolaModel(), rewardProportion, time),
+                5.0e-10);
+
+        double[] stableQAdjoint = new double[4];
+        double[] unscaledQAdjoint = new double[4];
+        stable.branchModel.getSericolaModel().computePdfGradientWrtInfinitesimalMatrixInto(
+                rewardProportion, time, upstream, stableQAdjoint);
+        unscaled.branchModel.getSericolaModel().computePdfGradientWrtInfinitesimalMatrixInto(
+                rewardProportion, time, upstream, unscaledQAdjoint);
+        assertMatrixEntryEquals("Q adjoint", stableQAdjoint, unscaledQAdjoint, 1.0e-9);
+
+        double[] stableRewardRateAdjoint = new double[2];
+        double[] unscaledRewardRateAdjoint = new double[2];
+        stable.branchModel.getSericolaModel().computePdfGradientWrtRewardRatesInto(
+                rewardProportion, time, upstream, stableRewardRateAdjoint);
+        unscaled.branchModel.getSericolaModel().computePdfGradientWrtRewardRatesInto(
+                rewardProportion, time, upstream, unscaledRewardRateAdjoint);
+        assertMatrixEntryEquals(
+                "reward-rate adjoint",
+                stableRewardRateAdjoint,
+                unscaledRewardRateAdjoint,
+                1.0e-9);
+    }
+
+    public void testSericolaPdfSurvivesLargeUniformizationRateAndNearBoundaryReward() {
+        Fixture fixture = createFixture(
+                createTwoStateSubstitutionFixture(1600.0, 1600.0),
+                new double[]{0.5, 0.5},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+        double lambdaTime = sericola.getUniformizationRate();
+        assertTrue(lambdaTime > 745.0);
+        assertEquals(0.0, Math.exp(-lambdaTime), 0.0);
+
+        double[] matrix = new double[4];
+        sericola.computePdfInto(1.0 - 1.0e-12, 1.0, matrix);
+
+        assertFiniteNonNegative(matrix);
+        assertTrue(accumulate(matrix) > 0.0);
+    }
+
+    public void testSericolaDerivativeSurvivesLargeUniformizationRate() {
+        Fixture fixture = createFixture(
+                createTwoStateSubstitutionFixture(1600.0, 1600.0),
+                new double[]{0.5, 0.5},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double rewardProportion = 0.5;
+        double time = 1.0;
+        double h = 1.0e-5;
+
+        double[] plus = new double[4];
+        double[] minus = new double[4];
+        double[] differential = new double[4];
+
+        sericola.computePdfInto(rewardProportion + h, time, plus);
+        sericola.computePdfInto(rewardProportion - h, time, minus);
+        sericola.computePdfDerivativeWrtRewardProportionInto(rewardProportion, time, differential, false);
+
+        for (int i = 0; i < differential.length; i++) {
+            assertTrue("entry " + i + " is not finite: " + differential[i],
+                    Double.isFinite(differential[i]));
+            double finiteDifference = (plus[i] - minus[i]) / (2.0 * h);
+            double tolerance = Math.max(1.0e-5, Math.abs(finiteDifference) * 1.0e-4);
+            assertEquals("entry " + i, finiteDifference, differential[i], tolerance);
+        }
+    }
+
+    public void testSericolaLargeRateInfinitesimalMatrixAdjointMatchesFiniteDifference() {
+        Fixture fixture = createFixture(
+                createTwoStateSubstitutionFixture(240.0, 200.0),
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double rewardProportion = 0.45;
+        double time = 3.0;
+        final double lambdaTime = sericola.getUniformizationRate() * time;
+        assertTrue("lambda*time=" + lambdaTime, lambdaTime > 250.0);
+
+        double[] upstream = new double[]{0.70, -0.25, 0.40, 1.10};
+        double[] qAdjoint = new double[4];
+
+        sericola.computePdfGradientWrtInfinitesimalMatrixInto(
+                rewardProportion,
+                time,
+                upstream,
+                qAdjoint);
+
+        for (double value : qAdjoint) {
+            assertTrue("Q adjoint is not finite: " + value, Double.isFinite(value));
+        }
+
+        for (int p = 0; p < fixture.substitutionRates.getDimension(); p++) {
+            double oldValue = fixture.substitutionRates.getParameterValue(p);
+            double step = 1.0e-6 * Math.max(1.0, Math.abs(oldValue));
+
+            fixture.substitutionRates.setParameterValue(p, oldValue + step);
+            double objectivePlus = sericolaObjective(sericola, rewardProportion, time, upstream);
+            double[] qPlus = infinitesimalMatrix(fixture.substitutionModel);
+
+            fixture.substitutionRates.setParameterValue(p, oldValue - step);
+            double objectiveMinus = sericolaObjective(sericola, rewardProportion, time, upstream);
+            double[] qMinus = infinitesimalMatrix(fixture.substitutionModel);
+
+            fixture.substitutionRates.setParameterValue(p, oldValue);
+
+            double finiteDifference = (objectivePlus - objectiveMinus) / (2.0 * step);
+            double chainRule = 0.0;
+            for (int i = 0; i < qAdjoint.length; i++) {
+                chainRule += qAdjoint[i] * (qPlus[i] - qMinus[i]) / (2.0 * step);
+            }
+
+            double tolerance = Math.max(1.0e-5, Math.abs(finiteDifference) * 5.0e-4);
+            assertEquals("large-rate parameter " + p, finiteDifference, chainRule, tolerance);
+        }
+    }
+
+    public void testSericolaLargeRateRewardRateAdjointMatchesFiniteDifference() {
+        Fixture fixture = createFixture(
+                createTwoStateSubstitutionFixture(240.0, 200.0),
+                new double[]{0.35, 0.65},
+                new double[]{0.0, 0.0},
+                new double[]{0.0, 1.0},
+                new double[]{0.2, 0.8}
+        );
+        SericolaSeriesMarkovRewardFastModel sericola = fixture.branchModel.getSericolaModel();
+
+        double rewardProportion = 0.45;
+        double time = 3.0;
+        final double lambdaTime = sericola.getUniformizationRate() * time;
+        assertTrue("lambda*time=" + lambdaTime, lambdaTime > 250.0);
+
+        double[] upstream = new double[]{0.70, -0.25, 0.40, 1.10};
+        double[] rewardRateAdjoint = new double[fixture.rewardRateValues.getDimension()];
+
+        sericola.computePdfGradientWrtRewardRatesInto(
+                rewardProportion,
+                time,
+                upstream,
+                rewardRateAdjoint);
+
+        for (double value : rewardRateAdjoint) {
+            assertTrue("reward-rate adjoint is not finite: " + value, Double.isFinite(value));
+        }
+
+        for (int p = 0; p < fixture.rewardRateValues.getDimension(); p++) {
+            double oldValue = fixture.rewardRateValues.getParameterValue(p);
+            double step = 1.0e-6;
+
+            fixture.rewardRateValues.setParameterValue(p, oldValue + step);
+            double objectivePlus = sericolaObjective(sericola, rewardProportion, time, upstream);
+
+            fixture.rewardRateValues.setParameterValue(p, oldValue - step);
+            double objectiveMinus = sericolaObjective(sericola, rewardProportion, time, upstream);
+
+            fixture.rewardRateValues.setParameterValue(p, oldValue);
+
+            double finiteDifference = (objectivePlus - objectiveMinus) / (2.0 * step);
+            double tolerance = Math.max(2.0e-5, Math.abs(finiteDifference) * 1.0e-3);
+            assertEquals("large-rate reward-rate value " + p,
+                    finiteDifference,
+                    rewardRateAdjoint[p],
+                    tolerance);
+        }
     }
 
     public void testAtomicTransitionMatrixHasSingleNoJumpMass() {
@@ -458,6 +689,22 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
             double[] indicatorValues,
             double[] atomValues,
             double[] rewardRateValueArray) {
+        return createFixture(
+                substitutionFixture,
+                rewardProportionValues,
+                indicatorValues,
+                atomValues,
+                rewardRateValueArray,
+                true);
+    }
+
+    private static Fixture createFixture(
+            SubstitutionFixture substitutionFixture,
+            double[] rewardProportionValues,
+            double[] indicatorValues,
+            double[] atomValues,
+            double[] rewardRateValueArray,
+            boolean sericolaSeriesRescaling) {
 
         TreeModel tree = createTwoTipTree();
         SubstitutionModel substitutionModel = substitutionFixture.substitutionModel;
@@ -484,10 +731,53 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
                 indicator,
                 branchRates,
                 atomIndices,
-                false
+                false,
+                sericolaSeriesRescaling
         );
 
         return new Fixture(tree, branchModel, substitutionModel, substitutionFixture.rates, rewardRateValues);
+    }
+
+    private static RewardsAwareBranchModel parseBranchModelWithSericolaSeriesRescaling(Boolean rescaling)
+            throws Exception {
+
+        final TreeModel tree = createTwoTipTree();
+        final SubstitutionModel substitutionModel = createTwoStateSubstitutionFixture().substitutionModel;
+        final Parameter rewardProportion = new Parameter.Default("rewardProportion", new double[]{0.35, 0.65});
+        final ArbitraryBranchRates branchRates = new ArbitraryBranchRates(
+                tree,
+                rewardProportion,
+                new ArbitraryBranchRates.BranchRateTransform.None(),
+                false
+        );
+        final RewardRates rewardRates = new RewardRates(
+                new Parameter.Default("rewardRates", new double[]{0.0, 1.0}),
+                null,
+                new Parameter.Default("rewardRatesInternal", new double[0]),
+                new Parameter.Default("rewardRatesMapping", new double[]{0.0, 1.0})
+        );
+        final Parameter indicator = new Parameter.Default("indicator", new double[]{0.0, 0.0});
+        final Parameter atomIndices = new Parameter.Default("atomIndices", new double[]{0.0, 1.0});
+
+        final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        final XMLObject xo;
+        if (rescaling == null) {
+            xo = xmlObject(document, new RewardsAwareBranchModelParser().getParserName());
+        } else {
+            xo = xmlObject(
+                    document,
+                    new RewardsAwareBranchModelParser().getParserName(),
+                    RewardsAwareBranchModelParser.SERICOLA_SERIES_RESCALING,
+                    rescaling.toString());
+        }
+
+        addChild(xo, nativeObject(document, "branchRates", branchRates));
+        addChild(xo, nativeObject(document, "substitutionModel", substitutionModel));
+        addChild(xo, wrapper(document, "indicator", nativeObject(document, "parameter", indicator)));
+        addChild(xo, wrapper(document, "atomIndices", nativeObject(document, "parameter", atomIndices)));
+        addChild(xo, nativeObject(document, "rewardRates", rewardRates));
+
+        return (RewardsAwareBranchModel) new RewardsAwareBranchModelParser().parseXMLObject(xo);
     }
 
     private static double sericolaObjective(
@@ -503,6 +793,30 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
             objective += upstream[i] * density[i];
         }
         return objective;
+    }
+
+    private static double[] sericolaPdf(
+            SericolaSeriesMarkovRewardFastModel sericola,
+            double rewardProportion,
+            double time) {
+
+        double[] density = new double[4];
+        sericola.computePdfInto(rewardProportion, time, density);
+        return density;
+    }
+
+    private static double[] sericolaRewardDerivative(
+            SericolaSeriesMarkovRewardFastModel sericola,
+            double rewardProportion,
+            double time) {
+
+        double[] differential = new double[4];
+        sericola.computePdfDerivativeWrtRewardProportionInto(
+                rewardProportion,
+                time,
+                differential,
+                false);
+        return differential;
     }
 
     private static double[] infinitesimalMatrix(SubstitutionModel substitutionModel) {
@@ -643,10 +957,41 @@ public class RewardsAwareBranchModelTest extends MathTestCase {
         return new DefaultTreeModel("rewardAwareTestTree", tree);
     }
 
+    private static XMLObject xmlObject(final Document document, final String name, final String... attributes) {
+        final Element element = document.createElement(name);
+        for (int i = 0; i < attributes.length; i += 2) {
+            element.setAttribute(attributes[i], attributes[i + 1]);
+        }
+        return new XMLObject(element, null);
+    }
+
+    private static XMLObject nativeObject(final Document document, final String name, final Object object) {
+        final XMLObject xo = xmlObject(document, name);
+        xo.setNativeObject(object);
+        return xo;
+    }
+
+    private static XMLObject wrapper(final Document document, final String name, final XMLObject child)
+            throws Exception {
+        final XMLObject xo = xmlObject(document, name);
+        addChild(xo, child);
+        return xo;
+    }
+
+    private static void addChild(final XMLObject parent, final XMLObject child) throws Exception {
+        final Method addChild = XMLObject.class.getDeclaredMethod("addChild", Object.class);
+        addChild.setAccessible(true);
+        addChild.invoke(parent, child);
+    }
+
     private static SubstitutionFixture createTwoStateSubstitutionFixture() {
+        return createTwoStateSubstitutionFixture(2.0, 3.0);
+    }
+
+    private static SubstitutionFixture createTwoStateSubstitutionFixture(double forwardRate, double reverseRate) {
         DataType dataType = TwoStates.INSTANCE;
         FrequencyModel frequencyModel = new FrequencyModel(dataType, new double[]{0.5, 0.5});
-        Parameter rates = new Parameter.Default("twoStateRates", new double[]{2.0, 3.0});
+        Parameter rates = new Parameter.Default("twoStateRates", new double[]{forwardRate, reverseRate});
         ComplexSubstitutionModel substitutionModel =
                 new ComplexSubstitutionModel("twoState", dataType, frequencyModel, rates);
         substitutionModel.setNormalization(false);

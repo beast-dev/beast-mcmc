@@ -224,9 +224,15 @@
         <treeDataLikelihood idref="dna.rewardTreeLikelihood"/>
     </branchRateGradient>
 
+    <rewardMixtureAtomicPseudoPrior id="atomicRewardPseudoPrior" standardDeviation="0.05">
+        <rewardsAwareBranchModel idref="host.rewardModel"/>
+        <rewardsAwareCategoricalMixtureBranchRatesDynamic idref="host.totalRewardsBranchRateModel"/>
+    </rewardMixtureAtomicPseudoPrior>
+
     <jointGradient id="ctsRewardGradient">
         <rewardAwareBranchModelGradient idref="hostRewardGradient"/>
         <branchRateGradient idref="dnaRewardGradient"/>
+        <rewardMixtureAtomicPseudoPrior idref="atomicRewardPseudoPrior"/>
     </jointGradient>
 
     <zeroGradient id="rewardCategoryZeroGradient">
@@ -245,6 +251,7 @@
         <dependentCtmcLikelihoods>
             <treeDataLikelihood idref="dna.rewardTreeLikelihood"/>
         </dependentCtmcLikelihoods>
+        <rewardMixtureAtomicPseudoPrior idref="atomicRewardPseudoPrior"/>
     </rewardMixtureCategoricalDiscontinuousPotentialDynamic>
 
     <zeroDiscontinuousPotential id="ctsZeroPotential">
@@ -285,9 +292,7 @@
           operatorAnalysis="testRewardsAwareRabiesHostDnaMixedDynamicSmoke.ops">
         <joint id="joint">
             <prior id="prior">
-                <uniformPrior lower="0.0" upper="1.0">
-                    <parameter idref="total.rewards.cts"/>
-                </uniformPrior>
+                <rewardMixtureAtomicPseudoPrior idref="atomicRewardPseudoPrior"/>
             </prior>
             <likelihood id="likelihood">
                 <treeDataLikelihood idref="host.treeLikelihood"/>

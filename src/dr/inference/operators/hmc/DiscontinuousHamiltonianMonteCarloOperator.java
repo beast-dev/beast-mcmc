@@ -30,6 +30,7 @@ package dr.inference.operators.hmc;
 import dr.inference.hmc.DiscontinuousPotentialProvider;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.RewardMixturePerformanceStats;
 import dr.inference.operators.SimpleMCMCOperator;
 
 /**
@@ -95,6 +96,8 @@ public class DiscontinuousHamiltonianMonteCarloOperator extends SimpleMCMCOperat
 
     @Override
     public double doOperation() {
+        provider.refresh();
+
         final double[] momentum = momentumHelper.drawMomentum();
         final double stepSizeThisOperation =
                 DiscontinuousHmcUtils.drawStepSize(stepSize, randomStepSizeFraction);
@@ -109,9 +112,15 @@ public class DiscontinuousHamiltonianMonteCarloOperator extends SimpleMCMCOperat
                 }
                 final DiscontinuousCoordinateIntegrator.StepResult result =
                         integrator.step(momentum, index, stepSizeThisOperation);
+                RewardMixturePerformanceStats.recordDiscontinuousStep(result.isCrossed(), result.isReflected());
 
                 if (result.isCrossed()) {
                     crossingCount++;
+                    RewardMixturePerformanceStats.recordCacheClearAfterAcceptedCrossing();
+                    provider.clearOperationCache(
+                            RewardMixturePerformanceStats.OperationCacheClearReason.ACCEPTED_CATEGORY_CROSSING);
+                } else {
+                    RewardMixturePerformanceStats.recordSkippedCacheClearAfterNoCrossing();
                 }
                 if (result.isReflected()) {
                     reflectionCount++;

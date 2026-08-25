@@ -154,11 +154,13 @@ public final class PerBranchRewardMixtureCategoryDecoder implements RewardMixtur
         return RewardMixtureCategoryDecoder.getAtomicStateForCategory(getCategoryForParameterIndex(parameterIndex));
     }
 
+    @Override
     public double getLowerCut(final int parameterIndex, final int category) {
         checkParameterIndex(parameterIndex);
         return embedding.getLowerCut(layout.bucketForCategory(insertionRankByParameterIndex[parameterIndex], category));
     }
 
+    @Override
     public double getUpperCut(final int parameterIndex, final int category) {
         checkParameterIndex(parameterIndex);
         return embedding.getUpperCut(layout.bucketForCategory(insertionRankByParameterIndex[parameterIndex], category));

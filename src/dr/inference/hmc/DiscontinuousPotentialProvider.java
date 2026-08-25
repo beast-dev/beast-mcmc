@@ -28,6 +28,7 @@
 package dr.inference.hmc;
 
 import dr.inference.model.Parameter;
+import dr.inference.operators.RewardMixturePerformanceStats;
 
 /**
  * Provides local log-density information needed by discontinuous HMC updates.
@@ -73,6 +74,10 @@ public interface DiscontinuousPotentialProvider {
      * layout captured by {@link #refresh()}.
      */
     default void clearOperationCache() {
+    }
+
+    default void clearOperationCache(final RewardMixturePerformanceStats.OperationCacheClearReason reason) {
+        clearOperationCache();
     }
 
     double getLogDensity();

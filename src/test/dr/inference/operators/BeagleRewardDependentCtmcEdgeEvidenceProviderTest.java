@@ -160,10 +160,55 @@ public class BeagleRewardDependentCtmcEdgeEvidenceProviderTest extends MathTestC
             for (double rawReward : candidates) {
                 final double manual = manualProvider.logEvidence(node.getNumber(), rawReward);
                 final double beagle = beagleProvider.logEvidence(node.getNumber(), rawReward);
-                assertFinite(manual);
-                assertFinite(beagle);
+                assertFinite("manual evidence on branch " + node.getNumber() +
+                        " for reward " + rawReward, manual);
+                assertFinite("BEAGLE preorder evidence on branch " + node.getNumber() +
+                        " for reward " + rawReward, beagle);
                 assertEquals("BEAGLE preorder evidence must match manual evidence on branch " +
                         node.getNumber() + " for reward " + rawReward, manual, beagle, TOL);
+            }
+        }
+    }
+
+    public void testLazyManualEvidenceMatchesEagerManualEvidenceOnAllBranches() throws Exception {
+        final Fixture fixture = createFixture();
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider lazyProvider =
+                new BeagleRewardDependentCtmcEdgeEvidenceProvider(fixture.treeDataLikelihood);
+
+        final File diagnosticFile = File.createTempFile("dependent_ctmc_eager_manual", ".tsv");
+        diagnosticFile.deleteOnExit();
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics eagerDiagnostics =
+                BeagleRewardDependentCtmcEdgeEvidenceProvider.Diagnostics.create(
+                        true,
+                        diagnosticFile.getAbsolutePath(),
+                        false,
+                        false,
+                        false,
+                        Integer.MAX_VALUE,
+                        Long.MAX_VALUE
+                );
+        final BeagleRewardDependentCtmcEdgeEvidenceProvider eagerProvider =
+                new BeagleRewardDependentCtmcEdgeEvidenceProvider(fixture.treeDataLikelihood, eagerDiagnostics);
+
+        fixture.treeDataLikelihood.makeDirty();
+        lazyProvider.prepare();
+        eagerProvider.prepare();
+
+        final double[] candidates = new double[]{0.25, 0.70, 1.10, 1.75};
+        for (int i = 0; i < fixture.tree.getNodeCount(); i++) {
+            final NodeRef node = fixture.tree.getNode(i);
+            if (fixture.tree.isRoot(node)) {
+                continue;
+            }
+            for (double rawReward : candidates) {
+                final double lazy = lazyProvider.logEvidence(node.getNumber(), rawReward);
+                final double eager = eagerProvider.logEvidence(node.getNumber(), rawReward);
+                assertFinite("lazy manual evidence on branch " + node.getNumber() +
+                        " for reward " + rawReward, lazy);
+                assertFinite("eager manual evidence on branch " + node.getNumber() +
+                        " for reward " + rawReward, eager);
+                assertEquals("Lazy manual evidence must match eager manual evidence on branch " +
+                        node.getNumber() + " for reward " + rawReward, lazy, eager, TOL);
             }
         }
     }
@@ -301,7 +346,11 @@ public class BeagleRewardDependentCtmcEdgeEvidenceProviderTest extends MathTestC
     }
 
     private static void assertFinite(final double value) {
-        assertTrue("Expected finite value but found " + value,
+        assertFinite("value", value);
+    }
+
+    private static void assertFinite(final String label, final double value) {
+        assertTrue("Expected finite " + label + " but found " + value,
                 !Double.isNaN(value) && !Double.isInfinite(value));
     }
 

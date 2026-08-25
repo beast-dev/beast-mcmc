@@ -10,15 +10,11 @@ import dr.inference.model.Parameter;
  * branch in," keyed by parameter index, can depend on this interface and
  * work unchanged with either decoder.
  *
- * Deliberately excludes value-only decoding (decode a raw axis value with no
- * branch context) and cut-boundary lookups: both are branch-dependent for
- * the per-branch decoder, so callers that need them (currently only
- * {@code RewardMixtureCategoricalDiscontinuousPotentialProvider}'s
- * boundary-crossing evaluation) use the concrete decoder type directly
- * rather than forcing every implementation to accept a branch index it may
- * not need. {@link #getNextBoundary} is the one value-based method safe to
- * share: the axis itself (cut values) is identical for every branch, so
- * finding the next boundary from a raw value never needs a branch index.
+ * Cut-boundary lookups require a branch index because the physical category
+ * occupying an embedded-axis bucket is branch-dependent for the per-branch
+ * decoder. Static decoders ignore the branch index after bounds checking.
+ * {@link #getNextBoundary} is still value-only because the axis itself (cut
+ * values) is identical for every branch.
  */
 public interface RewardMixtureCategoryDecoding {
 
@@ -31,6 +27,10 @@ public interface RewardMixtureCategoryDecoding {
     void refreshEmbedding();
 
     int getCategoryForParameterIndex(int parameterIndex);
+
+    double getLowerCut(int parameterIndex, int category);
+
+    double getUpperCut(int parameterIndex, int category);
 
     double getNextBoundary(double value, double direction);
 

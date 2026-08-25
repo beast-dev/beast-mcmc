@@ -2,23 +2,14 @@ package dr.inferencexml.operators;
 
 import dr.evomodel.branchratemodel.RewardRates;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OneZeroOneShuffleOperator;
 import dr.xml.*;
 
 /**
- * <oneZeroOneShuffleOperator id="..." weight="..." tol="...">
- *   <rewardRates>
- *     <fixedValues>
- *       <parameter idref="ind.rewardRates.fixedValues"/>
- *     </fixedValues>
- *     <varyingValues>
- *       <parameter idref="ind.rewardRates.varyingValues"/>
- *     </varyingValues>
- *     <stateIndices>
- *       <parameter idref="ind.rewardRates.stateIndices"/>
- *     </stateIndices>
- *   </rewardRates>
- * </oneZeroOneShuffleOperator>
+ * Disabled: <oneZeroOneShuffleOperator> has a reachability bug (0/1998
+ * acceptance observed in practice, see ctmc_bm4d_timeseries scenario a) and
+ * must not be used. Retained only so any XML still referencing it fails
+ * fast with a clear message instead of silently proposing an unreachable
+ * move. Use <oneZeroOneShuffleGibbsOperator> instead.
  */
 
 /*
@@ -38,27 +29,17 @@ public final class OneZeroOneShuffleOperatorParser extends AbstractXMLObjectPars
 
     @Override
     public Object parseXMLObject(final XMLObject xo) throws XMLParseException {
-
-        final double weight = xo.getDoubleAttribute(WEIGHT);
-        final double tol = xo.hasAttribute(TOL) ? xo.getDoubleAttribute(TOL) : 0.0;
-
-        final RewardRates rewardRates = (RewardRates) xo.getChild(RewardRates.class);
-
-        final OneZeroOneShuffleOperator op =
-                new OneZeroOneShuffleOperator(
-                        rewardRates.getValues(),
-                        rewardRates.getStateIndices(),
-                        weight,
-                        tol);
-
-        return op;
-
+        throw new XMLParseException(
+                "<" + OPERATOR + "> has a reachability bug (0/1998 acceptance observed in " +
+                        "practice, see ctmc_bm4d_timeseries scenario a) and must not be used. " +
+                        "Use <" + OneZeroOneShuffleGibbsOperatorParser.OPERATOR + "> instead."
+        );
     }
 
 
     @Override
     public String getParserDescription() {
-        return "Swaps one fixed extreme reward-rate label (0 or 1) with one non-extreme reward-rate label in the state-to-reward-rate mapping.";
+        return "Disabled (reachability bug) -- use oneZeroOneShuffleGibbsOperator instead.";
     }
 
     @Override

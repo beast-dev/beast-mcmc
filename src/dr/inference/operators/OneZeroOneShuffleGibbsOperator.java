@@ -1,5 +1,6 @@
 package dr.inference.operators;
 
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -58,6 +59,7 @@ public final class OneZeroOneShuffleGibbsOperator extends SimpleMCMCOperator imp
     private final TreeDataLikelihood treeDataLikelihood;
     private final TreeDataLikelihood[] dependentCtmcLikelihoods;
     private final TreeDataLikelihood[] dependentContinuousLikelihoods;
+    private final RewardMixtureAtomicPseudoPrior atomicPseudoPrior;
     private final double tol;
 
     private final int stateCount;
@@ -71,6 +73,24 @@ public final class OneZeroOneShuffleGibbsOperator extends SimpleMCMCOperator imp
                                           final TreeDataLikelihood treeDataLikelihood,
                                           final TreeDataLikelihood[] dependentCtmcLikelihoods,
                                           final TreeDataLikelihood[] dependentContinuousLikelihoods,
+                                          final double weight,
+                                          final double tol) {
+        this(rewardRatesValues,
+                rewardRatesMapping,
+                treeDataLikelihood,
+                dependentCtmcLikelihoods,
+                dependentContinuousLikelihoods,
+                null,
+                weight,
+                tol);
+    }
+
+    public OneZeroOneShuffleGibbsOperator(final Parameter rewardRatesValues,
+                                          final Parameter rewardRatesMapping,
+                                          final TreeDataLikelihood treeDataLikelihood,
+                                          final TreeDataLikelihood[] dependentCtmcLikelihoods,
+                                          final TreeDataLikelihood[] dependentContinuousLikelihoods,
+                                          final RewardMixtureAtomicPseudoPrior atomicPseudoPrior,
                                           final double weight,
                                           final double tol) {
         if (rewardRatesValues == null) {
@@ -98,6 +118,7 @@ public final class OneZeroOneShuffleGibbsOperator extends SimpleMCMCOperator imp
         this.dependentContinuousLikelihoods = dependentContinuousLikelihoods == null
                 ? new TreeDataLikelihood[0]
                 : Arrays.copyOf(dependentContinuousLikelihoods, dependentContinuousLikelihoods.length);
+        this.atomicPseudoPrior = atomicPseudoPrior;
         this.tol = tol;
 
         this.stateCount = rewardRatesValues.getDimension();
@@ -158,15 +179,20 @@ public final class OneZeroOneShuffleGibbsOperator extends SimpleMCMCOperator imp
     private int sampleIndex(final double logTotal) {
         final double u = MathUtils.nextDouble();
         double cumulative = 0.0;
+        int lastFiniteIndex = -1;
         for (int p = 0; p < permutationCount; p++) {
             if (Double.isFinite(logWeights[p])) {
+                lastFiniteIndex = p;
                 cumulative += Math.exp(logWeights[p] - logTotal);
             }
             if (u < cumulative) {
                 return p;
             }
         }
-        return permutationCount - 1;
+        if (lastFiniteIndex >= 0) {
+            return lastFiniteIndex;
+        }
+        throw new IllegalStateException("No finite permutation weight available after finite logTotal");
     }
 
     private double computeLogTarget() {
@@ -179,6 +205,10 @@ public final class OneZeroOneShuffleGibbsOperator extends SimpleMCMCOperator imp
         for (final TreeDataLikelihood dependent : dependentContinuousLikelihoods) {
             dependent.makeDirty();
             logTarget += dependent.getLogLikelihood();
+        }
+        if (atomicPseudoPrior != null) {
+            atomicPseudoPrior.makeDirty();
+            logTarget += atomicPseudoPrior.getLogLikelihood();
         }
         return logTarget;
     }

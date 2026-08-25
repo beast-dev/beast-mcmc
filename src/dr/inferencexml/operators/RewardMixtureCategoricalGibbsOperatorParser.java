@@ -1,6 +1,7 @@
 package dr.inferencexml.operators;
 
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodelxml.branchratemodel.RewardsAwareCategoricalMixtureBranchRatesParser;
 import dr.inference.model.Parameter;
@@ -50,8 +51,19 @@ public final class RewardMixtureCategoricalGibbsOperatorParser extends AbstractX
                 treeDataLikelihood,
                 parseTreeDataLikelihoods(xo, DEPENDENT_CTMC_LIKELIHOODS),
                 parseTreeDataLikelihoods(xo, DEPENDENT_CONTINUOUS_LIKELIHOODS),
+                parseAtomicPseudoPrior(xo),
                 updateProportion,
                 weight);
+    }
+
+    private RewardMixtureAtomicPseudoPrior parseAtomicPseudoPrior(final XMLObject xo) {
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            final Object child = xo.getChild(i);
+            if (child instanceof RewardMixtureAtomicPseudoPrior) {
+                return (RewardMixtureAtomicPseudoPrior) child;
+            }
+        }
+        return null;
     }
 
     private TreeDataLikelihood[] parseTreeDataLikelihoods(final XMLObject xo, final String childName) {
@@ -86,6 +98,7 @@ public final class RewardMixtureCategoricalGibbsOperatorParser extends AbstractX
                         }),
                 new ElementRule(RewardsAwareBranchModel.class),
                 new ElementRule(TreeDataLikelihood.class),
+                new ElementRule(RewardMixtureAtomicPseudoPrior.class, 0, 1),
                 new ElementRule(DEPENDENT_CTMC_LIKELIHOODS,
                         new XMLSyntaxRule[] {
                                 new ElementRule(TreeDataLikelihood.class, 1, Integer.MAX_VALUE)

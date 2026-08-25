@@ -73,6 +73,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     private final ArbitraryBranchRates branchRateModel;
     private final Parameter indicator;                  // 0/1, same indexing as rewardProportion
     private final RewardMixtureCategoryDecoding categoryDecoder;
+    private final int[] decodedCategoryByParameterIndex;
 
     private final int nstates;
     private final int dim2;
@@ -276,6 +277,10 @@ public class RewardsAwareBranchModel extends AbstractModel
                 : (useCategoricalState
                         ? new RewardMixtureCategoryDecoder(categoryParameter, categoryCuts, nstates, dim)
                         : null);
+        this.decodedCategoryByParameterIndex = this.categoryDecoder == null ? null : new int[dim];
+        if (this.categoryDecoder != null) {
+            refreshCachedDecodedCategories();
+        }
 
         final int nodeCount = tree.getNodeCount();
         final int branchCount = nodeCount - 1; // all non-root nodes
@@ -354,8 +359,10 @@ public class RewardsAwareBranchModel extends AbstractModel
             return;
         }
         categoryDecoder.refreshEmbedding();
-        invalidateCtsMatrices();
-        invalidateAtomicScales();
+        if (refreshCachedDecodedCategories()) {
+            invalidateCtsMatrices();
+            invalidateAtomicScales();
+        }
     }
 
     // -------------------- Basic accessors --------------------
@@ -450,6 +457,38 @@ public class RewardsAwareBranchModel extends AbstractModel
             }
         }
         return W[nodeNr];
+    }
+
+    public void computeTransitionMatrixCtsForBranchInto(final int nodeNr,
+                                                        final double[] matrixOut,
+                                                        final double[] xScratch,
+                                                        final double[] timeScratch,
+                                                        final double[][] matrixScratch) {
+        if (matrixOut.length != dim2) {
+            throw new IllegalArgumentException("matrixOut length must equal stateCount^2");
+        }
+        if (xScratch.length < 1 || timeScratch.length < 1 || matrixScratch.length < 1) {
+            throw new IllegalArgumentException("single-branch scratch arrays must have length at least 1");
+        }
+
+        final NodeRef node = tree.getNode(nodeNr);
+        if (tree.isRoot(node)) {
+            throw new IllegalArgumentException("Root node has no branch: " + nodeNr);
+        }
+
+        final double t = tree.getBranchLength(node);
+        if (t < 0.0) {
+            throw new IllegalArgumentException("Negative branch length for node " + nodeNr + ": " + t);
+        }
+        if (t == 0.0) {
+            setZeroTimeContinuousTransitionInto(matrixOut);
+            return;
+        }
+
+        xScratch[0] = getContinuousBranchRate(tree, node);
+        timeScratch[0] = t;
+        matrixScratch[0] = matrixOut;
+        sericola.computePdfInto(xScratch, timeScratch, true, matrixScratch);
     }
 
     private void computeAtomicScales() {
@@ -573,9 +612,13 @@ public class RewardsAwareBranchModel extends AbstractModel
         // to 1) and produces a genuinely invalid (zero) likelihood contribution
         // wherever it's actually used -- see the run README / project log for
         // the ctmc_bm4d_timeseries scenario (c) diagnosis this fixed.
-        Arrays.fill(W[nodeNr], 0.0);
+        setZeroTimeContinuousTransitionInto(W[nodeNr]);
+    }
+
+    private void setZeroTimeContinuousTransitionInto(final double[] matrix) {
+        Arrays.fill(matrix, 0.0);
         for (int i = 0; i < nstates; i++) {
-            W[nodeNr][i * nstates + i] = 1.0;
+            matrix[i * nstates + i] = 1.0;
         }
     }
     public double[] getWPacked(int i) {
@@ -693,6 +736,7 @@ public class RewardsAwareBranchModel extends AbstractModel
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (ignoreModelChangedEvent) return;
+        int changedNodeNumber = -1;
         if (model == sericola) {
             invalidateNoJumpLogRates();
             invalidateAtomicScales();
@@ -703,36 +747,98 @@ public class RewardsAwareBranchModel extends AbstractModel
             invalidateCtsMatrices();
         }
         if (model == branchRateModel) {
-            invalidateCtsMatrices();
+            if (isCategoryDecoderVariable(object) && branchRateModel instanceof RewardMixtureBranchRateModel) {
+                invalidateAtomicScales();
+            } else {
+                invalidateCtsMatrices();
+            }
+            changedNodeNumber = index;
         }
 
-        fireModelChanged();
+        fireModelChangedForNode(changedNodeNumber);
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        int changedNodeNumber = -1;
         if (variable == atomIndices) {
             invalidateAtomicScales();
+            changedNodeNumber = getNodeNumberForParameterEvent(index);
 //            invalidateCtsMatrices(); // safe, even if a bit conservative
         } else if (categoryDecoder != null && variable == categoryDecoder.getCategoryParameter()) {
-            // computeCtsTransitionMatrices() computes W[] for every branch
-            // unconditionally (no atomic/continuous filter), using
-            // getContinuousBranchRate() -- which itself depends on this
-            // branch's current atomic/continuous classification (an atomic
-            // branch's "rate" is its atomic reward value, not the raw cts
-            // parameter). A reward.category boundary crossing can flip that
-            // classification without total.rewards.cts's own value changing,
-            // so ctsMatricesDirty must also be invalidated here, not just
-            // atomicScalesDirty -- otherwise a stale W[] entry (computed
-            // under the branch's previous classification) can persist past
-            // a rejected proposal's restore.
-            invalidateCtsMatrices();
+            if (!refreshCachedDecodedCategory(index)) {
+                return;
+            }
+            invalidateCtsMatricesAfterCategoryChange();
             invalidateAtomicScales();
+            changedNodeNumber = getNodeNumberForParameterEvent(index);
         } else if (categoryDecoder != null && variable == categoryDecoder.getCutParameter()) {
             categoryDecoder.refreshEmbedding();
+            if (!refreshCachedDecodedCategories()) {
+                return;
+            }
+            invalidateCtsMatricesAfterCategoryChange();
             invalidateAtomicScales();
         }
-        fireModelChanged();
+        fireModelChangedForNode(changedNodeNumber);
+    }
+
+    private boolean isCategoryDecoderVariable(Object object) {
+        return categoryDecoder != null &&
+                (object == categoryDecoder.getCategoryParameter() ||
+                        object == categoryDecoder.getCutParameter());
+    }
+
+    private void invalidateCtsMatricesAfterCategoryChange() {
+        // Reward-mixture branch-rate models expose the continuous raw reward
+        // independently of the active atomic/continuous category, so a category
+        // flip changes transition selection but not the cached continuous W[].
+        if (!(branchRateModel instanceof RewardMixtureBranchRateModel)) {
+            invalidateCtsMatrices();
+        }
+    }
+
+    private int getNodeNumberForParameterEvent(final int parameterIndex) {
+        if (parameterIndex < 0 || parameterIndex >= branchIndexToNodeNr.length) {
+            return -1;
+        }
+        return branchIndexToNodeNr[parameterIndex];
+    }
+
+    private void fireModelChangedForNode(final int nodeNumber) {
+        if (nodeNumber >= 0) {
+            fireModelChanged(null, nodeNumber);
+        } else {
+            fireModelChanged();
+        }
+    }
+
+    private boolean refreshCachedDecodedCategory(final int parameterIndex) {
+        if (decodedCategoryByParameterIndex == null) {
+            return true;
+        }
+        if (parameterIndex < 0 || parameterIndex >= decodedCategoryByParameterIndex.length) {
+            return refreshCachedDecodedCategories();
+        }
+        final int currentCategory = categoryDecoder.getCategoryForParameterIndex(parameterIndex);
+        final boolean changed = decodedCategoryByParameterIndex[parameterIndex] != currentCategory;
+        decodedCategoryByParameterIndex[parameterIndex] = currentCategory;
+        return changed;
+    }
+
+    private boolean refreshCachedDecodedCategories() {
+        if (decodedCategoryByParameterIndex == null) {
+            return true;
+        }
+        boolean changed = false;
+        for (int i = 0; i < decodedCategoryByParameterIndex.length; i++) {
+            final int currentCategory = categoryDecoder.getCategoryForParameterIndex(i);
+            if (decodedCategoryByParameterIndex[i] != currentCategory) {
+                changed = true;
+                decodedCategoryByParameterIndex[i] = currentCategory;
+            }
+        }
+        return changed;
     }
 
     // -------------------- MCMC store/restore --------------------

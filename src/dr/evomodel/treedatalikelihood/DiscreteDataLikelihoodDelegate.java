@@ -16,6 +16,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inference.operators.RewardMixturePerformanceStats;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -518,7 +519,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
             preOrderDelegate.restoreState();
         }
     }
-    public void invalidatePreOrderOnlyForDebug() {
+    public void invalidatePreOrderOnly() {
         preOrderValid = false;
         Arrays.fill(nodePreOrderKnown, false);
         if (preOrderStartKnown != null) Arrays.fill(preOrderStartKnown, false);
@@ -532,6 +533,10 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         }
     }
 
+    public void invalidatePreOrderOnlyForDebug() {
+        invalidatePreOrderOnly();
+    }
+
     @Override
     public double[] getSiteLogLikelihoods() {
         return Arrays.copyOf(patternLogLikelihoods, patternLogLikelihoods.length);
@@ -542,6 +547,18 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     public double calculateLikelihood(List<BranchOperation> branchOperations,
                                       List<NodeOperation> nodeOperations,
                                       int rootNodeNumber) throws LikelihoodException {
+
+        final int branchOperationCount = branchOperations == null ? 0 : branchOperations.size();
+        final int nodeOperationCount = nodeOperations == null ? 0 : nodeOperations.size();
+        RewardMixturePerformanceStats.recordDiscreteLikelihoodTraversal(
+                branchOperationCount,
+                nodeOperationCount,
+                nodeCount,
+                tipCount,
+                computePostOrderStatisticsOnly,
+                updateSubstitutionModel,
+                updateSiteModel,
+                updateRootFrequency);
 
         if (siteAssignInd != null) {
             refreshPatternWeightsFromSiteAssignments();
@@ -744,6 +761,11 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         } else if (model == branchModel) {
             updateSubstitutionModel = true;
             updateRootFrequency = true;
+            if (index >= 0 && index < nodeCount) {
+                invalidatePreOrderOnly();
+                fireModelChanged(null, index);
+                return;
+            }
         }
         invalidateAllCaches();
         fireModelChanged();
@@ -1162,39 +1184,47 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
             throw new IllegalStateException("Pre-order is not enabled for this delegate.");
         }
 
+        final long ensureStart = RewardMixturePerformanceStats.startTimer();
         if (preOrderValid) {
+            RewardMixturePerformanceStats.recordDiscretePreOrderEnsure(
+                    true, RewardMixturePerformanceStats.elapsed(ensureStart));
             return;
         }
 
-        // Ensure likelihood/postorder is current first
-        // safest choice: force current likelihood evaluation if needed
-        // assuming TreeDataLikelihood has already driven calculateLikelihood before this is called,
-        // you may only need the internal postorder to be up-to-date.
-        final double[] categoryRates = siteRateModel.getCategoryRates();
-        final double[] rootFrequencies = branchModel.getRootFrequencyModel().getFrequencies();
-        final int rootNodeNumber = tree.getRoot().getNumber();
+        try {
+            // Ensure likelihood/postorder is current first
+            // safest choice: force current likelihood evaluation if needed
+            // assuming TreeDataLikelihood has already driven calculateLikelihood before this is called,
+            // you may only need the internal postorder to be up-to-date.
+            final double[] categoryRates = siteRateModel.getCategoryRates();
+            final double[] rootFrequencies = branchModel.getRootFrequencyModel().getFrequencies();
+            final int rootNodeNumber = tree.getRoot().getNumber();
 
-        if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) { //TODO check this better
-            if (updateSubstitutionModel) {
-                postOrderRepresentation.markDirty();
+            if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) { //TODO check this better
+                if (updateSubstitutionModel) {
+                    postOrderRepresentation.markDirty();
+                    if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
+                        preOrderRepresentation.markDirty();
+                    }
+                }
+                postOrderRepresentation.updateForLikelihood();
+                if (updateSubstitutionModel && tipPartialsDependOnSubstitutionModel) {
+                    initialiseTipPartials();
+                }
                 if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
-                    preOrderRepresentation.markDirty();
+                    preOrderRepresentation.updateForLikelihood();
                 }
             }
-            postOrderRepresentation.updateForLikelihood();
-            if (updateSubstitutionModel && tipPartialsDependOnSubstitutionModel) {
-                initialiseTipPartials();
-            }
-            if (!(postOrderRepresentation instanceof BidirectionalRepresentation) && preOrderRepresentation != null) {
-                preOrderRepresentation.updateForLikelihood();
-            }
+
+            ensurePostOrder(tree.getRoot(), categoryRates);
+
+            preOrderDelegate.ensurePreOrder(rootNodeNumber, categoryRates, rootFrequencies);
+
+            preOrderValid = true;
+        } finally {
+            RewardMixturePerformanceStats.recordDiscretePreOrderEnsure(
+                    false, RewardMixturePerformanceStats.elapsed(ensureStart));
         }
-
-        ensurePostOrder(tree.getRoot(), categoryRates);
-
-        preOrderDelegate.ensurePreOrder(rootNodeNumber, categoryRates, rootFrequencies);
-
-        preOrderValid = true;
     }
 
     // -------------------------------------------------------------------------

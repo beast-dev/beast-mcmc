@@ -70,9 +70,7 @@ public final class RewardMixtureCategoryDecoder implements RewardMixtureCategory
     }
 
     public int getCategoryForParameterIndex(final int parameterIndex) {
-        if (parameterIndex < 0 || parameterIndex >= categoryParameter.getDimension()) {
-            throw new IllegalArgumentException("Category parameter index out of range: " + parameterIndex);
-        }
+        checkParameterIndex(parameterIndex);
         try {
             return getCategoryForValue(categoryParameter.getParameterValue(parameterIndex));
         } catch (IllegalArgumentException e) {
@@ -96,6 +94,18 @@ public final class RewardMixtureCategoryDecoder implements RewardMixtureCategory
 
     public double getUpperCut(final int category) {
         return embedding.getUpperCut(category);
+    }
+
+    @Override
+    public double getLowerCut(final int parameterIndex, final int category) {
+        checkParameterIndex(parameterIndex);
+        return getLowerCut(category);
+    }
+
+    @Override
+    public double getUpperCut(final int parameterIndex, final int category) {
+        checkParameterIndex(parameterIndex);
+        return getUpperCut(category);
     }
 
     public double getNextBoundary(final double value, final double direction) {
@@ -123,5 +133,11 @@ public final class RewardMixtureCategoryDecoder implements RewardMixtureCategory
             throw new IllegalArgumentException("Category " + category + " is not atomic");
         }
         return category - 1;
+    }
+
+    private void checkParameterIndex(final int parameterIndex) {
+        if (parameterIndex < 0 || parameterIndex >= categoryParameter.getDimension()) {
+            throw new IllegalArgumentException("Category parameter index out of range: " + parameterIndex);
+        }
     }
 }

@@ -35,6 +35,7 @@ import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.RewardRates;
@@ -142,6 +143,48 @@ public class OneZeroOneShuffleGibbsOperatorTargetTest extends MathTestCase {
                 "the dependent-likelihood sum may not be wired correctly", anyDifference);
     }
 
+    public void testAtomicPseudoPriorInfluencesTheDraw() {
+        MathUtils.setSeed(20260818);
+
+        final Fixture fixture = createFixture(4, false);
+        fixture.ctsRewards.setParameterValue(0, 0.05);
+        fixture.categoryState.setParameterValue(0, 1.50);
+
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+
+        final double[] truthWithout = bruteForceLogTargets(fixture);
+        final double[] truthWith = bruteForceLogTargetsIncludingPseudoPrior(fixture, pseudoPrior);
+
+        boolean anyDifference = false;
+        for (int i = 0; i < truthWithout.length; i++) {
+            if (Math.abs((truthWith[i] - truthWithout[i]) -
+                    (truthWith[0] - truthWithout[0])) > TOL) {
+                anyDifference = true;
+                break;
+            }
+        }
+        assertTrue("Atomic pseudo-prior did not change the relative target across permutations; " +
+                "the pseudo-prior contribution may not be wired correctly", anyDifference);
+
+        resetMapping(fixture, fixture.permutations.get(0));
+        final OneZeroOneShuffleGibbsOperator operator = createOperator(fixture, pseudoPrior);
+        assertFinite(operator.doOperation());
+
+        final int landedIndex = indexOfCurrentMapping(fixture);
+        fixture.independentLikelihood.makeDirty();
+        pseudoPrior.makeDirty();
+        final double landedLogTarget =
+                fixture.independentLikelihood.getLogLikelihood() + pseudoPrior.getLogLikelihood();
+
+        assertLogEquals("Operator landed on a permutation whose fresh likelihood plus pseudo-prior " +
+                        "does not match the independently brute-forced value for that permutation",
+                truthWith[landedIndex], landedLogTarget);
+    }
+
     // --- brute-force target computation -----------------------------------------------------
 
     private double[] bruteForceLogTargets(final Fixture fixture) {
@@ -165,6 +208,18 @@ public class OneZeroOneShuffleGibbsOperatorTargetTest extends MathTestCase {
                 logTarget += fixture.dependentLikelihood.getLogLikelihood();
             }
             logTargets[i] = logTarget;
+        }
+        return logTargets;
+    }
+
+    private double[] bruteForceLogTargetsIncludingPseudoPrior(final Fixture fixture,
+                                                             final RewardMixtureAtomicPseudoPrior pseudoPrior) {
+        final double[] logTargets = new double[fixture.permutations.size()];
+        for (int i = 0; i < fixture.permutations.size(); i++) {
+            resetMapping(fixture, fixture.permutations.get(i));
+            fixture.independentLikelihood.makeDirty();
+            pseudoPrior.makeDirty();
+            logTargets[i] = fixture.independentLikelihood.getLogLikelihood() + pseudoPrior.getLogLikelihood();
         }
         return logTargets;
     }
@@ -232,6 +287,11 @@ public class OneZeroOneShuffleGibbsOperatorTargetTest extends MathTestCase {
     }
 
     private static OneZeroOneShuffleGibbsOperator createOperator(final Fixture fixture) {
+        return createOperator(fixture, null);
+    }
+
+    private static OneZeroOneShuffleGibbsOperator createOperator(final Fixture fixture,
+                                                                final RewardMixtureAtomicPseudoPrior pseudoPrior) {
         return new OneZeroOneShuffleGibbsOperator(
                 fixture.rewardRatesValues,
                 fixture.rewardRatesMapping,
@@ -240,6 +300,7 @@ public class OneZeroOneShuffleGibbsOperatorTargetTest extends MathTestCase {
                 fixture.dependentLikelihood == null
                         ? new TreeDataLikelihood[0]
                         : new TreeDataLikelihood[]{fixture.dependentLikelihood},
+                pseudoPrior,
                 1.0,
                 0.0);
     }
@@ -287,6 +348,7 @@ public class OneZeroOneShuffleGibbsOperatorTargetTest extends MathTestCase {
         java.util.Arrays.fill(categoryInit, 0.5);
 
         final Parameter ctsRewards = new Parameter.Default("targetRewardCts", ctsInit);
+        ctsRewards.addBounds(new Parameter.DefaultBounds(1.0, 0.0, branchCount));
         final Parameter categoryState = new Parameter.Default("targetRewardCategory", categoryInit);
         final double[] cuts = new double[stateCount + 2];
         for (int i = 0; i < cuts.length; i++) {
@@ -345,7 +407,8 @@ public class OneZeroOneShuffleGibbsOperatorTargetTest extends MathTestCase {
                     tree, dependentPatterns, rewardsAwareBranchModel, siteRateModel, rewardBranchRates);
         }
 
-        return new Fixture(independentLikelihood, dependentLikelihood, rewardRatesValues,
+        return new Fixture(independentLikelihood, dependentLikelihood, rewardsAwareBranchModel,
+                rewardBranchRates, ctsRewards, categoryState, rewardRatesValues,
                 rewardRatesMapping, allPermutations(stateCount));
     }
 
@@ -441,17 +504,29 @@ public class OneZeroOneShuffleGibbsOperatorTargetTest extends MathTestCase {
     private static final class Fixture {
         final TreeDataLikelihood independentLikelihood;
         final TreeDataLikelihood dependentLikelihood;
+        final RewardsAwareBranchModel rewardsAwareBranchModel;
+        final ArbitraryBranchRates rewardBranchRates;
+        final Parameter ctsRewards;
+        final Parameter categoryState;
         final Parameter rewardRatesValues;
         final Parameter rewardRatesMapping;
         final List<int[]> permutations;
 
         private Fixture(final TreeDataLikelihood independentLikelihood,
                         final TreeDataLikelihood dependentLikelihood,
+                        final RewardsAwareBranchModel rewardsAwareBranchModel,
+                        final ArbitraryBranchRates rewardBranchRates,
+                        final Parameter ctsRewards,
+                        final Parameter categoryState,
                         final Parameter rewardRatesValues,
                         final Parameter rewardRatesMapping,
                         final List<int[]> permutations) {
             this.independentLikelihood = independentLikelihood;
             this.dependentLikelihood = dependentLikelihood;
+            this.rewardsAwareBranchModel = rewardsAwareBranchModel;
+            this.rewardBranchRates = rewardBranchRates;
+            this.ctsRewards = ctsRewards;
+            this.categoryState = categoryState;
             this.rewardRatesValues = rewardRatesValues;
             this.rewardRatesMapping = rewardRatesMapping;
             this.permutations = permutations;

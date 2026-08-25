@@ -36,6 +36,14 @@ public final class RewardsMixtureBranchWeightProvider {
     private final double[] preScales;
     private final double[] postScales;
     private final double[] logAtomicWeights;
+    private final double[] continuousMatrixScratch;
+    private final double[] singleCtsRewardScratch;
+    private final double[] singleCtsTimeScratch;
+    private final double[][] singleCtsMatrixScratch;
+    private final double[][] cachedPrePartialByParameterIndex;
+    private final double[][] cachedPostPartialByParameterIndex;
+    private final double[] cachedPreScaleByParameterIndex;
+    private final double[] cachedPostScaleByParameterIndex;
     private final RewardsMixtureBranchResamplingHelper.BranchWeights[] cachedBranchWeightsByParameterIndex;
     private final int[] cachedBranchWeightsEpoch;
 
@@ -93,6 +101,14 @@ public final class RewardsMixtureBranchWeightProvider {
         this.preScales = new double[discreteDelegate.getPatternCount()];
         this.postScales = new double[discreteDelegate.getPatternCount()];
         this.logAtomicWeights = new double[nstates];
+        this.continuousMatrixScratch = new double[nstates * nstates];
+        this.singleCtsRewardScratch = new double[1];
+        this.singleCtsTimeScratch = new double[1];
+        this.singleCtsMatrixScratch = new double[1][];
+        this.cachedPrePartialByParameterIndex = new double[branchCount][nstates];
+        this.cachedPostPartialByParameterIndex = new double[branchCount][nstates];
+        this.cachedPreScaleByParameterIndex = new double[branchCount];
+        this.cachedPostScaleByParameterIndex = new double[branchCount];
         this.cachedBranchWeightsByParameterIndex =
                 new RewardsMixtureBranchResamplingHelper.BranchWeights[branchCount];
         this.cachedBranchWeightsEpoch = new int[branchCount];
@@ -126,29 +142,59 @@ public final class RewardsMixtureBranchWeightProvider {
     }
 
     public void refreshRewardCategoryEmbedding() {
+        refreshRewardCategoryEmbedding(
+                RewardMixturePerformanceStats.OperationCacheClearReason.DYNAMIC_EMBEDDING_REFRESH);
+    }
+
+    public void refreshRewardCategoryEmbedding(
+            final RewardMixturePerformanceStats.OperationCacheClearReason reason) {
         rewardsAwareBranchModel.refreshCategoryDecoderEmbedding();
-        clearOperationCache();
+        clearOperationCache(reason);
     }
 
     public void beginOperationCache() {
         operationCacheActive = true;
-        clearOperationCache();
+        RewardMixturePerformanceStats.recordOperationCacheBegin();
+        clearOperationCache(RewardMixturePerformanceStats.OperationCacheClearReason.OPERATION_START);
     }
 
     public void clearOperationCache() {
+        clearOperationCache(RewardMixturePerformanceStats.OperationCacheClearReason.UNKNOWN);
+    }
+
+    public void clearOperationCache(final RewardMixturePerformanceStats.OperationCacheClearReason reason) {
+        RewardMixturePerformanceStats.recordOperationCacheClear(reason);
         likelihoodMessagesFresh = false;
         advanceOperationCacheEpoch();
     }
 
     public void refreshLikelihoodMessages() {
-        discreteDelegate.updatePostOrdersFromTreeDataLikelihood(treeDataLikelihood);
-        discreteDelegate.ensurePreOrderComputed();
-        for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
-            provider.prepare();
-        }
-        if (operationCacheActive) {
-            likelihoodMessagesFresh = true;
-            advanceOperationCacheEpoch();
+        final long refreshStart = RewardMixturePerformanceStats.startTimer();
+        try {
+            long start = RewardMixturePerformanceStats.startTimer();
+            discreteDelegate.updatePostOrdersFromTreeDataLikelihood(treeDataLikelihood);
+            RewardMixturePerformanceStats.recordPostOrderRefresh(
+                    RewardMixturePerformanceStats.elapsed(start));
+
+            start = RewardMixturePerformanceStats.startTimer();
+            discreteDelegate.ensurePreOrderComputed();
+            RewardMixturePerformanceStats.recordPreOrderRefresh(
+                    RewardMixturePerformanceStats.elapsed(start));
+
+            for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
+                start = RewardMixturePerformanceStats.startTimer();
+                provider.prepare();
+                RewardMixturePerformanceStats.recordDependentPrepare(
+                        RewardMixturePerformanceStats.elapsed(start));
+            }
+            if (operationCacheActive) {
+                fillBranchMessageCache();
+                likelihoodMessagesFresh = true;
+                advanceOperationCacheEpoch();
+            }
+        } finally {
+            RewardMixturePerformanceStats.recordRewardProviderRefresh(
+                    RewardMixturePerformanceStats.elapsed(refreshStart));
         }
     }
 
@@ -162,17 +208,22 @@ public final class RewardsMixtureBranchWeightProvider {
         final int branchNodeNumber = getNodeNumberForParameterIndex(parameterIndex);
 
         if (!operationCacheActive) {
+            RewardMixturePerformanceStats.recordBranchWeightCacheBypass();
             refreshLikelihoodMessages();
             return computeBranchWeightsForNode(branchNodeNumber);
         }
 
         if (!likelihoodMessagesFresh) {
+            RewardMixturePerformanceStats.recordLikelihoodMessageMiss();
             refreshLikelihoodMessages();
         }
         if (cachedBranchWeightsEpoch[parameterIndex] != operationCacheEpoch) {
+            RewardMixturePerformanceStats.recordBranchWeightCacheMiss();
             cachedBranchWeightsByParameterIndex[parameterIndex] =
                     computeBranchWeightsForNode(branchNodeNumber);
             cachedBranchWeightsEpoch[parameterIndex] = operationCacheEpoch;
+        } else {
+            RewardMixturePerformanceStats.recordBranchWeightCacheHit();
         }
         return cachedBranchWeightsByParameterIndex[parameterIndex];
     }
@@ -187,17 +238,50 @@ public final class RewardsMixtureBranchWeightProvider {
 
     public RewardsMixtureBranchResamplingHelper.BranchWeights computeBranchWeightsForNode(
             final int branchNodeNumber) {
-        loadBranchPartials(branchNodeNumber, prePartial, postPartial);
+        final long start = RewardMixturePerformanceStats.startTimer();
+        try {
+            return computeBranchWeightsForNodeUnprofiled(branchNodeNumber);
+        } finally {
+            RewardMixturePerformanceStats.recordBranchWeightComputation(
+                    RewardMixturePerformanceStats.elapsed(start));
+        }
+    }
 
-        discreteDelegate.getPreOrderBranchScalesInto(branchNodeNumber, preScales);
-        discreteDelegate.getPostOrderBranchScalesInto(branchNodeNumber, postScales);
+    private RewardsMixtureBranchResamplingHelper.BranchWeights computeBranchWeightsForNodeUnprofiled(
+            final int branchNodeNumber) {
+        long messageStart = RewardMixturePerformanceStats.startTimer();
+        final int parameterIndex = getParameterIndexForNode(branchNodeNumber);
+        final double preScale;
+        final double postScale;
 
-        final double preScale = preScales[0];
-        final double postScale = postScales[0];
+        if (operationCacheActive && likelihoodMessagesFresh) {
+            loadCachedBranchMessages(parameterIndex, prePartial, postPartial);
+            preScale = cachedPreScaleByParameterIndex[parameterIndex];
+            postScale = cachedPostScaleByParameterIndex[parameterIndex];
+        } else {
+            loadBranchPartials(branchNodeNumber, prePartial, postPartial);
+
+            long start = RewardMixturePerformanceStats.startTimer();
+            discreteDelegate.getPreOrderBranchScalesInto(branchNodeNumber, preScales);
+            RewardMixturePerformanceStats.recordBranchPreScaleLoad(
+                    RewardMixturePerformanceStats.elapsed(start));
+
+            start = RewardMixturePerformanceStats.startTimer();
+            discreteDelegate.getPostOrderBranchScalesInto(branchNodeNumber, postScales);
+            RewardMixturePerformanceStats.recordBranchPostScaleLoad(
+                    RewardMixturePerformanceStats.elapsed(start));
+
+            preScale = preScales[0];
+            postScale = postScales[0];
+        }
+
+        RewardMixturePerformanceStats.recordBranchMessageLoad(
+                RewardMixturePerformanceStats.elapsed(messageStart));
 
         final NodeRef node = tree.getNode(branchNodeNumber);
         final double branchLength = tree.getBranchLength(node);
 
+        long start = RewardMixturePerformanceStats.startTimer();
         for (int j = 0; j < nstates; j++) {
             final double logAtomicLocalFactor =
                     rewardsAwareBranchModel.getAtomicLogScaleForState(j, branchLength);
@@ -215,24 +299,47 @@ public final class RewardsMixtureBranchWeightProvider {
 
         final double logAtomicTotalWeight =
                 RewardsMixtureBranchResamplingHelper.logSum(logAtomicWeights, nstates);
+        RewardMixturePerformanceStats.recordBranchAtomicWeightLoop(
+                RewardMixturePerformanceStats.elapsed(start));
 
         final double rawContinuousReward =
                 rewardsAwareBranchModel.getContinuousRewardRawForBranch(branchNodeNumber);
 
         final double logCtsWeight;
-        if (isContinuousRewardOutsideOpenSupport(rawContinuousReward)) {
+        if (branchLength == 0.0) {
+            // A mid-branch CTMC jump is impossible on a zero-length branch, so
+            // the continuous category has no support there -- exclude it
+            // outright rather than relying on a degenerate (identity) transition
+            // matrix, which would leave the branch selectable as "continuous"
+            // and then crash the cts-reward HMC gradient (Sericola derivative
+            // code requires time > 0). See the ctmc_bm4d_timeseries scenario (c)
+            // ladder-tree diagnosis in the project log for the full trace.
+            logCtsWeight = Double.NEGATIVE_INFINITY;
+        } else if (isContinuousRewardOutsideOpenSupport(rawContinuousReward)) {
             logCtsWeight = Double.NEGATIVE_INFINITY;
         } else {
-            final double[] continuousMatrix = rewardsAwareBranchModel.getTransitionMatrixCts(branchNodeNumber);
+            start = RewardMixturePerformanceStats.startTimer();
+            rewardsAwareBranchModel.computeTransitionMatrixCtsForBranchInto(
+                    branchNodeNumber,
+                    continuousMatrixScratch,
+                    singleCtsRewardScratch,
+                    singleCtsTimeScratch,
+                    singleCtsMatrixScratch);
+            RewardMixturePerformanceStats.recordBranchContinuousMatrixAccess(
+                    RewardMixturePerformanceStats.elapsed(start));
+
+            start = RewardMixturePerformanceStats.startTimer();
             logCtsWeight =
                     RewardsMixtureBranchResamplingHelper.logContinuousWeight(
                             prePartial,
-                            continuousMatrix,
+                            continuousMatrixScratch,
                             postPartial,
                             nstates,
                             preScale,
                             postScale
                     ) + getDependentLogEvidence(branchNodeNumber, rawContinuousReward);
+            RewardMixturePerformanceStats.recordBranchContinuousWeight(
+                    RewardMixturePerformanceStats.elapsed(start));
         }
 
         return new RewardsMixtureBranchResamplingHelper.BranchWeights(
@@ -294,23 +401,73 @@ public final class RewardsMixtureBranchWeightProvider {
     private void loadBranchPartials(final int nodeNum,
                                     final double[] prePartialOut,
                                     final double[] postPartialOut) {
+        long start = RewardMixturePerformanceStats.startTimer();
         Arrays.fill(prePartialOut, 0.0);
-        Arrays.fill(postPartialOut, 0.0);
-
         discreteDelegate.getPreOrderAtBranchStartInto(nodeNum, prePartialOut);
+        RewardMixturePerformanceStats.recordBranchPrePartialLoad(
+                RewardMixturePerformanceStats.elapsed(start));
+
+        start = RewardMixturePerformanceStats.startTimer();
+        Arrays.fill(postPartialOut, 0.0);
         discreteDelegate.getPostOrderAtBranchEndInto(nodeNum, postPartialOut);
+        RewardMixturePerformanceStats.recordBranchPostPartialLoad(
+                RewardMixturePerformanceStats.elapsed(start));
+    }
+
+    private void fillBranchMessageCache() {
+        final long start = RewardMixturePerformanceStats.startTimer();
+        for (int parameterIndex = 0; parameterIndex < branchCount; parameterIndex++) {
+            final int branchNodeNumber = nodeNumberByParameterIndex[parameterIndex];
+
+            Arrays.fill(cachedPrePartialByParameterIndex[parameterIndex], 0.0);
+            discreteDelegate.getPreOrderAtBranchStartInto(
+                    branchNodeNumber, cachedPrePartialByParameterIndex[parameterIndex]);
+
+            Arrays.fill(cachedPostPartialByParameterIndex[parameterIndex], 0.0);
+            discreteDelegate.getPostOrderAtBranchEndInto(
+                    branchNodeNumber, cachedPostPartialByParameterIndex[parameterIndex]);
+
+            discreteDelegate.getPreOrderBranchScalesInto(branchNodeNumber, preScales);
+            discreteDelegate.getPostOrderBranchScalesInto(branchNodeNumber, postScales);
+            cachedPreScaleByParameterIndex[parameterIndex] = preScales[0];
+            cachedPostScaleByParameterIndex[parameterIndex] = postScales[0];
+        }
+        RewardMixturePerformanceStats.recordBranchMessageCacheFill(
+                RewardMixturePerformanceStats.elapsed(start));
+    }
+
+    private void loadCachedBranchMessages(final int parameterIndex,
+                                          final double[] prePartialOut,
+                                          final double[] postPartialOut) {
+        final long start = RewardMixturePerformanceStats.startTimer();
+        System.arraycopy(cachedPrePartialByParameterIndex[parameterIndex], 0,
+                prePartialOut, 0, nstates);
+        RewardMixturePerformanceStats.recordBranchPrePartialLoad(
+                RewardMixturePerformanceStats.elapsed(start));
+
+        final long postStart = RewardMixturePerformanceStats.startTimer();
+        System.arraycopy(cachedPostPartialByParameterIndex[parameterIndex], 0,
+                postPartialOut, 0, nstates);
+        RewardMixturePerformanceStats.recordBranchPostPartialLoad(
+                RewardMixturePerformanceStats.elapsed(postStart));
     }
 
     private double getDependentLogEvidence(final int branchNodeNumber, final double rawReward) {
+        final long start = RewardMixturePerformanceStats.startTimer();
         double logEvidence = 0.0;
-        for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
-            final double contribution = provider.logEvidence(branchNodeNumber, rawReward);
-            if (!Double.isFinite(contribution)) {
-                return Double.NEGATIVE_INFINITY;
+        try {
+            for (RewardDependentEdgeEvidenceProvider provider : dependentEvidenceProviders) {
+                final double contribution = provider.logEvidence(branchNodeNumber, rawReward);
+                if (!Double.isFinite(contribution)) {
+                    return Double.NEGATIVE_INFINITY;
+                }
+                logEvidence += contribution;
             }
-            logEvidence += contribution;
+            return logEvidence;
+        } finally {
+            RewardMixturePerformanceStats.recordDependentEvidence(
+                    RewardMixturePerformanceStats.elapsed(start));
         }
-        return logEvidence;
     }
 
     private boolean isContinuousRewardOutsideOpenSupport(final double rawReward) {

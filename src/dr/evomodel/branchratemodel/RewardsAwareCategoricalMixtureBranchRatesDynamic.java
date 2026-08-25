@@ -35,6 +35,7 @@ public final class RewardsAwareCategoricalMixtureBranchRatesDynamic extends Arbi
 
     private final PerBranchRewardMixtureCategoryDecoder categoryDecoder;
     private final RewardRates rewardRates;
+    private final int[] decodedCategoryByParameterIndex;
 
     public RewardsAwareCategoricalMixtureBranchRatesDynamic(final TreeModel tree,
                                                              final Parameter ctsParameter,
@@ -60,6 +61,8 @@ public final class RewardsAwareCategoricalMixtureBranchRatesDynamic extends Arbi
                 rewardRates,
                 rewardRates.getStateIndices().getDimension(),
                 ctsParameter.getDimension());
+        this.decodedCategoryByParameterIndex = new int[ctsParameter.getDimension()];
+        refreshCachedDecodedCategories();
 
         addVariable(categoryParameter);
         addVariable(categoryCuts);
@@ -137,9 +140,18 @@ public final class RewardsAwareCategoricalMixtureBranchRatesDynamic extends Arbi
                                               final Parameter.ChangeType type) {
         if (variable == categoryDecoder.getCutParameter()) {
             categoryDecoder.refreshEmbedding();
-            fireModelChanged();
-        } else if (variable == categoryDecoder.getCategoryParameter() ||
-                variable == rewardRates.getValues() ||
+            if (refreshCachedDecodedCategories()) {
+                fireModelChanged();
+            }
+        } else if (variable == categoryDecoder.getCategoryParameter()) {
+            if (refreshCachedDecodedCategory(index)) {
+                if (index >= 0) {
+                    fireModelChanged(variable, getNodeNumberFromParameterIndex(index));
+                } else {
+                    fireModelChanged();
+                }
+            }
+        } else if (variable == rewardRates.getValues() ||
                 variable == rewardRates.getVaryingValues() ||
                 variable == rewardRates.getStateIndices()) {
             fireModelChanged();
@@ -151,6 +163,29 @@ public final class RewardsAwareCategoricalMixtureBranchRatesDynamic extends Arbi
     @Override
     protected void restoreState() {
         categoryDecoder.refreshEmbedding();
+        refreshCachedDecodedCategories();
         super.restoreState();
+    }
+
+    private boolean refreshCachedDecodedCategory(final int parameterIndex) {
+        if (parameterIndex < 0 || parameterIndex >= decodedCategoryByParameterIndex.length) {
+            return refreshCachedDecodedCategories();
+        }
+        final int currentCategory = categoryDecoder.getCategoryForParameterIndex(parameterIndex);
+        final boolean changed = decodedCategoryByParameterIndex[parameterIndex] != currentCategory;
+        decodedCategoryByParameterIndex[parameterIndex] = currentCategory;
+        return changed;
+    }
+
+    private boolean refreshCachedDecodedCategories() {
+        boolean changed = false;
+        for (int i = 0; i < decodedCategoryByParameterIndex.length; i++) {
+            final int currentCategory = categoryDecoder.getCategoryForParameterIndex(i);
+            if (decodedCategoryByParameterIndex[i] != currentCategory) {
+                changed = true;
+                decodedCategoryByParameterIndex[i] = currentCategory;
+            }
+        }
+        return changed;
     }
 }

@@ -35,6 +35,7 @@ import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.RewardRates;
@@ -92,7 +93,39 @@ public class OneZeroOneShuffleGibbsOperatorParserTest extends MathTestCase {
         assertEquals(1.0, fixture.rewardRatesValues.getParameterValue(1), 1e-12);
     }
 
+    public void testParserAcceptsAtomicPseudoPriorAndProposalRuns() throws Exception {
+        MathUtils.setSeed(20260818);
+
+        final Fixture fixture = createFixture();
+        fixture.ctsRewards.setParameterValue(0, 0.05);
+        fixture.categoryState.setParameterValue(0, 1.50);
+
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+
+        final OneZeroOneShuffleGibbsOperatorParser parser = new OneZeroOneShuffleGibbsOperatorParser();
+        final XMLObject xo = operatorXmlObject(fixture, pseudoPrior);
+        final Object parsed = parser.parseXMLObject(xo);
+
+        assertTrue(parsed instanceof OneZeroOneShuffleGibbsOperator);
+        final OneZeroOneShuffleGibbsOperator operator = (OneZeroOneShuffleGibbsOperator) parsed;
+
+        assertFinite(fixture.independentLikelihood.getLogLikelihood());
+        assertFinite(pseudoPrior.getLogLikelihood());
+        assertFinite(operator.doOperation());
+
+        assertIsValidPermutation(fixture.rewardRatesMapping);
+    }
+
     private static XMLObject operatorXmlObject(final Fixture fixture) throws Exception {
+        return operatorXmlObject(fixture, null);
+    }
+
+    private static XMLObject operatorXmlObject(final Fixture fixture,
+                                              final RewardMixtureAtomicPseudoPrior pseudoPrior) throws Exception {
         final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         final XMLObject xo = xmlObject(document,
                 OneZeroOneShuffleGibbsOperatorParser.OPERATOR,
@@ -100,6 +133,9 @@ public class OneZeroOneShuffleGibbsOperatorParserTest extends MathTestCase {
 
         addChild(xo, nativeObject(document, "rewardRates", fixture.rewardRates));
         addChild(xo, nativeObject(document, "treeDataLikelihood", fixture.independentLikelihood));
+        if (pseudoPrior != null) {
+            addChild(xo, nativeObject(document, "rewardMixtureAtomicPseudoPrior", pseudoPrior));
+        }
 
         return xo;
     }
@@ -112,6 +148,7 @@ public class OneZeroOneShuffleGibbsOperatorParserTest extends MathTestCase {
 
         final Parameter ctsRewards =
                 new Parameter.Default("rewardCts", new double[]{0.50, 0.50, 0.50, 0.50});
+        ctsRewards.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ctsRewards.getDimension()));
         final Parameter categoryState =
                 new Parameter.Default("rewardCategory", new double[]{0.50, 0.50, 0.50, 0.50});
         final Parameter categoryCuts =
@@ -167,7 +204,8 @@ public class OneZeroOneShuffleGibbsOperatorParserTest extends MathTestCase {
         final TreeDataLikelihood independentLikelihood =
                 new TreeDataLikelihood(independentDelegate, tree, rewardBranchRates);
 
-        return new Fixture(independentLikelihood, rewardRates, rewardRatesValues, rewardRatesMapping);
+        return new Fixture(independentLikelihood, rewardsAwareBranchModel, rewardBranchRates,
+                ctsRewards, categoryState, rewardRates, rewardRatesValues, rewardRatesMapping);
     }
 
     private static SitePatterns createSitePatterns(final String a, final String b, final String c) {
@@ -257,15 +295,27 @@ public class OneZeroOneShuffleGibbsOperatorParserTest extends MathTestCase {
 
     private static final class Fixture {
         final TreeDataLikelihood independentLikelihood;
+        final RewardsAwareBranchModel rewardsAwareBranchModel;
+        final ArbitraryBranchRates rewardBranchRates;
+        final Parameter ctsRewards;
+        final Parameter categoryState;
         final RewardRates rewardRates;
         final Parameter rewardRatesValues;
         final Parameter rewardRatesMapping;
 
         private Fixture(final TreeDataLikelihood independentLikelihood,
+                        final RewardsAwareBranchModel rewardsAwareBranchModel,
+                        final ArbitraryBranchRates rewardBranchRates,
+                        final Parameter ctsRewards,
+                        final Parameter categoryState,
                         final RewardRates rewardRates,
                         final Parameter rewardRatesValues,
                         final Parameter rewardRatesMapping) {
             this.independentLikelihood = independentLikelihood;
+            this.rewardsAwareBranchModel = rewardsAwareBranchModel;
+            this.rewardBranchRates = rewardBranchRates;
+            this.ctsRewards = ctsRewards;
+            this.categoryState = categoryState;
             this.rewardRates = rewardRates;
             this.rewardRatesValues = rewardRatesValues;
             this.rewardRatesMapping = rewardRatesMapping;

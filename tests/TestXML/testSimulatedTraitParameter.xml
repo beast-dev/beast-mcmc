@@ -1,0 +1,105 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="X">NA</attr>
+        </taxon>
+        <taxon id="B">
+            <attr name="X">NA</attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="X">NA</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree" usingHeights="true" usingDates="false">
+        ((A:0.0,B:1.0):1.0,C:2.0);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="1">
+            <parameter id="simulated.X"/>
+        </nodeTraits>
+    </treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="precisionMatrix">
+                <parameter id="prec.col1" value="1.0"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <arbitraryBranchRates id="branchRates" reciprocal="false" exp="false">
+        <rates>
+            <parameter id="actual.rates" value="1.5 0.75 1.25 2.0" lower="0"/>
+        </rates>
+        <treeModel idref="treeModel"/>
+    </arbitraryBranchRates>
+
+    <traitDataLikelihood id="simulationLikelihood" traitName="X"
+                         forceFullPrecision="true"
+                         forceCompletelyMissing="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter id="missingTraits"/>
+        </traitParameter>
+        <arbitraryBranchRates idref="branchRates"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="1.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <simulatedTraitParameter id="simulate.X" traitName="X" seed="12345">
+        <traitDataLikelihood idref="simulationLikelihood"/>
+        <traitParameter>
+            <parameter idref="simulated.X"/>
+        </traitParameter>
+    </simulatedTraitParameter>
+
+    <traitDataLikelihood id="observedLikelihood" traitName="X"
+                         forceFullPrecision="true"
+                         reconstructTraits="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="simulated.X"/>
+        </traitParameter>
+        <arbitraryBranchRates idref="branchRates"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="1.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+
+    <branchRateGradient id="branchRateGradient" traitName="X">
+        <traitDataLikelihood idref="observedLikelihood"/>
+    </branchRateGradient>
+
+    <report>
+        <parameter idref="simulated.X"/>
+        <branchRateGradient idref="branchRateGradient"/>
+    </report>
+
+</beast>

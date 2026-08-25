@@ -1,9 +1,11 @@
 package dr.inference.hmc;
 
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
+import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.branchratemodel.PerBranchRewardMixtureCategoryDecoder;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
+import dr.inference.operators.RewardMixturePerformanceStats;
 import dr.inference.operators.RewardsMixtureBranchResamplingHelper;
 import dr.inference.operators.RewardsMixtureBranchWeightProvider;
 
@@ -28,6 +30,7 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
     private final Parameter categoryParameter;
     private final PerBranchRewardMixtureCategoryDecoder categoryDecoder;
     private final RewardsMixtureBranchWeightProvider branchWeightProvider;
+    private final RewardMixtureAtomicPseudoPrior atomicPseudoPrior;
 
     public RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic(
             final PerBranchRewardMixtureCategoryDecoder categoryDecoder,
@@ -35,18 +38,41 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
             final TreeDataLikelihood treeDataLikelihood,
             final TreeDataLikelihood[] dependentTreeDataLikelihoods,
             final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods) {
+        this(categoryDecoder,
+                rewardsAwareBranchModel,
+                treeDataLikelihood,
+                dependentTreeDataLikelihoods,
+                dependentContinuousTreeDataLikelihoods,
+                null);
+    }
+
+    public RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic(
+            final PerBranchRewardMixtureCategoryDecoder categoryDecoder,
+            final RewardsAwareBranchModel rewardsAwareBranchModel,
+            final TreeDataLikelihood treeDataLikelihood,
+            final TreeDataLikelihood[] dependentTreeDataLikelihoods,
+            final TreeDataLikelihood[] dependentContinuousTreeDataLikelihoods,
+            final RewardMixtureAtomicPseudoPrior atomicPseudoPrior) {
         this(
                 categoryDecoder,
                 new RewardsMixtureBranchWeightProvider(
                         rewardsAwareBranchModel,
                         treeDataLikelihood,
                         dependentTreeDataLikelihoods,
-                        dependentContinuousTreeDataLikelihoods));
+                        dependentContinuousTreeDataLikelihoods),
+                atomicPseudoPrior);
     }
 
     public RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic(
             final PerBranchRewardMixtureCategoryDecoder categoryDecoder,
             final RewardsMixtureBranchWeightProvider branchWeightProvider) {
+        this(categoryDecoder, branchWeightProvider, null);
+    }
+
+    public RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic(
+            final PerBranchRewardMixtureCategoryDecoder categoryDecoder,
+            final RewardsMixtureBranchWeightProvider branchWeightProvider,
+            final RewardMixtureAtomicPseudoPrior atomicPseudoPrior) {
         if (categoryDecoder == null) {
             throw new IllegalArgumentException("categoryDecoder must be non-null");
         }
@@ -63,6 +89,7 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
         this.categoryDecoder = categoryDecoder;
         this.categoryParameter = categoryDecoder.getCategoryParameter();
         this.branchWeightProvider = branchWeightProvider;
+        this.atomicPseudoPrior = atomicPseudoPrior;
     }
 
     @Override
@@ -93,12 +120,18 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
 
     @Override
     public void refreshAfterPositionUpdate() {
-        branchWeightProvider.refreshRewardCategoryEmbedding();
+        branchWeightProvider.refreshRewardCategoryEmbedding(
+                RewardMixturePerformanceStats.OperationCacheClearReason.FINAL_POSITION_REFRESH);
     }
 
     @Override
     public void clearOperationCache() {
-        branchWeightProvider.clearOperationCache();
+        clearOperationCache(RewardMixturePerformanceStats.OperationCacheClearReason.UNKNOWN);
+    }
+
+    @Override
+    public void clearOperationCache(final RewardMixturePerformanceStats.OperationCacheClearReason reason) {
+        branchWeightProvider.clearOperationCache(reason);
     }
 
     @Override
@@ -159,9 +192,9 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
 
         final RewardsMixtureBranchResamplingHelper.BranchWeights weights = getBranchWeights(index);
         final double currentLogWeight =
-                branchWeightProvider.getLogWeightForCategory(weights, currentCategory);
+                getLogWeightForCategory(index, weights, currentCategory);
         final double proposedLogWeight =
-                branchWeightProvider.getLogWeightForCategory(weights, proposedCategory);
+                getLogWeightForCategory(index, weights, proposedCategory);
 
         if (isNegativeInfinity(proposedLogWeight)) {
             return Double.POSITIVE_INFINITY;
@@ -209,9 +242,9 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
 
         final RewardsMixtureBranchResamplingHelper.BranchWeights weights = getBranchWeights(index);
         final double currentLogWeight =
-                branchWeightProvider.getLogWeightForCategory(weights, currentCategory);
+                getLogWeightForCategory(index, weights, currentCategory);
         final double proposedLogWeight =
-                branchWeightProvider.getLogWeightForCategory(weights, proposedCategory);
+                getLogWeightForCategory(index, weights, proposedCategory);
 
         if (isNegativeInfinity(proposedLogWeight)) {
             return Double.POSITIVE_INFINITY;
@@ -265,12 +298,24 @@ public final class RewardMixtureCategoricalDiscontinuousPotentialProviderDynamic
                                      final int index,
                                      final double value) {
         try {
-            return branchWeightProvider.getLogWeightForCategory(
+            return getLogWeightForCategory(
+                    index,
                     weights,
                     categoryDecoder.getCategoryForValue(index, value));
         } catch (IllegalArgumentException e) {
             return Double.NEGATIVE_INFINITY;
         }
+    }
+
+    private double getLogWeightForCategory(final int index,
+                                           final RewardsMixtureBranchResamplingHelper.BranchWeights weights,
+                                           final int category) {
+        return branchWeightProvider.getLogWeightForCategory(weights, category) +
+                getPseudoPriorLogDensity(index, category);
+    }
+
+    private double getPseudoPriorLogDensity(final int index, final int category) {
+        return atomicPseudoPrior == null ? 0.0 : atomicPseudoPrior.getLogDensityForCategory(index, category);
     }
 
     private void checkIndex(final int index) {

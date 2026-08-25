@@ -32,26 +32,11 @@ public final class OneZeroOneShuffleOperator extends SimpleMCMCOperator {
                                      final Parameter rewardRatesMapping,
                                      final double weight,
                                      final double tol) {
-        if (rewardRatesValues == null) {
-            throw new IllegalArgumentException("rewardRatesValues must be non-null");
-        }
-        if (rewardRatesMapping == null) {
-            throw new IllegalArgumentException("rewardRatesMapping must be non-null");
-        }
-        if (rewardRatesValues.getDimension() < 2) {
-            throw new IllegalArgumentException("rewardRatesValues dimension must be >= 2");
-        }
-        if (tol < 0.0) {
-            throw new IllegalArgumentException("tol must be >= 0");
-        }
-
-        this.rewardRatesValues = rewardRatesValues;
-        this.rewardRatesMapping = rewardRatesMapping;
-        this.tol = tol;
-
-        validateRewardRatesValues();
-
-        setWeight(weight);
+        throw new UnsupportedOperationException(
+                "OneZeroOneShuffleOperator has a reachability bug (0/1998 acceptance observed in " +
+                        "practice, see ctmc_bm4d_timeseries scenario a) and must not be used. " +
+                        "Use OneZeroOneShuffleGibbsOperator instead."
+        );
     }
 
     @Override

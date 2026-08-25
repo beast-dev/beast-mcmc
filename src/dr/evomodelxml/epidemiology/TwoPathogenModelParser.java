@@ -56,9 +56,12 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
     public static final String SEASONAL_MODEL = "seasonalModel";
     public static final String SEASONAL_PERIOD = "seasonalPeriod";
     public static final String SEASONAL_AMP_ONE = "seasonalAmplitudeOne";
+    public static final String MOST_RECENT_SAMPLING_DATE_ONE = "mostRecentSamplingDateOne";
     public static final String SEASONAL_AMP_TWO = "seasonalAmplitudeTwo";
     public static final String SEASONAL_PEAK_ONE = "seasonalPeakDayOne";
     public static final String SEASONAL_PEAK_TWO = "seasonalPeakDayTwo";
+    public static final String MOST_RECENT_SAMPLING_DATE_TWO = "mostRecentSamplingDateTwo";
+
 
     public String getParserName() {
         return TWO_PATHOGEN_MODEL;
@@ -106,6 +109,16 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
         }
         if (seasonal && seasonalPeakDayTwo == null) {
             throw new RuntimeException("seasonal model requires seasonalPeakDayTwo");
+        }
+
+        Parameter mostRecentSamplingDateOne = null;
+        if(xo.getChild(MOST_RECENT_SAMPLING_DATE_ONE) != null) {
+            mostRecentSamplingDateOne = (Parameter) xo.getChild(MOST_RECENT_SAMPLING_DATE_ONE).getChild(Parameter.class);
+        }
+
+        Parameter mostRecentSamplingDateTwo = null;
+        if(xo.getChild(MOST_RECENT_SAMPLING_DATE_TWO) != null) {
+            mostRecentSamplingDateTwo = (Parameter) xo.getChild(MOST_RECENT_SAMPLING_DATE_TWO).getChild(Parameter.class);
         }
 
         ArrayList<Parameter> rateParams = new ArrayList<>();
@@ -266,7 +279,7 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
         TwoPathogenModel twoPathogenModel = new TwoPathogenModel(rateParams, compartmentCounts,
                 originOne, originTwo, originTimeNumSS, originTimeNumSI,originTimeNumIS, 79, (int)(numGridPoints.getParameterValue(0)),
                 cutOff.getParameterValue(0),seasonal, seasonalPeriod, seasonalAmplitudeOne, seasonalPeakDayOne,
-                seasonalAmplitudeTwo, seasonalPeakDayTwo);
+                mostRecentSamplingDateOne, seasonalAmplitudeTwo, seasonalPeakDayTwo, mostRecentSamplingDateTwo);
 
         return twoPathogenModel;
     }

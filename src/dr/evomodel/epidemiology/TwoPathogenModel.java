@@ -13,9 +13,12 @@ public class TwoPathogenModel extends CompartmentalModel {
     protected boolean seasonalModel;
     protected double seasonalPeriod;
     protected double seasonalAmpOne;
+    protected double mostRecentSamplingDateOne;
     protected double seasonalAmpTwo;
     protected double seasonalPeakDayOne;
     protected double seasonalPeakDayTwo;
+    protected double mostRecentSamplingDateTwo;
+    protected double seasonalOffset;
     // keep track of introduction of "younger" pathogen
     private boolean secondPathogenIntroduced;
 
@@ -34,8 +37,10 @@ public class TwoPathogenModel extends CompartmentalModel {
             Parameter seasonalPeriod,
             Parameter seasonalAmpOne,
             Parameter seasonalPeakDayOne,
+            Parameter mostRecentSamplingDateOne,
             Parameter seasonalAmpTwo,
-            Parameter seasonalPeakDayTwo) {
+            Parameter seasonalPeakDayTwo,
+            Parameter mostRecentSamplingDateTwo) {
         super("Two-Pathogen CompartmentalModel");
 
         this.rateParameters = rateParams;
@@ -55,24 +60,51 @@ public class TwoPathogenModel extends CompartmentalModel {
         this.originTimeNumSI = originTimeNumSI;
         this.originTimeNumIS = originTimeNumIS;
         // changed later if necessary
-        this.totalPopSize = originTimeNumSS.getParameterValue(0) + 1;
+        //this.totalPopSize = originTimeNumSS.getParameterValue(0) + 1;
         this.numGridPoints = numGridPoints;
         this.cutOff = cutOff;
         this.numReactionChannels = numReactionChannels;
         this.numSpecies = compartmentCounts.size();
         this.vMatrix = getVMatrix();
 
+        setTotalPopSize();
+
         this.seasonalModel = seasonalModel;
         if(seasonalModel) {
             this.seasonalPeriod = seasonalPeriod.getParameterValue(0);
             this.seasonalAmpOne = seasonalAmpOne.getParameterValue(0);
             this.seasonalAmpTwo = seasonalAmpTwo.getParameterValue(0);
-            this.seasonalAmpTwo = seasonalAmpTwo.getParameterValue(0);
-            this.seasonalPeakDayOne = seasonalAmpTwo.getParameterValue(0);
-            this.seasonalPeakDayTwo = seasonalAmpTwo.getParameterValue(0);
+            this.seasonalPeakDayOne = seasonalPeakDayOne.getParameterValue(0);
+            this.seasonalPeakDayTwo = seasonalPeakDayTwo.getParameterValue(0);
+            this.mostRecentSamplingDateOne = mostRecentSamplingDateOne.getParameterValue(0);
+            this.mostRecentSamplingDateTwo = mostRecentSamplingDateTwo.getParameterValue(0);
+            setSeasonalOffset();
         }
     }
 
+    protected void setTotalPopSize() {
+        double origOne = originOne.getParameterValue(0);
+        double origTwo = originTwo.getParameterValue(0);
+        double originTimeSS = originTimeNumSS.getParameterValue(0);
+        double originTimeSI = originTimeNumSI;
+        double originTimeIS = originTimeNumIS;
+
+        if (origOne > origTwo) {
+            // total compartment counts at origin time should be originTimeSS + originTimeIS
+            totalPopSize = originTimeSS + originTimeIS;
+        } else if (origTwo > origOne) {
+            totalPopSize = originTimeSS + originTimeSI;
+        } else {
+            // total compartment counts at origin time should be originTimeSS + originTimeIS + originTimeSI
+            totalPopSize = originTimeSS + originTimeIS + originTimeSI;
+        }
+    }
+
+    protected void setSeasonalOffset(){
+        double mostRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
+        double simStartDate = mostRecentSamplingDate - cutOff;
+        seasonalOffset = simStartDate - Math.floor(simStartDate);
+    }
 
     protected void setOriginTimeCompartmentCounts(int index){
         secondPathogenIntroduced = false;
@@ -82,6 +114,15 @@ public class TwoPathogenModel extends CompartmentalModel {
         double originTimeSS = originTimeNumSS.getParameterValue(0);
         double originTimeSI = originTimeNumSI;
         double originTimeIS = originTimeNumIS;
+
+        if (origOne > cutOff) {
+            throw new RuntimeException("Origin time of pathogen 1 (" + origOne +
+                    ") is further back in time than cutOff (" + cutOff + "). Need to increase value of cutOff");
+        }
+        if (origTwo > cutOff) {
+            throw new RuntimeException("Origin time of pathogen 2 (" + origTwo +
+                    ") is further back in time than cutOff (" + cutOff + "). Need to increase value of cutOff.");
+        }
 
         // initialize everything to 0
         for (int i = 0; i < compartmentCounts.size(); i++) {
@@ -95,12 +136,16 @@ public class TwoPathogenModel extends CompartmentalModel {
             // pathogen 1 is older, start in IS
             compartmentCounts.get(4).setParameterValue(index, originTimeIS);
             // total compartment counts at origin time should be originTimeSS + originTimeIS
-            totalPopSize = originTimeSS + originTimeIS;
+            if(totalPopSize != originTimeSS + originTimeIS){
+                throw new RuntimeException("Total pop size mismatch");
+            }
         } else if (origTwo > origOne) {
             // pathogen 2 is older, start in SI
             compartmentCounts.get(1).setParameterValue(index, originTimeSI);
             // total compartment counts at origin time should be originTimeSS + originTimeSI
-            totalPopSize = originTimeSS + originTimeSI;
+            if(totalPopSize != originTimeSS + originTimeSI){
+                throw new RuntimeException("Total pop size mismatch");
+            }
         } else {
             // no need to "introduce" second pathogen while doing forward time simulation
             secondPathogenIntroduced = true;
@@ -108,44 +153,11 @@ public class TwoPathogenModel extends CompartmentalModel {
             compartmentCounts.get(1).setParameterValue(index, originTimeSI); // SI
             compartmentCounts.get(4).setParameterValue(index, originTimeIS); // IS
             // total compartment counts at origin time should be originTimeSS + originTimeIS + originTimeSI
-            totalPopSize = originTimeSS + originTimeIS + originTimeSI;
+            if(totalPopSize != originTimeSS + originTimeIS + originTimeSI){
+                throw new RuntimeException("Total pop size mismatch");
+            }
         }
     }
-
-    /*
-    // DEBUG AND SIMULATION ONLY - SET ALL COUNTS TO 50 INITIALLY
-    protected void setOriginTimeCompartmentCounts(int index){
-
-        double origOne = originOne.getParameterValue(0);
-        double origTwo = originTwo.getParameterValue(0);
-        double originTimeSS = originTimeNumSS.getParameterValue(0);
-
-        // initialize everything to 0
-        for (int i = 0; i < compartmentCounts.size(); i++) {
-            compartmentCounts.get(i).setParameterValue(index, 50);
-        }
-
-        // total compartment counts should be originTimeSS + 1 for the infected individual?
-        // SS = originTimeSS
-        compartmentCounts.get(0).setParameterValue(index, originTimeSS);
-
-        if (origOne > origTwo) {
-            // pathogen 1 is older, start in IS
-            compartmentCounts.get(4).setParameterValue(index, 50);
-        } else if (origTwo > origOne) {
-            // pathogen 2 is older, start in SI
-            compartmentCounts.get(1).setParameterValue(index, 50);
-        } else {
-            // no need to "introduce" second pathogen while doing forward time simulation
-            secondPathogenIntroduced = true;
-            // origins equal
-            // choose whichever convention you want
-            compartmentCounts.get(1).setParameterValue(index, 50); // SI
-            compartmentCounts.get(4).setParameterValue(index, 50); // IS
-            compartmentCounts.get(0).setParameterValue(index, originTimeSS - 1); // starting with two sick
-        }
-    }
-    */
 
     protected void setDefaultCompartmentCounts(int index){
         double origOne = originOne.getParameterValue(0);
@@ -219,7 +231,7 @@ public class TwoPathogenModel extends CompartmentalModel {
 
     // v matrix describes how count vector changes with reaction
     // row corresponds to species/particle type, column corresponds to reaction channel
-    // columns are rxns, rows are compartment counts, there are 56 reactions
+    // columns are reactions, rows are compartment counts, there are 56 reactions
     // I am using the same reaction order as the reaction rates
     protected int[][] getVMatrix() {
         int[][] v = new int[numSpecies][numReactionChannels];
@@ -286,57 +298,6 @@ public class TwoPathogenModel extends CompartmentalModel {
         // RR
         v[15][43] = 1; v[15][47] = 1; v[15][51] = -1; v[15][55] = -1; v[15][78] = -1;
 
-        /*
-        int[][] v = new int[][]{
-                // SS
-                {-1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // SI
-                { 0,  0,  0,  0,  1,  1,  1,  1,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
-
-                // SC
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 1,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-
-                // SR
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-
-                // IS
-                { 1,  1,  1,  1,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // II
-                { 0,  0,  0,  0,  0,  0,  0,  0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // IC
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // IR
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // CS
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // CI
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // CC
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // CR
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
-                // RS
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 1},
-
-                // RI
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1, 0, 0, 0, 0},
-
-                // RC
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 0, 0},
-
-                // RR
-                { 0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1}
-        };
-        */
         return v;
     }
 
@@ -1058,96 +1019,6 @@ public class TwoPathogenModel extends CompartmentalModel {
         // RR -> 0, 0 -> SS
         rVec[78] = birthMortalityRate*dRR;
 
-        /*
-        // SS to IS
-        returnVec[0] = transRateOne*dSS*numIS + transRateOne*numSS*dIS;
-        returnVec[1] = transRateOne*dSS*numII + transRateOne*numSS*dII;
-        returnVec[2] = transRateOne*dSS*numIC + transRateOne*numSS*dIC;
-        returnVec[3] = transRateOne*dSS*numIR + transRateOne*numSS*dIR;
-        // SS to SI
-        returnVec[4] = transRateTwo*dSS*numSI + transRateTwo*numSS*dSI;
-        returnVec[5] = transRateTwo*dSS*numII + transRateTwo*numSS*dII;
-        returnVec[6] = transRateTwo*dSS*numCI + transRateTwo*numSS*dCI;
-        returnVec[7] = transRateTwo*dSS*numRI + transRateTwo*numSS*dRI;
-        // SI to II
-        returnVec[8] = infectionRateModulationI*transRateOne*dSI*numIS + infectionRateModulationI*transRateOne*numSI*dIS;
-        returnVec[9] = infectionRateModulationI*transRateOne*dSI*numII + infectionRateModulationI*transRateOne*numSI*dII;
-        returnVec[10] = infectionRateModulationI*transRateOne*dSI*numIC + infectionRateModulationI*transRateOne*numSI*dIC;
-        returnVec[11] = infectionRateModulationI*transRateOne*dSI*numIR + infectionRateModulationI*transRateOne*numSI*dIR;
-        // SI to SC
-        returnVec[12] = moveToCRateTwo*dSI;
-        // SC to IC
-        returnVec[13] = infectionRateModulationC*transRateOne*dSC*numIS + infectionRateModulationC*transRateOne*numSC*dIS;
-        returnVec[14] = infectionRateModulationC*transRateOne*dSC*numII + infectionRateModulationC*transRateOne*numSC*dII;
-        returnVec[15] = infectionRateModulationC*transRateOne*dSC*numIC + infectionRateModulationC*transRateOne*numSC*dIC;
-        returnVec[16] = infectionRateModulationC*transRateOne*dSC*numIR + infectionRateModulationC*transRateOne*numSC*dIR;
-        // SC to SR
-        returnVec[17] = moveToRRateTwo*dSC;
-        // SR to IR
-        returnVec[18] = transRateOne*dSR*numIS + transRateOne*numSR*dIS;
-        returnVec[19] = transRateOne*dSR*numII + transRateOne*numSR*dII;
-        returnVec[20] = transRateOne*dSR*numIC + transRateOne*numSR*dIC;
-        returnVec[21] = transRateOne*dSR*numIR + transRateOne*numSR*dIR;
-        // SR to SS
-        returnVec[22] = resusRateTwo*dSR;
-        // IS to CS
-        returnVec[23] = moveToCRateOne*dIS;
-        // IS to II
-        returnVec[24] = infectionRateModulationI*transRateTwo*dIS*numSI + infectionRateModulationI*transRateTwo*numIS*dSI;
-        returnVec[25] = infectionRateModulationI*transRateTwo*dIS*numII + infectionRateModulationI*transRateTwo*numIS*dII;
-        returnVec[26] = infectionRateModulationI*transRateTwo*dIS*numCI + infectionRateModulationI*transRateTwo*numIS*dCI;
-        returnVec[27] = infectionRateModulationI*transRateTwo*dIS*numRI + infectionRateModulationI*transRateTwo*numIS*dRI;
-        // II to CI
-        returnVec[28] = infectionRateModulationR*moveToCRateOne*dII;
-        // II to IC
-        returnVec[29] = infectionRateModulationR*moveToCRateTwo*dII;
-        // IC to CC
-        returnVec[30] = moveToCRateOne*dIC;
-        // IC to IR
-        returnVec[31] = moveToRRateTwo*dIC;
-        // IR to CR
-        returnVec[32] = moveToCRateOne*dIR;
-        // IR to IS
-        returnVec[33] = resusRateTwo*dIR;
-        // CS to RS
-        returnVec[34] = moveToRRateOne*dCS;
-        // CS to CI
-        returnVec[35] = infectionRateModulationC*transRateTwo*dCS*numSI + infectionRateModulationC*transRateTwo*numCS*dSI;
-        returnVec[36] = infectionRateModulationC*transRateTwo*dCS*numII + infectionRateModulationC*transRateTwo*numCS*dII;
-        returnVec[37] = infectionRateModulationC*transRateTwo*dCS*numCI + infectionRateModulationC*transRateTwo*numCS*dCI;
-        returnVec[38] = infectionRateModulationC*transRateTwo*dCS*numRI + infectionRateModulationC*transRateTwo*numCS*dRI;
-        // CI to RI
-        returnVec[39] = moveToRRateOne*dCI;
-        // CI to CC
-        returnVec[40] = moveToCRateTwo*dCI;
-        // CC to RC
-        returnVec[41] = moveToRRateOne*dCC;
-        // CC to CR
-        returnVec[42] = moveToRRateTwo*dCC;
-        // CR to RR
-        returnVec[43] = moveToRRateOne*dCR;
-        // CR to CS
-        returnVec[44] = resusRateTwo*dCR;
-        // RS to SS
-        returnVec[45] = resusRateOne*dRS;
-        // RS to RI
-        returnVec[46] = transRateTwo*dRS*numSI + transRateTwo*numRS*dSI;
-        returnVec[47] = transRateTwo*dRS*numII + transRateTwo*numRS*dII;
-        returnVec[48] = transRateTwo*dRS*numCI + transRateTwo*numRS*dCI;
-        returnVec[49] = transRateTwo*dRS*numRI + transRateTwo*numRS*dRI;
-        // RI to SI
-        returnVec[50] = resusRateOne*dRI;
-        // RI to RC
-        returnVec[51] = moveToCRateTwo*dRI;
-        // RC to SC
-        returnVec[52] = resusRateOne*dRC;
-        // RC to RR
-        returnVec[53] = moveToRRateTwo*dRC;
-        // RR to SR
-        returnVec[54] = resusRateOne*dRR;
-        // RR to RS
-        returnVec[55] = resusRateTwo*dRR;
-        */
         return rVec;
     }
 
@@ -1180,83 +1051,7 @@ public class TwoPathogenModel extends CompartmentalModel {
             }
         }
 
-        /*
-        // SS(t+tau) = SS(t) - rxn0 - rxn1 - rxn2 - rxn3 - rxn4 - rxn5 - rxn6 - rxn7 + rxn22 + rxn45
-        updatedCounts[0] = currentCounts[0] - countsNew[0] - countsNew[1] - countsNew[2] - countsNew[3] - countsNew[4] - countsNew[5] - countsNew[6] - countsNew[7] + countsNew[22] + countsNew[45];
-        // SI(t+tau) = SI(t) - rxn8 - rxn9 - rxn10 - rxn11 - rxn12 + rxn4 + rxn5 + rxn6 + rxn7 + rxn50
-        updatedCounts[1] = currentCounts[1] - countsNew[8] - countsNew[9] - countsNew[10] - countsNew[11] - countsNew[12] + countsNew[4] + countsNew[5] + countsNew[6] + countsNew[7] + countsNew[50];
-        // SC(t+tau) = SC(t) - rxn13 - rxn14 - rxn15 - rxn16 - rxn17 + rxn12 + rxn52
-        updatedCounts[2] = currentCounts[2] - countsNew[13] - countsNew[14] - countsNew[15] - countsNew[16] - countsNew[17] + countsNew[12] + countsNew[52];
-        // SR(t+tau) = SR(t) - rxn18 - rxn19 - rxn20 -  rxn21 - rxn22 + rxn17 + rxn54
-        updatedCounts[3] = currentCounts[3] - countsNew[18] - countsNew[19] - countsNew[20] - countsNew[21] - countsNew[22] + countsNew[17] + countsNew[54];
-        // IS(t+tau) = IS(t) - rxn23 - rxn24 - rxn25 - rxn26 - rxn27 + rxn0 + rxn1 + rxn2 + rxn3 + rxn33
-        updatedCounts[4] = currentCounts[4] - countsNew[23] - countsNew[24] - countsNew[25] - countsNew[26] - countsNew[27] + countsNew[0] + countsNew[1] + countsNew[2] + countsNew[3] + countsNew[33];
-        // II(t+tau) = II(t) - rxn28 - rxn29 + rxn8 + rxn9 + rxn10 + rxn11 + rxn24 + rxn25 + rxn26 + rxn27
-        updatedCounts[5] = currentCounts[5] - countsNew[28] - countsNew[29] + countsNew[8] + countsNew[9] + countsNew[10] + countsNew[11] + countsNew[24] + countsNew[25] + countsNew[26] + countsNew[27];
-        // IC(t+tau) = IC(t) - rxn30 - rxn31 + rxn13 + rxn14 + rxn15 + rxn16 + rxn29
-        updatedCounts[6] = currentCounts[6] - countsNew[30] - countsNew[31] + countsNew[13] + countsNew[14] + countsNew[15] + countsNew[16] + countsNew[29];
-        // IR(t+tau) = IR(t) - rxn32 - rxn33 + rxn18 + rxn19 + rxn20 + rxn21 + rxn31
-        updatedCounts[7] = currentCounts[7] - countsNew[32] - countsNew[33] + countsNew[18] + countsNew[19] + countsNew[20] + countsNew[21] + countsNew[31];
-        // CS(t+tau) = CS(t) - rxn34 - rxn35 - rxn36 - rxn37 - rxn38 + rxn23 + rxn44
-        updatedCounts[8] = currentCounts[8] - countsNew[34] - countsNew[35] - countsNew[36] - countsNew[37] - countsNew[38] + countsNew[23] + countsNew[44];
-        // CI(t+tau) = CI(t) - rxn39 - rxn40 + rxn28 + rxn35 + rxn36 + rxn37 + rxn38
-        updatedCounts[9] = currentCounts[9] - countsNew[39] - countsNew[40] + countsNew[28] + countsNew[35] + countsNew[36] + countsNew[37] + countsNew[38];
-        // CC(t+tau) = CC(t) - rxn41 - rxn42 + rxn30 + rxn40
-        updatedCounts[10] = currentCounts[10] - countsNew[41] - countsNew[42] + countsNew[30] + countsNew[40];
-        // CR(t+tau) = CR(t) - rxn43 - rxn44 + rxn32 + rxn42
-        updatedCounts[11] = currentCounts[11] - countsNew[43] - countsNew[44] + countsNew[32] + countsNew[42];
-        // RS(t+tau) = RS(t) - rxn45 - rxn46 - rxn47 - rxn48 - rxn49 + rxn34 + rxn55
-        updatedCounts[12] = currentCounts[12] - countsNew[45] - countsNew[46] - countsNew[47] - countsNew[48] - countsNew[49] + countsNew[34] + countsNew[55];
-        // RI(t+tau) = RI(t) - rxn50 - rxn51 + rxn39 + rxn46 + rxn47 + rxn48 + rxn49
-        updatedCounts[13] = currentCounts[13] - countsNew[50] - countsNew[51] + countsNew[39] + countsNew[46] + countsNew[47] + countsNew[48] + countsNew[49];
-        // RC(t+tau) = RC(t) - rxn52 - rxn53 + rxn41 + rxn51
-        updatedCounts[14] = currentCounts[14] - countsNew[52] - countsNew[53] + countsNew[41] + countsNew[51];
-        // RR(t+tau) = RR(t) - rxn54 - rxn55 + rxn43 + rxn53
-        updatedCounts[15] = currentCounts[15] - countsNew[54] - countsNew[55] + countsNew[43] + countsNew[53];
-        */
         return updatedCounts;
-
-        /*
-        // ===== DEBUG BLOCK START =====
-
-        System.out.println("----------------------------------------");
-        System.out.println("Entering getUpdatedCompartmentCounts()");
-
-        double totalBefore = 0.0;
-        double totalAfter = 0.0;
-
-        for (int i = 0; i < currentCounts.length; i++) {
-            totalBefore += currentCounts[i];
-            totalAfter += updatedCounts[i];
-        }
-
-        System.out.println("totalBefore = " + totalBefore);
-        System.out.println("totalAfter  = " + totalAfter);
-
-        System.out.println("Current counts:");
-        for (int i = 0; i < currentCounts.length; i++) {
-            System.out.printf("%2d : %8.1f%n", i, currentCounts[i]);
-        }
-
-        System.out.println("Reaction firings:");
-        for (int j = 0; j < countsNew.length; j++) {
-            if (countsNew[j] != 0.0) {
-                System.err.printf("rxn%2d : %8.1f%n", j, countsNew[j]);
-            }
-        }
-
-        System.out.println("Updated counts:");
-        for (int i = 0; i < updatedCounts.length; i++) {
-            System.out.printf("%2d : %8.1f%n", i, updatedCounts[i]);
-        }
-
-        System.out.println("----------------------------------------");
-
-        // ===== DEBUG BLOCK END =====
-        */
-
-        //return updatedCounts;
-
     }
 
 
@@ -1320,46 +1115,43 @@ public class TwoPathogenModel extends CompartmentalModel {
     }
 
     protected double getTransmissionRateOne(double simTime) {
-        // NEED TO DO: compute an offset for simTime, if necessary
         double tRateOne = rateParameters.get(0).getParameterValue(0);
         double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
-            tRateOne = tRateOne*origTimeNumSS*(1.0 + seasonalAmpOne*Math.cos(2.0*Math.PI*(simTime-seasonalPeakDayOne)/seasonalPeriod));
+            tRateOne = tRateOne*origTimeNumSS*(1.0 + seasonalAmpOne*Math.cos(2.0*Math.PI*(simTime + seasonalOffset
+                    - seasonalPeakDayOne)/seasonalPeriod));
         }
         return tRateOne;
     }
 
     protected double getTransmissionRateTwo(double simTime) {
-        // NEED TO DO: compute an offset for simTime, if necessary
         double tRateTwo = rateParameters.get(5).getParameterValue(0);
         double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
-            tRateTwo = tRateTwo*origTimeNumSS*(1.0 + seasonalAmpTwo*Math.cos(2.0*Math.PI*(simTime
+            tRateTwo = tRateTwo*origTimeNumSS*(1.0 + seasonalAmpTwo*Math.cos(2.0*Math.PI*(simTime + seasonalOffset
                     -seasonalPeakDayTwo)/seasonalPeriod));
         }
         return tRateTwo;
     }
 
     protected double getTranRateOneDerivative(double simTime) {
-        // NEED TO DO: compute an offset for simTime, if necessary
         double returnVal = 0.0;
         double tRateOne = rateParameters.get(0).getParameterValue(0);
         double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
             returnVal = -tRateOne*origTimeNumSS*seasonalAmpOne*(2.0*Math.PI/seasonalPeriod)
-                    *Math.sin(2.0*Math.PI*(simTime-seasonalPeakDayOne)/seasonalPeriod);
+                    *Math.sin(2.0*Math.PI*(simTime + seasonalOffset -seasonalPeakDayOne)/seasonalPeriod);
         }
         return returnVal;
     }
 
     protected double getTranRateTwoDerivative(double simTime) {
-        // NEED TO DO: compute an offset for simTime, if necessary
         double returnVal = 0.0;
         double tRateTwo = rateParameters.get(5).getParameterValue(0);
         double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
             returnVal = -tRateTwo*origTimeNumSS*seasonalAmpTwo*(2.0*Math.PI/seasonalPeriod)
-                    *Math.sin(2.0*Math.PI*(simTime-seasonalPeakDayTwo)/seasonalPeriod);
+                    *Math.sin(2.0*Math.PI*(simTime + seasonalOffset -seasonalPeakDayTwo)/seasonalPeriod);
         }
         return returnVal;
     }

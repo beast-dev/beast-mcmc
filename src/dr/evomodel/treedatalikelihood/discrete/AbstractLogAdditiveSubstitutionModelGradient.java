@@ -316,7 +316,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
         substitutionModel.getInfinitesimalMatrix(generator);
 
-        double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
+        double[] pi = substitutionModel.getNormalizationFrequencies();
         boolean normalize = substitutionModel.getNormalization();
 
         Transform transform = (substitutionModel instanceof LogRateSubstitutionModel) ?

@@ -235,9 +235,13 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
         double norm = 1.0;
         if (doNormalization) {
-            norm = super.getNormalizationValue(matrix, pi);
+            norm = super.getNormalizationValue(matrix, frequencyScaling ? pi : flat);
         }
         return norm;
+    }
+
+    public double[] getNormalizationFrequencies() {
+        return frequencyScaling ? getFrequencyModel().getFrequencies() : flat;
     }
 
     public double getLogLikelihood() {

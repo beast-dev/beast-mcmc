@@ -1003,7 +1003,8 @@ final class SpectralExactBranchKernel {
 
                         final int index = directedRateIndex[source][destinationState];
                         final int ij = source * stateCount + destinationState;
-                        final double sourceFrequency = model.getFrequencyModel().getFrequency(source);
+                        // sourceFrequency need no coincide with rootFrequences
+                        final double sourceFrequency = model.getNormalizationFrequencies()[source];
                         double element;
                         if (transform == null) {
                             element = generator[ij];

@@ -8,30 +8,7 @@ package dr.evomodel.coalescent.mascot;
 
 import java.util.Arrays;
 
-/**
- * The backward (adjoint/reverse-mode) replay over one {@link MascotCore}
- * instance's recorded {@link MascotCore.OperationTapeStore}. {@link
- * MascotCore} itself owns the forward RK4 integration (which also records the
- * tape this class replays -- taping is inherently a forward-pass concern,
- * since the intermediate values it captures can't be reconstructed later) and
- * the {@code evaluate(...)}/{@code evaluateInto(...)} orchestration; this
- * class owns only the backward traversal.
- * <p/>
- * Extracted purely for readability, not as an attempt at a clean forward/reverse
- * architectural boundary: the two passes remain tightly coupled by design (the
- * shared {@link MascotCore.EpochRates} cache, the tape itself, and {@link
- * MascotCore.Workspace}'s reused scratch arrays all cross this class boundary
- * on every call). Every per-evaluation input this class needs -- the {@link
- * MascotCore.Workspace}, the {@link MascotCore.EpochRates} array, and the
- * {@link MascotCore.OperationTapeStore} -- is therefore passed explicitly into
- * {@link #reverse}, rather than this class reaching back into a shared
- * {@code MascotCore} instance for them.
- * <p/>
- * Constructed once per {@code MascotCore} instance with that instance's fixed
- * dimensional constants (mirroring {@code MascotCore}'s own fields). Not
- * thread-safe to call concurrently against the same {@code Workspace}, for the
- * same reason {@link MascotCore} itself isn't (see its class doc).
- */
+/** Reverse-mode replay over MascotCore's recorded operation tape. */
 final class MascotReverseModeHelper {
 
     private static final double EPS = 1.0e-300;
@@ -49,12 +26,6 @@ final class MascotReverseModeHelper {
         this.parameterCount = parameterCount;
     }
 
-    /**
-     * Writes into {@code gradient} (caller/scratch-owned, length {@code
-     * parameterCount}) instead of allocating one: fixed-tree HMC calls this
-     * once per gradient evaluation, so a fresh array here would be the single
-     * largest per-call allocation in the reverse pass.
-     */
     void reverse(MascotCore.Workspace workspace, MascotCore.EpochRates[] epochRates,
                 MascotCore.OperationTapeStore operations, int finalActiveCount, double[] gradient,
                 double[] clockGradient, double[] ancestralStateScores) {
@@ -64,14 +35,6 @@ final class MascotReverseModeHelper {
         }
         int dim = finalActiveCount * stateCount + 1;
 
-        // Ping-pong between two reusable buffers across the whole reverse traversal
-        // (operations included) instead of allocating a fresh adjoint array at every
-        // sample/coalescent/interval boundary. Dimension changes by +/- stateCount at
-        // sample/coalescent events, so each buffer is grown (never shrunk) to the
-        // largest dimension it is ever asked to hold. These are distinct from
-        // Workspace.reverseCursorA/B, which reverseIntervalInto uses internally for
-        // its own per-RK4-step ping-pong (same dimension throughout one interval, so
-        // that inner loop does not need to touch these outer, operation-level buffers).
         workspace.reverseOperationA = MascotCore.ensure(workspace.reverseOperationA, dim);
         double[] cursor = workspace.reverseOperationA;
         Arrays.fill(cursor, 0, dim, 0.0);
@@ -189,41 +152,17 @@ final class MascotReverseModeHelper {
         System.arraycopy(w.adjointY0, 0, adjointBeforeOut, 0, dim);
     }
 
-    /**
-     * {@code y} is read at {@code yOffset + ...} throughout, so callers can pass a
-     * taped stage array (e.g. {@code tape.y4}) directly at the right per-step
-     * offset instead of copying that step's slice into a scratch buffer first.
-     * {@code adjointRhs}, {@code adjointYOut}, and {@code gradient} are always
-     * 0-based (they are per-call workspace/output buffers, not taped arrays).
-     */
     private void rhsVjpInto(double[] y, int yOffset, int activeCount, MascotCore.EpochRates rates, int epoch,
                             double[] adjointRhs, double[] adjointYOut, double[] gradient, MascotCore.Workspace w,
                             int[] activeLineageIds, double[] activeClockRates, double[] clockGradient) {
         int K = stateCount;
         int stateSize = activeCount * K;
-        // adjointYOut[stateSize] (the VJP component for the input's log-likelihood
-        // slot) is always zero: the forward RHS's out[stateSize] = -hazard never
-        // reads y[stateSize], so nothing below ever writes this index again.
         adjointYOut[stateSize] = 0.0;
 
-        // migrationGram[source*K+sink] = sum_lineage clock[lineage] * y[.,source] * adjointRhs[.,sink]
-        // (unweighted, i.e. clock[lineage]=1, when clockGradient/activeClockRates are
-        // null). The theta-gradient contribution for migration rate (source -> sink) is
-        // sum_lineage clock[lineage] * y[.,source] * (adjointRhs[.,sink] - adjointRhs[.,source]),
-        // which is exactly migrationGram[source,sink] - migrationGram[source,source]: the
-        // diagonal entries are precisely the term the old two-separate-loops version
-        // recomputed redundantly (K-1 times per source, once per sink). Building this
-        // matrix inside the same lineage-outer pass as the y-adjoint below removes
-        // that redundancy and turns the old (source,sink)-outer / lineage-inner
-        // stride-K loop into one extra accumulation per already-visited element.
         w.migrationGram = MascotCore.ensure(w.migrationGram, K * K);
         w.sums = MascotCore.ensure(w.sums, K);
         w.sumsSquares = MascotCore.ensure(w.sumsSquares, K);
 
-        // sums/sumsSquares accumulation is fused in here too (same lineage-outer
-        // pass, reusing ySource). The first lineage assigns every scratch slot
-        // that used to be zero-filled; remaining lineages accumulate into it.
-        // sums/sumsSquares are never clock-weighted (see rhsInto's matching note).
         {
             double c = activeClockRates == null ? 1.0 : activeClockRates[0];
             double clockContribution = 0.0;
@@ -240,9 +179,6 @@ final class MascotReverseModeHelper {
                 }
                 adjointYOut[source] = c * v;
                 if (clockGradient != null) {
-                    // d(logL)/d(clock[lineage]) accumulates the *unscaled* v here
-                    // (the migration RHS value the clock would have multiplied),
-                    // per the chain rule derived for out[l,sink] = c_l * (Q^T y)[sink].
                     clockContribution += ySource * v;
                 }
             }
@@ -370,13 +306,6 @@ final class MascotReverseModeHelper {
         adjointAfter[beforeDim - 1] = adjointAfter[afterDim - 1];
     }
 
-    /**
-     * {@code afterDim} is the logical size of (i.e. number of meaningful leading
-     * elements in) {@code adjointAfter} -- it cannot be read off {@code
-     * adjointAfter.length}, since that array is a reused, growth-only buffer
-     * from {@link #reverse}'s operation-level ping-pong and may be physically
-     * larger than the current logical dimension.
-     */
     private void reverseCoalescentInto(MascotCore.CoalescentTape tape, double[] adjointAfter, int afterDim,
                                        double[] adjointBeforeOut, double[] gradient,
                                        double[] ancestralStateScores) {
@@ -405,21 +334,8 @@ final class MascotReverseModeHelper {
             double p2 = Math.max(tape.p2[s], EPS);
             double centered = adjointAfter[parentOffset + s] - dot;
 
-            // Adjoint node-state score: pi_s = p_s * (centered + ellAdjoint), the
-            // exact derivative of logL with respect to a hypothetical local
-            // log-weight on this coalescent event's parent state s (see
-            // MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md Section 3 for the
-            // derivation). It both propagates the child adjoints and
-            // accumulates the population-size gradient below -- previously
-            // computed as two separate terms ("bar" plus an ellAdjoint term)
-            // that summed to the same value; now computed once and reused.
             double nodeStateScore = tape.parentProbabilities[s] * (centered + ellAdjoint);
 
-            // First write to each child slot must assign (=), not accumulate (+=):
-            // reverseCoalescentInto may write into a reused buffer (see reverse()'s
-            // operation-level ping-pong) whose child1Index/child2Index positions the
-            // compaction loop above never touches, so they can hold stale data from an
-            // earlier reverse-pass operation.
             adjointBeforeOut[tape.child1Index * stateCount + s] = nodeStateScore / p1;
             adjointBeforeOut[tape.child2Index * stateCount + s] = nodeStateScore / p2;
             gradient[thetaOffset + s] -= nodeStateScore;

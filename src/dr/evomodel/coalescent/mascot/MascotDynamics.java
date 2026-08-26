@@ -19,53 +19,20 @@ import dr.inference.model.Parameter;
 import java.util.Arrays;
 
 /**
- * Lightweight parameter layout helper for the BEAST-X MASCOT implementation.
- * <p/>
- * Migration rates and population sizes are kept as separate parser-facing
- * inputs throughout (matching BASTA's {@code <popSizes>} convention).
- * Migration may be declared either as native positive rates in a {@link Parameter}
- * (one flat, epoch-major-concatenated array covering every epoch) or through
- * one {@link SubstitutionModel} per epoch, each supplying that epoch's
- * realized infinitesimal matrix. Population size is declared through one of
- * BASTA's {@link AbstractPopulationSizeModel} implementations -- only
- * {@link ConstantPopulationSizeModel} (one natural-scale value per state,
- * shared across every epoch) and {@link dr.evomodel.coalescent.basta.PiecewiseConstantPopulationSizeModel}
- * (one natural-scale value per state per epoch) are supported; MASCOT has no
- * use for BASTA's continuous-growth model types. {@link MascotCore} still
- * wants one flat, epoch-major [migration rates, log population sizes] array
- * per evaluation (that layout is baked into its forward ODE and reverse-mode
- * adjoint); this class interleaves the source parameters into that layout on
- * the way in ({@link #getThetaValues()}, taking the log of the natural-scale
- * population size) and de-interleaves {@link MascotCore}'s returned combined
- * gradient back into per-parameter slices on the way out
- * ({@link #extractMigrationGradient}/{@link #extractPopSizeGradient}, applying
- * the d(logL)/dN = d(logL)/d(logN) / N chain rule for population size), so
- * migration rates and population sizes can be exposed as independent
- * {@link dr.inference.hmc.GradientWrtParameterProvider}s (see
- * {@link dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient})
- * without MascotCore's own math changing at all.
+ * Maps parser-facing migration/population parameters to MascotCore's flat
+ * epoch-major [migration rates, log population sizes] layout and gradients.
  */
 public final class MascotDynamics {
 
     private final int stateCount;
     private final Parameter migrationRates;
-    // One per epoch when migrationRates == null; null when migrationRates != null.
     private final SubstitutionModel[] migrationModels;
     private final AbstractPopulationSizeModel populationSizeModel;
-    // Natural-scale, extracted once from populationSizeModel: either
-    // stateCount-dimensioned (ConstantPopulationSizeModel, one shared block
-    // read for every epoch) or (epochCount * stateCount)-dimensioned
-    // (PiecewiseConstantPopulationSizeModel, one block per epoch).
     private final Parameter populationSizeParameter;
     private final Parameter epochTimes;
     private final int migrationRatesPerEpoch;
     private final int parametersPerEpoch;
     private double[] migrationModelMatrix;
-    // Lazily built, cached: a stable Parameter identity is required across
-    // repeated getMigrationRates() calls (HMC operators hold onto the
-    // returned reference for the whole analysis), and migrationModels.length
-    // == 1 returns that model's own rates parameter directly rather than
-    // wrapping a single element for no reason.
     private Parameter migrationModelRatesParameter;
 
     public MascotDynamics(int stateCount, Parameter migrationRates, AbstractPopulationSizeModel populationSizeModel,
@@ -129,7 +96,6 @@ public final class MascotDynamics {
         return migrationModels;
     }
 
-    /** Natural-scale population size parameter, extracted from {@link #getPopulationSizeModel()}. */
     public Parameter getPopSizes() {
         return populationSizeParameter;
     }
@@ -158,14 +124,6 @@ public final class MascotDynamics {
         return getEpochCount() * parametersPerEpoch;
     }
 
-    /**
-     * Interleaves migrationRates/popSizes into MascotCore's expected flat,
-     * epoch-major [migration rates, population sizes] layout, in a
-     * caller-owned buffer. {@code destination} must be exactly {@link
-     * #getParameterCount()} long -- the production ({@code MascotLikelihood})
-     * path reuses one {@code thetaBuffer} across evaluations instead of
-     * allocating a fresh array on every likelihood/gradient call.
-     */
     public void writeThetaValues(double[] destination) {
         checkDimensions();
         int epochCount = getEpochCount();
@@ -179,13 +137,6 @@ public final class MascotDynamics {
                 int migrationBase = epoch * migrationRatesPerEpoch;
                 for (int j = 0; j < migrationRatesPerEpoch; j++) {
                     double rate = migrationRates.getParameterValue(migrationBase + j);
-                    // >= 0, not > 0: a migration rate of exactly zero is a valid,
-                    // meaningful model state (e.g. a BSSVS indicator switched off
-                    // via bitFlipOperator zeroing out an SVSComplexSubstitutionModel
-                    // rate*indicator product) -- theta stores rates directly (unlike
-                    // population sizes, never logged), so nothing downstream divides
-                    // by or takes the log of a migration rate. Only negative/non-finite
-                    // values are genuine errors.
                     if (!(rate >= 0.0) || !Double.isFinite(rate)) {
                         throw new MascotCore.NumericalException("invalid migration rate at index " +
                                 (migrationBase + j) + ": " + rate);
@@ -208,20 +159,12 @@ public final class MascotDynamics {
         }
     }
 
-    /** Allocating compatibility wrapper over {@link #writeThetaValues}; prefer the in-place form in hot paths. */
     public double[] getThetaValues() {
         double[] theta = new double[getParameterCount()];
         writeThetaValues(theta);
         return theta;
     }
 
-    /**
-     * De-interleaves a flat, epoch-major combined gradient (MascotCore's own
-     * output layout) into just the migration-rate slice, in migrationRates'
-     * own (epoch-major-concatenated) layout, writing into a caller-owned
-     * {@code destination} instead of allocating. {@code destination} must be
-     * exactly {@link #getMigrationRates()}{@code .getDimension()} long.
-     */
     public void writeMigrationGradient(double[] combinedGradient, double[] destination) {
         if (migrationModels != null) {
             writeMigrationModelGradient(combinedGradient, destination);
@@ -238,7 +181,6 @@ public final class MascotDynamics {
         }
     }
 
-    /** Allocating compatibility wrapper over {@link #writeMigrationGradient}; prefer the in-place form in hot paths. */
     public double[] extractMigrationGradient(double[] combinedGradient) {
         double[] result = new double[migrationModels != null
                 ? migrationModelGradientDimension() : getEpochCount() * migrationRatesPerEpoch];
@@ -265,10 +207,6 @@ public final class MascotDynamics {
                 return error;
             }
         }
-        // A CompoundParameter's dimensions must each correspond to exactly one
-        // underlying value slot; two epochs sharing one rates Parameter would
-        // break that 1:1 mapping (and would mean an HMC move on one epoch's
-        // "copy" silently also moves the other's).
         for (int i = 0; i < migrationModels.length; i++) {
             Parameter ratesI = ComplexSubstitutionModelGradientSupport.getRatesParameter(migrationModels[i]);
             for (int j = i + 1; j < migrationModels.length; j++) {
@@ -282,26 +220,12 @@ public final class MascotDynamics {
         return null;
     }
 
-    /**
-     * Same as {@link #extractMigrationGradient} but for the population-size
-     * slice, converting MascotCore's own d(logL)/d(logN) to d(logL)/dN via
-     * the chain rule (populationSizeParameter is natural-scale). When
-     * populationSizeModel is a {@link ConstantPopulationSizeModel}, the same
-     * natural-scale value is read for every epoch in {@link #getThetaValues()},
-     * so its gradient is the sum of that epoch's contribution over all epochs.
-     */
     public double[] extractPopSizeGradient(double[] combinedGradient) {
         double[] result = new double[populationSizeParameter.getDimension()];
         writePopSizeGradient(combinedGradient, result);
         return result;
     }
 
-    /**
-     * In-place form of {@link #extractPopSizeGradient}; {@code destination}
-     * must be exactly {@link #getPopSizes()}{@code .getDimension()} long and
-     * is fully overwritten (not accumulated into) since every shared-block
-     * entry is revisited once per epoch below.
-     */
     public void writePopSizeGradient(double[] combinedGradient, double[] destination) {
         if (destination.length != populationSizeParameter.getDimension()) {
             throw new IllegalArgumentException("destination dimension " + destination.length +
@@ -369,9 +293,6 @@ public final class MascotDynamics {
                     continue;
                 }
                 double rate = migrationModelMatrix[row + sink];
-                // >= 0, not > 0: see the matching note in writeThetaValues -- a
-                // BSSVS indicator of 0 legitimately zeroes this entry via
-                // SVSComplexSubstitutionModel's rate*indicator product.
                 if (!(rate >= 0.0) || !Double.isFinite(rate)) {
                     throw new MascotCore.NumericalException("invalid migrationModel rate for epoch " + epoch +
                             ", source " + source + ", sink " + sink + ": " + rate);
@@ -444,8 +365,6 @@ public final class MascotDynamics {
             for (int epoch = 0; epoch < migrationModels.length; epoch++) {
                 Parameter rates = ComplexSubstitutionModelGradientSupport.getRatesParameter(migrationModels[epoch]);
                 if (rates == null) {
-                    // Let getMigrationGradientCompatibilityError() report the
-                    // actual reason at the call site instead of NPE-ing here.
                     return null;
                 }
                 ratesParameters[epoch] = rates;

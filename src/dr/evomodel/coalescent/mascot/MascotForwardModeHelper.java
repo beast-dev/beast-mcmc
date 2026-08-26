@@ -6,42 +6,11 @@
 
 package dr.evomodel.coalescent.mascot;
 
-import dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation;
+import dr.evomodel.coalescent.StructuredCoalescentSchedule;
 
 import java.util.Arrays;
 
-/**
- * The forward RK4 integration and event application for one {@link
- * MascotCore} instance: walks a {@link MascotCore.PreparedEvents} sequence
- * forward in time, advancing a {@link MascotCore.ActiveState} through
- * integration segments, samples, and coalescences. When a non-null {@link
- * MascotCore.OperationTapeStore} is supplied, this class also records the
- * tape {@link MascotReverseModeHelper} later replays backward -- taping is
- * necessarily a forward-pass concern, since the intermediate values it
- * captures cannot be reconstructed after the fact, so this class (not {@link
- * MascotReverseModeHelper}) owns both the integration and the recording.
- * {@link MascotCore} itself owns only {@code evaluate(...)}/{@code
- * evaluateInto(...)} orchestration: per-call validation, the shared {@link
- * MascotCore.EpochRates} setup ({@code updateEpochRates}, read identically by
- * both this class and {@link MascotReverseModeHelper}), and dispatching to
- * the reverse pass afterward.
- * <p/>
- * Extracted purely for readability, matching {@link MascotReverseModeHelper}:
- * every per-evaluation input this class needs -- the {@link
- * MascotCore.ActiveState}, the {@link MascotCore.EpochRates} array, the
- * {@link MascotCore.Workspace}, and the {@link MascotCore.OperationTapeStore}
- * -- is passed explicitly into {@link #forward}, rather than this class
- * reaching back into a shared {@code MascotCore} instance for them.
- * <p/>
- * Constructed once per {@code MascotCore} instance with that instance's fixed
- * dimensional constants and epoch boundaries (mirroring {@code MascotCore}'s
- * own fields), including the {@code epochCursor} scan position: that state is
- * exclusively a forward-pass concern (see {@code epochAt}/{@code
- * nextBoundaryAfter}'s doc), so it lives here now rather than on {@code
- * MascotCore}. Not thread-safe to call concurrently against the same {@code
- * ActiveState}/{@code Workspace}, for the same reason {@link MascotCore}
- * itself isn't (see its class doc).
- */
+/** Forward RK4 integration, event application, and optional reverse tape recording. */
 final class MascotForwardModeHelper {
 
     private final int stateCount;
@@ -58,39 +27,24 @@ final class MascotForwardModeHelper {
     }
 
     void forward(MascotCore.ActiveState state, MascotCore.EpochRates[] epochRates, MascotCore.Workspace workspace,
-                MascotCore.PreparedOperations prepared, double[] branchRates, boolean checkProbabilities,
+                MascotPreparedInput prepared, double[] branchRates, boolean checkProbabilities,
                 MascotCore.OperationTapeStore operations, double[] nodeLogWeights) {
-        BranchIntervalOperation[] branchOperations = prepared.operations;
+        StructuredCoalescentSchedule schedule = prepared.schedule;
         state.reset(stateCount, prepared.nodeCount, prepared.maxLineageId);
         if (workspace.coalescentTimes == null || workspace.coalescentTimes.length < prepared.nodeCount) {
             workspace.coalescentTimes = new double[prepared.nodeCount];
         }
         Arrays.fill(workspace.coalescentTimes, 0, prepared.nodeCount, Double.NaN);
         epochCursor = 0;
-        double currentTime = prepared.initialTime;
+        double currentTime = schedule.initialTime;
 
-        for (int interval = 0; interval < prepared.intervalStarts.length - 1; interval++) {
-            int start = prepared.intervalStarts[interval];
-            int end = prepared.intervalStarts[interval + 1];
-            double intervalLength = branchOperations[start].intervalLength;
+        applySampleEvent(state, prepared, schedule.initialSampleNode, operations);
+
+        for (int interval = 0; interval < schedule.getIntervalCount(); interval++) {
+            double intervalLength = schedule.intervalLengths[interval];
             if (intervalLength < 0.0 || !Double.isFinite(intervalLength)) {
                 throw new IllegalArgumentException("invalid interval length: " + intervalLength);
             }
-            for (int i = start + 1; i < end; i++) {
-                if (Math.abs(branchOperations[i].intervalLength - intervalLength) > MascotCore.TIME_TOLERANCE) {
-                    throw new IllegalArgumentException("operations in one interval have different lengths");
-                }
-            }
-            for (int i = start; i < end; i++) {
-                BranchIntervalOperation operation = branchOperations[i];
-                if (operation.inputBuffer2 < 0 &&
-                        nodeFromBuffer(operation.outputBuffer, prepared.nodeCount) !=
-                                nodeFromBuffer(operation.inputBuffer1, prepared.nodeCount)) {
-                    throw new IllegalArgumentException("propagation operation changed lineage identity");
-                }
-            }
-
-            addNewSamples(state, prepared, branchOperations, start, end, operations, workspace);
 
             double intervalEnd = currentTime + intervalLength;
             while (intervalEnd > currentTime + MascotCore.TIME_TOLERANCE) {
@@ -105,21 +59,13 @@ final class MascotForwardModeHelper {
             }
             currentTime = intervalEnd;
 
-            BranchIntervalOperation coalescent = null;
-            for (int i = start; i < end; i++) {
-                BranchIntervalOperation operation = branchOperations[i];
-                if (operation.inputBuffer2 >= 0) {
-                    if (coalescent != null) {
-                        throw new IllegalArgumentException("multiple coalescent operations in one interval");
-                    }
-                    coalescent = operation;
-                }
-            }
-            if (coalescent != null) {
+            if (schedule.eventTypes[interval] == StructuredCoalescentSchedule.SAMPLE) {
+                applySampleEvent(state, prepared, schedule.sampleNodes[interval], operations);
+            } else if (schedule.eventTypes[interval] == StructuredCoalescentSchedule.COALESCENT) {
                 int epoch = epochAt(currentTime);
-                int child1 = nodeFromBuffer(coalescent.inputBuffer1, prepared.nodeCount);
-                int child2 = nodeFromBuffer(coalescent.inputBuffer2, prepared.nodeCount);
-                int parent = nodeFromBuffer(coalescent.outputBuffer, prepared.nodeCount);
+                int child1 = schedule.coalescentChild1[interval];
+                int child2 = schedule.coalescentChild2[interval];
+                int parent = schedule.coalescentParent[interval];
                 if (sameTime(workspace.coalescentTimes[child1], currentTime) ||
                         sameTime(workspace.coalescentTimes[child2], currentTime)) {
                     throw new IllegalArgumentException("dependent coalescent events at the same time are not " +
@@ -128,6 +74,8 @@ final class MascotForwardModeHelper {
                 applyCoalescentEvent(state, child1, child2, parent,
                         epoch, epochRates[epoch], operations, nodeLogWeights, workspace);
                 workspace.coalescentTimes[parent] = currentTime;
+            } else {
+                throw new IllegalArgumentException("unknown schedule event type: " + schedule.eventTypes[interval]);
             }
 
             if (checkProbabilities) {
@@ -139,10 +87,6 @@ final class MascotForwardModeHelper {
                     " active lineages");
         }
     }
-
-    // ------------------------------------------------------------------
-    // Forward integration
-    // ------------------------------------------------------------------
 
     private void integrateSegment(MascotCore.ActiveState state, MascotCore.EpochRates rates, double start,
                                   double end, int epoch, double[] branchRates,
@@ -163,9 +107,6 @@ final class MascotForwardModeHelper {
         workspace.integrationOut = MascotCore.ensure(workspace.integrationOut, dim);
         double[] yOut = workspace.integrationOut;
 
-        // The active lineage set (hence which clock rate applies to each ODE
-        // slice) is fixed for the whole segment, so this snapshot is built once
-        // here rather than once per RK4 stage.
         double[] activeClockRates = null;
         if (branchRates != null) {
             workspace.activeClockRates = MascotCore.ensure(workspace.activeClockRates, activeCount);
@@ -261,14 +202,6 @@ final class MascotForwardModeHelper {
         w.sums = MascotCore.ensure(w.sums, K);
         w.sumsSquares = MascotCore.ensure(w.sumsSquares, K);
 
-        // sums/sumsSquares accumulation is fused into the migration loop below
-        // (same lineage-outer traversal, reusing the already-loaded p0/p values)
-        // rather than a separate pass over activeCount * K. The migration loop's
-        // own zero-fill-avoidance ("=" for source 0, "+=" for source 1..K-1 into
-        // out) is preserved unchanged. sums/sumsSquares themselves are never
-        // clock-scaled: they feed the coalescent-hazard term below, which is a
-        // function of Ne only, per BASTA's convention that a branch clock scales
-        // the migration/transition process but never the Ne-derived rate.
         double c0 = activeClockRates == null ? 1.0 : activeClockRates[0];
         double p0 = y[0];
         w.sums[0] = p0;
@@ -328,51 +261,18 @@ final class MascotForwardModeHelper {
         out[stateSize] = -hazard;
     }
 
-    // ------------------------------------------------------------------
-    // Events
-    // ------------------------------------------------------------------
-
-    private void addNewSamples(MascotCore.ActiveState state, MascotCore.PreparedOperations prepared,
-                               BranchIntervalOperation[] branchOperations, int start, int end,
-                               MascotCore.OperationTapeStore operations, MascotCore.Workspace workspace) {
-        if (workspace.sampleInputs == null || workspace.sampleInputs.length < prepared.nodeCount) {
-            workspace.sampleInputs = new boolean[prepared.nodeCount];
-        }
-        Arrays.fill(workspace.sampleInputs, 0, prepared.nodeCount, false);
-        for (int i = start; i < end; i++) {
-            BranchIntervalOperation operation = branchOperations[i];
-            workspace.sampleInputs[nodeFromBuffer(operation.inputBuffer1, prepared.nodeCount)] = true;
-            if (operation.inputBuffer2 >= 0) {
-                workspace.sampleInputs[nodeFromBuffer(operation.inputBuffer2, prepared.nodeCount)] = true;
-            }
-        }
-        for (int node = 0; node < prepared.nodeCount; node++) {
-            if (!workspace.sampleInputs[node] || state.isActive(node)) {
-                continue;
-            }
-            if (node >= prepared.tipPartials.length) {
-                throw new IllegalArgumentException("inactive internal lineage appears as operation input: " + node);
-            }
-            applySampleEvent(state, node, prepared.tipPartials[node], operations);
-        }
-    }
-
-    private static int nodeFromBuffer(int buffer, int nodeCount) {
-        if (buffer < 0) {
-            throw new IllegalArgumentException("negative operation buffer: " + buffer);
-        }
-        return buffer % nodeCount;
-    }
-
     private static boolean sameTime(double first, double second) {
         return !Double.isNaN(first) && Math.abs(first - second) <= MascotCore.TIME_TOLERANCE;
     }
 
-    private void applySampleEvent(MascotCore.ActiveState state, int lineage, double[] stateProbabilities,
+    private void applySampleEvent(MascotCore.ActiveState state, MascotPreparedInput prepared, int lineage,
                                   MascotCore.OperationTapeStore operations) {
+        if (state.isActive(lineage)) {
+            throw new IllegalArgumentException("sample lineage is already active: " + lineage);
+        }
         int index = state.activeCount;
         state.ensureCapacity(index + 1);
-        writeNormalizedSampleProbabilities(stateProbabilities, state.probabilities, index * stateCount);
+        prepared.tipData.writeTipPartials(lineage, state.probabilities, index * stateCount);
         state.activeIds[index] = lineage;
         state.setActiveIndex(lineage, index);
         state.activeCount++;
@@ -417,12 +317,6 @@ final class MascotForwardModeHelper {
                 lambda += parentProbabilities[s];
             }
         } else {
-            // Test-only hook (see evaluateWithNodeLogWeightsForTesting): applies a
-            // hypothetical per-state log weight at this event's parent node, for
-            // finite-difference validation of the adjoint node-state score. Never
-            // exercised by the production (XML-facing) evaluate(...) overloads,
-            // which always pass nodeLogWeights == null and take the branch above
-            // without paying for exp(0).
             int weightOffset = parent * stateCount;
             for (int s = 0; s < stateCount; s++) {
                 double weighted = p1[s] * p2[s] * q[s] * Math.exp(nodeLogWeights[weightOffset + s]);
@@ -445,9 +339,6 @@ final class MascotForwardModeHelper {
         int movedFromIndexBefore = -1;
         int movedToIndexAfter = -1;
 
-        // Active-lineage order carries no probability meaning. Keep the parent in
-        // one removed child slot and fill only the other hole with the old last
-        // lineage when needed.
         if (removedIndex != lastBefore) {
             movedFromIndexBefore = lastBefore;
             movedToIndexAfter = removedIndex;
@@ -474,48 +365,6 @@ final class MascotForwardModeHelper {
         }
     }
 
-    /**
-     * Writes the normalized sample-state probability vector directly into {@code
-     * out} at {@code offset}, avoiding the per-sample-event {@code double[]}
-     * allocation an intermediate array would cost.
-     */
-    private void writeNormalizedSampleProbabilities(double[] stateProbabilities, double[] out, int offset) {
-        if (stateProbabilities.length != stateCount) {
-            throw new IllegalArgumentException("sample probability dimension mismatch");
-        }
-        double sum = 0.0;
-        for (int s = 0; s < stateCount; s++) {
-            if (stateProbabilities[s] < 0.0) {
-                throw new IllegalArgumentException("sample probabilities must be nonnegative");
-            }
-            sum += stateProbabilities[s];
-        }
-        if (!(sum > 0.0)) {
-            throw new IllegalArgumentException("sample probabilities must have positive sum");
-        }
-        for (int s = 0; s < stateCount; s++) {
-            out[offset + s] = stateProbabilities[s] / sum;
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Epoch/time bookkeeping
-    // ------------------------------------------------------------------
-
-    /**
-     * Both {@link #epochAt} and {@link #nextBoundaryAfter} scan {@code
-     * boundaries} starting from {@link #epochCursor} instead of from the
-     * beginning: {@link #forward} only ever queries these with a
-     * nondecreasing sequence of times (both {@code currentTime} and {@code
-     * event.time} only increase over one {@code forward} call), so {@code
-     * boundaries[epochCursor] <= any time queried so far} is an invariant, and
-     * every boundary at or before {@code epochCursor} is therefore already known
-     * to fail both methods' "is this boundary after the query time" tests. This
-     * changes only the scan's starting point, not either method's comparison
-     * expressions (still using the exact same TIME_TOLERANCE arithmetic), so it
-     * cannot change which epoch/boundary is returned for a given time -- only how
-     * many array entries are checked to find it.
-     */
     private int epochAt(double t) {
         if (t < -MascotCore.TIME_TOLERANCE) {
             throw new IllegalArgumentException("time is before zero: " + t);
@@ -541,10 +390,6 @@ final class MascotForwardModeHelper {
         }
         return stop;
     }
-
-    // ------------------------------------------------------------------
-    // Pack/unpack and validation
-    // ------------------------------------------------------------------
 
     private void packStateInto(MascotCore.ActiveState state, double[] y) {
         int stateSize = state.activeCount * stateCount;

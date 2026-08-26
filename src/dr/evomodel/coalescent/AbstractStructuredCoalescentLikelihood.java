@@ -180,6 +180,15 @@ public abstract class AbstractStructuredCoalescentLikelihood extends AbstractMod
         return tree.getExternalNodeCount();
     }
 
+    protected final StructuredCoalescentTipData buildStructuredTipData(boolean allowAmbiguities, String context) {
+        return StructuredCoalescentTipData.fromPartials(tree.getNodeCount(), stateCount,
+                buildStructuredTipPartials(allowAmbiguities, context));
+    }
+
+    protected final double[][] buildStructuredTipPartials(boolean allowAmbiguities, String context) {
+        return StructuredTipStates.buildPartialsCache(tree, patternList, stateCount, allowAmbiguities, context);
+    }
+
     public BranchRateModel getBranchRateModel() {
         return branchRateModel;
     }

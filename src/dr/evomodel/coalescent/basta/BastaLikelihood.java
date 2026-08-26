@@ -30,7 +30,7 @@ import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
 import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
-import dr.evomodel.coalescent.StructuredTipStates;
+import dr.evomodel.coalescent.StructuredCoalescentTipData;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -75,6 +75,8 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
+    private StructuredCoalescentTipData tipDataCache;
+    private double[][] tipPartialsCache;
 
     // dataType/tag/formattedState(int) are inherited from
     // AbstractStructuredCoalescentLikelihood, shared with MASCOT's mode-state
@@ -205,12 +207,38 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 //    public SubstitutionModel getSubstitutionModel() { return substitutionModel; } // TODO generify for multiple models (e.g. epochs)
 
     public void setTipData() {
+        StructuredCoalescentTipData tipData = ensureTipData();
+        double[] partials = new double[stateCount];
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef node = tree.getExternalNode(i);
-            double[] partials = StructuredTipStates.getPartials(tree, node, patternList, stateCount,
-                    true, "BASTA tip-state attributePatterns");
+            tipData.writeTipPartials(node.getNumber(), partials, 0);
             likelihoodDelegate.setPartials(node.getNumber(), partials);
         }
+    }
+
+    private StructuredCoalescentTipData ensureTipData() {
+        if (tipDataCache == null) {
+            if (tipPartialsCache == null) {
+                tipPartialsCache = buildStructuredTipPartials(true, "BASTA tip-state attributePatterns");
+            }
+            tipDataCache = StructuredCoalescentTipData.fromPartials(
+                    tree.getNodeCount(), stateCount, tipPartialsCache);
+        }
+        return tipDataCache;
+    }
+
+    private void setCachedTipPartials(int tipNum, double[] partials) {
+        if (tipNum < 0 || tipNum >= tree.getNodeCount()) {
+            throw new IllegalArgumentException("tip number out of range: " + tipNum);
+        }
+        if (tipPartialsCache == null) {
+            tipPartialsCache = buildStructuredTipPartials(true, "BASTA tip-state attributePatterns");
+        }
+        if (tipPartialsCache.length <= tipNum) {
+            tipPartialsCache = Arrays.copyOf(tipPartialsCache, tree.getNodeCount());
+        }
+        tipPartialsCache[tipNum] = partials.clone();
+        tipDataCache = null;
     }
 
     // getTree() and getBranchRateModel() are inherited unchanged from
@@ -253,11 +281,18 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
     @Override
     public void setTipStates(int tipNum, int[] states) {
+        if (states == null || states.length == 0) {
+            throw new IllegalArgumentException("tip states must not be empty");
+        }
+        if (states[0] < 0 || states[0] >= stateCount) {
+            throw new IllegalArgumentException("tip state out of range: " + states[0]);
+        }
         double[] partials = new double[stateCount];
         partials[states[0]] = 1.0;
         likelihoodDelegate.setPartials(tipNum, partials);
+        setCachedTipPartials(tipNum, partials);
 
-        if (reconstructedStates != null && states != null && states.length > 0) {
+        if (reconstructedStates != null) {
             if (tipNum < reconstructedStates.length) {
                 System.arraycopy(states, 0, reconstructedStates[tipNum], 0, Math.min(states.length, reconstructedStates[tipNum].length));
             }

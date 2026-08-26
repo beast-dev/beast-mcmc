@@ -11,14 +11,12 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
+import dr.evomodel.coalescent.StructuredCoalescentSchedule;
+import dr.evomodel.coalescent.StructuredCoalescentTipData;
 import dr.evomodel.coalescent.StructuredTipStates;
 import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
-import dr.evomodel.coalescent.basta.CoalescentIntervalTraversal;
-import dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -31,43 +29,14 @@ import dr.util.Citation;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Filippo Monti
- */
 public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         implements Citable {
 
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
 
-    /**
-     * Default {@link TreeTrait} name under which adjoint node-state scores
-     * (see {@link #getAncestralStateScores()}) are exposed to tree logging,
-     * used when no explicit tag name is given to the constructor (see
-     * {@code stateTagName} in {@code StructuredCoalescentLikelihoodParser}).
-     * Named {@code stateSensitivity}, not {@code states}: these are exact
-     * sensitivities of the discretized RK4 likelihood
-     * (d(logL)/d(alpha_v,s)), not a posterior ancestral-state
-     * reconstruction -- a nonnegativity survey found a converged,
-     * step-size-independent negative value under highly unequal population
-     * sizes, so this quantity is not always a valid probability
-     * distribution (see MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md's
-     * "Probability interpretation" note) and must not be presented or named
-     * as one. Also deliberately distinct from BASTA's "states" tag, which is
-     * a genuine up-down MAP/joint reconstruction -- the two should not look
-     * interchangeable in output by default.
-     */
+    /** Tree-trait tag for adjoint node-state sensitivities, not probabilities. */
     public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.stateSensitivity";
 
-    /**
-     * Default {@link TreeTrait} name for the mode (highest-scoring) state at
-     * each node, e.g. {@code mascot.state="Region1"} -- the argmax of {@link
-     * #getAncestralStateScores()}, registered via the same {@code
-     * AbstractStructuredCoalescentLikelihood#addModeStateTrait} plumbing
-     * BASTA's up-down reconstruction uses for its own {@code states} tag.
-     * Distinct from {@link #DEFAULT_ANCESTRAL_STATE_TAG_NAME}: that tag logs
-     * the raw per-state score vector, this one logs the single winning
-     * state's name.
-     */
     public static final String DEFAULT_MODE_STATE_TAG_NAME = "mascot.state";
 
     private final TreeModel treeModel;
@@ -76,91 +45,36 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private final double maxStep;
     private final boolean checkProbabilities;
     private final String ancestralStateTagName;
-    private final MascotCoalescentIntervalTraversal operationTraversal;
 
-    private MascotCore.PreparedOperations preparedOperations;
-    private MascotCore core;
-    private boolean preparedOperationsKnown;
-    private boolean coreKnown;
+    private MascotPreparedInput preparedInput;
+    private MascotLikelihoodBackend backend;
+    private boolean preparedInputKnown;
+    private boolean backendKnown;
     private boolean gradientKnown;
-    // Tip states are fixed input data, never re-estimated, so unlike eventTape
-    // (rebuilt on every tree change) this is built once and never invalidated.
-    // Avoids re-deriving every tip's partial vector -- an O(tipCount) taxon-name
-    // lookup plus a fresh allocation, per tip -- on every tree-changing operator.
-    private double[][] tipPartialsCache;
+    private StructuredCoalescentTipData tipDataCache;
 
-    // Reused, caller-owned inputs to MascotCore.evaluateLikelihood/evaluateInto,
-    // sized once (theta/branchRate dimension is fixed for this instance's
-    // lifetime) instead of allocated fresh on every likelihood/gradient call.
     private double[] thetaBuffer;
     private double[] branchRateBuffer;
 
     private boolean ancestralStatesKnown;
 
-    /**
-     * Reused output buffers for one MascotCore.evaluateInto call: the
-     * combined, MascotCore-native flat gradient (epoch-major [migration,
-     * popSizes]; StructuredCoalescentLikelihoodGradient slices this per-part), the per-lineage clock
-     * gradient (null unless branchRateModel != null), and the flat, node-major
-     * adjoint node-state scores (see MascotCore.Result#ancestralStateScores).
-     */
     private static final class DerivedBuffers {
         double[] combinedGradient;
         double[] clockGradient;
         double[] ancestralStateScores;
     }
 
-    private static final class MascotCoalescentIntervalTraversal extends CoalescentIntervalTraversal {
-        private MascotCoalescentIntervalTraversal(Tree tree, BigFastTreeIntervals treeIntervals,
-                                                  BranchRateModel branchRateModel) {
-            super(tree, treeIntervals, branchRateModel, 1, false);
-        }
-    }
-
-    // Double-buffered per MASCOT_PRIMITIVE_ARRAY_REFACTORING_PLAN.md Section 8.1:
-    // a rejected proposal must restore the exact previous gradient/ancestral-score
-    // values, but derived buffers are now written in place rather than freshly
-    // allocated per call, so the "current" (possibly-proposed) and "stored"
-    // (last-accepted) values cannot share one buffer. evaluateLikelihoodAndGradient()/
-    // evaluateAncestralStates() always write into derivedBuffers[1 - storedDerivedIndex]
-    // -- the buffer storedDerivedIndex is NOT pointing at -- so a subsequent
-    // restoreStructuredState() (currentDerivedIndex = storedDerivedIndex) can never
-    // return a buffer whose contents were just overwritten by the rejected proposal.
     private final DerivedBuffers[] derivedBuffers = {new DerivedBuffers(), new DerivedBuffers()};
     private int currentDerivedIndex;
     private int storedDerivedIndex;
 
-    // Snapshots taken by storeStructuredState() and restored by restoreStructuredState()
-    // on a rejected proposal. Restoring the actual eventTape/core references (rather
-    // than just invalidating eventTapeKnown/coreKnown, as an earlier version of
-    // this class did) means a rejected proposal that never touched the tree or
-    // epoch times does not force a full event-tape/core rebuild on the next
-    // evaluation. Both MascotEventTape and MascotCore are effectively immutable
-    // from this wrapper's point of view once built (MascotCore's internal
-    // per-epoch rate cache is fully recomputed from theta at the start of every
-    // evaluate() call regardless), so sharing the stored reference back in is safe.
-    private MascotCore.PreparedOperations storedPreparedOperations;
-    private MascotCore storedCore;
-    private boolean storedPreparedOperationsKnown;
-    private boolean storedCoreKnown;
+    private MascotPreparedInput storedPreparedInput;
+    private MascotLikelihoodBackend storedBackend;
+    private boolean storedPreparedInputKnown;
+    private boolean storedBackendKnown;
     private boolean storedGradientKnown;
     private boolean storedAncestralStatesKnown;
 
-    /**
-     * Exactly one of {@code migrationRates} (a raw parameter of native
-     * positive migration rates) or {@code migrationModels} (one
-     * {@link SubstitutionModel} per epoch -- a single-element array is the
-     * constant-through-time case; see {@link MascotDynamics}'s class doc) must
-     * be non-null; the other must be null. {@code branchRateModel} may be
-     * null (no clock gradient support). Callers that don't need custom
-     * ancestral-state tree-trait names should pass {@link
-     * #DEFAULT_ANCESTRAL_STATE_TAG_NAME} and {@link
-     * #DEFAULT_MODE_STATE_TAG_NAME}. This is the one constructor: argument
-     * defaulting (e.g. {@code null} branchRateModel, {@code
-     * DEFAULT_ANCESTRAL_STATE_TAG_NAME}) is the XML parser's job (see {@code
-     * StructuredCoalescentLikelihoodParser.parseMascot}), not a further stack
-     * of overloads here.
-     */
     public MascotLikelihood(String name,
                             TreeModel treeModel,
                             PatternList tipPatterns,
@@ -184,13 +98,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         this.maxStep = maxStep;
         this.checkProbabilities = checkProbabilities;
         this.ancestralStateTagName = ancestralStateTagName;
-        this.operationTraversal = new MascotCoalescentIntervalTraversal(
-                treeModel, treeIntervals,
-                branchRateModel == null ? new DefaultBranchRateModel() : branchRateModel);
-
-        // tipPatterns is fixed input data (like a sequence alignment), not an
-        // estimated model variable, so it is not registered as a listened
-        // variable here -- it never changes over the course of an analysis.
         if (migrationRates != null) {
             addVariable(migrationRates);
         } else {
@@ -203,15 +110,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             addVariable(epochTimes);
         }
 
-        this.preparedOperationsKnown = false;
-        this.coreKnown = false;
+        this.preparedInputKnown = false;
+        this.backendKnown = false;
         this.gradientKnown = false;
 
-        // TreeTraitProvider.Helper keys a trait by its getTraitName() at
-        // registration time (not read live afterward), so the tag name is
-        // captured once here from the immutable ancestralStateTagName
-        // constructor parameter (like BASTA's own immutable "tag" field),
-        // not a post-construction setter.
         treeTraits.addTrait(new TreeTrait.DA() {
             public String getTraitName() {
                 return ancestralStateTagName;
@@ -221,16 +123,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                 return Intent.NODE;
             }
 
-            // getTraitClass() is inherited from TreeTrait.DA (double[].class);
-            // do not override it -- an earlier version incorrectly overrode it
-            // with Double.class.
-
             public double[] getTrait(Tree tree, NodeRef node) {
-                // Tip rows are intentionally left NaN by MascotCore (Section
-                // 5.3 of the design doc); generic tree-trait logging (Intent.NODE,
-                // the default ALL restriction) still requests every node's
-                // value, tips included, so return the observed/uncertain tip
-                // partial here rather than an all-NaN vector.
                 if (tree.isExternal(node)) {
                     return StructuredTipStates.getPartials(tree, node, tipPatterns, getStateCount(), true,
                             ancestralStateTagName + " tip trait");
@@ -241,21 +134,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             }
         });
 
-        // Same shared plumbing BASTA's up-down reconstruction uses for its
-        // own "states" tag (AbstractStructuredCoalescentLikelihood#addModeStateTrait):
-        // here the winning state is the argmax of the adjoint score vector
-        // above, rather than a sampled/MAP joint state, but the "index ->
-        // state name" formatting step is identical.
         addModeStateTrait(tag, this::getModeState);
     }
 
-    /**
-     * The mode (highest-scoring) state at {@code node}: the argmax of {@link
-     * #getAncestralStateScores()} for an internal node, or the observed tip
-     * state for an external one. Backs the {@link #DEFAULT_MODE_STATE_TAG_NAME}
-     * tree trait; see that field's javadoc for why this is an argmax over a
-     * sensitivity score, not a literal posterior-probability mode.
-     */
     public int getModeState(Tree tree, NodeRef node) {
         if (tree.isExternal(node)) {
             double[] tipPartials = StructuredTipStates.getPartials(tree, node, tipPatterns, getStateCount(), true,
@@ -267,42 +148,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         return argmax(row);
     }
 
-    // getLogLikelihood() itself, getTreeTraits()/getTreeTrait(), and
-    // getBranchRateModel() are inherited unchanged from
-    // AbstractStructuredCoalescentLikelihood: calculateLogLikelihood() below
-    // is the only hook it calls, and it deliberately never opportunistically
-    // computes the gradient there, even if some HMC operator elsewhere primed
-    // this likelihood -- an operator that only needs the likelihood (tree
-    // moves, bitFlip, plain scaleOperator) must not pay for the adjoint pass
-    // on every one of its evaluations just because an unrelated
-    // structuredCoalescentLikelihoodGradient element also exists in the XML.
-    // getGradientLogDensity() below is the only path that ever computes the
-    // gradient, and only when actually called; when it is, it caches the
-    // likelihood too (via cacheLogLikelihood()), so a getLogLikelihood() call
-    // right after a real HMC step is still a cache hit.
-
-    /**
-     * MascotCore's own combined flat gradient (epoch-major [migration, popSizes]).
-     * Most callers want {@link #getMigrationGradientLogDensity()} or
-     * {@link #getPopSizeGradientLogDensity()} instead (see {@link
-     * dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient}).
-     */
     public double[] getGradientLogDensity() {
         if (!gradientKnown) {
             evaluateLikelihoodAndGradient(true);
         }
-        // Clone on every return, not just on a cache hit: the buffer is reused
-        // across calls, so a caller that mutated the returned array in place
-        // would otherwise silently corrupt the cache for the next caller.
         return currentDerived().combinedGradient.clone();
     }
 
-    /**
-     * Reads directly from the reused combined-gradient buffer instead of going
-     * through {@link #getGradientLogDensity()}: that method's defensive clone
-     * would otherwise be allocated only to be immediately discarded once
-     * {@link MascotDynamics#writeMigrationGradient} extracts this part from it.
-     */
     public double[] getMigrationGradientLogDensity() {
         if (!gradientKnown) {
             evaluateLikelihoodAndGradient(true);
@@ -321,11 +173,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         return result;
     }
 
-    /**
-     * d(logLikelihood)/d(branchRate[lineageId]), indexed by tree node number (see
-     * {@link #writeBranchRates(double[])}). Only valid when {@link
-     * #getBranchRateModel()} is non-null.
-     */
     public double[] getClockGradientLogDensity() {
         if (!gradientKnown) {
             evaluateLikelihoodAndGradient(true);
@@ -334,25 +181,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         return clockGradient == null ? null : clockGradient.clone();
     }
 
-    /**
-     * Flat, node-major adjoint node-state scores for every internal tree
-     * node, indexed by {@code nodeNumber * getStateCount() + state} (see
-     * {@code MascotCore.Result#ancestralStateScores} and
-     * {@code MASCOT_ADJOINT_ANCESTRAL_RECONSTRUCTION.md}). Tip rows and any
-     * unused node-number slots are {@link Double#NaN}. These are exact
-     * sensitivities of the discretized RK4 likelihood -- d(logL)/d(alpha_v,s),
-     * not a posterior-probability interpretation: a broad nonnegativity
-     * survey found a converged, step-size-independent negative score under
-     * highly unequal population sizes, so this quantity is not always a
-     * valid probability distribution (see the design document's
-     * "Probability interpretation" note under Section 19), and legitimate
-     * negative entries are permitted here, not treated as failures. This
-     * call still throws on a genuine correctness violation: a non-finite
-     * entry, a missing (never-written) internal-node row, or a row that
-     * doesn't sum to one within tolerance (an identity that holds regardless
-     * of individual entries' sign, so its violation always indicates a bug,
-     * never a valid parameter regime).
-     */
+    /** Node-major internal-node sensitivities, not posterior probabilities. */
     public double[] getAncestralStateScores() {
         if (!ancestralStatesKnown) {
             evaluateAncestralStates();
@@ -360,7 +189,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         return currentDerived().ancestralStateScores.clone();
     }
 
-    /** Row-copy convenience for allocation-conscious tree logging; avoids exposing the flat layout to callers. */
     public void getAncestralStateScores(int nodeNumber, double[] destination) {
         if (destination.length != getStateCount()) {
             throw new IllegalArgumentException("destination length " + destination.length +
@@ -402,8 +230,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     @Override
     protected void makeDirtyInternal() {
-        preparedOperationsKnown = false;
-        coreKnown = false;
+        preparedInputKnown = false;
+        backendKnown = false;
     }
 
     @Override
@@ -412,54 +240,34 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         ancestralStatesKnown = false;
     }
 
-    // Base class calls this, then unconditionally invalidates the shared
-    // likelihood cache and derived state (invalidateDerivedState() above),
-    // then fires the model-changed event -- so this only needs the
-    // classification logic for eventTapeKnown/coreKnown.
     @Override
     protected void handleStructuredModelChangedEvent(Model model, Object object, int index) {
         if (model == treeIntervals) {
-            preparedOperationsKnown = false;
-        } else if (isMigrationModel(model)) {
-            // A substitution-model-backed migration-rate change (in any
-            // epoch) only changes the numeric Q matrix read into theta;
-            // event tape and epoch boundaries remain valid.
-        } else if (model == dynamics.getPopulationSizeModel()) {
-            // A population-size-model value change (Constant or
-            // PiecewiseConstant) only changes the numeric logN values read
-            // into theta; event tape and epoch boundaries remain valid.
-        } else if (model == branchRateModel) {
-            // A clock-rate parameter changed. The event tape and MascotCore's
-            // per-epoch rate cache are both keyed on the tree/theta, neither of
-            // which changed here -- only the numeric likelihood/gradient are
-            // stale. Falling through to the generic "else" below would set
-            // coreKnown=false and force a full MascotCore/tape rebuild on every
-            // HMC step touching the clock rate, defeating the tape-reuse design
-            // (see MascotCore's OperationTapeStore doc comment).
-        } else {
-            coreKnown = false;
+            preparedInputKnown = false;
+        } else if (!isMigrationModel(model) &&
+                model != dynamics.getPopulationSizeModel() &&
+                model != branchRateModel) {
+            backendKnown = false;
         }
     }
 
     @Override
     protected void handleStructuredVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == dynamics.getMigrationRates()) {
-            // The event tape is still valid; only the numeric likelihood and gradient change.
-        } else if (variable == dynamics.getEpochTimes()) {
-            coreKnown = false;
-        } else {
-            preparedOperationsKnown = false;
-            coreKnown = false;
+        if (variable == dynamics.getEpochTimes()) {
+            backendKnown = false;
+        } else if (variable != dynamics.getMigrationRates()) {
+            preparedInputKnown = false;
+            backendKnown = false;
         }
     }
 
     @Override
     protected void storeStructuredState() {
         storedDerivedIndex = currentDerivedIndex;
-        storedPreparedOperations = preparedOperations;
-        storedCore = core;
-        storedPreparedOperationsKnown = preparedOperationsKnown;
-        storedCoreKnown = coreKnown;
+        storedPreparedInput = preparedInput;
+        storedBackend = backend;
+        storedPreparedInputKnown = preparedInputKnown;
+        storedBackendKnown = backendKnown;
         storedGradientKnown = gradientKnown;
         storedAncestralStatesKnown = ancestralStatesKnown;
     }
@@ -467,61 +275,37 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     @Override
     protected void restoreStructuredState() {
         currentDerivedIndex = storedDerivedIndex;
-        preparedOperations = storedPreparedOperations;
-        core = storedCore;
-        preparedOperationsKnown = storedPreparedOperationsKnown;
-        coreKnown = storedCoreKnown;
+        preparedInput = storedPreparedInput;
+        backend = storedBackend;
+        preparedInputKnown = storedPreparedInputKnown;
+        backendKnown = storedBackendKnown;
         gradientKnown = storedGradientKnown;
         ancestralStatesKnown = storedAncestralStatesKnown;
     }
-
-    // acceptState() and getReport() are inherited unchanged: both engines'
-    // acceptState() was already a no-op, and this class's getReport() always
-    // matched AbstractStructuredCoalescentLikelihood.getDefaultReport() exactly.
-    // acceptState() does not need to touch currentDerivedIndex/storedDerivedIndex
-    // either: on acceptance, currentDerivedIndex already points at the
-    // just-computed (now accepted) buffer, and storedDerivedIndex is simply
-    // stale until the next storeStructuredState() call refreshes it.
 
     private DerivedBuffers currentDerived() {
         return derivedBuffers[currentDerivedIndex];
     }
 
-    private void ensurePreparedOperations() {
-        // validateSinglePattern(tipPatterns, stateCount, ...) already ran in
-        // AbstractStructuredCoalescentLikelihood's constructor, shared with BASTA.
-        if (tipPartialsCache == null) {
-            tipPartialsCache = StructuredTipStates.buildPartialsCache(treeModel, tipPatterns, dynamics.getStateCount(),
-                    true, "tip-state attributePatterns");
+    private void ensurePreparedInput() {
+        if (tipDataCache == null) {
+            tipDataCache = buildStructuredTipData(true, "tip-state attributePatterns");
         }
-        if (!preparedOperationsKnown) {
-            for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
-                NodeRef node = treeModel.getInternalNode(i);
-                int childCount = treeModel.getChildCount(node);
-                if (childCount != 2) {
-                    throw new IllegalArgumentException("The structured coalescent requires binary trees; node " +
-                            node.getNumber() + " has " + childCount + " children");
-                }
-            }
-            operationTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
-            preparedOperations = MascotCore.prepareOperations(
-                    operationTraversal.getBranchIntervalOperations(),
-                    operationTraversal.getIntervalStarts(),
-                    tipPartialsCache,
-                    treeModel.getNodeCount(),
-                    treeModel.getNodeHeight(treeIntervals.getSamplingNode(-1)));
-            preparedOperationsKnown = true;
+        if (!preparedInputKnown) {
+            StructuredCoalescentSchedule schedule = StructuredCoalescentSchedule.fromTreeIntervals(
+                    treeModel, treeIntervals, true, false);
+            preparedInput = MascotPreparedInput.prepare(schedule, tipDataCache);
+            preparedInputKnown = true;
         }
     }
 
-    private void ensureCore() {
-        if (!coreKnown) {
-            core = new MascotCore(dynamics.getStateCount(), dynamics.getBoundaries(), maxStep);
-            coreKnown = true;
+    private void ensureBackend() {
+        if (!backendKnown) {
+            backend = new MascotCore(dynamics.getStateCount(), dynamics.getBoundaries(), maxStep);
+            backendKnown = true;
         }
     }
 
-    /** Lazily sized once (parameterCount is fixed for this instance's lifetime), then reused across every call. */
     private double[] thetaBuffer() {
         if (thetaBuffer == null) {
             thetaBuffer = new double[dynamics.getParameterCount()];
@@ -530,7 +314,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         return thetaBuffer;
     }
 
-    /** Same reuse pattern as {@link #thetaBuffer()}; null (no allocation at all) when there is no clock. */
     private double[] branchRateBufferOrNull() {
         if (branchRateModel == null) {
             return null;
@@ -550,13 +333,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
     }
 
-    /**
-     * Ensures {@code buffers}' arrays are allocated (once; sizes are fixed for
-     * this instance's lifetime) before a {@code core.evaluateInto} call writes
-     * into them. {@code clockGradient} is left permanently {@code null} when
-     * there is no branch-rate model, matching {@code getClockGradientLogDensity()}'s
-     * existing null contract.
-     */
     private void ensureDerivedBuffers(DerivedBuffers buffers, boolean needsClockGradient) {
         if (buffers.combinedGradient == null) {
             buffers.combinedGradient = new double[dynamics.getParameterCount()];
@@ -581,10 +357,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     @Override
     protected double calculateLogLikelihood() {
-        ensurePreparedOperations();
-        ensureCore();
+        ensurePreparedInput();
+        ensureBackend();
         try {
-            double value = core.evaluateLikelihood(preparedOperations, thetaBuffer(),
+            double value = backend.evaluateLikelihood(preparedInput, thetaBuffer(),
                     branchRateBufferOrNull(), checkProbabilities);
             return Double.isFinite(value) ? value : Double.NEGATIVE_INFINITY;
         } catch (MascotCore.NumericalException e) {
@@ -593,21 +369,16 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     }
 
     private void evaluateLikelihoodAndGradient(boolean failOnGradientFailure) {
-        ensurePreparedOperations();
-        ensureCore();
+        ensurePreparedInput();
+        ensureBackend();
         double[] branchRates = branchRateBufferOrNull();
-        // See the DerivedBuffers double-buffering note above the field
-        // declarations: writing into 1 - storedDerivedIndex (never the buffer
-        // storeStructuredState() last snapshotted) is what lets a rejected
-        // proposal's restoreStructuredState() safely fall back to the
-        // untouched, previously-accepted values.
         currentDerivedIndex = 1 - storedDerivedIndex;
         DerivedBuffers buffers = currentDerived();
         ensureDerivedBuffers(buffers, branchRates != null);
 
         double logLikelihood;
         try {
-            logLikelihood = core.evaluateInto(preparedOperations, thetaBuffer(), branchRates,
+            logLikelihood = backend.evaluateInto(preparedInput, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, null, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             if (failOnGradientFailure) {
@@ -638,19 +409,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         gradientKnown = true;
     }
 
-    /**
-     * Evaluates the likelihood together with adjoint node-state scores for
-     * every internal tree node. Also requests the parameter gradient from
-     * the same MascotCore evaluation (rather than a separate one) so it is
-     * cached "for free" alongside the ancestral scores when both are needed;
-     * this does not run more often than plain likelihood/gradient evaluation
-     * since it is only invoked by {@link #getAncestralStateScores()} and its
-     * row-copy overload, which tree logging calls far less frequently than
-     * every MCMC/HMC step.
-     */
     private void evaluateAncestralStates() {
-        ensurePreparedOperations();
-        ensureCore();
+        ensurePreparedInput();
+        ensureBackend();
         double[] branchRates = branchRateBufferOrNull();
         currentDerivedIndex = 1 - storedDerivedIndex;
         DerivedBuffers buffers = currentDerived();
@@ -661,7 +422,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
         double logLikelihood;
         try {
-            logLikelihood = core.evaluateInto(preparedOperations, thetaBuffer(), branchRates,
+            logLikelihood = backend.evaluateInto(preparedInput, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, buffers.ancestralStateScores, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             throw new IllegalStateException("MASCOT ancestral states cannot be evaluated for the current " +
@@ -678,23 +439,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         ancestralStatesKnown = true;
     }
 
-    /**
-     * Checks finiteness, that every internal node's row was actually
-     * written, and sum-to-one for every internal-node row. Iterates the
-     * real tree (rather than inferring tip-vs-internal from whether a row's
-     * first entry happens to be NaN) so a genuinely missing internal-node
-     * row -- e.g. from a tape/indexing bug -- is caught as a failure
-     * instead of silently treated like a tip.
-     * <p/>
-     * Deliberately does <em>not</em> reject negative entries: this quantity
-     * is a sensitivity, not a probability (see {@link #getAncestralStateScores()}),
-     * and a broad nonnegativity survey already found legitimate, converged
-     * negative values under highly unequal population sizes -- rejecting
-     * them here would mean a valid MCMC/HMC state could make tree logging
-     * throw. The sum-to-one check is still a hard failure: that identity
-     * (Section 3 of the design doc) holds regardless of individual entries'
-     * sign, so its violation always indicates a bug, never a valid regime.
-     */
     private void validateAncestralStateScores(double[] scores) {
         if (scores == null) {
             throw new IllegalStateException("MASCOT ancestral-state evaluation returned no scores");
@@ -764,16 +508,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
     }
 
-    /**
-     * d(logLikelihood)/d(clock-rate parameter), reduced from the raw,
-     * node-number-indexed {@link #getClockGradientLogDensity()} via the
-     * branchRateModel's own {@link DifferentiableBranchRates} reduction --
-     * the same generic mechanism the rest of BEAST-X already uses for e.g.
-     * {@code ArbitraryBranchRates}, {@code LocalClockModel}, etc. Requires
-     * {@link #getBranchRateModel()} to implement {@link DifferentiableBranchRates};
-     * {@link StructuredCoalescentLikelihoodGradient.WrtParameter#CLOCK_RATE}'s
-     * {@code getParameter()} already enforces this at construction time.
-     */
     public double[] getClockRateGradientLogDensity() {
         if (!(branchRateModel instanceof DifferentiableBranchRates)) {
             throw new IllegalStateException("clockRate gradient requires a branchRateModel that implements " +

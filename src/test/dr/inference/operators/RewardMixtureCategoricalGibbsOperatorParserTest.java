@@ -55,7 +55,9 @@ import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RewardMixtureCategoricalGibbsOperator;
+import dr.inference.operators.RewardMixtureContinuousBranchSliceOperator;
 import dr.inferencexml.operators.RewardMixtureCategoricalGibbsOperatorParser;
+import dr.inferencexml.operators.RewardMixtureContinuousBranchSliceOperatorParser;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.xml.XMLObject;
@@ -73,6 +75,27 @@ import java.lang.reflect.Method;
  * @author Filippo Monti
  */
 public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCase {
+
+    public void testContinuousBranchSliceParserAcceptsStateAndProposalRuns() throws Exception {
+        MathUtils.setSeed(20260826);
+
+        final Fixture fixture = createFixture();
+        final RewardMixtureContinuousBranchSliceOperatorParser parser =
+                new RewardMixtureContinuousBranchSliceOperatorParser();
+
+        final XMLObject xo = continuousSliceOperatorXmlObject(fixture);
+        final Object parsed = parser.parseXMLObject(xo);
+
+        assertTrue(parsed instanceof RewardMixtureContinuousBranchSliceOperator);
+
+        final RewardMixtureContinuousBranchSliceOperator operator =
+                (RewardMixtureContinuousBranchSliceOperator) parsed;
+
+        assertFinite(fixture.independentLikelihood.getLogLikelihood());
+        assertFinite(operator.doOperation());
+        assertCategoryValuesAreInsideCuts(fixture.categoryState, fixture.categoryCuts);
+        assertCtsValuesAreInsideBounds(fixture.ctsRewards);
+    }
 
     public void testParserAcceptsCategoricalRewardStateAndProposalRuns() throws Exception {
         MathUtils.setSeed(20260701);
@@ -163,6 +186,21 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         if (pseudoPrior != null) {
             addChild(xo, nativeObject(document, "rewardMixtureAtomicPseudoPrior", pseudoPrior));
         }
+
+        return xo;
+    }
+
+    private static XMLObject continuousSliceOperatorXmlObject(final Fixture fixture) throws Exception {
+        final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        final XMLObject xo = xmlObject(document,
+                RewardMixtureContinuousBranchSliceOperatorParser.OPERATOR_NAME,
+                MCMCOperator.WEIGHT, "1.0",
+                RewardMixtureContinuousBranchSliceOperatorParser.WINDOW_SIZE, "0.05");
+
+        addChild(xo, wrapper(document, "categoryState", nativeObject(document, "parameter", fixture.categoryState)));
+        addChild(xo, wrapper(document, "categoryCuts", nativeObject(document, "parameter", fixture.categoryCuts)));
+        addChild(xo, nativeObject(document, "rewardsAwareBranchModel", fixture.rewardsAwareBranchModel));
+        addChild(xo, nativeObject(document, "treeDataLikelihood", fixture.independentLikelihood));
 
         return xo;
     }
@@ -324,6 +362,16 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
             final double value = categoryState.getParameterValue(i);
             assertTrue("Category value out of cut support: " + value,
                     value >= lower && value <= upper);
+        }
+    }
+
+    private static void assertCtsValuesAreInsideBounds(final Parameter ctsRewards) {
+        for (int i = 0; i < ctsRewards.getDimension(); i++) {
+            final double value = ctsRewards.getParameterValue(i);
+            assertTrue("CTS value below lower bound: " + value,
+                    value >= ctsRewards.getBounds().getLowerLimit(i));
+            assertTrue("CTS value above upper bound: " + value,
+                    value <= ctsRewards.getBounds().getUpperLimit(i));
         }
     }
 

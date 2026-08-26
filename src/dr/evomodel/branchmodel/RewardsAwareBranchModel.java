@@ -464,6 +464,21 @@ public class RewardsAwareBranchModel extends AbstractModel
                                                         final double[] xScratch,
                                                         final double[] timeScratch,
                                                         final double[][] matrixScratch) {
+        computeTransitionMatrixCtsForBranchInto(
+                nodeNr,
+                getContinuousRewardRawForBranch(nodeNr),
+                matrixOut,
+                xScratch,
+                timeScratch,
+                matrixScratch);
+    }
+
+    public void computeTransitionMatrixCtsForBranchInto(final int nodeNr,
+                                                        final double rawReward,
+                                                        final double[] matrixOut,
+                                                        final double[] xScratch,
+                                                        final double[] timeScratch,
+                                                        final double[][] matrixScratch) {
         if (matrixOut.length != dim2) {
             throw new IllegalArgumentException("matrixOut length must equal stateCount^2");
         }
@@ -485,7 +500,7 @@ public class RewardsAwareBranchModel extends AbstractModel
             return;
         }
 
-        xScratch[0] = getContinuousBranchRate(tree, node);
+        xScratch[0] = getContinuousBranchRateForRawReward(tree, node, rawReward);
         timeScratch[0] = t;
         matrixScratch[0] = matrixOut;
         sericola.computePdfInto(xScratch, timeScratch, true, matrixScratch);
@@ -706,6 +721,16 @@ public class RewardsAwareBranchModel extends AbstractModel
                     rewardMixtureRates.getContinuousRawReward(tree, node));
         }
         return branchRateModel.getBranchRate(tree, node);
+    }
+
+    private double getContinuousBranchRateForRawReward(final TreeModel tree,
+                                                       final NodeRef node,
+                                                       final double rawReward) {
+        if (branchRateModel instanceof RewardMixtureBranchRateModel) {
+            return ((RewardMixtureBranchRateModel) branchRateModel)
+                    .getBranchRateForRawReward(tree, node, rawReward);
+        }
+        return rawReward;
     }
 
     // -------------------- Branch model mapping --------------------

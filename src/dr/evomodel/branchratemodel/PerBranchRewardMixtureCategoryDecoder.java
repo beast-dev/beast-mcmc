@@ -166,6 +166,22 @@ public final class PerBranchRewardMixtureCategoryDecoder implements RewardMixtur
         return embedding.getUpperCut(layout.bucketForCategory(insertionRankByParameterIndex[parameterIndex], category));
     }
 
+    public double getLowerCutForCategoryAtCtsValue(final int parameterIndex,
+                                                   final int category,
+                                                   final double ctsValue) {
+        checkParameterIndex(parameterIndex);
+        final int rank = layout.insertionRank(ctsValue);
+        return embedding.getLowerCut(layout.bucketForCategory(rank, category));
+    }
+
+    public double getUpperCutForCategoryAtCtsValue(final int parameterIndex,
+                                                   final int category,
+                                                   final double ctsValue) {
+        checkParameterIndex(parameterIndex);
+        final int rank = layout.insertionRank(ctsValue);
+        return embedding.getUpperCut(layout.bucketForCategory(rank, category));
+    }
+
     private void checkParameterIndex(final int parameterIndex) {
         if (parameterIndex < 0 || parameterIndex >= categoryParameter.getDimension()) {
             throw new IllegalArgumentException("Category parameter index out of range: " + parameterIndex);

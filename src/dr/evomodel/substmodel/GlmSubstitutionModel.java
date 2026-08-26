@@ -241,8 +241,9 @@ public class GlmSubstitutionModel extends ComplexSubstitutionModel
         double derivative = 0;
 
         if (getNormalization()) {
+            final double[] normalizationFrequencies = getNormalizationFrequencies();
             for (int i = 0; i < stateCount; ++i) {
-                derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i);
+                derivative -= differentialMassMatrix[i][i] * normalizationFrequencies[i];
             }
         }
         return derivative;

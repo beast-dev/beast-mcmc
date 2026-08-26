@@ -20,15 +20,25 @@ public final class StructuredCoalescentActiveLineages {
     private final int nodeCount;
     private final int[] activeNodes;
     private final int[] activeIndexByNode;
+    private final boolean preserveOrder;
     private int activeCount;
 
     public StructuredCoalescentActiveLineages(int nodeCount) {
+        this(nodeCount, true);
+    }
+
+    public static StructuredCoalescentActiveLineages unordered(int nodeCount) {
+        return new StructuredCoalescentActiveLineages(nodeCount, false);
+    }
+
+    private StructuredCoalescentActiveLineages(int nodeCount, boolean preserveOrder) {
         if (nodeCount <= 0) {
             throw new IllegalArgumentException("nodeCount must be positive");
         }
         this.nodeCount = nodeCount;
         this.activeNodes = new int[nodeCount];
         this.activeIndexByNode = new int[nodeCount];
+        this.preserveOrder = preserveOrder;
         Arrays.fill(activeIndexByNode, -1);
     }
 
@@ -39,6 +49,10 @@ public final class StructuredCoalescentActiveLineages {
 
     public int getActiveCount() {
         return activeCount;
+    }
+
+    public int getNodeCount() {
+        return nodeCount;
     }
 
     public int getActiveNode(int index) {
@@ -78,8 +92,13 @@ public final class StructuredCoalescentActiveLineages {
             throw new IllegalArgumentException("coalescent parent is already active: " + parent);
         }
 
-        removePreservingOrder(leftChild);
-        removePreservingOrder(rightChild);
+        if (preserveOrder) {
+            removePreservingOrder(leftChild);
+            removePreservingOrder(rightChild);
+        } else {
+            removeSwapWithLast(leftChild);
+            removeSwapWithLast(rightChild);
+        }
         addSample(parent);
     }
 
@@ -106,6 +125,21 @@ public final class StructuredCoalescentActiveLineages {
             int movedNode = activeNodes[i];
             activeNodes[i - 1] = movedNode;
             activeIndexByNode[movedNode] = i - 1;
+        }
+        activeCount--;
+        activeIndexByNode[node] = -1;
+    }
+
+    private void removeSwapWithLast(int node) {
+        int index = activeIndexByNode[node];
+        if (index < 0) {
+            throw new IllegalArgumentException("lineage is not active: " + node);
+        }
+        int lastIndex = activeCount - 1;
+        int lastNode = activeNodes[lastIndex];
+        if (index != lastIndex) {
+            activeNodes[index] = lastNode;
+            activeIndexByNode[lastNode] = index;
         }
         activeCount--;
         activeIndexByNode[node] = -1;

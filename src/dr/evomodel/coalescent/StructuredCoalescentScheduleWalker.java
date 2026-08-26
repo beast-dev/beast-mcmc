@@ -75,9 +75,25 @@ public final class StructuredCoalescentScheduleWalker {
         if (visitor == null) {
             throw new IllegalArgumentException("visitor must not be null");
         }
+        walk(schedule, new StructuredCoalescentActiveLineages(schedule.nodeCount), visitor);
+    }
 
-        StructuredCoalescentActiveLineages activeLineages =
-                new StructuredCoalescentActiveLineages(schedule.nodeCount);
+    public static void walk(StructuredCoalescentSchedule schedule, StructuredCoalescentActiveLineages activeLineages,
+                            Visitor visitor) {
+        if (schedule == null) {
+            throw new IllegalArgumentException("schedule must not be null");
+        }
+        if (activeLineages == null) {
+            throw new IllegalArgumentException("activeLineages must not be null");
+        }
+        if (activeLineages.getNodeCount() != schedule.nodeCount) {
+            throw new IllegalArgumentException("activeLineages nodeCount " + activeLineages.getNodeCount() +
+                    " does not match schedule nodeCount " + schedule.nodeCount);
+        }
+        if (visitor == null) {
+            throw new IllegalArgumentException("visitor must not be null");
+        }
+
         activeLineages.reset(schedule.initialSampleNode);
         visitor.initialSample(schedule.initialSampleNode, activeLineages);
 

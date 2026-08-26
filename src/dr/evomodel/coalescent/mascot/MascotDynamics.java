@@ -19,7 +19,7 @@ import dr.inference.model.Parameter;
 import java.util.Arrays;
 
 /**
- * Maps parser-facing migration/population parameters to MascotCore's flat
+ * Maps parser-facing migration/population parameters to GenericMascotLikelihoodDelegate's flat
  * epoch-major [migration rates, log population sizes] layout and gradients.
  */
 public final class MascotDynamics {
@@ -138,7 +138,7 @@ public final class MascotDynamics {
                 for (int j = 0; j < migrationRatesPerEpoch; j++) {
                     double rate = migrationRates.getParameterValue(migrationBase + j);
                     if (!(rate >= 0.0) || !Double.isFinite(rate)) {
-                        throw new MascotCore.NumericalException("invalid migration rate at index " +
+                        throw new MascotLikelihoodDelegate.NumericalException("invalid migration rate at index " +
                                 (migrationBase + j) + ": " + rate);
                     }
                     destination[base + j] = rate;
@@ -151,7 +151,7 @@ public final class MascotDynamics {
             for (int k = 0; k < stateCount; k++) {
                 double naturalSize = populationSizeParameter.getParameterValue(popSizeBase + k);
                 if (!(naturalSize > 0.0) || !Double.isFinite(naturalSize)) {
-                    throw new MascotCore.NumericalException("invalid population size at epoch " + epoch +
+                    throw new MascotLikelihoodDelegate.NumericalException("invalid population size at epoch " + epoch +
                             ", state " + k + ": " + naturalSize);
                 }
                 destination[base + migrationRatesPerEpoch + k] = Math.log(naturalSize);
@@ -294,7 +294,7 @@ public final class MascotDynamics {
                 }
                 double rate = migrationModelMatrix[row + sink];
                 if (!(rate >= 0.0) || !Double.isFinite(rate)) {
-                    throw new MascotCore.NumericalException("invalid migrationModel rate for epoch " + epoch +
+                    throw new MascotLikelihoodDelegate.NumericalException("invalid migrationModel rate for epoch " + epoch +
                             ", source " + source + ", sink " + sink + ": " + rate);
                 }
                 theta[thetaOffset + index] = rate;

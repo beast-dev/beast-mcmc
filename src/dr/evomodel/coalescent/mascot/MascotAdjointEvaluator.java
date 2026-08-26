@@ -1,5 +1,5 @@
 /*
- * MascotReverseModeHelper.java
+ * MascotAdjointEvaluator.java
  *
  * Copyright (c) 2002-2026 Alexei Drummond, Andrew Rambaut and Marc Suchard
  */
@@ -8,8 +8,8 @@ package dr.evomodel.coalescent.mascot;
 
 import java.util.Arrays;
 
-/** Reverse-mode replay over MascotCore's recorded operation tape. */
-final class MascotReverseModeHelper {
+/** Owns MASCOT adjoint recording storage and reverse-mode replay. */
+final class MascotAdjointEvaluator {
 
     private static final double EPS = 1.0e-300;
 
@@ -17,8 +17,11 @@ final class MascotReverseModeHelper {
     private final int parametersPerEpoch;
     private final int migrationParametersPerEpoch;
     private final int parameterCount;
+    private final MascotAdjointTape.Store operationTape = new MascotAdjointTape.Store();
+    private double[] gradientScratch;
+    private double[] clockGradientScratch;
 
-    MascotReverseModeHelper(int stateCount, int parametersPerEpoch, int migrationParametersPerEpoch,
+    MascotAdjointEvaluator(int stateCount, int parametersPerEpoch, int migrationParametersPerEpoch,
                             int parameterCount) {
         this.stateCount = stateCount;
         this.parametersPerEpoch = parametersPerEpoch;
@@ -26,54 +29,76 @@ final class MascotReverseModeHelper {
         this.parameterCount = parameterCount;
     }
 
-    void reverse(MascotCore.Workspace workspace, MascotCore.EpochRates[] epochRates,
-                MascotCore.OperationTapeStore operations, int finalActiveCount, double[] gradient,
-                double[] clockGradient, double[] ancestralStateScores) {
+    MascotAdjointTape.Store resetTape(int expectedOperationCount) {
+        operationTape.reset(expectedOperationCount);
+        return operationTape;
+    }
+
+    void reverseInto(MascotRuntime.Workspace workspace, MascotRuntime.EpochRates[] epochRates,
+                     MascotAdjointTape.Store operations, int finalActiveCount,
+                     int lineageDimension, boolean needsClockGradientScratch,
+                     double[] gradientOut, double[] clockGradientOut, double[] ancestralStateScores) {
+        double[] gradient = gradientOut;
+        if (gradient == null) {
+            gradientScratch = MascotRuntime.ensure(gradientScratch, parameterCount);
+            gradient = gradientScratch;
+        }
+        double[] clockGradient = clockGradientOut;
+        if (clockGradient == null && needsClockGradientScratch) {
+            clockGradientScratch = MascotRuntime.ensure(clockGradientScratch, lineageDimension);
+            clockGradient = clockGradientScratch;
+        }
+        reverse(workspace, epochRates, operations, finalActiveCount, gradient, clockGradient, ancestralStateScores);
+    }
+
+    private void reverse(MascotRuntime.Workspace workspace, MascotRuntime.EpochRates[] epochRates,
+                         MascotAdjointTape.Store operations, int finalActiveCount, double[] gradient,
+                         double[] clockGradient, double[] ancestralStateScores) {
         Arrays.fill(gradient, 0, parameterCount, 0.0);
         if (clockGradient != null) {
             Arrays.fill(clockGradient, 0, clockGradient.length, 0.0);
         }
         int dim = finalActiveCount * stateCount + 1;
 
-        workspace.reverseOperationA = MascotCore.ensure(workspace.reverseOperationA, dim);
+        workspace.reverseOperationA = MascotRuntime.ensure(workspace.reverseOperationA, dim);
         double[] cursor = workspace.reverseOperationA;
         Arrays.fill(cursor, 0, dim, 0.0);
         cursor[dim - 1] = 1.0;
         boolean cursorIsA = true;
 
         for (int opIndex = operations.size() - 1; opIndex >= 0; opIndex--) {
-            MascotCore.OperationTape operation = operations.get(opIndex);
+            MascotAdjointTape.Operation operation = operations.get(opIndex);
             int nextDim;
-            if (operation instanceof MascotCore.IntervalTape) {
+            if (operation instanceof MascotAdjointTape.Interval) {
                 nextDim = dim;
-            } else if (operation instanceof MascotCore.CoalescentTape) {
+            } else if (operation instanceof MascotAdjointTape.Coalescent) {
                 nextDim = dim + stateCount;
-            } else if (operation instanceof MascotCore.SampleTape) {
+            } else if (operation instanceof MascotAdjointTape.Sample) {
                 nextDim = dim - stateCount;
             } else {
                 throw new IllegalArgumentException("unknown tape operation: " + operation.getClass());
             }
 
-            if (operation instanceof MascotCore.SampleTape) {
-                reverseSampleInPlace((MascotCore.SampleTape) operation, cursor, dim);
+            if (operation instanceof MascotAdjointTape.Sample) {
+                reverseSampleInPlace((MascotAdjointTape.Sample) operation, cursor, dim);
                 dim = nextDim;
                 continue;
             }
 
             double[] next;
             if (cursorIsA) {
-                workspace.reverseOperationB = MascotCore.ensure(workspace.reverseOperationB, nextDim);
+                workspace.reverseOperationB = MascotRuntime.ensure(workspace.reverseOperationB, nextDim);
                 next = workspace.reverseOperationB;
             } else {
-                workspace.reverseOperationA = MascotCore.ensure(workspace.reverseOperationA, nextDim);
+                workspace.reverseOperationA = MascotRuntime.ensure(workspace.reverseOperationA, nextDim);
                 next = workspace.reverseOperationA;
             }
 
-            if (operation instanceof MascotCore.IntervalTape) {
-                reverseIntervalInto(workspace, (MascotCore.IntervalTape) operation, cursor, next, epochRates,
+            if (operation instanceof MascotAdjointTape.Interval) {
+                reverseIntervalInto(workspace, (MascotAdjointTape.Interval) operation, cursor, next, epochRates,
                         gradient, clockGradient);
-            } else if (operation instanceof MascotCore.CoalescentTape) {
-                reverseCoalescentInto((MascotCore.CoalescentTape) operation, cursor, dim, next, gradient,
+            } else if (operation instanceof MascotAdjointTape.Coalescent) {
+                reverseCoalescentInto((MascotAdjointTape.Coalescent) operation, cursor, dim, next, gradient,
                         ancestralStateScores);
             }
 
@@ -83,14 +108,14 @@ final class MascotReverseModeHelper {
         }
     }
 
-    private void reverseIntervalInto(MascotCore.Workspace workspace, MascotCore.IntervalTape tape,
+    private void reverseIntervalInto(MascotRuntime.Workspace workspace, MascotAdjointTape.Interval tape,
                                      double[] adjointAfter, double[] adjointBeforeOut,
-                                     MascotCore.EpochRates[] epochRates, double[] gradient, double[] clockGradient) {
+                                     MascotRuntime.EpochRates[] epochRates, double[] gradient, double[] clockGradient) {
         int dim = tape.stateDimension;
-        MascotCore.EpochRates rates = epochRates[tape.epoch];
+        MascotRuntime.EpochRates rates = epochRates[tape.epoch];
 
-        workspace.reverseCursorA = MascotCore.ensure(workspace.reverseCursorA, dim);
-        workspace.reverseCursorB = MascotCore.ensure(workspace.reverseCursorB, dim);
+        workspace.reverseCursorA = MascotRuntime.ensure(workspace.reverseCursorA, dim);
+        workspace.reverseCursorB = MascotRuntime.ensure(workspace.reverseCursorB, dim);
         System.arraycopy(adjointAfter, 0, workspace.reverseCursorA, 0, dim);
         double[] cursor = workspace.reverseCursorA;
         double[] next = workspace.reverseCursorB;
@@ -106,9 +131,9 @@ final class MascotReverseModeHelper {
         System.arraycopy(cursor, 0, adjointBeforeOut, 0, dim);
     }
 
-    private void reverseStepInto(MascotCore.IntervalTape tape, int offset, MascotCore.EpochRates rates,
+    private void reverseStepInto(MascotAdjointTape.Interval tape, int offset, MascotRuntime.EpochRates rates,
                                  double[] adjointAfter, double[] adjointBeforeOut, double[] gradient,
-                                 double[] clockGradient, MascotCore.Workspace w) {
+                                 double[] clockGradient, MascotRuntime.Workspace w) {
         int dim = tape.stateDimension;
         int activeCount = tape.activeCount;
         int epoch = tape.epoch;
@@ -116,52 +141,52 @@ final class MascotReverseModeHelper {
         int[] activeIds = tape.activeIds;
         double[] activeClockRates = tape.clockRates;
 
-        w.adjointY0 = MascotCore.ensure(w.adjointY0, dim);
+        w.adjointY0 = MascotRuntime.ensure(w.adjointY0, dim);
         System.arraycopy(adjointAfter, 0, w.adjointY0, 0, dim);
 
-        w.adjointK1 = MascotCore.ensure(w.adjointK1, dim);
-        MascotCore.scaleInto(adjointAfter, h / 6.0, w.adjointK1, dim);
-        w.adjointK2 = MascotCore.ensure(w.adjointK2, dim);
-        MascotCore.scaleInto(adjointAfter, h / 3.0, w.adjointK2, dim);
-        w.adjointK3 = MascotCore.ensure(w.adjointK3, dim);
-        MascotCore.scaleInto(adjointAfter, h / 3.0, w.adjointK3, dim);
-        w.adjointK4 = MascotCore.ensure(w.adjointK4, dim);
-        MascotCore.scaleInto(adjointAfter, h / 6.0, w.adjointK4, dim);
+        w.adjointK1 = MascotRuntime.ensure(w.adjointK1, dim);
+        MascotRuntime.scaleInto(adjointAfter, h / 6.0, w.adjointK1, dim);
+        w.adjointK2 = MascotRuntime.ensure(w.adjointK2, dim);
+        MascotRuntime.scaleInto(adjointAfter, h / 3.0, w.adjointK2, dim);
+        w.adjointK3 = MascotRuntime.ensure(w.adjointK3, dim);
+        MascotRuntime.scaleInto(adjointAfter, h / 3.0, w.adjointK3, dim);
+        w.adjointK4 = MascotRuntime.ensure(w.adjointK4, dim);
+        MascotRuntime.scaleInto(adjointAfter, h / 6.0, w.adjointK4, dim);
 
-        w.vjpY = MascotCore.ensure(w.vjpY, dim);
+        w.vjpY = MascotRuntime.ensure(w.vjpY, dim);
 
         rhsVjpInto(tape.y4, offset, activeCount, rates, epoch, w.adjointK4, w.vjpY, gradient, w,
                 activeIds, activeClockRates, clockGradient);
-        MascotCore.addInPlace(w.adjointY0, w.vjpY, dim);
-        MascotCore.addScaledInPlace(w.adjointK3, w.vjpY, h, dim);
+        MascotRuntime.addInPlace(w.adjointY0, w.vjpY, dim);
+        MascotRuntime.addScaledInPlace(w.adjointK3, w.vjpY, h, dim);
 
         rhsVjpInto(tape.y3, offset, activeCount, rates, epoch, w.adjointK3, w.vjpY, gradient, w,
                 activeIds, activeClockRates, clockGradient);
-        MascotCore.addInPlace(w.adjointY0, w.vjpY, dim);
-        MascotCore.addScaledInPlace(w.adjointK2, w.vjpY, 0.5 * h, dim);
+        MascotRuntime.addInPlace(w.adjointY0, w.vjpY, dim);
+        MascotRuntime.addScaledInPlace(w.adjointK2, w.vjpY, 0.5 * h, dim);
 
         rhsVjpInto(tape.y2, offset, activeCount, rates, epoch, w.adjointK2, w.vjpY, gradient, w,
                 activeIds, activeClockRates, clockGradient);
-        MascotCore.addInPlace(w.adjointY0, w.vjpY, dim);
-        MascotCore.addScaledInPlace(w.adjointK1, w.vjpY, 0.5 * h, dim);
+        MascotRuntime.addInPlace(w.adjointY0, w.vjpY, dim);
+        MascotRuntime.addScaledInPlace(w.adjointK1, w.vjpY, 0.5 * h, dim);
 
         rhsVjpInto(tape.y0, offset, activeCount, rates, epoch, w.adjointK1, w.vjpY, gradient, w,
                 activeIds, activeClockRates, clockGradient);
-        MascotCore.addInPlace(w.adjointY0, w.vjpY, dim);
+        MascotRuntime.addInPlace(w.adjointY0, w.vjpY, dim);
 
         System.arraycopy(w.adjointY0, 0, adjointBeforeOut, 0, dim);
     }
 
-    private void rhsVjpInto(double[] y, int yOffset, int activeCount, MascotCore.EpochRates rates, int epoch,
-                            double[] adjointRhs, double[] adjointYOut, double[] gradient, MascotCore.Workspace w,
+    private void rhsVjpInto(double[] y, int yOffset, int activeCount, MascotRuntime.EpochRates rates, int epoch,
+                            double[] adjointRhs, double[] adjointYOut, double[] gradient, MascotRuntime.Workspace w,
                             int[] activeLineageIds, double[] activeClockRates, double[] clockGradient) {
         int K = stateCount;
         int stateSize = activeCount * K;
         adjointYOut[stateSize] = 0.0;
 
-        w.migrationGram = MascotCore.ensure(w.migrationGram, K * K);
-        w.sums = MascotCore.ensure(w.sums, K);
-        w.sumsSquares = MascotCore.ensure(w.sumsSquares, K);
+        w.migrationGram = MascotRuntime.ensure(w.migrationGram, K * K);
+        w.sums = MascotRuntime.ensure(w.sums, K);
+        w.sumsSquares = MascotRuntime.ensure(w.sumsSquares, K);
 
         {
             double c = activeClockRates == null ? 1.0 : activeClockRates[0];
@@ -227,8 +252,8 @@ final class MascotReverseModeHelper {
             }
         }
 
-        w.hValues = MascotCore.ensure(w.hValues, stateSize);
-        w.rValues = MascotCore.ensure(w.rValues, activeCount);
+        w.hValues = MascotRuntime.ensure(w.hValues, stateSize);
+        w.rValues = MascotRuntime.ensure(w.rValues, activeCount);
         for (int lineage = 0; lineage < activeCount; lineage++) {
             int offset = lineage * K;
             double r = 0.0;
@@ -240,7 +265,7 @@ final class MascotReverseModeHelper {
             w.rValues[lineage] = r;
         }
 
-        w.bValues = MascotCore.ensure(w.bValues, activeCount);
+        w.bValues = MascotRuntime.ensure(w.bValues, activeCount);
         for (int lineage = 0; lineage < activeCount; lineage++) {
             int offset = lineage * K;
             double b = 0.0;
@@ -250,8 +275,8 @@ final class MascotReverseModeHelper {
             w.bValues[lineage] = b;
         }
 
-        w.cSums = MascotCore.ensure(w.cSums, K);
-        w.cValues = MascotCore.ensure(w.cValues, stateSize);
+        w.cSums = MascotRuntime.ensure(w.cSums, K);
+        w.cValues = MascotRuntime.ensure(w.cValues, stateSize);
         double b = w.bValues[0];
         for (int state = 0; state < K; state++) {
             double upstream = adjointRhs[state];
@@ -274,7 +299,7 @@ final class MascotReverseModeHelper {
             }
         }
 
-        w.gradQ = MascotCore.ensure(w.gradQ, K);
+        w.gradQ = MascotRuntime.ensure(w.gradQ, K);
         double ellAdjoint = adjointRhs[stateSize];
         for (int state = 0; state < K; state++) {
             double pairSum = 0.5 * (w.sums[state] * w.sums[state] - w.sumsSquares[state]);
@@ -296,7 +321,7 @@ final class MascotReverseModeHelper {
         }
     }
 
-    private void reverseSampleInPlace(MascotCore.SampleTape tape, double[] adjointAfter, int afterDim) {
+    private void reverseSampleInPlace(MascotAdjointTape.Sample tape, double[] adjointAfter, int afterDim) {
         int afterCount = (afterDim - 1) / stateCount;
         int beforeCount = afterCount - 1;
         if (tape.sampleIndexAfter != beforeCount) {
@@ -306,7 +331,7 @@ final class MascotReverseModeHelper {
         adjointAfter[beforeDim - 1] = adjointAfter[afterDim - 1];
     }
 
-    private void reverseCoalescentInto(MascotCore.CoalescentTape tape, double[] adjointAfter, int afterDim,
+    private void reverseCoalescentInto(MascotAdjointTape.Coalescent tape, double[] adjointAfter, int afterDim,
                                        double[] adjointBeforeOut, double[] gradient,
                                        double[] ancestralStateScores) {
         int beforeDim = afterDim + stateCount;

@@ -47,9 +47,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private final String ancestralStateTagName;
 
     private MascotPreparedInput preparedInput;
-    private MascotLikelihoodBackend backend;
+    private MascotLikelihoodDelegate likelihoodDelegate;
     private boolean preparedInputKnown;
-    private boolean backendKnown;
+    private boolean likelihoodDelegateKnown;
     private boolean gradientKnown;
     private StructuredCoalescentTipData tipDataCache;
 
@@ -69,9 +69,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private int storedDerivedIndex;
 
     private MascotPreparedInput storedPreparedInput;
-    private MascotLikelihoodBackend storedBackend;
+    private MascotLikelihoodDelegate storedLikelihoodDelegate;
     private boolean storedPreparedInputKnown;
-    private boolean storedBackendKnown;
+    private boolean storedLikelihoodDelegateKnown;
     private boolean storedGradientKnown;
     private boolean storedAncestralStatesKnown;
 
@@ -111,7 +111,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
 
         this.preparedInputKnown = false;
-        this.backendKnown = false;
+        this.likelihoodDelegateKnown = false;
         this.gradientKnown = false;
 
         treeTraits.addTrait(new TreeTrait.DA() {
@@ -231,7 +231,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     @Override
     protected void makeDirtyInternal() {
         preparedInputKnown = false;
-        backendKnown = false;
+        likelihoodDelegateKnown = false;
     }
 
     @Override
@@ -247,17 +247,17 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         } else if (!isMigrationModel(model) &&
                 model != dynamics.getPopulationSizeModel() &&
                 model != branchRateModel) {
-            backendKnown = false;
+            likelihoodDelegateKnown = false;
         }
     }
 
     @Override
     protected void handleStructuredVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == dynamics.getEpochTimes()) {
-            backendKnown = false;
+            likelihoodDelegateKnown = false;
         } else if (variable != dynamics.getMigrationRates()) {
             preparedInputKnown = false;
-            backendKnown = false;
+            likelihoodDelegateKnown = false;
         }
     }
 
@@ -265,9 +265,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     protected void storeStructuredState() {
         storedDerivedIndex = currentDerivedIndex;
         storedPreparedInput = preparedInput;
-        storedBackend = backend;
+        storedLikelihoodDelegate = likelihoodDelegate;
         storedPreparedInputKnown = preparedInputKnown;
-        storedBackendKnown = backendKnown;
+        storedLikelihoodDelegateKnown = likelihoodDelegateKnown;
         storedGradientKnown = gradientKnown;
         storedAncestralStatesKnown = ancestralStatesKnown;
     }
@@ -276,9 +276,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     protected void restoreStructuredState() {
         currentDerivedIndex = storedDerivedIndex;
         preparedInput = storedPreparedInput;
-        backend = storedBackend;
+        likelihoodDelegate = storedLikelihoodDelegate;
         preparedInputKnown = storedPreparedInputKnown;
-        backendKnown = storedBackendKnown;
+        likelihoodDelegateKnown = storedLikelihoodDelegateKnown;
         gradientKnown = storedGradientKnown;
         ancestralStatesKnown = storedAncestralStatesKnown;
     }
@@ -299,10 +299,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
     }
 
-    private void ensureBackend() {
-        if (!backendKnown) {
-            backend = new MascotCore(dynamics.getStateCount(), dynamics.getBoundaries(), maxStep);
-            backendKnown = true;
+    private void ensureLikelihoodDelegate() {
+        if (!likelihoodDelegateKnown) {
+            likelihoodDelegate = new GenericMascotLikelihoodDelegate(dynamics.getStateCount(), dynamics.getBoundaries(), maxStep);
+            likelihoodDelegateKnown = true;
         }
     }
 
@@ -358,19 +358,19 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     @Override
     protected double calculateLogLikelihood() {
         ensurePreparedInput();
-        ensureBackend();
+        ensureLikelihoodDelegate();
         try {
-            double value = backend.evaluateLikelihood(preparedInput, thetaBuffer(),
+            double value = likelihoodDelegate.calculateLikelihood(preparedInput, thetaBuffer(),
                     branchRateBufferOrNull(), checkProbabilities);
             return Double.isFinite(value) ? value : Double.NEGATIVE_INFINITY;
-        } catch (MascotCore.NumericalException e) {
+        } catch (MascotLikelihoodDelegate.NumericalException e) {
             return Double.NEGATIVE_INFINITY;
         }
     }
 
     private void evaluateLikelihoodAndGradient(boolean failOnGradientFailure) {
         ensurePreparedInput();
-        ensureBackend();
+        ensureLikelihoodDelegate();
         double[] branchRates = branchRateBufferOrNull();
         currentDerivedIndex = 1 - storedDerivedIndex;
         DerivedBuffers buffers = currentDerived();
@@ -378,9 +378,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
         double logLikelihood;
         try {
-            logLikelihood = backend.evaluateInto(preparedInput, thetaBuffer(), branchRates,
+            logLikelihood = likelihoodDelegate.calculateLikelihoodAndDerivatives(preparedInput, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, null, checkProbabilities);
-        } catch (MascotCore.NumericalException e) {
+        } catch (MascotLikelihoodDelegate.NumericalException e) {
             if (failOnGradientFailure) {
                 throw new IllegalStateException("MASCOT gradient cannot be evaluated for the current " +
                         "parameter values: " + e.getMessage(), e);
@@ -411,7 +411,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     private void evaluateAncestralStates() {
         ensurePreparedInput();
-        ensureBackend();
+        ensureLikelihoodDelegate();
         double[] branchRates = branchRateBufferOrNull();
         currentDerivedIndex = 1 - storedDerivedIndex;
         DerivedBuffers buffers = currentDerived();
@@ -422,9 +422,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
         double logLikelihood;
         try {
-            logLikelihood = backend.evaluateInto(preparedInput, thetaBuffer(), branchRates,
+            logLikelihood = likelihoodDelegate.calculateLikelihoodAndDerivatives(preparedInput, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, buffers.ancestralStateScores, checkProbabilities);
-        } catch (MascotCore.NumericalException e) {
+        } catch (MascotLikelihoodDelegate.NumericalException e) {
             throw new IllegalStateException("MASCOT ancestral states cannot be evaluated for the current " +
                     "parameter values: " + e.getMessage(), e);
         }

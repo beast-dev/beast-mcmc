@@ -11,7 +11,7 @@ import dr.inference.model.Parameter;
 /**
  * Shared parsing/validation for "a Parameter of strictly-increasing
  * backward-time breakpoints" -- the concept behind both MASCOT's
- * {@code epochTimes} (feeding {@code MascotCore}'s epoch-major {@code theta}
+ * {@code epochTimes} (feeding {@code GenericMascotLikelihoodDelegate}'s epoch-major {@code theta}
  * layout) and BASTA's {@code gridPoints} (feeding {@code
  * PiecewiseConstantPopulationSizeModel}'s per-segment population sizes).
  *
@@ -48,7 +48,7 @@ public final class EpochBoundaries {
 
     /**
      * The {@code [0.0, times[0], times[1], ..., +Infinity]} form MASCOT's
-     * {@code MascotCore} requires: {@code times.length} breakpoints produce
+     * {@code GenericMascotLikelihoodDelegate} requires: {@code times.length} breakpoints produce
      * {@code times.length + 1} epochs, epoch 0 spanning {@code [0, times[0])}.
      * A {@code null} (or zero-dimension) {@code times} yields a single epoch
      * spanning {@code [0, +Infinity)}.

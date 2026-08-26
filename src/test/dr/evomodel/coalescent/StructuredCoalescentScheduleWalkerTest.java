@@ -64,6 +64,44 @@ public class StructuredCoalescentScheduleWalkerTest extends TestCase {
         }, visitor.records);
     }
 
+    public void testWalkerCanReuseActiveLineageTracker() throws Exception {
+        TreeModel tree = fixedTree();
+        StructuredCoalescentSchedule schedule = StructuredCoalescentSchedule.fromTreeIntervals(
+                tree, new BigFastTreeIntervals(tree), true, false);
+        StructuredCoalescentActiveLineages activeLineages =
+                new StructuredCoalescentActiveLineages(schedule.nodeCount);
+        RecordingVisitor first = new RecordingVisitor();
+        RecordingVisitor second = new RecordingVisitor();
+
+        StructuredCoalescentScheduleWalker.walk(schedule, activeLineages, first);
+        assertEquals(1, activeLineages.getActiveCount());
+        assertEquals(10, activeLineages.getActiveNode(0));
+
+        StructuredCoalescentScheduleWalker.walk(schedule, activeLineages, second);
+
+        assertEquals(first.records, second.records);
+        assertEquals(1, activeLineages.getActiveCount());
+        assertEquals(10, activeLineages.getActiveNode(0));
+    }
+
+    public void testWalkerCanReuseUnorderedActiveLineageTracker() throws Exception {
+        TreeModel tree = fixedTree();
+        StructuredCoalescentSchedule schedule = StructuredCoalescentSchedule.fromTreeIntervals(
+                tree, new BigFastTreeIntervals(tree), true, false);
+        StructuredCoalescentActiveLineages activeLineages =
+                StructuredCoalescentActiveLineages.unordered(schedule.nodeCount);
+
+        StructuredCoalescentScheduleWalker.walk(schedule, activeLineages,
+                new StructuredCoalescentScheduleWalker.Adapter());
+        assertEquals(1, activeLineages.getActiveCount());
+        assertEquals(10, activeLineages.getActiveNode(0));
+
+        StructuredCoalescentScheduleWalker.walk(schedule, activeLineages,
+                new StructuredCoalescentScheduleWalker.Adapter());
+        assertEquals(1, activeLineages.getActiveCount());
+        assertEquals(10, activeLineages.getActiveNode(0));
+    }
+
     private static TreeModel fixedTree() throws Exception {
         NewickImporter importer = new NewickImporter(
                 "(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0," +

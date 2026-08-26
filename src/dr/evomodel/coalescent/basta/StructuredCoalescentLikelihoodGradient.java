@@ -49,7 +49,7 @@ import dr.xml.Reportable;
  * derivative over the {@code stateCount x stateCount} instantaneous-rate
  * matrix (or the {@code stateCount}-dimensioned population-size block), which
  * {@link WrtParameter#chainRule} then reduces to the free parameter; MASCOT's
- * {@code MascotCore} adjoint pass instead returns a gradient already expressed
+ * {@code GenericMascotLikelihoodDelegate} adjoint pass instead returns a gradient already expressed
  * directly in theta-space (raw migration rates, log population sizes), fully
  * reduced by {@link MascotLikelihood} itself ({@code
  * MascotDynamics#writeMigrationGradient}/{@code writePopSizeGradient}) before

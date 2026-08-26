@@ -220,6 +220,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     private final double[][] transformedPreOrder;
 
     private final double[] branchLengths;
+    private final double[] storedBranchLengths;
     private final int[] branchUpdateIndices;
 
     private final boolean[] nodePartialKnown;
@@ -247,6 +248,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
     private boolean updateSiteModel = true;
     private boolean updateRootFrequency = true;
     private boolean computePostOrderStatisticsOnly = false;
+    private boolean branchLengthsKnown = false;
+    private boolean storedBranchLengthsKnown = false;
 
     private long totalEvaluationCount = 0L;
     private long totalNodeOperationCount = 0L;
@@ -302,6 +305,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         this.stateSetCache = buildStateSetCache(dataType);
 
         this.branchLengths = new double[nodeCount];
+        this.storedBranchLengths = new double[nodeCount];
         this.branchUpdateIndices = new int[nodeCount];
 
 
@@ -499,6 +503,8 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         final int firstScaleSnapshotRow = tipPartialsDependOnSubstitutionModel ? 0 : tipCount;
         copy2D(nodePartials, storedNodePartials, firstPartialSnapshotRow);
         copy2D(nodePatternLogScales, storedNodePatternLogScales, firstScaleSnapshotRow);
+        System.arraycopy(branchLengths, 0, storedBranchLengths, 0, branchLengths.length);
+        storedBranchLengthsKnown = branchLengthsKnown;
 //        copy2D(nodePreOrderPatternLogScales, storedNodePreOrderPatternLogScales);
         postOrderRepresentation.storeState();
         if (preOrderDelegate != null) {
@@ -529,12 +535,15 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         updateSubstitutionModel = true;
         invalidateAllCaches();
         postOrderRepresentation.restoreState();
+        System.arraycopy(storedBranchLengths, 0, branchLengths, 0, branchLengths.length);
+        branchLengthsKnown = storedBranchLengthsKnown;
         preOrderValid = false;
         if (preOrderDelegate != null) {
             preOrderDelegate.restoreState();
         }
     }
-    public void invalidatePreOrderOnlyForDebug() {
+
+    private void invalidatePreOrder() {
         preOrderValid = false;
         Arrays.fill(nodePreOrderKnown, false);
         if (preOrderStartKnown != null) Arrays.fill(preOrderStartKnown, false);
@@ -567,6 +576,7 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
 //            branchUpdateIndices[branchUpdateCount] = op.getBranchNumber(); //TODO check this
             branchLengths[nodeNumber] = op.getBranchLength();
         }
+        branchLengthsKnown = true;
 
         if (updateSubstitutionModel || updateSiteModel || updateRootFrequency) {
             if (updateSubstitutionModel) {
@@ -706,8 +716,16 @@ public class DiscreteDataLikelihoodDelegate extends AbstractModel implements Dat
         return totalNodeOperationCount;
     }
 
+    public boolean hasKnownBranchLengths() {
+        return branchLengthsKnown;
+    }
+
     public void updatePostOrdersFromTreeDataLikelihood(TreeDataLikelihood treeDataLikelihood) {
-        treeDataLikelihood.calculatePostOrderStatistics();
+        if (!branchLengthsKnown) {
+            treeDataLikelihood.makeDirty();
+        }
+        treeDataLikelihood.getLogLikelihood();
+        invalidatePreOrder();
     }
     // -------------------------------------------------------------------------
     // Report / cite

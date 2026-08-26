@@ -53,12 +53,6 @@
         </rate>
     </strictClockBranchRates>
 
-    <!--
-        3-state logRateSubstitutionModel.
-        logRates has dimension K*(K-1) = 6 for K=3 states (A,B,C):
-        ordering: A->B, A->C, B->A, B->C, C->A, C->B.
-        Non-uniform values ensure a non-trivial gradient.
-    -->
     <logRateSubstitutionModel id="loc.model" normalize="true" scaleRatesByFrequencies="false">
         <generalDataType idref="loc.dataType"/>
         <rootFrequencies>
@@ -80,13 +74,6 @@
         </substitutionModel>
     </siteModel>
 
-    <!--
-        phyloGeoFast="true" + phyloGeoFastRepresentation="spectralRotated" selects
-        SpectralRotatedPartialsRepresentation as the internal likelihood representation.
-        AbstractLogAdditiveSubstitutionModelGradient detects this via isSpectralRepresentation()
-        and automatically routes to SpectralExactGradientDelegate instead of the
-        approximate DiscreteSubstitutionModelCrossProductDelegate.
-    -->
     <treeDataLikelihood id="treeLikelihood" useAmbiguities="true"
                         usePreOrder="true" branchInfinitesimalDerivative="true"
                         phyloGeoFast="true" phyloGeoFastRepresentation="spectralRotated"
@@ -97,31 +84,49 @@
         <strictClockBranchRates idref="loc.branchRates"/>
     </treeDataLikelihood>
 
-    <!--
-        exactLogCtmcRateGradient triggers LogCtmcRateGradient which, for a
-        DiscreteDataLikelihoodDelegate with spectral representation, uses
-        SpectralExactGradientDelegate (exact Frechet-derivative gradient).
-    -->
     <exactLogCtmcRateGradient id="spectralExactGradient" traitName="loc" mode="exact">
         <treeDataLikelihood idref="treeLikelihood"/>
         <logRateSubstitutionModel idref="loc.model"/>
     </exactLogCtmcRateGradient>
 
+    <exactLogCtmcRateHessian id="spectralExactHessian" traitName="loc">
+        <treeDataLikelihood idref="treeLikelihood"/>
+        <logRateSubstitutionModel idref="loc.model"/>
+    </exactLogCtmcRateHessian>
+
     <report>
         <exactLogCtmcRateGradient idref="spectralExactGradient"/>
     </report>
 
-    <!-- Compare analytic gradient (SpectralExactGradientDelegate) against numeric gradient -->
-    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
-        <message>
-            Check SpectralExactGradientDelegate: analytic gradient matches numeric gradient
-        </message>
-        <actual regex="analytic: (.*?)\n">
+    <operators id="operators">
+        <hamiltonianMonteCarloOperator weight="1.0" nSteps="5" stepSize="3.0"
+                                       drawVariance="1.0" autoOptimize="false"
+                                       preconditioning="diagonal" preconditioningUpdateFrequency="1"
+                                       gradientCheckCount="100" gradientCheckTolerance="1e-4">
             <exactLogCtmcRateGradient idref="spectralExactGradient"/>
-        </actual>
-        <expected regex="numeric : (.*?)\n">
-            <exactLogCtmcRateGradient idref="spectralExactGradient"/>
-        </expected>
-    </assertEqual>
+            <parameter idref="loc.logRates"/>
+            <preconditioner>
+                <exactLogCtmcRateHessian idref="spectralExactHessian"/>
+            </preconditioner>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="20" autoOptimize="false">
+        <posterior id="posterior">
+            <prior id="prior"/>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="treeLikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="10">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+    </mcmc>
 
 </beast>

@@ -135,6 +135,13 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
             Qknown = true;
         }
     }
+
+    @Override
+    protected void restoreState() {
+        super.restoreState();
+        Qknown = false;
+    }
+
     @Override
     public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) { // TODO this is duplicated code from DifferentialMassProvider
 

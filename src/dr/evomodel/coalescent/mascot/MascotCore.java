@@ -15,8 +15,10 @@
 
 package dr.evomodel.coalescent.mascot;
 
+import dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation;
+
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.List;
 
 /**
  * Allocation-light engine for a MASCOT-style marginal structured coalescent
@@ -114,11 +116,11 @@ public final class MascotCore {
         return parameterCount;
     }
 
-    public double logLikelihood(PreparedEvents prepared, double[] theta) {
+    public double logLikelihood(PreparedOperations prepared, double[] theta) {
         return evaluate(prepared, theta, null, false, false, false, false).logLikelihood;
     }
 
-    public Result likelihoodAndGradient(PreparedEvents prepared, double[] theta) {
+    public Result likelihoodAndGradient(PreparedOperations prepared, double[] theta) {
         return evaluate(prepared, theta, null, true, false, false, false);
     }
 
@@ -126,7 +128,7 @@ public final class MascotCore {
      * Likelihood plus adjoint node-state scores for every internal node (see
      * {@code Result#ancestralStateScores}), without a parameter gradient.
      */
-    public Result likelihoodAndAncestralStates(PreparedEvents prepared, double[] theta, double[] branchRates,
+    public Result likelihoodAndAncestralStates(PreparedOperations prepared, double[] theta, double[] branchRates,
                                                boolean checkProbabilities) {
         return evaluate(prepared, theta, branchRates, false, true, checkProbabilities, false);
     }
@@ -138,63 +140,42 @@ public final class MascotCore {
      * many {@link #evaluate} (or {@link #evaluateInto}/{@link #evaluateLikelihood})
      * calls.
      */
-    public static PreparedEvents prepareEvents(Event[] events) {
-        if (events == null || events.length == 0) {
-            throw new IllegalArgumentException("at least one tree event is required");
+    public static PreparedOperations prepareOperations(List<BranchIntervalOperation> operations,
+                                                       List<Integer> intervalStarts,
+                                                       double[][] tipPartials,
+                                                       int nodeCount,
+                                                       double initialTime) {
+        if (operations == null || operations.isEmpty()) {
+            throw new IllegalArgumentException("at least one branch interval operation is required");
         }
-        Event[] sorted = events.clone();
-        Arrays.sort(sorted, EVENT_COMPARATOR);
-        validateSameTimeCoalescentBlocks(sorted);
-
-        int maxLineageId = 0;
-        for (Event event : events) {
-            maxLineageId = Math.max(maxLineageId, event.lineage);
-            maxLineageId = Math.max(maxLineageId, event.child1);
-            maxLineageId = Math.max(maxLineageId, event.child2);
-            maxLineageId = Math.max(maxLineageId, event.parent);
+        if (intervalStarts == null || intervalStarts.size() < 2 ||
+                intervalStarts.get(0) != 0 ||
+                intervalStarts.get(intervalStarts.size() - 1) != operations.size()) {
+            throw new IllegalArgumentException("invalid interval starts");
         }
-
-        return new PreparedEvents(sorted, maxLineageId);
-    }
-
-    private static void validateSameTimeCoalescentBlocks(Event[] sortedEvents) {
-        int start = 0;
-        while (start < sortedEvents.length) {
-            int end = start + 1;
-            while (end < sortedEvents.length && sameEventTime(sortedEvents[start].time, sortedEvents[end].time)) {
-                end++;
-            }
-            validateSameTimeCoalescentBlock(sortedEvents, start, end);
-            start = end;
+        if (tipPartials == null || nodeCount <= 0 || tipPartials.length > nodeCount) {
+            throw new IllegalArgumentException("invalid tip partials or node count");
         }
-    }
-
-    private static void validateSameTimeCoalescentBlock(Event[] sortedEvents, int start, int end) {
-        for (int i = start; i < end; i++) {
-            Event parentEvent = sortedEvents[i];
-            if (parentEvent.type != EventType.COALESCENCE) {
-                continue;
-            }
-            for (int j = start; j < end; j++) {
-                if (i == j) {
-                    continue;
-                }
-                Event childEvent = sortedEvents[j];
-                if (childEvent.type != EventType.COALESCENCE) {
-                    continue;
-                }
-                if (childEvent.child1 == parentEvent.parent || childEvent.child2 == parentEvent.parent) {
-                    throw new IllegalArgumentException("dependent coalescent events at the same time are not " +
-                            "currently supported: parent lineage " + parentEvent.parent +
-                            " is used as a child at time " + parentEvent.time +
-                            ". Add a positive internal branch length or implement topological ordering.");
-                }
+        if (initialTime < -TIME_TOLERANCE || !Double.isFinite(initialTime)) {
+            throw new IllegalArgumentException("invalid initial time: " + initialTime);
+        }
+        BranchIntervalOperation[] operationArray =
+                operations.toArray(new BranchIntervalOperation[operations.size()]);
+        int[] starts = new int[intervalStarts.size()];
+        for (int i = 0; i < starts.length; i++) {
+            starts[i] = intervalStarts.get(i);
+            if (i > 0 && starts[i] <= starts[i - 1]) {
+                throw new IllegalArgumentException("empty or unordered operation interval at index " + (i - 1));
             }
         }
-    }
-
-    private static boolean sameEventTime(double first, double second) {
-        return Math.abs(first - second) <= TIME_TOLERANCE;
+        double[][] partials = new double[tipPartials.length][];
+        for (int i = 0; i < tipPartials.length; i++) {
+            if (tipPartials[i] == null) {
+                throw new IllegalArgumentException("missing tip partials for node " + i);
+            }
+            partials[i] = tipPartials[i].clone();
+        }
+        return new PreparedOperations(operationArray, starts, partials, nodeCount, initialTime);
     }
 
     /**
@@ -224,7 +205,7 @@ public final class MascotCore {
      * tests and other callers that want a self-contained {@code Result}
      * object rather than caller-owned output buffers.
      */
-    public Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
+    public Result evaluate(PreparedOperations prepared, double[] theta, double[] branchRates, boolean computeGradient,
                            boolean computeAncestralStates, boolean checkProbabilities, boolean copyFinalState) {
         return evaluate(prepared, theta, branchRates, computeGradient, computeAncestralStates, checkProbabilities,
                 copyFinalState, null);
@@ -239,12 +220,12 @@ public final class MascotCore {
      * nodeLogWeights == null} is exactly the production forward computation.
      * Package-private: not part of the public/XML-facing API.
      */
-    Result evaluateWithNodeLogWeightsForTesting(PreparedEvents prepared, double[] theta, double[] branchRates,
+    Result evaluateWithNodeLogWeightsForTesting(PreparedOperations prepared, double[] theta, double[] branchRates,
                                                 double[] nodeLogWeights, boolean checkProbabilities) {
         return evaluate(prepared, theta, branchRates, false, false, checkProbabilities, false, nodeLogWeights);
     }
 
-    private Result evaluate(PreparedEvents prepared, double[] theta, double[] branchRates, boolean computeGradient,
+    private Result evaluate(PreparedOperations prepared, double[] theta, double[] branchRates, boolean computeGradient,
                             boolean computeAncestralStates, boolean checkProbabilities, boolean copyFinalState,
                             double[] nodeLogWeights) {
         double[] gradientOut = computeGradient ? new double[parameterCount] : null;
@@ -280,7 +261,7 @@ public final class MascotCore {
      * the two still runs the same reverse pass; the unrequested output is
      * written into a reused scratch buffer instead of the caller's array.
      */
-    public double evaluateInto(PreparedEvents prepared, double[] theta, double[] branchRates,
+    public double evaluateInto(PreparedOperations prepared, double[] theta, double[] branchRates,
                                double[] gradientOut, double[] clockGradientOut, double[] ancestralStateScoresOut,
                                boolean checkProbabilities) {
         return evaluateCore(prepared, theta, branchRates, checkProbabilities, null,
@@ -288,16 +269,16 @@ public final class MascotCore {
     }
 
     /** Scalar-only evaluation: never builds the reverse tape, never allocates a {@link Result}. */
-    public double evaluateLikelihood(PreparedEvents prepared, double[] theta, double[] branchRates,
+    public double evaluateLikelihood(PreparedOperations prepared, double[] theta, double[] branchRates,
                                      boolean checkProbabilities) {
         return evaluateCore(prepared, theta, branchRates, checkProbabilities, null, null, null, null);
     }
 
-    private double evaluateCore(PreparedEvents prepared, double[] theta, double[] branchRates,
+    private double evaluateCore(PreparedOperations prepared, double[] theta, double[] branchRates,
                                 boolean checkProbabilities, double[] nodeLogWeights,
                                 double[] gradientOut, double[] clockGradientOut, double[] ancestralStateScoresOut) {
         if (prepared == null) {
-            throw new IllegalArgumentException("prepared events must not be null");
+            throw new IllegalArgumentException("prepared operations must not be null");
         }
         if (theta == null || theta.length != parameterCount) {
             throw new IllegalArgumentException("theta dimension " + (theta == null ? -1 : theta.length) +
@@ -346,7 +327,7 @@ public final class MascotCore {
             // stage arrays, so fixed-tree HMC overwrites the same storage instead
             // of rebuilding the reverse tape at every parameter evaluation.
             operations = workspace.operationTapes;
-            operations.reset(prepared.sortedEvents.length + epochCount);
+            operations.reset(prepared.operations.length + epochCount);
         }
 
         forwardHelper.forward(state, epochRates, workspace, prepared, branchRates, checkProbabilities,
@@ -461,108 +442,6 @@ public final class MascotCore {
         }
     }
 
-    private static final Comparator<Event> EVENT_COMPARATOR = new Comparator<Event>() {
-        @Override
-        public int compare(Event first, Event second) {
-            int time = Double.compare(first.time, second.time);
-            if (time != 0) {
-                return time;
-            }
-            int type = first.type.compareRank - second.type.compareRank;
-            if (type != 0) {
-                return type;
-            }
-            return first.sortId() - second.sortId();
-        }
-    };
-
-    public enum EventType {
-        SAMPLE(0),
-        COALESCENCE(1);
-
-        private final int compareRank;
-
-        EventType(int compareRank) {
-            this.compareRank = compareRank;
-        }
-    }
-
-    // Fields are package-private (not private): MascotForwardModeHelper (a
-    // separate top-level class) reads them directly in its event-application
-    // hot path, the same reason Workspace's fields are package-private.
-    public static final class Event {
-        final double time;
-        final EventType type;
-        final int lineage;
-        final int state;
-        final double[] stateProbabilities;
-        final int child1;
-        final int child2;
-        final int parent;
-
-        private Event(double time, EventType type, int lineage, int state, double[] stateProbabilities,
-                      int child1, int child2, int parent) {
-            if (time < -TIME_TOLERANCE || !Double.isFinite(time)) {
-                throw new IllegalArgumentException("invalid event time: " + time);
-            }
-            this.time = time;
-            this.type = type;
-            this.lineage = lineage;
-            this.state = state;
-            this.stateProbabilities = stateProbabilities == null ? null : stateProbabilities.clone();
-            this.child1 = child1;
-            this.child2 = child2;
-            this.parent = parent;
-        }
-
-        public static Event sample(double time, int lineage, int state) {
-            return new Event(time, EventType.SAMPLE, lineage, state, null, -1, -1, -1);
-        }
-
-        public static Event sample(double time, int lineage, double[] stateProbabilities) {
-            return new Event(time, EventType.SAMPLE, lineage, -1, stateProbabilities, -1, -1, -1);
-        }
-
-        public static Event coalescence(double time, int child1, int child2, int parent) {
-            return new Event(time, EventType.COALESCENCE, -1, -1, null, child1, child2, parent);
-        }
-
-        public double getTime() {
-            return time;
-        }
-
-        public EventType getType() {
-            return type;
-        }
-
-        public int getLineage() {
-            return lineage;
-        }
-
-        public int getState() {
-            return state;
-        }
-
-        public int getChild1() {
-            return child1;
-        }
-
-        public int getChild2() {
-            return child2;
-        }
-
-        public int getParent() {
-            return parent;
-        }
-
-        private int sortId() {
-            if (type == EventType.SAMPLE) {
-                return lineage;
-            }
-            return parent;
-        }
-    }
-
     /**
      * An already-sorted, validated event sequence. Building one requires a full
      * clone and sort of the input array; evaluating against a {@code PreparedEvents}
@@ -570,14 +449,23 @@ public final class MascotCore {
      * parameters (the common MCMC/HMC pattern) should build this once per tree
      * change and reuse it across evaluations.
      */
-    public static final class PreparedEvents {
+    public static final class PreparedOperations {
         // Package-private (not private): read directly by MascotForwardModeHelper.forward().
-        final Event[] sortedEvents;
+        final BranchIntervalOperation[] operations;
+        final int[] intervalStarts;
+        final double[][] tipPartials;
+        final int nodeCount;
         final int maxLineageId;
+        final double initialTime;
 
-        private PreparedEvents(Event[] sortedEvents, int maxLineageId) {
-            this.sortedEvents = sortedEvents;
-            this.maxLineageId = maxLineageId;
+        private PreparedOperations(BranchIntervalOperation[] operations, int[] intervalStarts,
+                                   double[][] tipPartials, int nodeCount, double initialTime) {
+            this.operations = operations;
+            this.intervalStarts = intervalStarts;
+            this.tipPartials = tipPartials;
+            this.nodeCount = nodeCount;
+            this.maxLineageId = nodeCount - 1;
+            this.initialTime = initialTime;
         }
     }
 
@@ -783,6 +671,8 @@ public final class MascotCore {
         double[] coalP1;
         double[] coalP2;
         double[] coalParent;
+        boolean[] sampleInputs;
+        double[] coalescentTimes;
 
         /**
          * Discardable reverse-pass output buffers, used only when a caller of

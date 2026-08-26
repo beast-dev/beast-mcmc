@@ -6,6 +6,8 @@
 
 package dr.evomodel.coalescent.mascot;
 
+import dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation;
+
 import java.util.Arrays;
 
 /**
@@ -56,24 +58,43 @@ final class MascotForwardModeHelper {
     }
 
     void forward(MascotCore.ActiveState state, MascotCore.EpochRates[] epochRates, MascotCore.Workspace workspace,
-                MascotCore.PreparedEvents prepared, double[] branchRates, boolean checkProbabilities,
+                MascotCore.PreparedOperations prepared, double[] branchRates, boolean checkProbabilities,
                 MascotCore.OperationTapeStore operations, double[] nodeLogWeights) {
-        MascotCore.Event[] sortedEvents = prepared.sortedEvents;
-        state.reset(stateCount, sortedEvents.length, prepared.maxLineageId);
+        BranchIntervalOperation[] branchOperations = prepared.operations;
+        state.reset(stateCount, prepared.nodeCount, prepared.maxLineageId);
+        if (workspace.coalescentTimes == null || workspace.coalescentTimes.length < prepared.nodeCount) {
+            workspace.coalescentTimes = new double[prepared.nodeCount];
+        }
+        Arrays.fill(workspace.coalescentTimes, 0, prepared.nodeCount, Double.NaN);
         epochCursor = 0;
-        double currentTime = 0.0;
+        double currentTime = prepared.initialTime;
 
-        for (MascotCore.Event event : sortedEvents) {
-            if (event.time < currentTime - MascotCore.TIME_TOLERANCE) {
-                throw new IllegalArgumentException("events must be sorted by nondecreasing time");
+        for (int interval = 0; interval < prepared.intervalStarts.length - 1; interval++) {
+            int start = prepared.intervalStarts[interval];
+            int end = prepared.intervalStarts[interval + 1];
+            double intervalLength = branchOperations[start].intervalLength;
+            if (intervalLength < 0.0 || !Double.isFinite(intervalLength)) {
+                throw new IllegalArgumentException("invalid interval length: " + intervalLength);
+            }
+            for (int i = start + 1; i < end; i++) {
+                if (Math.abs(branchOperations[i].intervalLength - intervalLength) > MascotCore.TIME_TOLERANCE) {
+                    throw new IllegalArgumentException("operations in one interval have different lengths");
+                }
+            }
+            for (int i = start; i < end; i++) {
+                BranchIntervalOperation operation = branchOperations[i];
+                if (operation.inputBuffer2 < 0 &&
+                        nodeFromBuffer(operation.outputBuffer, prepared.nodeCount) !=
+                                nodeFromBuffer(operation.inputBuffer1, prepared.nodeCount)) {
+                    throw new IllegalArgumentException("propagation operation changed lineage identity");
+                }
             }
 
-            while (event.time > currentTime + MascotCore.TIME_TOLERANCE) {
-                if (state.activeCount == 0) {
-                    currentTime = event.time;
-                    break;
-                }
-                double segmentEnd = nextBoundaryAfter(currentTime, event.time);
+            addNewSamples(state, prepared, branchOperations, start, end, operations, workspace);
+
+            double intervalEnd = currentTime + intervalLength;
+            while (intervalEnd > currentTime + MascotCore.TIME_TOLERANCE) {
+                double segmentEnd = nextBoundaryAfter(currentTime, intervalEnd);
                 int epoch = epochAt(currentTime + MascotCore.TIME_TOLERANCE);
                 integrateSegment(state, epochRates[epoch], currentTime, segmentEnd, epoch, branchRates, operations,
                         workspace);
@@ -82,18 +103,40 @@ final class MascotForwardModeHelper {
                     checkProbabilities(state);
                 }
             }
+            currentTime = intervalEnd;
 
-            currentTime = event.time;
-            if (event.type == MascotCore.EventType.SAMPLE) {
-                applySampleEvent(state, event, operations);
-            } else {
-                int epoch = epochAt(event.time);
-                applyCoalescentEvent(state, event, epoch, epochRates[epoch], operations, nodeLogWeights, workspace);
+            BranchIntervalOperation coalescent = null;
+            for (int i = start; i < end; i++) {
+                BranchIntervalOperation operation = branchOperations[i];
+                if (operation.inputBuffer2 >= 0) {
+                    if (coalescent != null) {
+                        throw new IllegalArgumentException("multiple coalescent operations in one interval");
+                    }
+                    coalescent = operation;
+                }
+            }
+            if (coalescent != null) {
+                int epoch = epochAt(currentTime);
+                int child1 = nodeFromBuffer(coalescent.inputBuffer1, prepared.nodeCount);
+                int child2 = nodeFromBuffer(coalescent.inputBuffer2, prepared.nodeCount);
+                int parent = nodeFromBuffer(coalescent.outputBuffer, prepared.nodeCount);
+                if (sameTime(workspace.coalescentTimes[child1], currentTime) ||
+                        sameTime(workspace.coalescentTimes[child2], currentTime)) {
+                    throw new IllegalArgumentException("dependent coalescent events at the same time are not " +
+                            "currently supported");
+                }
+                applyCoalescentEvent(state, child1, child2, parent,
+                        epoch, epochRates[epoch], operations, nodeLogWeights, workspace);
+                workspace.coalescentTimes[parent] = currentTime;
             }
 
             if (checkProbabilities) {
                 checkProbabilities(state);
             }
+        }
+        if (state.activeCount != 1) {
+            throw new IllegalArgumentException("operation traversal ended with " + state.activeCount +
+                    " active lineages");
         }
     }
 
@@ -289,20 +332,49 @@ final class MascotForwardModeHelper {
     // Events
     // ------------------------------------------------------------------
 
-    private void applySampleEvent(MascotCore.ActiveState state, MascotCore.Event event,
-                                  MascotCore.OperationTapeStore operations) {
-        if (event.lineage < 0) {
-            throw new IllegalArgumentException("sample event has no lineage id");
+    private void addNewSamples(MascotCore.ActiveState state, MascotCore.PreparedOperations prepared,
+                               BranchIntervalOperation[] branchOperations, int start, int end,
+                               MascotCore.OperationTapeStore operations, MascotCore.Workspace workspace) {
+        if (workspace.sampleInputs == null || workspace.sampleInputs.length < prepared.nodeCount) {
+            workspace.sampleInputs = new boolean[prepared.nodeCount];
         }
-        if (state.isActive(event.lineage)) {
-            throw new IllegalArgumentException("lineage " + event.lineage + " is already active");
+        Arrays.fill(workspace.sampleInputs, 0, prepared.nodeCount, false);
+        for (int i = start; i < end; i++) {
+            BranchIntervalOperation operation = branchOperations[i];
+            workspace.sampleInputs[nodeFromBuffer(operation.inputBuffer1, prepared.nodeCount)] = true;
+            if (operation.inputBuffer2 >= 0) {
+                workspace.sampleInputs[nodeFromBuffer(operation.inputBuffer2, prepared.nodeCount)] = true;
+            }
         }
+        for (int node = 0; node < prepared.nodeCount; node++) {
+            if (!workspace.sampleInputs[node] || state.isActive(node)) {
+                continue;
+            }
+            if (node >= prepared.tipPartials.length) {
+                throw new IllegalArgumentException("inactive internal lineage appears as operation input: " + node);
+            }
+            applySampleEvent(state, node, prepared.tipPartials[node], operations);
+        }
+    }
 
+    private static int nodeFromBuffer(int buffer, int nodeCount) {
+        if (buffer < 0) {
+            throw new IllegalArgumentException("negative operation buffer: " + buffer);
+        }
+        return buffer % nodeCount;
+    }
+
+    private static boolean sameTime(double first, double second) {
+        return !Double.isNaN(first) && Math.abs(first - second) <= MascotCore.TIME_TOLERANCE;
+    }
+
+    private void applySampleEvent(MascotCore.ActiveState state, int lineage, double[] stateProbabilities,
+                                  MascotCore.OperationTapeStore operations) {
         int index = state.activeCount;
         state.ensureCapacity(index + 1);
-        writeNormalizedSampleProbabilities(event, state.probabilities, index * stateCount);
-        state.activeIds[index] = event.lineage;
-        state.setActiveIndex(event.lineage, index);
+        writeNormalizedSampleProbabilities(stateProbabilities, state.probabilities, index * stateCount);
+        state.activeIds[index] = lineage;
+        state.setActiveIndex(lineage, index);
         state.activeCount++;
 
         if (operations != null) {
@@ -310,20 +382,20 @@ final class MascotForwardModeHelper {
         }
     }
 
-    private void applyCoalescentEvent(MascotCore.ActiveState state, MascotCore.Event event, int epoch,
+    private void applyCoalescentEvent(MascotCore.ActiveState state, int child1, int child2, int parent, int epoch,
                                       MascotCore.EpochRates rates, MascotCore.OperationTapeStore operations,
                                       double[] nodeLogWeights, MascotCore.Workspace workspace) {
-        int first = state.activeIndexOf(event.child1);
-        int second = state.activeIndexOf(event.child2);
+        int first = state.activeIndexOf(child1);
+        int second = state.activeIndexOf(child2);
         if (first < 0 || second < 0) {
             throw new IllegalArgumentException("coalescent children are not both active: " +
-                    event.child1 + ", " + event.child2);
+                    child1 + ", " + child2);
         }
         if (first == second) {
             throw new IllegalArgumentException("coalescent children must be distinct");
         }
-        if (state.isActive(event.parent)) {
-            throw new IllegalArgumentException("coalescent parent is already active: " + event.parent);
+        if (state.isActive(parent)) {
+            throw new IllegalArgumentException("coalescent parent is already active: " + parent);
         }
 
         double[] q = rates.inversePopulation;
@@ -351,7 +423,7 @@ final class MascotForwardModeHelper {
             // exercised by the production (XML-facing) evaluate(...) overloads,
             // which always pass nodeLogWeights == null and take the branch above
             // without paying for exp(0).
-            int weightOffset = event.parent * stateCount;
+            int weightOffset = parent * stateCount;
             for (int s = 0; s < stateCount; s++) {
                 double weighted = p1[s] * p2[s] * q[s] * Math.exp(nodeLogWeights[weightOffset + s]);
                 parentProbabilities[s] = weighted;
@@ -386,18 +458,18 @@ final class MascotForwardModeHelper {
             state.setActiveIndex(movedLineage, movedToIndexAfter);
         }
 
-        state.activeIds[parentIndexAfter] = event.parent;
+        state.activeIds[parentIndexAfter] = parent;
         System.arraycopy(parentProbabilities, 0, state.probabilities, parentIndexAfter * stateCount, stateCount);
-        state.setActiveIndex(event.parent, parentIndexAfter);
-        state.clearActiveIndex(event.child1);
-        state.clearActiveIndex(event.child2);
+        state.setActiveIndex(parent, parentIndexAfter);
+        state.clearActiveIndex(child1);
+        state.clearActiveIndex(child2);
 
         state.activeCount = afterCount;
         state.logLikelihood += Math.log(lambda);
 
         if (operations != null) {
             operations.addCoalescent(epoch, first, second, parentIndexAfter,
-                    movedFromIndexBefore, movedToIndexAfter, event.parent,
+                    movedFromIndexBefore, movedToIndexAfter, parent,
                     p1, p2, parentProbabilities, lambda, stateCount);
         }
     }
@@ -407,30 +479,22 @@ final class MascotForwardModeHelper {
      * out} at {@code offset}, avoiding the per-sample-event {@code double[]}
      * allocation an intermediate array would cost.
      */
-    private void writeNormalizedSampleProbabilities(MascotCore.Event event, double[] out, int offset) {
-        if (event.stateProbabilities == null) {
-            if (event.state < 0 || event.state >= stateCount) {
-                throw new IllegalArgumentException("sample state out of range: " + event.state);
-            }
-            Arrays.fill(out, offset, offset + stateCount, 0.0);
-            out[offset + event.state] = 1.0;
-            return;
-        }
-        if (event.stateProbabilities.length != stateCount) {
+    private void writeNormalizedSampleProbabilities(double[] stateProbabilities, double[] out, int offset) {
+        if (stateProbabilities.length != stateCount) {
             throw new IllegalArgumentException("sample probability dimension mismatch");
         }
         double sum = 0.0;
         for (int s = 0; s < stateCount; s++) {
-            if (event.stateProbabilities[s] < 0.0) {
+            if (stateProbabilities[s] < 0.0) {
                 throw new IllegalArgumentException("sample probabilities must be nonnegative");
             }
-            sum += event.stateProbabilities[s];
+            sum += stateProbabilities[s];
         }
         if (!(sum > 0.0)) {
             throw new IllegalArgumentException("sample probabilities must have positive sum");
         }
         for (int s = 0; s < stateCount; s++) {
-            out[offset + s] = event.stateProbabilities[s] / sum;
+            out[offset + s] = stateProbabilities[s] / sum;
         }
     }
 

@@ -11,7 +11,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.coalescent.StructuredTipStates;
 import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
@@ -74,10 +76,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private final double maxStep;
     private final boolean checkProbabilities;
     private final String ancestralStateTagName;
+    private final MascotCoalescentIntervalTraversal operationTraversal;
 
-    private MascotCore.PreparedEvents eventTape;
+    private MascotCore.PreparedOperations preparedOperations;
     private MascotCore core;
-    private boolean eventTapeKnown;
+    private boolean preparedOperationsKnown;
     private boolean coreKnown;
     private boolean gradientKnown;
     // Tip states are fixed input data, never re-estimated, so unlike eventTape
@@ -107,6 +110,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         double[] ancestralStateScores;
     }
 
+    private static final class MascotCoalescentIntervalTraversal extends CoalescentIntervalTraversal {
+        private MascotCoalescentIntervalTraversal(Tree tree, BigFastTreeIntervals treeIntervals,
+                                                  BranchRateModel branchRateModel) {
+            super(tree, treeIntervals, branchRateModel, 1, false);
+        }
+    }
+
     // Double-buffered per MASCOT_PRIMITIVE_ARRAY_REFACTORING_PLAN.md Section 8.1:
     // a rejected proposal must restore the exact previous gradient/ancestral-score
     // values, but derived buffers are now written in place rather than freshly
@@ -129,9 +139,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     // from this wrapper's point of view once built (MascotCore's internal
     // per-epoch rate cache is fully recomputed from theta at the start of every
     // evaluate() call regardless), so sharing the stored reference back in is safe.
-    private MascotCore.PreparedEvents storedEventTape;
+    private MascotCore.PreparedOperations storedPreparedOperations;
     private MascotCore storedCore;
-    private boolean storedEventTapeKnown;
+    private boolean storedPreparedOperationsKnown;
     private boolean storedCoreKnown;
     private boolean storedGradientKnown;
     private boolean storedAncestralStatesKnown;
@@ -174,6 +184,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         this.maxStep = maxStep;
         this.checkProbabilities = checkProbabilities;
         this.ancestralStateTagName = ancestralStateTagName;
+        this.operationTraversal = new MascotCoalescentIntervalTraversal(
+                treeModel, treeIntervals,
+                branchRateModel == null ? new DefaultBranchRateModel() : branchRateModel);
 
         // tipPatterns is fixed input data (like a sequence alignment), not an
         // estimated model variable, so it is not registered as a listened
@@ -190,7 +203,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             addVariable(epochTimes);
         }
 
-        this.eventTapeKnown = false;
+        this.preparedOperationsKnown = false;
         this.coreKnown = false;
         this.gradientKnown = false;
 
@@ -389,7 +402,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     @Override
     protected void makeDirtyInternal() {
-        eventTapeKnown = false;
+        preparedOperationsKnown = false;
         coreKnown = false;
     }
 
@@ -406,7 +419,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     @Override
     protected void handleStructuredModelChangedEvent(Model model, Object object, int index) {
         if (model == treeIntervals) {
-            eventTapeKnown = false;
+            preparedOperationsKnown = false;
         } else if (isMigrationModel(model)) {
             // A substitution-model-backed migration-rate change (in any
             // epoch) only changes the numeric Q matrix read into theta;
@@ -435,7 +448,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         } else if (variable == dynamics.getEpochTimes()) {
             coreKnown = false;
         } else {
-            eventTapeKnown = false;
+            preparedOperationsKnown = false;
             coreKnown = false;
         }
     }
@@ -443,9 +456,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     @Override
     protected void storeStructuredState() {
         storedDerivedIndex = currentDerivedIndex;
-        storedEventTape = eventTape;
+        storedPreparedOperations = preparedOperations;
         storedCore = core;
-        storedEventTapeKnown = eventTapeKnown;
+        storedPreparedOperationsKnown = preparedOperationsKnown;
         storedCoreKnown = coreKnown;
         storedGradientKnown = gradientKnown;
         storedAncestralStatesKnown = ancestralStatesKnown;
@@ -454,9 +467,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     @Override
     protected void restoreStructuredState() {
         currentDerivedIndex = storedDerivedIndex;
-        eventTape = storedEventTape;
+        preparedOperations = storedPreparedOperations;
         core = storedCore;
-        eventTapeKnown = storedEventTapeKnown;
+        preparedOperationsKnown = storedPreparedOperationsKnown;
         coreKnown = storedCoreKnown;
         gradientKnown = storedGradientKnown;
         ancestralStatesKnown = storedAncestralStatesKnown;
@@ -474,32 +487,30 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         return derivedBuffers[currentDerivedIndex];
     }
 
-    private void ensureEventTape() {
+    private void ensurePreparedOperations() {
         // validateSinglePattern(tipPatterns, stateCount, ...) already ran in
         // AbstractStructuredCoalescentLikelihood's constructor, shared with BASTA.
         if (tipPartialsCache == null) {
             tipPartialsCache = StructuredTipStates.buildPartialsCache(treeModel, tipPatterns, dynamics.getStateCount(),
                     true, "tip-state attributePatterns");
         }
-        if (!eventTapeKnown) {
-            final Tree tree = treeIntervals.getTree();
-            final MascotCore.Event[] events = new MascotCore.Event[treeIntervals.getIntervalCount() + 1];
-            CoalescentIntervalTraversal.walkEvents(
-                    treeIntervals, new CoalescentIntervalTraversal.EventVisitor() {
-                        @Override
-                        public void processSamplingEvent(int interval, NodeRef node) {
-                            events[interval + 1] = MascotCore.Event.sample(
-                                    tree.getNodeHeight(node), node.getNumber(), tipPartialsCache[node.getNumber()]);
-                        }
-
-                        @Override
-                        public void processCoalescentEvent(int interval, NodeRef node, NodeRef child1, NodeRef child2) {
-                            events[interval + 1] = MascotCore.Event.coalescence(
-                                    tree.getNodeHeight(node), child1.getNumber(), child2.getNumber(), node.getNumber());
-                        }
-            });
-            eventTape = MascotCore.prepareEvents(events);
-            eventTapeKnown = true;
+        if (!preparedOperationsKnown) {
+            for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
+                NodeRef node = treeModel.getInternalNode(i);
+                int childCount = treeModel.getChildCount(node);
+                if (childCount != 2) {
+                    throw new IllegalArgumentException("The structured coalescent requires binary trees; node " +
+                            node.getNumber() + " has " + childCount + " children");
+                }
+            }
+            operationTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            preparedOperations = MascotCore.prepareOperations(
+                    operationTraversal.getBranchIntervalOperations(),
+                    operationTraversal.getIntervalStarts(),
+                    tipPartialsCache,
+                    treeModel.getNodeCount(),
+                    treeModel.getNodeHeight(treeIntervals.getSamplingNode(-1)));
+            preparedOperationsKnown = true;
         }
     }
 
@@ -570,10 +581,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     @Override
     protected double calculateLogLikelihood() {
-        ensureEventTape();
+        ensurePreparedOperations();
         ensureCore();
         try {
-            double value = core.evaluateLikelihood(eventTape, thetaBuffer(),
+            double value = core.evaluateLikelihood(preparedOperations, thetaBuffer(),
                     branchRateBufferOrNull(), checkProbabilities);
             return Double.isFinite(value) ? value : Double.NEGATIVE_INFINITY;
         } catch (MascotCore.NumericalException e) {
@@ -582,7 +593,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     }
 
     private void evaluateLikelihoodAndGradient(boolean failOnGradientFailure) {
-        ensureEventTape();
+        ensurePreparedOperations();
         ensureCore();
         double[] branchRates = branchRateBufferOrNull();
         // See the DerivedBuffers double-buffering note above the field
@@ -596,7 +607,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
         double logLikelihood;
         try {
-            logLikelihood = core.evaluateInto(eventTape, thetaBuffer(), branchRates,
+            logLikelihood = core.evaluateInto(preparedOperations, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, null, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             if (failOnGradientFailure) {
@@ -638,7 +649,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
      * every MCMC/HMC step.
      */
     private void evaluateAncestralStates() {
-        ensureEventTape();
+        ensurePreparedOperations();
         ensureCore();
         double[] branchRates = branchRateBufferOrNull();
         currentDerivedIndex = 1 - storedDerivedIndex;
@@ -650,7 +661,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
         double logLikelihood;
         try {
-            logLikelihood = core.evaluateInto(eventTape, thetaBuffer(), branchRates,
+            logLikelihood = core.evaluateInto(preparedOperations, thetaBuffer(), branchRates,
                     buffers.combinedGradient, buffers.clockGradient, buffers.ancestralStateScores, checkProbabilities);
         } catch (MascotCore.NumericalException e) {
             throw new IllegalStateException("MASCOT ancestral states cannot be evaluated for the current " +

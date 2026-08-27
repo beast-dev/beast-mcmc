@@ -30,6 +30,10 @@ package dr.evomodel.substmodel.aminoacid;
 import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.util.Citation;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author Alexei Drummond
  */
@@ -49,16 +53,19 @@ public enum AminoAcidModelType {
     MTINV("mtInv", dr.evomodel.substmodel.aminoacid.MTINV.INSTANCE),
     MTDEU("mtDeu", dr.evomodel.substmodel.aminoacid.MTDEU.INSTANCE),
     MTMAM("mtMam", dr.evomodel.substmodel.aminoacid.MTMAM.INSTANCE),
-    ThreeDi("ThreeDi", dr.evomodel.substmodel.aminoacid.ThreeDi.INSTANCE);
+    Q_3DI_AF("Q.3Di.AF", ThreeDiAF.INSTANCE),
+    Q_3DI_LLM("Q.3Di.LLM", ThreeDiLLM.INSTANCE),
+    Q_3DI_FS_LOGODDS("Q.3Di.FSlogodds", ThreeDiFSlogodds.INSTANCE, "ThreeDi");
 
-    AminoAcidModelType(String displayName, EmpiricalRateMatrix matrix) {
-        this(displayName, displayName, matrix);
+    AminoAcidModelType(String displayName, EmpiricalRateMatrix matrix, String... legacyXmlNames) {
+        this(displayName, displayName, matrix, legacyXmlNames);
     }
 
-    AminoAcidModelType(String displayName, String xmlName, EmpiricalRateMatrix matrix) {
+    AminoAcidModelType(String displayName, String xmlName, EmpiricalRateMatrix matrix, String... legacyXmlNames) {
         this.displayName = displayName;
         this.xmlName = xmlName;
         this.matrix = matrix;
+        this.legacyXmlNames = legacyXmlNames;
     }
 
     public String toString() {
@@ -78,17 +85,40 @@ public enum AminoAcidModelType {
         return matrix.getCitations().get(0);
     }
 
+    /**
+     * @return the model whose current or legacy XML name matches, or null if there is none.
+     */
+    public static AminoAcidModelType fromXMLName(String xmlName) {
+
+        for (AminoAcidModelType type : values()) {
+            if (type.xmlName.equals(xmlName)) {
+                return type;
+            }
+            for (String legacyXmlName : type.legacyXmlNames) {
+                if (legacyXmlName.equals(xmlName)) {
+                    return type;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return every XML name accepted for a model, legacy names of renamed models included.
+     * This is what the XML syntax rules validate against, so a name omitted here is rejected
+     * before the parser is ever reached.
+     */
     public static String[] xmlNames() {
 
-        AminoAcidModelType[] values = values();
-
-        String[] xmlNames = new String[values.length];
-        for (int i = 0; i < values.length; i++) {
-            xmlNames[i] = values[i].getXMLName();
+        List<String> xmlNames = new ArrayList<String>();
+        for (AminoAcidModelType type : values()) {
+            xmlNames.add(type.getXMLName());
+            Collections.addAll(xmlNames, type.legacyXmlNames);
         }
-        return xmlNames;
+        return xmlNames.toArray(new String[0]);
     }
 
     private final String displayName, xmlName;
+    private final String[] legacyXmlNames;
     private final EmpiricalRateMatrix matrix;
 }

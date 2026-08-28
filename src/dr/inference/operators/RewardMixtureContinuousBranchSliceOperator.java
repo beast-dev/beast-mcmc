@@ -3,7 +3,6 @@ package dr.inference.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
-import dr.evomodel.branchratemodel.PerBranchRewardMixtureCategoryDecoder;
 import dr.evomodel.branchratemodel.RewardMixtureBranchRateModel;
 import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoder;
 import dr.evomodel.branchratemodel.RewardMixtureCategoryDecoding;
@@ -133,8 +132,7 @@ public final class RewardMixtureContinuousBranchSliceOperator
 
     @Override
     public double doOperation() {
-        categoryDecoder.refreshEmbedding();
-        rewardsAwareBranchModel.refreshCategoryDecoderEmbedding();
+        refreshCategoryEmbedding();
 
         final int candidateCount = collectContinuousPositiveLengthBranches();
         if (candidateCount == 0) {
@@ -152,14 +150,19 @@ public final class RewardMixtureContinuousBranchSliceOperator
         }
 
         final double current = ctsParameter.getParameterValue(parameterIndex);
-        final double currentLogDensity = logContinuousTarget(parameterIndex, current);
-        if (!Double.isFinite(currentLogDensity)) {
-            return Double.NEGATIVE_INFINITY;
-        }
-
-        final double cutoff = currentLogDensity + MathUtils.randomLogDouble();
-        final SliceInterval interval = constructInterval(parameterIndex, current, cutoff, lower, upper);
-        final double proposed = drawFromInterval(parameterIndex, current, cutoff, interval);
+        final double proposed = UnivariateSliceSampler.sample(
+                current,
+                lower,
+                upper,
+                windowSize,
+                maxSteppingOut,
+                maxShrinkIterations,
+                new UnivariateSliceSampler.LogDensity() {
+                    @Override
+                    public double logDensity(final double x) {
+                        return logContinuousTarget(parameterIndex, x);
+                    }
+                });
         if (!Double.isFinite(proposed)) {
             return Double.NEGATIVE_INFINITY;
         }
@@ -181,64 +184,6 @@ public final class RewardMixtureContinuousBranchSliceOperator
             }
         }
         return count;
-    }
-
-    private SliceInterval constructInterval(final int parameterIndex,
-                                            final double current,
-                                            final double cutoff,
-                                            final double lower,
-                                            final double upper) {
-        double left = current - windowSize * MathUtils.nextDouble();
-        double right = left + windowSize;
-        if (left < lower) {
-            left = lower;
-        }
-        if (right > upper) {
-            right = upper;
-        }
-
-        int leftSteps = MathUtils.nextInt(maxSteppingOut);
-        int rightSteps = (maxSteppingOut - 1) - leftSteps;
-
-        while (leftSteps > 0 && left > lower) {
-            final double nextLeft = Math.max(lower, left - windowSize);
-            if (!(logContinuousTarget(parameterIndex, nextLeft) > cutoff)) {
-                break;
-            }
-            left = nextLeft;
-            leftSteps--;
-        }
-
-        while (rightSteps > 0 && right < upper) {
-            final double nextRight = Math.min(upper, right + windowSize);
-            if (!(logContinuousTarget(parameterIndex, nextRight) > cutoff)) {
-                break;
-            }
-            right = nextRight;
-            rightSteps--;
-        }
-
-        return new SliceInterval(left, right);
-    }
-
-    private double drawFromInterval(final int parameterIndex,
-                                    final double current,
-                                    final double cutoff,
-                                    final SliceInterval interval) {
-        double left = interval.left;
-        double right = interval.right;
-        for (int i = 0; i < maxShrinkIterations; i++) {
-            final double proposed = MathUtils.uniform(left, right);
-            if (logContinuousTarget(parameterIndex, proposed) >= cutoff) {
-                return proposed;
-            }
-            if (proposed < current) {
-                left = proposed;
-            } else {
-                right = proposed;
-            }
-        }
-        return Double.NaN;
     }
 
     private double logContinuousTarget(final int parameterIndex, final double rawReward) {
@@ -272,27 +217,24 @@ public final class RewardMixtureContinuousBranchSliceOperator
     }
 
     private double getContinuousCategoryLowerCut(final int parameterIndex, final double rawReward) {
-        if (categoryDecoder instanceof PerBranchRewardMixtureCategoryDecoder) {
-            return ((PerBranchRewardMixtureCategoryDecoder) categoryDecoder)
-                    .getLowerCutForCategoryAtCtsValue(parameterIndex, CONTINUOUS_CATEGORY, rawReward);
-        }
-        return categoryDecoder.getLowerCut(parameterIndex, CONTINUOUS_CATEGORY);
+        return categoryDecoder.getLowerCutForCategoryAtCtsValue(
+                parameterIndex,
+                CONTINUOUS_CATEGORY,
+                rawReward);
     }
 
     private double getContinuousCategoryUpperCut(final int parameterIndex, final double rawReward) {
-        if (categoryDecoder instanceof PerBranchRewardMixtureCategoryDecoder) {
-            return ((PerBranchRewardMixtureCategoryDecoder) categoryDecoder)
-                    .getUpperCutForCategoryAtCtsValue(parameterIndex, CONTINUOUS_CATEGORY, rawReward);
-        }
-        return categoryDecoder.getUpperCut(parameterIndex, CONTINUOUS_CATEGORY);
+        return categoryDecoder.getUpperCutForCategoryAtCtsValue(
+                parameterIndex,
+                CONTINUOUS_CATEGORY,
+                rawReward);
     }
 
     private void setContinuousBranchState(final int parameterIndex, final double rawReward) {
         final double categoryValue = sampleContinuousCategoryValue(parameterIndex, rawReward);
         ctsParameter.setParameterValueQuietly(parameterIndex, rawReward);
         categoryParameter.setParameterValueQuietly(parameterIndex, categoryValue);
-        categoryDecoder.refreshEmbedding();
-        rewardsAwareBranchModel.refreshCategoryDecoderEmbedding();
+        refreshCategoryEmbedding();
         ctsParameter.fireParameterChangedEvent(parameterIndex, Parameter.ChangeType.VALUE_CHANGED);
         categoryParameter.fireParameterChangedEvent(parameterIndex, Parameter.ChangeType.VALUE_CHANGED);
     }
@@ -311,13 +253,11 @@ public final class RewardMixtureContinuousBranchSliceOperator
         return lower + u * width;
     }
 
-    private static final class SliceInterval {
-        private final double left;
-        private final double right;
-
-        private SliceInterval(final double left, final double right) {
-            this.left = left;
-            this.right = right;
+    private void refreshCategoryEmbedding() {
+        if (rewardsAwareBranchModel.getCategoryDecoder() == null) {
+            categoryDecoder.refreshEmbedding();
+        } else {
+            rewardsAwareBranchModel.refreshCategoryDecoderEmbedding();
         }
     }
 }

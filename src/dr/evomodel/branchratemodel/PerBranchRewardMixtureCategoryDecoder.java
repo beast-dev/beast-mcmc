@@ -166,6 +166,7 @@ public final class PerBranchRewardMixtureCategoryDecoder implements RewardMixtur
         return embedding.getUpperCut(layout.bucketForCategory(insertionRankByParameterIndex[parameterIndex], category));
     }
 
+    @Override
     public double getLowerCutForCategoryAtCtsValue(final int parameterIndex,
                                                    final int category,
                                                    final double ctsValue) {
@@ -174,6 +175,7 @@ public final class PerBranchRewardMixtureCategoryDecoder implements RewardMixtur
         return embedding.getLowerCut(layout.bucketForCategory(rank, category));
     }
 
+    @Override
     public double getUpperCutForCategoryAtCtsValue(final int parameterIndex,
                                                    final int category,
                                                    final double ctsValue) {

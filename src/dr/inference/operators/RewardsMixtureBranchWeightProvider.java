@@ -477,6 +477,25 @@ public final class RewardsMixtureBranchWeightProvider {
         return weights.logAtomicWeights[atomState];
     }
 
+    public double computeLogWeightForCategoryAtValue(final int parameterIndex,
+                                                     final int category,
+                                                     final double rawContinuousReward) {
+        if (category == 0) {
+            return computeContinuousLogWeightForParameterIndex(parameterIndex, rawContinuousReward);
+        }
+
+        // Atomic categories do not depend on the candidate CTS reward value.
+        // Their CTS contribution is carried by the optional atomic pseudo-prior.
+        final int atomState = category - 1;
+        if (atomState < 0 || atomState >= nstates) {
+            throw new IllegalArgumentException("Reward mixture category out of range: " + category);
+        }
+
+        final RewardsMixtureBranchResamplingHelper.BranchWeights weights =
+                getOperationCachedBranchWeightsForParameterIndex(parameterIndex);
+        return weights.logAtomicWeights[atomState];
+    }
+
     private void initializeBranchMappings() {
         Arrays.fill(nodeNumberByParameterIndex, -1);
 

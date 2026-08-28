@@ -130,12 +130,36 @@ public final class RewardMixtureAtomicPseudoPrior extends Likelihood.Abstract
 
     public double getLogDensityForCategory(final int parameterIndex, final int category) {
         checkParameterIndex(parameterIndex);
+        return getLogDensityForCategoryAtValue(
+                parameterIndex,
+                category,
+                parameter.getParameterValue(parameterIndex));
+    }
+
+    public double getLogDensityForCategoryAtValue(final int parameterIndex,
+                                                  final int category,
+                                                  final double rawReward) {
+        checkParameterIndex(parameterIndex);
         if (RewardMixtureCategoryDecoder.isContinuousCategory(category)) {
-            return getUniformLogDensity(parameterIndex);
+            return getUniformLogDensityAtValue(parameterIndex, rawReward);
         }
         return getLogDensityForAtomicState(
                 parameterIndex,
-                RewardMixtureCategoryDecoder.getAtomicStateForCategory(category));
+                RewardMixtureCategoryDecoder.getAtomicStateForCategory(category),
+                rawReward);
+    }
+
+    public double getGradientForCategoryAtValue(final int parameterIndex,
+                                                final int category,
+                                                final double rawReward) {
+        checkParameterIndex(parameterIndex);
+        if (RewardMixtureCategoryDecoder.isContinuousCategory(category)) {
+            return 0.0;
+        }
+        return getGradientForAtomicState(
+                parameterIndex,
+                RewardMixtureCategoryDecoder.getAtomicStateForCategory(category),
+                rawReward);
     }
 
     public double getStandardDeviation() {
@@ -161,6 +185,12 @@ public final class RewardMixtureAtomicPseudoPrior extends Likelihood.Abstract
 
     private double getLogDensityForAtomicState(final int parameterIndex, final int atomicState) {
         final double x = parameter.getParameterValue(parameterIndex);
+        return getLogDensityForAtomicState(parameterIndex, atomicState, x);
+    }
+
+    private double getLogDensityForAtomicState(final int parameterIndex,
+                                               final int atomicState,
+                                               final double x) {
         final double mean = rewardsAwareBranchModel.getRewardRateRawForState(atomicState);
         final double lower = getLowerBound(parameterIndex);
         final double upper = getUpperBound(parameterIndex);
@@ -179,12 +209,22 @@ public final class RewardMixtureAtomicPseudoPrior extends Likelihood.Abstract
 
     private double getGradientForAtomicState(final int parameterIndex, final int atomicState) {
         final double x = parameter.getParameterValue(parameterIndex);
+        return getGradientForAtomicState(parameterIndex, atomicState, x);
+    }
+
+    private double getGradientForAtomicState(final int parameterIndex,
+                                             final int atomicState,
+                                             final double x) {
         final double mean = rewardsAwareBranchModel.getRewardRateRawForState(atomicState);
         return (mean - x) / variance;
     }
 
     private double getUniformLogDensity(final int parameterIndex) {
         final double x = parameter.getParameterValue(parameterIndex);
+        return getUniformLogDensityAtValue(parameterIndex, x);
+    }
+
+    private double getUniformLogDensityAtValue(final int parameterIndex, final double x) {
         final double lower = getLowerBound(parameterIndex);
         final double upper = getUpperBound(parameterIndex);
         if (!Double.isFinite(x) || x < lower || x > upper) {

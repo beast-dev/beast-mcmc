@@ -38,8 +38,10 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.RewardMixtureAtomicPseudoPrior;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.PerBranchRewardMixtureCategoryDecoder;
 import dr.evomodel.branchratemodel.RewardRates;
 import dr.evomodel.branchratemodel.RewardsAwareCategoricalMixtureBranchRates;
+import dr.evomodel.branchratemodel.RewardsAwareCategoricalMixtureBranchRatesDynamic;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -54,8 +56,11 @@ import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.repres
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.RewardMixtureBranchJointCtsCategoryOperator;
 import dr.inference.operators.RewardMixtureCategoricalGibbsOperator;
 import dr.inference.operators.RewardMixtureContinuousBranchSliceOperator;
+import dr.inference.operators.RewardsMixtureBranchWeightProvider;
+import dr.inferencexml.operators.RewardMixtureBranchJointCtsCategoryOperatorParser;
 import dr.inferencexml.operators.RewardMixtureCategoricalGibbsOperatorParser;
 import dr.inferencexml.operators.RewardMixtureContinuousBranchSliceOperatorParser;
 import dr.math.MathUtils;
@@ -95,6 +100,68 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         assertFinite(operator.doOperation());
         assertCategoryValuesAreInsideCuts(fixture.categoryState, fixture.categoryCuts);
         assertCtsValuesAreInsideBounds(fixture.ctsRewards);
+    }
+
+    public void testJointBranchCtsCategoryParserAcceptsStateAndProposalRuns() throws Exception {
+        MathUtils.setSeed(20260828);
+
+        final Fixture fixture = createFixture();
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+        final RewardMixtureBranchJointCtsCategoryOperatorParser parser =
+                new RewardMixtureBranchJointCtsCategoryOperatorParser();
+
+        final XMLObject xo = jointOperatorXmlObject(fixture, pseudoPrior);
+        final Object parsed = parser.parseXMLObject(xo);
+
+        assertTrue(parsed instanceof RewardMixtureBranchJointCtsCategoryOperator);
+
+        final RewardMixtureBranchJointCtsCategoryOperator operator =
+                (RewardMixtureBranchJointCtsCategoryOperator) parsed;
+
+        assertFinite(fixture.independentLikelihood.getLogLikelihood());
+        assertFinite(operator.doOperation());
+        assertCategoryValuesAreInsideCuts(fixture.categoryState, fixture.categoryCuts);
+        assertCtsValuesAreInsideBounds(fixture.ctsRewards);
+    }
+
+    public void testJointBranchCtsCategoryOperatorRunsWithDynamicDecoder() {
+        MathUtils.setSeed(20260830);
+
+        final Fixture fixture = createFixture(true);
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+        final RewardMixtureBranchJointCtsCategoryOperator operator =
+                new RewardMixtureBranchJointCtsCategoryOperator(
+                        fixture.categoryState,
+                        fixture.categoryCuts,
+                        fixture.rewardsAwareBranchModel,
+                        fixture.independentLikelihood,
+                        new TreeDataLikelihood[0],
+                        new TreeDataLikelihood[0],
+                        pseudoPrior,
+                        0.25,
+                        10,
+                        100,
+                        1.0);
+
+        assertFinite(fixture.independentLikelihood.getLogLikelihood());
+        assertFinite(operator.doOperation());
+        fixture.rewardsAwareBranchModel.refreshCategoryDecoderEmbedding();
+        assertCategoryValuesAreInsideCuts(fixture.categoryState, fixture.categoryCuts);
+        assertCtsValuesAreInsideBounds(fixture.ctsRewards);
+        for (int i = 0; i < fixture.categoryState.getDimension(); i++) {
+            final int category = fixture.rewardsAwareBranchModel.getCategoryDecoder()
+                    .getCategoryForParameterIndex(i);
+            assertTrue("Decoded category out of range: " + category,
+                    category >= 0 && category < 5);
+        }
     }
 
     public void testParserAcceptsCategoricalRewardStateAndProposalRuns() throws Exception {
@@ -140,6 +207,130 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         for (int i = 1; i < gradient.length; i++) {
             assertEquals(0.0, gradient[i], 1E-10);
         }
+    }
+
+    public void testAtomicPseudoPriorCandidateValueMatchesTemporarySetValue() {
+        final Fixture fixture = createFixture();
+        fixture.ctsRewards.setParameterValue(0, 0.50);
+        fixture.categoryState.setParameterValue(0, 2.50);
+
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+
+        final double candidate = 0.55;
+        final int category = 2;
+        final double candidateLogDensity =
+                pseudoPrior.getLogDensityForCategoryAtValue(0, category, candidate);
+        final double currentLogDensity =
+                pseudoPrior.getLogDensityForCategory(0, category);
+        assertTrue("Candidate density should not read the stored CTS value",
+                Math.abs(candidateLogDensity - currentLogDensity) > 1E-8);
+
+        fixture.ctsRewards.setParameterValue(0, candidate);
+        assertEquals(candidateLogDensity, pseudoPrior.getLogDensityForCategory(0, category), 1E-10);
+        assertEquals(-15.0, pseudoPrior.getGradientForCategoryAtValue(0, category, candidate), 1E-10);
+    }
+
+    public void testDynamicDecoderCandidateCtsCutsMatchRefreshedEmbedding() {
+        final Parameter ctsRewards =
+                new Parameter.Default("dynamicDecoderCts", new double[]{0.30});
+        final Parameter categoryState =
+                new Parameter.Default("dynamicDecoderCategory", new double[]{0.50});
+        final Parameter categoryCuts =
+                new Parameter.Default("dynamicDecoderCuts", new double[]{0, 1, 2, 3, 4, 5});
+        final RewardRates rewardRates = createRewardRates();
+        final PerBranchRewardMixtureCategoryDecoder decoder =
+                new PerBranchRewardMixtureCategoryDecoder(
+                        categoryState,
+                        categoryCuts,
+                        ctsRewards,
+                        rewardRates,
+                        4,
+                        1);
+
+        assertEquals(1.0, decoder.getLowerCut(0, 0), 0.0);
+        assertEquals(2.0, decoder.getUpperCut(0, 0), 0.0);
+
+        final double candidate = 0.70;
+        final double candidateLower = decoder.getLowerCutForCategoryAtCtsValue(0, 0, candidate);
+        final double candidateUpper = decoder.getUpperCutForCategoryAtCtsValue(0, 0, candidate);
+        assertEquals(3.0, candidateLower, 0.0);
+        assertEquals(4.0, candidateUpper, 0.0);
+
+        ctsRewards.setParameterValue(0, candidate);
+        decoder.refreshEmbedding();
+        assertEquals(candidateLower, decoder.getLowerCut(0, 0), 0.0);
+        assertEquals(candidateUpper, decoder.getUpperCut(0, 0), 0.0);
+    }
+
+    public void testJointOperatorDoesNotMutateWhenAllCategoryMassesAreInvalid() {
+        MathUtils.setSeed(20260829);
+
+        final Fixture fixture = createFixture();
+        for (int i = 0; i < fixture.ctsRewards.getDimension(); i++) {
+            fixture.ctsRewards.setParameterValue(i, Double.NaN);
+            fixture.categoryState.setParameterValue(i, 2.50);
+        }
+        final RewardMixtureAtomicPseudoPrior pseudoPrior =
+                new RewardMixtureAtomicPseudoPrior(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.rewardBranchRates,
+                        0.10);
+        final RewardMixtureBranchJointCtsCategoryOperator operator =
+                new RewardMixtureBranchJointCtsCategoryOperator(
+                        fixture.categoryState,
+                        fixture.categoryCuts,
+                        fixture.rewardsAwareBranchModel,
+                        fixture.independentLikelihood,
+                        new TreeDataLikelihood[0],
+                        new TreeDataLikelihood[0],
+                        pseudoPrior,
+                        0.05,
+                        10,
+                        100,
+                        1.0);
+
+        final double result = operator.doOperation();
+        assertTrue("Expected invalid operation but found " + result,
+                Double.isInfinite(result) && result < 0.0);
+        for (int i = 0; i < fixture.ctsRewards.getDimension(); i++) {
+            assertTrue(Double.isNaN(fixture.ctsRewards.getParameterValue(i)));
+            assertEquals(2.50, fixture.categoryState.getParameterValue(i), 0.0);
+        }
+    }
+
+    public void testContinuousBranchLocalWeightDeltaMatchesFullLikelihoodDelta() {
+        final Fixture fixture = createFixture();
+        final RewardsMixtureBranchWeightProvider provider =
+                new RewardsMixtureBranchWeightProvider(
+                        fixture.rewardsAwareBranchModel,
+                        fixture.independentLikelihood,
+                        new TreeDataLikelihood[0],
+                        new TreeDataLikelihood[0]);
+
+        final int parameterIndex = 0;
+        final double current = fixture.ctsRewards.getParameterValue(parameterIndex);
+        final double proposed = 0.55;
+
+        final double fullCurrent = fixture.independentLikelihood.getLogLikelihood();
+        provider.beginSingleBranchOperationCache(parameterIndex);
+        final double localCurrent =
+                provider.computeContinuousLogWeightForParameterIndex(parameterIndex, current);
+        final double localProposed =
+                provider.computeContinuousLogWeightForParameterIndex(parameterIndex, proposed);
+
+        fixture.ctsRewards.setParameterValue(parameterIndex, proposed);
+        fixture.independentLikelihood.makeDirty();
+        final double fullProposed = fixture.independentLikelihood.getLogLikelihood();
+
+        assertFinite(fullCurrent);
+        assertFinite(fullProposed);
+        assertFinite(localCurrent);
+        assertFinite(localProposed);
+        assertEquals(fullProposed - fullCurrent, localProposed - localCurrent, 1E-8);
     }
 
     public void testParserAcceptsAtomicPseudoPriorAndProposalRuns() throws Exception {
@@ -190,6 +381,25 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         return xo;
     }
 
+    private static XMLObject jointOperatorXmlObject(final Fixture fixture,
+                                                    final RewardMixtureAtomicPseudoPrior pseudoPrior) throws Exception {
+        final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        final XMLObject xo = xmlObject(document,
+                RewardMixtureBranchJointCtsCategoryOperatorParser.OPERATOR_NAME,
+                MCMCOperator.WEIGHT, "1.0",
+                RewardMixtureBranchJointCtsCategoryOperatorParser.WINDOW_SIZE, "0.05");
+
+        addChild(xo, wrapper(document, "categoryState", nativeObject(document, "parameter", fixture.categoryState)));
+        addChild(xo, wrapper(document, "categoryCuts", nativeObject(document, "parameter", fixture.categoryCuts)));
+        addChild(xo, nativeObject(document, "rewardsAwareBranchModel", fixture.rewardsAwareBranchModel));
+        addChild(xo, nativeObject(document, "treeDataLikelihood", fixture.independentLikelihood));
+        if (pseudoPrior != null) {
+            addChild(xo, nativeObject(document, "rewardMixtureAtomicPseudoPrior", pseudoPrior));
+        }
+
+        return xo;
+    }
+
     private static XMLObject continuousSliceOperatorXmlObject(final Fixture fixture) throws Exception {
         final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         final XMLObject xo = xmlObject(document,
@@ -206,6 +416,10 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
     }
 
     private static Fixture createFixture() {
+        return createFixture(false);
+    }
+
+    private static Fixture createFixture(final boolean dynamicCategoryOrdering) {
         final TreeModel tree = createThreeTipTree();
         final SitePatterns patterns = createSitePatterns("A", "C", "G");
         final SubstitutionModel substitutionModel = createNucleotideSubstitutionModel();
@@ -214,19 +428,42 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
         final Parameter ctsRewards =
                 new Parameter.Default("rewardCts", new double[]{0.50, 0.50, 0.50, 0.50});
         ctsRewards.addBounds(new Parameter.DefaultBounds(1.0, 0.0, ctsRewards.getDimension()));
+        final double initialCategoryValue = dynamicCategoryOrdering ? 2.50 : 0.50;
         final Parameter categoryState =
-                new Parameter.Default("rewardCategory", new double[]{0.50, 0.50, 0.50, 0.50});
+                new Parameter.Default("rewardCategory", new double[]{
+                        initialCategoryValue,
+                        initialCategoryValue,
+                        initialCategoryValue,
+                        initialCategoryValue});
         final Parameter categoryCuts =
                 new Parameter.Default("rewardCategoryCuts", new double[]{0, 1, 2, 3, 4, 5});
-        final RewardRates rewardRates = new RewardRates(
-                new Parameter.Default("rewardRates", new double[]{0.20, 0.40, 0.60, 0.80}),
-                null,
-                new Parameter.Default("rewardRatesInternal", new double[0]),
-                new Parameter.Default("rewardRatesMapping", new double[]{0.0, 1.0, 2.0, 3.0})
-        );
+        final RewardRates rewardRates = createRewardRates();
 
-        final RewardsAwareCategoricalMixtureBranchRates rewardBranchRates =
-                new RewardsAwareCategoricalMixtureBranchRates(
+        final ArbitraryBranchRates rewardBranchRates;
+        final RewardsAwareBranchModel rewardsAwareBranchModel;
+        if (dynamicCategoryOrdering) {
+            final RewardsAwareCategoricalMixtureBranchRatesDynamic dynamicRewardBranchRates =
+                    new RewardsAwareCategoricalMixtureBranchRatesDynamic(
+                            tree,
+                            ctsRewards,
+                            categoryState,
+                            categoryCuts,
+                            rewardRates,
+                            new ArbitraryBranchRates.BranchRateTransform.None(),
+                            false,
+                            TreeParameterModel.Type.WITHOUT_ROOT);
+            rewardBranchRates = dynamicRewardBranchRates;
+            rewardsAwareBranchModel = new RewardsAwareBranchModel(
+                    tree,
+                    substitutionModel,
+                    rewardRates,
+                    dynamicRewardBranchRates.getCategoryDecoder(),
+                    rewardBranchRates,
+                    false,
+                    RewardsAwareBranchModel.DEFAULT_SERICOLA_SERIES_RESCALING);
+        } else {
+            final RewardsAwareCategoricalMixtureBranchRates staticRewardBranchRates =
+                    new RewardsAwareCategoricalMixtureBranchRates(
                         tree,
                         ctsRewards,
                         categoryState,
@@ -235,15 +472,17 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
                         new ArbitraryBranchRates.BranchRateTransform.None(),
                         false,
                         TreeParameterModel.Type.WITHOUT_ROOT);
-        final RewardsAwareBranchModel rewardsAwareBranchModel = new RewardsAwareBranchModel(
-                tree,
-                substitutionModel,
-                rewardRates,
-                categoryState,
-                categoryCuts,
-                rewardBranchRates,
-                false
-        );
+            rewardBranchRates = staticRewardBranchRates;
+            rewardsAwareBranchModel = new RewardsAwareBranchModel(
+                    tree,
+                    substitutionModel,
+                    rewardRates,
+                    categoryState,
+                    categoryCuts,
+                    rewardBranchRates,
+                    false
+            );
+        }
 
         final DiscreteDataLikelihoodDelegate independentDelegate = new DiscreteDataLikelihoodDelegate(
                 tree,
@@ -271,6 +510,15 @@ public class RewardMixtureCategoricalGibbsOperatorParserTest extends MathTestCas
                 ctsRewards,
                 categoryState,
                 categoryCuts);
+    }
+
+    private static RewardRates createRewardRates() {
+        return new RewardRates(
+                new Parameter.Default("rewardRates", new double[]{0.20, 0.40, 0.60, 0.80}),
+                null,
+                new Parameter.Default("rewardRatesInternal", new double[0]),
+                new Parameter.Default("rewardRatesMapping", new double[]{0.0, 1.0, 2.0, 3.0})
+        );
     }
 
     private static SitePatterns createSitePatterns(final String a, final String b, final String c) {

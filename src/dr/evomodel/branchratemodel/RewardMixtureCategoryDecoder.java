@@ -108,6 +108,22 @@ public final class RewardMixtureCategoryDecoder implements RewardMixtureCategory
         return getUpperCut(category);
     }
 
+    @Override
+    public double getLowerCutForCategoryAtCtsValue(final int parameterIndex,
+                                                   final int category,
+                                                   final double ctsValue) {
+        checkParameterIndex(parameterIndex);
+        return getLowerCut(category);
+    }
+
+    @Override
+    public double getUpperCutForCategoryAtCtsValue(final int parameterIndex,
+                                                   final int category,
+                                                   final double ctsValue) {
+        checkParameterIndex(parameterIndex);
+        return getUpperCut(category);
+    }
+
     public double getNextBoundary(final double value, final double direction) {
         return embedding.getNextBoundary(value, direction);
     }

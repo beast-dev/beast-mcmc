@@ -32,6 +32,10 @@ public interface RewardMixtureCategoryDecoding {
 
     double getUpperCut(int parameterIndex, int category);
 
+    double getLowerCutForCategoryAtCtsValue(int parameterIndex, int category, double ctsValue);
+
+    double getUpperCutForCategoryAtCtsValue(int parameterIndex, int category, double ctsValue);
+
     double getNextBoundary(double value, double direction);
 
     boolean isAtomic(int parameterIndex);

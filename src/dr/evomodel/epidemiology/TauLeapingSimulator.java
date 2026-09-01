@@ -57,12 +57,14 @@ public class TauLeapingSimulator extends StochasticSimulator {
             runOneLeapingIteration(state, critical, noncritical);
         }
 
-        printSimulationSummary();
+        //printSimulationSummary();
 
         long endTime = System.nanoTime();
-        double elapsedTimeInSeconds = (endTime - startTime) / 1e9;
-        System.out.println("Elapsed time: " + elapsedTimeInSeconds + " seconds");
-        elapsedTime.setParameterValue(0, elapsedTimeInSeconds);
+        if(elapsedTime != null) {
+            double elapsedTimeInSeconds = (endTime - startTime) / 1e9;
+            System.out.println("Elapsed time: " + elapsedTimeInSeconds + " seconds");
+            elapsedTime.setParameterValue(0, elapsedTimeInSeconds);
+        }
     }
 
     /*

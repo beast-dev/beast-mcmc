@@ -52,7 +52,7 @@ public class TwoPathogenCompatibleGridParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return Parameter.class;
+        return TwoPathogenCompatibleGrid.class;
     }
 
     public String getParserName() {

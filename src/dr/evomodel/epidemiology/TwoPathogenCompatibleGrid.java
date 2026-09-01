@@ -6,6 +6,7 @@ import dr.inference.model.Parameter;
 public class TwoPathogenCompatibleGrid extends Parameter.Abstract {
 
     private double[] gridStartTimes;
+    private Bounds bounds = null;
 
     public TwoPathogenCompatibleGrid(Parameter cutOff,
                                      Parameter numGridPoints,
@@ -36,19 +37,20 @@ public class TwoPathogenCompatibleGrid extends Parameter.Abstract {
     }
 
     protected void storeValues() {
-        throw new RuntimeException("Not implemented");
     }
 
     protected void restoreValues() {
-        throw new RuntimeException("Not implemented");
     }
 
     protected void acceptValues() {
-        throw new RuntimeException("Not implemented");
     }
 
     protected void adoptValues(Parameter source) {
         throw new RuntimeException("Not implemented");
+    }
+
+    public int getDimension() {
+        return gridStartTimes.length;
     }
 
     public double getParameterValue(int dim) {
@@ -72,11 +74,11 @@ public class TwoPathogenCompatibleGrid extends Parameter.Abstract {
     }
 
     public void addBounds(Bounds bounds) {
-        throw new RuntimeException("Not implemented");
+        this.bounds = bounds;
     }
 
     public Bounds<Double> getBounds() {
-        throw new RuntimeException("Not implemented.");
+        return bounds;
     }
 
     public void addDimension(int index, double value) {

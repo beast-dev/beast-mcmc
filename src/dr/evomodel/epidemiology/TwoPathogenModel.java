@@ -66,6 +66,8 @@ public class TwoPathogenModel extends CompartmentalModel {
         this.numReactionChannels = numReactionChannels;
         this.numSpecies = compartmentCounts.size();
         this.vMatrix = getVMatrix();
+        this.mostRecentSamplingDateOne = mostRecentSamplingDateOne.getParameterValue(0);
+        this.mostRecentSamplingDateTwo = mostRecentSamplingDateTwo.getParameterValue(0);
 
         setTotalPopSize();
 
@@ -76,23 +78,27 @@ public class TwoPathogenModel extends CompartmentalModel {
             this.seasonalAmpTwo = seasonalAmpTwo.getParameterValue(0);
             this.seasonalPeakDayOne = seasonalPeakDayOne.getParameterValue(0);
             this.seasonalPeakDayTwo = seasonalPeakDayTwo.getParameterValue(0);
-            this.mostRecentSamplingDateOne = mostRecentSamplingDateOne.getParameterValue(0);
-            this.mostRecentSamplingDateTwo = mostRecentSamplingDateTwo.getParameterValue(0);
             setSeasonalOffset();
         }
     }
 
     protected void setTotalPopSize() {
-        double origOne = originOne.getParameterValue(0);
-        double origTwo = originTwo.getParameterValue(0);
+        //double origOne = originOne.getParameterValue(0);
+        //double origTwo = originTwo.getParameterValue(0);
         double originTimeSS = originTimeNumSS.getParameterValue(0);
         double originTimeSI = originTimeNumSI;
         double originTimeIS = originTimeNumIS;
 
-        if (origOne > origTwo) {
+        double mostRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
+        double forwardOrigOne = cutOff - originOne.getParameterValue(0) -
+                (mostRecentSamplingDate - mostRecentSamplingDateOne);
+        double forwardOrigTwo = cutOff - originTwo.getParameterValue(0) -
+                (mostRecentSamplingDate - mostRecentSamplingDateTwo);
+
+        if (forwardOrigOne < forwardOrigTwo) {
             // total compartment counts at origin time should be originTimeSS + originTimeIS
             totalPopSize = originTimeSS + originTimeIS;
-        } else if (origTwo > origOne) {
+        } else if (forwardOrigTwo < forwardOrigOne) {
             totalPopSize = originTimeSS + originTimeSI;
         } else {
             // total compartment counts at origin time should be originTimeSS + originTimeIS + originTimeSI
@@ -114,14 +120,19 @@ public class TwoPathogenModel extends CompartmentalModel {
         double originTimeSS = originTimeNumSS.getParameterValue(0);
         double originTimeSI = originTimeNumSI;
         double originTimeIS = originTimeNumIS;
+        double mostRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
+        // units of time beyond simulation start time (which corresponds to cutOff time) of pathogen one origin
+        double forwardOrigOne = cutOff - origOne - (mostRecentSamplingDate - mostRecentSamplingDateOne);
+        // units of time beyond simulation start time (which corresponds to cutOff time) of pathogen two origin
+        double forwardOrigTwo = cutOff - origTwo - (mostRecentSamplingDate - mostRecentSamplingDateTwo);
 
-        if (origOne > cutOff) {
-            throw new RuntimeException("Origin time of pathogen 1 (" + origOne +
-                    ") is further back in time than cutOff (" + cutOff + "). Need to increase value of cutOff");
+        if (forwardOrigOne < 0) {
+            throw new RuntimeException("Origin time of pathogen 1 is further back in time than cutOff. " +
+                    "Need to increase value of cutOff");
         }
-        if (origTwo > cutOff) {
-            throw new RuntimeException("Origin time of pathogen 2 (" + origTwo +
-                    ") is further back in time than cutOff (" + cutOff + "). Need to increase value of cutOff.");
+        if (forwardOrigTwo < 0) {
+            throw new RuntimeException("Origin time of pathogen 2 is further back in time than cutOff. " +
+                    "Need to increase value of cutOff.");
         }
 
         // initialize everything to 0
@@ -132,14 +143,14 @@ public class TwoPathogenModel extends CompartmentalModel {
         // SS = originTimeSS
         compartmentCounts.get(0).setParameterValue(index, originTimeSS);
 
-        if (origOne > origTwo) {
+        if (forwardOrigOne < forwardOrigTwo) {
             // pathogen 1 is older, start in IS
             compartmentCounts.get(4).setParameterValue(index, originTimeIS);
             // total compartment counts at origin time should be originTimeSS + originTimeIS
             if(totalPopSize != originTimeSS + originTimeIS){
                 throw new RuntimeException("Total pop size mismatch");
             }
-        } else if (origTwo > origOne) {
+        } else if (forwardOrigTwo < forwardOrigOne) {
             // pathogen 2 is older, start in SI
             compartmentCounts.get(1).setParameterValue(index, originTimeSI);
             // total compartment counts at origin time should be originTimeSS + originTimeSI
@@ -160,23 +171,29 @@ public class TwoPathogenModel extends CompartmentalModel {
     }
 
     protected void setDefaultCompartmentCounts(int index){
-        double origOne = originOne.getParameterValue(0);
-        double origTwo = originTwo.getParameterValue(0);
+        //double origOne = originOne.getParameterValue(0);
+        //double origTwo = originTwo.getParameterValue(0);
         double originTimeSS = originTimeNumSS.getParameterValue(0);
         double originTimeSI = originTimeNumSI;
         double originTimeIS = originTimeNumIS;
+
+        double mostRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
+        double forwardOrigOne = cutOff - originOne.getParameterValue(0) -
+                (mostRecentSamplingDate - mostRecentSamplingDateOne);
+        double forwardOrigTwo = cutOff - originTwo.getParameterValue(0) -
+                (mostRecentSamplingDate - mostRecentSamplingDateTwo);
 
         // initialize everything to 0
         for (int i = 0; i < compartmentCounts.size(); i++) {
             compartmentCounts.get(i).setParameterValue(index, 0);
         }
 
-        if (origOne > origTwo) {
+        if (forwardOrigOne < forwardOrigTwo) {
             // pathogen 1 is older, start in IS
             // total compartment counts at origin time should be originTimeSS + originTimeIS
             // default SS value should be same
             compartmentCounts.get(0).setParameterValue(index, originTimeSS + originTimeIS);
-        } else if (origTwo > origOne) {
+        } else if (forwardOrigTwo < forwardOrigOne) {
             // pathogen 2 is older, start in SI
             // total compartment counts at origin time should be originTimeSS + originTimeSI
             // default SS value should be same
@@ -1054,13 +1071,15 @@ public class TwoPathogenModel extends CompartmentalModel {
         return updatedCounts;
     }
 
-
+    // gets time into the past from most recent sampling date to oldest epidemic origin
     protected double getOldestOrigin() {
-        if(originOne.getParameterValue(0) >= originTwo.getParameterValue(0)){
-            return originOne.getParameterValue(0);
-        }else{
-            return originTwo.getParameterValue(0);
-        }
+        double originOneCalTime = mostRecentSamplingDateOne -
+                originOne.getParameterValue(0);
+        double originTwoCalTime = mostRecentSamplingDateTwo -
+                originTwo.getParameterValue(0);
+        double oldestOriginCalTime = Math.min(originOneCalTime, originTwoCalTime);
+        double moreRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
+        return moreRecentSamplingDate - oldestOriginCalTime;
     }
 
     @Override
@@ -1068,17 +1087,21 @@ public class TwoPathogenModel extends CompartmentalModel {
 
         // check if second pathogen has not yet been introduced
         if(!secondPathogenIntroduced) {
-            double origOne = originOne.getParameterValue(0);
-            double origTwo = originTwo.getParameterValue(0);
-            // forward time of simulation start time is 0.0, corresponds to backward time of oldest origin
-            // in forward time, time of younger origin is origTimeDif
-            double origTimeDiff = Math.abs(origOne - origTwo);
+            double mostRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
+            double forwardOrigOne = cutOff - originOne.getParameterValue(0) -
+                    (mostRecentSamplingDate - mostRecentSamplingDateOne);
+            double forwardOrigTwo = cutOff - originTwo.getParameterValue(0) -
+                    (mostRecentSamplingDate - mostRecentSamplingDateTwo);
+
+            // forward time of simulation start time is 0.0,
+            double youngerForwardOrigTime = Math.max(forwardOrigOne, forwardOrigTwo);
+
             // check if time of younger origin (in forward time) is <= simulationTime
-            if(origTimeDiff <= simulationTime){
+            if(youngerForwardOrigTime <= simulationTime){
+                // SS decreases by 1
+                currentCounts[0] = currentCounts[0] - 1;
 
-                currentCounts[0] = currentCounts[0] - 1; // SS
-
-                if (origOne < origTwo) {
+                if (forwardOrigOne > forwardOrigTwo) {
                     // pathogen 1 is younger, introduce pathogen 1
                     currentCounts[4] = currentCounts[4] + 1; // IS
                 } else {
@@ -1086,7 +1109,7 @@ public class TwoPathogenModel extends CompartmentalModel {
                     currentCounts[1] = currentCounts[1] + 1; // SI
                 }
                 secondPathogenIntroduced = true;
-                System.out.println("Both pathogens now active");
+                //System.out.println("Both pathogens now active");
             }
         }
         return currentCounts;

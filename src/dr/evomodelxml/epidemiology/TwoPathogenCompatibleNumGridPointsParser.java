@@ -51,7 +51,7 @@ public class TwoPathogenCompatibleNumGridPointsParser extends AbstractXMLObjectP
     }
 
     public Class getReturnType() {
-        return Parameter.class;
+        return TwoPathogenCompatibleNumGridPoints.class;
     }
 
     public String getParserName() {

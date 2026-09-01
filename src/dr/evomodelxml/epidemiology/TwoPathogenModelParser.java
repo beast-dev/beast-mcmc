@@ -210,7 +210,6 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
         }
         compartmentCounts.add(numIRParam);
 
-
         Parameter numCSParam = (Parameter) xo.getChild(NUM_CS).getChild(Parameter.class);
         if (numCSParam.getDimension() != numGridPoints.getParameterValue(0)) {
             throw new RuntimeException("numCS parameter must have dimension equal to numGridPoints");
@@ -234,7 +233,6 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
             throw new RuntimeException("numCR parameter must have dimension equal to numGridPoints");
         }
         compartmentCounts.add(numCRParam);
-
 
         Parameter numRSParam = (Parameter) xo.getChild(NUM_RS).getChild(Parameter.class);
         if (numRSParam.getDimension() != numGridPoints.getParameterValue(0)) {
@@ -268,12 +266,12 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
 
         double originTimeNumSI = 1.0;
         if(xo.getChild(ORIGIN_TIME_NUM_SI)!=null){
-            originTimeNumSI = (double)((Parameter) xo.getChild(ORIGIN_TIME_NUM_SI).getChild(Parameter.class)).getParameterValue(0);
+            originTimeNumSI = ((Parameter) xo.getChild(ORIGIN_TIME_NUM_SI).getChild(Parameter.class)).getParameterValue(0);
         }
 
         double originTimeNumIS = 1.0;
         if(xo.getChild(ORIGIN_TIME_NUM_IS)!=null){
-            originTimeNumIS = (double)((Parameter) xo.getChild(ORIGIN_TIME_NUM_IS).getChild(Parameter.class)).getParameterValue(0);
+            originTimeNumIS = ((Parameter) xo.getChild(ORIGIN_TIME_NUM_IS).getChild(Parameter.class)).getParameterValue(0);
         }
 
         TwoPathogenModel twoPathogenModel = new TwoPathogenModel(rateParams, compartmentCounts,
@@ -326,6 +324,14 @@ public class TwoPathogenModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }, true),
+            new ElementRule(MOST_RECENT_SAMPLING_DATE_ONE,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
+            new ElementRule(MOST_RECENT_SAMPLING_DATE_TWO,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }),
             new ElementRule(MOVE_TO_C_RATE_ONE,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),

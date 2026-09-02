@@ -789,7 +789,11 @@ public class SubstitutionModelGenerator extends Generator {
 
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
-            writeNuRelativeRateBlock(writer, prefix, parameter);
+            if (parameter.getParent() != null) {
+                writeNuRelativeRateBlock(writer, prefix, parameter);
+            } else {
+                writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
+            }
         } else {
             writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }

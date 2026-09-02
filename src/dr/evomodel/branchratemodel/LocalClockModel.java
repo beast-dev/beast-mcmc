@@ -277,8 +277,11 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
                         throw new IllegalArgumentException("A stem proportion for a local clock is > 1.0");
                     }
                 } else {
-                    stemProportion = localClock.getStemValue();
-                    stemTime = tree.getBranchLength(node) * stemProportion;
+                // the parser does not allow external clocks to have stem proportions default to 1 above
+                    if(localClock.getType()!=ClockType.EXTERNAL){ 
+                        stemProportion = localClock.getStemValue();
+                        stemTime = tree.getBranchLength(node) * stemProportion;
+                    }
                 }
             }
 

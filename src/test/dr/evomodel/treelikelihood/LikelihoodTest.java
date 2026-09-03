@@ -30,15 +30,22 @@ package test.dr.evomodel.treelikelihood;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.TreeUtils;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.GTR;
-import dr.oldevomodel.substmodel.HKY;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.nucleotide.GTR;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.TreeLikelihood;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.GTRParser;
-import dr.oldevomodelxml.substmodel.HKYParser;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.PreOrderSettings;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodelxml.siteratemodel.GammaSiteRateModelParser;
+import dr.evomodelxml.substmodel.GTRParser;
+import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import junit.framework.Test;
@@ -47,6 +54,9 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.text.NumberFormat;
 import java.util.Locale;
+
+import static dr.evomodelxml.siteratemodel.SiteModelParser.MUTATION_RATE;
+import static dr.evomodelxml.siteratemodel.SiteModelParser.SITE_MODEL;
 
 
 /**
@@ -77,10 +87,26 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         System.out.println("\nTest Simple Node to convert Newick Tree:");
         String expectedNewickTree = "((((human:0.024003,(chimp:0.010772,bonobo:0.010772):0.013231):0.012035," +
                 "gorilla:0.036038):0.033087,orangutan:0.069125):0.030457,siamang:0.099582);";
-        
+
         assertEquals("Fail to covert the correct tree !!!", expectedNewickTree, TreeUtils.newick(treeModel, 6));
     }
 
+    private TreeDataLikelihood getTreeDataLikelihood(SubstitutionModel substitutionModel, SiteRateModel siteRateModel) {
+        //siteModel
+        if (siteRateModel == null) {
+            siteRateModel = new DiscretizedSiteRateModel("");
+        }
+
+        //treeLikelihood
+        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
+
+        return new TreeDataLikelihood(
+                new BeagleDataLikelihoodDelegate(treeModel, patterns,
+                        new HomogeneousBranchModel(substitutionModel), siteRateModel, true,
+                        false, PartialsRescalingScheme.DEFAULT, false, PreOrderSettings.getDefault()),
+                treeModel, null
+        );
+    }
 
 
     public void testLikelihoodJC69() {
@@ -92,19 +118,11 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
 
-        //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteModel.setMutationRateParameter(mu);
-
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(hky, null);
 
         assertEquals("treeLikelihoodJC69", format.format(-1992.20564), format.format(treeLikelihood.getLogLikelihood()));
     }
+
 
     public void testLikelihoodK80() {
         System.out.println("\nTest Likelihood using K80:");
@@ -116,15 +134,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteModel.setMutationRateParameter(mu);
-
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(hky, null);
 
         assertEquals("treeLikelihoodK80", format.format(-1856.30305), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -138,16 +148,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
 
-        //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteModel.setMutationRateParameter(mu);
-
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);          
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(hky, null);
 
         assertEquals("treeLikelihoodHKY85", format.format(-1825.21317), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -162,16 +163,13 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.137064, 0, 1000.0);
+        Parameter mu = new Parameter.Default(GammaSiteRateModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteRateModelParser.GAMMA_SHAPE, 0.137064, 0, 1000.0);
 
-        GammaSiteModel siteModel = new GammaSiteModel(hky, mu, shape, 4, null);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, mu, 1, shape, 4, GammaSiteRateModel.DiscretizationType.EQUAL, null);
 
         //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(hky, siteRateModel);
 
         assertEquals("treeLikelihoodHKY85G", format.format(-1789.75936), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -186,16 +184,13 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.701211, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteRateModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter invar = new Parameter.Default(GammaSiteRateModelParser.PROPORTION_INVARIANT, 0.701211, 0, 1.0);
 
-        GammaSiteModel siteModel = new GammaSiteModel(hky, mu, null, 4, invar);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, mu, 1, null, 1, GammaSiteRateModel.DiscretizationType.EQUAL, invar);
 
         //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(hky, siteRateModel);
 
         assertEquals("treeLikelihoodHKY85I", format.format(-1789.91240), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -210,17 +205,14 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.587649, 0, 1000.0);
-        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.486548, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteRateModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteRateModelParser.GAMMA_SHAPE, 0.587649, 0, 1000.0);
+        Parameter invar = new Parameter.Default(GammaSiteRateModelParser.PROPORTION_INVARIANT, 0.486548, 0, 1.0);
 
-        GammaSiteModel siteModel = new GammaSiteModel(hky, mu, shape, 4, invar);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, mu, 1, shape, 4, GammaSiteRateModel.DiscretizationType.EQUAL, invar);
 
         //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(hky, siteRateModel);
 
         assertEquals("treeLikelihoodHKY85GI", format.format(-1789.63923), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -239,16 +231,7 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         Variable<Double> rateGTValue = new Parameter.Default(GTRParser.G_TO_T, 1.0, 1.0E-8, Double.POSITIVE_INFINITY);
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
-        //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-
-        GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, null, 4, null);
-
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(gtr, null);
 
         assertEquals("treeLikelihoodGTR", format.format(-1969.14584), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -268,16 +251,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.5, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteRateModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter invar = new Parameter.Default(GammaSiteRateModelParser.PROPORTION_INVARIANT, 0.701211, 0, 1.0);
 
-        GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, null, 4, invar);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, mu, 1, null, 1, GammaSiteRateModel.DiscretizationType.EQUAL, invar);
 
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(gtr, siteRateModel);
 
         assertEquals("treeLikelihoodGTRI", format.format(-1948.84175), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -297,16 +276,12 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.5, 0, 100.0);
+        Parameter mu = new Parameter.Default(GammaSiteRateModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteRateModelParser.GAMMA_SHAPE, 0.587649, 0, 1000.0);
 
-        GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, shape, 4, null);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, mu, 1, shape, 4, GammaSiteRateModel.DiscretizationType.EQUAL, null);
 
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(gtr, siteRateModel);
 
         assertEquals("treeLikelihoodGTRG", format.format(-1949.03601), format.format(treeLikelihood.getLogLikelihood()));
     }
@@ -326,17 +301,13 @@ public class LikelihoodTest extends TraceCorrelationAssert {
         GTR gtr = new GTR(rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, f);
 
         //siteModel
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        Parameter shape = new Parameter.Default(GammaSiteModelParser.GAMMA_SHAPE, 0.5, 0, 100.0);
-        Parameter invar = new Parameter.Default(GammaSiteModelParser.PROPORTION_INVARIANT, 0.5, 0, 1.0);
+        Parameter mu = new Parameter.Default(GammaSiteRateModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
+        Parameter shape = new Parameter.Default(GammaSiteRateModelParser.GAMMA_SHAPE, 0.587649, 0, 1000.0);
+        Parameter invar = new Parameter.Default(GammaSiteRateModelParser.PROPORTION_INVARIANT, 0.486548, 0, 1.0);
 
-        GammaSiteModel siteModel = new GammaSiteModel(gtr, mu, shape, 4, invar);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, mu, 1, shape, 4, GammaSiteRateModel.DiscretizationType.EQUAL, invar);
 
-        //treeLikelihood
-        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
-
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, null, null,
-                false, false, true, false, false);
+        TreeDataLikelihood treeLikelihood = getTreeDataLikelihood(gtr, siteRateModel);
 
         assertEquals("treeLikelihoodGTRGI", format.format(-1947.58294), format.format(treeLikelihood.getLogLikelihood()));
     }

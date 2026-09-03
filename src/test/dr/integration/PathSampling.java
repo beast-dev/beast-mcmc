@@ -30,9 +30,9 @@ package test.dr.integration;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.inference.model.Parameter;
-import dr.oldevomodel.substmodel.HKY;
-import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.math.distributions.GammaDistribution;
 import dr.math.LogTricks;
 

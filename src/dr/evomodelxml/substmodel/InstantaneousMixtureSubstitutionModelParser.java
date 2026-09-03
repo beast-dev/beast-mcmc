@@ -27,21 +27,14 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.AminoAcidMixture;
-import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionRateMatrixMixture;
-import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
-import dr.evoxml.util.DataTypeUtils;
-import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.distribution.LogLinearModel;
-import dr.inference.model.Parameter;
 import dr.evomodel.substmodel.FrequencyModel;
-import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
-import dr.xml.*;
 import dr.evomodel.substmodel.InstantaneousMixtureSubstitutionModel;
-import java.util.ArrayList;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evoxml.util.DataTypeUtils;
+import dr.inference.model.Parameter;
+import dr.xml.*;
+
 import java.util.List;
 
 public class InstantaneousMixtureSubstitutionModelParser extends AbstractXMLObjectParser {

@@ -28,8 +28,8 @@
 package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Nucleotides;
-import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.TN93;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 

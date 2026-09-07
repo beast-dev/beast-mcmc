@@ -36,6 +36,12 @@ public abstract class CompartmentalModel extends AbstractModel {
 
     protected abstract double[] getUpdatedCompartmentCounts(double[] currentCounts, double[] countsNew);
 
+    // Provides the number of infected individuals relevant to the lineage count constraint for each
+    // pathogen in the model at the shared trajectory index.
+    // For a single-pathogen model, returns an array of length 1, and for a two-pathogen model,
+    // returns an array of length 2.
+    public abstract int[] getLineageCountConstraintCounts(double[] currentCounts);
+
     // Checks of all counts are nonnegative
     protected boolean hasMinimalCounts(double[] counts) {
         for (int i = 0; i < counts.length; i++) {

@@ -3,6 +3,8 @@ package dr.evomodel.epidemiology;
 import cern.jet.random.Poisson;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.stats.Variate;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,10 @@ public class TauLeapingSimulator extends StochasticSimulator {
     protected double epsilon;
     protected int criticalNumber;
     protected Parameter elapsedTime;
+    // class field
+    private boolean firstLeap = true;
+    // class field
+    private double maxIS = 0;
 
     // Count the number of times SSA is used instead of Tau or SAL
     // Number of separate times the simulator reverts to SSA
@@ -38,15 +44,35 @@ public class TauLeapingSimulator extends StochasticSimulator {
     // Implements hybrid tau-leaping/SSA algorithm with step size selection as outlined by Cao et al. (2006)
     public void simulateTrajectory() {
 
+        firstLeap = true;
+
+        /*
+        System.out.println("simulateTrajectory() called from:");
+        Thread.currentThread().getStackTrace();
+        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+            System.out.println("  " + element);
+        }
+
+        System.out.println("Compartment counts before simulation:");
+        for (int s = 0; s < numSpecies; s++) {
+            System.out.print("Compartment " + s + ": ");
+            for (int k = 0; k < numGridPoints; k++) {
+                System.out.print(compartmentalModel.compartmentCounts.get(s).getParameterValue(k) + " ");
+            }
+            System.out.println();
+        }
+        */
         // To monitor how long it takes to simulate one trajectory
         long startTime = System.nanoTime();
 
         // set up time interval vector
         // duration for which we need to simulate trajectory
-        double T = compartmentalModel.getOldestOrigin();
+        //double T = compartmentalModel.getOldestOrigin();
 
         // initialize values that we will have to keep track of
-        SimulationState state = initializeSimulation(T);
+        SimulationState state = initializeSimulation();
+
+        //System.out.println("Right after initializeSimulation() called. simTime=" + state.simulationTime + " IS=" + state.currentCounts[4]);
 
         List<Integer> critical = new ArrayList<>(numReactionChannels);
         List<Integer> noncritical = new ArrayList<>(numReactionChannels);
@@ -65,6 +91,17 @@ public class TauLeapingSimulator extends StochasticSimulator {
             System.out.println("Elapsed time: " + elapsedTimeInSeconds + " seconds");
             elapsedTime.setParameterValue(0, elapsedTimeInSeconds);
         }
+        /*
+        System.out.println("Compartment counts after simulation:");
+        for (int s = 0; s < numSpecies; s++) {
+            System.out.print("Compartment " + s + ": ");
+            for (int k = 0; k < numGridPoints; k++) {
+                System.out.print(compartmentalModel.compartmentCounts.get(s).getParameterValue(k) + " ");
+            }
+            System.out.println();
+        }
+
+        */
     }
 
     /*
@@ -110,6 +147,8 @@ public class TauLeapingSimulator extends StochasticSimulator {
     // A full run through Steps 1 - 6 of algorithm described in Cao et al. paper
     private void runOneLeapingIteration(SimulationState state, List<Integer> critical, List<Integer> noncritical) {
 
+        double prevIS = state.currentCounts[4];
+
         while (true) {
             double[] e = computeEpsilonVector();
 
@@ -118,6 +157,8 @@ public class TauLeapingSimulator extends StochasticSimulator {
 
             // computes tauPrime
             double tauPrime = stepTwo(state, noncritical, e);
+
+            //System.out.println("Tau prime after first computed: " + tauPrime);
 
             // proceeds if tauPrime is large enough, otherwise temporarily abandons tau-leaping,
             // performs 100 SSA steps, and then returns to Step 1
@@ -142,6 +183,18 @@ public class TauLeapingSimulator extends StochasticSimulator {
             // We don't have to restart from Step 1, and we did not reach the end of the trajectory
             // So we have successfully exectued a tau leap
             executeLeap(state, outcome.leapResult);
+
+            // in the IS change print:
+            /*
+            if (state.currentCounts[4] != prevIS) {
+                if (state.currentCounts[4] > maxIS) maxIS = state.currentCounts[4];
+                if (state.currentCounts[4] == 0) {
+                    System.out.println("IS went to 0 at simTime=" + state.simulationTime +
+                            " maxIS was=" + maxIS + " SS=" + state.currentCounts[0]);
+                    maxIS = 0;
+                }
+            }
+            */
             return;
         }
     }
@@ -157,6 +210,21 @@ public class TauLeapingSimulator extends StochasticSimulator {
 
     private void stepOne(SimulationState state, List<Integer> critical, List<Integer> noncritical) {
         state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
+
+        // diagnostic
+        /*
+        double r0 = sumIntensities(state.reactionInt);
+        if(state.simulationTime == 7.5) {
+            System.out.println("Initial r0=" + r0 + " simTime=" + state.simulationTime);
+            // print non-zero reaction intensities only
+            for (int c = 0; c < numReactionChannels; c++) {
+                if (state.reactionInt[c] > 0) {
+                    System.out.println("  reaction " + c + ": " + state.reactionInt[c]);
+                }
+            }
+        }
+        */
+
         // Maximum number of times that a reaction with a positive intensity can fire before
         // exhausting one of its reactants
         state.maxFiringTimes = getMaxFiringTimes(state.currentCounts, state.reactionInt);
@@ -184,9 +252,11 @@ public class TauLeapingSimulator extends StochasticSimulator {
         boolean tauPrimeTooSmall = true;
 
         while (tauPrimeTooSmall && state.nextRecordIndex >= 0) {
-
             double r0 = sumIntensities(state.reactionInt);
-
+            if(r0 == 0){
+                recordCompartmentCountsUpTo(state, Double.POSITIVE_INFINITY);
+                break;
+            }
             if (!isTauPrimeTooSmall(tauPrime, r0, 10.0)) {
                 tauPrimeTooSmall = false;
                 // if tauPrime is not too small, skip the rest
@@ -197,15 +267,14 @@ public class TauLeapingSimulator extends StochasticSimulator {
             ssaCount++;
             smallTauCount++;
 
-            // DEBUGGING: Print a note when SSA is used
-            //System.out.printf(
-            //        getClass().getSimpleName() + " -> SSA (tauPrime too small): tauPrime=%f threshold=%f time=%f%n",
-            //        tauPrime, 10.0 / r0, state.simulationTime
-            //);
-
             runSSASteps(state, 100, true);
-
             if (state.nextRecordIndex < 0) {
+                break;
+            }
+
+            r0 = sumIntensities(state.reactionInt);
+            if(r0 == 0){
+                recordCompartmentCountsUpTo(state, Double.POSITIVE_INFINITY);
                 break;
             }
 
@@ -236,47 +305,35 @@ public class TauLeapingSimulator extends StochasticSimulator {
     // runs Gillespie stochastic simulation algorithm for certain number of steps
     // countSteps is set to true if we want to keep track of number of SSA steps taken
     private void runSSASteps(SimulationState state, int numSteps, boolean countSteps) {
-
         for (int k = 0; k < numSteps; k++) {
-
             if (state.nextRecordIndex < 0) {
                 break;
             }
-
             // perform one step of Gillespie stochastic simulation algorithm
-
             double r0 = sumIntensities(state.reactionInt);
+            if(r0 == 0){
+                break;
+            }
 
             //find time to next reaction
             double timeToReaction = -Math.log(MathUtils.nextDouble()) / r0;
-
             // if next reaction occurs after nextIntervalStartTime, record current compartment
             // counts for next interval
             recordCompartmentCountsUpTo(state, state.simulationTime + timeToReaction);
-
             int sampledReactionChannel = sampleReactionChannel(state.reactionInt, r0);
-
             if (countSteps) {
                 // Add to total number of SSA steps taken
                 ssaStepCount++;
             }
-
             // update simulationTime and current compartment counts
             state.simulationTime = state.simulationTime + timeToReaction;
-            state.currentCounts = compartmentalModel.introduceSecondPathogen(state.simulationTime, state.currentCounts);
+            state.currentCounts = compartmentalModel.introduceSecondPathogen(state.simulationTime,
+                    state.currentCounts);
 
             for (int s = 0; s < numSpecies; s++) {
                 state.currentCounts[s] = state.currentCounts[s] + vMatrix[s][sampledReactionChannel];
             }
-
             state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
-
-            // check if we need this
-            //r0 = 0;
-            //for (int c = 0; c < numReactionChannels; c++) {
-            //    r0 = r0 + state.reactionInt[c];
-            //}
-
         }
     }
 
@@ -414,6 +471,30 @@ public class TauLeapingSimulator extends StochasticSimulator {
             }
         }
 
+        // only print for first leap
+        /*
+        if (firstLeap == true) {
+            firstLeap = false;
+            System.out.println("First leap diagnostic:");
+            System.out.println("tau=" + tau + " tauPrime=" + tauPrime + " tauDoublePrime=" + tauDoublePrime);
+            System.out.println("Poisson draws for reactions consuming SS (species 0):");
+            int totalSSChange = 0;
+            int totalISChange = 0;
+            for (int c = 0; c < numReactionChannels; c++) {
+                if (vMatrix[0][c] < 0 && numFirings[c] > 0) {
+                    System.out.println("  reaction " + c +
+                            ": vSS=" + vMatrix[0][c] +
+                            " vIS=" + vMatrix[4][c] +
+                            " numFirings=" + numFirings[c] +
+                            " intensity=" + state.reactionInt[c]);
+                    totalSSChange += vMatrix[0][c] * numFirings[c];
+                    totalISChange += vMatrix[4][c] * numFirings[c];
+                }
+            }
+            System.out.println("Total SS change from leap: " + totalSSChange);
+            System.out.println("Total IS change from leap: " + totalISChange);
+        }
+        */
         StepFiveResult result = new StepFiveResult();
         result.tau = tau;
         result.numFirings = numFirings;

@@ -171,19 +171,7 @@ public class SIRCompartmentalModel extends CompartmentalModel {
         return updatedCounts;
     }
 
-    /*
-    protected boolean hasMinimalCounts(int[] counts) {
-        // check for negative counts
-        for (int i = 0; i < counts.length; i++) {
-            if (counts[i] < 0) {
-                return false;
-            }
-        }
-        // check if less than 1 susceptible
-        if(counts[1] < 1){
-            return false;
-        }
-        return true;
+    public int[] getLineageCountConstraintCounts(double[] currentCounts){
+        return new int[]{(int) currentCounts[1]};
     }
-    */
 }

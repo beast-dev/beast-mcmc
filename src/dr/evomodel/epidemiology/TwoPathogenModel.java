@@ -199,8 +199,6 @@ public class TwoPathogenModel extends CompartmentalModel {
             // default SS value should be same
             compartmentCounts.get(0).setParameterValue(index, originTimeSS + originTimeSI);
         } else {
-            // no need to "introduce" second pathogen while doing forward time simulation
-            secondPathogenIntroduced = true;
             // origins equal
             // total compartment counts at origin time should be originTimeSS + originTimeIS + originTimeSI
             // default value should be same
@@ -1085,6 +1083,8 @@ public class TwoPathogenModel extends CompartmentalModel {
     @Override
     public double[] introduceSecondPathogen(double simulationTime, double[] currentCounts) {
 
+        //System.out.println("in introduceSecondPathogen");
+
         // check if second pathogen has not yet been introduced
         if(!secondPathogenIntroduced) {
             double mostRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
@@ -1093,8 +1093,14 @@ public class TwoPathogenModel extends CompartmentalModel {
             double forwardOrigTwo = cutOff - originTwo.getParameterValue(0) -
                     (mostRecentSamplingDate - mostRecentSamplingDateTwo);
 
+            //System.out.println("forwardOrigOne: " + forwardOrigOne);
+            //System.out.println("forwardOrigTwo: " + forwardOrigTwo);
+
             // forward time of simulation start time is 0.0,
             double youngerForwardOrigTime = Math.max(forwardOrigOne, forwardOrigTwo);
+
+            //System.out.println("simulationTime=" + simulationTime +
+            //        " youngerForwardOrigTime=" + youngerForwardOrigTime);
 
             // check if time of younger origin (in forward time) is <= simulationTime
             if(youngerForwardOrigTime <= simulationTime){
@@ -1177,5 +1183,30 @@ public class TwoPathogenModel extends CompartmentalModel {
                     *Math.sin(2.0*Math.PI*(simTime + seasonalOffset -seasonalPeakDayTwo)/seasonalPeriod);
         }
         return returnVal;
+    }
+
+    public int[] getLineageCountConstraintCounts(double[] currentCounts){
+        // compartment counts
+        //double numSS = currentCounts[0];
+        double numSI = currentCounts[1];
+        //double numSC = currentCounts[2];
+        //double numSR = currentCounts[3];
+        double numIS = currentCounts[4];
+        double numII = currentCounts[5];
+        double numIC = currentCounts[6];
+        double numIR = currentCounts[7];
+        //double numCS = currentCounts[8];
+        double numCI = currentCounts[9];
+        //double numCC = currentCounts[10];
+        //double numCR = currentCounts[11];
+        //double numRS = currentCounts[12];
+        double numRI = currentCounts[13];
+        //double numRC = currentCounts[14];
+        //double numRR = currentCounts[15];
+
+        double infectedPathogenOne = currentCounts[4] + currentCounts[5] + currentCounts[6] + currentCounts[7];
+        double infectedPathogenTwo = currentCounts[1] + currentCounts[5] + currentCounts[9] + currentCounts[13];
+
+        return new int[]{(int)infectedPathogenOne,(int)infectedPathogenTwo};
     }
 }

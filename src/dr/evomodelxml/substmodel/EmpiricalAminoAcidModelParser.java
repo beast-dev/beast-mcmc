@@ -49,48 +49,20 @@ public class EmpiricalAminoAcidModelParser extends AbstractXMLObjectParser {
 
         FrequencyModel freqModel = null;
 
-        if (xo.hasAttribute(FREQUENCIES)) {
+        if (xo.hasChildNamed(FREQUENCIES)) {
             XMLObject cxo = xo.getChild(FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
         }
 
-        EmpiricalRateMatrix rateMatrix = null;
-
         String type = xo.getStringAttribute(TYPE);
 
-        if (type.equals(AminoAcidModelType.BLOSUM_62.getXMLName())) {
-            rateMatrix = Blosum62.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.DAYHOFF.getXMLName())) {
-            rateMatrix = Dayhoff.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.JTT.getXMLName())) {
-            rateMatrix = JTT.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MT_REV_24.getXMLName())) {
-            rateMatrix = MTREV.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.CP_REV_45.getXMLName())) {
-            rateMatrix = CPREV.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.WAG.getXMLName())) {
-            rateMatrix = WAG.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.LG.getXMLName())) {
-            rateMatrix = LG.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.FLU.getXMLName())) {
-            rateMatrix = FLU.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MTVER.getXMLName())) {
-            rateMatrix = MTVER.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MTPRO.getXMLName())) {
-            rateMatrix = MTPRO.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MTMET.getXMLName())) {
-            rateMatrix = MTMET.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MTINV.getXMLName())) {
-            rateMatrix = MTINV.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MTDEU.getXMLName())) {
-            rateMatrix = MTDEU.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MTMAM.getXMLName())) {
-            rateMatrix = MTMAM.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.ThreeDi.getXMLName())) {
-            rateMatrix = ThreeDi.INSTANCE;
-        } else {
-                throw new XMLParseException("Unrecognized empirical amino acid model: " + type);
+        AminoAcidModelType modelType = AminoAcidModelType.fromXMLName(type);
+
+        if (modelType == null) {
+            throw new XMLParseException("Unrecognized empirical amino acid model: " + type);
         }
+
+        EmpiricalRateMatrix rateMatrix = modelType.getRateMatrixInstance();
 
         return new EmpiricalAminoAcidModel(rateMatrix, freqModel);
     }

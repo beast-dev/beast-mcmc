@@ -47,7 +47,7 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
      * @return an object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        final String fileName = xo.getStringAttribute(FILE_NAME);
+        final String fileName = FileHelpers.getFile(xo.getStringAttribute(FILE_NAME)).getAbsolutePath();
 
         final int checkpointEvery = xo.getIntegerAttribute(CHECKPOINT_EVERY);
 

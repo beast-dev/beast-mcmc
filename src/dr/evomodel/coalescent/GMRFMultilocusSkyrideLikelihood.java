@@ -885,7 +885,6 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         return ploidyFactors.getParameterValue(nt);
     }
 
-    @Deprecated
     public List<Parameter> getBetaListParameter() {
         return beta;
     }
@@ -1140,6 +1139,82 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
             setupSufficientStatistics();
             intervalsKnown = true;
         }
+    }
+
+    // row corresponds to field length (logPopSize dimension), column corresponds to covariate dimension
+    private double[][] assembleDesignMatrix(){
+        int numCol = 0;
+        for (Parameter b : beta){
+            numCol += b.getDimension();
+        }
+        double[][] zMat = new double[fieldLength][numCol];
+        int col = 0;
+        for(int k = 0; k < beta.size(); k++){
+            Parameter b = beta.get(k);
+            int bDim = b.getDimension();
+            MatrixParameter covariate = covariates.get(k);
+            boolean transposed = isTransposed(fieldLength, bDim, covariate);
+            for(int j = 0; j < bDim; j++) {
+                for(int i = 0; i < fieldLength; i++) {
+                    zMat[i][col] = getCovariateValue(covariate, i, j, transposed);
+                }
+                col++;
+            }
+        }
+        return zMat;
+    }
+
+    // flattens beta into a single vector matching assembleDesignMatrix()'s column order
+    private double[] flattenBeta(){
+       int dim = 0;
+       for(Parameter b : beta){
+           dim = dim + b.getDimension();
+       }
+       double[] flattenedBeta = new double[dim];
+       int col = 0;
+       for(Parameter b : beta){
+           for (int j = 0; j < b.getDimension(); j++) {
+               flattenedBeta[col] = b.getParameterValue(j);
+               col++;
+           }
+       }
+       return flattenedBeta;
+    }
+
+    public double[][] getDesignMat(){
+        return assembleDesignMatrix();
+    }
+
+    public double[] getZBetaVect(){
+        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+        DenseVector meanAdjustedGamma = skygridHelper.getMeanAdjustedGamma();
+        double[] zBeta = new double[currentGamma.size()];
+        for (int i = 0; i < zBeta.length; i++) {
+            zBeta[i] = currentGamma.get(i) - meanAdjustedGamma.get(i);
+        }
+
+        // check if independent reconstruction matches
+        double[][] zMat = assembleDesignMatrix();
+        double[] flattenedBeta = flattenBeta();
+        // int numRow = zMat.length;
+        //double[] zBeta = new double[numRow];
+        for(int i = 0; i < zBeta.length; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < flattenedBeta.length; j++) {
+                sum += zMat[i][j]*flattenedBeta[j];
+            }
+            double difference = Math.abs(sum - zBeta[i]);
+            double absoluteTolerance = 1e-8;
+            double relativeTolerance = 1e-8*Math.abs(zBeta[i]);
+            double allowedDifference = absoluteTolerance + relativeTolerance;
+
+            if(difference > allowedDifference){
+                throw new RuntimeException("getDesignMat()/getZBetaVect() inconsistency at index " + i +
+                        ": reconstructed=" + sum + ", actual (from getMeanAdjustedGamma())= "
+                        + zBeta[i] + ". This indicates a bug in assembleDesignMatrix()/flattenBeta().");
+            }
+        }
+        return zBeta;
     }
 
     class SkygridHelper {

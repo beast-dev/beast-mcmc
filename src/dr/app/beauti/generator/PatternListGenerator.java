@@ -82,7 +82,8 @@ public class PatternListGenerator extends Generator {
                 && model.getBinarySubstitutionModel() == BinaryModelType.BIN_COVARION;
 
         boolean unique = isAncestralStatesModel || isCovarionModel;
-        boolean strip = isAncestralStatesModel || isCovarionModel;
+        // robust counting requires all codon positions to retain every site, so completely gapped sites are not stripped
+        boolean strip = isAncestralStatesModel || isCovarionModel || ancestralStatesOptions.dNdSRobustCounting(partition);
 
         if (model.getDataType().getType() == DataType.NUCLEOTIDES && codonHeteroPattern != null && partitionCount > 1) {
 
@@ -138,7 +139,7 @@ public class PatternListGenerator extends Generator {
         from += offset;
 
         // this object is created solely to calculate the number of patterns in the alignment
-        SitePatterns patterns = new SitePatterns(alignment, null, from - 1, to - 1, every, strip,
+        SitePatterns patterns = new SitePatterns(alignment, null, from - 1, to - 1, every, !strip,
                 unique ? SitePatterns.CompressionType.UNIQUE_ONLY : SitePatterns.CompressionType.UNCOMPRESSED);
 
         writer.writeComment("The " + (unique ? "unique " : "") + "patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""),

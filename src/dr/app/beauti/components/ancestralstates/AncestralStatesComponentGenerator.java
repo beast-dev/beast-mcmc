@@ -480,8 +480,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
                 new Attribute.Default<String>("fileName", options.fileNameStem + "." + partition.getName() + DNDS_LOG_SUFFIX)});
 
-        writer.writeOpenTag("dNdSLogger", new Attribute[]{new Attribute.Default<String>("id",
-                partition.getName() + ".dNdS")});
+        writer.writeOpenTag("dNdSLogger", new Attribute[]{
+                new Attribute.Default<String>("id", partition.getName() + ".dNdS"),
+                new Attribute.Default<String>("prefix", prefix)});
         writer.writeIDref("treeModel", "treeModel");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");

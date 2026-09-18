@@ -79,9 +79,10 @@ public class ParameterPriorGenerator extends Generator {
         //HMC relaxed clock
         for (int i = 0; i < totalModels; i++) {
             String prefix = partitionClockModels.get(i).getPrefix();
-            mapParameterToPrior.put(ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
-            mapParameterToPrior.put(ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
-            mapParameterToPrior.put(ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            // keyed by the full parameter name so each clock model gets its own priors
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
         }
         //mixed effects clock
         //always write distribution likelihoods for rate, scale and intercept

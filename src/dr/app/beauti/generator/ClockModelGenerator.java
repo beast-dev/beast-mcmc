@@ -298,19 +298,7 @@ public class ClockModelGenerator extends Generator {
 
                 writeCovarianceStatistic(writer, tag, prefix, treePrefix);
 
-                boolean generateRatesGradient = false;
-                boolean generateScaleGradient = false;
-
-                for (Operator operator : options.selectOperators()) {
-                    if (operator.getName().equals(ClockType.HMC_CLOCK_RATES_DESCRIPTION) && operator.isUsed()) {
-                        generateRatesGradient = true;
-                    }
-                    if (operator.getName().equals(ClockType.HMC_CLOCK_LOCATION_SCALE_DESCRIPTION) && operator.isUsed()) {
-                        generateScaleGradient = true;
-                    }
-                }
-
-                if (generateRatesGradient) {
+                if (clockModel.getOperator("HMCRCR").isUsed()) {
 
                     //scale prior
                     writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
@@ -339,54 +327,6 @@ public class ClockModelGenerator extends Generator {
                     writer.writeCloseTag(CTMCScalePriorParser.SCALEPARAMETER);
                     writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
                     writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
-
-                }
-
-                if (generateScaleGradient){
-                    //location gradient
-                    writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[]{
-                            new Attribute.Default<>(XMLParser.ID, prefix + LocationGradient.LOCATION_GRADIENT),
-                            new Attribute.Default<>("traitName", "Sequence"),
-                            new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
-                    });
-                    writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, treePrefix + "treeLikelihood");
-                    writer.writeOpenTag(LocationScaleGradientParser.LOCATION);
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_LOCATION);
-                    writer.writeCloseTag(LocationScaleGradientParser.LOCATION);
-                    writer.writeCloseTag(LocationScaleGradientParser.NAME);
-
-                    //scale gradient
-                    writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[]{
-                            new Attribute.Default<>(XMLParser.ID, prefix + ScaleGradient.SCALE_GRADIENT),
-                            new Attribute.Default<>("traitName", "Sequence"),
-                            new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
-                    });
-                    writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, treePrefix + "treeLikelihood");
-                    writer.writeOpenTag(LocationScaleGradientParser.SCALE);
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
-                    writer.writeCloseTag(LocationScaleGradientParser.SCALE);
-                    writer.writeCloseTag(LocationScaleGradientParser.NAME);
-
-                    //location scale (compound) gradient
-                    writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.NAME));
-                    writer.writeIDref(LocationScaleGradientParser.NAME, prefix + LocationGradient.LOCATION_GRADIENT);
-                    writer.writeIDref(LocationScaleGradientParser.NAME, prefix + ScaleGradient.SCALE_GRADIENT);
-                    writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
-
-                    //location scale (compound) prior gradient
-                    writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.LOCATION_SCALE_PRIOR_GRADIENT));
-                    writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
-                    writer.writeOpenTag(HessianWrapperParser.NAME);
-                    writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.SCALE_PRIOR);
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
-                    writer.writeCloseTag(HessianWrapperParser.NAME);
-                    writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
-
-                    //location scale joint gradient
-                    writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.LOCATION_SCALE_JOINT_GRADIENT));
-                    writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + LocationScaleGradientParser.LOCATION_SCALE_PRIOR_GRADIENT);
-                    writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + LocationScaleGradientParser.NAME);
-                    writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
 
                 }
 
@@ -457,7 +397,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeOpenTag(ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES,
                         new Attribute.Default<>(XMLParser.ID, prefix  + BranchRateModel.BRANCH_RATES));
                 writer.writeIDref(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES, prefix  + "substBranchRates");
-                writer.writeIDref(DefaultTreeModel.TREE_MODEL, prefix  + DefaultTreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
                 writeParameter(clockModel.getParameter(ClockType.SHRINKAGE_CLOCK_LOCATION), -1, writer);
                 writer.writeCloseTag(ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES);
 
@@ -861,6 +801,67 @@ public class ClockModelGenerator extends Generator {
 
     }
 
+    /**
+     * Write the gradients used by the HMC relaxed clock location/scale operator. These refer to the
+     * tree data likelihood so must be written after it.
+     *
+     * @param clockModel PartitionClockModel
+     * @param writer     XMLWriter
+     */
+    public void writeHMCClockGradients(PartitionClockModel clockModel, XMLWriter writer) {
+        if (clockModel.getClockType() != ClockType.HMC_CLOCK || !clockModel.getOperator("HMCRCS").isUsed()) {
+            return;
+        }
+
+        PartitionTreeModel treeModel = clockModel.getPartitionTreeModel();
+        String prefix = clockModel.getPrefix();
+
+        //location gradient
+        writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[]{
+                new Attribute.Default<>(XMLParser.ID, prefix + LocationGradient.LOCATION_GRADIENT),
+                new Attribute.Default<>("traitName", "Sequence"),
+                new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
+        });
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, TreeLikelihoodGenerator.getTreeDataLikelihoodId(treeModel, clockModel));
+        writer.writeOpenTag(LocationScaleGradientParser.LOCATION);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMC_CLOCK_LOCATION);
+        writer.writeCloseTag(LocationScaleGradientParser.LOCATION);
+        writer.writeCloseTag(LocationScaleGradientParser.NAME);
+
+        //scale gradient
+        writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[]{
+                new Attribute.Default<>(XMLParser.ID, prefix + ScaleGradient.SCALE_GRADIENT),
+                new Attribute.Default<>("traitName", "Sequence"),
+                new Attribute.Default<>(LocationScaleGradientParser.USE_HESSIAN, "false")
+        });
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, TreeLikelihoodGenerator.getTreeDataLikelihoodId(treeModel, clockModel));
+        writer.writeOpenTag(LocationScaleGradientParser.SCALE);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
+        writer.writeCloseTag(LocationScaleGradientParser.SCALE);
+        writer.writeCloseTag(LocationScaleGradientParser.NAME);
+
+        //location scale (compound) gradient
+        writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.NAME));
+        writer.writeIDref(LocationScaleGradientParser.NAME, prefix + LocationGradient.LOCATION_GRADIENT);
+        writer.writeIDref(LocationScaleGradientParser.NAME, prefix + ScaleGradient.SCALE_GRADIENT);
+        writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
+
+        //location scale (compound) prior gradient
+        writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.LOCATION_SCALE_PRIOR_GRADIENT));
+        writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
+        writer.writeOpenTag(HessianWrapperParser.NAME);
+        writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + ClockType.HMCLN_SCALE);
+        writer.writeCloseTag(HessianWrapperParser.NAME);
+        writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
+
+        //location scale joint gradient
+        writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT, new Attribute.Default<>(XMLParser.ID, prefix + LocationScaleGradientParser.LOCATION_SCALE_JOINT_GRADIENT));
+        writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + LocationScaleGradientParser.LOCATION_SCALE_PRIOR_GRADIENT);
+        writer.writeIDref(CompoundGradientParser.COMPOUND_GRADIENT, prefix + LocationScaleGradientParser.NAME);
+        writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
+    }
+
     private void writeMeanRateStatistic(XMLWriter writer, String tag, String prefix, String treePrefix) {
         writer.writeText("");
         writer.writeOpenTag(
@@ -943,8 +944,8 @@ public class ClockModelGenerator extends Generator {
                 break;
 
             case SHRINKAGE_LOCAL_CLOCK:
-                writer.writeIDref(GAMMA_PRIOR, "globalScalePrior");
-                writer.writeIDref(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES, "substBranchRatesPrior");
+                writer.writeIDref(GAMMA_PRIOR, model.getPrefix() + "globalScalePrior");
+                writer.writeIDref(AutoCorrelatedBranchRatesDistributionParser.AUTO_CORRELATED_RATES, model.getPrefix() + "substBranchRatesPrior");
                 tag = ScaledByTreeTimeBranchRateModelParser.TREE_TIME_BRANCH_RATES;
                 id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                 break;

@@ -70,6 +70,7 @@ public class SkygridSummaryStatisticParser extends AbstractXMLObjectParser {
 
         switch(type){
             case MUTUAL_INFORMATION:
+            case MUTUAL_INFORMATION_IS:
             case BETA_GIVEN_GAMMA_VARIANCE_DIAG:
             case BETA_TILDE_VARIANCE_DIAG:
                 requireXML(betaPriorPrecision != null, typeString, "a betaPriorPrecision child element");
@@ -119,8 +120,14 @@ public class SkygridSummaryStatisticParser extends AbstractXMLObjectParser {
         switch (typeString) {
             case "retainedInformationRatio":
                 return SkygridSummaryStatistic.Type.RETAINED_INFORMATION_RATIO;
+            case "retainedInformationRatioIS":
+                return SkygridSummaryStatistic.Type.RETAINED_INFORMATION_RATIO_IS;
             case "mutualInformation":
                 return SkygridSummaryStatistic.Type.MUTUAL_INFORMATION;
+            case "mutualInformationIS":
+                return SkygridSummaryStatistic.Type.MUTUAL_INFORMATION_IS;
+            case "importanceSamplingESS":
+                return SkygridSummaryStatistic.Type.IMPORTANCE_SAMPLING_ESS;
             case "lagrangeBound":
                 return SkygridSummaryStatistic.Type.LAGRANGE_BOUND;
             case "gammaHat":

@@ -167,16 +167,16 @@ public abstract class StochasticSimulator {
         int[] numInfected = compartmentalModel.getLineageCountConstraintCounts(currentCounts);
         for(int i = 0; i < numInfected.length; i++){
             if(numInfected[i] < lineageCounts[i][index]){
-                System.out.println("Constraint violated at index " + index +
-                        " pathogen " + i +
-                        " infectedCount=" + numInfected[i] +
-                        " lineageCount=" + lineageCounts[i][index]);
+               // System.out.println("Constraint violated at index " + index +
+               //         " pathogen " + i +
+               //         " infectedCount=" + numInfected[i] +
+               //         " lineageCount=" + lineageCounts[i][index]);
                 // print recorded infected counts for pathogen 1 at all grid points so far
-                System.out.println("Recorded IS counts at grid points:");
-                for (int k = index; k <= 5; k++) {
-                    System.out.println("  index " + k + ": IS=" +
-                            compartmentalModel.compartmentCounts.get(4).getParameterValue(k));
-                }
+               // System.out.println("Recorded IS counts at grid points:");
+               // for (int k = index; k <= 5; k++) {
+               //     System.out.println("  index " + k + ": IS=" +
+                //            compartmentalModel.compartmentCounts.get(4).getParameterValue(k));
+                //}
                 return false;
             }
         }

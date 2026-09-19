@@ -12,7 +12,10 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
 
     public enum Type{
         RETAINED_INFORMATION_RATIO,
+        RETAINED_INFORMATION_RATIO_IS,
         MUTUAL_INFORMATION,
+        MUTUAL_INFORMATION_IS,
+        IMPORTANCE_SAMPLING_ESS,
         LAGRANGE_BOUND,
         GAMMA_HAT,
         SIGMA_G_INVERSE_DIAG,
@@ -58,7 +61,10 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
     public int getDimension(){
         switch (type) {
             case RETAINED_INFORMATION_RATIO:
+            case RETAINED_INFORMATION_RATIO_IS:
             case MUTUAL_INFORMATION:
+            case MUTUAL_INFORMATION_IS:
+            case IMPORTANCE_SAMPLING_ESS:
             case TAU_CONDITIONAL_SHAPE:
             case TAU_CONDITIONAL_RATE:
                 return 1;
@@ -84,8 +90,14 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
         switch (type) {
             case RETAINED_INFORMATION_RATIO:
                 return computeRetainedInformationRatio();
+            case RETAINED_INFORMATION_RATIO_IS:
+                return computeRetainedInformationRatioIS();
             case MUTUAL_INFORMATION:
                 return computeMutualInformation();
+            case MUTUAL_INFORMATION_IS:
+                return computeMutualInformationIS();
+            case IMPORTANCE_SAMPLING_ESS:
+                return approximation.getImportanceSamplesESS();
             case LAGRANGE_BOUND:
                 return computeLagrangeBoundPerInterval()[dimension];
             case GAMMA_HAT:
@@ -146,6 +158,16 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
          return new double[][][]{complete,jMat};
     }
 
+    // Computes same information "complete" information matrix as above
+    // pairs it with Fisher information matrix J(\beta | \tau) based on exact formula,
+    // but with importance-sampling estimate of Var(\gamma | g, Z, \beta, \tau)
+    private double[][][] computeISInformationMatrices(){
+        double[][] complete = computeInformationMatrices()[0];
+        double[][] lossIS = approximation.getISLossMatrix();
+        double[][] jIS = GMRFDenseMatrixUtils.subtractMat(complete, lossIS);
+        return new double[][][]{complete,jIS};
+    }
+
     // compute \tau*Z'Qv for a vector v
     private double[] tauZTransposeQTimes(double[] v){
         SymmTridiagMatrix scaledQ = approximation.getScaledQ();
@@ -194,6 +216,31 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
         }
     }
 
+    // Computes information ratio via estimate of exact Fisher information
+    // that uses importance-sampling
+    private double computeRetainedInformationRatioIS(){
+        double[][][] informationMatrices = computeISInformationMatrices();
+        double[][] complete = informationMatrices[0];
+        double[][] jIS = informationMatrices[1];
+        int p = complete.length;
+
+        if(coefficientIndex != null){
+            double[] v = new double[p];
+            v[coefficientIndex] = 1;
+            double numerator = GMRFDenseMatrixUtils.quadraticForm(jIS, v);
+            double denominator = GMRFDenseMatrixUtils.quadraticForm(complete, v);
+            return numerator / denominator;
+        }else{
+            double traceComplete = 0;
+            double traceJ = 0;
+            for (int i = 0; i < p; i++) {
+                traceComplete += complete[i][i];
+                traceJ += jIS[i][i];
+            }
+            return traceJ / traceComplete;
+        }
+    }
+
     // Computes approximation of mutual information of \gamma and \beta, conditional
     // on g, Z and \tau. Depends on Gaussian approximation of coalescent likelihood.
     private double computeMutualInformation(){
@@ -211,6 +258,27 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
 
         if(mutualInf < -1e-6){
             throw  new RuntimeException("Approximate mutual information of log effective population" +
+                    "size and effect size coefficients (conditional on genealogy, covariates and precision)" +
+                    "is negative. This should not happen.");
+        }
+        return Math.max(mutualInf, 0);
+    }
+
+    private double computeMutualInformationIS(){
+        double[][][] informationMatrices = computeISInformationMatrices();
+        double[][] complete = informationMatrices[0];
+        double[][] jIS = informationMatrices[1];
+        // precision of P_G(\beta | g, Z, \tau)
+        double[][] precisionMarginal = GMRFDenseMatrixUtils.addMat(betaPriorPrecision, complete);
+        // precision of P_G(\beta | \gamma, g, Z, \tau)
+        double[][] precisionConditional = GMRFDenseMatrixUtils.addMat(betaPriorPrecision, jIS);
+
+        double logDetMarginal = GMRFDenseMatrixUtils.logDetSPD(precisionMarginal);
+        double logDetConditional = GMRFDenseMatrixUtils.logDetSPD(precisionConditional);
+        double mutualInf = 0.5*(logDetMarginal - logDetConditional);
+
+        if(mutualInf < -1e-6){
+            throw  new RuntimeException("Approximate (IS-corrected) mutual information of log effective population" +
                     "size and effect size coefficients (conditional on genealogy, covariates and precision)" +
                     "is negative. This should not happen.");
         }

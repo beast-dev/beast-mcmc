@@ -176,4 +176,55 @@ public class GMRFDenseMatrixUtils {
         }
         return result;
     }
+
+    // Solves LL'x = b given an already computed lower cholesky factor L
+    public static double[] solveGivenCholeskyLower(double[][] lMat, double[] b){
+        int p = lMat.length;
+        double[] y = new double[p];
+        for (int i = 0; i < p; i++) {
+            double sum = b[i];
+            for(int k = 0; k < i; k++){
+                sum = sum - lMat[i][k]*y[k];
+            }
+            y[i] = sum/lMat[i][i];
+        }
+        double[] x = new double[p];
+        for (int i = p-1; i>=0; i--) {
+            double sum = y[i];
+            for(int k = i+1; k < p; k++){
+                sum = sum - lMat[k][i]*x[k];
+            }
+            x[i] = sum/lMat[i][i];
+        }
+        return x;
+    }
+
+
+    public static double logMvnDensityGivenPrecision(double[] x,
+                                                     double[] mean,
+                                                     double[][] precisionMat,
+                                                     double logDetPrecision){
+        int p = x.length;
+        double[] diff = new double[p];
+        for (int i = 0; i < p; i++) {
+            diff[i] = x[i] - mean[i];
+        }
+        double quad = quadraticForm(precisionMat, diff);
+        return -0.5*p*Math.log(2*Math.PI)+0.5*logDetPrecision-0.5*quad;
+    }
+
+    public static double[][] invertSPD(double[][] aMat){
+        int p = aMat.length;
+        double[][] result = new double[p][p];
+        for (int j = 0; j < p; j++) {
+            double[] e = new double[p];
+            e[j] = 1.0;
+            double[] col = solveSPD(aMat, e);
+            for(int i=0; i<p; i++){
+                result[i][j] = col[i];
+            }
+        }
+        return result;
+    }
+
 }

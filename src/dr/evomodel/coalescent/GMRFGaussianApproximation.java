@@ -2,6 +2,7 @@ package dr.evomodel.coalescent;
 
 import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;
 import dr.inference.model.*;
+import dr.math.MathUtils;
 import no.uib.cipr.matrix.*;
 import java.util.logging.Logger;
 
@@ -10,6 +11,7 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
     private final GMRFMultilocusSkyrideLikelihood likelihood;
     private final double tolerance;
     private final int maxNewtonIterations;
+    private final int numImportanceSamples;
 
     // mode for approximation
     private double[] gammaHat;
@@ -28,14 +30,23 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
     // to track non-convergence of Newton-Raphson method
     private boolean lastRecomputeFailed = false;
 
+    // importance samples
+    private double[][] isSamples;
+    private double[] isNormalizedWeights;
+    private double isESS;
+    private double[] isMeanGamma;
+    private boolean importanceSamplesDirty = true;
+
     private static final Logger LOGGER = Logger.getLogger("dr.evomodel.coalescent.GMRFGaussianApproximation");
 
     public GMRFGaussianApproximation(GMRFMultilocusSkyrideLikelihood likelihood,
-                                     double tolerance, int maxNewtonIterations) {
+                                     double tolerance, int maxNewtonIterations,
+                                     int numImportanceSamples) {
 
         this.likelihood = likelihood;
         this.tolerance = tolerance;
         this.maxNewtonIterations = maxNewtonIterations;
+        this.numImportanceSamples = numImportanceSamples;
 
         likelihood.addModelListener(this);
         likelihood.getPrecisionParameter().addParameterListener(this);
@@ -200,6 +211,114 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
             val[i] = tauQZBeta.get(i) + sigmaGInverseMuG[i];
         }
         return solveSystemVector(val);
+    }
+
+    public void ensureImportanceSamplesUpToDate(){
+        ensureValuesUpToDate();
+        if(!importanceSamplesDirty){
+            return;
+        }
+
+        int n = gammaHat.length;
+        double[] tildeMean = getGammaTildeMean();
+        UpperTriangBandMatrix uMat = factorSystem();
+        double[] c = likelihood.getNumCoalEvents();
+        double[] suffStat = likelihood.getSufficientStatistics();
+
+        isSamples = new double[numImportanceSamples][n];
+        double[] logWeights = new double[numImportanceSamples];
+
+        DenseVector z = new DenseVector(n);
+        DenseVector zTransf = new DenseVector(n);
+
+        for(int s = 0; s < numImportanceSamples; s++) {
+            for (int i = 0; i < n; i++) {
+                z.set(i, MathUtils.nextGaussian());
+            }
+            // make sure samples have appropriate variance
+            uMat.solve(z, zTransf);
+
+            double[] gammaStar = new double[n];
+            double logExact = 0.0;
+            double logApprox = 0.0;
+            for (int i = 0; i < n; i++) {
+                gammaStar[i] = tildeMean[i] + zTransf.get(i);
+                logExact += -gammaStar[i] * c[i] - suffStat[i] * Math.exp(-gammaStar[i]);
+                logApprox += -0.5 * sigmaGInverseDiag[i] * gammaStar[i] * gammaStar[i]
+                        + sigmaGInverseMuG[i] * gammaStar[i];
+            }
+            isSamples[s] = gammaStar;
+            logWeights[s] = logExact - logApprox;
+        }
+
+        // Normalize, using log-sum-exp trick for numerical stability
+        double maxLogWeight = Double.NEGATIVE_INFINITY;
+        for (int s = 0; s < numImportanceSamples; s++) {
+            if(logWeights[s] > maxLogWeight) {
+                maxLogWeight = logWeights[s];
+            }
+        }
+        double sumExp = 0.0;
+        double[] rawWeights = new double[numImportanceSamples];
+        double sumSquaredWeights = 0.0;
+        for (int s = 0; s < numImportanceSamples; s++) {
+            isNormalizedWeights[s] = rawWeights[s]/sumExp;
+            sumSquaredWeights += isNormalizedWeights[s]*isNormalizedWeights[s];
+        }
+        // Effective sample size (Kish, 1965)
+        isESS = 1.0/sumSquaredWeights;
+
+        isMeanGamma = new double[n];
+        for(int s = 0; s < numImportanceSamples; s++) {
+            double w = isNormalizedWeights[s];
+            for(int i = 0; i < n; i++) {
+                isMeanGamma[i] += w*isSamples[s][i];
+            }
+        }
+        importanceSamplesDirty = false;
+    }
+
+    public double getImportanceSamplesESS(){
+        ensureImportanceSamplesUpToDate();
+        return isESS;
+    }
+
+    public int getNumImportanceSamples(){
+        return numImportanceSamples;
+    }
+
+    // Importance-sampling based estimate of "information loss" term in
+    // exact Fisher information J(\beta|\tau).
+    // Computed as a weighted sum of P-dim rank-one outer products
+    // \sum_{i} w_i*u_i*u'_i, u_i = Z'*scaledQ*(\gamma^{*(i)}-isMeanGamma)
+    // this is equal to \tau^{2}*Z'QVar_{IS}[\gamma]QZ
+    public double[][] getISLossMatrix(){
+        ensureImportanceSamplesUpToDate();
+        int n = gammaHat.length;
+        int p = designMatrixZ[0].length;
+
+        double[][] loss = new double[p][p];
+        DenseVector diffVec = new DenseVector(n);
+        DenseVector qDiff = new DenseVector(n);
+        double[] qDiffArray = new double[n];
+
+        for(int s = 0; s < numImportanceSamples; s++) {
+            for (int i = 0; i < n; i++) {
+                diffVec.set(i, isSamples[s][i]-isMeanGamma[i]);
+            }
+            scaledQ.mult(diffVec, qDiff);
+            for (int i = 0; i < n; i++) {
+                qDiffArray[i] = qDiff.get(i);
+            }
+            double[] u = GMRFDenseMatrixUtils.transposeMultiplyVector(designMatrixZ, qDiffArray);
+            double w = isNormalizedWeights[s];
+            for(int a = 0; a < p; a++){
+                for (int b = 0; b < p; b++){
+                    loss[a][b] += w*u[a]*u[b];
+                }
+            }
+        }
+        return loss;
     }
 
     // returns Q without it being scaled by tau

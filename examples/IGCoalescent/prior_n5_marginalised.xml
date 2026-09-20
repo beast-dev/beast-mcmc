@@ -1,0 +1,102 @@
+<?xml version="1.0" standalone="yes"?>
+
+<!-- Prior-only run for PR #1075 (integrated inverse-Gamma coalescent prior). -->
+<!-- 5 contemporaneous taxa. -->
+<!-- No sequence data: the MCMC samples the coalescent (and, in the "full"  -->
+<!-- variant, the population size) prior alone.                             -->
+<beast>
+
+	<taxa id="taxa">
+		<taxon id="taxon1"/>
+		<taxon id="taxon2"/>
+		<taxon id="taxon3"/>
+		<taxon id="taxon4"/>
+		<taxon id="taxon5"/>
+	</taxa>
+
+	<constantSize id="demo" units="years">
+		<populationSize>
+			<parameter id="demo.popSize" value="10.0" lower="0.0"/>
+		</populationSize>
+	</constantSize>
+
+	<coalescentSimulator id="startingTree">
+		<taxa idref="taxa"/>
+		<constantSize idref="demo"/>
+	</coalescentSimulator>
+
+	<treeModel id="treeModel">
+		<coalescentTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<treeLengthStatistic id="treeLength">
+		<treeModel idref="treeModel"/>
+	</treeLengthStatistic>
+
+	<tmrcaStatistic id="age(root)" absolute="true">
+		<treeModel idref="treeModel"/>
+	</tmrcaStatistic>
+
+	<coalescentLikelihoodIG id="coalescentIG" alpha="2.0" beta="10.0">
+		<populationTree>
+			<treeModel idref="treeModel"/>
+		</populationTree>
+	</coalescentLikelihoodIG>
+
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+		<coalescentLikelihoodIG idref="coalescentIG"/>
+
+		<log id="screenLog" logEvery="10000">
+			<column label="coalescentIG" dp="4" width="12">
+				<coalescentLikelihoodIG idref="coalescentIG"/>
+			</column>
+			<column label="age(root)" sf="6" width="12">
+				<tmrcaStatistic idref="age(root)"/>
+			</column>
+		</log>
+
+		<log id="fileLog" logEvery="1000" fileName="prior_n5_marginalised.log">
+			<coalescentLikelihoodIG idref="coalescentIG"/>
+			<parameter idref="treeModel.rootHeight"/>
+			<tmrcaStatistic idref="age(root)"/>
+			<treeLengthStatistic idref="treeLength"/>
+		</log>
+
+		<operators id="operators" optimizationSchedule="default">
+		<subtreeSlide weight="15" gaussian="true" size="1.0">
+			<treeModel idref="treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="treeModel"/>
+		</wilsonBalding>
+		<uniformOperator weight="30">
+			<parameter idref="treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
+		</operators>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<mcmc idref="mcmc"/>
+		</property>
+	</report>
+
+</beast>

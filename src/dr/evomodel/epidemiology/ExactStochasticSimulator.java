@@ -3,15 +3,15 @@ package dr.evomodel.epidemiology;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
-public class ExactSimulator extends StochasticSimulator {
+public class ExactStochasticSimulator extends CompartmentalModelSimulator {
 
     protected Parameter elapsedTime;
 
-    public ExactSimulator(CompartmentalModel compartmentalModel) {
+    public ExactStochasticSimulator(CompartmentalModel compartmentalModel) {
         super(compartmentalModel);
     }
 
-    public ExactSimulator(CompartmentalModel compartmentalModel, Parameter elapsedTime) {
+    public ExactStochasticSimulator(CompartmentalModel compartmentalModel, Parameter elapsedTime) {
         super(compartmentalModel);
         this.elapsedTime = elapsedTime;
     }

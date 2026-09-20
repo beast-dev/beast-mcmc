@@ -2,7 +2,6 @@ package dr.evomodelxml.epidemiology;
 
 import dr.evomodel.epidemiology.CompartmentalModel;
 import dr.evomodel.epidemiology.SALSimulator;
-import dr.evomodel.epidemiology.TauLeapingSimulator;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

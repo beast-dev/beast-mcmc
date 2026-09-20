@@ -3,12 +3,11 @@ package dr.evomodel.epidemiology;
 import cern.jet.random.Poisson;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.stats.Variate;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TauLeapingSimulator extends StochasticSimulator {
+public class TauLeapingSimulator extends CompartmentalModelSimulator {
 
     protected double epsilon;
     protected int criticalNumber;
@@ -445,7 +444,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         double tau = Math.min(tauPrime, tauDoublePrime);
 
         state.reactionInt = compartmentalModel.getReactionIntensities(state.currentCounts, state.simulationTime);
-        double[] poissonIntensities = getPoissonIntensities(state.currentCounts, state.reactionInt, tau);
+        double[] poissonIntensities = getPoissonIntensities(state.currentCounts, state.reactionInt, tau, state.simulationTime);
 
         double[] numFirings = new double[numReactionChannels];
 
@@ -1064,7 +1063,7 @@ public class TauLeapingSimulator extends StochasticSimulator {
         return returnVal;
     }
 
-    protected double[] getPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau) {
+    protected double[] getPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau, double simTime) {
         return getTauLeapingPoissonIntensities(reactionInt, tau);
     }
 

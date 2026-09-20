@@ -1209,4 +1209,17 @@ public class TwoPathogenModel extends CompartmentalModel {
 
         return new int[]{(int)infectedPathogenOne,(int)infectedPathogenTwo};
     }
+
+    public double getYoungerForwardOrigTime(){
+        double moreRecentDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
+        double forwardOrigOne = cutOff - originOne.getParameterValue(0)
+                - (moreRecentDate - mostRecentSamplingDateOne);
+        double forwardOrigTwo = cutOff - originTwo.getParameterValue(0)
+                - (moreRecentDate - mostRecentSamplingDateTwo);
+        return Math.max(forwardOrigOne, forwardOrigTwo);
+    }
+
+    public boolean isSecondPathogenIntroduced(){
+        return secondPathogenIntroduced;
+    }
 }

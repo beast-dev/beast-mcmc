@@ -1,8 +1,6 @@
 package dr.evomodelxml.epidemiology;
+import dr.evomodel.epidemiology.CompartmentalModelSimulator;
 import dr.evomodel.epidemiology.JointCompartmentalModelOperator;
-import dr.evomodel.epidemiology.CompartmentalModel;
-import dr.evomodel.epidemiology.StochasticSimulator;
-import dr.inference.model.Parameter;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.*;
 
@@ -23,8 +21,7 @@ public class JointCompartmentalModelOperatorParser extends AbstractXMLObjectPars
 
         final double targetProb = xo.getAttribute(TARGET_ACCEPTANCE, 0.2);
 
-        //CompartmentalModel compartmentalModel  = (CompartmentalModel) xo.getChild(CompartmentalModel.class);
-        StochasticSimulator simulator = (StochasticSimulator) xo.getChild(StochasticSimulator.class);
+        CompartmentalModelSimulator simulator = (CompartmentalModelSimulator) xo.getChild(CompartmentalModelSimulator.class);
 
         if (targetProb <= 0.0 || targetProb >= 1.0)
             throw new RuntimeException("Target acceptance probability must be between 0.0 and 1.0");
@@ -60,14 +57,11 @@ public class JointCompartmentalModelOperatorParser extends AbstractXMLObjectPars
     }
 
     private final XMLSyntaxRule[] rules = {
-            //new ElementRule(CompartmentalModel.class),
-            new ElementRule(StochasticSimulator.class),
+            new ElementRule(CompartmentalModelSimulator.class),
             new ElementRule(OPERATORS,
                     new XMLSyntaxRule[]{
                             new ElementRule(SimpleMCMCOperator.class, 1, Integer.MAX_VALUE),}),
-            //new ElementRule(SimpleMCMCOperator.class, 1, Integer.MAX_VALUE),
             AttributeRule.newDoubleRule(WEIGHT),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true)
     };
-
 }

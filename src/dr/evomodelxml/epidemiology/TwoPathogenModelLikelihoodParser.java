@@ -1,6 +1,6 @@
 package dr.evomodelxml.epidemiology;
 
-import dr.evomodel.epidemiology.StochasticSimulator;
+import dr.evomodel.epidemiology.CompartmentalModelSimulator;
 import dr.evomodel.epidemiology.TwoPathogenModel;
 import dr.evomodel.epidemiology.TwoPathogenModelLikelihood;
 import dr.evomodel.tree.TreeModel;
@@ -11,15 +11,15 @@ public class TwoPathogenModelLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TWO_PATHOGEN_MODEL_LIKELIHOOD = "twoPathogenModelLikelihood";
     public static final String TREE_MODEL_ONE = "treeModelOne";
     public static final String TREE_MODEL_TWO = "treeModelTwo";
-    public static final String STOCHASTIC_SIMULATOR = "stochasticSimulator";
+    public static final String COMPARTMENTAL_MODEL_SIMULATOR = "compartmentalModelSimulator";
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         TwoPathogenModel tpm = (TwoPathogenModel) xo.getChild(TwoPathogenModel.class);
-        StochasticSimulator stochasticSimulator = (StochasticSimulator) xo.getChild(StochasticSimulator.class);
+        CompartmentalModelSimulator simulator = (CompartmentalModelSimulator) xo.getChild(CompartmentalModelSimulator.class);
         TreeModel treeModelOne = (TreeModel) xo.getChild(TREE_MODEL_ONE).getChild(TreeModel.class);
         TreeModel treeModelTwo = (TreeModel) xo.getChild(TREE_MODEL_TWO).getChild(TreeModel.class);
 
-        return new TwoPathogenModelLikelihood(tpm, stochasticSimulator, treeModelOne, treeModelTwo);
+        return new TwoPathogenModelLikelihood(tpm, simulator, treeModelOne, treeModelTwo);
     }
 
     //************************************************************************
@@ -45,7 +45,7 @@ public class TwoPathogenModelLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TwoPathogenModel.class),
-            new ElementRule(StochasticSimulator.class),
+            new ElementRule(CompartmentalModelSimulator.class),
             new ElementRule(TREE_MODEL_ONE,
                     new XMLSyntaxRule[]{
                             new ElementRule(TreeModel.class),

@@ -2,11 +2,9 @@ package dr.evomodel.epidemiology;
 
 import dr.math.MathUtils;
 
-import java.util.Arrays;
+public abstract class CompartmentalModelSimulator {
 
-public abstract class StochasticSimulator {
-
-    protected CompartmentalModel compartmentalModel;
+    public CompartmentalModel compartmentalModel;
     protected double cutOff;
     protected int numGridPoints;
     protected int numSpecies;
@@ -21,7 +19,7 @@ public abstract class StochasticSimulator {
     // Will be null if there is no constraint to check
     protected int[][] lineageCounts = null;
 
-    public StochasticSimulator(CompartmentalModel compartmentalModel) {
+    public CompartmentalModelSimulator(CompartmentalModel compartmentalModel) {
         this.compartmentalModel = compartmentalModel;
         this.cutOff = compartmentalModel.cutOff;
         this.numGridPoints = compartmentalModel.numGridPoints;
@@ -32,6 +30,8 @@ public abstract class StochasticSimulator {
     }
 
     public abstract void simulateTrajectory();
+
+    //protected abstract double[] getPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau, double simTime);
 
     protected SimulationState initializeSimulation() {
 
@@ -95,6 +95,11 @@ public abstract class StochasticSimulator {
     }
 
     protected void recordCompartmentCountsUpTo(SimulationState state, double candidateTime) {
+        //System.out.println("recordCompartmentCountsUpTo: candidateTime=" + candidateTime
+        //        + " nextIntervalStartTime=" + state.nextIntervalStartTime
+        //        + " nextRecordIndex=" + state.nextRecordIndex
+        //        + " SS=" + state.currentCounts[0]);
+
         while (candidateTime > state.nextIntervalStartTime && state.nextRecordIndex >= 0) {
             //System.out.println("Recording grid point " + state.nextRecordIndex +
             //        " at simulationTime=" + state.simulationTime +

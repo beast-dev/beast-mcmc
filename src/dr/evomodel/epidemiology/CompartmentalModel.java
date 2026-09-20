@@ -10,7 +10,7 @@ import java.util.List;
 public abstract class CompartmentalModel extends AbstractModel {
 
     protected List<Parameter> rateParameters;
-    protected List<Parameter> compartmentCounts;
+    public List<Parameter> compartmentCounts;
     protected Parameter originOne;
     protected Parameter originTwo;
     protected int numGridPoints;
@@ -35,6 +35,12 @@ public abstract class CompartmentalModel extends AbstractModel {
     protected abstract double[] getSALPoissonIntensities(double[] currentCounts, double[] reactionInt, double tau, double simTime);
 
     protected abstract double[] getUpdatedCompartmentCounts(double[] currentCounts, double[] countsNew);
+
+    protected abstract double[] getCompartmentDerivatives(double[] currentCounts, double simTime);
+
+    protected abstract double getYoungerForwardOrigTime();
+
+    protected abstract boolean isSecondPathogenIntroduced();
 
     // Provides the number of infected individuals relevant to the lineage count constraint for each
     // pathogen in the model at the shared trajectory index.

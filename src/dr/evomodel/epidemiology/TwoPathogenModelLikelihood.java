@@ -10,7 +10,7 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
 
     private final TwoPathogenModel twoPathogenModel;
     private boolean likelihoodKnown = false;
-    private final StochasticSimulator stochasticSimulator;
+    private final CompartmentalModelSimulator simulator;
     private final TreeModel treeModelOne;
     private final TreeModel treeModelTwo;
     private final double mostRecentSamplingDateOne;
@@ -19,14 +19,14 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
     private final double intervalWidth;
 
     public TwoPathogenModelLikelihood(TwoPathogenModel twoPathogenModel,
-                                      StochasticSimulator stochasticSimulator,
+                                      CompartmentalModelSimulator simulator,
                                       TreeModel treeModelOne,
                                       TreeModel treeModelTwo) {
 
         super("TwoPathogenModelLikelihood");
 
         this.twoPathogenModel = twoPathogenModel;
-        this.stochasticSimulator = stochasticSimulator;
+        this.simulator = simulator;
         this.treeModelOne = treeModelOne;
         this.treeModelTwo = treeModelTwo;
         this.mostRecentSamplingDateOne = twoPathogenModel.mostRecentSamplingDateOne;
@@ -43,7 +43,7 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
         int maxAttempts = 100000;
         int attempts = 0;
         do{
-            stochasticSimulator.simulateTrajectory();
+            simulator.simulateTrajectory();
             attempts++;
             if(attempts % 1000 == 0){
                 System.out.println("attempting to find valid initial trajectory: attempt " + attempts);
@@ -53,7 +53,7 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
                         "counts after " + maxAttempts + " attempts. Check that model parameters are consistent with trees.");
             }
 
-        }while(stochasticSimulator.isLineageConstraintViolated());
+        }while(simulator.isLineageConstraintViolated());
         System.out.println("Found valid initial trajectory after " + attempts + " attempts.");
     }
 
@@ -61,7 +61,7 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
         int[][] lineageCounts = new int[2][numGridPoints];
         lineageCounts[0] = computeLineageCounts(treeModelOne, mostRecentSamplingDateOne);
         lineageCounts[1] = computeLineageCounts(treeModelTwo, mostRecentSamplingDateTwo);
-        stochasticSimulator.setLineageCounts(lineageCounts);
+        simulator.setLineageCounts(lineageCounts);
 
         System.out.println("Lineage counts:");
         for (int k = 0; k < numGridPoints; k++) {
@@ -109,7 +109,7 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
 
     public double getLogLikelihood() {
         // return -infinity if lineage count constraint is violated
-        if (stochasticSimulator.isLineageConstraintViolated()){
+        if (simulator.isLineageConstraintViolated()){
             return Double.NEGATIVE_INFINITY;
         }
         // otherwise, always return 0.0 since trajectory prior and proposal cancel in MH ratio
@@ -137,7 +137,7 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
     }
 
     protected void restoreState(){
-        stochasticSimulator.resetLineageConstraintViolated();
+        simulator.resetLineageConstraintViolated();
     }
 
     protected void acceptState(){

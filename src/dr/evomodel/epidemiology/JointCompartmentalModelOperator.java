@@ -5,10 +5,10 @@ import dr.inference.operators.JointOperator;
 
 public class JointCompartmentalModelOperator extends JointOperator {
 
-    private final StochasticSimulator simulator;
+    private final CompartmentalModelSimulator simulator;
 
     public JointCompartmentalModelOperator (double weight, double targetAcceptanceProbability,
-                                            StochasticSimulator simulator) {
+                                            CompartmentalModelSimulator simulator) {
         super(weight, targetAcceptanceProbability);
         this.simulator = simulator;
         setWeight(weight);

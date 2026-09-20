@@ -1,11 +1,11 @@
 package dr.evomodelxml.epidemiology;
 
 import dr.evomodel.epidemiology.CompartmentalModel;
-import dr.evomodel.epidemiology.ExactSimulator;
+import dr.evomodel.epidemiology.ExactStochasticSimulator;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-public class ExactSimulatorParser extends AbstractXMLObjectParser {
+public class ExactStochasticSimulatorParser extends AbstractXMLObjectParser {
 
     public static final String EXACT_SIMULATOR = "exactStochasticSimulator";
 
@@ -19,12 +19,12 @@ public class ExactSimulatorParser extends AbstractXMLObjectParser {
 
         Parameter elapsedTimeOneTrajectory = (Parameter) xo.getChild(Parameter.class);
 
-        ExactSimulator simulator;
+        ExactStochasticSimulator simulator;
 
         if(elapsedTimeOneTrajectory == null){
-            simulator = new ExactSimulator(compartmentalModel);
+            simulator = new ExactStochasticSimulator(compartmentalModel);
         }else {
-            simulator = new ExactSimulator(compartmentalModel, elapsedTimeOneTrajectory);
+            simulator = new ExactStochasticSimulator(compartmentalModel, elapsedTimeOneTrajectory);
         }
 
         return simulator;
@@ -39,7 +39,7 @@ public class ExactSimulatorParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return ExactSimulator.class;
+        return ExactStochasticSimulator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

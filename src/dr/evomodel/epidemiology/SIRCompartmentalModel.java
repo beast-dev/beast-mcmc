@@ -174,4 +174,16 @@ public class SIRCompartmentalModel extends CompartmentalModel {
     public int[] getLineageCountConstraintCounts(double[] currentCounts){
         return new int[]{(int) currentCounts[1]};
     }
+
+    protected double[] getCompartmentDerivatives(double[] currentCounts, double simTime){
+        throw new RuntimeException("getCompartmentDerivatives not implemented yet in SIRCompartmentalModel");
+    }
+
+    protected double getYoungerForwardOrigTime(){
+        throw new RuntimeException("getYoungerForwardOrigTime not implemented yet in SIRCompartmentalModel");
+    }
+
+    protected boolean isSecondPathogenIntroduced(){
+        return true;
+    }
 }

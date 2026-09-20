@@ -101,6 +101,14 @@
 		</populationTree>
 	</coalescentLikelihood>
 
+	<!-- Waiting times scale with Ne (rate = kChoose2/Ne), so Ne and tree height are
+	     positively correlated in the joint prior. This lets a single move rescale both
+	     together by the same factor, instead of relying on separate, uncoupled moves. -->
+	<compoundParameter id="popSizeAndRootHeight">
+		<parameter idref="demo.popSize"/>
+		<parameter idref="treeModel.rootHeight"/>
+	</compoundParameter>
+
 	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
 		<prior id="prior">
 			<invgammaPrior shape="3.0" scale="20.0">
@@ -132,6 +140,9 @@
 		<operators id="operators" optimizationSchedule="default">
 			<scaleOperator scaleFactor="0.75" weight="3">
 				<parameter idref="demo.popSize"/>
+			</scaleOperator>
+			<scaleOperator scaleFactor="0.75" weight="5" scaleAll="true">
+				<parameter idref="popSizeAndRootHeight"/>
 			</scaleOperator>
 		<subtreeSlide weight="15" gaussian="true" size="1.0">
 			<treeModel idref="treeModel"/>

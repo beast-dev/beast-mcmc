@@ -30,6 +30,8 @@ package test.dr.evomodel.coalescent;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.io.NewickImporter;
+import dr.evolution.tree.SimpleNode;
+import dr.evolution.tree.SimpleTree;
 import dr.evomodel.coalescent.IGCoalescentLikelihood;
 import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -91,6 +93,55 @@ public class IGCoalescentLikelihoodTest extends TestCase {
         }
 
         assertTrue(Math.abs(joint - productOfMarginals) > 1E-3);
+    }
+
+    /**
+     * The 3-taxon test above never exercises a genuine heterochronous sampling interval:
+     * every non-coalescent interval there has zero duration. This builds a tree with two
+     * real (nonzero-duration, multi-lineage) sampling intervals -- tip C is added while A
+     * and B haven't yet coalesced, and tip D is added while only two lineages remain -- and
+     * checks the joint calculation against the same independent numerical integration.
+     *
+     * Heights: A=0, B=0, C=0.3, D=5.0; (A,B)=N1 at 2.0; (N1,C)=N2 at 8.0; (N2,D)=root at 10.0.
+     * Interval structure this produces: [0.3, k=2, SAMPLE], [1.7, k=3, COALESCENT],
+     * [3.0, k=2, SAMPLE], [3.0, k=3, COALESCENT], [2.0, k=2, COALESCENT].
+     */
+    public void testJointMarginalWithHeterochronousSamplingMatchesNumericalIntegration() throws Exception {
+
+        SimpleNode a = new SimpleNode();
+        a.setHeight(0.0);
+        SimpleNode b = new SimpleNode();
+        b.setHeight(0.0);
+        SimpleNode c = new SimpleNode();
+        c.setHeight(0.3);
+        SimpleNode d = new SimpleNode();
+        d.setHeight(5.0);
+
+        SimpleNode n1 = new SimpleNode();
+        n1.setHeight(2.0);
+        n1.addChild(a);
+        n1.addChild(b);
+
+        SimpleNode n2 = new SimpleNode();
+        n2.setHeight(8.0);
+        n2.addChild(n1);
+        n2.addChild(c);
+
+        SimpleNode root = new SimpleNode();
+        root.setHeight(10.0);
+        root.addChild(n2);
+        root.addChild(d);
+
+        SimpleTree tree = new SimpleTree(root);
+        IntervalList intervals = new TreeIntervals(tree);
+
+        final double alpha = 3.0;
+        final double beta = 20.0;
+
+        final double logLikelihood = IGCoalescentLikelihood.calculateLogLikelihood(intervals, alpha, beta);
+        final double expected = Math.log(numericallyIntegratedJointDensity(intervals, alpha, beta));
+
+        assertEquals(expected, logLikelihood, TOLERANCE);
     }
 
     /**

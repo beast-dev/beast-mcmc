@@ -3,9 +3,8 @@ package dr.evomodel.speciation.agedependent.simulation;
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.Units;
+import dr.evomodel.speciation.agedependent.agehazard.AgeHazard;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
@@ -15,53 +14,73 @@ import java.util.logging.Logger;
 /**
  * @author Frederik M. Andersen
  *
- * Simulates symmetric or asymmetric time- and age-dependent birth-death tree using thinning algorithm
+ * Simulates a symmetric or asymmetric time- and age-dependent birth-death tree using a thinning
+ * algorithm, and returns the reconstructed tree over the sampled tips.
  *
- * Birth and death rates of the form
+ * Sampling is serial: sampled-through-time tips are produced by psi events during the simulation
+ * (the lineage is removed on sampling), and lineages surviving to the present are each sampled
+ * with probability rho. Setting psi = 0 and rho = 1 recovers the ultrametric process, in which
+ * every lineage extant at the present becomes a tip.
+ *
+ * Rates:
  *     lambda(t, a) = birthScale(t) * h_b(a)
- *     mu(t, a) = deathScale(t) * h_d(a)
- *     with h(a) = (1 + r * gamma * a) * exp(-gamma * a)
+ *     mu(t, a)     = deathScale(t) * h_d(a)
+ *     psi(t)       = samplingScale(t)
+ *
+ * where h_b and h_d are supplied as {@link AgeHazard} instances, the same pluggable hazard
+ * family the likelihood models use, so a simulation and the likelihood it is validated against
+ * can be driven by the identical hazard shape. A hazard covering one epoch is shared across
+ * all epochs; one covering numEpochs supplies a distinct shape per epoch.
+ *
+ * Thinning uses {@link AgeHazard#maxHazard} as the per-epoch envelope, so any hazard providing
+ * a correct upper bound over [0, originTime] can be simulated under without further changes.
  */
 public class AgeDependentBirthDeathSimulator {
     private final double[] birthScale;
     private final double[] deathScale;
-    private final double birthB;
-    private final double birthGamma;
-    private final double deathB;
-    private final double deathGamma;
+    private final double[] samplingScale;
+    private final double extantSamplingProb;
+    private final AgeHazard birthHazard;
+    private final AgeHazard deathHazard;
     private final double[] epochBounds;
     private final double originTime;
     private final boolean symmetric;
     private final int maxLineages;
 
-    // Precomputed max hazard values over [0, origin]
-    private final double maxBirthHaz;
-    private final double maxDeathHaz;
+    private final double[] maxBirthHaz;
+    private final double[] maxDeathHaz;
 
     /**
-     * @param birthScale  piecewise-constant birth scale, one per epoch
-     * @param deathScale  piecewise-constant death scale, one per epoch (or length 1 for constant)
-     * @param birthHazard  [r, gamma] for birth hazard, with b = r*gamma
-     * @param deathHazard  [r, gamma] for death hazard, with b = r*gamma
-     * @param epochTimes  internal epoch boundaries in backwards time (ascending); does not include origin
-     * @param originTime  the origin time (most ancient point)
-     * @param symmetric   if true, both daughters get age 0; if false, one inherits parent age
-     * @param maxLineages safety cap to prevent runaway growth
+     * @param birthScale         piecewise-constant birth scale, one per epoch
+     * @param deathScale         piecewise-constant death scale, one per epoch (or length 1)
+     * @param samplingScale      piecewise-constant serial sampling rate psi(t), one per epoch (or length 1)
+     * @param extantSamplingProb extant sampling probability rho in [0, 1]
+     * @param birthHazard        age-hazard h_b(a, epoch); must cover 1 or numEpochs epochs
+     * @param deathHazard        age-hazard h_d(a, epoch); must cover 1 or numEpochs epochs
+     * @param epochTimes         internal epoch boundaries in backwards time (ascending); excludes origin
+     * @param originTime         the origin time (most ancient point)
+     * @param symmetric          if true, both daughters get age 0; if false, one inherits parent age
+     * @param maxLineages        safety cap to prevent runaway growth
      */
     public AgeDependentBirthDeathSimulator(double[] birthScale,
-                                           double[] deathScale,
-                                           double[] birthHazard,
-                                           double[] deathHazard,
-                                           double[] epochTimes,
-                                           double originTime,
-                                           boolean symmetric,
-                                           int maxLineages) {
+                                                 double[] deathScale,
+                                                 double[] samplingScale,
+                                                 double extantSamplingProb,
+                                                 AgeHazard birthHazard,
+                                                 AgeHazard deathHazard,
+                                                 double[] epochTimes,
+                                                 double originTime,
+                                                 boolean symmetric,
+                                                 int maxLineages) {
         this.birthScale = birthScale;
         this.deathScale = deathScale;
-        this.birthGamma = birthHazard[1];
-        this.birthB = birthHazard[0] * this.birthGamma;
-        this.deathGamma = deathHazard[1];
-        this.deathB = deathHazard[0] * this.deathGamma;
+        this.samplingScale = samplingScale;
+        this.extantSamplingProb = extantSamplingProb;
+        int numEpochs = epochTimes.length + 1;
+        checkEpochCount(birthHazard, "birthHazard", numEpochs);
+        checkEpochCount(deathHazard, "deathHazard", numEpochs);
+        this.birthHazard = birthHazard;
+        this.deathHazard = deathHazard;
         this.epochBounds = new double[epochTimes.length + 2];
         this.epochBounds[0] = 0.0;
         System.arraycopy(epochTimes, 0, this.epochBounds, 1, epochTimes.length);
@@ -70,33 +89,34 @@ public class AgeDependentBirthDeathSimulator {
         this.symmetric = symmetric;
         this.maxLineages = maxLineages;
 
-        maxBirthHaz = maxHaz(birthB, birthGamma, originTime);
-        maxDeathHaz = maxHaz(deathB, deathGamma, originTime);
-    }
-
-    /**
-     * Linear-exponential hazard function: h(a) = (1 + b*a) * exp(-gamma*a)
-     */
-    static double ageHaz(double b, double gamma, double age) {
-        return (1.0 + b * age) * Math.exp(-gamma * age);
-    }
-
-    /**
-     * Maximum of h(a) over [0, maxAge]
-     */
-    static double maxHaz(double b, double gamma, double maxAge) {
-        double hMax = Math.max(1.0, ageHaz(b, gamma, maxAge));
-        if (b > 0.0 && gamma > 0.0) {
-            double aStar = (b - gamma) / (gamma * b);
-            if (aStar > 0.0 && aStar < maxAge) {
-                hMax = Math.max(hMax, ageHaz(b, gamma, aStar));
-            }
+        // Thinning envelope: one bound per epoch, evaluated over the whole age range a lineage
+        // can reach. A hazard covering a single epoch returns the same bound for every k.
+        this.maxBirthHaz = new double[numEpochs];
+        this.maxDeathHaz = new double[numEpochs];
+        for (int k = 0; k < numEpochs; k++) {
+            maxBirthHaz[k] = birthHazard.maxHazard(originTime, hazardEpoch(birthHazard, k));
+            maxDeathHaz[k] = deathHazard.maxHazard(originTime, hazardEpoch(deathHazard, k));
         }
-        return hMax;
     }
 
     /**
-     * Simulate a tree, retrying until the tip count is in [minTips, maxTips].
+     * A hazard covering a single epoch is shared across all of them; otherwise the epoch
+     * selects its own shape. Mirrors {@code AgeHazard.idx} at the hazard-object level.
+     */
+    private static int hazardEpoch(AgeHazard hazard, int epoch) {
+        return hazard.getEpochCount() == 1 ? 0 : epoch;
+    }
+
+    private static void checkEpochCount(AgeHazard hazard, String name, int numEpochs) {
+        int n = hazard.getEpochCount();
+        if (n != 1 && n != numEpochs) {
+            throw new IllegalArgumentException(name + " must cover 1 (shared) or " + numEpochs
+                    + " epochs, got " + n);
+        }
+    }
+
+    /**
+     * Simulate a tree, retrying until the sampled-tip count is in [minTips, maxTips].
      */
     public Tree simulate(int minTips, int maxTips, int maxAttempts) {
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
@@ -105,31 +125,7 @@ public class AgeDependentBirthDeathSimulator {
             if (tree != null) {
                 int n = tree.getExternalNodeCount();
 
-                if (n >= minTips && n <= maxTips) {
-                    Logger.getLogger("dr.evomodel.speciation").info(
-                            "Simulated TABD tree with " + n +
-                            " tips (attempt " + (attempt + 1) + ")");
-                    return tree;
-                }
-            }
-        }
-        String range = maxTips > 0 ? "[" + minTips + ", " + maxTips + "]" : ">= " + minTips;
-        throw new RuntimeException(
-                "Failed to simulate TABD tree with " + range +
-                " tips after " + maxAttempts + " attempts");
-    }
-
-    /**
-     * Simulate a tree, retrying until at least minTips lineages survive to the present.
-     */
-    public Tree simulate(int minTips, int maxAttempts) {
-        for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            Tree tree = simulateOnce();
-
-            if (tree != null) {
-                int n = tree.getExternalNodeCount();
-
-                if (n >= minTips) {
+                if (n >= minTips && (maxTips <= 0 || n <= maxTips)) {
                     Logger.getLogger("dr.evomodel.speciation").info(
                             "Simulated TABD tree with " + n +
                                     " tips (attempt " + (attempt + 1) + ")");
@@ -137,10 +133,14 @@ public class AgeDependentBirthDeathSimulator {
                 }
             }
         }
-        String range =  ">= " + minTips;
+        String range = maxTips > 0 ? "[" + minTips + ", " + maxTips + "]" : ">= " + minTips;
         throw new RuntimeException(
                 "Failed to simulate TABD tree with " + range +
                         " tips after " + maxAttempts + " attempts");
+    }
+
+    public Tree simulate(int minTips, int maxAttempts) {
+        return simulate(minTips, 0, maxAttempts);
     }
 
     /**
@@ -148,6 +148,7 @@ public class AgeDependentBirthDeathSimulator {
      */
     private Tree simulateOnce() {
         List<LineAge> lineages = new ArrayList<>();
+        List<FlexibleNode> sampledTips = new ArrayList<>();
         FlexibleNode stemNode = new FlexibleNode();
         lineages.add(new LineAge(stemNode, 0.0));
 
@@ -162,10 +163,11 @@ public class AgeDependentBirthDeathSimulator {
             }
 
             double bScale = birthScale[epoch];
-            double dScale = deathScale[epoch];
+            double dScale = (deathScale.length == 1) ? deathScale[0] : deathScale[epoch];
+            double sScale = (samplingScale.length == 1) ? samplingScale[0] : samplingScale[epoch];
             double epochBound = epochBounds[epoch];
 
-            double maxRate = K * (bScale * maxBirthHaz + dScale * maxDeathHaz);
+            double maxRate = K * (bScale * maxBirthHaz[epoch] + dScale * maxDeathHaz[epoch] + sScale);
             if (maxRate <= 0.0) {
                 double dt = currentTime - epochBound;
                 for (LineAge l : lineages) l.age += dt;
@@ -174,15 +176,12 @@ public class AgeDependentBirthDeathSimulator {
                 continue;
             }
 
-
-            // Draw exponential(maxRate) time-to-event proposal
             double prop = -Math.log(MathUtils.nextDouble()) / maxRate;
             if (currentTime - prop <= epochBound) {
                 double dt = currentTime - epochBound;
                 for (LineAge l : lineages) {
                     l.age += dt;
                 }
-
                 currentTime = epochBound;
                 if (epoch > 0) {
                     epoch--;
@@ -195,21 +194,21 @@ public class AgeDependentBirthDeathSimulator {
                 l.age += prop;
             }
 
-            // Pick lineage
             int idx = MathUtils.nextInt(K);
             LineAge chosen = lineages.get(idx);
 
-            double lam = bScale * ageHaz(birthB, birthGamma, chosen.age);
-            double mu = dScale * ageHaz(deathB, deathGamma, chosen.age);
-            double r = lam + mu;
+            double lam = bScale * birthHazard.evaluate(chosen.age, hazardEpoch(birthHazard, epoch));
+            double mu  = dScale * deathHazard.evaluate(chosen.age, hazardEpoch(deathHazard, epoch));
+            double psi = sScale;
+            double r = lam + mu + psi;
 
-            // Reject
             if (MathUtils.nextDouble() >= K * r / maxRate) {
                 continue;
             }
 
-            // Accept and determine whether a speciation or extinction
-            if (MathUtils.nextDouble() < lam / r) {
+            // Choose event: birth / death / sampling
+            double u = MathUtils.nextDouble() * r;
+            if (u < lam) {
                 FlexibleNode parent = chosen.node;
                 parent.setHeight(currentTime);
 
@@ -219,47 +218,65 @@ public class AgeDependentBirthDeathSimulator {
                 parent.addChild(child2);
 
                 if (symmetric) {
-                    // Both daughters start at age 0
                     lineages.set(idx, new LineAge(child1, 0.0));
                     lineages.add(new LineAge(child2, 0.0));
                 } else {
-                    // child1 inherits parent's age, child2 starts fresh
                     lineages.set(idx, new LineAge(child1, chosen.age));
                     lineages.add(new LineAge(child2, 0.0));
                 }
-
-            } else {
+            } else if (u < lam + mu) {
                 FlexibleNode deadNode = chosen.node;
                 deadNode.setHeight(currentTime);
-                lineages.remove(idx);
+                removeAt(lineages, idx);
+            } else {
+                // Sampling event: the lineage becomes a sampled tip at currentTime > 0.
+                FlexibleNode sampled = chosen.node;
+                sampled.setHeight(currentTime);
+                taxonCount++;
+                sampled.setTaxon(new Taxon("taxon" + taxonCount));
+                sampledTips.add(sampled);
+                removeAt(lineages, idx);
             }
         }
 
-        // Return if all is extinct
-        if (lineages.isEmpty()) {
+        // Extant sampling: at present, each surviving lineage is sampled with prob rho.
+        for (LineAge l : lineages) {
+            l.node.setHeight(0.0);
+            if (extantSamplingProb >= 1.0 || MathUtils.nextDouble() < extantSamplingProb) {
+                taxonCount++;
+                l.node.setTaxon(new Taxon("taxon" + taxonCount));
+                sampledTips.add(l.node);
+            }
+        }
+
+        if (sampledTips.isEmpty()) {
             return null;
         }
 
-        // Set extant tips
-        for (LineAge l : lineages) {
-            l.node.setHeight(0.0);
-            taxonCount++;
-            l.node.setTaxon(new Taxon("taxon" + taxonCount));
-        }
-
-        // Prune extinct lineages from the tree
         FlexibleNode prunedRoot = reconstructTree(stemNode);
 
         if (prunedRoot == null || prunedRoot.getChildCount() == 0) {
             return null;
         }
 
-        FlexibleTree tree = new FlexibleTree(prunedRoot);
-        return tree;
+        // The simulation only ever assigns node heights, never branch lengths. The single-arg
+        // FlexibleTree constructor asserts BOTH are known, so every getBranchLength() would
+        // silently return the unset default of 0. Declaring lengths unknown makes FlexibleTree
+        // derive them from the heights on first access.
+        return new FlexibleTree(prunedRoot, true, false);
+    }
+
+    private static void removeAt(List<LineAge> lineages, int idx) {
+        int last = lineages.size() - 1;
+        if (idx != last) {
+            lineages.set(idx, lineages.get(last));
+        }
+        lineages.remove(last);
     }
 
     /**
-     * Recursively prune extinct lineages from the tree and collapse degree 2 nodes
+     * Recursively prune unsampled lineages and collapse degree-2 nodes. A leaf with a taxon
+     * is a sampled tip (extant or serial); a leaf without a taxon is an unsampled extinction.
      */
     private FlexibleNode reconstructTree(FlexibleNode node) {
         if (node.getChildCount() == 0) {
@@ -279,12 +296,9 @@ public class AgeDependentBirthDeathSimulator {
         }
 
         if (surviving.size() == 1) {
-            // Collapse: skip this node, return the single surviving child.
-            // Height is preserved, so branch lengths remain correct.
             return surviving.get(0);
         }
 
-        // Rebuild node with only surviving children
         FlexibleNode newNode = new FlexibleNode();
         newNode.setHeight(node.getHeight());
         for (FlexibleNode child : surviving) {
@@ -294,7 +308,7 @@ public class AgeDependentBirthDeathSimulator {
     }
 
     /**
-     * An active lineage defined by its node and current age, i.e. time since last speciation in the lineage
+     * An active lineage defined by its node and current age, i.e. time since the lineage's own origin
      */
     private static class LineAge {
         FlexibleNode node;

@@ -2,9 +2,12 @@
 <!--
   Cross-validation of the two primary age-dependent birth-death implementations:
     - ageDependentBirthDeathIEModel  (integral-equation, FFT-Picard)
-    - ageDependentBirthDeathPDEModel (PDE, method of lines + RK4)
+    - ageDependentBirthDeathPDEModel (PDE, method of lines + RK4), run with the
+      sampling specifications omitted, i.e. psi = 0 and rho = 1, which reduces it to
+      the ultrametric process.
   on a single fixed tree. Both run under symmetric speciation with the same
-  conditioning (excludeRootBranch=true). Linear-exponential age hazard
+  conditioning (IE excludeRootBranch="true" / PDE conditionAt="mrca").
+  Linear-exponential age hazard
   h(a) = (1 + r*gamma*a) * exp(-gamma*a).
 
   The PDE model uses the AgeHazard interface. A single <linExpAgeHazard>
@@ -41,7 +44,7 @@
     1b. Stadler closed-form anchor (IE)     (origin conditioning, high-res)
     2.  Age-dependent rates                 (r,gamma > 0,  1 epoch, MRCA)
     3.  Skyline + age-dependent rates       (r,gamma > 0,  2 epochs, MRCA, shared shape)
-    4.  Conditioning on origin              (excludeRootBranch=false, age-dep)
+    4.  Conditioning on origin              (conditionAt="origin", age-dep)
     5.  Optional optimizations vs baselines (IE quadrature solver, IE/PDE
                                              multi-threading, PDE birth-rate
                                              truncation)
@@ -88,9 +91,9 @@
         <deathHazard><parameter value="0.0 0.0"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
-    <ageDependentBirthDeathPDEModel id="pde.const" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true">
+    <ageDependentBirthDeathPDEModel id="pde.const" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="mrca">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthHazard>
@@ -134,9 +137,9 @@
         <deathHazard><parameter value="0.0 0.0"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
-    <ageDependentBirthDeathPDEModel id="pde.anchor" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="false">
+    <ageDependentBirthDeathPDEModel id="pde.anchor" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="origin">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthHazard>
@@ -186,9 +189,9 @@
         <deathHazard><parameter value="0.2 0.1"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
-    <ageDependentBirthDeathPDEModel id="pde.linexp" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true">
+    <ageDependentBirthDeathPDEModel id="pde.linexp" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="mrca">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthHazard>
@@ -233,9 +236,9 @@
         <deathHazard><parameter value="0.3 0.15"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
-    <ageDependentBirthDeathPDEModel id="pde.skyline" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true">
+    <ageDependentBirthDeathPDEModel id="pde.skyline" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="mrca">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
@@ -280,9 +283,9 @@
         <deathHazard><parameter value="0.2 0.1"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
-    <ageDependentBirthDeathPDEModel id="pde.origin" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="false">
+    <ageDependentBirthDeathPDEModel id="pde.origin" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="origin">
         <treeModel idref="treeModel"/>
         <birthScale><parameter value="1.5" lower="0.0"/></birthScale>
         <birthHazard>
@@ -339,9 +342,9 @@
         <deathHazard><parameter value="0.3 0.15"/></deathHazard>
     </ageDependentBirthDeathIEModel>
 
-    <ageDependentBirthDeathPDEModel id="pde.parallel" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true" numThreads="4">
+    <ageDependentBirthDeathPDEModel id="pde.parallel" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="mrca" numThreads="4">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
@@ -360,9 +363,9 @@
         </deathHazard>
     </ageDependentBirthDeathPDEModel>
 
-    <ageDependentBirthDeathPDEModel id="pde.trunc" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true" rateZeroThreshold="1e-6">
+    <ageDependentBirthDeathPDEModel id="pde.trunc" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="mrca" rateZeroThreshold="1e-6">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>
@@ -435,9 +438,9 @@
     <!-- slots must produce the exact same likelihood as the shared- -->
     <!-- shape pde.skyline (scenario 3).                             -->
     <!-- ============================================================ -->
-    <ageDependentBirthDeathPDEModel id="pde.per_epoch" originTime="10.0"
-            timeSteps="2000" ageSteps="2000"
-            symmetric="true" excludeRootBranch="true">
+    <ageDependentBirthDeathPDEModel id="pde.per_epoch" maxTime="10.0"
+            timeStep="0.005" ageStep="0.005"
+            symmetric="true" conditionAt="mrca">
         <treeModel idref="treeModel"/>
         <epochTimes><parameter value="3.0"/></epochTimes>
         <birthScale><parameter value="1.2 1.8" lower="0.0"/></birthScale>

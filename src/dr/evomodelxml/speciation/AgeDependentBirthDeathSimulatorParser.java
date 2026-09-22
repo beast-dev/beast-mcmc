@@ -1,6 +1,7 @@
 package dr.evomodelxml.speciation;
 
 import dr.evolution.tree.Tree;
+import dr.evomodel.speciation.agedependent.agehazard.AgeHazard;
 import dr.evomodel.speciation.agedependent.simulation.AgeDependentBirthDeathSimulator;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -14,11 +15,25 @@ import dr.xml.*;
  * &lt;ageDependentBirthDeathSimulator id="simTree" symmetric="true" originTime="10.0" minTips="2" maxAttempts="1000"&gt;
  *     &lt;birthScale&gt;&lt;parameter value="1.0 0.7"/&gt;&lt;/birthScale&gt;
  *     &lt;deathScale&gt;&lt;parameter value="0.2 0.4"/&gt;&lt;/deathScale&gt;
- *     &lt;birthHazard&gt;&lt;parameter value="0.05 0.15"/&gt;&lt;/birthHazard&gt;
- *     &lt;deathHazard&gt;&lt;parameter value="0.02 0.1"/&gt;&lt;/deathHazard&gt;
+ *     &lt;birthHazard&gt;
+ *         &lt;linExpAgeHazard&gt;
+ *             &lt;r&gt;&lt;parameter value="0.4"/&gt;&lt;/r&gt;
+ *             &lt;gamma&gt;&lt;parameter value="0.25"/&gt;&lt;/gamma&gt;
+ *         &lt;/linExpAgeHazard&gt;
+ *     &lt;/birthHazard&gt;
+ *     &lt;deathHazard&gt;
+ *         &lt;expAgeHazard&gt;&lt;gamma&gt;&lt;parameter value="0.1"/&gt;&lt;/gamma&gt;&lt;/expAgeHazard&gt;
+ *     &lt;/deathHazard&gt;
  *     &lt;epochTimes&gt;&lt;parameter value="5.0"/&gt;&lt;/epochTimes&gt;
  * &lt;/ageDependentBirthDeathSimulator&gt;
  * </pre>
+ *
+ * The hazard elements take any {@link AgeHazard} -- the same family the likelihood models
+ * use -- so a simulation can be driven by exactly the hazard shape it will be fitted with.
+ *
+ * Serial sampling is added with the optional &lt;samplingScale&gt; (psi) and
+ * &lt;extantSamplingProb&gt; (rho) elements; omitting both gives psi = 0 and rho = 1,
+ * i.e. the ultrametric process.
  *
  * @author Frederik M. Andersen
  */
@@ -30,6 +45,8 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
     private static final String BIRTH_HAZARD = "birthHazard";
     private static final String DEATH_SCALE = "deathScale";
     private static final String DEATH_HAZARD = "deathHazard";
+    private static final String SAMPLING_SCALE = "samplingScale";
+    private static final String EXTANT_SAMPLING_PROB = "extantSamplingProb";
     private static final String SYMMETRIC = "symmetric";
     private static final String MIN_TIPS = "minTips";
     private static final String MAX_TIPS = "maxTips";
@@ -48,9 +65,18 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
         double originTime = xo.getDoubleAttribute(ORIGIN_TIME);
 
         Parameter birthScale = (Parameter) xo.getElementFirstChild(BIRTH_SCALE);
-        Parameter birthHazard = (Parameter) xo.getElementFirstChild(BIRTH_HAZARD);
+        AgeHazard birthHazard = (AgeHazard) xo.getElementFirstChild(BIRTH_HAZARD);
         Parameter deathScale = (Parameter) xo.getElementFirstChild(DEATH_SCALE);
-        Parameter deathHazard = (Parameter) xo.getElementFirstChild(DEATH_HAZARD);
+        AgeHazard deathHazard = (AgeHazard) xo.getElementFirstChild(DEATH_HAZARD);
+        // Both sampling specifications are optional. Omitting them gives psi(t) = 0 and rho = 1,
+        // i.e. no serial sampling and complete sampling of the extant lineages, which reduces the
+        // simulator to the ultrametric age-dependent birth-death process.
+        Parameter samplingScale = xo.hasChildNamed(SAMPLING_SCALE)
+                ? (Parameter) xo.getElementFirstChild(SAMPLING_SCALE)
+                : new Parameter.Default(1, 0.0);
+        Parameter extantSamplingProb = xo.hasChildNamed(EXTANT_SAMPLING_PROB)
+                ? (Parameter) xo.getElementFirstChild(EXTANT_SAMPLING_PROB)
+                : new Parameter.Default(1, 1.0);
 
         double[] epochTimesValues;
         if (xo.hasChildNamed(EPOCH_TIMES)) {
@@ -90,18 +116,28 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
             throw new XMLParseException("deathScale dimension (" + deathScale.getDimension() +
                     ") must be 1 or equal to number of epochs (" + numEpochs + ")");
         }
-        if (birthHazard.getDimension() != 2) {
-            throw new XMLParseException("birthHazard must have dimension 2 [r, gamma], got " + birthHazard.getDimension());
+        if (samplingScale.getDimension() != 1 && samplingScale.getDimension() != numEpochs) {
+            throw new XMLParseException("samplingScale dimension (" + samplingScale.getDimension() +
+                    ") must be 1 or equal to number of epochs (" + numEpochs + ")");
         }
-        if (deathHazard.getDimension() != 2) {
-            throw new XMLParseException("deathHazard must have dimension 2 [r, gamma], got " + deathHazard.getDimension());
+        validateShape(birthHazard, BIRTH_HAZARD, numEpochs);
+        validateShape(deathHazard, DEATH_HAZARD, numEpochs);
+        if (extantSamplingProb.getDimension() != 1) {
+            throw new XMLParseException("extantSamplingProb must have dimension 1, got "
+                    + extantSamplingProb.getDimension());
+        }
+        double rho = extantSamplingProb.getParameterValue(0);
+        if (rho < 0.0 || rho > 1.0) {
+            throw new XMLParseException("extantSamplingProb must lie in [0, 1], got " + rho);
         }
 
         AgeDependentBirthDeathSimulator simulator = new AgeDependentBirthDeathSimulator(
                 birthScale.getParameterValues(),
                 deathScale.getParameterValues(),
-                birthHazard.getParameterValues(),
-                deathHazard.getParameterValues(),
+                samplingScale.getParameterValues(),
+                rho,
+                birthHazard,
+                deathHazard,
                 epochTimesValues,
                 originTime,
                 symmetric,
@@ -111,11 +147,22 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
         return simulator.simulate(minTips, maxTips, maxAttempts);
     }
 
+    private static void validateShape(AgeHazard shape, String name,
+                                      int numEpochs) throws XMLParseException {
+        int n = shape.getEpochCount();
+        if (n != 1 && n != numEpochs) {
+            throw new XMLParseException(name + " must cover 1 (shared) or " + numEpochs
+                    + " epochs, got " + n);
+        }
+    }
+
     public String getParserDescription() {
         return "Simulates a tree under a time- and age-dependent birth-death process. " +
-               "Rates are lambda(t,a) = birthScale(t) * (1 + b*a) * exp(-gamma*a) and " +
-               "mu(t,a) = deathScale(t) * (1 + b*a) * exp(-gamma*a). " +
-               "Returns the reconstructed tree (extant tips only).";
+               "Rates are lambda(t,a) = birthScale(t) * h_b(a), mu(t,a) = deathScale(t) * h_d(a) " +
+               "and psi(t) = samplingScale(t), where h_b and h_d are pluggable age hazards, " +
+               "with extant sampling probability rho. Returns the reconstructed tree over the " +
+               "sampled tips; omitting both sampling specifications gives psi = 0 and rho = 1, " +
+               "i.e. extant tips only.";
     }
 
     public Class getReturnType() {
@@ -132,17 +179,23 @@ public class AgeDependentBirthDeathSimulatorParser extends AbstractXMLObjectPars
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(BIRTH_HAZARD, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+                    new ElementRule(AgeHazard.class)
             }),
             new ElementRule(DEATH_SCALE, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(DEATH_HAZARD, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+                    new ElementRule(AgeHazard.class)
             }),
+            new ElementRule(SAMPLING_SCALE, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(EXTANT_SAMPLING_PROB, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
             new ElementRule(EPOCH_TIMES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
-            }, true), // optional
+            }, true),
             AttributeRule.newBooleanRule(SYMMETRIC, true),
             AttributeRule.newIntegerRule(MIN_TIPS, true),
             AttributeRule.newIntegerRule(MAX_TIPS, true),

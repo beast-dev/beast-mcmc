@@ -44,6 +44,14 @@ public abstract class AgeHazard extends AbstractModel {
      */
     public abstract int getEpochCount();
 
+    /**
+     * Index into a Parameter for the given epoch: dimension-1 Parameters are shared
+     * across all epochs, otherwise the epoch selects the corresponding element.
+     */
+    protected static int idx(Parameter p, int epoch) {
+        return p.getDimension() == 1 ? 0 : epoch;
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged();
     }

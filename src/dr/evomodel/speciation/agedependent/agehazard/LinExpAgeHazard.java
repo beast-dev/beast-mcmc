@@ -33,10 +33,6 @@ public class LinExpAgeHazard extends AgeHazard {
         return Math.max(r.getDimension(), gamma.getDimension());
     }
 
-    private int idx(Parameter p, int epoch) {
-        return p.getDimension() == 1 ? 0 : epoch;
-    }
-
     @Override
     public double evaluate(double age, int epoch) {
         double rv = r.getParameterValue(idx(r, epoch));

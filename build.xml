@@ -130,6 +130,7 @@
             <include name="dr/inference/**"/>
             <include name="dr/inferencexml/**"/>
             <include name="dr/math/**"/>
+            <include name="dr/mathxml/**"/>
             <include name="dr/matrix/**"/>
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
@@ -178,6 +179,7 @@
                 <include name="dr/inference/**/*.class"/>
                 <include name="dr/inferencexml/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
+                <include name="dr/mathxml/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>

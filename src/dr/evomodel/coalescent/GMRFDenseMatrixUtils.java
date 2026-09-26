@@ -227,4 +227,63 @@ public class GMRFDenseMatrixUtils {
         return result;
     }
 
+    public static double logSumExp(double[] logValues){
+        double max = Double.NEGATIVE_INFINITY;
+        for(double v : logValues){
+            if(v > max){
+                max = v;
+            }
+        }
+        if(Double.isInfinite(max)){
+            return max;
+        }
+        double sum = 0.0;
+        for (double v : logValues){
+            sum += Math.exp(v-max);
+        }
+        return max + Math.log(sum);
+    }
+
+    // normalize the log weights into weights that sum to 1
+    public static double[] normalizeLogWeights(double[] logWeights){
+        double lse = logSumExp(logWeights);
+        double[] w = new double[logWeights.length];
+        for(int i = 0; i < w.length; i++){
+            w[i] = Math.exp(logWeights[i]-lse);
+        }
+        return w;
+    }
+
+    public static double effectiveSampleSize(double[] normalizedWeights){
+        double sumSq = 0.0;
+        for (double w : normalizedWeights){
+            sumSq += w*w;
+        }
+        return 1.0/sumSq;
+    }
+
+    // matching nodes and weights for Simpson's rule
+    // \int f \approx \sum_k weights[k]*f(points[k])
+    // numPoints is shifted up by one if it is even, since we
+    // need an even number of intervals (and odd number points)
+    public static double[][] simpsonNodesAndWeights(int numPoints, double lower, double upper) {
+        if (numPoints % 2 == 0) {
+            numPoints += 1;
+        }
+        int n = numPoints - 1; // number of intervals, even
+        double h = (upper-lower)/n;
+
+        double[] points = new double[numPoints];
+        double[] weights = new double[numPoints];
+        for (int i = 0; i <= n; i++) {
+            points[i] = lower + i*h;
+        }
+        weights[0] = h/3.0;
+        weights[n] = h/3.0;
+        for (int i = 1; i < n; i++) {
+            weights[i] = (i%2 == 1) ? (4.0*h/3.0):(2.0*h/3.0);
+        }
+        return new double[][]{points, weights};
+    }
+
 }

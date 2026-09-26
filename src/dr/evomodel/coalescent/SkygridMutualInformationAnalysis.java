@@ -150,6 +150,7 @@ public class SkygridMutualInformationAnalysis {
                 (shape-1.0)*Math.log(x)-rate*x;
     }
 
+    /*
     private static double logSumExp(double[] logValues){
         double max = Double.NEGATIVE_INFINITY;
         for(double v : logValues){
@@ -166,8 +167,11 @@ public class SkygridMutualInformationAnalysis {
         }
         return max + Math.log(sum);
     }
+    */
+
 
     // normalize the log weights into weights that sum to 1
+    /*
     private static double[] normalizeLogWeights(double[] logWeights){
         double lse = logSumExp(logWeights);
         double[] w = new double[logWeights.length];
@@ -176,7 +180,8 @@ public class SkygridMutualInformationAnalysis {
         }
         return w;
     }
-
+    */
+    /*
     private static double effectiveSampleSize(double[] normalizedWeights){
         double sumSq = 0.0;
         for (double w : normalizedWeights){
@@ -184,6 +189,7 @@ public class SkygridMutualInformationAnalysis {
         }
         return 1.0/sumSq;
     }
+    */
 
     private double[] rhsForTau(int sampleIndex, double tau){
         double[] rhs = new double[P];
@@ -252,7 +258,7 @@ public class SkygridMutualInformationAnalysis {
                         betaSamples[r], means[s], sys.prec, sys.logDet);
 
             }
-            sumLogMixture += logSumExp(logDensities)-Math.log(N);
+            sumLogMixture += GMRFDenseMatrixUtils.logSumExp(logDensities)-Math.log(N);
         }
         double hMarg = -sumLogMixture/N;
 
@@ -266,8 +272,8 @@ public class SkygridMutualInformationAnalysis {
             double rate = tauRate + 0.5*quadraticFormGammaBeta(r);
             logWeights[r] = logGammaDensity(tau0, tauShape + M/2.0, rate);
         }
-        double[] w = normalizeLogWeights(logWeights);
-        double ess = effectiveSampleSize(w);
+        double[] w = GMRFDenseMatrixUtils.normalizeLogWeights(logWeights);
+        double ess = GMRFDenseMatrixUtils.effectiveSampleSize(w);
 
         BetaGivenGammaSystem sys = new BetaGivenGammaSystem(betaPriorPrecision, zqz, tau0);
         double hCond = closedFormConditionalEntropy(sys.logDet);
@@ -285,7 +291,7 @@ public class SkygridMutualInformationAnalysis {
                         + GMRFDenseMatrixUtils.logMvnDensityGivenPrecision(
                                 betaSamples[r], means[rPrime], sys.prec, sys.logDet);
             }
-            double logMixtureR = logSumExp(logDensities);
+            double logMixtureR = GMRFDenseMatrixUtils.logSumExp(logDensities);
             hMarg += -w[r]*logMixtureR;
         }
         return new double[]{hMarg-hCond, tau0, ess};
@@ -312,8 +318,8 @@ public class SkygridMutualInformationAnalysis {
             for (int r = 0; r < N; r++){
                 logWeights[r] = logGammaDensity(tauS, tauShape + M/2.0, rates[r]);
             }
-            double[] w = normalizeLogWeights(logWeights);
-            sumEss += effectiveSampleSize(w);
+            double[] w = GMRFDenseMatrixUtils.normalizeLogWeights(logWeights);
+            sumEss += GMRFDenseMatrixUtils.effectiveSampleSize(w);
 
             double[] logDensities = new double[N];
             for (int r = 0; r < N; r++){
@@ -321,7 +327,7 @@ public class SkygridMutualInformationAnalysis {
                 logDensities[r] = Math.log(w[r]) + GMRFDenseMatrixUtils.logMvnDensityGivenPrecision(
                     betaSamples[s], meanR, sys.prec, sys.logDet);
             }
-            double logPBetaSGivenTauS = logSumExp(logDensities);
+            double logPBetaSGivenTauS = GMRFDenseMatrixUtils.logSumExp(logDensities);
             sumHMargContribution += -logPBetaSGivenTauS;
         }
 
@@ -346,6 +352,7 @@ public class SkygridMutualInformationAnalysis {
     // \int f \approx \sum_k weights[k]*f(points[k])
     // numPoints is shifted up by one if it is even, since we
     // need an even number of intervals (and odd number points)
+    /*
     private static double[][] simpsonNodesAndWeights(int numPoints, double lower, double upper) {
         if (numPoints % 2 == 0) {
             numPoints += 1;
@@ -365,6 +372,7 @@ public class SkygridMutualInformationAnalysis {
         }
         return new double[][]{points, weights};
     }
+    */
 
     private static class QuadratureNode {
         final double u, tau, logWeight, logDetM;
@@ -386,7 +394,7 @@ public class SkygridMutualInformationAnalysis {
     }
 
     private double runFullyMarginal() {
-        double[][] nodesAndWeights = simpsonNodesAndWeights(numQuadraturePoints, logTauLower, logTauUpper);
+        double[][] nodesAndWeights = GMRFDenseMatrixUtils.simpsonNodesAndWeights(numQuadraturePoints, logTauLower, logTauUpper);
         double[] points = nodesAndWeights[0];
         double[] weights = nodesAndWeights[1];
 
@@ -410,7 +418,7 @@ public class SkygridMutualInformationAnalysis {
                 logIntegrand[k] = (tauShape + M / 2.0)*node.u - tauRate*node.tau
                         - 0.5*node.logDetM + exponent + node.logWeight;
             }
-            logPGammaGivenZ[i] = logSumExp(logIntegrand);
+            logPGammaGivenZ[i] = GMRFDenseMatrixUtils.logSumExp(logIntegrand);
         }
 
         BetaGivenGammaSystem[] systems = new BetaGivenGammaSystem[N];
@@ -436,7 +444,7 @@ public class SkygridMutualInformationAnalysis {
                 logDensities[s] = GMRFDenseMatrixUtils.logMvnDensityGivenPrecision(
                         betaSamples[i], means[s], systems[s].prec, systems[s].logDet);
             }
-            double logDenominator = logSumExp(logDensities)-Math.log(N);
+            double logDenominator = GMRFDenseMatrixUtils.logSumExp(logDensities)-Math.log(N);
 
             sumLogRatio += (logNumerator-logDenominator);
         }
@@ -756,7 +764,7 @@ public class SkygridMutualInformationAnalysis {
         }
 
         public String getParserDescription() {
-            return "Post-processing analysis (run after completion of MCMC somulation) computing exact, non-Gaussian-" +
+            return "Post-processing analysis (run after completion of MCMC simulation) computing exact, non-Gaussian-" +
                     "approximated mutual information estimators for the skygrid-GLM effective population " +
                     "size trajectory and effect size coefficients.";
         }

@@ -89,6 +89,12 @@ public class SkygridSummaryStatisticParser extends AbstractXMLObjectParser {
             case TAU_CONDITIONAL_RATE:
                 requireXML(tauRate != null, typeString, "a tauRate child element");
                 break;
+            case RETAINED_INFORMATION_RATIO_MARGINAL_GAUSSIAN:
+            case RETAINED_INFORMATION_RATIO_MARGINAL_IS:
+            case MARGINAL_FISHER_MIN_ESS:
+                requireXML(tauShape != null, typeString, "a tauShape child element");
+                requireXML(tauRate != null, typeString, "a tauRate child element");
+                break;
                 default:
                     break;
         }
@@ -122,6 +128,12 @@ public class SkygridSummaryStatisticParser extends AbstractXMLObjectParser {
                 return SkygridSummaryStatistic.Type.RETAINED_INFORMATION_RATIO;
             case "retainedInformationRatioIS":
                 return SkygridSummaryStatistic.Type.RETAINED_INFORMATION_RATIO_IS;
+            case "retainedInformationRatioMarginalGaussian":
+                return SkygridSummaryStatistic.Type.RETAINED_INFORMATION_RATIO_MARGINAL_GAUSSIAN;
+            case "retainedInformationRatioMarginalIS":
+                return SkygridSummaryStatistic.Type.RETAINED_INFORMATION_RATIO_MARGINAL_IS;
+            case "marginalFisherMinESS":
+                return SkygridSummaryStatistic.Type.MARGINAL_FISHER_MIN_ESS;
             case "mutualInformation":
                 return SkygridSummaryStatistic.Type.MUTUAL_INFORMATION;
             case "mutualInformationIS":

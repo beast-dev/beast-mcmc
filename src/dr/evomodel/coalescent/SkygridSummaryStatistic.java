@@ -13,6 +13,9 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
     public enum Type{
         RETAINED_INFORMATION_RATIO,
         RETAINED_INFORMATION_RATIO_IS,
+        RETAINED_INFORMATION_RATIO_MARGINAL_GAUSSIAN,
+        RETAINED_INFORMATION_RATIO_MARGINAL_IS,
+        MARGINAL_FISHER_MIN_ESS,
         MUTUAL_INFORMATION,
         MUTUAL_INFORMATION_IS,
         IMPORTANCE_SAMPLING_ESS,
@@ -62,6 +65,9 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
         switch (type) {
             case RETAINED_INFORMATION_RATIO:
             case RETAINED_INFORMATION_RATIO_IS:
+            case RETAINED_INFORMATION_RATIO_MARGINAL_GAUSSIAN:
+            case RETAINED_INFORMATION_RATIO_MARGINAL_IS:
+            case MARGINAL_FISHER_MIN_ESS:
             case MUTUAL_INFORMATION:
             case MUTUAL_INFORMATION_IS:
             case IMPORTANCE_SAMPLING_ESS:
@@ -92,6 +98,12 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
                 return computeRetainedInformationRatio();
             case RETAINED_INFORMATION_RATIO_IS:
                 return computeRetainedInformationRatioIS();
+            case RETAINED_INFORMATION_RATIO_MARGINAL_GAUSSIAN:
+                return computeRetainedInformationRatioMarginalGaussian();
+            case RETAINED_INFORMATION_RATIO_MARGINAL_IS:
+                return computeRetainedInformationRatioMarginalIS();
+            case MARGINAL_FISHER_MIN_ESS:
+                return approximation.getMarginalFisherInformationIS(tauShape, tauRate).minESS;
             case MUTUAL_INFORMATION:
                 return computeMutualInformation();
             case MUTUAL_INFORMATION_IS:
@@ -240,6 +252,77 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
             return traceJ / traceComplete;
         }
     }
+
+    private double[][] rawZQZ(){
+        SymmTridiagMatrix rawQ = approximation.getRawQ();
+        double[][] zMat = approximation.getDesignMatrixZ();
+        int n = zMat.length;
+        int p = zMat[0].length;
+        double[][] rawQZ = new double[n][p];
+        for (int j = 0; j < p; j++){
+            DenseVector col = new DenseVector(n);
+            for (int i = 0; i < n; i++){
+                col.set(i, zMat[i][j]);
+            }
+            DenseVector qCol = new DenseVector(n);
+            rawQ.mult(col, qCol);
+            for (int i = 0; i < n; i++){
+                rawQZ[i][j] = qCol.get(i);
+            }
+        }
+        return GMRFDenseMatrixUtils.transposeMultiply(zMat, rawQZ);
+    }
+
+    // Marginal (\tau-integrated-out) retained-information ratio, Gaussian-
+    // approximation version: v'J_G(\beta)v / (E_{\tau}[\tau] * v'[Z'Q_raw*Z]v).
+    private double computeRetainedInformationRatioMarginalGaussian(){
+        GMRFGaussianApproximation.MarginalFisherInfoResult result =
+                approximation.getMarginalFisherInformationGaussian(tauShape, tauRate);
+        double[][] jMarginal = result.jMarginal;
+        double[][] complete = rawZQZ();
+        int p = jMarginal.length;
+
+        if(coefficientIndex != null){
+            double[] v = new double[p];
+            v[coefficientIndex] = 1;
+            double numerator = GMRFDenseMatrixUtils.quadraticForm(jMarginal, v);
+            double denominator = result.eTau * GMRFDenseMatrixUtils.quadraticForm(complete, v);
+            return numerator / denominator;
+        }else{
+            double traceJ = 0, traceComplete = 0;
+            for (int i = 0; i < p; i++){
+                traceJ += jMarginal[i][i];
+                traceComplete += complete[i][i];
+            }
+            return traceJ / (result.eTau * traceComplete);
+        }
+    }
+
+    // Same as above, but using the EXACT (importance-sampling-corrected,
+    // not Gaussian-approximated) marginal Fisher information.
+    private double computeRetainedInformationRatioMarginalIS(){
+        GMRFGaussianApproximation.MarginalFisherInfoResult result =
+                approximation.getMarginalFisherInformationIS(tauShape, tauRate);
+        double[][] jMarginal = result.jMarginal;
+        double[][] complete = rawZQZ();
+        int p = jMarginal.length;
+
+        if(coefficientIndex != null){
+            double[] v = new double[p];
+            v[coefficientIndex] = 1;
+            double numerator = GMRFDenseMatrixUtils.quadraticForm(jMarginal, v);
+            double denominator = result.eTau * GMRFDenseMatrixUtils.quadraticForm(complete, v);
+            return numerator / denominator;
+        }else{
+            double traceJ = 0, traceComplete = 0;
+            for (int i = 0; i < p; i++){
+                traceJ += jMarginal[i][i];
+                traceComplete += complete[i][i];
+            }
+            return traceJ / (result.eTau * traceComplete);
+        }
+    }
+
 
     // Computes approximation of mutual information of \gamma and \beta, conditional
     // on g, Z and \tau. Depends on Gaussian approximation of coalescent likelihood.

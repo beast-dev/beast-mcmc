@@ -57,6 +57,31 @@ import java.util.concurrent.atomic.AtomicInteger;
  * the root-branch survival term and the {@code p0} integration endpoint need an origin — when
  * {@code conditionAt == MRCA} it is used only to size the grid.
  *
+ * Solver: {@code solver} selects the numerical scheme.
+ * <ul>
+ *   <li>{@link Solver#RK4}: method of lines. The age derivative is a finite-difference stencil
+ *       ({@link #ageDeriv}) and time stepping is explicit RK4 for both {@code p0} and {@code L}.
+ *       Explicit, so each grid step is subdivided adaptively until {@code h_sub*rate} is at most
+ *       {@link #RK4_SUBSTEP_HR} (the reaction-rate stability limit); cost grows with the rates
+ *       but the scheme never rejects a state on stability grounds.</li>
+ *   <li>{@link Solver#SPLIT}: Strang operator splitting along characteristics. A step of length
+ *       {@code h} is: aging shift by {@code h/2} ({@code f(a) <- f(a+h/2)}), reaction over
+ *       {@code h} with the age-dependent rates frozen at the (now grid-aligned) characteristic
+ *       midpoints, aging shift by {@code h/2}. The time step is forced to {@code 2*da} so that
+ *       full-step shifts are exact index shifts ({@code deltaT} is ignored); only the partial
+ *       steps at branch ends and epoch boundaries use positivity-preserving linear
+ *       interpolation. The {@code L} reaction matrix is diagonal-plus-one-column
+ *       ({@code -diag(alpha) + u e0^T}, the column being the age-0 coupling), so it has an O(Na)
+ *       closed form given {@code p0} at the step's midpoint time. The {@code p0} reaction is
+ *       a closed-form Riccati solve for {@code p0(t,0)} followed by an exponential midpoint
+ *       rule per age. Unconditionally stable and positivity/[0,1] preserving, so no
+ *       substepping is needed; second order in time, exact in age. Benchmarks (2026-09-22)
+ *       show it is much less accurate than RK4 at equal grid spacing (about 10-100x more
+ *       expensive at equal accuracy), so RK4 remains the default. Beyond the top of the (possibly
+ *       truncated) age grid the shift extrapolates with the last grid value, mirroring the RK4
+ *       one-sided stencil.</li>
+ * </ul>
+ *
  * Root conditioning: {@code conditionAt} selects what the likelihood is conditioned on.
  * {@code ORIGIN} includes the root branch (mrca to {@code maxTime}) and conditions on survival
  * from the origin. {@code MRCA} excludes the root branch and conditions on survival of both
@@ -75,6 +100,9 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
      */
     public enum ConditioningPoint { ORIGIN, MRCA }
 
+    /** Numerical scheme: method of lines with explicit {@link #RK4}, or characteristic {@link #SPLIT}. */
+    public enum Solver { RK4, SPLIT }
+
     private static final boolean DIAG_INF = Boolean.getBoolean("beast.abd.diag");
 
     // Root-conditioning survival-probability guard. p0 -> 1 makes -log(1-p0) diverge to
@@ -89,21 +117,26 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     private static final double MIN_SURVIVAL = 1e-12;
 
     // Explicit-RK4 stability bound for a step of size h against reaction rate r: unstable once
-    // |h*r| exceeds ~2.78 (real negative eigenvalues). Confirmed 2026-08-19: without this guard,
+    // |h*r| exceeds ~2.78 (real negative eigenvalues). Confirmed 2026-08-19: without a guard,
     // an MCMC proposal that pushes birthScale/gamma into a regime where h*rate exceeds this bound
     // can make solveL/solveP0's RK4 integration overflow into a large, deceptively "good" finite
     // log-likelihood instead of the correct (tiny) one -- a one-way trapdoor an MH sampler will
     // always accept into, since the corruption only ever inflates the value, never shrinks it.
-    // Rejecting the state outright (mirroring the p0Root guard above) closes that off regardless
-    // of which PDE grid resolution is chosen for performance. Uses a safety margin under the
-    // textbook 2.78 bound since this is a coupled nonlinear system, not a scalar linear ODE.
-    private static final double RK4_STABLE_HR = 2.0;
+    // Rather than rejecting such states (which carved a grid-dependent hole out of the
+    // posterior), each grid step is split into ceil(h*rate / RK4_SUBSTEP_HR) equal RK4
+    // substeps so that every substep satisfies h_sub*rate <= RK4_SUBSTEP_HR. The target is
+    // well inside the textbook bound both for safety (coupled nonlinear system, not a scalar
+    // linear ODE) and for accuracy (RK4 at h*rate ~ 2 is stable but crude). Overridable via
+    // -Dbeast.abd.substepHR for benchmarking.
+    private static final double RK4_SUBSTEP_HR =
+            Double.parseDouble(System.getProperty("beast.abd.substepHR", "1.0"));
 
     private static final double EPS = 1e-12;
 
     private final Tree tree;
     private final boolean symmetric;
     private final ConditioningPoint conditionAt;
+    private final Solver solver;
     private final Parameter rootAge;
 
     private final Parameter birthScale;
@@ -127,6 +160,10 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     private final double inv6da;
     private final double dt;
     private final double dt05;
+    // p0Grid row spacing and last row index: RK4 stores p0 at half steps (dt05, 2*Nt rows),
+    // SPLIT at full steps (dt == 2*da, Nt rows).
+    private final double p0Step;
+    private final int p0Rows;
 
     // Birth rate truncation
     private final double rateZeroThreshold;
@@ -156,6 +193,10 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
     private double[] storedSScale;
     private double[] epBounds;
     private double[] storedEpBounds;
+    // SPLIT, symmetric only: exp(-(lam_j + mu_j + psi) * dt) per epoch, the L-reaction decay
+    // factor of a full step, which is time-independent within an epoch.
+    private double[][] eAlphaDt;
+    private double[][] storedEAlphaDt;
 
     // Shared tip solveL buffers
     private final int numExternal;
@@ -225,7 +266,8 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                                                 ConditioningPoint conditionAt,
                                                 Parameter rootAge,
                                                 double rateZeroThreshold,
-                                                int numThreads) {
+                                                int numThreads,
+                                                Solver solver) {
         super(name);
 
         this.tree = tree;
@@ -234,6 +276,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         }
         this.symmetric = symmetric;
         this.conditionAt = conditionAt;
+        this.solver = solver;
         this.rootAge = rootAge;
         if (rootAge != null) {
             addVariable(rootAge);
@@ -264,26 +307,35 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         if (deathHazard != birthHazard) addModel(deathHazard);
 
         this.maxTime = maxTime;
-        this.Na = (int) Math.ceil(maxTime / deltaA);
-        int NtRaw = (int) Math.ceil(maxTime / deltaT);
-        this.Nt = Math.max(this.Na, NtRaw);
+        if (solver == Solver.SPLIT) {
+            // Strang half-steps must be exact index shifts: dt == 2*m*da. DIAG: m decouples the
+            // time step from the age step (m = 1 is the production setting).
+            int m = Integer.getInteger("beast.abd.splitTimeMult", 1);
+            this.Nt = (int) Math.ceil(maxTime / (2.0 * m * deltaA));
+            this.Na = 2 * m * this.Nt;
+        } else {
+            this.Na = (int) Math.ceil(maxTime / deltaA);
+            int NtRaw = (int) Math.ceil(maxTime / deltaT);
+            this.Nt = Math.max(this.Na, NtRaw);
+        }
         this.da = maxTime / this.Na;
         this.inv2da = 1.0 / (2.0 * da);
         this.inv6da = 1.0 / (6.0 * da);
         this.dt = maxTime / this.Nt;
         this.dt05 = 0.5 * dt;
+        this.p0Step = (solver == Solver.SPLIT) ? this.dt : this.dt05;
+        this.p0Rows = (solver == Solver.SPLIT) ? this.Nt : 2 * this.Nt;
 
         this.rateZeroThreshold = rateZeroThreshold;
         this.jLamZero = Na + 1;
 
         int totalNodes = tree.getNodeCount();
-        int Nt2 = 2 * this.Nt;
 
         this.branchTopL = new double[totalNodes][Na + 1];
         this.storedBranchTopL = new double[totalNodes][Na + 1];
 
-        this.p0Grid = new double[Nt2 + 1][Na + 1];
-        this.storedP0Grid = new double[Nt2 + 1][Na + 1];
+        this.p0Grid = new double[p0Rows + 1][Na + 1];
+        this.storedP0Grid = new double[p0Rows + 1][Na + 1];
         this.p0Curr = new double[Na + 1];
         this.p0Next = new double[Na + 1];
 
@@ -306,6 +358,10 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         this.storedSScale = new double[numEpochs];
         this.epBounds = new double[numBoundaries];
         this.storedEpBounds = new double[numBoundaries];
+        if (solver == Solver.SPLIT && symmetric) {
+            this.eAlphaDt = new double[numEpochs][Na + 1];
+            this.storedEAlphaDt = new double[numEpochs][Na + 1];
+        }
 
         this.nodeLogScale = new double[totalNodes];
         this.storedNodeLogScale = new double[totalNodes];
@@ -373,6 +429,15 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         }
 
         NaTrunc = Math.min(Na, Math.max(10, Math.min(jLamZero, Na)));
+
+        if (eAlphaDt != null) {
+            for (int k = 0; k < numEpochs; k++) {
+                double[] e = eAlphaDt[k];
+                for (int j = 0; j <= NaTrunc; j++) {
+                    e[j] = Math.exp(-(bScale[k] * birthHaz[k][j] + dScale[k] * deathHaz[k][j] + sScale[k]) * dt);
+                }
+            }
+        }
     }
 
     /*
@@ -396,9 +461,8 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         }
         double psi = sScale[epoch];
         psiCurrPool[worker] = psi;
-        // Worst-case reaction rate this epoch, used by solveL/solveP0 to guard against explicit
-        // RK4 instability: a step of size h is only trustworthy while h*rate stays within the
-        // scheme's stability region -- see RK4_STABLE_HR.
+        // Worst-case reaction rate this epoch, used by the RK4 solver to choose the number of
+        // substeps per grid step -- see RK4_SUBSTEP_HR.
         maxRatePool[worker] = maxLam + maxMu + psi;
     }
 
@@ -454,6 +518,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
      * Forward-solve p0 with half sized steps dt05. Boundary p0(0, a) = 1 - rho.
      */
     private boolean solveP0() {
+        if (solver == Solver.SPLIT) return solveP0Split();
         final double rho = extantSamplingProb.getParameterValue(0);
         final double p0Init = 1.0 - rho;
         Arrays.fill(p0Curr, 0, NaTrunc + 1, p0Init);
@@ -472,33 +537,296 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             if (epoch < numBoundaries && epBounds[epoch] < tNext) {
                 double boundary = epBounds[epoch];
                 if (boundary - t > EPS) {
-                    if ((boundary - t) * maxRatePool[worker] > RK4_STABLE_HR) return false;
-                    rk4.step(t, boundary - t, p0Curr, p0Next, NaTrunc + 1, rhs);
-                    double[] sw = p0Curr; p0Curr = p0Next; p0Next = sw;
-                    clampUnit(p0Curr);
+                    stepP0RK4(worker, rk4, rhs, t, boundary - t);
                     t = boundary;
                 }
                 epoch++;
                 currentRates(worker, epoch);
             }
 
-            if ((tNext - t) * maxRatePool[worker] > RK4_STABLE_HR) return false;
-            rk4.step(t, tNext - t, p0Curr, p0Next, NaTrunc + 1, rhs);
-            double[] sw = p0Curr; p0Curr = p0Next; p0Next = sw;
-            clampUnit(p0Curr);
+            stepP0RK4(worker, rk4, rhs, t, tNext - t);
             t = tNext;
             System.arraycopy(p0Curr, 0, p0Grid[i], 0, NaTrunc + 1);
         }
         return true;
     }
 
+    /* Number of equal RK4 substeps needed for a step of size h against the worker's max rate. */
+    private int numSubsteps(int worker, double h) {
+        double hr = h * maxRatePool[worker];
+        return (hr <= RK4_SUBSTEP_HR) ? 1 : (int) Math.ceil(hr / RK4_SUBSTEP_HR);
+    }
+
+    /* Advance p0Curr by h with adaptive RK4 substepping (swaps p0Curr/p0Next). */
+    private void stepP0RK4(int worker, RungeKutta rk4, RungeKutta.RhsFunction rhs, double t, double h) {
+        int n = numSubsteps(worker, h);
+        double hs = h / n;
+        for (int k = 0; k < n; k++) {
+            rk4.step(t + k * hs, hs, p0Curr, p0Next, NaTrunc + 1, rhs);
+            double[] sw = p0Curr; p0Curr = p0Next; p0Next = sw;
+            clampUnit(p0Curr);
+        }
+    }
+
+    //===============
+    // Split solver
+    //===============
+
+    /*
+     * Exact aging step along characteristics, in place: x[j] <- x(a_j + h). Reads only indices
+     * >= j, so ascending in-place evaluation is safe. Full steps (h a multiple of da) are pure
+     * index shifts; partial steps use positivity-preserving linear interpolation. Beyond the top
+     * of the grid the last value is held (constant extrapolation).
+     */
+    private void shiftAge(double[] x, double h) {
+        final int top = NaTrunc;
+        double s = h / da;
+        int m = (int) Math.floor(s + 1e-9);
+        double f = s - m;
+        if (f < 1e-9) f = 0.0;
+        if (m == 0 && f == 0.0) return;
+        final double g = 1.0 - f;
+        for (int j = 0; j <= top; j++) {
+            int k = j + m;
+            if (k >= top) {
+                x[j] = x[top];
+            } else if (f == 0.0) {
+                x[j] = x[k];
+            } else {
+                x[j] = g * x[k] + f * x[k + 1];
+            }
+        }
+    }
+
+    /*
+     * Frozen-coefficient reaction step for L over duration h with p0 evaluated at p0Mid:
+     *     dL_j/dt = -alpha_j L_j + u_j L_0
+     * where the coupling runs only through L_0, so L_0(s) = L_0 exp(-kappa0 s) with
+     * kappa0 = alpha_0 - u_0, and each L_j has the closed form
+     *     L_j(h) = e^{-alpha_j h} L_j + u_j L_0 (e^{-kappa0 h} - e^{-alpha_j h}) / (alpha_j - kappa0).
+     * The quotient is evaluated via expm1 near a vanishing denominator (limit h e^{-alpha_j h}).
+     * Nonnegativity is preserved: every term is a product of nonnegative factors.
+     */
+    private void LReactSplit(int worker, double[] L, double[] p0Mid, double h, double[] eACache) {
+        double[] lamCurr = lamCurrPool[worker];
+        double[] muCurr = muCurrPool[worker];
+        final double psi = psiCurrPool[worker];
+        final double p0_0 = p0Mid[0];
+        final double x0 = L[0];
+
+        final double lam0 = lamCurr[0];
+        final double alpha0, u0;
+        if (symmetric) {
+            alpha0 = lam0 + muCurr[0] + psi;
+            u0 = 2.0 * lam0 * p0_0;
+        } else {
+            alpha0 = lam0 + muCurr[0] + psi - lam0 * p0_0;
+            u0 = lam0 * p0_0;
+        }
+        final double kappa0 = alpha0 - u0;
+        final double eK = Math.exp(-kappa0 * h);
+
+        for (int j = 0; j <= NaTrunc; j++) {
+            double lam = lamCurr[j];
+            double alpha, u;
+            if (symmetric) {
+                alpha = lam + muCurr[j] + psi;
+                u = 2.0 * lam * p0_0;
+            } else {
+                alpha = lam + muCurr[j] + psi - lam * p0_0;
+                u = lam * p0Mid[j];
+            }
+            double eA = (eACache != null) ? eACache[j] : Math.exp(-alpha * h);
+            double d = alpha - kappa0;
+            double dh = d * h;
+            double q;   // (e^{-kappa0 h} - e^{-alpha h}) / (alpha - kappa0), >= 0
+            if (Math.abs(dh) < 1.0) {
+                q = (dh == 0.0) ? h * eA : eA * Math.expm1(dh) / d;
+            } else {
+                q = (eK - eA) / d;
+            }
+            L[j] = eA * L[j] + u * x0 * q;
+        }
+    }
+
+    /*
+     * Exact solution at time s of the constant-coefficient Riccati equation governing the
+     * age-0 survival component during a reaction step,
+     *     dp/ds = mu0 + lam0 p^2 - r0 p,   r0 = lam0 + mu0 + psi,   p(0) = pBar.
+     * Roots pm <= 1 <= pp of the quadratic (real since disc >= (lam0 - mu0)^2), delta = sqrt(disc):
+     *     (p - pm)/(p - pp) = C e^{-delta s},  C = (pBar - pm)/(pBar - pp).
+     */
+    private static double riccatiP0(double pBar, double lam0, double mu0, double r0, double s) {
+        if (lam0 <= 0.0) {
+            // Linear: dp/ds = mu0 - r0 p
+            if (r0 <= 0.0) return pBar;
+            double e = Math.exp(-r0 * s);
+            return pBar * e + (mu0 / r0) * (1.0 - e);
+        }
+        double disc = r0 * r0 - 4.0 * lam0 * mu0;
+        if (disc < 0.0) disc = 0.0;
+        double delta = Math.sqrt(disc);
+        double pm = (r0 - delta) / (2.0 * lam0);
+        if (delta * s < 1e-8) {
+            // Double root: dp/ds = lam0 (p - pm)^2
+            double d = pBar - pm;
+            return pm + d / (1.0 - lam0 * d * s);
+        }
+        double pp = (r0 + delta) / (2.0 * lam0);
+        double c = (pBar - pm) / (pBar - pp);
+        double ce = c * Math.exp(-delta * s);
+        return (pm - pp * ce) / (1.0 - ce);
+    }
+
+    /*
+     * Reaction step for p0 over duration h (between the two Strang half-shifts). The age-0
+     * component obeys a closed-form Riccati equation; every other age then obeys a scalar
+     * linear ODE dp_j/ds = A_j(s) - B_j(s) p_j with A_j, B_j >= 0 depending on s only through
+     * p0(s,0), integrated with the exponential midpoint rule
+     *     p_j(h) = e^{-B h} p_j + (A/B)(1 - e^{-B h}),   A, B at s = h/2,
+     * which is second order, unconditionally stable and maps [0,1] into [0,1] since A <= B.
+     */
+    private void p0ReactSplit(int worker, double[] p0, double h) {
+        double[] lamCurr = lamCurrPool[worker];
+        double[] muCurr = muCurrPool[worker];
+        final double psi = psiCurrPool[worker];
+
+        final double lam0 = lamCurr[0];
+        final double mu0 = muCurr[0];
+        final double r0 = lam0 + mu0 + psi;
+        final double pBar = p0[0];
+        final double x0Mid = riccatiP0(pBar, lam0, mu0, r0, 0.5 * h);
+        p0[0] = riccatiP0(pBar, lam0, mu0, r0, h);
+
+        if (symmetric) {
+            final double x0sq = x0Mid * x0Mid;
+            for (int j = 1; j <= NaTrunc; j++) {
+                double lam = lamCurr[j];
+                double mu = muCurr[j];
+                double A = mu + lam * x0sq;
+                double B = lam + mu + psi;
+                p0[j] = expMidpoint(p0[j], A, B, h);
+            }
+        } else {
+            final double surv0 = 1.0 - x0Mid;
+            for (int j = 1; j <= NaTrunc; j++) {
+                double lam = lamCurr[j];
+                double mu = muCurr[j];
+                double B = mu + psi + lam * surv0;
+                p0[j] = expMidpoint(p0[j], mu, B, h);
+            }
+        }
+        clampUnit(p0);
+    }
+
+    /* Solution at h of dp/ds = A - B p from p, with constant A, B >= 0. */
+    private static double expMidpoint(double p, double A, double B, double h) {
+        double bh = B * h;
+        if (bh < 1e-8) return p + (A - B * p) * h;
+        double e = Math.exp(-bh);
+        return p * e + (A / B) * (1.0 - e);
+    }
+
+    /*
+     * Forward-solve p0 on the full-step grid (spacing dt = 2*da) with the split scheme. Boundary
+     * p0(0, a) = 1 - rho. Never fails: the scheme has no stability restriction.
+     */
+    private boolean solveP0Split() {
+        final double rho = extantSamplingProb.getParameterValue(0);
+        final double p0Init = 1.0 - rho;
+        Arrays.fill(p0Curr, 0, NaTrunc + 1, p0Init);
+        Arrays.fill(p0Grid[0], 0, NaTrunc + 1, p0Init);
+
+        final int worker = 0;
+        int epoch = 0;
+        currentRates(worker, epoch);
+        double t = 0.0;
+
+        for (int i = 1; i <= p0Rows; i++) {
+            double tNext = i * p0Step;
+
+            if (epoch < numBoundaries && epBounds[epoch] < tNext) {
+                double boundary = epBounds[epoch];
+                if (boundary - t > EPS) {
+                    p0StepSplit(worker, p0Curr, boundary - t);
+                    t = boundary;
+                }
+                epoch++;
+                currentRates(worker, epoch);
+            }
+
+            if (tNext - t > EPS) {
+                p0StepSplit(worker, p0Curr, tNext - t);
+                t = tNext;
+            }
+            System.arraycopy(p0Curr, 0, p0Grid[i], 0, NaTrunc + 1);
+        }
+        return true;
+    }
+
+    /* One Strang step for p0 over duration h: half shift, reaction, half shift. */
+    private void p0StepSplit(int worker, double[] p0, double h) {
+        shiftAge(p0, 0.5 * h);
+        p0ReactSplit(worker, p0, h);
+        shiftAge(p0, 0.5 * h);
+    }
+
+    /*
+     * One Strang step for L from height t to t + h: half shift, reaction with rates of the
+     * current epoch and p0 at the step's midpoint time, half shift.
+     */
+    private void LStepSplit(int worker, double[] L, double t, double h, int epoch) {
+        double[] p0Buf = p0BufPool[worker];
+        double[] eACache = (eAlphaDt != null && Math.abs(h - dt) < EPS) ? eAlphaDt[epoch] : null;
+        shiftAge(L, 0.5 * h);
+        p0Inter(t + 0.5 * h, p0Buf);
+        LReactSplit(worker, L, p0Buf, h, eACache);
+        shiftAge(L, 0.5 * h);
+    }
+
+    /*
+     * Split-scheme counterpart of solveL: same stepping structure (full grid steps, partial
+     * steps at the branch ends and at epoch boundaries), no stability guard. Adjacent
+     * half-shifts of consecutive full steps are not merged; the shift is cheap relative to the
+     * exp-heavy reaction.
+     */
+    private void solveLSplit(int worker, double[] L, double startTime, double endTime) {
+        double t = startTime;
+        int epoch = getEpochIndex(t);
+        currentRates(worker, epoch);
+
+        int firstIdx = (int) Math.floor(t / dt) + 1;
+        int lastIdx = (int) Math.floor(endTime / dt);
+
+        for (int i = firstIdx; i <= lastIdx + 1; i++) {
+            double tNext = (i <= lastIdx) ? i * dt : endTime;
+
+            if (epoch < numBoundaries && epBounds[epoch] < tNext) {
+                double boundary = epBounds[epoch];
+                if (boundary - t > EPS) {
+                    LStepSplit(worker, L, t, boundary - t, epoch);
+                    if (!rescaleL(worker, L)) { L[0] = Double.NaN; return; }
+                    t = boundary;
+                }
+                epoch++;
+                currentRates(worker, epoch);
+            }
+
+            if (tNext - t > EPS) {
+                LStepSplit(worker, L, t, tNext - t, epoch);
+                if (!rescaleL(worker, L)) { L[0] = Double.NaN; return; }
+                t = tNext;
+            }
+        }
+    }
+
     /*
      * Catmull-Rom interpolation of p0 with linear fallback near the boundaries.
      */
     private void p0Inter(double t, double[] result) {
-        double idx = t / dt05;
+        double idx = t / p0Step;
         int lo = (int) Math.floor(idx);
-        int last = 2 * Nt;
+        int last = p0Rows;
         if (lo < 0) lo = 0;
         if (lo >= last) {
             System.arraycopy(p0Grid[last], 0, result, 0, NaTrunc + 1);
@@ -585,6 +913,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
 
     private void solveL(int worker, double[] L, double startTime, double endTime) {
         if (endTime - startTime < EPS) return;
+        if (solver == Solver.SPLIT) { solveLSplit(worker, L, startTime, endTime); return; }
         if (DIAG3) System.err.println("solveL-START worker=" + worker + " startTime=" + startTime
                 + " endTime=" + endTime + " L0=" + L[0] + " " + argmaxStr(L));
 
@@ -597,7 +926,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         };
 
         RungeKutta.RhsFunction rhsGrid = (t, y, dydt) -> {
-            int idx = (int) Math.round(t / dt05);
+            int idx = (int) Math.round(t / p0Step);
             LRhs(worker, y, p0Grid[idx], dydt);
         };
 
@@ -615,8 +944,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             if (epoch < numBoundaries && epBounds[epoch] < tNext) {
                 double boundary = epBounds[epoch];
                 if (boundary - t > EPS) {
-                    if ((boundary - t) * maxRatePool[worker] > RK4_STABLE_HR) { L[0] = Double.NaN; return; }
-                    rk4.step(t, boundary - t, L, L, NaTrunc + 1, rhsInterp);
+                    stepLRK4(worker, rk4, rhsInterp, t, boundary - t, L);
                     clampNonNeg(L);
                     if (!rescaleL(worker, L)) { L[0] = Double.NaN; return; }
                     t = boundary;
@@ -631,8 +959,13 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             if (tNext - t > EPS) {
                 boolean nextOnGrid = (i <= lastIdx);
                 boolean stepOnGrid = tOnGrid && nextOnGrid && Math.abs((tNext - t) - dt) < EPS;
-                if ((tNext - t) * maxRatePool[worker] > RK4_STABLE_HR) { L[0] = Double.NaN; return; }
-                rk4.step(t, tNext - t, L, L, NaTrunc + 1, stepOnGrid ? rhsGrid : rhsInterp);
+                int n = numSubsteps(worker, tNext - t);
+                if (n == 1) {
+                    rk4.step(t, tNext - t, L, L, NaTrunc + 1, stepOnGrid ? rhsGrid : rhsInterp);
+                } else {
+                    // Substeps evaluate p0 off the half-step grid, so always interpolate.
+                    stepLRK4(worker, rk4, rhsInterp, t, tNext - t, L);
+                }
                 clampNonNeg(L);
                 if (!rescaleL(worker, L)) { L[0] = Double.NaN; return; }
                 t = tNext;
@@ -640,6 +973,15 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 if (DIAG3) System.err.println("solveL-step t=" + t + " L0=" + L[0]
                         + " logScale=" + logScalePool[worker] + " " + argmaxStr(L));
             }
+        }
+    }
+
+    /* Advance L in place by h with adaptive RK4 substepping. */
+    private void stepLRK4(int worker, RungeKutta rk4, RungeKutta.RhsFunction rhs, double t, double h, double[] L) {
+        int n = numSubsteps(worker, h);
+        double hs = h / n;
+        for (int k = 0; k < n; k++) {
+            rk4.step(t + k * hs, hs, L, L, NaTrunc + 1, rhs);
         }
     }
 
@@ -770,8 +1112,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             rateStateDirty = true;
             parametersDirty = false;
             if (!p0Ok) {
-                if (DIAG_INF) System.err.println("ABD -Inf [p0RK4Unstable]: h*rate exceeded "
-                        + "stability bound during solveP0");
+                if (DIAG_INF) System.err.println("ABD -Inf [p0Solve]: p0 solve failed");
                 return Double.NEGATIVE_INFINITY;
             }
         }
@@ -928,7 +1269,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 return Double.NEGATIVE_INFINITY;
             }
 
-            double p0Origin = p0Grid[2 * Nt][0];
+            double p0Origin = p0Grid[p0Rows][0];
             if (!Double.isFinite(p0Origin) || p0Origin >= MAX_P0_ROOT) {
                 if (DIAG_INF) System.err.println("ABD -Inf [p0Origin]: p0Origin=" + p0Origin);
                 return Double.NEGATIVE_INFINITY;
@@ -1142,13 +1483,14 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
         storedNaTrunc = NaTrunc;
 
         if (storedStateDirty || rateStateDirty) {
-            int totalCols = 2 * Nt + 1;
+            int totalCols = p0Rows + 1;
             for (int i = 0; i < totalCols; i++) {
                 System.arraycopy(p0Grid[i], 0, storedP0Grid[i], 0, NaTrunc + 1);
             }
             for (int k = 0; k < numEpochs; k++) {
                 System.arraycopy(birthHaz[k], 0, storedBirthHaz[k], 0, Na + 1);
                 System.arraycopy(deathHaz[k], 0, storedDeathHaz[k], 0, Na + 1);
+                if (eAlphaDt != null) System.arraycopy(eAlphaDt[k], 0, storedEAlphaDt[k], 0, Na + 1);
             }
             System.arraycopy(bScale, 0, storedBScale, 0, bScale.length);
             System.arraycopy(dScale, 0, storedDScale, 0, dScale.length);
@@ -1190,6 +1532,7 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
             tmp2D = p0Grid; p0Grid = storedP0Grid; storedP0Grid = tmp2D;
             tmp2D = birthHaz; birthHaz = storedBirthHaz; storedBirthHaz = tmp2D;
             tmp2D = deathHaz; deathHaz = storedDeathHaz; storedDeathHaz = tmp2D;
+            tmp2D = eAlphaDt; eAlphaDt = storedEAlphaDt; storedEAlphaDt = tmp2D;
             tmpD = bScale; bScale = storedBScale; storedBScale = tmpD;
             tmpD = dScale; dScale = storedDScale; storedDScale = tmpD;
             tmpD = sScale; sScale = storedSScale; storedSScale = tmpD;
@@ -1222,7 +1565,8 @@ public class AgeDependentBirthDeathPDEModel extends AbstractModelLikelihood impl
                 + ", jLamZero=" + jLamZero
                 + ", numThreads=" + numThreads
                 + ", rho=" + extantSamplingProb.getParameterValue(0)
-                + ", p0Origin=" + p0Grid[2 * Nt][0] + ")\n";
+                + ", solver=" + solver
+                + ", p0Origin=" + p0Grid[p0Rows][0] + ")\n";
     }
 
     public String toString() {

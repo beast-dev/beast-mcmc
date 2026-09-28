@@ -24,6 +24,7 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
     private static final String ROOT_AGE = "rootAge";
     private static final String RATE_ZERO_THRESHOLD = "rateZeroThreshold";
     private static final String NUM_THREADS = "numThreads";
+    private static final String SOLVER = "solver";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -67,6 +68,14 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
         }
         double rateZeroThreshold = xo.getAttribute(RATE_ZERO_THRESHOLD, 1e-12);
         int numThreads = xo.getAttribute(NUM_THREADS, 1);
+        String solverStr = xo.getAttribute(SOLVER, "rk4");
+        AgeDependentBirthDeathPDEModel.Solver solver;
+        try {
+            solver = AgeDependentBirthDeathPDEModel.Solver.valueOf(solverStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(SOLVER + " must be one of 'rk4' or 'split', got '"
+                    + solverStr + "'");
+        }
 
         Parameter rootAge = null;
         if (xo.hasChildNamed(ROOT_AGE)) {
@@ -123,7 +132,8 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
                 conditionAt,
                 rootAge,
                 rateZeroThreshold,
-                numThreads
+                numThreads,
+                solver
         );
     }
 
@@ -137,8 +147,11 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
     }
 
     public String getParserDescription() {
-        return "Age-dependent birth-death model solved via Method of Lines (PDE formulation) " +
-               "with fixed-step RK4 time stepping, with a piecewise-constant serial sampling " +
+        return "Age-dependent birth-death model solved as a PDE, either via Method of Lines " +
+               "with fixed-step RK4 time stepping (solver=\"rk4\", default) or via characteristic " +
+               "operator splitting with an exact aging shift and closed-form/implicit reaction " +
+               "steps (solver=\"split\", unconditionally stable, timeStep ignored: dt = ageStep), " +
+               "with a piecewise-constant serial sampling " +
                "rate psi(t) and an extant sampling probability rho. Omitting both sampling " +
                "specifications gives psi = 0 and rho = 1, i.e. the ultrametric process.";
     }
@@ -184,5 +197,6 @@ public class AgeDependentBirthDeathPDEModelParser extends AbstractXMLObjectParse
             }, true),
             AttributeRule.newDoubleRule(RATE_ZERO_THRESHOLD, true),
             AttributeRule.newIntegerRule(NUM_THREADS, true),
+            AttributeRule.newStringRule(SOLVER, true),
     };
 }

@@ -109,6 +109,15 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     private boolean uncertainSites = false;
 
     /**
+     * A hash of the patterns added so far to their index in the patterns array. This is
+     * used to look up matching patterns when compressing rather than doing a linear scan
+     * of all the patterns added so far (which is O(N^2) in the number of unique patterns
+     * and becomes prohibitive for alignments with many variable sites). It is only
+     * populated while the patterns are being added.
+     */
+    private Map<PatternKey, Integer> patternIndices = null;
+
+    /**
      * Constructor
      */
     public SitePatterns(Alignment alignment) {
@@ -247,6 +256,8 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         patternCount = 0;
 
+        patternIndices = (compression != UNCOMPRESSED ? new HashMap<PatternKey, Integer>() : null);
+
         patterns = new int[siteCount][];
 
         sitePatternIndices = new int[siteCount];
@@ -324,6 +335,9 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         }
 
 
+        // the indices are only valid while patterns are being added
+        patternIndices = null;
+
         if (compression != UNCOMPRESSED && compression != UNIQUE_ONLY) {
 //            sortPatternsByWeight();
             compressAmbiguousPatterns(compression == AMBIGUOUS_CONSTANT, ambiguityThreshold);
@@ -361,13 +375,15 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         if (compression != UNCOMPRESSED) {
             // this will compress unique patterns, further compression of ambiguously similar
             // patterns is done in a later step
-            for (int i = 0; i < patternCount; i++) {
-                if (comparePatterns(patterns[i], pattern, false)) {
-                    patterns[i] = pattern;
-                    weights[i] += weight;
-                    return i;
-                }
+            PatternKey key = new PatternKey(pattern);
+            Integer match = patternIndices.get(key);
+            if (match != null) {
+                int i = match;
+                patterns[i] = pattern;
+                weights[i] += weight;
+                return i;
             }
+            patternIndices.put(key, patternCount);
         }
 
         // new pattern - add it
@@ -560,6 +576,34 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             }
         }
         return count;
+    }
+
+    /**
+     * Wraps a pattern so that it can be used as a key in a hash map. Equality is the same
+     * exact match as comparePatterns(pattern1, pattern2, false).
+     */
+    private static final class PatternKey {
+        private final int[] pattern;
+        private final int hashCode;
+
+        PatternKey(int[] pattern) {
+            this.pattern = pattern;
+            this.hashCode = Arrays.hashCode(pattern);
+        }
+
+        public int hashCode() {
+            return hashCode;
+        }
+
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof PatternKey)) {
+                return false;
+            }
+            return Arrays.equals(pattern, ((PatternKey) obj).pattern);
+        }
     }
 
     /**

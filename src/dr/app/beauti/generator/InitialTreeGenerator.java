@@ -110,11 +110,7 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 String simulatorId = prefix + STARTING_TREE;
 
-                String taxaId = TaxaParser.TAXA;
-                AbstractPartitionData partition = options.getDataPartitions(model).get(0);
-                if (!options.hasIdenticalTaxa()) {
-                    taxaId = partition.getPartitionTreeModel().getPrefix() + TaxaParser.TAXA;
-                }
+                String taxaId = model.getTaxaId();
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
                 if (options.taxonSets != null && options.taxonSets.size() > 0) {

@@ -336,6 +336,13 @@ public class BeastGenerator extends Generator {
 
             writer.writeText("");
 
+            // partitions with different taxa have separate trees, each needing its own taxon list
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                if (!model.getTaxaId().equals(TaxaParser.TAXA)) {
+                    writeTreeTaxa(model, writer);
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace(System.err);
             throw new GeneratorException("Taxon list generation has failed:\n" + e.getMessage());
@@ -713,6 +720,27 @@ public class BeastGenerator extends Generator {
 
         if (hasDate || hasAttr) writer.writeCloseTag(TaxonParser.TAXON);
 
+    }
+
+    private void writeTreeTaxa(PartitionTreeModel model, XMLWriter writer) {
+        Taxa taxa = new Taxa();
+        for (AbstractPartitionData partition : options.getDataPartitions(model)) {
+            if (partition.getTaxonList() != null) {
+                for (Taxon taxon : partition.getTaxonList()) {
+                    if (!taxa.contains(taxon)) {
+                        taxa.addTaxon(taxon);
+                    }
+                }
+            }
+        }
+
+        writer.writeComment("The taxa in tree " + model.getName(), "ntax=" + taxa.getTaxonCount());
+        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getTaxaId())});
+        for (Taxon taxon : taxa) {
+            writer.writeIDref(TaxonParser.TAXON, taxon.getId());
+        }
+        writer.writeCloseTag(TaxaParser.TAXA);
+        writer.writeText("");
     }
 
     /**

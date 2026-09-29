@@ -575,13 +575,7 @@ public class TreePriorGenerator extends Generator {
                                 });
                         writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
 
-                        String taxaId;
-                        if (options.hasIdenticalTaxa()) {
-                            taxaId = TaxaParser.TAXA;
-                        } else {
-                            taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
-                        }
-                        writer.writeIDref(TaxaParser.TAXA, taxaId);
+                        writer.writeIDref(TaxaParser.TAXA, model.getTaxaId());
 
                         writeDistribution(model.getParameter("treeModel.rootHeight"), true, writer);
 

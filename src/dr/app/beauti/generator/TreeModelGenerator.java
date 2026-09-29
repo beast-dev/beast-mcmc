@@ -99,7 +99,7 @@ public class TreeModelGenerator extends Generator {
                         new Attribute.Default<>(EmpiricalTreeDistributionModelParser.FILE_NAME, model.getEmpiricalTreesFilename())
                 }, false);
 
-        writer.writeIDref(TaxaParser.TAXA, "taxa"); // @todo - get the actual taxon set for the partition
+        writer.writeIDref(TaxaParser.TAXA, model.getTaxaId());
         writer.writeCloseTag(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL);
 
         writer.writeComment("Statistic to give the current empirical tree");

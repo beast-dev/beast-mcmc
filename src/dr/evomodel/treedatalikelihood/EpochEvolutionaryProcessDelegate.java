@@ -48,11 +48,4 @@ public interface EpochEvolutionaryProcessDelegate extends EvolutionaryProcessDel
      * transition matrix of every original and augmented node
      */
     AugmentedNodeRegistry getAugmentedNodeRegistry();
-
-    /**
-     * @return the index of a transition matrix that is the identity, which lets a degree-2 node be computed
-     * as a node with two children where the second child contributes nothing. The matrix is set by
-     * the first call of updateTransitionMatrices().
-     */
-    int getIdentityMatrixIndex();
 }

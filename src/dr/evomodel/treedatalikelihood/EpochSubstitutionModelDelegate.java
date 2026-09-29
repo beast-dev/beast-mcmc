@@ -44,10 +44,6 @@ import java.util.List;
  * <p>
  * The matrix buffers cover the original nodes and the augmented nodes. The epoch of the matrix of a node is looked
  * up in the AugmentedNodeRegistry, which the traversal fills.
- * <p>
- * One further matrix buffer provides an identity matrix. A branch length of zero makes every eigenvalue term
- * exp(0 t) = 1, and so gives the identity, with any eigen decomposition, in the standard and in the spectral
- * representation.
  *
  * @author Marc A Suchard
  */
@@ -64,9 +60,6 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
 
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
-
-    private final int identityMatrixIndex;
-    private boolean identityMatrixSet = false;
 
     /**
      * @param tree              the tree
@@ -107,9 +100,8 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
         // two eigen buffers for each decomposition for store and restore
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 
-        // two matrices for each original and augmented node for store and restore, then the identity
+        // two matrices for each original and augmented node for store and restore
         matrixBufferHelper = new BufferIndexHelper(registry.getTotalNodeCount(), 0);
-        identityMatrixIndex = matrixBufferHelper.getBufferCount();
     }
 
     @Override
@@ -132,11 +124,6 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
     }
 
     @Override
-    public int getIdentityMatrixIndex() {
-        return identityMatrixIndex;
-    }
-
-    @Override
     public boolean canReturnComplexDiagonalization() {
         for (SubstitutionModel model : substitutionModelList) {
             if (model.canReturnComplexDiagonalization()) {
@@ -153,7 +140,7 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
 
     @Override
     public int getMatrixBufferCount() {
-        return identityMatrixIndex + 1;
+        return matrixBufferHelper.getBufferCount();
     }
 
     /**
@@ -272,30 +259,11 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
     }
 
     /**
-     * The identity does not depend on the category rates, but BEAGLE needs them to have been set before it updates
-     * any matrix, which is after updateSubstitutionModels() has been called for the first time.
-     */
-    private void setIdentityMatrix(Beagle beagle) {
-        beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(0),
-                new int[]{identityMatrixIndex},
-                null, // firstDerivativeIndices
-                null, // secondDerivativeIndices
-                new double[]{0.0},
-                1);
-
-        identityMatrixSet = true;
-    }
-
-    /**
      * @param branchIndices original and augmented nodes whose matrices to update
      */
     @Override
     public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLengths, int updateCount,
                                          boolean flipBuffers) {
-
-        if (!identityMatrixSet) {
-            setIdentityMatrix(beagle);
-        }
 
         final int[] counts = new int[eigenCount];
         for (int i = 0; i < updateCount; i++) {

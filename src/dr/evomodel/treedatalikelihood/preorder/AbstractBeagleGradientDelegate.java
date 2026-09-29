@@ -274,21 +274,16 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     }
 
     /**
-     * A degree-2 node has no sibling. As for the post-order operations, the sibling is Beagle.NONE where BEAGLE
-     * supports single-child operations, and otherwise a buffer of ones with the identity matrix.
+     * A degree-2 node has no sibling. As for the post-order operations, the sibling is Beagle.NONE.
      */
     private int getSiblingPartialIndex(NodeOperation operation) {
-        if (operation.getRightChild() == NodeOperation.NO_CHILD) {
-            return likelihoodDelegate.usesNativeDegree2() ? Beagle.NONE : likelihoodDelegate.getDegree2PartialsIndex();
-        }
-        return getPostOrderPartialIndex(operation.getRightChild());
+        return (operation.getRightChild() == NodeOperation.NO_CHILD) ?
+                Beagle.NONE : getPostOrderPartialIndex(operation.getRightChild());
     }
 
     private int getSiblingMatrixIndex(NodeOperation operation) {
-        if (operation.getRightChild() == NodeOperation.NO_CHILD) {
-            return likelihoodDelegate.usesNativeDegree2() ? Beagle.NONE : epochProcessDelegate.getIdentityMatrixIndex();
-        }
-        return evolutionaryProcessDelegate.getMatrixIndex(operation.getRightChild());
+        return (operation.getRightChild() == NodeOperation.NO_CHILD) ?
+                Beagle.NONE : evolutionaryProcessDelegate.getMatrixIndex(operation.getRightChild());
     }
 
     private int vectorizeNodeOperationsTop(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {

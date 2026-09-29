@@ -28,7 +28,6 @@
 package test.dr.evomodel.treedatalikelihood;
 
 import beagle.BeagleFlag;
-import beagle.BeagleInfo;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
@@ -92,51 +91,19 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
     }
 
     /**
-     * BEAGLE's CPU implementations take Beagle.NONE as the second child of a degree-2 node from BEAGLE 4.1.1; other
-     * implementations and older versions get a buffer of ones with the identity matrix
+     * Degree-2 nodes have Beagle.NONE as the second child, which only BEAGLE's CPU implementations accept, so a CPU
+     * implementation is required even when a GPU is preferred
      */
-    public void testSingleChildOperationsWhenSupported() {
-        Fixture augmented = new Fixture(0, true, PartialsRescalingScheme.NONE, 1);
+    public void testCpuImplementationIsRequired() {
+        Fixture augmented = new Fixture(0, true, PartialsRescalingScheme.NONE, 1, true);
+        Fixture convolved = new Fixture(0, false, PartialsRescalingScheme.NONE, 1);
 
-        final int[] version = BeagleInfo.getVersionNumbers();
-        final int[] required = {4, 1, 1};
-        boolean supported = true;
-        for (int i = 0; i < required.length; ++i) {
-            final int v = (i < version.length) ? version[i] : 0;
-            if (v != required[i]) {
-                supported = v > required[i];
-                break;
-            }
-        }
-        final boolean cpu = (augmented.delegate.getBeagleInstance().getDetails().getFlags() &
-                BeagleFlag.FRAMEWORK_CPU.getMask()) != 0;
+        assertTrue(augmented.delegate.getBeagleInstance().getDetails().toString(),
+                (augmented.delegate.getBeagleInstance().getDetails().getFlags() &
+                        BeagleFlag.FRAMEWORK_CPU.getMask()) != 0);
 
-        assertEquals("BEAGLE " + BeagleInfo.getVersion(), supported && cpu, augmented.delegate.usesNativeDegree2());
-    }
-
-    /**
-     * Without single-child operations, the second child of a degree-2 node is a buffer of ones, which any transition
-     * matrix would leave unchanged, so check that the matrix is the identity itself
-     */
-    public void testIdentityMatrix() {
-        for (int categories : new int[]{1, 4}) {
-            Fixture augmented = new Fixture(0, true, PartialsRescalingScheme.NONE, categories);
-            augmented.likelihood.getLogLikelihood();
-
-            final int identityIndex = ((EpochEvolutionaryProcessDelegate)
-                    augmented.delegate.getEvolutionaryProcessDelegate()).getIdentityMatrixIndex();
-
-            final int stateCount = 4;
-            final double[] matrix = new double[categories * stateCount * stateCount];
-            augmented.delegate.getBeagleInstance().getTransitionMatrix(identityIndex, matrix);
-
-            for (int i = 0; i < matrix.length; ++i) {
-                final int row = (i / stateCount) % stateCount;
-                final int column = i % stateCount;
-                assertEquals("element " + i + " of " + categories + " categories", row == column ? 1.0 : 0.0,
-                        matrix[i], 1E-14);
-            }
-        }
+        assertEquals(convolved.likelihood.getLogLikelihood(), augmented.likelihood.getLogLikelihood(),
+                TOLERANCE * Math.abs(convolved.likelihood.getLogLikelihood()));
     }
 
     /**
@@ -234,8 +201,9 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
         int lastNodeOperationCount;
 
         CountingDelegate(Tree tree, PatternList patternList, BranchModel branchModel,
-                         SiteRateModel siteRateModel, PartialsRescalingScheme scheme, PreOrderSettings settings) {
-            super(tree, patternList, branchModel, siteRateModel, false, false, scheme, false, settings);
+                         SiteRateModel siteRateModel, boolean preferGPU, PartialsRescalingScheme scheme,
+                         PreOrderSettings settings) {
+            super(tree, patternList, branchModel, siteRateModel, false, preferGPU, scheme, false, settings);
         }
 
         @Override
@@ -261,6 +229,10 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
         private final Random proposals;
 
         Fixture(long seed, boolean augment, PartialsRescalingScheme scheme, int categories) {
+            this(seed, augment, scheme, categories, false);
+        }
+
+        Fixture(long seed, boolean augment, PartialsRescalingScheme scheme, int categories, boolean preferGPU) {
             Random random = new Random(seed);
             proposals = new Random(seed + 1000);
 
@@ -295,7 +267,7 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
 
             SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
-            delegate = new CountingDelegate(tree, patterns, branchModel, siteRateModel, scheme,
+            delegate = new CountingDelegate(tree, patterns, branchModel, siteRateModel, preferGPU, scheme,
                     new PreOrderSettings(false, false, false, false, false, false, augment));
 
             likelihood = new TreeDataLikelihood(delegate, tree, new DefaultBranchRateModel());

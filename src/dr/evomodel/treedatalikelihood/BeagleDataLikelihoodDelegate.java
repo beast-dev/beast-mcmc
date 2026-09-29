@@ -190,6 +190,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 throw new IllegalArgumentException("Augmented epoch nodes do not yet support " +
                         "branch infinitesimal derivatives");
             }
+            if (!IS_DEGREE2_SUPPORTED()) {
+                throw new IllegalArgumentException("Augmented epoch nodes require BEAGLE 4.1.1 or later, found " +
+                        BeagleInfo.getVersion());
+            }
 
             // An epoch branch model passes on every change of the tree, because the branches that a substitution
             // model applies to depend on the node heights, and then everything is updated. With degree-2 nodes the
@@ -292,13 +296,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount(settings);
             }
 
-            if (epochDelegate != null) {
-                // one more partials buffer, after the pre-order buffers, holds ones,
-                // the second child of a degree-2 node
-                degree2PartialsIndex = numPartials;
-                ++numPartials;
-            }
-
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
                 resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
@@ -349,6 +346,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             if (requiredOrder.size() > 0) {
                 requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
+            }
+
+            if (epochDelegate != null) {
+                // degree-2 nodes have Beagle.NONE as the second child, which only the CPU implementations accept
+                requirementFlags |= BeagleFlag.FRAMEWORK_CPU.getMask();
             }
 
 
@@ -542,11 +544,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             instanceFlags = instanceDetails.getFlags();
 
-            // BEAGLE's CPU implementations take Beagle.NONE as the second child of a degree-2 node from 4.1.1;
-            // otherwise a buffer of ones with the identity matrix stands in for it
-            nativeDegree2 = epochDelegate != null && (instanceFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0
-                    && IS_DEGREE2_SUPPORTED();
-
             if ((instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0) {
                 if (IS_THREAD_COUNT_COMPATIBLE() && threadCount != 0) {
                     if (threadCount > 0) {
@@ -603,17 +600,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             beagle.setPatternWeights(patternWeights);
 
             if (epochDelegate != null) {
-                if (!nativeDegree2) {
-                    // setPartials, unlike setTipPartials, does not repeat the patterns for each rate category
-                    final double[] ones = new double[categoryCount * patternCount * stateCount];
-                    Arrays.fill(ones, 1.0);
-                    beagle.setPartials(degree2PartialsIndex, ones);
-                }
-
                 logger.info("    Adding degree-2 nodes at the epoch transition times ("
-                        + augmentedNodeCapacity + " extra nodes, "
-                        + (nativeDegree2 ? "single-child operations" : "a buffer of ones as the second child")
-                        + ").");
+                        + augmentedNodeCapacity + " extra nodes).");
             }
 
             String rescaleMessage = "    Using rescaling scheme : " + this.rescalingScheme.getText();
@@ -1231,9 +1219,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     }
 
     /**
-     * Fills in the sources of an operation for a node with a single child (the destination is already set).
-     * The second child is Beagle.NONE where BEAGLE supports single-child operations, and otherwise a buffer of ones
-     * with the identity matrix. Rescaling the children keeps the scale factors valid because propagating along a
+     * Fills in the sources of an operation for a node with a single child (the destination is already set); the
+     * second child is Beagle.NONE. Rescaling the children keeps the scale factors valid because propagating along a
      * segment by a stochastic matrix cannot make partials any smaller.
      */
     private void setDegree2Operation(int k, NodeOperation op) {
@@ -1243,13 +1230,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
         operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
 
-        if (nativeDegree2) {
-            operations[k + 5] = Beagle.NONE; // no source node 2
-            operations[k + 6] = Beagle.NONE;
-        } else {
-            operations[k + 5] = degree2PartialsIndex; // source node 2
-            operations[k + 6] = ((EpochEvolutionaryProcessDelegate) evolutionaryProcessDelegate).getIdentityMatrixIndex();
-        }
+        operations[k + 5] = Beagle.NONE; // no source node 2
+        operations[k + 6] = Beagle.NONE;
     }
 
     @Override
@@ -1314,21 +1296,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         return scaleBufferIndices[nodeNumber - tipCount];
     }
 
-    /**
-     * @return the partials buffer of ones that is the second child of a degree-2 node, or Beagle.NONE if there are
-     * no augmented epoch nodes
-     */
-    public final int getDegree2PartialsIndex() {
-        return degree2PartialsIndex;
-    }
-
-    /**
-     * @return true if the operations of a degree-2 node have Beagle.NONE as the second child, in place of the buffer
-     * of ones and the identity matrix
-     */
-    public final boolean usesNativeDegree2() {
-        return nativeDegree2;
-    }
 
     public final int getPartialBufferCount() {
         return partialBufferHelper.getBufferCount();
@@ -1429,8 +1396,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
     private final int[] operations;
 
-    private int degree2PartialsIndex = Beagle.NONE; // partials of ones, when there are augmented epoch nodes
-    private boolean nativeDegree2 = false; // degree-2 nodes have Beagle.NONE as the second child
     private EpochTimeProvider epochTimeProvider = null; // non-null when there are augmented epoch nodes
 
     private boolean flip = true;

@@ -31,7 +31,10 @@ import beagle.Beagle;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.AugmentedNodeRegistry;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+
+import java.util.Arrays;
 
 /**
  * AbstractBeagleGradientDelegate - interface for a plugin delegate for data simulation on a tree.
@@ -55,6 +58,11 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
     }
     @Override
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
+
+        if (epochProcessDelegate != null) {
+            getSegmentDerivatives(tree, first, second);
+            return;
+        }
 
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
@@ -96,6 +104,83 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
 
         if (DEBUG) {
             checkReduction(first);
+        }
+    }
+
+    /**
+     * With degree-2 nodes at the epoch transition times, a branch is a chain of segments, each in one epoch. The
+     * derivative with respect to the length of a segment uses the infinitesimal matrix of the epoch of the segment.
+     * A branch has one rate, so the derivative with respect to its length is the average of the derivatives of its
+     * segments, weighted by the fraction of the branch that each segment covers. The chain rule of a caller
+     * multiplies by the length of the branch, giving the derivative with respect to the rate of the branch.
+     */
+    private void getSegmentDerivatives(Tree tree, double[] first, double[] second) {
+
+        if (second != null) {
+            throw new UnsupportedOperationException("Second derivatives are not yet supported with augmented " +
+                    "epoch nodes, since the segments of a branch share its rate");
+        }
+
+        if (!substitutionProcessKnown) {
+            cacheDifferentialMassMatrix(tree, false);
+            substitutionProcessKnown = true;
+        }
+
+        final AugmentedNodeRegistry registry = epochProcessDelegate.getAugmentedNodeRegistry();
+
+        int segmentCount = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            if (!tree.isRoot(tree.getNode(nodeNum))) {
+                segmentCount += 1 + registry.getChainLength(nodeNum);
+            }
+        }
+
+        final int[] postBufferIndices = new int[segmentCount];
+        final int[] preBufferIndices = new int[segmentCount];
+        final int[] firstDervIndices = new int[segmentCount];
+        final int[] branch = new int[segmentCount]; // the position of the branch of each segment in first
+        final double[] weight = new double[segmentCount];
+
+        final int[] chain = new int[registry.getBoundaryCount()];
+
+        int s = 0;
+        int u = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            final NodeRef node = tree.getNode(nodeNum);
+            if (!tree.isRoot(node)) {
+
+                final int count = registry.copyChain(nodeNum, chain);
+                final int firstBoundary = registry.getFirstBoundary(nodeNum);
+
+                final double lowestHeight = tree.getNodeHeight(node);
+                final double highestHeight = tree.getNodeHeight(tree.getParent(node));
+
+                for (int j = 0; j <= count; ++j) {
+                    // the segment above the node (j = 0) and above each of its augmented nodes
+                    final int id = (j == 0) ? nodeNum : chain[j - 1];
+                    final double lower = (j == 0) ? lowestHeight : registry.getBoundary(firstBoundary + j - 1);
+                    final double upper = (j == count) ? highestHeight : registry.getBoundary(firstBoundary + j);
+
+                    postBufferIndices[s] = getPostOrderPartialIndex(id);
+                    preBufferIndices[s] = getPreOrderPartialIndex(id);
+                    firstDervIndices[s] = getFirstDerivativeMatrixBufferIndex(id);
+                    branch[s] = u;
+                    weight[s] = (count == 0) ? 1.0 : (upper - lower) / (highestHeight - lowestHeight);
+                    ++s;
+                }
+                u++;
+            }
+        }
+
+        final double[] segmentDerivatives = new double[segmentCount];
+
+        beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
+                firstDervIndices, new int[] { 0 }, segmentCount,
+                null, segmentDerivatives, null);
+
+        Arrays.fill(first, 0.0);
+        for (s = 0; s < segmentCount; ++s) {
+            first[branch[s]] += weight[s] * segmentDerivatives[s];
         }
     }
 

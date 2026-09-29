@@ -40,6 +40,9 @@ public class PreOrderSettings {
 
     boolean useRewardAwareBranchModelDelegate;
 
+    /** add degree-2 nodes at the epoch transition times instead of convolving the matrices of the epochs */
+    boolean useAugmentedEpochNodes;
+
     public PreOrderSettings(boolean usePreOrder,
                             boolean branchRateDerivative,
                             boolean branchInfinitesimalDerivative,
@@ -52,12 +55,24 @@ public class PreOrderSettings {
                             boolean useAmbiguities,
                             boolean useSpectralRepresentation,
                             boolean useRewardAwareBranchModelDelegate) {
+        this(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities,
+                useSpectralRepresentation, useRewardAwareBranchModelDelegate, false);
+    }
+
+    public PreOrderSettings(boolean usePreOrder,
+                            boolean branchRateDerivative,
+                            boolean branchInfinitesimalDerivative,
+                            boolean useAmbiguities,
+                            boolean useSpectralRepresentation,
+                            boolean useRewardAwareBranchModelDelegate,
+                            boolean useAugmentedEpochNodes) {
         this.usePreOrder = usePreOrder;
         this.branchRateDerivative = branchRateDerivative;
         this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
         this.useAmbiguities = useAmbiguities;
         this.useSpectralRepresentation = useSpectralRepresentation;
         this.useRewardAwareBranchModelDelegate = useRewardAwareBranchModelDelegate;
+        this.useAugmentedEpochNodes = useAugmentedEpochNodes;
     }
 
     public static PreOrderSettings getDefault() {

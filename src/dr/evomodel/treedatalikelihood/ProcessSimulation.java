@@ -60,8 +60,19 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         this.tree = treeDataLikelihood.getTree();
 
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
-        treeTraversalDelegate = new SimulationTreeTraversal(tree, branchRateModel,
-                simulationDelegate.getOptimalTraversalType());
+
+        // with an epoch model, the operations also cover the degree-2 nodes at the epoch transition times
+        final EpochEvolutionaryProcessDelegate epochDelegate = simulationDelegate.getEpochProcessDelegate();
+        final int augmentedNodeCapacity;
+        if (epochDelegate == null) {
+            treeTraversalDelegate = new SimulationTreeTraversal(tree, branchRateModel,
+                    simulationDelegate.getOptimalTraversalType());
+            augmentedNodeCapacity = 0;
+        } else {
+            treeTraversalDelegate = new EpochSimulationTreeTraversal(tree, branchRateModel,
+                    simulationDelegate.getOptimalTraversalType(), epochDelegate);
+            augmentedNodeCapacity = epochDelegate.getAugmentedNodeRegistry().getCapacity();
+        }
 
         treeDataLikelihood.addModelListener(this);
         treeDataLikelihood.addModelRestoreListener(this);
@@ -69,7 +80,8 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
 
-        this.operations = new int[tree.getNodeCount() * simulationDelegate.getSingleOperationSize()];
+        this.operations = new int[(tree.getNodeCount() + augmentedNodeCapacity) *
+                simulationDelegate.getSingleOperationSize()];
 
         validSimulation = false;
     }

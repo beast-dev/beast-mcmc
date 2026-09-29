@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.*;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.EpochEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
@@ -64,6 +65,14 @@ public interface ProcessSimulationDelegate extends ProcessOnTreeDelegate, TreeTr
     int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int rootNodeNumber, int[] operations);
 
     int getSingleOperationSize();
+
+    /**
+     * @return the process that changes at epoch transition times, when the operations must include the degree-2
+     * nodes that a traversal adds at the transition times, or null if there are none
+     */
+    default EpochEvolutionaryProcessDelegate getEpochProcessDelegate() {
+        return null;
+    }
 
     abstract class AbstractDelegate implements ProcessSimulationDelegate {
 

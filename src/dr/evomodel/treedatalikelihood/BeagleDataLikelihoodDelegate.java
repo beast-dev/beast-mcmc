@@ -34,8 +34,11 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.TransitionMatrixProviderBranchModel;
+import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel.EpochTimeProvider;
 import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
@@ -164,7 +167,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         }
 
         this.branchModel = branchModel;
-        addModel(this.branchModel);
+        if (!settings.useAugmentedEpochNodes) { // see below
+            addModel(this.branchModel);
+        }
 
         this.siteRateModel = siteRateModel;
         addModel(this.siteRateModel);
@@ -175,12 +180,43 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         tipCount = tree.getExternalNodeCount();
         internalNodeCount = nodeCount - tipCount;
 
-        branchUpdateIndices = new int[nodeCount];
-        branchLengths = new double[nodeCount];
+        // With augmented epoch nodes, degree-2 nodes lie along the branches and need their own buffers
+        EpochSubstitutionModelDelegate epochDelegate = null;
+        if (settings.useAugmentedEpochNodes) {
+            if (!(branchModel instanceof EpochBranchModel)) {
+                throw new IllegalArgumentException("Augmented epoch nodes require an epoch branch model");
+            }
+            if (settings.branchInfinitesimalDerivative) {
+                throw new IllegalArgumentException("Augmented epoch nodes do not yet support " +
+                        "branch infinitesimal derivatives");
+            }
+
+            // An epoch branch model passes on every change of the tree, because the branches that a substitution
+            // model applies to depend on the node heights, and then everything is updated. With degree-2 nodes the
+            // heights only change the branch lengths, which the likelihood already updates where they change.
+            // So, watch the parts of the branch model that matter instead of the branch model.
+            for (SubstitutionModel substitutionModel : branchModel.getSubstitutionModels()) {
+                addModel(substitutionModel);
+            }
+            addModel(branchModel.getRootFrequencyModel());
+
+            // registered as a model so that it is restored when a proposal is rejected
+            epochTimeProvider = new EpochTimeProvider.ParameterWrapper(
+                    ((EpochBranchModel) branchModel).getEpochTimes());
+            addModel(epochTimeProvider);
+
+            epochDelegate = new EpochSubstitutionModelDelegate(tree, branchModel, epochTimeProvider);
+        }
+
+        final int augmentedNodeCapacity = (epochDelegate == null) ? 0 :
+                epochDelegate.getAugmentedNodeRegistry().getCapacity();
+
+        branchUpdateIndices = new int[nodeCount + augmentedNodeCapacity];
+        branchLengths = new double[nodeCount + augmentedNodeCapacity];
         scaleBufferIndices = new int[internalNodeCount];
         storedScaleBufferIndices = new int[internalNodeCount];
 
-        operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
+        operations = new int[(internalNodeCount + augmentedNodeCapacity) * Beagle.OPERATION_TUPLE_SIZE];
 
         firstRescaleAttempt = true;
 
@@ -197,7 +233,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             }
 
             // one partials buffer for each tip and two for each internal node (for store restore)
-            partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
+            partialBufferHelper = new BufferIndexHelper(nodeCount + augmentedNodeCapacity, tipCount);
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
@@ -211,7 +247,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
             }
 
-            if (settings.useRewardAwareBranchModelDelegate) {
+            if (epochDelegate != null) {
+                evolutionaryProcessDelegate = epochDelegate;
+            } else if (settings.useRewardAwareBranchModelDelegate) {
                 evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree,
                         (TransitionMatrixProviderBranchModel) branchModel, 0, extraBufferCount, settings);
             }  else if (settings.branchInfinitesimalDerivative) {
@@ -236,20 +274,29 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
             if (settings.usePreOrder){
-                numPartials += nodeCount;
-                // Reserve two more scale buffers per node (indexed directly by node
+                // (pre-order buffers are also needed for the augmented nodes)
+                numPartials += nodeCount + augmentedNodeCapacity;
+                // Reserve one more scale buffer per node (indexed directly by node
                 // number, not double-buffered/store-restore -- rebuilt fresh every
-                // gradient evaluation): one for that node's own cumulative post-order
-                // scale (its own scale-write plus every rescaled descendant's) and one
-                // for the cumulative pre-order scale already baked into its pre-order
-                // partial. Used by AbstractBeagleGradientDelegate/
-                // SpectralBeagleCrossProductDelegate to correct the adjoint
-                // cross-product gradient for rescaling -- see beagle.h's
-                // beagleCalculateAdjointCrossProductDerivative. A couple of slots
-                // (root's) go unused; the waste is one scale buffer's worth of
-                // memory (O(patternCount) doubles) and not worth avoiding here.
-                numScaleBuffers += 2 * nodeCount;
+                // gradient evaluation), holding the negated cumulative sum of every
+                // ANCESTOR's own individual rescaling. Used by
+                // AbstractBeagleGradientDelegate/SpectralBeagleCrossProductDelegate
+                // to correct the adjoint cross-product gradient for rescaling -- see
+                // beagle.h's beagleCalculateAdjointCrossProductDerivative and
+                // AbstractBeagleGradientDelegate.buildNegAncestorCumulativeScaleBuffer
+                // for why this single term suffices (no separate post-order-cumulative
+                // or root-cumulative buffer needed). Root's own slot goes unused; the
+                // waste is one scale buffer's worth of memory (O(patternCount)
+                // doubles) and not worth avoiding here.
+                numScaleBuffers += nodeCount + augmentedNodeCapacity;
                 numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount(settings);
+            }
+
+            if (epochDelegate != null) {
+                // one more partials buffer, after the pre-order buffers, holds ones,
+                // the second child of a degree-2 node
+                degree2PartialsIndex = numPartials;
+                ++numPartials;
             }
 
             // Attempt to get the resource order from the System Property
@@ -324,6 +371,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             }
 
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO) {
+                if (epochDelegate != null) {
+                    throw new IllegalArgumentException("Augmented epoch nodes do not support auto rescaling");
+                }
                 preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();
                 useAutoScaling = true;
             } else {
@@ -546,6 +596,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             }
 
             beagle.setPatternWeights(patternWeights);
+
+            if (epochDelegate != null) {
+                // setPartials, unlike setTipPartials, does not repeat the patterns for each rate category
+                final double[] ones = new double[categoryCount * patternCount * stateCount];
+                Arrays.fill(ones, 1.0);
+                beagle.setPartials(degree2PartialsIndex, ones);
+
+                logger.info("    Adding degree-2 nodes at the epoch transition times ("
+                        + augmentedNodeCapacity + " extra nodes).");
+            }
 
             String rescaleMessage = "    Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
@@ -874,6 +934,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
+            if (op.getRightChild() == NodeOperation.NO_CHILD) {
+                // A degree-2 node has one child and is never rescaled
+                setDegree2Operation(k, op);
+                k += Beagle.OPERATION_TUPLE_SIZE;
+                continue;
+            }
+
             if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum) && !recomputeScaleFactors) {
                 System.err.println("Stored partial should not be updated!");
             }
@@ -937,12 +1004,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         } else if (useAutoScaling) {
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
-
-        // Cached for AbstractBeagleGradientDelegate/SpectralBeagleCrossProductDelegate,
-        // which run a separate pass (after this likelihood evaluation, against the
-        // same buffers) that needs to correct the adjoint cross-product gradient for
-        // whatever rescaling was applied here -- see getNodeIndividualScaleBufferIndex.
-        lastCumulativeScaleBufferIndex = cumulateScaleBufferIndex;
 
         double[] sumLogLikelihoods = new double[1];
 
@@ -1080,7 +1141,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == siteRateModel) {
             updateSiteModel = true;
-        } else if (model == branchModel) {
+        } else if (model == branchModel || (epochTimeProvider != null && model != epochTimeProvider)) {
+            // with augmented epoch nodes, the substitution models and root frequencies stand in for the branch model
             updateSubstitutionModel = true;
             updateRootFrequency = true;
         }
@@ -1159,6 +1221,24 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         // Do nothing
     }
 
+    /**
+     * Fills in the sources of an operation for a node with a single child (the destination is already set).
+     * BEAGLE has no single-child operation yet, so the second child is a buffer of ones with the identity matrix.
+     * Rescaling the children keeps the scale factors valid because propagating along a segment by a
+     * stochastic matrix cannot make partials any smaller.
+     */
+    private void setDegree2Operation(int k, NodeOperation op) {
+        operations[k + 1] = Beagle.NONE; // Not writing scaleFactors
+        operations[k + 2] = Beagle.NONE; // Not reading scaleFactors
+
+        operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
+        operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+
+        // TODO Once BEAGLE accepts Beagle.NONE as a source, use it here in place of the ones and identity
+        operations[k + 5] = degree2PartialsIndex; // source node 2
+        operations[k + 6] = ((EpochEvolutionaryProcessDelegate) evolutionaryProcessDelegate).getIdentityMatrixIndex();
+    }
+
     @Override
     public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
         // Do nothing
@@ -1215,18 +1295,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
      * see beagleCalculateAdjointCrossProductDerivative's contract in beagle.h.
      */
     public final int getNodeIndividualScaleBufferIndex(int nodeNumber) {
-        if (!useScaleFactors || nodeNumber < tipCount) {
+        if (!useScaleFactors || nodeNumber < tipCount || nodeNumber >= nodeCount) { // not augmented nodes
             return Beagle.NONE;
         }
         return scaleBufferIndices[nodeNumber - tipCount];
     }
 
     /**
-     * @return the cumulative (root) scale buffer used to correct the last
-     * likelihood evaluation's logL, or Beagle.NONE if rescaling was not applied.
+     * @return the partials buffer of ones that is the second child of a degree-2 node, or Beagle.NONE if there are
+     * no augmented epoch nodes
      */
-    public final int getRootCumulativeScaleBufferIndex() {
-        return useScaleFactors ? lastCumulativeScaleBufferIndex : Beagle.NONE;
+    public final int getDegree2PartialsIndex() {
+        return degree2PartialsIndex;
     }
 
     public final int getPartialBufferCount() {
@@ -1325,9 +1405,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
     private int[] scaleBufferIndices;
     private int[] storedScaleBufferIndices;
-    private int lastCumulativeScaleBufferIndex = Beagle.NONE;
 
     private final int[] operations;
+
+    private int degree2PartialsIndex = Beagle.NONE; // partials of ones, when there are augmented epoch nodes
+    private EpochTimeProvider epochTimeProvider = null; // non-null when there are augmented epoch nodes
 
     private boolean flip = true;
     private final BufferIndexHelper partialBufferHelper;

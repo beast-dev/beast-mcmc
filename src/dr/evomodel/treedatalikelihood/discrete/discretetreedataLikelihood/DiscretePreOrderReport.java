@@ -6,8 +6,10 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.treedatalikelihood.AugmentedNodeRegistry;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.EpochEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
@@ -28,6 +30,7 @@ public final class DiscretePreOrderReport implements Reportable {
     private final int roundingScale;
     private final DiscretePartialsType displayType;
     private final DiscretePartialsType beagleType;
+    private final EpochEvolutionaryProcessDelegate epochProcessDelegate; // null unless there are augmented epoch nodes
 
     public DiscretePreOrderReport(TreeDataLikelihood treeDataLikelihood) {
         this(treeDataLikelihood, DiscretePartialsType.TOP,0.0);
@@ -58,9 +61,13 @@ public final class DiscretePreOrderReport implements Reportable {
         if (delegate instanceof PreOrderMessageProvider) {
             this.discreteDelegate = (PreOrderMessageProvider) delegate;
             this.treeTrait = null;
+            this.epochProcessDelegate = null;
         } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
 
             BeagleDataLikelihoodDelegate likelihoodDelegate = (BeagleDataLikelihoodDelegate) delegate;
+            this.epochProcessDelegate = (likelihoodDelegate.getEvolutionaryProcessDelegate()
+                    instanceof EpochEvolutionaryProcessDelegate) ?
+                    (EpochEvolutionaryProcessDelegate) likelihoodDelegate.getEvolutionaryProcessDelegate() : null;
             String name = "preorder.partials";
 
             if (treeDataLikelihood.getTreeTrait(name) == null) {
@@ -86,21 +93,12 @@ public final class DiscretePreOrderReport implements Reportable {
                     @Override
                     public void getPreorderPartials(int nodeNumber, DiscretePartialsType type, double[] out) {
 
-                        final int stateCount = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0)
-                                .getDataType().getStateCount();
-
-                        assert out.length == stateCount;  // TODO update for multiple columns, rate classes, etc.
+                        assert out.length == stateCount * categoryCount * patternCount;
 
                         if (type == DiscretePartialsType.TOP || displayType == DiscretePartialsType.TOP_SPECTRAL) {
 
                             if (displayType == DiscretePartialsType.TOP_SPECTRAL) {
-                                double[] intermediate = new double[out.length];
-                                super.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, intermediate);
-
-                                EigenDecomposition ed = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0).getEigenDecomposition();
-                                EigenDecomposition edT = ed.transpose();
-
-                                multiplyMatrixVector(edT.getInverseEigenVectors(), intermediate, 0, out, 0, stateCount);
+                                rotatePreorderPartials(nodeNumber, DiscretePartialsType.TOP, false, out);
                             } else {
                                 super.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, out);
                             }
@@ -108,18 +106,49 @@ public final class DiscretePreOrderReport implements Reportable {
                         } else if (type == DiscretePartialsType.BOTTOM || displayType == DiscretePartialsType.BOTTOM_SPECTRAL) {
 
                             if (displayType == DiscretePartialsType.BOTTOM_SPECTRAL) {
-                                double[] intermediate = new double[out.length];
-                                super.getPreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, intermediate);
-
-                                EigenDecomposition ed = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0).getEigenDecomposition();
-                                EigenDecomposition edT = ed.transpose();
-
-                                multiplyMatrixVector(edT.getEigenVectors(), intermediate, 0, out, 0, stateCount);
+                                rotatePreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, true, out);
                             } else {
                                 super.getPreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, out);
                             }
                         } else {
                             super.getPreorderPartials(nodeNumber, type, out);
+                        }
+                    }
+
+                    /**
+                     * Rotates the raw (state-space) pre-order partial of nodeNumber -- an original or, with
+                     * augmented epoch nodes, a degree-2 node -- into the eigenbasis of the substitution model that
+                     * applies on the branch immediately above it (the model that makes that branch's transition
+                     * matrix diagonal in this basis; see SpectralBeagleCrossProductDelegate.getRotatedPartial).
+                     * Root has no branch above it, so its partial (the root state frequencies) is left unrotated.
+                     * <p>
+                     * A branch spanning more than one epoch (i.e., requiring convolution of several substitution
+                     * models, rather than the augmented degree-2 nodes that give each segment its own single model)
+                     * has no single diagonalizing basis; getSubstitutionModelForBranch() throws in that case, which
+                     * is the correct signal here too.
+                     */
+                    private void rotatePreorderPartials(int nodeNumber, DiscretePartialsType rawType, boolean bottom,
+                                                        double[] out) {
+
+                        double[] intermediate = new double[out.length];
+                        super.getPreorderPartials(nodeNumber, rawType, intermediate);
+
+                        if (nodeNumber == tree.getRoot().getNumber()) {
+                            System.arraycopy(intermediate, 0, out, 0, out.length);
+                            return;
+                        }
+
+                        EigenDecomposition ed = likelihoodDelegate.getEvolutionaryProcessDelegate()
+                                .getSubstitutionModelForBranch(nodeNumber).getEigenDecomposition();
+                        EigenDecomposition edT = ed.transpose();
+                        double[] rotation = bottom ? edT.getEigenVectors() : edT.getInverseEigenVectors();
+
+                        int offset = 0;
+                        for (int c = 0; c < categoryCount; ++c) {
+                            for (int p = 0; p < patternCount; ++p) {
+                                multiplyMatrixVector(rotation, intermediate, offset, out, offset, stateCount);
+                                offset += stateCount;
+                            }
                         }
                     }
 
@@ -200,26 +229,56 @@ public final class DiscretePreOrderReport implements Reportable {
             }
             sb.append('\n');
 
-            discreteDelegate.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, allStart);
-            discreteDelegate.getPreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, allEnd);
+            appendPartialRows(sb, nodeNumber, allStart, allEnd, start, end, categoryCount, patternCount, stateCount);
+        }
 
-            for (int c = 0; c < categoryCount; c++) {
-                for (int p = 0; p < patternCount; p++) {
+        // With augmented epoch nodes, each branch also carries a chain of degree-2 nodes, one per epoch
+        // transition time it spans, each with its own pre-order partial.
+        if (epochProcessDelegate != null) {
+            AugmentedNodeRegistry registry = epochProcessDelegate.getAugmentedNodeRegistry();
+            int[] chain = new int[registry.getBoundaryCount()];
 
-                    int offset = (c * patternCount + p) * stateCount;
-                    System.arraycopy(allStart, offset, start, 0, stateCount);
-                    System.arraycopy(allEnd, offset, end, 0, stateCount);
+            for (int branch = 0; branch < tree.getNodeCount(); branch++) {
+                if (tree.isRoot(tree.getNode(branch))) {
+                    continue;
+                }
 
-                    sb.append("  category ").append(c)
-                            .append(" pattern ").append(p)
-                            .append(" start=").append(formatArray(start))
-                            .append(" end=").append(formatArray(end))
-                            .append('\n');
+                int count = registry.copyChain(branch, chain);
+                for (int j = 0; j < count; j++) {
+                    int id = chain[j];
+
+                    sb.append("node ").append(id).append(" augmented, branch ").append(branch)
+                            .append(", epoch ").append(registry.getMatrixEpoch(id)).append('\n');
+
+                    appendPartialRows(sb, id, allStart, allEnd, start, end, categoryCount, patternCount, stateCount);
                 }
             }
         }
 
         return sb.toString();
+    }
+
+    private void appendPartialRows(StringBuilder sb, int nodeNumber, double[] allStart, double[] allEnd,
+                                   double[] start, double[] end, int categoryCount, int patternCount,
+                                   int stateCount) {
+
+        discreteDelegate.getPreorderPartials(nodeNumber, DiscretePartialsType.TOP, allStart);
+        discreteDelegate.getPreorderPartials(nodeNumber, DiscretePartialsType.BOTTOM, allEnd);
+
+        for (int c = 0; c < categoryCount; c++) {
+            for (int p = 0; p < patternCount; p++) {
+
+                int offset = (c * patternCount + p) * stateCount;
+                System.arraycopy(allStart, offset, start, 0, stateCount);
+                System.arraycopy(allEnd, offset, end, 0, stateCount);
+
+                sb.append("  category ").append(c)
+                        .append(" pattern ").append(p)
+                        .append(" start=").append(formatArray(start))
+                        .append(" end=").append(formatArray(end))
+                        .append('\n');
+            }
+        }
     }
 
     private static void multiplyMatrixVector(double[] matrix, double[] vector, int vectorOffset, double[] out, int outOffset, int dim) {

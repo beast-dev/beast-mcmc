@@ -35,7 +35,6 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
-import dr.evomodel.tree.TreeModel;
 import dr.oldevomodelxml.MSSD.ALSSiteModelParser;
 import dr.oldevomodelxml.MSSD.ALSTreeLikelihoodParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -230,7 +229,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
-                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()));
             writeParameter(prefix + "alpha", model, writer);
             writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
         }

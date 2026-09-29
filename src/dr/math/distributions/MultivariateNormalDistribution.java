@@ -33,6 +33,7 @@ import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
+import dr.matrix.SparseSquareUpperTriangular;
 import org.ejml.alg.dense.decomposition.TriangularSolver;
 import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionInner_D64;
 import org.ejml.data.DenseMatrix64F;
@@ -103,7 +104,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return logDet;
     }
 
-    private boolean isDiagonal(double x[][]) {
+    private boolean isDiagonal(double[][] x) {
         for (int i = 0; i < x.length; ++i) {
             for (int j = i + 1; j < x.length; ++j) {
                 if (x[i][j] != 0.0) {
@@ -114,7 +115,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return true;
     }
 
-    private double logDetForDiagonal(double x[][]) {
+    private double logDetForDiagonal(double[][] x) {
         double logDet = 0;
         for (int i = 0; i < x.length; ++i) {
             logDet += Math.log(x[i][i]);
@@ -135,8 +136,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), 1.0);
     }
 
-    public double[] nextMultivariateNormal(double[] x) {
-        return nextMultivariateNormalCholesky(x, getCholeskyDecomposition(), 1.0);
+    @SuppressWarnings("unused")
+    public double[] nextMultivariateNormal(double[] mean) {
+        return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), 1.0);
     }
 
     // Scale lives in variance-space
@@ -459,6 +461,24 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
     }
 
+    public static void nextMultivariateNormalViaBackSolvePrecision(
+            final double[] mean, final int meanOffset, SparseSquareUpperTriangular choleskyPrecision,
+            final double sqrtScale, final double[] result, final int resultOffset,
+            final double[] epsilon) {
+
+        final int dim = epsilon.length;
+
+        for (int i = 0; i < dim; ++i) {
+            epsilon[i] = MathUtils.nextGaussian() * sqrtScale;
+        }
+
+        choleskyPrecision.backSolveInPlaceMatrixVector(result, resultOffset, epsilon, 0);
+
+        for (int i = 0; i < dim; ++i) {
+            result[resultOffset + i] += mean[meanOffset + i];
+        }
+    }
+
     // TODO should be a junit test
     public static void main(String[] args) {
         testPdf();
@@ -511,7 +531,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         System.err.println("TRUE: [ 1 2 ]\n");
         System.err.println("MVar: " + new Vector(var));
         System.err.println("TRUE: [ 0.571 1.14 ]\n");
-        System.err.println("Covv: " + ZZ);
+        System.err.println("CovV: " + ZZ);
         System.err.println("TRUE: -0.286");
     }
 

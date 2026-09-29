@@ -39,6 +39,7 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 import java.util.Locale;
+import java.util.logging.Logger;
 
 /**
  */
@@ -59,23 +60,46 @@ public class EpidemiologyStatisticParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        final String parserName = xo.getName();
         final String name = xo.getAttribute(Statistic.NAME, xo.getId());
 
-        XMLObject cxo = xo.getChild(GROWTH_RATE);
-        final Parameter growthRate = (Parameter)cxo.getChild(Parameter.class);
-        Units.Type timeUnits = Units.Type.valueOf(cxo.getAttribute(TIME_UNITS, "years").toUpperCase());
+        Parameter growthRate = null;
+        Parameter doublingTime = null;
+        Units.Type timeUnits = null;
 
-        if (getParserName().equals(DOUBLING_TIME)) {
-            return new EpidemiologyStatistic(name, growthRate, timeUnits);
+        if (xo.hasChildNamed(GROWTH_RATE)) {
+            XMLObject cxo = xo.getChild(GROWTH_RATE);
+            growthRate = (Parameter)cxo.getChild(Parameter.class);
+            timeUnits = Units.Type.valueOf(cxo.getAttribute(TIME_UNITS, "years").toUpperCase());
+        }
+        if (xo.hasChildNamed(DOUBLING_TIME)) {
+            XMLObject cxo = xo.getChild(DOUBLING_TIME);
+            doublingTime = (Parameter)cxo.getChild(Parameter.class);
+            timeUnits = Units.Type.valueOf(cxo.getAttribute(TIME_UNITS, "years").toUpperCase());
+        }
+
+        if (parserName.equals(DOUBLING_TIME)) {
+            Logger.getLogger("dr.evomodel").info("Logging doubling time (in " + timeUnits + ") calculated from growth rate.");
+            return new EpidemiologyStatistic(name, EpidemiologyStatistic.StatisticType.DOUBLING_TIME,
+                    growthRate, null, timeUnits);
+        }
+
+        if (parserName.equals(GROWTH_RATE)) {
+            Logger.getLogger("dr.evomodel").info("Logging growth rate (per " + timeUnits + ") calculated from doubling time.");
+            return new EpidemiologyStatistic(name, EpidemiologyStatistic.StatisticType.GROWTH_RATE,
+                    null, doublingTime, timeUnits);
         }
 
         // R0
         if (xo.hasChildNamed(SERIAL_INTERVAL)) {
-            cxo = xo.getChild(SERIAL_INTERVAL);
+            XMLObject cxo = xo.getChild(SERIAL_INTERVAL);
             double mean = cxo.getAttribute(MEAN, 0.0);
             double stdev = cxo.getAttribute(STDEV, 0.0);
 
-            return new EpidemiologyStatistic(name, growthRate, timeUnits, mean, stdev);
+            Logger.getLogger("dr.evomodel").info("Logging R0 estimated from growth rate with serial " +
+                    "interval (mean = " + mean + ", stdev = " + stdev + ")");
+
+            return new EpidemiologyStatistic(name, growthRate, doublingTime, timeUnits, mean, stdev);
         } else {
             throw new XMLParseException("R0 statistic requires a serialInterval element");
         }
@@ -88,7 +112,7 @@ public class EpidemiologyStatisticParser extends AbstractXMLObjectParser {
     @Override
     public String[] getParserNames() {
         return new String[] {
-                DOUBLING_TIME, R0
+                DOUBLING_TIME, GROWTH_RATE, R0
         };
     }
 
@@ -105,10 +129,16 @@ public class EpidemiologyStatisticParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(GROWTH_RATE, new XMLSyntaxRule[] {
-                    new StringAttributeRule(TIME_UNITS, "time units for the growth rate (default: years)", true),
-                    new ElementRule(Parameter.class)
-            },  "The growth rate parameter"),
+            new XORRule(
+                    new ElementRule(GROWTH_RATE, new XMLSyntaxRule[] {
+                            new StringAttributeRule(TIME_UNITS, "time units for the growth rate (default: years)", true),
+                            new ElementRule(Parameter.class)
+                    },  "The growth rate parameter"),
+                    new ElementRule(DOUBLING_TIME, new XMLSyntaxRule[] {
+                            new StringAttributeRule(TIME_UNITS, "time units for the growth rate (default: years)", true),
+                            new ElementRule(Parameter.class)
+                    },  "The doubling time parameter")
+            ),
             new ElementRule(SERIAL_INTERVAL, new XMLSyntaxRule[] {
                     AttributeRule.newDoubleRule(MEAN, false, "the mean of the gamma distribution modelling serial interval"),
                     AttributeRule.newDoubleRule(STDEV, false, "the stdev of the gamma distribution modelling serial interval"),

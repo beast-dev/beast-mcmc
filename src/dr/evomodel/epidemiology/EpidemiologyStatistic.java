@@ -48,6 +48,7 @@ import dr.inference.model.Statistic;
 public class EpidemiologyStatistic extends Statistic.Abstract implements Units {
     public enum StatisticType {
         DOUBLING_TIME("doublingTime"),
+        GROWTH_RATE("growthRate"),
         R0("R0");
 
         StatisticType(String name) {
@@ -66,49 +67,41 @@ public class EpidemiologyStatistic extends Statistic.Abstract implements Units {
      * Constructor for a doubling time statistic
      * @param name
      * @param growthRate
-     * @param growthRateUnits
+     * @param doublingTime
+     * @param units
      */
-    public EpidemiologyStatistic(String name, Parameter growthRate, Units.Type growthRateUnits) {
-        this(name, StatisticType.DOUBLING_TIME, growthRate, growthRateUnits, 0, 0, null);
+    public EpidemiologyStatistic(String name, StatisticType statisticType, Parameter growthRate, Parameter doublingTime, Units.Type units) {
+        this(name, statisticType, growthRate, doublingTime, units, 0, 0, null);
     }
 
     /**
      * Constructor for an R0 statistic with a parameterised serial interval
      * @param name
      * @param growthRate
-     * @param growthRateUnits
+     * @param doublingTime
+     * @param units
      * @param serialIntervalMean
      * @param serialIntervalStdev
      */
-    public EpidemiologyStatistic(String name, Parameter growthRate, Units.Type growthRateUnits,
+    public EpidemiologyStatistic(String name, Parameter growthRate, Parameter doublingTime,  Units.Type units,
                                  double serialIntervalMean, double serialIntervalStdev) {
-        this(name, StatisticType.R0, growthRate, growthRateUnits, serialIntervalMean, serialIntervalStdev, null);
+        this(name, StatisticType.R0, growthRate, doublingTime, units, serialIntervalMean, serialIntervalStdev, null);
     }
 
-    /**
-     * Constructor for an R0 statistic with a discretised serial interval
-     * @param name
-     * @param growthRate
-     * @param growthRateUnits
-     * @param serialIntervalPDF
-     */
-    public EpidemiologyStatistic(String name, Parameter growthRate, Units.Type growthRateUnits,
-                                 double[] serialIntervalPDF) {
-        this(name, StatisticType.R0, growthRate, growthRateUnits, 0, 0, serialIntervalPDF);
-    }
-
-    private EpidemiologyStatistic(String name, StatisticType statisticType, Parameter growthRate, Units.Type growthRateUnits,
+    private EpidemiologyStatistic(String name, StatisticType statisticType, Parameter growthRate,
+                                  Parameter doublingTime,  Units.Type units,
                                   double serialIntervalMean, double serialIntervalStdev, double[] serialIntervalPDF) {
         super(name);
 
         this.statisticType = statisticType;
 
         this.growthRate = growthRate;
-        if (growthRateUnits != Type.YEARS && growthRateUnits != Type.MONTHS && growthRateUnits != Type.WEEKS && growthRateUnits != Type.DAYS) {
+        this.doublingTime = doublingTime;
+        if (units != Type.YEARS && units != Type.MONTHS && units != Type.WEEKS && units != Type.DAYS) {
             throw new UnsupportedOperationException("Growth rate time units should be years, months, weeks, or days");
         }
-        this.growthRateUnits = growthRateUnits;
-        this.a = (serialIntervalMean * serialIntervalMean);
+        this.units = units;
+        this.a = (serialIntervalMean * serialIntervalMean) / (serialIntervalStdev * serialIntervalStdev);
         this.b = serialIntervalMean / (serialIntervalStdev * serialIntervalStdev);
 
         if (serialIntervalPDF != null) {
@@ -128,7 +121,7 @@ public class EpidemiologyStatistic extends Statistic.Abstract implements Units {
 
     @Override
     public String getDimensionName(int dim) {
-        return super.getDimensionName(dim) + "." + statisticType.toString();
+        return super.getDimensionName(dim);
     }
 
     public int getDimension() {
@@ -139,20 +132,30 @@ public class EpidemiologyStatistic extends Statistic.Abstract implements Units {
      * @return the height of the MRCA node.
      */
     public double getStatisticValue(int dim) {
+
+        double gr; // growth rate in original units
+        if (growthRate != null) {
+            gr = growthRate.getParameterValue(0);
+        } else {
+            // compute the growth rate from the doubling time
+            double dt = doublingTime.getParameterValue(0);
+            gr = Math.log(2) / dt;
+        }
+
         double r;
-        switch (growthRateUnits) {
+        switch (units) {
             // convert the growth rate to a per day rate
             case DAYS:
-                r = growthRate.getParameterValue(0);
+                r = gr;
                 break;
             case WEEKS:
-                r = growthRate.getParameterValue(0) / 7;
+                r = gr / 7;
                 break;
             case MONTHS:
-                r = growthRate.getParameterValue(0) / 30; // approximate
+                r = gr / 30; // approximate
                 break;
             case YEARS:
-                r = growthRate.getParameterValue(0) / 365;
+                r = gr / 365;
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported time unit");
@@ -160,7 +163,10 @@ public class EpidemiologyStatistic extends Statistic.Abstract implements Units {
 
         if (statisticType == StatisticType.DOUBLING_TIME) {
             // doubling time in days
-            return Math.log(2) / r;
+            return Math.max(0.0, Math.log(2) / r);
+        } else if (statisticType == StatisticType.GROWTH_RATE) {
+            // growth rate in original units
+            return gr;
         } else { // R0
             double R0 = 1.0;
             if (w == null) {
@@ -174,7 +180,8 @@ public class EpidemiologyStatistic extends Statistic.Abstract implements Units {
 
     private final StatisticType statisticType;
     private final Parameter growthRate;
-    private final Type growthRateUnits;
+    private final Parameter doublingTime;
+    private final Type units;
     private final double[] w;
     private final double a, b;
 

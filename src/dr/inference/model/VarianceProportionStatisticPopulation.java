@@ -48,7 +48,7 @@ import org.ejml.ops.CommonOps;
 public class VarianceProportionStatisticPopulation extends AbstractVarianceProportionStatistic implements VariableListener, ModelListener {
 
     private final MultivariateDiffusionModel diffusionModel;
-    private VarianceProportionStatistic.TreeVarianceSums treeSums;
+    private TreeVarianceSums treeSums;
 
     private DenseMatrix64F diffusionVariance;
     private DenseMatrix64F samplingVariance;
@@ -58,6 +58,8 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
 
     private final DiffusionProcessDelegate diffusionProcessDelegate;
     private final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+
+    private final RepeatedMeasuresTraitDataModel dataModel;
 
     private double[] treeDepths;
 
@@ -69,7 +71,7 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
         super(tree, treeLikelihood, dataModel, ratio);
 
         this.likelihoodDelegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
-
+        this.dataModel = dataModel;
         this.diffusionModel = diffusionModel;
         this.diffusionProcessDelegate = likelihoodDelegate.getDiffusionProcessDelegate();
 
@@ -109,7 +111,7 @@ public class VarianceProportionStatisticPopulation extends AbstractVariancePropo
         if (!varianceKnown) {
 
             samplingVariance = MissingOps.wrap(dataModel.getSamplingVariance().toArrayComponents(), 0, dimTrait, dimTrait);
-            diffusionVariance = MissingOps.wrap(diffusionModel.getPrecisionmatrixAsVector(), 0, dimTrait, dimTrait);
+            diffusionVariance = MissingOps.wrap(diffusionModel.getPrecisionMatrixAsVector(), 0, dimTrait, dimTrait);
             CommonOps.invert(diffusionVariance);
 
             varianceKnown = true;

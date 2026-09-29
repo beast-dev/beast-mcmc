@@ -73,7 +73,7 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 //        treeVariance = traitModel.computeTreeVariance(includeRoot);
 //        long estimatedTime2 = System.nanoTime() - startTime2;
 
-        double[][] traitPrecision = traitModel.getDiffusionModel().getPrecisionmatrix();
+        double[][] traitPrecision = traitModel.getDiffusionModel().getPrecisionMatrix();
 
 
 //        for (int i = 0; i < treeVariance2.length; ++i) {
@@ -116,7 +116,7 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
         NodeRef root = traitModel.getTreeModel().getRoot();
         double[] traitStart = traitModel.getPriorMean();
         double[][] varianceCholesky = null;
-        double[][] temp = new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
+        double[][] temp = new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionMatrix()).inverse().toComponents();
         try {
             varianceCholesky = (new CholeskyDecomposition(temp).getL());
         } catch (IllegalDimension illegalDimension) {

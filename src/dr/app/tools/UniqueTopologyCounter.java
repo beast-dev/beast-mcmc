@@ -111,8 +111,8 @@ public class UniqueTopologyCounter {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burninTrees", "b", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

@@ -27,12 +27,14 @@
 
 package dr.evolution.datatype;
 
+import java.util.Arrays;
+
 /**
  * @author Marc A. Suchard
  */
 public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
 
-    public static final String DESCRIPTION = "hiddenNucleotide";
+    public static final String DESCRIPTION = HiddenDataType.DESCRIPTION + "Nucleotide";
 
     static final HiddenNucleotides NUCLEOTIDE_HIDDEN_1 = new HiddenNucleotides(1);
     static final HiddenNucleotides NUCLEOTIDE_HIDDEN_2 = new HiddenNucleotides(2);
@@ -61,6 +63,13 @@ public class HiddenNucleotides extends Nucleotides implements HiddenDataType {
 
     public String getCodeWithoutHiddenState(int state) {
         return HiddenDataType.getCodeWithoutHiddenStateImpl(state, stateCount, super::getCode);
+    }
+
+    static public void registerHiddenDataType(GeneticCode geneticCode, int hiddenClassCount) {
+        String registeredName = DESCRIPTION + hiddenClassCount;
+        if (!Arrays.asList(DataType.getRegisteredDataTypeNames()).contains(registeredName)) {
+            DataType.registerDataType(registeredName, new HiddenNucleotides(hiddenClassCount));
+        }
     }
 
     public int getStateCount() {

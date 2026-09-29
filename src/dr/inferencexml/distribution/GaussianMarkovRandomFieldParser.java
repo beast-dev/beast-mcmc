@@ -33,7 +33,6 @@ import dr.math.distributions.GaussianMarkovRandomField;
 import dr.xml.*;
 
 import static dr.inferencexml.distribution.RandomFieldParser.WEIGHTS_RULE;
-import static dr.inferencexml.distribution.RandomFieldParser.parseWeightProvider;
 
 public class GaussianMarkovRandomFieldParser extends AbstractXMLObjectParser {
 

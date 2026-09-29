@@ -51,7 +51,7 @@ public class StateChange {
     private int previousState;
 
     public StateChange(StateChange change) {
-        this(change.time, change.state);
+        this(change.time, change.state, change.previousState);
     }
 
     public StateChange(double time, int state, int previousState) {
@@ -104,8 +104,6 @@ public class StateChange {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{").append(getTime()).append(",").append(getState()).append("}");
-        return sb.toString();
+        return "{" + getTime() + "," + getState() + "}";
     }
 }

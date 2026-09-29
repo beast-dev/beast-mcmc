@@ -27,26 +27,29 @@
 
 package dr.inference.distribution;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
-
-import java.util.Arrays;
 
 public class Weights extends AbstractModel implements RandomField.WeightProvider {
 
     private final TreeModel tree;
     private BigFastTreeIntervals intervals;
+    private final boolean rescaleByRootHeight;
 
     private boolean indicesKnown;
 
     private int[] indices;
 
     public Weights(TreeModel tree) {
+        this(tree, false);
+    }
+
+    public Weights(TreeModel tree, boolean rescaleByRootHeight) {
         super("just work");
         this.tree = tree;
+        this.rescaleByRootHeight = rescaleByRootHeight;
         intervals = new BigFastTreeIntervals((TreeModel) tree);
         addModel(intervals);
 
@@ -73,9 +76,16 @@ public class Weights extends AbstractModel implements RandomField.WeightProvider
                 index1 = temp;
             }
 
-            return 2/(intervals.getInterval(index1) + intervals.getInterval(index2));
+            return 2/(intervals.getInterval(index1) + intervals.getInterval(index2)) * getFieldScalar();
         }
 
+    }
+
+    private double getFieldScalar() {
+        if (rescaleByRootHeight) {
+            return tree.getNodeHeight(tree.getRoot());
+        }
+        return 1.0;
     }
 
 
@@ -119,15 +129,6 @@ public class Weights extends AbstractModel implements RandomField.WeightProvider
 //    public void removeModelListener(ModelListener listener) {
 //
 //    }
-
-
-
-
-
-
-
-
-
 
 
     @Override

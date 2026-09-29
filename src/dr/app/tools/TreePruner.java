@@ -245,10 +245,10 @@ public class TreePruner extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption("taxaToPrune", "list","a list of taxon names to prune"),
-                        new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
+                        new Arguments.StringOption("taxaToPrune", "t", "list","a list of taxon names to prune"),
+                        new Arguments.StringOption(NAME_CONTENT, "n", falseTrue, false,
                                 "Using common string in taxa names to define taxa set)"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
         handleHelp(arguments, args, TreePruner::printUsage);

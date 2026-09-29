@@ -49,7 +49,7 @@ public class CitationLogHandler extends StreamHandler {
 
     public void publish(LogRecord record) {
         super.publish(record);
-        flush();
+        INSTANCE.flush();
         //System.err.println("published: " + record.getMessage());
     }
 

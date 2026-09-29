@@ -296,11 +296,11 @@ public class NStoAAannotator extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption("sitesToAnnotate", "list", "a list of sites to annotate"),
-                        new Arguments.StringOption(JOINTSTATE, falseTrue, false,
+                        new Arguments.IntegerOption(BURN_IN, "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.StringOption("sitesToAnnotate", "s", "list", "a list of sites to annotate"),
+                        new Arguments.StringOption(JOINTSTATE, "j", falseTrue, false,
                                 "annotate the joint State for the sites [default = false])"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
         handleHelp(arguments, args, NStoAAannotator::printUsage);

@@ -198,7 +198,7 @@ abstract class AbstractZigZagOperator extends AbstractParticleOperator implement
                 System.arraycopy(position, i, positionSubset, 0, nDim);
                 System.arraycopy(velocity, i, velocitySubset, 0, nDim);
                 System.arraycopy(observedDataMask, i, observedDataMaskSubset, 0, nDim);
-
+                // TODO why make a copy?
                 MinimumTravelInformation bounceInfo = findCategoricalBoundaryTimeOneTrait(positionSubset,
                         velocitySubset, observedDataMaskSubset);
 

@@ -168,7 +168,7 @@ public class CoalescentSimulator {
 					currentHeight = getMinimumInactiveHeight();
 					setCurrentHeight(currentHeight);
 				}
-
+// TODO should it enforce this?
                 if(!enforceMaxHeight){
 	//			nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getMedianInterval(demographic, getActiveNodeCount(), currentHeight);
 				    nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic,

@@ -30,6 +30,7 @@ package dr.evomodelxml.treelikelihood;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
@@ -75,7 +76,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, MutableTreeModel treeModel,
                                                         BranchModel branchModel,
-                                                        GammaSiteRateModel siteRateModel,
+                                                        SiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
@@ -192,7 +193,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             }
                         }
                     } else {
-                        throw new XMLParseException("Markov Jumps register parameter " + registerParameter.getId() + " is of the wrong dimension");
+                        throw new XMLParseException("Markov Jumps register parameter " + registerParameter.getId() + " is of the wrong dimension (" + registerParameter.getDimension() + " vs " + (stateCount * stateCount) + ")");
                     }
                 }
                 if (type == MarkovJumpsType.REWARDS &&
@@ -204,7 +205,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             registerParameter.setParameterValueQuietly(j, 1.0);
                         }
                     } else {
-                        throw new XMLParseException("Markov Rewards register parameter " + registerParameter.getId() + " is of the wrong dimension");
+                        throw new XMLParseException("Markov Rewards register parameter " + registerParameter.getId() + " is of the wrong dimension (" + registerParameter.getDimension() + " vs " + stateCount + ")");
                     }
                 }
 
@@ -237,7 +238,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     }, true),
                     new ElementRule(PatternList.class),
                     new ElementRule(MutableTreeModel.class),
-                    new ElementRule(GammaSiteRateModel.class),
+                    new ElementRule(SiteRateModel.class),
                     new ElementRule(BranchModel.class, true),
                     new ElementRule(SubstitutionModel.class, true),
                     new ElementRule(BranchRateModel.class, true),

@@ -30,11 +30,13 @@ package dr.inferencexml.hmc;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.GradientProvider;
+import dr.inference.hmc.CompoundGradient;
+import dr.inference.model.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -58,7 +60,25 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
             }
 
             final GradientProvider provider = (GradientProvider) mdl.getDistribution();
-            final Parameter parameter = mdl.getDataParameter();
+            Parameter parameter = mdl.getDataParameter();
+
+            if (parameter == null) {
+                parameter = (Parameter) xo.getChild(Parameter.class);
+            }
+
+            if (parameter == null) {
+                Parameter[] slices = (Parameter[]) xo.getChild(Parameter[].class);
+                if (slices[0] instanceof DataSliceFromMatrixParameter) {
+
+                    List<GradientWrtParameterProvider> gradients = new ArrayList<>();
+                    for (Parameter p : slices) {
+                        gradients.add(new GradientWrtParameterProvider.ParameterWrapper(
+                                provider, p, mdl
+                        ));
+                    }
+                    return new CompoundGradient(gradients);
+                }
+            }
 
             return new GradientWrtParameterProvider.ParameterWrapper(provider, parameter, mdl);
         } else if (obj instanceof EmpiricalDistributionLikelihood) {

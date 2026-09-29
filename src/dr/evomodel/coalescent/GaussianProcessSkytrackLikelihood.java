@@ -27,9 +27,6 @@
 
 package dr.evomodel.coalescent;
 
-//import com.lowagie.text.Paragraph;
-
-//import com.sun.servicetag.SystemEnvironment;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeChangedEvent;
@@ -40,10 +37,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
-//import dr.util.ComparableDouble;
-//import dr.util.HeapSort;
 import no.uib.cipr.matrix.*;
-//import sun.font.TrueTypeFont;
 
 import java.util.ArrayList;
 import java.util.List;

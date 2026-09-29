@@ -1,7 +1,7 @@
 /*
  * Clade.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,7 +22,6 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.app.tools.treeannotator;
@@ -35,7 +34,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $
  */
-public interface Clade {
+public interface Clade extends Comparable<Clade> {
     int getCount();
 
     void setCount(int count);
@@ -49,14 +48,32 @@ public interface Clade {
     Taxon getTaxon();
 
     int getIndex();
+
     Clade getBestLeft();
 
     Clade getBestRight();
 
     Object getKey();
 
-    void addAttributeValues(Object[] values);
+    void addHeightValue(double height);
 
-    List<Object[]> getAttributeValues();
+    List<Double> getHeightValues();
 
+//    void addAttributeValues(Object[] values);
+
+//    List<Object[]> getAttributeValues();
+
+    void addAttributeValue(String attributeName, Object value);
+
+    List<Object> getAttributeValues(String attributeName);
+
+    /**
+     * Comparable to sort by ascending size
+     *
+     * @param o the object to be compared.
+     */
+    @Override
+    default int compareTo(Clade o) {
+        return this.getSize() - o.getSize();
+    }
 }

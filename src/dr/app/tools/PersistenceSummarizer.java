@@ -455,13 +455,13 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.IntegerOption(BURN_IN, "b", "the number of states to be considered as 'burn-in' [default = 0]"),
 //                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
-                        new Arguments.RealArrayOption(EVALUATION_TIME, -1, "The time(s) at which the ancestral persistence of lineages is evaluated"),
+                        new Arguments.RealArrayOption(EVALUATION_TIME, null, -1, "The time(s) at which the ancestral persistence of lineages is evaluated"),
 //                        new Arguments.RealOption("independenceTime", "The time for which a lineage should not share a common ancestor with another lineage to be called a unique persistence/introduction  [default=MAX_VALUE]"),
-                        new Arguments.RealArrayOption(ANCESTRAL_TIME, -1, "The time(s) in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
-                        new Arguments.StringOption(NODE_STATE_ANNOTATION, "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.RealArrayOption(ANCESTRAL_TIME, null, -1, "The time(s) in the past until which the the ancestral persistence of lineages is evaluated [default=MAX_VALUE]"),
+                        new Arguments.StringOption(NODE_STATE_ANNOTATION, null, "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
 

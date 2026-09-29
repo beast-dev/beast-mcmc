@@ -271,13 +271,13 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             }
             // OperatorAnalysisPrinter class can do the job now
             if (showOperatorAnalysis) {
-                OperatorAnalysisPrinter.showOperatorAnalysis(System.out, getOperatorSchedule(), options.useAdaptation());
+                OperatorAnalysisPrinter.showOperatorAnalysis(System.out, getOperatorSchedule(), options.useAdaptation(), false);
             }
 
             if (operatorAnalysisFile != null) {
                 try {
                     PrintStream out = new PrintStream(new FileOutputStream(operatorAnalysisFile));
-                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useAdaptation());
+                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useAdaptation(), operatorAnalysisCSVFile);
                     out.flush();
                     out.close();
                 } catch (IOException e) {
@@ -385,8 +385,9 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     }
 
 
-    public void setOperatorAnalysisFile(File operatorAnalysisFile) {
+    public void setOperatorAnalysisFile(File operatorAnalysisFile, boolean csvFile) {
         this.operatorAnalysisFile = operatorAnalysisFile;
+        this.operatorAnalysisCSVFile = csvFile;
     }
 
     public String getId() {
@@ -404,6 +405,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     protected boolean stopping = false;
     protected boolean showOperatorAnalysis = Boolean.parseBoolean(System.getProperty(OperatorSchedule.SHOW_OPERATORS));
     protected File operatorAnalysisFile = null;
+    protected boolean operatorAnalysisCSVFile = false;
     protected final dr.util.Timer timer = new dr.util.Timer();
     protected long currentState = 0;
     //private int stepsPerReport = 1000;

@@ -35,10 +35,19 @@ import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.SimpsonIntegrator;
 import org.apache.commons.math.analysis.solvers.NewtonSolver;
 
+import java.util.Arrays;
+
 /**
  * @author Marc Suchard
  */
 public abstract class KernelDensityEstimatorDistribution implements Distribution {
+
+    KernelDensityEstimatorDistribution(double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
+
+        this.sample = Arrays.copyOf(sample, sample.length);
+        processBounds(lowerBound, upperBound);
+        setBandWidth(bandWidth);
+    }
 
     KernelDensityEstimatorDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
 

@@ -56,7 +56,8 @@ public class NotUsedGlmSubstitutionModel extends ComplexSubstitutionModel {
     }
 
     public double[] getRates() {
-        return glm.getXBeta();
+        throw new RuntimeException("No longer supported");
+//        return glm.getXBeta();
     }
 
 

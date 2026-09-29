@@ -317,9 +317,9 @@ public class MakeAncestralSequenceAnnotatedTree {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("thin", "thin"),
-                        new Arguments.IntegerOption("skip", "skip"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("thin", null, "thin"),
+                        new Arguments.IntegerOption("skip", null, "skip"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

@@ -1245,46 +1245,46 @@ public class RateIndicatorBF {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' " +
+                        new Arguments.IntegerOption(BURNIN, "b","the number of states to be considered as 'burn-in' " +
                                 "[default = 0]"),
-                        new Arguments.StringOption(LOCATIONSFILE,"coordinates file","a file with latitudes and " +
+                        new Arguments.StringOption(LOCATIONSFILE,null, "coordinates file","a file with latitudes and " +
                                 "longitudes for each location (required for a kml output)"),
                         //boolean for KML
-                        new Arguments.StringOption(KML, falseTrue, false,
+                        new Arguments.StringOption(KML, null, falseTrue, false,
                                 "generate a KML file including well-supported rates [default = false]"),
-                        new Arguments.StringOption(CALCULATERATES, falseTrue, false,
+                        new Arguments.StringOption(CALCULATERATES, null, falseTrue, false,
                                 "calculate the actual rates for well-supported transitions"),
-                        new Arguments.IntegerOption(LOCATIONSTATES,"the number of locations states used in the " +
+                        new Arguments.IntegerOption(LOCATIONSTATES,null, "the number of locations states used in the " +
                                 "analyses [requires a coordinates file if not provided]"),
-                        new Arguments.IntegerOption(POFFSET,"the offset of the (truncated) Poisson prior " +
+                        new Arguments.IntegerOption(POFFSET,null, "the offset of the (truncated) Poisson prior " +
                                 "[default=locations-1]"),
-                        new Arguments.RealOption(PMEAN,"the mean of the (truncated) Poisson prior  " +
+                        new Arguments.RealOption(PMEAN,null, "the mean of the (truncated) Poisson prior  " +
                                 "[default=0.693 (log2)]"),
-                        new Arguments.RealOption(BFCUTOFF,"the Bayes Factor values above which we consider rates to " +
+                        new Arguments.RealOption(BFCUTOFF,null, "the Bayes Factor values above which we consider rates to " +
                                 "be well supported  [default=3.0]"),
-                        new Arguments.RealOption(ICUTOFF,"the indicator values above which we consider rates to be " +
+                        new Arguments.RealOption(ICUTOFF,null, "the indicator values above which we consider rates to be " +
                                 "well supported  [default uses a Bayes factor cut off of 3.0]"),
-                        new Arguments.StringOption(ISTRING, "indicator_string", "prefix string used for outputting " +
+                        new Arguments.StringOption(ISTRING,null,  "indicator_string", "prefix string used for outputting " +
                                 "the rate indicators in the log file [default = indicators]"),
-                        new Arguments.StringOption(RSTRING, "relativeRate_string", "prefix string used for " +
+                        new Arguments.StringOption(RSTRING,null,  "relativeRate_string", "prefix string used for " +
                                 "outputting the relative rates in the log file [default = rates]"),
-                        new Arguments.StringOption(FSTRING, "frequencies_string", "prefix string used for outputting " +
+                        new Arguments.StringOption(FSTRING,null,  "frequencies_string", "prefix string used for outputting " +
                                 "the state frequencies in the log file [default = frequencies]"),
-                        new Arguments.StringOption(PSTRING, "rate*indicator_string", "prefix string used for " +
+                        new Arguments.StringOption(PSTRING,null,  "rate*indicator_string", "prefix string used for " +
                                 "outputting the product statistic for rates*indicators [default = actualRates]"),
-                        new Arguments.StringOption(CSTRING, "clock_rate_string", "string used for outputting " +
+                        new Arguments.StringOption(CSTRING,null,  "clock_rate_string", "string used for outputting " +
                                 "the overall clock rate in the log file [default = clock.rate]"),
-                        new Arguments.StringOption(USTRING, "units_string", "string describing the time unit" +
+                        new Arguments.StringOption(USTRING,null,  "units_string", "string describing the time unit" +
                                 "[default = year]"),
-                        new Arguments.StringOption(KMLFILE,"KML output file","KML output file name " +
+                        new Arguments.StringOption(KMLFILE,null, "KML output file","KML output file name " +
                                 "[default=KMLrates.kml]"),
-                        new Arguments.StringOption(LOWCOLOR, "lower link strength color", "specifies an lower link " +
+                        new Arguments.StringOption(LOWCOLOR,null,  "lower link strength color", "specifies an lower link " +
                                 "color for the links [default=FF00FF]"),
-                        new Arguments.StringOption(UPCOLOR, "upper link strength color", "specifies an upper link " +
+                        new Arguments.StringOption(UPCOLOR,null,  "upper link strength color", "specifies an upper link " +
                                 "color for the links [default=FFFF00]"),
-                        new Arguments.RealOption(BWC,"specifies the connection (rate) width constant [default=2.5]"),
-                        new Arguments.RealOption(BWM,"specifies the connection (rate)  width multiplier [default=7.0]"),
-                        new Arguments.RealOption(ALTITUDE,"specifies the altitude factor for the connections (rate) " +
+                        new Arguments.RealOption(BWC,null, "specifies the connection (rate) width constant [default=2.5]"),
+                        new Arguments.RealOption(BWM,null, "specifies the connection (rate)  width multiplier [default=7.0]"),
+                        new Arguments.RealOption(ALTITUDE,null, "specifies the altitude factor for the connections (rate) " +
                                 "[default=500]"),
                         //new Arguments.RealOption(WIDTH,"width for KML rates [default=3.0]"),
                 });

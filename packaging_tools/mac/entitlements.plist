@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Entitlements required for BEAST Java apps under macOS Hardened Runtime.
+        These are needed so that Apple's notarization service accepts the app bundle.
+
+        Reference: https://developer.apple.com/documentation/security/hardened_runtime
+    -->
+
+    <!-- Allow JVM to use JNI / native bridges (required for BEAGLE and other JNI libs) -->
+    <key>com.apple.security.cs.allow-jvm-bridging</key>
+    <true/>
+
+    <!-- Allow JVM JIT to allocate executable memory (required for any Java runtime) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!--
+        Disable library validation so that unsigned native libraries (e.g. BEAGLE,
+        platform-specific .dylibs) can be loaded at runtime.
+    -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>

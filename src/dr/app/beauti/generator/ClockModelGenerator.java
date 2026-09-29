@@ -340,6 +340,9 @@ public class ClockModelGenerator extends Generator {
                     writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
                     writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
 
+                }
+
+                if (generateScaleGradient){
                     //location gradient
                     writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[]{
                             new Attribute.Default<>(XMLParser.ID, prefix + LocationGradient.LOCATION_GRADIENT),
@@ -352,9 +355,6 @@ public class ClockModelGenerator extends Generator {
                     writer.writeCloseTag(LocationScaleGradientParser.LOCATION);
                     writer.writeCloseTag(LocationScaleGradientParser.NAME);
 
-                }
-
-                if (generateScaleGradient){
                     //scale gradient
                     writer.writeOpenTag(LocationScaleGradientParser.NAME, new Attribute[]{
                             new Attribute.Default<>(XMLParser.ID, prefix + ScaleGradient.SCALE_GRADIENT),

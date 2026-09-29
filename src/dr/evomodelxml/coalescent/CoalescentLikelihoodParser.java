@@ -33,6 +33,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.coalescent.piecewise.PopulationSizeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
@@ -123,7 +124,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
             try {
                 if (intervalList == null) {
-                    intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees);
+                    intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees, false);
                 }
                 // TreeIntervals now deals with all the interval stuff
 //                return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);

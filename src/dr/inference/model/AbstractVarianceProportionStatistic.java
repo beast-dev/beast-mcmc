@@ -31,8 +31,11 @@ import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.RateRescalingScheme;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitDataModel;
+import dr.evomodel.treedatalikelihood.continuous.MultivariateTraitDebugUtilities;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
@@ -52,7 +55,7 @@ public abstract class AbstractVarianceProportionStatistic extends Statistic.Abst
 
     protected final Tree tree;
     protected final Boolean isTreeRandom;
-    protected final RepeatedMeasuresTraitDataModel dataModel;
+    protected final ContinuousTraitDataModel dataModel;
     protected final TreeDataLikelihood treeLikelihood;
 
     private DenseMatrix64F diffusionProportion;
@@ -65,7 +68,7 @@ public abstract class AbstractVarianceProportionStatistic extends Statistic.Abst
     protected final int dimTrait;
 
     public AbstractVarianceProportionStatistic(Tree tree, TreeDataLikelihood treeLikelihood,
-                                               RepeatedMeasuresTraitDataModel dataModel,
+                                               ContinuousTraitDataModel dataModel,
                                                MatrixRatios ratio) {
         this.tree = tree;
         this.treeLikelihood = treeLikelihood;
@@ -97,6 +100,34 @@ public abstract class AbstractVarianceProportionStatistic extends Statistic.Abst
         sb.append(mat);
         sb.append("\n\n");
         return sb.toString();
+    }
+
+    /**
+     * recalculates the sum of the diagonal elements and sum of all the elements of the tree variance
+     * matrix statistic based on current parameters
+     */
+    protected void updateTreeSums(TreeVarianceSums treeSums) {
+        double diagonalSum = MultivariateTraitDebugUtilities.getVarianceDiagonalSum(tree,
+                treeLikelihood.getBranchRateModel(), 1.0);
+
+        double offDiagonalSum = MultivariateTraitDebugUtilities.getVarianceOffDiagonalSum(tree,
+                treeLikelihood.getBranchRateModel(), 1.0);
+
+        RateRescalingScheme rescalingScheme = treeLikelihood.getDataLikelihoodDelegate().getRateRescalingScheme();
+
+        double normalization = 1.0;
+        if (rescalingScheme == RateRescalingScheme.TREE_HEIGHT) {
+            normalization = tree.getNodeHeight(tree.getRoot());
+        } else if (rescalingScheme == RateRescalingScheme.TREE_LENGTH) {
+            normalization = 1.0 / ((ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate())
+                    .getRateTransformationNormalization();
+        } else if (rescalingScheme != RateRescalingScheme.NONE) {
+            throw new RuntimeException("VarianceProportionStatistic not yet implemented for RateRescalingScheme" +
+                    rescalingScheme.getText() + ".");
+        }
+
+        treeSums.setDiagonalSum(diagonalSum / normalization);
+        treeSums.setTotalSum((diagonalSum + offDiagonalSum) / normalization);
     }
 
     public enum MatrixRatios {

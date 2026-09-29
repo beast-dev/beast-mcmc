@@ -68,7 +68,8 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         final Double tolerance = xo.hasAttribute(GRADIENT_CHECK_TOLERANCE) ? xo.getDoubleAttribute(GRADIENT_CHECK_TOLERANCE) : null;
-        BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
+        BranchSpecificSubstitutionParameterBranchModel branchModel =
+                (BranchSpecificSubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
         BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
 
@@ -79,10 +80,16 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         int dim = xo.getAttribute(DIMENSION, 0);
         if (homogeneous) {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
-                    dim, mode);
+            if (dim == -1) { // meaning all dimensions should be differentiated
+                return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
+                        mode);
+            } else {
+                return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
+                        dim, mode);
+            }
         } else {
-            DifferentiableBranchRates branchRateModel = (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
+            DifferentiableBranchRates branchRateModel =
+                    (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
             CompoundParameter branchParameter = branchModel.getBranchSpecificParameters(branchRateModel);
             return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
                     branchParameter, branchRateModel, tolerance, useHessian, dim, mode);

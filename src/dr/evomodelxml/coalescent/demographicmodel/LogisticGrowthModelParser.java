@@ -33,6 +33,8 @@ import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * Parses an element from an XMLObject into LogisticGrowthModel.
  */
@@ -70,6 +72,12 @@ public class LogisticGrowthModelParser extends AbstractXMLObjectParser {
 
         cxo = xo.getChild(TIME_50);
         Parameter cParam = (Parameter) cxo.getChild(Parameter.class);
+
+        if (usingGrowthRate) {
+            Logger.getLogger("dr.evomodel").info("Logistic growth coalescent model.");
+        } else {
+            Logger.getLogger("dr.evomodel").info("Logistic growth coalescent model (doubling time parameterization).");
+        }
 
         return new LogisticGrowthModel(N0Param, rParam, cParam, 0.5, units, usingGrowthRate);
     }

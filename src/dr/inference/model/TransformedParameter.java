@@ -52,10 +52,6 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         }
     }
 
-    public int getDimension() {
-        return parameter.getDimension();
-    }
-
     protected void storeValues() {
         parameter.storeParameterValues();
     }

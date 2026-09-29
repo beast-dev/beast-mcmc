@@ -108,9 +108,9 @@ public class BeautiApp extends MultiDocApplication {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.Option("advanced", "Enable advanced & developer features"),
-                        new Arguments.Option("version", "Print the version and credits and stop"),
-                        new Arguments.Option("help", "Print this information and stop"),
+                        new Arguments.Option("advanced", "a", "Enable advanced & developer features"),
+                        new Arguments.Option("version", "v", "Print the version and credits and stop"),
+                        new Arguments.Option("help", "h", "Print this information and stop"),
                 });
 
         int argumentCount = 0;

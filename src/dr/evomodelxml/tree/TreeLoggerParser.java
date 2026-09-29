@@ -173,6 +173,11 @@ public class TreeLoggerParser extends LoggerParser {
 
                     TreeTraitProvider ttp = (TreeTraitProvider)xco.getChild(TreeTraitProvider.class);
 
+                    if (ttp == null) {
+                        throw new XMLParseException("The child element of <" + TREE_TRAIT + "> does not implement TreeTraitProvider. " +
+                                "Check that the referenced element (e.g. ancestralTreeLikelihood) is a TreeTraitProvider.");
+                    }
+
                     if (xco.hasAttribute(NAME)) {
                         // a specific named trait is required (optionally with a tag to name it in the tree file)
 

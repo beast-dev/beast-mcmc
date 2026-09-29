@@ -492,7 +492,7 @@ public class SkyGlideLikelihood extends AbstractModelLikelihood implements Repor
         assert(slope != 0 || intercept != 0);
         final double realSmall = getMagicUnderFlowBound(slope);
         if (intervalStart != intervalEnd) {
-            final double slopeMultiplier = Math.abs(slope) < realSmall ? Math.exp(-intercept) * (intervalStart * intervalStart - intervalEnd * intervalEnd) / 2
+            final double slopeMultiplier = Math.abs(slope) < realSmall ? 0
                     : Math.exp(-intercept) * ( (-intervalStart * Math.exp(-slope * intervalStart) + intervalEnd * Math.exp(-slope * intervalEnd))
                     - (Math.exp(-slope * intervalStart) - Math.exp(-slope * intervalEnd)) / slope) / slope;
             final double interceptMultiplier = Math.abs(slope) < realSmall ? (intervalEnd - intervalStart) * (-Math.exp(-intercept))

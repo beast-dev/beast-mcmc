@@ -41,11 +41,18 @@ public class DuplicatedParameterParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        XMLObject cxo = xo.getChild(COPIES);
-        Parameter dup = (Parameter) cxo.getChild(Parameter.class);
-
-        DuplicatedParameter duplicatedParameter = new DuplicatedParameter(parameter);
-        duplicatedParameter.addDuplicationParameter(dup);
+        Parameter dup = null;
+        if (xo.hasChildNamed(COPIES)) {
+            dup = (Parameter) xo.getElementFirstChild(COPIES);
+        }
+        int copies = 1;
+        if (xo.hasAttribute(COPIES)) {
+            copies = xo.getIntegerAttribute(COPIES);
+        }
+        DuplicatedParameter duplicatedParameter = new DuplicatedParameter(parameter, copies);
+        if (dup != null) {
+            duplicatedParameter.addDuplicationParameter(dup);
+        }
 
         return duplicatedParameter;
     }
@@ -55,11 +62,12 @@ public class DuplicatedParameterParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newIntegerRule(COPIES, true),
             new ElementRule(Parameter.class),
             new ElementRule(COPIES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
-                    }),
+                    }, true)
     };
 
     public String getParserDescription() {

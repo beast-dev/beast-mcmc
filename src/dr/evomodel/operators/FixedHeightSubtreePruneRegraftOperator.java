@@ -105,6 +105,10 @@ public class FixedHeightSubtreePruneRegraftOperator extends AbstractTreeOperator
         final NodeRef j = destinations.get(r);
         final NodeRef jP = tree.getParent(j);
 
+        // the distance travelled in branch length space - the distance between node i and j minus how much
+        // higher i is than node j.
+        double delta = TreeUtils.getPathLength(tree, i, j) - (tree.getNodeHeight(i) - tree.getNodeHeight(j));
+
         tree.beginTreeEdit();
 
         // remove the parent of i by connecting its sibling to its grandparent.
@@ -122,6 +126,8 @@ public class FixedHeightSubtreePruneRegraftOperator extends AbstractTreeOperator
         tree.addChild(jP, iP);
 
         tree.endTreeEdit();
+
+        setTopologyChanged(true, delta);
 
         return 0.0;
     }

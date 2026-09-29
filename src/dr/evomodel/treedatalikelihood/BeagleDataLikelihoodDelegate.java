@@ -34,6 +34,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.TransitionMatrixProviderBranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
@@ -41,7 +42,6 @@ import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
-
 import java.util.Collections;
 import java.util.Arrays;
 import java.util.List;
@@ -60,7 +60,7 @@ import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_PO
  */
 
 public class BeagleDataLikelihoodDelegate extends AbstractModel implements
-        DataLikelihoodDelegate, TipStateAccessor, Citable {
+        DataLikelihoodDelegate, DiscreteProcessAlongTree, TipStateAccessor, Citable {
 
     private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
@@ -215,16 +215,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
                         extraBufferCount, settings);
             } else {
-
-                if (branchModel.getSubstitutionModels().size() == 1) {
-                    evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
-                } else {
-                    // use a more general delegate that allows different substitution models on different branches and
-                    // can do matrix convolution.
-
-                    // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
-                    evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                if (settings.useRewardAwareBranchModelDelegate) {
+                    evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree, (TransitionMatrixProviderBranchModel) branchModel, 0,
                             extraBufferCount, settings);
+                } else {
+                    if (branchModel.getSubstitutionModels().size() == 1) {
+                        evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+                    } else {
+                        // use a more general delegate that allows different substitution models on different branches and
+                        // can do matrix convolution.
+
+                        // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
+                        evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                                extraBufferCount, settings);
+                    }
                 }
             }
 
@@ -1157,7 +1161,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         return this.settings.usePreOrder;
     }
 
-    public final EvolutionaryProcessDelegate getEvolutionaryProcessDelegate(){
+    public final EvolutionaryProcessDelegate getEvolutionaryProcessDelegate() {
         return this.evolutionaryProcessDelegate;
     }
 

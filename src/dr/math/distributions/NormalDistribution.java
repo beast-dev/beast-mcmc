@@ -96,15 +96,15 @@ public class NormalDistribution implements Distribution, RandomGenerator, Gradie
     }
 
     private final UnivariateFunction pdfFunction = new UnivariateFunction() {
-        public final double evaluate(double x) {
+        public double evaluate(double x) {
             return pdf(x);
         }
 
-        public final double getLowerBound() {
+        public double getLowerBound() {
             return Double.NEGATIVE_INFINITY;
         }
 
-        public final double getUpperBound() {
+        public double getUpperBound() {
             return Double.POSITIVE_INFINITY;
         }
     };
@@ -141,6 +141,10 @@ public class NormalDistribution implements Distribution, RandomGenerator, Gradie
 
     public static double gradLogPdf(double x, double m, double sd) {
         return (m - x) / (sd * sd);
+    }
+
+    public static double gradLogPdfWrtPrecision(double x, double m, double sd) {
+        return 0.5 / (sd * sd) - 0.5 * (x - m) * (x - m); // TODO Check
     }
 
     public static double hessianLogPdf(double x, double m, double sd) {

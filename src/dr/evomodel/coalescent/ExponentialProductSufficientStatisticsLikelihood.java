@@ -27,13 +27,7 @@
 
 package dr.evomodel.coalescent;
 
-import java.util.List;
-
-import dr.evolution.coalescent.IntervalType;
-import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood.CoalescentEventType;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
 
 /**
  * Calculates a product of exponential densities and exponential tail probabilities.

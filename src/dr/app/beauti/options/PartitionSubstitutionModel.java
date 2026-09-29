@@ -1,7 +1,7 @@
 /*
  * PartitionSubstitutionModel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -28,15 +28,16 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
+import dr.app.beauti.components.discrete.BASTAModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
-import dr.app.beauti.components.discrete.DiscreteSubstModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelStructureType;
 import dr.app.beauti.types.*;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
-import dr.stats.Variate;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -60,7 +61,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
-    private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
+
+    private DiscreteSubstModelType discreteSubstModelType = DiscreteSubstModelType.FIT;
+    private BASTAModelType bastaModelType = BASTAModelType.CONST;
+    private boolean sharedCoalescentModel = true;
+
+    private DiscreteSubstModelStructureType discreteSubstType = DiscreteSubstModelStructureType.SYM_SUBST;
     private ContinuousSubstModelType continuousSubstModelType = ContinuousSubstModelType.HOMOGENOUS;
     private ContinuousModelExtensionType continuousExtensionType = ContinuousModelExtensionType.NONE;
 
@@ -74,8 +80,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public boolean useAmbiguitiesTreeLikelihood = false;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
+    private boolean freeRatesHetero = false;
     private boolean gammaHetero = false;
-    private int gammaCategories = 4;
+    private int rateCategories = 4;
     private boolean invarHetero = false;
     private boolean equalWeights = false;
     private String codonHeteroPattern = null;
@@ -89,12 +96,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean isIndependent = false;
     private double jitterWindow = 0.0;
 
-    public TraitData getTraitData() {
-        return traitData;
-    }
+    private AbstractPartitionData partition;
 
     public PartitionSubstitutionModel(BeautiOptions options, String name, AbstractPartitionData partition) {
         super(options, name);
+
+        this.partition = partition;
 
         if (partition.getTraits() != null && partition.getDataType().getType() == DataType.CONTINUOUS) {
             continuousTraitCount = partition.getTraits().size();
@@ -141,8 +148,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
+        freeRatesHetero = source.freeRatesHetero;
         gammaHetero = source.gammaHetero;
-        gammaCategories = source.gammaCategories;
+        rateCategories = source.rateCategories;
         equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
@@ -165,6 +173,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         dataType = DataType.NUCLEOTIDES;
 
         initModelParametersAndOpererators();
+    }
+
+    public TraitData getTraitData() {
+        return traitData;
     }
 
     // only init in PartitionSubstitutionModel
@@ -543,38 +555,42 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 throw new IllegalArgumentException("Unknown data type");
         }
 
-        // if gamma do shape move
-        if (gammaHetero) {
-            if (includeRelativeRates && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    params.add(getParameter("CP1.alpha"));
-                    params.add(getParameter("CP2.alpha"));
-                    params.add(getParameter("CP3.alpha"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    params.add(getParameter("CP1+2.alpha"));
-                    params.add(getParameter("CP3.alpha"));
+        if (freeRatesHetero) {
+            assert false : "Implement";
+        } else {
+            // if gamma do shape move
+            if (gammaHetero) {
+                if (includeRelativeRates && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        params.add(getParameter("CP1.alpha"));
+                        params.add(getParameter("CP2.alpha"));
+                        params.add(getParameter("CP3.alpha"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        params.add(getParameter("CP1+2.alpha"));
+                        params.add(getParameter("CP3.alpha"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    params.add(getParameter("alpha"));
                 }
-            } else {
-                params.add(getParameter("alpha"));
             }
-        }
-        // if pinv do pinv move
-        if (invarHetero) {
-            if (includeRelativeRates && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    params.add(getParameter("CP1.pInv"));
-                    params.add(getParameter("CP2.pInv"));
-                    params.add(getParameter("CP3.pInv"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    params.add(getParameter("CP1+2.pInv"));
-                    params.add(getParameter("CP3.pInv"));
+            // if pinv do pinv move
+            if (invarHetero) {
+                if (includeRelativeRates && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        params.add(getParameter("CP1.pInv"));
+                        params.add(getParameter("CP2.pInv"));
+                        params.add(getParameter("CP3.pInv"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        params.add(getParameter("CP1+2.pInv"));
+                        params.add(getParameter("CP3.pInv"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    params.add(getParameter("pInv"));
                 }
-            } else {
-                params.add(getParameter("pInv"));
             }
         }
         return params;
@@ -789,39 +805,43 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 throw new IllegalArgumentException("Unknown data type");
         }
 
-        // if gamma do shape move
-        if (gammaHetero) {
-            if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    ops.add(getOperator("CP1.alpha"));
-                    ops.add(getOperator("CP2.alpha"));
-                    ops.add(getOperator("CP3.alpha"));
-                } else if (codonHeteroPattern.equals("112")) {
-                    ops.add(getOperator("CP1+2.alpha"));
-                    ops.add(getOperator("CP3.alpha"));
+        if (freeRatesHetero) {
+            assert false : "Implement";
+        } else {
+            // if gamma do shape move
+            if (gammaHetero) {
+                if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        ops.add(getOperator("CP1.alpha"));
+                        ops.add(getOperator("CP2.alpha"));
+                        ops.add(getOperator("CP3.alpha"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        ops.add(getOperator("CP1+2.alpha"));
+                        ops.add(getOperator("CP3.alpha"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    ops.add(getOperator("alpha"));
                 }
-            } else {
-                ops.add(getOperator("alpha"));
             }
-        }
-        // if pinv do pinv move
-        if (invarHetero) {
-            String name = (options.usePInvRandomWalk() ? "rwPInv" : "uniformPInv");
-            if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
-                if (codonHeteroPattern.equals("123")) {
-                    ops.add(getOperator("CP1." + name));
-                    ops.add(getOperator("CP2." + name));
-                    ops.add(getOperator("CP3." + name));
-                } else if (codonHeteroPattern.equals("112")) {
-                    ops.add(getOperator("CP1+2." + name));
-                    ops.add(getOperator("CP3." + name));
+            // if pinv do pinv move
+            if (invarHetero) {
+                String name = (options.usePInvRandomWalk() ? "rwPInv" : "uniformPInv");
+                if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
+                    if (codonHeteroPattern.equals("123")) {
+                        ops.add(getOperator("CP1." + name));
+                        ops.add(getOperator("CP2." + name));
+                        ops.add(getOperator("CP3." + name));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        ops.add(getOperator("CP1+2." + name));
+                        ops.add(getOperator("CP3." + name));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else {
-                    throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    ops.add(getOperator(name));
                 }
-            } else {
-                ops.add(getOperator(name));
             }
         }
 
@@ -949,11 +969,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.binarySubstitutionModel = binarySubstitutionModel;
     }
 
-    public DiscreteSubstModelType getDiscreteSubstType() {
+    public DiscreteSubstModelStructureType getDiscreteSubstType() {
         return discreteSubstType;
     }
 
-    public void setDiscreteSubstType(DiscreteSubstModelType discreteSubstType) {
+    public void setDiscreteSubstType(DiscreteSubstModelStructureType discreteSubstType) {
         this.discreteSubstType = discreteSubstType;
     }
 
@@ -1018,7 +1038,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public boolean isActivateBSSVS() {
-        return discreteSubstType != DiscreteSubstModelType.GLM_SUBST && activateBSSVS;
+        return discreteSubstType != DiscreteSubstModelStructureType.GLM_SUBST && activateBSSVS;
     }
 
     public void setActivateBSSVS(boolean activateBSSVS) {
@@ -1033,6 +1053,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.frequencyPolicy = frequencyPolicy;
     }
 
+    public boolean isFreeRatesHetero() {
+        return freeRatesHetero;
+    }
+
+    public void setFreeRatesHetero(boolean freeRatesHetero) {
+        this.freeRatesHetero = freeRatesHetero;
+    }
+
     public boolean isGammaHetero() {
         return gammaHetero;
     }
@@ -1041,12 +1069,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.gammaHetero = gammaHetero;
     }
 
-    public int getGammaCategories() {
-        return gammaCategories;
+    public int getRateCategories() {
+        return rateCategories;
     }
 
-    public void setGammaCategories(int gammaCategories) {
-        this.gammaCategories = gammaCategories;
+    public void setRateCategories(int rateCategories) {
+        this.rateCategories = rateCategories;
     }
 
     public boolean isInvarHetero() {
@@ -1187,8 +1215,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
+        freeRatesHetero = source.freeRatesHetero;
         gammaHetero = source.gammaHetero;
-        gammaCategories = source.gammaCategories;
+        rateCategories = source.rateCategories;
         equalWeights = source.equalWeights;
         invarHetero = source.invarHetero;
         codonHeteroPattern = source.codonHeteroPattern;
@@ -1204,4 +1233,31 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return getName();
     }
 
+    public DiscreteSubstModelType getDiscreteSubstModelType() {
+        return discreteSubstModelType;
+    }
+
+    public void setDiscreteSubstModelType(DiscreteSubstModelType discreteSubstModelType) {
+        this.discreteSubstModelType = discreteSubstModelType;
+    }
+
+    public BASTAModelType getBastaModelType() {
+        return bastaModelType;
+    }
+
+    public void setBastaModelType(BASTAModelType bastaModelType) {
+        this.bastaModelType = bastaModelType;
+    }
+
+    public boolean isSharedCoalescentModel() {
+        return sharedCoalescentModel;
+    }
+
+    public void setSharedCoalescentModel(boolean sharedCoalescentModel) {
+        this.sharedCoalescentModel = sharedCoalescentModel;
+    }
+
+    public AbstractPartitionData getPartitionData() {
+        return partition;
+    }
 }

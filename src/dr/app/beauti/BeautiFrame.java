@@ -161,7 +161,9 @@ public class BeautiFrame extends DocumentFrame {
                 TipDateSamplingComponentFactory.INSTANCE
         };
 
-        options = new BeautiOptions(components);
+        options = BeautiOptions.getInstance();
+        options.registerComponents(components);
+
         generator = new BeastGenerator(options, components);
 
         this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener() {
@@ -548,7 +550,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public final boolean doImportTraits() {
         File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat")});
+                new FileNameExtensionFilter("Tab-delimited text files", "tsv", "txt", "tab", "dat")});
 
         if (files != null && files.length != 0) {
             try {
@@ -627,7 +629,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public PartitionTreePrior getCurrentPartitionTreePrior() {
         treesPanel.setOptions(options); // need this to refresh the currentTreeModel
-        return treesPanel.currentTreeModel.getPartitionTreePrior();
+        return treesPanel.getCurrentTreeModel().getPartitionTreePrior();
     }
 
     public void setStatusMessage() {

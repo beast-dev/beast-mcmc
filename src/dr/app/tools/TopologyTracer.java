@@ -343,16 +343,16 @@ public class TopologyTracer {
         //
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
-                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
-                        new Arguments.Option("paired", "take 2 input tree files and compute metric between tree pairs"),
-                        new Arguments.Option("pairwise", "compute all pairs in a tree file (output: lower triangular CSV file)"),
-                        new Arguments.StringOption("tree", "tree file name", "a focal tree provided by the user [default = first tree in .trees file]"),
-                        new Arguments.StringOption("metric", new String[] {"kc", "sp", "rf", "clade", "branch", "all"}, false,
+                        new Arguments.IntegerOption("burnin", "b","the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.IntegerOption("burninTrees", "bt", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.Option("paired", null, "take 2 input tree files and compute metric between tree pairs"),
+                        new Arguments.Option("pairwise", null, "compute all pairs in a tree file (output: lower triangular CSV file)"),
+                        new Arguments.StringOption("tree",null,  "tree file name", "a focal tree provided by the user [default = first tree in .trees file]"),
+                        new Arguments.StringOption("metric",null,  new String[] {"kc", "sp", "rf", "clade", "branch", "all"}, false,
                                 "which tree metric to use ('kc', 'sp', 'rf', 'clade', 'branch') [default = all]"
                         ),
-                        new Arguments.RealOption("lambda", "the lambda value to be used for the 'Kendall-Colijn metric' [default = {0,0.5,1}]"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.RealOption("lambda",null,  "the lambda value to be used for the 'Kendall-Colijn metric' [default = {0,0.5,1}]"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

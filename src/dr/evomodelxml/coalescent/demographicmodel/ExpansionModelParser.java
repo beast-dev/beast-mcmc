@@ -33,6 +33,8 @@ import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * Parses an element from an DOM document into a ConstantExponentialModel.
  */
@@ -70,6 +72,13 @@ public class ExpansionModelParser extends AbstractXMLObjectParser {
             rParam = (Parameter) cxo.getChild(Parameter.class);
             usingGrowthRate = false;
         }
+
+        if (usingGrowthRate) {
+            Logger.getLogger("dr.evomodel").info("Expansion growth coalescent model.");
+        } else {
+            Logger.getLogger("dr.evomodel").info("Expansion growth coalescent model (doubling time parameterization).");
+        }
+
 
         return new ExpansionModel(N0Param, N1Param, rParam, units, usingGrowthRate);
     }

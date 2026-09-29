@@ -28,11 +28,13 @@
 package dr.evomodelxml.coalescent.demographicmodel;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ExponentialPopulationSizeModel;
+import dr.evomodel.coalescent.piecewise.ExponentialPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodel.ExponentialGrowthModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 import static dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser.LOG_SPACE;
 
@@ -77,8 +79,14 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Doubling time parameterization is not compatible with log population size");
             }
             // ExponentialPopulationSizeModel provides a model with N0 in log space
+            Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model (population size in log space).");
             return new ExponentialPopulationSizeModel(N0Param, rParam, units);
         } else {
+            if (usingGrowthRate) {
+                Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model.");
+            } else {
+                Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model (doubling time parameterization).");
+            }
             return new ExponentialGrowthModel(N0Param, rParam, units, usingGrowthRate);
         }
     }

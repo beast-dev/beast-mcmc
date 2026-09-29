@@ -37,6 +37,25 @@ import dr.xml.*;
 
 public class LogCtmcRatesMatrixMatrixProductParameterParser extends AbstractXMLObjectParser {
 
+    /**
+     * <someName>
+     * 	<generalDataType idref="loc.dataType"/>
+     * 	<lump id="S1">
+     * 		<state code="A"/>
+     * 	</lump>
+     * 	<lump id="S2">
+     * 		<state code="C"/>
+     * 		<state code="G"/>
+     * 		<state code="T"/>
+     * 	</lump>
+     * 	<rates>
+     * 		<parameter id="my.rates"/>
+     * 	</rates>
+     * 	<proportions>
+     * 		<parameter id="my.proportions"/>
+     * 	</proportions>
+     * </someName>
+     */
     public static final String PRODUCT_PARAMETER = "ctmcRatesMatrixMatrixProduct";
     public static final String LHS = "lhs";
     public static final String RHS = "rhs";

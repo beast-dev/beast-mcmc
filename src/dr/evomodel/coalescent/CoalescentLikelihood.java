@@ -32,6 +32,8 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.coalescent.piecewise.PopulationSizeFunction;
+import dr.evomodel.coalescent.piecewise.PopulationSizeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.math.Binomial;
 
@@ -107,7 +109,9 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 			lnL = calculateLogLikelihood(demographicModel);
 		}
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demographicModel.getId() + " is " + Double.toString(lnL));
+			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demographicModel.getId() +
+					" is " + Double.toString(lnL) + " (likely to be extreme model parameter values - " +
+					"if the messages don't stop, try using stronger priors on these)");
 		}
 
 		return lnL;
@@ -164,11 +168,8 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 					//                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
 					logL -= Math.log(demographicAtCoalPoint);
 				} else {
-					// remove this at some stage
-					//  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
 					return Double.NEGATIVE_INFINITY;
 				}
-
 			}
 
 			startTime = finishTime;
@@ -191,8 +192,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		double absoluteStartTime = intervals.getStartTime();
 		demographicModel.setTimeOffset(absoluteStartTime);
-
-		DemographicFunction demographicFunction = demographicModel.getDemographicFunction();
 
 		double startTime = 0;
 

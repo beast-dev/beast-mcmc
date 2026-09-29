@@ -366,17 +366,17 @@ public class JumpHistoryAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.StringOption("from", "from_states", "set of 'from' states to limit the history [default all states]"),
-                        new Arguments.StringOption("to", "to_states", "set of 'to' states to limit the history [default all states]"),
-                        new Arguments.Option("iterateFrom", "iterate over 'from' states [default combine states]"),
-                        new Arguments.Option("iterateTo", "iterate over 'to' states [default combine states]"),
-                        new Arguments.Option("backwardsTime", "time runs backwards [default false]"),
-                        new Arguments.IntegerOption("bins", "the number of discrete bins [default 100]"),
-                        new Arguments.RealOption("min", "the minimum bound of the time range"),
-                        new Arguments.RealOption("max", "the maximum bound of the time range"),
-                        new Arguments.RealOption("mrsd", "the date of the most recently sampled tip"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.IntegerOption("burnin","b","the number of states to be considered as 'burn-in'"),
+                        new Arguments.StringOption("from","f", "from_states", "set of 'from' states to limit the history [default all states]"),
+                        new Arguments.StringOption("to", "t","to_states", "set of 'to' states to limit the history [default all states]"),
+                        new Arguments.Option("iterateFrom", "if", "iterate over 'from' states [default combine states]"),
+                        new Arguments.Option("iterateTo", "it", "iterate over 'to' states [default combine states]"),
+                        new Arguments.Option("backwardsTime", "bt", "time runs backwards [default false]"),
+                        new Arguments.IntegerOption("bins", null, "the number of discrete bins [default 100]"),
+                        new Arguments.RealOption("min", null, "the minimum bound of the time range"),
+                        new Arguments.RealOption("max", null, "the maximum bound of the time range"),
+                        new Arguments.RealOption("mrsd", null, "the date of the most recently sampled tip"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
         try {

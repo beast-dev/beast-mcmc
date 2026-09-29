@@ -27,9 +27,6 @@
 
 package dr.evomodel.operators;
 
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
-import dr.evomodelxml.operators.TipLeapOperatorParser;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
 

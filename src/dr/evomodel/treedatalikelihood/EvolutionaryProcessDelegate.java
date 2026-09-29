@@ -28,6 +28,7 @@
 package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 
 /**
@@ -66,6 +67,8 @@ public interface EvolutionaryProcessDelegate {
     SubstitutionModel getSubstitutionModel(int index);
 
     SubstitutionModel getSubstitutionModelForBranch(int branchIndex);
+
+    BranchModel getBranchSubstitutionModel();
 
     int getEigenIndex(int bufferIndex);
 

@@ -28,6 +28,7 @@
 package dr.app.beast;
 
 import dr.util.Citation;
+import dr.util.CitationLogHandler;
 import dr.util.Pair;
 import dr.util.Version;
 import dr.xml.PropertyParser;
@@ -209,32 +210,29 @@ public class BeastParser extends XMLParser {
 
     @Override
     protected void executingRunnable() {
-        //Logger.getLogger("dr.app.beast").info("\nCitations for this analysis: ");
-        Logger.getLogger("dr.util").info("\nCitations for this analysis: ");
+        Logger logger = Logger.getLogger("dr.util.citations");
+
+        logger.info("\nCitations for this analysis: ");
 
         Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
 
         // force the Framework category to be first...
-        categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
+        categoryMap.put("Framework", new LinkedHashSet<>());
 
         for (Pair<String, String> keyPair : getCitationStore().keySet()) {
-            Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.first);
-            if (pairSet == null) {
-                pairSet = new LinkedHashSet<Pair<String, String>>();
-                categoryMap.put(keyPair.first, pairSet);
-            }
+            Set<Pair<String, String>> pairSet = categoryMap.computeIfAbsent(keyPair.first, k -> new LinkedHashSet<>());
             pairSet.add(keyPair);
         }
 
         for (String category : categoryMap.keySet()) {
-            Logger.getLogger("dr.util").info("\n"+category.toUpperCase());
+            logger.info("\n"+category.toUpperCase());
             Set<Pair<String, String>> pairSet = categoryMap.get(category);
 
             for (Pair<String, String>keyPair : pairSet) {
-                Logger.getLogger("dr.util").info(keyPair.second + ":");
+                logger.info(keyPair.second + ":");
 
                 for (Citation citation : getCitationStore().get(keyPair)) {
-                    Logger.getLogger("dr.util").info("\t" + citation.toString());
+                    logger.info("\t" + citation.toString());
                 }
             }
         }
@@ -242,8 +240,10 @@ public class BeastParser extends XMLParser {
         // clear the citation store so all the same citations don't get cited again
         getCitationStore().clear();
 
-        Logger.getLogger("dr.util").info("\n");
+        logger.info("\n");
 
+        //close citationHandler
+        CitationLogHandler.closeHandler();
     }
 
     private void setup(String[] args) {

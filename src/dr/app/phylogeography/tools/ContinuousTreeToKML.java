@@ -75,15 +75,15 @@ public class ContinuousTreeToKML {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption(ANNOTATION, "location annotation label", "specifies the label used for location coordinates annotation [default=location]"),
-                        new Arguments.RealOption(ALTITUDE,"specifies the altitude of the root of the 3D tree [default=no 3D tree]"),
-                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
+                        new Arguments.StringOption(ANNOTATION,null, "location annotation label", "specifies the label used for location coordinates annotation [default=location]"),
+                        new Arguments.RealOption(ALTITUDE,null, "specifies the altitude of the root of the 3D tree [default=no 3D tree]"),
+                        new Arguments.RealOption(MRSD,null, "specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
 
-                        new Arguments.StringOption(SLICES,"time","specifies a slice time-list [default=none]"),
-                        new Arguments.StringOption(SLICEMIDPOINT, falseTrue, false,
+                        new Arguments.StringOption(SLICES,null,"time","specifies a slice time-list [default=none]"),
+                        new Arguments.StringOption(SLICEMIDPOINT, null, falseTrue, false,
                                 "shows complete branch for sliced tree if time is more recent than the branch's midpoint [default=false"),
 
-                        new Arguments.Option(HELP, "option to print this message")
+                        new Arguments.Option(HELP, "h", "option to print this message")
                 });
 
         try {

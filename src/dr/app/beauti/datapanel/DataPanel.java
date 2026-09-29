@@ -1,7 +1,7 @@
 /*
  * DataPanel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -517,7 +517,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         } else {
             minRow = options.createPartitionForTraits(name, selectedTraits);
             maxRow = minRow;
-
         }
 
         modelsChanged();
@@ -1169,7 +1168,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     partitionsToRemove.add(partition);
                     removePartitions(partitionsToRemove);
 
-                    break; //there should only be one dummy partion
+                    break; //there should only be one dummy partition
 
                 }
 

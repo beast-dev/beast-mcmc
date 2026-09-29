@@ -46,6 +46,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
@@ -403,6 +404,16 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         double[] registration = registerParameter.get(whichRegistration).getParameterValues();
         markovjumps.get(whichRegistration).setRegistration(registration);
         areStatesRedrawn = false;
+    }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (markovjumps != null && markovjumps.contains(model)) {
+            areStatesRedrawn = false;
+            fireModelChanged(model);
+            return;
+        }
+        super.handleModelChangedEvent(model, object, index);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

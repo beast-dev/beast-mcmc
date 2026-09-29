@@ -29,6 +29,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evomodel.coalescent.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.hmc.BayesianSkylineGradient;
+import dr.inference.hmc.NumericGradientStepSizeProvider;
 import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.xml.*;
 
@@ -49,8 +50,9 @@ public class BayesianSkylineGradientParser extends AbstractXMLObjectParser {
         String wrtParameterCase = (String) xo.getAttribute(WRT_PARAMETER);
         BayesianSkylineGradient.WrtParameter type = BayesianSkylineGradient.WrtParameter.factory(wrtParameterCase);
         double tolerance = xo.getAttribute(TOLERANCE, 1E-4);
+        double numericGradientStepSize = NumericGradientStepSizeProvider.parseStepSizeRatio(xo);
 
-        return new BayesianSkylineGradient(skylineLikelihood, type, tolerance);
+        return new BayesianSkylineGradient(skylineLikelihood, type, tolerance, numericGradientStepSize);
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * BiClade.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,7 +22,6 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.app.tools.treeannotator;
@@ -38,6 +37,10 @@ import java.util.*;
  */
 class BiClade implements Clade {
 
+    private static final boolean USE_BITSET_CLADE_KEYS = false;
+
+    public static final CladeKeys cladeKeys;
+
     /**
      * Clade for a tip
      * @param index number of the tip
@@ -49,7 +52,7 @@ class BiClade implements Clade {
         credibility = 1.0;
         size = 1;
 
-        key = index;
+        key = getTaxonKey(index);
 
         this.taxon = taxon;
     }
@@ -79,12 +82,15 @@ class BiClade implements Clade {
         index = left.index;
         addSubClades(left, right);
 
-        key = BiClade.makeKey(left.key, right.key);
+        key = BiClade.getParentKey(left.key, right.key);
 
         this.taxon = null;
     }
 
     public void addSubClades(Clade child1, Clade child2) {
+        if (subClades == null) {
+            subClades = new HashSet<>();
+        }
         // arrange with the lowest index on the left
         BiClade left = (BiClade)child1;
         BiClade right = (BiClade)child2;
@@ -95,6 +101,28 @@ class BiClade implements Clade {
         assert left.size + right.size == size;
         assert left.index == index;
         subClades.add(new Pair<>(left, right));
+    }
+
+    void addParent(BiClade parentClade) {
+        if (parentClades == null) {
+            parentClades = new HashSet<>();
+        }
+        parentClades.add(parentClade);
+    }
+
+    void addChild(BiClade childClade) {
+        if (childClades == null) {
+            childClades = new HashSet<>();
+        }
+        childClades.add(childClade);
+    }
+
+    public BiClade getMajorityRuleParent() {
+        return majorityRuleParent;
+    }
+
+    public void setMajorityRuleParent(BiClade majorityRuleParent) {
+        this.majorityRuleParent = majorityRuleParent;
     }
 
     @Override
@@ -118,17 +146,40 @@ class BiClade implements Clade {
     }
 
     @Override
-    public void addAttributeValues(Object[] values) {
-        if (attributeValues == null) {
-            attributeValues = new ArrayList<>();
+    public void addAttributeValue(String attributeName, Object value) {
+        synchronized (attributeValueMap) {
+            attributeValueMap.computeIfAbsent(attributeName, k -> new ArrayList<>()).add(value);
         }
-        attributeValues.add(values);
     }
 
     @Override
-    public List<Object[]> getAttributeValues() {
-        return attributeValues;
+    public List<Object> getAttributeValues(String attributeName) {
+        return attributeValueMap.get(attributeName);
     }
+
+    @Override
+    public void addHeightValue(double height) {
+        synchronized (heightValues) {
+            heightValues.add(height);
+        }
+    }
+
+    @Override
+    public List<Double> getHeightValues() {
+        return heightValues;
+    }
+
+//    public void addChildHeightValues(double leftHeight, double rightHeight) {
+//        leftHeightValues.add(leftHeight);
+//        rightHeightValues.add(rightHeight);
+//    }
+//
+//    public List<Double> getLeftHeightValues() {
+//        return leftHeightValues;
+//    }
+//    public List<Double> getRightHeightValues() {
+//        return rightHeightValues;
+//    }
 
     @Override
     public int getSize() {
@@ -159,61 +210,72 @@ class BiClade implements Clade {
         return subClades;
     }
 
+    public Set<BiClade> getParentClades() {
+        return parentClades;
+    }
+
+    public Set<BiClade> getChildClades() {
+        return childClades;
+    }
+
     @Override
     public Object getKey() {
         return key;
     }
 
-    public static Object makeKey(Object key1, Object key2) {
-        BitSet bits = new BitSet();
-        if (key1 instanceof Integer) {
-            bits.set((Integer) key1);
-        } else {
-            assert key1 instanceof BitSet;
-            bits.or((BitSet) key1);
-        }
-        if (key2 instanceof Integer) {
-            bits.set((Integer) key2);
-        } else {
-            assert key2 instanceof BitSet;
-            bits.or((BitSet) key2);
-        }
-        return bits;
+    public static Object getTaxonKey(int index) {
+        return cladeKeys.getTaxonKey(index);
     }
 
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//
-//        if (((BiClade) o).size != size) return false;
-//
-//        return !(bits != null ? !Arrays.equals(bits, ((BiClade) o).bits) : ((BiClade) o).bits != null);
-//
-//    }
-//
-//    public int hashCode() {
-//        return left.hashCode() ^ right.hashCode();
-//    }
+    public static Object getParentKey(Object key1, Object key2) {
+        return cladeKeys.getParentKey(key1, key2);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BiClade)) return false;
+        return Objects.equals(key, ((BiClade)o).key);
+    }
+
+    @Override
+    public int hashCode() {
+        return key.hashCode();
+    }
 
     public String toString() {
-        return "clade " + hashCode();
+        return "clade " + key;
     }
 
-    private int count;
-    private double credibility;
-    private final int size;
-    private final int index;
+    int count;
+    double credibility;
+    final int size;
+    final int index;
 
-    private final Object key;
+    final Object key;
 
     private final Taxon taxon;
 
-    private final Set<Pair<BiClade, BiClade>> subClades = new HashSet<>();
+    public BiClade majorityRuleParent = null;
+
+    private Set<Pair<BiClade, BiClade>> subClades = null;
     BiClade bestLeft = null;
     BiClade bestRight = null;
+    private Set<BiClade> parentClades = null;
+    private Set<BiClade> childClades = null;
 
 
-    double bestSubTreeCredibility;
+    double bestSubTreeScore = Double.NaN;
 
-    private List<Object[]> attributeValues = null;
+    private final List<Object[]> attributeValues = new ArrayList<>();
+    private final Map<String, List<Object>> attributeValueMap = new HashMap<>();
+    private final List<Double> heightValues = new ArrayList<>();
+
+    static {
+        if (USE_BITSET_CLADE_KEYS) {
+            cladeKeys = BitsetCladeKeys.INSTANCE;
+        } else {
+            cladeKeys = FingerprintCladeKeys.INSTANCE;
+        }
+    }
 }

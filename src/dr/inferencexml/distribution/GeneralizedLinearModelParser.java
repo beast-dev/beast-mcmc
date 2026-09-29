@@ -179,6 +179,9 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 //                System.err.println(new Matrix(designMatrix.getParameterAsMatrix()));
 //                System.exit(-1);
 
+                setupDimensionNames(independentParam, designMatrix);
+                setupDimensionNames(indicator, designMatrix);
+
                 glm.addIndependentParameter(independentParam, designMatrix, indicator);
 //                System.err.println("C");
             }
@@ -186,6 +189,49 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     }
 
     private boolean checkFullRankOfMatrix;
+
+    /**
+     * Names each dimension of a coefficient (or indicator) parameter after the corresponding
+     * column of the design matrix so that, say, HZ.coefficients gets logged as
+     * HZ.coefficients.distances rather than HZ.coefficients1.
+     */
+    private void setupDimensionNames(Parameter parameter, DesignMatrix designMatrix) {
+        if (parameter == null || parameter.getDimension() != designMatrix.getColumnDimension()) {
+            return;
+        }
+
+        String prefix = parameter.getParameterName();
+        String[] names = new String[designMatrix.getColumnDimension()];
+
+        for (int col = 0; col < names.length; ++col) {
+            String columnName = designMatrix.getParameter(col).getId();
+            if (columnName == null || columnName.length() == 0) {
+                // no id on this column so nothing better than the index to use
+                return;
+            }
+            names[col] = (prefix == null ? "" : prefix + ".") + trimSharedPrefix(columnName, prefix);
+        }
+
+        parameter.setDimensionNames(names);
+    }
+
+    /**
+     * Removes any leading, dot-delimited prefix that the design matrix column shares with the
+     * parameter (typically the trait name) to avoid names like HZ.coefficients.HZ.distances.
+     */
+    private static String trimSharedPrefix(String columnName, String prefix) {
+        if (prefix == null) {
+            return columnName;
+        }
+        int lastDot = prefix.lastIndexOf('.');
+        if (lastDot > 0) {
+            String sharedPrefix = prefix.substring(0, lastDot + 1);
+            if (columnName.startsWith(sharedPrefix) && columnName.length() > sharedPrefix.length()) {
+                return columnName.substring(sharedPrefix.length());
+            }
+        }
+        return columnName;
+    }
 
     private void checkFullRank(DesignMatrix designMatrix) throws XMLParseException {
         int fullRank = designMatrix.getColumnDimension();

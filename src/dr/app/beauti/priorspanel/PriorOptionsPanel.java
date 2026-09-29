@@ -270,7 +270,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     }
 
     protected Double getValue(int i) {
-        return ((RealNumberField) argumentFields.get(i)).getValue();
+        if (argumentFields.get(i) instanceof RealNumberField) {
+            return ((RealNumberField) argumentFields.get(i)).getValue();
+        }
+        return null;
     }
 
     protected Double getValue(String fieldName) {
@@ -641,9 +644,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
 
         public boolean getArguments(Parameter parameter) {
-            if (getValue(0) == null ||
-                    getValue(1) == null ||
-                    getValue(2) == null ) {
+            if (getValue(1) == null ||
+                    getValue(2) == null ||
+                    getValue(3) == null ) {
                 return false;
             }
             parameter.mean = getValue(1);

@@ -17,17 +17,20 @@ env:
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
     BEAGLE_BRANCH: v4_release
+    BEAGLE_CACHE_VERSION: beagle-portable-v1
 
 jobs:
     build:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - name: Set up JDK 8
-              uses: actions/setup-java@v4
-              with:
-                  java-version: "8"
-                  distribution: "adopt"
+#            - name: Set up JDK 8
+#              uses: actions/setup-java@v4
+#              with:
+#                 java-version: "8"
+#                 distribution: "adopt"
+#                 java-version: "17"
+#                 distribution: "temurin"
             - name: Setup cmake
               uses: lukka/get-cmake@latest
             - name: Cache BEAGLE
@@ -37,8 +40,9 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Build BEAGLE
+              if: steps.cache.outputs.cache-hit != 'true'
               run: |
                   chmod +x ./.github/scripts/build_beagle.sh
                   ./.github/scripts/build_beagle.sh
@@ -52,10 +56,10 @@ jobs:
               id: set-matrices
               run: |
                   echo "xml-matrix=$(ls tests/TestXML/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-                  echo "xml-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+                  echo "xml-long-load-state-matrix=$(ls tests/TestXMLwithLoadState/*.xml | grep long.xml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
         outputs:
             xml-matrix: ${{ steps.set-matrices.outputs.xml-matrix }}
-            xml-load-state-matrix: ${{ steps.set-matrices.outputs.xml-load-state-matrix }}
+            xml-long-load-state-matrix: ${{ steps.set-matrices.outputs.xml-long-load-state-matrix }}
 
     test-xml:
         needs: build
@@ -71,21 +75,16 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Rebuild project
               run: ant dist                      
             - name: Run test for ${{ matrix.file }}
               run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
-    test-xml-load-state:
+    # Test checkpointing by running 2 shorter analyses
+    test-xml-short-load-state:
         needs: build
         runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                file: ${{fromJson(needs.build.outputs.xml-load-state-matrix)}}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/cache@v4
@@ -93,15 +92,55 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Rebuild project
-              run: ant dist                      
-            - name: Run test with load state for ${{ matrix.file }}
+              run: ant dist
+            - name: checkpoint adaptive MCMC
+              id: checkpoint-adaptive-mcmc
               run: |
-                  checkpoint=tests/TestXMLwithLoadState/$(basename ${{ matrix.file }} .xml).chkpt
-                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state $checkpoint -overwrite ${{ matrix.file }}
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state testAdaptiveMCMC.chkpt -save_every 5000 tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state testAdaptiveMCMC.chkpt -save_state testAdaptiveMCMC.chkpt -save_every 5000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunAdaptiveMCMC.xml
+            - name: checkpoint HMC
+              id: checkpoint-hmc
+              run: |
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -save_state testHMC.chkpt -save_every 5000 tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
+                  java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -load_state testHMC.chkpt -save_state testHMC.chkpt -save_every 5000 -overwrite tests/TestXMLwithLoadState/testCheckpointedRunHMC.xml
+            - name: Check generated files
+              run: ls -R
+            - name: Upload checkpoint file
+              uses: actions/upload-artifact@v4
+              with:
+                  name: checkpoint_short
+                  path: ./*.chkpt
+                  overwrite: true
+
+    # Test checkpointing by running a longer analysis, and compare against the checkpoint file from the 2 shorter analyses
+    test-xml-long-load-state:
+        needs: [build, test-xml-short-load-state]
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                file: ${{fromJson(needs.build.outputs.xml-long-load-state-matrix)}}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/cache@v4
+              with:
+                  path: |
+                      ${{ env.BEAGLE_DIR }}
+                      build/dist
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
+            - name: Rebuild project
+              run: ant dist
+            - name: Download checkpoint file
+              uses: actions/download-artifact@v4
+              with:
+                  name: checkpoint_short
+            - name: Check downloaded files
+              run: ls -R
+            - name: Run test without load state for ${{ matrix.file }}
+              id: long-checkpointing
+              run: java -Djava.library.path=${BEAGLE_LIB} -jar build/dist/beast.jar -fail_threads -seed 666 -overwrite ${{ matrix.file }}
 
     test-junit:
         needs: build
@@ -117,9 +156,7 @@ jobs:
                   path: |
                       ${{ env.BEAGLE_DIR }}
                       build/dist
-                  key: beagle-beast-${{ hashFiles('**/build_beagle.sh', '**/build.xml') }}
-                  restore-keys: |
-                      beagle-beast
+                  key: ${{ env.BEAGLE_CACHE_VERSION }}-${{ runner.os }}-${{ runner.arch }}-${{ env.BEAGLE_BRANCH }}-${{ hashFiles('.github/scripts/build_beagle.sh', 'build.xml') }}
             - name: Rebuild project
               run: ant dist
             - name: Run JUnit tests

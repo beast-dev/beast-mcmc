@@ -6,20 +6,14 @@ BEAST X is a cross-platform program for Bayesian analysis of molecular sequences
 
 [Download BEAST v10.5 binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases)
 
-[Latest stable release ![Release Version](https://img.shields.io/github/release/beast-dev/beast-mcmc.svg?style=plastic) ![Release Date](https://img.shields.io/github/release-date/beast-dev/beast-mcmc.svg?style=plastic)](https://github.com/beast-dev/beast-mcmc/releases/latest/) ![Downloads](https://img.shields.io/github/downloads/beast-dev/beast-mcmc/v1.10.4/total.svg?style=plastic)
+[Latest stable release ![Release Version](https://img.shields.io/github/release/beast-dev/beast-mcmc.svg?style=plastic) ![Release Date](https://img.shields.io/github/release-date/beast-dev/beast-mcmc.svg?style=plastic)](https://github.com/beast-dev/beast-mcmc/releases/latest/) ![Downloads](https://img.shields.io/github/downloads/beast-dev/beast-mcmc/v10.5.0/total.svg?style=plastic)
 
 [Latest development release ![Development Version](https://img.shields.io/github/release/beast-dev/beast-mcmc/all.svg?style=plastic) ![Development Date](https://img.shields.io/github/release-date-pre/beast-dev/beast-mcmc.svg?style=plastic)](https://github.com/beast-dev/beast-mcmc/releases/latest/) ![Downloads](https://img.shields.io/github/downloads-pre/beast-dev/beast-mcmc/latest/total.svg?style=plastic)
 
 
-[The previous major release of BEAST was v1.8.4 --- binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.8.4) ![Downloads](https://img.shields.io/github/downloads/beast-dev/beast-mcmc/v1.8.4/total.svg?style=plastic)
+[The previous major release of BEAST was v1.10.4 --- binaries for Mac, Windows and UNIX/Linux](https://github.com/beast-dev/beast-mcmc/releases/tag/v1.10.4) ![Downloads](https://img.shields.io/github/downloads/beast-dev/beast-mcmc/v1.10.4/total.svg?style=plastic)
 
 [Older BEAST Downloads](https://code.google.com/p/beast-mcmc/downloads)
-
-## Other Downloads
-
-[BEASTGen v1.0.2 .tgz file](https://drive.google.com/file/d/0B37cqWL7UhTAVFVhQ2o1Y093b1k)
-
-[BEASTGen v1.0.2 .ZIP file](https://drive.google.com/file/d/0B37cqWL7UhTAWm81VklIeUNtQVU)
 
 # Documentation
 

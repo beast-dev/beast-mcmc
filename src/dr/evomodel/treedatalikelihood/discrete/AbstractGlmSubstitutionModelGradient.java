@@ -37,6 +37,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.util.Author;
 import dr.util.Citation;
+import dr.util.Transform;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,7 +114,8 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
 
     double processSingleGradientDimension(int i,
                                           double[] differentials, double[] generator, double[] pi,
-                                          boolean normalize, double normalizationConstant) {
+                                          boolean normalize, double normalizationConstant,
+                                          double rateScalar, Transform transform, boolean scaleByFrequencies) {
 
         double[] covariate = parameterMap.getCovariateColumn(i);
         return calculateCovariateDifferential(generator, differentials, covariate, pi, normalize);
@@ -184,11 +186,6 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
     }
 
     @Override
-    public Citation.Category getCategory() {
-        return Citation.Category.FRAMEWORK;
-    }
-
-    @Override
     public String getDescription() {
         return "Using linear-time differential calculations for all substitution generator elements";
     }
@@ -200,20 +197,22 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
 
     private static final Citation CITATION = new Citation(
             new Author[]{
-                    new Author( "AF", "Magee"),
-                    new Author( "AJ", "Holbrook"),
-                    new Author( "JE", "Pekar"),
-                    new Author( "IW", "Caviedes-Solis"),
-                    new Author( "FA", "Matsen"),
-                    new Author( "G", "Baele"),
-                    new Author( "JO", "Wertheim"),
-                    new Author( "X", "Ji"),
+                    new Author("AF", "Magee"),
+                    new Author("AJ", "Holbrook"),
+                    new Author("JE", "Pekar"),
+                    new Author("IW", "Caviedes-Solis"),
+                    new Author("FA", "Matsen"),
+                    new Author("G", "Baele"),
+                    new Author("JO", "Wertheim"),
+                    new Author("X", "Ji"),
                     new Author("P", "Lemey"),
                     new Author("MA", "Suchard"),
             },
             "Random-effects substitution models for phylogenetics via scalable gradient approximations",
-            "",
-            Citation.Status.IN_PREPARATION);
+            2024,
+            "Systematic Biology",
+            73, 562, 578,
+            Citation.Status.PUBLISHED);
 
     interface ParameterMap {
         double[] getCovariateColumn(int i);

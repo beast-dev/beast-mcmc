@@ -56,7 +56,7 @@ import dr.xml.XMLSyntaxRule;
  * @author Guy Baele
  * @author Marc A. Suchard
  */
-public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator implements Citable {
+public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator implements Citable, CheckpointableMCMCOperator {
 
     public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -595,6 +595,67 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
 
     public double getScaleFactor() {
         return scaleFactor;
+    }
+
+    @Override
+    public String getCheckpointStateType() {
+        return "adaptableVarianceMultivariateNormal";
+    }
+
+    @Override
+    public void writeCheckpointState(CheckpointStateWriter writer) {
+        writer.writeInt(iterations);
+        writer.writeInt(updates);
+        writer.writeVector(oldMeans);
+        writer.writeVector(newMeans);
+        writer.writeMatrix(empirical);
+        writer.writeMatrix(proposal);
+        writer.writeMatrix(cholesky);
+    }
+
+    @Override
+    public void readCheckpointState(CheckpointStateReader reader) {
+        restoreAdaptiveState(
+                reader.readInt(),
+                reader.readInt(),
+                reader.readVector(),
+                reader.readVector(),
+                reader.readMatrix(),
+                reader.readMatrix(),
+                reader.readMatrix());
+    }
+
+    private void restoreAdaptiveState(int iterations, int updates, double[] oldMeans, double[] newMeans,
+                                      double[][] empirical, double[][] proposal, double[][] cholesky) {
+        if (oldMeans.length != dim || newMeans.length != dim ||
+                empirical.length != dim || proposal.length != dim || cholesky.length != dim) {
+            throw new RuntimeException("Dimension mismatch restoring AdaptableVarianceMultivariateNormalOperator state");
+        }
+        validateMatrixDimensions(empirical, dim, "empirical");
+        validateMatrixDimensions(proposal, dim, "proposal");
+        validateMatrixDimensions(cholesky, dim, "cholesky");
+
+        this.iterations = iterations;
+        this.updates = updates;
+        System.arraycopy(oldMeans, 0, this.oldMeans, 0, dim);
+        System.arraycopy(newMeans, 0, this.newMeans, 0, dim);
+        copyMatrix(empirical, this.empirical);
+        copyMatrix(proposal, this.proposal);
+        copyMatrix(cholesky, this.cholesky);
+    }
+
+    private void validateMatrixDimensions(double[][] matrix, int dim, String name) {
+        for (int i = 0; i < dim; i++) {
+            if (matrix[i].length != dim) {
+                throw new RuntimeException("Dimension mismatch restoring " + name + " matrix");
+            }
+        }
+    }
+
+    private void copyMatrix(double[][] source, double[][] destination) {
+        for (int i = 0; i < source.length; i++) {
+            System.arraycopy(source[i], 0, destination[i], 0, source[i].length);
+        }
     }
 
     public String getAdaptableParameterName() {

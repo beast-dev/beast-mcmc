@@ -309,16 +309,16 @@ public class TreeMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURN_IN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption("taxaToIgnore", "list", "a list of taxon names that defines parts of trees to ignore in MJH processing"),
-                        new Arguments.StringOption("statesToIgnore", "list", "a list of location states to ignore in MJH processing"),
-                        new Arguments.RealOption("mrsd", "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
-                        new Arguments.StringOption(NAME_CONTENT, falseTrue, false,
+                        new Arguments.IntegerOption(BURN_IN, "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.StringOption("taxaToIgnore", null, "list", "a list of taxon names that defines parts of trees to ignore in MJH processing"),
+                        new Arguments.StringOption("statesToIgnore",null,  "list", "a list of location states to ignore in MJH processing"),
+                        new Arguments.RealOption("mrsd", null, "The most recent sampling time to convert heights to times [default=MAX_VALUE]"),
+                        new Arguments.StringOption(NAME_CONTENT,null,  falseTrue, false,
                                 "taxa names contain string [default = false])"),
-                        new Arguments.StringOption("mrcaTaxa", "list", "a list of taxon names that defines a clade to focus on for MJH processing"),
-                        new Arguments.StringOption("nodeStateAnnotation", "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
-                        new Arguments.StringOption("checkMJforState", "String", "check if there is a MJ on branches with different parent and node state for this annotation"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.StringOption("mrcaTaxa",null,  "list", "a list of taxon names that defines a clade to focus on for MJH processing"),
+                        new Arguments.StringOption("nodeStateAnnotation", null, "String", "use node state annotations as poor proxy to MJs based on a annotation string for the discrete trait"),
+                        new Arguments.StringOption("checkMJforState",null,  "String", "check if there is a MJ on branches with different parent and node state for this annotation"),
+                        new Arguments.Option("help", "h", "option to print this message"),
                 });
 
 

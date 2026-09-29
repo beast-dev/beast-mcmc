@@ -28,6 +28,7 @@
 package dr.app.mapper.application;
 
 import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.options.GuessDatesException;
 import dr.app.beauti.tipdatepanel.GuessDatesDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
@@ -252,15 +253,22 @@ public class StrainsPanel extends JPanel implements Exportable, MapperDocument.L
         guesser.guessDates = true;
         guessDatesDialog.setupGuesser(guesser);
 
-        String warningMessage = null;
+//        String warningMessage = null;
 
-        guesser.guessDates(document.getTaxa());
-
-        if (warningMessage != null) {
-            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
-                    "Error guessing dates",
-                    JOptionPane.WARNING_MESSAGE);
+        try {
+            guesser.guessDates(document.getTaxa());
+        } catch (GuessDatesException gde) {
+            JOptionPane.showMessageDialog(this, gde.getMessage(),
+                    "Error parsing dates",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
         }
+
+//        if (warningMessage != null) {
+//            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+//                    "Error guessing dates",
+//                    JOptionPane.WARNING_MESSAGE);
+//        }
 
         // adjust the dates to the current timescale...
         timeScaleChanged();

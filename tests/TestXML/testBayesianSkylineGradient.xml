@@ -812,7 +812,7 @@
 		</chainParameter>
 	</exponentialMarkovLikelihood>
 	
-	<skylineGradient id="skylineGradientWrtNodeHeight" wrtParameter="nodeHeight" gradientCheckTolerance="1e-3">
+	<skylineGradient id="skylineGradientWrtNodeHeight" wrtParameter="nodeHeight" gradientCheckTolerance="1e-3" numericStepSize="small">
 		<generalizedSkyLineLikelihood idref="skyline"/>
 	</skylineGradient>
 

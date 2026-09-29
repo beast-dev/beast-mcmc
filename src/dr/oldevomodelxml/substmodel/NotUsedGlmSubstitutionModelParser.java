@@ -57,7 +57,7 @@ public class NotUsedGlmSubstitutionModelParser extends AbstractXMLObjectParser {
 
         LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
 
-        int length = glm.getXBeta().length;
+        int length = glm.getRates().length;
 
         if (length != rateCount) {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However GLM dimension is " + length);

@@ -52,12 +52,14 @@ public class Arguments {
 
     public static class Option {
 
-        public Option(String label, String description) {
+        public Option(String label, String shortLabel, String description) {
             this.label = label;
+            this.shortLabel = shortLabel;
             this.description = description;
         }
 
         String label;
+        String shortLabel;
         String description;
         boolean isAvailable = false;
     }
@@ -69,13 +71,13 @@ public class Arguments {
          *                    Example - tag "file-name" will show '-save <file-name>' in the usage.
          * @param description
          */
-        public StringOption(String label, String tag, String description) {
-            super(label, description);
+        public StringOption(String label, String shortLabel, String tag, String description) {
+            super(label, shortLabel, description);
             this.tag = tag;
         }
 
-        public StringOption(String label, String[] options, boolean caseSensitive, String description) {
-            super(label, description);
+        public StringOption(String label, String shortLabel, String[] options, boolean caseSensitive, String description) {
+            super(label, shortLabel, description);
             this.options = options;
             this.caseSensitive = caseSensitive;
         }
@@ -89,12 +91,12 @@ public class Arguments {
 
     public static class IntegerOption extends Option {
 
-        public IntegerOption(String label, String description) {
-            super(label, description);
+        public IntegerOption(String label, String shortLabel, String description) {
+            super(label, shortLabel, description);
         }
 
-        public IntegerOption(String label, int minValue, int maxValue, String description) {
-            super(label, description);
+        public IntegerOption(String label, String shortLabel, int minValue, int maxValue, String description) {
+            super(label, shortLabel, description);
             this.minValue = minValue;
             this.maxValue = maxValue;
         }
@@ -107,20 +109,20 @@ public class Arguments {
 
     public static class IntegerArrayOption extends IntegerOption {
 
-        public IntegerArrayOption(String label, String description) {
-            this(label, 0, Integer.MIN_VALUE, Integer.MAX_VALUE, description);
+        public IntegerArrayOption(String label, String shortLabel, String description) {
+            this(label, shortLabel, Integer.MIN_VALUE, Integer.MAX_VALUE, description);
         }
 
-        public IntegerArrayOption(String label, int count, String description) {
-            this(label, count, Integer.MIN_VALUE, Integer.MAX_VALUE, description);
+        public IntegerArrayOption(String label, String shortLabel, int count, String description) {
+            this(label, shortLabel, count, Integer.MIN_VALUE, Integer.MAX_VALUE, description);
         }
 
-        public IntegerArrayOption(String label, int minValue, int maxValue, String description) {
-            this(label, 0, minValue, maxValue, description);
+        public IntegerArrayOption(String label, String shortLabel, int minValue, int maxValue, String description) {
+            this(label, shortLabel, 0, minValue, maxValue, description);
         }
 
-        public IntegerArrayOption(String label, int count, int minValue, int maxValue, String description) {
-            super(label, minValue, maxValue, description);
+        public IntegerArrayOption(String label, String shortLabel, int count, int minValue, int maxValue, String description) {
+            super(label, shortLabel, minValue, maxValue, description);
             this.count = count;
         }
 
@@ -131,12 +133,12 @@ public class Arguments {
 
     public static class LongOption extends Option {
 
-        public LongOption(String label, String description) {
-            super(label, description);
+        public LongOption(String label, String shortLabel, String description) {
+            super(label, shortLabel, description);
         }
 
-        public LongOption(String label, long minValue, long maxValue, String description) {
-            super(label, description);
+        public LongOption(String label, String shortLabel, long minValue, long maxValue, String description) {
+            super(label, shortLabel,description);
             this.minValue = minValue;
             this.maxValue = maxValue;
         }
@@ -149,12 +151,12 @@ public class Arguments {
 
     public static class RealOption extends Option {
 
-        public RealOption(String label, String description) {
-            super(label, description);
+        public RealOption(String label, String shortLabel, String description) {
+            super(label, shortLabel, description);
         }
 
-        public RealOption(String label, double minValue, double maxValue, String description) {
-            super(label, description);
+        public RealOption(String label, String shortLabel, double minValue, double maxValue, String description) {
+            super(label, shortLabel, description);
             this.minValue = minValue;
             this.maxValue = maxValue;
         }
@@ -171,16 +173,16 @@ public class Arguments {
 //            this(label, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, description);
 //        }
         // A count of -1 means any length
-        public RealArrayOption(String label, int count, String description) {
-            this(label, count, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, description);
+        public RealArrayOption(String label, String shortLabel, int count, String description) {
+            this(label, shortLabel, count, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, description);
         }
 
 //        public RealArrayOption(String label, double minValue, double maxValue, String description) {
 //            this(label, 0, minValue, maxValue, description);
 //        }
 
-        public RealArrayOption(String label, int count, double minValue, double maxValue, String description) {
-            super(label, minValue, maxValue, description);
+        public RealArrayOption(String label, String shortLabel, int count, double minValue, double maxValue, String description) {
+            super(label, shortLabel, minValue, maxValue, description);
             this.count = count;
         }
 
@@ -194,16 +196,35 @@ public class Arguments {
      */
     public Arguments(Option[] options) {
         this.options = options;
+        assert checkOptions();
     }
 
     public Arguments(Option[] options, boolean caseSensitive) {
         this.options = options;
         this.caseSensitive = caseSensitive;
+        assert checkOptions();
     }
 
-    public void addOption(String label, String description, String positionLabel) {
+    private boolean checkOptions() {
+        for (int i = 0; i < options.length - 1; i++) {
+            Option option1 = options[i];
+            assert option1.label != null && !option1.label.isEmpty();
+            for (int j = i + 1; j < options.length; j++) {
+                Option option2 = options[j];
+                assert option2.label != null && !option2.label.isEmpty();
+                assert !option1.label.equalsIgnoreCase(option2.label) : "option label, " + option1.label + ", is used twice";
+                assert option1.shortLabel == null || option1.shortLabel.isEmpty() ||
+                        option2.shortLabel == null || option2.shortLabel.isEmpty() ||
+                        !option1.shortLabel.equalsIgnoreCase(option2.shortLabel) : "option short label, " + option1.shortLabel +
+                        ", is used twice for options " + option1.label + " and " + option2.label;
+            }
+        }
+        return true;
+    }
+
+    public void addOption(String label, String shortLabel, String description, String positionLabel) {
         ArrayList<Option> optionsList = new ArrayList<Option>(Arrays.asList(this.options));
-        optionsList.add(findOption(positionLabel), new Arguments.Option(label, description));
+        optionsList.add(findOption(positionLabel), new Arguments.Option(label, shortLabel, description));
 
         this.options = new Option[optionsList.size()];
         optionsList.toArray(this.options);                            ;
@@ -215,22 +236,28 @@ public class Arguments {
     public int parseArguments(String[] arguments) throws ArgumentException {
 
         int[] optionIndex = new int[arguments.length];
-        for (int i = 0; i < optionIndex.length; i++) {
-            optionIndex[i] = -1;
-        }
+        Arrays.fill(optionIndex, -1);
 
         for (int i = 0; i < options.length; i++) {
             Option option = options[i];
 
-            int index = findArgument(arguments, option.label);
+            int index = findArgument(arguments, option.label, option.shortLabel);
             if (index != -1) {
 
+                boolean hasShortLabel = option.shortLabel != null && !option.shortLabel.isEmpty();
                 if (optionIndex[index] != -1) {
                     throw new ArgumentException("Argument, " + arguments[index] + " overlaps with another argument");
                 }
 
                 // the first value may be appended to the option label (e.g., '-t1.0'):
-                String arg = arguments[index].substring(option.label.length() + 1);
+                String arg = "";
+                if (arguments[index].charAt(1) != ARGUMENT_CHARACTER.charAt(0) &&
+                        !arguments[index].startsWith(option.label) &&
+                        (hasShortLabel &&
+                        arguments[index].length() > option.shortLabel.length() + 1)) {
+                    arg = arguments[index].substring(option.label.length() + 1);
+                }
+
                 optionIndex[index] = i;
                 option.isAvailable = true;
 
@@ -242,11 +269,11 @@ public class Arguments {
                     int j = 0;
 
                     while (j < o.count) {
-                        if (arg.length() > 0) {
+                        if (!arg.isEmpty()) {
                             StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
                             while (tokenizer.hasMoreTokens()) {
                                 String token = tokenizer.nextToken();
-                                if (token.length() > 0) {
+                                if (!token.isEmpty()) {
                                     try {
                                         o.values[j] = Integer.parseInt(token);
                                     } catch (NumberFormatException nfe) {
@@ -281,7 +308,7 @@ public class Arguments {
                 } else if (option instanceof IntegerOption) {
 
                     IntegerOption o = (IntegerOption) option;
-                    if (arg.length() == 0) {
+                    if (arg.isEmpty()) {
                         int k = index + 1;
                         if (k >= arguments.length) {
                             throw new ArgumentException("Argument, " + arguments[index] +
@@ -308,7 +335,7 @@ public class Arguments {
                 } else if (option instanceof LongOption) {
 
                     LongOption o = (LongOption) option;
-                    if (arg.length() == 0) {
+                    if (arg.isEmpty()) {
                         int k = index + 1;
                         if (k >= arguments.length) {
                             throw new ArgumentException("Argument, " + arguments[index] +
@@ -344,11 +371,11 @@ public class Arguments {
                         int j = 0;
 
                         while (j < count) {
-                            if (arg.length() > 0) {
+                            if (!arg.isEmpty()) {
                                 StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
                                 while (tokenizer.hasMoreTokens()) {
                                     String token = tokenizer.nextToken();
-                                    if (token.length() > 0) {
+                                    if (!token.isEmpty()) {
                                         try {
                                             o.values[j] = Double.parseDouble(token);
                                         } catch (NumberFormatException nfe) {
@@ -389,11 +416,11 @@ public class Arguments {
 
                         int j = 0;
 
-                        if (arg.length() > 0) {
+                        if (!arg.isEmpty()) {
                             StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
                             while (tokenizer.hasMoreTokens()) {
                                 String token = tokenizer.nextToken();
-                                if (token.length() > 0) {
+                                if (!token.isEmpty()) {
                                     try {
                                         values[j] = Double.parseDouble(token);
                                     } catch (NumberFormatException nfe) {
@@ -414,7 +441,7 @@ public class Arguments {
                 } else if (option instanceof RealOption) {
 
                     RealOption o = (RealOption) option;
-                    if (arg.length() == 0) {
+                    if (arg.isEmpty()) {
                         int k = index + 1;
                         if (k >= arguments.length) {
                             throw new ArgumentException("Argument, " + arguments[index] +
@@ -441,7 +468,7 @@ public class Arguments {
                 } else if (option instanceof StringOption) {
 
                     StringOption o = (StringOption) option;
-                    if (arg.length() == 0) {
+                    if (arg.isEmpty()) {
                         int k = index + 1;
                         if (k >= arguments.length) {
                             throw new ArgumentException("Argument, " + arguments[index] +
@@ -494,21 +521,29 @@ public class Arguments {
         return n;
     }
 
-    private int findArgument(String[] arguments, String label) {
+    private int findArgument(String[] arguments, String label, String shortLabel) {
         for (int i = 0; i < arguments.length; i++) {
 
-            if (arguments[i].length() - 1 >= label.length()) {
-                if (arguments[i].startsWith(ARGUMENT_CHARACTER)) {
-//                  String l = arguments[i].substring(1, label.length() + 1);
-//                                                String l = arguments[i];
-                    String l = arguments[i].substring(1, arguments[i].length());
-                    if ((!caseSensitive && label.equalsIgnoreCase(l)) || label.equals(l)) {
-                        return i;
-                    }
-
+            if (arguments[i].startsWith(ARGUMENT_CHARACTER + ARGUMENT_CHARACTER)) {
+                // starts with `--` so must be long label
+                String l = arguments[i].substring(2);
+                if ((!caseSensitive && label.equalsIgnoreCase(l)) || label.equals(l)) {
+                    return i;
+                }
+            }
+            if (arguments[i].startsWith(ARGUMENT_CHARACTER)) {
+                String l = arguments[i].substring(1);
+                if (shortLabel != null && (!caseSensitive && shortLabel.equalsIgnoreCase(l) || shortLabel.equals(l))) {
+                    // check short label first
+                    return i;
+                }
+                if ((!caseSensitive && label.equalsIgnoreCase(l)) || label.equals(l)) {
+                    // long label with single `-` for backwards compatibility.
+                    return i;
                 }
             }
         }
+
         return -1;
     }
 
@@ -583,8 +618,10 @@ public class Arguments {
 
         System.out.print("  Usage: " + name);
         for (Option option : options) {
-            System.out.print(" [-" + option.label);
-
+            System.out.print(" [--" + option.label);
+            if (option.shortLabel != null && !option.shortLabel.isEmpty()) {
+                System.out.print("|-" + option.shortLabel);
+            }
             if (option instanceof IntegerArrayOption) {
 
                 IntegerArrayOption o = (IntegerArrayOption) option;
@@ -624,7 +661,11 @@ public class Arguments {
         System.out.println(" " + commandLine);
 
         for (Option option : options) {
-            System.out.println("    -" + option.label + " " + option.description);
+            System.out.print("    --" + option.label);
+            if (option.shortLabel != null && !option.shortLabel.isEmpty()) {
+                System.out.print(" | -" + option.shortLabel);
+            }
+            System.out.println(": " + option.description);
         }
     }
 

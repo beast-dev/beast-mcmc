@@ -74,7 +74,6 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
     private int[] postBufferIndices;
     private int[] preBufferIndices;
     private int[] matrixBufferIndices;
-    private int[] postScaleIndices;
     private int[] preScaleIndices;
     private double[] branchLengths;
 
@@ -147,7 +146,6 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
     private int coverWholeTree(int[] postBufferIndices,
                                int[] preBufferIndices,
                                int[] matrixBufferIndices,
-                               int[] postScaleIndices,
                                int[] preScaleIndices,
                                double[] branchLengths) {
         int u = 0;
@@ -157,8 +155,10 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                 postBufferIndices[u] = getPostOrderPartialIndex(nodeNum);
                 preBufferIndices[u]  = getPreOrderPartialIndex(nodeNum);
                 matrixBufferIndices[u] = likelihoodDelegate.getEvolutionaryProcessDelegate().getMatrixIndex(nodeNum);
-                postScaleIndices[u] = getPostCumulativeScaleBufferIndex(nodeNum);
-                preScaleIndices[u]  = getPreCumulativeScaleBufferIndex(nodeNum);
+                // See AbstractBeagleGradientDelegate.buildNegAncestorCumulativeScaleBuffer:
+                // this single term already equals postCum(nodeNum)+preCum(nodeNum)-rootCumLog,
+                // so no separate post-order-cumulative or root-cumulative buffer is needed.
+                preScaleIndices[u] = getNegAncestorCumulativeScaleBufferIndex(nodeNum);
                 branchLengths[u] = getBranchLength(node);
                 u++;
             }
@@ -235,9 +235,9 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             double[] buffer = new double[first.length];
 
             int count = coverWholeTree(postBufferIndices, preBufferIndices, matrixBufferIndices,
-                    postScaleIndices, preScaleIndices, branchLengths);
+                    preScaleIndices, branchLengths);
             calculateCrossProductDifferentials(0, count,
-                    postBufferIndices, preBufferIndices, matrixBufferIndices, postScaleIndices, preScaleIndices,
+                    postBufferIndices, preBufferIndices, matrixBufferIndices, preScaleIndices,
                     ed, ted, branchLengths,
                     patternWeights, categoryWeights, categoryRates, buffer);
 
@@ -278,7 +278,6 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             postBufferIndices = new int[branchCount];
             preBufferIndices = new int[branchCount];
             matrixBufferIndices = new int[branchCount];
-            postScaleIndices = new int[branchCount];
             preScaleIndices = new int[branchCount];
             branchLengths = new double[branchCount];
         }
@@ -289,7 +288,6 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                                                     int[] postBufferIndices,
                                                     int[] preBufferIndices,
                                                     int[] matrixBufferIndices,
-                                                    int[] postScaleIndices,
                                                     int[] preScaleIndices,
                                                     EigenDecomposition ed,
                                                     EigenDecomposition ted,
@@ -300,12 +298,15 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
                                                     double[] first) {
 
         if (BEAGLE_OVERRIDE) {
+            // postScaleIndices/cumulativeScaleIndex are unused: the single
+            // preScaleIndices term already equals postCum+preCum-rootCumLog
+            // (see AbstractBeagleGradientDelegate.buildNegAncestorCumulativeScaleBuffer).
             beagle.calculateAdjointCrossProductDifferentials(
                     postBufferIndices, preBufferIndices,
                     matrixBufferIndices,
                     new int[]{0}, new int[]{0}, getRootPostOrderBuffer(), 0,
                     branchLengths.length, first, null,
-                    postScaleIndices, preScaleIndices, getRootCumulativeScaleBufferIndex());
+                    null, preScaleIndices, Beagle.NONE);
 
         } else {
             for (int i = start; i < end; ++i) {

@@ -88,7 +88,7 @@
     <treeDataLikelihood id="treeLikelihood" useAmbiguities="true"
                         usePreOrder="true"
                         useSpectralRepresentation="true"
-                        scalingScheme="never" delayScaling="false">
+                        scalingScheme="dynamic" delayScaling="false">
         <patterns idref="loc.pattern"/>
         <treeModel idref="treeModel"/>
         <siteModel idref="loc.siteModel"/>

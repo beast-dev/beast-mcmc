@@ -60,7 +60,7 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
 
         if (epochProcessDelegate != null) {
-            getSegmentDerivatives(tree, first, second);
+            getSegmentDerivatives(tree, first, second, null, null);
             return;
         }
 
@@ -114,7 +114,7 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
      * segments, weighted by the fraction of the branch that each segment covers. The chain rule of a caller
      * multiplies by the length of the branch, giving the derivative with respect to the rate of the branch.
      */
-    private void getSegmentDerivatives(Tree tree, double[] first, double[] second) {
+    private void getSegmentDerivatives(Tree tree, double[] first, double[] second, double[] bottom, double[] top) {
 
         if (second != null) {
             throw new UnsupportedOperationException("Second derivatives are not yet supported with augmented " +
@@ -140,6 +140,8 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
         final int[] firstDervIndices = new int[segmentCount];
         final int[] branch = new int[segmentCount]; // the position of the branch of each segment in first
         final double[] weight = new double[segmentCount];
+        final int[] bottomSegment = new int[tree.getNodeCount() - 1];
+        final int[] topSegment = new int[tree.getNodeCount() - 1];
 
         final int[] chain = new int[registry.getBoundaryCount()];
 
@@ -166,6 +168,12 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
                     firstDervIndices[s] = getFirstDerivativeMatrixBufferIndex(id);
                     branch[s] = u;
                     weight[s] = (count == 0) ? 1.0 : (upper - lower) / (highestHeight - lowestHeight);
+                    if (j == 0) {
+                        bottomSegment[u] = s;
+                    }
+                    if (j == count) {
+                        topSegment[u] = s;
+                    }
                     ++s;
                 }
                 u++;
@@ -178,10 +186,30 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
                 firstDervIndices, new int[] { 0 }, segmentCount,
                 null, segmentDerivatives, null);
 
-        Arrays.fill(first, 0.0);
-        for (s = 0; s < segmentCount; ++s) {
-            first[branch[s]] += weight[s] * segmentDerivatives[s];
+        if (first != null) {
+            Arrays.fill(first, 0.0);
+            for (s = 0; s < segmentCount; ++s) {
+                first[branch[s]] += weight[s] * segmentDerivatives[s];
+            }
         }
+
+        if (bottom != null) {
+            for (u = 0; u < bottomSegment.length; ++u) {
+                bottom[u] = segmentDerivatives[bottomSegment[u]];
+                top[u] = segmentDerivatives[topSegment[u]];
+            }
+        }
+    }
+
+    /**
+     * With degree-2 nodes at the epoch transition times, the height of a node only changes the length of the lowest
+     * segment of the branch above it and of the highest segment of each branch below it.
+     *
+     * @param bottom the derivative with respect to the length of the lowest segment of each branch
+     * @param top    the derivative with respect to the length of the highest segment of each branch
+     */
+    protected void getEndSegmentDerivatives(Tree tree, double[] bottom, double[] top) {
+        getSegmentDerivatives(tree, null, null, bottom, top);
     }
 
     private void checkReduction(double[] array) {

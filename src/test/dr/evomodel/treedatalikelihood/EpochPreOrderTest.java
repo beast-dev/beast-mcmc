@@ -49,6 +49,7 @@ import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
+import dr.evomodel.treedatalikelihood.discrete.NodeHeightGradientForDiscreteTrait;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
@@ -125,6 +126,53 @@ public class EpochPreOrderTest extends TraceCorrelationAssert {
                     }
                 }
             }
+        }
+    }
+
+    public void testNodeHeightGradient() {
+        PartialsRescalingScheme[] schemes = {PartialsRescalingScheme.NONE, PartialsRescalingScheme.DYNAMIC,
+                PartialsRescalingScheme.ALWAYS};
+
+        for (boolean spectral : new boolean[]{false, true}) {
+            for (int seed = 0; seed < 3; ++seed) {
+                for (PartialsRescalingScheme scheme : schemes) {
+                    for (int categories : new int[]{1, 4}) {
+
+                        checkNodeHeightGradient(new Fixture(seed, scheme, categories, spectral),
+                                "seed " + seed + ", " + scheme.getText() + ", " + categories + " categories" +
+                                        (spectral ? ", spectral" : ""));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Moving a node height changes the lengths of the end segments of the branches at the node and can move it into
+     * another epoch, so the gradient is compared with central differences of the log likelihood.
+     */
+    private void checkNodeHeightGradient(Fixture f, String label) {
+
+        NodeHeightGradientForDiscreteTrait heightGradient = new NodeHeightGradientForDiscreteTrait("test",
+                f.likelihood, f.delegate, f.rates);
+        Parameter heights = heightGradient.getParameter();
+
+        double[] gradient = heightGradient.getGradientLogDensity();
+        assertEquals(f.tree.getInternalNodeCount(), gradient.length);
+
+        final double h = 1E-6;
+        for (int i = 0; i < gradient.length; ++i) {
+            final double height = heights.getParameterValue(i);
+
+            heights.setParameterValue(i, height + h);
+            final double up = f.likelihood.getLogLikelihood();
+            heights.setParameterValue(i, height - h);
+            final double down = f.likelihood.getLogLikelihood();
+            heights.setParameterValue(i, height);
+
+            final double numerical = (up - down) / (2 * h);
+            assertEquals(label + ", node " + i, numerical, gradient[i],
+                    1E-5 * Math.max(1.0, Math.abs(numerical)));
         }
     }
 

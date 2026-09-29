@@ -27,6 +27,8 @@
 
 package test.dr.evomodel.treedatalikelihood;
 
+import beagle.BeagleFlag;
+import beagle.BeagleInfo;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
@@ -90,8 +92,31 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
     }
 
     /**
-     * The second child of a degree-2 node is a buffer of ones, which any transition matrix would leave unchanged, so
-     * check that the matrix is the identity itself
+     * BEAGLE's CPU implementations take Beagle.NONE as the second child of a degree-2 node from BEAGLE 4.1.1; other
+     * implementations and older versions get a buffer of ones with the identity matrix
+     */
+    public void testSingleChildOperationsWhenSupported() {
+        Fixture augmented = new Fixture(0, true, PartialsRescalingScheme.NONE, 1);
+
+        final int[] version = BeagleInfo.getVersionNumbers();
+        final int[] required = {4, 1, 1};
+        boolean supported = true;
+        for (int i = 0; i < required.length; ++i) {
+            final int v = (i < version.length) ? version[i] : 0;
+            if (v != required[i]) {
+                supported = v > required[i];
+                break;
+            }
+        }
+        final boolean cpu = (augmented.delegate.getBeagleInstance().getDetails().getFlags() &
+                BeagleFlag.FRAMEWORK_CPU.getMask()) != 0;
+
+        assertEquals("BEAGLE " + BeagleInfo.getVersion(), supported && cpu, augmented.delegate.usesNativeDegree2());
+    }
+
+    /**
+     * Without single-child operations, the second child of a degree-2 node is a buffer of ones, which any transition
+     * matrix would leave unchanged, so check that the matrix is the identity itself
      */
     public void testIdentityMatrix() {
         for (int categories : new int[]{1, 4}) {

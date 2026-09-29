@@ -71,7 +71,7 @@
 <!-- 				<parameter id="log.kappa" value="0.0"/> -->
 				<designMatrix id="kappa.designMatrix">
 					<parameter value="0 1 0 0 0 0
-					                  0 0 0 0 0 0"/>
+					                  0 1 0 0 0 0"/>
 
 <!-- 
 					<parameter value="0 1 0 0 0 0

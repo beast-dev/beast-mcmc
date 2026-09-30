@@ -82,7 +82,7 @@ public class InverseGammaDistributionModel extends AbstractModel implements Para
     }
 
     public double logPdf(double x) {
-        return InverseGammaDistribution.logPdf(x, getShape(), getScale(), 1);
+        return InverseGammaDistribution.logPdf(x, getShape(), getScale(), 0.0);
     }
 
     public double cdf(double x) {

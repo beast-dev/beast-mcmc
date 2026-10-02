@@ -40,20 +40,26 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
         updateLineageCounts();
 
         // run stochastic simulator until we get a valid initial trajectory
-        int maxAttempts = 100000;
+        int maxAttempts = (simulator instanceof ODESolver) ? 1 : 100000;
         int attempts = 0;
-        do{
+        do {
             simulator.simulateTrajectory();
             attempts++;
-            if(attempts % 1000 == 0){
+            if (attempts % 1000 == 0) {
                 System.out.println("attempting to find valid initial trajectory: attempt " + attempts);
             }
-            if(attempts >= maxAttempts){
-                throw new RuntimeException("Could not find valid initial trajectory of compartment " +
-                        "counts after " + maxAttempts + " attempts. Check that model parameters are consistent with trees.");
+            if (!simulator.isLineageConstraintViolated()) {
+                break;
             }
-
-        }while(simulator.isLineageConstraintViolated());
+            if (attempts >= maxAttempts) {
+                throw new RuntimeException(
+                        "Could not find valid initial trajectory of compartment counts after "
+                                + attempts + " attempt" + (attempts == 1 ? "" : "s")
+                                + ". The trajectory has fewer infected individuals than the tree has "
+                                + "lineages at some grid point. Check that the origin times exceed the "
+                                + "tree root heights and that R0 is high enough to support the trees.");
+            }
+        } while (true);
         System.out.println("Found valid initial trajectory after " + attempts + " attempts.");
     }
 
@@ -77,7 +83,7 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
 
         for(int k = 0; k < numGridPoints; k++){
             // backward time from this tree's most recent sampling date
-            double backwardTime = cutOff - k*intervalWidth - (mostRecentDate-mostRecentSamplingDate);
+            double backwardTime = k*intervalWidth - (mostRecentDate - mostRecentSamplingDate);
 
             // backwardTime being negative means that the grid point is more recent than the tree's
             // most recent sampling date, in which case lineageCounts should be set to 0

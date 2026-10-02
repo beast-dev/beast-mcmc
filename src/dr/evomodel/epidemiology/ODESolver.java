@@ -125,6 +125,10 @@ public class ODESolver extends CompartmentalModelSimulator {
 
         try{
             integrator.integrate(odes, t0, y, t1, y);
+
+            System.arraycopy(y, 0, state.currentCounts, 0, numSpecies);
+            state.simulationTime = t1;
+            recordCompartmentCountsUpTo(state, t1 + intervalWidth);
         } catch (IntegratorException e){
             // integration failed
             // set lineageConstraintViolated = true;

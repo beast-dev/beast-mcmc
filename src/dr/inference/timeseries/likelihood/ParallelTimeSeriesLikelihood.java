@@ -124,6 +124,24 @@ public final class ParallelTimeSeriesLikelihood extends AbstractModelLikelihood
     }
 
     @Override
+    public double[][] getScoreContributionsWrt(final Parameter parameter) {
+        final List<double[]> rows = new ArrayList<double[]>();
+        for (final TimeSeriesLikelihood likelihood : likelihoods) {
+            final double[][] contributions = likelihood.getScoreContributionsWrt(parameter);
+            if (contributions == null) {
+                return null;
+            }
+            for (final double[] contribution : contributions) {
+                if (contribution == null || contribution.length != parameter.getDimension()) {
+                    throw new IllegalStateException("Time-series score contribution dimension mismatch.");
+                }
+                rows.add(contribution);
+            }
+        }
+        return rows.toArray(new double[rows.size()][]);
+    }
+
+    @Override
     public void makeDirty() {
         likelihoodKnown = false;
         if (sharedCanonicalSchedule != null) {

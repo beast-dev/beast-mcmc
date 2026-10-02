@@ -3,6 +3,7 @@ package dr.inference.timeseries.runtime;
 import dr.inference.hmc.BatchGradient;
 import dr.inference.hmc.BatchGradientWrtParameterProvider;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.ScoreContributionsWrtParameterProvider;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -16,7 +17,8 @@ import java.util.List;
 /**
  * BEAST-facing HMC adapter for time-series likelihood gradients.
  */
-public class TimeSeriesGradient implements BatchGradientWrtParameterProvider, Reportable {
+public class TimeSeriesGradient implements BatchGradientWrtParameterProvider,
+        ScoreContributionsWrtParameterProvider, Reportable {
 
     private final TimeSeriesGradientSource gradientSource;
     private final Likelihood likelihood;
@@ -68,6 +70,11 @@ public class TimeSeriesGradient implements BatchGradientWrtParameterProvider, Re
     @Override
     public double[] getGradientLogDensity() {
         return provider.getGradientLogDensity(null);
+    }
+
+    @Override
+    public double[][] getScoreContributionsLogDensity() {
+        return gradientSource.getScoreContributionsWrt(parameter);
     }
 
     @Override

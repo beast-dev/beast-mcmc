@@ -64,7 +64,7 @@ public class HamiltonianMonteCarloOperatorTest extends TestCase {
         final HamiltonianMonteCarloOperator.Options runtimeOptions =
                 new HamiltonianMonteCarloOperator.Options(
                         0.1, 2, 0.0, options,
-                        0, 1.0e-3, 10, 0.1, 0.8,
+                        0, 1.0e-3, 0.0, 10, 0.1, 0.8,
                         HamiltonianMonteCarloOperator.InstabilityHandler.REJECT);
         final HamiltonianMonteCarloOperator operator =
                 new HamiltonianMonteCarloOperator(

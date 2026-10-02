@@ -8,8 +8,16 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalGaus
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.GaussianBranchTransitionKernel;
 import dr.inference.timeseries.core.TimeGrid;
 
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 /**
  * Small cache keyed by exact {@code dt} values for independent time series sharing one OU process.
+ *
+ * <p>Adjacent time-series transitions additionally use a direct interval-index cache. This keeps
+ * regular grids sharing one entry while avoiding a keyed lookup in the hot path for fully irregular
+ * grids with many distinct intervals.</p>
  */
 final class RepeatedDeltaCanonicalTransitionCache {
 
@@ -17,8 +25,12 @@ final class RepeatedDeltaCanonicalTransitionCache {
     private final CanonicalGaussianBranchTransitionKernel canonicalKernel;
     private final CanonicalPreparedTransitionSupport preparedTransition;
     private final ThreadLocal<double[]> stationaryMeanScratch;
+    private final Map<Long, Entry> entriesByDtBits;
+    private final IdentityHashMap<TimeGrid, Entry[]> adjacentEntriesByTimeGrid;
     private Entry[] entries;
     private int entryCount;
+    private volatile TimeGrid recentTimeGrid;
+    private volatile Entry[] recentAdjacentEntries;
     private long momentRequests;
     private long momentBuilds;
     private long canonicalRequests;
@@ -38,15 +50,84 @@ final class RepeatedDeltaCanonicalTransitionCache {
         this.stationaryMeanScratch = preparedTransition == null
                 ? null
                 : ThreadLocal.withInitial(() -> new double[kernel.getStateDimension()]);
+        this.entriesByDtBits = new HashMap<Long, Entry>();
+        this.adjacentEntriesByTimeGrid = new IdentityHashMap<TimeGrid, Entry[]>();
         this.entries = new Entry[0];
         this.entryCount = 0;
+        this.recentTimeGrid = null;
+        this.recentAdjacentEntries = null;
         this.dirty = true;
     }
 
     synchronized void prepareTimeGrid(final TimeGrid timeGrid) {
-        for (int t = 0; t < timeGrid.getTimeCount() - 1; ++t) {
-            final double dt = validatedDelta(timeGrid, t, t + 1);
-            ensureEntry(dt);
+        final Entry[] adjacentEntries = buildAdjacentEntries(timeGrid);
+        adjacentEntriesByTimeGrid.put(timeGrid, adjacentEntries);
+        publishRecent(timeGrid, adjacentEntries);
+    }
+
+    void fillTransitionMatrixFlat(final int fromIndex,
+                                  final int toIndex,
+                                  final TimeGrid timeGrid,
+                                  final double[] out) {
+        final Entry entry = entryForInterval(fromIndex, toIndex, timeGrid);
+        synchronized (entry) {
+            ++momentRequests;
+            ensureMoments(entry, entry.dt());
+            System.arraycopy(entry.transitionMatrixFlat, 0, out, 0, entry.dimension * entry.dimension);
+        }
+    }
+
+    void fillTransitionOffset(final int fromIndex,
+                              final int toIndex,
+                              final TimeGrid timeGrid,
+                              final double[] out) {
+        final Entry entry = entryForInterval(fromIndex, toIndex, timeGrid);
+        synchronized (entry) {
+            ++momentRequests;
+            ensureMoments(entry, entry.dt());
+            System.arraycopy(entry.transitionOffset, 0, out, 0, entry.dimension);
+        }
+    }
+
+    void fillTransitionCovarianceFlat(final int fromIndex,
+                                      final int toIndex,
+                                      final TimeGrid timeGrid,
+                                      final double[] out) {
+        final Entry entry = entryForInterval(fromIndex, toIndex, timeGrid);
+        synchronized (entry) {
+            ++momentRequests;
+            ensureMoments(entry, entry.dt());
+            System.arraycopy(entry.transitionCovarianceFlat, 0, out, 0, entry.dimension * entry.dimension);
+        }
+    }
+
+    void fillTransitionMomentsView(final int fromIndex,
+                                   final int toIndex,
+                                   final TimeGrid timeGrid,
+                                   final TransitionMomentsView out) {
+        final Entry entry = entryForInterval(fromIndex, toIndex, timeGrid);
+        synchronized (entry) {
+            ++momentRequests;
+            ensureMoments(entry, entry.dt());
+            out.set(entry.transitionMatrixFlat,
+                    entry.transitionOffset,
+                    entry.transitionCovarianceFlat,
+                    entry.dimension);
+        }
+    }
+
+    void fillCanonicalTransition(final int fromIndex,
+                                 final int toIndex,
+                                 final TimeGrid timeGrid,
+                                 final CanonicalGaussianTransition out) {
+        if (canonicalKernel == null) {
+            throw new UnsupportedOperationException("Kernel does not support canonical transitions");
+        }
+        final Entry entry = entryForInterval(fromIndex, toIndex, timeGrid);
+        synchronized (entry) {
+            ++canonicalRequests;
+            ensureCanonical(entry, entry.dt());
+            out.copyFrom(entry.canonicalTransition);
         }
     }
 
@@ -102,19 +183,37 @@ final class RepeatedDeltaCanonicalTransitionCache {
         }
     }
 
+    CanonicalPreparedBranchHandle getThreadPreparedCanonicalBranch(final int fromIndex,
+                                                                   final int toIndex,
+                                                                   final TimeGrid timeGrid,
+                                                                   final double[] stationaryMean) {
+        if (preparedTransition == null) {
+            return null;
+        }
+        final Entry entry = entryForInterval(fromIndex, toIndex, timeGrid);
+        return getThreadPreparedCanonicalBranch(entry, entry.dt(), stationaryMean);
+    }
+
     CanonicalPreparedBranchHandle getThreadPreparedCanonicalBranch(final double dt,
                                                                    final double[] stationaryMean) {
         if (preparedTransition == null) {
             return null;
         }
         final Entry entry = ensureEntry(dt);
-        final ThreadPreparedBranch prepared = entry.threadPrepared.get();
-        if (prepared.version != entry.version) {
-            preparedTransition.prepareBranch(dt, stationaryMean, prepared.handle);
-            prepared.version = entry.version;
-            markClean();
+        return getThreadPreparedCanonicalBranch(entry, dt, stationaryMean);
+    }
+
+    CanonicalPreparedBranchHandle getReusablePreparedCanonicalBranch(final int fromIndex,
+                                                                    final int toIndex,
+                                                                    final TimeGrid timeGrid) {
+        if (preparedTransition == null) {
+            return null;
         }
-        return prepared.handle;
+        final Entry entry = entryForInterval(fromIndex, toIndex, timeGrid);
+        synchronized (entry) {
+            ensureMoments(entry, entry.dt());
+            return entry.prepared;
+        }
     }
 
     CanonicalPreparedBranchHandle getReusablePreparedCanonicalBranch(final double dt) {
@@ -126,6 +225,18 @@ final class RepeatedDeltaCanonicalTransitionCache {
             ensureMoments(entry, dt);
             return entry.prepared;
         }
+    }
+
+    private CanonicalPreparedBranchHandle getThreadPreparedCanonicalBranch(final Entry entry,
+                                                                          final double dt,
+                                                                          final double[] stationaryMean) {
+        final ThreadPreparedBranch prepared = entry.threadPrepared.get();
+        if (prepared.version != entry.version) {
+            preparedTransition.prepareBranch(dt, stationaryMean, prepared.handle);
+            prepared.version = entry.version;
+            markClean();
+        }
+        return prepared.handle;
     }
 
     synchronized RepeatedDeltaCacheStatistics getStatistics() {
@@ -149,21 +260,60 @@ final class RepeatedDeltaCanonicalTransitionCache {
 
     private Entry ensureEntry(final double dt) {
         final long bits = Double.doubleToLongBits(dt);
-        Entry[] localEntries = entries;
-        final int localCount = entryCount;
-        for (int i = 0; i < localCount; ++i) {
-            if (localEntries[i].dtBits == bits) {
-                return localEntries[i];
-            }
+        synchronized (this) {
+            return ensureEntryByBits(bits);
         }
-        return createEntry(bits);
     }
 
-    private synchronized Entry createEntry(final long bits) {
-        for (int i = 0; i < entryCount; ++i) {
-            if (entries[i].dtBits == bits) {
-                return entries[i];
+    private Entry entryForInterval(final int fromIndex,
+                                   final int toIndex,
+                                   final TimeGrid timeGrid) {
+        if (fromIndex >= 0 && toIndex == fromIndex + 1) {
+            final Entry[] localEntries = recentAdjacentEntries;
+            if (timeGrid == recentTimeGrid && localEntries != null && fromIndex < localEntries.length) {
+                return localEntries[fromIndex];
             }
+            final Entry[] adjacentEntries = adjacentEntriesFor(timeGrid);
+            if (fromIndex < adjacentEntries.length) {
+                return adjacentEntries[fromIndex];
+            }
+        }
+        return ensureEntry(validatedDelta(timeGrid, fromIndex, toIndex));
+    }
+
+    private synchronized Entry[] adjacentEntriesFor(final TimeGrid timeGrid) {
+        Entry[] adjacentEntries = adjacentEntriesByTimeGrid.get(timeGrid);
+        if (adjacentEntries == null) {
+            adjacentEntries = buildAdjacentEntries(timeGrid);
+            adjacentEntriesByTimeGrid.put(timeGrid, adjacentEntries);
+        }
+        publishRecent(timeGrid, adjacentEntries);
+        return adjacentEntries;
+    }
+
+    private Entry[] buildAdjacentEntries(final TimeGrid timeGrid) {
+        if (timeGrid == null) {
+            throw new IllegalArgumentException("timeGrid must not be null");
+        }
+        final int intervalCount = Math.max(0, timeGrid.getTimeCount() - 1);
+        final Entry[] adjacentEntries = new Entry[intervalCount];
+        for (int t = 0; t < intervalCount; ++t) {
+            final double dt = validatedDelta(timeGrid, t, t + 1);
+            adjacentEntries[t] = ensureEntryByBits(Double.doubleToLongBits(dt));
+        }
+        return adjacentEntries;
+    }
+
+    private void publishRecent(final TimeGrid timeGrid, final Entry[] adjacentEntries) {
+        recentAdjacentEntries = adjacentEntries;
+        recentTimeGrid = timeGrid;
+    }
+
+    private Entry ensureEntryByBits(final long bits) {
+        final Long key = Long.valueOf(bits);
+        final Entry cached = entriesByDtBits.get(key);
+        if (cached != null) {
+            return cached;
         }
         if (entryCount == entries.length) {
             final int newLength = entries.length == 0 ? 4 : entries.length * 2;
@@ -172,6 +322,7 @@ final class RepeatedDeltaCanonicalTransitionCache {
             entries = expanded;
         }
         final Entry entry = new Entry(bits, kernel.getStateDimension(), preparedTransition);
+        entriesByDtBits.put(key, entry);
         entries[entryCount++] = entry;
         return entry;
     }
@@ -272,6 +423,10 @@ final class RepeatedDeltaCanonicalTransitionCache {
             this.momentsValid = false;
             this.preparedValid = false;
             this.version = 0;
+        }
+
+        double dt() {
+            return Double.longBitsToDouble(dtBits);
         }
 
         void makeDirty() {

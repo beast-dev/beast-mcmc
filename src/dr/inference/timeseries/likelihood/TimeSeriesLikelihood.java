@@ -116,6 +116,15 @@ public class TimeSeriesLikelihood extends AbstractModelLikelihood implements Tim
     }
 
     @Override
+    public double[][] getScoreContributionsWrt(final Parameter parameter) {
+        if (gradientEngine instanceof CanonicalAnalyticalKalmanGradientEngine) {
+            return ((CanonicalAnalyticalKalmanGradientEngine) gradientEngine)
+                    .getScoreContributionsWrt(parameter);
+        }
+        return null;
+    }
+
+    @Override
     protected void handleModelChangedEvent(final Model model, final Object object, final int index) {
         makeDirty();
         fireModelChanged(object, index);

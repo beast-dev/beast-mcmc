@@ -74,8 +74,8 @@ public final class LDUInvertibleMatrixParametrization extends InvertibleMatrixPa
         this.inverseXScratch = new double[dimension];
 
         for (int row = 0; row < dimension; row++) {
-            lowerRowOffsets[row] = row * (row - 1) / 2;
-            upperRowOffsets[row] = row * (2 * dimension - row - 1) / 2;
+            lowerRowOffsets[row] = StrictTriangularMatrixIndexing.lowerRowOffset(row);
+            upperRowOffsets[row] = StrictTriangularMatrixIndexing.upperRowOffset(dimension, row);
         }
     }
 
@@ -96,21 +96,15 @@ public final class LDUInvertibleMatrixParametrization extends InvertibleMatrixPa
     }
 
     public static int getStrictTriangularDimension(final int dimension) {
-        return dimension * (dimension - 1) / 2;
+        return StrictTriangularMatrixIndexing.getStrictTriangularDimension(dimension);
     }
 
     public static int lowerIndex(final int row, final int col) {
-        if (row <= col) {
-            throw new IllegalArgumentException("lowerIndex requires row > col");
-        }
-        return row * (row - 1) / 2 + col;
+        return StrictTriangularMatrixIndexing.lowerIndex(row, col);
     }
 
     public static int upperIndex(final int dimension, final int row, final int col) {
-        if (row >= col) {
-            throw new IllegalArgumentException("upperIndex requires row < col");
-        }
-        return row * (2 * dimension - row - 1) / 2 + (col - row - 1);
+        return StrictTriangularMatrixIndexing.upperIndex(dimension, row, col);
     }
 
     @Override

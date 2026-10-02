@@ -1,7 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuous.canonical.gradient;
 
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
-import dr.inference.model.InvertibleMatrixParametrization;
+import dr.inference.model.NativeMatrixGradientProvider;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.TransposedMatrixParameter;
@@ -90,6 +90,19 @@ public final class CanonicalSelectionGradientProjector {
                 orthogonalProvider.fillPullBackGradientFlat(gradientR, dimension, out, nativeBlockDim);
                 return out;
             }
+            if (blockParameter.getRotationMatrixParameter() instanceof NativeMatrixGradientProvider) {
+                final NativeMatrixGradientProvider nativeMatrix =
+                        (NativeMatrixGradientProvider) blockParameter.getRotationMatrixParameter();
+                final Parameter nativeRotationParameter = nativeMatrix.getNativeParameter();
+                final int nativeBlockDim = blockParameter.getBlockDiagonalNParameters();
+                final int nativeRotationDim =
+                        nativeMatrix.getPullBackGradientDimension(nativeRotationParameter);
+                final double[] out = new double[nativeBlockDim + nativeRotationDim];
+                System.arraycopy(nativeBlockGradient, 0, out, 0, nativeBlockDim);
+                nativeMatrix.fillPullBackGradientForParameter(
+                        nativeRotationParameter, gradientR, dimension, out, nativeBlockDim);
+                return out;
+            }
             final double[] out = new double[blockParameter.getBlockDiagonalNParameters() + dimension * dimension];
             System.arraycopy(nativeBlockGradient, 0, out, 0, blockParameter.getBlockDiagonalNParameters());
             final double[] flatRotation = flattenRotationGradientFlat(
@@ -109,12 +122,12 @@ public final class CanonicalSelectionGradientProjector {
             orthogonalProvider.fillPullBackGradientFlat(gradientR, dimension, out);
             return out;
         }
-        if (blockParameter.getRotationMatrixParameter() instanceof InvertibleMatrixParametrization) {
-            final InvertibleMatrixParametrization invertible =
-                    (InvertibleMatrixParametrization) blockParameter.getRotationMatrixParameter();
-            if (invertible.supportsNativeParameter(requestedParameter)) {
-                final double[] out = new double[invertible.getPullBackGradientDimension(requestedParameter)];
-                invertible.fillPullBackGradientForParameter(requestedParameter, gradientR, dimension, out, 0);
+        if (blockParameter.getRotationMatrixParameter() instanceof NativeMatrixGradientProvider) {
+            final NativeMatrixGradientProvider nativeMatrix =
+                    (NativeMatrixGradientProvider) blockParameter.getRotationMatrixParameter();
+            if (nativeMatrix.supportsNativeParameter(requestedParameter)) {
+                final double[] out = new double[nativeMatrix.getPullBackGradientDimension(requestedParameter)];
+                nativeMatrix.fillPullBackGradientForParameter(requestedParameter, gradientR, dimension, out, 0);
                 return out;
             }
         }

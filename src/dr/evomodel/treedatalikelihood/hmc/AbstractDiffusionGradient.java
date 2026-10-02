@@ -76,6 +76,10 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
         }
     }
 
+    boolean requiresFreshLikelihoodBeforeSharedBranchGradient() {
+        return false;
+    }
+
     public abstract Parameter getRawParameter();
 
     public void setOffset(int offset) {

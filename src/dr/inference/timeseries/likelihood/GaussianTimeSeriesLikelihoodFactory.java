@@ -15,6 +15,7 @@ import dr.inference.timeseries.engine.kalman.formula.CanonicalDiffusionMatrixGra
 import dr.inference.timeseries.engine.kalman.CanonicalKalmanSmootherEngine;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalStationaryMeanGradientFormula;
 import dr.inference.timeseries.engine.kalman.formula.CanonicalBlockDiagonalGradientCache;
+import dr.inference.timeseries.engine.kalman.formula.DiagonalObservationNoiseGradientFormula;
 import dr.inference.timeseries.engine.kalman.formula.MomentDiffusionMatrixGradientFormula;
 import dr.inference.timeseries.engine.kalman.MomentSmootherResults;
 import dr.inference.timeseries.engine.kalman.GaussianForwardComputationMode;
@@ -157,6 +158,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                     ouProcess.getDiffusionMatrix(),
                     ouProcess.getStationaryMeanParameter(),
                     ouProcess.getInitialCovarianceParameter(),
+                    observationModel,
                     ouProcess.getStateDimension());
         }
         if (latentProcess instanceof EulerOUProcessModel) {
@@ -168,6 +170,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                     eulerProcess.getDiffusionMatrix(),
                     eulerProcess.getStationaryMeanParameter(),
                     eulerProcess.getInitialCovarianceParameter(),
+                    observationModel,
                     eulerProcess.getStateDimension());
         }
 
@@ -207,6 +210,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                                                              final dr.inference.model.MatrixParameterInterface diffusionMatrix,
                                                              final dr.inference.model.Parameter stationaryMean,
                                                              final MatrixParameter initialCovariance,
+                                                             final LinearGaussianObservationModel observationModel,
                                                              final int stateDimension) {
         final DiffusionMatrixParameterization diffusionParameterization =
                 DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
@@ -242,19 +246,24 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                         processModel,
                         diffusionParameterization,
                         stateDimension,
-                        blockDiagonalGradientCache));
+                        blockDiagonalGradientCache),
+                new DiagonalObservationNoiseGradientFormula(
+                        observationModel,
+                        stateDimension));
         if (smoother instanceof CanonicalKalmanSmootherEngine) {
             return new CanonicalAnalyticalKalmanGradientEngine(
                     (CanonicalKalmanSmootherEngine) smoother,
                     formulas.canonicalSelection,
                     formulas.canonicalMean,
-                    formulas.canonicalDiffusion);
+                    formulas.canonicalDiffusion,
+                    formulas.observationNoise);
         }
         return new MomentAnalyticalKalmanGradientEngine(
                 smoother,
                 formulas.selection,
                 formulas.mean,
-                formulas.diffusion);
+                formulas.diffusion,
+                formulas.observationNoise);
     }
 
     private static final class GradientFormulaBundle {
@@ -264,19 +273,22 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         final CanonicalStationaryMeanGradientFormula canonicalMean;
         final MomentDiffusionMatrixGradientFormula diffusion;
         final CanonicalDiffusionMatrixGradientFormula canonicalDiffusion;
+        final DiagonalObservationNoiseGradientFormula observationNoise;
 
         GradientFormulaBundle(final MomentSelectionMatrixGradientFormula selection,
                               final CanonicalSelectionMatrixGradientFormula canonicalSelection,
                               final MomentStationaryMeanGradientFormula mean,
                               final CanonicalStationaryMeanGradientFormula canonicalMean,
                               final MomentDiffusionMatrixGradientFormula diffusion,
-                              final CanonicalDiffusionMatrixGradientFormula canonicalDiffusion) {
+                              final CanonicalDiffusionMatrixGradientFormula canonicalDiffusion,
+                              final DiagonalObservationNoiseGradientFormula observationNoise) {
             this.selection = selection;
             this.canonicalSelection = canonicalSelection;
             this.mean = mean;
             this.canonicalMean = canonicalMean;
             this.diffusion = diffusion;
             this.canonicalDiffusion = canonicalDiffusion;
+            this.observationNoise = observationNoise;
         }
     }
 

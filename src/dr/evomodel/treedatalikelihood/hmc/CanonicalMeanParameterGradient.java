@@ -72,6 +72,11 @@ public final class CanonicalMeanParameterGradient extends AbstractDiffusionGradi
     }
 
     @Override
+    boolean requiresFreshLikelihoodBeforeSharedBranchGradient() {
+        return true;
+    }
+
+    @Override
     public Parameter getRawParameter() {
         return parameter;
     }

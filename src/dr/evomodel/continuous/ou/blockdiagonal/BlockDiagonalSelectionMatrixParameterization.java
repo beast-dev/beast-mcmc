@@ -14,6 +14,7 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalLoca
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.NativeMatrixGradientProvider;
 import dr.inference.model.TransposedMatrixParameter;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -46,6 +47,7 @@ public class BlockDiagonalSelectionMatrixParameterization
     protected final double[] transitionOffsetScratch;
     protected final double[] denseAdjointScratch;
     protected final double[] nativeBlockGradientScratch;
+    protected final double[] rotationNativeGradientScratch;
     protected final double[] choleskyScratch;
     protected final double[] lowerInverseScratch;
     protected final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
@@ -81,6 +83,7 @@ public class BlockDiagonalSelectionMatrixParameterization
         this.transitionOffsetScratch = new double[d];
         this.denseAdjointScratch = new double[d * d];
         this.nativeBlockGradientScratch = new double[blockParameter.getBlockDiagonalNParameters()];
+        this.rotationNativeGradientScratch = new double[getRotationGradientDimension(d)];
         this.choleskyScratch = new double[d * d];
         this.lowerInverseScratch = new double[d * d];
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(d);
@@ -96,7 +99,7 @@ public class BlockDiagonalSelectionMatrixParameterization
 
     @Override
     public int getSelectionGradientDimension() {
-        return blockParameter.getBlockDiagonalNParameters() + getDimension() * getDimension();
+        return blockParameter.getBlockDiagonalNParameters() + getRotationGradientDimension(getDimension());
     }
 
     @Override
@@ -1338,6 +1341,12 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                      final double[] out,
                                                      final int offset,
                                                      final int dimension) {
+        final NativeMatrixGradientProvider nativeMatrix = getRotationNativeGradientProvider();
+        if (nativeMatrix != null) {
+            nativeMatrix.fillPullBackGradientForParameter(
+                    nativeMatrix.getNativeParameter(), rowMajorGradient, dimension, out, offset);
+            return;
+        }
         if (blockParameter.getRotationMatrixParameter() instanceof TransposedMatrixParameter) {
             System.arraycopy(rowMajorGradient, 0, out, offset, dimension * dimension);
             return;
@@ -1354,6 +1363,16 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                         final double[] out,
                                                         final int offset,
                                                         final int dimension) {
+        final NativeMatrixGradientProvider nativeMatrix = getRotationNativeGradientProvider();
+        if (nativeMatrix != null) {
+            Arrays.fill(rotationNativeGradientScratch, 0.0);
+            nativeMatrix.fillPullBackGradientForParameter(
+                    nativeMatrix.getNativeParameter(), rowMajorGradient, dimension, rotationNativeGradientScratch, 0);
+            for (int i = 0; i < rotationNativeGradientScratch.length; ++i) {
+                out[offset + i] += rotationNativeGradientScratch[i];
+            }
+            return;
+        }
         if (blockParameter.getRotationMatrixParameter() instanceof TransposedMatrixParameter) {
             for (int i = 0; i < dimension * dimension; ++i) {
                 out[offset + i] += rowMajorGradient[i];
@@ -1366,6 +1385,21 @@ public class BlockDiagonalSelectionMatrixParameterization
                 out[index++] += rowMajorGradient[row * dimension + col];
             }
         }
+    }
+
+    private int getRotationGradientDimension(final int dimension) {
+        final NativeMatrixGradientProvider nativeMatrix = getRotationNativeGradientProvider();
+        if (nativeMatrix != null) {
+            return nativeMatrix.getPullBackGradientDimension(nativeMatrix.getNativeParameter());
+        }
+        return dimension * dimension;
+    }
+
+    private NativeMatrixGradientProvider getRotationNativeGradientProvider() {
+        final MatrixParameterInterface rotationParameter = blockParameter.getRotationMatrixParameter();
+        return rotationParameter instanceof NativeMatrixGradientProvider
+                ? (NativeMatrixGradientProvider) rotationParameter
+                : null;
     }
 
     protected void checkNativeGradientFinite(final String contribution,

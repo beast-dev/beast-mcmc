@@ -69,6 +69,38 @@ public class BlockDiagonalNativeTimeSeriesGradientTest extends TestCase {
         assertGradientMatchesFiniteDifference("canonical mean", likelihood, model, model.mean);
     }
 
+    public void testCanonicalNativeDriftScoreContributionsSumToGradient() {
+        final GeneralBlockModel model = makeGeneralBlockModel("canonical.general.block.scores", true);
+        final TimeSeriesLikelihood likelihood = makeLikelihood(
+                "ts.canonical.general.block.scores",
+                model,
+                GaussianForwardComputationMode.CANONICAL,
+                GaussianSmootherComputationMode.CANONICAL,
+                GaussianGradientComputationMode.CANONICAL_ANALYTICAL);
+        assertScoreContributionsSum(likelihood, model.block.getRhoParameter());
+        assertScoreContributionsSum(likelihood, model.block.getThetaParameter());
+        assertScoreContributionsSum(likelihood, model.block.getTParameter());
+        assertScoreContributionsSum(likelihood, model.block.getRotationMatrixParameter());
+    }
+
+    private static void assertScoreContributionsSum(final TimeSeriesLikelihood likelihood,
+                                                    final Parameter parameter) {
+        likelihood.makeDirty();
+        final double[] gradient = likelihood.getGradientWrt(parameter).getGradientLogDensity(null);
+        final double[][] contributions = likelihood.getScoreContributionsWrt(parameter);
+        assertNotNull(contributions);
+        final double[] sum = new double[gradient.length];
+        for (final double[] contribution : contributions) {
+            assertEquals(gradient.length, contribution.length);
+            for (int i = 0; i < gradient.length; ++i) {
+                sum[i] += contribution[i];
+            }
+        }
+        for (int i = 0; i < gradient.length; ++i) {
+            assertEquals(gradient[i], sum[i], 1.0e-10);
+        }
+    }
+
     private static void assertNativeBlockGradientsMatchFiniteDifference(
             final String label,
             final TimeSeriesLikelihood likelihood,

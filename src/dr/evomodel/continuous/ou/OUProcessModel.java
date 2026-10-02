@@ -3,6 +3,7 @@ package dr.evomodel.continuous.ou;
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.BlockDiagonalNormalizedCartesianStableMatrixParameter;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
@@ -213,7 +214,8 @@ public class OUProcessModel extends AbstractModel
 
     private static boolean usesStableBlockDiagonalSelectionChart(
             final MatrixParameterInterface driftMatrix) {
-        return driftMatrix instanceof BlockDiagonalPolarStableMatrixParameter
+        return driftMatrix instanceof BlockDiagonalNormalizedCartesianStableMatrixParameter
+                || driftMatrix instanceof BlockDiagonalPolarStableMatrixParameter
                 || driftMatrix instanceof OrthogonalBlockDiagonalPolarStableMatrixParameter;
     }
 

@@ -175,4 +175,57 @@ public final class CanonicalSelectionMatrixGradientFormula implements CanonicalG
                 nativeGradient,
                 rotationGradientFlat);
     }
+
+    @Override
+    public double[][] computeScoreContributions(final Parameter parameter,
+                                                final CanonicalForwardTrajectory trajectory,
+                                                final CanonicalBranchGradientCache branchGradientCache,
+                                                final GaussianTransitionRepresentation repr,
+                                                final TimeGrid timeGrid) {
+        final int branchCount = Math.max(0, trajectory.timeCount - 1);
+        final double[][] scores = new double[branchCount][];
+        branchAdjoints.ensure(trajectory, branchGradientCache);
+        if (shouldUseBlockDiagonalNativePath(parameter)) {
+            final BlockDiagonalNativeCanonicalParameterization blockParameterization =
+                    BlockDiagonalFormulaSupport.nativeParameterization(processModel);
+            final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter =
+                    (AbstractBlockDiagonalTwoByTwoMatrixParameter) selectionMatrixParameter;
+            processModel.getInitialMean(stationaryMeanScratch);
+            for (int t = 0; t < branchCount; ++t) {
+                Arrays.fill(nativeCompressedGradientScratch, 0.0);
+                Arrays.fill(nativeRotationGradientFlat, 0.0);
+                final double dt = timeGrid.getDelta(t, t + 1);
+                blockParameterization.accumulateNativeGradientFromCanonicalContributionFlat(
+                        processModel.getDiffusionMatrix(),
+                        stationaryMeanScratch,
+                        dt,
+                        branchAdjoints.localContribution(t, trajectory, branchGradientCache),
+                        branchAdjoints.localAdjoints(t, trajectory, branchGradientCache),
+                        nativeCompressedGradientScratch,
+                        nativeRotationGradientFlat);
+                final double[] nativeGradient =
+                        new double[blockParameter.getBlockDiagonalNParameters()];
+                blockParameter.chainGradient(nativeCompressedGradientScratch, nativeGradient);
+                scores[t] = BlockDiagonalFormulaSupport.assembleNativeSelectionGradient(
+                        stateDimension,
+                        parameter,
+                        blockParameter,
+                        nativeGradient,
+                        nativeRotationGradientFlat);
+            }
+            return scores;
+        }
+
+        for (int t = 0; t < branchCount; ++t) {
+            final double[] score = new double[stateDimension * stateDimension];
+            final CanonicalLocalTransitionAdjoints adjoints =
+                    branchAdjoints.localAdjoints(t, trajectory, branchGradientCache);
+            repr.accumulateSelectionGradientFlat(
+                    t, t + 1, timeGrid, adjoints.dLogL_dF, adjoints.dLogL_df, score);
+            repr.accumulateSelectionGradientFromCovarianceFlat(
+                    t, t + 1, timeGrid, adjoints.dLogL_dOmega, score);
+            scores[t] = score;
+        }
+        return scores;
+    }
 }

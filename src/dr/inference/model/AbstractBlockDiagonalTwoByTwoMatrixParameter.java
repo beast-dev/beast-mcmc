@@ -500,7 +500,7 @@ public abstract class AbstractBlockDiagonalTwoByTwoMatrixParameter
     }
 
     public CompoundParameter getParameter() {
-        return compoundParameter;
+        return checkpointableParameter;
     }
 
     @Override

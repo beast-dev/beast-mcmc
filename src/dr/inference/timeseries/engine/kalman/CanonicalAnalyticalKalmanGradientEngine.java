@@ -89,4 +89,24 @@ public final class CanonicalAnalyticalKalmanGradientEngine implements GradientEn
             formula.makeDirty();
         }
     }
+
+    public double[][] getScoreContributionsWrt(final Parameter parameter) {
+        if (!supportsGradientWrt(parameter)) {
+            return null;
+        }
+        final CanonicalForwardTrajectory trajectory = smootherEngine.getCanonicalTrajectory();
+        final CanonicalBranchGradientCache branchGradientCache =
+                smootherEngine.getCanonicalBranchGradientCache();
+        for (final CanonicalGradientFormula formula : formulas) {
+            if (formula.supportsParameter(parameter)) {
+                return formula.computeScoreContributions(
+                        parameter,
+                        trajectory,
+                        branchGradientCache,
+                        smootherEngine.getTransitionRepresentation(),
+                        smootherEngine.getTimeGrid());
+            }
+        }
+        return null;
+    }
 }

@@ -61,6 +61,9 @@ public class ODESolver extends CompartmentalModelSimulator {
                 relTolerance);
 
 
+        // System.out.println("youngerForwardOrigTime = " + youngerForwardOrigTime
+        //        + ", secondPathogenIntroduced = " + compartmentalModel.isSecondPathogenIntroduced());
+
         // handle second pathogen introduction
         // the introduction creates a discontinuity (one individual moves from SS to SI or IS)
         // this locates the time exactly and restarts the integrator from the modified state
@@ -77,22 +80,16 @@ public class ODESolver extends CompartmentalModelSimulator {
 
                 @Override
                 public int eventOccurred(double t, double[] y, boolean increasing) {
-                    // introduce second pathogen by modifying y
-                    // SS reduced by 1, IS or SI increased by 1
-                    compartmentalModel.introduceSecondPathogen(t, y);
-
-                    // keep state.currentCounts consistent with y so that
-                    // recordCompartmentCountsUpTo uses the correct counts
-                    System.arraycopy(y, 0, state.currentCounts, 0, numSpecies);
-
-                    // RESET_STATE causes the integrator to restart from the modified y
                     return EventHandler.RESET_STATE;
                 }
 
                 @Override
                 public void resetState(double t, double[] y) {
-                    // y has already been modified in eventOccurred
-                    // do nothing
+                    // Introduce the second pathogen: SS decremented, IS or SI incremented.
+                    //System.out.println("event fired at t=" + t + " SI before=" + y[1]);
+                    compartmentalModel.introduceSecondPathogen(t, y);
+                    //System.out.println("  SI after=" + y[1]);
+                    System.arraycopy(y, 0, state.currentCounts, 0, numSpecies);
                 }
                 // max interval between event checks, root-find convergence tolerance,
                 // and max root-finding iterations

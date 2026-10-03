@@ -28,6 +28,13 @@ public class ODESolver extends CompartmentalModelSimulator {
         this.relTolerance = relTolerance;
     }
 
+    // See CompartmentalModelSimulator's enforceLineageCountConstraint(). The ODE
+    // gives the mean trajectory, so a tree exceeding it is not impossible.
+    @Override
+    protected boolean enforceLineageCountConstraint() {
+        return false;
+    }
+
     // Solves ODE system and records compartment counts at each grid point
     // ODE integration proceeds in forward time, starting at
     // cutOff - oldestOrigin (both of which are in backward time), and goes

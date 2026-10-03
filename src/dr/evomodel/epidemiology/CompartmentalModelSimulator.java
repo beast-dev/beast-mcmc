@@ -18,6 +18,13 @@ public abstract class CompartmentalModelSimulator {
     // shared trajectory index runs from 0 to numGridPoints-1
     // Will be null if there is no constraint to check
     protected int[][] lineageCounts = null;
+    // Number of grid points at which the trajectory held fewer infected
+    // individuals than the tree held lineages, in the last simulation.
+    protected int lineageViolationCount = 0;
+    // Largest such shortfall (lineages - infected), and where it occurred.
+    protected double worstLineageShortfall = 0.0;
+    protected int worstLineageIndex = -1;
+    protected int worstLineagePathogen = -1;
 
     public CompartmentalModelSimulator(CompartmentalModel compartmentalModel) {
         this.compartmentalModel = compartmentalModel;
@@ -37,6 +44,10 @@ public abstract class CompartmentalModelSimulator {
 
         // make sure this is reset at start of each simulation
         lineageConstraintViolated = false;
+        lineageViolationCount = 0;
+        worstLineageShortfall = 0.0;
+        worstLineageIndex = -1;
+        worstLineagePathogen = -1;
         int nextRecordIndex = numGridPoints-1;
         double oldestOrigin = compartmentalModel.getOldestOrigin();
         //System.out.println("oldestOrigin from initializeSimulation(): " + oldestOrigin);
@@ -172,16 +183,51 @@ public abstract class CompartmentalModelSimulator {
         int[] numInfected = compartmentalModel.getLineageCountConstraintCounts(currentCounts);
         for(int i = 0; i < numInfected.length; i++){
             if(numInfected[i] < lineageCounts[i][index]){
-                System.out.println("Constraint violated at grid index " + index
-                        + ", pathogen " + (i + 1)
-                        + ": trajectory has " + numInfected[i]
-                        + " infected but tree has " + lineageCounts[i][index] + " lineages");
-                return false;
+                double shortfall = lineageCounts[i][index] - numInfected[i];
+                lineageViolationCount++;
+                if (shortfall > worstLineageShortfall) {
+                    worstLineageShortfall = shortfall;
+                    worstLineageIndex = index;
+                    worstLineagePathogen = i;
+                }
+                if (enforceLineageCountConstraint()) {
+                    return false;
+                }
             }
         }
         //System.out.println("index: " + index);
         //System.out.println("currentCounts: " + Arrays.toString(currentCounts));
         return true;
+    }
+
+    // Determines whether a trajectory holding fewer infected individuals than the tree
+    // holds lineages should always be rejected
+    // It should for stochastic simulators, where the trajectory is a realisation:
+    // each tree lineage is an infected individual, so such a trajectory could
+    // not have generated the tree and P(tree | trajectory) = 0
+    // It shouldn't for deterministic model, where the trajectory is E[I(t)] rather
+    // than an actual realisation. A tree with more lineages than the expectation is an
+    // ordinary above-average draw, not an impossibility, and rejecting it
+    // compares a realization against an expectation. The violation is still
+    // recorded and reported, since it flags a marginal scenario.
+    protected boolean enforceLineageCountConstraint() {
+        return true;
+    }
+
+    public int getLineageViolationCount() {
+        return lineageViolationCount;
+    }
+
+    public double getWorstLineageShortfall() {
+        return worstLineageShortfall;
+    }
+
+    public int getWorstLineageIndex() {
+        return worstLineageIndex;
+    }
+
+    public int getWorstLineagePathogen() {
+        return worstLineagePathogen;
     }
 
     public void resetLineageConstraintViolated() {

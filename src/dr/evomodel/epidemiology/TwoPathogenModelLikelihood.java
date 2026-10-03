@@ -40,27 +40,37 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
         updateLineageCounts();
 
         // run stochastic simulator until we get a valid initial trajectory
-        int maxAttempts = (simulator instanceof ODESolver) ? 1 : 100000;
-        int attempts = 0;
-        do {
+        if (simulator.enforceLineageCountConstraint()) {
+            int maxAttempts = 100000;
+            int attempts = 0;
+            while (true) {
+                simulator.simulateTrajectory();
+                attempts++;
+                if (!simulator.isLineageConstraintViolated()) break;
+                if (attempts >= maxAttempts) {
+                    throw new RuntimeException(
+                            "Could not find a valid initial trajectory after " + attempts
+                                    + " attempts. The trajectory holds fewer infected individuals "
+                                    + "than the tree holds lineages at some grid point.");
+                }
+            }
+            System.out.println("Found valid initial trajectory after " + attempts
+                    + " attempt" + (attempts == 1 ? "" : "s") + ".");
+        } else {
             simulator.simulateTrajectory();
-            attempts++;
-            if (attempts % 1000 == 0) {
-                System.out.println("attempting to find valid initial trajectory: attempt " + attempts);
+            if (simulator.getLineageViolationCount() > 0) {
+                System.out.println(String.format(
+                        "Note: the deterministic trajectory holds fewer infected individuals "
+                                + "than the tree holds lineages at %d grid point(s); worst shortfall "
+                                + "%.2f at index %d for pathogen %d. This is expected near the tree "
+                                + "root and is not treated as invalid, but a large or widespread "
+                                + "shortfall indicates the trees are poorly matched to the trajectory.",
+                        simulator.getLineageViolationCount(),
+                        simulator.getWorstLineageShortfall(),
+                        simulator.getWorstLineageIndex(),
+                        simulator.getWorstLineagePathogen() + 1));
             }
-            if (!simulator.isLineageConstraintViolated()) {
-                break;
-            }
-            if (attempts >= maxAttempts) {
-                throw new RuntimeException(
-                        "Could not find valid initial trajectory of compartment counts after "
-                                + attempts + " attempt" + (attempts == 1 ? "" : "s")
-                                + ". The trajectory has fewer infected individuals than the tree has "
-                                + "lineages at some grid point. Check that the origin times exceed the "
-                                + "tree root heights and that R0 is high enough to support the trees.");
-            }
-        } while (true);
-        System.out.println("Found valid initial trajectory after " + attempts + " attempts.");
+        }
     }
 
     private void updateLineageCounts(){

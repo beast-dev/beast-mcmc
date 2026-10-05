@@ -36,6 +36,8 @@ import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GlmSubstitutionModel;
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
+import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -43,6 +45,7 @@ import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode;
 import dr.evomodel.treedatalikelihood.discrete.FixedEffectSubstitutionModelGradient;
+import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.distribution.LogLinearModel;
 import dr.inference.model.DesignMatrix;
@@ -112,6 +115,53 @@ public class EpochSubstitutionGradientTest extends TraceCorrelationAssert {
             assertTrue(label + ", epoch " + e + " is not used", numerical != 0.0);
             assertEquals(label + ", epoch " + e, numerical, gradient[0],
                     1E-5 * Math.max(1.0, Math.abs(numerical)));
+        }
+    }
+
+    /**
+     * Two normalized log-rate models alternate across the epochs (A, B, A, ...) on the spectral implementation, so
+     * the gradient of each model sums the adjoint cross products of several epochs. The exact gradient with respect
+     * to every log rate is compared with central differences of the log likelihood.
+     */
+    public void testExactSpectralLogRateGradient() {
+        PartialsRescalingScheme[] schemes = {PartialsRescalingScheme.NONE, PartialsRescalingScheme.DYNAMIC,
+                PartialsRescalingScheme.ALWAYS};
+
+        boolean complex = false;
+        for (int seed = 0; seed < 3; ++seed) {
+            for (PartialsRescalingScheme scheme : schemes) {
+                for (int categories : new int[]{1, 4}) {
+                    AlternatingFixture f = new AlternatingFixture(seed, scheme, categories);
+                    checkLogRateGradient(f,
+                            "seed " + seed + ", " + scheme.getText() + ", " + categories + " categories");
+                    complex |= f.hasComplexEigenvalues();
+                }
+            }
+        }
+        assertTrue("no model has complex eigenvalues", complex);
+    }
+
+    private void checkLogRateGradient(AlternatingFixture f, String label) {
+
+        final double h = 1E-5;
+        for (int m = 0; m < f.logRates.size(); ++m) {
+            final double[] gradient = f.gradients.get(m).getGradientLogDensity();
+            assertEquals(RATES, gradient.length);
+
+            final Parameter logRates = f.logRates.get(m);
+            for (int k = 0; k < RATES; ++k) {
+                final double value = logRates.getParameterValue(k);
+
+                logRates.setParameterValue(k, value + h);
+                final double up = f.likelihood.getLogLikelihood();
+                logRates.setParameterValue(k, value - h);
+                final double down = f.likelihood.getLogLikelihood();
+                logRates.setParameterValue(k, value);
+
+                final double numerical = (up - down) / (2 * h);
+                assertEquals(label + ", model " + m + ", rate " + k, numerical, gradient[k],
+                        1E-5 * Math.max(1.0, Math.abs(numerical)));
+            }
         }
     }
 
@@ -196,28 +246,117 @@ public class EpochSubstitutionGradientTest extends TraceCorrelationAssert {
                         ApproximationMode.FIRST_ORDER));
             }
         }
+    }
 
-        private SimpleTree randomTree(Random random) {
-            List<SimpleNode> active = new ArrayList<SimpleNode>();
-            for (int i = 0; i < taxa.length; ++i) {
-                SimpleNode tip = new SimpleNode();
-                tip.setTaxon(taxa[i]);
-                tip.setHeight(0.0);
-                active.add(tip);
+    private class AlternatingFixture {
+
+        final TreeDataLikelihood likelihood;
+        final List<LogRateSubstitutionModel> models = new ArrayList<LogRateSubstitutionModel>();
+        final List<Parameter> logRates = new ArrayList<Parameter>();
+        final List<LogCtmcRateGradient> gradients = new ArrayList<LogCtmcRateGradient>();
+
+        AlternatingFixture(long seed, PartialsRescalingScheme scheme, int categories) {
+            Random random = new Random(seed);
+
+            DefaultTreeModel tree = new DefaultTreeModel(randomTree(random));
+
+            final int epochCount = 3 + random.nextInt(3);
+            final double[] times = new double[epochCount - 1];
+            double time = 0.0;
+            for (int i = 0; i < times.length; ++i) {
+                time += 0.05 + 0.2 * random.nextDouble();
+                times[i] = time;
             }
 
-            while (active.size() > 1) {
-                SimpleNode left = active.remove(random.nextInt(active.size()));
-                SimpleNode right = active.remove(random.nextInt(active.size()));
+            for (String name : new String[]{"A", "B"}) {
+                double[] frequencies = new double[STATES];
+                double sum = 0.0;
+                for (int j = 0; j < STATES; ++j) {
+                    frequencies[j] = 0.5 + random.nextDouble();
+                    sum += frequencies[j];
+                }
+                for (int j = 0; j < STATES; ++j) {
+                    frequencies[j] /= sum;
+                }
 
-                SimpleNode parent = new SimpleNode();
-                parent.setHeight(Math.max(left.getHeight(), right.getHeight()) + 0.02 + 0.2 * random.nextDouble());
-                parent.addChild(left);
-                parent.addChild(right);
-                active.add(parent);
+                double[] values = new double[RATES];
+                for (int k = 0; k < RATES; ++k) {
+                    values[k] = random.nextGaussian();
+                }
+                Parameter rates = new Parameter.Default("logRates." + name, values);
+
+                LogRateSubstitutionModel model = new LogRateSubstitutionModel("model." + name, Nucleotides.INSTANCE,
+                        new FrequencyModel(Nucleotides.INSTANCE, frequencies),
+                        new LogAdditiveCtmcRateProvider.DataAugmented.Basic(rates.getId(), rates));
+                model.setNormalization(true);
+                model.setScaleRatesByFrequencies(false);
+
+                models.add(model);
+                logRates.add(rates);
             }
 
-            return new SimpleTree(active.get(0));
+            List<SubstitutionModel> epochModels = new ArrayList<SubstitutionModel>();
+            for (int e = 0; e < epochCount; ++e) {
+                epochModels.add(models.get(e % 2));
+            }
+
+            EpochBranchModel branchModel = new EpochBranchModel(tree, epochModels, new Parameter.Default(times));
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel", 0.5, categories);
+
+            SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
+
+            Parameter rates = new Parameter.Default(tree.getNodeCount() - 1, 1.0);
+            for (int i = 0; i < rates.getDimension(); ++i) {
+                rates.setParameterValue(i, 0.5 + random.nextDouble());
+            }
+            ArbitraryBranchRates branchRates = new ArbitraryBranchRates(tree, rates,
+                    ArbitraryBranchRates.make(false, false, false), false);
+
+            BeagleDataLikelihoodDelegate delegate = new BeagleDataLikelihoodDelegate(tree, patterns, branchModel,
+                    siteRateModel, false, false, scheme, false,
+                    new PreOrderSettings(true, false, false, false, true, false, true));
+
+            likelihood = new TreeDataLikelihood(delegate, tree, branchRates);
+
+            for (LogRateSubstitutionModel model : models) {
+                gradients.add(new LogCtmcRateGradient("test", likelihood, delegate, model,
+                        ApproximationMode.EXACT_SPECTRAL, false));
+            }
         }
+
+        boolean hasComplexEigenvalues() {
+            for (LogRateSubstitutionModel model : models) {
+                final double[] values = model.getEigenDecomposition().getEigenValues();
+                for (int i = STATES; i < values.length; ++i) { // the imaginary parts, if any
+                    if (values[i] != 0.0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    private SimpleTree randomTree(Random random) {
+        List<SimpleNode> active = new ArrayList<SimpleNode>();
+        for (int i = 0; i < taxa.length; ++i) {
+            SimpleNode tip = new SimpleNode();
+            tip.setTaxon(taxa[i]);
+            tip.setHeight(0.0);
+            active.add(tip);
+        }
+
+        while (active.size() > 1) {
+            SimpleNode left = active.remove(random.nextInt(active.size()));
+            SimpleNode right = active.remove(random.nextInt(active.size()));
+
+            SimpleNode parent = new SimpleNode();
+            parent.setHeight(Math.max(left.getHeight(), right.getHeight()) + 0.02 + 0.2 * random.nextDouble());
+            parent.addChild(left);
+            parent.addChild(right);
+            active.add(parent);
+        }
+
+        return new SimpleTree(active.get(0));
     }
 }

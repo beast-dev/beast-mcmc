@@ -35,6 +35,7 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treedatalikelihood.AugmentedNodeRegistry;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AdjointMethods;
@@ -192,6 +193,41 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
         return u;
     }
 
+    /**
+     * With degree-2 nodes at the epoch transition times, each segment of a branch lies in one epoch. Its matrix
+     * buffer carries the segment's length and its epoch's eigen decomposition.
+     */
+    private int coverSegments(int epoch,
+                              int[] postBufferIndices,
+                              int[] preBufferIndices,
+                              int[] matrixBufferIndices,
+                              int[] preScaleIndices) {
+
+        final AugmentedNodeRegistry registry = epochProcessDelegate.getAugmentedNodeRegistry();
+        final int[] chain = new int[registry.getBoundaryCount()];
+
+        int u = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            if (!tree.isRoot(tree.getNode(nodeNum))) {
+
+                final int count = registry.copyChain(nodeNum, chain);
+
+                for (int j = 0; j <= count; ++j) {
+                    // the segment above the node (j = 0) and above each of its augmented nodes
+                    final int id = (j == 0) ? nodeNum : chain[j - 1];
+                    if (registry.getMatrixEpoch(id) == epoch) {
+                        postBufferIndices[u] = getPostOrderPartialIndex(id);
+                        preBufferIndices[u]  = getPreOrderPartialIndex(id);
+                        matrixBufferIndices[u] = likelihoodDelegate.getEvolutionaryProcessDelegate().getMatrixIndex(id);
+                        preScaleIndices[u] = getNegAncestorCumulativeScaleBufferIndex(id);
+                        u++;
+                    }
+                }
+            }
+        }
+        return u;
+    }
+
     private double relativeWeight(int k, double[] weights) {
         double sum = 0.0;
         for (double w : weights) {
@@ -212,11 +248,39 @@ public class SpectralBeagleCrossProductDelegate extends AbstractBeagleGradientDe
             throw new RuntimeException("Not yet implemented");
         }
 
-        ensureBranchBuffers(tree.getNodeCount() - 1);
-
         List<SubstitutionModel> substitutionModels = likelihoodDelegate.getBranchModel().getSubstitutionModels();
 
-        if (substitutionModelCount == 1) {
+        if (epochProcessDelegate != null) {
+
+            ensureBranchBuffers(tree.getNodeCount() - 1 + epochProcessDelegate.getAugmentedNodeRegistry().getCapacity());
+
+            // BEAGLE accumulates the adjoint in the eigenbasis of the segments' eigen decomposition, so the segments
+            // of each epoch are accumulated separately and rotated back with that epoch's eigen decomposition
+            final double[] buffer = new double[length];
+            for (int epoch = 0; epoch < substitutionModelCount; ++epoch) {
+
+                final int count = coverSegments(epoch, postBufferIndices, preBufferIndices, matrixBufferIndices,
+                        preScaleIndices);
+
+                if (count == 0) {
+                    Arrays.fill(first, epoch * length, (epoch + 1) * length, 0.0);
+                } else {
+                    beagle.calculateAdjointCrossProductDifferentials(
+                            postBufferIndices, preBufferIndices,
+                            matrixBufferIndices,
+                            new int[]{0}, new int[]{0}, getRootPostOrderBuffer(), 0,
+                            count, buffer, null,
+                            null, preScaleIndices, Beagle.NONE);
+
+                    EigenDecomposition ed = substitutionModels.get(epoch).getEigenDecomposition();
+                    rotateIntoOutput(buffer, ed.getEigenVectors(), ed.getInverseEigenVectors(), first,
+                            epoch * length);
+                }
+            }
+
+        } else if (substitutionModelCount == 1) {
+
+            ensureBranchBuffers(tree.getNodeCount() - 1);
 
             EigenDecomposition ed = substitutionModels.get(0).getEigenDecomposition();
             // ted.getInverseEigenVectors() is R^T for the original eigensystem;

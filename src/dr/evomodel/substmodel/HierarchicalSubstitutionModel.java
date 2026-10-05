@@ -40,6 +40,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -83,7 +84,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         this.stateCount = tree.getTaxonCount();
         this.branchRateModel = new StrictClockBranchRates(new Parameter.Default(tree.getNodeCount(), 1.0));
         this.postOrderTraversal = getPostOrderTraversalOrder(tree);
-        this.preOrderTraversal = postOrderTraversal.reversed();
+        List<Integer> reversedOrder = new ArrayList<>(postOrderTraversal);
+        Collections.reverse(reversedOrder);
+        this.preOrderTraversal = reversedOrder;
 
         this.probNoEventsOnBranch = new double[tree.getInternalNodeCount()];
         this.probNoEventsFromRoot = new double[tree.getNodeCount()];
@@ -136,14 +139,6 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 probNoEventsFromRoot[node.getNumber()] = probNoEventsFromRoot[tree.getParent(node).getNumber()] * probNoEventsOnBranch[tree.getParent(node).getNumber() - tree.getExternalNodeCount()];
                 H[preOrderTraversal.get(i)] = probNoEventsFromRoot[node.getNumber()] / pi[node.getNumber()];
             }
-        }
-
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
-            final double poissonRate = hierarchicalRates.getNodeValue(tree, node);
-            probNoEventsOnBranch[i] = Math.exp(-poissonRate * distance);
-
-
         }
     }
 

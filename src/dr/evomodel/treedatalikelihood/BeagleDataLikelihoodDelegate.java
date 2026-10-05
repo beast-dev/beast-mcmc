@@ -180,6 +180,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         tipCount = tree.getExternalNodeCount();
         internalNodeCount = nodeCount - tipCount;
 
+        // BEAGLE's spectral implementations keep the eigen information of each branch instead of its transition
+        // matrix, so there are no matrices to convolve
+        if (settings.useSpectralRepresentation && branchModel.requiresMatrixConvolution() &&
+                !settings.useAugmentedEpochNodes) {
+            throw new IllegalArgumentException("The spectral representation cannot convolve transition matrices; " +
+                    "epoch models need useAugmentedEpochNodes=\"true\" with useSpectralRepresentation=\"true\"");
+        }
+
         // With augmented epoch nodes, degree-2 nodes lie along the branches and need their own buffers
         EpochSubstitutionModelDelegate epochDelegate = null;
         if (settings.useAugmentedEpochNodes) {

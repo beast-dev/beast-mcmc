@@ -95,7 +95,7 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
      * implementation is required even when a GPU is preferred
      */
     public void testCpuImplementationIsRequired() {
-        Fixture augmented = new Fixture(0, true, PartialsRescalingScheme.NONE, 1, true);
+        Fixture augmented = new Fixture(0, true, PartialsRescalingScheme.NONE, 1, true, false);
         Fixture convolved = new Fixture(0, false, PartialsRescalingScheme.NONE, 1);
 
         assertTrue(augmented.delegate.getBeagleInstance().getDetails().toString(),
@@ -104,6 +104,19 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
 
         assertEquals(convolved.likelihood.getLogLikelihood(), augmented.likelihood.getLogLikelihood(),
                 TOLERANCE * Math.abs(convolved.likelihood.getLogLikelihood()));
+    }
+
+    /**
+     * BEAGLE's spectral implementations cannot convolve transition matrices, so the spectral representation of an
+     * epoch model requires degree-2 nodes
+     */
+    public void testSpectralRepresentationRequiresAugmentedNodes() {
+        try {
+            new Fixture(0, false, PartialsRescalingScheme.NONE, 1, false, true);
+            fail("The spectral representation of an epoch model was accepted without augmented nodes");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("useAugmentedEpochNodes=\"true\""));
+        }
     }
 
     /**
@@ -229,10 +242,11 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
         private final Random proposals;
 
         Fixture(long seed, boolean augment, PartialsRescalingScheme scheme, int categories) {
-            this(seed, augment, scheme, categories, false);
+            this(seed, augment, scheme, categories, false, false);
         }
 
-        Fixture(long seed, boolean augment, PartialsRescalingScheme scheme, int categories, boolean preferGPU) {
+        Fixture(long seed, boolean augment, PartialsRescalingScheme scheme, int categories, boolean preferGPU,
+                boolean spectral) {
             Random random = new Random(seed);
             proposals = new Random(seed + 1000);
 
@@ -268,7 +282,7 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
             SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
             delegate = new CountingDelegate(tree, patterns, branchModel, siteRateModel, preferGPU, scheme,
-                    new PreOrderSettings(false, false, false, false, false, false, augment));
+                    new PreOrderSettings(false, false, false, false, spectral, false, augment));
 
             likelihood = new TreeDataLikelihood(delegate, tree, new DefaultBranchRateModel());
         }

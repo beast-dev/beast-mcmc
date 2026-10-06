@@ -30,8 +30,6 @@ package dr.evomodelxml.substmodel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -53,15 +51,12 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FrequencyModelParser.FREQUENCIES);
         TreeModel tree = (TreeModel) xo.getElementFirstChild(CHARACTER_TREE);
-        Parameter ratesParameter = xo.hasChildNamed(RATES_PARAMETER) ?
-                new CompoundParameter("poisson.rates", new Parameter[]{
-                        new Parameter.Default("external.poisson.rates", tree.getExternalNodeCount(), 1.0),
-                        (Parameter) xo.getElementFirstChild(RATES_PARAMETER)})
-                : new Parameter.Default(tree.getNodeCount(), 1.0);
 
-        TreeParameterModel treeParameterModel = new TreeParameterModel(tree, ratesParameter, true);
+        HierarchicalSubstitutionModel.HierarchicalRateProvider hierarchicalRateProvider = xo.hasChildNamed(RATES_PARAMETER) ?
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default((Parameter) xo.getElementFirstChild(RATES_PARAMETER), tree)
+                : new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(tree.getNodeCount(), 1.0), tree);
 
-        return new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL, treeParameterModel, tree, freqModel);
+        return new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL, hierarchicalRateProvider, freqModel);
     }
 
     @Override

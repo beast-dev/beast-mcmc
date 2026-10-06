@@ -34,10 +34,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,7 +50,7 @@ import java.util.List;
  */
 public class HierarchicalSubstitutionModel extends AbstractModel implements SubstitutionModel {
 
-    private TreeParameterModel hierarchicalRates;
+    private HierarchicalRateProvider hierarchicalRates;
     private TreeModel tree;
     private FrequencyModel frequency;
     private DataType dataType;
@@ -74,11 +71,11 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
 
 
-    public HierarchicalSubstitutionModel(String name, TreeParameterModel hierarchicalRates, TreeModel tree,
+    public HierarchicalSubstitutionModel(String name, HierarchicalRateProvider hierarchicalRateProvider,
                                          FrequencyModel frequency) {
         super(name);
-        this.hierarchicalRates = hierarchicalRates;
-        this.tree = tree;
+        this.hierarchicalRates = hierarchicalRateProvider;
+        this.tree = hierarchicalRateProvider.getTreeModel();
         this.frequency = frequency;
         this.dataType = frequency.getDataType();
         this.stateCount = tree.getTaxonCount();
@@ -101,7 +98,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
         getMRCAs();
         addModel(tree);
-        addModel(hierarchicalRates);
+        hierarchicalRates.addModel(this);
         addModel(frequency);
 
     }
@@ -126,7 +123,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
             if (!tree.isExternal(node)) {
                 final int index = preOrderTraversal.get(i) - tree.getExternalNodeCount();
-                final double poissonRate = hierarchicalRates.getNodeValue(tree, node);
+                final double poissonRate = hierarchicalRates.getRate(tree, node.getNumber());
                 probNoEventsOnBranch[index] = Math.exp(-poissonRate * distance);
                 if (tree.isRoot(node)) {
                     probNoEventsFromRoot[node.getNumber()] = 1.0;
@@ -286,5 +283,44 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
+    }
+
+    public interface HierarchicalRateProvider {
+        double getRate(TreeModel tree, int node);
+        TreeModel getTreeModel();
+        void addModel(ModelListener modelListener);
+
+        class Default implements HierarchicalRateProvider {
+
+            private final TreeParameterModel hierarchicalPoissonRates;
+            private final TreeModel tree;
+
+            public Default(Parameter rateParameter, TreeModel treeModel) {
+                if (rateParameter.getDimension() != treeModel.getInternalNodeCount()) {
+                    throw new RuntimeException("Incorrect parameter dimension");
+                }
+                this.hierarchicalPoissonRates = new TreeParameterModel(treeModel,
+                        new CompoundParameter("Default.Poisson.rates", new Parameter[]{
+                                new Parameter.Default(treeModel.getExternalNodeCount(), 1.0),
+                                rateParameter}), true);
+                this.tree = treeModel;
+
+            }
+
+            @Override
+            public double getRate(TreeModel tree, int node) {
+                return hierarchicalPoissonRates.getNodeValue(tree, tree.getNode(node));
+            }
+
+            @Override
+            public TreeModel getTreeModel() {
+                return tree;
+            }
+
+            @Override
+            public void addModel(ModelListener modelListener) {
+                hierarchicalPoissonRates.addModelListener(modelListener);
+            }
+        }
     }
 }

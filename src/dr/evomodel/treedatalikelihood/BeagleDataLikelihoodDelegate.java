@@ -189,7 +189,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         }
 
         // With augmented epoch nodes, degree-2 nodes lie along the branches and need their own buffers
-        EpochSubstitutionModelDelegate epochDelegate = null;
         if (settings.useAugmentedEpochNodes) {
             if (!(branchModel instanceof EpochBranchModel)) {
                 throw new IllegalArgumentException("Augmented epoch nodes require an epoch branch model");
@@ -217,8 +216,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                     ((EpochBranchModel) branchModel).getEpochTimes());
             addModel(epochTimeProvider);
 
-            epochDelegate = new EpochSubstitutionModelDelegate(tree, branchModel, epochTimeProvider);
+            epochDelegate = new EpochSubstitutionModelDelegate(tree, branchModel, epochTimeProvider, settings);
+        } else {
+            epochDelegate = null;
         }
+        registry = (epochDelegate == null) ? null : epochDelegate.getAugmentedNodeRegistry();
 
         final int augmentedNodeCapacity = (epochDelegate == null) ? 0 :
                 epochDelegate.getAugmentedNodeRegistry().getCapacity();
@@ -238,14 +240,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
         try {
 
-            int compactPartialsCount = tipCount;
-            if (useAmbiguities) {
-                // if we are using ambiguities then we don't use tip partials
-                compactPartialsCount = 0;
-            }
+            // if we are using ambiguities then we don't use tip partials
+            compactPartialsCount = useAmbiguities ? 0 : tipCount;
 
             // one partials buffer for each tip and two for each internal node (for store restore)
-            partialBufferHelper = new BufferIndexHelper(nodeCount + augmentedNodeCapacity, tipCount);
+            if (epochDelegate != null) {
+                // then, last so that allocating more augmented nodes appends, a block for each augmented node: its
+                // two partials and, with pre-order, its pre-order partial (those of the original nodes come first)
+                augmentedPartialHelper = new AugmentedBufferIndexHelper(nodeCount, tipCount, augmentedNodeCapacity,
+                        2 * nodeCount - tipCount + (settings.usePreOrder ? nodeCount : 0),
+                        settings.usePreOrder ? 3 : 2);
+                partialBufferHelper = augmentedPartialHelper;
+            } else {
+                augmentedPartialHelper = null;
+                partialBufferHelper = new BufferIndexHelper(nodeCount + augmentedNodeCapacity, tipCount);
+            }
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
@@ -284,8 +293,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             int numScaleBuffers = scaleBufferHelper.getBufferCount();
             int numMatrices = evolutionaryProcessDelegate.getMatrixBufferCount();
 
+            if (epochDelegate != null) {
+                // the augmented layouts already include the pre-order partials, the gradient scale buffers and the
+                // cached matrices
+                numPartials = partialsFor(augmentedNodeCapacity);
+                numMatrices = matricesFor(augmentedNodeCapacity);
+                numScaleBuffers = scaleFor(augmentedNodeCapacity);
+
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
-            if (settings.usePreOrder){
+            } else if (settings.usePreOrder){
                 // (pre-order buffers are also needed for the augmented nodes)
                 numPartials += nodeCount + augmentedNodeCapacity;
                 // Reserve one more scale buffer per node (indexed directly by node
@@ -703,6 +719,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
     private int getSingleScaleBufferCount() {
         return internalNodeCount + 1;
+    }
+
+    // BEAGLE buffer counts with buffers for a augmented nodes; only with augmented epoch nodes
+
+    private int partialsFor(int a) {
+        return augmentedPartialHelper.getBufferCount(a);
+    }
+
+    private int matricesFor(int a) {
+        return epochDelegate.getMatrixBufferCount(a);
+    }
+
+    private int scaleFor(int a) {
+        // with pre-order, one gradient scale buffer per original and augmented node, after the others
+        return scaleBufferHelper.getBufferCount() + (settings.usePreOrder ? nodeCount + a : 0);
     }
 
     /**
@@ -1309,6 +1340,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         return partialBufferHelper.getBufferCount();
     }
 
+    /**
+     * @param id an original or augmented node
+     * @return the buffer of its pre-order partial
+     */
+    public final int getPreOrderPartialIndex(int id) {
+        if (augmentedPartialHelper == null) {
+            return getPartialBufferCount() + id;
+        }
+        if (!settings.usePreOrder) { // these indices would be the post-order partials of augmented nodes
+            throw new IllegalStateException("Pre-order partials with augmented epoch nodes need usePreOrder=\"true\"");
+        }
+        return (id < nodeCount) ? (2 * nodeCount - tipCount) + id : augmentedPartialHelper.getSlotIndex(id, 2);
+    }
+
     public PreOrderSettings getPreOrderSettings() {
         return settings;
     }
@@ -1405,6 +1450,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private final int[] operations;
 
     private EpochTimeProvider epochTimeProvider = null; // non-null when there are augmented epoch nodes
+
+    // non-null when there are augmented epoch nodes
+    private final EpochSubstitutionModelDelegate epochDelegate;
+    private final AugmentedNodeRegistry registry;
+    private final AugmentedBufferIndexHelper augmentedPartialHelper; // the same object as partialBufferHelper
+
+    private final int compactPartialsCount;
 
     private boolean flip = true;
     private final BufferIndexHelper partialBufferHelper;

@@ -57,9 +57,11 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
     private final double[] transitionTimes;
 
     private final AugmentedNodeRegistry registry;
+    private final int nodeCount;
 
     private final BufferIndexHelper eigenBufferHelper;
-    private final BufferIndexHelper matrixBufferHelper;
+    private final AugmentedBufferIndexHelper matrixBufferHelper;
+    private final int cachedMatrixCount;
 
     /**
      * @param tree              the tree
@@ -69,16 +71,15 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
      *                          recent epoch and the remaining entries are the transition times
      */
     public EpochSubstitutionModelDelegate(Tree tree, BranchModel branchModel, EpochTimeProvider epochTimeProvider) {
-        this(tree, branchModel, epochTimeProvider, 0);
+        this(tree, branchModel, epochTimeProvider, null);
     }
 
     /**
-     * @param augmentedNodeCapacity  maximum number of augmented nodes in use at once; if not positive then
-     *                               taxon count times number of transition times, which EpochLikelihoodTraversal
-     *                               never exceeds because it releases chains before it takes new ones
+     * @param settings with a branch-rate derivative on pre-order, buffers for the infinitesimal matrices of the
+     *                 epochs are allocated (see cacheInfinitesimalMatrix); null for none
      */
     public EpochSubstitutionModelDelegate(Tree tree, BranchModel branchModel, EpochTimeProvider epochTimeProvider,
-                                          int augmentedNodeCapacity) {
+                                          PreOrderSettings settings) {
 
         this.substitutionModelList = branchModel.getSubstitutionModels();
         this.rootFrequencyModel = branchModel.getRootFrequencyModel();
@@ -93,16 +94,22 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
         }
         transitionTimes = new double[boundaryCount];
 
-        final int capacity = augmentedNodeCapacity > 0 ? augmentedNodeCapacity :
-                tree.getExternalNodeCount() * boundaryCount;
+        // at most one lineage per taxon crosses each transition time, and EpochLikelihoodTraversal releases chains
+        // before it takes new ones, so this many augmented nodes are never exceeded
+        final int capacity = tree.getExternalNodeCount() * boundaryCount;
 
-        registry = new AugmentedNodeRegistry(tree.getNodeCount(), boundaryCount, capacity);
+        nodeCount = tree.getNodeCount();
+        registry = new AugmentedNodeRegistry(nodeCount, boundaryCount, capacity);
 
         // two eigen buffers for each decomposition for store and restore
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 
-        // two matrices for each original and augmented node for store and restore
-        matrixBufferHelper = new BufferIndexHelper(registry.getTotalNodeCount(), 0);
+        // two matrices for each original node for store and restore, then the cached infinitesimal matrices, then
+        // two for each augmented node, last so that allocating more augmented nodes appends
+        cachedMatrixCount = (settings != null && settings.usePreOrder && settings.branchRateDerivative) ?
+                2 * getEigenBufferCount() : 0;
+        matrixBufferHelper = new AugmentedBufferIndexHelper(nodeCount, 0, capacity,
+                2 * nodeCount + cachedMatrixCount, 2);
     }
 
     @Override
@@ -139,9 +146,27 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
         return eigenBufferHelper.getBufferCount();
     }
 
+    /**
+     * @return the number of matrix buffers, including the cached infinitesimal matrices, for the augmented nodes
+     * allocated now
+     */
     @Override
     public int getMatrixBufferCount() {
         return matrixBufferHelper.getBufferCount();
+    }
+
+    /**
+     * @return the number of matrix buffers, including the cached infinitesimal matrices, for a augmented nodes
+     */
+    public int getMatrixBufferCount(int a) {
+        return matrixBufferHelper.getBufferCount(a);
+    }
+
+    /**
+     * Sets the number of augmented nodes that have matrix buffers. No buffer index changes.
+     */
+    public void setAugmentedBufferCount(int a) {
+        matrixBufferHelper.setAllocated(a);
     }
 
     /**
@@ -160,12 +185,13 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
         return getInfinitesimalSquaredMatrixBufferIndexForEpoch(registry.getMatrixEpoch(branchIndex));
     }
 
+    // the cached matrices follow the two matrices of each original node, so they never move
     private int getInfinitesimalMatrixBufferIndexForEpoch(int epoch) {
-        return getMatrixBufferCount() + eigenBufferHelper.getOffsetIndex(epoch);
+        return 2 * nodeCount + eigenBufferHelper.getOffsetIndex(epoch);
     }
 
     private int getInfinitesimalSquaredMatrixBufferIndexForEpoch(int epoch) {
-        return getMatrixBufferCount() + getEigenBufferCount() + eigenBufferHelper.getOffsetIndex(epoch);
+        return 2 * nodeCount + getEigenBufferCount() + eigenBufferHelper.getOffsetIndex(epoch);
     }
 
     @Override
@@ -183,6 +209,7 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
      */
     @Override
     public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+        checkCachedMatrices();
         beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndexForEpoch(bufferIndex), differentialMatrix);
     }
 
@@ -191,8 +218,17 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
      */
     @Override
     public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+        checkCachedMatrices();
         beagle.setDifferentialMatrix(getInfinitesimalSquaredMatrixBufferIndexForEpoch(bufferIndex),
                 differentialMatrix);
+    }
+
+    // without buffers of their own, the cached matrices would overwrite the matrices of augmented nodes
+    private void checkCachedMatrices() {
+        if (cachedMatrixCount == 0) {
+            throw new IllegalStateException("No buffers for the infinitesimal matrices: the delegate was created " +
+                    "without a branch-rate derivative on pre-order");
+        }
     }
 
     @Override

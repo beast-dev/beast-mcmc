@@ -206,7 +206,6 @@ public class EpochPreOrderTest extends TraceCorrelationAssert {
         final Beagle beagle = f.delegate.getBeagleInstance();
         final Tree tree = f.tree;
         final int size = f.categories * f.patternCount * STATES;
-        final int preOrderOffset = f.delegate.getPartialBufferCount();
 
         final double[] pre = new double[size];
         final double[] post = new double[size];
@@ -214,7 +213,7 @@ public class EpochPreOrderTest extends TraceCorrelationAssert {
 
         // the likelihood at the root
         final int root = tree.getRoot().getNumber();
-        beagle.getPartials(preOrderOffset + root, Beagle.NONE, pre);
+        beagle.getPartials(f.delegate.getPreOrderPartialIndex(root), Beagle.NONE, pre);
         beagle.getPartials(f.delegate.getPartialBufferIndex(root), Beagle.NONE, post);
         final double[] expected = new double[f.categories * f.patternCount];
         for (int i = 0; i < expected.length; ++i) {
@@ -238,7 +237,7 @@ public class EpochPreOrderTest extends TraceCorrelationAssert {
             for (int j = -1; j < count; ++j) {
                 final int id = (j < 0) ? n : chain[j];
 
-                beagle.getPartials(preOrderOffset + id, Beagle.NONE, pre);
+                beagle.getPartials(f.delegate.getPreOrderPartialIndex(id), Beagle.NONE, pre);
                 if (id < tree.getExternalNodeCount()) {
                     setTipPartials(f, id, post); // tips have states, not partials
                 } else {

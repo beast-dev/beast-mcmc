@@ -120,6 +120,20 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
     }
 
     /**
+     * Without pre-order, no pre-order partials are allocated for augmented nodes, so asking for one fails instead of
+     * returning a buffer that holds post-order partials
+     */
+    public void testPreOrderPartialsRequirePreOrder() {
+        Fixture augmented = new Fixture(0, true, PartialsRescalingScheme.NONE, 1);
+        try {
+            augmented.delegate.getPreOrderPartialIndex(augmented.tree.getRoot().getNumber());
+            fail("A pre-order partial was returned without pre-order");
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("usePreOrder=\"true\""));
+        }
+    }
+
+    /**
      * With the epochs convolved, an epoch branch model passes every change of the tree on to the likelihood, which
      * then updates all nodes, because the substitution models on a branch depend on the node heights. With degree-2
      * nodes at the transition times, only the nodes that change, and their ancestors, are updated.

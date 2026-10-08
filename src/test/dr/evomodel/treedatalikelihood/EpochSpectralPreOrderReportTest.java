@@ -104,7 +104,6 @@ public class EpochSpectralPreOrderReportTest extends TraceCorrelationAssert {
             DiscretePreOrderReport report = new DiscretePreOrderReport(f.likelihood, displayType, 0.0);
             String text = report.getReport();
 
-            final int preOrderOffset = f.delegate.getPartialBufferCount();
             final Beagle beagle = f.delegate.getBeagleInstance();
             final double[] raw = new double[f.categories * f.patternCount * STATES];
 
@@ -125,7 +124,7 @@ public class EpochSpectralPreOrderReportTest extends TraceCorrelationAssert {
                 int blockEnd = (h + 1 < headerStarts.size()) ? headerStarts.get(h + 1) : text.length();
                 String block = text.substring(headerStarts.get(h), blockEnd);
 
-                beagle.getPartials(preOrderOffset + id, Beagle.NONE, raw); // the raw (un-rotated) partial
+                beagle.getPartials(f.delegate.getPreOrderPartialIndex(id), Beagle.NONE, raw); // the raw (un-rotated) partial
 
                 final boolean isRoot = (id == f.tree.getRoot().getNumber());
                 double[] rotation = null;
@@ -202,7 +201,6 @@ public class EpochSpectralPreOrderReportTest extends TraceCorrelationAssert {
                 0.0);
         String text = report.getReport();
 
-        final int preOrderOffset = f.delegate.getPartialBufferCount();
         final Beagle beagle = f.delegate.getBeagleInstance();
         final double[] raw = new double[f.categories * f.patternCount * STATES];
 
@@ -235,7 +233,7 @@ public class EpochSpectralPreOrderReportTest extends TraceCorrelationAssert {
         }
         assertNotNull(reported);
 
-        beagle.getPartials(preOrderOffset + lateId, Beagle.NONE, raw);
+        beagle.getPartials(f.delegate.getPreOrderPartialIndex(lateId), Beagle.NONE, raw);
 
         // model 0's rotation -- what the pre-fix code would have applied regardless of lateId's actual epoch
         EigenDecomposition wrongEd = f.models.get(0).getEigenDecomposition().transpose();

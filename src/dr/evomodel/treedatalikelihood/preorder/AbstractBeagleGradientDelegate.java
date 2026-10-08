@@ -75,9 +75,6 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         this.stateCount = likelihoodDelegate.getPatternList().getDataType().getStateCount();
         this.categoryCount = siteRateModel.getCategoryCount();
 
-        // put preOrder partials right after postOrder partials
-        this.preOrderPartialOffset = likelihoodDelegate.getPartialBufferCount();
-
         this.patternList = likelihoodDelegate.getPatternList();
 
         likelihoodDelegate.addModelListener(this);
@@ -393,7 +390,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     }
 
     protected int getPreOrderPartialIndex(final int nodeNumber) {
-        return preOrderPartialOffset + nodeNumber;
+        return likelihoodDelegate.getPreOrderPartialIndex(nodeNumber);
     }
 
     @Override
@@ -423,7 +420,6 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     protected final int patternCount;
     protected final int stateCount;
     protected final int categoryCount;
-    private final int preOrderPartialOffset;
 
     protected double[] gradient;
 

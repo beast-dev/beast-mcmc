@@ -213,9 +213,18 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
                 }
 
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                // unfinished likelihoods were cancelled, so there is no total to return
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
             } catch (ExecutionException e) {
-                e.printStackTrace();
+                // fail as the single threaded path does
+                Throwable cause = e.getCause();
+                if (cause instanceof RuntimeException) {
+                    throw (RuntimeException) cause;
+                } else if (cause instanceof Error) {
+                    throw (Error) cause;
+                }
+                throw new RuntimeException(cause);
             }
         }
 

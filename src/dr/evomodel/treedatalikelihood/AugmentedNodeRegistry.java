@@ -235,7 +235,8 @@ public final class AugmentedNodeRegistry {
             return;
         }
 
-        if (count - old > s.freeTop) { // TODO ask BEAGLE to allocate more buffers here
+        // not reached when chains are released before others are taken; BEAGLE buffers follow getHighWaterMark()
+        if (count - old > s.freeTop) {
             throw new IllegalStateException("Out of augmented nodes: capacity " + capacity +
                     " is too small for the epoch transition times and tree");
         }

@@ -84,6 +84,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
     private static final String THREAD_COUNT = "beagle.thread.count";
+    // keep BEAGLE buffers for every augmented epoch node the tree can have, instead of growing them on demand
+    private static final String PREALLOCATE_AUGMENTED_PROPERTY = "beagle.augmented.preallocate";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -221,6 +223,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             epochDelegate = null;
         }
         registry = (epochDelegate == null) ? null : epochDelegate.getAugmentedNodeRegistry();
+        growable = epochDelegate != null && IS_BUFFER_GROWTH_SUPPORTED() &&
+                !Boolean.getBoolean(PREALLOCATE_AUGMENTED_PROPERTY);
 
         final int augmentedNodeCapacity = (epochDelegate == null) ? 0 :
                 epochDelegate.getAugmentedNodeRegistry().getCapacity();
@@ -295,10 +299,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             if (epochDelegate != null) {
                 // the augmented layouts already include the pre-order partials, the gradient scale buffers and the
-                // cached matrices
-                numPartials = partialsFor(augmentedNodeCapacity);
-                numMatrices = matricesFor(augmentedNodeCapacity);
-                numScaleBuffers = scaleFor(augmentedNodeCapacity);
+                // cached matrices; when they can grow, there are no buffers for augmented nodes until they are used
+                final int allocated = growable ? 0 : augmentedNodeCapacity;
+                numPartials = partialsFor(allocated);
+                numMatrices = matricesFor(allocated);
+                numScaleBuffers = scaleFor(allocated);
+                setAugmentedAllocation(allocated);
 
             // one partial buffer for root node and two for each node including tip nodes (for store restore)
             } else if (settings.usePreOrder){
@@ -540,6 +546,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                     requirementFlags
             );
 
+            if (growable) {
+                try {
+                    beagle.ensureBufferCounts(0, 0, 0); // every CPU instance from BEAGLE 4.2.0 can grow
+                } catch (BeagleException e) {
+                    if (beagle instanceof GeneralBeagleImpl) { // -java: it cannot do degree-2 operations either
+                        throw new IllegalStateException("Degree-2 nodes at the epoch transition times need a " +
+                                "native BEAGLE CPU instance, not the Java implementation (-java)", e);
+                    }
+                    throw new IllegalStateException("BEAGLE " + BeagleInfo.getVersion() + " cannot grow buffers (" +
+                            e.getMessage() + "); check the native BEAGLE libraries or run with -D" +
+                            PREALLOCATE_AUGMENTED_PROPERTY + "=true", e);
+                }
+            }
+
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;
 
@@ -624,8 +644,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             beagle.setPatternWeights(patternWeights);
 
             if (epochDelegate != null) {
-                logger.info("    Adding degree-2 nodes at the epoch transition times ("
-                        + augmentedNodeCapacity + " extra nodes).");
+                logger.info("    Adding degree-2 nodes at the epoch transition times (up to "
+                        + augmentedNodeCapacity + " extra nodes, BEAGLE buffers "
+                        + (growable ? "grown on demand" : "preallocated") + ").");
             }
 
             String rescaleMessage = "    Using rescaling scheme : " + this.rescalingScheme.getText();
@@ -738,6 +759,48 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         return scaleBufferHelper.getBufferCount() + (settings.usePreOrder ? nodeCount + a : 0);
     }
 
+    private void setAugmentedAllocation(int a) {
+        augmentedPartialHelper.setAllocated(a);
+        epochDelegate.setAugmentedBufferCount(a);
+        allocatedAugmented = a;
+    }
+
+    /**
+     * Gives BEAGLE buffers to every augmented node the registry has used, before any BEAGLE call of the evaluation:
+     * every id is assigned by the traversal that precedes calculateLikelihood. Exactly as many as needed the first
+     * time, then at least 1.5 times as many, at most the capacity of the registry. Indices never move.
+     */
+    private void ensureAugmentedBuffers() {
+        final int needed = registry.getHighWaterMark();
+        if (needed <= allocatedAugmented) {
+            return;
+        }
+        if (!growable) { // unreachable: the registry never exceeds its capacity, which is preallocated
+            throw new IllegalStateException("Augmented epoch nodes exceed their BEAGLE buffers");
+        }
+        final int previous = allocatedAugmented;
+        final int target = Math.min(registry.getCapacity(), Math.max(needed, previous + (previous >> 1)));
+        beagle.ensureBufferCounts(partialsFor(target), matricesFor(target), scaleFor(target)); // throws on failure
+        setAugmentedAllocation(target);
+        ++growthEventCount;
+        Logger.getLogger("dr.evomodel").fine("Degree-2 buffer growth" + (getId() != null ? " (" + getId() + ")" : "") +
+                ": " + previous + " -> " + target + " augmented nodes, " + needed + " used");
+    }
+
+    /**
+     * @return the number of times the BEAGLE buffers of augmented nodes grew
+     */
+    public int getGrowthEventCount() {
+        return growthEventCount;
+    }
+
+    /**
+     * @return the number of augmented nodes with BEAGLE buffers
+     */
+    public int getAllocatedAugmentedCount() {
+        return allocatedAugmented;
+    }
+
     /**
      * Sets the partials from a sequence in an alignment.
      *
@@ -843,6 +906,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
      */
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException {
+
+        if (registry != null) {
+            ensureAugmentedBuffers();
+        }
 
         if(siteAssignInd != null) {
             setAllPatternWeights(siteAssignInd);
@@ -1457,6 +1524,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private final EpochSubstitutionModelDelegate epochDelegate;
     private final AugmentedNodeRegistry registry;
     private final AugmentedBufferIndexHelper augmentedPartialHelper; // the same object as partialBufferHelper
+
+    private final boolean growable;  // the BEAGLE buffers of augmented nodes grow on demand (BEAGLE 4.2.0)
+    private int allocatedAugmented;  // augmented nodes with BEAGLE buffers
+    private int growthEventCount;
 
     private final int compactPartialsCount;
 

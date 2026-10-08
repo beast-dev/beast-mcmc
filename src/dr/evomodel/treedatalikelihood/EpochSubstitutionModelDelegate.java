@@ -74,7 +74,8 @@ public class EpochSubstitutionModelDelegate implements EpochEvolutionaryProcessD
 
     /**
      * @param augmentedNodeCapacity  maximum number of augmented nodes in use at once; if not positive then
-     *                               taxon count times number of transition times, which cannot be exceeded
+     *                               taxon count times number of transition times, which EpochLikelihoodTraversal
+     *                               never exceeds because it releases chains before it takes new ones
      */
     public EpochSubstitutionModelDelegate(Tree tree, BranchModel branchModel, EpochTimeProvider epochTimeProvider,
                                           int augmentedNodeCapacity) {

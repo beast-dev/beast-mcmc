@@ -58,6 +58,11 @@ public class EpochLikelihoodTraversal extends LikelihoodTreeTraversal {
     private final int[] chain;
     private double[] boundaries;
 
+    // branches whose chains grow, assigned after every other branch has released (see reassignChains)
+    private final int[] pendingNode;
+    private final int[] pendingFirst;
+    private final int[] pendingCount;
+
     public EpochLikelihoodTraversal(final Tree treeModel,
                                     final BranchRateModel branchRateModel,
                                     final TraversalType traversalType,
@@ -71,6 +76,11 @@ public class EpochLikelihoodTraversal extends LikelihoodTreeTraversal {
         this.epochDelegate = epochDelegate;
         this.registry = epochDelegate.getAugmentedNodeRegistry();
         this.chain = new int[registry.getBoundaryCount()];
+
+        final int nodeCount = treeModel.getNodeCount();
+        this.pendingNode = new int[nodeCount];
+        this.pendingFirst = new int[nodeCount];
+        this.pendingCount = new int[nodeCount];
     }
 
     @Override
@@ -83,6 +93,8 @@ public class EpochLikelihoodTraversal extends LikelihoodTreeTraversal {
             updateAllNodes();
         }
 
+        reassignChains(treeModel);
+
         traversePostOrder(treeModel, treeModel.getRoot(), 0);
 
         if (traversalType == TraversalType.REVERSE_LEVEL_ORDER) {
@@ -92,13 +104,7 @@ public class EpochLikelihoodTraversal extends LikelihoodTreeTraversal {
 
     @Override
     protected int getChildLevel(final Tree tree, final NodeRef child, final int parentLevel) {
-        final int nodeNum = child.getNumber();
-
-        if (updateNode[nodeNum]) {
-            assignChain(tree, child);
-        }
-
-        return parentLevel + 1 + registry.getChainLength(nodeNum);
+        return parentLevel + 1 + registry.getChainLength(child.getNumber());
     }
 
     @Override
@@ -151,17 +157,43 @@ public class EpochLikelihoodTraversal extends LikelihoodTreeTraversal {
     }
 
     /**
-     * Finds the transition times strictly between the height of node and the height of its parent, and gives the
-     * branch a chain of augmented nodes, one for each.
+     * Gives the branch above each updated node a chain of augmented nodes, one for each transition time strictly
+     * between the height of the node and the height of its parent. Chains that shrink or keep their length are
+     * assigned first and chains that grow afterwards, so the number in use never exceeds the larger of the old and
+     * the new total, and taxonCount * boundaryCount always suffices. The root has no branch, so a node that became
+     * the root releases its chain.
      */
-    private void assignChain(final Tree tree, final NodeRef node) {
-        final double lowerHeight = tree.getNodeHeight(node);
-        final double upperHeight = tree.getNodeHeight(tree.getParent(node));
+    private void reassignChains(final Tree tree) {
+        final int root = tree.getRoot().getNumber();
+        if (registry.getChainLength(root) > 0) {
+            registry.assign(root, 0, 0);
+        }
 
-        final int first = firstIndexAbove(boundaries, lowerHeight);
-        final int end = firstIndexAtOrAbove(boundaries, upperHeight);
+        int growing = 0;
+        for (int n = 0; n < tree.getNodeCount(); ++n) {
+            if (n == root || !updateNode[n]) {
+                continue;
+            }
+            final NodeRef node = tree.getNode(n);
+            assert node.getNumber() == n;
 
-        registry.assign(node.getNumber(), first, Math.max(0, end - first));
+            final int first = firstIndexAbove(boundaries, tree.getNodeHeight(node));
+            final int count = Math.max(0,
+                    firstIndexAtOrAbove(boundaries, tree.getNodeHeight(tree.getParent(node))) - first);
+
+            if (count <= registry.getChainLength(n)) {
+                registry.assign(n, first, count); // releases or relabels only
+            } else {
+                pendingNode[growing] = n;
+                pendingFirst[growing] = first;
+                pendingCount[growing] = count;
+                ++growing;
+            }
+        }
+
+        for (int k = 0; k < growing; ++k) { // takes only
+            registry.assign(pendingNode[k], pendingFirst[k], pendingCount[k]);
+        }
     }
 
     /**

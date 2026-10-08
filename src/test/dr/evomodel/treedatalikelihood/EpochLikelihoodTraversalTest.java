@@ -31,6 +31,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -220,6 +221,173 @@ public class EpochLikelihoodTraversalTest extends TestCase {
                 }
             }
         }
+    }
+
+    /**
+     * ((A, B)X:2, C):3 with tips at 0 and one transition time, so the capacity is 3 tips times 1 time. At 1.0 the
+     * chains of A, B and C hold all 3 augmented nodes. Moving the time to 2.5 gives X a chain, which fits only if A
+     * and B release theirs first.
+     */
+    public void testTwoPhaseNoOverflow() {
+        for (TraversalType type : new TraversalType[]{TraversalType.POST_ORDER, TraversalType.REVERSE_LEVEL_ORDER}) {
+
+            SimpleNode a = tip("A", 0.0);
+            SimpleNode b = tip("B", 0.0);
+            SimpleNode c = tip("C", 0.0);
+            SimpleNode x = parent(2.0, a, b);
+            SimpleNode root = parent(3.0, x, c);
+
+            Scenario s = new Scenario(new Random(3), new SimpleTree(root), new double[]{1.0}, type);
+            s.evaluate();
+            assertEquals(3, s.registry.getCapacity());
+            assertEquals(0, s.registry.getFreeCount());
+
+            s.epochTimes.setParameterValue(0, 2.5);
+            s.evaluate();
+
+            assertEquals(0, s.registry.getChainLength(s.number("A")));
+            assertEquals(0, s.registry.getChainLength(s.number("B")));
+            assertEquals(1, s.registry.getChainLength(s.number(x)));
+            assertEquals(1, s.registry.getChainLength(s.number("C")));
+            s.checkRegistry();
+            assertEquals(s.reference(), s.likelihood, TOLERANCE);
+        }
+    }
+
+    /**
+     * A topology move that makes a node with a chain the root: ((A, B)X:2, C)R:3 becomes (A, (B, C)R:2)X:3.5 with
+     * transition times 1.0 and 2.5. X keeps no chain as the root, and the augmented nodes in use are exactly the
+     * lineages that cross the transition times.
+     */
+    public void testRootChainReleased() {
+        for (TraversalType type : new TraversalType[]{TraversalType.POST_ORDER, TraversalType.REVERSE_LEVEL_ORDER}) {
+
+            SimpleNode a = tip("A", 0.0);
+            SimpleNode b = tip("B", 0.0);
+            SimpleNode c = tip("C", 0.0);
+            SimpleNode x = parent(2.0, a, b);
+            SimpleNode root = parent(3.0, x, c);
+
+            double[] times = new double[]{1.0, 2.5};
+            Scenario s = new Scenario(new Random(4), new SimpleTree(root), times, type);
+            s.evaluate();
+
+            DefaultTreeModel tree = s.tree;
+            NodeRef nodeA = tree.getNode(s.number("A"));
+            NodeRef nodeB = tree.getNode(s.number("B"));
+            NodeRef nodeX = tree.getNode(s.number(x));
+            NodeRef nodeR = tree.getNode(s.number(root));
+            assertEquals(1, s.registry.getChainLength(nodeX.getNumber()));
+            assertEquals(crossings(tree, times), inUse(s.registry));
+
+            tree.beginTreeEdit();
+            tree.removeChild(nodeX, nodeB);
+            tree.removeChild(nodeR, nodeX);
+            tree.addChild(nodeR, nodeB);
+            tree.addChild(nodeX, nodeR);
+            tree.setRoot(nodeX);
+            tree.setNodeHeight(nodeX, 3.5);
+            tree.setNodeHeight(nodeR, 2.0);
+            tree.endTreeEdit();
+            assertTrue(tree.isRoot(nodeX));
+            assertEquals(nodeX, tree.getParent(nodeA));
+
+            s.traversal.updateAllNodes();
+            s.evaluate();
+
+            assertEquals(0, s.registry.getChainLength(nodeX.getNumber()));
+            assertEquals(crossings(tree, times), inUse(s.registry));
+            s.checkRegistry();
+            assertEquals(s.reference(), s.likelihood, TOLERANCE);
+        }
+    }
+
+    /**
+     * Over random node-height (including tip-date) and transition-time walks with accepts and rejects, the high-water
+     * mark of the registry is the peak number of augmented nodes in use, at most the capacity, and a restore leaves
+     * it unchanged.
+     */
+    public void testHighWaterMark() {
+        boolean rose = false;               // the walks raise the mark after the first evaluation
+        boolean raisedByRejection = false;  // and some rejected proposals raise it, so restoring it would be caught
+
+        for (int seed = 0; seed < 6; ++seed) {
+
+            Random random = new Random(100 + seed);
+            int tips = 4 + random.nextInt(20);
+            int boundaries = 1 + random.nextInt(8);
+
+            double[] times = new double[boundaries];
+            double time = 0.0;
+            for (int i = 0; i < boundaries; ++i) {
+                time += 0.05 + 0.4 * random.nextDouble();
+                times[i] = time;
+            }
+
+            Scenario s = new Scenario(random, randomTree(random, tips, true), times, TraversalType.POST_ORDER);
+            AugmentedNodeRegistry registry = s.registry;
+            assertEquals(0, registry.getHighWaterMark());
+
+            s.evaluate();
+            final int first = inUse(registry);
+            int peak = first;
+            assertEquals(peak, registry.getHighWaterMark());
+
+            for (int iteration = 0; iteration < 200; ++iteration) {
+                s.storeState();
+
+                if (random.nextInt(4) == 0) {
+                    s.proposeTransitionTime();
+                } else {
+                    s.proposeNodeHeight();
+                }
+
+                // the mark cannot exceed the capacity of taxonCount * boundaryCount: assign() would throw first
+                s.evaluate();
+                final int before = peak;
+                peak = Math.max(peak, inUse(registry));
+                assertEquals("seed " + seed + " iteration " + iteration, peak, registry.getHighWaterMark());
+
+                if (random.nextBoolean()) {
+                    raisedByRejection |= peak > before;
+                    s.restoreState();
+                    assertEquals(peak, registry.getHighWaterMark());
+                    s.evaluate();
+                    assertEquals(peak, registry.getHighWaterMark());
+                }
+            }
+            s.checkRegistry();
+            rose |= peak > first;
+        }
+
+        assertTrue(rose);
+        assertTrue(raisedByRejection);
+    }
+
+    /**
+     * @return the number of augmented nodes in use
+     */
+    private static int inUse(AugmentedNodeRegistry registry) {
+        return registry.getCapacity() - registry.getFreeCount();
+    }
+
+    /**
+     * @return the number of times a branch strictly crosses a transition time, summed over the transition times
+     */
+    private static int crossings(Tree tree, double[] times) {
+        int count = 0;
+        for (int n = 0; n < tree.getNodeCount(); ++n) {
+            NodeRef node = tree.getNode(n);
+            if (tree.isRoot(node)) {
+                continue;
+            }
+            for (double time : times) {
+                if (tree.getNodeHeight(node) < time && time < tree.getNodeHeight(tree.getParent(node))) {
+                    ++count;
+                }
+            }
+        }
+        return count;
     }
 
     private static int levelOf(List<NodeOperation> operations, int nodeNumber) {

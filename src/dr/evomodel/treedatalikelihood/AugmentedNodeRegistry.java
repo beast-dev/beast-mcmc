@@ -63,11 +63,14 @@ public final class AugmentedNodeRegistry {
     private final State stored;
     private boolean storePending = true; // stored is not yet a snapshot of current
 
+    private int highWaterMark; // like a capacity, never stored or restored
+
     /**
      * @param nodeCount     number of nodes in the tree
      * @param boundaryCount number of epoch transition times
      * @param capacity      maximum number of augmented nodes that can be in use at once; at most one lineage
-     *                      per taxon can cross each boundary, so taxonCount * boundaryCount always suffices
+     *                      per taxon can cross each boundary, so taxonCount * boundaryCount suffices when chains
+     *                      are released before others are taken (as EpochLikelihoodTraversal does)
      */
     public AugmentedNodeRegistry(int nodeCount, int boundaryCount, int capacity) {
         if (nodeCount < 1 || boundaryCount < 0 || capacity < 0) {
@@ -102,6 +105,16 @@ public final class AugmentedNodeRegistry {
 
     public int getFreeCount() {
         return current.freeTop;
+    }
+
+    /**
+     * Ids are taken lowest first and released ids are reused before new ones, so augmented nodes
+     * nodeCount ... nodeCount + getHighWaterMark() - 1 are the only ones ever used.
+     *
+     * @return the largest number of augmented nodes in use at once so far, including in states that were restored
+     */
+    public int getHighWaterMark() {
+        return highWaterMark;
     }
 
     public boolean isAugmented(int id) {
@@ -249,6 +262,9 @@ public final class AugmentedNodeRegistry {
         // Take what is missing
         for (int j = keep; j < count; ++j) {
             final int taken = s.freeStack[--s.freeTop];
+            if (taken - nodeCount >= highWaterMark) {
+                highWaterMark = taken - nodeCount + 1;
+            }
             s.next[taken - nodeCount] = NONE;
             if (last == NONE) {
                 s.chainHead[branch] = taken;

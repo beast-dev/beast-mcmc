@@ -724,7 +724,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     // BEAGLE buffer counts with buffers for a augmented nodes; only with augmented epoch nodes
 
     private int partialsFor(int a) {
-        return augmentedPartialHelper.getBufferCount(a);
+        // BEAGLE's index space is the partials count plus the compact count, and the helper's count already
+        // includes the tips, so without this subtraction tipCount internal buffers would never be used
+        return augmentedPartialHelper.getBufferCount(a) - compactPartialsCount;
     }
 
     private int matricesFor(int a) {

@@ -133,6 +133,10 @@ public class ODESolver extends CompartmentalModelSimulator {
             System.arraycopy(y, 0, state.currentCounts, 0, numSpecies);
             state.simulationTime = t1;
             recordCompartmentCountsUpTo(state, t1 + intervalWidth);
+
+            if (!compartmentalModel.isSecondPathogenIntroduced()) {
+                throw new RuntimeException("Second pathogen was not introduced during ODE integration");
+            }
         } catch (IntegratorException e){
             // integration failed
             // set lineageConstraintViolated = true;

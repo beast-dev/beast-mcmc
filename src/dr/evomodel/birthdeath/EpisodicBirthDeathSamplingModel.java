@@ -404,7 +404,10 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
                 segmentIntervalEnd = modelBreakPoints[model];
             }
 
-            logP -= Math.log(1.0 - p(model, origin));
+            //logP -= Math.log(1.0 - p(model, origin));
+            double q = 1.0 - p(model, origin);
+            if (!(q > 0.0)) return Double.NEGATIVE_INFINITY;
+            logP -= Math.log(q);
         }
         return logP;
     }

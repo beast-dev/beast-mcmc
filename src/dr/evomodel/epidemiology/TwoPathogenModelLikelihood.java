@@ -79,11 +79,11 @@ public class TwoPathogenModelLikelihood extends AbstractModelLikelihood {
         lineageCounts[1] = computeLineageCounts(treeModelTwo, mostRecentSamplingDateTwo);
         simulator.setLineageCounts(lineageCounts);
 
-        System.out.println("Lineage counts:");
-        for (int k = 0; k < numGridPoints; k++) {
-            System.out.println("Grid point " + k + ": pathogen1=" +
-                    lineageCounts[0][k] + " pathogen2=" + lineageCounts[1][k]);
-        }
+        //System.out.println("Lineage counts:");
+        //for (int k = 0; k < numGridPoints; k++) {
+        //    System.out.println("Grid point " + k + ": pathogen1=" +
+        //            lineageCounts[0][k] + " pathogen2=" + lineageCounts[1][k]);
+        //}
     }
 
     private int[] computeLineageCounts(TreeModel treeModel, double mostRecentSamplingDate){

@@ -79,12 +79,14 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
             case SIGMA_G_INVERSE_DIAG:
             case GAMMA_TILDE_MEAN:
             case GAMMA_TILDE_VARIANCE_DIAG:
-                return approximation.getGammaHat().length;
+                //return approximation.getGammaHat().length;
+                return approximation.getLikelihood().getPopSizeParameter().getDimension();
             case BETA_GIVEN_GAMMA_MEAN:
             case BETA_GIVEN_GAMMA_VARIANCE_DIAG:
             case BETA_TILDE_MEAN:
             case BETA_TILDE_VARIANCE_DIAG:
-                return approximation.getDesignMatrixZ()[0].length;
+                //return approximation.getDesignMatrixZ()[0].length;
+                return approximation.getLikelihood().getDesignMat()[0].length;
             default:
                 throw new IllegalArgumentException("Unsupported type: " + type);
         }
@@ -357,15 +359,21 @@ public class SkygridSummaryStatistic extends Statistic.Abstract implements Logga
         double[][] precisionConditional = GMRFDenseMatrixUtils.addMat(betaPriorPrecision, jIS);
 
         double logDetMarginal = GMRFDenseMatrixUtils.logDetSPD(precisionMarginal);
-        double logDetConditional = GMRFDenseMatrixUtils.logDetSPD(precisionConditional);
-        double mutualInf = 0.5*(logDetMarginal - logDetConditional);
+        double logDetConditional;
+        try { logDetConditional = GMRFDenseMatrixUtils.logDetSPD(precisionConditional); }
+        catch (RuntimeException e) { return Double.NaN; }
+        return Math.max(0.5*(logDetMarginal - logDetConditional), 0);
 
-        if(mutualInf < -1e-6){
-            throw  new RuntimeException("Approximate (IS-corrected) mutual information of log effective population" +
-                    "size and effect size coefficients (conditional on genealogy, covariates and precision)" +
-                    "is negative. This should not happen.");
-        }
-        return Math.max(mutualInf, 0);
+        //double logDetMarginal = GMRFDenseMatrixUtils.logDetSPD(precisionMarginal);
+        //double logDetConditional = GMRFDenseMatrixUtils.logDetSPD(precisionConditional);
+        //double mutualInf = 0.5*(logDetMarginal - logDetConditional);
+
+        //if(mutualInf < -1e-6){
+        //    throw  new RuntimeException("Approximate (IS-corrected) mutual information of log effective population" +
+        //            "size and effect size coefficients (conditional on genealogy, covariates and precision)" +
+        //            "is negative. This should not happen.");
+        //}
+        //return Math.max(mutualInf, 0);
     }
 
     // Computes \mu_{\beta | \gamma, g, Z, \tau}

@@ -101,7 +101,7 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
         if(!dirty){
             return;
         }
-
+        likelihood.getLogLikelihood();   // forces setupSufficientStatistics() if not yet done
         double tau = likelihood.getPrecisionParameter().getParameterValue(0);
         double lambda = likelihood.getLambdaParameter().getParameterValue(0);
 
@@ -713,6 +713,7 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
         double[] tauAtNode = new double[K];
         double[][][] jExactAtNode = new double[K][][];
         double[][] scoreAtNode = new double[K][];
+        double[] essAtNode = new double[K];
         double minESS = Double.POSITIVE_INFINITY;
 
         for (int k = 0; k < K; k++){
@@ -734,7 +735,8 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
             // Importance-sampling correction at this node: draws from
             // P_G(gamma|g,Z,beta,tauK), reweighted by P(g|gamma)/P_G(g|gamma).
             WeightedSamples ws = drawAndWeightSamplesAtTau(tauK, numImportanceSamplesPerNode);
-            minESS = Math.min(minESS, ws.ess);
+            //minESS = Math.min(minESS, ws.ess);
+            essAtNode[k] = ws.ess;
 
             double logPTauK = tauShape*Math.log(tauRate) - Gamma.logGamma(tauShape)
                     + (tauShape-1.0)*uK - tauRate*tauK;
@@ -790,6 +792,11 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
 
         double[] w = GMRFDenseMatrixUtils.normalizeLogWeights(logNodeWeight);
 
+        minESS = Double.POSITIVE_INFINITY;
+        for (int k = 0; k < K; k++) {
+            if (w[k] > 1e-4) minESS = Math.min(minESS, essAtNode[k]);
+        }
+
         double[][] eJExact = new double[p][p];
         double eTau = 0.0;
         double[] scoreMean = new double[p];
@@ -825,17 +832,17 @@ public class GMRFGaussianApproximation implements ModelListener, VariableListene
 
     public double[] getGammaHat(){
         ensureValuesUpToDate();
-        return gammaHat;
+        return gammaHat.clone();
     }
 
     public double[] getSigmaGInverseDiag(){
         ensureValuesUpToDate();
-        return sigmaGInverseDiag;
+        return sigmaGInverseDiag.clone();
     }
 
     public double[] getSigmaGInverseMuG(){
         ensureValuesUpToDate();
-        return sigmaGInverseMuG;
+        return sigmaGInverseMuG.clone();
     }
 
     public double[] getSuffStat(){

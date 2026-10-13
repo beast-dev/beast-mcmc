@@ -43,6 +43,7 @@ import java.util.Arrays;
  *
  * @author Joseph Heled, Graham Jones
  *         Date: 26/05/2008
+ * @deprecated - StarBEAST is in BEAST2
  */
 public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units {
     private final SpeciesTreeModel spTree;

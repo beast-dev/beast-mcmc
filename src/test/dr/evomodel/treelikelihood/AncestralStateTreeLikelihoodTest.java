@@ -27,25 +27,38 @@
 
 package test.dr.evomodel.treelikelihood;
 
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.FlexibleTree;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
+import dr.evomodel.siteratemodel.HomogeneousRateDelegate;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.HKY;
 import dr.evomodel.tree.TreeModel;
-import dr.oldevomodel.treelikelihood.AncestralStateTreeLikelihood;
+import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import junit.framework.TestCase;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Alexei Drummond
@@ -102,10 +115,16 @@ public class AncestralStateTreeLikelihoodTest extends TestCase {
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
 
-        AncestralStateTreeLikelihood treeLikelihood = new AncestralStateTreeLikelihood(
-                alignment, treeModel,
-                new GammaSiteModel(hky), new StrictClockBranchRates(mu),
-                false, true,
+        AncestralStateBeagleTreeLikelihood treeLikelihood = new AncestralStateBeagleTreeLikelihood(
+                alignment,
+                treeModel,
+                new HomogeneousBranchModel(hky),
+                new DiscretizedSiteRateModel(""),
+                new StrictClockBranchRates(mu),
+                null,
+                false, PartialsRescalingScheme.DEFAULT,
+                false,
+                null,
                 Nucleotides.INSTANCE,
                 "state",
                 false,
@@ -117,7 +136,7 @@ public class AncestralStateTreeLikelihoodTest extends TestCase {
         StringBuffer buffer = new StringBuffer();
 
         TreeUtils.newick(treeModel, treeModel.getRoot(), false, TreeUtils.BranchLengthType.LENGTHS_AS_TIME,
-                null, null, new TreeTraitProvider[] { treeLikelihood }, null, buffer); 
+                null, null, new TreeTraitProvider[] { treeLikelihood }, null, buffer);
 
 
         System.out.println(buffer);

@@ -86,6 +86,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     protected boolean likelihoodKnown;
 
     private boolean populationSizesKnown;
+
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
 
@@ -174,14 +175,19 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
+
         if (tree instanceof TreeModel) {
             treeIntervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) treeModel);
+            addModel(treeIntervals);
+        } else if (tree instanceof MutableTreeModel) {
+            treeIntervals = new BestSignalsFromBigFastTreeIntervals("intervals", (MutableTreeModel) treeModel);
             addModel(treeIntervals);
         } else {
             throw new RuntimeException("Not yet implemented");
         }
 
-        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
+        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel,
+                numberSubIntervals, true);
 
         if (likelihoodDelegate instanceof AdjointGenericBastaLikelihoodDelegate) {
             int[] consts = ((AdjointGenericBastaLikelihoodDelegate) likelihoodDelegate)
@@ -497,6 +503,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
         return h;
     }
 
+
     private double calculateLogLikelihood() {
 
         if (!transitionMatricesKnown) {
@@ -515,7 +522,15 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         if (!treeIntervalsKnown) {
             // update operations on tree
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            try {
+                treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            } catch (CoalescentIntervalTraversal.DegenerateIntervalException e) {
+                treeIntervalsKnown = false;
+                return Double.NEGATIVE_INFINITY;
+            } catch (CoalescentIntervalTraversal.ActiveSetException e) {
+                treeIntervalsKnown = false;
+                return Double.NEGATIVE_INFINITY;
+            }
         }
 
         final List<BranchIntervalOperation> branchOperations =

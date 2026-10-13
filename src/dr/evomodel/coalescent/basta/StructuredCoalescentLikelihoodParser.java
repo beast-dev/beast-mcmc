@@ -27,6 +27,7 @@ package dr.evomodel.coalescent.basta;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -106,7 +107,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             throw new XMLParseException("Ancestral state reconstruction cannot be used with compressed (unique) patterns.");
         }
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         GeneralSubstitutionModel generalSubstitutionModel = (GeneralSubstitutionModel) xo.getChild(GeneralSubstitutionModel.class);
 
         Parameter popSizes = (Parameter) xo.getElementFirstChild(POPULATION_SIZES);
@@ -220,7 +221,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             new ElementRule(PatternList.class),
-            new ElementRule(TreeModel.class),
+            new ElementRule(MutableTreeModel.class),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(Parameter.class, true)

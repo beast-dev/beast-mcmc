@@ -51,8 +51,25 @@ import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*
  */
 public class CoalescentIntervalTraversal extends TreeTraversal {
 
+
+    public static class DegenerateIntervalException extends RuntimeException {
+        public DegenerateIntervalException(String message) {
+            super(message);
+        }
+    }
+
+
+    public static class ActiveSetException extends RuntimeException {
+        public final NodeRef node;
+        public ActiveSetException(String message, NodeRef node) {
+            super(message);
+            this.node = node;
+        }
+    }
+
     private final BigFastTreeIntervals treeIntervals;
     private final int numberSubIntervals;
+    private final boolean checkForZeroLengthIntervals;
 
     private int currentMatrixNumber;
     private int currentLikelihoodInterval;
@@ -143,12 +160,19 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                                           final BigFastTreeIntervals treeIntervals,
                                           final BranchRateModel branchRateModel,
                                           final int numberSubIntervals) {
-        super(tree, branchRateModel, TraversalType.REVERSE_LEVEL_ORDER);
+        this(tree, treeIntervals, branchRateModel, numberSubIntervals, true);
+    }
 
-        assert tree instanceof TreeModel;
+    protected CoalescentIntervalTraversal(final Tree tree,
+                                          final BigFastTreeIntervals treeIntervals,
+                                          final BranchRateModel branchRateModel,
+                                          final int numberSubIntervals,
+                                          final boolean checkForZeroLengthIntervals) {
+        super(tree, branchRateModel, TraversalType.REVERSE_LEVEL_ORDER);
 
         this.treeIntervals = treeIntervals;
         this.numberSubIntervals = numberSubIntervals;
+        this.checkForZeroLengthIntervals = checkForZeroLengthIntervals;
     }
 
     @Override
@@ -295,7 +319,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         private void test(NodeRef node) {
             if (!activeSet.contains(node)) {
-                throw new RuntimeException("Not in active set");
+                throw new ActiveSetException("Not in active set", node);
             }
         }
 
@@ -559,8 +583,8 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         final NodeRef leftChild = treeModel.getChild(nodeAtTopOfInterval, 0);
         final NodeRef rightChild = treeModel.getChild(nodeAtTopOfInterval, 1);
 
-        if (subIntervalLength <= 0.0) {
-            throw new RuntimeException("Cannot coalescence in <= 0.0 time");
+        if (checkForZeroLengthIntervals && subIntervalLength <= 0.0) {
+            throw new DegenerateIntervalException("Cannot coalescence in <= 0.0 time");
         }
 
         // Handle initial sub-intervals

@@ -29,6 +29,7 @@ package dr.evomodel.bigfasttree;
 
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervalList;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
@@ -70,10 +71,34 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         addModel(tree);
     }
 
+    public BigFastTreeIntervals(MutableTreeModel tree) {
+        this("bigFastIntervals", tree);
+    }
+
+    public BigFastTreeIntervals(String name, MutableTreeModel tree) {
+        super(name);
+        int maxEventCount = tree.getNodeCount();
+
+        this.tree = tree;
+        intervalsKnown = false;
+
+        updatedNodes = new ArrayList<>(maxEventCount);
+        storedUpdatedNodes = new ArrayList<>(maxEventCount);
+
+        events = new Events(maxEventCount);
+        storedEvents = new Events(maxEventCount);
+
+        dirty = true;
+        onlyUpdateTimes = false;
+        calculateIntervals();
+        addModel((Model) tree);
+    }
+
 
     public void makeDirty() {
         dirty = true;
         intervalsKnown=false;
+        updatedNodes.clear();
     }
 
     @Override
@@ -312,8 +337,16 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                 for (int i = 0; i < tree.getNodeCount(); ++i) {
                     nodes[i] = tree.getNode(i);
                 }
+            } else if (tree instanceof TreeModel) {
+                System.arraycopy(((TreeModel) tree).getNodes(), 0, nodes, 0, tree.getNodeCount());
             } else {
-                System.arraycopy(tree.getNodes(), 0, nodes, 0, tree.getNodeCount());
+                int idx = 0;
+                for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                    nodes[idx++] = tree.getExternalNode(i);
+                }
+                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+                    nodes[idx++] = tree.getInternalNode(i);
+                }
             }
             Arrays.parallelSort(nodes, (a, b) -> {
                 if (tree.getNodeHeight(a) == tree.getNodeHeight(b)) return Boolean.compare(tree.isRoot(a), tree.isRoot(b));
@@ -383,6 +416,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == tree) {
+            if (!(tree instanceof TreeModel)) {
+                makeDirty();
+                fireModelChanged(object);
+                return;
+            }
             if (object instanceof TreeChangedEvent) {
                 TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
                 if (treeChangedEvent.isNodeChanged()) {
@@ -391,7 +429,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                     // rate changes.
                     if (treeChangedEvent.isHeightChanged()) {
                         NodeRef node = ((TreeChangedEvent) object).getNode();
-                        updatedNodes.add(node.getNumber());
+                        if (updatedNodes.size() >= tree.getNodeCount()) {
+                            makeDirty();
+                        } else {
+                            updatedNodes.add(node.getNumber());
+                        }
                         intervalsKnown = false;
                         onlyUpdateTimes = false;
                     }
@@ -423,7 +465,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     protected void storeState() {
-        storedUpdatedNodes = new ArrayList<>();
+        storedUpdatedNodes.clear();
         storedUpdatedNodes.addAll(updatedNodes);
 //        Collections.copy(storedUpdatedNodes, updatedNodes);
         storedIntervalsKnown = intervalsKnown;
@@ -705,7 +747,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     protected boolean onlyUpdateTimes;
     private boolean storedOnlyUpdateTimes;
 
-    private final TreeModel tree;
+    private final Tree tree;
     protected boolean dirty;
     private int intervalCount = 0;
 

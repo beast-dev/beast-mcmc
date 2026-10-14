@@ -153,8 +153,12 @@ public class PiecewiseConstantPopulationSizeModel extends IntervalSpecificPopula
             firstNonZeroIdx++;
         }
 
+        int eventIdx = firstNonZeroIdx;
         for (int interval = 0; interval < numIntervals; interval++) {
-            double intervalEndTime = treeEventTimes[firstNonZeroIdx + interval];
+            double intervalEndTime = treeEventTimes[eventIdx];
+            while (eventIdx < treeEventTimes.length && treeEventTimes[eventIdx] == intervalEndTime) {
+                eventIdx++;
+            }
             double[] integralAccumulator = new double[stateCount];
 
             while (mergedIdx < mergedTimeLine.length && mergedTimeLine[mergedIdx] <= intervalEndTime) {

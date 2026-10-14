@@ -41,7 +41,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;
-import dr.evomodel.treelikelihood.AncestralStateTraitProvider;
+import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;
@@ -62,7 +62,7 @@ import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTr
  */
 
 public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood implements
-        AncestralStateTraitProvider, Citable, Profileable, Reportable, TipStateAccessor,
+        MarkovJumpsTraitProvider, Citable, Profileable, Reportable, TipStateAccessor,
         ProcessAlongTree, DiscreteProcessAlongTree {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
@@ -515,12 +515,12 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
     @Override
     public MutableTreeModel getTreeModel() {
-        return null;
+        return tree instanceof MutableTreeModel ? (MutableTreeModel) tree : null;
     }
 
     @Override
     public String formattedState(int[] state) {
-        return null;
+        return formattedState(state[0]);
     }
 
     @Override

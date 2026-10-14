@@ -20,6 +20,9 @@ import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.ProcessAlongTree;
+import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryTraits;
+import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.inference.markovjumps.StateHistory;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -27,12 +30,15 @@ import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
-        implements Citable {
+        implements Citable, ProcessAlongTree, MarkovJumpsTraitProvider {
 
     public static final String MASCOT_LIKELIHOOD = "mascotLikelihood";
 
@@ -40,6 +46,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.stateSensitivity";
 
     public static final String DEFAULT_MODE_STATE_TAG_NAME = "mascot.state";
+
+    /** Suffixes of the stochastic-mapping traits; the same names BASTA's Markov-jump add-ons use. */
+    public static final String HISTORY_SUFFIX = ".history";
+    public static final String COUNT_SUFFIX = ".count";
+    public static final String RAW_SUFFIX = ".raw";
 
     private final TreeModel treeModel;
     private final PatternList tipPatterns;
@@ -66,6 +77,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private boolean stochasticMapPrepared;
     private MascotStochasticMap stochasticMap;
     private boolean warnedStochasticMapLogLikelihood;
+    private String stochasticMappingTag;
+    private StochasticMapSampler stochasticMapSampler = StochasticMapSampler.GRID;
 
     private static final class DerivedBuffers {
         double[] combinedGradient;
@@ -241,6 +254,205 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         stochasticMap = null;
     }
 
+    /** Chooses how draws are made; {@link StochasticMapSampler#GRID} by default. */
+    public void setStochasticMapSampler(StochasticMapSampler sampler) {
+        if (sampler == null) {
+            throw new IllegalArgumentException("sampler must not be null");
+        }
+        if (sampler != stochasticMapSampler) {
+            stochasticMapSampler = sampler;
+            stochasticMapPrepared = false;
+            stochasticMap = null;
+        }
+    }
+
+    public StochasticMapSampler getStochasticMapSampler() {
+        return stochasticMapSampler;
+    }
+
+    /**
+     * Registers the stochastic-mapping tree traits under {@code tag}, with BASTA's names and types: {@code tag}
+     * (drawn node states), {@code tag.history} (each branch's changes as {site, height, from, to}), {@code tag.count}
+     * (jumps per branch), {@code tag.raw} (copies of the {@link StateHistory} objects; not loggable) and
+     * {@code tag.<register name>} per count (K x K) or reward (K) register; plus the untagged {@code history} and
+     * {@code allTransitions} traits that completeHistoryLogger reads. Labels are backward in time: a change from a
+     * to b (register entry a K + b) is a forward-time migration from b to a.
+     */
+    public void enableStochasticMapping(String tag, List<Parameter> countRegisters, List<Parameter> rewardRegisters) {
+        if (stochasticMappingTag != null) {
+            throw new IllegalStateException("stochastic mapping is already enabled under tag " + stochasticMappingTag);
+        }
+        if (tag == null || tag.isEmpty()) {
+            throw new IllegalArgumentException("stochastic mapping needs a non-empty tag");
+        }
+        int K = getStateCount();
+        List<String> names = new ArrayList<>();
+        names.add(tag);
+        names.add(tag + HISTORY_SUFFIX);
+        names.add(tag + COUNT_SUFFIX);
+        names.add(tag + RAW_SUFFIX);
+        for (Parameter register : countRegisters) {
+            if (register.getDimension() != K * K) {
+                throw new IllegalArgumentException("count register " + register.getParameterName() + " has dimension " +
+                        register.getDimension() + "; expected " + (K * K));
+            }
+            names.add(tag + "." + register.getParameterName());
+        }
+        for (Parameter register : rewardRegisters) {
+            if (register.getDimension() != K) {
+                throw new IllegalArgumentException("reward register " + register.getParameterName() + " has dimension " +
+                        register.getDimension() + "; expected " + K);
+            }
+            names.add(tag + "." + register.getParameterName());
+        }
+        TreeTrait[] loggerTraits = CompleteHistoryTraits.createLoggerTraits(
+                historyTrait(tag + HISTORY_SUFFIX), countTrait(tag + COUNT_SUFFIX));
+        for (TreeTrait trait : loggerTraits) {
+            names.add(trait.getTraitName());
+        }
+        Set<String> unique = new HashSet<>();
+        for (String name : names) {
+            if (!unique.add(name) || treeTraits.getTreeTrait(name) != null) {
+                throw new IllegalArgumentException("stochastic-mapping trait name '" + name + "' is already in use");
+            }
+        }
+
+        treeTraits.addTrait(new TreeTrait.IA() {
+            public String getTraitName() {
+                return tag;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public int[] getTrait(Tree tree, NodeRef node) {
+                requireOwnTree(tree);
+                return new int[]{getStochasticMap().getNodeState(node.getNumber())};
+            }
+
+            public String getTraitString(Tree tree, NodeRef node) {
+                return formattedState(getTrait(tree, node));
+            }
+        });
+        treeTraits.addTrait(historyTrait(tag + HISTORY_SUFFIX));
+        treeTraits.addTrait(countTrait(tag + COUNT_SUFFIX));
+        treeTraits.addTrait(new TreeTrait<StateHistory[]>() {
+            public String getTraitName() {
+                return tag + RAW_SUFFIX;
+            }
+
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            public Class getTraitClass() {
+                return StateHistory[].class;
+            }
+
+            public StateHistory[] getTrait(Tree tree, NodeRef node) {
+                StateHistory history = branchHistory(tree, node);
+                return history == null ? null : new StateHistory[]{history};
+            }
+
+            public String getTraitString(Tree tree, NodeRef node) {
+                throw new UnsupportedOperationException(tag + RAW_SUFFIX + " is not loggable");
+            }
+
+            public boolean getLoggable() {
+                return false;
+            }
+        });
+        for (Parameter register : countRegisters) {
+            treeTraits.addTrait(registerTrait(tag + "." + register.getParameterName(), register.getParameterValues(),
+                    true));
+        }
+        for (Parameter register : rewardRegisters) {
+            treeTraits.addTrait(registerTrait(tag + "." + register.getParameterName(), register.getParameterValues(),
+                    false));
+        }
+        treeTraits.addTraits(loggerTraits);
+        stochasticMappingTag = tag;
+    }
+
+    private TreeTrait<String[]> historyTrait(final String name) {
+        return new TreeTrait.SA() {
+            public String getTraitName() {
+                return name;
+            }
+
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            public String[] getTrait(Tree tree, NodeRef node) {
+                StateHistory history = branchHistory(tree, node);
+                return history == null ? null : new String[]{history.toStringChanges(1, dataType)};
+            }
+        };
+    }
+
+    private TreeTrait<double[]> countTrait(final String name) {
+        return new TreeTrait.DA() {
+            public String getTraitName() {
+                return name;
+            }
+
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            public double[] getTrait(Tree tree, NodeRef node) {
+                StateHistory history = branchHistory(tree, node);
+                return history == null ? null : new double[]{history.getNumberOfJumps()};
+            }
+        };
+    }
+
+    /** Registered jumps (K x K register) or reward (K register) on each branch. */
+    private TreeTrait<double[]> registerTrait(final String name, final double[] register, final boolean counts) {
+        return new TreeTrait.DA() {
+            public String getTraitName() {
+                return name;
+            }
+
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            public double[] getTrait(Tree tree, NodeRef node) {
+                StateHistory history = branchHistory(tree, node);
+                if (history == null) {
+                    return null;
+                }
+                return new double[]{counts ? history.getTotalRegisteredCounts(register) :
+                        history.getTotalReward(register)};
+            }
+        };
+    }
+
+    private StateHistory branchHistory(Tree tree, NodeRef node) {
+        requireOwnTree(tree);
+        return tree.isRoot(node) ? null : getStochasticMap().getBranchHistory(node.getNumber());
+    }
+
+    private void requireOwnTree(Tree tree) {
+        if (tree != treeModel) {
+            throw new IllegalArgumentException("MASCOT stochastic-mapping traits are only defined on the likelihood's " +
+                    "own tree");
+        }
+    }
+
+    @Override
+    public void calculatePostOrderStatistics() {
+        getLogLikelihood();
+    }
+
+    @Override
+    public String formattedState(int[] state) {
+        return formattedState(state[0]);
+    }
+
     private void prepareStochasticMap() {
         double logLikelihood = getLogLikelihood();
         if (!Double.isFinite(logLikelihood)) {
@@ -257,7 +469,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         double mappedLogLikelihood;
         try {
             mappedLogLikelihood = likelihoodDelegate.prepareStochasticMap(preparedInput, thetaBuffer(),
-                    branchRateBufferOrNull(), nodeHeights, checkProbabilities);
+                    branchRateBufferOrNull(), nodeHeights, checkProbabilities, stochasticMapSampler);
         } catch (MascotLikelihoodDelegate.NumericalException e) {
             throw new IllegalStateException("MASCOT stochastic map cannot be drawn for the current parameter " +
                     "values: " + e.getMessage(), e);

@@ -95,6 +95,10 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String CHECK_PROBABILITIES = "checkProbabilities";
     public static final String MIGRATION_MODEL = "migrationModel";
     public static final String MODE_STATE_TAG_NAME = "modeStateTagName";
+    public static final String STOCHASTIC_MAPPING = "stochasticMapping";
+    public static final String STOCHASTIC_MAPPING_TAG = "tag";
+    public static final String COUNTS = "counts";
+    public static final String REWARDS = "rewards";
 
     public String getParserName() {
         return STRUCTURED_COALESCENT;
@@ -373,9 +377,28 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         AbstractPopulationSizeModel populationSizeModel =
                 constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
-        return new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates, migrationModels,
-                branchRateModel, populationSizeModel, stateCount, gridPoints, maxStep, checkProbabilities, tagName,
-                modeStateTagName);
+        MascotLikelihood likelihood = new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates,
+                migrationModels, branchRateModel, populationSizeModel, stateCount, gridPoints, maxStep,
+                checkProbabilities, tagName, modeStateTagName);
+
+        if (xo.hasChildNamed(COUNTS) || xo.hasChildNamed(REWARDS)) {
+            throw new XMLParseException("For " + STRUCTURED_COALESCENT + " type=\"" + MASCOT_TYPE + "\", place <" +
+                    COUNTS + "> and <" + REWARDS + "> inside <" + STOCHASTIC_MAPPING + ">");
+        }
+        if (xo.hasChildNamed(STOCHASTIC_MAPPING)) {
+            XMLObject mapping = xo.getChild(STOCHASTIC_MAPPING);
+            String tag = mapping.getAttribute(STOCHASTIC_MAPPING_TAG, RECONSTRUCTION_TAG);
+            List<Parameter> counts = mapping.hasChildNamed(COUNTS) ?
+                    mapping.getChild(COUNTS).getAllChildren(Parameter.class) : new ArrayList<>();
+            List<Parameter> rewards = mapping.hasChildNamed(REWARDS) ?
+                    mapping.getChild(REWARDS).getAllChildren(Parameter.class) : new ArrayList<>();
+            try {
+                likelihood.enableStochasticMapping(tag, counts, rewards);
+            } catch (IllegalArgumentException e) {
+                throw new XMLParseException("<" + STOCHASTIC_MAPPING + ">: " + e.getMessage());
+            }
+        }
+        return likelihood;
     }
 
     private static Parameter parseGridPoints(XMLObject xo) throws XMLParseException {
@@ -525,6 +548,14 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                     new XORRule(
                             new ElementRule(Parameter.class),
                             new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE))}, true),
+            // MASCOT stochastic mapping: one joint draw of node states and complete branch histories per log step,
+            // exposed as tree traits named by tag (see MascotLikelihood.enableStochasticMapping).
+            new ElementRule(STOCHASTIC_MAPPING, new XMLSyntaxRule[]{
+                    AttributeRule.newStringRule(STOCHASTIC_MAPPING_TAG, true),
+                    new ElementRule(COUNTS, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true),
+                    new ElementRule(REWARDS, new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)}, true),
     };
 
 }

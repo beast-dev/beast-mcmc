@@ -3,6 +3,7 @@ package dr.evomodelxml.treedatalikelihood.markovjumps;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.basta.BastaLikelihood;
 import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryAddOn;
+import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryTraits;
 import dr.evomodel.treedatalikelihood.markovjumps.MarkovJumpRewardAddOn;
 import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;
 import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
@@ -27,6 +28,22 @@ public class MarkovJumpsParserUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Adds BASTA's complete-history add-on (tag.raw, tag.history, tag.count) and the untagged history and
+     * allTransitions traits that completeHistoryLogger reads.
+     */
+    public static CompleteHistoryAddOn addCompleteHistory(Tree tree, BastaLikelihood likelihood, String tag) {
+        AbstractRealizedDiscreteTraitDelegate traitDelegate = likelihood.getRealizedTraitDelegate();
+        CompleteHistoryAddOn completeHistoryAddOn = new CompleteHistoryAddOn(tag, tree,
+                likelihood.getEvolutionaryProcessDelegate().getBranchSubstitutionModel().getSubstitutionModels(),
+                likelihood.getSiteRateModel(), traitDelegate,
+                MarkovJumpsTraitProvider.ValueScaling.RAW);
+        traitDelegate.registerAddOn(completeHistoryAddOn);
+        likelihood.addTraits(CompleteHistoryTraits.createLoggerTraits(
+                likelihood.getTreeTrait(tag + ".history"), likelihood.getTreeTrait(tag + ".count")));
+        return completeHistoryAddOn;
     }
 
     public static void parseXMLObject(XMLObject xo,
@@ -62,12 +79,7 @@ public class MarkovJumpsParserUtils {
 
             countParameters.remove(indexOfTotalCounts);
 
-            completeHistoryAddOn = new CompleteHistoryAddOn(tag, tree,
-                    likelihood.getEvolutionaryProcessDelegate().getBranchSubstitutionModel().getSubstitutionModels(),
-                    likelihood.getSiteRateModel(), traitDelegate,
-                    MarkovJumpsTraitProvider.ValueScaling.RAW);
-
-            traitDelegate.registerAddOn(completeHistoryAddOn);
+            completeHistoryAddOn = addCompleteHistory(tree, likelihood, tag);
 
             for (Parameter register : countParameters) {
 

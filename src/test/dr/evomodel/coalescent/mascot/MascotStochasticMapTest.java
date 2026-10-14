@@ -75,7 +75,7 @@ public class MascotStochasticMapTest extends TestCase {
         double[][] marginals = exact.marginals();
         double[][] jumps = exact.expectedJumps();
         double[][] dwell = exact.expectedDwell();
-        Sample sample = Sample.draw(built, 20000, null);
+        Sample sample = Sample.draw(built, 20000, null, null);
         int K = built.spec.K;
         for (int v = 0; v < sample.nodeCount; v++) {
             for (int s = 0; s < K; s++) {
@@ -146,7 +146,7 @@ public class MascotStochasticMapTest extends TestCase {
 
     // ---------------------------------------------------------------------------------------------------------
 
-    private static void checkStructure(MascotMappingFixtures.Built built, int draws) {
+    static void checkStructure(MascotMappingFixtures.Built built, int draws) {
         MascotLikelihood likelihood = built.likelihood;
         TreeModel tree = built.tree;
         int K = built.spec.K;
@@ -206,11 +206,16 @@ public class MascotStochasticMapTest extends TestCase {
     }
 
     private static void checkAgainstOracle(MascotMappingFixtures.Built built, int draws, long seed) {
+        checkAgainstOracle(built, draws, seed, built.oracle());
+    }
+
+    /** Compares draws from {@code built.likelihood} (whatever its sampler) with {@code oracle}'s Pi_h. */
+    static void checkAgainstOracle(MascotMappingFixtures.Built built, int draws, long seed,
+                                   MascotSurrogateOracle oracle) {
         MathUtils.setSeed(seed);
-        MascotSurrogateOracle oracle = built.oracle();
         int K = built.spec.K;
         int[] order = MascotSurrogateOracleTest.internalOrder(built);
-        Sample sample = Sample.draw(built, draws, order);
+        Sample sample = Sample.draw(built, draws, order, oracle);
         String name = built.spec.name + " (maxStep " + built.maxStep + ")";
 
         double[][] marginals = oracle.nodeMarginals();
@@ -299,10 +304,10 @@ public class MascotStochasticMapTest extends TestCase {
         double[] sumEarly;
         double[] sumSqEarly;
 
-        static Sample draw(MascotMappingFixtures.Built built, int draws, int[] jointOrder) {
+        static Sample draw(MascotMappingFixtures.Built built, int draws, int[] jointOrder,
+                           MascotSurrogateOracle oracle) {
             MascotLikelihood likelihood = built.likelihood;
             TreeModel tree = built.tree;
-            MascotSurrogateOracle oracle = jointOrder == null ? null : built.oracle();
             int K = built.spec.K;
             Sample sample = new Sample();
             sample.n = draws;

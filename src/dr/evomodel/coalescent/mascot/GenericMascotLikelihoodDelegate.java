@@ -36,6 +36,7 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
     private final MascotForwardEvaluator forwardEvaluator;
     private final MascotAdjointEvaluator adjointEvaluator;
     private MascotStochasticMapper stochasticMapper;
+    private StochasticMapSampler stochasticMapSampler;
 
     public GenericMascotLikelihoodDelegate(int stateCount, double[] boundaries, double maxStep) {
         if (stateCount < 2) {
@@ -223,10 +224,13 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
 
     @Override
     public double prepareStochasticMap(MascotPreparedInput prepared, double[] theta, double[] branchRates,
-                                       double[] nodeHeights, boolean checkProbabilities) {
+                                       double[] nodeHeights, boolean checkProbabilities,
+                                       StochasticMapSampler sampler) {
         validateInputs(prepared, theta, branchRates);
-        if (stochasticMapper == null) {
-            stochasticMapper = new MascotStochasticMapper(stateCount);
+        if (stochasticMapper == null || stochasticMapSampler != sampler) {
+            stochasticMapper = sampler == StochasticMapSampler.H_TRANSFORM ?
+                    new MascotHTransformMapper(stateCount) : new MascotGridMapper(stateCount);
+            stochasticMapSampler = sampler;
         }
         stochasticMapper.invalidate();
         for (int epoch = 0; epoch < epochCount; epoch++) {

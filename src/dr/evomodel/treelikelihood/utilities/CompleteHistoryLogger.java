@@ -224,9 +224,10 @@ public class CompleteHistoryLogger implements Loggable, Citable {
 
                                         Object[] change = (Object[]) changes[j];
                                         int offset = (change.length == 4) ? 1 : 0;
-                                        String source = (String) change[1 + offset];
-                                        String dest = (String) change[2 + offset];
-                                        double thisTime = (Double) change[0 + offset];
+                                        // parseValue turns numeric state codes (e.g. "0") into numbers
+                                        String source = change[1 + offset].toString();
+                                        String dest = change[2 + offset].toString();
+                                        double thisTime = ((Number) change[0 + offset]).doubleValue();
                                         if (thisTime < 0.0) {
                                             throw new RuntimeException("negative time");
                                         }

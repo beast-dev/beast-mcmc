@@ -125,6 +125,7 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
         addModel(likelihoodDelegate);
 
         this.substitutionModel = getSubstitutionModel();
+        addModel(substitutionModel);
 
         // validateSinglePattern(patternList, stateCount, ...) now runs in
         // AbstractStructuredCoalescentLikelihood's constructor (super() above),

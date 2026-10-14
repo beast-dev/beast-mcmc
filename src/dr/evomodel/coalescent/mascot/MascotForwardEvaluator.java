@@ -93,7 +93,7 @@ final class MascotForwardEvaluator {
                 yOut = swap;
             }
         } else {
-            MascotAdjointTape.Interval tape = operations.addInterval(steps, activeCount, dim, epoch, h,
+            MascotAdjointTape.Interval tape = operations.addInterval(steps, activeCount, dim, epoch, start, h,
                     state.activeIds, activeClockRates);
             for (int i = 0; i < steps; i++) {
                 rk4StepWithTapeInto(y, activeCount, rates, activeClockRates, h, yOut, workspace, tape, i);
@@ -269,7 +269,7 @@ final class MascotForwardEvaluator {
         state.activeCount++;
 
         if (operations != null) {
-            operations.addSample(index);
+            operations.addSample(index, lineage);
         }
     }
 

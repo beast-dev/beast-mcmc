@@ -18,6 +18,16 @@ public interface MascotLikelihoodDelegate {
                                              double[] gradientOut, double[] clockGradientOut,
                                              double[] ancestralStateScoresOut, boolean checkProbabilities);
 
+    /**
+     * Runs a taped forward pass and prepares the stochastic mapper on it (see {@link MascotStochasticMapper}).
+     * {@code nodeHeights} holds every node's tree height by node number. Returns the forward pass's log likelihood.
+     */
+    double prepareStochasticMap(MascotPreparedInput prepared, double[] theta, double[] branchRates,
+                                double[] nodeHeights, boolean checkProbabilities);
+
+    /** One joint draw from the most recent {@link #prepareStochasticMap} preparation. */
+    MascotStochasticMap drawStochasticMap();
+
     final class Result {
         public final double logLikelihood;
         public final double[] gradient;

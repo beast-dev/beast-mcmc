@@ -34,7 +34,7 @@ final class MascotAdjointTape {
             return operations[index];
         }
 
-        Interval addInterval(int steps, int activeCount, int stateDimension, int epoch, double h,
+        Interval addInterval(int steps, int activeCount, int stateDimension, int epoch, double startTime, double h,
                              int[] activeIds, double[] activeClockRates) {
             int index = nextIndex();
             Operation operation = operations[index];
@@ -45,11 +45,11 @@ final class MascotAdjointTape {
                 tape = new Interval();
                 operations[index] = tape;
             }
-            tape.reset(steps, activeCount, stateDimension, epoch, h, activeIds, activeClockRates);
+            tape.reset(steps, activeCount, stateDimension, epoch, startTime, h, activeIds, activeClockRates);
             return tape;
         }
 
-        void addSample(int sampleIndexAfter) {
+        void addSample(int sampleIndexAfter, int lineageId) {
             int index = nextIndex();
             Operation operation = operations[index];
             Sample tape;
@@ -59,7 +59,7 @@ final class MascotAdjointTape {
                 tape = new Sample();
                 operations[index] = tape;
             }
-            tape.reset(sampleIndexAfter);
+            tape.reset(sampleIndexAfter, lineageId);
         }
 
         void addCoalescent(int epoch, int child1Index, int child2Index, int parentIndexAfter,
@@ -101,6 +101,8 @@ final class MascotAdjointTape {
         int activeCount;
         int stateDimension;
         int epoch;
+        /** Height at which the interval starts; read by the stochastic mapper, not by the adjoint. */
+        double startTime;
         double h;
         /** steps + 1 rows: row k is the normalized input of step k; row steps is the interval's final state. */
         double[] y0;
@@ -112,12 +114,13 @@ final class MascotAdjointTape {
         int[] activeIds;
         double[] clockRates;
 
-        private void reset(int steps, int activeCount, int stateDimension, int epoch, double h,
+        private void reset(int steps, int activeCount, int stateDimension, int epoch, double startTime, double h,
                            int[] sourceActiveIds, double[] sourceClockRates) {
             this.steps = steps;
             this.activeCount = activeCount;
             this.stateDimension = stateDimension;
             this.epoch = epoch;
+            this.startTime = startTime;
             this.h = h;
             int storageSize = steps * stateDimension;
             y0 = MascotRuntime.ensure(y0, storageSize + stateDimension);
@@ -142,9 +145,12 @@ final class MascotAdjointTape {
 
     static final class Sample implements Operation {
         int sampleIndexAfter;
+        /** Node number of the sampled lineage; read by the stochastic mapper, not by the adjoint. */
+        int lineageId;
 
-        private void reset(int sampleIndexAfter) {
+        private void reset(int sampleIndexAfter, int lineageId) {
             this.sampleIndexAfter = sampleIndexAfter;
+            this.lineageId = lineageId;
         }
     }
 

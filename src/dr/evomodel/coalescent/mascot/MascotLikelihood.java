@@ -20,6 +20,7 @@ import dr.evomodel.coalescent.basta.AbstractPopulationSizeModel;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.markovjumps.StateHistory;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -28,6 +29,7 @@ import dr.util.Citation;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         implements Citable {
@@ -57,6 +59,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private double[] branchRateBuffer;
 
     private boolean ancestralStatesKnown;
+
+    // Stochastic mapping: the preparation (taped forward pass + Pi_h filter) lives in the delegate and is valid
+    // until the model changes or is restored; the draw is also discarded whenever the state is stored, which the
+    // MCMC does once per iteration right after logging, so every log step gets a fresh draw shared by all loggers.
+    private boolean stochasticMapPrepared;
+    private MascotStochasticMap stochasticMap;
+    private boolean warnedStochasticMapLogLikelihood;
 
     private static final class DerivedBuffers {
         double[] combinedGradient;
@@ -204,6 +213,64 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         System.arraycopy(ancestralStateScores, nodeNumber * getStateCount(), destination, 0, getStateCount());
     }
 
+    /**
+     * One joint draw of every node's location and every branch's complete location history from Pi_h, MASCOT's
+     * frozen-environment surrogate on its RK4 grid, given the current tree, tip data and parameter values (see
+     * {@link MascotStochasticMapper}). Every caller gets the same draw until the model changes, the state is stored
+     * or restored, or {@link #forceRedraw()} is called.
+     *
+     * @throws IllegalStateException if the log likelihood is not finite at the current state
+     */
+    public MascotStochasticMap getStochasticMap() {
+        if (stochasticMap == null) {
+            if (!stochasticMapPrepared) {
+                prepareStochasticMap();
+            }
+            stochasticMap = likelihoodDelegate.drawStochasticMap();
+        }
+        return stochasticMap;
+    }
+
+    /** A copy of the drawn history of the branch above {@code node}; null for the root. */
+    public StateHistory getBranchHistory(NodeRef node) {
+        return getStochasticMap().getBranchHistory(node.getNumber());
+    }
+
+    /** Discards the current draw, keeping its preparation, so the next request draws afresh. */
+    public void forceRedraw() {
+        stochasticMap = null;
+    }
+
+    private void prepareStochasticMap() {
+        double logLikelihood = getLogLikelihood();
+        if (!Double.isFinite(logLikelihood)) {
+            throw new IllegalStateException("MASCOT stochastic map cannot be drawn: the log likelihood is " +
+                    logLikelihood + " at the current state");
+        }
+        ensurePreparedInput();
+        ensureLikelihoodDelegate();
+        double[] nodeHeights = new double[treeModel.getNodeCount()];
+        for (int i = 0; i < nodeHeights.length; i++) {
+            NodeRef node = treeModel.getNode(i);
+            nodeHeights[node.getNumber()] = treeModel.getNodeHeight(node);
+        }
+        double mappedLogLikelihood;
+        try {
+            mappedLogLikelihood = likelihoodDelegate.prepareStochasticMap(preparedInput, thetaBuffer(),
+                    branchRateBufferOrNull(), nodeHeights, checkProbabilities);
+        } catch (MascotLikelihoodDelegate.NumericalException e) {
+            throw new IllegalStateException("MASCOT stochastic map cannot be drawn for the current parameter " +
+                    "values: " + e.getMessage(), e);
+        }
+        if (!warnedStochasticMapLogLikelihood &&
+                Math.abs(mappedLogLikelihood - logLikelihood) > 1.0e-9 * Math.max(1.0, Math.abs(logLikelihood))) {
+            Logger.getLogger("dr.evomodel").warning("MASCOT stochastic map was conditioned on a forward pass with " +
+                    "log likelihood " + mappedLogLikelihood + ", but the cached value is " + logLikelihood);
+            warnedStochasticMapLogLikelihood = true;
+        }
+        stochasticMapPrepared = true;
+    }
+
     public Parameter getMigrationRates() {
         return dynamics.getMigrationRates();
     }
@@ -238,6 +305,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     protected void invalidateDerivedState() {
         gradientKnown = false;
         ancestralStatesKnown = false;
+        stochasticMapPrepared = false;
+        stochasticMap = null;
     }
 
     @Override
@@ -270,6 +339,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         storedLikelihoodDelegateKnown = likelihoodDelegateKnown;
         storedGradientKnown = gradientKnown;
         storedAncestralStatesKnown = ancestralStatesKnown;
+        stochasticMap = null;
     }
 
     @Override
@@ -281,6 +351,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         likelihoodDelegateKnown = storedLikelihoodDelegateKnown;
         gradientKnown = storedGradientKnown;
         ancestralStatesKnown = storedAncestralStatesKnown;
+        stochasticMapPrepared = false;
+        stochasticMap = null;
     }
 
     private DerivedBuffers currentDerived() {

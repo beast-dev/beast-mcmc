@@ -32,6 +32,7 @@ import dr.evolution.datatype.DataType;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -125,6 +126,14 @@ public class StateHistory {
             StateChange finalState = stateList.get(nJumps + 1);
             times[currentState] += (finalState.getTime() - currentTime);
         }
+    }
+
+    /**
+     * The starting state, every change and the ending state, in order. The list is read-only, but its
+     * {@link StateChange} entries are this history's own objects.
+     */
+    public List<StateChange> getStateChanges() {
+        return Collections.unmodifiableList(stateList);
     }
 
     public int getNumberOfJumps() {

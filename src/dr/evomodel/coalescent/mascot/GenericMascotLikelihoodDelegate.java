@@ -35,6 +35,7 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
     private final MascotRuntime.ActiveState activeState = new MascotRuntime.ActiveState();
     private final MascotForwardEvaluator forwardEvaluator;
     private final MascotAdjointEvaluator adjointEvaluator;
+    private MascotStochasticMapper stochasticMapper;
 
     public GenericMascotLikelihoodDelegate(int stateCount, double[] boundaries, double maxStep) {
         if (stateCount < 2) {
@@ -166,21 +167,7 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
     private double evaluateCore(MascotPreparedInput prepared, double[] theta, double[] branchRates,
                                 boolean checkProbabilities, double[] nodeLogWeights,
                                 double[] gradientOut, double[] clockGradientOut, double[] ancestralStateScoresOut) {
-        if (prepared == null) {
-            throw new IllegalArgumentException("prepared input must not be null");
-        }
-        if (prepared.tipData.stateCount != stateCount) {
-            throw new IllegalArgumentException("tip data stateCount " + prepared.tipData.stateCount +
-                    " does not match GenericMascotLikelihoodDelegate stateCount " + stateCount);
-        }
-        if (theta == null || theta.length != parameterCount) {
-            throw new IllegalArgumentException("theta dimension " + (theta == null ? -1 : theta.length) +
-                    " does not match expected dimension " + parameterCount);
-        }
-        if (branchRates != null && branchRates.length <= prepared.maxLineageId) {
-            throw new IllegalArgumentException("branchRates dimension " + branchRates.length +
-                    " does not cover the maximum lineage id " + prepared.maxLineageId);
-        }
+        validateInputs(prepared, theta, branchRates);
         if (nodeLogWeights != null) {
             int expectedLength = (prepared.maxLineageId + 1) * stateCount;
             if (nodeLogWeights.length != expectedLength) {
@@ -232,6 +219,52 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
         }
 
         return state.logLikelihood;
+    }
+
+    @Override
+    public double prepareStochasticMap(MascotPreparedInput prepared, double[] theta, double[] branchRates,
+                                       double[] nodeHeights, boolean checkProbabilities) {
+        validateInputs(prepared, theta, branchRates);
+        if (stochasticMapper == null) {
+            stochasticMapper = new MascotStochasticMapper(stateCount);
+        }
+        stochasticMapper.invalidate();
+        for (int epoch = 0; epoch < epochCount; epoch++) {
+            updateEpochRates(theta, epoch, epochRates[epoch]);
+        }
+        MascotAdjointTape.Store operations =
+                adjointEvaluator.resetTape(prepared.schedule.getIntervalCount() * 2 + epochCount + 1);
+        forwardEvaluator.forward(activeState, epochRates, workspace, prepared, branchRates, checkProbabilities,
+                operations, null);
+        stochasticMapper.prepare(operations, epochRates, epochCount, prepared, nodeHeights,
+                activeState.logLikelihood);
+        return activeState.logLikelihood;
+    }
+
+    @Override
+    public MascotStochasticMap drawStochasticMap() {
+        if (stochasticMapper == null || !stochasticMapper.isPrepared()) {
+            throw new IllegalStateException("prepareStochasticMap must succeed before drawStochasticMap");
+        }
+        return stochasticMapper.draw();
+    }
+
+    private void validateInputs(MascotPreparedInput prepared, double[] theta, double[] branchRates) {
+        if (prepared == null) {
+            throw new IllegalArgumentException("prepared input must not be null");
+        }
+        if (prepared.tipData.stateCount != stateCount) {
+            throw new IllegalArgumentException("tip data stateCount " + prepared.tipData.stateCount +
+                    " does not match GenericMascotLikelihoodDelegate stateCount " + stateCount);
+        }
+        if (theta == null || theta.length != parameterCount) {
+            throw new IllegalArgumentException("theta dimension " + (theta == null ? -1 : theta.length) +
+                    " does not match expected dimension " + parameterCount);
+        }
+        if (branchRates != null && branchRates.length <= prepared.maxLineageId) {
+            throw new IllegalArgumentException("branchRates dimension " + branchRates.length +
+                    " does not cover the maximum lineage id " + prepared.maxLineageId);
+        }
     }
 
     // ------------------------------------------------------------------

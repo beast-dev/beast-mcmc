@@ -373,6 +373,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
         treeTraits.addTraits(loggerTraits);
         stochasticMappingTag = tag;
+        Logger.getLogger("dr.evomodel").info("MASCOT stochastic mapping: one joint draw of node states and branch " +
+                "histories per log step, as traits '" + tag + "', '" + tag + HISTORY_SUFFIX + "', '" + tag +
+                COUNT_SUFFIX + "' (" + stochasticMapSampler.getXmlName() + " sampler)");
     }
 
     private TreeTrait<String[]> historyTrait(final String name) {

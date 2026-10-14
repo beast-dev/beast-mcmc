@@ -34,6 +34,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.coalescent.EpochBoundaries;
 import dr.evomodel.coalescent.mascot.MascotLikelihood;
+import dr.evomodel.coalescent.mascot.StochasticMapSampler;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -97,6 +98,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String MODE_STATE_TAG_NAME = "modeStateTagName";
     public static final String STOCHASTIC_MAPPING = "stochasticMapping";
     public static final String STOCHASTIC_MAPPING_TAG = "tag";
+    public static final String STOCHASTIC_MAPPING_SAMPLER = "sampler";
     public static final String COUNTS = "counts";
     public static final String REWARDS = "rewards";
 
@@ -393,6 +395,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             List<Parameter> rewards = mapping.hasChildNamed(REWARDS) ?
                     mapping.getChild(REWARDS).getAllChildren(Parameter.class) : new ArrayList<>();
             try {
+                likelihood.setStochasticMapSampler(StochasticMapSampler.fromXmlName(
+                        mapping.getAttribute(STOCHASTIC_MAPPING_SAMPLER, StochasticMapSampler.GRID.getXmlName())));
                 likelihood.enableStochasticMapping(tag, counts, rewards);
             } catch (IllegalArgumentException e) {
                 throw new XMLParseException("<" + STOCHASTIC_MAPPING + ">: " + e.getMessage());
@@ -552,6 +556,9 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             // exposed as tree traits named by tag (see MascotLikelihood.enableStochasticMapping).
             new ElementRule(STOCHASTIC_MAPPING, new XMLSyntaxRule[]{
                     AttributeRule.newStringRule(STOCHASTIC_MAPPING_TAG, true),
+                    // "grid" (default; exact for MASCOT's surrogate on its RK4 grid) or "hTransform" (faster for
+                    // many demes; approximate, and inaccurate where RK4 steps are stiff).
+                    AttributeRule.newStringRule(STOCHASTIC_MAPPING_SAMPLER, true),
                     new ElementRule(COUNTS, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true),
                     new ElementRule(REWARDS, new XMLSyntaxRule[]{

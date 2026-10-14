@@ -35,8 +35,9 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
     private final MascotRuntime.ActiveState activeState = new MascotRuntime.ActiveState();
     private final MascotForwardEvaluator forwardEvaluator;
     private final MascotAdjointEvaluator adjointEvaluator;
-    private MascotStochasticMapper stochasticMapper;
-    private StochasticMapSampler stochasticMapSampler;
+    private MascotGridMapper gridMapper;
+    private MascotHTransformMapper hTransformMapper;
+    private MascotStochasticMapper activeMapper;
 
     public GenericMascotLikelihoodDelegate(int stateCount, double[] boundaries, double maxStep) {
         if (stateCount < 2) {
@@ -227,12 +228,7 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
                                        double[] nodeHeights, boolean checkProbabilities,
                                        StochasticMapSampler sampler) {
         validateInputs(prepared, theta, branchRates);
-        if (stochasticMapper == null || stochasticMapSampler != sampler) {
-            stochasticMapper = sampler == StochasticMapSampler.H_TRANSFORM ?
-                    new MascotHTransformMapper(stateCount) : new MascotGridMapper(stateCount);
-            stochasticMapSampler = sampler;
-        }
-        stochasticMapper.invalidate();
+        activeMapper = null;
         for (int epoch = 0; epoch < epochCount; epoch++) {
             updateEpochRates(theta, epoch, epochRates[epoch]);
         }
@@ -240,17 +236,36 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
                 adjointEvaluator.resetTape(prepared.schedule.getIntervalCount() * 2 + epochCount + 1);
         forwardEvaluator.forward(activeState, epochRates, workspace, prepared, branchRates, checkProbabilities,
                 operations, null);
-        stochasticMapper.prepare(operations, epochRates, epochCount, prepared, nodeHeights,
-                activeState.logLikelihood);
+        MascotStochasticMapper mapper;
+        if (sampler == StochasticMapSampler.H_TRANSFORM) {
+            if (hTransformMapper == null) {
+                hTransformMapper = new MascotHTransformMapper(stateCount);
+            }
+            mapper = hTransformMapper;
+            mapper.prepare(operations, epochRates, epochCount, prepared, nodeHeights, activeState.logLikelihood);
+            if (mapper.getMaxRateTimesLength() > MascotHTransformMapper.STIFFNESS_LIMIT) {
+                mapper = null;   // too stiff for the h-transform: use the exact grid sampler on the same pass
+            }
+        } else {
+            mapper = null;
+        }
+        if (mapper == null) {
+            if (gridMapper == null) {
+                gridMapper = new MascotGridMapper(stateCount);
+            }
+            mapper = gridMapper;
+            mapper.prepare(operations, epochRates, epochCount, prepared, nodeHeights, activeState.logLikelihood);
+        }
+        activeMapper = mapper;
         return activeState.logLikelihood;
     }
 
     @Override
     public MascotStochasticMap drawStochasticMap() {
-        if (stochasticMapper == null || !stochasticMapper.isPrepared()) {
+        if (activeMapper == null || !activeMapper.isPrepared()) {
             throw new IllegalStateException("prepareStochasticMap must succeed before drawStochasticMap");
         }
-        return stochasticMapper.draw();
+        return activeMapper.draw();
     }
 
     private void validateInputs(MascotPreparedInput prepared, double[] theta, double[] branchRates) {

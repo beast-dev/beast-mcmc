@@ -33,6 +33,11 @@ final class MascotGridMapper extends MascotStochasticMapper {
     }
 
     @Override
+    protected StochasticMapSampler sampler() {
+        return StochasticMapSampler.GRID;
+    }
+
+    @Override
     protected void beginReplay() {
         filter = ensure(filter, nodeCount * stateCount);
         nodeFilter = ensure(nodeFilter, nodeCount * stateCount);

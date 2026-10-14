@@ -17,8 +17,9 @@ public enum StochasticMapSampler {
 
     /**
      * The Doob h-transform of BEAST2's MappedMascot on cubic Hermite interpolants of MASCOT's lineage
-     * probabilities, with exact thinning; approximate for the continuous surrogate, and inaccurate where RK4 steps
-     * are stiff (MascotStochasticMap.getMaxRateTimesLength() well above one).
+     * probabilities, with exact thinning; approximate for the continuous surrogate. It is inaccurate where RK4 steps
+     * are stiff, so a state whose largest h mu exceeds one is drawn with {@link #GRID} instead (see
+     * MascotStochasticMap.getSampler()).
      */
     H_TRANSFORM("hTransform");
 

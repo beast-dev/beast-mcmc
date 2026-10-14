@@ -79,6 +79,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private boolean warnedStochasticMapLogLikelihood;
     private String stochasticMappingTag;
     private StochasticMapSampler stochasticMapSampler = StochasticMapSampler.GRID;
+    private boolean warnedStiffFallback;
 
     private static final class DerivedBuffers {
         double[] combinedGradient;
@@ -240,6 +241,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                 prepareStochasticMap();
             }
             stochasticMap = likelihoodDelegate.drawStochasticMap();
+            if (stochasticMap.getSampler() != stochasticMapSampler && !warnedStiffFallback) {
+                Logger.getLogger("dr.evomodel").warning(String.format("MASCOT stochastic mapping: the RK4 steps are " +
+                        "too stiff for the h-transform sampler (max h mu = %.2f > 1), so this state, and any other " +
+                        "as stiff, is drawn with the exact grid sampler. A smaller maxStep lets the h-transform run.",
+                        stochasticMap.getMaxRateTimesLength()));
+                warnedStiffFallback = true;
+            }
         }
         return stochasticMap;
     }

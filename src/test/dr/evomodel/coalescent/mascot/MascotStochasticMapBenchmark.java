@@ -201,9 +201,9 @@ public class MascotStochasticMapBenchmark {
                 "surrogate); " + ACCURACY_DRAWS + " draws per row. 'own' = the sampler's exact target where it has " +
                 "one (grid: Pi_h at maxStep).");
         System.out.println("| case | maxStep | max mu h | Pi_h vs reference (max abs, deterministic) | sampler | " +
-                "node max abs z | node max abs diff | jumps max abs z | jumps max abs diff | dwell max abs z | " +
-                "draw ms |");
-        System.out.println("|---|---|---|---|---|---|---|---|---|---|---|");
+                "drawn by | node max abs z | node max abs diff | jumps max abs z | jumps max abs diff | " +
+                "dwell max abs z | draw ms |");
+        System.out.println("|---|---|---|---|---|---|---|---|---|---|---|---|");
         List<Object[]> cases = new ArrayList<>();
         for (MascotMappingFixtures.Spec spec : MascotMappingFixtures.oracleCases()) {
             cases.add(new Object[]{spec, 0.1});
@@ -225,8 +225,8 @@ public class MascotStochasticMapBenchmark {
                 built.likelihood.setStochasticMapSampler(sampler);
                 MathUtils.setSeed(seed++);
                 Moments moments = Moments.draw(built, ACCURACY_DRAWS);
-                System.out.printf(Locale.US, "| %s | %.2f | %.2f | %.1e | %s | %.1f | %.4f | %.1f | %.4f | %.1f | %.3f |%n",
-                        spec.name, maxStep, moments.maxRateTimesLength, gap, sampler,
+                System.out.printf(Locale.US, "| %s | %.2f | %.2f | %.1e | %s | %s | %.1f | %.4f | %.1f | %.4f | %.1f | %.3f |%n",
+                        spec.name, maxStep, moments.maxRateTimesLength, gap, sampler, moments.drawnBy,
                         moments.maxZ(moments.states, refMarginals), moments.maxDiff(moments.states, refMarginals),
                         moments.maxZ(moments.jumps, refJumps), moments.maxDiff(moments.jumps, refJumps),
                         moments.maxZ(moments.dwell, refDwell), moments.drawMillis);
@@ -254,6 +254,7 @@ public class MascotStochasticMapBenchmark {
         double[][][] jumps;    // [node][K K][sum, sumSq]
         double[][][] dwell;    // [node][K][sum, sumSq]
         double maxRateTimesLength;
+        StochasticMapSampler drawnBy;
         double drawMillis;
 
         static Moments draw(MascotMappingFixtures.Built built, int draws) {
@@ -271,6 +272,7 @@ public class MascotStochasticMapBenchmark {
                 likelihood.forceRedraw();
                 MascotStochasticMap map = likelihood.getStochasticMap();
                 m.maxRateTimesLength = map.getMaxRateTimesLength();
+                m.drawnBy = map.getSampler();
                 for (int v = 0; v < nodes; v++) {
                     int state = map.getNodeState(v);
                     for (int s = 0; s < K; s++) {

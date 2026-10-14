@@ -9,6 +9,7 @@ package test.dr.evomodel.coalescent.mascot;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.coalescent.mascot.MascotLikelihood;
 import dr.evomodel.coalescent.mascot.MascotStochasticMap;
+import dr.evomodel.coalescent.mascot.StochasticMapSampler;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.markovjumps.StateChange;
 import dr.inference.markovjumps.StateHistory;
@@ -154,6 +155,11 @@ public class MascotStochasticMapTest extends TestCase {
             likelihood.forceRedraw();
             MascotStochasticMap map = likelihood.getStochasticMap();
             assertEquals(likelihood.getLogLikelihood(), map.getLogLikelihood(), 0.0);
+            if (map.getSampler() != likelihood.getStochasticMapSampler()) {
+                assertEquals("only a fallback to the grid sampler is allowed", StochasticMapSampler.GRID,
+                        map.getSampler());
+                assertTrue("fallback without stiff steps", map.getMaxRateTimesLength() > 1.0);
+            }
             for (int i = 0; i < tree.getNodeCount(); i++) {
                 NodeRef node = tree.getNode(i);
                 int v = node.getNumber();

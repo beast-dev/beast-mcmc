@@ -557,7 +557,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             new ElementRule(STOCHASTIC_MAPPING, new XMLSyntaxRule[]{
                     AttributeRule.newStringRule(STOCHASTIC_MAPPING_TAG, true),
                     // "grid" (default; exact for MASCOT's surrogate on its RK4 grid) or "hTransform" (faster for
-                    // many demes; approximate, and inaccurate where RK4 steps are stiff).
+                    // many demes; approximate; states with stiff RK4 steps fall back to "grid").
                     AttributeRule.newStringRule(STOCHASTIC_MAPPING_SAMPLER, true),
                     new ElementRule(COUNTS, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true),

@@ -20,6 +20,8 @@ public interface MascotLikelihoodDelegate {
 
     /**
      * Runs a taped forward pass and prepares the chosen stochastic mapper on it (see {@link MascotStochasticMapper}).
+     * An {@link StochasticMapSampler#H_TRANSFORM} request falls back to {@link StochasticMapSampler#GRID} when the RK4
+     * steps are too stiff for it.
      * {@code nodeHeights} holds every node's tree height by node number. Returns the forward pass's log likelihood.
      */
     double prepareStochasticMap(MascotPreparedInput prepared, double[] theta, double[] branchRates,

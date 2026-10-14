@@ -60,11 +60,26 @@ public class MascotHTransformSamplerTest extends TestCase {
         MascotLikelihood likelihood = built.likelihood;
         assertEquals(StochasticMapSampler.GRID, likelihood.getStochasticMapSampler());
         MascotStochasticMap grid = likelihood.getStochasticMap();
+        assertEquals(StochasticMapSampler.GRID, grid.getSampler());
         likelihood.setStochasticMapSampler(StochasticMapSampler.H_TRANSFORM);
         MascotStochasticMap hTransform = likelihood.getStochasticMap();
+        assertEquals(StochasticMapSampler.H_TRANSFORM, hTransform.getSampler());
         assertNotSame(grid, hTransform);
         assertSame(hTransform, likelihood.getStochasticMap());
         assertEquals(likelihood.getLogLikelihood(), hTransform.getLogLikelihood(), 0.0);
+    }
+
+    /** On stiff steps the h-transform is biased, so such states are drawn, exactly, by the grid sampler. */
+    public void testStiffStepsFallBackToGrid() throws Exception {
+        MascotMappingFixtures.Built stiff = hTransform(MascotMappingFixtures.c2(), 0.3);
+        MascotStochasticMap map = stiff.likelihood.getStochasticMap();
+        assertTrue(map.getMaxRateTimesLength() > 1.0);
+        assertEquals(StochasticMapSampler.GRID, map.getSampler());
+        assertEquals(StochasticMapSampler.H_TRANSFORM, stiff.likelihood.getStochasticMapSampler());
+        MascotStochasticMapTest.checkAgainstOracle(stiff, 20000, 9, stiff.oracle());
+
+        MascotMappingFixtures.Built mild = hTransform(MascotMappingFixtures.c2(), 0.01);
+        assertEquals(StochasticMapSampler.H_TRANSFORM, mild.likelihood.getStochasticMap().getSampler());
     }
 
     private static void check(MascotMappingFixtures.Spec spec, double maxStep, long seed) throws Exception {

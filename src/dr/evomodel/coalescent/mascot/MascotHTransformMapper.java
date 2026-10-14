@@ -26,6 +26,13 @@ import dr.math.MathUtils;
  */
 final class MascotHTransformMapper extends MascotStochasticMapper {
 
+    /**
+     * Above this largest h mu (total exit rate times step length) the RK4 solution this sampler interpolates is too
+     * coarse: at h mu = 2.84 its node frequencies were off by 0.044 while the grid sampler stayed exact for Pi_h.
+     * States this stiff are drawn with {@link MascotGridMapper} instead.
+     */
+    static final double STIFFNESS_LIMIT = 1.0;
+
     /** Below this probability for the current state anywhere in the step, the step is bridged exactly instead. */
     private static final double MIN_PROBABILITY = 1.0e-6;
     /** More expected thinning proposals than this in the rest of a step also switches to the exact bridge. */
@@ -59,6 +66,11 @@ final class MascotHTransformMapper extends MascotStochasticMapper {
         this.rates = new double[stateCount];
         this.hazard = new double[stateCount];
         this.rootProbabilities = new double[stateCount];
+    }
+
+    @Override
+    protected StochasticMapSampler sampler() {
+        return StochasticMapSampler.H_TRANSFORM;
     }
 
     @Override

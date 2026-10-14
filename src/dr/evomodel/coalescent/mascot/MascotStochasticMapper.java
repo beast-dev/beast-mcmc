@@ -173,9 +173,17 @@ abstract class MascotStochasticMapper {
                 totalJumps += histories[child].getNumberOfJumps();
             }
         }
-        return new MascotStochasticMap(stateCount, states, histories, logLikelihood, maxRateTimesLength,
+        return new MascotStochasticMap(sampler(), stateCount, states, histories, logLikelihood, maxRateTimesLength,
                 cells.count(), totalJumps);
     }
+
+    /** Largest h mu over the cells of the last preparation (see {@link MascotStochasticMap#getMaxRateTimesLength}). */
+    final double getMaxRateTimesLength() {
+        return maxRateTimesLength;
+    }
+
+    /** Which sampler this mapper implements. */
+    protected abstract StochasticMapSampler sampler();
 
     /** Called once before the tape is replayed. */
     protected void beginReplay() {

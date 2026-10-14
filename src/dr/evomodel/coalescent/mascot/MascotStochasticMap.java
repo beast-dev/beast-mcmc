@@ -20,6 +20,7 @@ import dr.inference.markovjumps.StateHistory;
  */
 public final class MascotStochasticMap {
 
+    private final StochasticMapSampler sampler;
     private final int stateCount;
     private final int[] nodeStates;
     private final StateHistory[] histories;
@@ -28,8 +29,9 @@ public final class MascotStochasticMap {
     private final int cellCount;
     private final int totalJumpCount;
 
-    MascotStochasticMap(int stateCount, int[] nodeStates, StateHistory[] histories, double logLikelihood,
-                        double maxRateTimesLength, int cellCount, int totalJumpCount) {
+    MascotStochasticMap(StochasticMapSampler sampler, int stateCount, int[] nodeStates, StateHistory[] histories,
+                        double logLikelihood, double maxRateTimesLength, int cellCount, int totalJumpCount) {
+        this.sampler = sampler;
         this.stateCount = stateCount;
         this.nodeStates = nodeStates;
         this.histories = histories;
@@ -37,6 +39,14 @@ public final class MascotStochasticMap {
         this.maxRateTimesLength = maxRateTimesLength;
         this.cellCount = cellCount;
         this.totalJumpCount = totalJumpCount;
+    }
+
+    /**
+     * The sampler that made this draw: {@link StochasticMapSampler#GRID} also when the h-transform was requested but
+     * the RK4 steps were too stiff for it.
+     */
+    public StochasticMapSampler getSampler() {
+        return sampler;
     }
 
     public int getStateCount() {

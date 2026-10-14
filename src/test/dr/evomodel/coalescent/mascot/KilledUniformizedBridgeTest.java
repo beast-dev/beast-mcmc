@@ -298,7 +298,11 @@ public class KilledUniformizedBridgeTest extends TestCase {
         double mean = sum / n;
         double variance = Math.max(0.0, sumSquares / n - mean * mean);
         if (variance == 0.0) {
-            assertEquals(label, expected, mean, 1.0e-9);
+            // Every draw gave the same value, as for a rare count that never occurred: missing n |mean - expected|
+            // events of expected rate has probability about exp(-n |mean - expected|), so require that it is not
+            // implausibly small (below about 1e-6).
+            assertTrue(label + ": every draw gave " + mean + ", expected mean " + expected,
+                    n * Math.abs(mean - expected) < 14.0);
             return;
         }
         double z = (mean - expected) / Math.sqrt(variance / n);

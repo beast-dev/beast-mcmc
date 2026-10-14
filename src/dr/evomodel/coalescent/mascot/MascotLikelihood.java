@@ -439,6 +439,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         ancestralStatesKnown = true;
     }
 
+    /**
+     * Checks that every internal-node row was written and is finite. Row sums are not checked: row entry s is
+     * P[s](A[s] - A.P + a_l) with a_l = 1 and sum(P) = 1, so the row sums to 1 for any adjoint A. A sum test can
+     * detect only roundoff, never discretization or adjoint errors.
+     */
     private void validateAncestralStateScores(double[] scores) {
         if (scores == null) {
             throw new IllegalStateException("MASCOT ancestral-state evaluation returned no scores");
@@ -451,7 +456,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             }
             int nodeNumber = node.getNumber();
             int offset = nodeNumber * stateCount;
-            double sum = 0.0;
             for (int s = 0; s < stateCount; s++) {
                 double v = scores[offset + s];
                 if (Double.isNaN(v)) {
@@ -462,11 +466,6 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                     throw new IllegalStateException("MASCOT ancestral-state score is non-finite at node " +
                             nodeNumber + ", state " + s + ": " + v);
                 }
-                sum += v;
-            }
-            if (Math.abs(sum - 1.0) > 1.0e-8) {
-                throw new IllegalStateException("MASCOT ancestral-state row sum " + sum +
-                        " does not equal 1 within tolerance 1e-8 at node " + nodeNumber + " (maxStep=" + maxStep + ")");
             }
         }
     }

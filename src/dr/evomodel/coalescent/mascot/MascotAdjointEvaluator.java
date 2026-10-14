@@ -122,6 +122,7 @@ final class MascotAdjointEvaluator {
 
         for (int step = tape.steps - 1; step >= 0; step--) {
             int offset = step * dim;
+            reverseNormalizationInPlace(tape, step, cursor);
             reverseStepInto(tape, offset, rates, cursor, next, gradient, clockGradient, workspace);
             double[] swap = cursor;
             cursor = next;
@@ -129,6 +130,27 @@ final class MascotAdjointEvaluator {
         }
 
         System.arraycopy(cursor, 0, adjointBeforeOut, 0, dim);
+    }
+
+    /**
+     * VJP of the forward per-step projection f(y) = y / (1'y) on each lineage block: J'a = (a - (f'a) 1) / (1'y).
+     * This removes each lineage adjoint's component along 1, which no output reads and which otherwise grows like
+     * exp(int p.lambda dt). The logL slot passes through unchanged.
+     */
+    private void reverseNormalizationInPlace(MascotAdjointTape.Interval tape, int step, double[] adjoint) {
+        int postOffset = (step + 1) * tape.stateDimension;
+        int scaleOffset = step * tape.activeCount;
+        for (int lineage = 0; lineage < tape.activeCount; lineage++) {
+            int offset = lineage * stateCount;
+            double dot = 0.0;
+            for (int s = 0; s < stateCount; s++) {
+                dot += adjoint[offset + s] * tape.y0[postOffset + offset + s];
+            }
+            double scale = tape.scale[scaleOffset + lineage];
+            for (int s = 0; s < stateCount; s++) {
+                adjoint[offset + s] = (adjoint[offset + s] - dot) / scale;
+            }
+        }
     }
 
     private void reverseStepInto(MascotAdjointTape.Interval tape, int offset, MascotRuntime.EpochRates rates,

@@ -102,10 +102,13 @@ final class MascotAdjointTape {
         int stateDimension;
         int epoch;
         double h;
+        /** steps + 1 rows: row k is the normalized input of step k; row steps is the interval's final state. */
         double[] y0;
         double[] y2;
         double[] y3;
         double[] y4;
+        /** scale[k * activeCount + i] is lineage i's probability sum after step k, before normalization. */
+        double[] scale;
         int[] activeIds;
         double[] clockRates;
 
@@ -117,10 +120,11 @@ final class MascotAdjointTape {
             this.epoch = epoch;
             this.h = h;
             int storageSize = steps * stateDimension;
-            y0 = MascotRuntime.ensure(y0, storageSize);
+            y0 = MascotRuntime.ensure(y0, storageSize + stateDimension);
             y2 = MascotRuntime.ensure(y2, storageSize);
             y3 = MascotRuntime.ensure(y3, storageSize);
             y4 = MascotRuntime.ensure(y4, storageSize);
+            scale = MascotRuntime.ensure(scale, steps * activeCount);
             if (sourceActiveIds != null) {
                 activeIds = MascotRuntime.ensureInt(activeIds, activeCount);
                 System.arraycopy(sourceActiveIds, 0, activeIds, 0, activeCount);

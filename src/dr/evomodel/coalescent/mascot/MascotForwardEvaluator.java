@@ -87,6 +87,7 @@ final class MascotForwardEvaluator {
         if (operations == null) {
             for (int i = 0; i < steps; i++) {
                 rk4StepInto(y, activeCount, rates, activeClockRates, h, yOut, workspace);
+                normalizeLineagesInPlace(yOut, activeCount, null, 0);
                 double[] swap = y;
                 y = yOut;
                 yOut = swap;
@@ -96,10 +97,12 @@ final class MascotForwardEvaluator {
                     state.activeIds, activeClockRates);
             for (int i = 0; i < steps; i++) {
                 rk4StepWithTapeInto(y, activeCount, rates, activeClockRates, h, yOut, workspace, tape, i);
+                normalizeLineagesInPlace(yOut, activeCount, tape.scale, i * activeCount);
                 double[] swap = y;
                 y = yOut;
                 yOut = swap;
             }
+            System.arraycopy(y, 0, tape.y0, steps * dim, dim);
         }
 
         unpackStateFrom(y, state);
@@ -159,6 +162,26 @@ final class MascotForwardEvaluator {
 
         for (int i = 0; i < dim; i++) {
             yOut[i] = y[i] + (h / 6.0) * (w.k1[i] + 2.0 * w.k2[i] + 2.0 * w.k3[i] + w.k4[i]);
+        }
+    }
+
+    /**
+     * Projects each lineage block back onto the simplex; the logL slot is left untouched. The simplex is invariant
+     * but repelling (d(1'p - 1)/dt = (p.lambda)(1'p - 1)), so without this, roundoff grows like exp(int p.lambda dt).
+     */
+    private void normalizeLineagesInPlace(double[] y, int activeCount, double[] scales, int scaleOffset) {
+        for (int lineage = 0; lineage < activeCount; lineage++) {
+            int offset = lineage * stateCount;
+            double sum = 0.0;
+            for (int s = 0; s < stateCount; s++) {
+                sum += y[offset + s];
+            }
+            for (int s = 0; s < stateCount; s++) {
+                y[offset + s] /= sum;
+            }
+            if (scales != null) {
+                scales[scaleOffset + lineage] = sum;
+            }
         }
     }
 

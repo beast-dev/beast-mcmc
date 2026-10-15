@@ -28,6 +28,7 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.SubtreeLeapOperator;
+import dr.evomodel.operators.SubtreeMoveHook;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
@@ -79,7 +80,9 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
 
         final boolean slideOnly = xo.getAttribute(SLIDE_ONLY, false);
 
-        return new SubtreeLeapOperator(treeModel, weight, size, distanceKernel, slideOnly, mode, targetAcceptance);
+        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, distanceKernel, slideOnly, mode, targetAcceptance);
+        operator.setSubtreeMoveHook((SubtreeMoveHook) xo.getChild(SubtreeMoveHook.class));
+        return operator;
     }
 
     public String getParserDescription() {
@@ -101,7 +104,8 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(DISTANCE_KERNEL, true),
             AttributeRule.newBooleanRule(SLIDE_ONLY, true),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
-            new ElementRule(TreeModel.class)
+            new ElementRule(TreeModel.class),
+            new ElementRule(SubtreeMoveHook.class, true)
     };
 
 }

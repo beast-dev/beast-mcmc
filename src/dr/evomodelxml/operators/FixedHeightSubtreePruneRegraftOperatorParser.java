@@ -28,6 +28,7 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
+import dr.evomodel.operators.SubtreeMoveHook;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
@@ -48,7 +49,9 @@ public class FixedHeightSubtreePruneRegraftOperatorParser extends AbstractXMLObj
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        return new FixedHeightSubtreePruneRegraftOperator(treeModel, weight);
+        FixedHeightSubtreePruneRegraftOperator operator = new FixedHeightSubtreePruneRegraftOperator(treeModel, weight);
+        operator.setSubtreeMoveHook((SubtreeMoveHook) xo.getChild(SubtreeMoveHook.class));
+        return operator;
     }
 
     public String getParserDescription() {
@@ -65,7 +68,8 @@ public class FixedHeightSubtreePruneRegraftOperatorParser extends AbstractXMLObj
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            new ElementRule(TreeModel.class)
+            new ElementRule(TreeModel.class),
+            new ElementRule(SubtreeMoveHook.class, true)
     };
 
 }

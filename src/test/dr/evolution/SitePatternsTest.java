@@ -92,6 +92,81 @@ public class SitePatternsTest extends TraceCorrelationAssert {
         assertEquals("Wrong number of compressed patterns", patterns.getPatternCount(), 68);
     }
 
+    public void testConstantOnlySitePatterns() {
+        SitePatterns uncompressed = new SitePatterns(alignment, null, 0, -1, 1, true, SitePatterns.CompressionType.UNCOMPRESSED);
+        SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true, SitePatterns.CompressionType.CONSTANT_ONLY);
+        int stateCount = patterns.getStateCount();
+
+        // the first stateCount patterns are the constant ones, weighted by their number of sites
+        double[] constantWeights = new double[stateCount];
+        int variableSites = 0;
+        for (int site = 0; site < uncompressed.getPatternCount(); site++) {
+            int[] pattern = uncompressed.getPattern(site);
+            int constantState = constantState(pattern, stateCount);
+            if (constantState >= 0) {
+                constantWeights[constantState] += 1;
+                assertEquals(constantState, patterns.getPatternIndex(site));
+            } else {
+                int index = patterns.getPatternIndex(site);
+                assertTrue(index >= stateCount);
+                assertTrue(java.util.Arrays.equals(pattern, patterns.getPattern(index)));
+                variableSites++;
+            }
+        }
+        assertEquals(stateCount + variableSites, patterns.getPatternCount());
+        for (int i = 0; i < stateCount; i++) {
+            assertEquals(i, constantState(patterns.getPattern(i), stateCount));
+            assertEquals(constantWeights[i], patterns.getPatternWeight(i), 0.0);
+        }
+        for (int i = stateCount; i < patterns.getPatternCount(); i++) {
+            assertEquals(1.0, patterns.getPatternWeight(i), 0.0);
+        }
+    }
+
+    public void testAmbiguousConstantOnlySitePatterns() {
+        // columns: constant A; A with one N; A with one R; A with one Y; A with three Ns; constant C; variable
+        String[] columns = {"AAAAAA", "AANAAA", "AARAAA", "AAYAAA", "ANNNAA", "CCCCCC", "ACAAAA"};
+        String[] taxa = {"t1", "t2", "t3", "t4", "t5", "t6"};
+        String[] sequences = new String[taxa.length];
+        for (int t = 0; t < taxa.length; t++) {
+            StringBuilder sb = new StringBuilder();
+            for (String column : columns) {
+                sb.append(column.charAt(t));
+            }
+            sequences[t] = sb.toString();
+        }
+        createAlignment(new Object[][]{taxa, sequences}, Nucleotides.INSTANCE);
+
+        SitePatterns constantOnly = new SitePatterns(alignment, null, 0, -1, 1, false, SitePatterns.CompressionType.CONSTANT_ONLY);
+        assertEquals(4 + 5, constantOnly.getPatternCount());
+        assertEquals(1.0, constantOnly.getPatternWeight(Nucleotides.A_STATE), 0.0);
+        assertEquals(1.0, constantOnly.getPatternWeight(Nucleotides.C_STATE), 0.0);
+
+        // with the default threshold (25%), one N or a compatible R still counts as constant, but not a Y or three Ns
+        SitePatterns ambiguousConstantOnly = new SitePatterns(alignment, null, 0, -1, 1, false, SitePatterns.CompressionType.AMBIGUOUS_CONSTANT_ONLY);
+        assertEquals(4 + 3, ambiguousConstantOnly.getPatternCount());
+        assertEquals(3.0, ambiguousConstantOnly.getPatternWeight(Nucleotides.A_STATE), 0.0);
+        assertEquals(1.0, ambiguousConstantOnly.getPatternWeight(Nucleotides.C_STATE), 0.0);
+        assertEquals(Nucleotides.A_STATE, ambiguousConstantOnly.getPatternIndex(1));
+        assertEquals(Nucleotides.A_STATE, ambiguousConstantOnly.getPatternIndex(2));
+        assertTrue(ambiguousConstantOnly.getPatternIndex(3) >= 4);
+        assertTrue(ambiguousConstantOnly.getPatternIndex(4) >= 4);
+
+        // the existing AMBIGUOUS_CONSTANT compression must apply the same threshold: the site with three Ns
+        // (50% ambiguous) is not merged into the constant A pattern
+        SitePatterns ambiguousConstant = new SitePatterns(alignment, null, 0, -1, 1, false, SitePatterns.CompressionType.AMBIGUOUS_CONSTANT);
+        assertEquals(3.0, ambiguousConstant.getPatternWeight(Nucleotides.A_STATE), 0.0);
+    }
+
+    private static int constantState(int[] pattern, int stateCount) {
+        for (int state : pattern) {
+            if (state != pattern[0] || state >= stateCount) {
+                return -1;
+            }
+        }
+        return pattern[0];
+    }
+
     public void testCodonSitePatterns() {
         SitePatterns patterns = new SitePatterns(alignment, null, 2, -1, 3);
         System.out.println("2nd position unique site patterns = " + patterns.getPatternCount());

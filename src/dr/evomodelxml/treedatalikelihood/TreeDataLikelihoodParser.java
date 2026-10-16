@@ -73,6 +73,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
     public static final String USE_PREORDER = "usePreOrder";
+    public static final String USE_HIERARCHICAL_REPRESENTATION = "useHierarchicalRepresentation";
     public static final String BRANCHRATE_DERIVATIVE = "branchRateDerivative";
     public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
     public static final String INITIAL_NUM_CATS = "initialNumCats";
@@ -134,6 +135,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     !System.getProperty("beagle.multipartition.extensions").equals("auto")) {
                 useBeagle3MultiPartition = Boolean.parseBoolean(System.getProperty("beagle.multipartition.extensions"));
             }
+        }
+
+        if (settings.useHierarchicalRepresentation()) {
+            useBeagle3MultiPartition = false;
         }
 
         boolean useJava = Boolean.parseBoolean(System.getProperty("java.only", "false"));
@@ -216,6 +221,11 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             for (int j = 0; j < bic; j++) {
                 PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
                 DataLikelihoodDelegate dataLikelihoodDelegate;
+                if (settings.useHierarchicalRepresentation() &&
+                        (phyloGeoFast || branchModels.get(i) instanceof RewardsAwareBranchModel)) {
+                    throw new XMLParseException(USE_HIERARCHICAL_REPRESENTATION
+                            + " is only available with the standard BEAGLE data likelihood delegate");
+                }
                 if (phyloGeoFast) {
                     final DiscreteDataLikelihoodDelegate.PartialTransform postOrderTransform =
                             DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
@@ -354,10 +364,12 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
         boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
         boolean useRewardAwareBranchModelDelegate = xo.getAttribute("useRewardAwareBranchModelDelegate", false);
+        boolean useHierarchicalRepresentation = xo.getAttribute(USE_HIERARCHICAL_REPRESENTATION, false);
         if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
             throw new RuntimeException("Need to specify derivative types.");
         }
-        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, useRewardAwareBranchModelDelegate);
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative,
+                useAmbiguities, useRewardAwareBranchModelDelegate, useHierarchicalRepresentation);
 
         int beagleInstanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
         String bic = System.getProperty(BEAGLE_INSTANCE_COUNT);
@@ -540,6 +552,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
             AttributeRule.newBooleanRule(PHYLOGEOFAST, true),
+            AttributeRule.newBooleanRule(USE_HIERARCHICAL_REPRESENTATION, true),
 
             // really it should be this set of elements or the PARTITION elements
             new OrRule(

@@ -54,7 +54,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
 
         HierarchicalSubstitutionModel.HierarchicalRateProvider hierarchicalRateProvider = xo.hasChildNamed(RATES_PARAMETER) ?
                 new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default((Parameter) xo.getElementFirstChild(RATES_PARAMETER), tree)
-                : new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(tree.getNodeCount(), 1.0), tree);
+                : new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(tree.getInternalNodeCount(), 1.0), tree);
 
         return new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL, hierarchicalRateProvider, freqModel);
     }

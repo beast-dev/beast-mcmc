@@ -211,7 +211,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
             }
 
-            if (settings.useRewardAwareBranchModelDelegate) {
+            if (settings.useHierarchicalRepresentation) {
+                if (!BeagleFunctionality.IS_HIERARCHICAL_SUPPORTED()) {
+                    throw new IllegalArgumentException("The hierarchical representation needs BEAGLE 4.3 or later, found "
+                            + BeagleInfo.getVersion());
+                }
+                if (settings.usePreOrder) {
+                    throw new IllegalArgumentException(
+                            "Pre-order partials and gradients are not yet available with the hierarchical representation");
+                }
+                evolutionaryProcessDelegate = new HierarchicalSubstitutionEvolutionaryProcess(tree, branchModel, siteRateModel);
+            } else if (settings.useRewardAwareBranchModelDelegate) {
                 evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree,
                         (TransitionMatrixProviderBranchModel) branchModel, 0, extraBufferCount, settings);
             }  else if (settings.branchInfinitesimalDerivative) {
@@ -308,6 +318,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
             }
 
+            if (this.rescalingScheme == PartialsRescalingScheme.AUTO && settings.useHierarchicalRepresentation) {
+                throw new IllegalArgumentException(
+                        "Automatic rescaling is not yet available with the hierarchical representation");
+            }
+
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO) {
                 preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();
                 useAutoScaling = true;
@@ -392,6 +407,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 requirementFlags |= BeagleFlag.PREORDER_TRANSPOSE_AUTO.getMask();
             }
 
+            if (settings.useHierarchicalRepresentation) {
+                requirementFlags |= BeagleFlag.HIERARCHICAL_REPRESENTATION.getMask();
+            }
+
             // start auto resource selection
             String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
             if (Boolean.parseBoolean(resourceAuto)) {
@@ -451,6 +470,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;
+
+            if (settings.useHierarchicalRepresentation && (instanceDetails == null ||
+                    (instanceDetails.getFlags() & BeagleFlag.HIERARCHICAL_REPRESENTATION.getMask()) == 0)) {
+                throw new IllegalArgumentException("No BEAGLE resource provides the hierarchical representation");
+            }
 
             if (instanceDetails != null) {
                 resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());

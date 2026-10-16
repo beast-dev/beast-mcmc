@@ -64,6 +64,10 @@ public class BeagleFunctionality {
         return checkGTEVersion(new int[]{3,2});
     }
 
+    public static boolean IS_HIERARCHICAL_SUPPORTED() {
+        return checkGTEVersion(new int[]{4,3});
+    }
+
     static boolean IS_MULTI_PARTITION_COMPATIBLE() {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
         return checkGTEVersion(new int[]{3});

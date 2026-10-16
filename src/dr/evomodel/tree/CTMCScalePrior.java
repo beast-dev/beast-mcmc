@@ -272,8 +272,8 @@ public class CTMCScalePrior extends AbstractModelLikelihood
      * may have changed. A node event marks the node's branch and its children's branches (as in
      * TreeDataLikelihood); any other event marks every branch. The tree length is the sum of the
      * branch lengths in node order, the same sum as TreeUtils.getTreeLength. Changes since the last
-     * store are journaled so that restore can put them back. Trees other than DefaultTreeModel are
-     * always recalculated in full.
+     * store are journaled so that restore can put them back. Trees other than DefaultTreeModel and
+     * FastTreeModel are always recalculated in full.
      */
     private static class BranchLengths {
         final TreeModel tree;
@@ -296,7 +296,8 @@ public class CTMCScalePrior extends AbstractModelLikelihood
 
         BranchLengths(TreeModel tree) {
             this.tree = tree;
-            this.incremental = tree instanceof DefaultTreeModel;
+            // these tree models fire a node event for every change to a node's height or links
+            this.incremental = tree instanceof DefaultTreeModel || tree instanceof FastTreeModel;
             int nodeCount = tree.getNodeCount();
             lengths = new double[nodeCount];
             isDirty = new boolean[nodeCount];

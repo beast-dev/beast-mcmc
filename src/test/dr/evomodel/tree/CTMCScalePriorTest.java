@@ -39,6 +39,8 @@ import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.tree.CTMCScalePrior;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.FastTreeModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.GammaFunction;
@@ -48,7 +50,8 @@ import junit.framework.TestCase;
 /**
  * Checks that CTMCScalePrior, which keeps the tree length up to date from tree changed events, gives
  * exactly the same log density as calculating the tree length in full, through store/accept/restore
- * cycles of tree moves (including root changes and moves of all heights) and moves of the scale.
+ * cycles of tree moves (including root changes and moves of all heights) and moves of the scale,
+ * with a DefaultTreeModel and with a FastTreeModel.
  */
 public class CTMCScalePriorTest extends TestCase {
 
@@ -57,6 +60,14 @@ public class CTMCScalePriorTest extends TestCase {
     }
 
     public void testIncrementalTreeLength() {
+        run(false);
+    }
+
+    public void testIncrementalTreeLengthWithFastTreeModel() {
+        run(true);
+    }
+
+    private void run(boolean fast) {
         MathUtils.setSeed(1234);
 
         Taxa taxa = new Taxa();
@@ -69,20 +80,34 @@ public class CTMCScalePriorTest extends TestCase {
         ConstantPopulation population = new ConstantPopulation(Units.Type.YEARS);
         population.setN0(1.0);
         Tree start = new CoalescentSimulator().simulateTree(taxa, population);
-        DefaultTreeModel tree = new DefaultTreeModel("treeModel", start);
+        TreeModel tree;
+        Parameter internalHeights;
+        Parameter allInternalHeights;
+        Parameter rootHeight;
+        if (fast) {
+            FastTreeModel fastTree = new FastTreeModel("treeModel", start, false, false);
+            internalHeights = fastTree.createNodeHeightsParameter(false, true, false);
+            allInternalHeights = fastTree.createNodeHeightsParameter(true, true, false);
+            rootHeight = fastTree.getRootHeightParameter();
+            tree = fastTree;
+        } else {
+            DefaultTreeModel defaultTree = new DefaultTreeModel("treeModel", start);
+            internalHeights = defaultTree.createNodeHeightsParameter(false, true, false);
+            allInternalHeights = defaultTree.createNodeHeightsParameter(true, true, false);
+            rootHeight = defaultTree.getRootHeightParameter();
+            tree = defaultTree;
+        }
 
         Parameter scale = new Parameter.Default(0.001);
         scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         CTMCScalePrior prior = new CTMCScalePrior("ctmcScalePrior", scale, tree, null, false, null, false);
 
-        Parameter internalHeights = tree.createNodeHeightsParameter(false, true, false);
-        Parameter allInternalHeights = tree.createNodeHeightsParameter(true, true, false);
         SimpleMCMCOperator[] operators = {
                 new SubtreeLeapOperator(tree, 1.0, 0.5, SubtreeLeapOperator.DistanceKernelType.NORMAL,
                         AdaptationMode.ADAPTATION_OFF, 0.234),
                 new FixedHeightSubtreePruneRegraftOperator(tree, 1.0),
                 new UniformOperator(internalHeights, 1.0),
-                new ScaleOperator(tree.getRootHeightParameter(), 0.75, AdaptationMode.ADAPTATION_OFF, 1.0),
+                new ScaleOperator(rootHeight, 0.75, AdaptationMode.ADAPTATION_OFF, 1.0),
                 new UpDownOperator(new Scalable[]{new Scalable.Default(allInternalHeights)},
                         new Scalable[]{new Scalable.Default(scale)}, 0.75, 1.0, AdaptationMode.ADAPTATION_OFF),
                 new ScaleOperator(scale, 0.75, AdaptationMode.ADAPTATION_OFF, 1.0)

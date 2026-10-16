@@ -1,6 +1,6 @@
 # FastTreeModel: design
 
-Branch: `optimization_fast_tree_model` (from `main`). Status: design, for agreement before implementation.
+Branch: `optimization_fast_tree_model` (from `main`). Status: agreed and implemented (see Decisions at the end).
 
 ## Aim
 
@@ -148,7 +148,10 @@ FastTreeModel extends `TreeModel` and implements the same `Tree`/`MutableTree` m
 
 These throw `UnsupportedOperationException`:
 
-- node rates: `getNodeRate`, `setNodeRate`, `createNodeRatesParameter`, `hasRates` returns false;
+- node rates: `setNodeRate`, `createNodeRatesParameter`; `hasRates` returns false. (`getNodeRate`
+  returns 1.0, and `getNodeAttribute`/`getNodeAttributeNames` behave as in a `DefaultTreeModel` without
+  node rates, because generic tree copying, such as `new FlexibleTree(tree)` and `SimpleNode`, asks
+  every tree for its node rates);
 - node traits: `getNodeTrait`, `setNodeTrait`, `getMultivariateNodeTrait`, `setMultivariateTrait`,
   `getNodeTraitParameter`, `getTraitMap`, `swapAllTraits`, `createNodeTraitsParameter`,
   `createNodeTraitsParameterAsMatrix`, `hasNodeTraits` returns false;
@@ -225,3 +228,27 @@ cases that use node rates or traits, or should be checked individually.
 2. Should the per-slot `SlotHeightParameter`s be created lazily (only when a parser or operator asks
    for a height parameter)? Most analyses ask for the root and all internal heights anyway, so this
    would mainly help analyses that use only tree moves.
+
+## Decisions
+
+1. The implementation is chosen with an attribute: `<treeModel id="treeModel" implementation="fast">`
+   (`implementation="default"` or no attribute gives `DefaultTreeModel`). `TreeModelParser` creates
+   either class and its return type is now `TreeModel`, so `<treeModel idref=…/>` references work for
+   both. The parser may later default to the fast implementation.
+2. The per-slot height parameters are created when the tree model is created: most XMLs use the
+   up/down operator on all node heights anyway.
+3. Node rates and node traits are not supported (see above). `nodeRates`, `nodeTraits` and `leafTrait`
+   elements give a parse error with `implementation="fast"`.
+
+## Components that still require a DefaultTreeModel
+
+Found while implementing; each would need a small change outside FastTreeModel to accept any
+`TreeModel` (not done yet):
+
+- `subtreeSlide` (`SubtreeSlideOperator` takes a `DefaultTreeModel`, for its optional rate and trait
+  swapping), which older BEAUti XMLs use;
+- `EfficientBirthDeathLikelihood` (`birthDeathLikelihood`), which checks for a `DefaultTreeModel`
+  but then only uses `TreeModel` methods;
+- `CTMCScalePrior`'s incremental tree length (branch `optimization_ctmc_prior`) is only enabled for
+  `DefaultTreeModel`; FastTreeModel fires the same events, so it could be enabled for both;
+- the legacy components that use node rates or traits.

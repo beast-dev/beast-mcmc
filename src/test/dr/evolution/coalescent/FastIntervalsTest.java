@@ -94,6 +94,8 @@ public class FastIntervalsTest extends TestCase {
                 stored = tmp;
                 tips = storedTips;
                 internal = storedInternal;
+                // the restored copy must be complete without adding the events again
+                assertSameAsFullSort(current, tips, internal);
                 addEvents(current, tips, internal, true);
                 assertSameAsFullSort(current, tips, internal);
             }
@@ -184,5 +186,28 @@ public class FastIntervalsTest extends TestCase {
             assertEquals("lineages " + k, expectedLineages[k], intervals.getLineageCount(k));
         }
         assertEquals(sampleTimes[0], intervals.getStartTime(), 0.0);
+        assertEquals(coalescentTimes[coalescentTimes.length - 1] - sampleTimes[0], intervals.getTotalDuration(), 0.0);
+    }
+
+    /**
+     * A copy taken before the intervals have been calculated calculates them from the source's events.
+     */
+    public void testCopyBeforeCalculation() {
+        double[] tips = new double[TIPS];
+        double[] internal = new double[INTERNAL];
+        FastIntervals source = new FastIntervals(TIPS, INTERNAL);
+        FastIntervals copy = new FastIntervals(TIPS, INTERNAL);
+        for (int iteration = 0; iteration < 100; iteration++) {
+            for (int i = 0; i < TIPS; i++) {
+                tips[i] = random.nextInt(10) * 0.5;
+            }
+            for (int i = 0; i < INTERNAL; i++) {
+                internal[i] = 5.0 + random.nextDouble() * 20.0;
+            }
+            addEvents(source, tips, internal, iteration % 2 == 0);
+            copy.copyIntervals(source);
+            assertSameAsFullSort(copy, tips, internal);
+            assertSameAsFullSort(source, tips, internal);
+        }
     }
 }

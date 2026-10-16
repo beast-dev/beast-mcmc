@@ -76,11 +76,20 @@ public class FastIntervals implements MutableIntervalList {
         assert intervalCount == source.intervalCount;
 
         startTime = source.startTime;
+        finishTime = source.finishTime;
 
         if (intervalsKnown) {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);
             System.arraycopy(source.intervalTypes, 0, intervalTypes, 0, intervals.length);
             System.arraycopy(source.lineageCounts, 0, lineageCounts, 0, intervals.length);
+            System.arraycopy(source.eventTimes, 0, eventTimes, 0, eventTimes.length);
+        } else {
+            // the copy will calculate its intervals from the events, so it needs the source's events
+            System.arraycopy(source.sampleTimes, 0, sampleTimes, 0, sampleTimes.length);
+            System.arraycopy(source.coalescentTimes, 0, coalescentTimes, 0, coalescentTimes.length);
+            cumulativeSampleCount = source.cumulativeSampleCount;
+            cumulativeCoalescentCount = source.cumulativeCoalescentCount;
+            eventsInNodeOrder = source.eventsInNodeOrder;
         }
 
         // keep the sort orders current, so the copy can update incrementally if it is swapped back in

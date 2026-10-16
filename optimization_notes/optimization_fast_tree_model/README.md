@@ -1,10 +1,26 @@
 # optimization_fast_tree_model
 
-Branch: `optimization_fast_tree_model` (from `main`)
+Branch: `optimization_fast_tree_model`, from `main`, with `optimization_ctmc_prior` merged in (so it
+must be merged after that branch).
 
 New: `src/dr/evomodel/tree/FastTreeModel.java` and `src/test/dr/evomodel/tree/FastTreeModelTest.java`.
-Changed: `src/dr/evomodelxml/tree/TreeModelParser.java` (the `implementation` attribute; returns
-`TreeModel`). `DefaultTreeModel` is unchanged.
+
+Changed:
+
+- `src/dr/evomodelxml/tree/TreeModelParser.java`: the `implementation` attribute; returns `TreeModel`.
+- `src/dr/evomodel/tree/CTMCScalePrior.java`: the incremental tree length (from
+  `optimization_ctmc_prior`) is used with `FastTreeModel` as well as `DefaultTreeModel`;
+  `CTMCScalePriorTest` runs with both.
+- `src/dr/evomodel/operators/SubtreeSlideOperator.java` and its parser: the operator takes any
+  `TreeModel`. It no longer swaps node rates or node traits (on root changes, or the optional random
+  swaps); `swapInRandomRate="true"` or `swapInRandomTrait="true"` gives a parse error. With no node
+  rates or traits this changes nothing; the few legacy XMLs that combine `subtreeSlide` with node
+  traits (e.g. the RacRABV continuous phylogeography examples) will give different (still valid)
+  results.
+- `src/dr/evomodel/birthdeath/EfficientBirthDeathLikelihood.java`: accepts any `TreeModel` (it only
+  checked for a `DefaultTreeModel`).
+
+`DefaultTreeModel` is unchanged.
 
 The design, the decisions taken, and the components that still require a `DefaultTreeModel` are in
 [DESIGN.md](DESIGN.md).
@@ -62,12 +78,14 @@ MCMC logs with the same seed are identical (apart from the header lines) between
 | the same plus narrow and wide exchange, Wilson–Balding, root height scale, a sampled tip date and a tip with an uncertain date | 500,000 | 1.36 min | 34.7 s |
 | the same plus a birth-death tree prior (`Gernhard08BirthDeathModel`) | 500,000 | 1.52 min | 42.9 s |
 | `benchmark-big-2-min` (BEAGLE tree likelihood; parameter and tree logs) | 50,000 | – | 39.9 s |
+| the operators XML plus `subtreeSlide` (default run with `main`'s operator) | 500,000 | 1.32 min | 35.7 s |
+| the birth-death XML plus `birthDeathLikelihood` (an episodic birth-death-sampling model; default run with `main`'s likelihood) | 500,000 | 2.05 min | 1.18 min |
 
 and for the 10,000,000-state runs below.
 
 ## Performance
 
-Machine: Apple M5 Max, OpenJDK 26.0.1, one run at a time, all four runs back to back.
+Machine: Apple M5 Max, OpenJDK 26.0.1, one run at a time.
 
 ### Coalescent-only benchmark with a CTMC scale prior (`prior-only-ctmc-1610.xml`)
 
@@ -80,32 +98,31 @@ and a clock rate under the CTMC scale reference prior (no sequence data or tree 
 | Build | Tree model | Run time | min / million states | vs `main` default |
 |---|---|---|---|---|
 | `main` | default | 20.96 min | 2.10 | – |
-| `main` | fast | 9.01 min | 0.90 | **57% less time** (2.3×) |
-| combined | default | 7.08 min | 0.71 | 66% less time (3.0×) |
-| combined | fast | 5.24 min | 0.52 | **75% less time** (4.0×) |
+| `main` + FastTreeModel (without the CTMC change) | fast | 9.73 min | 0.97 | 54% less time (2.2×) |
+| this branch | fast | 8.82 min | 0.88 | **58% less time** (2.4×) |
+| combined | default | 6.95 min | 0.70 | 67% less time (3.0×) |
+| combined + this branch | fast | 4.14 min | 0.41 | **80% less time** (5.1×) |
 
-All four final log lines are identical (joint −34.5964 at state 10,000,000).
+The two rows for FastTreeModel on `main` were run back to back (run times on this machine vary by up
+to about 5% between sessions). All final log lines are identical (joint −34.5964 at state 10,000,000).
 
 On its own, FastTreeModel gives about the same saving on `main` as the three tree and parameter store
 branches together, without changing `DefaultTreeModel` or `Parameter`.
 
-### Where the time goes now (combined, fast; profile of 2,000,000 states)
+### Where the time goes now (profiles of 2,000,000 states)
 
-| | Share of run time |
-|---|---|
-| storing the model graph (`storeModelState`) | 13% (restore and accept < 1%) |
-| CTMC scale prior: full tree length (`TreeUtils.getTreeLength`) | 18% |
-| coalescent likelihood (TreeIntervals adding every node's height, FastIntervals, the likelihood itself) | 52% |
-| operators | 7% |
+With the combined branches and FastTreeModel (before the CTMC prior used its incremental tree length
+with FastTreeModel), storing the model graph was 13% of the run time (restore and accept under 1%), the
+CTMC prior's full tree length 18%, the coalescent likelihood 52% and the operators 7%. Enabling the
+CTMC prior's incremental tree length removed most of that 18% (5.24 → 4.14 minutes).
 
-The CTMC prior recalculates the whole tree length here because its incremental cache (branch
-`optimization_ctmc_prior`) is only enabled for `DefaultTreeModel`. FastTreeModel fires the same events,
-so enabling it for FastTreeModel too would remove most of that 18%.
+On this branch alone (with `main`'s FastIntervals), sorting the coalescent intervals takes over half of
+the run time (`optimization_fast_intervals` addresses this) and the CTMC prior 3%.
 
 To run:
 
 ```
-beast -seed 1234 -overwrite prior-only-ctmc-1610.xml
+beast -seed 1234 -overwrite prior-only-ctmc-1610-fast.xml
 ```
 
-(`prior-only-ctmc-1610-fast.xml` is the same XML with `implementation="fast"`.)
+(`prior-only-ctmc-1610.xml` is the same XML with the default tree model.)

@@ -240,15 +240,15 @@ cases that use node rates or traits, or should be checked individually.
 3. Node rates and node traits are not supported (see above). `nodeRates`, `nodeTraits` and `leafTrait`
    elements give a parse error with `implementation="fast"`.
 
-## Components that still require a DefaultTreeModel
+## Components that required a DefaultTreeModel
 
-Found while implementing; each would need a small change outside FastTreeModel to accept any
-`TreeModel` (not done yet):
+Found while implementing, and changed on this branch to accept any `TreeModel`:
 
-- `subtreeSlide` (`SubtreeSlideOperator` takes a `DefaultTreeModel`, for its optional rate and trait
-  swapping), which older BEAUti XMLs use;
-- `EfficientBirthDeathLikelihood` (`birthDeathLikelihood`), which checks for a `DefaultTreeModel`
-  but then only uses `TreeModel` methods;
-- `CTMCScalePrior`'s incremental tree length (branch `optimization_ctmc_prior`) is only enabled for
-  `DefaultTreeModel`; FastTreeModel fires the same events, so it could be enabled for both;
-- the legacy components that use node rates or traits.
+- `subtreeSlide` (`SubtreeSlideOperator` took a `DefaultTreeModel` to swap node rates and traits; it
+  no longer does);
+- `EfficientBirthDeathLikelihood` (`birthDeathLikelihood`), which only checked for a
+  `DefaultTreeModel`;
+- `CTMCScalePrior`'s incremental tree length (from `optimization_ctmc_prior`, merged into this branch)
+  is now used with `FastTreeModel` too.
+
+The legacy components that use node rates or node traits still require a `DefaultTreeModel`.

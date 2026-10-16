@@ -1,0 +1,418 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<!-- Gradient of sum_r log N(y_r | leafTraits, P) with respect to the MVN mean leafTraits: P * sum_r (y_r - leafTraits) -->
+
+	<taxa id="taxa">
+		<taxon id="A">
+			<attr name="X">1.0 2.0</attr>
+		</taxon>
+		<taxon id="B">
+			<attr name="X">-1.0 0.5</attr>
+		</taxon>
+		<taxon id="C">
+			<attr name="X">3.0 -2.0</attr>
+		</taxon>
+	</taxa>
+
+	<newick id="tree">
+		((A:1,B:1):1,C:2);
+	</newick>
+
+	<treeModel id="treeModel">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2"
+					asMatrix="true">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+	<multivariateDiffusionModel id="diffusionModel">
+		<precisionMatrix>
+			<matrixParameter>
+				<parameter value="1.0 0.5"/>
+				<parameter value="0.5 2.0"/>
+			</matrixParameter>
+		</precisionMatrix>
+	</multivariateDiffusionModel>
+
+	<traitDataLikelihood id="traitLikelihood" traitName="X">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+		<conjugateRootPrior>
+			<meanParameter>
+				<parameter value="0.0 0.0"/>
+			</meanParameter>
+			<priorSampleSize>
+				<parameter value="10.0"/>
+			</priorSampleSize>
+		</conjugateRootPrior>
+	</traitDataLikelihood>
+
+	<!-- Shows the leafTraits order (A, B, C) that the repetitions below assume -->
+	<report>
+		<parameter idref="leafTraits"/>
+	</report>
+
+	<parameter id="repetition.1" value="1.1 2.3  -0.9 0.4  2.7 -2.2"/>
+	<parameter id="repetition.2" value="0.8 1.9  -1.3 0.7  3.1 -1.6"/>
+	<parameter id="repetition.3" value="1.2 2.1  -1.0 0.2  3.4 -2.1"/>
+
+	<!-- sum_r (y_r - leafTraits) = (0.1, 0.3, -0.2, -0.2, 0.2, 0.1); expected gradients are P times this -->
+
+	<!-- Dense (banded) precision -->
+	<multivariateDistributionLikelihood id="banded.density">
+		<distribution>
+			<multivariateNormalDistributionModel>
+				<meanParameter>
+					<parameter idref="leafTraits"/>
+				</meanParameter>
+				<precisionParameter>
+					<matrixParameter>
+						<parameter value="2.0 0.4 0.0 0.0 0.0 0.0"/>
+						<parameter value="0.4 1.5 0.4 0.0 0.0 0.0"/>
+						<parameter value="0.0 0.4 3.0 0.4 0.0 0.0"/>
+						<parameter value="0.0 0.0 0.4 2.5 0.4 0.0"/>
+						<parameter value="0.0 0.0 0.0 0.4 1.0 0.4"/>
+						<parameter value="0.0 0.0 0.0 0.0 0.4 2.0"/>
+					</matrixParameter>
+				</precisionParameter>
+			</multivariateNormalDistributionModel>
+		</distribution>
+		<data>
+			<parameter idref="repetition.1"/>
+			<parameter idref="repetition.2"/>
+			<parameter idref="repetition.3"/>
+		</data>
+	</multivariateDistributionLikelihood>
+
+	<gradient id="banded.gradient">
+		<multivariateDistributionLikelihood idref="banded.density"/>
+		<parameter idref="leafTraits"/>
+	</gradient>
+
+	<cachedReport id="banded.report">
+		<report>
+			<gradient idref="banded.gradient"/>
+		</report>
+	</cachedReport>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+		<message>
+			Check banded-precision log density against hand-computed value
+		</message>
+		<actual regex="likelihood:\s+(.*)\n">
+			<likelihood>
+				<multivariateDistributionLikelihood idref="banded.density"/>
+			</likelihood>
+		</actual>
+		<expected>
+			-12.0974300614984
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check banded-precision gradient wrt mean against hand-computed value
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="banded.report"/>
+		</actual>
+		<expected>
+			0.32 0.41 -0.56 -0.5 0.16 0.28
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check banded-precision gradient wrt mean against numerical gradient
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="banded.report"/>
+		</actual>
+		<expected regex="numeric : (.*?)\n">
+			<cachedReport idref="banded.report"/>
+		</expected>
+	</assertEqual>
+
+	<!-- Diagonal precision -->
+	<multivariateDistributionLikelihood id="diagonal.density">
+		<distribution>
+			<multivariateNormalDistributionModel>
+				<meanParameter>
+					<parameter idref="leafTraits"/>
+				</meanParameter>
+				<precisionParameter>
+					<diagonalMatrix>
+						<parameter value="2.0 1.5 3.0 2.5 1.0 2.0"/>
+					</diagonalMatrix>
+				</precisionParameter>
+			</multivariateNormalDistributionModel>
+		</distribution>
+		<data>
+			<parameter idref="repetition.1"/>
+			<parameter idref="repetition.2"/>
+			<parameter idref="repetition.3"/>
+		</data>
+	</multivariateDistributionLikelihood>
+
+	<gradient id="diagonal.gradient">
+		<multivariateDistributionLikelihood idref="diagonal.density"/>
+		<parameter idref="leafTraits"/>
+	</gradient>
+
+	<cachedReport id="diagonal.report">
+		<report>
+			<gradient idref="diagonal.gradient"/>
+		</report>
+	</cachedReport>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+		<message>
+			Check diagonal-precision log density against hand-computed value
+		</message>
+		<actual regex="likelihood:\s+(.*)\n">
+			<likelihood>
+				<multivariateDistributionLikelihood idref="diagonal.density"/>
+			</likelihood>
+		</actual>
+		<expected>
+			-11.668399863028629
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check diagonal-precision gradient wrt mean against hand-computed value
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="diagonal.report"/>
+		</actual>
+		<expected>
+			0.2 0.45 -0.6 -0.5 0.2 0.2
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check diagonal-precision gradient wrt mean against numerical gradient
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="diagonal.report"/>
+		</actual>
+		<expected regex="numeric : (.*?)\n">
+			<cachedReport idref="diagonal.report"/>
+		</expected>
+	</assertEqual>
+
+	<!-- Diagonal precision with per-coordinate values shared across taxa -->
+	<multivariateDistributionLikelihood id="duplicated.density">
+		<distribution>
+			<multivariateNormalDistributionModel>
+				<meanParameter>
+					<parameter idref="leafTraits"/>
+				</meanParameter>
+				<precisionParameter>
+					<diagonalMatrix>
+						<duplicatedParameter>
+							<parameter value="2.0 1.5"/>
+							<copies>
+								<parameter value="3"/>
+							</copies>
+						</duplicatedParameter>
+					</diagonalMatrix>
+				</precisionParameter>
+			</multivariateNormalDistributionModel>
+		</distribution>
+		<data>
+			<parameter idref="repetition.1"/>
+			<parameter idref="repetition.2"/>
+			<parameter idref="repetition.3"/>
+		</data>
+	</multivariateDistributionLikelihood>
+
+	<gradient id="duplicated.gradient">
+		<multivariateDistributionLikelihood idref="duplicated.density"/>
+		<parameter idref="leafTraits"/>
+	</gradient>
+
+	<cachedReport id="duplicated.report">
+		<report>
+			<gradient idref="duplicated.gradient"/>
+		</report>
+	</cachedReport>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+		<message>
+			Check duplicated-precision log density against hand-computed value
+		</message>
+		<actual regex="likelihood:\s+(.*)\n">
+			<likelihood>
+				<multivariateDistributionLikelihood idref="duplicated.density"/>
+			</likelihood>
+		</actual>
+		<expected>
+			-12.392138298677615
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check duplicated-precision gradient wrt mean against hand-computed value
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="duplicated.report"/>
+		</actual>
+		<expected>
+			0.2 0.45 -0.4 -0.3 0.4 0.15
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check duplicated-precision gradient wrt mean against numerical gradient
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="duplicated.report"/>
+		</actual>
+		<expected regex="numeric : (.*?)\n">
+			<cachedReport idref="duplicated.report"/>
+		</expected>
+	</assertEqual>
+
+	<!-- Diagonal precision with a single value -->
+	<multivariateDistributionLikelihood id="single.density">
+		<distribution>
+			<multivariateNormalDistributionModel>
+				<meanParameter>
+					<parameter idref="leafTraits"/>
+				</meanParameter>
+				<precisionParameter>
+					<diagonalMatrix>
+						<duplicatedParameter>
+							<parameter value="2.5"/>
+							<copies>
+								<parameter value="6"/>
+							</copies>
+						</duplicatedParameter>
+					</diagonalMatrix>
+				</precisionParameter>
+			</multivariateNormalDistributionModel>
+		</distribution>
+		<data>
+			<parameter idref="repetition.1"/>
+			<parameter idref="repetition.2"/>
+			<parameter idref="repetition.3"/>
+		</data>
+	</multivariateDistributionLikelihood>
+
+	<gradient id="single.gradient">
+		<multivariateDistributionLikelihood idref="single.density"/>
+		<parameter idref="leafTraits"/>
+	</gradient>
+
+	<cachedReport id="single.report">
+		<report>
+			<gradient idref="single.gradient"/>
+		</report>
+	</cachedReport>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+		<message>
+			Check single-precision log density against hand-computed value
+		</message>
+		<actual regex="likelihood:\s+(.*)\n">
+			<likelihood>
+				<multivariateDistributionLikelihood idref="single.density"/>
+			</likelihood>
+		</actual>
+		<expected>
+			-9.431777010816711
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check single-precision gradient wrt mean against hand-computed value
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="single.report"/>
+		</actual>
+		<expected>
+			0.25 0.75 -0.5 -0.5 0.5 0.25
+		</expected>
+	</assertEqual>
+
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check single-precision gradient wrt mean against numerical gradient
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="single.report"/>
+		</actual>
+		<expected regex="numeric : (.*?)\n">
+			<cachedReport idref="single.report"/>
+		</expected>
+	</assertEqual>
+
+	<!-- The sampling-density gradient combines with the tree gradient for HMC on leafTraits -->
+	<jointGradient id="joint.gradient">
+		<traitGradientOnTree traitName="X">
+			<traitDataLikelihood idref="traitLikelihood"/>
+			<parameter idref="leafTraits"/>
+		</traitGradientOnTree>
+		<gradient idref="banded.gradient"/>
+	</jointGradient>
+
+	<cachedReport id="joint.report">
+		<report>
+			<jointGradient idref="joint.gradient"/>
+		</report>
+	</cachedReport>
+
+	<assertEqual tolerance="1e-6" verbose="true" charactersToStrip="\[\],">
+		<message>
+			Check joint tree + sampling-density gradient wrt leafTraits against numerical gradient
+		</message>
+		<actual regex="analytic: (.*?)\n">
+			<cachedReport idref="joint.report"/>
+		</actual>
+		<expected regex="numeric : (.*?)\n">
+			<cachedReport idref="joint.report"/>
+		</expected>
+	</assertEqual>
+
+	<operators id="operators">
+		<hamiltonianMonteCarloOperator weight="1" nSteps="5" stepSize="0.1" autoOptimize="false"
+				gradientCheckCount="1" gradientCheckTolerance="1e-3">
+			<jointGradient idref="joint.gradient"/>
+			<parameter idref="leafTraits"/>
+		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<mcmc id="mcmc" chainLength="10">
+		<joint id="joint">
+			<traitDataLikelihood idref="traitLikelihood"/>
+			<multivariateDistributionLikelihood idref="banded.density"/>
+		</joint>
+		<operators idref="operators"/>
+		<log logEvery="5">
+			<column label="joint" dp="4" width="12">
+				<joint idref="joint"/>
+			</column>
+		</log>
+	</mcmc>
+
+</beast>

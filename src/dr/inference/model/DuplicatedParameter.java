@@ -66,6 +66,10 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
         return parameter.getDimension() * copies;
     }
 
+    public Parameter getDuplicatedParameter() {
+        return parameter;
+    }
+
     protected void storeValues() {
         parameter.storeParameterValues();
     }

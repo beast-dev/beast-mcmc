@@ -30,6 +30,7 @@ package dr.inferencexml.hmc;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.model.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -60,6 +61,14 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
             }
 
             final GradientProvider provider = (GradientProvider) mdl.getDistribution();
+
+            if (mdl.getDistribution() instanceof MultivariateNormalDistributionModel) {
+                final Parameter mean = ((MultivariateNormalDistributionModel) mdl.getDistribution()).getMeanParameter();
+                if (xo.getChild(Parameter.class) == mean) {
+                    return new GradientWrtParameterProvider.GaussianMeanWrapper(provider, mean, mdl.getDataList(), mdl);
+                }
+            }
+
             Parameter parameter = mdl.getDataParameter();
 
             if (parameter == null) {

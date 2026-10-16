@@ -55,14 +55,19 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         addVariable(precParameter);
 
         Parameter single = null;
+        Parameter diagonal = null;
         if (precParameter instanceof DiagonalMatrix) {
             DiagonalMatrix dm = (DiagonalMatrix) precParameter;
-            if (dm.getDiagonalParameter() instanceof DuplicatedParameter) {
+            if (dm.getDiagonalParameter() instanceof DuplicatedParameter &&
+                    ((DuplicatedParameter) dm.getDiagonalParameter()).getDuplicatedParameter().getDimension() == 1) {
                 single = dm.getDiagonalParameter();
+            } else {
+                diagonal = dm.getDiagonalParameter();
             }
         }
         hasSinglePrecision = (single != null);
         singlePrecision = single;
+        diagonalPrecision = diagonal;
 
         distribution = createNewDistribution();
         distributionKnown = true;
@@ -119,16 +124,21 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         distributionKnown = false;
+        if (variable != mean) {
+            precisionKnown = false;
+        }
     }
 
     protected void storeState() {
         storedDistribution = distribution;
         storedDistributionKnown = distributionKnown;
+        storedPrecisionKnown = precisionKnown;
     }
 
     protected void restoreState() {
         distributionKnown = storedDistributionKnown;
         distribution = storedDistribution;
+        precisionKnown = storedPrecisionKnown;
     }
 
     protected void acceptState() {
@@ -158,8 +168,15 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     // **************************************************************
 
     private MultivariateNormalDistribution createNewDistribution() {
+        if (precisionKnown) {
+            // Only the mean changed; keep the precision and its (for dense precision, O(dim^3)) log-determinant
+            return distribution.withMean(getMean());
+        }
+        precisionKnown = true;
         if (hasSinglePrecision) {
             return new MultivariateNormalDistribution(getMean(), singlePrecision.getParameterValue(0));
+        } else if (diagonalPrecision != null) {
+            return new MultivariateNormalDistribution(getMean(), diagonalPrecision.getParameterValues());
         } else {
             return new MultivariateNormalDistribution(getMean(), getScaleMatrix());
         }
@@ -169,11 +186,14 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     private final MatrixParameter precision;
     private final boolean hasSinglePrecision;
     private final Parameter singlePrecision;
+    private final Parameter diagonalPrecision;
     private MultivariateNormalDistribution distribution;
     private MultivariateNormalDistribution storedDistribution;
 
     private boolean distributionKnown;
     private boolean storedDistributionKnown;
+    private boolean precisionKnown;
+    private boolean storedPrecisionKnown;
 
     // RandomGenerator interface
     public double[] nextRandom() {

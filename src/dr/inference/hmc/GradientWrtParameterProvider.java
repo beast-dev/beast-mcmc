@@ -33,8 +33,10 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.util.Attribute;
 import dr.xml.Reportable;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -135,6 +137,70 @@ public interface GradientWrtParameterProvider {
             return GradientWrtParameterProvider.getReportAndCheckForError(this,
                     parameter.getBounds().getLowerLimit(0),
                     parameter.getBounds().getUpperLimit(0), null);
+        }
+    }
+
+    class GaussianMeanWrapper implements GradientWrtParameterProvider, Reportable {
+
+        final GradientProvider provider;
+        final Parameter mean;
+        final List<Attribute<double[]>> dataList;
+        final Likelihood likelihood;
+
+        public GaussianMeanWrapper(GradientProvider provider, Parameter mean,
+                                   List<Attribute<double[]>> dataList, Likelihood likelihood) {
+            this.provider = provider;
+            this.mean = mean;
+            this.dataList = dataList;
+            this.likelihood = likelihood;
+        }
+
+        @Override
+        public Likelihood getLikelihood() {
+            return likelihood;
+        }
+
+        @Override
+        public Parameter getParameter() {
+            return mean;
+        }
+
+        @Override
+        public int getDimension() {
+            return mean.getDimension();
+        }
+
+        @Override
+        public double[] getGradientLogDensity() {
+
+            // d/dx log N(x | mean, P) = P (mean - x) is linear in x, so
+            // d/d mean sum_r log N(x_r | mean, P) = P sum_r (x_r - mean) = -R * d/dx log N(xBar | mean, P)
+            final int dim = mean.getDimension();
+            final int R = dataList.size();
+
+            final double[] xBar = new double[dim];
+            for (Attribute<double[]> data : dataList) {
+                final double[] x = data.getAttributeValue();
+                for (int i = 0; i < dim; ++i) {
+                    xBar[i] += x[i];
+                }
+            }
+            for (int i = 0; i < dim; ++i) {
+                xBar[i] /= R;
+            }
+
+            final double[] gradient = provider.getGradientLogDensity(xBar);
+            for (int i = 0; i < dim; ++i) {
+                gradient[i] *= -R;
+            }
+
+            return gradient;
+        }
+
+        @Override
+        public String getReport() {
+            return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                    Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, null);
         }
     }
 

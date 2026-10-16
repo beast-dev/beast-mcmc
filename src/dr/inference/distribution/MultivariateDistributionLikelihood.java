@@ -37,6 +37,11 @@ import dr.util.Attribute;
 import dr.util.Transform;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static dr.util.Transform.Util.parseTransform;
@@ -81,6 +86,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String DETERMINANT_PRIOR = "determinantPrior";
 
     public static final String DATA = "data";
+    public static final String SHUFFLE = "shuffle";
+    public static final String TAXON = "taxon";
+    public static final String REPETITION = "repetition";
+    public static final String LABEL = "label";
 
     private final MultivariateDistribution distribution;
     private final Transform[] transforms; // TODO: Unify transforms[] and multivariateTransform
@@ -230,6 +239,105 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             Logger.getLogger("dr.utils.Transform").info(sb.toString());
         }
         return transforms;
+    }
+
+    /**
+     * Assembles per-taxon {@code <shuffle taxon="..."><repetition label="...">values</repetition></shuffle>}
+     * blocks into one data parameter per repetition label, concatenating the taxon blocks in the column
+     * order of {@code order} (e.g. the tree-model leafTraits parameter, whose columns are named
+     * 'taxon' or 'taxon.traitName').
+     */
+    public static List<Parameter> parseShuffledRepetitions(XMLObject xo, Parameter order) throws XMLParseException {
+
+        if (!(order instanceof CompoundParameter)) {
+            throw new XMLParseException("<" + SHUFFLE + "> data requires a per-taxon trait parameter (e.g. leafTraits)"
+                    + " as the distribution mean; '" + order.getId() + "' is not one");
+        }
+        final CompoundParameter columns = (CompoundParameter) order;
+
+        Map<String, XMLObject> blocks = new LinkedHashMap<>();
+        for (XMLObject block : xo.getAllChildren(SHUFFLE)) {
+            String taxon = block.getStringAttribute(TAXON);
+            if (blocks.put(taxon, block) != null) {
+                throw new XMLParseException("Duplicate <" + SHUFFLE + "> block for taxon '" + taxon + "'");
+            }
+        }
+
+        // Match each column to a taxon; take the longest match in case one taxon id prefixes another
+        List<String> taxa = new ArrayList<>();
+        Map<String, Integer> columnOf = new HashMap<>();
+        for (int i = 0; i < columns.getParameterCount(); ++i) {
+            String name = columns.getParameter(i).getParameterName();
+            String match = null;
+            for (String taxon : blocks.keySet()) {
+                if ((name.equals(taxon) || name.startsWith(taxon + "."))
+                        && (match == null || taxon.length() > match.length())) {
+                    match = taxon;
+                }
+            }
+            if (match == null) {
+                throw new XMLParseException("No <" + SHUFFLE + "> block for '" + name + "' in '" + order.getId() + "'");
+            }
+            if (columnOf.put(match, i) != null) {
+                throw new XMLParseException("<" + SHUFFLE + "> taxon '" + match + "' matches more than one column of '"
+                        + order.getId() + "'");
+            }
+            taxa.add(match);
+        }
+        for (String taxon : blocks.keySet()) {
+            if (!columnOf.containsKey(taxon)) {
+                throw new XMLParseException("<" + SHUFFLE + "> taxon '" + taxon + "' is not in '" + order.getId() + "'");
+            }
+        }
+
+        // Every block must hold the same repetition labels, in any order
+        List<String> labels = null;
+        String firstTaxon = null;
+        Map<String, Map<String, double[]>> values = new HashMap<>();
+        for (Map.Entry<String, XMLObject> block : blocks.entrySet()) {
+            final String taxon = block.getKey();
+            final int dim = columns.getParameter(columnOf.get(taxon)).getDimension();
+
+            Map<String, double[]> byLabel = new LinkedHashMap<>();
+            for (XMLObject repetition : block.getValue().getAllChildren(REPETITION)) {
+                String label = repetition.getStringAttribute(LABEL);
+                double[] x = repetition.getChildCount() > 0 ? repetition.getDoubleArrayChild(0) : new double[0];
+                if (x.length != dim) {
+                    throw new XMLParseException("<" + REPETITION + " " + LABEL + "=\"" + label + "\"> for taxon '"
+                            + taxon + "' has " + x.length + " values; expected " + dim);
+                }
+                if (byLabel.put(label, x) != null) {
+                    throw new XMLParseException("Duplicate <" + REPETITION + " " + LABEL + "=\"" + label
+                            + "\"> for taxon '" + taxon + "'");
+                }
+            }
+
+            if (labels == null) {
+                labels = new ArrayList<>(byLabel.keySet());
+                firstTaxon = taxon;
+            } else if (labels.size() != byLabel.size() || !byLabel.keySet().containsAll(labels)) {
+                throw new XMLParseException("<" + REPETITION + "> labels " + byLabel.keySet() + " for taxon '" + taxon
+                        + "' differ from " + labels + " for taxon '" + firstTaxon + "'");
+            }
+            values.put(taxon, byLabel);
+        }
+
+        List<Parameter> repetitions = new ArrayList<>();
+        for (String label : labels) {
+            double[] all = new double[columns.getDimension()];
+            int offset = 0;
+            for (String taxon : taxa) {
+                double[] x = values.get(taxon).get(label);
+                System.arraycopy(x, 0, all, offset, x.length);
+                offset += x.length;
+            }
+            repetitions.add(new Parameter.Default(REPETITION + "." + label, all));
+        }
+
+        Logger.getLogger("dr.inference.distribution").info("Read " + repetitions.size() + " repetitions of "
+                + taxa.size() + " taxa, ordered as in '" + order.getId() + "'");
+
+        return repetitions;
     }
 
     public static XMLObjectParser DIRICHLET_PRIOR_PARSER = new AbstractXMLObjectParser() {
@@ -425,7 +533,16 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             boolean dataAsMatrix = xo.getAttribute(DATA_AS_MATRIX, false);
 
             cxo = xo.getChild(DATA);
-            if (cxo != null) {
+            if (cxo != null && cxo.hasChildNamed(SHUFFLE)) {
+                if (!(distribution instanceof MultivariateNormalDistributionModel)) {
+                    throw new XMLParseException("<" + SHUFFLE + "> data in " + xo.getName()
+                            + " requires a multivariateNormalDistributionModel");
+                }
+                Parameter order = ((MultivariateNormalDistributionModel) distribution).getMeanParameter();
+                for (Parameter data : parseShuffledRepetitions(cxo, order)) {
+                    likelihood.addData(data);
+                }
+            } else if (cxo != null) {
                 for (int j = 0; j < cxo.getChildCount(); j++) {
                     if (cxo.getChild(j) instanceof Parameter) {
                         Parameter data = (Parameter) cxo.getChild(j);
@@ -481,10 +598,17 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{
-                                new XORRule(
+                                new XORRule(new XMLSyntaxRule[]{
                                         new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
-                                        new ElementRule(Attribute[].class)
-                                ),
+                                        new ElementRule(Attribute[].class),
+                                        new ElementRule(SHUFFLE, new XMLSyntaxRule[]{
+                                                AttributeRule.newStringRule(TAXON),
+                                                new ElementRule(REPETITION, new XMLSyntaxRule[]{
+                                                        AttributeRule.newStringRule(LABEL),
+                                                }, 1, Integer.MAX_VALUE),
+                                        }, "Repeated measurements of one taxon, re-ordered to match the distribution mean",
+                                                1, Integer.MAX_VALUE),
+                                }),
                         }, true)
         };
 

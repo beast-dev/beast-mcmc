@@ -108,9 +108,11 @@ scale on popSize (3). popSize has a 1/x prior. 10,000,000 states, seed 1234.
 |---|---|---|---|
 | `main` | 19.10 min | 1.91 | – |
 | incremental sort (`a904f313e`) | 13.07 min | 1.31 | **31.5% less time** (1.46×) |
-| + `copyIntervals` fix (`d0e9ad8bd`) | (running) | | |
+| + `copyIntervals` fix (`d0e9ad8bd`) | 13.23 min | 1.32 | 30.7% less time (1.44×) |
 
-The final log lines are identical (joint −677.9039, root height 2.15861 at state 10,000,000).
+The logs of all three runs are identical apart from the header lines (joint −677.9039, root height
+2.15861 at state 10,000,000). The `copyIntervals` fix costs nothing measurable: the 1% difference
+from the run without it is within run-to-run variation.
 
 To run:
 

@@ -48,18 +48,24 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     private final double[] mean;
     private final double[][] precision;
+    private final double[] diagonalPrecision;
+    private final double singlePrecision;
+
     private double[][] variance = null;
     private double[][] cholesky = null;
     private Double logDet = null;
 
     private final boolean hasSinglePrecision;
-    private final double singlePrecision;
+    private final boolean hasDiagonalPrecision;
 
     public MultivariateNormalDistribution(double[] mean, double[][] precision) {
         this.mean = mean;
         this.precision = precision;
+        this.diagonalPrecision = null;
+        this.singlePrecision = Double.NaN;
+
         this.hasSinglePrecision = false;
-        this.singlePrecision = 1.0;
+        this.hasDiagonalPrecision = false;
     }
 
     public MultivariateNormalDistribution(double[] mean, double singlePrecision) {
@@ -72,6 +78,22 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         for (int i = 0; i < dim; ++i) {
             this.precision[i][i] = singlePrecision;
         }
+        this.diagonalPrecision = null;
+        hasDiagonalPrecision = true;
+    }
+
+    public MultivariateNormalDistribution(double[] mean, double[] diagonalPrecision) {
+        this.mean = mean;
+        this.diagonalPrecision = diagonalPrecision;
+        this.singlePrecision = Double.NaN;
+
+        final int dim = mean.length;
+        this.precision = new double[dim][dim];
+        for (int i = 0; i < dim; ++i) {
+            this.precision[i][i] = diagonalPrecision[i];
+        }
+        hasSinglePrecision = false;
+        hasDiagonalPrecision = true;
     }
 
     public String getType() {
@@ -95,6 +117,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     public double getLogDet() {
         if (logDet == null) {
             logDet = calculatePrecisionMatrixLogDeterminate(precision);
+            if (hasDiagonalPrecision && diagonalPrecision != null)  {
+                logDet = logDetForDiagonal(diagonalPrecision);
+            } else {
+                logDet = calculatePrecisionMatrixLogDeterminate(precision);
+            }
         }
         if (Double.isInfinite(logDet)) {
             if (isDiagonal(precision)) {
@@ -113,6 +140,14 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
             }
         }
         return true;
+    }
+
+    private double logDetForDiagonal(double[] x) {
+        double logDet = 0;
+        for (double v : x) {
+            logDet += Math.log(v);
+        }
+        return logDet;
     }
 
     private double logDetForDiagonal(double[][] x) {
@@ -162,6 +197,8 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     public double logPdf(double[] x) {
         if (hasSinglePrecision) {
             return logPdf(x, mean, singlePrecision, 1.0);
+        } else if (hasDiagonalPrecision) {
+            return logPdf(x, mean, diagonalPrecision, getLogDet(), 1.0);
         } else {
             return logPdf(x, mean, precision, getLogDet(), 1.0);
         }
@@ -315,6 +352,20 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
         return dim * logNormalize + 0.5 * (logDet - dim * Math.log(scale) - SSE / scale);   // There was an error here.
         // Variance = (scale * Precision^{-1})
+    }
+
+    public static double logPdf(double[] x, double[] mean, double[] precision,
+                                double logDet, double scale) {
+
+        final int dim = x.length;
+
+        double SSE = 0;
+        for (int i = 0; i < dim; ++i) {
+            double delta = x[i] - mean[i];
+            SSE += delta * precision[i];
+        }
+
+        return dim *logNormalize + 0.5 * (logDet - dim * Math.log(scale) - SSE / scale);
     }
 
     /* Equal precision, independent dimensions */

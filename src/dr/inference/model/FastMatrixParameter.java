@@ -236,6 +236,15 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     }
 
+    private static final boolean TEST = true;
+
+    public void setParameterValueQuietly(int dim, double value) {
+        if (TEST) {
+            singleParameter.setParameterValueQuietly(dim, value);
+        } else {
+            super.setParameterValueQuietly(dim, value);
+        }
+    }
 
     @Override
     public double getParameterValue(int row, int col) {

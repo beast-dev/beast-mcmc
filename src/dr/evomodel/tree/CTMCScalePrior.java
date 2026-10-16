@@ -27,6 +27,7 @@
 
 package dr.evomodel.tree;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -53,6 +54,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     final private Parameter ctmcScale;
     final private List<TreeModel> treeModels;
     private Set<Taxon> taxa = null;
+    private final BranchLengths[] branchLengths;
     private double treeLength;
     private double storedTreeLength;
     private boolean treeLengthKnown;
@@ -97,6 +99,16 @@ public class CTMCScalePrior extends AbstractModelLikelihood
             addModel(treeModel);
         }
 
+        // the lengths of whole trees are kept up to date incrementally (subtree lengths are recalculated)
+        if (this.taxa == null) {
+            branchLengths = new BranchLengths[treeModels.size()];
+            for (int i = 0; i < branchLengths.length; i++) {
+                branchLengths[i] = new BranchLengths(treeModels.get(i));
+            }
+        } else {
+            branchLengths = null;
+        }
+
         treeLengthKnown = false;
         likelihoodKnown = false;
 
@@ -109,18 +121,33 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        treeLengthKnown = false;
+        if (model != substitutionModel) {
+            // a tree has changed (the substitution model does not affect the tree length)
+            treeLengthKnown = false;
+            if (branchLengths != null) {
+                for (BranchLengths lengths : branchLengths) {
+                    if (lengths.tree == model) {
+                        lengths.treeChanged(object);
+                    }
+                }
+            }
+        }
         likelihoodKnown = false;
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        treeLengthKnown = false;
+        // the scale parameter does not affect the tree length
         likelihoodKnown = false;
     }
 
     protected void storeState() {
         storedLogLikelihood = logLikelihood;
         storedTreeLength = treeLength;
+        if (branchLengths != null) {
+            for (BranchLengths lengths : branchLengths) {
+                lengths.store();
+            }
+        }
     }
 
     protected void restoreState() {
@@ -128,6 +155,11 @@ public class CTMCScalePrior extends AbstractModelLikelihood
         treeLength = storedTreeLength;
         treeLengthKnown = true;
         likelihoodKnown = true;
+        if (branchLengths != null) {
+            for (BranchLengths lengths : branchLengths) {
+                lengths.restore();
+            }
+        }
     }
 
     protected void acceptState() {
@@ -205,8 +237,8 @@ public class CTMCScalePrior extends AbstractModelLikelihood
         if (!treeLengthKnown) {
             if (taxa == null) {
                 treeLength = 0.0;
-                for (TreeModel treeModel : treeModels) {
-                    treeLength += TreeUtils.getTreeLength(treeModel);
+                for (BranchLengths lengths : branchLengths) {
+                    treeLength += lengths.getTreeLength();
                 }
                 treeLength /= treeModels.size();
             } else {
@@ -228,6 +260,159 @@ public class CTMCScalePrior extends AbstractModelLikelihood
     public void makeDirty() {
         treeLengthKnown = false;
         likelihoodKnown = false;
+        if (branchLengths != null) {
+            for (BranchLengths lengths : branchLengths) {
+                lengths.makeDirty();
+            }
+        }
+    }
+
+    /**
+     * The branch lengths of one tree, updated only for the branches that tree changed events say
+     * may have changed. A node event marks the node's branch and its children's branches (as in
+     * TreeDataLikelihood); any other event marks every branch. The tree length is the sum of the
+     * branch lengths in node order, the same sum as TreeUtils.getTreeLength. Changes since the last
+     * store are journaled so that restore can put them back. Trees other than DefaultTreeModel are
+     * always recalculated in full.
+     */
+    private static class BranchLengths {
+        final TreeModel tree;
+        private final boolean incremental;
+        private final double[] lengths;
+
+        // branches that may have changed since they were last calculated
+        private final boolean[] isDirty;
+        private final int[] dirtyNodes;
+        private int dirtyCount = 0;
+        private boolean allDirty = true;
+
+        // the lengths at the last store of branches recalculated since then
+        private final double[] storedLengths;
+        private final boolean[] isStored;
+        private final int[] storedNodes;
+        private int storedCount = 0;
+        private boolean allStored = false;
+        private double[] allStoredLengths = null;
+
+        BranchLengths(TreeModel tree) {
+            this.tree = tree;
+            this.incremental = tree instanceof DefaultTreeModel;
+            int nodeCount = tree.getNodeCount();
+            lengths = new double[nodeCount];
+            isDirty = new boolean[nodeCount];
+            dirtyNodes = new int[nodeCount];
+            storedLengths = new double[nodeCount];
+            isStored = new boolean[nodeCount];
+            storedNodes = new int[nodeCount];
+        }
+
+        void treeChanged(Object object) {
+            if (object instanceof TreeChangedEvent && ((TreeChangedEvent) object).isNodeChanged()
+                    && ((TreeChangedEvent) object).getNode() != null) {
+                NodeRef node = ((TreeChangedEvent) object).getNode();
+                markDirty(node.getNumber());
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+                    markDirty(tree.getChild(node, i).getNumber());
+                }
+            } else if (object instanceof Parameter) {
+                // A node parameter has changed: the tree model also fires a node event for it
+                // (AbstractModel.variableChangedEvent passes on every parameter change as well).
+            } else {
+                makeDirty();
+            }
+        }
+
+        private void markDirty(int number) {
+            if (!isDirty[number]) {
+                isDirty[number] = true;
+                dirtyNodes[dirtyCount] = number;
+                dirtyCount++;
+            }
+        }
+
+        void makeDirty() {
+            allDirty = true;
+        }
+
+        double getTreeLength() {
+            if (!incremental) {
+                return TreeUtils.getTreeLength(tree);
+            }
+
+            if (allDirty) {
+                if (!allStored) {
+                    // keep every length as it was at the last store
+                    if (allStoredLengths == null) {
+                        allStoredLengths = new double[lengths.length];
+                    }
+                    for (int i = 0; i < storedCount; i++) {
+                        lengths[storedNodes[i]] = storedLengths[storedNodes[i]];
+                    }
+                    System.arraycopy(lengths, 0, allStoredLengths, 0, lengths.length);
+                    allStored = true;
+                }
+                for (int i = 0; i < lengths.length; i++) {
+                    lengths[i] = tree.getBranchLength(tree.getNode(i));
+                }
+                allDirty = false;
+            } else {
+                for (int i = 0; i < dirtyCount; i++) {
+                    final int number = dirtyNodes[i];
+                    if (!allStored && !isStored[number]) {
+                        storedLengths[number] = lengths[number];
+                        isStored[number] = true;
+                        storedNodes[storedCount] = number;
+                        storedCount++;
+                    }
+                    lengths[number] = tree.getBranchLength(tree.getNode(number));
+                }
+            }
+            clearDirty();
+
+            // the same sum, in the same order, as TreeUtils.getTreeLength
+            double length = 0;
+            for (double branchLength : lengths) {
+                length += branchLength;
+            }
+            return length;
+        }
+
+        void store() {
+            if (dirtyCount > 0 || allDirty) {
+                // bring the lengths up to date with the tree being stored
+                getTreeLength();
+            }
+            clearStored();
+        }
+
+        void restore() {
+            if (allStored) {
+                System.arraycopy(allStoredLengths, 0, lengths, 0, lengths.length);
+            } else {
+                for (int i = 0; i < storedCount; i++) {
+                    lengths[storedNodes[i]] = storedLengths[storedNodes[i]];
+                }
+            }
+            clearStored();
+            // any changes since the store have been undone with the tree
+            clearDirty();
+            allDirty = false;
+        }
+
+        private void clearDirty() {
+            for (int i = 0; i < dirtyCount; i++) {
+                isDirty[dirtyNodes[i]] = false;
+            }
+            dirtyCount = 0;
+        }
+
+        private void clearStored() {
+            for (int i = 0; i < storedCount; i++) {
+                isStored[storedNodes[i]] = false;
+            }
+            storedCount = 0;
+            allStored = false;
+        }
     }
 
     @Override

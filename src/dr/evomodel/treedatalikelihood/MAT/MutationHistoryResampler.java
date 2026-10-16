@@ -54,6 +54,13 @@ import java.util.Set;
  * proposal density of the old states (under the old topology) and of the new states (under the new
  * one) gives the Hastings ratio, so the combined move is a valid Metropolis-Hastings move whatever
  * topology move it accompanies.
+ *
+ * Only sites that vary around the block are resampled (a hybrid of Gibbs sampling and keeping the
+ * states). A site is resampled if the states of the block's neighbours (the nodes adjacent to the block
+ * in either the old or the new topology) are not all the same; every other site keeps its states, a
+ * proposal that is its own reverse. The move never changes the states outside the block, so the move
+ * and its reverse resample the same sites. Candidate sites are found from the events on the branches
+ * around the block, so a move costs O(events around the block), not O(sites).
  */
 public class MutationHistoryResampler implements SubtreeMoveHook {
 
@@ -69,8 +76,17 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     public static final byte CONSTANT = 3;
 
     private int[] block = null;
-    private byte[] patternClasses = null;
-    private double logProposalOfOldStates;
+    private int[] candidateSites = null;
+    private int[] oldBoundary = null;
+
+    // per-site work arrays: classes and old/new proposal log probabilities of candidate sites
+    private final byte[] siteClasses;
+    private final int[] siteStamps;
+    private int stamp = 0;
+    private final double[] oldSiteLogProbabilities;
+    private final double[] newSiteLogProbabilities;
+    private final boolean[] resampledSites;
+    private int[] lastResampledSites = new int[0];
 
     private final double[] infinitesimalMatrix;
     private final double[] exitRates;
@@ -91,6 +107,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         this.exitRates = new double[stateCount];
         this.logFrequencies = new double[stateCount];
         this.inBlock = new boolean[tree.getNodeCount()];
+        this.siteClasses = new byte[patternCount];
+        this.siteStamps = new int[patternCount];
+        this.oldSiteLogProbabilities = new double[patternCount];
+        this.newSiteLogProbabilities = new double[patternCount];
+        this.resampledSites = new boolean[patternCount];
 
         double[] weights = delegate.getPatternWeights();
         Map<Double, Integer> classes = new HashMap<Double, Integer>();
@@ -117,8 +138,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     public void beforeSubtreeMove(NodeRef node, NodeRef sibling, NodeRef destination) {
         delegate.updateMAT();
         block = getBlock(tree.getParent(node), sibling, destination);
-        patternClasses = getPatternClasses(block);
-        logProposalOfOldStates = sampleBlock(block, false, patternClasses);
+        candidateSites = getCandidateSites(block);
+        oldBoundary = getBoundary(block);
+        // score the candidates' current states under the old topology (only the resampled ones will count)
+        sampleBlock(block, false, siteClasses, candidateSites, oldSiteLogProbabilities);
     }
 
     @Override
@@ -126,12 +149,12 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         if (block == null) {
             throw new IllegalStateException("afterSubtreeMove called without beforeSubtreeMove");
         }
-        int[] currentBlock = block;
+        final int[] currentBlock = block;
         block = null;
 
-        DefaultMutationStore store = delegate.getMutableMutationStore();
-        int[] parents = MATInitializer.getParents(tree);
-        List<Integer> reparented = new ArrayList<Integer>();
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final int[] parents = MATInitializer.getParents(tree);
+        final List<Integer> reparented = new ArrayList<Integer>();
         for (int n = 0; n < parents.length; n++) {
             if (store.getParent(n) != parents[n]) {
                 reparented.add(n);
@@ -139,26 +162,139 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         store.setParents(parents);
 
-        double logProposalOfNewStates = sampleBlock(currentBlock, true, patternClasses);
-        patternClasses = null;
+        // the sites to resample: candidates whose states on the block's neighbours (old and new) are not all equal
+        final int[] newBoundary = getBoundary(currentBlock);
+        final int[] sites = new int[candidateSites.length];
+        int siteCount = 0;
+        for (int p : candidateSites) {
+            int state = store.getState(oldBoundary[0], p);
+            boolean uniform = true;
+            for (int n : oldBoundary) {
+                uniform &= store.getState(n, p) == state;
+            }
+            for (int n : newBoundary) {
+                uniform &= store.getState(n, p) == state;
+            }
+            if (!uniform) {
+                sites[siteCount++] = p;
+                resampledSites[p] = true;
+            }
+        }
+        final int[] resampled = Arrays.copyOf(sites, siteCount);
+        lastResampledSites = resampled;
+
+        double logProposalOfOldStates = 0.0;
+        for (int p : resampled) {
+            logProposalOfOldStates += oldSiteLogProbabilities[p];
+        }
+        double logProposalOfNewStates = sampleBlock(currentBlock, true, siteClasses, resampled, newSiteLogProbabilities);
         delegate.setHistoryResampled();
 
         // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
         store.setFitchSetsStale(true);
-        int[][] children = MATInitializer.getChildren(tree);
 
-        Set<Integer> branches = new HashSet<Integer>(reparented);
-        for (int n : currentBlock) {
-            branches.add(n);
-            for (int c : children[n]) {
-                branches.add(c);
-            }
-        }
-        for (int n : branches) {
+        // branches whose parent changed are recomputed in full; the others around the block changed only at the resampled sites
+        Set<Integer> fullUpdates = new HashSet<Integer>(reparented);
+        for (int n : fullUpdates) {
             store.updateBranch(n);
         }
+        for (int n : currentBlock) {
+            if (!fullUpdates.contains(n)) {
+                store.updateBranchSites(n, resampledSites, resampled);
+            }
+            NodeRef node = tree.getNode(n);
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                int c = tree.getChild(node, i).getNumber();
+                if (!fullUpdates.contains(c) && !inBlock(currentBlock, c)) {
+                    store.updateBranchSites(c, resampledSites, resampled);
+                }
+            }
+        }
+        for (int p : resampled) {
+            resampledSites[p] = false;
+        }
+        candidateSites = null;
+        oldBoundary = null;
 
         return logProposalOfOldStates - logProposalOfNewStates;
+    }
+
+    /**
+     * @return the sites resampled by the last move (for testing)
+     */
+    public int[] getLastResampledSites() {
+        return lastResampledSites.clone();
+    }
+
+    private static boolean inBlock(int[] blockNodes, int n) {
+        for (int b : blockNodes) {
+            if (b == n) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return the sites with an event (substitution or ambiguity) on a branch within the block's
+     * neighbourhood (the branches above the block nodes and their children), with their classes set in
+     * siteClasses. Every other site has the same state throughout the neighbourhood.
+     */
+    int[] getCandidateSites(int[] blockNodes) {
+        MutationStore store = delegate.getMutationStore();
+        stamp++;
+        int[] sites = new int[16];
+        int count = 0;
+        for (int n : blockNodes) {
+            NodeRef node = tree.getNode(n);
+            for (int i = -1; i < tree.getChildCount(node); i++) {
+                BranchMutations mutations = store.getBranchMutations(i < 0 ? n : tree.getChild(node, i).getNumber());
+                for (int k = 0; k < mutations.size(); k++) {
+                    int p = mutations.getPattern(k);
+                    if (siteStamps[p] != stamp) {
+                        siteStamps[p] = stamp;
+                        siteClasses[p] = mutations.isAmbiguity(k) ? AMBIGUITIES_ONLY : HAS_SUBSTITUTIONS;
+                        if (count == sites.length) {
+                            sites = Arrays.copyOf(sites, 2 * count);
+                        }
+                        sites[count++] = p;
+                    } else if (!mutations.isAmbiguity(k)) {
+                        siteClasses[p] = HAS_SUBSTITUTIONS;
+                    }
+                }
+            }
+        }
+        return Arrays.copyOf(sites, count);
+    }
+
+    /**
+     * @return the nodes adjacent to the block in the current topology: children of block nodes that
+     * are not in the block, and the parent of the top node
+     */
+    private int[] getBoundary(int[] blockNodes) {
+        for (int n : blockNodes) {
+            inBlock[n] = true;
+        }
+        List<Integer> boundary = new ArrayList<Integer>();
+        for (int n : blockNodes) {
+            NodeRef node = tree.getNode(n);
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                int c = tree.getChild(node, i).getNumber();
+                if (!inBlock[c]) {
+                    boundary.add(c);
+                }
+            }
+            NodeRef parent = tree.getParent(node);
+            if (parent != null && !inBlock[parent.getNumber()]) {
+                boundary.add(parent.getNumber());
+            }
+        }
+        clearBlock(blockNodes);
+        int[] result = new int[boundary.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = boundary.get(i);
+        }
+        return result;
     }
 
     /**
@@ -287,7 +423,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @return the log probability of the drawn (or existing) states under that distribution
      */
     public double sampleBlock(int[] blockNodes, boolean sample) {
-        return sampleBlock(blockNodes, sample, null);
+        return sampleBlock(blockNodes, sample, null, null, null);
     }
 
     /**
@@ -295,6 +431,15 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * block (see {@link #getPatternClasses}) handled by a fast exact path.
      */
     public double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses) {
+        return sampleBlock(blockNodes, sample, patternClasses, null, null);
+    }
+
+    /**
+     * As {@link #sampleBlock(int[], boolean, byte[])} but only for the given sites (all sites if null),
+     * optionally recording each site's log probability.
+     */
+    private double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses,
+                               int[] sites, double[] siteLogProbabilities) {
         final DefaultMutationStore store = delegate.getMutableMutationStore();
         final int[] postOrder = getBlockPostOrder(blockNodes);
         final int blockSize = postOrder.length;
@@ -398,7 +543,18 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         double logProbability = 0.0;
 
-        for (int p = 0; p < patternCount; p++) {
+        final int siteCount = sites == null ? patternCount : sites.length;
+        int lastSite = -1;
+        double lastLogProbability = 0.0;
+        for (int siteIndex = 0; siteIndex < siteCount; siteIndex++) {
+            final int p = sites == null ? siteIndex : sites[siteIndex];
+            if (siteLogProbabilities != null) {
+                if (lastSite >= 0) {
+                    siteLogProbabilities[lastSite] = logProbability - lastLogProbability;
+                }
+                lastSite = p;
+                lastLogProbability = logProbability;
+            }
             final double w = patternWeights[p];
             final double nu = delegate.getSiteRate(p, siteRateScale);
 
@@ -516,6 +672,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     blockStates[i][p] = (byte) chosenState;
                 }
             }
+        }
+
+        if (siteLogProbabilities != null && lastSite >= 0) {
+            siteLogProbabilities[lastSite] = logProbability - lastLogProbability;
         }
 
         for (int n : postOrder) {

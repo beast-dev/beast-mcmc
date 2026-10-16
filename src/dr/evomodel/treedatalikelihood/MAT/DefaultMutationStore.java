@@ -275,6 +275,79 @@ public final class DefaultMutationStore implements MutationStore {
         mutations[nodeNumber] = new BranchMutations(patterns, from, to, substitutionCount);
     }
 
+    /**
+     * Updates the events on the branch above the node when its states, or its parent's, have changed only
+     * at the given sites (and the parent is unchanged): events at other sites are kept.
+     *
+     * @param changed flags the sites in `sites`
+     */
+    public void updateBranchSites(int nodeNumber, boolean[] changed, int[] sites) {
+        if (sites.length == 0) {
+            return;
+        }
+        if (!branchDirty[nodeNumber]) {
+            journal(nodeNumber);
+            savedMutations[nodeNumber] = mutations[nodeNumber];
+            branchDirty[nodeNumber] = true;
+        }
+        int parent = parents[nodeNumber];
+        if (parent < 0) {
+            mutations[nodeNumber] = BranchMutations.EMPTY;
+            return;
+        }
+        BranchMutations old = mutations[nodeNumber];
+        byte[] childStates = states[nodeNumber];
+        byte[] parentStates = states[parent];
+
+        int capacity = old.size() + sites.length;
+        int[] subPatterns = new int[capacity];
+        byte[] subFrom = new byte[capacity];
+        byte[] subTo = new byte[capacity];
+        int[] ambPatterns = new int[capacity];
+        byte[] ambFrom = new byte[capacity];
+        int subCount = 0;
+        int ambCount = 0;
+        for (int k = 0; k < old.size(); k++) {
+            int p = old.getPattern(k);
+            if (!changed[p]) {
+                if (old.isAmbiguity(k)) {
+                    ambPatterns[ambCount] = p;
+                    ambFrom[ambCount++] = (byte) old.getFromState(k);
+                } else {
+                    subPatterns[subCount] = p;
+                    subFrom[subCount] = (byte) old.getFromState(k);
+                    subTo[subCount++] = (byte) old.getToState(k);
+                }
+            }
+        }
+        for (int p : sites) {
+            if (parentStates[p] >= 0 && childStates[p] != parentStates[p]) {
+                if (childStates[p] < 0) {
+                    ambPatterns[ambCount] = p;
+                    ambFrom[ambCount++] = parentStates[p];
+                } else {
+                    subPatterns[subCount] = p;
+                    subFrom[subCount] = parentStates[p];
+                    subTo[subCount++] = childStates[p];
+                }
+            }
+        }
+        if (subCount + ambCount == 0) {
+            mutations[nodeNumber] = BranchMutations.EMPTY;
+            return;
+        }
+        int[] patterns = new int[subCount + ambCount];
+        byte[] from = new byte[patterns.length];
+        byte[] to = new byte[patterns.length];
+        System.arraycopy(subPatterns, 0, patterns, 0, subCount);
+        System.arraycopy(subFrom, 0, from, 0, subCount);
+        System.arraycopy(subTo, 0, to, 0, subCount);
+        System.arraycopy(ambPatterns, 0, patterns, subCount, ambCount);
+        System.arraycopy(ambFrom, 0, from, subCount, ambCount);
+        java.util.Arrays.fill(to, subCount, patterns.length, (byte) -1);
+        mutations[nodeNumber] = new BranchMutations(patterns, from, to, subCount);
+    }
+
     public void updateAllBranches() {
         for (int n = 0; n < nodeCount; n++) {
             updateBranch(n);

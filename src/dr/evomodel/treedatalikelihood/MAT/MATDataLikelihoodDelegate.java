@@ -588,7 +588,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     @Override
     protected void acceptState() {
-        mutationStore.commit();
+        // nothing to do: the journal of changes is cleared by the next storeState()
     }
 
     @Override

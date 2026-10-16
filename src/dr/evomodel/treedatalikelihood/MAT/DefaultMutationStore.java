@@ -348,6 +348,19 @@ public final class DefaultMutationStore implements MutationStore {
         mutations[nodeNumber] = new BranchMutations(patterns, from, to, subCount);
     }
 
+    /**
+     * Replaces the events on the branch above the node (used by branch history models that sample
+     * explicit histories).
+     */
+    public void setBranchMutations(int nodeNumber, BranchMutations branchMutations) {
+        if (!branchDirty[nodeNumber]) {
+            journal(nodeNumber);
+            savedMutations[nodeNumber] = mutations[nodeNumber];
+            branchDirty[nodeNumber] = true;
+        }
+        mutations[nodeNumber] = branchMutations;
+    }
+
     public void updateAllBranches() {
         for (int n = 0; n < nodeCount; n++) {
             updateBranch(n);

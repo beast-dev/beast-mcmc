@@ -39,6 +39,7 @@ import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
 
     public static final String MUTATION_HISTORY_RESAMPLER = "mutationHistoryResampler";
+    public static final String SITE_SELECTION = "siteSelection";
 
     @Override
     public String getParserName() {
@@ -47,7 +48,15 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        return new MutationHistoryResampler(getDelegate(xo));
+        MutationHistoryResampler.SiteSelection siteSelection = null;
+        try {
+            if (xo.hasAttribute(SITE_SELECTION)) {
+                siteSelection = MutationHistoryResampler.SiteSelection.parse(xo.getStringAttribute(SITE_SELECTION));
+            }
+            return new MutationHistoryResampler(getDelegate(xo), siteSelection);
+        } catch (IllegalArgumentException iae) {
+            throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
+        }
     }
 
     static MATDataLikelihoodDelegate getDelegate(XMLObject xo) throws XMLParseException {
@@ -63,6 +72,9 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
+                AttributeRule.newStringRule(SITE_SELECTION, true, "Which sites a move resamples: 'hybrid' " +
+                        "(only those varying around the moved subtree) or 'all' (default: hybrid, or all for branch " +
+                        "history models with explicit hits)"),
                 new ElementRule(TreeDataLikelihood.class)
         };
     }

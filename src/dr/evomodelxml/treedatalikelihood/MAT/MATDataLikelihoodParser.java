@@ -33,7 +33,9 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.MAT.BranchHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MAT.SingleHitHistoryModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -45,6 +47,7 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String MAT_DATA_LIKELIHOOD = "matDataLikelihood";
     public static final String SITE_RATES = "siteRates";
+    public static final String BRANCH_HISTORY = "branchHistory";
 
     @Override
     public String getParserName() {
@@ -71,8 +74,11 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
 
         MATDataLikelihoodDelegate delegate;
         try {
+            BranchHistoryModel historyModel = BranchHistoryModel.create(
+                    xo.getAttribute(BRANCH_HISTORY, SingleHitHistoryModel.NAME),
+                    patternList.getDataType().getStateCount());
             delegate = new MATDataLikelihoodDelegate(treeModel, patternList, branchModel,
-                    siteRateModel, branchRateModel, siteRates);
+                    siteRateModel, branchRateModel, siteRates, historyModel);
         } catch (IllegalArgumentException iae) {
             throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
         }
@@ -83,6 +89,9 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
+                AttributeRule.newStringRule(BRANCH_HISTORY, true, "How each site's history along a branch is " +
+                        "represented: " + String.join(", ", BranchHistoryModel.NAMES) + " (default " +
+                        SingleHitHistoryModel.NAME + ")"),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new XORRule(

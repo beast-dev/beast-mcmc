@@ -60,14 +60,13 @@ import java.util.logging.Logger;
  * any other operator, the MAT is brought up to date by (incremental) parsimony, which makes the
  * likelihood a deterministic function of the tree. The two should not be mixed in one analysis.
  *
- * For a branch of length R (expected substitutions, i.e. rate x time) the site l in state a
- * contributes -nu_l q_a R, where q_a is the total rate out of a. A mutation a->b at site l on that
- * branch contributes log(nu_l q_ab) plus the integral over its unknown time,
- * log( int_0^R exp(nu_l (q_b - q_a) s) ds ). Times are integrated out exactly because parsimony
- * places at most one mutation per site per branch. The root sequence has prior sum_l log pi_a.
+ * How each site's history along a branch is represented and scored is delegated to a
+ * {@link BranchHistoryModel}: by default {@link SingleHitHistoryModel} (at most one substitution per
+ * site per branch, its time integrated out); alternatives allow multiple hits, summed analytically or
+ * as explicit (optionally timed) paths. The root sequence has prior sum_l log pi_a.
  *
- * Writing everything in terms of the root state and the total branch length below each mutation
- * makes the cost O(nodes + patterns + mutations) per evaluation.
+ * The likelihood is a root term plus a term for each branch, each cached against what it depends on,
+ * so an evaluation costs O(changed branches) plus O(nodes) to check the caches.
  */
 public class MATDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
 
@@ -87,6 +86,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private final double[] patternWeights;
     private final boolean[] constantPatterns;
 
+    private final BranchHistoryModel historyModel;
     private final MATInitializer initializer;
     private final DefaultMutationStore mutationStore;
     private int rebuildCount = 0;
@@ -110,7 +110,9 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private final long[] exitRateStateVersions;
     private final double[] branchTerms;
     private final double[] branchTermLengths;
-    private final double[] branchTermExitRates;
+    private final long[] branchTermStateVersions;
+    private final double[][] compositions;           // summed weights of the sites in each state, per node
+    private final long[] compositionStateVersions;
     private final BranchMutations[] branchTermMutations;
     private final long[] branchTermModelVersions;
     private final long[] exitRateModelVersions;
@@ -122,8 +124,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     private final double[] infinitesimalMatrix;
     private final double[] exitRates;
-    private final double[] branchLengths;
-    private final double[] subtreeLengths;
 
     public MATDataLikelihoodDelegate(Tree tree,
                                      PatternList patternList,
@@ -131,6 +131,19 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                                      SiteRateModel siteRateModel,
                                      BranchRateModel branchRateModel,
                                      Parameter siteRates) {
+        this(tree, patternList, branchModel, siteRateModel, branchRateModel, siteRates, null);
+    }
+
+    /**
+     * @param historyModel how histories along branches are represented (null for single hits)
+     */
+    public MATDataLikelihoodDelegate(Tree tree,
+                                     PatternList patternList,
+                                     BranchModel branchModel,
+                                     SiteRateModel siteRateModel,
+                                     BranchRateModel branchRateModel,
+                                     Parameter siteRates,
+                                     BranchHistoryModel historyModel) {
         super(NAME);
         this.tree = tree;
         this.patternList = patternList;
@@ -197,18 +210,24 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.exitRateModelVersions = new long[nodeCount];
         this.branchTerms = new double[nodeCount];
         this.branchTermLengths = new double[nodeCount];
-        this.branchTermExitRates = new double[nodeCount];
+        this.branchTermStateVersions = new long[nodeCount];
+        this.compositions = new double[nodeCount][];
+        this.compositionStateVersions = new long[nodeCount];
+        java.util.Arrays.fill(compositionStateVersions, -1);
         this.branchTermMutations = new BranchMutations[nodeCount];
         this.branchTermModelVersions = new long[nodeCount];
         java.util.Arrays.fill(exitRateModelVersions, -1);
         java.util.Arrays.fill(branchTermModelVersions, -1);
         this.infinitesimalMatrix = new double[stateCount * stateCount];
         this.exitRates = new double[stateCount];
-        this.branchLengths = new double[tree.getNodeCount()];
-        this.subtreeLengths = new double[tree.getNodeCount()];
+
+        this.historyModel = historyModel == null ? new SingleHitHistoryModel(stateCount) : historyModel;
+        this.historyModel.checkCompatibility(this);
+        Logger.getLogger("dr.evomodel").info("  MAT branch history model: " + this.historyModel.getName());
 
         initializer = new MATInitializer(patternList, tree);
         mutationStore = initializer.buildMutationStore();
+        this.historyModel.initialise(mutationStore);
 
         addModel(branchModel);
         if (siteRateModel != null) {
@@ -222,6 +241,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     public MutationStore getMutationStore() {
         return mutationStore;
+    }
+
+    public BranchHistoryModel getHistoryModel() {
+        return historyModel;
     }
 
     MATInitializer getInitializer() {
@@ -276,6 +299,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     void updateMAT() {
         if (!mutationStore.hasParents(MATInitializer.getParents(tree))) {
             initializer.update(mutationStore);
+            historyModel.initialise(mutationStore);
             rebuildCount++;
             if (historyResampled && !mixingWarningGiven) {
                 Logger.getLogger("dr.evomodel").warning("The topology of " + tree.getId() +
@@ -297,40 +321,9 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     }
 
     /**
-     * Computes the rate matrix quantities and the branch and subtree lengths for the current state.
+     * Brings the rate matrix, the site rates and the history model's rates up to date.
      */
-    private void prepare() {
-        substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-        for (int a = 0; a < stateCount; a++) {
-            double q = 0.0;
-            for (int b = 0; b < stateCount; b++) {
-                if (b != a) {
-                    q += infinitesimalMatrix[a * stateCount + b];
-                }
-            }
-            exitRates[a] = q;
-        }
-
-        // branch lengths in expected substitutions and the total length of each subtree including its branch
-        for (int n : MATInitializer.getPostOrder(tree)) {
-            NodeRef node = tree.getNode(n);
-            double length = getBranchLength(node);
-            branchLengths[n] = length;
-            double subtree = length;
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                subtree += subtreeLengths[tree.getChild(node, i).getNumber()];
-            }
-            subtreeLengths[n] = subtree;
-        }
-    }
-
-    /**
-     * Computes the likelihood as the root term plus a term for each branch,
-     *   -lambda_n R_n + sum over substitutions a->b at site p of w_p [log(nu_p Q_ab R_n) + log(expm1(x)/x)],
-     * where lambda_n is the total exit rate of node n's sequence (which depends only on n's states) and
-     * x = nu_p (q_b - q_a) R_n. Only the terms whose inputs have changed are recomputed.
-     */
-    private void computeLikelihood() {
+    void ensureRates() {
         if (cachedModelVersion != modelVersion) {
             substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
             for (int a = 0; a < stateCount; a++) {
@@ -347,8 +340,13 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 patternRates[p] = getSiteRate(p, siteRateScale);
                 patternWeightRates[p] = patternWeights[p] * patternRates[p];
             }
+            historyModel.setRates(substitutionModel, infinitesimalMatrix, exitRates);
             cachedModelVersion = modelVersion;
         }
+    }
+
+    private void computeLikelihood() {
+        ensureRates();
 
         final int rootNumber = tree.getRoot().getNumber();
         final int[] preOrder = MATInitializer.getPostOrder(tree);
@@ -361,22 +359,16 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             }
             int parent = mutationStore.getParent(n);
             double exitRate = getExitRate(n, parent);
+            double[] composition = historyModel.needsComposition() ? getComposition(n, parent) : null;
             double length = getBranchLength(tree.getNode(n));
             BranchMutations mutations = mutationStore.getBranchMutations(n);
+            long stateVersion = mutationStore.getStateVersion(n);
             if (branchTermModelVersions[n] != modelVersion || branchTermLengths[n] != length ||
-                    branchTermExitRates[n] != exitRate || branchTermMutations[n] != mutations) {
-                double term = -exitRate * length;
-                for (int k = 0; k < mutations.getSubstitutionCount(); k++) {
-                    int p = mutations.getPattern(k);
-                    int a = mutations.getFromState(k);
-                    int b = mutations.getToState(k);
-                    double nu = patternRates[p];
-                    term += patternWeights[p] * (Math.log(nu * infinitesimalMatrix[a * stateCount + b] * length)
-                            + logExpm1OverX(nu * (exitRates[b] - exitRates[a]) * length));
-                }
-                branchTerms[n] = term;
+                    branchTermStateVersions[n] != stateVersion || branchTermMutations[n] != mutations) {
+                branchTerms[n] = historyModel.getBranchLogLikelihood(mutations, length, exitRate, composition,
+                        patternWeights, patternRates);
                 branchTermLengths[n] = length;
-                branchTermExitRates[n] = exitRate;
+                branchTermStateVersions[n] = stateVersion;
                 branchTermMutations[n] = mutations;
                 branchTermModelVersions[n] = modelVersion;
             }
@@ -417,6 +409,38 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         return exitRateSums[n];
     }
 
+    /**
+     * @return the summed weights of the node's sites in each state, from its parent's (already up to
+     * date in pre-order) and the events on its branch
+     */
+    private double[] getComposition(int n, int parent) {
+        long stateVersion = mutationStore.getStateVersion(n);
+        if (compositions[n] == null || compositionStateVersions[n] != stateVersion) {
+            double[] composition = new double[stateCount];
+            if (parent < 0) {
+                byte[] states = mutationStore.getStates(n);
+                for (int p = 0; p < patternCount; p++) {
+                    if (states[p] >= 0) {
+                        composition[states[p]] += patternWeights[p];
+                    }
+                }
+            } else {
+                System.arraycopy(getComposition(parent, mutationStore.getParent(parent)), 0, composition, 0, stateCount);
+                BranchMutations mutations = mutationStore.getBranchMutations(n);
+                for (int k = 0; k < mutations.size(); k++) {
+                    int p = mutations.getPattern(k);
+                    composition[mutations.getFromState(k)] -= patternWeights[p];
+                    if (!mutations.isAmbiguity(k)) {
+                        composition[mutations.getToState(k)] += patternWeights[p];
+                    }
+                }
+            }
+            compositions[n] = composition;
+            compositionStateVersions[n] = stateVersion;
+        }
+        return compositions[n];
+    }
+
     private double computeExitRate(int n) {
         byte[] states = mutationStore.getStates(n);
         double rate = 0.0;
@@ -452,47 +476,54 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     }
 
     /**
-     * Computes the per-pattern log likelihoods in full (only needed when they are asked for), using the
-     * equivalent formulation in terms of the root state and the subtree length below each event.
+     * Computes the per-pattern log likelihoods in full (only needed when they are asked for), site by
+     * site and branch by branch with the history model.
      */
     private void computeSiteLogLikelihoods() {
-        prepare();
+        ensureRates();
         double[] frequencies = rootFrequencyModel.getFrequencies();
-        double siteRateScale = getSiteRateScale();
         int rootNumber = tree.getRoot().getNumber();
-        double treeLength = subtreeLengths[rootNumber];
 
         byte[] rootStates = mutationStore.getStates(rootNumber);
         for (int p = 0; p < patternCount; p++) {
             int a = rootStates[p];
-            if (a < 0) {
-                siteLogLikelihoods[p] = 0.0;
-            } else {
-                siteLogLikelihoods[p] = Math.log(frequencies[a]) - getSiteRate(p, siteRateScale) * exitRates[a] * treeLength;
-            }
+            siteLogLikelihoods[p] = a < 0 ? 0.0 : Math.log(frequencies[a]);
         }
+        int[] eventStart = new int[patternCount];
+        int[] eventEnd = new int[patternCount];
         for (int n = 0; n < tree.getNodeCount(); n++) {
+            if (n == rootNumber) {
+                continue;
+            }
+            double length = getBranchLength(tree.getNode(n));
+            byte[] states = mutationStore.getStates(n);
             BranchMutations mutations = mutationStore.getBranchMutations(n);
-            for (int k = 0; k < mutations.size(); k++) {
-                int p = mutations.getPattern(k);
-                int a = mutations.getFromState(k);
-                double nu = getSiteRate(p, siteRateScale);
-                if (mutations.isAmbiguity(k)) {
-                    siteLogLikelihoods[p] += nu * exitRates[a] * subtreeLengths[n];
-                } else {
-                    int b = mutations.getToState(k);
-                    double deltaQ = nu * (exitRates[b] - exitRates[a]);
-                    double length = branchLengths[n];
-                    siteLogLikelihoods[p] += -deltaQ * subtreeLengths[n]
-                            + Math.log(nu * infinitesimalMatrix[a * stateCount + b] * length)
-                            + logExpm1OverX(deltaQ * length);
+            java.util.Arrays.fill(eventStart, -1);
+            int k = 0;
+            while (k < mutations.getSubstitutionCount()) {
+                int end = mutations.getSiteEnd(k);
+                eventStart[mutations.getPattern(k)] = k;
+                eventEnd[mutations.getPattern(k)] = end;
+                k = end;
+            }
+            for (int p = 0; p < patternCount; p++) {
+                if (states[p] < 0) {
+                    continue;
                 }
+                siteLogLikelihoods[p] += eventStart[p] < 0 ?
+                        historyModel.getUnchangedSiteLogLikelihood(states[p], length, patternRates[p]) :
+                        historyModel.getSiteLogLikelihood(mutations, eventStart[p], eventEnd[p], length, patternRates[p]);
             }
         }
         for (int p = 0; p < patternCount; p++) {
             siteLogLikelihoods[p] *= patternWeights[p];
         }
         siteLogLikelihoodsKnown = true;
+    }
+
+    double[] getPatternRates() {
+        ensureRates();
+        return patternRates;
     }
 
     double getSiteRateScale() {

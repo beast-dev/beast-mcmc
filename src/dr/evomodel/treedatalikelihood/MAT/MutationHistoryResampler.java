@@ -61,10 +61,36 @@ import java.util.Set;
  * proposal that is its own reverse. The move never changes the states outside the block, so the move
  * and its reverse resample the same sites. Candidate sites are found from the events on the branches
  * around the block, so a move costs O(events around the block), not O(sites).
+ *
+ * The hybrid cannot create back-mutations at sites that look uniform around every block it sees, so
+ * the alternative {@link SiteSelection#ALL} resamples every (non-constant) site, a plain Gibbs block
+ * update. Branch history models with explicit hits ({@link BranchHistoryModel#hasExplicitHistories()})
+ * require it: the ancestral states are drawn with the hits summed out, then each site's hits on every
+ * branch touching the block are drawn given its end states, and the probabilities of the old and new
+ * hits enter the Hastings ratio.
  */
 public class MutationHistoryResampler implements SubtreeMoveHook {
 
+    /**
+     * Which sites a move resamples: those that vary around the block (HYBRID) or all of them (ALL).
+     */
+    public enum SiteSelection {
+        HYBRID, ALL;
+
+        public static SiteSelection parse(String name) {
+            for (SiteSelection selection : values()) {
+                if (selection.name().equalsIgnoreCase(name)) {
+                    return selection;
+                }
+            }
+            throw new IllegalArgumentException("Unknown site selection: " + name);
+        }
+    }
+
     private final MATDataLikelihoodDelegate delegate;
+    private final BranchHistoryModel historyModel;
+    private final SiteSelection siteSelection;
+    private double logProposalOfOldHistories;
     private final Tree tree;
     private final int stateCount;
     private final int patternCount;
@@ -99,7 +125,24 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private final double[] classWeights;
 
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate) {
+        this(delegate, null);
+    }
+
+    /**
+     * @param siteSelection which sites to resample (null for the default: HYBRID unless the branch
+     *                      history model has explicit histories)
+     */
+    public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, SiteSelection siteSelection) {
         this.delegate = delegate;
+        this.historyModel = delegate.getHistoryModel();
+        if (siteSelection == null) {
+            siteSelection = historyModel.hasExplicitHistories() ? SiteSelection.ALL : SiteSelection.HYBRID;
+        }
+        if (siteSelection == SiteSelection.HYBRID && historyModel.hasExplicitHistories()) {
+            throw new IllegalArgumentException("The " + historyModel.getName() + " branch history model needs every site " +
+                    "to be resampled (site selection " + SiteSelection.ALL + ")");
+        }
+        this.siteSelection = siteSelection;
         this.tree = delegate.getTree();
         this.stateCount = delegate.getPatternList().getDataType().getStateCount();
         this.patternCount = delegate.getPatternList().getPatternCount();
@@ -137,11 +180,16 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     @Override
     public void beforeSubtreeMove(NodeRef node, NodeRef sibling, NodeRef destination) {
         delegate.updateMAT();
+        delegate.ensureRates();
         block = getBlock(tree.getParent(node), sibling, destination);
-        candidateSites = getCandidateSites(block);
+        candidateSites = siteSelection == SiteSelection.ALL ? getVariableSites(block) : getCandidateSites(block);
         oldBoundary = getBoundary(block);
         // score the candidates' current states under the old topology (only the resampled ones will count)
         sampleBlock(block, false, siteClasses, candidateSites, oldSiteLogProbabilities);
+        if (historyModel.hasExplicitHistories()) {
+            // every candidate is resampled (site selection ALL), so score all their hits around the block
+            logProposalOfOldHistories = scoreHistories(getIncidentBranches(block), candidateSites);
+        }
     }
 
     @Override
@@ -175,7 +223,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             for (int n : newBoundary) {
                 uniform &= store.getState(n, p) == state;
             }
-            if (!uniform) {
+            if (!uniform || siteSelection == SiteSelection.ALL) {
                 sites[siteCount++] = p;
                 resampledSites[p] = true;
             }
@@ -192,6 +240,21 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
         store.setFitchSetsStale(true);
+
+        if (historyModel.hasExplicitHistories()) {
+            // draw the hits of the resampled sites on every branch touching the block, given their end states
+            Set<Integer> branches = new HashSet<Integer>(reparented);
+            for (int n : getIncidentBranches(currentBlock)) {
+                branches.add(n);
+            }
+            double logProposalOfNewHistories = sampleHistories(branches, resampled);
+            for (int p : resampled) {
+                resampledSites[p] = false;
+            }
+            candidateSites = null;
+            oldBoundary = null;
+            return logProposalOfOldStates - logProposalOfNewStates + logProposalOfOldHistories - logProposalOfNewHistories;
+        }
 
         // branches whose parent changed are recomputed in full; the others around the block changed only at the resampled sites
         Set<Integer> fullUpdates = new HashSet<Integer>(reparented);
@@ -224,6 +287,196 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      */
     public int[] getLastResampledSites() {
         return lastResampledSites.clone();
+    }
+
+    /**
+     * @return every non-constant site, with its class around the block set in siteClasses
+     */
+    private int[] getVariableSites(int[] blockNodes) {
+        byte[] classes = getPatternClasses(blockNodes);
+        int[] sites = new int[patternCount];
+        int count = 0;
+        for (int p = 0; p < patternCount; p++) {
+            if (!delegate.isConstantPattern(p)) {
+                siteClasses[p] = classes[p];
+                sites[count++] = p;
+            }
+        }
+        return Arrays.copyOf(sites, count);
+    }
+
+    /**
+     * @return the nodes whose branches touch the block in the current topology: the block nodes (other
+     * than the root) and their children
+     */
+    private int[] getIncidentBranches(int[] blockNodes) {
+        Set<Integer> branches = new HashSet<Integer>();
+        for (int n : blockNodes) {
+            NodeRef node = tree.getNode(n);
+            if (!tree.isRoot(node)) {
+                branches.add(n);
+            }
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                branches.add(tree.getChild(node, i).getNumber());
+            }
+        }
+        int[] result = new int[branches.size()];
+        int i = 0;
+        for (int n : branches) {
+            result[i++] = n;
+        }
+        return result;
+    }
+
+    /**
+     * @return the log probability of the current hits of the given sites on the branches above the given
+     * nodes, given their end states
+     */
+    private double scoreHistories(int[] branches, int[] sites) {
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final double[] rates = delegate.getPatternRates();
+        final int[] start = new int[patternCount];
+        final int[] end = new int[patternCount];
+        double logProbability = 0.0;
+        for (int n : branches) {
+            int parent = store.getParent(n);
+            double length = delegate.getBranchLength(tree.getNode(n));
+            BranchMutations mutations = store.getBranchMutations(n);
+            for (int p : sites) {
+                start[p] = -1;
+            }
+            int k = 0;
+            while (k < mutations.getSubstitutionCount()) {
+                int siteEnd = mutations.getSiteEnd(k);
+                start[mutations.getPattern(k)] = k;
+                end[mutations.getPattern(k)] = siteEnd;
+                k = siteEnd;
+            }
+            for (int p : sites) {
+                int b = store.getState(n, p);
+                if (b < 0) {
+                    continue;
+                }
+                int a = store.getState(parent, p);
+                logProbability += start[p] < 0 ?
+                        historyModel.getHistoryLogProposal(mutations, 0, 0, a, b, length, rates[p]) :
+                        historyModel.getHistoryLogProposal(mutations, start[p], end[p], a, b, length, rates[p]);
+            }
+        }
+        return logProbability;
+    }
+
+    /**
+     * Draws the hits of the sites flagged in resampledSites (listed in sites) on the branches above the
+     * given nodes, given their end states, keeping the events of the other sites.
+     *
+     * @return the log probability of the drawn hits
+     */
+    private double sampleHistories(Iterable<Integer> branches, int[] sites) {
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final double[] rates = delegate.getPatternRates();
+        double logProbability = 0.0;
+        for (int n : branches) {
+            int parent = store.getParent(n);
+            if (parent < 0) {
+                continue;
+            }
+            double length = delegate.getBranchLength(tree.getNode(n));
+            BranchMutations old = store.getBranchMutations(n);
+            BranchMutations.Builder builder = new BranchMutations.Builder(true);
+            int k = 0;
+            while (k < old.getSubstitutionCount()) {
+                int siteEnd = old.getSiteEnd(k);
+                if (!resampledSites[old.getPattern(k)]) {
+                    for (int i = k; i < siteEnd; i++) {
+                        builder.addSubstitution(old.getPattern(i), old.getFromState(i), old.getToState(i),
+                                old.hasTimes() ? old.getTime(i) : (i - k + 1.0) / (siteEnd - k + 1.0));
+                    }
+                }
+                k = siteEnd;
+            }
+            for (int i = old.getSubstitutionCount(); i < old.size(); i++) {
+                if (!resampledSites[old.getPattern(i)]) {
+                    builder.addAmbiguity(old.getPattern(i), old.getFromState(i));
+                }
+            }
+            for (int p : sites) {
+                int a = store.getState(parent, p);
+                int b = store.getState(n, p);
+                if (b < 0) {
+                    if (a >= 0) {
+                        builder.addAmbiguity(p, a);
+                    }
+                } else {
+                    logProbability += historyModel.sampleHistory(p, a, b, length, rates[p], builder);
+                }
+            }
+            store.setBranchMutations(n, builder.build());
+        }
+        return logProbability;
+    }
+
+    /**
+     * @return the log probability of all the ancestral states (of the variable sites) and hits under their
+     * full conditional distribution given the tree; the likelihood minus this is the likelihood with
+     * them summed out
+     */
+    public double getLogFullConditional() {
+        delegate.updateMAT();
+        delegate.ensureRates();
+        double logProbability = sampleBlock(getInternalNodes(), false);
+        if (historyModel.hasExplicitHistories()) {
+            logProbability += scoreHistories(getNonRootNodes(), getVariableSites(getInternalNodes()));
+        }
+        return logProbability;
+    }
+
+    /**
+     * Draws all the ancestral states (of the variable sites) and hits from their full conditional
+     * distribution given the tree (a Gibbs update of the whole MAT).
+     */
+    public void resampleAll() {
+        delegate.updateMAT();
+        delegate.ensureRates();
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        int[] internal = getInternalNodes();
+        sampleBlock(internal, true);
+        if (historyModel.hasExplicitHistories()) {
+            int[] sites = getVariableSites(internal);
+            for (int p : sites) {
+                resampledSites[p] = true;
+            }
+            List<Integer> branches = new ArrayList<Integer>();
+            for (int n : getNonRootNodes()) {
+                branches.add(n);
+            }
+            sampleHistories(branches, sites);
+            for (int p : sites) {
+                resampledSites[p] = false;
+            }
+        } else {
+            store.updateAllBranches();
+        }
+        delegate.setHistoryResampled();
+    }
+
+    private int[] getInternalNodes() {
+        int[] nodes = new int[tree.getInternalNodeCount()];
+        for (int i = 0; i < nodes.length; i++) {
+            nodes[i] = tree.getInternalNode(i).getNumber();
+        }
+        return nodes;
+    }
+
+    private int[] getNonRootNodes() {
+        int[] nodes = new int[tree.getNodeCount() - 1];
+        int i = 0;
+        for (int n = 0; n < tree.getNodeCount(); n++) {
+            if (!tree.isRoot(tree.getNode(n))) {
+                nodes[i++] = n;
+            }
+        }
+        return nodes;
     }
 
     private static boolean inBlock(int[] blockNodes, int n) {
@@ -440,6 +693,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      */
     private double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses,
                                int[] sites, double[] siteLogProbabilities) {
+        delegate.ensureRates();
         final DefaultMutationStore store = delegate.getMutableMutationStore();
         final int[] postOrder = getBlockPostOrder(blockNodes);
         final int blockSize = postOrder.length;
@@ -1078,23 +1332,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     /**
-     * Log density of the path along a branch of length R (expected substitutions) from state a to
-     * state b, allowing at most one substitution: -nu q_a R if a == b, otherwise
-     * log(nu Q_ab R) - nu q_b R + log(expm1(x)/x) with x = nu (q_b - q_a) R.
-     * Consistent with the likelihood computed by {@link MATDataLikelihoodDelegate}.
+     * Log density of going from state a to state b along a branch of length R (expected substitutions),
+     * summed over whatever the branch history model does not sample.
      */
     private void computeLogBranchDensities(double length, double nu, double[] out) {
-        for (int a = 0; a < stateCount; a++) {
-            for (int b = 0; b < stateCount; b++) {
-                if (a == b) {
-                    out[a * stateCount + b] = -nu * exitRates[a] * length;
-                } else {
-                    double rate = nu * infinitesimalMatrix[a * stateCount + b];
-                    out[a * stateCount + b] = Math.log(rate * length) - nu * exitRates[b] * length
-                            + MATDataLikelihoodDelegate.logExpm1OverX(nu * (exitRates[b] - exitRates[a]) * length);
-                }
-            }
-        }
+        historyModel.getLogTransitionDensities(length, nu, out);
     }
 
     /**

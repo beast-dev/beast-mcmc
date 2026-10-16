@@ -38,3 +38,4 @@ src/revision.txt
 *.citations.txt
 *.ops
 *.MLE
+*.code-workspace

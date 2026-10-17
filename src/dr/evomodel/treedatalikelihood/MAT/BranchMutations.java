@@ -181,22 +181,6 @@ public final class BranchMutations {
             ambFrom[ambCount++] = (byte) from;
         }
 
-        /**
-         * Copies the events of one site from another branch's events.
-         */
-        public void copySite(BranchMutations source, int pattern) {
-            for (int i = 0; i < source.size(); i++) {
-                if (source.getPattern(i) == pattern) {
-                    if (source.isAmbiguity(i)) {
-                        addAmbiguity(pattern, source.getFromState(i));
-                    } else {
-                        addSubstitution(pattern, source.getFromState(i), source.getToState(i),
-                                source.hasTimes() ? source.getTime(i) : 0.0);
-                    }
-                }
-            }
-        }
-
         public BranchMutations build() {
             int size = subCount + ambCount;
             if (size == 0) {

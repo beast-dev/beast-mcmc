@@ -27,7 +27,7 @@
 package dr.evomodel.treedatalikelihood.MAT;
 
 /**
- * Explicit hits with their positions along the branch (as in Delphy): a path of k hits at fractions
+ * Explicit hits with their positions along the branch (as in Varilly et al., Nature 2026): a path of k hits at fractions
  * u_1 < ... < u_k of the branch contributes
  * sum_i log(nu Q_{x_{i-1} x_i}) - sum_i nu q_{x_i} (u_{i+1} - u_i) L + k log L,
  * the CTMC path density with the change of variables from times to fractions (so that changing the

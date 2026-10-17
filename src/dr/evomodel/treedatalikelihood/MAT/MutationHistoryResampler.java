@@ -118,7 +118,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private final int[] variableSites;
     private int[][] stateCountsCache;
     private long[] stateCountsVersion;
-    private int candidateStamp;
     private int referenceNode;
     private final int[] uniformCounts;
     private double uniformOldLogProbability;
@@ -227,7 +226,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         if (sparseUniform) {
             // the sites with events around the block; the others are handled together (see the class comment)
             candidateSites = getCandidateSites(block);
-            candidateStamp = stamp;
             uniformSkipStamps = siteStamps;
             uniformSkipStamp = stamp;
             referenceNode = node.getNumber();

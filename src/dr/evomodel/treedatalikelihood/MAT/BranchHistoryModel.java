@@ -36,7 +36,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
  * <li>{@link SingleHitHistoryModel}: at most one substitution per site per branch, times integrated out</li>
  * <li>{@link IntegratedHitsHistoryModel}: any number of hits, summed analytically (transition probabilities)</li>
  * <li>{@link ExplicitHitsHistoryModel}: explicit hits (paths of states) per site per branch, times integrated out</li>
- * <li>{@link TimedHitsHistoryModel}: explicit hits with their positions along the branch (as in Delphy)</li>
+ * <li>{@link TimedHitsHistoryModel}: explicit hits with their positions along the branch (as in Varilly et al., Nature 2026)</li>
  * </ul>
  *
  * Branch lengths are in expected substitutions (time x branch rate) and nu is a site's relative rate.

@@ -51,8 +51,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Mutation-annotated tree (MAT) likelihood delegate, following the model used by Delphy
- * (Varilly et al.).
+ * Mutation-annotated tree (MAT) likelihood delegate, following the model of Varilly et al. (Nature,
+ * 2026).
  *
  * Rather than integrating over all ancestral states, the likelihood is that of an explicit
  * mutational history: a root sequence plus a set of mutations on each branch, reconstructed by
@@ -66,8 +66,10 @@ import java.util.logging.Logger;
  * site per branch, its time integrated out); alternatives allow multiple hits, summed analytically or
  * as explicit (optionally timed) paths. The root sequence has prior sum_l log pi_a.
  *
- * The likelihood is a root term plus a term for each branch, each cached against what it depends on,
- * so an evaluation costs O(changed branches) plus O(nodes) to check the caches.
+ * The likelihood is a root term plus a term for each branch, each cached against what it depends on.
+ * Only the terms of branches whose states, events or length may have changed are recomputed (the store
+ * logs the first two, events from the tree the third), so an evaluation costs O(changed branches) plus a
+ * sum over the branch terms.
  */
 public class MATDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate {
 
@@ -101,7 +103,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     // Incremental likelihood: logL = root term + sum over branches of a branch term, each cached
     // against what it depends on. modelVersion changes whenever the rate matrix, frequencies or
-    // site rates may have changed (branch lengths are compared directly).
+    // site rates may have changed.
     private long modelVersion = 0;
     private long cachedModelVersion = -1;
     private boolean modelChangedSinceStore = false;
@@ -268,10 +270,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         return historyModel;
     }
 
-    MATInitializer getInitializer() {
-        return initializer;
-    }
-
     DefaultMutationStore getMutableMutationStore() {
         return mutationStore;
     }
@@ -308,10 +306,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     public BranchRateModel getBranchRateModel() {
         return branchRateModel;
-    }
-
-    public Parameter getSiteRates() {
-        return siteRates;
     }
 
     /**

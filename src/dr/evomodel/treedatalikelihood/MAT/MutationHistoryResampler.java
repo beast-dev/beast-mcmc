@@ -70,7 +70,10 @@ import java.util.Set;
  * through the variable sites with geometric jumps at the highest probability of a change, and keeping
  * each site visited with its own probability over that), the unchanged ones contribute
  * n_a log P(unchanged | a) for the number n_a of them in each state, and a move costs
- * O(events around the block + changes), not O(sites). Branch history models with explicit hits ({@link BranchHistoryModel#hasExplicitHistories()})
+ * O(events around the block + changes), not O(sites). Sites whose only events around the block are
+ * ambiguities are treated in the same way, grouped by their state and by which of the block's
+ * neighbours are ambiguous there (which together determine their conditional): there are typically
+ * many such sites (runs of N) but few groups. Branch history models with explicit hits ({@link BranchHistoryModel#hasExplicitHistories()})
  * require it: the ancestral states are drawn with the hits summed out, then each site's hits on every
  * branch touching the block are drawn given its end states, and the probabilities of the old and new
  * hits enter the Hastings ratio.
@@ -141,6 +144,15 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private double uniformOldLogProbability;
     private int[] changedUniformSites = new int[16];
     private int changedUniformCount;
+    // the sites with only ambiguities around the block, handled in groups (see the class comment)
+    private int[] substitutionSites;
+    private int[] ambiguitySites;
+    private double ambiguityOldLogProbability;
+    private double lastAmbiguityLogProbability;
+    private int[] changedAmbiguitySites = new int[16];
+    private int changedAmbiguityCount;
+    private int[] changedAmbiguityStamps;
+    private int changedAmbiguityStamp = 0;
 
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate) {
         this(delegate, null);
@@ -222,15 +234,32 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             candidateStamp = stamp;
             referenceNode = node.getNumber();
             countUniformSites();
+            int substitutionCount = 0;
+            int ambiguityCount = 0;
+            int[] substitution = new int[candidateSites.length];
+            int[] ambiguity = new int[candidateSites.length];
+            for (int p : candidateSites) {
+                if (delegate.isConstantPattern(p)) {
+                    continue;
+                }
+                if (siteClasses[p] == AMBIGUITIES_ONLY) {
+                    ambiguity[ambiguityCount++] = p;
+                } else {
+                    substitution[substitutionCount++] = p;
+                }
+            }
+            substitutionSites = Arrays.copyOf(substitution, substitutionCount);
+            ambiguitySites = Arrays.copyOf(ambiguity, ambiguityCount);
         } else {
             candidateSites = siteSelection == SiteSelection.ALL ? getVariableSites(block) : getCandidateSites(block);
         }
         oldBoundary = getBoundary(block);
         // score the candidates' current states under the old topology (only the resampled ones will count)
         uniformPass = sparseUniform;
-        sampleBlock(block, false, siteClasses, candidateSites, oldSiteLogProbabilities);
+        sampleBlock(block, false, siteClasses, sparseUniform ? substitutionSites : candidateSites, oldSiteLogProbabilities);
         uniformPass = false;
         uniformOldLogProbability = sparseUniform ? lastUniformLogProbability : 0.0;
+        ambiguityOldLogProbability = sparseUniform ? lastAmbiguityLogProbability : 0.0;
         if (historyModel.hasExplicitHistories()) {
             // every candidate is resampled (site selection ALL), so score all their hits around the block
             logProposalOfOldHistories = scoreHistories(getIncidentBranches(block), candidateSites);
@@ -259,7 +288,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         final int[] newBoundary = getBoundary(currentBlock);
         final int[] sites = new int[candidateSites.length];
         int siteCount = 0;
-        for (int p : candidateSites) {
+        for (int p : sparseUniform ? substitutionSites : candidateSites) {
             int state = store.getState(oldBoundary[0], p);
             boolean uniform = true;
             for (int n : oldBoundary) {
@@ -276,22 +305,28 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         final int[] resampled = Arrays.copyOf(sites, siteCount);
         lastResampledSites = resampled;
 
-        double logProposalOfOldStates = uniformOldLogProbability;
+        double logProposalOfOldStates = uniformOldLogProbability + ambiguityOldLogProbability;
         for (int p : resampled) {
             logProposalOfOldStates += oldSiteLogProbabilities[p];
         }
         uniformPass = sparseUniform;
         changedUniformCount = 0;
+        changedAmbiguityCount = 0;
         double logProposalOfNewStates = sampleBlock(currentBlock, true, siteClasses, resampled, newSiteLogProbabilities);
         uniformPass = false;
         delegate.setHistoryResampled();
 
         int[] changed = resampled;
-        if (sparseUniform && changedUniformCount > 0) {
-            // the sites with no events around the block that changed also need their branches updated
-            changed = Arrays.copyOf(resampled, resampled.length + changedUniformCount);
+        if (sparseUniform && changedUniformCount + changedAmbiguityCount > 0) {
+            // the other sites whose block states changed also need their branches updated
+            changed = Arrays.copyOf(resampled, resampled.length + changedAmbiguityCount + changedUniformCount);
+            int k = resampled.length;
+            for (int i = 0; i < changedAmbiguityCount; i++) {
+                changed[k++] = changedAmbiguitySites[i];
+                resampledSites[changedAmbiguitySites[i]] = true;
+            }
             for (int i = 0; i < changedUniformCount; i++) {
-                changed[resampled.length + i] = changedUniformSites[i];
+                changed[k++] = changedUniformSites[i];
                 resampledSites[changedUniformSites[i]] = true;
             }
             lastResampledSites = changed;
@@ -999,6 +1034,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
 
         if (uniformPass) {
+            lastAmbiguityLogProbability = sampleAmbiguitySites(sample, blockStates, postOrder, children, topParent,
+                    store, siteRateScale);
+            logProbability += lastAmbiguityLogProbability;
             lastUniformLogProbability = sampleUniformSites(sample, blockStates, siteRateScale);
             logProbability += lastUniformLogProbability;
         }
@@ -1013,6 +1051,214 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private double lastUniformLogProbability;
     // set while sampleBlock is scoring or drawing a move's block (when it also handles the sites with no events)
     private boolean uniformPass = false;
+
+    /**
+     * The sites with only ambiguities around the block that share a state and a pattern of ambiguous
+     * neighbours (and so a conditional).
+     */
+    private static final class AmbiguityGroup {
+        final int state;
+        final int representative;
+        int[] sites = new int[8];
+        int count = 0;
+
+        AmbiguityGroup(int state, int representative) {
+            this.state = state;
+            this.representative = representative;
+        }
+
+        void add(int p) {
+            if (count == sites.length) {
+                sites = Arrays.copyOf(sites, 2 * count);
+            }
+            sites[count++] = p;
+        }
+    }
+
+    /**
+     * The key of an ambiguity group: which of the block's neighbours are unambiguous, and the state.
+     */
+    private static final class AmbiguityKey {
+        long[] present;
+        int state;
+        int hash;
+
+        void set(long[] present, int state) {
+            this.present = present;
+            this.state = state;
+            this.hash = 31 * Arrays.hashCode(present) + state;
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            AmbiguityKey other = (AmbiguityKey) o;
+            return state == other.state && Arrays.equals(present, other.present);
+        }
+    }
+
+    /**
+     * Scores (or draws) the block states of the sites whose only events around the block are
+     * ambiguities. Every unambiguous node around and in the block has the same state a at such a site,
+     * and its block states stay at a (where the block has data below it) with a probability that depends
+     * only on a and on which of the block's neighbours are ambiguous, so the sites are handled in groups
+     * as the sites with no events are (see sampleUniformSites).
+     *
+     * @return the log probability of their (drawn or existing) block states under the full conditional
+     */
+    private double sampleAmbiguitySites(boolean sample, byte[][] blockStates, int[] postOrder, int[][] children,
+                                        NodeRef topParent, DefaultMutationStore store, double siteRateScale) {
+        changedAmbiguityCount = 0;
+        if (changedAmbiguityStamps == null) {
+            changedAmbiguityStamps = new int[patternCount];
+        }
+        changedAmbiguityStamp++;
+        if (ambiguitySites.length == 0) {
+            return 0.0;
+        }
+        final int blockSize = postOrder.length;
+
+        // the block's neighbours, in the order the conditionals use them
+        int neighbourCount = topParent == null ? 0 : 1;
+        for (int i = 0; i < blockSize; i++) {
+            for (int c : children[i]) {
+                if (!inBlock[c]) {
+                    neighbourCount++;
+                }
+            }
+        }
+        final int[] neighbours = new int[neighbourCount];
+        int k = 0;
+        if (topParent != null) {
+            neighbours[k++] = topParent.getNumber();
+        }
+        for (int i = 0; i < blockSize; i++) {
+            for (int c : children[i]) {
+                if (!inBlock[c]) {
+                    neighbours[k++] = c;
+                }
+            }
+        }
+        final byte[][] neighbourStates = new byte[neighbourCount][];
+        for (int j = 0; j < neighbourCount; j++) {
+            neighbourStates[j] = store.getStates(neighbours[j]);
+        }
+
+        // group the sites
+        final int words = (neighbourCount + 63) / 64;
+        final Map<AmbiguityKey, AmbiguityGroup> groups = new HashMap<AmbiguityKey, AmbiguityGroup>();
+        final AmbiguityKey probe = new AmbiguityKey();
+        long[] present = new long[words];
+        double logProbability = 0.0;
+        for (int p : ambiguitySites) {
+            Arrays.fill(present, 0L);
+            int a = -1;
+            for (int j = 0; j < neighbourCount; j++) {
+                int state = neighbourStates[j][p];
+                if (state >= 0) {
+                    present[j >> 6] |= 1L << (j & 63);
+                    a = Math.max(a, state);
+                }
+            }
+            for (int i = 0; i < blockSize; i++) {
+                a = Math.max(a, blockStates[i][p]);
+            }
+            if (a < 0) {
+                // ambiguous throughout
+                setBlockStates(blockStates, p, -1, null, sample);
+                continue;
+            }
+            probe.set(present, a);
+            AmbiguityGroup group = groups.get(probe);
+            if (group == null) {
+                AmbiguityKey key = new AmbiguityKey();
+                key.set(present, a);
+                present = new long[words];
+                group = new AmbiguityGroup(a, p);
+                groups.put(key, group);
+            }
+            group.add(p);
+        }
+
+        final double w = delegate.getPatternWeights()[variableSites[0]];
+        final double nu = delegate.getSiteRate(variableSites[0], siteRateScale);
+        for (AmbiguityGroup group : groups.values()) {
+            final Conditional conditional = new Conditional(group.representative, w, nu);
+            final int topIndex = blockSize - 1;
+            if (!conditional.present[topIndex]) {
+                // no data below the block
+                for (int i = 0; i < group.count; i++) {
+                    setBlockStates(blockStates, group.sites[i], -1, null, sample);
+                }
+                continue;
+            }
+            final UniformConditional uniform = new UniformConditional(conditional, group.state);
+            if (!sample) {
+                logProbability += group.count * uniform.logProbabilityUnchanged;
+                continue;
+            }
+            // the unchanged configuration: unambiguous nodes take a (which they may not have had before the move)
+            for (int i = 0; i < group.count; i++) {
+                setBlockStates(blockStates, group.sites[i], group.state, conditional.present, true);
+            }
+            // the sites that change, by thinning (here every site in the group has the same probability)
+            final double probabilityChanged = -Math.expm1(uniform.logProbabilityUnchanged);
+            int changedCount = 0;
+            if (probabilityChanged > 0.0) {
+                final double logSkip = Math.log1p(-probabilityChanged);
+                long index = -1;
+                while (true) {
+                    double u = 1.0 - MathUtils.nextDouble(); // in (0, 1]
+                    index += 1 + (logSkip == Double.NEGATIVE_INFINITY ? 0L : (long) Math.floor(Math.log(u) / logSkip));
+                    if (index >= group.count) {
+                        break;
+                    }
+                    int p = group.sites[(int) index];
+                    logProbability += sampleChangedUniformPattern(uniform, p, blockStates);
+                    addChangedAmbiguitySite(p);
+                    changedCount++;
+                }
+            }
+            logProbability += (group.count - changedCount) * uniform.logProbabilityUnchanged;
+        }
+        return logProbability;
+    }
+
+    /**
+     * Sets a site's block states to the state (where present, or everywhere if present is null), noting the
+     * site as changed if any of them change. Does nothing if not sampling.
+     */
+    private void setBlockStates(byte[][] blockStates, int p, int state, boolean[] present, boolean sample) {
+        if (!sample) {
+            return;
+        }
+        boolean changed = false;
+        for (int i = 0; i < blockStates.length; i++) {
+            byte value = (byte) (present == null || present[i] ? state : -1);
+            if (blockStates[i][p] != value) {
+                blockStates[i][p] = value;
+                changed = true;
+            }
+        }
+        if (changed) {
+            addChangedAmbiguitySite(p);
+        }
+    }
+
+    private void addChangedAmbiguitySite(int p) {
+        if (changedAmbiguityStamps[p] == changedAmbiguityStamp) {
+            return;
+        }
+        changedAmbiguityStamps[p] = changedAmbiguityStamp;
+        if (changedAmbiguityCount == changedAmbiguitySites.length) {
+            changedAmbiguitySites = Arrays.copyOf(changedAmbiguitySites, 2 * changedAmbiguityCount);
+        }
+        changedAmbiguitySites[changedAmbiguityCount++] = p;
+    }
 
     /**
      * Counts the variable sites with no events around the block, by their state (which is the same at

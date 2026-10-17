@@ -489,9 +489,9 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     /**
-     * The sites with no events around the block are drawn by thinning; check that each changes with its
-     * exact probability (from the full conditional of its block states, enumerated with the dense scorer)
-     * by repeating the same move many times.
+     * The sites with no events around the block, and those with only ambiguities there, are drawn by
+     * thinning; check that each changes with its exact probability (from the full conditional of its block
+     * states, enumerated with the dense scorer) by repeating the same move many times.
      */
     public void testSparseResamplingDrawsUniformSitesExactly() {
         // a high rate, so that sites with no events around the block change often enough to count
@@ -516,13 +516,34 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         byte[] classes = resampler.getPatternClasses(block);
         List<Integer> uniformSites = new ArrayList<Integer>();
         int[] uniformState = new int[patterns.getPatternCount()];
+        int[] neighbourhood = new int[]{x.getNumber(), sibling.getNumber(), destination.getNumber(),
+                treeModel.getParent(destination).getNumber(), parent.getNumber()};
+        int noEventSites = 0;
+        int ambiguitySites = 0;
         for (int p = 0; p < patterns.getPatternCount(); p++) {
-            if (classes[p] == MutationHistoryResampler.NO_EVENTS && store.getState(x.getNumber(), p) >= 0) {
+            if (classes[p] != MutationHistoryResampler.NO_EVENTS && classes[p] != MutationHistoryResampler.AMBIGUITIES_ONLY) {
+                continue;
+            }
+            // every unambiguous node around the block has the same state
+            int a = -1;
+            for (int n : neighbourhood) {
+                a = Math.max(a, store.getState(n, p));
+            }
+            for (int n : block) {
+                a = Math.max(a, store.getState(n, p));
+            }
+            if (a >= 0) {
                 uniformSites.add(p);
-                uniformState[p] = store.getState(x.getNumber(), p);
+                uniformState[p] = a;
+                if (classes[p] == MutationHistoryResampler.NO_EVENTS) {
+                    noEventSites++;
+                } else {
+                    ambiguitySites++;
+                }
             }
         }
-        assertTrue(uniformSites.size() > 10);
+        assertTrue("sites with no events: " + noEventSites, noEventSites > 10);
+        assertTrue("sites with only ambiguities: " + ambiguitySites, ambiguitySites > 10);
 
         // the exact probability that each such site's block states change, under the new topology
         likelihood.storeModelState();
@@ -530,18 +551,31 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         regraft(x, destination, height);
         resampler.afterSubtreeMove();
         double[] probabilityChanged = new double[patterns.getPatternCount()];
+        boolean[][] free = new boolean[patterns.getPatternCount()][];
         double expectedChanges = 0.0;
         for (int p : uniformSites) {
+            // the block nodes with data below them at this site (in the new topology); the others stay ambiguous
+            free[p] = new boolean[block.length];
+            int freeCount = 0;
+            for (int i = 0; i < block.length; i++) {
+                free[p][i] = store.getState(block[i], p) >= 0;
+                if (free[p][i]) {
+                    freeCount++;
+                }
+            }
             double logUnchanged = Double.NaN;
             double logTotal = Double.NEGATIVE_INFINITY;
-            int combinations = (int) Math.pow(4, block.length);
+            int combinations = (int) Math.pow(4, freeCount);
             for (int k = 0; k < combinations; k++) {
                 int code = k;
                 boolean unchanged = true;
-                for (int n : block) {
+                for (int i = 0; i < block.length; i++) {
+                    if (!free[p][i]) {
+                        continue;
+                    }
                     int state = code % 4;
                     code /= 4;
-                    store.getWritableStates(n)[p] = (byte) state;
+                    store.getWritableStates(block[i])[p] = (byte) state;
                     unchanged &= state == uniformState[p];
                 }
                 double logQ = resampler.sampleBlock(block, false);
@@ -550,8 +584,10 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                     logUnchanged = logQ;
                 }
             }
-            for (int n : block) {
-                store.getWritableStates(n)[p] = (byte) uniformState[p];
+            for (int i = 0; i < block.length; i++) {
+                if (free[p][i]) {
+                    store.getWritableStates(block[i])[p] = (byte) uniformState[p];
+                }
             }
             probabilityChanged[p] = -Math.expm1(logUnchanged - logTotal);
             expectedChanges += probabilityChanged[p];
@@ -571,8 +607,10 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             regraft(x, destination, height);
             resampler.afterSubtreeMove();
             for (int p : uniformSites) {
-                for (int n : block) {
-                    if (store.getState(n, p) != uniformState[p]) {
+                for (int i = 0; i < block.length; i++) {
+                    int state = store.getState(block[i], p);
+                    assertEquals("ambiguity of block node " + i + " at site " + p, free[p][i], state >= 0);
+                    if (free[p][i] && state != uniformState[p]) {
                         changes[p]++;
                         totalChanges++;
                         break;

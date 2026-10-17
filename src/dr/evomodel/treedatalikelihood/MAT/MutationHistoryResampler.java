@@ -249,7 +249,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 }
             }
             substitutionSites = Arrays.copyOf(substitution, substitutionCount);
-            ambiguitySites = Arrays.copyOf(ambiguity, ambiguityCount);
+            // in pattern order, so that they can be grouped by sweeping the neighbours' ambiguous runs
+            ambiguitySites = sortSites(ambiguity, ambiguityCount);
         } else {
             candidateSites = siteSelection == SiteSelection.ALL ? getVariableSites(block) : getCandidateSites(block);
         }
@@ -1150,40 +1151,81 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             neighbourStates[j] = store.getStates(neighbours[j]);
         }
 
-        // group the sites
+        // Group the sites. Which neighbours are ambiguous only changes at the ends of their ambiguous runs,
+        // so the sites (in pattern order) are swept against those, and a site's state is read from one
+        // unambiguous neighbour (every unambiguous node around the block has the same state).
         final int words = (neighbourCount + 63) / 64;
+        int eventCount = 0;
+        final int[][] runs = new int[neighbourCount][];
+        for (int j = 0; j < neighbourCount; j++) {
+            runs[j] = getAmbiguousRuns(neighbours[j]);
+            eventCount += runs[j].length;
+        }
+        final long[] events = new long[eventCount];
+        k = 0;
+        for (int j = 0; j < neighbourCount; j++) {
+            for (int position : runs[j]) {
+                events[k++] = ((long) position << 32) | j;
+            }
+        }
+        Arrays.sort(events);
+
         final Map<AmbiguityKey, AmbiguityGroup> groups = new HashMap<AmbiguityKey, AmbiguityGroup>();
         final AmbiguityKey probe = new AmbiguityKey();
-        long[] present = new long[words];
+        final long[] present = new long[words];
+        for (int j = 0; j < neighbourCount; j++) {
+            present[j >> 6] |= 1L << (j & 63);
+        }
+        int nextEvent = 0;
+        boolean presenceChanged = true;
+        int firstPresent = -1;
+        AmbiguityGroup current = null;
         double logProbability = 0.0;
         for (int p : ambiguitySites) {
-            Arrays.fill(present, 0L);
-            int a = -1;
-            for (int j = 0; j < neighbourCount; j++) {
-                int state = neighbourStates[j][p];
-                if (state >= 0) {
-                    present[j >> 6] |= 1L << (j & 63);
-                    a = Math.max(a, state);
-                }
+            while (nextEvent < eventCount && (int) (events[nextEvent] >>> 32) <= p) {
+                // the start of an ambiguous run makes the neighbour ambiguous, the end unambiguous again
+                int j = (int) events[nextEvent];
+                present[j >> 6] ^= 1L << (j & 63);
+                nextEvent++;
+                presenceChanged = true;
             }
-            for (int i = 0; i < blockSize; i++) {
-                a = Math.max(a, blockStates[i][p]);
+            if (presenceChanged) {
+                firstPresent = -1;
+                for (int word = 0; word < words; word++) {
+                    if (present[word] != 0L) {
+                        firstPresent = (word << 6) + Long.numberOfTrailingZeros(present[word]);
+                        break;
+                    }
+                }
+                current = null;
+                presenceChanged = false;
+            }
+            int a;
+            if (firstPresent >= 0) {
+                a = neighbourStates[firstPresent][p];
+            } else {
+                // no data around the block (block nodes may still have states from before the move)
+                a = -1;
+                for (int i = 0; i < blockSize; i++) {
+                    a = Math.max(a, blockStates[i][p]);
+                }
             }
             if (a < 0) {
                 // ambiguous throughout
                 setBlockStates(blockStates, p, -1, null, sample);
                 continue;
             }
-            probe.set(present, a);
-            AmbiguityGroup group = groups.get(probe);
-            if (group == null) {
-                AmbiguityKey key = new AmbiguityKey();
-                key.set(present, a);
-                present = new long[words];
-                group = new AmbiguityGroup(a, p);
-                groups.put(key, group);
+            if (current == null || current.state != a) {
+                probe.set(present, a);
+                current = groups.get(probe);
+                if (current == null) {
+                    AmbiguityKey key = new AmbiguityKey();
+                    key.set(present.clone(), a);
+                    current = new AmbiguityGroup(a, p);
+                    groups.put(key, current);
+                }
             }
-            group.add(p);
+            current.add(p);
         }
 
         final double w = delegate.getPatternWeights()[variableSites[0]];
@@ -1249,6 +1291,66 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         if (changed) {
             addChangedAmbiguitySite(p);
         }
+    }
+
+    /**
+     * @return the given sites in pattern order (each site at most once)
+     */
+    private int[] sortSites(int[] sites, int count) {
+        if (siteBits == null) {
+            siteBits = new long[(patternCount + 63) / 64];
+        }
+        for (int i = 0; i < count; i++) {
+            siteBits[sites[i] >> 6] |= 1L << (sites[i] & 63);
+        }
+        int[] sorted = new int[count];
+        int k = 0;
+        for (int word = 0; word < siteBits.length; word++) {
+            long bits = siteBits[word];
+            siteBits[word] = 0L;
+            while (bits != 0L) {
+                sorted[k++] = (word << 6) + Long.numberOfTrailingZeros(bits);
+                bits &= bits - 1;
+            }
+        }
+        return sorted;
+    }
+
+    /**
+     * @return the runs of patterns at which the node is ambiguous, as [start, end) pairs in pattern order
+     * (cached for the node's current states)
+     */
+    private int[] getAmbiguousRuns(int n) {
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        if (ambiguousRuns == null) {
+            ambiguousRuns = new int[tree.getNodeCount()][];
+            ambiguousRunsVersion = new long[tree.getNodeCount()];
+        }
+        long version = store.getStateVersion(n);
+        if (ambiguousRuns[n] == null || ambiguousRunsVersion[n] != version) {
+            byte[] states = store.getStates(n);
+            int[] runs = new int[8];
+            int count = 0;
+            int p = 0;
+            while (p < patternCount) {
+                if (states[p] < 0) {
+                    int start = p;
+                    while (p < patternCount && states[p] < 0) {
+                        p++;
+                    }
+                    if (count + 2 > runs.length) {
+                        runs = Arrays.copyOf(runs, 2 * runs.length);
+                    }
+                    runs[count++] = start;
+                    runs[count++] = p;
+                } else {
+                    p++;
+                }
+            }
+            ambiguousRuns[n] = Arrays.copyOf(runs, count);
+            ambiguousRunsVersion[n] = version;
+        }
+        return ambiguousRuns[n];
     }
 
     /**
@@ -1377,6 +1479,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int blockTopBranch;
     private DefaultMutationStore blockStore;
     private int[] blockNodes;
+    private long[] siteBits;
+    private int[][] ambiguousRuns;
+    private long[] ambiguousRunsVersion;
     private double[] branchLengths;
     private double[][] logF;
     private double logFRate;

@@ -636,6 +636,424 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         }
     }
 
+    /**
+     * Data with regions in which only one or two taxa have data, so that moves have sites at which the
+     * moved subtree is the only data along part of its path (hot sites), with chains of different lengths.
+     */
+    private void setUpSparseData() {
+        String[][] taxaSequence = new String[2][];
+        taxaSequence[0] = PRIMATES_TAXON_SEQUENCE[0].clone();
+        taxaSequence[1] = PRIMATES_TAXON_SEQUENCE[1].clone();
+        for (int t = 0; t < taxaSequence[1].length; t++) {
+            String sequence = taxaSequence[1][t];
+            if (t != 4) {
+                sequence = mask(sequence, 200, 260, 'N'); // orangutan only
+            }
+            if (t != 4 && t != 5) {
+                sequence = mask(sequence, 300, 340, 'N'); // orangutan and siamang
+            }
+            if (t != 0 && t != 1) {
+                sequence = mask(sequence, 400, 430, 'N'); // human and chimp
+            }
+            if (t != 3) {
+                sequence = mask(sequence, 500, 520, '-'); // gorilla only
+            }
+            if (t == 2 || t == 3) {
+                sequence = mask(sequence, 600, 640, 'N'); // all but bonobo and gorilla
+            }
+            taxaSequence[1][t] = sequence;
+        }
+        createAlignment(taxaSequence, Nucleotides.INSTANCE);
+        treeModel = createPrimateTreeModel();
+        patterns = new SitePatterns(alignment, null, 0, -1, 1, true, SitePatterns.CompressionType.CONSTANT_ONLY);
+        branchRates = new StrictClockBranchRates(clockRate);
+        delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
+                null, branchRates, null);
+        likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
+        // the direct path density (directLogLikelihood) then uses a relative rate of 1 for every site
+        siteRates = new Parameter.Default(patterns.getPatternCount(), 1.0);
+    }
+
+    /**
+     * The local block: the log Hastings ratio of random moves equals log q(old) - log q(new), where q is the
+     * full conditional of the block's states (the regrafted parent's, and those of every node whose
+     * presence the move changes) given all other states, found by enumerating the block at each site.
+     * States outside the block must not change, and the MAT must stay consistent.
+     */
+    public void testLocalBlockMatchesEnumeratedConditional() {
+        setUpSparseData();
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate,
+                MutationHistoryResampler.SiteSelection.ALL, true);
+
+        int moves = 0;
+        int chainSites = 0;
+        int longChainSites = 0;
+        for (int iteration = 0; iteration < 5000 && moves < 200; iteration++) {
+            NodeRef x = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            NodeRef destination = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            if (treeModel.isRoot(x) || treeModel.isRoot(treeModel.getParent(x)) || treeModel.isRoot(destination)) {
+                continue;
+            }
+            NodeRef parent = treeModel.getParent(x);
+            NodeRef sibling = otherChild(parent, x);
+            if (destination == parent || destination == sibling || isAncestorOrSelf(x, destination) ||
+                    treeModel.getNodeHeight(treeModel.getParent(destination)) <= treeModel.getNodeHeight(x)) {
+                continue;
+            }
+
+            likelihood.getLogLikelihood();
+            likelihood.storeModelState();
+            String statesBefore = describeStates();
+            double logLBefore = likelihood.getLogLikelihood();
+
+            int p = parent.getNumber();
+            int[] oldParents = currentParents();
+            int[] newParents = oldParents.clone();
+            newParents[sibling.getNumber()] = oldParents[p];
+            newParents[p] = oldParents[destination.getNumber()];
+            newParents[destination.getNumber()] = p;
+            boolean[][] oldPresence = presence(oldParents);
+            boolean[][] newPresence = presence(newParents);
+            int[][] oldStates = snapshotStates();
+            double logQOld = 0.0;
+            for (int site : variableSites()) {
+                int[] block = localBlock(p, site, oldPresence, newPresence);
+                logQOld += logConditional(site, block, oldPresence, oldStates, oldParents);
+            }
+
+            resampler.beforeSubtreeMove(x, sibling, destination);
+            regraft(x, destination, regraftHeight(destination, treeModel.getNodeHeight(x)));
+            double logRatio = resampler.afterSubtreeMove();
+
+            assertTrue(java.util.Arrays.equals(newParents, currentParents()));
+            int[][] newStates = snapshotStates();
+            double logQNew = 0.0;
+            for (int site : variableSites()) {
+                int[] block = localBlock(p, site, oldPresence, newPresence);
+                boolean[] inBlock = new boolean[treeModel.getNodeCount()];
+                for (int n : block) {
+                    inBlock[n] = true;
+                }
+                for (int n = 0; n < treeModel.getNodeCount(); n++) {
+                    if (!inBlock[n]) {
+                        assertEquals("node " + n + " outside the block at site " + site, oldStates[n][site], newStates[n][site]);
+                    }
+                }
+                if (block.length > 1) {
+                    chainSites++;
+                    if (block.length > 2) {
+                        longChainSites++;
+                    }
+                }
+                logQNew += logConditional(site, block, newPresence, newStates, newParents);
+            }
+            assertEquals("move " + moves, logQOld - logQNew, logRatio, 1E-6);
+            assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+
+            if (MathUtils.nextBoolean()) {
+                likelihood.acceptModelState();
+            } else {
+                likelihood.restoreModelState();
+                assertEquals(statesBefore, describeStates());
+                assertEquals(logLBefore, likelihood.getLogLikelihood(), 1E-10);
+            }
+            moves++;
+        }
+        assertEquals(200, moves);
+        assertTrue("sites with chains: " + chainSites, chainSites > 0);
+        assertTrue("sites with chains longer than one node: " + longChainSites, longChainSites > 0);
+    }
+
+    /**
+     * The local block's states are drawn from their full conditional: repeat one move (with long chains)
+     * many times and compare the frequency of each site's drawn block states with the enumerated conditional.
+     */
+    public void testLocalBlockDrawsExactly() {
+        clockRate.setParameterValue(0, 40.0);
+        setUpSparseData();
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate,
+                MutationHistoryResampler.SiteSelection.ALL, true);
+
+        final int xNumber = findTip("orangutan").getNumber();
+        final int destinationNumber = findTip("human").getNumber();
+        likelihood.getLogLikelihood();
+        NodeRef x = treeModel.getNode(xNumber);
+        NodeRef parent = treeModel.getParent(x);
+        final int p = parent.getNumber();
+        final int siblingNumber = otherChild(parent, x).getNumber();
+        int[] oldParents = currentParents();
+        int[] newParents = oldParents.clone();
+        newParents[siblingNumber] = oldParents[p];
+        newParents[p] = oldParents[destinationNumber];
+        newParents[destinationNumber] = p;
+        boolean[][] oldPresence = presence(oldParents);
+        boolean[][] newPresence = presence(newParents);
+        final int[] sites = variableSites();
+        final double height = regraftHeight(treeModel.getNode(destinationNumber), treeModel.getNodeHeight(x));
+
+        final int repeats = 3000;
+        java.util.Map<String, Integer> observed = new java.util.HashMap<String, Integer>();
+        java.util.Map<String, Double> expected = new java.util.HashMap<String, Double>();
+        int longChainSites = 0;
+        for (int r = 0; r < repeats; r++) {
+            likelihood.getLogLikelihood();
+            likelihood.storeModelState();
+            x = treeModel.getNode(xNumber);
+            resampler.beforeSubtreeMove(x, treeModel.getNode(siblingNumber), treeModel.getNode(destinationNumber));
+            regraft(x, treeModel.getNode(destinationNumber), height);
+            resampler.afterSubtreeMove();
+            int[][] states = snapshotStates();
+            for (int site : sites) {
+                int[] block = present(localBlock(p, site, oldPresence, newPresence), newPresence, site);
+                if (r == 0) {
+                    if (block.length > 2) {
+                        longChainSites++;
+                    }
+                    // the exact distribution of this site's block states (the other states are the same each time)
+                    double logZ = logConditionalNormaliser(site, block, states, newParents);
+                    int[] assignment = states(site, block, states).clone();
+                    for (int code = 0; code < (1 << (2 * block.length)); code++) {
+                        for (int i = 0; i < block.length; i++) {
+                            states[block[i]][site] = (code >> (2 * i)) & 3;
+                        }
+                        double probability = Math.exp(siteLogLikelihood(site, states, newParents) - logZ);
+                        expected.put(site + ":" + java.util.Arrays.toString(states(site, block, states)), probability);
+                    }
+                    for (int i = 0; i < block.length; i++) {
+                        states[block[i]][site] = assignment[i];
+                    }
+                }
+                String key = site + ":" + java.util.Arrays.toString(states(site, block, states));
+                Integer count = observed.get(key);
+                observed.put(key, count == null ? 1 : count + 1);
+            }
+            likelihood.restoreModelState();
+        }
+        assertTrue("sites with chains longer than one node: " + longChainSites, longChainSites > 0);
+
+        int checked = 0;
+        for (java.util.Map.Entry<String, Double> e : expected.entrySet()) {
+            double mean = repeats * e.getValue();
+            Integer count = observed.get(e.getKey());
+            int n = count == null ? 0 : count;
+            assertEquals(e.getKey(), mean, n, 5 * Math.sqrt(mean * (1 - e.getValue())) + 1);
+            if (mean > 5 && mean < repeats - 5) {
+                checked++;
+            }
+        }
+        for (String key : observed.keySet()) {
+            assertTrue("drawn states with no probability: " + key, expected.containsKey(key));
+        }
+        assertTrue("block states with intermediate probabilities: " + checked, checked > 20);
+    }
+
+    /**
+     * The local block with the subtree moves themselves (including moves at the root): the MAT stays
+     * consistent and restores exactly.
+     */
+    public void testLocalBlockMovesKeepMATConsistent() {
+        setUpSparseData();
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate,
+                MutationHistoryResampler.SiteSelection.ALL, true);
+        List<AbstractTreeOperator> operators = new ArrayList<AbstractTreeOperator>();
+        operators.add(new SubtreeLeapOperator(treeModel, 1.0, 0.05, SubtreeLeapOperator.DistanceKernelType.NORMAL,
+                AdaptationMode.ADAPTATION_OFF, 0.234));
+        operators.add(new SubtreeJumpOperator(treeModel, 1.0, 1.0, 0.234, true, AdaptationMode.ADAPTATION_OFF));
+        operators.add(new FixedHeightSubtreePruneRegraftOperator(treeModel, 1.0));
+        for (AbstractTreeOperator operator : operators) {
+            operator.setSubtreeMoveHook(resampler);
+        }
+
+        likelihood.getLogLikelihood();
+        for (int iteration = 0; iteration < 600; iteration++) {
+            double logLBefore = likelihood.getLogLikelihood();
+            String statesBefore = describeStates();
+            likelihood.storeModelState();
+
+            double logHR = operators.get(iteration % operators.size()).doOperation();
+            assertFalse(Double.isNaN(logHR));
+            double logL = likelihood.getLogLikelihood();
+            assertEquals(directLogLikelihood(), logL, 1E-6);
+
+            if (MathUtils.nextBoolean()) {
+                likelihood.restoreModelState();
+                assertEquals(statesBefore, describeStates());
+                assertEquals(logLBefore, likelihood.getLogLikelihood(), 1E-10);
+            } else {
+                likelihood.acceptModelState();
+            }
+        }
+        assertEquals("the resampler should keep the MAT in step with the topology", 0, delegate.getRebuildCount());
+    }
+
+    private int[] currentParents() {
+        int[] parents = new int[treeModel.getNodeCount()];
+        for (int n = 0; n < parents.length; n++) {
+            NodeRef parent = treeModel.getParent(treeModel.getNode(n));
+            parents[n] = parent == null ? -1 : parent.getNumber();
+        }
+        return parents;
+    }
+
+    private int[] variableSites() {
+        List<Integer> sites = new ArrayList<Integer>();
+        for (int site = 0; site < patterns.getPatternCount(); site++) {
+            if (!delegate.isConstantPattern(site)) {
+                sites.add(site);
+            }
+        }
+        int[] result = new int[sites.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = sites.get(i);
+        }
+        return result;
+    }
+
+    /**
+     * @return [node][site]: whether a tip below the node (in the topology given by parents) has data
+     */
+    private boolean[][] presence(int[] parents) {
+        MutationStore store = delegate.getMutationStore();
+        boolean[][] present = new boolean[parents.length][patterns.getPatternCount()];
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            int tip = treeModel.getExternalNode(i).getNumber();
+            for (int site = 0; site < patterns.getPatternCount(); site++) {
+                if (store.getState(tip, site) >= 0) {
+                    for (int n = tip; n >= 0 && !present[n][site]; n = parents[n]) {
+                        present[n][site] = true;
+                    }
+                }
+            }
+        }
+        return present;
+    }
+
+    private int[][] snapshotStates() {
+        MutationStore store = delegate.getMutationStore();
+        int[][] states = new int[treeModel.getNodeCount()][patterns.getPatternCount()];
+        for (int n = 0; n < states.length; n++) {
+            for (int site = 0; site < states[n].length; site++) {
+                states[n][site] = store.getState(n, site);
+            }
+        }
+        return states;
+    }
+
+    /**
+     * @return the local block at a site: the regrafted parent and every node whose presence the move changes
+     */
+    private static int[] localBlock(int p, int site, boolean[][] oldPresence, boolean[][] newPresence) {
+        List<Integer> block = new ArrayList<Integer>();
+        block.add(p);
+        for (int n = 0; n < oldPresence.length; n++) {
+            if (n != p && oldPresence[n][site] != newPresence[n][site]) {
+                block.add(n);
+            }
+        }
+        int[] result = new int[block.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = block.get(i);
+        }
+        return result;
+    }
+
+    private static int[] present(int[] nodes, boolean[][] presence, int site) {
+        List<Integer> result = new ArrayList<Integer>();
+        for (int n : nodes) {
+            if (presence[n][site]) {
+                result.add(n);
+            }
+        }
+        int[] array = new int[result.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = result.get(i);
+        }
+        return array;
+    }
+
+    private static int[] states(int site, int[] nodes, int[][] states) {
+        int[] result = new int[nodes.length];
+        for (int i = 0; i < nodes.length; i++) {
+            result[i] = states[nodes[i]][site];
+        }
+        return result;
+    }
+
+    /**
+     * @return the log full conditional of the block's states at a site (given all other states), in the
+     * topology given by parents: the site's likelihood less its log sum over the states of the block's
+     * nodes that have data
+     */
+    private double logConditional(int site, int[] block, boolean[][] presence, int[][] states, int[] parents) {
+        for (int n : block) {
+            if (!presence[n][site]) {
+                assertEquals("node " + n + " without data at site " + site, -1, states[n][site]);
+            }
+        }
+        int[] free = present(block, presence, site);
+        return siteLogLikelihood(site, states, parents) - logConditionalNormaliser(site, free, states, parents);
+    }
+
+    private double logConditionalNormaliser(int site, int[] free, int[][] states, int[] parents) {
+        int[] saved = states(site, free, states);
+        double logZ = Double.NEGATIVE_INFINITY;
+        for (int code = 0; code < (1 << (2 * free.length)); code++) {
+            for (int i = 0; i < free.length; i++) {
+                states[free[i]][site] = (code >> (2 * i)) & 3;
+            }
+            logZ = logAdd(logZ, siteLogLikelihood(site, states, parents));
+        }
+        for (int i = 0; i < free.length; i++) {
+            states[free[i]][site] = saved[i];
+        }
+        return logZ;
+    }
+
+    /**
+     * @return the log likelihood of one site's states (single hits, a relative rate of 1) in the topology
+     * given by parents, with the current node heights
+     */
+    private double siteLogLikelihood(int site, int[][] states, int[] parents) {
+        double[] q = new double[16];
+        hky.getInfinitesimalMatrix(q);
+        double[] pi = hky.getFrequencyModel().getFrequencies();
+        double rate = clockRate.getParameterValue(0);
+        double logL = 0.0;
+        for (int n = 0; n < parents.length; n++) {
+            int b = states[n][site];
+            if (parents[n] < 0) {
+                if (b >= 0) {
+                    logL += Math.log(pi[b]);
+                }
+                continue;
+            }
+            if (b < 0) {
+                continue;
+            }
+            int a = states[parents[n]][site];
+            assertTrue("unambiguous child below ambiguous parent", a >= 0);
+            double length = (treeModel.getNodeHeight(treeModel.getNode(parents[n])) -
+                    treeModel.getNodeHeight(treeModel.getNode(n))) * rate;
+            logL += singleHitLogDensity(q, a, b, length, 1.0);
+        }
+        return logL;
+    }
+
+    private static double singleHitLogDensity(double[] q, int a, int b, double length, double nu) {
+        if (a == b) {
+            return -nu * -q[a * 4 + a] * length;
+        }
+        double qa = -q[a * 4 + a], qb = -q[b * 4 + b];
+        int steps = 2000;
+        double h = length / steps, integral = 0;
+        for (int k = 0; k <= steps; k++) {
+            double s = k * h;
+            double f = nu * q[a * 4 + b] * Math.exp(-nu * qa * s - nu * qb * (length - s));
+            integral += f * (k == 0 || k == steps ? 1 : (k % 2 == 1 ? 4 : 2));
+        }
+        return Math.log(integral * h / 3);
+    }
+
     private boolean isAncestorOrSelf(NodeRef ancestor, NodeRef node) {
         for (NodeRef n = node; n != null; n = treeModel.getParent(n)) {
             if (n == ancestor) {

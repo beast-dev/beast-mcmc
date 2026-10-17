@@ -153,16 +153,34 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int changedAmbiguityCount;
     private int[] changedAmbiguityStamps;
     private int changedAmbiguityStamp = 0;
+    // the sites that sampleUniformSites skips (handled individually or in groups)
+    private int[] uniformSkipStamps;
+    private int uniformSkipStamp;
+
+    // the local block (see LocalMove)
+    private final boolean localBlock;
+    private LocalMove localMove = null;
+    private int[] oldMarks;
+    private int[] newMarks;
+    private int[] hotMarks;
+    private int localStamp = 0;
 
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate) {
         this(delegate, null);
     }
 
+    public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, SiteSelection siteSelection) {
+        this(delegate, siteSelection, false);
+    }
+
     /**
      * @param siteSelection which sites to resample (null for the default: HYBRID unless the branch
      *                      history model has explicit histories)
+     * @param localBlock    resample the local block (the regrafted parent, and the nodes whose data at a site
+     *                      come only from the moved subtree) instead of the path block
      */
-    public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, SiteSelection siteSelection) {
+    public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, SiteSelection siteSelection,
+                                    boolean localBlock) {
         this.delegate = delegate;
         this.historyModel = delegate.getHistoryModel();
         if (siteSelection == null) {
@@ -217,6 +235,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         this.uniformCounts = new int[stateCount];
         this.sparseUniform = siteSelection == SiteSelection.ALL && !historyModel.hasExplicitHistories() &&
                 !delegate.hasSiteRates() && equalWeights && variableCount > 0;
+        this.localBlock = localBlock;
+        if (localBlock && !sparseUniform) {
+            throw new IllegalArgumentException("The local block needs site selection " + SiteSelection.ALL +
+                    ", a branch history model without explicit hits, no per-site rates and equal pattern weights");
+        }
     }
 
     public MATDataLikelihoodDelegate getDelegate() {
@@ -225,6 +248,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
     @Override
     public void beforeSubtreeMove(NodeRef node, NodeRef sibling, NodeRef destination) {
+        if (localBlock) {
+            beforeLocalMove(node, sibling, destination);
+            return;
+        }
         delegate.updateMAT();
         delegate.ensureRates();
         block = getBlock(tree.getParent(node), sibling, destination);
@@ -232,6 +259,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             // the sites with events around the block; the others are handled together (see the class comment)
             candidateSites = getCandidateSites(block);
             candidateStamp = stamp;
+            uniformSkipStamps = siteStamps;
+            uniformSkipStamp = stamp;
             referenceNode = node.getNumber();
             countUniformSites();
             int substitutionCount = 0;
@@ -269,6 +298,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
     @Override
     public double afterSubtreeMove() {
+        if (localBlock) {
+            return afterLocalMove();
+        }
         if (block == null) {
             throw new IllegalStateException("afterSubtreeMove called without beforeSubtreeMove");
         }
@@ -375,6 +407,453 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         oldBoundary = null;
 
         return logProposalOfOldStates - logProposalOfNewStates;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // The local block
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * What a local move carries from before the topology change to after it.
+     * <p>
+     * The subtree below X ({@code node}) moves, with its parent P, from beside S ({@code sibling}) to the
+     * branch above D ({@code destination}). Before the move P's neighbours are its parent G, S and X; after
+     * it they are its new parent N, D and X. P's states are resampled at every variable site, given its
+     * neighbours. At a site where some of X's ancestors have data only from X (a hot site), their states
+     * change too: on the old side G, and each ancestor above it whose other children have no data there,
+     * lose their states (which is determined by the topology); on the new side N, and the ancestors above it
+     * that had no data there, gain states, which are drawn with P's as a chain from the first ancestor that
+     * had data down to X. No other state changes. A move and its reverse change the same states and each
+     * draws them from their full conditional given all the others, so the Hastings ratio is the ratio of
+     * the old states' conditional (under the old topology) to the new states' (under the new one).
+     * <p>
+     * The sites are found from the substitutions on the few branches that relate P's neighbours and from the
+     * runs of ambiguous patterns of the neighbours, so a move costs O(events near P + runs + changes),
+     * whatever the distance moved (see optimization_notes/mat_local_spr/DESIGN.md).
+     */
+    private static final class LocalMove {
+        int x;
+        int p;
+        int newParent;                 // -1 if P becomes the root
+        int[] presentX;                // runs of patterns at which X has data
+        int[] oldChain;                // G and the ancestors above it, as far as any site's old chain reaches
+        int[][] oldChainLevels;        // [i]: runs of patterns at which the old chain reaches oldChain[i]
+        int[] oldHotSites;             // the variable sites at which the old chain is not empty
+        int[] newSubstitutionSites;
+        int[] newAmbiguitySites;       // in pattern order, including any new hot sites
+        int[] newUniformCounts;
+        int newStamp;
+        double logProposalOfOldStates;
+    }
+
+    private static final class IntBuffer {
+        int[] values = new int[16];
+        int count = 0;
+
+        void add(int value) {
+            if (count == values.length) {
+                values = Arrays.copyOf(values, 2 * count);
+            }
+            values[count++] = value;
+        }
+
+        int[] toArray() {
+            return Arrays.copyOf(values, count);
+        }
+    }
+
+    private void beforeLocalMove(NodeRef node, NodeRef sibling, NodeRef destination) {
+        delegate.updateMAT();
+        delegate.ensureRates();
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        if (oldMarks == null) {
+            oldMarks = new int[patternCount];
+            newMarks = new int[patternCount];
+            hotMarks = new int[patternCount];
+        }
+        localStamp++;
+        final int markStamp = localStamp;
+
+        final LocalMove move = new LocalMove();
+        final NodeRef pNode = tree.getParent(node);
+        final NodeRef gNode = tree.getParent(pNode);
+        final NodeRef dParent = tree.getParent(destination);
+        // P's new parent: D's parent, unless D is S (which then stays below G)
+        final NodeRef newParentNode = dParent != null && dParent.getNumber() == pNode.getNumber() ? gNode : dParent;
+        move.x = node.getNumber();
+        move.p = pNode.getNumber();
+        move.newParent = newParentNode == null ? -1 : newParentNode.getNumber();
+        final int s = sibling.getNumber();
+        final int d = destination.getNumber();
+
+        move.presentX = complementRuns(getAmbiguousRuns(move.x));
+
+        // The old chain: G and each ancestor above it lose their states where X was their only data, up to
+        // the first node that is above X's new position too.
+        final Set<Integer> newAncestors = new HashSet<Integer>();
+        for (NodeRef n = newParentNode; n != null; n = tree.getParent(n)) {
+            newAncestors.add(n.getNumber());
+        }
+        final List<Integer> chain = new ArrayList<Integer>();
+        final List<int[]> levels = new ArrayList<int[]>();
+        int[] hot = intersectRuns(move.presentX, getAmbiguousRuns(s));
+        int previous = move.p;
+        for (NodeRef n = gNode; n != null && hot.length > 0 && !newAncestors.contains(n.getNumber()); n = tree.getParent(n)) {
+            for (int i = 0; i < tree.getChildCount(n); i++) {
+                int c = tree.getChild(n, i).getNumber();
+                if (c != previous) {
+                    hot = intersectRuns(hot, getAmbiguousRuns(c));
+                }
+            }
+            if (hot.length == 0) {
+                break;
+            }
+            chain.add(n.getNumber());
+            levels.add(hot);
+            previous = n.getNumber();
+        }
+        move.oldChain = toArray(chain);
+        move.oldChainLevels = levels.toArray(new int[levels.size()][]);
+        move.oldHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
+        for (int site : move.oldHotSites) {
+            hotMarks[site] = markStamp;
+        }
+
+        // The old pass: P with neighbours G, S and X.
+        final IntBuffer oldSubstitutions = new IntBuffer();
+        final IntBuffer oldAmbiguities = new IntBuffer();
+        collectSubstitutionSites(store, gNode == null ? new int[]{move.x, s} : new int[]{move.x, s, move.p},
+                oldMarks, markStamp, oldSubstitutions);
+        collectAmbiguousSites(gNode == null ? new int[]{move.x, s} : new int[]{gNode.getNumber(), s, move.x},
+                oldMarks, markStamp, oldAmbiguities);
+        final int[] oldUniformCounts = getUniformCounts(move.x, oldSubstitutions, oldAmbiguities);
+
+        // The new pass: P with neighbours N, D and X. P's state there is affected by the substitutions
+        // between X and N (in the old topology, where they are on the path between them) and between D and
+        // N, by the runs of ambiguous patterns of X, D and N, and by the old chain (D may be in it).
+        final NodeRef anchor = newParentNode != null ? newParentNode : destination;
+        final Set<Integer> xAncestors = new HashSet<Integer>();
+        for (NodeRef n = node; n != null; n = tree.getParent(n)) {
+            xAncestors.add(n.getNumber());
+        }
+        final IntBuffer pathBranches = new IntBuffer();
+        NodeRef mrca = anchor;
+        while (!xAncestors.contains(mrca.getNumber())) {
+            pathBranches.add(mrca.getNumber());
+            mrca = tree.getParent(mrca);
+        }
+        for (NodeRef n = node; n.getNumber() != mrca.getNumber(); n = tree.getParent(n)) {
+            pathBranches.add(n.getNumber());
+        }
+        if (newParentNode != null) {
+            pathBranches.add(d);
+        }
+        final IntBuffer newSubstitutions = new IntBuffer();
+        final IntBuffer newAmbiguities = new IntBuffer();
+        collectSubstitutionSites(store, pathBranches.toArray(), newMarks, markStamp, newSubstitutions);
+        collectAmbiguousSites(newParentNode == null ? new int[]{d, move.x} : new int[]{move.newParent, d, move.x},
+                newMarks, markStamp, newAmbiguities);
+        for (int site : move.oldHotSites) {
+            if (newMarks[site] != markStamp) {
+                newMarks[site] = markStamp;
+                newAmbiguities.add(site);
+            }
+        }
+        move.newSubstitutionSites = newSubstitutions.toArray();
+        move.newAmbiguitySites = sortSites(newAmbiguities.values, newAmbiguities.count);
+        move.newUniformCounts = getUniformCounts(move.x, newSubstitutions, newAmbiguities);
+        move.newStamp = markStamp;
+
+        // score P's current states (and the old chain's) under the old topology
+        referenceNode = move.x;
+        uniformSkipStamps = oldMarks;
+        uniformSkipStamp = markStamp;
+        System.arraycopy(oldUniformCounts, 0, uniformCounts, 0, stateCount);
+        substitutionSites = withoutMarked(oldSubstitutions.toArray(), hotMarks, markStamp);
+        int[] oldAmbiguitySites = withoutMarked(oldAmbiguities.toArray(), hotMarks, markStamp);
+        ambiguitySites = sortSites(oldAmbiguitySites, oldAmbiguitySites.length);
+        uniformPass = true;
+        double logProbability = sampleBlock(new int[]{move.p}, false, null, substitutionSites, null);
+        uniformPass = false;
+        logProbability += sampleChains(move.p, move.oldChain, move.oldChainLevels, false);
+        move.logProposalOfOldStates = logProbability;
+        localMove = move;
+    }
+
+    private double afterLocalMove() {
+        final LocalMove move = localMove;
+        if (move == null) {
+            throw new IllegalStateException("afterSubtreeMove called without beforeSubtreeMove");
+        }
+        localMove = null;
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final int[] parents = MATInitializer.getParents(tree);
+        final Set<Integer> reparented = new HashSet<Integer>();
+        for (int n = 0; n < parents.length; n++) {
+            if (store.getParent(n) != parents[n]) {
+                reparented.add(n);
+            }
+        }
+        store.setParents(parents);
+
+        // The new chain: N, and each ancestor above it that had no data, gain states where X has data
+        // (read before the old chain loses its states, so as states before the move).
+        final List<Integer> chain = new ArrayList<Integer>();
+        final List<int[]> levels = new ArrayList<int[]>();
+        if (move.newParent >= 0) {
+            int[] hot = intersectRuns(move.presentX, getAmbiguousRuns(move.newParent));
+            NodeRef n = tree.getNode(move.newParent);
+            while (hot.length > 0) {
+                chain.add(n.getNumber());
+                levels.add(hot);
+                NodeRef parent = tree.getParent(n);
+                if (parent == null) {
+                    break;
+                }
+                hot = intersectRuns(hot, getAmbiguousRuns(parent.getNumber()));
+                n = parent;
+            }
+        }
+        final int[] newChain = toArray(chain);
+        final int[][] newChainLevels = levels.toArray(new int[levels.size()][]);
+        final int[] newHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
+        localStamp++;
+        final int newHotStamp = localStamp;
+        for (int site : newHotSites) {
+            hotMarks[site] = newHotStamp;
+        }
+
+        // the old chain loses its states at its hot sites
+        for (int i = 0; i < move.oldChain.length; i++) {
+            for (int site : variableSitesIn(move.oldChainLevels[i])) {
+                store.setState(move.oldChain[i], site, -1);
+            }
+        }
+
+        // draw P's states (and the new chain's) under the new topology
+        referenceNode = move.x;
+        uniformSkipStamps = newMarks;
+        uniformSkipStamp = move.newStamp;
+        System.arraycopy(move.newUniformCounts, 0, uniformCounts, 0, stateCount);
+        substitutionSites = withoutMarked(move.newSubstitutionSites, hotMarks, newHotStamp);
+        ambiguitySites = withoutMarked(move.newAmbiguitySites, hotMarks, newHotStamp);
+        changedUniformCount = 0;
+        changedAmbiguityCount = 0;
+        uniformPass = true;
+        double logProposalOfNewStates = sampleBlock(new int[]{move.p}, true, null, substitutionSites, null);
+        uniformPass = false;
+        logProposalOfNewStates += sampleChains(move.p, newChain, newChainLevels, true);
+        delegate.setHistoryResampled();
+        // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
+        store.setFitchSetsStale(true);
+
+        // the sites at which any state changed
+        final IntBuffer changed = new IntBuffer();
+        addFlagged(changed, substitutionSites, substitutionSites.length);
+        addFlagged(changed, changedAmbiguitySites, changedAmbiguityCount);
+        addFlagged(changed, changedUniformSites, changedUniformCount);
+        addFlagged(changed, move.oldHotSites, move.oldHotSites.length);
+        addFlagged(changed, newHotSites, newHotSites.length);
+        final int[] changedSites = changed.toArray();
+        lastResampledSites = changedSites;
+
+        // the branches whose parent changed are recomputed in full; those whose ends changed only at the
+        // changed sites are updated there
+        for (int n : reparented) {
+            store.updateBranch(n);
+        }
+        final Set<Integer> touched = new HashSet<Integer>();
+        touched.add(move.x);
+        addWithChildren(touched, move.p);
+        for (int n : move.oldChain) {
+            addWithChildren(touched, n);
+        }
+        for (int n : newChain) {
+            addWithChildren(touched, n);
+        }
+        for (int n : touched) {
+            if (!reparented.contains(n)) {
+                store.updateBranchSites(n, resampledSites, changedSites);
+            }
+        }
+        for (int site : changedSites) {
+            resampledSites[site] = false;
+        }
+        substitutionSites = null;
+        ambiguitySites = null;
+
+        return move.logProposalOfOldStates - logProposalOfNewStates;
+    }
+
+    /**
+     * Scores or draws the states of the chains {P, chain[0], ..., chain[k]} at the sites where the chain
+     * has length k + 1 (levels[i] are the runs of patterns at which it reaches chain[i]).
+     */
+    private double sampleChains(int p, int[] chain, int[][] levels, boolean sample) {
+        double logProbability = 0.0;
+        for (int k = 0; k < chain.length; k++) {
+            int[] exact = k + 1 < chain.length ? subtractRuns(levels[k], levels[k + 1]) : levels[k];
+            int[] sites = variableSitesIn(exact);
+            if (sites.length == 0) {
+                continue;
+            }
+            int[] chainBlock = new int[k + 2];
+            chainBlock[0] = p;
+            System.arraycopy(chain, 0, chainBlock, 1, k + 1);
+            logProbability += sampleBlock(chainBlock, sample, null, sites, null);
+        }
+        return logProbability;
+    }
+
+    private void addWithChildren(Set<Integer> nodes, int n) {
+        nodes.add(n);
+        NodeRef node = tree.getNode(n);
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            nodes.add(tree.getChild(node, i).getNumber());
+        }
+    }
+
+    private void addFlagged(IntBuffer buffer, int[] sites, int count) {
+        for (int i = 0; i < count; i++) {
+            if (!resampledSites[sites[i]]) {
+                resampledSites[sites[i]] = true;
+                buffer.add(sites[i]);
+            }
+        }
+    }
+
+    /**
+     * Adds the variable sites with a substitution on the branches above the given nodes (and not yet marked).
+     */
+    private void collectSubstitutionSites(DefaultMutationStore store, int[] branches, int[] marks, int markStamp,
+                                          IntBuffer out) {
+        for (int n : branches) {
+            BranchMutations mutations = store.getBranchMutations(n);
+            for (int k = 0; k < mutations.getSubstitutionCount(); k++) {
+                int site = mutations.getPattern(k);
+                if (marks[site] != markStamp && !delegate.isConstantPattern(site)) {
+                    marks[site] = markStamp;
+                    out.add(site);
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds the variable sites at which any of the given nodes is ambiguous (and not yet marked).
+     */
+    private void collectAmbiguousSites(int[] nodes, int[] marks, int markStamp, IntBuffer out) {
+        for (int n : nodes) {
+            int[] runs = getAmbiguousRuns(n);
+            for (int i = 0; i < runs.length; i += 2) {
+                for (int site = runs[i]; site < runs[i + 1]; site++) {
+                    if (marks[site] != markStamp && !delegate.isConstantPattern(site)) {
+                        marks[site] = markStamp;
+                        out.add(site);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @return the number of variable sites in each state at node x, excluding the given sites
+     */
+    private int[] getUniformCounts(int x, IntBuffer... excluded) {
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final int[] counts = getStateCounts(x).clone();
+        for (IntBuffer sites : excluded) {
+            for (int i = 0; i < sites.count; i++) {
+                int a = store.getState(x, sites.values[i]);
+                if (a >= 0) {
+                    counts[a]--;
+                }
+            }
+        }
+        return counts;
+    }
+
+    private static int[] withoutMarked(int[] sites, int[] marks, int markStamp) {
+        int[] result = new int[sites.length];
+        int count = 0;
+        for (int site : sites) {
+            if (marks[site] != markStamp) {
+                result[count++] = site;
+            }
+        }
+        return count == sites.length ? sites : Arrays.copyOf(result, count);
+    }
+
+    private static int[] toArray(List<Integer> values) {
+        int[] result = new int[values.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = values.get(i);
+        }
+        return result;
+    }
+
+    /**
+     * @return the intersection of two sets of runs ([start, end) pairs in pattern order)
+     */
+    static int[] intersectRuns(int[] a, int[] b) {
+        int[] result = new int[a.length + b.length];
+        int count = 0;
+        int i = 0;
+        int j = 0;
+        while (i < a.length && j < b.length) {
+            int start = Math.max(a[i], b[j]);
+            int end = Math.min(a[i + 1], b[j + 1]);
+            if (start < end) {
+                result[count++] = start;
+                result[count++] = end;
+            }
+            if (a[i + 1] < b[j + 1]) {
+                i += 2;
+            } else {
+                j += 2;
+            }
+        }
+        return Arrays.copyOf(result, count);
+    }
+
+    /**
+     * @return the runs of patterns not in the given runs
+     */
+    private int[] complementRuns(int[] runs) {
+        int[] result = new int[runs.length + 2];
+        int count = 0;
+        int position = 0;
+        for (int i = 0; i < runs.length; i += 2) {
+            if (runs[i] > position) {
+                result[count++] = position;
+                result[count++] = runs[i];
+            }
+            position = runs[i + 1];
+        }
+        if (position < patternCount) {
+            result[count++] = position;
+            result[count++] = patternCount;
+        }
+        return Arrays.copyOf(result, count);
+    }
+
+    private int[] subtractRuns(int[] a, int[] b) {
+        return intersectRuns(a, complementRuns(b));
+    }
+
+    /**
+     * @return the variable sites in the runs, in pattern order
+     */
+    private int[] variableSitesIn(int[] runs) {
+        IntBuffer sites = new IntBuffer();
+        for (int i = 0; i < runs.length; i += 2) {
+            for (int site = runs[i]; site < runs[i + 1]; site++) {
+                if (!delegate.isConstantPattern(site)) {
+                    sites.add(site);
+                }
+            }
+        }
+        return sites.toArray();
     }
 
     /**
@@ -1384,6 +1863,23 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private void countUniformSites() {
         final DefaultMutationStore store = delegate.getMutableMutationStore();
         final int n = referenceNode;
+        System.arraycopy(getStateCounts(n), 0, uniformCounts, 0, stateCount);
+        for (int p : candidateSites) {
+            if (!delegate.isConstantPattern(p)) {
+                int a = store.getState(n, p);
+                if (a >= 0) {
+                    uniformCounts[a]--;
+                }
+            }
+        }
+    }
+
+    /**
+     * @return the number of the variable sites in each state at the node (cached for its current states;
+     * callers must not modify it)
+     */
+    private int[] getStateCounts(int n) {
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
         if (stateCountsCache == null) {
             stateCountsCache = new int[tree.getNodeCount()][];
             stateCountsVersion = new long[tree.getNodeCount()];
@@ -1402,15 +1898,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             stateCountsCache[n] = counts;
             stateCountsVersion[n] = version;
         }
-        System.arraycopy(stateCountsCache[n], 0, uniformCounts, 0, stateCount);
-        for (int p : candidateSites) {
-            if (!delegate.isConstantPattern(p)) {
-                int a = store.getState(n, p);
-                if (a >= 0) {
-                    uniformCounts[a]--;
-                }
-            }
-        }
+        return stateCountsCache[n];
     }
 
     /**
@@ -1449,7 +1937,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     break;
                 }
                 int p = variableSites[(int) i];
-                if (siteStamps[p] == candidateStamp) {
+                if (uniformSkipStamps[p] == uniformSkipStamp) {
                     // a site with events: handled individually
                     continue;
                 }

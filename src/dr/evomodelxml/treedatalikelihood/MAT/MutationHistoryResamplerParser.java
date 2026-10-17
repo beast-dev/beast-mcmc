@@ -40,6 +40,9 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
 
     public static final String MUTATION_HISTORY_RESAMPLER = "mutationHistoryResampler";
     public static final String SITE_SELECTION = "siteSelection";
+    public static final String BLOCK = "block";
+    public static final String PATH_BLOCK = "path";
+    public static final String LOCAL_BLOCK = "local";
 
     @Override
     public String getParserName() {
@@ -53,7 +56,12 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
             if (xo.hasAttribute(SITE_SELECTION)) {
                 siteSelection = MutationHistoryResampler.SiteSelection.parse(xo.getStringAttribute(SITE_SELECTION));
             }
-            return new MutationHistoryResampler(getDelegate(xo), siteSelection);
+            String block = xo.getAttribute(BLOCK, PATH_BLOCK);
+            if (!block.equalsIgnoreCase(PATH_BLOCK) && !block.equalsIgnoreCase(LOCAL_BLOCK)) {
+                throw new XMLParseException("The " + BLOCK + " attribute of " + xo.getId() + " must be '" +
+                        PATH_BLOCK + "' or '" + LOCAL_BLOCK + "'");
+            }
+            return new MutationHistoryResampler(getDelegate(xo), siteSelection, block.equalsIgnoreCase(LOCAL_BLOCK));
         } catch (IllegalArgumentException iae) {
             throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
         }
@@ -75,6 +83,9 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
                 AttributeRule.newStringRule(SITE_SELECTION, true, "Which sites a move resamples: 'hybrid' " +
                         "(only those varying around the moved subtree) or 'all' (default: hybrid, or all for branch " +
                         "history models with explicit hits)"),
+                AttributeRule.newStringRule(BLOCK, true, "Which states a move resamples: 'path' (the regrafted " +
+                        "parent and the nodes on the path between its old and new positions; the default) or 'local' " +
+                        "(the regrafted parent, and the nodes whose data at a site come only from the moved subtree)"),
                 new ElementRule(TreeDataLikelihood.class)
         };
     }

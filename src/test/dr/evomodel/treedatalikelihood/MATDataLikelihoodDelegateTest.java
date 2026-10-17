@@ -431,6 +431,183 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     /**
+     * With site selection ALL and no per-site rates, the resampler handles the sites with no events
+     * around the block together (drawing the few that change by thinning). Its Hastings ratio must still
+     * be that of the exact Gibbs block update: the full conditional of the old states under the old
+     * topology over that of the new states under the new one, computed here over every pattern.
+     */
+    public void testSparseResamplingMatchesDenseConditional() {
+        delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
+                null, branchRates, null);
+        likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
+        // the direct path density (directLogLikelihood) then uses a relative rate of 1 for every site
+        siteRates = new Parameter.Default(patterns.getPatternCount(), 1.0);
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, MutationHistoryResampler.SiteSelection.ALL);
+
+        int moves = 0;
+        int movesChangingUniformSites = 0;
+        for (int iteration = 0; iteration < 2000 && moves < 300; iteration++) {
+            NodeRef x = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            NodeRef destination = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            if (treeModel.isRoot(x) || treeModel.isRoot(treeModel.getParent(x)) || treeModel.isRoot(destination)) {
+                continue;
+            }
+            NodeRef parent = treeModel.getParent(x);
+            NodeRef sibling = otherChild(parent, x);
+            if (destination == parent || destination == sibling || isAncestorOrSelf(x, destination) ||
+                    treeModel.getNodeHeight(treeModel.getParent(destination)) <= treeModel.getNodeHeight(x)) {
+                // (the regrafted parent must fit between x and the destination's parent)
+                continue;
+            }
+
+            likelihood.getLogLikelihood();
+            likelihood.storeModelState();
+            int[] block = resampler.getBlock(parent, sibling, destination);
+            double denseOld = resampler.sampleBlock(block, false);
+
+            resampler.beforeSubtreeMove(x, sibling, destination);
+            regraft(x, destination, regraftHeight(destination, treeModel.getNodeHeight(x)));
+            double logRatio = resampler.afterSubtreeMove();
+
+            double denseNew = resampler.sampleBlock(block, false);
+            assertEquals("move " + moves, denseOld - denseNew, logRatio, 1E-8);
+            assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+            if (resampler.getLastChangedUniformSiteCount() > 0) {
+                movesChangingUniformSites++;
+            }
+
+            if (MathUtils.nextBoolean()) {
+                likelihood.acceptModelState();
+            } else {
+                likelihood.restoreModelState();
+            }
+            moves++;
+        }
+        assertEquals(300, moves);
+        // the sites with no events around the block must sometimes change, or this tests nothing new
+        assertTrue("moves changing uniform sites: " + movesChangingUniformSites, movesChangingUniformSites > 0);
+    }
+
+    /**
+     * The sites with no events around the block are drawn by thinning; check that each changes with its
+     * exact probability (from the full conditional of its block states, enumerated with the dense scorer)
+     * by repeating the same move many times.
+     */
+    public void testSparseResamplingDrawsUniformSitesExactly() {
+        // a high rate, so that sites with no events around the block change often enough to count
+        clockRate.setParameterValue(0, 40.0);
+        delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
+                null, branchRates, null);
+        likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, MutationHistoryResampler.SiteSelection.ALL);
+        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+
+        NodeRef x = findTip("chimp");
+        NodeRef destination = findTip("human");
+        NodeRef parent = treeModel.getParent(x);
+        NodeRef sibling = otherChild(parent, x);
+        double height = regraftHeight(destination, treeModel.getNodeHeight(x));
+        // (restoring the tree replaces its node objects, so the nodes are looked up by number each time)
+        final int xNumber = x.getNumber();
+        final int siblingNumber = sibling.getNumber();
+        final int destinationNumber = destination.getNumber();
+        likelihood.getLogLikelihood();
+        int[] block = resampler.getBlock(parent, sibling, destination);
+        byte[] classes = resampler.getPatternClasses(block);
+        List<Integer> uniformSites = new ArrayList<Integer>();
+        int[] uniformState = new int[patterns.getPatternCount()];
+        for (int p = 0; p < patterns.getPatternCount(); p++) {
+            if (classes[p] == MutationHistoryResampler.NO_EVENTS && store.getState(x.getNumber(), p) >= 0) {
+                uniformSites.add(p);
+                uniformState[p] = store.getState(x.getNumber(), p);
+            }
+        }
+        assertTrue(uniformSites.size() > 10);
+
+        // the exact probability that each such site's block states change, under the new topology
+        likelihood.storeModelState();
+        resampler.beforeSubtreeMove(x, sibling, destination);
+        regraft(x, destination, height);
+        resampler.afterSubtreeMove();
+        double[] probabilityChanged = new double[patterns.getPatternCount()];
+        double expectedChanges = 0.0;
+        for (int p : uniformSites) {
+            double logUnchanged = Double.NaN;
+            double logTotal = Double.NEGATIVE_INFINITY;
+            int combinations = (int) Math.pow(4, block.length);
+            for (int k = 0; k < combinations; k++) {
+                int code = k;
+                boolean unchanged = true;
+                for (int n : block) {
+                    int state = code % 4;
+                    code /= 4;
+                    store.getWritableStates(n)[p] = (byte) state;
+                    unchanged &= state == uniformState[p];
+                }
+                double logQ = resampler.sampleBlock(block, false);
+                logTotal = logAdd(logTotal, logQ);
+                if (unchanged) {
+                    logUnchanged = logQ;
+                }
+            }
+            for (int n : block) {
+                store.getWritableStates(n)[p] = (byte) uniformState[p];
+            }
+            probabilityChanged[p] = -Math.expm1(logUnchanged - logTotal);
+            expectedChanges += probabilityChanged[p];
+        }
+        likelihood.restoreModelState();
+
+        // repeat the move and count the changes
+        final int repeats = 2000;
+        int[] changes = new int[patterns.getPatternCount()];
+        int totalChanges = 0;
+        for (int r = 0; r < repeats; r++) {
+            x = treeModel.getNode(xNumber);
+            sibling = treeModel.getNode(siblingNumber);
+            destination = treeModel.getNode(destinationNumber);
+            likelihood.storeModelState();
+            resampler.beforeSubtreeMove(x, sibling, destination);
+            regraft(x, destination, height);
+            resampler.afterSubtreeMove();
+            for (int p : uniformSites) {
+                for (int n : block) {
+                    if (store.getState(n, p) != uniformState[p]) {
+                        changes[p]++;
+                        totalChanges++;
+                        break;
+                    }
+                }
+            }
+            likelihood.restoreModelState();
+        }
+
+        // the total number of changes is a sum of independent Bernoullis
+        double mean = repeats * expectedChanges;
+        double variance = 0.0;
+        for (int p : uniformSites) {
+            variance += repeats * probabilityChanged[p] * (1.0 - probabilityChanged[p]);
+        }
+        assertTrue("expected " + mean + " changes, observed " + totalChanges, mean > 50);
+        assertEquals("changes of the sites with no events around the block", mean, totalChanges, 4 * Math.sqrt(variance));
+        // and site by site
+        for (int p : uniformSites) {
+            double siteMean = repeats * probabilityChanged[p];
+            double siteSd = Math.sqrt(siteMean * (1.0 - probabilityChanged[p]));
+            assertEquals("site " + p, siteMean, changes[p], 5 * siteSd + 1);
+        }
+    }
+
+    private boolean isAncestorOrSelf(NodeRef ancestor, NodeRef node) {
+        for (NodeRef n = node; n != null; n = treeModel.getParent(n)) {
+            if (n == ancestor) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @return a height for the regrafted parent on the branch above the destination (and above x)
      */
     private double regraftHeight(NodeRef destination, double minimum) {

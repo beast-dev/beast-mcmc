@@ -1179,7 +1179,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         int nextEvent = 0;
         boolean presenceChanged = true;
         int firstPresent = -1;
-        AmbiguityGroup current = null;
+        // the groups of the current presence, by state
+        final AmbiguityGroup[] groupsByState = new AmbiguityGroup[stateCount];
         double logProbability = 0.0;
         for (int p : ambiguitySites) {
             while (nextEvent < eventCount && (int) (events[nextEvent] >>> 32) <= p) {
@@ -1197,7 +1198,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                         break;
                     }
                 }
-                current = null;
+                Arrays.fill(groupsByState, null);
                 presenceChanged = false;
             }
             int a;
@@ -1215,7 +1216,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 setBlockStates(blockStates, p, -1, null, sample);
                 continue;
             }
-            if (current == null || current.state != a) {
+            AmbiguityGroup current = groupsByState[a];
+            if (current == null) {
                 probe.set(present, a);
                 current = groups.get(probe);
                 if (current == null) {
@@ -1224,6 +1226,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     current = new AmbiguityGroup(a, p);
                     groups.put(key, current);
                 }
+                groupsByState[a] = current;
             }
             current.add(p);
         }

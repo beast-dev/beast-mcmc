@@ -29,7 +29,6 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
 import dr.inference.model.Statistic;
@@ -48,19 +47,25 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 
     private static final boolean DEBUG = false;
 
-    private DefaultTreeModel tree = null;
+    private TreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
-    private final boolean swapInRandomRate;
-    private final boolean swapInRandomTrait;
     private final boolean scaledDirichletBranches;
     private AdaptationMode mode = AdaptationMode.DEFAULT;
     private final double targetAcceptance;
 
-    public SubtreeSlideOperator(DefaultTreeModel tree, double weight, double size, boolean gaussian,
+    /**
+     * Swapping node rates or traits (swapRates, swapTraits) is no longer supported: node rates and
+     * traits are legacy features of DefaultTreeModel.
+     */
+    public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
                                 boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches,
                                 AdaptationMode mode, double targetAcceptance) {
         super(mode, targetAcceptance);
+
+        if (swapRates || swapTraits) {
+            throw new IllegalArgumentException("Swapping node rates or traits is no longer supported by the subtree slide operator");
+        }
 
         this.tree = tree;
         setWeight(weight);
@@ -75,8 +80,6 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 
         this.size = size;
         this.gaussian = gaussian;
-        this.swapInRandomRate = swapRates;
-        this.swapInRandomTrait = swapTraits;
         this.scaledDirichletBranches = scaleDirichletBranches;
 
         this.mode = mode;
@@ -142,24 +145,6 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
                     tree.addChild(PiP, CiP);
                     tree.setRoot(iP);
                     //System.err.println("Creating new root!");
-
-                    if (tree.hasNodeTraits()) {
-                        // **********************************************
-                        // swap traits and rates so that root keeps it trait and rate values
-                        // **********************************************
-
-                        tree.swapAllTraits(newChild, iP);
-
-                    }
-
-                    if (tree.hasRates()) {
-                        final double rootNodeRate = tree.getNodeRate(newChild);
-                        tree.setNodeRate(newChild, tree.getNodeRate(iP));
-                        tree.setNodeRate(iP, rootNodeRate);
-                    }
-
-                    // **********************************************
-
                 }
                 // 3.1.2 no new root
                 else {
@@ -243,23 +228,6 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
                     tree.addChild(newParent, iP);
                     tree.setRoot(CiP);
 
-                    if (tree.hasNodeTraits()) {
-                        // **********************************************
-                        // swap traits and rates, so that root keeps it trait and rate values
-                        // **********************************************
-
-                        tree.swapAllTraits(iP, CiP);
-
-                    }
-
-                    if (tree.hasRates()) {
-                        final double rootNodeRate = tree.getNodeRate(iP);
-                        tree.setNodeRate(iP, tree.getNodeRate(CiP));
-                        tree.setNodeRate(CiP, rootNodeRate);
-                    }
-
-                    // **********************************************
-
                     //System.err.println("DOWN: Creating new root!");
                 } else {
                     tree.removeChild(iP, CiP);
@@ -285,29 +253,6 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
         }
 
         setTopologyChanged(topologyChanged, delta);
-
-        if (swapInRandomRate) {
-            final NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-            if (j != i) {
-                final double tmp = tree.getNodeRate(i);
-                tree.setNodeRate(i, tree.getNodeRate(j));
-                tree.setNodeRate(j, tmp);
-            }
-
-        }
-
-        if (swapInRandomTrait) {
-            final NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-            if (j != i) {
-
-                tree.swapAllTraits(i, j);
-
-//                final double tmp = tree.getNodeTrait(i, TRAIT);
-//                tree.setNodeTrait(i, TRAIT, tree.getNodeTrait(j, TRAIT));
-//                tree.setNodeTrait(j, TRAIT, tmp);
-            }
-
-        }
 
         // just return -Inf
         //if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");

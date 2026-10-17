@@ -28,7 +28,6 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;
@@ -55,6 +54,10 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
 
         boolean swapRates = xo.getAttribute(SWAP_RATES, false);
         boolean swapTraits = xo.getAttribute(SWAP_TRAITS, false);
+        if (swapRates || swapTraits) {
+            throw new XMLParseException("The " + SWAP_RATES + " and " + SWAP_TRAITS + " options of " + getParserName() +
+                    " are no longer supported");
+        }
         boolean scaledDirichletBranches = xo.getAttribute(DIRICHLET_BRANCHES, false);
 
         AdaptationMode mode = AdaptationMode.DEFAULT;
@@ -66,7 +69,7 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
             }
         }
 
-        DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);

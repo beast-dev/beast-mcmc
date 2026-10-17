@@ -310,7 +310,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         block = null;
 
         final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final List<Integer> reparented = syncParents(movedNodes);
+        final List<Integer> reparented = new ArrayList<Integer>();
+        IntBuffer synced = syncParents(movedNodes);
+        for (int i = 0; i < synced.count; i++) {
+            reparented.add(synced.values[i]);
+        }
 
         // the sites to resample: candidates whose states on the block's neighbours (old and new) are not all equal
         final int[] newBoundary = getBoundary(currentBlock);
@@ -491,15 +495,15 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         // The old chain: G and each ancestor above it lose their states where X was their only data, up to
         // the first node that is above X's new position too.
-        final Set<Integer> newAncestors = new HashSet<Integer>();
+        final int newAncestorStamp = nextNodeStamp();
         for (NodeRef n = newParentNode; n != null; n = tree.getParent(n)) {
-            newAncestors.add(n.getNumber());
+            nodeMarks[n.getNumber()] = newAncestorStamp;
         }
-        final List<Integer> chain = new ArrayList<Integer>();
+        final IntBuffer chain = new IntBuffer();
         final List<int[]> levels = new ArrayList<int[]>();
         int[] hot = intersectRuns(move.presentX, getAmbiguousRuns(s));
         int previous = move.p;
-        for (NodeRef n = gNode; n != null && hot.length > 0 && !newAncestors.contains(n.getNumber()); n = tree.getParent(n)) {
+        for (NodeRef n = gNode; n != null && hot.length > 0 && nodeMarks[n.getNumber()] != newAncestorStamp; n = tree.getParent(n)) {
             for (int i = 0; i < tree.getChildCount(n); i++) {
                 int c = tree.getChild(n, i).getNumber();
                 if (c != previous) {
@@ -513,7 +517,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             levels.add(hot);
             previous = n.getNumber();
         }
-        move.oldChain = toArray(chain);
+        move.oldChain = chain.toArray();
         move.oldChainLevels = levels.toArray(new int[levels.size()][]);
         move.oldHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
         for (int site : move.oldHotSites) {
@@ -533,13 +537,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         // between X and N (in the old topology, where they are on the path between them) and between D and
         // N, by the runs of ambiguous patterns of X, D and N, and by the old chain (D may be in it).
         final NodeRef anchor = newParentNode != null ? newParentNode : destination;
-        final Set<Integer> xAncestors = new HashSet<Integer>();
+        final int xAncestorStamp = nextNodeStamp();
         for (NodeRef n = node; n != null; n = tree.getParent(n)) {
-            xAncestors.add(n.getNumber());
+            nodeMarks[n.getNumber()] = xAncestorStamp;
         }
         final IntBuffer pathBranches = new IntBuffer();
         NodeRef mrca = anchor;
-        while (!xAncestors.contains(mrca.getNumber())) {
+        while (nodeMarks[mrca.getNumber()] != xAncestorStamp) {
             pathBranches.add(mrca.getNumber());
             mrca = tree.getParent(mrca);
         }
@@ -588,11 +592,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         localMove = null;
         final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final Set<Integer> reparented = new HashSet<Integer>(syncParents(new int[]{move.s, move.p, move.d}));
+        final IntBuffer reparented = syncParents(new int[]{move.s, move.p, move.d});
 
         // The new chain: N, and each ancestor above it that had no data, gain states where X has data
         // (read before the old chain loses its states, so as states before the move).
-        final List<Integer> chain = new ArrayList<Integer>();
+        final IntBuffer chain = new IntBuffer();
         final List<int[]> levels = new ArrayList<int[]>();
         if (move.newParent >= 0) {
             int[] hot = intersectRuns(move.presentX, getAmbiguousRuns(move.newParent));
@@ -608,7 +612,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 n = parent;
             }
         }
-        final int[] newChain = toArray(chain);
+        final int[] newChain = chain.toArray();
         final int[][] newChainLevels = levels.toArray(new int[levels.size()][]);
         final int[] newHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
         localStamp++;
@@ -653,22 +657,23 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         // the branches whose parent changed are recomputed in full; those whose ends changed only at the
         // changed sites are updated there
-        for (int n : reparented) {
-            store.updateBranch(n);
+        final int touchedStamp = nextNodeStamp();
+        for (int i = 0; i < reparented.count; i++) {
+            store.updateBranch(reparented.values[i]);
+            nodeMarks[reparented.values[i]] = touchedStamp;
         }
-        final Set<Integer> touched = new HashSet<Integer>();
-        touched.add(move.x);
-        addWithChildren(touched, move.p);
+        // the other branches below the nodes whose states changed (and above them)
+        final IntBuffer touched = new IntBuffer();
+        addUnmarked(touched, move.x, touchedStamp);
+        addWithChildren(touched, move.p, touchedStamp);
         for (int n : move.oldChain) {
-            addWithChildren(touched, n);
+            addWithChildren(touched, n, touchedStamp);
         }
         for (int n : newChain) {
-            addWithChildren(touched, n);
+            addWithChildren(touched, n, touchedStamp);
         }
-        for (int n : touched) {
-            if (!reparented.contains(n)) {
-                store.updateBranchSites(n, resampledSites, changedSites);
-            }
+        for (int i = 0; i < touched.count; i++) {
+            store.updateBranchSites(touched.values[i], resampledSites, changedSites);
         }
         for (int site : changedSites) {
             resampledSites[site] = false;
@@ -700,12 +705,26 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return logProbability;
     }
 
-    private void addWithChildren(Set<Integer> nodes, int n) {
-        nodes.add(n);
+    private void addWithChildren(IntBuffer nodes, int n, int markStamp) {
+        addUnmarked(nodes, n, markStamp);
         NodeRef node = tree.getNode(n);
         for (int i = 0; i < tree.getChildCount(node); i++) {
-            nodes.add(tree.getChild(node, i).getNumber());
+            addUnmarked(nodes, tree.getChild(node, i).getNumber(), markStamp);
         }
+    }
+
+    private void addUnmarked(IntBuffer nodes, int n, int markStamp) {
+        if (nodeMarks[n] != markStamp) {
+            nodeMarks[n] = markStamp;
+            nodes.add(n);
+        }
+    }
+
+    private int nextNodeStamp() {
+        if (nodeMarks == null) {
+            nodeMarks = new int[tree.getNodeCount()];
+        }
+        return ++nodeStamp;
     }
 
     private void addFlagged(IntBuffer buffer, int[] sites, int count) {
@@ -779,14 +798,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return count == sites.length ? sites : Arrays.copyOf(result, count);
     }
 
-    private static int[] toArray(List<Integer> values) {
-        int[] result = new int[values.size()];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = values.get(i);
-        }
-        return result;
-    }
-
     /**
      * @return the intersection of two sets of runs ([start, end) pairs in pattern order)
      */
@@ -856,13 +867,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      *
      * @return the nodes whose parent changed
      */
-    private List<Integer> syncParents(int[] nodes) {
+    private IntBuffer syncParents(int[] nodes) {
         final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final List<Integer> reparented = new ArrayList<Integer>();
+        final IntBuffer reparented = new IntBuffer();
         for (int n : nodes) {
             NodeRef parent = tree.getParent(tree.getNode(n));
             int parentNumber = parent == null ? -1 : parent.getNumber();
-            if (store.getParent(n) != parentNumber && !reparented.contains(n)) {
+            if (store.getParent(n) != parentNumber) {
                 store.setParent(n, parentNumber);
                 reparented.add(n);
             }
@@ -1304,11 +1315,20 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         // local indices: the block nodes, and the branches below each of them plus the one above the top
         final int[][] children = new int[blockSize][];
-        final int[] blockIndex = new int[tree.getNodeCount()];
+        if (nodeBlockIndex == null) {
+            nodeBlockIndex = new int[tree.getNodeCount()];
+        }
+        // (only read for block nodes, so it need not be cleared)
+        final int[] blockIndex = nodeBlockIndex;
         for (int i = 0; i < blockSize; i++) {
             blockIndex[postOrder[i]] = i;
         }
-        final List<Double> lengths = new ArrayList<Double>();
+        int branchTotal = 1;
+        for (int i = 0; i < blockSize; i++) {
+            branchTotal += tree.getChildCount(tree.getNode(postOrder[i]));
+        }
+        final double[] lengths = new double[branchTotal];
+        int branchCounter = 0;
         final int[][] childBranch = new int[blockSize][];
         for (int i = 0; i < blockSize; i++) {
             NodeRef node = tree.getNode(postOrder[i]);
@@ -1317,8 +1337,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             for (int j = 0; j < children[i].length; j++) {
                 NodeRef child = tree.getChild(node, j);
                 children[i][j] = child.getNumber();
-                childBranch[i][j] = lengths.size();
-                lengths.add(delegate.getBranchLength(child));
+                childBranch[i][j] = branchCounter;
+                lengths[branchCounter++] = delegate.getBranchLength(child);
             }
         }
         final int[] parentIndex = new int[blockSize];
@@ -1330,9 +1350,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 }
             }
         }
-        final int topBranch = lengths.size();
-        lengths.add(delegate.getBranchLength(tree.getNode(top)));
-        final int branchCount = lengths.size();
+        final int topBranch = branchCounter;
+        lengths[branchCounter++] = delegate.getBranchLength(tree.getNode(top));
+        final int branchCount = branchCounter;
 
         // model quantities
         delegate.getSubstitutionModel().getInfinitesimalMatrix(infinitesimalMatrix);
@@ -1361,10 +1381,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         this.blockTopBranch = topBranch;
         this.blockStore = store;
         this.blockNodes = postOrder;
-        this.branchLengths = new double[branchCount];
-        for (int e = 0; e < branchCount; e++) {
-            branchLengths[e] = lengths.get(e);
-        }
+        this.branchLengths = lengths;
         this.logF = new double[branchCount][stateCount * stateCount];
         this.logFRate = Double.NaN;
         this.linearMatrices = new double[classWeights.length][][];
@@ -1987,6 +2004,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int blockTopBranch;
     private DefaultMutationStore blockStore;
     private int[] blockNodes;
+    private int[] nodeBlockIndex;
+    // stamped marks of nodes (a node is marked if its entry equals nodeStamp)
+    private int[] nodeMarks;
+    private int nodeStamp = 0;
     private long[] siteBits;
     private int[][] ambiguousRuns;
     private long[] ambiguousRunsVersion;

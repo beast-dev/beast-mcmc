@@ -53,7 +53,7 @@ public final class DefaultMutationStore implements MutationStore {
     private final int stateCount;
     private final double[] patternWeights;
 
-    private int[] parents;
+    private final int[] parents;
     private int root;
     private final byte[][] states;
     private final long[][] fitchSets;
@@ -69,8 +69,10 @@ public final class DefaultMutationStore implements MutationStore {
     private int changeLogCount = 0;
 
     // journal
-    private int[] savedParents;
+    private final int[] savedParents;
+    private final boolean[] parentDirty;
     private int savedRoot;
+    private boolean rootSaved = false;
     private final byte[][] savedStates;
     private final long[] savedStateVersions;
     private final double[][] savedCompositions;
@@ -114,6 +116,8 @@ public final class DefaultMutationStore implements MutationStore {
         this.fitchSetsDirty = new boolean[nodeCount];
         this.branchDirty = new boolean[nodeCount];
         this.nodeInJournal = new boolean[nodeCount];
+        this.savedParents = new int[nodeCount];
+        this.parentDirty = new boolean[nodeCount];
         this.dirtyNodes = new int[nodeCount];
     }
 
@@ -159,12 +163,37 @@ public final class DefaultMutationStore implements MutationStore {
     }
 
     public void setParents(int[] newParents) {
-        if (savedParents == null) {
-            savedParents = parents;
-            savedRoot = root;
+        for (int n = 0; n < nodeCount; n++) {
+            setParent(n, newParents[n]);
         }
-        parents = newParents.clone();
-        root = findRoot(parents);
+        if (root < 0 || parents[root] >= 0) {
+            root = findRoot(parents);
+        }
+    }
+
+    /**
+     * Sets the parent of a node (-1 makes it the root). A topology change must leave exactly one node
+     * without a parent.
+     */
+    public void setParent(int nodeNumber, int parent) {
+        if (parents[nodeNumber] == parent) {
+            return;
+        }
+        if (!rootSaved) {
+            savedRoot = root;
+            rootSaved = true;
+        }
+        if (!parentDirty[nodeNumber]) {
+            journal(nodeNumber);
+            savedParents[nodeNumber] = parents[nodeNumber];
+            parentDirty[nodeNumber] = true;
+        }
+        parents[nodeNumber] = parent;
+        if (parent < 0) {
+            root = nodeNumber;
+        } else if (root == nodeNumber) {
+            root = -1; // until the new root's parent is cleared
+        }
     }
 
     @Override
@@ -504,10 +533,11 @@ public final class DefaultMutationStore implements MutationStore {
             statesDirty[n] = false;
             fitchSetsDirty[n] = false;
             branchDirty[n] = false;
+            parentDirty[n] = false;
             nodeInJournal[n] = false;
         }
         dirtyNodeCount = 0;
-        savedParents = null;
+        rootSaved = false;
         fitchSetsStaleChanged = false;
     }
 
@@ -532,9 +562,11 @@ public final class DefaultMutationStore implements MutationStore {
             if (branchDirty[n]) {
                 mutations[n] = savedMutations[n];
             }
+            if (parentDirty[n]) {
+                parents[n] = savedParents[n];
+            }
         }
-        if (savedParents != null) {
-            parents = savedParents;
+        if (rootSaved) {
             root = savedRoot;
         }
         if (fitchSetsStaleChanged) {

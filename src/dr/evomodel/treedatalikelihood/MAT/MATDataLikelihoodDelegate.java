@@ -334,6 +334,15 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     }
 
     /**
+     * Called by a subtree move's hook once it has made the MAT match the topology after the move, so that
+     * the topology need not be checked against the MAT (it is under assertions).
+     */
+    void markTopologySynchronised() {
+        assert mutationStore.hasParents(MATInitializer.getParents(tree)) : "the MAT does not match the topology";
+        treeChangedSinceCheck = false;
+    }
+
+    /**
      * The MAT tracks changes to the tree itself (see updateMAT), so the tree likelihood need not traverse
      * the tree to collect operations.
      */
@@ -690,7 +699,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             // changed. Other objects (the height parameters, re-fired by the tree) come with a TreeChangedEvent.
             if (object instanceof TreeChangedEvent) {
                 TreeChangedEvent event = (TreeChangedEvent) object;
-                treeChangedSinceCheck = true;
+                if (event.getParameter() == null || !event.isHeightChanged()) {
+                    // (a change of a node's height parameter cannot change the topology)
+                    treeChangedSinceCheck = true;
+                }
                 if (event.isNodeChanged() && event.getNode() != null) {
                     NodeRef node = event.getNode();
                     markDirty(node.getNumber());

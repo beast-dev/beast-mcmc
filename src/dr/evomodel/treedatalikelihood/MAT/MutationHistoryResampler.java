@@ -111,6 +111,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     public static final byte CONSTANT = 3;
 
     private int[] block = null;
+    private int[] movedNodes = null; // the nodes whose parents a subtree move changes
     private int[] candidateSites = null;
     private int[] oldBoundary = null;
 
@@ -254,6 +255,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         delegate.updateMAT();
         delegate.ensureRates();
+        movedNodes = new int[]{sibling.getNumber(), tree.getParent(node).getNumber(), destination.getNumber()};
         block = getBlock(tree.getParent(node), sibling, destination);
         if (sparseUniform) {
             // the sites with events around the block; the others are handled together (see the class comment)
@@ -308,14 +310,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         block = null;
 
         final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final int[] parents = MATInitializer.getParents(tree);
-        final List<Integer> reparented = new ArrayList<Integer>();
-        for (int n = 0; n < parents.length; n++) {
-            if (store.getParent(n) != parents[n]) {
-                reparented.add(n);
-            }
-        }
-        store.setParents(parents);
+        final List<Integer> reparented = syncParents(movedNodes);
 
         // the sites to resample: candidates whose states on the block's neighbours (old and new) are not all equal
         final int[] newBoundary = getBoundary(currentBlock);
@@ -380,6 +375,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
             candidateSites = null;
             oldBoundary = null;
+            delegate.markTopologySynchronised();
             return logProposalOfOldStates - logProposalOfNewStates + logProposalOfOldHistories - logProposalOfNewHistories;
         }
 
@@ -405,6 +401,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         candidateSites = null;
         oldBoundary = null;
+        delegate.markTopologySynchronised();
 
         return logProposalOfOldStates - logProposalOfNewStates;
     }
@@ -434,6 +431,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private static final class LocalMove {
         int x;
         int p;
+        int s;
+        int d;
         int newParent;                 // -1 if P becomes the root
         int[] presentX;                // runs of patterns at which X has data
         int[] oldChain;                // G and the ancestors above it, as far as any site's old chain reaches
@@ -485,6 +484,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         move.newParent = newParentNode == null ? -1 : newParentNode.getNumber();
         final int s = sibling.getNumber();
         final int d = destination.getNumber();
+        move.s = s;
+        move.d = d;
 
         move.presentX = complementRuns(getAmbiguousRuns(move.x));
 
@@ -587,14 +588,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         localMove = null;
         final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final int[] parents = MATInitializer.getParents(tree);
-        final Set<Integer> reparented = new HashSet<Integer>();
-        for (int n = 0; n < parents.length; n++) {
-            if (store.getParent(n) != parents[n]) {
-                reparented.add(n);
-            }
-        }
-        store.setParents(parents);
+        final Set<Integer> reparented = new HashSet<Integer>(syncParents(new int[]{move.s, move.p, move.d}));
 
         // The new chain: N, and each ancestor above it that had no data, gain states where X has data
         // (read before the old chain loses its states, so as states before the move).
@@ -681,6 +675,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         substitutionSites = null;
         ambiguitySites = null;
+        delegate.markTopologySynchronised();
 
         return move.logProposalOfOldStates - logProposalOfNewStates;
     }
@@ -854,6 +849,28 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
         }
         return sites.toArray();
+    }
+
+    /**
+     * Gives the store the tree's parents of the nodes a subtree move reparents (the only ones it changes).
+     *
+     * @return the nodes whose parent changed
+     */
+    private List<Integer> syncParents(int[] nodes) {
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final List<Integer> reparented = new ArrayList<Integer>();
+        for (int n : nodes) {
+            NodeRef parent = tree.getParent(tree.getNode(n));
+            int parentNumber = parent == null ? -1 : parent.getNumber();
+            if (store.getParent(n) != parentNumber && !reparented.contains(n)) {
+                store.setParent(n, parentNumber);
+                reparented.add(n);
+            }
+        }
+        if (store.getRoot() < 0 || store.getParent(store.getRoot()) >= 0) {
+            throw new IllegalStateException("The subtree move changed more parents than expected");
+        }
+        return reparented;
     }
 
     /**

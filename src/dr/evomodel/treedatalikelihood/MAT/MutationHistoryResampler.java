@@ -1009,7 +1009,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 }
                 continue;
             }
-            logProbability += choose(conditional.topLogP, conditional.topP, sample, blockStates[topIndex][p]);
+            logProbability += choose(conditional.topLogP(), conditional.topP(), sample, blockStates[topIndex][p]);
             if (sample) {
                 blockStates[topIndex][p] = (byte) chosenState;
             }
@@ -1206,7 +1206,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 setBlockStates(blockStates, group.sites[i], group.state, conditional.present, true);
             }
             // the sites that change, by thinning (here every site in the group has the same probability)
-            final double probabilityChanged = -Math.expm1(uniform.logProbabilityUnchanged);
+            final double probabilityChanged = uniform.totalChangeMass;
             int changedCount = 0;
             if (probabilityChanged > 0.0) {
                 final double logSkip = Math.log1p(-probabilityChanged);
@@ -1314,7 +1314,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         for (int a = 0; a < stateCount; a++) {
             if (uniformCounts[a] > 0) {
                 uniform[a] = new UniformConditional(new Conditional(a, w, nu, true), a);
-                probabilityChanged[a] = -Math.expm1(uniform[a].logProbabilityUnchanged);
+                probabilityChanged[a] = uniform[a].totalChangeMass;
                 maxProbabilityChanged = Math.max(maxProbabilityChanged, probabilityChanged[a]);
             }
         }
@@ -1406,6 +1406,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * distribution of the top node and of each other node given its parent. The upward (filtering)
      * pass is done on construction; the distribution of a node given its parent's state is computed
      * when first needed.
+     * <p>
+     * Without per-site rates the filtering is done in linear space and the distributions are
+     * normalised in linear space; their logarithms are only taken when asked for.
      */
     private final class Conditional {
         final double w;
@@ -1413,10 +1416,12 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         // if not negative, the state of every node around the block (for sites with no events there)
         private final int uniformState;
         final boolean[] present;
-        final double[][] logPartials; // log density of everything below block node i given its state
-        final int[] branchOf;         // the branch above each block node
-        double[] topLogP;
-        double[] topP;
+        private double[][] partials;    // density of everything below block node i given its state, scaled (linear filtering)
+        private double[][] logPartials; // log density of everything below block node i given its state (log filtering)
+        private double[][] linearMatrices;
+        final int[] branchOf;           // the branch above each block node
+        private double[] topLogP;
+        private double[] topP;
         private final double[][][] logRows;
         private final double[][][] rows;
 
@@ -1437,10 +1442,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             this.nu = nu;
             this.uniformState = uniformState;
             this.present = new boolean[blockSize];
-            this.logPartials = new double[blockSize][stateCount];
             this.branchOf = new int[blockSize];
-            this.logRows = new double[blockSize][stateCount][];
-            this.rows = new double[blockSize][stateCount][];
+            this.logRows = new double[blockSize][][];
+            this.rows = new double[blockSize][][];
             for (int i = 0; i < blockSize; i++) {
                 for (int j = 0; j < blockChildren[i].length; j++) {
                     int c = blockChildren[i][j];
@@ -1453,28 +1457,48 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
             ensureLogF(nu);
             if (delegate.hasSiteRates() || !filterLinear(p)) {
+                partials = null;
                 filterLog(p);
             }
 
             int topIndex = blockSize - 1;
             if (present[topIndex]) {
-                double[] logWeights = new double[stateCount];
-                if (blockTopParent == null) {
-                    for (int s = 0; s < stateCount; s++) {
-                        logWeights[s] = logPartials[topIndex][s] + w * logFrequencies[s];
-                    }
-                } else {
-                    int parentState = stateOf(blockTopParent.getNumber(), p);
+                int parentState = -1;
+                if (blockTopParent != null) {
+                    parentState = stateOf(blockTopParent.getNumber(), p);
                     if (parentState < 0) {
                         throw new IllegalStateException("Parent of the resampling block is ambiguous where the block is not");
                     }
-                    double[] f = logF[blockTopBranch];
-                    for (int s = 0; s < stateCount; s++) {
-                        logWeights[s] = logPartials[topIndex][s] + w * f[parentState * stateCount + s];
-                    }
                 }
-                topLogP = normaliseLog(logWeights);
-                topP = exp(topLogP);
+                if (partials != null) {
+                    double[] weights = new double[stateCount];
+                    double[] partial = partials[topIndex];
+                    if (parentState < 0) {
+                        for (int s = 0; s < stateCount; s++) {
+                            weights[s] = partial[s] * Math.exp(w * logFrequencies[s]);
+                        }
+                    } else {
+                        double[] matrix = linearMatrices[blockTopBranch];
+                        for (int s = 0; s < stateCount; s++) {
+                            weights[s] = partial[s] * matrix[parentState * stateCount + s];
+                        }
+                    }
+                    topP = normaliseLinear(weights);
+                } else {
+                    double[] logWeights = new double[stateCount];
+                    if (parentState < 0) {
+                        for (int s = 0; s < stateCount; s++) {
+                            logWeights[s] = logPartials[topIndex][s] + w * logFrequencies[s];
+                        }
+                    } else {
+                        double[] f = logF[blockTopBranch];
+                        for (int s = 0; s < stateCount; s++) {
+                            logWeights[s] = logPartials[topIndex][s] + w * f[parentState * stateCount + s];
+                        }
+                    }
+                    topLogP = normaliseLog(logWeights);
+                    topP = exp(topLogP);
+                }
             }
         }
 
@@ -1483,14 +1507,15 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
 
         /**
-         * Filtering in linear space with exp(w logF) matrices (no exponentials per pattern).
+         * Filtering in linear space with exp(w logF) matrices (no exponentials or logarithms per pattern).
          *
          * @return false if the partials underflow, in which case filterLog must be used
          */
         private boolean filterLinear(int p) {
             final double[][] m = getLinearMatrices(p >= 0 ? weightClass[p] : weightClass[variableSites[0]]);
             final int blockSize = blockChildren.length;
-            final double[][] partials = new double[blockSize][stateCount];
+            partials = new double[blockSize][stateCount];
+            linearMatrices = m;
             for (int i = 0; i < blockSize; i++) {
                 double[] partial = partials[i];
                 Arrays.fill(partial, 1.0);
@@ -1529,9 +1554,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                         Arrays.fill(present, false);
                         return false;
                     }
+                    double scale = 1.0 / max;
                     for (int s = 0; s < stateCount; s++) {
-                        partial[s] /= max;
-                        logPartials[i][s] = Math.log(partial[s]);
+                        partial[s] *= scale;
                     }
                 }
             }
@@ -1544,9 +1569,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         private void filterLog(int p) {
             final int blockSize = blockChildren.length;
             final double[] terms = new double[stateCount];
+            logPartials = new double[blockSize][stateCount];
             for (int i = 0; i < blockSize; i++) {
                 double[] partial = logPartials[i];
-                Arrays.fill(partial, 0.0);
                 for (int j = 0; j < blockChildren[i].length; j++) {
                     int c = blockChildren[i][j];
                     double[] f = logF[blockChildBranch[i][j]];
@@ -1575,29 +1600,60 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
 
         /**
+         * @return the distribution of (non-top) block node i given its parent has state s
+         */
+        double[] row(int i, int s) {
+            if (rows[i] == null) {
+                rows[i] = new double[stateCount][];
+                logRows[i] = new double[stateCount][];
+            }
+            if (rows[i][s] == null) {
+                if (partials != null) {
+                    double[] matrix = linearMatrices[branchOf[i]];
+                    double[] partial = partials[i];
+                    double[] weights = new double[stateCount];
+                    for (int t = 0; t < stateCount; t++) {
+                        weights[t] = matrix[s * stateCount + t] * partial[t];
+                    }
+                    rows[i][s] = normaliseLinear(weights);
+                } else {
+                    ensureLogF(nu);
+                    double[] f = logF[branchOf[i]];
+                    double[] terms = new double[stateCount];
+                    for (int t = 0; t < stateCount; t++) {
+                        terms[t] = w * f[s * stateCount + t] + logPartials[i][t];
+                    }
+                    logRows[i][s] = normaliseLog(terms);
+                    rows[i][s] = exp(logRows[i][s]);
+                }
+            }
+            return rows[i][s];
+        }
+
+        /**
          * @return the log distribution of (non-top) block node i given its parent has state s
          */
         double[] logRow(int i, int s) {
+            double[] row = row(i, s);
             if (logRows[i][s] == null) {
-                ensureLogF(nu);
-                double[] f = logF[branchOf[i]];
-                double[] terms = new double[stateCount];
-                for (int t = 0; t < stateCount; t++) {
-                    terms[t] = w * f[s * stateCount + t] + logPartials[i][t];
-                }
-                logRows[i][s] = normaliseLog(terms);
-                rows[i][s] = exp(logRows[i][s]);
+                logRows[i][s] = log(row);
             }
             return logRows[i][s];
         }
 
-        double[] row(int i, int s) {
-            logRow(i, s);
-            return rows[i][s];
+        double[] topP() {
+            return topP;
+        }
+
+        double[] topLogP() {
+            if (topLogP == null) {
+                topLogP = log(topP);
+            }
+            return topLogP;
         }
 
         double[] logRowOrTop(int i, int s) {
-            return i == present.length - 1 ? topLogP : logRow(i, s);
+            return i == present.length - 1 ? topLogP() : logRow(i, s);
         }
 
         double[] rowOrTop(int i, int s) {
@@ -1614,6 +1670,25 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return result;
     }
 
+    /**
+     * Normalises in place; with no mass the result is NaN throughout (as normaliseLog gives).
+     */
+    private static double[] normaliseLinear(double[] weights) {
+        double total = 0.0;
+        for (double weight : weights) {
+            total += weight;
+        }
+        if (!(total > 0.0)) {
+            Arrays.fill(weights, Double.NaN);
+            return weights;
+        }
+        double scale = 1.0 / total;
+        for (int s = 0; s < weights.length; s++) {
+            weights[s] *= scale;
+        }
+        return weights;
+    }
+
     private static double[] exp(double[] logP) {
         double[] p = new double[logP.length];
         for (int s = 0; s < logP.length; s++) {
@@ -1622,36 +1697,43 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return p;
     }
 
+    private static double[] log(double[] p) {
+        double[] logP = new double[p.length];
+        for (int s = 0; s < p.length; s++) {
+            logP[s] = Math.log(p[s]);
+        }
+        return logP;
+    }
+
     /**
      * For a pattern whose unambiguous nodes all have state a throughout the block's neighbourhood: the
      * probability that the block's unambiguous nodes all keep a, and for each node (in pre-order) the
-     * probability that it is the first to differ from a.
+     * probability that it is the first to differ from a. Computed in linear space with one logarithm.
      */
     private final class UniformConditional {
         final Conditional conditional;
         final int state;
         final double logProbabilityUnchanged;
         final double probabilityUnchanged;
-        final double[] logPrefix;      // log probability that all nodes before this pre-order position keep a
+        final double[] prefix;          // probability that all nodes before this pre-order position keep a
         final double[] firstChangeMass; // probability that this position is the first to differ from a
-        final double totalChangeMass;
+        final double totalChangeMass;   // the probability that any node differs from a
 
         UniformConditional(Conditional conditional, int a) {
             this.conditional = conditional;
             this.state = a;
             int blockSize = conditional.present.length;
-            logPrefix = new double[blockSize];
+            prefix = new double[blockSize];
             firstChangeMass = new double[blockSize];
-            double logPrefixSum = 0.0;
+            double product = 1.0;
             double total = 0.0;
             for (int position = 0; position < blockSize; position++) {
                 int i = blockSize - 1 - position;
-                logPrefix[position] = logPrefixSum;
+                prefix[position] = product;
                 if (!conditional.present[i]) {
                     // ambiguous nodes have no state to change
                     continue;
                 }
-                double[] logRow = conditional.logRowOrTop(i, a);
                 double[] row = conditional.rowOrTop(i, a);
                 double changed = 0.0;
                 for (int t = 0; t < row.length; t++) {
@@ -1659,13 +1741,28 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                         changed += row[t];
                     }
                 }
-                firstChangeMass[position] = Math.exp(logPrefixSum) * changed;
+                firstChangeMass[position] = product * changed;
                 total += firstChangeMass[position];
-                logPrefixSum += logRow[a];
+                product *= row[a];
             }
-            logProbabilityUnchanged = logPrefixSum;
-            probabilityUnchanged = Math.exp(logPrefixSum);
+            probabilityUnchanged = product;
             totalChangeMass = total;
+            if (total < 0.5) {
+                // more accurate than log(product) when changes are rare (the usual case)
+                logProbabilityUnchanged = Math.log1p(-total);
+            } else if (product > 1E-250 || Double.isNaN(product)) {
+                logProbabilityUnchanged = Math.log(product);
+            } else {
+                // the product may have underflowed: sum the logarithms
+                double logProduct = 0.0;
+                for (int position = 0; position < blockSize; position++) {
+                    int i = blockSize - 1 - position;
+                    if (conditional.present[i]) {
+                        logProduct += conditional.logRowOrTop(i, a)[a];
+                    }
+                }
+                logProbabilityUnchanged = logProduct;
+            }
         }
     }
 
@@ -1697,7 +1794,14 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             return Double.NEGATIVE_INFINITY;
         }
 
-        double logProbability = uniform.logPrefix[first];
+        // the nodes before the first to change keep a
+        double logProbability = 0.0;
+        for (int position = 0; position < first; position++) {
+            int j = blockSize - 1 - position;
+            if (conditional.present[j]) {
+                logProbability += conditional.logRowOrTop(j, a)[a];
+            }
+        }
 
         // the first node to change: a state other than a, in proportion to its conditional
         int i = blockSize - 1 - first;

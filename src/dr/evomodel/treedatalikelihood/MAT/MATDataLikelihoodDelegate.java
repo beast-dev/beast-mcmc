@@ -109,6 +109,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private final double[] patternWeightRates;  // w_p nu_p
     private final double[] exitRateSums;        // lambda_n = sum_p w_p nu_p q(state of p at n)
     private final long[] exitRateStateVersions;
+    private final int[] exitRatePath;           // scratch: nodes whose exit rates are being brought up to date
     private final double[] branchTerms;
     private final double[] branchTermLengths;
     private final long[] branchTermStateVersions;
@@ -222,6 +223,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.exitRateSums = new double[nodeCount];
         this.exitRateStateVersions = new long[nodeCount];
         this.exitRateModelVersions = new long[nodeCount];
+        this.exitRatePath = new int[nodeCount];
         this.branchTerms = new double[nodeCount];
         this.branchTermLengths = new double[nodeCount];
         this.branchTermStateVersions = new long[nodeCount];
@@ -440,8 +442,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      * Recomputes the term of the branch above node n if anything it depends on has changed.
      */
     private void updateBranchTerm(int n) {
-        int parent = mutationStore.getParent(n);
-        double exitRate = getExitRate(n, parent);
+        double exitRate = historyModel.needsExitRate() ? getExitRate(n) : 0.0;
         double[] composition = historyModel.needsComposition() ? mutationStore.getComposition(n) : null;
         double length = getBranchLength(tree.getNode(n));
         BranchMutations mutations = mutationStore.getBranchMutations(n);
@@ -463,25 +464,38 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     /**
      * @return lambda_n, the total exit rate of the node's sequence: from the node's composition if all
-     * sites have the same rate, otherwise from its parent's (which, in pre-order, is already up to date)
-     * and the events on its branch
+     * sites have the same rate, otherwise from its parent's and the events on its branch (bringing the
+     * rates of its ancestors up to date first, from the nearest one that is)
      */
-    private double getExitRate(int n, int parent) {
-        long stateVersion = mutationStore.getStateVersion(n);
-        if (exitRateModelVersions[n] != modelVersion || exitRateStateVersions[n] != stateVersion) {
+    private double getExitRate(int n) {
+        if (isExitRateKnown(n)) {
+            return exitRateSums[n];
+        }
+        if (!hasSiteRates()) {
+            double[] composition = mutationStore.getComposition(n);
+            double rate = 0.0;
+            for (int a = 0; a < stateCount; a++) {
+                rate += composition[a] * exitRates[a];
+            }
+            setExitRate(n, rate * commonSiteRate);
+            return exitRateSums[n];
+        }
+        int count = 0;
+        int top = n;
+        exitRatePath[count++] = top;
+        while (mutationStore.getParent(top) >= 0 && !isExitRateKnown(mutationStore.getParent(top))) {
+            top = mutationStore.getParent(top);
+            exitRatePath[count++] = top;
+        }
+        for (int i = count - 1; i >= 0; i--) {
+            int node = exitRatePath[i];
+            int parent = mutationStore.getParent(node);
             double rate;
-            if (!hasSiteRates()) {
-                double[] composition = mutationStore.getComposition(n);
-                rate = 0.0;
-                for (int a = 0; a < stateCount; a++) {
-                    rate += composition[a] * exitRates[a];
-                }
-                rate *= commonSiteRate;
-            } else if (parent < 0) {
-                rate = computeExitRate(n);
+            if (parent < 0) {
+                rate = computeExitRate(node);
             } else {
-                rate = getExitRate(parent, mutationStore.getParent(parent));
-                BranchMutations mutations = mutationStore.getBranchMutations(n);
+                rate = exitRateSums[parent];
+                BranchMutations mutations = mutationStore.getBranchMutations(node);
                 for (int k = 0; k < mutations.size(); k++) {
                     int p = mutations.getPattern(k);
                     int a = mutations.getFromState(k);
@@ -492,11 +506,19 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                     }
                 }
             }
-            exitRateSums[n] = rate;
-            exitRateStateVersions[n] = stateVersion;
-            exitRateModelVersions[n] = modelVersion;
+            setExitRate(node, rate);
         }
         return exitRateSums[n];
+    }
+
+    private boolean isExitRateKnown(int n) {
+        return exitRateModelVersions[n] == modelVersion && exitRateStateVersions[n] == mutationStore.getStateVersion(n);
+    }
+
+    private void setExitRate(int n, double rate) {
+        exitRateSums[n] = rate;
+        exitRateStateVersions[n] = mutationStore.getStateVersion(n);
+        exitRateModelVersions[n] = modelVersion;
     }
 
     private double computeExitRate(int n) {

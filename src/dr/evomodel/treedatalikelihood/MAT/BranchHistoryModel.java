@@ -94,6 +94,14 @@ public interface BranchHistoryModel {
     boolean needsComposition();
 
     /**
+     * @return true if branch terms need the exit rate of each node (lambda: the sum of w_p nu_p q(state of
+     * p) over its sites)
+     */
+    default boolean needsExitRate() {
+        return true;
+    }
+
+    /**
      * The log density of going from state a to state b along a branch, summed over any part of the
      * history that the model does not sample (used to draw ancestral states).
      *

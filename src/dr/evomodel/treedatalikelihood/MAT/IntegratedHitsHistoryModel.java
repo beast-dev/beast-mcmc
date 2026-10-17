@@ -67,6 +67,11 @@ public class IntegratedHitsHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
+    public boolean needsExitRate() {
+        return false;
+    }
+
+    @Override
     public void getLogTransitionDensities(double length, double nu, double[] out) {
         System.arraycopy(getLogTransitionProbabilities(nu * length), 0, out, 0, stateCount * stateCount);
     }

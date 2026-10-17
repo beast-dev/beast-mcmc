@@ -202,6 +202,9 @@ public final class BranchMutations {
             if (size == 0) {
                 return EMPTY;
             }
+            // events are kept in pattern order (several hits at a site stay in the order they were added)
+            sortByPattern(subPatterns, subCount, subFrom, subTo, subTimes);
+            sortByPattern(ambPatterns, ambCount, ambFrom, null, null);
             int[] patterns = new int[size];
             byte[] from = new byte[size];
             byte[] to = new byte[size];
@@ -213,6 +216,47 @@ public final class BranchMutations {
             java.util.Arrays.fill(to, subCount, size, (byte) -1);
             double[] times = timed ? java.util.Arrays.copyOf(subTimes, size) : null;
             return new BranchMutations(patterns, from, to, subCount, times);
+        }
+
+        /**
+         * Sorts the first count entries by pattern, keeping the order of equal patterns.
+         */
+        private static void sortByPattern(int[] patterns, int count, byte[] from, byte[] to, double[] times) {
+            boolean sorted = true;
+            for (int i = 1; i < count && sorted; i++) {
+                sorted = patterns[i - 1] <= patterns[i];
+            }
+            if (sorted) {
+                return;
+            }
+            long[] keys = new long[count];
+            for (int i = 0; i < count; i++) {
+                keys[i] = ((long) patterns[i] << 32) | i;
+            }
+            java.util.Arrays.sort(keys);
+            int[] newPatterns = new int[count];
+            byte[] newFrom = new byte[count];
+            byte[] newTo = to == null ? null : new byte[count];
+            double[] newTimes = times == null ? null : new double[count];
+            for (int i = 0; i < count; i++) {
+                int k = (int) keys[i];
+                newPatterns[i] = patterns[k];
+                newFrom[i] = from[k];
+                if (to != null) {
+                    newTo[i] = to[k];
+                }
+                if (times != null) {
+                    newTimes[i] = times[k];
+                }
+            }
+            System.arraycopy(newPatterns, 0, patterns, 0, count);
+            System.arraycopy(newFrom, 0, from, 0, count);
+            if (to != null) {
+                System.arraycopy(newTo, 0, to, 0, count);
+            }
+            if (times != null) {
+                System.arraycopy(newTimes, 0, times, 0, count);
+            }
         }
     }
 }

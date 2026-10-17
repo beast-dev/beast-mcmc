@@ -384,6 +384,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
 
         // branches whose parent changed are recomputed in full; the others around the block changed only at the resampled sites
+        changed = sortSites(changed, changed.length);
         Set<Integer> fullUpdates = new HashSet<Integer>(reparented);
         for (int n : fullUpdates) {
             store.updateBranch(n);
@@ -652,7 +653,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         addFlagged(changed, changedUniformSites, changedUniformCount);
         addFlagged(changed, move.oldHotSites, move.oldHotSites.length);
         addFlagged(changed, newHotSites, newHotSites.length);
-        final int[] changedSites = changed.toArray();
+        final int[] changedSites = sortSites(changed.values, changed.count);
         lastResampledSites = changedSites;
 
         // the branches whose parent changed are recomputed in full; those whose ends changed only at the

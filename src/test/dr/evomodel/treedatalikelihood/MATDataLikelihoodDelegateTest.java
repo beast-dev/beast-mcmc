@@ -1251,6 +1251,13 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 }
             }
             assertEquals("mutation list of node " + n, mutationCount, storedMutationCount);
+            // the events of a branch are in pattern order (substitutions, then ambiguities)
+            dr.evomodel.treedatalikelihood.MAT.BranchMutations events = store.getBranchMutations(n);
+            for (int k = 1; k < events.size(); k++) {
+                if (k != events.getSubstitutionCount()) {
+                    assertTrue("events of node " + n + " out of pattern order", events.getPattern(k - 1) <= events.getPattern(k));
+                }
+            }
 
             // an internal node is ambiguous exactly where all its children are
             if (!childPresent) {

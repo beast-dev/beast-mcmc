@@ -398,6 +398,7 @@ public final class DefaultMutationStore implements MutationStore {
      * at the given sites (and the parent is unchanged): events at other sites are kept.
      *
      * @param changed flags the sites in `sites`
+     * @param sites   the sites, in pattern order (the events of every branch are kept in pattern order)
      */
     public void updateBranchSites(int nodeNumber, boolean[] changed, int[] sites) {
         if (sites.length == 0) {
@@ -418,6 +419,8 @@ public final class DefaultMutationStore implements MutationStore {
         byte[] childStates = states[nodeNumber];
         byte[] parentStates = states[parent];
 
+        // the kept events (in pattern order) are merged with the new ones at the sites (in pattern order),
+        // so that the events stay in pattern order
         int capacity = old.size() + sites.length;
         int[] subPatterns = new int[capacity];
         byte[] subFrom = new byte[capacity];
@@ -426,29 +429,36 @@ public final class DefaultMutationStore implements MutationStore {
         byte[] ambFrom = new byte[capacity];
         int subCount = 0;
         int ambCount = 0;
-        for (int k = 0; k < old.size(); k++) {
-            int p = old.getPattern(k);
-            if (!changed[p]) {
-                if (old.isAmbiguity(k)) {
-                    ambPatterns[ambCount] = p;
-                    ambFrom[ambCount++] = (byte) old.getFromState(k);
-                } else {
-                    subPatterns[subCount] = p;
-                    subFrom[subCount] = (byte) old.getFromState(k);
-                    subTo[subCount++] = (byte) old.getToState(k);
-                }
-            }
-        }
-        for (int p : sites) {
-            if (parentStates[p] >= 0 && childStates[p] != parentStates[p]) {
-                if (childStates[p] < 0) {
-                    ambPatterns[ambCount] = p;
-                    ambFrom[ambCount++] = parentStates[p];
-                } else {
+        int j = 0;
+        for (int k = 0; k <= old.getSubstitutionCount(); k++) {
+            int next = k < old.getSubstitutionCount() ? old.getPattern(k) : Integer.MAX_VALUE;
+            for (; j < sites.length && sites[j] < next; j++) {
+                int p = sites[j];
+                if (parentStates[p] >= 0 && childStates[p] >= 0 && childStates[p] != parentStates[p]) {
                     subPatterns[subCount] = p;
                     subFrom[subCount] = parentStates[p];
                     subTo[subCount++] = childStates[p];
                 }
+            }
+            if (k < old.getSubstitutionCount() && !changed[next]) {
+                subPatterns[subCount] = next;
+                subFrom[subCount] = (byte) old.getFromState(k);
+                subTo[subCount++] = (byte) old.getToState(k);
+            }
+        }
+        j = 0;
+        for (int k = old.getSubstitutionCount(); k <= old.size(); k++) {
+            int next = k < old.size() ? old.getPattern(k) : Integer.MAX_VALUE;
+            for (; j < sites.length && sites[j] < next; j++) {
+                int p = sites[j];
+                if (parentStates[p] >= 0 && childStates[p] < 0) {
+                    ambPatterns[ambCount] = p;
+                    ambFrom[ambCount++] = parentStates[p];
+                }
+            }
+            if (k < old.size() && !changed[next]) {
+                ambPatterns[ambCount] = next;
+                ambFrom[ambCount++] = (byte) old.getFromState(k);
             }
         }
         if (subCount + ambCount == 0) {

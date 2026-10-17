@@ -111,8 +111,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private final double[] branchTerms;
     private final double[] branchTermLengths;
     private final long[] branchTermStateVersions;
-    private final double[][] compositions;           // summed weights of the sites in each state, per node
-    private final long[] compositionStateVersions;
+    private double commonSiteRate; // the rate of every site, without per-site rates
     private final BranchMutations[] branchTermMutations;
     private final long[] branchTermModelVersions;
     private final long[] exitRateModelVersions;
@@ -211,9 +210,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.branchTerms = new double[nodeCount];
         this.branchTermLengths = new double[nodeCount];
         this.branchTermStateVersions = new long[nodeCount];
-        this.compositions = new double[nodeCount][];
-        this.compositionStateVersions = new long[nodeCount];
-        java.util.Arrays.fill(compositionStateVersions, -1);
         this.branchTermMutations = new BranchMutations[nodeCount];
         this.branchTermModelVersions = new long[nodeCount];
         java.util.Arrays.fill(exitRateModelVersions, -1);
@@ -345,6 +341,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 exitRates[a] = q;
             }
             double siteRateScale = getSiteRateScale();
+            commonSiteRate = siteRateScale;
             for (int p = 0; p < patternCount; p++) {
                 patternRates[p] = getSiteRate(p, siteRateScale);
                 patternWeightRates[p] = patternWeights[p] * patternRates[p];
@@ -368,7 +365,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             }
             int parent = mutationStore.getParent(n);
             double exitRate = getExitRate(n, parent);
-            double[] composition = historyModel.needsComposition() ? getComposition(n, parent) : null;
+            double[] composition = historyModel.needsComposition() ? mutationStore.getComposition(n) : null;
             double length = getBranchLength(tree.getNode(n));
             BranchMutations mutations = mutationStore.getBranchMutations(n);
             long stateVersion = mutationStore.getStateVersion(n);
@@ -389,14 +386,22 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     }
 
     /**
-     * @return lambda_n, the total exit rate of the node's sequence, computed from its parent's (which,
-     * in pre-order, is already up to date) and the events on its branch
+     * @return lambda_n, the total exit rate of the node's sequence: from the node's composition if all
+     * sites have the same rate, otherwise from its parent's (which, in pre-order, is already up to date)
+     * and the events on its branch
      */
     private double getExitRate(int n, int parent) {
         long stateVersion = mutationStore.getStateVersion(n);
         if (exitRateModelVersions[n] != modelVersion || exitRateStateVersions[n] != stateVersion) {
             double rate;
-            if (parent < 0) {
+            if (!hasSiteRates()) {
+                double[] composition = mutationStore.getComposition(n);
+                rate = 0.0;
+                for (int a = 0; a < stateCount; a++) {
+                    rate += composition[a] * exitRates[a];
+                }
+                rate *= commonSiteRate;
+            } else if (parent < 0) {
                 rate = computeExitRate(n);
             } else {
                 rate = getExitRate(parent, mutationStore.getParent(parent));
@@ -418,38 +423,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         return exitRateSums[n];
     }
 
-    /**
-     * @return the summed weights of the node's sites in each state, from its parent's (already up to
-     * date in pre-order) and the events on its branch
-     */
-    private double[] getComposition(int n, int parent) {
-        long stateVersion = mutationStore.getStateVersion(n);
-        if (compositions[n] == null || compositionStateVersions[n] != stateVersion) {
-            double[] composition = new double[stateCount];
-            if (parent < 0) {
-                byte[] states = mutationStore.getStates(n);
-                for (int p = 0; p < patternCount; p++) {
-                    if (states[p] >= 0) {
-                        composition[states[p]] += patternWeights[p];
-                    }
-                }
-            } else {
-                System.arraycopy(getComposition(parent, mutationStore.getParent(parent)), 0, composition, 0, stateCount);
-                BranchMutations mutations = mutationStore.getBranchMutations(n);
-                for (int k = 0; k < mutations.size(); k++) {
-                    int p = mutations.getPattern(k);
-                    composition[mutations.getFromState(k)] -= patternWeights[p];
-                    if (!mutations.isAmbiguity(k)) {
-                        composition[mutations.getToState(k)] += patternWeights[p];
-                    }
-                }
-            }
-            compositions[n] = composition;
-            compositionStateVersions[n] = stateVersion;
-        }
-        return compositions[n];
-    }
-
     private double computeExitRate(int n) {
         byte[] states = mutationStore.getStates(n);
         double rate = 0.0;
@@ -469,11 +442,11 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             for (int a = 0; a < stateCount; a++) {
                 logFrequencies[a] = Math.log(frequencies[a]);
             }
-            byte[] states = mutationStore.getStates(rootNumber);
+            double[] composition = mutationStore.getComposition(rootNumber);
             double term = 0.0;
-            for (int p = 0; p < patternCount; p++) {
-                if (states[p] >= 0) {
-                    term += patternWeights[p] * logFrequencies[states[p]];
+            for (int a = 0; a < stateCount; a++) {
+                if (composition[a] > 0.0) {
+                    term += composition[a] * logFrequencies[a];
                 }
             }
             rootTerm = term;

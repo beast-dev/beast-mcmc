@@ -38,15 +38,20 @@ package dr.evomodel.treedatalikelihood.MAT;
  * date, and parsimony recomputes them all before use.
  *
  * Each node's states carry a version number that changes whenever they may have changed, so that
- * quantities derived from them can be cached.
+ * quantities derived from them can be cached. Each node also has a summary of its states, its
+ * composition (the summed pattern weights of its sites in each state), which {@link #setState} keeps up
+ * to date as states are changed.
  *
  * Changes are journaled per node: the first change to a node after {@link #commit()} keeps the
- * previous arrays so that {@link #revert()} can put them back.
+ * previous arrays (and the version and composition of the states) so that {@link #revert()} can put
+ * them back.
  */
 public final class DefaultMutationStore implements MutationStore {
 
     private final int nodeCount;
     private final int patternCount;
+    private final int stateCount;
+    private final double[] patternWeights;
 
     private int[] parents;
     private int root;
@@ -56,11 +61,14 @@ public final class DefaultMutationStore implements MutationStore {
     private final BranchMutations[] mutations;
     private final long[] stateVersions;
     private long lastStateVersion = 0;
+    private final double[][] compositions; // null where not yet computed from the states
 
     // journal
     private int[] savedParents;
     private int savedRoot;
     private final byte[][] savedStates;
+    private final long[] savedStateVersions;
+    private final double[][] savedCompositions;
     private final long[][] savedFitchSets;
     private boolean savedFitchSetsStale;
     private boolean fitchSetsStaleChanged = false;
@@ -72,9 +80,15 @@ public final class DefaultMutationStore implements MutationStore {
     private int dirtyNodeCount = 0;
     private final boolean[] nodeInJournal;
 
-    public DefaultMutationStore(int[] parents, int patternCount) {
+    /**
+     * @param patternWeights the weight of each pattern (for the compositions; may be longer than patternCount)
+     * @param stateCount     the number of states
+     */
+    public DefaultMutationStore(int[] parents, int patternCount, double[] patternWeights, int stateCount) {
         this.nodeCount = parents.length;
         this.patternCount = patternCount;
+        this.stateCount = stateCount;
+        this.patternWeights = java.util.Arrays.copyOf(patternWeights, patternCount);
         this.parents = parents.clone();
         this.root = findRoot(parents);
         this.states = new byte[nodeCount][patternCount];
@@ -82,8 +96,11 @@ public final class DefaultMutationStore implements MutationStore {
         this.mutations = new BranchMutations[nodeCount];
         java.util.Arrays.fill(mutations, BranchMutations.EMPTY);
         this.stateVersions = new long[nodeCount];
+        this.compositions = new double[nodeCount][];
 
         this.savedStates = new byte[nodeCount][];
+        this.savedStateVersions = new long[nodeCount];
+        this.savedCompositions = new double[nodeCount][];
         this.savedFitchSets = new long[nodeCount][];
         this.savedMutations = new BranchMutations[nodeCount];
         this.statesDirty = new boolean[nodeCount];
@@ -156,17 +173,79 @@ public final class DefaultMutationStore implements MutationStore {
     }
 
     /**
-     * @return the node's states for writing (each call counts as a change of the states)
+     * @return the node's states for writing directly (each call counts as a change of the states, and the
+     * node's composition is recomputed in full when next asked for); to change a few states, use
+     * {@link #setState}
      */
     public byte[] getWritableStates(int nodeNumber) {
+        journalStates(nodeNumber);
+        stateVersions[nodeNumber] = ++lastStateVersion;
+        compositions[nodeNumber] = null;
+        return states[nodeNumber];
+    }
+
+    /**
+     * @return the node's states, as the array that {@link #setState} will change until the next commit or
+     * revert; callers must not modify it themselves
+     */
+    public byte[] getStatesForUpdate(int nodeNumber) {
+        journalStates(nodeNumber);
+        return states[nodeNumber];
+    }
+
+    /**
+     * Sets the state of a node at a pattern (-1 for ambiguous), keeping its composition up to date.
+     */
+    public void setState(int nodeNumber, int pattern, int state) {
+        int old = states[nodeNumber][pattern];
+        if (old == state) {
+            return;
+        }
+        journalStates(nodeNumber);
+        states[nodeNumber][pattern] = (byte) state;
+        double[] composition = compositions[nodeNumber];
+        if (composition != null) {
+            double weight = patternWeights[pattern];
+            if (old >= 0) {
+                composition[old] -= weight;
+            }
+            if (state >= 0) {
+                composition[state] += weight;
+            }
+        }
+        stateVersions[nodeNumber] = ++lastStateVersion;
+    }
+
+    /**
+     * @return the summed pattern weights of the node's sites in each state; callers must not modify it
+     */
+    public double[] getComposition(int nodeNumber) {
+        double[] composition = compositions[nodeNumber];
+        if (composition == null) {
+            composition = new double[stateCount];
+            byte[] nodeStates = states[nodeNumber];
+            for (int p = 0; p < patternCount; p++) {
+                if (nodeStates[p] >= 0) {
+                    composition[nodeStates[p]] += patternWeights[p];
+                }
+            }
+            compositions[nodeNumber] = composition;
+        }
+        return composition;
+    }
+
+    private void journalStates(int nodeNumber) {
         if (!statesDirty[nodeNumber]) {
             journal(nodeNumber);
             savedStates[nodeNumber] = states[nodeNumber];
             states[nodeNumber] = states[nodeNumber].clone();
+            savedStateVersions[nodeNumber] = stateVersions[nodeNumber];
+            savedCompositions[nodeNumber] = compositions[nodeNumber];
+            if (compositions[nodeNumber] != null) {
+                compositions[nodeNumber] = compositions[nodeNumber].clone();
+            }
             statesDirty[nodeNumber] = true;
         }
-        stateVersions[nodeNumber] = ++lastStateVersion;
-        return states[nodeNumber];
     }
 
     /**
@@ -381,6 +460,7 @@ public final class DefaultMutationStore implements MutationStore {
         for (int i = 0; i < dirtyNodeCount; i++) {
             int n = dirtyNodes[i];
             savedStates[n] = null;
+            savedCompositions[n] = null;
             savedFitchSets[n] = null;
             savedMutations[n] = null;
             statesDirty[n] = false;
@@ -400,8 +480,10 @@ public final class DefaultMutationStore implements MutationStore {
         for (int i = 0; i < dirtyNodeCount; i++) {
             int n = dirtyNodes[i];
             if (statesDirty[n]) {
+                // the states are as they were at the saved version, so caches keyed by it are valid again
                 states[n] = savedStates[n];
-                stateVersions[n] = ++lastStateVersion;
+                stateVersions[n] = savedStateVersions[n];
+                compositions[n] = savedCompositions[n];
             }
             if (fitchSetsDirty[n]) {
                 fitchSets[n] = savedFitchSets[n];

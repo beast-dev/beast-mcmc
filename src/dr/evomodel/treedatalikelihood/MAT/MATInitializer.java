@@ -79,7 +79,7 @@ public class MATInitializer {
         final int[][] children = getChildren(tree);
         final int[] postOrder = getPostOrder(tree);
 
-        DefaultMutationStore store = new DefaultMutationStore(parents, patternCount);
+        DefaultMutationStore store = new DefaultMutationStore(parents, patternCount, patternList.getPatternWeights(), stateCount);
         for (int n : postOrder) {
             if (children[n].length == 0) {
                 System.arraycopy(tipStateSets[n], 0, store.getWritableFitchSets(n), 0, patternCount);
@@ -195,7 +195,7 @@ public class MATInitializer {
         long[] sets = store.getFitchSets(node);
         byte[] current = store.getStates(node);
         byte[] parentStates = parent >= 0 ? store.getStates(parent) : null;
-        byte[] states = null;
+        boolean changed = false;
         for (int p = 0; p < patternCount; p++) {
             long set = sets[p];
             int state;
@@ -207,13 +207,11 @@ public class MATInitializer {
                 state = Long.numberOfTrailingZeros(set);
             }
             if (state != current[p]) {
-                if (states == null) {
-                    states = store.getWritableStates(node);
-                }
-                states[p] = (byte) state;
+                store.setState(node, p, state);
+                changed = true;
             }
         }
-        return states != null;
+        return changed;
     }
 
     /**

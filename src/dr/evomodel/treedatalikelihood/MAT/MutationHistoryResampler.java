@@ -863,6 +863,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         this.blockTopParent = topParent;
         this.blockTopBranch = topBranch;
         this.blockStore = store;
+        this.blockNodes = postOrder;
         this.branchLengths = new double[branchCount];
         for (int e = 0; e < branchCount; e++) {
             branchLengths[e] = lengths.get(e);
@@ -874,7 +875,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         final byte[][] blockStates = new byte[blockSize][];
         for (int i = 0; i < blockSize; i++) {
-            blockStates[i] = sample ? store.getWritableStates(postOrder[i]) : store.getStates(postOrder[i]);
+            // changed only through setBlockState, which keeps the store's node summaries up to date
+            blockStates[i] = sample ? store.getStatesForUpdate(postOrder[i]) : store.getStates(postOrder[i]);
         }
 
         // The full conditional of a pattern's block states depends only on its weight, its rate and the
@@ -975,7 +977,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 if (a < 0 || !conditional.present[topIndex]) {
                     if (sample) {
                         for (int i = 0; i < blockSize; i++) {
-                            blockStates[i][p] = -1;
+                            setBlockState(blockStates, i, p, -1);
                         }
                     }
                     continue;
@@ -991,7 +993,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 }
                 // the unchanged configuration: unambiguous nodes take a (which they may not have had before the move)
                 for (int i = 0; i < blockSize; i++) {
-                    blockStates[i][p] = (byte) (conditional.present[i] ? a : -1);
+                    setBlockState(blockStates, i, p, (byte) (conditional.present[i] ? a : -1));
                 }
                 if (MathUtils.nextDouble() < uniform.probabilityUnchanged) {
                     logProbability += uniform.logProbabilityUnchanged;
@@ -1004,27 +1006,27 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             if (!conditional.present[topIndex]) {
                 if (sample) {
                     for (int i = 0; i < blockSize; i++) {
-                        blockStates[i][p] = -1;
+                        setBlockState(blockStates, i, p, -1);
                     }
                 }
                 continue;
             }
             logProbability += choose(conditional.topLogP(), conditional.topP(), sample, blockStates[topIndex][p]);
             if (sample) {
-                blockStates[topIndex][p] = (byte) chosenState;
+                setBlockState(blockStates, topIndex, p, (byte) chosenState);
             }
             // pre-order: each child given its (already chosen) parent
             for (int i = topIndex - 1; i >= 0; i--) {
                 if (!conditional.present[i]) {
                     if (sample) {
-                        blockStates[i][p] = -1;
+                        setBlockState(blockStates, i, p, -1);
                     }
                     continue;
                 }
                 int s = blockStates[parentIndex[i]][p];
                 logProbability += choose(conditional.logRow(i, s), conditional.row(i, s), sample, blockStates[i][p]);
                 if (sample) {
-                    blockStates[i][p] = (byte) chosenState;
+                    setBlockState(blockStates, i, p, (byte) chosenState);
                 }
             }
         }
@@ -1240,12 +1242,21 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         for (int i = 0; i < blockStates.length; i++) {
             byte value = (byte) (present == null || present[i] ? state : -1);
             if (blockStates[i][p] != value) {
-                blockStates[i][p] = value;
+                setBlockState(blockStates, i, p, value);
                 changed = true;
             }
         }
         if (changed) {
             addChangedAmbiguitySite(p);
+        }
+    }
+
+    /**
+     * Sets the state of block node i at a pattern, through the store.
+     */
+    private void setBlockState(byte[][] blockStates, int i, int p, int state) {
+        if (blockStates[i][p] != state) {
+            blockStore.setState(blockNodes[i], p, state);
         }
     }
 
@@ -1365,6 +1376,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private NodeRef blockTopParent;
     private int blockTopBranch;
     private DefaultMutationStore blockStore;
+    private int[] blockNodes;
     private double[] branchLengths;
     private double[][] logF;
     private double logFRate;
@@ -1827,7 +1839,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         if (newState < 0) {
             return Double.NEGATIVE_INFINITY;
         }
-        blockStates[i][p] = (byte) newState;
+        setBlockState(blockStates, i, p, (byte) newState);
         logProbability += logRow[newState];
 
         // later nodes in pre-order (whose parents are all already drawn) from their usual conditionals
@@ -1838,7 +1850,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
             int parentState = blockStates[blockParentIndex[j]][p];
             logProbability += choose(conditional.logRow(j, parentState), conditional.row(j, parentState), true, -1);
-            blockStates[j][p] = (byte) chosenState;
+            setBlockState(blockStates, j, p, (byte) chosenState);
         }
         return logProbability;
     }

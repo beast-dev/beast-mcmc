@@ -718,6 +718,26 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         return sb.toString();
     }
 
+    /**
+     * The store's node summaries must equal those computed from the states.
+     */
+    private void assertCompositionsMatchStates() {
+        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        for (int n = 0; n < treeModel.getNodeCount(); n++) {
+            double[] expected = new double[4];
+            for (int p = 0; p < patterns.getPatternCount(); p++) {
+                int a = store.getState(n, p);
+                if (a >= 0) {
+                    expected[a] += patterns.getPatternWeight(p);
+                }
+            }
+            double[] actual = store.getComposition(n);
+            for (int a = 0; a < 4; a++) {
+                assertEquals("composition of node " + n + " state " + a, expected[a], actual[a], 1E-9);
+            }
+        }
+    }
+
     private void assertSameStates(MutationStore expected, MutationStore actual) {
         for (int n = 0; n < expected.getNodeCount(); n++) {
             assertEquals(expected.getParent(n), actual.getParent(n));
@@ -759,6 +779,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
 
         NodeRef root = treeModel.getRoot();
         assertEquals(root.getNumber(), store.getRoot());
+        assertCompositionsMatchStates();
 
         double logL = 0;
         for (int p = 0; p < patternCount; p++) {

@@ -444,8 +444,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         int[][] oldChainLevels;        // [i]: runs of patterns at which the old chain reaches oldChain[i]
         int[] oldHotSites;             // the variable sites at which the old chain is not empty
         int[] newSubstitutionSites;
-        int[] newAmbiguitySites;       // in pattern order, including any new hot sites
-        int[] newUniformCounts;
         int newStamp;
         double logProposalOfOldStates;
     }
@@ -526,17 +524,16 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
 
         // The old pass: P with neighbours G, S and X.
+        // (the sites at which a neighbour is ambiguous are found from their runs when P is scored or drawn)
         final IntBuffer oldSubstitutions = new IntBuffer();
-        final IntBuffer oldAmbiguities = new IntBuffer();
         collectSubstitutionSites(store, gNode == null ? new int[]{move.x, s} : new int[]{move.x, s, move.p},
                 oldMarks, markStamp, oldSubstitutions);
-        collectAmbiguousSites(gNode == null ? new int[]{move.x, s} : new int[]{gNode.getNumber(), s, move.x},
-                oldMarks, markStamp, oldAmbiguities);
-        final int[] oldUniformCounts = getUniformCounts(move.x, oldSubstitutions, oldAmbiguities);
+        final int[] oldUniformCounts = getUniformCounts(move.x, oldSubstitutions, move.oldHotSites, oldMarks, markStamp);
 
         // The new pass: P with neighbours N, D and X. P's state there is affected by the substitutions
         // between X and N (in the old topology, where they are on the path between them) and between D and
-        // N, by the runs of ambiguous patterns of X, D and N, and by the old chain (D may be in it).
+        // N, and by the runs of ambiguous patterns of X, D and N (after the old chain loses its states, since
+        // D may be in it).
         final NodeRef anchor = newParentNode != null ? newParentNode : destination;
         final int xAncestorStamp = nextNodeStamp();
         for (NodeRef n = node; n != null; n = tree.getParent(n)) {
@@ -555,29 +552,17 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             pathBranches.add(d);
         }
         final IntBuffer newSubstitutions = new IntBuffer();
-        final IntBuffer newAmbiguities = new IntBuffer();
         collectSubstitutionSites(store, pathBranches.toArray(), newMarks, markStamp, newSubstitutions);
-        collectAmbiguousSites(newParentNode == null ? new int[]{d, move.x} : new int[]{move.newParent, d, move.x},
-                newMarks, markStamp, newAmbiguities);
-        for (int site : move.oldHotSites) {
-            if (newMarks[site] != markStamp) {
-                newMarks[site] = markStamp;
-                newAmbiguities.add(site);
-            }
-        }
         move.newSubstitutionSites = newSubstitutions.toArray();
-        move.newAmbiguitySites = sortSites(newAmbiguities.values, newAmbiguities.count);
-        move.newUniformCounts = getUniformCounts(move.x, newSubstitutions, newAmbiguities);
         move.newStamp = markStamp;
 
         // score P's current states (and the old chain's) under the old topology
         referenceNode = move.x;
-        uniformSkipStamps = oldMarks;
-        uniformSkipStamp = markStamp;
         System.arraycopy(oldUniformCounts, 0, uniformCounts, 0, stateCount);
         substitutionSites = withoutMarked(oldSubstitutions.toArray(), hotMarks, markStamp);
-        int[] oldAmbiguitySites = withoutMarked(oldAmbiguities.toArray(), hotMarks, markStamp);
-        ambiguitySites = sortSites(oldAmbiguitySites, oldAmbiguitySites.length);
+        localSubstitutionMarks = oldMarks;
+        localSubstitutionStamp = markStamp;
+        localHotStamp = markStamp;
         uniformPass = true;
         double logProbability = sampleBlock(new int[]{move.p}, false, null, substitutionSites, null);
         uniformPass = false;
@@ -631,11 +616,12 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         // draw P's states (and the new chain's) under the new topology
         referenceNode = move.x;
-        uniformSkipStamps = newMarks;
-        uniformSkipStamp = move.newStamp;
-        System.arraycopy(move.newUniformCounts, 0, uniformCounts, 0, stateCount);
+        System.arraycopy(getUniformCounts(move.x, move.newSubstitutionSites, newHotSites, newMarks, move.newStamp),
+                0, uniformCounts, 0, stateCount);
         substitutionSites = withoutMarked(move.newSubstitutionSites, hotMarks, newHotStamp);
-        ambiguitySites = withoutMarked(move.newAmbiguitySites, hotMarks, newHotStamp);
+        localSubstitutionMarks = newMarks;
+        localSubstitutionStamp = move.newStamp;
+        localHotStamp = newHotStamp;
         changedUniformCount = 0;
         changedAmbiguityCount = 0;
         uniformPass = true;
@@ -755,34 +741,26 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     /**
-     * Adds the variable sites at which any of the given nodes is ambiguous (and not yet marked).
+     * @return the number of variable sites in each state at node x, excluding the substitution sites (marked)
+     * and the hot sites (the sites at which a neighbour of P is ambiguous are excluded when they are swept)
      */
-    private void collectAmbiguousSites(int[] nodes, int[] marks, int markStamp, IntBuffer out) {
-        for (int n : nodes) {
-            int[] runs = getAmbiguousRuns(n);
-            for (int i = 0; i < runs.length; i += 2) {
-                for (int site = runs[i]; site < runs[i + 1]; site++) {
-                    if (marks[site] != markStamp && !delegate.isConstantPattern(site)) {
-                        marks[site] = markStamp;
-                        out.add(site);
-                    }
-                }
-            }
-        }
+    private int[] getUniformCounts(int x, IntBuffer substitutions, int[] hot, int[] marks, int markStamp) {
+        return getUniformCounts(x, substitutions.toArray(), hot, marks, markStamp);
     }
 
-    /**
-     * @return the number of variable sites in each state at node x, excluding the given sites
-     */
-    private int[] getUniformCounts(int x, IntBuffer... excluded) {
+    private int[] getUniformCounts(int x, int[] substitutions, int[] hot, int[] marks, int markStamp) {
         final DefaultMutationStore store = delegate.getMutableMutationStore();
         final int[] counts = getStateCounts(x).clone();
-        for (IntBuffer sites : excluded) {
-            for (int i = 0; i < sites.count; i++) {
-                int a = store.getState(x, sites.values[i]);
-                if (a >= 0) {
-                    counts[a]--;
-                }
+        for (int site : substitutions) {
+            int a = store.getState(x, site);
+            if (a >= 0) {
+                counts[a]--;
+            }
+        }
+        for (int site : hot) {
+            int a = store.getState(x, site);
+            if (a >= 0 && marks[site] != markStamp) {
+                counts[a]--;
             }
         }
         return counts;
@@ -1551,8 +1529,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
 
         if (uniformPass) {
-            lastAmbiguityLogProbability = sampleAmbiguitySites(sample, blockStates, postOrder, children, topParent,
-                    store, siteRateScale);
+            lastAmbiguityLogProbability = localBlock ?
+                    sampleLocalAmbiguitySites(sample, blockStates, children[0], topParent, store, siteRateScale) :
+                    sampleAmbiguitySites(sample, blockStates, postOrder, children, topParent, store, siteRateScale);
             logProbability += lastAmbiguityLogProbability;
             lastUniformLogProbability = sampleUniformSites(sample, blockStates, siteRateScale);
             logProbability += lastUniformLogProbability;
@@ -1870,6 +1849,272 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return ambiguousRuns[n];
     }
 
+    // the current pass of a local move: the sites handled individually, and P's neighbours
+    private int[] localSubstitutionMarks;
+    private int localSubstitutionStamp;
+    private int localHotStamp;
+    private byte[][] localNeighbourStates;
+
+    /**
+     * @return true if a site is not uniform around P in the current pass of a local move: a substitution
+     * site, a hot site, or one at which one of P's neighbours is ambiguous
+     */
+    private boolean isLocalCandidate(int p) {
+        if (localSubstitutionMarks[p] == localSubstitutionStamp || hotMarks[p] == localHotStamp) {
+            return true;
+        }
+        for (byte[] states : localNeighbourStates) {
+            if (states[p] < 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isLocalExcluded(int p) {
+        return localSubstitutionMarks[p] == localSubstitutionStamp || hotMarks[p] == localHotStamp ||
+                delegate.isConstantPattern(p);
+    }
+
+    /**
+     * A local move's equivalent of sampleAmbiguitySites, for the block {P}: the sites at which some of P's
+     * neighbours are ambiguous (and that are not substitution or hot sites) are swept as segments over which
+     * the same neighbours are ambiguous, and grouped by their state, without lists of sites. P's states only
+     * need writing where its presence changes, and the sites that change otherwise are located when drawn.
+     * The groups, and the order of their sites, are those sampleAmbiguitySites would form.
+     */
+    private double sampleLocalAmbiguitySites(boolean sample, byte[][] blockStates, int[] children,
+                                             NodeRef topParent, DefaultMutationStore store, double siteRateScale) {
+        changedAmbiguityCount = 0;
+        if (changedAmbiguityStamps == null) {
+            changedAmbiguityStamps = new int[patternCount];
+        }
+        changedAmbiguityStamp++;
+
+        // P's neighbours, in the order of sampleAmbiguitySites
+        final int neighbourCount = children.length + (topParent == null ? 0 : 1);
+        final int[] neighbours = new int[neighbourCount];
+        int k = 0;
+        if (topParent != null) {
+            neighbours[k++] = topParent.getNumber();
+        }
+        int childBits = 0;
+        for (int c : children) {
+            childBits |= 1 << k;
+            neighbours[k++] = c;
+        }
+        final byte[][] neighbourStates = new byte[neighbourCount][];
+        int eventCount = 0;
+        for (int j = 0; j < neighbourCount; j++) {
+            neighbourStates[j] = store.getStates(neighbours[j]);
+            eventCount += getAmbiguousRuns(neighbours[j]).length;
+        }
+        localNeighbourStates = neighbourStates;
+
+        // the ends of the neighbours' ambiguous runs, in pattern order
+        final long[] events = new long[eventCount];
+        k = 0;
+        for (int j = 0; j < neighbourCount; j++) {
+            for (int position : getAmbiguousRuns(neighbours[j])) {
+                events[k++] = ((long) position << 32) | j;
+            }
+        }
+        Arrays.sort(events);
+        // where P has data before this pass's writes
+        final int[] pRuns = getAmbiguousRuns(blockNodes[0]);
+
+        final int fullMask = (1 << neighbourCount) - 1;
+        final Map<AmbiguityKey, LocalAmbiguityGroup> groups = new HashMap<AmbiguityKey, LocalAmbiguityGroup>();
+        final AmbiguityKey probe = new AmbiguityKey();
+        final long[] present = new long[1];
+        final LocalAmbiguityGroup[] groupsByState = new LocalAmbiguityGroup[stateCount];
+        int mask = fullMask;
+        int start = 0;
+        int nextEvent = 0;
+        int pRun = 0;
+        while (start < patternCount) {
+            int end = nextEvent < eventCount ? (int) (events[nextEvent] >>> 32) : patternCount;
+            if (end > start && mask != fullMask) {
+                // a segment over which the same neighbours are ambiguous
+                int first = Integer.numberOfTrailingZeros(mask);
+                boolean pPresent = (mask & childBits) != 0;
+                if (first < neighbourCount) {
+                    present[0] = mask;
+                    Arrays.fill(groupsByState, null);
+                    byte[] states = neighbourStates[first];
+                    for (int p = start; p < end; p++) {
+                        if (isLocalExcluded(p)) {
+                            continue;
+                        }
+                        int a = states[p];
+                        LocalAmbiguityGroup group = groupsByState[a];
+                        if (group == null) {
+                            probe.set(present, a);
+                            group = groups.get(probe);
+                            if (group == null) {
+                                AmbiguityKey key = new AmbiguityKey();
+                                key.set(present.clone(), a);
+                                group = new LocalAmbiguityGroup(a, p, first);
+                                groups.put(key, group);
+                            }
+                            groupsByState[a] = group;
+                            group.addSegment(start, end);
+                        }
+                        group.count++;
+                    }
+                }
+                if (sample) {
+                    // P's states where its presence changes (elsewhere it already has the neighbours' state)
+                    while (pRun < pRuns.length && pRuns[pRun + 1] <= start) {
+                        pRun += 2;
+                    }
+                    int position = start;
+                    for (int r = pRun; position < end; r += 2) {
+                        int runStart = r < pRuns.length ? Math.max(pRuns[r], start) : end;
+                        int runEnd = r < pRuns.length ? Math.min(pRuns[r + 1], end) : end;
+                        // [position, runStart): P had data; [runStart, runEnd): it had none
+                        if (!pPresent) {
+                            for (int p = position; p < Math.min(runStart, end); p++) {
+                                if (!isLocalExcluded(p)) {
+                                    setBlockState(blockStates, 0, p, -1);
+                                    addChangedAmbiguitySite(p);
+                                }
+                            }
+                        } else {
+                            for (int p = Math.max(runStart, position); p < runEnd; p++) {
+                                if (!isLocalExcluded(p)) {
+                                    setBlockState(blockStates, 0, p, neighbourStates[first][p]);
+                                    addChangedAmbiguitySite(p);
+                                }
+                            }
+                        }
+                        position = Math.max(runEnd, position);
+                        if (r >= pRuns.length) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (nextEvent >= eventCount) {
+                break;
+            }
+            // the start of a run makes a neighbour ambiguous, its end unambiguous again
+            mask ^= 1 << (int) events[nextEvent];
+            nextEvent++;
+            start = end;
+        }
+
+        final double w = delegate.getPatternWeights()[variableSites[0]];
+        final double nu = delegate.getSiteRate(variableSites[0], siteRateScale);
+        double logProbability = 0.0;
+        for (Map.Entry<AmbiguityKey, LocalAmbiguityGroup> entry : groups.entrySet()) {
+            final LocalAmbiguityGroup group = entry.getValue();
+            final int groupMask = (int) entry.getKey().present[0];
+            // these sites are not uniform: take them out of the counts of the uniform sites (read at X)
+            if ((groupMask & (1 << localXIndex(neighbours))) != 0) {
+                uniformCounts[group.state] -= group.count;
+            }
+            final Conditional conditional = new Conditional(group.representative, w, nu);
+            if (!conditional.present[0]) {
+                // no data below P: its states were cleared above
+                continue;
+            }
+            final UniformConditional uniform = new UniformConditional(conditional, group.state);
+            if (!sample) {
+                logProbability += group.count * uniform.logProbabilityUnchanged;
+                continue;
+            }
+            // the sites that change, by thinning (every site in the group has the same probability)
+            final double probabilityChanged = uniform.totalChangeMass;
+            int changedCount = 0;
+            if (probabilityChanged > 0.0) {
+                final double logSkip = Math.log1p(-probabilityChanged);
+                long index = -1;
+                group.resetCursor();
+                while (true) {
+                    double u = 1.0 - MathUtils.nextDouble(); // in (0, 1]
+                    index += 1 + (logSkip == Double.NEGATIVE_INFINITY ? 0L : (long) Math.floor(Math.log(u) / logSkip));
+                    if (index >= group.count) {
+                        break;
+                    }
+                    int p = locate(group, (int) index, neighbourStates);
+                    logProbability += sampleChangedUniformPattern(uniform, p, blockStates);
+                    addChangedAmbiguitySite(p);
+                    changedCount++;
+                }
+            }
+            logProbability += (group.count - changedCount) * uniform.logProbabilityUnchanged;
+        }
+        return logProbability;
+    }
+
+    private int localXIndex(int[] neighbours) {
+        for (int j = 0; j < neighbours.length; j++) {
+            if (neighbours[j] == referenceNode) {
+                return j;
+            }
+        }
+        throw new IllegalStateException("X is not a neighbour of the regrafted parent");
+    }
+
+    /**
+     * @return the site of the group with the given index (in pattern order); indices must be asked for in
+     * increasing order after resetCursor
+     */
+    private int locate(LocalAmbiguityGroup group, int index, byte[][] neighbourStates) {
+        while (true) {
+            int segmentStart = group.segments.values[2 * group.cursorSegment];
+            int segmentEnd = group.segments.values[2 * group.cursorSegment + 1];
+            byte[] states = neighbourStates[group.firstPresent];
+            if (group.cursorSite < segmentStart) {
+                group.cursorSite = segmentStart;
+            }
+            for (; group.cursorSite < segmentEnd; group.cursorSite++) {
+                int p = group.cursorSite;
+                if (states[p] == group.state && !isLocalExcluded(p)) {
+                    if (group.cursorIndex == index) {
+                        group.cursorIndex++;
+                        group.cursorSite++;
+                        return p;
+                    }
+                    group.cursorIndex++;
+                }
+            }
+            group.cursorSegment++;
+        }
+    }
+
+    /**
+     * The sites of a local move's segments that share a pattern of ambiguous neighbours and a state.
+     */
+    private static final class LocalAmbiguityGroup {
+        final int state;
+        final int representative;
+        final int firstPresent;   // the neighbour the state is read from
+        final IntBuffer segments = new IntBuffer(); // [start, end) of each segment with sites in the group
+        int count = 0;
+        int cursorSegment;
+        int cursorSite;
+        int cursorIndex;
+
+        LocalAmbiguityGroup(int state, int representative, int firstPresent) {
+            this.state = state;
+            this.representative = representative;
+            this.firstPresent = firstPresent;
+        }
+
+        void addSegment(int start, int end) {
+            segments.add(start);
+            segments.add(end);
+        }
+
+        void resetCursor() {
+            cursorSegment = 0;
+            cursorSite = 0;
+            cursorIndex = 0;
+        }
+    }
+
     /**
      * Sets the state of block node i at a pattern, through the store.
      */
@@ -1972,8 +2217,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     break;
                 }
                 int p = variableSites[(int) i];
-                if (uniformSkipStamps[p] == uniformSkipStamp) {
-                    // a site with events: handled individually
+                if (localBlock ? isLocalCandidate(p) : uniformSkipStamps[p] == uniformSkipStamp) {
+                    // a site with events: handled individually or in groups
                     continue;
                 }
                 int a = store.getState(referenceNode, p);

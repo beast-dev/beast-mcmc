@@ -35,6 +35,7 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.RateRescalingScheme;
@@ -120,6 +121,20 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private long rootTermStateVersion = -1;
     private long rootTermModelVersion = -1;
     private long calculationCount = 0;
+
+    // The branch terms are only recomputed for nodes whose states, branch events or branch length may
+    // have changed: the store logs the first two, events from the tree the third.
+    private final boolean[] nodeDirty;
+    private final int[] dirtyNodes;
+    private int dirtyNodeCount = 0;
+    private boolean allNodesDirty = true;
+    private long termsModelVersion = -1;
+    // nodes whose terms were recomputed since storeState (the tree restores their lengths silently)
+    private final boolean[] recomputedSinceStore;
+    private final int[] recomputedNodes;
+    private int recomputedCount = 0;
+    // whether the topology may have changed since the MAT was last checked against it
+    private boolean treeChangedSinceCheck = true;
 
     private final double[] infinitesimalMatrix;
     private final double[] exitRates;
@@ -214,6 +229,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.branchTermModelVersions = new long[nodeCount];
         java.util.Arrays.fill(exitRateModelVersions, -1);
         java.util.Arrays.fill(branchTermModelVersions, -1);
+        this.nodeDirty = new boolean[nodeCount];
+        this.dirtyNodes = new int[nodeCount];
+        this.recomputedSinceStore = new boolean[nodeCount];
+        this.recomputedNodes = new int[nodeCount];
         this.infinitesimalMatrix = new double[stateCount * stateCount];
         this.exitRates = new double[stateCount];
 
@@ -232,6 +251,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         addModel(this.branchRateModel);
         if (siteRates != null) {
             addVariable(siteRates);
+        }
+        if (tree instanceof Model) {
+            // a listener only (not a sub-model): to learn which branch lengths, and when the topology, change
+            ((Model) tree).addModelListener(this);
         }
     }
 
@@ -293,6 +316,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      * Makes the MAT consistent with the current topology, by parsimony if necessary.
      */
     void updateMAT() {
+        if (!treeChangedSinceCheck) {
+            return;
+        }
+        treeChangedSinceCheck = false;
         if (!mutationStore.hasParents(MATInitializer.getParents(tree))) {
             initializer.update(mutationStore);
             historyModel.initialise(mutationStore);
@@ -353,36 +380,76 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     private void computeLikelihood() {
         ensureRates();
+        if (termsModelVersion != modelVersion) {
+            allNodesDirty = true;
+            termsModelVersion = modelVersion;
+        }
+        for (int i = 0; i < mutationStore.getChangedNodeCount(); i++) {
+            markDirty(mutationStore.getChangedNode(i));
+        }
+        mutationStore.clearChangeLog();
 
         final int rootNumber = tree.getRoot().getNumber();
-        final int[] preOrder = MATInitializer.getPostOrder(tree);
+        if (allNodesDirty) {
+            for (int n = 0; n < tree.getNodeCount(); n++) {
+                if (n != rootNumber) {
+                    updateBranchTerm(n);
+                }
+                nodeDirty[n] = false;
+            }
+            allNodesDirty = false;
+        } else {
+            for (int i = 0; i < dirtyNodeCount; i++) {
+                int n = dirtyNodes[i];
+                if (n != rootNumber) {
+                    updateBranchTerm(n);
+                }
+                nodeDirty[n] = false;
+            }
+        }
+        dirtyNodeCount = 0;
 
         double total = getRootTerm(rootNumber);
-        for (int i = preOrder.length - 1; i >= 0; i--) {
-            int n = preOrder[i];
-            if (n == rootNumber) {
-                continue;
+        for (int n = 0; n < branchTerms.length; n++) {
+            if (n != rootNumber) {
+                total += branchTerms[n];
             }
-            int parent = mutationStore.getParent(n);
-            double exitRate = getExitRate(n, parent);
-            double[] composition = historyModel.needsComposition() ? mutationStore.getComposition(n) : null;
-            double length = getBranchLength(tree.getNode(n));
-            BranchMutations mutations = mutationStore.getBranchMutations(n);
-            long stateVersion = mutationStore.getStateVersion(n);
-            if (branchTermModelVersions[n] != modelVersion || branchTermLengths[n] != length ||
-                    branchTermStateVersions[n] != stateVersion || branchTermMutations[n] != mutations) {
-                branchTerms[n] = historyModel.getBranchLogLikelihood(mutations, length, exitRate, composition,
-                        patternWeights, patternRates);
-                branchTermLengths[n] = length;
-                branchTermStateVersions[n] = stateVersion;
-                branchTermMutations[n] = mutations;
-                branchTermModelVersions[n] = modelVersion;
-            }
-            total += branchTerms[n];
         }
 
         logLikelihood = total;
         siteLogLikelihoodsKnown = false;
+    }
+
+    private void markDirty(int n) {
+        if (!nodeDirty[n]) {
+            nodeDirty[n] = true;
+            dirtyNodes[dirtyNodeCount++] = n;
+        }
+    }
+
+    /**
+     * Recomputes the term of the branch above node n if anything it depends on has changed.
+     */
+    private void updateBranchTerm(int n) {
+        int parent = mutationStore.getParent(n);
+        double exitRate = getExitRate(n, parent);
+        double[] composition = historyModel.needsComposition() ? mutationStore.getComposition(n) : null;
+        double length = getBranchLength(tree.getNode(n));
+        BranchMutations mutations = mutationStore.getBranchMutations(n);
+        long stateVersion = mutationStore.getStateVersion(n);
+        if (branchTermModelVersions[n] != modelVersion || branchTermLengths[n] != length ||
+                branchTermStateVersions[n] != stateVersion || branchTermMutations[n] != mutations) {
+            branchTerms[n] = historyModel.getBranchLogLikelihood(mutations, length, exitRate, composition,
+                    patternWeights, patternRates);
+            branchTermLengths[n] = length;
+            branchTermStateVersions[n] = stateVersion;
+            branchTermMutations[n] = mutations;
+            branchTermModelVersions[n] = modelVersion;
+        }
+        if (!recomputedSinceStore[n]) {
+            recomputedSinceStore[n] = true;
+            recomputedNodes[recomputedCount++] = n;
+        }
     }
 
     /**
@@ -578,11 +645,16 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     @Override
     public void makeDirty() {
-        // the likelihood is recomputed in full whenever TreeDataLikelihood asks for it
+        allNodesDirty = true;
+        treeChangedSinceCheck = true;
     }
 
     @Override
     public void storeState() {
+        for (int i = 0; i < recomputedCount; i++) {
+            recomputedSinceStore[recomputedNodes[i]] = false;
+        }
+        recomputedCount = 0;
         mutationStore.commit();
         storedLogLikelihood = logLikelihood;
         modelChangedSinceStore = false;
@@ -590,6 +662,13 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     @Override
     public void restoreState() {
+        // the terms recomputed since the store may have used the rejected branch lengths
+        for (int i = 0; i < recomputedCount; i++) {
+            int n = recomputedNodes[i];
+            recomputedSinceStore[n] = false;
+            markDirty(n);
+        }
+        recomputedCount = 0;
         mutationStore.revert();
         logLikelihood = storedLogLikelihood;
         siteLogLikelihoodsKnown = false;
@@ -606,8 +685,28 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model != branchRateModel) {
-            // branch rates only affect branch lengths, which the cached terms are checked against
+        if (model == tree) {
+            // The tree likelihood hears of tree changes itself: only note which branch lengths may have
+            // changed. Other objects (the height parameters, re-fired by the tree) come with a TreeChangedEvent.
+            if (object instanceof TreeChangedEvent) {
+                TreeChangedEvent event = (TreeChangedEvent) object;
+                treeChangedSinceCheck = true;
+                if (event.isNodeChanged() && event.getNode() != null) {
+                    NodeRef node = event.getNode();
+                    markDirty(node.getNumber());
+                    for (int i = 0; i < tree.getChildCount(node); i++) {
+                        markDirty(tree.getChild(node, i).getNumber());
+                    }
+                } else {
+                    allNodesDirty = true;
+                }
+            }
+            return;
+        }
+        if (model == branchRateModel) {
+            // branch rates only affect branch lengths
+            allNodesDirty = true;
+        } else {
             modelVersion++;
             modelChangedSinceStore = true;
         }

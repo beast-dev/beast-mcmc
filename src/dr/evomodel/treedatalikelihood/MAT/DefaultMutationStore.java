@@ -63,6 +63,11 @@ public final class DefaultMutationStore implements MutationStore {
     private long lastStateVersion = 0;
     private final double[][] compositions; // null where not yet computed from the states
 
+    // the nodes whose states or branch events have changed since the log was last cleared
+    private final boolean[] changeLogged;
+    private final int[] changeLog;
+    private int changeLogCount = 0;
+
     // journal
     private int[] savedParents;
     private int savedRoot;
@@ -97,6 +102,8 @@ public final class DefaultMutationStore implements MutationStore {
         java.util.Arrays.fill(mutations, BranchMutations.EMPTY);
         this.stateVersions = new long[nodeCount];
         this.compositions = new double[nodeCount][];
+        this.changeLogged = new boolean[nodeCount];
+        this.changeLog = new int[nodeCount];
 
         this.savedStates = new byte[nodeCount][];
         this.savedStateVersions = new long[nodeCount];
@@ -181,6 +188,7 @@ public final class DefaultMutationStore implements MutationStore {
         journalStates(nodeNumber);
         stateVersions[nodeNumber] = ++lastStateVersion;
         compositions[nodeNumber] = null;
+        logChange(nodeNumber);
         return states[nodeNumber];
     }
 
@@ -214,6 +222,7 @@ public final class DefaultMutationStore implements MutationStore {
             }
         }
         stateVersions[nodeNumber] = ++lastStateVersion;
+        logChange(nodeNumber);
     }
 
     /**
@@ -314,6 +323,7 @@ public final class DefaultMutationStore implements MutationStore {
             savedMutations[nodeNumber] = mutations[nodeNumber];
             branchDirty[nodeNumber] = true;
         }
+        logChange(nodeNumber);
 
         int parent = parents[nodeNumber];
         if (parent < 0) {
@@ -369,6 +379,7 @@ public final class DefaultMutationStore implements MutationStore {
             savedMutations[nodeNumber] = mutations[nodeNumber];
             branchDirty[nodeNumber] = true;
         }
+        logChange(nodeNumber);
         int parent = parents[nodeNumber];
         if (parent < 0) {
             mutations[nodeNumber] = BranchMutations.EMPTY;
@@ -437,6 +448,7 @@ public final class DefaultMutationStore implements MutationStore {
             savedMutations[nodeNumber] = mutations[nodeNumber];
             branchDirty[nodeNumber] = true;
         }
+        logChange(nodeNumber);
         mutations[nodeNumber] = branchMutations;
     }
 
@@ -444,6 +456,32 @@ public final class DefaultMutationStore implements MutationStore {
         for (int n = 0; n < nodeCount; n++) {
             updateBranch(n);
         }
+    }
+
+    private void logChange(int nodeNumber) {
+        if (!changeLogged[nodeNumber]) {
+            changeLogged[nodeNumber] = true;
+            changeLog[changeLogCount++] = nodeNumber;
+        }
+    }
+
+    /**
+     * @return the number of nodes whose states or branch events have changed (including by revert)
+     * since {@link #clearChangeLog}
+     */
+    public int getChangedNodeCount() {
+        return changeLogCount;
+    }
+
+    public int getChangedNode(int i) {
+        return changeLog[i];
+    }
+
+    public void clearChangeLog() {
+        for (int i = 0; i < changeLogCount; i++) {
+            changeLogged[changeLog[i]] = false;
+        }
+        changeLogCount = 0;
     }
 
     private void journal(int nodeNumber) {
@@ -479,6 +517,9 @@ public final class DefaultMutationStore implements MutationStore {
     public void revert() {
         for (int i = 0; i < dirtyNodeCount; i++) {
             int n = dirtyNodes[i];
+            if (statesDirty[n] || branchDirty[n]) {
+                logChange(n);
+            }
             if (statesDirty[n]) {
                 // the states are as they were at the saved version, so caches keyed by it are valid again
                 states[n] = savedStates[n];

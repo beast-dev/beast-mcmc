@@ -53,7 +53,6 @@ public class MATInitializer {
     private final int stateCount;
     private final int patternCount;
     private final long allStates;
-    private long[][] tipStateSets;
 
     /**
      * @param tree the tree to reconstruct on; its topology may change between calls but its tips
@@ -71,10 +70,6 @@ public class MATInitializer {
     }
 
     public DefaultMutationStore buildMutationStore() {
-        if (tipStateSets == null) {
-            tipStateSets = getTipStateSets();
-        }
-
         final int[] parents = getParents(tree);
         final int[][] children = getChildren(tree);
         final int[] postOrder = getPostOrder(tree);
@@ -82,7 +77,7 @@ public class MATInitializer {
         DefaultMutationStore store = new DefaultMutationStore(parents, patternCount, patternList.getPatternWeights(), stateCount);
         for (int n : postOrder) {
             if (children[n].length == 0) {
-                System.arraycopy(tipStateSets[n], 0, store.getWritableFitchSets(n), 0, patternCount);
+                System.arraycopy(getTipStateSets(tree.getNode(n)), 0, store.getWritableFitchSets(n), 0, patternCount);
             } else {
                 updateFitchSets(store, n, children[n]);
             }
@@ -111,6 +106,18 @@ public class MATInitializer {
         final int[] parents = getParents(tree);
         final int[][] children = getChildren(tree);
         final int[] postOrder = getPostOrder(tree);
+        if (full) {
+            // the tips' sets follow from their states (partial ambiguities count as missing)
+            for (int n = 0; n < nodeCount; n++) {
+                if (children[n].length == 0) {
+                    long[] sets = store.getWritableFitchSets(n);
+                    for (int p = 0; p < patternCount; p++) {
+                        int state = store.getState(n, p);
+                        sets[p] = state < 0 ? 0 : 1L << state;
+                    }
+                }
+            }
+        }
 
         final boolean[] parentChanged = new boolean[nodeCount];
         final boolean[] needsSets = new boolean[nodeCount];
@@ -164,7 +171,7 @@ public class MATInitializer {
      */
     boolean updateFitchSets(DefaultMutationStore store, int node, int[] children) {
         long[] current = store.getFitchSets(node);
-        long[] sets = null;
+        long[] sets = current == null ? store.getWritableFitchSets(node) : null;
         for (int p = 0; p < patternCount; p++) {
             long intersection = allStates;
             long union = 0;
@@ -176,7 +183,7 @@ public class MATInitializer {
                 }
             }
             long set = union == 0 ? 0 : (intersection != 0 ? intersection : union);
-            if (set != current[p]) {
+            if (current == null || set != current[p]) {
                 if (sets == null) {
                     sets = store.getWritableFitchSets(node);
                 }
@@ -215,33 +222,28 @@ public class MATInitializer {
     }
 
     /**
-     * @return state sets as bitmasks indexed by [tip node number][pattern], with any ambiguous state as 0
+     * @return the tip's state sets as bitmasks by pattern, with any ambiguous state as 0
      */
-    private long[][] getTipStateSets() {
+    private long[] getTipStateSets(NodeRef tip) {
         DataType dataType = patternList.getDataType();
-        long[][] tipStateSets = new long[tree.getNodeCount()][];
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            NodeRef tip = tree.getExternalNode(i);
-            String taxonId = tree.getNodeTaxon(tip).getId();
-            int taxonIndex = patternList.getTaxonIndex(taxonId);
-            if (taxonIndex < 0) {
-                throw new IllegalArgumentException("Taxon " + taxonId + " is not in the pattern list");
-            }
-            long[] sets = new long[patternCount];
-            for (int p = 0; p < patternCount; p++) {
-                boolean[] stateSet = dataType.getStateSet(patternList.getPatternState(taxonIndex, p));
-                long set = 0;
-                for (int s = 0; s < stateCount; s++) {
-                    if (stateSet[s]) {
-                        set |= 1L << s;
-                    }
-                }
-                // partial ambiguities are treated as complete ambiguities
-                sets[p] = Long.bitCount(set) == 1 ? set : 0;
-            }
-            tipStateSets[tip.getNumber()] = sets;
+        String taxonId = tree.getNodeTaxon(tip).getId();
+        int taxonIndex = patternList.getTaxonIndex(taxonId);
+        if (taxonIndex < 0) {
+            throw new IllegalArgumentException("Taxon " + taxonId + " is not in the pattern list");
         }
-        return tipStateSets;
+        long[] sets = new long[patternCount];
+        for (int p = 0; p < patternCount; p++) {
+            boolean[] stateSet = dataType.getStateSet(patternList.getPatternState(taxonIndex, p));
+            long set = 0;
+            for (int s = 0; s < stateCount; s++) {
+                if (stateSet[s]) {
+                    set |= 1L << s;
+                }
+            }
+            // partial ambiguities are treated as complete ambiguities
+            sets[p] = Long.bitCount(set) == 1 ? set : 0;
+        }
+        return sets;
     }
 
     /**

@@ -35,7 +35,8 @@ package dr.evomodel.treedatalikelihood.MAT;
  *
  * The Fitch sets are only needed for (incremental) parsimony. Code that changes the topology and
  * states by other means marks them stale ({@link #setFitchSetsStale}) rather than keeping them up to
- * date, and parsimony recomputes them all before use.
+ * date, and parsimony recomputes them all before use. Stale sets are released when committed (they are
+ * eight times the size of the states), and allocated again when parsimony next needs them.
  *
  * Each node's states carry a version number that changes whenever they may have changed, so that
  * quantities derived from them can be cached. Each node also has a summary of its states, its
@@ -58,6 +59,7 @@ public final class DefaultMutationStore implements MutationStore {
     private final byte[][] states;
     private final long[][] fitchSets;
     private boolean fitchSetsStale = false;
+    private boolean fitchSetsReleased = false;
     private final BranchMutations[] mutations;
     private final long[] stateVersions;
     private long lastStateVersion = 0;
@@ -99,7 +101,7 @@ public final class DefaultMutationStore implements MutationStore {
         this.parents = parents.clone();
         this.root = findRoot(parents);
         this.states = new byte[nodeCount][patternCount];
-        this.fitchSets = new long[nodeCount][patternCount];
+        this.fitchSets = new long[nodeCount][]; // allocated when parsimony first sets them
         this.mutations = new BranchMutations[nodeCount];
         java.util.Arrays.fill(mutations, BranchMutations.EMPTY);
         this.stateVersions = new long[nodeCount];
@@ -305,6 +307,9 @@ public final class DefaultMutationStore implements MutationStore {
         fitchSetsStale = stale;
     }
 
+    /**
+     * @return the node's Fitch sets, or null if they have not been computed (or were released when stale)
+     */
     public long[] getFitchSets(int nodeNumber) {
         return fitchSets[nodeNumber];
     }
@@ -312,9 +317,11 @@ public final class DefaultMutationStore implements MutationStore {
     public long[] getWritableFitchSets(int nodeNumber) {
         if (!fitchSetsDirty[nodeNumber]) {
             journal(nodeNumber);
-            savedFitchSets[nodeNumber] = fitchSets[nodeNumber];
-            fitchSets[nodeNumber] = fitchSets[nodeNumber].clone();
+            long[] sets = fitchSets[nodeNumber];
+            savedFitchSets[nodeNumber] = sets;
+            fitchSets[nodeNumber] = sets == null ? new long[patternCount] : sets.clone();
             fitchSetsDirty[nodeNumber] = true;
+            fitchSetsReleased = false;
         }
         return fitchSets[nodeNumber];
     }
@@ -549,6 +556,11 @@ public final class DefaultMutationStore implements MutationStore {
         dirtyNodeCount = 0;
         rootSaved = false;
         fitchSetsStaleChanged = false;
+        if (fitchSetsStale && !fitchSetsReleased) {
+            // parsimony will recompute them all before use
+            java.util.Arrays.fill(fitchSets, null);
+            fitchSetsReleased = true;
+        }
     }
 
     /**

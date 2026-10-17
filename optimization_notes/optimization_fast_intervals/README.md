@@ -134,8 +134,3 @@ The remaining cost per evaluation with the incremental sort breaks down as follo
 | adding events (done by `TreeIntervals`, not changed) | 2.74 µs |
 | `calculateIntervals` (change detection, merge, interval loop) | 7.34 µs |
 
-### With a data likelihood
-
-On `benchmark-big-2` (1,610 taxa) with the single-threaded MAT likelihood, the run was 6.5% faster.
-The likelihood dominates there, so the saving is a smaller share of the total. BEAGLE multi-threaded
-timings vary by about ±10% from run to run, which is too noisy to measure this change.

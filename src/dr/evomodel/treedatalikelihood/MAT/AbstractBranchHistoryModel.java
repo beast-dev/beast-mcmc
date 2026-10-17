@@ -43,15 +43,16 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
     protected double[] infinitesimalMatrix;
     protected double[] exitRates;
 
-    // cache of the most recent transition probability matrix
-    private double cachedDistance = Double.NaN;
-    private final double[] cachedTransitionProbabilities;
-    private final double[] cachedLogTransitionProbabilities;
+    // cache of transition probability matrices (and their logs) by distance, for the current rates: an
+    // open-addressing table, emptied when the rates change or it is half full
+    private static final int CACHE_CAPACITY = 8192;
+    private final long[] cachedDistances = new long[CACHE_CAPACITY];
+    private final double[][] cachedTransitionProbabilities = new double[CACHE_CAPACITY][];
+    private final double[][] cachedLogTransitionProbabilities = new double[CACHE_CAPACITY][];
+    private int cachedCount = 0;
 
     protected AbstractBranchHistoryModel(int stateCount) {
         this.stateCount = stateCount;
-        this.cachedTransitionProbabilities = new double[stateCount * stateCount];
-        this.cachedLogTransitionProbabilities = new double[stateCount * stateCount];
     }
 
     @Override
@@ -59,7 +60,15 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
         this.substitutionModel = substitutionModel;
         this.infinitesimalMatrix = infinitesimalMatrix.clone();
         this.exitRates = exitRates.clone();
-        this.cachedDistance = Double.NaN;
+        clearTransitionProbabilityCache();
+    }
+
+    private void clearTransitionProbabilityCache() {
+        if (cachedCount > 0) {
+            java.util.Arrays.fill(cachedTransitionProbabilities, null);
+            java.util.Arrays.fill(cachedLogTransitionProbabilities, null);
+            cachedCount = 0;
+        }
     }
 
     @Override
@@ -79,19 +88,42 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
      * @return the transition probabilities over the given distance (expected substitutions), row-major
      */
     protected double[] getTransitionProbabilities(double distance) {
-        if (distance != cachedDistance) {
-            substitutionModel.getTransitionProbabilities(distance, cachedTransitionProbabilities);
-            for (int i = 0; i < cachedTransitionProbabilities.length; i++) {
-                cachedLogTransitionProbabilities[i] = Math.log(Math.max(cachedTransitionProbabilities[i], 0.0));
-            }
-            cachedDistance = distance;
-        }
-        return cachedTransitionProbabilities;
+        return cachedTransitionProbabilities[getCacheSlot(distance)];
     }
 
     protected double[] getLogTransitionProbabilities(double distance) {
-        getTransitionProbabilities(distance);
-        return cachedLogTransitionProbabilities;
+        return cachedLogTransitionProbabilities[getCacheSlot(distance)];
+    }
+
+    /**
+     * @return the slot of the cache holding the matrices for the distance (computed if not already there)
+     */
+    private int getCacheSlot(double distance) {
+        final long key = Double.doubleToLongBits(distance);
+        final int mask = CACHE_CAPACITY - 1;
+        long h = key * 0x9E3779B97F4A7C15L;
+        int slot = (int) (h >>> 51) & mask;
+        while (cachedTransitionProbabilities[slot] != null) {
+            if (cachedDistances[slot] == key) {
+                return slot;
+            }
+            slot = (slot + 1) & mask;
+        }
+        if (cachedCount >= CACHE_CAPACITY / 2) {
+            clearTransitionProbabilityCache();
+            slot = (int) (h >>> 51) & mask;
+        }
+        double[] p = new double[stateCount * stateCount];
+        substitutionModel.getTransitionProbabilities(distance, p);
+        double[] logP = new double[p.length];
+        for (int i = 0; i < p.length; i++) {
+            logP[i] = Math.log(Math.max(p[i], 0.0));
+        }
+        cachedDistances[slot] = key;
+        cachedTransitionProbabilities[slot] = p;
+        cachedLogTransitionProbabilities[slot] = logP;
+        cachedCount++;
+        return slot;
     }
 
     // --------------------------------------------------------------------------------------------

@@ -31,7 +31,6 @@ import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -61,8 +60,8 @@ public class EfficientBirthDeathLikelihood extends BirthDeathLikelihood implemen
     public EfficientBirthDeathLikelihood(Tree tree, BirthDeathModel birthDeathModel, Set<Taxon> exclude, String id) {
         super(tree, birthDeathModel, exclude, id);
 
-        if (!(tree instanceof DefaultTreeModel)) {
-            throw new IllegalArgumentException("Must currently provide a DefaultTreeModel");
+        if (!(tree instanceof TreeModel)) {
+            throw new IllegalArgumentException("Must currently provide a TreeModel");
         }
 
         likelihoodTime = 0;

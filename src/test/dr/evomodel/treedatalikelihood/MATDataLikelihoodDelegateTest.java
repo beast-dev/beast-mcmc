@@ -388,50 +388,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     /**
-     * The hybrid resampler only resamples sites that vary around the block; for the move to be valid
-     * the reverse move must resample exactly the same sites.
-     */
-    public void testResampledSitesAreSymmetric() {
-        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate);
-        String[][] moves = {{"human", "gorilla"}, {"gorilla", "human"}, {"chimp", "orangutan"}, {"orangutan", "bonobo"}, {"siamang", "chimp"}};
-        int checked = 0;
-        for (String[] move : moves) {
-            NodeRef x = findTip(move[0]);
-            NodeRef destination = findTip(move[1]);
-            NodeRef parent = treeModel.getParent(x);
-            NodeRef sibling = otherChild(parent, x);
-            if (treeModel.isRoot(parent) || destination == sibling || treeModel.getParent(destination) == parent) {
-                continue;
-            }
-            double oldHeight = treeModel.getNodeHeight(parent);
-
-            likelihood.storeModelState();
-            resampler.beforeSubtreeMove(x, sibling, destination);
-            regraft(x, destination, regraftHeight(destination, treeModel.getNodeHeight(x)));
-            resampler.afterSubtreeMove();
-            int[] forward = resampler.getLastResampledSites();
-            likelihood.getLogLikelihood();
-
-            // and back again
-            resampler.beforeSubtreeMove(x, destination, sibling);
-            regraft(x, sibling, oldHeight);
-            resampler.afterSubtreeMove();
-            int[] reverse = resampler.getLastResampledSites();
-            likelihood.getLogLikelihood();
-            likelihood.restoreModelState();
-
-            java.util.Arrays.sort(forward);
-            java.util.Arrays.sort(reverse);
-            assertTrue(move[0] + " -> " + move[1] + ": " + java.util.Arrays.toString(forward) + " vs " + java.util.Arrays.toString(reverse),
-                    java.util.Arrays.equals(forward, reverse));
-            assertTrue(forward.length > 0);
-            checked++;
-        }
-        assertTrue(checked >= 3);
-    }
-
-    /**
-     * With site selection ALL and no per-site rates, the resampler handles the sites with no events
+     * Without per-site rates, the resampler handles the sites with no events
      * around the block together (drawing the few that change by thinning). Its Hastings ratio must still
      * be that of the exact Gibbs block update: the full conditional of the old states under the old
      * topology over that of the new states under the new one, computed here over every pattern.
@@ -442,7 +399,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
         // the direct path density (directLogLikelihood) then uses a relative rate of 1 for every site
         siteRates = new Parameter.Default(patterns.getPatternCount(), 1.0);
-        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, MutationHistoryResampler.SiteSelection.ALL);
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate);
 
         int moves = 0;
         int movesChangingUniformSites = 0;
@@ -499,7 +456,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
                 null, branchRates, null);
         likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
-        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, MutationHistoryResampler.SiteSelection.ALL);
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate);
         DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
 
         NodeRef x = findTip("chimp");
@@ -682,8 +639,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      */
     public void testLocalBlockMatchesEnumeratedConditional() {
         setUpSparseData();
-        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate,
-                MutationHistoryResampler.SiteSelection.ALL, true);
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
 
         int moves = 0;
         int chainSites = 0;
@@ -771,8 +727,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     public void testLocalBlockDrawsExactly() {
         clockRate.setParameterValue(0, 40.0);
         setUpSparseData();
-        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate,
-                MutationHistoryResampler.SiteSelection.ALL, true);
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
 
         final int xNumber = findTip("orangutan").getNumber();
         final int destinationNumber = findTip("human").getNumber();
@@ -853,8 +808,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      */
     public void testLocalBlockMovesKeepMATConsistent() {
         setUpSparseData();
-        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate,
-                MutationHistoryResampler.SiteSelection.ALL, true);
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
         List<AbstractTreeOperator> operators = new ArrayList<AbstractTreeOperator>();
         operators.add(new SubtreeLeapOperator(treeModel, 1.0, 0.05, SubtreeLeapOperator.DistanceKernelType.NORMAL,
                 AdaptationMode.ADAPTATION_OFF, 0.234));

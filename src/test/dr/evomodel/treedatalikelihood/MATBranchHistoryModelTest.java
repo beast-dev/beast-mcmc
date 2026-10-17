@@ -389,15 +389,6 @@ public class MATBranchHistoryModelTest extends TraceCorrelationAssert {
         }
     }
 
-    public void testHybridNeedsImplicitHistories() {
-        try {
-            new MutationHistoryResampler(createDelegate(ExplicitHitsHistoryModel.NAME), MutationHistoryResampler.SiteSelection.HYBRID);
-            fail("explicit hits should require resampling every site");
-        } catch (IllegalArgumentException expected) {
-            // expected
-        }
-    }
-
     private static int indexOf(String model) {
         for (int i = 0; i < MODELS.length; i++) {
             if (MODELS[i].equals(model)) {

@@ -40,65 +40,45 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Resamples the mutational history of a MAT jointly with a subtree prune-and-regraft move.
+ * Resamples the ancestral states of a MAT jointly with a subtree prune-and-regraft move, as a
+ * {@link SubtreeMoveHook} attached to the operator.
  *
- * With at most one mutation per site per branch and mutation times integrated out, a mutation
- * history is just the state of every pattern at every internal node. When the subtree below
- * {@code node} moves from beside {@code sibling} to the branch above {@code destination}, the only
- * states that need to change are those of the regrafted parent node and of the internal nodes on the
- * path between {@code sibling} and {@code destination} in the pruned tree. This block is the same for
- * the move and its reverse, and contains every node whose ambiguity status can change.
+ * With mutation times integrated out (or, for explicit hits, drawn separately; see below), a mutational
+ * history is the state of every pattern at every internal node. When the subtree below X ({@code node})
+ * moves, with its parent P, from beside S ({@code sibling}) to the branch above D ({@code destination}),
+ * the states of a block are drawn from their exact full conditional given all other states (a Gibbs block
+ * update), by forward filtering and backward sampling. The block covers the same states for the move and
+ * its reverse, so the proposal densities of the old states (under the old topology) and of the new ones
+ * (under the new topology) give the Hastings ratio, whatever topology move it accompanies.
  *
- * The block's states are drawn from their exact full conditional given all other states (a Gibbs
- * block update) by forward filtering and backward sampling on the block, which is a path. The
- * proposal density of the old states (under the old topology) and of the new states (under the new
- * one) gives the Hastings ratio, so the combined move is a valid Metropolis-Hastings move whatever
- * topology move it accompanies.
+ * There are two blocks:
+ * <ul>
+ * <li>the path block: P and the internal nodes on the path between S and D in the pruned tree, at every
+ * variable site, which contains every node whose ambiguity can change;</li>
+ * <li>the local block ({@link LocalMove}): P at every variable site, and at each site only the nodes whose
+ * data there come only from X (whose presence the move changes), as in the subtree moves of Varilly et
+ * al. (Nature, 2026). Its cost does not grow with the distance moved.</li>
+ * </ul>
  *
- * Only sites that vary around the block are resampled (a hybrid of Gibbs sampling and keeping the
- * states). A site is resampled if the states of the block's neighbours (the nodes adjacent to the block
- * in either the old or the new topology) are not all the same; every other site keeps its states, a
- * proposal that is its own reverse. The move never changes the states outside the block, so the move
- * and its reverse resample the same sites. Candidate sites are found from the events on the branches
- * around the block, so a move costs O(events around the block), not O(sites).
- *
- * The hybrid cannot create back-mutations at sites that look uniform around every block it sees, so
- * the alternative {@link SiteSelection#ALL} resamples every (non-constant) site, a plain Gibbs block
- * update. Without per-site rates or explicit hits, it is done sparsely (as in Delphy): a site with no
- * events around the block has the same state a throughout, and its block states stay unchanged with a
- * probability that depends only on a. So the sites that change are drawn by thinning (stepping
+ * Without per-site rates, explicit hits or unequal pattern weights, sites are handled sparsely: a site
+ * with no events around the block has the same state a throughout, and its block states stay unchanged
+ * with a probability that depends only on a. So the sites that change are drawn by thinning (stepping
  * through the variable sites with geometric jumps at the highest probability of a change, and keeping
- * each site visited with its own probability over that), the unchanged ones contribute
- * n_a log P(unchanged | a) for the number n_a of them in each state, and a move costs
- * O(events around the block + changes), not O(sites). Sites whose only events around the block are
- * ambiguities are treated in the same way, grouped by their state and by which of the block's
- * neighbours are ambiguous there (which together determine their conditional): there are typically
- * many such sites (runs of N) but few groups. Branch history models with explicit hits ({@link BranchHistoryModel#hasExplicitHistories()})
- * require it: the ancestral states are drawn with the hits summed out, then each site's hits on every
- * branch touching the block are drawn given its end states, and the probabilities of the old and new
- * hits enter the Hastings ratio.
+ * each site visited with its own probability over that), and the unchanged ones contribute
+ * n_a log P(unchanged | a) for the number n_a of them in each state. Sites whose only events around the
+ * block are ambiguities are handled in the same way, grouped by their state and by which of the block's
+ * neighbours are ambiguous there: there are typically many such sites (runs of N) but few groups. A move
+ * then costs O(events around the block + changes), not O(sites).
+ *
+ * Branch history models with explicit hits ({@link BranchHistoryModel#hasExplicitHistories()}) use the
+ * path block: the ancestral states are drawn with the hits summed out, then each site's hits on every
+ * branch touching the block are drawn given its end states, and the probabilities of the old and new hits
+ * enter the Hastings ratio.
  */
 public class MutationHistoryResampler implements SubtreeMoveHook {
 
-    /**
-     * Which sites a move resamples: those that vary around the block (HYBRID) or all of them (ALL).
-     */
-    public enum SiteSelection {
-        HYBRID, ALL;
-
-        public static SiteSelection parse(String name) {
-            for (SiteSelection selection : values()) {
-                if (selection.name().equalsIgnoreCase(name)) {
-                    return selection;
-                }
-            }
-            throw new IllegalArgumentException("Unknown site selection: " + name);
-        }
-    }
-
     private final MATDataLikelihoodDelegate delegate;
     private final BranchHistoryModel historyModel;
-    private final SiteSelection siteSelection;
     private double logProposalOfOldHistories;
     private final Tree tree;
     private final int stateCount;
@@ -113,7 +93,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int[] block = null;
     private int[] movedNodes = null; // the nodes whose parents a subtree move changes
     private int[] candidateSites = null;
-    private int[] oldBoundary = null;
 
     // per-site work arrays: classes and old/new proposal log probabilities of candidate sites
     private final byte[] siteClasses;
@@ -166,32 +145,20 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int[] hotMarks;
     private int localStamp = 0;
 
+    /**
+     * A resampler with the path block.
+     */
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate) {
-        this(delegate, null);
-    }
-
-    public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, SiteSelection siteSelection) {
-        this(delegate, siteSelection, false);
+        this(delegate, false);
     }
 
     /**
-     * @param siteSelection which sites to resample (null for the default: HYBRID unless the branch
-     *                      history model has explicit histories)
-     * @param localBlock    resample the local block (the regrafted parent, and the nodes whose data at a site
-     *                      come only from the moved subtree) instead of the path block
+     * @param localBlock resample the local block (the regrafted parent, and the nodes whose data at a site
+     *                   come only from the moved subtree) instead of the path block
      */
-    public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, SiteSelection siteSelection,
-                                    boolean localBlock) {
+    public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, boolean localBlock) {
         this.delegate = delegate;
         this.historyModel = delegate.getHistoryModel();
-        if (siteSelection == null) {
-            siteSelection = historyModel.hasExplicitHistories() ? SiteSelection.ALL : SiteSelection.HYBRID;
-        }
-        if (siteSelection == SiteSelection.HYBRID && historyModel.hasExplicitHistories()) {
-            throw new IllegalArgumentException("The " + historyModel.getName() + " branch history model needs every site " +
-                    "to be resampled (site selection " + SiteSelection.ALL + ")");
-        }
-        this.siteSelection = siteSelection;
         this.tree = delegate.getTree();
         this.stateCount = delegate.getPatternList().getDataType().getStateCount();
         this.patternCount = delegate.getPatternList().getPatternCount();
@@ -234,12 +201,12 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         this.variableSites = Arrays.copyOf(variable, variableCount);
         this.uniformCounts = new int[stateCount];
-        this.sparseUniform = siteSelection == SiteSelection.ALL && !historyModel.hasExplicitHistories() &&
-                !delegate.hasSiteRates() && equalWeights && variableCount > 0;
+        this.sparseUniform = !historyModel.hasExplicitHistories() && !delegate.hasSiteRates() && equalWeights &&
+                variableCount > 0;
         this.localBlock = localBlock;
         if (localBlock && !sparseUniform) {
-            throw new IllegalArgumentException("The local block needs site selection " + SiteSelection.ALL +
-                    ", a branch history model without explicit hits, no per-site rates and equal pattern weights");
+            throw new IllegalArgumentException("The local block needs a branch history model without explicit " +
+                    "hits, no per-site rates and equal pattern weights");
         }
     }
 
@@ -283,17 +250,16 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             // in pattern order, so that they can be grouped by sweeping the neighbours' ambiguous runs
             ambiguitySites = sortSites(ambiguity, ambiguityCount);
         } else {
-            candidateSites = siteSelection == SiteSelection.ALL ? getVariableSites(block) : getCandidateSites(block);
+            candidateSites = getVariableSites(block);
         }
-        oldBoundary = getBoundary(block);
-        // score the candidates' current states under the old topology (only the resampled ones will count)
+        // score the candidates' current states under the old topology
         uniformPass = sparseUniform;
         sampleBlock(block, false, siteClasses, sparseUniform ? substitutionSites : candidateSites, oldSiteLogProbabilities);
         uniformPass = false;
         uniformOldLogProbability = sparseUniform ? lastUniformLogProbability : 0.0;
         ambiguityOldLogProbability = sparseUniform ? lastAmbiguityLogProbability : 0.0;
         if (historyModel.hasExplicitHistories()) {
-            // every candidate is resampled (site selection ALL), so score all their hits around the block
+            // every candidate is resampled, so score all their hits around the block
             logProposalOfOldHistories = scoreHistories(getIncidentBranches(block), candidateSites);
         }
     }
@@ -316,25 +282,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             reparented.add(synced.values[i]);
         }
 
-        // the sites to resample: candidates whose states on the block's neighbours (old and new) are not all equal
-        final int[] newBoundary = getBoundary(currentBlock);
-        final int[] sites = new int[candidateSites.length];
-        int siteCount = 0;
-        for (int p : sparseUniform ? substitutionSites : candidateSites) {
-            int state = store.getState(oldBoundary[0], p);
-            boolean uniform = true;
-            for (int n : oldBoundary) {
-                uniform &= store.getState(n, p) == state;
-            }
-            for (int n : newBoundary) {
-                uniform &= store.getState(n, p) == state;
-            }
-            if (!uniform || siteSelection == SiteSelection.ALL) {
-                sites[siteCount++] = p;
-                resampledSites[p] = true;
-            }
+        // every candidate is resampled (the others are handled together when sampling sparsely)
+        final int[] resampled = sparseUniform ? substitutionSites : candidateSites;
+        for (int p : resampled) {
+            resampledSites[p] = true;
         }
-        final int[] resampled = Arrays.copyOf(sites, siteCount);
         lastResampledSites = resampled;
 
         double logProposalOfOldStates = uniformOldLogProbability + ambiguityOldLogProbability;
@@ -378,7 +330,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 resampledSites[p] = false;
             }
             candidateSites = null;
-            oldBoundary = null;
             delegate.markTopologySynchronised();
             return logProposalOfOldStates - logProposalOfNewStates + logProposalOfOldHistories - logProposalOfNewHistories;
         }
@@ -405,7 +356,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             resampledSites[p] = false;
         }
         candidateSites = null;
-        oldBoundary = null;
         delegate.markTopologySynchronised();
 
         return logProposalOfOldStates - logProposalOfNewStates;
@@ -1106,36 +1056,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
         }
         return Arrays.copyOf(sites, count);
-    }
-
-    /**
-     * @return the nodes adjacent to the block in the current topology: children of block nodes that
-     * are not in the block, and the parent of the top node
-     */
-    private int[] getBoundary(int[] blockNodes) {
-        for (int n : blockNodes) {
-            inBlock[n] = true;
-        }
-        List<Integer> boundary = new ArrayList<Integer>();
-        for (int n : blockNodes) {
-            NodeRef node = tree.getNode(n);
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                int c = tree.getChild(node, i).getNumber();
-                if (!inBlock[c]) {
-                    boundary.add(c);
-                }
-            }
-            NodeRef parent = tree.getParent(node);
-            if (parent != null && !inBlock[parent.getNumber()]) {
-                boundary.add(parent.getNumber());
-            }
-        }
-        clearBlock(blockNodes);
-        int[] result = new int[boundary.size()];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = boundary.get(i);
-        }
-        return result;
     }
 
     /**

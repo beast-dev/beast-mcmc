@@ -51,17 +51,19 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        MutationHistoryResampler.SiteSelection siteSelection = null;
         try {
-            if (xo.hasAttribute(SITE_SELECTION)) {
-                siteSelection = MutationHistoryResampler.SiteSelection.parse(xo.getStringAttribute(SITE_SELECTION));
+            if (xo.hasAttribute(SITE_SELECTION) && !xo.getStringAttribute(SITE_SELECTION).equalsIgnoreCase("all")) {
+                // the hybrid selection (only sites varying around the block) could not create back-mutations
+                // at sites that looked uniform around every block, so it was not irreducible
+                throw new XMLParseException("The " + SITE_SELECTION + " attribute of " + xo.getId() + " must be " +
+                        "'all' (every site is resampled; 'hybrid' is no longer supported)");
             }
             String block = xo.getAttribute(BLOCK, PATH_BLOCK);
             if (!block.equalsIgnoreCase(PATH_BLOCK) && !block.equalsIgnoreCase(LOCAL_BLOCK)) {
                 throw new XMLParseException("The " + BLOCK + " attribute of " + xo.getId() + " must be '" +
                         PATH_BLOCK + "' or '" + LOCAL_BLOCK + "'");
             }
-            return new MutationHistoryResampler(getDelegate(xo), siteSelection, block.equalsIgnoreCase(LOCAL_BLOCK));
+            return new MutationHistoryResampler(getDelegate(xo), block.equalsIgnoreCase(LOCAL_BLOCK));
         } catch (IllegalArgumentException iae) {
             throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
         }
@@ -80,9 +82,8 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                AttributeRule.newStringRule(SITE_SELECTION, true, "Which sites a move resamples: 'hybrid' " +
-                        "(only those varying around the moved subtree) or 'all' (default: hybrid, or all for branch " +
-                        "history models with explicit hits)"),
+                AttributeRule.newStringRule(SITE_SELECTION, true, "Which sites a move resamples: only 'all' " +
+                        "(kept for older files)"),
                 AttributeRule.newStringRule(BLOCK, true, "Which states a move resamples: 'path' (the regrafted " +
                         "parent and the nodes on the path between its old and new positions; the default) or 'local' " +
                         "(the regrafted parent, and the nodes whose data at a site come only from the moved subtree)"),

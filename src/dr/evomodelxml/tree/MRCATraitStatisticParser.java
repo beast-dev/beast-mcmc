@@ -53,7 +53,7 @@ public class MRCATraitStatisticParser extends AbstractXMLObjectParser {
         String name = xo.getAttribute(NAME, xo.getId());
         String trait = xo.getStringAttribute(TRAIT);
 
-        DefaultTreeModel tree = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+        DefaultTreeModel tree = TreeModelParser.getOldTreeModel(xo, getParserName());
         TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
 
         try {
@@ -80,7 +80,7 @@ public class MRCATraitStatisticParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(DefaultTreeModel.class),
+            new ElementRule(TreeModel.class),
             new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
             new StringAttributeRule("trait", "The name of the trait (can be rate)"),
             AttributeRule.newBooleanRule("rate", true),

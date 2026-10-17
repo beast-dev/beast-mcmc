@@ -31,6 +31,7 @@ import dr.evomodel.operators.RateExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -50,7 +51,7 @@ public class RateExchangeOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+        DefaultTreeModel treeModel = TreeModelParser.getOldTreeModel(xo, getParserName());
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         boolean swapRates = xo.getBooleanAttribute(SWAP_RATES);
         boolean swapTraits = xo.getBooleanAttribute(SWAP_TRAITS);
@@ -77,6 +78,6 @@ public class RateExchangeOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SWAP_TRAITS),
             AttributeRule.newBooleanRule(SWAP_AT_ROOT),
             AttributeRule.newBooleanRule(MOVE_HEIGHT),
-            new ElementRule(DefaultTreeModel.class)
+            new ElementRule(TreeModel.class)
     };
 }

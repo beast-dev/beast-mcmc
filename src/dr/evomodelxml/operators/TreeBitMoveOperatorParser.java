@@ -30,6 +30,7 @@ package dr.evomodelxml.operators;
 import dr.evomodel.operators.TreeBitMoveOperator;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -49,7 +50,7 @@ public class TreeBitMoveOperatorParser extends AbstractXMLObjectParser {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+        DefaultTreeModel treeModel = TreeModelParser.getOldTreeModel(xo, getParserName());
 
 
         String trait1 = null;
@@ -78,7 +79,7 @@ public class TreeBitMoveOperatorParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            new ElementRule(DefaultTreeModel.class),
+            new ElementRule(TreeModel.class),
             AttributeRule.newStringRule(INDICTATOR_TRAIT, true),
             AttributeRule.newStringRule(TRAIT2, true)
     };

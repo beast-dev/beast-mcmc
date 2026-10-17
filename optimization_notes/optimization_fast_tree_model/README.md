@@ -27,16 +27,26 @@ The design, the decisions taken, and the components that still require a `Defaul
 
 ## Using it
 
+On `operator_experiment` the fast implementation is the default: a plain `<treeModel>` creates a
+`FastTreeModel`. `implementation="old"` selects `DefaultTreeModel`:
+
 ```xml
-<treeModel id="treeModel" implementation="fast">
-    ...
-</treeModel>
+<treeModel id="treeModel">                      <!-- FastTreeModel -->
+<treeModel id="treeModel" implementation="old"> <!-- DefaultTreeModel -->
 ```
 
-The child elements are the same as for the default implementation (`rootHeight`, `nodeHeights`,
-`leafHeight`, `leafHeights`), and references (`<treeModel idref="treeModel"/>`) are unchanged. Node
-rates and node traits are not supported: `nodeRates`, `nodeTraits` and `leafTrait` give a parse error,
-and analyses that need them must use the default implementation.
+(On `main`, where this branch's work was first merged, the default is still `DefaultTreeModel` and the
+fast one is selected with `implementation="fast"`.)
+
+The child elements are the same for both (`rootHeight`, `nodeHeights`, `leafHeight`, `leafHeights`), and
+references (`<treeModel idref="treeModel"/>`) are unchanged. Node rates and node traits are only
+available in the old implementation: a `<treeModel>` with `nodeRates`, `nodeTraits` or `leafTrait` and no
+`implementation` attribute selects it automatically, and with `implementation="fast"` they give a parse
+error. The few older components that use features of `DefaultTreeModel` (the rateExchange, treeBitMove,
+treeBitRandomWalk and RLC narrow exchange operators, the MRCA trait statistic, the inhibition assay
+likelihood, the independent coalescent samplers and the star tree model's shared root) give an error
+asking for `implementation="old"` if given a fast tree model. The log reports which implementation is
+used ("Creating the tree model, 'treeModel' (fast implementation)").
 
 ## What it does
 

@@ -39,6 +39,7 @@ import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.AttributeRule;
@@ -149,7 +150,7 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
 
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+			DefaultTreeModel treeModel = TreeModelParser.getOldTreeModel(xo, getParserName());
 			double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 	        DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
 	        CoalescentLikelihood coalescent = (CoalescentLikelihood) xo.getChild(CoalescentLikelihood.class);
@@ -169,7 +170,7 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
 		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
 				new ElementRule(Taxa.class),
-                new ElementRule(DefaultTreeModel.class),
+                new ElementRule(TreeModel.class),
                 new ElementRule(DemographicModel.class),
                 new ElementRule(CoalescentLikelihood.class)
         };

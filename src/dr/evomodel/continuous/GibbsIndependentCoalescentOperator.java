@@ -34,6 +34,7 @@ import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -184,7 +185,7 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
 		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 			double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-			DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+			DefaultTreeModel treeModel = TreeModelParser.getOldTreeModel(xo, getParserName());
 			DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
 			double height = xo.getAttribute(HEIGHT, Double.NaN);
 
@@ -204,7 +205,7 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
 		private final XMLSyntaxRule[] rules = {
 				AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
 				AttributeRule.newDoubleRule(HEIGHT, true, ""),
-                new ElementRule(DefaultTreeModel.class),
+                new ElementRule(TreeModel.class),
                 new ElementRule(DemographicModel.class),
 				new ElementRule(Tree.class, 0, Integer.MAX_VALUE),
 				new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE)

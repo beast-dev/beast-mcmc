@@ -71,7 +71,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
                 new ElementRule(Tree.class),
                 new XORRule(
                         new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
-                        new ElementRule(SHARE_ROOT, DefaultTreeModel.class)
+                        new ElementRule(SHARE_ROOT, TreeModel.class)
                 ),
                 new ElementRule(LEAF_HEIGHT,
                         new XMLSyntaxRule[]{
@@ -117,7 +117,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
                     }
 
                 } else if (cxo.getName().equals(SHARE_ROOT)) {
-                    DefaultTreeModel sharedRoot = (DefaultTreeModel) cxo.getChild(DefaultTreeModel.class);
+                    DefaultTreeModel sharedRoot = TreeModelParser.getOldTreeModel(cxo, getParserName());
                     treeModel.setSharedRootHeightParameter(sharedRoot);
                 } else if (cxo.getName().equals(LEAF_HEIGHT)) {
 

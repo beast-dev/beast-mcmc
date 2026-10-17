@@ -30,6 +30,7 @@ package dr.evomodel.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -151,7 +152,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+            DefaultTreeModel treeModel = TreeModelParser.getOldTreeModel(xo, getParserName());
             double weight = xo.getDoubleAttribute("weight");
 
             return new RLCNarrowExchangeOperator(treeModel, weight);
@@ -176,7 +177,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
-                new ElementRule(DefaultTreeModel.class)
+                new ElementRule(TreeModel.class)
         };
 
     };

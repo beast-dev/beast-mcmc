@@ -31,6 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
@@ -416,7 +417,7 @@ public class InhibitionAssayLikelihood extends AbstractModelLikelihood /*impleme
 //            System.err.println("did i get here?");
 
 //            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
-            DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
+            DefaultTreeModel treeModel = TreeModelParser.getOldTreeModel(xo, getParserName());
 //			CompoundParameter traitParameter = (CompoundParameter) xo.getSocketChild(TRAIT_PARAMETER);
 
             MatrixParameter data = (MatrixParameter) xo.getChild(MatrixParameter.class);
@@ -539,7 +540,7 @@ public class InhibitionAssayLikelihood extends AbstractModelLikelihood /*impleme
 //				new StringAttributeRule(TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
 //				AttributeRule.newBooleanRule(IN_REAL_TIME, true),
 //				new ElementRule(MultivariateDiffusionModel.class),
-                new ElementRule(DefaultTreeModel.class),
+                new ElementRule(TreeModel.class),
                 new ElementRule(MatrixParameter.class),
 //                new ElementRule("precision", Parameter)
 //                new ElementRule(Parameter.class)

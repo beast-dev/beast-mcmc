@@ -53,6 +53,15 @@ public interface DataLikelihoodDelegate extends ProcessOnTreeDelegate, Model, Pr
     double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
                                int rootNodeNumber) throws LikelihoodException;
 
+    /**
+     * @return false if the delegate keeps track of changes to the tree itself and does not use the branch
+     * and node operations passed to calculateLikelihood, which are then empty (and the tree is not
+     * traversed to collect them)
+     */
+    default boolean requiresTreeTraversal() {
+        return true;
+    }
+
     int getTraitCount();
 
     int getTraitDim();

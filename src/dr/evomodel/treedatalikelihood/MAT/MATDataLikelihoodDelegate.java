@@ -310,6 +310,15 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         }
     }
 
+    /**
+     * The MAT tracks changes to the tree itself (see updateMAT), so the tree likelihood need not traverse
+     * the tree to collect operations.
+     */
+    @Override
+    public boolean requiresTreeTraversal() {
+        return false;
+    }
+
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations,
                                       List<NodeOperation> nodeOperations,

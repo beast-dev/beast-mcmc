@@ -38,6 +38,7 @@ import dr.util.Citation;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -91,13 +92,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         }
         addModel(this.branchRateModel);
 
-        if(likelihoodDelegate != null) {
-            treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                    likelihoodDelegate.getOptimalTraversalType()
-            );
-        }else{
-            treeTraversalDelegate = null;
-        }
+        treeTraversalDelegate = createTreeTraversal(likelihoodDelegate);
 
         if(likelihoodDelegate != null) {
             rateRescalingScheme = likelihoodDelegate.getRateRescalingScheme();
@@ -124,9 +119,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate = dld;
         addModel(likelihoodDelegate);
         likelihoodDelegate.setCallback(this);
-        treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                likelihoodDelegate.getOptimalTraversalType()
-        );
+        treeTraversalDelegate = createTreeTraversal(likelihoodDelegate);
         rateRescalingScheme = likelihoodDelegate.getRateRescalingScheme();
         hasInitialized = true;
     }
@@ -337,10 +330,17 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             long underflowCount = 0;
 
             do {
-                treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-
-                final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
-                final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+                final List<DataLikelihoodDelegate.BranchOperation> branchOperations;
+                final List<DataLikelihoodDelegate.NodeOperation> nodeOperations;
+                if (treeTraversalDelegate != null) {
+                    treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+                    branchOperations = treeTraversalDelegate.getBranchOperations();
+                    nodeOperations = treeTraversalDelegate.getNodeOperations();
+                } else {
+                    // the delegate keeps track of changes to the tree itself
+                    branchOperations = Collections.emptyList();
+                    nodeOperations = Collections.emptyList();
+                }
 
                 if (COUNT_TOTAL_OPERATIONS) {
                     totalMatrixUpdateCount += branchOperations.size();
@@ -369,7 +369,19 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     }
 
     private void setAllNodesUpdated() {
-        treeTraversalDelegate.setAllNodesUpdated();
+        if (treeTraversalDelegate != null) {
+            treeTraversalDelegate.setAllNodesUpdated();
+        }
+    }
+
+    /**
+     * @return the traversal that collects the operations for the delegate, or null if it does not need them
+     */
+    private LikelihoodTreeTraversal createTreeTraversal(DataLikelihoodDelegate likelihoodDelegate) {
+        if (likelihoodDelegate == null || !likelihoodDelegate.requiresTreeTraversal()) {
+            return null;
+        }
+        return new LikelihoodTreeTraversal(treeModel, branchRateModel, likelihoodDelegate.getOptimalTraversalType());
     }
 
     /**
@@ -379,7 +391,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount++;
 
-        treeTraversalDelegate.updateNode(node);
+        if (treeTraversalDelegate != null) {
+            treeTraversalDelegate.updateNode(node);
+        }
         likelihoodKnown = false;
     }
 
@@ -390,7 +404,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateSingleCount += 1 + treeModel.getChildCount(node);
 
-        treeTraversalDelegate.updateNodeAndChildren(node);
+        if (treeTraversalDelegate != null) {
+            treeTraversalDelegate.updateNodeAndChildren(node);
+        }
         likelihoodKnown = false;
     }
 
@@ -401,7 +417,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (COUNT_TOTAL_OPERATIONS)
             totalRateUpdateAllCount++;
 
-        treeTraversalDelegate.updateAllNodes();
+        if (treeTraversalDelegate != null) {
+            treeTraversalDelegate.updateAllNodes();
+        }
         likelihoodKnown = false;
     }
 

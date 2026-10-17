@@ -260,3 +260,16 @@ same MAT likelihood:
 3. Should a hook ever influence the choice of destination? Varilly et al. (2026) choose destinations near
    the moved subtree. Here the operator's distance kernel does that, which keeps the operators unaware of
    the MAT.
+
+## Implementation notes
+
+Implemented on `operator_experiment` (f501918f0, then 75b643976 to 0d1e33af2). big-3 integrated hits,
+300,000 states: 38.2 s with the path block, 14.3 s with the local block.
+
+- The ambiguity-only sites around P are handled by segments of the neighbours' runs of ambiguous
+  patterns, with no per-site lists (0d1e33af2).
+- The O(events) update of the reparented branches (section "Sites and cost") was tried and dropped: with
+  about 2,400 patterns, `updateBranch`'s scan of the states is cheaper than collecting and sorting the
+  sites of the old events (7% slower overall).
+- After a hooked move the topology check is skipped (it remains as an assertion), and each branch's
+  events are kept in pattern order.

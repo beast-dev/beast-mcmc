@@ -51,7 +51,11 @@ public class PreOrderSettings {
                             boolean useAmbiguities) {
         this(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, false,false);
     }
-    public PreOrderSettings(boolean usePreOrder,
+
+    // Private on purpose: on hmc-clock a public 6-boolean constructor meant (..., useRewardAwareBranchModelDelegate,
+    // useHierarchicalRepresentation). Keeping this same-arity form private makes such callers fail to compile instead
+    // of silently mis-wiring; use the 7- or 8-argument constructor.
+    private PreOrderSettings(boolean usePreOrder,
                             boolean branchRateDerivative,
                             boolean branchInfinitesimalDerivative,
                             boolean useAmbiguities,

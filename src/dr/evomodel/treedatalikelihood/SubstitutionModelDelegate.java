@@ -172,12 +172,14 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         return matrixBufferHelper.getBufferCount() + extraBufferCount + 1;
     }
 
+    public static final String EPOCH_GRADIENT_MESSAGE =
+            "Branch-rate and node-height gradients for branch models that convolve transition matrices (e.g. epoch models) " +
+                    "require useAugmentedEpochNodes=\"true\" on the treeDataLikelihood";
+
     @Override
     public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
         if (getSubstitutionOrder(branchIndex).length > 1) {
-            int[] order = getSubstitutionOrder(branchIndex);
-            return getInfinitesimalMatrixBufferIndexByEigenIndex(order[order.length - 1]);
-//            return getMatrixBufferCount() + getEigenBufferCount() * 2 + branchIndex;
+            throw new UnsupportedOperationException(EPOCH_GRADIENT_MESSAGE);
         }
         return getInfinitesimalMatrixBufferIndexByEigenIndex(getSubstitutionOrder(branchIndex)[0]);
     }
@@ -194,7 +196,7 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
     @Override
     public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
         if (getSubstitutionOrder(branchIndex).length > 1) {
-            return getMatrixBufferCount() + getEigenBufferCount() * 2 + tree.getNodeCount() + branchIndex;
+            throw new UnsupportedOperationException(EPOCH_GRADIENT_MESSAGE);
         }
         return getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(getSubstitutionOrder(branchIndex)[0]);
     }

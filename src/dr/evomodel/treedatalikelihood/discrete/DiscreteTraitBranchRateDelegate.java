@@ -46,6 +46,10 @@ public class DiscreteTraitBranchRateDelegate extends AbstractBeagleBranchGradien
 
     DiscreteTraitBranchRateDelegate(String name, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate, BranchRates branchRateModel) {
         super(name, tree, likelihoodDelegate, branchRateModel);
+        if (evolutionaryProcessDelegate instanceof SubstitutionModelDelegate
+                && likelihoodDelegate.getBranchModel().requiresMatrixConvolution()) {
+            throw new IllegalArgumentException(SubstitutionModelDelegate.EPOCH_GRADIENT_MESSAGE);
+        }
     }
 
     protected void cacheDifferentialMassMatrix(Tree tree, boolean cacheSquaredMatrix) {

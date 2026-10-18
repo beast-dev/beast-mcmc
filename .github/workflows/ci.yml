@@ -16,7 +16,11 @@ env:
     BEAGLE_DIR: beagle-lib
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
-    BEAGLE_BRANCH: matrix_vector
+    # hrate = beagle-lib matrix_vector CPU code (v5 pre-order, adjoint, degree-2 nodes, ensureBufferCounts, spectral)
+    # plus the hierarchical plugin (BEAGLE 4.3.0). Switch back to matrix_vector once hrate is merged there.
+    BEAGLE_BRANCH: hrate
+    # pin the commit so a force-push to the branch cannot break CI; set to "" to follow the branch head
+    BEAGLE_SHA_PIN: 5f34a7af67d8e8be38f9ab748c03ae359b499bf0
     JAVA_VERSION: "8"
     JAVA_DISTRIBUTION: temurin
 
@@ -36,7 +40,7 @@ jobs:
             - name: Resolve BEAGLE commit
               id: beagle
               run: |
-                  sha=$(git ls-remote https://github.com/beagle-dev/beagle-lib.git refs/heads/${BEAGLE_BRANCH} | cut -f1)
+                  sha=${BEAGLE_SHA_PIN:-$(git ls-remote https://github.com/beagle-dev/beagle-lib.git refs/heads/${BEAGLE_BRANCH} | cut -f1)}
                   test -n "$sha"
                   echo "sha=$sha" >> $GITHUB_OUTPUT
             - name: Cache BEAGLE

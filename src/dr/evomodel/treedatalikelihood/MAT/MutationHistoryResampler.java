@@ -59,6 +59,9 @@ import java.util.Set;
  * data there come only from X (whose presence the move changes), as in the subtree moves of Varilly et
  * al. (Nature, 2026). Its cost does not grow with the distance moved.</li>
  * </ul>
+ * The local block is the default in XML wherever the model allows it ({@link #supportsLocalBlock}): on big-3
+ * it gave two to three times the ESS per minute of the path block and of BEAGLE, with the same posterior
+ * (optimization_notes/mat_local_spr/benchmark).
  *
  * Without per-site rates, explicit hits or unequal pattern weights, sites are handled sparsely (see
  * {@link SparsePass}): a site with no events around the block has the same state a throughout, and its
@@ -135,7 +138,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int chosenState;           // left by choose
 
     /**
-     * A resampler with the path block.
+     * A resampler with the path block (the XML parser uses the local block by default where it can).
      */
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate) {
         this(delegate, false);
@@ -177,23 +180,40 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         int variableCount = 0;
         int[] variable = new int[patternCount];
-        boolean equalWeights = true;
         for (int p = 0; p < patternCount; p++) {
             if (!delegate.isConstantPattern(p)) {
-                if (variableCount > 0 && weights[p] != weights[variable[0]]) {
-                    equalWeights = false;
-                }
                 variable[variableCount++] = p;
             }
         }
         this.variableSites = Arrays.copyOf(variable, variableCount);
-        this.sparse = !historyModel.hasExplicitHistories() && !delegate.hasSiteRates() && equalWeights &&
-                variableCount > 0;
+        this.sparse = supportsLocalBlock(delegate);
         this.localBlock = localBlock;
         if (localBlock && !sparse) {
             throw new IllegalArgumentException("The local block needs a branch history model without explicit " +
                     "hits, no per-site rates and equal pattern weights");
         }
+    }
+
+    /**
+     * @return true if sites can be handled sparsely, which the local block needs: a branch history model
+     * without explicit hits, no per-site rates, and the same weight for every variable pattern
+     */
+    public static boolean supportsLocalBlock(MATDataLikelihoodDelegate delegate) {
+        if (delegate.getHistoryModel().hasExplicitHistories() || delegate.hasSiteRates()) {
+            return false;
+        }
+        final double[] weights = delegate.getPatternWeights();
+        double weight = Double.NaN;
+        for (int p = 0; p < delegate.getPatternList().getPatternCount(); p++) {
+            if (!delegate.isConstantPattern(p)) {
+                if (weight == weight && weights[p] != weight) {
+                    return false;
+                }
+                weight = weights[p];
+            }
+        }
+        // (with no variable sites there is nothing to resample)
+        return weight == weight;
     }
 
     public MATDataLikelihoodDelegate getDelegate() {

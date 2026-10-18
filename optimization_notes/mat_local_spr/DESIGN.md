@@ -273,3 +273,6 @@ Implemented on `operator_experiment` (f501918f0, then 75b643976 to 0d1e33af2). b
   sites of the old events (7% slower overall).
 - After a hooked move the topology check is skipped (it remains as an assertion), and each branch's
   events are kept in pattern order.
+- After the big-3 benchmark (`benchmark/README.md`) the local block became the default of
+  `<mutationHistoryResampler>` wherever the model allows it (no explicit hits, no per-site rates, equal
+  pattern weights); otherwise, or with `block="path"`, the path block is used.

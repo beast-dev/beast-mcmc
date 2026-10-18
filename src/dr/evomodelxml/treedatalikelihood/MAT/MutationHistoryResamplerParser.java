@@ -30,6 +30,8 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 
 /**
@@ -58,12 +60,23 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("The " + SITE_SELECTION + " attribute of " + xo.getId() + " must be " +
                         "'all' (every site is resampled; 'hybrid' is no longer supported)");
             }
-            String block = xo.getAttribute(BLOCK, PATH_BLOCK);
-            if (!block.equalsIgnoreCase(PATH_BLOCK) && !block.equalsIgnoreCase(LOCAL_BLOCK)) {
-                throw new XMLParseException("The " + BLOCK + " attribute of " + xo.getId() + " must be '" +
-                        PATH_BLOCK + "' or '" + LOCAL_BLOCK + "'");
+            MATDataLikelihoodDelegate delegate = getDelegate(xo);
+            boolean local;
+            if (xo.hasAttribute(BLOCK)) {
+                String block = xo.getStringAttribute(BLOCK);
+                if (!block.equalsIgnoreCase(PATH_BLOCK) && !block.equalsIgnoreCase(LOCAL_BLOCK)) {
+                    throw new XMLParseException("The " + BLOCK + " attribute of " + xo.getId() + " must be '" +
+                            PATH_BLOCK + "' or '" + LOCAL_BLOCK + "'");
+                }
+                local = block.equalsIgnoreCase(LOCAL_BLOCK);
+            } else {
+                // the local block where the model allows it (it is faster and mixes as well), else the path block
+                local = MutationHistoryResampler.supportsLocalBlock(delegate);
             }
-            return new MutationHistoryResampler(getDelegate(xo), block.equalsIgnoreCase(LOCAL_BLOCK));
+            MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, local);
+            Logger.getLogger("dr.evomodel").info("  Mutation history resampler " + xo.getId() + ": the " +
+                    (local ? LOCAL_BLOCK : PATH_BLOCK) + " block");
+            return resampler;
         } catch (IllegalArgumentException iae) {
             throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
         }
@@ -84,9 +97,11 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
         return new XMLSyntaxRule[] {
                 AttributeRule.newStringRule(SITE_SELECTION, true, "Which sites a move resamples: only 'all' " +
                         "(kept for older files)"),
-                AttributeRule.newStringRule(BLOCK, true, "Which states a move resamples: 'path' (the regrafted " +
-                        "parent and the nodes on the path between its old and new positions; the default) or 'local' " +
-                        "(the regrafted parent, and the nodes whose data at a site come only from the moved subtree)"),
+                AttributeRule.newStringRule(BLOCK, true, "Which states a move resamples: 'local' (the regrafted " +
+                        "parent, and the nodes whose data at a site come only from the moved subtree; the default where " +
+                        "the model allows it) or 'path' (the regrafted parent and the nodes on the path between its old " +
+                        "and new positions; the default for branch history models with explicit hits, per-site rates " +
+                        "or unequal pattern weights, which the local block does not support)"),
                 new ElementRule(TreeDataLikelihood.class)
         };
     }

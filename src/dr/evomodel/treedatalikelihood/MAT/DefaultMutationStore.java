@@ -26,6 +26,9 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 /**
  * A mutable mutation annotated tree with store/restore support.
  *
@@ -64,6 +67,9 @@ public final class DefaultMutationStore implements MutationStore {
     private final long[] stateVersions;
     private long lastStateVersion = 0;
     private final double[][] compositions; // null where not yet computed from the states
+    private int[] scratchPatterns;         // work arrays of updateBranch
+    private byte[] scratchFrom;
+    private byte[] scratchTo;
 
     // the nodes whose states or branch events have changed since the log was last cleared
     private final boolean[] changeLogged;
@@ -367,35 +373,62 @@ public final class DefaultMutationStore implements MutationStore {
             return;
         }
 
-        byte[] childStates = states[nodeNumber];
-        byte[] parentStates = states[parent];
+        final byte[] childStates = states[nodeNumber];
+        final byte[] parentStates = states[parent];
+        // views reading eight states at a time (to skip patterns where the two nodes' states are equal)
+        final ByteBuffer childWords = ByteBuffer.wrap(childStates).order(ByteOrder.nativeOrder());
+        final ByteBuffer parentWords = ByteBuffer.wrap(parentStates).order(ByteOrder.nativeOrder());
+        if (scratchPatterns == null) {
+            scratchPatterns = new int[patternCount];
+            scratchFrom = new byte[patternCount];
+            scratchTo = new byte[patternCount];
+        }
+        // one pass: substitutions from the front of the scratch arrays, ambiguities from the back (in reverse);
+        // most patterns have the same state at both ends, which is skipped eight at a time
         int substitutionCount = 0;
-        int ambiguityCount = 0;
-        for (int p = 0; p < patternCount; p++) {
-            if (parentStates[p] >= 0 && childStates[p] != parentStates[p]) {
-                if (childStates[p] < 0) {
-                    ambiguityCount++;
-                } else {
-                    substitutionCount++;
+        int ambiguityEnd = patternCount;
+        int p = 0;
+        final int wordEnd = patternCount - 7;
+        while (p < patternCount) {
+            if (p < wordEnd && childWords.getLong(p) == parentWords.getLong(p)) {
+                p += 8;
+                continue;
+            }
+            final int end = Math.min(p + 8, patternCount);
+            for (; p < end; p++) {
+                byte a = parentStates[p];
+                byte b = childStates[p];
+                if (a >= 0 && b != a) {
+                    if (b < 0) {
+                        ambiguityEnd--;
+                        scratchPatterns[ambiguityEnd] = p;
+                        scratchFrom[ambiguityEnd] = a;
+                    } else {
+                        scratchPatterns[substitutionCount] = p;
+                        scratchFrom[substitutionCount] = a;
+                        scratchTo[substitutionCount] = b;
+                        substitutionCount++;
+                    }
                 }
             }
         }
+        final int ambiguityCount = patternCount - ambiguityEnd;
         if (substitutionCount + ambiguityCount == 0) {
             mutations[nodeNumber] = BranchMutations.EMPTY;
             return;
         }
-        int[] patterns = new int[substitutionCount + ambiguityCount];
-        byte[] from = new byte[patterns.length];
-        byte[] to = new byte[patterns.length];
-        int substitution = 0;
-        int ambiguity = substitutionCount;
-        for (int p = 0; p < patternCount; p++) {
-            if (parentStates[p] >= 0 && childStates[p] != parentStates[p]) {
-                int i = childStates[p] < 0 ? ambiguity++ : substitution++;
-                patterns[i] = p;
-                from[i] = parentStates[p];
-                to[i] = childStates[p];
-            }
+        final int size = substitutionCount + ambiguityCount;
+        int[] patterns = new int[size];
+        byte[] from = new byte[size];
+        byte[] to = new byte[size];
+        System.arraycopy(scratchPatterns, 0, patterns, 0, substitutionCount);
+        System.arraycopy(scratchFrom, 0, from, 0, substitutionCount);
+        System.arraycopy(scratchTo, 0, to, 0, substitutionCount);
+        // the ambiguities were collected backwards
+        for (int i = 0; i < ambiguityCount; i++) {
+            patterns[substitutionCount + i] = scratchPatterns[patternCount - 1 - i];
+            from[substitutionCount + i] = scratchFrom[patternCount - 1 - i];
+            to[substitutionCount + i] = -1;
         }
         mutations[nodeNumber] = new BranchMutations(patterns, from, to, substitutionCount);
     }

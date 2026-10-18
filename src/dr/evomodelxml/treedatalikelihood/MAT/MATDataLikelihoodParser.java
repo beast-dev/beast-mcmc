@@ -34,8 +34,11 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.MAT.BranchHistoryModel;
+import dr.evomodel.treedatalikelihood.MAT.ExplicitHitsHistoryModel;
+import dr.evomodel.treedatalikelihood.MAT.IntegratedHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.SingleHitHistoryModel;
+import dr.evomodel.treedatalikelihood.MAT.TimedHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -72,10 +75,24 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         Parameter siteRates = xo.hasChildNamed(SITE_RATES) ? (Parameter) xo.getElementFirstChild(SITE_RATES) : null;
 
+        final String historyName = xo.getAttribute(BRANCH_HISTORY, IntegratedHitsHistoryModel.NAME);
+        if (historyName.equalsIgnoreCase(IntegratedHitsHistoryModel.NAME)) {
+            final boolean rateCategories = siteRateModel != null && siteRateModel.getCategoryCount() > 1;
+            if (siteRates != null || rateCategories) {
+                throw new XMLParseException("Site rate heterogeneity (" +
+                        (siteRates != null ? "a per-site rate parameter" :
+                                "a site model with " + siteRateModel.getCategoryCount() + " rate categories") +
+                        ") is not yet implemented for the " + IntegratedHitsHistoryModel.NAME + " branch history model" +
+                        (xo.hasAttribute(BRANCH_HISTORY) ? "" : " (the default)") + " in " + xo.getId() +
+                        ": use " + BRANCH_HISTORY + "=\"" + SingleHitHistoryModel.NAME + "\", \"" +
+                        ExplicitHitsHistoryModel.NAME + "\" or \"" + TimedHitsHistoryModel.NAME +
+                        "\" with a per-site rate parameter (" + SITE_RATES + ")");
+            }
+        }
+
         MATDataLikelihoodDelegate delegate;
         try {
-            BranchHistoryModel historyModel = BranchHistoryModel.create(
-                    xo.getAttribute(BRANCH_HISTORY, SingleHitHistoryModel.NAME),
+            BranchHistoryModel historyModel = BranchHistoryModel.create(historyName,
                     patternList.getDataType().getStateCount());
             delegate = new MATDataLikelihoodDelegate(treeModel, patternList, branchModel,
                     siteRateModel, branchRateModel, siteRates, historyModel);
@@ -91,7 +108,7 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
         return new XMLSyntaxRule[] {
                 AttributeRule.newStringRule(BRANCH_HISTORY, true, "How each site's history along a branch is " +
                         "represented: " + String.join(", ", BranchHistoryModel.NAMES) + " (default " +
-                        SingleHitHistoryModel.NAME + ")"),
+                        IntegratedHitsHistoryModel.NAME + ", which does not yet support site rate heterogeneity)"),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new XORRule(

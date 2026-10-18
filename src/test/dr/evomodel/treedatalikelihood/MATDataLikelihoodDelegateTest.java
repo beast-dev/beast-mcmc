@@ -40,6 +40,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.MAT.DefaultMutationStore;
+import dr.evomodel.treedatalikelihood.MAT.IntegratedHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.Mutation;
 import dr.evomodel.treedatalikelihood.MAT.MutationHistoryGibbsOperator;
@@ -69,6 +70,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     private StrictClockBranchRates branchRates;
     private MATDataLikelihoodDelegate delegate;
     private TreeDataLikelihood likelihood;
+    private boolean integratedHits = false;
 
     public MATDataLikelihoodDelegateTest(String name) {
         super(name);
@@ -599,6 +601,14 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * moved subtree is the only data along part of its path (hot sites), with chains of different lengths.
      */
     private void setUpSparseData() {
+        setUpSparseData(false);
+    }
+
+    /**
+     * @param integrated whether to use integrated hits (and siteLogLikelihood then log P(t)) rather than single hits
+     */
+    private void setUpSparseData(boolean integrated) {
+        integratedHits = integrated;
         String[][] taxaSequence = new String[2][];
         taxaSequence[0] = PRIMATES_TAXON_SEQUENCE[0].clone();
         taxaSequence[1] = PRIMATES_TAXON_SEQUENCE[1].clone();
@@ -626,7 +636,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         patterns = new SitePatterns(alignment, null, 0, -1, 1, true, SitePatterns.CompressionType.CONSTANT_ONLY);
         branchRates = new StrictClockBranchRates(clockRate);
         delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
-                null, branchRates, null);
+                null, branchRates, null, integrated ? new IntegratedHitsHistoryModel(4) : null);
         likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
         // the direct path density (directLogLikelihood) then uses a relative rate of 1 for every site
         siteRates = new Parameter.Default(patterns.getPatternCount(), 1.0);
@@ -847,8 +857,20 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * enumerated conditional. States outside the block must not change.
      */
     public void testHistoryGibbsDrawsExactly() {
+        checkHistoryGibbsDrawsExactly(false);
+    }
+
+    /**
+     * As testHistoryGibbsDrawsExactly, with integrated hits: a Gibbs update (unlike a Metropolis-Hastings
+     * proposal) must draw from exactly the conditional of the likelihood used.
+     */
+    public void testHistoryGibbsDrawsExactlyWithIntegratedHits() {
+        checkHistoryGibbsDrawsExactly(true);
+    }
+
+    private void checkHistoryGibbsDrawsExactly(boolean integrated) {
         clockRate.setParameterValue(0, 40.0);
-        setUpSparseData();
+        setUpSparseData(integrated);
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
 
         likelihood.getLogLikelihood();
@@ -894,7 +916,9 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 Integer c = observed.get(key);
                 observed.put(key, c == null ? 1 : c + 1);
             }
-            assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+            if (!integrated) {
+                assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+            }
             likelihood.restoreModelState();
         }
 
@@ -1115,7 +1139,13 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             assertTrue("unambiguous child below ambiguous parent", a >= 0);
             double length = (treeModel.getNodeHeight(treeModel.getNode(parents[n])) -
                     treeModel.getNodeHeight(treeModel.getNode(n))) * rate;
-            logL += singleHitLogDensity(q, a, b, length, 1.0);
+            if (integratedHits) {
+                double[] transition = new double[16];
+                hky.getTransitionProbabilities(length, transition);
+                logL += Math.log(transition[a * 4 + b]);
+            } else {
+                logL += singleHitLogDensity(q, a, b, length, 1.0);
+            }
         }
         return logL;
     }

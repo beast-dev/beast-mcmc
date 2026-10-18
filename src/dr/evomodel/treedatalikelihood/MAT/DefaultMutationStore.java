@@ -378,11 +378,7 @@ public final class DefaultMutationStore implements MutationStore {
         // views reading eight states at a time (to skip patterns where the two nodes' states are equal)
         final ByteBuffer childWords = ByteBuffer.wrap(childStates).order(ByteOrder.nativeOrder());
         final ByteBuffer parentWords = ByteBuffer.wrap(parentStates).order(ByteOrder.nativeOrder());
-        if (scratchPatterns == null) {
-            scratchPatterns = new int[patternCount];
-            scratchFrom = new byte[patternCount];
-            scratchTo = new byte[patternCount];
-        }
+        ensureScratch();
         // one pass: substitutions from the front of the scratch arrays, ambiguities from the back (in reverse);
         // most patterns have the same state at both ends, which is skipped eight at a time
         int substitutionCount = 0;
@@ -412,25 +408,39 @@ public final class DefaultMutationStore implements MutationStore {
                 }
             }
         }
-        final int ambiguityCount = patternCount - ambiguityEnd;
-        if (substitutionCount + ambiguityCount == 0) {
-            mutations[nodeNumber] = BranchMutations.EMPTY;
-            return;
+        mutations[nodeNumber] = buildFromScratch(substitutionCount, ambiguityEnd);
+    }
+
+    private void ensureScratch() {
+        if (scratchPatterns == null) {
+            scratchPatterns = new int[patternCount];
+            scratchFrom = new byte[patternCount];
+            scratchTo = new byte[patternCount];
         }
+    }
+
+    /**
+     * @return the events in the work arrays: substitutions in [0, substitutionCount), and ambiguities in
+     * [ambiguityEnd, patternCount) in reverse pattern order
+     */
+    private BranchMutations buildFromScratch(int substitutionCount, int ambiguityEnd) {
+        final int ambiguityCount = patternCount - ambiguityEnd;
         final int size = substitutionCount + ambiguityCount;
+        if (size == 0) {
+            return BranchMutations.EMPTY;
+        }
         int[] patterns = new int[size];
         byte[] from = new byte[size];
         byte[] to = new byte[size];
         System.arraycopy(scratchPatterns, 0, patterns, 0, substitutionCount);
         System.arraycopy(scratchFrom, 0, from, 0, substitutionCount);
         System.arraycopy(scratchTo, 0, to, 0, substitutionCount);
-        // the ambiguities were collected backwards
         for (int i = 0; i < ambiguityCount; i++) {
             patterns[substitutionCount + i] = scratchPatterns[patternCount - 1 - i];
             from[substitutionCount + i] = scratchFrom[patternCount - 1 - i];
             to[substitutionCount + i] = -1;
         }
-        mutations[nodeNumber] = new BranchMutations(patterns, from, to, substitutionCount);
+        return new BranchMutations(patterns, from, to, substitutionCount);
     }
 
     /**
@@ -459,16 +469,15 @@ public final class DefaultMutationStore implements MutationStore {
         byte[] childStates = states[nodeNumber];
         byte[] parentStates = states[parent];
 
-        // the kept events (in pattern order) are merged with the new ones at the sites (in pattern order),
-        // so that the events stay in pattern order
-        int capacity = old.size() + sites.length;
-        int[] subPatterns = new int[capacity];
-        byte[] subFrom = new byte[capacity];
-        byte[] subTo = new byte[capacity];
-        int[] ambPatterns = new int[capacity];
-        byte[] ambFrom = new byte[capacity];
+        // The kept events (in pattern order) are merged with the new ones at the sites (in pattern order),
+        // so that the events stay in pattern order. There is at most one event per pattern, so they fit in
+        // the work arrays: substitutions from the front, ambiguities from the back (in reverse).
+        ensureScratch();
+        final int[] subPatterns = scratchPatterns;
+        final byte[] subFrom = scratchFrom;
+        final byte[] subTo = scratchTo;
         int subCount = 0;
-        int ambCount = 0;
+        int ambEnd = patternCount;
         int j = 0;
         for (int k = 0; k <= old.getSubstitutionCount(); k++) {
             int next = k < old.getSubstitutionCount() ? old.getPattern(k) : Integer.MAX_VALUE;
@@ -492,29 +501,18 @@ public final class DefaultMutationStore implements MutationStore {
             for (; j < sites.length && sites[j] < next; j++) {
                 int p = sites[j];
                 if (parentStates[p] >= 0 && childStates[p] < 0) {
-                    ambPatterns[ambCount] = p;
-                    ambFrom[ambCount++] = parentStates[p];
+                    ambEnd--;
+                    subPatterns[ambEnd] = p;
+                    subFrom[ambEnd] = parentStates[p];
                 }
             }
             if (k < old.size() && !changed[next]) {
-                ambPatterns[ambCount] = next;
-                ambFrom[ambCount++] = (byte) old.getFromState(k);
+                ambEnd--;
+                subPatterns[ambEnd] = next;
+                subFrom[ambEnd] = (byte) old.getFromState(k);
             }
         }
-        if (subCount + ambCount == 0) {
-            mutations[nodeNumber] = BranchMutations.EMPTY;
-            return;
-        }
-        int[] patterns = new int[subCount + ambCount];
-        byte[] from = new byte[patterns.length];
-        byte[] to = new byte[patterns.length];
-        System.arraycopy(subPatterns, 0, patterns, 0, subCount);
-        System.arraycopy(subFrom, 0, from, 0, subCount);
-        System.arraycopy(subTo, 0, to, 0, subCount);
-        System.arraycopy(ambPatterns, 0, patterns, subCount, ambCount);
-        System.arraycopy(ambFrom, 0, from, subCount, ambCount);
-        java.util.Arrays.fill(to, subCount, patterns.length, (byte) -1);
-        mutations[nodeNumber] = new BranchMutations(patterns, from, to, subCount);
+        mutations[nodeNumber] = buildFromScratch(subCount, ambEnd);
     }
 
     /**

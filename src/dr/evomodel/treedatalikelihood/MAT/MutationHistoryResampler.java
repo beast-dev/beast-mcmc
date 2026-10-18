@@ -132,8 +132,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int nodeStamp = 0;
     private int[][] ambiguousRuns;
     private long[] ambiguousRunsVersion;
-    private int[][] stateCountsCache;
-    private long[] stateCountsVersion;
+    // the summed weights of the constant patterns in each state (which every node has), and the weight of
+    // every variable pattern (when sites are handled sparsely)
+    private final double[] constantComposition;
+    private final double variableWeight;
 
     private int chosenState;           // left by choose
 
@@ -187,6 +189,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         this.variableSites = Arrays.copyOf(variable, variableCount);
         this.sparse = supportsLocalBlock(delegate);
+        this.constantComposition = new double[stateCount];
+        for (int p = 0; p < patternCount; p++) {
+            if (delegate.isConstantPattern(p)) {
+                constantComposition[delegate.getPatternList().getPatternState(0, p)] += weights[p];
+            }
+        }
+        this.variableWeight = variableCount > 0 ? weights[variableSites[0]] : 1.0;
         this.localBlock = localBlock;
         if (localBlock && !sparse) {
             throw new IllegalArgumentException("The local block needs a branch history model without explicit " +
@@ -255,7 +264,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             candidateSites = getCandidateSites(block);
             final DefaultMutationStore store = delegate.getMutableMutationStore();
             final int x = node.getNumber();
-            final int[] uniformCounts = getStateCounts(x).clone();
+            final int[] uniformCounts = getStateCounts(x);
             int substitutionCount = 0;
             int ambiguityCount = 0;
             int[] substitution = new int[candidateSites.length];
@@ -779,7 +788,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      */
     private int[] getUniformCounts(int x, int[] substitutions, int[] hot, int[] marks, int markStamp) {
         final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final int[] counts = getStateCounts(x).clone();
+        final int[] counts = getStateCounts(x);
         for (int site : substitutions) {
             int a = store.getState(x, site);
             if (a >= 0) {
@@ -1074,30 +1083,29 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     /**
-     * @return the number of the variable sites in each state at the node (cached for its current states;
-     * callers must not modify it)
+     * @return the number of the variable sites in each state at the node (when sites are handled sparsely,
+     * so that every variable pattern has the same weight), from the node's composition: constant patterns
+     * have their state at every node
      */
     private int[] getStateCounts(int n) {
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
-        if (stateCountsCache == null) {
-            stateCountsCache = new int[tree.getNodeCount()][];
-            stateCountsVersion = new long[tree.getNodeCount()];
-            Arrays.fill(stateCountsVersion, -1L);
+        final double[] composition = delegate.getMutableMutationStore().getComposition(n);
+        final int[] counts = new int[stateCount];
+        for (int a = 0; a < stateCount; a++) {
+            counts[a] = (int) Math.round((composition[a] - constantComposition[a]) / variableWeight);
         }
-        long version = store.getStateVersion(n);
-        if (stateCountsCache[n] == null || stateCountsVersion[n] != version) {
-            int[] counts = stateCountsCache[n] == null ? new int[stateCount] : stateCountsCache[n];
-            Arrays.fill(counts, 0);
-            byte[] states = store.getStates(n);
-            for (int p : variableSites) {
-                if (states[p] >= 0) {
-                    counts[states[p]]++;
-                }
+        assert Arrays.equals(counts, countStates(n)) : "state counts of node " + n;
+        return counts;
+    }
+
+    private int[] countStates(int n) {
+        final int[] counts = new int[stateCount];
+        final byte[] states = delegate.getMutableMutationStore().getStates(n);
+        for (int p : variableSites) {
+            if (states[p] >= 0) {
+                counts[states[p]]++;
             }
-            stateCountsCache[n] = counts;
-            stateCountsVersion[n] = version;
         }
-        return stateCountsCache[n];
+        return counts;
     }
 
     /**

@@ -26,12 +26,16 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
  * Sets of patterns held as runs: [start, end) pairs in pattern order, disjoint and not touching.
  */
 final class SiteRuns {
+
+    private static final long SIGN_BITS = 0x8080808080808080L;
 
     private SiteRuns() {
     }
@@ -40,14 +44,25 @@ final class SiteRuns {
      * @return the runs of the patterns at which the states are ambiguous (negative)
      */
     static int[] ambiguous(byte[] states, int patternCount) {
+        // eight states at a time: a word has an ambiguous (negative) state iff one of its sign bits is set
+        final ByteBuffer words = ByteBuffer.wrap(states).order(ByteOrder.nativeOrder());
+        final int wordEnd = patternCount - 7;
         int[] runs = new int[8];
         int count = 0;
         int p = 0;
         while (p < patternCount) {
+            if (p < wordEnd && (words.getLong(p) & SIGN_BITS) == 0L) {
+                p += 8;
+                continue;
+            }
             if (states[p] < 0) {
                 int start = p;
                 while (p < patternCount && states[p] < 0) {
-                    p++;
+                    if (p < wordEnd && (words.getLong(p) & SIGN_BITS) == SIGN_BITS) {
+                        p += 8;
+                    } else {
+                        p++;
+                    }
                 }
                 if (count + 2 > runs.length) {
                     runs = Arrays.copyOf(runs, 2 * runs.length);

@@ -267,32 +267,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         movedNodes = new int[]{sibling.getNumber(), tree.getParent(node).getNumber(), destination.getNumber()};
         block = getBlock(tree.getParent(node), sibling, destination);
         if (sparse) {
-            // the sites with events around the block; the others are handled together (see SparsePass)
-            candidateSites = getCandidateSites(block);
-            final DefaultMutationStore store = delegate.getMutableMutationStore();
-            final int x = node.getNumber();
-            final int[] uniformCounts = getStateCounts(x);
-            int substitutionCount = 0;
-            int ambiguityCount = 0;
-            int[] substitution = new int[candidateSites.length];
-            int[] ambiguity = new int[candidateSites.length];
-            for (int p : candidateSites) {
-                if (delegate.isConstantPattern(p)) {
-                    continue;
-                }
-                int a = store.getState(x, p);
-                if (a >= 0) {
-                    uniformCounts[a]--;
-                }
-                if (siteClasses[p] == AMBIGUITIES_ONLY) {
-                    ambiguity[ambiguityCount++] = p;
-                } else {
-                    substitution[substitutionCount++] = p;
-                }
-            }
-            // the ambiguity-only sites in pattern order, so that they can be swept against the neighbours' runs
-            oldPathPass = new PathPass(x, uniformCounts, Arrays.copyOf(substitution, substitutionCount),
-                    sortSites(ambiguity, ambiguityCount), stamp);
+            oldPathPass = makePathPass(block, node.getNumber());
             sampleBlock(block, false, siteClasses, oldPathPass.substitutionSites, oldSiteLogProbabilities, oldPathPass);
         } else {
             candidateSites = getVariableSites(block);
@@ -303,6 +278,116 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             // every candidate is resampled, so score all their hits around the block
             logProposalOfOldHistories = scoreHistories(getIncidentBranches(block), candidateSites);
         }
+    }
+
+    /**
+     * Finds the sites with events around the block (setting candidateSites; the others are handled together,
+     * see SparsePass) and makes the sparse pass for them.
+     *
+     * @param referenceNode a neighbour of the block whose states do not change (the uniform sites' states are
+     *                      read there)
+     */
+    private PathPass makePathPass(int[] blockNodes, int referenceNode) {
+        candidateSites = getCandidateSites(blockNodes);
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final int[] uniformCounts = getStateCounts(referenceNode);
+        int substitutionCount = 0;
+        int ambiguityCount = 0;
+        int[] substitution = new int[candidateSites.length];
+        int[] ambiguity = new int[candidateSites.length];
+        for (int p : candidateSites) {
+            if (delegate.isConstantPattern(p)) {
+                continue;
+            }
+            int a = store.getState(referenceNode, p);
+            if (a >= 0) {
+                uniformCounts[a]--;
+            }
+            if (siteClasses[p] == AMBIGUITIES_ONLY) {
+                ambiguity[ambiguityCount++] = p;
+            } else {
+                substitution[substitutionCount++] = p;
+            }
+        }
+        // the ambiguity-only sites in pattern order, so that they can be swept against the neighbours' runs
+        return new PathPass(referenceNode, uniformCounts, Arrays.copyOf(substitution, substitutionCount),
+                sortSites(ambiguity, ambiguityCount), stamp);
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Gibbs updates in place
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Draws the states of a connected block of internal nodes from their full conditional given all the other
+     * states (and, with explicit hits, the hits on the branches touching the block given their end states),
+     * without changing the topology: a Gibbs update of the mutational history (see
+     * {@link MutationHistoryGibbsOperator}). The draw is that of the path block's new states.
+     */
+    public void resampleInPlace(int[] blockNodes) {
+        delegate.updateMAT();
+        delegate.ensureRates();
+        final DefaultMutationStore store = delegate.getMutableMutationStore();
+
+        final int[] resampled;
+        IntBuffer otherChanges = null;
+        if (sparse) {
+            final PathPass pass = makePathPass(blockNodes, getOutsideChild(blockNodes));
+            sampleBlock(blockNodes, true, siteClasses, pass.substitutionSites, null, pass);
+            resampled = pass.substitutionSites;
+            otherChanges = pass.changedSites;
+        } else {
+            resampled = getVariableSites(blockNodes);
+            sampleBlock(blockNodes, true, siteClasses, resampled, null, null);
+        }
+        delegate.setHistoryResampled();
+        store.setFitchSetsStale(true);
+
+        final IntBuffer changed = new IntBuffer();
+        addFlagged(changed, resampled, resampled.length);
+        if (otherChanges != null) {
+            addFlagged(changed, otherChanges.values, otherChanges.count);
+        }
+        final int[] changedSites = sortSites(changed.values, changed.count);
+        if (historyModel.hasExplicitHistories()) {
+            // draw the hits of the resampled sites on every branch touching the block, given their end states
+            List<Integer> branches = new ArrayList<Integer>();
+            for (int n : getIncidentBranches(blockNodes)) {
+                branches.add(n);
+            }
+            sampleHistories(branches, changedSites);
+        } else {
+            // the branches above the block's nodes and below them (the parents are unchanged)
+            final int touchedStamp = nextNodeStamp();
+            final IntBuffer touched = new IntBuffer();
+            for (int n : blockNodes) {
+                addWithChildren(touched, n, touchedStamp);
+            }
+            for (int i = 0; i < touched.count; i++) {
+                store.updateBranchSites(touched.values[i], resampledSites, changedSites);
+            }
+        }
+        for (int p : changedSites) {
+            resampledSites[p] = false;
+        }
+        candidateSites = null;
+        delegate.fireHistoryChanged();
+    }
+
+    /**
+     * @return a child of one of the block's nodes that is not in the block
+     */
+    private int getOutsideChild(int[] blockNodes) {
+        for (int n : blockNodes) {
+            NodeRef node = tree.getNode(n);
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                int c = tree.getChild(node, i).getNumber();
+                if (!contains(blockNodes, c)) {
+                    return c;
+                }
+            }
+        }
+        throw new IllegalArgumentException("The block has no children outside it");
     }
 
     private double afterPathMove() {

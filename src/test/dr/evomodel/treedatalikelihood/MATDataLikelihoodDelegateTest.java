@@ -42,6 +42,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.MAT.DefaultMutationStore;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.Mutation;
+import dr.evomodel.treedatalikelihood.MAT.MutationHistoryGibbsOperator;
 import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 import dr.evomodel.treedatalikelihood.MAT.MutationStore;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -838,6 +839,132 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             }
         }
         assertEquals("the resampler should keep the MAT in step with the topology", 0, delegate.getRebuildCount());
+    }
+
+    /**
+     * The Gibbs update in place draws a block's states from their full conditional: repeat it on a block of
+     * three nodes (up to the root) and compare the frequency of each site's drawn block states with the
+     * enumerated conditional. States outside the block must not change.
+     */
+    public void testHistoryGibbsDrawsExactly() {
+        clockRate.setParameterValue(0, 40.0);
+        setUpSparseData();
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
+
+        likelihood.getLogLikelihood();
+        NodeRef humanChimp = treeModel.getParent(findTip("human"));
+        int[] block = new int[3];
+        int count = 0;
+        for (NodeRef n = humanChimp; n != null && count < 3; n = treeModel.getParent(n)) {
+            block[count++] = n.getNumber();
+        }
+        assertEquals(3, count);
+        final int[] parents = currentParents();
+        final boolean[][] presence = presence(parents);
+        final int[] sites = variableSites();
+        final int[][] initialStates = snapshotStates();
+
+        final int repeats = 3000;
+        java.util.Map<String, Integer> observed = new java.util.HashMap<String, Integer>();
+        java.util.Map<String, Double> expected = new java.util.HashMap<String, Double>();
+        for (int site : sites) {
+            int[] free = present(block, presence, site);
+            int[][] states = snapshotStates();
+            double logZ = logConditionalNormaliser(site, free, states, parents);
+            for (int code = 0; code < (1 << (2 * free.length)); code++) {
+                for (int i = 0; i < free.length; i++) {
+                    states[free[i]][site] = (code >> (2 * i)) & 3;
+                }
+                double probability = Math.exp(siteLogLikelihood(site, states, parents) - logZ);
+                expected.put(site + ":" + java.util.Arrays.toString(states(site, free, states)), probability);
+            }
+        }
+        for (int r = 0; r < repeats; r++) {
+            likelihood.getLogLikelihood();
+            likelihood.storeModelState();
+            resampler.resampleInPlace(block);
+            int[][] states = snapshotStates();
+            for (int site : sites) {
+                for (int n = 0; n < parents.length; n++) {
+                    if (!contains(block, n) || !presence[n][site]) {
+                        assertEquals("node " + n + " at site " + site, initialStates[n][site], states[n][site]);
+                    }
+                }
+                String key = site + ":" + java.util.Arrays.toString(states(site, present(block, presence, site), states));
+                Integer c = observed.get(key);
+                observed.put(key, c == null ? 1 : c + 1);
+            }
+            assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+            likelihood.restoreModelState();
+        }
+
+        // each frequency, and (for the more probable states) a chi-square over them all
+        int checked = 0;
+        double chiSquare = 0.0;
+        for (java.util.Map.Entry<String, Double> e : expected.entrySet()) {
+            double mean = repeats * e.getValue();
+            Integer c = observed.get(e.getKey());
+            int n = c == null ? 0 : c;
+            assertEquals(e.getKey(), mean, n, 5 * Math.sqrt(mean * (1 - e.getValue())) + 3);
+            if (mean > 5 && mean < repeats - 5) {
+                checked++;
+                chiSquare += (n - mean) * (n - mean) / (mean * (1 - e.getValue()));
+            }
+        }
+        assertTrue("chi-square " + chiSquare + " over " + checked + " states", chiSquare < 1.5 * checked);
+        for (String key : observed.keySet()) {
+            assertTrue("drawn states with no probability: " + key, expected.containsKey(key));
+        }
+        assertTrue("block states with intermediate probabilities: " + checked, checked > 20);
+    }
+
+    /**
+     * The Gibbs operator mixed with the subtree moves (local block): the MAT stays consistent and restores
+     * exactly, and the operator changes the history.
+     */
+    public void testHistoryGibbsKeepsMATConsistent() {
+        clockRate.setParameterValue(0, 40.0);
+        setUpSparseData();
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
+        SubtreeLeapOperator leap = new SubtreeLeapOperator(treeModel, 1.0, 0.05,
+                SubtreeLeapOperator.DistanceKernelType.NORMAL, AdaptationMode.ADAPTATION_OFF, 0.234);
+        leap.setSubtreeMoveHook(resampler);
+        MutationHistoryGibbsOperator gibbs = new MutationHistoryGibbsOperator(resampler, 3, 1.0);
+
+        likelihood.getLogLikelihood();
+        int changes = 0;
+        for (int iteration = 0; iteration < 600; iteration++) {
+            double logLBefore = likelihood.getLogLikelihood();
+            String statesBefore = describeStates();
+            likelihood.storeModelState();
+
+            double logHR = (iteration % 3 == 0 ? leap : gibbs).doOperation();
+            assertFalse(Double.isNaN(logHR));
+            double logL = likelihood.getLogLikelihood();
+            assertEquals(directLogLikelihood(), logL, 1E-6);
+            if (iteration % 3 != 0 && !statesBefore.equals(describeStates())) {
+                changes++;
+            }
+
+            if (MathUtils.nextBoolean()) {
+                likelihood.restoreModelState();
+                assertEquals(statesBefore, describeStates());
+                assertEquals(logLBefore, likelihood.getLogLikelihood(), 1E-10);
+            } else {
+                likelihood.acceptModelState();
+            }
+        }
+        assertTrue("Gibbs updates that changed the history: " + changes, changes > 50);
+        assertEquals("the resampler should keep the MAT in step with the topology", 0, delegate.getRebuildCount());
+    }
+
+    private static boolean contains(int[] nodes, int n) {
+        for (int m : nodes) {
+            if (m == n) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int[] currentParents() {

@@ -282,6 +282,16 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     }
 
     /**
+     * Called by a {@link MutationHistoryResampler} when it has changed the history without changing the tree,
+     * so that the tree likelihood (which otherwise hears only of tree changes) recalculates. The branches to
+     * update are found from the mutation store's change log.
+     */
+    void fireHistoryChanged() {
+        // index -1: TreeDataLikelihood would otherwise read the index as a node number
+        fireModelChanged(mutationStore, -1);
+    }
+
+    /**
      * @return the number of times the MAT has been updated by parsimony after a topology change
      */
     public int getRebuildCount() {

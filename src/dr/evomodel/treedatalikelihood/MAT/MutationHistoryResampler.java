@@ -136,6 +136,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     // every variable pattern (when sites are handled sparsely)
     private final double[] constantComposition;
     private final double variableWeight;
+    private final long[] constantBits; // the constant patterns, as a bit set
 
     private int chosenState;           // left by choose
 
@@ -196,6 +197,12 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
         }
         this.variableWeight = variableCount > 0 ? weights[variableSites[0]] : 1.0;
+        this.constantBits = new long[(patternCount + 63) >>> 6];
+        for (int p = 0; p < patternCount; p++) {
+            if (delegate.isConstantPattern(p)) {
+                constantBits[p >>> 6] |= 1L << p;
+            }
+        }
         this.localBlock = localBlock;
         if (localBlock && !sparse) {
             throw new IllegalArgumentException("The local block needs a branch history model without explicit " +
@@ -646,7 +653,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         move.newStamp = markStamp;
 
         // score P's current states (and the old chain's) under the old topology
-        final LocalPass pass = new LocalPass(move.x, oldUniformCounts, oldMarks, markStamp, markStamp);
+        final LocalPass pass = new LocalPass(move.x, oldUniformCounts, oldSubstitutionSites, move.oldHotSites);
         final int[] substitutionSites = withoutMarked(oldSubstitutionSites, hotMarks, markStamp);
         double logProbability = sampleBlock(new int[]{move.p}, false, null, substitutionSites, null, pass);
         logProbability += sampleChains(move.p, move.oldChain, move.oldChainLevels, false);
@@ -700,7 +707,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         // draw P's states (and the new chain's) under the new topology
         final LocalPass pass = new LocalPass(move.x,
                 getUniformCounts(move.x, move.newSubstitutionSites, newHotSites, newMarks, move.newStamp),
-                newMarks, move.newStamp, newHotStamp);
+                move.newSubstitutionSites, newHotSites);
         final int[] substitutionSites = withoutMarked(move.newSubstitutionSites, hotMarks, newHotStamp);
         double logProposalOfNewStates = sampleBlock(new int[]{move.p}, true, null, substitutionSites, null, pass);
         logProposalOfNewStates += sampleChains(move.p, newChain, newChainLevels, true);
@@ -1899,17 +1906,19 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * groups, and the order of their sites, are those a path pass would form.
      */
     private final class LocalPass extends SparsePass {
-        final int[] substitutionMarks; // the substitution sites (handled individually) are marked here
-        final int substitutionStamp;
-        final int hotStamp;            // the hot sites (handled as chains) are marked in hotMarks
+        // the sites not handled here: constant, substitution (handled individually) and hot (handled as chains)
+        final long[] excluded;
         byte[][] neighbourStates;      // P's neighbours' states (set when the ambiguity-only sites are swept)
 
-        LocalPass(int referenceNode, int[] uniformCounts, int[] substitutionMarks, int substitutionStamp,
-                  int hotStamp) {
+        LocalPass(int referenceNode, int[] uniformCounts, int[] substitutionSites, int[] hotSites) {
             super(referenceNode, uniformCounts);
-            this.substitutionMarks = substitutionMarks;
-            this.substitutionStamp = substitutionStamp;
-            this.hotStamp = hotStamp;
+            this.excluded = constantBits.clone();
+            for (int p : substitutionSites) {
+                excluded[p >>> 6] |= 1L << p;
+            }
+            for (int p : hotSites) {
+                excluded[p >>> 6] |= 1L << p;
+            }
         }
 
         /**
@@ -1917,7 +1926,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
          */
         @Override
         boolean isCandidate(int p) {
-            if (substitutionMarks[p] == substitutionStamp || hotMarks[p] == hotStamp) {
+            if (isExcluded(p)) {
                 return true;
             }
             for (byte[] states : neighbourStates) {
@@ -1929,8 +1938,29 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
 
         private boolean isExcluded(int p) {
-            return substitutionMarks[p] == substitutionStamp || hotMarks[p] == hotStamp ||
-                    delegate.isConstantPattern(p);
+            return ((excluded[p >>> 6] >>> p) & 1L) != 0L;
+        }
+
+        /**
+         * Adds the number of sites of [start, end) in each state (all must be unambiguous) that are not excluded.
+         */
+        private void countStates(byte[] states, int start, int end, int[] counts) {
+            int p = start;
+            while (p < end) {
+                final long bits = excluded[p >>> 6];
+                final int limit = Math.min(end, ((p >>> 6) + 1) << 6);
+                if (bits == 0L) {
+                    for (; p < limit; p++) {
+                        counts[states[p]]++;
+                    }
+                } else {
+                    for (; p < limit; p++) {
+                        if (((bits >>> p) & 1L) == 0L) {
+                            counts[states[p]]++;
+                        }
+                    }
+                }
+            }
         }
 
         @Override
@@ -1969,7 +1999,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             final Map<AmbiguityKey, LocalAmbiguityGroup> groups = new HashMap<AmbiguityKey, LocalAmbiguityGroup>();
             final AmbiguityKey probe = new AmbiguityKey();
             final long[] present = new long[1];
-            final LocalAmbiguityGroup[] groupsByState = new LocalAmbiguityGroup[stateCount];
+            final int[] segmentCounts = new int[stateCount];
+            final int[] firstSites = new int[stateCount];
+            final int[] newStates = new int[stateCount];
             int mask = fullMask;
             int start = 0;
             int nextEvent = 0;
@@ -1982,27 +2014,37 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     boolean pPresent = (mask & childBits) != 0;
                     if (first < neighbourCount) {
                         present[0] = mask;
-                        Arrays.fill(groupsByState, null);
-                        byte[] states = neighbourStates[first];
-                        for (int p = start; p < end; p++) {
-                            if (isExcluded(p)) {
-                                continue;
+                        final byte[] states = neighbourStates[first];
+                        Arrays.fill(segmentCounts, 0);
+                        countStates(states, start, end, segmentCounts);
+                        // the groups of the segment's states, in the order of their first sites (the order in
+                        // which new groups are created, as when the sites were taken one at a time)
+                        int stateCountInSegment = 0;
+                        Arrays.fill(firstSites, -1);
+                        for (int a = 0; a < stateCount; a++) {
+                            if (segmentCounts[a] > 0) {
+                                stateCountInSegment++;
                             }
-                            int a = states[p];
-                            LocalAmbiguityGroup group = groupsByState[a];
+                        }
+                        int found = 0;
+                        for (int p = start; found < stateCountInSegment; p++) {
+                            if (!isExcluded(p) && firstSites[states[p]] < 0) {
+                                firstSites[states[p]] = p;
+                                newStates[found++] = states[p];
+                            }
+                        }
+                        for (int i = 0; i < found; i++) {
+                            final int a = newStates[i];
+                            probe.set(present, a);
+                            LocalAmbiguityGroup group = groups.get(probe);
                             if (group == null) {
-                                probe.set(present, a);
-                                group = groups.get(probe);
-                                if (group == null) {
-                                    AmbiguityKey key = new AmbiguityKey();
-                                    key.set(present.clone(), a);
-                                    group = new LocalAmbiguityGroup(a, p, first);
-                                    groups.put(key, group);
-                                }
-                                groupsByState[a] = group;
-                                group.addSegment(start, end);
+                                AmbiguityKey key = new AmbiguityKey();
+                                key.set(present.clone(), a);
+                                group = new LocalAmbiguityGroup(a, firstSites[a], first);
+                                groups.put(key, group);
                             }
-                            group.count++;
+                            group.addSegment(start, end);
+                            group.count += segmentCounts[a];
                         }
                     }
                     if (block.sample) {

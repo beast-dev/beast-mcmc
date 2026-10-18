@@ -9,7 +9,14 @@ is per minute of sampling after the burn-in (the run's wall time times the propo
 Agreement is the difference between means in units of its Monte Carlo standard error
 (sqrt(se1^2 + se2^2), se = sd / sqrt(ESS)): |z| > 3 is flagged.
 
-usage: analyse.py RUN_DIR [--burnin 0.25] [--baseline baseline] [--markdown out.md]
+The MAT runs also report their own likelihood (treeLikelihood), the number of mutations in the sampled
+history (mat.mutations) and its excess over the Fitch parsimony score of the sampled tree (excess, from the
+trees in the run's .trees file, see tree_parsimony.py; the scores are cached in the run's parsimony.txt).
+These are compared with the MAT reference method rather than the baseline. A history that mixes slowly
+keeps more mutations than its tree needs: a high excess that differs between replicates.
+
+usage: analyse.py RUN_DIR [--burnin 0.25] [--baseline baseline] [--mat-reference mat-path-gibbs]
+                  [--markdown out.md]
 """
 import argparse
 import glob
@@ -18,8 +25,13 @@ import os
 
 import numpy as np
 
+import tree_parsimony
+
 BASKET = ['rootHeight', 'treeLength', 'constant.popSize', 'kappa', 'clock.rate',
-          'frequencies1', 'frequencies2', 'frequencies3', 'frequencies4', 'coalescent', 'prior']
+          'frequencies1', 'frequencies2', 'frequencies3', 'frequencies4', 'coalescent', 'prior',
+          'treeLikelihood', 'mat.mutations', 'excess']
+# parameters that differ in meaning between the baseline and the MAT
+MAT_ONLY = {'treeLikelihood', 'mat.mutations', 'excess'}
 
 
 def read_log(path):
@@ -67,6 +79,28 @@ def hpd(x, mass=0.95):
     return s[i], s[i + k]
 
 
+def parsimony_scores(directory):
+    """@return {state: Fitch score} of the run's sampled trees (cached in parsimony.txt)."""
+    cache = os.path.join(directory, 'parsimony.txt')
+    if not os.path.exists(cache):
+        xml = glob.glob(os.path.join(directory, '*.xml'))[0]
+        trees = glob.glob(os.path.join(directory, '*.trees'))[0]
+        names, matrix = tree_parsimony.read_matrix(xml)
+        sets = {tree_parsimony.key(name): matrix[i] for i, name in enumerate(names)}
+        translate, sampled = tree_parsimony.read_trees(trees)
+        with open(cache + '.tmp', 'w') as f:
+            for state, newick in sampled:
+                tree = tree_parsimony.relabel(tree_parsimony.parse_newick(newick), translate)
+                f.write('%d\t%d\n' % (state, tree_parsimony.fitch(tree, sets)))
+        os.rename(cache + '.tmp', cache)
+    scores = {}
+    with open(cache) as f:
+        for line in f:
+            state, score = line.split()
+            scores[int(state)] = int(score)
+    return scores
+
+
 def summarise(run_dir, burnin):
     runs = {}
     for path in sorted(glob.glob(os.path.join(run_dir, '*', 'time.txt'))):
@@ -82,11 +116,20 @@ def summarise(run_dir, burnin):
         states = log['state']
         keep = states >= burnin * states[-1]
         minutes = seconds / 60.0 * (1.0 - burnin)
+        series = {p: log[p][keep] for p in BASKET if p in log}
+        if method == 'baseline':
+            for p in MAT_ONLY:
+                series.pop(p, None)
+        elif 'mat.mutations' in log and glob.glob(os.path.join(directory, '*.trees')):
+            scores = parsimony_scores(directory)
+            index = {int(s): i for i, s in enumerate(states)}
+            sampled = [s for s in sorted(scores) if s >= burnin * states[-1] and s in index]
+            series['excess'] = np.array([log['mat.mutations'][index[s]] - scores[s] for s in sampled])
         stats = {}
         for p in BASKET:
-            if p not in log:
+            if p not in series:
                 continue
-            x = log[p][keep]
+            x = series[p]
             e = ess(x)
             stats[p] = {'mean': float(np.mean(x)), 'sd': float(np.std(x, ddof=1)), 'ess': e,
                         'ess_per_minute': e / minutes, 'hpd': hpd(x),
@@ -118,7 +161,18 @@ def fmt(x):
     return '%.4f' % x
 
 
-def report(runs, baseline, burnin):
+def max_pairwise_z(stats_list):
+    """@return the z of the pair of replicates that differ most (in units of their Monte Carlo SE)."""
+    worst = float('nan')
+    for i in range(len(stats_list)):
+        for j in range(i + 1, len(stats_list)):
+            z = z_score(stats_list[j], stats_list[i])
+            if worst != worst or abs(z) > abs(worst):
+                worst = z
+    return worst
+
+
+def report(runs, baseline, mat_reference, burnin):
     lines = []
     out = lines.append
     methods = sorted({m for m, _ in runs}, key=lambda m: (m != baseline, m))
@@ -169,11 +223,14 @@ def report(runs, baseline, burnin):
     out('')
 
     out('## Agreement (z = difference / Monte Carlo SE; |z| > 3 flagged)\n')
-    out('Within runs: second half of the kept samples against the first (stationarity). Between replicates of a '
-        'method. Between each method (replicates pooled) and %s.\n' % baseline)
+    if mat_reference not in methods:
+        mat_reference = next((m for m in methods if m != baseline), baseline)
+    out('Within runs: second half of the kept samples against the first (stationarity). Between the replicates of '
+        'a method: the pair that differ most. Between each method (replicates pooled) and the reference: %s, or '
+        'for the MAT\'s own quantities (%s) %s.\n' % (baseline, ', '.join(sorted(MAT_ONLY)), mat_reference))
     out('| Parameter | ' + ' | '.join(['halves %s %s' % k for k in keys] +
                                        ['reps %s' % m for m in methods] +
-                                       ['%s vs %s' % (m, baseline) for m in methods if m != baseline]) + ' |')
+                                       ['%s vs reference' % m for m in methods if m != baseline]) + ' |')
     ncols = len(keys) + len(methods) + len(methods) - 1
     out('|---|' + '---|' * ncols)
     for p in BASKET:
@@ -188,10 +245,14 @@ def report(runs, baseline, burnin):
                 cells.append('')
         for m in methods:
             reps = [runs[k]['stats'][p] for k in keys if k[0] == m and p in runs[k]['stats']]
-            cells.append(flag(z_score(reps[0], reps[1])) if len(reps) >= 2 else '')
-        base = [runs[k]['stats'][p] for k in keys if k[0] == baseline and p in runs[k]['stats']]
+            cells.append(flag(max_pairwise_z(reps)) if len(reps) >= 2 else '')
+        reference = mat_reference if p in MAT_ONLY else baseline
+        base = [runs[k]['stats'][p] for k in keys if k[0] == reference and p in runs[k]['stats']]
         for m in methods:
             if m == baseline:
+                continue
+            if m == reference:
+                cells.append('')
                 continue
             other = [runs[k]['stats'][p] for k in keys if k[0] == m and p in runs[k]['stats']]
             cells.append(flag(z_score(pooled(other), pooled(base))) if other and base else '')
@@ -210,10 +271,11 @@ def main():
     parser.add_argument('run_dir')
     parser.add_argument('--burnin', type=float, default=0.25)
     parser.add_argument('--baseline', default='baseline')
+    parser.add_argument('--mat-reference', default='mat-path-gibbs')
     parser.add_argument('--markdown')
     args = parser.parse_args()
     runs = summarise(args.run_dir, args.burnin)
-    text = report(runs, args.baseline, args.burnin)
+    text = report(runs, args.baseline, args.mat_reference, args.burnin)
     print(text)
     if args.markdown:
         with open(args.markdown, 'w') as f:

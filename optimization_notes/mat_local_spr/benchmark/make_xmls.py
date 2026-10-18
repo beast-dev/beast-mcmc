@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Makes the XMLs of the big-3 comparison of the Felsenstein likelihood (BEAGLE) with the MAT likelihood
-(integrated hits) using the path and the local resampling blocks.
+(integrated hits) using the path and the local resampling blocks, with and without the Gibbs operator on
+the mutational history (mutationHistoryGibbsOperator, weight GIBBS_WEIGHT, blocks of up to 3 nodes).
 
 The sources are the big-3 XMLs of the beast-benchmark repository (899 BDBV genomes, HKY, strict clock,
 constant-size coalescent). All three use the same data, model, priors and operators; they differ only in
@@ -19,7 +20,11 @@ SOURCES = {
     'baseline': 'benchmark-big-3-min.xml',
     'mat-path': 'benchmark-big-3-mat.xml',
     'mat-local': 'benchmark-big-3-mat.xml',
+    'mat-path-gibbs': 'benchmark-big-3-mat.xml',
+    'mat-local-gibbs': 'benchmark-big-3-mat.xml',
 }
+
+GIBBS_WEIGHT = 90
 
 
 def replace_once(text, old, new):
@@ -38,9 +43,15 @@ def make(name, source, chain_length, log_every, tree_log_every):
     if name.startswith('mat'):
         # treat ambiguities exactly as BEAGLE does
         xml = replace_once(xml, ' ambiguousConstant="true" ambiguityThreshold="0.25"', '')
-        block = 'local' if name == 'mat-local' else 'path'
+        block = 'local' if name.startswith('mat-local') else 'path'
         xml = replace_once(xml, '<mutationHistoryResampler id="matResampler" siteSelection="all">',
                            '<mutationHistoryResampler id="matResampler" block="%s">' % block)
+        if name.endswith('-gibbs'):
+            xml = replace_once(xml, '\t</operators>',
+                               '\t\t<mutationHistoryGibbsOperator weight="%d" size="3">\n'
+                               '\t\t\t<mutationHistoryResampler idref="matResampler"/>\n'
+                               '\t\t</mutationHistoryGibbsOperator>\n'
+                               '\t</operators>' % GIBBS_WEIGHT)
     return xml
 
 

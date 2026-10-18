@@ -59,6 +59,16 @@ public class BeagleFunctionality {
         return checkGTEVersion(new int[]{3,1,3});
     }
 
+    static boolean IS_DEGREE2_SUPPORTED() {
+        // a second child of Beagle.NONE (a degree-2 node) on the CPU from BEAGLE 4.1.1
+        return checkGTEVersion(new int[]{4,1,1});
+    }
+
+    static boolean IS_BUFFER_GROWTH_SUPPORTED() {
+        // beagleEnsureBufferCounts from BEAGLE 4.2.0
+        return checkGTEVersion(new int[]{4,2,0});
+    }
+
     static boolean IS_PRE_ORDER_SUPPORTED() {
         int[] versionNumbers = BeagleInfo.getVersionNumbers();
         return checkGTEVersion(new int[]{3,2});

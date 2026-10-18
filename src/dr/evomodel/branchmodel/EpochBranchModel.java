@@ -169,6 +169,10 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         return epochTimes.getParameterValues();
     }
 
+    public Parameter getEpochTimes() {
+        return epochTimes;
+    }
+
     public MutableTreeModel getTree() {
         return tree;
     }

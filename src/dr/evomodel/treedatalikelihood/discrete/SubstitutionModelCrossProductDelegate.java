@@ -32,6 +32,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.treedatalikelihood.AugmentedNodeRegistry;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 
@@ -126,6 +127,51 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
         return u;
     }
 
+    /**
+     * With degree-2 nodes at the epoch transition times, each segment of a branch lies in one epoch, so its cross
+     * products belong to the substitution model of that epoch alone, with the segment's own partials and length.
+     */
+    private int coverSegments(int modelNumber,
+                              int[] postBufferIndices,
+                              int[] preBufferIndices,
+                              double[] branchLengths) {
+
+        final AugmentedNodeRegistry registry = epochProcessDelegate.getAugmentedNodeRegistry();
+        final int[] chain = new int[registry.getBoundaryCount()];
+
+        int u = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            NodeRef node = tree.getNode(nodeNum);
+            if (!tree.isRoot(node)) {
+
+                final int count = registry.copyChain(nodeNum, chain);
+                final int firstBoundary = registry.getFirstBoundary(nodeNum);
+
+                final double branchRate;
+                synchronized (branchRateModel) {
+                    branchRate = branchRateModel.getBranchRate(tree, node);
+                }
+
+                for (int j = 0; j <= count; ++j) {
+                    // the segment above the node (j = 0) and above each of its augmented nodes
+                    final int id = (j == 0) ? nodeNum : chain[j - 1];
+                    if (registry.getMatrixEpoch(id) == modelNumber) {
+                        final double lower = (j == 0) ? tree.getNodeHeight(node) :
+                                registry.getBoundary(firstBoundary + j - 1);
+                        final double upper = (j == count) ? tree.getNodeHeight(tree.getParent(node)) :
+                                registry.getBoundary(firstBoundary + j);
+
+                        postBufferIndices[u] = getPostOrderPartialIndex(id);
+                        preBufferIndices[u]  = getPreOrderPartialIndex(id);
+                        branchLengths[u] = branchRate * (upper - lower);
+                        u++;
+                    }
+                }
+            }
+        }
+        return u;
+    }
+
     private double relativeWeight(int k, double[] weights) {
         double sum = 0.0;
         for (double w : weights) {
@@ -146,11 +192,14 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
             throw new RuntimeException("Not yet implemented");
         }
 
-        final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
-        final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
-        final double[] branchLengths = new double[tree.getNodeCount() - 1];
+        final int maxCount = tree.getNodeCount() - 1 + ((epochProcessDelegate == null) ? 0 :
+                epochProcessDelegate.getAugmentedNodeRegistry().getCapacity());
 
-        if (substitutionModelCount == 1) {
+        final int[] postBufferIndices = new int[maxCount];
+        final int[] preBufferIndices = new int[maxCount];
+        final double[] branchLengths = new double[maxCount];
+
+        if (substitutionModelCount == 1 && epochProcessDelegate == null) {
 
             Arrays.fill(first, 0, first.length, 0.0);
 
@@ -167,8 +216,9 @@ public class SubstitutionModelCrossProductDelegate extends AbstractBeagleGradien
             for (int i = 0; i < substitutionModelCount; ++i) {
 
                 Arrays.fill(buffer, 0, buffer.length, 0.0);
-                int count = coverPartialTree(i, postBufferIndices, preBufferIndices,
-                        branchLengths);
+                int count = (epochProcessDelegate != null) ?
+                        coverSegments(i, postBufferIndices, preBufferIndices, branchLengths) :
+                        coverPartialTree(i, postBufferIndices, preBufferIndices, branchLengths);
                 beagle.calculateCrossProductDifferentials(postBufferIndices, preBufferIndices,
                         new int[] { 0 }, new int[] { 0 },
                         branchLengths,

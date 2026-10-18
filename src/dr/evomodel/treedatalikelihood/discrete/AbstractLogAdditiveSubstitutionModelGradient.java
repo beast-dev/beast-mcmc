@@ -29,11 +29,10 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.*;
-import dr.evomodel.treedatalikelihood.*;
-import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
+import dr.evomodel.treedatalikelihood.GradientDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Likelihood;
@@ -61,6 +60,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
     protected final TreeTrait treeTraitProvider;
     protected final Tree tree;
     protected final BranchModel branchModel;
+    private final SubstitutionModelGradientTraitFactory.Context crossProductTraitContext;
 
     protected final ComplexSubstitutionModel substitutionModel;
     protected final int stateCount;
@@ -71,10 +71,31 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
     public enum ApproximationMode {
 
+        EXACT_SPECTRAL("exactSpectral") {
+            @Override
+            String getInfo() {
+                return "an exact adjoint";
+            }
+
+            @Override
+            CorrectionTermCache createCache(SubstitutionModel model, List<Integer> accumulateMap) {
+                return null;
+            }
+
+            @Override
+            void emptyCache(CorrectionTermCache cache) {
+
+            }
+
+            @Override
+            double computeCorrection(int i, int j, double[] crossProducts, int stateCount, CorrectionTermCache correctionTermCache) {
+                return 0;
+            }
+        },
         FIRST_ORDER("firstOrder") {
             @Override
             public String getInfo() {
-                return "a first-order";
+                return "a first-order approximation";
             }
 
             @Override
@@ -93,7 +114,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         AFFINE_CORRECTED("affineCorrected") {
             @Override
             public String getInfo() {
-                return "an affine-corrected";
+                return "an affine-corrected approximation";
             }
 
             @Override
@@ -163,6 +184,15 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
                                                         GradientDataLikelihoodDelegate likelihoodDelegate,
                                                         ComplexSubstitutionModel substitutionModel,
                                                         ApproximationMode mode) {
+        this(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode, false);
+    }
+
+    public AbstractLogAdditiveSubstitutionModelGradient(String traitName,
+                                                        TreeDataLikelihood treeDataLikelihood,
+                                                        GradientDataLikelihoodDelegate likelihoodDelegate,
+                                                        ComplexSubstitutionModel substitutionModel,
+                                                        ApproximationMode mode,
+                                                        boolean forceAllReal) {
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.branchModel = likelihoodDelegate.getBranchModel();
@@ -174,37 +204,22 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
         this.mode = mode;
         this.correctionTermCache = mode.createCache(substitutionModel, crossProductAccumulationMap);
 
-        String name = SubstitutionModelCrossProductDelegate.getName(traitName);
+        this.crossProductTraitContext = SubstitutionModelGradientTraitFactory.create(traitName,
+                treeDataLikelihood,
+                likelihoodDelegate,
+                substitutionModel.getDataType().getStateCount(),
+                mode == ApproximationMode.EXACT_SPECTRAL,
+                forceAllReal,
+                mode.getInfo());
 
-        if (treeDataLikelihood.getTreeTrait(name) == null) {
-            ProcessSimulationDelegate gradientDelegate;
-            if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
-                gradientDelegate = new SubstitutionModelCrossProductDelegate(traitName,
-                        treeDataLikelihood.getTree(),
-                        (BeagleDataLikelihoodDelegate) likelihoodDelegate,
-                        treeDataLikelihood.getBranchRateModel(),
-                        substitutionModel.getDataType().getStateCount());
-            } else if (likelihoodDelegate instanceof  DiscreteDataLikelihoodDelegate){
-                gradientDelegate = new DiscreteSubstitutionModelCrossProductDelegate(traitName,
-                        treeDataLikelihood.getTree(),
-                        (DiscreteDataLikelihoodDelegate) likelihoodDelegate,
-                        substitutionModel.getDataType().getStateCount());
-            } else {
-                throw new RuntimeException("Other likelihood delegates are currently not supported");
-            }
-
-            TreeTraitProvider traitProvider = new ProcessSimulation(treeDataLikelihood, gradientDelegate);
-            treeDataLikelihood.addTraits(traitProvider.getTreeTraits());
-        }
-
-        treeTraitProvider = treeDataLikelihood.getTreeTrait(name);
+        treeTraitProvider = crossProductTraitContext.getTreeTrait();
         assert (treeTraitProvider != null);
 
         this.branchModel.addModelListener(this);
         this.substitutionModel.addModelListener(this);
         
         Logger.getLogger("dr.evomodel.treedatalikelihood.discrete").info(
-                "Gradient wrt " + traitName + " using " + mode.getInfo() + " approximation");
+                "Gradient wrt " + traitName + " using " + crossProductTraitContext.getInfo());
     }
 
     protected int[][] makeAsymmetricMap() {
@@ -252,6 +267,8 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
             startTime = System.nanoTime();
         }
 
+        crossProductTraitContext.prepareEvaluation();
+
         double[] crossProducts = (double[]) treeTraitProvider.getTrait(tree, null);
         double[] generator = new double[crossProducts.length];
 
@@ -259,16 +276,16 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
         substitutionModel.getInfinitesimalMatrix(generator);
 
-        double[] pi = substitutionModel.getFrequencyModel().getFrequencies();
+        double[] pi = substitutionModel.getNormalizationFrequencies();
         boolean normalize = substitutionModel.getNormalization();
-
-        double rateScalar = normalize ? 1 / substitutionModel.setupMatrix() : 0.0;
-
-        double normalizationConstant = preProcessNormalization(crossProducts, generator,
-                substitutionModel.getNormalization());
 
         Transform transform = (substitutionModel instanceof LogRateSubstitutionModel) ?
                 ((LogRateSubstitutionModel) substitutionModel).getTransform() : null;
+
+        double rateScalar = normalize && transform != null ? 1 / substitutionModel.setupMatrix() : 0.0;
+
+        double normalizationConstant = preProcessNormalization(crossProducts, generator,
+                substitutionModel.getNormalization());
 
         final double[] gradient = new double[getParameter().getDimension()];
         for (int i = 0; i < getParameter().getDimension(); ++i) {
@@ -357,7 +374,7 @@ public abstract class AbstractLogAdditiveSubstitutionModelGradient implements
 
 
     Double getReportTolerance() {
-        return null;
+        return mode == ApproximationMode.EXACT_SPECTRAL ? 1E-4 : null;
     }
 
     @SuppressWarnings("unused")

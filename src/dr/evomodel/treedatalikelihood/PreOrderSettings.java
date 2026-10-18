@@ -36,8 +36,12 @@ public class PreOrderSettings {
     boolean branchInfinitesimalDerivative;
 
     boolean useAmbiguities;
+    boolean useSpectralRepresentation;
 
     boolean useRewardAwareBranchModelDelegate;
+
+    /** add degree-2 nodes at the epoch transition times instead of convolving the matrices of the epochs */
+    boolean useAugmentedEpochNodes;
 
     boolean useHierarchicalRepresentation;
 
@@ -45,28 +49,44 @@ public class PreOrderSettings {
                             boolean branchRateDerivative,
                             boolean branchInfinitesimalDerivative,
                             boolean useAmbiguities) {
-        this(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, false);
+        this(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, false,false);
     }
     public PreOrderSettings(boolean usePreOrder,
                             boolean branchRateDerivative,
                             boolean branchInfinitesimalDerivative,
                             boolean useAmbiguities,
+                            boolean useSpectralRepresentation,
                             boolean useRewardAwareBranchModelDelegate) {
         this(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities,
-                useRewardAwareBranchModelDelegate, false);
+                useSpectralRepresentation, useRewardAwareBranchModelDelegate, false);
     }
 
     public PreOrderSettings(boolean usePreOrder,
                             boolean branchRateDerivative,
                             boolean branchInfinitesimalDerivative,
                             boolean useAmbiguities,
+                            boolean useSpectralRepresentation,
                             boolean useRewardAwareBranchModelDelegate,
+                            boolean useAugmentedEpochNodes) {
+        this(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities,
+                useSpectralRepresentation, useRewardAwareBranchModelDelegate, useAugmentedEpochNodes, false);
+    }
+
+    public PreOrderSettings(boolean usePreOrder,
+                            boolean branchRateDerivative,
+                            boolean branchInfinitesimalDerivative,
+                            boolean useAmbiguities,
+                            boolean useSpectralRepresentation,
+                            boolean useRewardAwareBranchModelDelegate,
+                            boolean useAugmentedEpochNodes,
                             boolean useHierarchicalRepresentation) {
         this.usePreOrder = usePreOrder;
         this.branchRateDerivative = branchRateDerivative;
         this.branchInfinitesimalDerivative = branchInfinitesimalDerivative;
         this.useAmbiguities = useAmbiguities;
+        this.useSpectralRepresentation = useSpectralRepresentation;
         this.useRewardAwareBranchModelDelegate = useRewardAwareBranchModelDelegate;
+        this.useAugmentedEpochNodes = useAugmentedEpochNodes;
         this.useHierarchicalRepresentation = useHierarchicalRepresentation;
     }
 

@@ -87,9 +87,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         addModel(this.branchRateModel);
 
         if(likelihoodDelegate != null) {
-            treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                    likelihoodDelegate.getOptimalTraversalType()
-            );
+            treeTraversalDelegate = createTreeTraversal(likelihoodDelegate);
         }else{
             treeTraversalDelegate = null;
         }
@@ -115,6 +113,21 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         return branchRateModel;
     }
 
+    private LikelihoodTreeTraversal createTreeTraversal(DataLikelihoodDelegate delegate) {
+        if (delegate instanceof BeagleDataLikelihoodDelegate) {
+            final EvolutionaryProcessDelegate processDelegate =
+                    ((BeagleDataLikelihoodDelegate) delegate).getEvolutionaryProcessDelegate();
+
+            if (processDelegate instanceof EpochEvolutionaryProcessDelegate) {
+                // the process changes at epoch transition times, which need degree-2 nodes
+                return new EpochLikelihoodTraversal(treeModel, branchRateModel, delegate.getOptimalTraversalType(),
+                        (EpochEvolutionaryProcessDelegate) processDelegate);
+            }
+        }
+
+        return new LikelihoodTreeTraversal(treeModel, branchRateModel, delegate.getOptimalTraversalType());
+    }
+
     public DataLikelihoodDelegate getDataLikelihoodDelegate() {
         return likelihoodDelegate;
     }
@@ -123,9 +136,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         likelihoodDelegate = dld;
         addModel(likelihoodDelegate);
         likelihoodDelegate.setCallback(this);
-        treeTraversalDelegate = new LikelihoodTreeTraversal(treeModel, branchRateModel,
-                likelihoodDelegate.getOptimalTraversalType()
-        );
+        treeTraversalDelegate = createTreeTraversal(likelihoodDelegate);
         rateRescalingScheme = likelihoodDelegate.getRateRescalingScheme();
         hasInitialized = true;
     }

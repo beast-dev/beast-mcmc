@@ -62,10 +62,22 @@ public interface ProcessOnTreeDelegate {
     }
 
     final class NodeOperation {
+
+        /** rightChild of a degree-2 node, i.e., an augmented node with a single child */
+        public static final int NO_CHILD = -1;
+
+        /** level of an operation created without level information */
+        public static final int UNKNOWN_LEVEL = -1;
+
         NodeOperation(int nodeNumber, int leftChild, int rightChild) {
+            this(nodeNumber, leftChild, rightChild, UNKNOWN_LEVEL);
+        }
+
+        NodeOperation(int nodeNumber, int leftChild, int rightChild, int level) {
             this.nodeNumber = nodeNumber;
             this.leftChild = leftChild;
             this.rightChild = rightChild;
+            this.level = level;
         }
 
         public int getNodeNumber() {
@@ -80,6 +92,15 @@ public interface ProcessOnTreeDelegate {
             return rightChild;
         }
 
+        /**
+         * @return the depth below the root (root = 0), counting augmented nodes, of the node that the operation
+         * computes: nodeNumber in post-order and leftChild in pre-order. Operations at the same level are
+         * independent. UNKNOWN_LEVEL if not recorded.
+         */
+        public int getLevel() {
+            return level;
+        }
+
         public String toString() {
             return nodeNumber + "(" + leftChild + "," + rightChild + ")";
         }
@@ -87,6 +108,7 @@ public interface ProcessOnTreeDelegate {
         private final int nodeNumber;
         private final int leftChild;
         private final int rightChild;
+        private final int level;
     }
 
     final class BranchNodeOperation {

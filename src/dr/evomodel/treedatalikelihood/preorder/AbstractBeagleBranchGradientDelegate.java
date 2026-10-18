@@ -32,7 +32,10 @@ import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evomodel.treedatalikelihood.AugmentedNodeRegistry;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+
+import java.util.Arrays;
 
 /**
  * AbstractBeagleGradientDelegate - interface for a plugin delegate for data simulation on a tree.
@@ -60,6 +63,11 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
     }
     @Override
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
+
+        if (epochProcessDelegate != null) {
+            getSegmentDerivatives(tree, first, second, null, null);
+            return;
+        }
 
         final int[] postBufferIndices = new int[tree.getNodeCount() - 1];
         final int[] preBufferIndices = new int[tree.getNodeCount() - 1];
@@ -102,6 +110,111 @@ public abstract class AbstractBeagleBranchGradientDelegate extends AbstractBeagl
         if (DEBUG) {
             checkReduction(first);
         }
+    }
+
+    /**
+     * With degree-2 nodes at the epoch transition times, a branch is a chain of segments, each in one epoch. The
+     * derivative with respect to the length of a segment uses the infinitesimal matrix of the epoch of the segment.
+     * A branch has one rate, so the derivative with respect to its length is the average of the derivatives of its
+     * segments, weighted by the fraction of the branch that each segment covers. The chain rule of a caller
+     * multiplies by the length of the branch, giving the derivative with respect to the rate of the branch.
+     */
+    private void getSegmentDerivatives(Tree tree, double[] first, double[] second, double[] bottom, double[] top) {
+
+        if (second != null) {
+            throw new UnsupportedOperationException("Second derivatives are not yet supported with augmented " +
+                    "epoch nodes, since the segments of a branch share its rate");
+        }
+
+        if (!substitutionProcessKnown) {
+            cacheDifferentialMassMatrix(tree, false);
+            substitutionProcessKnown = true;
+        }
+
+        final AugmentedNodeRegistry registry = epochProcessDelegate.getAugmentedNodeRegistry();
+
+        int segmentCount = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            if (!tree.isRoot(tree.getNode(nodeNum))) {
+                segmentCount += 1 + registry.getChainLength(nodeNum);
+            }
+        }
+
+        final int[] postBufferIndices = new int[segmentCount];
+        final int[] preBufferIndices = new int[segmentCount];
+        final int[] firstDervIndices = new int[segmentCount];
+        final int[] branch = new int[segmentCount]; // the position of the branch of each segment in first
+        final double[] weight = new double[segmentCount];
+        final int[] bottomSegment = new int[tree.getNodeCount() - 1];
+        final int[] topSegment = new int[tree.getNodeCount() - 1];
+
+        final int[] chain = new int[registry.getBoundaryCount()];
+
+        int s = 0;
+        int u = 0;
+        for (int nodeNum = 0; nodeNum < tree.getNodeCount(); nodeNum++) {
+            final NodeRef node = tree.getNode(nodeNum);
+            if (!tree.isRoot(node)) {
+
+                final int count = registry.copyChain(nodeNum, chain);
+                final int firstBoundary = registry.getFirstBoundary(nodeNum);
+
+                final double lowestHeight = tree.getNodeHeight(node);
+                final double highestHeight = tree.getNodeHeight(tree.getParent(node));
+
+                for (int j = 0; j <= count; ++j) {
+                    // the segment above the node (j = 0) and above each of its augmented nodes
+                    final int id = (j == 0) ? nodeNum : chain[j - 1];
+                    final double lower = (j == 0) ? lowestHeight : registry.getBoundary(firstBoundary + j - 1);
+                    final double upper = (j == count) ? highestHeight : registry.getBoundary(firstBoundary + j);
+
+                    postBufferIndices[s] = getPostOrderPartialIndex(id);
+                    preBufferIndices[s] = getPreOrderPartialIndex(id);
+                    firstDervIndices[s] = getFirstDerivativeMatrixBufferIndex(id);
+                    branch[s] = u;
+                    weight[s] = (count == 0) ? 1.0 : (upper - lower) / (highestHeight - lowestHeight);
+                    if (j == 0) {
+                        bottomSegment[u] = s;
+                    }
+                    if (j == count) {
+                        topSegment[u] = s;
+                    }
+                    ++s;
+                }
+                u++;
+            }
+        }
+
+        final double[] segmentDerivatives = new double[segmentCount];
+
+        beagle.calculateEdgeDifferentials(postBufferIndices, preBufferIndices,
+                firstDervIndices, new int[] { 0 }, segmentCount,
+                null, segmentDerivatives, null);
+
+        if (first != null) {
+            Arrays.fill(first, 0.0);
+            for (s = 0; s < segmentCount; ++s) {
+                first[branch[s]] += weight[s] * segmentDerivatives[s];
+            }
+        }
+
+        if (bottom != null) {
+            for (u = 0; u < bottomSegment.length; ++u) {
+                bottom[u] = segmentDerivatives[bottomSegment[u]];
+                top[u] = segmentDerivatives[topSegment[u]];
+            }
+        }
+    }
+
+    /**
+     * With degree-2 nodes at the epoch transition times, the height of a node only changes the length of the lowest
+     * segment of the branch above it and of the highest segment of each branch below it.
+     *
+     * @param bottom the derivative with respect to the length of the lowest segment of each branch
+     * @param top    the derivative with respect to the length of the highest segment of each branch
+     */
+    protected void getEndSegmentDerivatives(Tree tree, double[] bottom, double[] top) {
+        getSegmentDerivatives(tree, null, null, bottom, top);
     }
 
     private void checkReduction(double[] array) {

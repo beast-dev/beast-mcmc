@@ -40,10 +40,10 @@ import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.LumpableCtmcRateGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode;
 
 /**
  * @author Filippo Monti
@@ -54,17 +54,33 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
 
     private static final String PARSER_NAME = "approximateLogCtmcRateGradient";
     private static final String TRANSFORMED_PARSER_NAME = "approximateTransformedCtmcRateGradient";
+    private static final String EXACT_PARSER_NAME = "exactLogCtmcRateGradient";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String FORCE_ALL_REAL = "forceAllReal";
+    private static final String MODE = "mode";
 
     public String getParserName(){ return PARSER_NAME; }
 
     public String[] getParserNames() {
-        return new String[] { PARSER_NAME, TRANSFORMED_PARSER_NAME };
+        return new String[] { PARSER_NAME, TRANSFORMED_PARSER_NAME, EXACT_PARSER_NAME };
+    }
+
+    public static ApproximationMode parseGradientMode(XMLObject xo) throws XMLParseException {
+        String modeString = xo.getAttribute(MODE, "firstOrder");
+        if (modeString.compareToIgnoreCase("exact") == 0) {
+            return ApproximationMode.EXACT_SPECTRAL;
+        }
+        try {
+            return ApproximationMode.factory(modeString);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
+        final boolean forceAllReal = xo.getAttribute(FORCE_ALL_REAL, false);
         final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
@@ -72,11 +88,13 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
+        ApproximationMode mode = parseGradientMode(xo);
+
         for (Object child : xo.getChildren()) {
             if (child instanceof GlmSubstitutionModel) {
                 final GlmSubstitutionModel substitutionModel = (GlmSubstitutionModel) child;
                 return new LogCtmcRateGradient(traitName, treeDataLikelihood,
-                        (BeagleDataLikelihoodDelegate) delegate, substitutionModel);
+                        (BeagleDataLikelihoodDelegate) delegate, substitutionModel, mode, forceAllReal);
             } else if (child instanceof LogRateSubstitutionModel) {
                 final LogRateSubstitutionModel substitutionModel = (LogRateSubstitutionModel) child;
                 LogAdditiveCtmcRateProvider rates = substitutionModel.getRateProvider();
@@ -91,7 +109,7 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
                             (BeagleDataLikelihoodDelegate) delegate, substitutionModel, parameter);
                 } else {
                     return new LogCtmcRateGradient(traitName, treeDataLikelihood,
-                            (GradientDataLikelihoodDelegate) delegate, substitutionModel);
+                            (GradientDataLikelihoodDelegate) delegate, substitutionModel, mode, forceAllReal);
                 }
             }
         }
@@ -105,6 +123,8 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME, true),
+            AttributeRule.newBooleanRule(FORCE_ALL_REAL, true), // TODO this should be a Mode
+            AttributeRule.newStringRule(MODE, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(CompoundParameter.class, true),
             new XORRule(
@@ -125,4 +145,3 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
         return AbstractGlmSubstitutionModelGradient.class;
     }
 }
-

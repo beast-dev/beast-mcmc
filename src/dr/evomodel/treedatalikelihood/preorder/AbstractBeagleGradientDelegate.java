@@ -32,9 +32,11 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.PreOrderMessageProvider;
 import dr.inference.model.Model;
 import dr.math.matrixAlgebra.WrappedVector;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -43,7 +45,8 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc Suchard
  */
-public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDelegate.AbstractDelegate {
+public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDelegate.AbstractDelegate
+        implements PreOrderMessageProvider {
 
     private static final String GRADIENT_TRAIT_NAME = "Gradient";
     private static final String HESSIAN_TRAIT_NAME = "Hessian";
@@ -55,18 +58,22 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         this.tree = tree;
         this.likelihoodDelegate = likelihoodDelegate;
         this.beagle = likelihoodDelegate.getBeagleInstance();
+        this.preOrderType = getPreOrderType();
 
         assert (this.likelihoodDelegate.isUsePreOrder()); /// TODO: reinitialize beagle instance if usePreOrder = false
 
         this.evolutionaryProcessDelegate = likelihoodDelegate.getEvolutionaryProcessDelegate();
+        this.epochProcessDelegate = (evolutionaryProcessDelegate instanceof EpochEvolutionaryProcessDelegate) ?
+                (EpochEvolutionaryProcessDelegate) evolutionaryProcessDelegate : null;
+
+        // BOTTOM_SPECTRAL/TOP_SPECTRAL drive the exact same operations as BOTTOM/TOP (see vectorizeNodeOperations);
+        // the "spectral" distinction is a caller-side eigenbasis rotation of the raw partial (getPreorderPartials()),
+        // orthogonal to how it was computed here, and to whether there are augmented epoch nodes.
         this.siteRateModel = likelihoodDelegate.getSiteRateModel();
 
         this.patternCount = likelihoodDelegate.getPatternList().getPatternCount();
         this.stateCount = likelihoodDelegate.getPatternList().getDataType().getStateCount();
         this.categoryCount = siteRateModel.getCategoryCount();
-
-        // put preOrder partials right after postOrder partials
-        this.preOrderPartialOffset = likelihoodDelegate.getPartialBufferCount();
 
         this.patternList = likelihoodDelegate.getPatternList();
 
@@ -74,6 +81,36 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         likelihoodDelegate.addModelRestoreListener(this);
 
         this.substitutionProcessKnown = false;
+    }
+
+    @Override
+    public EpochEvolutionaryProcessDelegate getEpochProcessDelegate() {
+        return epochProcessDelegate;
+    }
+
+    @Override
+    public int getStateCount() { return stateCount; }
+
+    @Override
+    public int getPatternCount() { return patternCount; }
+
+    @Override
+    public int getCategoryCount() { return categoryCount; }
+
+    @Override
+    public void getPreorderPartials(int nodeNumber, DiscretePartialsType type, double[] out) {
+
+        assert out.length >= categoryCount * patternCount * stateCount;
+
+        if (type == preOrderType) {
+            beagle.getPartials(getPreOrderPartialIndex(nodeNumber), Beagle.NONE, out);
+        } else {
+            Arrays.fill(out, 0.0);
+        }
+    }
+
+    protected DiscretePartialsType getPreOrderType() {
+        return DiscretePartialsType.BOTTOM;
     }
 
     abstract protected int getGradientLength();
@@ -117,7 +154,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
 
         if (DEBUG_TRANSPOSE) { debugMatrixTranspose(operations); }
 
-        beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
+        beagle.updatePrePartials_v5(operations, operationCount, Beagle.NONE, preOrderType.getBeagleType());
 
         if (gradient == null) {
             gradient = new double[getGradientLength()];
@@ -204,7 +241,21 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     }
 
     @Override
-    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
+        if (preOrderType == DiscretePartialsType.BOTTOM) {
+            return vectorizeNodeOperationsBottom(nodeOperations, operations);
+        } else if (preOrderType == DiscretePartialsType.TOP) {
+            return vectorizeNodeOperationsTop(nodeOperations, rootNodeNumber, operations);
+        } else if (preOrderType == DiscretePartialsType.BOTTOM_SPECTRAL) {
+            return vectorizeNodeOperationsBottom(nodeOperations, operations);
+        } else if (preOrderType == DiscretePartialsType.TOP_SPECTRAL) {
+            return vectorizeNodeOperationsTop(nodeOperations, rootNodeNumber, operations);
+        } else {
+            throw new RuntimeException("Not yet implemented");
+        }
+    }
+
+    private int vectorizeNodeOperationsBottom(List<NodeOperation> nodeOperations, int[] operations) {
         int k = 0;
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
@@ -213,10 +264,120 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
             operations[k++] = Beagle.NONE;
             operations[k++] = getPreOrderPartialIndex(tmpNodeOperation.getNodeNumber());
             operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getLeftChild());
-            operations[k++] = getPostOrderPartialIndex(tmpNodeOperation.getRightChild());
-            operations[k++] = evolutionaryProcessDelegate.getMatrixIndex(tmpNodeOperation.getRightChild());
+            operations[k++] = getSiblingPartialIndex(tmpNodeOperation);
+            operations[k++] = getSiblingMatrixIndex(tmpNodeOperation);
         }
         return nodeOperations.size();
+    }
+
+    /**
+     * A degree-2 node has no sibling. As for the post-order operations, the sibling is Beagle.NONE.
+     */
+    private int getSiblingPartialIndex(NodeOperation operation) {
+        return (operation.getRightChild() == NodeOperation.NO_CHILD) ?
+                Beagle.NONE : getPostOrderPartialIndex(operation.getRightChild());
+    }
+
+    private int getSiblingMatrixIndex(NodeOperation operation) {
+        return (operation.getRightChild() == NodeOperation.NO_CHILD) ?
+                Beagle.NONE : evolutionaryProcessDelegate.getMatrixIndex(operation.getRightChild());
+    }
+
+    private int vectorizeNodeOperationsTop(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
+        final boolean scaling = likelihoodDelegate.isUsingScaleFactors();
+        if (scaling) {
+            initializeScaleBufferTracking();
+        }
+
+        int k = 0;
+        for (NodeOperation tmpNodeOperation : nodeOperations) {
+            //nodeNumber = ParentNodeNumber, leftChild = nodeNumber, rightChild = siblingNodeNumber
+            final int nodeNumber = tmpNodeOperation.getLeftChild();
+            final int parentNumber = tmpNodeOperation.getNodeNumber();
+
+            operations[k++] = getPreOrderPartialIndex(nodeNumber);
+            operations[k++] = Beagle.NONE;
+            operations[k++] = Beagle.NONE;
+            operations[k++] = getPreOrderPartialIndex(parentNumber);
+            operations[k++] = (parentNumber == rootNodeNumber) ? Beagle.NONE :
+                    evolutionaryProcessDelegate.getMatrixIndex(parentNumber);
+            operations[k++] = getSiblingPartialIndex(tmpNodeOperation);
+            operations[k++] = getSiblingMatrixIndex(tmpNodeOperation);
+
+            if (scaling) {
+                buildNegAncestorCumulativeScaleBuffer(nodeNumber, parentNumber);
+            }
+        }
+        return nodeOperations.size();
+    }
+
+    /**
+     * For beagleCalculateAdjointCrossProductDerivative's rescaling correction
+     * (see its contract in beagle.h), a branch X's needed correction term
+     * postCum(X) + preCum(X) - rootCumLog collapses (by induction on tree
+     * depth -- see TODO.md's "Adjoint gradient also ignores rescaling" entry
+     * for the derivation) to a single quantity:
+     *
+     *   -ancestorCum(X),  where ancestorCum(X) = ancestorCum(parent(X)) + s(parent(X))
+     *                     and s(n) = node n's own individual log-scale (0 if
+     *                     unrescaled), ancestorCum(root) = 0.
+     *
+     * i.e. the negated sum of every ANCESTOR's (not X's own, not any
+     * descendant's or sibling's) individual rescaling. This is exactly what
+     * gets passed as preScaleIndices below, with postScaleIndices/
+     * cumulativeScaleIndex left at NONE -- no separate post-order-cumulative
+     * or root-cumulative bookkeeping is needed at all.
+     *
+     * Because ancestorCum only ever extends the PARENT's already-built value
+     * by exactly one term, it can be built with a single copyScaleFactors +
+     * single-element beagleRemoveScaleFactors call (removeScaleFactors
+     * subtracts, giving the needed negation directly) referencing only the
+     * parent's own already-materialized buffer -- unlike a genuine multi-term
+     * cumulative sum, this never requires accumulating a growing flat list
+     * (beagleAccumulateScaleFactors's inputs must be raw individual buffers,
+     * so an already-cumulative one can't be fed into it -- not an issue here
+     * since each step only ever adds the parent's single raw individual
+     * buffer, never a whole subtree's worth). When the parent itself wasn't
+     * rescaled, X's buffer index is just the parent's, reused directly with
+     * no materialization at all. Either way this is O(1) buffer ops per node.
+     */
+    private void initializeScaleBufferTracking() {
+        if (scaleBufferBase < 0) {
+            scaleBufferBase = likelihoodDelegate.getScaleBufferCount();
+        }
+        negAncestorCumulativeScaleBufferIndex = new int[tree.getNodeCount() +
+                ((epochProcessDelegate == null) ? 0 : epochProcessDelegate.getAugmentedNodeRegistry().getCapacity())];
+        Arrays.fill(negAncestorCumulativeScaleBufferIndex, Beagle.NONE);
+    }
+
+    private void buildNegAncestorCumulativeScaleBuffer(int nodeNumber, int parentNumber) {
+        // parentNumber was already processed earlier in this same top-down
+        // traversal, so negAncestorCumulativeScaleBufferIndex[parentNumber] is
+        // already set (still Beagle.NONE, its initialized default, if
+        // parentNumber is the root -- root's own entry is never written).
+        int parentNegAncestorCum = negAncestorCumulativeScaleBufferIndex[parentNumber];
+        int parentIndividual = likelihoodDelegate.getNodeIndividualScaleBufferIndex(parentNumber);
+        if (parentIndividual == Beagle.NONE) {
+            // parent itself wasn't rescaled: X inherits exactly what the parent inherited
+            negAncestorCumulativeScaleBufferIndex[nodeNumber] = parentNegAncestorCum;
+        } else {
+            int slot = scaleBufferBase + nodeNumber;
+            if (parentNegAncestorCum != Beagle.NONE) {
+                beagle.copyScaleFactors(slot, parentNegAncestorCum);
+            } else {
+                beagle.resetScaleFactors(slot);
+            }
+            beagle.removeScaleFactors(new int[]{parentIndividual}, 1, slot);
+            negAncestorCumulativeScaleBufferIndex[nodeNumber] = slot;
+        }
+    }
+
+    /** @return the negated cumulative (LOG) sum of every ancestor's own
+     * individual rescaling (see buildNegAncestorCumulativeScaleBuffer), or
+     * Beagle.NONE if no ancestor of nodeNumber was ever rescaled. Only valid
+     * after simulate() has run for the current tree/model state. */
+    protected int getNegAncestorCumulativeScaleBufferIndex(int nodeNumber) {
+        return (negAncestorCumulativeScaleBufferIndex == null) ? Beagle.NONE : negAncestorCumulativeScaleBufferIndex[nodeNumber];
     }
 
     @Override
@@ -229,7 +390,7 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     }
 
     protected int getPreOrderPartialIndex(final int nodeNumber) {
-        return preOrderPartialOffset + nodeNumber;
+        return likelihoodDelegate.getPreOrderPartialIndex(nodeNumber);
     }
 
     @Override
@@ -251,18 +412,24 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
     protected final BeagleDataLikelihoodDelegate likelihoodDelegate;
     protected final Beagle beagle;
     protected EvolutionaryProcessDelegate evolutionaryProcessDelegate;
+    protected final EpochEvolutionaryProcessDelegate epochProcessDelegate; // null without augmented epoch nodes
     protected final SiteRateModel siteRateModel;
     protected final PatternList patternList;
+    protected final DiscretePartialsType preOrderType;
 
     protected final int patternCount;
     protected final int stateCount;
     protected final int categoryCount;
-    private final int preOrderPartialOffset;
 
     protected double[] gradient;
 
     protected boolean substitutionProcessKnown;
     protected Tree tree;
+
+    // Rescaling-correction bookkeeping for beagleCalculateAdjointCrossProductDerivative
+    // (see initializeScaleBufferTracking); by node number, rebuilt every simulate() call.
+    private int scaleBufferBase = -1;
+    private int[] negAncestorCumulativeScaleBufferIndex;
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     final boolean DEBUG = false;

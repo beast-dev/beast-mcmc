@@ -29,7 +29,7 @@ package dr.inferencexml.distribution;
 
 import dr.inference.distribution.RandomField;
 import dr.inference.model.Parameter;
-import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
+import dr.math.distributions.gp.GaussianProcessField;
 import dr.math.distributions.gp.BasisDimension;
 import dr.math.distributions.gp.GaussianProcessKernel;
 import dr.math.distributions.gp.GaussianProcessKernelGradient;
@@ -48,9 +48,9 @@ public class GaussianProcessKernelGradientParser extends AbstractXMLObjectParser
         RandomField randomField = (RandomField) xo.getChild(RandomField.class);
         List<Parameter> parameters;
 
-        if (randomField.getDistribution() instanceof AdditiveGaussianProcessDistribution) {
+        if (randomField.getDistribution() instanceof GaussianProcessField) {
             BasisDimension basis = null;
-            AdditiveGaussianProcessDistribution distribution = (AdditiveGaussianProcessDistribution) randomField.getDistribution();
+            GaussianProcessField distribution = (GaussianProcessField) randomField.getDistribution();
             if (xo.getChild(GaussianProcessKernel.class) != null) {
                 GaussianProcessKernel kernel = (GaussianProcessKernel) xo.getChild(GaussianProcessKernel.class);
                 if (kernel.getParameters().isEmpty()) {

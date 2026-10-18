@@ -1,0 +1,828 @@
+package dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations;
+
+import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.EigenDecomposition;
+import org.apache.commons.math.util.FastMath;
+
+import java.util.Arrays;
+
+/**
+ * Spectral-basis partial representation with spectral branch propagation.
+ *
+ * Stores post-order partials as y = R^{-1} p and pre-order partials as z = R^T q.
+ * Traversal stays in rotated coordinates; merge operations rotate only transient
+ * working vectors.
+ *
+ * Branch coefficients are cached with CACHE_SLOTS slots per node so that all rate
+ * categories coexist in the cache without evicting each other.  All cache storage
+ * uses flat 1-D primitive arrays to avoid pointer-chasing through Object[][][] chains.
+ *
+ * Layout:
+ *   coeffA / coeffB : double[], index = (node * CACHE_SLOTS + slot) * stateCount + state
+ *   cachedBranchLength / cachedCoeffVersion : index = node * CACHE_SLOTS + slot
+ */
+public final class SpectralRotatedPartialsRepresentation
+        implements BidirectionalRepresentation, RealBranchExponentialsProvider {
+
+    private static final double IMAG_TOL = 1.0e-15;
+    private static final double PAIR_TOL = 1.0e-12;
+
+    private static final byte REAL_BLOCK    = 1;
+    private static final byte COMPLEX_BLOCK = 2;
+
+    // Number of branch-length slots cached per node.
+    // 16 is more than enough for typical category counts (4–8).
+    private static final int CACHE_SLOTS = 16;
+
+    private final BaseSubstitutionModel substitutionModel;
+    private final int stateCount;
+
+    private final double[] matrixR;
+    private final double[] matrixRInv;
+    private final double[] matrixRT;
+    private final double[] matrixRInvT;
+    private final double[] eigenReal;
+    private final double[] eigenImag;
+
+    private final byte[] blockType;
+    private final int[]  blockStart;
+    private int blockCount;
+
+    private final double[] tmpA;
+    private final double[] tmpB;
+    private final double[] tmpStandardA;
+    private final double[] tmpStandardB;
+
+    private boolean eigenDirty = true;
+    private long    eigenVersion = 0L;
+
+    // --- flat cache arrays ---
+    // coeffA[node * CACHE_SLOTS * K + slot * K + state]  (K = stateCount)
+    private double[] coeffA;
+    private double[] coeffB;
+    // cachedBranchLength[node * CACHE_SLOTS + slot]
+    private double[] cachedBranchLength;
+    // cachedCoeffVersion[node * CACHE_SLOTS + slot]
+    private long[]   cachedCoeffVersion;
+    // nextSlotByNode[node]  — round-robin eviction pointer
+    private int[]    nextSlotByNode;
+    // activeSlotByNode[node] — slot last found/written (for apply methods)
+    private int[]    activeSlotByNode;
+    private final int nodeCapacity;
+
+    public SpectralRotatedPartialsRepresentation(BaseSubstitutionModel substitutionModel,
+                                                  int nodeCount) {
+        if (substitutionModel == null) {
+            throw new IllegalArgumentException("substitutionModel must not be null");
+        }
+
+        this.substitutionModel = substitutionModel;
+        this.stateCount = substitutionModel.getDataType().getStateCount();
+
+        this.matrixR    = new double[stateCount * stateCount];
+        this.matrixRInv = new double[stateCount * stateCount];
+        this.matrixRT   = new double[stateCount * stateCount];
+        this.matrixRInvT = new double[stateCount * stateCount];
+        this.eigenReal  = new double[stateCount];
+        this.eigenImag  = new double[stateCount];
+
+        this.blockType  = new byte[stateCount];
+        this.blockStart = new int[stateCount];
+
+        this.tmpA         = new double[stateCount];
+        this.tmpB         = new double[stateCount];
+        this.tmpStandardA = new double[stateCount];
+        this.tmpStandardB = new double[stateCount];
+
+        this.nodeCapacity       = nodeCount;
+        this.coeffA             = new double[nodeCount * CACHE_SLOTS * stateCount];
+        this.coeffB             = new double[nodeCount * CACHE_SLOTS * stateCount];
+        this.cachedBranchLength = new double[nodeCount * CACHE_SLOTS];
+        this.cachedCoeffVersion = new long[nodeCount * CACHE_SLOTS];
+        this.nextSlotByNode     = new int[nodeCount];
+        this.activeSlotByNode   = new int[nodeCount];
+
+        Arrays.fill(cachedBranchLength, Double.NaN);
+        Arrays.fill(cachedCoeffVersion, Long.MIN_VALUE);
+    }
+
+    @Override public String  getName()                { return "spectral-rotated-partials"; }
+    @Override public int     getStateCount()          { return stateCount; }
+    @Override public boolean supportsInternalScaling() { return true; }
+    @Override public boolean storesPartialsInStandardBasis() { return false; }
+    @Override public boolean supportsSparseTipPartials() { return true; }
+    @Override public boolean cacheOnlyBranchTopPreOrder() { return true; }
+
+    @Override
+    public void markDirty() { eigenDirty = true; }
+
+    @Override
+    public boolean borrowRealBranchExponentials(int nodeNumber,
+                                                double effectiveBranchLength,
+                                                BorrowedSlice out) {
+        ensureEigenSystemCurrent();
+        if (blockCount != stateCount) {
+            out.clear();
+            return false;
+        }
+
+        ensureBranchCoefficients(nodeNumber, effectiveBranchLength);
+        final int coeffBase = (nodeNumber * CACHE_SLOTS + activeSlotByNode[nodeNumber]) * stateCount;
+        out.set(coeffA, coeffBase, stateCount);
+        return true;
+    }
+
+    @Override
+    public void storeState() { /* caches are derived; nothing to snapshot */ }
+
+    @Override
+    public void restoreState() { eigenDirty = true; }
+
+    @Override
+    public void updateForLikelihood() { ensureEigenSystemCurrent(); }
+
+    @Override
+    public void initializeTipPartial(double[] standardTip, double[] outPartial) {
+        initializeTipPartial(standardTip, outPartial, 0);
+    }
+
+    @Override
+    public void initializeTipPartial(double[] standardTip, double[] outPartial, int outOffset) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixSparseVector(matrixRInv, standardTip, outPartial, outOffset, stateCount);
+    }
+
+    @Override
+    public void initializeSparseTipPartial(boolean[] stateSet, double[] outPartial) {
+        initializeSparseTipPartial(stateSet, outPartial, 0);
+    }
+
+    @Override
+    public void initializeSparseTipPartial(boolean[] stateSet, double[] outPartial, int outOffset) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixStateSet(matrixRInv, stateSet, outPartial, outOffset, stateCount);
+    }
+
+    @Override
+    public void propagateSparseTipToBranchTop(int nodeNumber,
+                                              double branchLength,
+                                              boolean[] stateSet,
+                                              double[] outBranchTopPartial,
+                                              int outOffset) {
+        ensureEigenSystemCurrent();
+        ensureBranchCoefficients(nodeNumber, branchLength);
+        multiplyMatrixStateSet(matrixRInv, stateSet, tmpA, 0, stateCount);
+        applyForwardCoefficients(nodeNumber, tmpA, 0, outBranchTopPartial, outOffset);
+    }
+
+    @Override
+    public void propagateToBranchTop(int nodeNumber,
+                                     double branchLength,
+                                     double[] childPartial,
+                                     double[] outBranchTopPartial) {
+        propagateToBranchTop(nodeNumber, branchLength, childPartial, 0, outBranchTopPartial, 0);
+    }
+
+    @Override
+    public void propagateToBranchTop(int nodeNumber,
+                                     double branchLength,
+                                     double[] childPartial,
+                                     int childOffset,
+                                     double[] outBranchTopPartial,
+                                     int outOffset) {
+        ensureEigenSystemCurrent();
+        ensureBranchCoefficients(nodeNumber, branchLength);
+        applyForwardCoefficients(nodeNumber, childPartial, childOffset, outBranchTopPartial, outOffset);
+    }
+
+    @Override
+    public void combineBranchTopPartials(double[] leftBranchTopPartial,
+                                         double[] rightBranchTopPartial,
+                                         double[] outParentPartial) {
+        combineBranchTopPartials(leftBranchTopPartial, 0, rightBranchTopPartial, 0, outParentPartial, 0);
+    }
+
+    @Override
+    public void combineBranchTopPartials(double[] leftBranchTopPartial,
+                                         int leftOffset,
+                                         double[] rightBranchTopPartial,
+                                         int rightOffset,
+                                         double[] outParentPartial,
+                                         int outOffset) {
+        ensureEigenSystemCurrent();
+        // Fuse R×left and R×right into one pass over matrixR (saves K² reads), inline Hadamard.
+        for (int i = 0; i < stateCount; i++) {
+            double sumA = 0.0, sumB = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                final double rij = matrixR[base + j];
+                sumA += rij * leftBranchTopPartial[leftOffset + j];
+                sumB += rij * rightBranchTopPartial[rightOffset + j];
+            }
+            tmpA[i] = sumA * sumB;
+        }
+        multiplyMatrixVectorOffset(matrixRInv, tmpA, 0, outParentPartial, outOffset, stateCount);
+    }
+
+    @Override
+    public void combineBranchTopPartials(double[] leftBranchTopPartial,
+                                         double[] rightBranchTopPartial,
+                                         double[] outParentPartial,
+                                         double[] outLeftStandard,
+                                         double[] outRightStandard) {
+        combineBranchTopPartials(leftBranchTopPartial, 0, rightBranchTopPartial, 0,
+                outParentPartial, 0, outLeftStandard, 0, outRightStandard, 0);
+    }
+
+    @Override
+    public void combineBranchTopPartials(double[] leftBranchTopPartial,
+                                         int leftOffset,
+                                         double[] rightBranchTopPartial,
+                                         int rightOffset,
+                                         double[] outParentPartial,
+                                         int outOffset,
+                                         double[] outLeftStandard,
+                                         int outLeftStandardOffset,
+                                         double[] outRightStandard,
+                                         int outRightStandardOffset) {
+        ensureEigenSystemCurrent();
+        // Fuse R×left and R×right into one pass over matrixR (saves K² reads), inline Hadamard.
+        for (int i = 0; i < stateCount; i++) {
+            double sumA = 0.0, sumB = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                final double rij = matrixR[base + j];
+                sumA += rij * leftBranchTopPartial[leftOffset + j];
+                sumB += rij * rightBranchTopPartial[rightOffset + j];
+            }
+            tmpStandardA[i] = sumA;
+            tmpStandardB[i] = sumB;
+            tmpA[i] = sumA * sumB;
+        }
+        if (outLeftStandard != null) {
+            for (int s = 0; s < stateCount; s++) {
+                outLeftStandard[outLeftStandardOffset + s] = tmpStandardA[s];
+            }
+        }
+        if (outRightStandard != null) {
+            for (int s = 0; s < stateCount; s++) {
+                outRightStandard[outRightStandardOffset + s] = tmpStandardB[s];
+            }
+        }
+        multiplyMatrixVectorOffset(matrixRInv, tmpA, 0, outParentPartial, outOffset, stateCount);
+    }
+
+    @Override
+    public double rootContribution(double[] rootFrequencies, double[] rootPartial) {
+        return rootContribution(rootFrequencies, rootPartial, 0);
+    }
+
+    @Override
+    public double rootContribution(double[] rootFrequencies, double[] rootPartial, int rootOffset) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVector(matrixRT, rootFrequencies, tmpA, stateCount);
+        double sum = 0.0;
+        for (int i = 0; i < stateCount; i++) sum += tmpA[i] * rootPartial[rootOffset + i];
+        return sum;
+    }
+
+    @Override
+    public void initializeRootPartial(double[] rootFrequencies, double[] outPartial) {
+        initializeRootPartial(rootFrequencies, outPartial, 0);
+    }
+
+    @Override
+    public void initializeRootPartial(double[] rootFrequencies, double[] outPartial, int outOffset) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVectorOffset(matrixRT, rootFrequencies, 0, outPartial, outOffset, stateCount);
+    }
+
+    @Override
+    public void combineParentAndSibling(double[] parentNodePreOrder,
+                                        int parentOffset,
+                                        double[] siblingBranchTopPostOrder,
+                                        double[] outChildBranchTopPreOrder,
+                                        int outOffset) {
+        combineParentAndSibling(parentNodePreOrder, parentOffset,
+                siblingBranchTopPostOrder, 0, outChildBranchTopPreOrder, outOffset);
+    }
+
+    @Override
+    public void combineParentAndSibling(double[] parentNodePreOrder,
+                                        int parentOffset,
+                                        double[] siblingBranchTopPostOrder,
+                                        int siblingOffset,
+                                        double[] outChildBranchTopPreOrder,
+                                        int outOffset) {
+        prepareParentForSiblingCombinations(parentNodePreOrder, parentOffset, tmpStandardA, 0);
+        combinePreparedParentAndSibling(tmpStandardA, 0,
+                siblingBranchTopPostOrder, siblingOffset,
+                outChildBranchTopPreOrder, outOffset);
+    }
+
+    @Override
+    public double combineParentAndSiblingWithScaling(double[] parentNodePreOrder,
+                                                     int parentOffset,
+                                                     double[] siblingBranchTopPostOrder,
+                                                     int siblingOffset,
+                                                     double[] outChildBranchTopPreOrder,
+                                                     int outOffset,
+                                                     double scalingFloor,
+                                                     double scalingCeiling) {
+        prepareParentForSiblingCombinations(parentNodePreOrder, parentOffset, tmpStandardA, 0);
+        return combinePreparedParentAndSiblingWithScaling(tmpStandardA, 0,
+                siblingBranchTopPostOrder, siblingOffset,
+                outChildBranchTopPreOrder, outOffset,
+                scalingFloor, scalingCeiling);
+    }
+
+    @Override
+    public boolean supportsPreparedParentForSiblingCombinations() {
+        return true;
+    }
+
+    @Override
+    public void prepareParentForSiblingCombinations(double[] parentNodePreOrder,
+                                                    int parentOffset,
+                                                    double[] outPreparedParent,
+                                                    int outOffset) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVectorOffset(matrixRInvT, parentNodePreOrder, parentOffset,
+                outPreparedParent, outOffset, stateCount);
+    }
+
+    @Override
+    public void combinePreparedParentAndSibling(double[] preparedParent,
+                                                int preparedParentOffset,
+                                                double[] siblingBranchTopPostOrder,
+                                                int siblingOffset,
+                                                double[] outChildBranchTopPreOrder,
+                                                int outOffset) {
+        ensureEigenSystemCurrent();
+        // Fuse R×sibling + Hadamard into one pass.
+        for (int i = 0; i < stateCount; i++) {
+            double sum = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                sum += matrixR[base + j] * siblingBranchTopPostOrder[siblingOffset + j];
+            }
+            tmpStandardB[i] = preparedParent[preparedParentOffset + i] * sum;
+        }
+        multiplyMatrixVectorOffset(matrixRT, tmpStandardB, 0, outChildBranchTopPreOrder, outOffset, stateCount);
+    }
+
+    @Override
+    public double combinePreparedParentAndSiblingWithScaling(double[] preparedParent,
+                                                             int preparedParentOffset,
+                                                             double[] siblingBranchTopPostOrder,
+                                                             int siblingOffset,
+                                                             double[] outChildBranchTopPreOrder,
+                                                             int outOffset,
+                                                             double scalingFloor,
+                                                             double scalingCeiling) {
+        ensureEigenSystemCurrent();
+
+        double parentMax = 0.0;
+        for (int i = 0; i < stateCount; i++) {
+            parentMax = Math.max(parentMax, Math.abs(preparedParent[preparedParentOffset + i]));
+        }
+
+        double siblingMax = 0.0;
+        for (int i = 0; i < stateCount; i++) {
+            double sum = 0.0;
+            final int base = i * stateCount;
+            for (int j = 0; j < stateCount; j++) {
+                sum += matrixR[base + j] * siblingBranchTopPostOrder[siblingOffset + j];
+            }
+            tmpStandardB[i] = sum;
+            siblingMax = Math.max(siblingMax, Math.abs(sum));
+        }
+
+        if (!isPositiveFinite(parentMax) || !isPositiveFinite(siblingMax)) {
+            Arrays.fill(tmpStandardB, 0, stateCount, 1.0 / stateCount);
+            multiplyMatrixVectorOffset(matrixRT, tmpStandardB, 0,
+                    outChildBranchTopPreOrder, outOffset, stateCount);
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        final double productLogScale = Math.log(parentMax) + Math.log(siblingMax);
+        final boolean scaleProduct = productLogScale < Math.log(scalingFloor)
+                || productLogScale > Math.log(scalingCeiling);
+        final double parentNormalizer = scaleProduct ? parentMax : 1.0;
+        final double siblingNormalizer = scaleProduct ? siblingMax : 1.0;
+
+        for (int i = 0; i < stateCount; i++) {
+            tmpA[i] = (preparedParent[preparedParentOffset + i] / parentNormalizer)
+                    * (tmpStandardB[i] / siblingNormalizer);
+        }
+        multiplyMatrixVectorOffset(matrixRT, tmpA, 0, outChildBranchTopPreOrder, outOffset, stateCount);
+        return scaleProduct ? productLogScale : 0.0;
+    }
+
+    @Override
+    public void propagateToBranchBottom(int childNodeNumber,
+                                        double branchLength,
+                                        double[] childBranchTopPreOrder,
+                                        int childBranchTopOffset,
+                                        double[] out, int outOff) {
+        ensureEigenSystemCurrent();
+        ensureBranchCoefficients(childNodeNumber, branchLength);
+        applyTransposeCoefficients(childNodeNumber, childBranchTopPreOrder, childBranchTopOffset, out, outOff);
+    }
+
+    @Override
+    public void exportPostOrderPartial(double[] partial, double[] outPartial) {
+        exportPostOrderPartial(partial, 0, outPartial, 0);
+    }
+
+    @Override
+    public void exportPostOrderPartial(double[] partial, int partialOffset,
+                                       double[] outPartial, int outOffset) {
+        for (int s = 0; s < stateCount; s++) {
+            outPartial[outOffset + s] = partial[partialOffset + s];
+        }
+    }
+
+    @Override
+    public void exportPostOrderPartialToStandard(double[] partial, double[] outPartial) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVector(matrixR, partial, outPartial, stateCount);
+    }
+
+    @Override
+    public void exportPostOrderPartialToStandard(double[] partial, int partialOffset,
+                                                 double[] outPartial, int outOffset) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVectorOffset(matrixR, partial, partialOffset, outPartial, outOffset, stateCount);
+    }
+
+    @Override
+    public void exportPreOrderPartial(double[] preOrderPartial, double[] outPartial) {
+        exportPreOrderPartial(preOrderPartial, 0, outPartial, 0);
+    }
+
+    @Override
+    public void exportPreOrderPartial(double[] preOrderPartial, int preOrderOffset,
+                                      double[] outPartial, int outOffset) {
+        for (int s = 0; s < stateCount; s++) {
+            outPartial[outOffset + s] = preOrderPartial[preOrderOffset + s];
+        }
+    }
+
+    @Override
+    public void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
+                                                  double[] rightStandard,
+                                                  double[] outPreOrderPartial) {
+        importPreOrderProductFromStandard(leftStandard, leftOff, rightStandard, 0,
+                outPreOrderPartial, 0);
+    }
+
+    @Override
+    public void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
+                                                  double[] rightStandard,
+                                                  double[] outPreOrderPartial,
+                                                  int outOff) {
+        importPreOrderProductFromStandard(leftStandard, leftOff, rightStandard, 0,
+                outPreOrderPartial, outOff);
+    }
+
+    @Override
+    public void importPreOrderProductFromStandard(double[] leftStandard, int leftOff,
+                                                  double[] rightStandard, int rightOff,
+                                                  double[] outPreOrderPartial,
+                                                  int outOff) {
+        ensureEigenSystemCurrent();
+        int base = 0;
+        for (int i = 0; i < stateCount; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < stateCount; j++) {
+                sum += matrixRT[base + j] * leftStandard[leftOff + j] * rightStandard[rightOff + j];
+            }
+            outPreOrderPartial[outOff + i] = sum;
+            base += stateCount;
+        }
+    }
+
+    @Override
+    public void exportPreOrderPartialToStandard(double[] src, int srcOff, double[] dst, int dstOff) {
+        ensureEigenSystemCurrent();
+        multiplyMatrixVectorOffset(matrixRInvT, src, srcOff, dst, dstOff, stateCount);
+    }
+
+    @Override
+    public double normalizeAndExportPreOrderPartialToStandard(double[] src, int srcOff,
+                                                              double[] dst, int dstOff,
+                                                              double scalingFloor,
+                                                              double scalingCeiling) {
+        ensureEigenSystemCurrent();
+
+        double max = 0.0;
+        for (int s = 0; s < stateCount; s++) {
+            max = Math.max(max, Math.abs(src[srcOff + s]));
+        }
+
+        if (max == 0.0) {
+            final double uniform = 1.0 / stateCount;
+            for (int s = 0; s < stateCount; s++) {
+                src[srcOff + s] = uniform;
+            }
+            multiplyMatrixVectorOffset(matrixRInvT, src, srcOff, dst, dstOff, stateCount);
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        if (max < scalingFloor || max > scalingCeiling) {
+            final double invMax = 1.0 / max;
+            multiplyMatrixVectorOffsetScaled(matrixRInvT, src, srcOff, dst, dstOff, stateCount, invMax);
+            for (int s = 0; s < stateCount; s++) {
+                src[srcOff + s] *= invMax;
+            }
+            return Math.log(max);
+        }
+
+        multiplyMatrixVectorOffset(matrixRInvT, src, srcOff, dst, dstOff, stateCount);
+        return 0.0;
+    }
+
+    // -------------------------------------------------------------------------
+
+    private void ensureEigenSystemCurrent() {
+        if (!eigenDirty) return;
+
+        final EigenDecomposition eigen = substitutionModel.getEigenDecomposition();
+        if (eigen == null) {
+            Arrays.fill(matrixR,    0.0);
+            Arrays.fill(matrixRInv, 0.0);
+            Arrays.fill(matrixRT,   0.0);
+            Arrays.fill(matrixRInvT, 0.0);
+            Arrays.fill(eigenReal,  0.0);
+            Arrays.fill(eigenImag,  0.0);
+            blockCount = 0;
+            eigenVersion++;
+            eigenDirty = false;
+            return;
+        }
+
+        loadEigenDecomposition(eigen, matrixR, matrixRInv, eigenReal, eigenImag, stateCount);
+        transposeSquare(matrixR, matrixRT, stateCount);
+        transposeSquare(matrixRInv, matrixRInvT, stateCount);
+        buildBlockPlan(eigenReal, eigenImag, stateCount, blockType, blockStart);
+        eigenVersion++;
+        eigenDirty = false;
+    }
+
+    private void buildBlockPlan(double[] real, double[] imag, int dim,
+                                byte[] outType, int[] outStart) {
+        int b = 0, i = 0;
+        while (i < dim) {
+            if (Math.abs(imag[i]) <= IMAG_TOL) {
+                outType[b]  = REAL_BLOCK;
+                outStart[b] = i;
+                b++; i++;
+                continue;
+            }
+            if (i + 1 >= dim) throw new IllegalStateException(
+                    "Malformed eigenvalue array: complex eigenvalue at final index " + i);
+            final double a  = real[i];
+            final double bi = imag[i];
+            if (Math.abs(real[i + 1] - a) > PAIR_TOL) throw new IllegalStateException(
+                    "Malformed eigenvalue array: real parts of conjugate pair do not match at " + i);
+            if (Math.abs(imag[i + 1] + bi) > PAIR_TOL) throw new IllegalStateException(
+                    "Malformed eigenvalue array: imaginary parts are not conjugates at " + i);
+            outType[b]  = COMPLEX_BLOCK;
+            outStart[b] = i;
+            b++; i += 2;
+        }
+        blockCount = b;
+    }
+
+    private static void loadEigenDecomposition(EigenDecomposition eigen,
+                                               double[] outR, double[] outRInv,
+                                               double[] outReal, double[] outImag,
+                                               int stateCount) {
+        final double[] evec = eigen.getEigenVectors();
+        final double[] ievc = eigen.getInverseEigenVectors();
+        final double[] eval = eigen.getEigenValues();
+
+        if (evec.length != stateCount * stateCount)
+            throw new IllegalStateException("Unexpected eigenvector length " + evec.length);
+        if (ievc.length != stateCount * stateCount)
+            throw new IllegalStateException("Unexpected inverse eigenvector length " + ievc.length);
+
+        for (int i = 0; i < outR.length; i++) {
+            outR[i] = evec[i];
+            outRInv[i] = ievc[i];
+        }
+
+        if (eval.length == stateCount) {
+            for (int i = 0; i < stateCount; i++) {
+                outReal[i] = eval[i];
+            }
+            Arrays.fill(outImag, 0.0);
+        } else if (eval.length == 2 * stateCount) {
+            for (int i = 0; i < stateCount; i++) {
+                outReal[i] = eval[i];
+                outImag[i] = eval[stateCount + i];
+            }
+        } else {
+            throw new IllegalStateException("Unexpected eigenvalue array length " + eval.length);
+        }
+    }
+
+    private void ensureBranchCoefficients(int nodeNumber, double branchLength) {
+        if (nodeNumber >= nodeCapacity) {
+            throw new IllegalArgumentException(
+                    "nodeNumber " + nodeNumber + " exceeds nodeCapacity " + nodeCapacity);
+        }
+
+        final long   curVersion  = eigenVersion;
+        final long   branchBits  = Double.doubleToLongBits(branchLength);
+        final int    nodeSlotBase = nodeNumber * CACHE_SLOTS;
+
+        final int activeSlot = activeSlotByNode[nodeNumber];
+        final int activeIdx = nodeSlotBase + activeSlot;
+        if (cachedCoeffVersion[activeIdx] == curVersion
+                && Double.doubleToLongBits(cachedBranchLength[activeIdx]) == branchBits) {
+            return;
+        }
+
+        // Fast path: scan the remaining slots for this node.
+        for (int s = 0; s < CACHE_SLOTS; s++) {
+            if (s == activeSlot) {
+                continue;
+            }
+            final int idx = nodeSlotBase + s;
+            if (cachedCoeffVersion[idx] == curVersion
+                    && Double.doubleToLongBits(cachedBranchLength[idx]) == branchBits) {
+                activeSlotByNode[nodeNumber] = s;
+                return;
+            }
+        }
+
+        // Cache miss: evict next round-robin slot.
+        final int slot    = nextSlotByNode[nodeNumber];
+        nextSlotByNode[nodeNumber]  = (slot + 1 == CACHE_SLOTS) ? 0 : slot + 1;
+        activeSlotByNode[nodeNumber] = slot;
+
+        final int coeffBase = (nodeSlotBase + slot) * stateCount;
+
+        for (int b = 0; b < blockCount; b++) {
+            final int i = blockStart[b];
+            if (blockType[b] == REAL_BLOCK) {
+                coeffA[coeffBase + i] = FastMath.exp(branchLength * eigenReal[i]);
+                coeffB[coeffBase + i] = 0.0;
+            } else {
+                final double expat = FastMath.exp(branchLength * eigenReal[i]);
+                final double bt    = branchLength * eigenImag[i];
+                coeffA[coeffBase + i] = expat * Math.cos(bt);
+                coeffB[coeffBase + i] = expat * Math.sin(bt);
+            }
+        }
+
+        cachedBranchLength[nodeSlotBase + slot] = branchLength;
+        cachedCoeffVersion[nodeSlotBase + slot]  = curVersion;
+    }
+
+    private void applyForwardCoefficients(int nodeNumber, double[] in, int inOff, double[] out, int outOff) {
+        final int coeffBase = (nodeNumber * CACHE_SLOTS + activeSlotByNode[nodeNumber]) * stateCount;
+
+        for (int b = 0; b < blockCount; b++) {
+            final int i = blockStart[b];
+            if (blockType[b] == REAL_BLOCK) {
+                out[outOff + i] = coeffA[coeffBase + i] * in[inOff + i];
+            } else {
+                final double c = coeffA[coeffBase + i];
+                final double s = coeffB[coeffBase + i];
+                final double x = in[inOff + i];
+                final double y = in[inOff + i + 1];
+                out[outOff + i]     =  c * x + s * y;
+                out[outOff + i + 1] = -s * x + c * y;
+            }
+        }
+    }
+
+    private void applyTransposeCoefficients(int nodeNumber, double[] in, int inOff, double[] out, int outOff) {
+        final int coeffBase = (nodeNumber * CACHE_SLOTS + activeSlotByNode[nodeNumber]) * stateCount;
+
+        for (int b = 0; b < blockCount; b++) {
+            final int i = blockStart[b];
+            if (blockType[b] == REAL_BLOCK) {
+                out[outOff + i] = coeffA[coeffBase + i] * in[inOff + i];
+            } else {
+                final double c = coeffA[coeffBase + i];
+                final double s = coeffB[coeffBase + i];
+                final double x = in[inOff + i];
+                final double y = in[inOff + i + 1];
+                out[outOff + i]     = c * x - s * y;
+                out[outOff + i + 1] = s * x + c * y;
+            }
+        }
+    }
+
+    private static void multiplyMatrixVector(double[] matrix, double[] vector,
+                                             double[] out, int dim) {
+        int base = 0;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) sum += matrix[base + j] * vector[j];
+            out[i] = sum;
+            base += dim;
+        }
+    }
+
+    private static void multiplyMatrixSparseVector(double[] matrix, double[] vector,
+                                                   double[] out, int outOff, int dim) {
+        int base = 0;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) {
+                final double v = vector[j];
+                if (v != 0.0) {
+                    sum += matrix[base + j] * v;
+                }
+            }
+            out[outOff + i] = sum;
+            base += dim;
+        }
+    }
+
+
+    private static void multiplyMatrixStateSet(double[] matrix, boolean[] stateSet,
+                                               double[] out, int outOff, int dim) {
+        final int column = singleState(stateSet, dim);
+        if (column >= 0) {
+            copyMatrixColumn(matrix, column, out, outOff, dim);
+            return;
+        }
+
+        int base = 0;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) {
+                if (stateSet[j]) {
+                    sum += matrix[base + j];
+                }
+            }
+            out[outOff + i] = sum;
+            base += dim;
+        }
+    }
+
+    private static int singleState(boolean[] stateSet, int dim) {
+        int column = -1;
+        for (int j = 0; j < dim; j++) {
+            if (stateSet[j]) {
+                if (column >= 0) {
+                    return -1;
+                }
+                column = j;
+            }
+        }
+        return column;
+    }
+
+    private static void copyMatrixColumn(double[] matrix, int column, double[] out, int outOff, int dim) {
+        for (int i = 0; i < dim; i++) {
+            out[outOff + i] = matrix[i * dim + column];
+        }
+    }
+
+    private static void multiplyMatrixVectorOffset(double[] matrix,
+                                                   double[] vector, int vecOff,
+                                                   double[] out, int outOff, int dim) {
+        int base = 0;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) sum += matrix[base + j] * vector[vecOff + j];
+            out[outOff + i] = sum;
+            base += dim;
+        }
+    }
+
+    private static void multiplyMatrixVectorOffsetScaled(double[] matrix,
+                                                         double[] vector, int vecOff,
+                                                         double[] out, int outOff,
+                                                         int dim,
+                                                         double scale) {
+        int base = 0;
+        for (int i = 0; i < dim; i++) {
+            double sum = 0.0;
+            for (int j = 0; j < dim; j++) sum += matrix[base + j] * vector[vecOff + j];
+            out[outOff + i] = sum * scale;
+            base += dim;
+        }
+    }
+
+    private static boolean isPositiveFinite(double value) {
+        return value > 0.0 && Double.isFinite(value);
+    }
+
+    private static void transposeSquare(double[] matrix, double[] transpose, int dim) {
+        for (int i = 0; i < dim; i++) {
+            final int rowBase = i * dim;
+            for (int j = 0; j < dim; j++) {
+                transpose[j * dim + i] = matrix[rowBase + j];
+            }
+        }
+    }
+
+}

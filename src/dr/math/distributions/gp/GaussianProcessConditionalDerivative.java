@@ -43,7 +43,7 @@ public class GaussianProcessConditionalDerivative extends GaussianProcessPredict
     private final Parameter priorMeanDerivative;
 
 
-    public GaussianProcessConditionalDerivative(AdditiveGaussianProcessDistribution gp,
+    public GaussianProcessConditionalDerivative(GaussianProcessField gp,
                                                 Parameter realizedValues,
                                                 Parameter priorMeanDerivative) {
         super(gp, realizedValues, extractDesignMatrices(gp));
@@ -58,7 +58,7 @@ public class GaussianProcessConditionalDerivative extends GaussianProcessPredict
         priorMeanDerivative.addVariableListener(this);
     }
 
-    public GaussianProcessConditionalDerivative(AdditiveGaussianProcessDistribution gp,
+    public GaussianProcessConditionalDerivative(GaussianProcessField gp,
                                                 Parameter realizedValues) {
         this(gp, realizedValues, setDefaultPriorMean(realizedValues.getDimension()));
     }
@@ -71,7 +71,7 @@ public class GaussianProcessConditionalDerivative extends GaussianProcessPredict
         return priorMeanDerivative;
     }
 
-    private static List<DesignMatrix> extractDesignMatrices(AdditiveGaussianProcessDistribution gp) {
+    private static List<DesignMatrix> extractDesignMatrices(GaussianProcessField gp) {
         List<DesignMatrix> designMatrices = new ArrayList<>();
         for (BasisDimension basis : gp.getBases()) {
             designMatrices.add(basis.getDesignMatrix1());

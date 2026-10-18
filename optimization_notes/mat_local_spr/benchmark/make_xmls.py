@@ -17,8 +17,8 @@ import re
 
 SOURCES = {
     'baseline': 'benchmark-big-3-min.xml',
-    'mat-path': 'benchmark-big-3-mat-integrated.xml',
-    'mat-local': 'benchmark-big-3-mat-integrated.xml',
+    'mat-path': 'benchmark-big-3-mat.xml',
+    'mat-local': 'benchmark-big-3-mat.xml',
 }
 
 

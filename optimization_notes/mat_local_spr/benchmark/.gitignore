@@ -1,3 +1,5 @@
 runs/
 xmls/
 __pycache__/
+validation-xmls/
+validation-runs/

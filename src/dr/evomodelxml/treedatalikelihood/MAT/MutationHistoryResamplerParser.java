@@ -101,7 +101,8 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
                         "parent, and the nodes whose data at a site come only from the moved subtree; the default where " +
                         "the model allows it) or 'path' (the regrafted parent and the nodes on the path between its old " +
                         "and new positions; the default for branch history models with explicit hits, per-site rates " +
-                        "or unequal pattern weights, which the local block does not support)"),
+                        "or unequal pattern weights, which the local block does not support). The local block needs a " +
+                        "mutationHistoryGibbsOperator with this resampler, to mix the history away from the moves"),
                 new ElementRule(TreeDataLikelihood.class)
         };
     }

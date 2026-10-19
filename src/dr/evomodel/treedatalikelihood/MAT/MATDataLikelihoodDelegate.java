@@ -331,7 +331,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             historyModel.initialise(mutationStore);
             rebuildCount++;
             if (historyResampled && !mixingWarningGiven) {
-                Logger.getLogger("dr.evomodel").warning("The topology of " + tree.getId() +
+                // (at the info level, as BEAST prints warnings only when verbose)
+                Logger.getLogger("dr.evomodel").info("WARNING: the topology of " + tree.getId() +
                         " was changed by an operator without a mutation history resampler: the MAT has been " +
                         "updated by parsimony, which is not a valid MCMC move when histories are sampled.");
                 mixingWarningGiven = true;

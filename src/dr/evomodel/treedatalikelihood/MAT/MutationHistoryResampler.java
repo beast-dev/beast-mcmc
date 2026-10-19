@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * Resamples the ancestral states of a MAT jointly with a subtree prune-and-regraft move, as a
@@ -92,6 +93,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private final int stateCount;
     private final int patternCount;
     private final boolean localBlock;
+    // the local block alone barely mixes the history away from the moves: it needs a MutationHistoryGibbsOperator
+    private boolean hasGibbsOperator = false;
+    private boolean gibbsWarningGiven = false;
 
     // patterns grouped by weight, so conditionals can be looked up by [state][weight class]
     private final int[] weightClass;
@@ -236,9 +240,27 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return delegate;
     }
 
+    /**
+     * Called by a {@link MutationHistoryGibbsOperator} that updates this resampler's histories.
+     */
+    void setGibbsOperator() {
+        hasGibbsOperator = true;
+    }
+
     @Override
     public void beforeSubtreeMove(NodeRef node, NodeRef sibling, NodeRef destination) {
         if (localBlock) {
+            if (!hasGibbsOperator && !gibbsWarningGiven) {
+                // the local block resamples a node's states only when a move regrafts next to it, so excess
+                // mutations elsewhere are almost never removed and the tree parameters follow them
+                // (at the info level, as BEAST prints warnings only when verbose)
+                Logger.getLogger("dr.evomodel").info("WARNING: the mutation history resampler of " + tree.getId() +
+                        " uses the local block, but no mutationHistoryGibbsOperator updates its histories. " +
+                        "Without one the histories mix far too slowly for a correct posterior: add a " +
+                        "<mutationHistoryGibbsOperator> with this resampler to the " +
+                        "operators (with a weight of about 10% of the subtree moves' weight).");
+                gibbsWarningGiven = true;
+            }
             beforeLocalMove(node, sibling, destination);
         } else {
             beforePathMove(node, sibling, destination);

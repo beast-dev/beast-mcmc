@@ -39,7 +39,9 @@ import dr.math.MathUtils;
  * <p>
  * The subtree moves resample the history only around the nodes they move, so a node's states otherwise
  * change only when it is moved. This operator lets every part of the history mix, including moving a
- * mutation across several branches at once.
+ * mutation across several branches at once. The local block needs it: without it, excess mutations in the
+ * history are almost never removed, and the tree parameters follow them. A weight of about 10% of the
+ * subtree moves' weight is enough.
  */
 public class MutationHistoryGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
@@ -57,6 +59,7 @@ public class MutationHistoryGibbsOperator extends SimpleMCMCOperator implements 
             throw new IllegalArgumentException("The block size must be at least 1");
         }
         this.resampler = resampler;
+        resampler.setGibbsOperator();
         this.tree = resampler.getDelegate().getTree();
         this.size = size;
         setWeight(weight);

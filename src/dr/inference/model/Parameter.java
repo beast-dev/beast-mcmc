@@ -189,8 +189,9 @@ public interface Parameter extends Statistic, Variable<Double> {
 
     boolean isImmutable();
 
-    Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
-    Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
+    // views of the current thread's ModelRegistry
+    Set<Parameter> FULL_PARAMETER_SET = ModelRegistry.view(ModelRegistry::getFullParameterSet);
+    Set<Parameter> CONNECTED_PARAMETER_SET = ModelRegistry.view(ModelRegistry::getConnectedParameterSet);
 
     /**
      * Abstract base class for parameters

@@ -27,14 +27,18 @@
 
 package dr.inference.mcmc;
 
+import dr.inference.model.ModelRegistry;
 import dr.math.MathUtils;
+import dr.util.ErrorLogHandler;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * What belongs to one chain of a multi-chain run: its random number stream and how its
- * output files are named. A context is bound to a thread while the chain's model is being
+ * What belongs to one chain of a multi-chain run: its random number stream, the registry of
+ * its models and parameters (used, e.g., for checkpointing), its count of numerical errors and
+ * how its output files are named. A context is bound to a thread while the chain's model is being
  * built and on the thread that runs the chain. With nothing bound (a plain single-chain
  * run) everything behaves as it always has.
  *
@@ -59,11 +63,14 @@ public final class ChainContext {
     }
 
     /**
-     * Binds this context (and its random number stream) to the current thread.
+     * Binds this context (its random number stream, registry and error count) to the
+     * current thread.
      */
     public void bind() {
         CURRENT.set(this);
         MathUtils.setThreadRandom(random);
+        ModelRegistry.setCurrent(registry);
+        ErrorLogHandler.setThreadErrorCounter(errorCount);
     }
 
     /**
@@ -72,6 +79,12 @@ public final class ChainContext {
     public static void unbind() {
         CURRENT.remove();
         MathUtils.setThreadRandom(null);
+        ModelRegistry.setCurrent(null);
+        ErrorLogHandler.setThreadErrorCounter(null);
+    }
+
+    public ModelRegistry getRegistry() {
+        return registry;
     }
 
     /**
@@ -167,4 +180,6 @@ public final class ChainContext {
     private final boolean writesFiles;
     private final long seed;
     private final MathUtils.RandomStream random;
+    private final ModelRegistry registry = new ModelRegistry();
+    private final AtomicInteger errorCount = new AtomicInteger(0);
 }

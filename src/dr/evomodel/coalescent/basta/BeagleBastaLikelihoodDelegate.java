@@ -524,13 +524,16 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     }
 
     public static void releaseAllBeagleBastaInstances() throws Throwable {
-        for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
-            if (likelihood instanceof BastaLikelihood) {
-                releaseBeagleBastaLikelihoodDelegate((BastaLikelihood) likelihood);
-            } else if (likelihood instanceof CompoundLikelihood) {
-                for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
-                    if (likelihood2 instanceof BastaLikelihood) {
-                        releaseBeagleBastaLikelihoodDelegate((BastaLikelihood) likelihood2);
+        // every chain of a multi-chain run has its own registry
+        for (dr.inference.model.ModelRegistry registry : dr.inference.model.ModelRegistry.getAll()) {
+            for (Likelihood likelihood : registry.getFullLikelihoodSet()) {
+                if (likelihood instanceof BastaLikelihood) {
+                    releaseBeagleBastaLikelihoodDelegate((BastaLikelihood) likelihood);
+                } else if (likelihood instanceof CompoundLikelihood) {
+                    for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                        if (likelihood2 instanceof BastaLikelihood) {
+                            releaseBeagleBastaLikelihoodDelegate((BastaLikelihood) likelihood2);
+                        }
                     }
                 }
             }

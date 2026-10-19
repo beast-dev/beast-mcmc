@@ -1247,13 +1247,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     }
 
     public static void releaseAllBeagleInstances() throws Throwable {
-        for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
-            if (likelihood instanceof TreeDataLikelihood) {
-                releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood);
-            } else if (likelihood instanceof CompoundLikelihood) {
-                for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
-                    if (likelihood2 instanceof TreeDataLikelihood) {
-                        releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood2);
+        // every chain of a multi-chain run has its own registry
+        for (dr.inference.model.ModelRegistry registry : dr.inference.model.ModelRegistry.getAll()) {
+            for (Likelihood likelihood : registry.getFullLikelihoodSet()) {
+                if (likelihood instanceof TreeDataLikelihood) {
+                    releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood);
+                } else if (likelihood instanceof CompoundLikelihood) {
+                    for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                        if (likelihood2 instanceof TreeDataLikelihood) {
+                            releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood2);
+                        }
                     }
                 }
             }

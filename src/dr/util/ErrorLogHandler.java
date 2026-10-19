@@ -27,6 +27,7 @@
 
 package dr.util;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -47,7 +48,9 @@ public class ErrorLogHandler extends StreamHandler {
         flush();
 
         if (record.getLevel() == Level.SEVERE) {
-            errorCount++;
+            // each chain of a multi-chain run counts its own errors
+            AtomicInteger counter = threadErrorCount.get();
+            int errorCount = (counter != null ? counter : this.errorCount).incrementAndGet();
 
             if (errorCount > maxErrorCount) {
                 if (errorCount > 1) {
@@ -64,7 +67,19 @@ public class ErrorLogHandler extends StreamHandler {
     }
 
     public int getErrorCount() {
-        return errorCount;
+        return errorCount.get();
+    }
+
+    /**
+     * Counts the errors logged from the current thread with the given counter instead of the
+     * handler's own. Pass null to go back to the handler's counter.
+     */
+    public static void setThreadErrorCounter(AtomicInteger counter) {
+        if (counter == null) {
+            threadErrorCount.remove();
+        } else {
+            threadErrorCount.set(counter);
+        }
     }
 
     private class MessageLogFormatter extends Formatter {
@@ -94,5 +109,7 @@ public class ErrorLogHandler extends StreamHandler {
 
 
     private final int maxErrorCount;
-    private int errorCount = 0;
+    private final AtomicInteger errorCount = new AtomicInteger(0);
+
+    private static final ThreadLocal<AtomicInteger> threadErrorCount = new ThreadLocal<AtomicInteger>();
 }

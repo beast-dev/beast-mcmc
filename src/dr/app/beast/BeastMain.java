@@ -40,6 +40,7 @@ import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.mcmcmc.MultiChainRunner;
 import dr.inference.mcmcmc.TemperedChainSet;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.state.Factory;
 import dr.math.MathUtils;
 import dr.util.*;
 import dr.xml.XMLParser;
@@ -347,6 +348,12 @@ public class BeastMain {
         } finally {
             // restart messages
             logger.setLevel(Level.ALL);
+        }
+
+        // Checkpointing is set up by the command line options or by a checkpoint element in
+        // the XML. A tempered set would also need its temperature permutation saved.
+        if (temperedChainCount > 1 && Factory.INSTANCE != null) {
+            throw new RuntimeException("Checkpointing is not yet available with parallel tempering (-mc3_chains)");
         }
 
         return Collections.<ChainSet>singletonList(new TemperedChainSet(0, chains, contexts, swapContext, mc3Options));

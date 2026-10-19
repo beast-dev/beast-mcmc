@@ -33,6 +33,7 @@ import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
+import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.ChainSet;
 import dr.inference.mcmcmc.MCMCMCOptions;
@@ -312,23 +313,35 @@ public class BeastMain {
         double[] chainTemperatures = mc3Options.getChainTemperatures();
         int temperedChainCount = runConfiguration.getTemperedChainCount();
 
+        // Each chain gets its own random number stream, seeded from the run's seed, so the
+        // chains are independent and the run is reproducible.
+        ChainContext[] contexts = new ChainContext[temperedChainCount];
+        for (int i = 0; i < temperedChainCount; i++) {
+            String name = (i == 0 ? "Cold chain" : "Hot chain " + i);
+            contexts[i] = new ChainContext(name, "", i == 0, nextChainSeed());
+        }
+        ChainContext swapContext = new ChainContext("Swaps", "", false, nextChainSeed());
+
         if (temperedChainCount > 1) {
             infoLogger.info("Starting cold chain plus hot chains with temperatures: ");
             for (int i = 1; i < chainTemperatures.length; i++) {
                 infoLogger.info("Hot Chain " + i + ": " + chainTemperatures[i]);
             }
         }
+        for (ChainContext context : contexts) {
+            infoLogger.info(context.getName() + " random number seed: " + context.getSeed());
+        }
 
         MCMC[] chains = new MCMC[temperedChainCount];
         try {
             for (int i = 0; i < temperedChainCount; i++) {
                 if (i == 0) {
-                    chains[i] = chainFactory.buildChain(firstParser);
+                    chains[i] = chainFactory.buildChain(firstParser, contexts[i]);
                 } else {
                     // turn off all messages for subsequent parses (they will be the same as the
                     // first time).
                     logger.setLevel(Level.OFF);
-                    chains[i] = chainFactory.buildChain();
+                    chains[i] = chainFactory.buildChain(contexts[i]);
                 }
             }
         } finally {
@@ -336,7 +349,14 @@ public class BeastMain {
             logger.setLevel(Level.ALL);
         }
 
-        return Collections.<ChainSet>singletonList(new TemperedChainSet(0, chains, mc3Options));
+        return Collections.<ChainSet>singletonList(new TemperedChainSet(0, chains, contexts, swapContext, mc3Options));
+    }
+
+    /**
+     * @return a seed for a chain's random number stream, drawn from the run's generator
+     */
+    private static long nextChainSeed() {
+        return 1 + MathUtils.nextInt(Integer.MAX_VALUE - 1);
     }
 
     public static void centreLine(String line, int pageWidth) {

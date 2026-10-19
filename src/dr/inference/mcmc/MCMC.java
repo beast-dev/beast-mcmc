@@ -440,6 +440,14 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         this.operatorAnalysisCSVFile = csvFile;
     }
 
+    public File getOperatorAnalysisFile() {
+        return operatorAnalysisFile;
+    }
+
+    public boolean isOperatorAnalysisCSVFile() {
+        return operatorAnalysisCSVFile;
+    }
+
     public String getId() {
         return id;
     }

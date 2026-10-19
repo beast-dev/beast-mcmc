@@ -28,6 +28,7 @@
 package dr.app.beast;
 
 import dr.app.plugin.PluginLoader;
+import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 import dr.util.Version;
 import dr.xml.XMLParseException;
@@ -81,25 +82,32 @@ public class ChainFactory {
     /**
      * Builds the model for a chain from a new parser (with plugins loaded).
      */
-    public MCMC buildChain() throws XMLParseException {
+    public MCMC buildChain(ChainContext context) throws XMLParseException {
         XMLParser parser = newParser();
         PluginLoader.loadPlugins(parser);
-        return buildChain(parser);
+        return buildChain(parser, context);
     }
 
     /**
      * Builds the model for a chain using the given parser. Elements after the MCMC element
-     * are not parsed and nothing is run.
+     * are not parsed and nothing is run. The context is bound while parsing so the chain's
+     * random number stream is used (e.g., for a random starting tree) and its output files
+     * are named for it.
      */
-    public MCMC buildChain(XMLParser parser) throws XMLParseException {
+    public MCMC buildChain(XMLParser parser, ChainContext context) throws XMLParseException {
         if (document == null) {
             throw new IllegalStateException("readDocument must be called before building chains");
         }
-        MCMC mcmc = (MCMC) parser.parse(document, MCMC.class);
-        if (mcmc == null) {
-            throw new XMLParseException("BEAST XML file is missing an MCMC element");
+        context.bind();
+        try {
+            MCMC mcmc = (MCMC) parser.parse(document, MCMC.class);
+            if (mcmc == null) {
+                throw new XMLParseException("BEAST XML file is missing an MCMC element");
+            }
+            return mcmc;
+        } finally {
+            ChainContext.unbind();
         }
-        return mcmc;
     }
 
     private final String fileName;

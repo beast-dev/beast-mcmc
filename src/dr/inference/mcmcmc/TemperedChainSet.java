@@ -31,10 +31,12 @@ import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.Logger;
 import dr.inference.loggers.MCLogger;
 import dr.inference.markovchain.MarkovChain;
+import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCCriterion;
 import dr.inference.operators.OperatorSchedule;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,8 +53,9 @@ import java.util.concurrent.Semaphore;
  */
 public class TemperedChainSet extends AbstractChainSet {
 
-    public TemperedChainSet(int index, MCMC[] mcmcs, MCMCMCOptions options) {
-        super(index, mcmcs);
+    public TemperedChainSet(int index, MCMC[] mcmcs, ChainContext[] contexts, ChainContext driverContext,
+                            MCMCMCOptions options) {
+        super(index, mcmcs, contexts, driverContext);
 
         this.options = options;
 
@@ -84,6 +87,10 @@ public class TemperedChainSet extends AbstractChainSet {
                 mcLoggers[i][j] = (MCLogger) loggers[j];
             }
         }
+
+        // only the first chain was built with real output files
+        operatorAnalysisFile = mcmcs[0].getOperatorAnalysisFile();
+        operatorAnalysisCSVFile = mcmcs[0].isOperatorAnalysisCSVFile();
 
         coldChain = 0;
         scheme = options.getSwapScheme().factory(chains, schedules, options);
@@ -158,6 +165,8 @@ public class TemperedChainSet extends AbstractChainSet {
             if (i != coldChain) {
                 mcmcs[i].setShowOperatorAnalysis(false);
                 mcmcs[i].setOperatorAnalysisFile(null, false);
+            } else {
+                mcmcs[i].setOperatorAnalysisFile(operatorAnalysisFile, operatorAnalysisCSVFile);
             }
         }
 
@@ -203,6 +212,9 @@ public class TemperedChainSet extends AbstractChainSet {
     private final OperatorSchedule[] schedules;
     private final MCLogger[][] mcLoggers;
     private final ParallelTempering scheme;
+
+    private final File operatorAnalysisFile;
+    private final boolean operatorAnalysisCSVFile;
 
     private List<List<LogFormatter>> coldFormatters;
     private volatile int coldChain;

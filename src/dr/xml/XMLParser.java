@@ -27,6 +27,7 @@
 
 package dr.xml;
 
+import dr.inference.mcmc.ChainContext;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -481,6 +482,11 @@ public class XMLParser {
     public static PrintWriter getFilePrintWriter(XMLObject xo, String parserName, String attributeName) throws XMLParseException {
 
         if (xo.hasAttribute(attributeName)) {
+            ChainContext context = ChainContext.current();
+            if (context != null && !context.writesFiles()) {
+                return ChainContext.getDiscardWriter();
+            }
+
             File logFile = getLogFile(xo, attributeName);
 
             try {
@@ -495,7 +501,16 @@ public class XMLParser {
     }
 
     public static File getLogFile(XMLObject xo, String attributeName) throws XMLParseException {
-        final File logFile = getFileHandle(xo, attributeName);
+        ChainContext context = ChainContext.current();
+        if (context != null && !context.writesFiles()) {
+            return ChainContext.getDiscardFile(xo.getStringAttribute(attributeName));
+        }
+
+        File logFile = getFileHandle(xo, attributeName);
+        if (context != null) {
+            // each chain of a multi-chain run writes its own files
+            logFile = context.addSuffix(logFile);
+        }
         boolean allowOverwrite = false;
 
         if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {

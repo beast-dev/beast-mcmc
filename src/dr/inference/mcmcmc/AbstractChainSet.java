@@ -27,6 +27,7 @@
 
 package dr.inference.mcmcmc;
 
+import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 
 import java.util.ArrayList;
@@ -35,16 +36,25 @@ import java.util.concurrent.*;
 
 /**
  * Owns one thread per chain so that each chain (and its BEAGLE instances) is always run
- * from the same thread. A chain computes only while it holds a permit from the semaphore
- * shared across the run.
+ * from the same thread, with the chain's context (and so its random number stream) bound to
+ * it. A chain computes only while it holds a permit from the semaphore shared across the run.
  *
  * @author Andrew Rambaut
  */
 public abstract class AbstractChainSet implements ChainSet {
 
-    protected AbstractChainSet(int index, MCMC[] mcmcs) {
+    /**
+     * @param contexts      one per chain, bound to the chain's thread
+     * @param driverContext bound to the thread driving the set (e.g., for swap decisions)
+     */
+    protected AbstractChainSet(int index, MCMC[] mcmcs, ChainContext[] contexts, ChainContext driverContext) {
+        if (contexts.length != mcmcs.length) {
+            throw new IllegalArgumentException("There should be one context per chain");
+        }
         this.index = index;
         this.mcmcs = mcmcs;
+        this.contexts = contexts;
+        this.driverContext = driverContext;
     }
 
     @Override
@@ -54,11 +64,18 @@ public abstract class AbstractChainSet implements ChainSet {
 
     @Override
     public void start(Semaphore permits) {
+        // start is called on the driver thread
+        driverContext.bind();
+
         this.permits = permits;
         workers = new ExecutorService[mcmcs.length];
         for (int i = 0; i < mcmcs.length; i++) {
             final String name = "chain-" + (index + 1) + (mcmcs.length > 1 ? "." + i : "");
-            workers[i] = Executors.newSingleThreadExecutor(r -> new Thread(r, name));
+            final ChainContext context = contexts[i];
+            workers[i] = Executors.newSingleThreadExecutor(r -> new Thread(() -> {
+                context.bind();
+                r.run();
+            }, name));
         }
     }
 
@@ -139,6 +156,8 @@ public abstract class AbstractChainSet implements ChainSet {
 
     protected final int index;
     protected final MCMC[] mcmcs;
+    protected final ChainContext[] contexts;
+    private final ChainContext driverContext;
 
     private Semaphore permits;
     private ExecutorService[] workers;

@@ -570,6 +570,10 @@ public class BeastGenerator extends Generator {
 
             treeLikelihoodGenerator.writeAllTreeLikelihoods(writer);
 
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                clockModelGenerator.writeHMCClockGradients(model, writer);
+            }
+
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
         } catch (Exception e) {
             e.printStackTrace();

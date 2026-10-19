@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="human"/>
+        <taxon id="chimp"/>
+        <taxon id="gorilla"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="human"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="chimp"/>
+            AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAATCCCCTTATTTCTACTA
+            GGACTATAAGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="gorilla"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGAGGTTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATTGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTGTCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTCACATCCTTCCCGTACTAAGAAATT
+            TAGGTTAAACATAGACCAAGAGCCTTCAAAGCCCTTAGTAAGTTA-CAACACTTAATTTCTGTAAGGACTGC
+        </sequence>
+    </alignment>
+
+    <patterns id="patterns" from="1" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        ((human:0.1,chimp:0.1):0.1,gorilla:0.2);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <taxa id="characterTaxa">
+        <taxon id="A"/>
+        <taxon id="C"/>
+        <taxon id="G"/>
+        <taxon id="T"/>
+    </taxa>
+
+    <newick id="characterNewick" usingHeights="true" usingDates="false">
+        ((A:1,G:1):1,(C:1,T:1):1);
+    </newick>
+
+    <treeModel id="characterTree" fixHeights="true">
+        <tree idref="characterNewick"/>
+        <rootHeight>
+            <parameter id="characterTree.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="characterTree.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="characterTree.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <hierarchicalSubstitutionModel id="hrate">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="hrate.frequencies" value="0.1 0.2 0.3 0.4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <characterTree>
+            <treeModel idref="characterTree"/>
+        </characterTree>
+        <ratesParameter>
+            <parameter id="hrate.rates" value="0.5825242718446603 0.8737864077669906 0.9708737864077672"/>
+        </ratesParameter>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="hrate.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="hrate.alpha" value="0.5"/>
+        </gammaShape>
+    </siteModel>
+
+    <HKYModel id="hky">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="hky.frequencies" value="0.1 0.2 0.3 0.4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="2.5" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+
+    <siteModel id="hky.siteModel">
+        <substitutionModel>
+            <HKYModel idref="hky"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="hky.alpha" value="0.5"/>
+        </gammaShape>
+    </siteModel>
+
+    <treeDataLikelihood id="hierarchical.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="eigen.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="hky.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hky.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <report>
+        <treeDataLikelihood idref="hierarchical.likelihood"/>
+        <treeDataLikelihood idref="eigen.likelihood"/>
+        <treeDataLikelihood idref="hky.likelihood"/>
+    </report>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            Hierarchical BEAGLE representation against plain BEAGLE with the analytic eigen decomposition
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="eigen.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            Hierarchical BEAGLE representation against the equivalent HKY model
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hky.likelihood"/>
+        </expected>
+    </assertEqual>
+</beast>

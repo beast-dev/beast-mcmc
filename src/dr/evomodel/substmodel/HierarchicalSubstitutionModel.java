@@ -144,7 +144,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         }
 
         addModel(tree);
-        hierarchicalRates.addModel(this);
+        hierarchicalRates.addToModelListener(this);
         addModel(frequency);
     }
 
@@ -460,7 +460,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     public interface HierarchicalRateProvider {
         double getRate(TreeModel tree, int node);
         TreeModel getTreeModel();
-        void addModel(ModelListener modelListener);
+        void addToModelListener(AbstractModel listener);
 
         class Default implements HierarchicalRateProvider {
 
@@ -490,8 +490,8 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             }
 
             @Override
-            public void addModel(ModelListener modelListener) {
-                hierarchicalPoissonRates.addModelListener(modelListener);
+            public void addToModelListener(AbstractModel listener) {
+                listener.addModel(hierarchicalPoissonRates);
             }
         }
     }

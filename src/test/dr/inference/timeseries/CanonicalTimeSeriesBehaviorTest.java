@@ -46,6 +46,7 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
                 "testCanonicalKalmanLikelihoodMatchesMomentEngine_ExactOu",
                 "testCanonicalKalmanLikelihoodAndSmootherMatchMomentWithRectangularDesign",
                 "testCanonicalKalmanLikelihoodAndSmootherAllowPartialObservationColumns",
+                "testCanonicalAnalyticalGradientsMatchFDWithAlternatingPartialObservations",
                 "testCanonicalKalmanLikelihoodMatchesMomentEngine_Euler",
                 "testForwardLikelihoodFactorySelectsEquivalentExactOuBackends",
                 "testForwardLikelihoodFactorySelectsEquivalentEulerBackends",

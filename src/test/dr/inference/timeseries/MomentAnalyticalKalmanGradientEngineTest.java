@@ -879,6 +879,61 @@ public class MomentAnalyticalKalmanGradientEngineTest extends TestCase {
         return (llPlus - llMinus) / (2.0 * h);
     }
 
+    private static double numericalGradientFourthOrder(dr.inference.model.Likelihood likelihood,
+                                                        Parameter param, int index, double h) {
+        final double original = param.getParameterValue(index);
+
+        param.setParameterValue(index, original + 2.0 * h);
+        likelihood.makeDirty();
+        final double plusTwo = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original + h);
+        likelihood.makeDirty();
+        final double plusOne = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original - h);
+        likelihood.makeDirty();
+        final double minusOne = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original - 2.0 * h);
+        likelihood.makeDirty();
+        final double minusTwo = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original);
+        likelihood.makeDirty();
+
+        return (-plusTwo + 8.0 * plusOne - 8.0 * minusOne + minusTwo) / (12.0 * h);
+    }
+
+    private static double numericalLogScaleGradientFourthOrder(dr.inference.model.Likelihood likelihood,
+                                                                Parameter param, int index, double h) {
+        final double original = param.getParameterValue(index);
+        if (!(original > 0.0)) {
+            throw new IllegalArgumentException("Log-scale finite difference requires a positive parameter");
+        }
+
+        param.setParameterValue(index, original * Math.exp(2.0 * h));
+        likelihood.makeDirty();
+        final double plusTwo = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original * Math.exp(h));
+        likelihood.makeDirty();
+        final double plusOne = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original * Math.exp(-h));
+        likelihood.makeDirty();
+        final double minusOne = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original * Math.exp(-2.0 * h));
+        likelihood.makeDirty();
+        final double minusTwo = likelihood.getLogLikelihood();
+
+        param.setParameterValue(index, original);
+        likelihood.makeDirty();
+
+        return (-plusTwo + 8.0 * plusOne - 8.0 * minusOne + minusTwo) / (12.0 * h);
+    }
+
     private static void assertFullEvaluationStable(String label,
                                                    dr.inference.model.Likelihood likelihood,
                                                    double tolerance) {
@@ -2206,6 +2261,78 @@ public class MomentAnalyticalKalmanGradientEngineTest extends TestCase {
         } catch (IllegalArgumentException expected) {
             assertTrue("Expected partial missing observation error",
                     expected.getMessage().contains("Partial missing observations"));
+        }
+    }
+
+    public void testCanonicalAnalyticalGradientsMatchFDWithAlternatingPartialObservations() {
+        final MatrixParameter drift = makeMatrix("A.canonical.fd.partial", new double[][]{
+                {0.50, -0.10},
+                {0.10, 1.00}
+        });
+        final MatrixParameter diffusion = makeMatrix("Q.canonical.fd.partial", new double[][]{
+                {2.0e-7, 0.0},
+                {0.0, 4.0e-3}
+        });
+        final Parameter mean = new Parameter.Default(new double[]{0.20, -0.10});
+        final MatrixParameter initCov = makeMatrix("P0.canonical.fd.partial", new double[][]{
+                {0.05, 0.0},
+                {0.0, 0.05}
+        });
+        final OUProcessModel process = new OUProcessModel(
+                "ouCanonicalFdPartial", 2, drift, diffusion, mean, initCov,
+                CovarianceGradientMethod.LYAPUNOV_ADJOINT);
+
+        final MatrixParameter H = makeMatrix("H.canonical.fd.partial", new double[][]{{1, 0}, {0, 1}});
+        final MatrixParameter R = makeMatrix("R.canonical.fd.partial", new double[][]{
+                {1.0e-5, 0.0},
+                {0.0, 1.0e-5}
+        });
+        final int timeCount = 101;
+        final double[][] observationValues = new double[2][timeCount];
+        for (int t = 0; t < timeCount; ++t) {
+            observationValues[0][t] = Double.NaN;
+            observationValues[1][t] = Double.NaN;
+            if (t > 0) {
+                final int observedCoordinate = (t - 1) & 1;
+                observationValues[observedCoordinate][t] =
+                        observedCoordinate == 0
+                                ? 0.03 * Math.sin(0.17 * t)
+                                : -0.02 * Math.cos(0.13 * t);
+            }
+        }
+        final MatrixParameter Y = makeMatrix("Y.canonical.fd.partial", observationValues);
+        final LinearGaussianObservationModel obs = new LinearGaussianObservationModel(
+                "obsCanonicalFdPartial", 2, H, R, Y);
+        final TimeGrid grid = new UniformTimeGrid(timeCount, 0.0, 2.777777777777778e-7);
+        final TimeSeriesLikelihood canonical = makeCanonicalAnalyticalLikelihood(
+                "tsLikeCanonicalFdPartial", process, obs, grid);
+
+        final double[] analyticalDrift = canonical.getGradientWrt(drift).getGradientLogDensity(null);
+        for (int idx = 0; idx < analyticalDrift.length; ++idx) {
+            assertEquals("Canonical drift gradient with alternating partial observations, idx=" + idx,
+                    numericalGradientFourthOrder(canonical, drift, idx, 1e-2),
+                    analyticalDrift[idx],
+                    1e-4);
+        }
+
+        final double[] analyticalDiffusion = canonical.getGradientWrt(diffusion).getGradientLogDensity(null);
+        final double analyticalFirstLogScale = diffusion.getParameterValue(0) * analyticalDiffusion[0];
+        assertEquals("Canonical first diffusion diagonal gradient with short partial-observation branches",
+                numericalLogScaleGradientFourthOrder(canonical, diffusion, 0, 0.1),
+                analyticalFirstLogScale,
+                Math.max(1e-6, Math.abs(analyticalFirstLogScale) * 1e-2));
+        final double analyticalSecondLogScale = diffusion.getParameterValue(3) * analyticalDiffusion[3];
+        assertEquals("Canonical second diffusion diagonal gradient with short partial-observation branches",
+                numericalLogScaleGradientFourthOrder(canonical, diffusion, 3, 0.1),
+                analyticalSecondLogScale,
+                Math.max(1e-6, Math.abs(analyticalSecondLogScale) * 1e-2));
+
+        final double[] analyticalMean = canonical.getGradientWrt(mean).getGradientLogDensity(null);
+        for (int idx = 0; idx < analyticalMean.length; ++idx) {
+            assertEquals("Canonical mean gradient with alternating partial observations, idx=" + idx,
+                    numericalGradientFourthOrder(canonical, mean, idx, 1e-2),
+                    analyticalMean[idx],
+                    1e-4);
         }
     }
 

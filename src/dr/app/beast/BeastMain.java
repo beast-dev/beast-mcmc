@@ -213,13 +213,26 @@ public class BeastMain {
 
             } else {
 
-                MultiChainRunner runner = new MultiChainRunner(
-                        buildChainSets(chainFactory, parser, runConfiguration, logger),
-                        runConfiguration.getChainThreads());
+                List<SampleCollector> collectors = new ArrayList<SampleCollector>();
+                List<ChainSet> sets = buildChainSets(chainFactory, parser, runConfiguration, logger, collectors);
+
+                MultiChainRunner runner = new MultiChainRunner(sets, runConfiguration.getChainThreads());
                 if (consoleApp != null) {
                     consoleApp.runner = runner;
                 }
+
+                ConvergenceMonitor monitor = null;
+                if (!collectors.isEmpty()) {
+                    monitor = new ConvergenceMonitor(sets, collectors, runConfiguration.getConvergenceInterval(),
+                            getConvergenceLogFile(fileName));
+                    monitor.start();
+                }
+
                 runner.run();
+
+                if (monitor != null) {
+                    monitor.stop();
+                }
             }
 
         } catch (java.io.IOException ioe) {
@@ -309,7 +322,8 @@ public class BeastMain {
      */
     private List<ChainSet> buildChainSets(ChainFactory chainFactory, XMLParser firstParser,
                                           RunConfiguration runConfiguration,
-                                          Logger logger) throws dr.xml.XMLParseException {
+                                          Logger logger,
+                                          List<SampleCollector> collectors) throws dr.xml.XMLParseException {
 
         MCMCMCOptions mc3Options = runConfiguration.getMCMCMCOptions();
         double[] chainTemperatures = mc3Options.getChainTemperatures();
@@ -363,6 +377,12 @@ public class BeastMain {
                 } else {
                     sets.add(new IndependentChainSet(k, chains[0], contexts[k][0], driverContexts[k]));
                 }
+                if (independentChainCount > 1 && runConfiguration.getConvergenceInterval() > 0) {
+                    // keep the samples to compare the chains
+                    SampleCollector collector = new SampleCollector("Chain " + (k + 1), chains);
+                    collector.attach(chains);
+                    collectors.add(collector);
+                }
             }
         } finally {
             // restart messages
@@ -376,6 +396,22 @@ public class BeastMain {
         }
 
         return sets;
+    }
+
+    /**
+     * @return the file for the convergence reports, named after the XML file
+     */
+    private static File getConvergenceLogFile(String xmlFileName) {
+        String stem = xmlFileName;
+        if (stem.toLowerCase().endsWith(".xml")) {
+            stem = stem.substring(0, stem.length() - 4);
+        }
+        File file = FileHelpers.getFile(stem + ".convergence.log", System.getProperty("file.name.prefix"));
+        if (file.exists() && !Boolean.parseBoolean(System.getProperty("log.allow.overwrite", "false"))) {
+            throw new RuntimeException("The convergence log file " + file.getName() + " already exists in the working directory." +
+                    "\nTo allow it to be overwritten, use the '-overwrite' command line option.");
+        }
+        return file;
     }
 
     /**
@@ -483,6 +519,7 @@ public class BeastMain {
 
                         new Arguments.IntegerOption("chains", null, 1, Integer.MAX_VALUE, "number of independent chains to run (default 1)"),
                         new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "maximum number of chains computing at once (default: one per processor)"),
+                        new Arguments.IntegerOption("convergence_every", null, 0, Integer.MAX_VALUE, "seconds between convergence reports for multiple chains (default 60, 0 for none)"),
 
                         new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains in each parallel tempering set (1 cold plus heated chains)"),
                         new Arguments.RealOption("mc3_delta", null, 0.0, Double.MAX_VALUE, "temperature increment parameter"),

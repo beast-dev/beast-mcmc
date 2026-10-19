@@ -41,6 +41,7 @@ public class RunConfiguration {
 
     public static final double DEFAULT_DELTA = 1.0;
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
+    public static final int DEFAULT_CONVERGENCE_INTERVAL = 60;
 
     public RunConfiguration(int independentChainCount, double[] chainTemperatures, int swapChainsEvery,
                             MCMCMCOptions.SwapScheme swapScheme, int chainThreads) {
@@ -55,6 +56,21 @@ public class RunConfiguration {
         this.swapChainsEvery = swapChainsEvery;
         this.swapScheme = swapScheme;
         this.chainThreads = chainThreads;
+    }
+
+    /**
+     * @param seconds the interval between convergence reports (0 for none)
+     */
+    public void setConvergenceInterval(int seconds) {
+        this.convergenceInterval = seconds;
+    }
+
+    /**
+     * @return the interval in seconds between convergence reports when there are several
+     * independent chains (0 for none)
+     */
+    public int getConvergenceInterval() {
+        return convergenceInterval;
     }
 
     /**
@@ -121,7 +137,12 @@ public class RunConfiguration {
             chainThreads = arguments.getIntegerOption("chain_threads");
         }
 
-        return new RunConfiguration(independentChainCount, chainTemperatures, swapChainsEvery, swapScheme, chainThreads);
+        RunConfiguration configuration = new RunConfiguration(independentChainCount, chainTemperatures,
+                swapChainsEvery, swapScheme, chainThreads);
+        if (arguments.hasOption("convergence_every")) {
+            configuration.setConvergenceInterval(arguments.getIntegerOption("convergence_every"));
+        }
+        return configuration;
     }
 
     /**
@@ -185,4 +206,5 @@ public class RunConfiguration {
     private final int swapChainsEvery;
     private final MCMCMCOptions.SwapScheme swapScheme;
     private final int chainThreads;
+    private int convergenceInterval = DEFAULT_CONVERGENCE_INTERVAL;
 }

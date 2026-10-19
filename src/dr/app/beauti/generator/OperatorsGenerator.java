@@ -566,6 +566,19 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 
+    /**
+     * The id of the TreeDataLikelihood for the clock model with this prefix (clock operators carry the
+     * clock model's prefix but not the model itself).
+     */
+    private String getTreeDataLikelihoodId(String clockPrefix) {
+        for (PartitionClockModel clockModel : options.getPartitionClockModels()) {
+            if (clockModel.getPrefix().equals(clockPrefix)) {
+                return TreeLikelihoodGenerator.getTreeDataLikelihoodId(clockModel.getPartitionTreeModel(), clockModel);
+            }
+        }
+        throw new IllegalArgumentException("No clock model found with prefix '" + clockPrefix + "'");
+    }
+
     private void writeRelaxedClockHMCRateOperator(Operator operator, String prefix, XMLWriter writer) {
         int nSteps = 4;
         double stepSize = 1E-2;
@@ -593,7 +606,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(HessianWrapperParser.NAME);
 
         writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
-        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, getTreeDataLikelihoodId(prefix));
         writer.writeCloseTag(BranchRateGradientParser.NAME);
 
         writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
@@ -671,7 +684,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeComment("gradient of likelihood wrt subst branch rates");
         writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
-        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, getTreeDataLikelihoodId(prefix));
         writer.writeCloseTag(BranchRateGradientParser.NAME);
 
         writer.writeIDref(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT, prefix + "incrementGradient");

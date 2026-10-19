@@ -41,17 +41,25 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Periodically compares independent chains while they run: the effective sample size of each
- * logged value (summed over the chains), the split potential scale reduction factor (R-hat)
- * and the average standard deviation of clade frequencies (ASDSF). Reports go to the screen
- * and to a log file. This only reports; it never stops the chains.
+ * Periodically compares independent chains while they run. The chains share one burn-in,
+ * estimated from their agreement: the smallest burn-in after which the split R-hat of the
+ * posterior across the chains stays below 1.01 (for that burn-in and every larger one tried,
+ * as the initial transient can make R-hat look small when nothing is discarded). After that
+ * burn-in it reports the effective sample size of each logged value (summed over the chains),
+ * the split potential scale reduction factor (R-hat) and the average standard deviation of
+ * clade frequencies (ASDSF). Reports go to the screen and to a log file. This only reports; it
+ * never stops the chains.
  *
  * @author Andrew Rambaut
  */
 public class ConvergenceMonitor {
 
-    public static final double DEFAULT_BURNIN = 0.1;
     public static final double MIN_CLADE_FREQUENCY = 0.1;
+
+    // burn-ins tried, as proportions of the samples (the step matches the tree blocks)
+    public static final double BURNIN_STEP = 1.0 / SampleCollector.TREE_BLOCK_COUNT;
+    public static final double MAX_BURNIN = 0.5;
+    public static final double RHAT_THRESHOLD = 1.01;
 
     public ConvergenceMonitor(List<ChainSet> sets, List<SampleCollector> collectors,
                               long intervalSeconds, File logFile) {
@@ -59,14 +67,13 @@ public class ConvergenceMonitor {
         this.collectors = collectors;
         this.intervalSeconds = intervalSeconds;
         this.logFile = logFile;
-        this.burnin = DEFAULT_BURNIN;
     }
 
     public void start() {
         if (logFile != null) {
             try {
                 log = new PrintWriter(new FileWriter(logFile));
-                log.println("state\tminESS\tminESS.parameter\tmaxRhat\tmaxRhat.parameter\tASDSF\tclades");
+                log.println("state\tburnin\tposteriorRhat\tminESS\tminESS.parameter\tmaxRhat\tmaxRhat.parameter\tASDSF\tclades");
                 log.flush();
             } catch (IOException e) {
                 throw new RuntimeException("Unable to write the convergence log, " + logFile + ": " + e.getMessage());
@@ -117,15 +124,26 @@ public class ConvergenceMonitor {
             minState = Math.min(minState, snapshots[k].state);
         }
 
-        Diagnostics diagnostics = computeDiagnostics(collectors.get(0).getLabels(), snapshots, burnin);
+        Burnin burnin = estimateBurnin(snapshots);
+        // without a common burn-in, show the diagnostics after the largest one tried
+        double proportion = burnin.found ? burnin.proportion : MAX_BURNIN;
+        Diagnostics diagnostics = computeDiagnostics(collectors.get(0).getLabels(), snapshots, proportion);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%n%s at state %d (%d chains, %.0f%% burn-in):%n",
-                title, minState, chainCount, burnin * 100));
+        sb.append(String.format("%n%s at state %d (%d chains):%n", title, minState, chainCount));
         for (int k = 0; k < chainCount; k++) {
             String status = sets.get(k).getStatus();
             sb.append(String.format("  %-10s state %-12d posterior %-16.4f %s%n",
                     collectors.get(k).getName(), snapshots[k].state, snapshots[k].posterior, status));
+        }
+        if (burnin.found) {
+            sb.append(String.format("  common burn-in %d states (%.0f%%): posterior R-hat %.4f%n",
+                    burnin.states, burnin.proportion * 100, burnin.posteriorRhat));
+        } else if (burnin.tried) {
+            sb.append(String.format("  no common burn-in yet: posterior R-hat %.4f after %.0f%% (needs < %.2f); below is after %.0f%%%n",
+                    burnin.posteriorRhat, MAX_BURNIN * 100, RHAT_THRESHOLD, MAX_BURNIN * 100));
+        } else {
+            sb.append(String.format("  too few samples to estimate the burn-in (below is after %.0f%%)%n", MAX_BURNIN * 100));
         }
         if (diagnostics.minESSLabel != null) {
             sb.append(String.format("  min ESS %.1f (%s)", diagnostics.minESS, diagnostics.minESSLabel));
@@ -147,7 +165,9 @@ public class ConvergenceMonitor {
         System.out.flush();
 
         if (log != null) {
-            log.println(minState + "\t" + format(diagnostics.minESS) + "\t" + format(diagnostics.minESSLabel) +
+            log.println(minState + "\t" + (burnin.found ? Long.toString(burnin.states) : "NA") +
+                    "\t" + format(burnin.posteriorRhat) +
+                    "\t" + format(diagnostics.minESS) + "\t" + format(diagnostics.minESSLabel) +
                     "\t" + format(diagnostics.maxRhat) + "\t" + format(diagnostics.maxRhatLabel) +
                     "\t" + format(diagnostics.asdsf) + "\t" + diagnostics.cladeCount);
             log.flush();
@@ -160,6 +180,68 @@ public class ConvergenceMonitor {
 
     private static String format(String label) {
         return label == null ? "NA" : label;
+    }
+
+    static class Burnin {
+        boolean tried = false;
+        boolean found = false;
+        double proportion = Double.NaN;
+        long states = 0;
+        // at the burn-in found, or after MAX_BURNIN if none was
+        double posteriorRhat = Double.NaN;
+    }
+
+    /**
+     * Finds the smallest burn-in (from 0 to MAX_BURNIN in steps of BURNIN_STEP) for which the
+     * split R-hat of the chains' posteriors is below RHAT_THRESHOLD, for that burn-in and every
+     * larger one tried.
+     */
+    static Burnin estimateBurnin(SampleCollector.Snapshot[] snapshots) {
+        Burnin burnin = new Burnin();
+        int n = Integer.MAX_VALUE;
+        for (SampleCollector.Snapshot snapshot : snapshots) {
+            n = Math.min(n, snapshot.scores.size());
+        }
+        int steps = (int) Math.round(MAX_BURNIN / BURNIN_STEP);
+        // need at least a few samples in each half chain after the largest burn-in
+        if (snapshots.length < 2 || n * (1.0 - MAX_BURNIN) < 8) {
+            return burnin;
+        }
+        burnin.tried = true;
+
+        double[] rhats = new double[steps + 1];
+        for (int i = 0; i <= steps; i++) {
+            int start = getBurninSamples(n, i * BURNIN_STEP);
+            double[][] chains = new double[snapshots.length][n - start];
+            for (int k = 0; k < snapshots.length; k++) {
+                for (int s = start; s < n; s++) {
+                    chains[k][s - start] = snapshots[k].scores.get(s);
+                }
+            }
+            rhats[i] = splitRhat(chains);
+        }
+
+        int found = -1;
+        for (int i = steps; i >= 0; i--) {
+            if (!(rhats[i] < RHAT_THRESHOLD)) {
+                break;
+            }
+            found = i;
+        }
+        if (found >= 0) {
+            burnin.found = true;
+            burnin.proportion = found * BURNIN_STEP;
+            burnin.states = getBurninSamples(n, burnin.proportion) * snapshots[0].logEvery;
+            burnin.posteriorRhat = rhats[found];
+        } else {
+            burnin.posteriorRhat = rhats[steps];
+        }
+        return burnin;
+    }
+
+    private static int getBurninSamples(int sampleCount, double proportion) {
+        // round first so steps like 3 * 0.02 do not fall just above a whole number
+        return (int) Math.ceil(Math.round(sampleCount * proportion * 1e6) / 1e6);
     }
 
     static class Diagnostics {
@@ -180,7 +262,7 @@ public class ConvergenceMonitor {
         for (SampleCollector.Snapshot snapshot : snapshots) {
             sampleCount = Math.min(sampleCount, snapshot.rows.size());
         }
-        int start = (int) Math.ceil(sampleCount * burnin);
+        int start = getBurninSamples(sampleCount, burnin);
         int n = sampleCount - start;
 
         if (n >= 4) {
@@ -307,7 +389,7 @@ public class ConvergenceMonitor {
             // drop whole blocks up to the burn-in
             int skip = 0;
             int skipped = 0;
-            while (skip < snapshot.treeBlockSizes.size() && skipped + snapshot.treeBlockSizes.get(skip) <= total * burnin) {
+            while (skip < snapshot.treeBlockSizes.size() && skipped + snapshot.treeBlockSizes.get(skip) <= total * burnin + 1e-6) {
                 skipped += snapshot.treeBlockSizes.get(skip);
                 skip++;
             }
@@ -365,7 +447,6 @@ public class ConvergenceMonitor {
     private final List<SampleCollector> collectors;
     private final long intervalSeconds;
     private final File logFile;
-    private final double burnin;
 
     private ScheduledExecutorService scheduler = null;
     private PrintWriter log = null;

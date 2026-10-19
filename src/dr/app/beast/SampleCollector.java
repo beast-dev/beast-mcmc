@@ -43,8 +43,8 @@ import dr.inference.model.Model;
 import java.util.*;
 
 /**
- * Keeps the samples of one chain in memory for convergence diagnostics: the numeric columns
- * of the chain's main log, and the frequencies of the clades of its logged tree.
+ * Keeps the samples of one chain in memory for convergence diagnostics: the chain's posterior,
+ * the numeric columns of its main log, and the frequencies of the clades of its logged tree.
  *
  * Trees are not stored. Each clade is identified by a 64-bit hash (the sum of random keys of
  * its taxa, which needs O(n) per tree) and counted in blocks of consecutive samples, so a
@@ -116,10 +116,14 @@ public class SampleCollector implements MarkovChainListener {
             labels[j] = valueColumns[0].get(j).getLabel();
         }
         this.labels = labels;
-        this.logEvery = logEvery;
         this.treeEvery = (trees[0] != null ? treeEvery : 0);
 
         long chainLength = mcmcs[0].getChainLength();
+        // the posterior is always sampled, at the main log's interval if there is one
+        if (logEvery <= 0) {
+            logEvery = (this.treeEvery > 0 ? this.treeEvery : Math.max(1, chainLength / 1000));
+        }
+        this.logEvery = logEvery;
         long expectedTreeSamples = (this.treeEvery > 0 ? chainLength / this.treeEvery : 0);
         this.treeSamplesPerBlock = Math.max(1, expectedTreeSamples / TREE_BLOCK_COUNT);
 
@@ -177,6 +181,7 @@ public class SampleCollector implements MarkovChainListener {
         int i = chainIndex.get(markovChain);
         coldChain = markovChain;
 
+        double score = markovChain.getCurrentScore();
         double[] row = null;
         if (logValues) {
             List<NumberColumn> columns = valueColumns[i];
@@ -191,6 +196,7 @@ public class SampleCollector implements MarkovChainListener {
             lastState = state;
             if (row != null) {
                 rows.add(row);
+                scores.add(score);
             }
             if (clades != null) {
                 if (currentBlock == null || currentBlockSize >= treeSamplesPerBlock) {
@@ -286,15 +292,16 @@ public class SampleCollector implements MarkovChainListener {
             blocks.set(last, new HashMap<Long, Integer>(blocks.get(last)));
         }
         return new Snapshot(lastState, coldChain.getCurrentScore(), new ArrayList<double[]>(rows),
-                blocks, new ArrayList<Integer>(treeBlockSizes), logEvery);
+                new ArrayList<Double>(scores), blocks, new ArrayList<Integer>(treeBlockSizes), logEvery);
     }
 
     public static class Snapshot {
-        Snapshot(long state, double posterior, List<double[]> rows,
+        Snapshot(long state, double posterior, List<double[]> rows, List<Double> scores,
                  List<Map<Long, Integer>> treeBlocks, List<Integer> treeBlockSizes, long logEvery) {
             this.state = state;
             this.posterior = posterior;
             this.rows = rows;
+            this.scores = scores;
             this.treeBlocks = treeBlocks;
             this.treeBlockSizes = treeBlockSizes;
             this.logEvery = logEvery;
@@ -303,6 +310,10 @@ public class SampleCollector implements MarkovChainListener {
         public final long state;
         public final double posterior;
         public final List<double[]> rows;
+        /**
+         * the chain's log posterior at the same states as rows
+         */
+        public final List<Double> scores;
         public final List<Map<Long, Integer>> treeBlocks;
         public final List<Integer> treeBlockSizes;
         public final long logEvery;
@@ -322,6 +333,7 @@ public class SampleCollector implements MarkovChainListener {
 
     // guarded by this
     private final List<double[]> rows = new ArrayList<double[]>();
+    private final List<Double> scores = new ArrayList<Double>();
     private final List<Map<Long, Integer>> treeBlocks = new ArrayList<Map<Long, Integer>>();
     private final List<Integer> treeBlockSizes = new ArrayList<Integer>();
     private Map<Long, Integer> currentBlock = null;

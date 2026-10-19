@@ -134,21 +134,20 @@ public class XMLParser {
             dr.xml.XMLParseException,
             javax.xml.parsers.ParserConfigurationException {
 
-        InputSource in = new InputSource(reader);
-        javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        return parse(readDocument(reader), target);
+    }
 
-        javax.xml.parsers.DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        Document document = documentBuilder.parse(in);
+    /**
+     * Parses a document that has already been read, up to the first object of the target
+     * class, which is returned. Nothing is run. The document is not modified so it can be
+     * parsed again by another parser.
+     */
+    public Object parse(Document document, Class target) throws dr.xml.XMLParseException {
 
-        Element e = document.getDocumentElement();
-        if (e.getTagName().equals("beast")) {
+        Element e = getRootElement(document);
 
-            concurrent = false;
-            return convert(e, target, null, false, true);
-
-        } else {
-            throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
-        }
+        concurrent = false;
+        return convert(e, target, null, false, true);
     }
 
     public Map<String, XMLObject> parse(Reader reader, boolean run)
@@ -157,38 +156,60 @@ public class XMLParser {
             dr.xml.XMLParseException,
             javax.xml.parsers.ParserConfigurationException {
 
+        return parse(readDocument(reader), run);
+    }
+
+    /**
+     * Parses a document that has already been read, running any runnable elements if run is
+     * true. The document is not modified so it can be parsed again by another parser.
+     */
+    public Map<String, XMLObject> parse(Document document, boolean run) throws dr.xml.XMLParseException {
+
+        Element e = getRootElement(document);
+
+        concurrent = false;
+        root = (XMLObject) convert(e, null, null, run, true);
+
+        return objectStore;
+    }
+
+    /**
+     * Reads an XML document.
+     */
+    public static Document readDocument(Reader reader)
+            throws java.io.IOException,
+            org.xml.sax.SAXException,
+            javax.xml.parsers.ParserConfigurationException {
+
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
 
         javax.xml.parsers.DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         documentBuilder.setErrorHandler(new MyErrorHandler());
-        Document document = documentBuilder.parse(in);
+        return documentBuilder.parse(in);
+    }
 
+    private Element getRootElement(Document document) throws dr.xml.XMLParseException {
         Element e = document.getDocumentElement();
-        if (e.getTagName().equals("beast")) {
-            // If the 'version' is attribute is present then check it is not a more recent version...
-            if (e.hasAttribute(VERSION)) {
-                String xmlVersion = e.getAttribute(VERSION);
-                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion()) &&
-                        !Boolean.parseBoolean(System.getProperty("ignore.versions"))) {
-                    throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than \n" +
-                            "the version of BEAST running it (" + version.getVersion() + "). \n" +
-                            "This may be incompatible and cause unpredictable errors. \n" +
-                            "To override this behaviour use the `-ignore_versions` command line option." );
-                }
-            }
-
-            concurrent = false;
-            root = (XMLObject) convert(e, null, null, run, true);
-
-        } else {
+        if (!e.getTagName().equals("beast")) {
             throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
         }
 
-        return objectStore;
+        // If the 'version' is attribute is present then check it is not a more recent version...
+        if (e.hasAttribute(VERSION)) {
+            String xmlVersion = e.getAttribute(VERSION);
+            if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion()) &&
+                    !Boolean.parseBoolean(System.getProperty("ignore.versions"))) {
+                throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than \n" +
+                        "the version of BEAST running it (" + version.getVersion() + "). \n" +
+                        "This may be incompatible and cause unpredictable errors. \n" +
+                        "To override this behaviour use the `-ignore_versions` command line option." );
+            }
+        }
+        return e;
     }
 
-    private class MyErrorHandler extends DefaultHandler {
+    private static class MyErrorHandler extends DefaultHandler {
         public void warning(SAXParseException e) throws SAXException {
             System.out.println("Warning: ");
             printInfo(e);
@@ -438,16 +459,6 @@ public class XMLParser {
         if (fileNamePrefix != null) {
             if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
                 throw new XMLParseException("The specified file name prefix is illegal.");
-            }
-        }
-
-        final String fileRankPostfix = System.getProperty("mpi.rank.postfix");
-        if (fileRankPostfix != null) {
-            if (fileName.endsWith(".log")) {
-                fileName = fileName.substring(0, fileName.length() - 4) + fileRankPostfix + ".log";
-            }
-            if (fileName.endsWith(".trees")) {
-                fileName = fileName.substring(0, fileName.length() - 6) + fileRankPostfix + ".trees";
             }
         }
 

@@ -37,11 +37,8 @@ import dr.inference.mcmc.MCMCCriterion;
 import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
-import dr.inference.operators.AdaptableMCMCOperator;
-import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorAnalysisPrinter;
 import dr.inference.operators.OperatorSchedule;
-import dr.math.MathUtils;
 import dr.util.NumberFormatter;
 
 import java.util.Collections;
@@ -100,11 +97,7 @@ public class MCMCMC implements Runnable {
             acceptor.setRank(i);
         }
 
-        if (USE_PARALLEL_TEMPERING_SCHEME) {
-            scheme = mcmcmcOptions.getSwapScheme().factory(chains, schedules, mcmcmcOptions);
-        } else {
-            scheme = null;
-        }
+        scheme = mcmcmcOptions.getSwapScheme().factory(chains, schedules, mcmcmcOptions);
     }
 
     private static final boolean DEBUG_IN_SERIES = false;
@@ -185,11 +178,7 @@ public class MCMCMC implements Runnable {
                 int oldColdChain = coldChain;
 
                 // attempt to swap two or more chains' temperatures
-                if (USE_PARALLEL_TEMPERING_SCHEME) {
-                    coldChain = scheme.swapChainTemperatures(coldChain);
-                } else {
-                    coldChain = swapChainTemperatures();
-                }
+                coldChain = scheme.swapChainTemperatures(coldChain);
 
                 // if the cold chain was involved in a swap then we need to change the
                 // listener that does the logging and the destinations for the coldChainLoggers.
@@ -246,85 +235,6 @@ public class MCMCMC implements Runnable {
         }
     }
 
-    private int swapChainTemperatures() {
-
-        if(DEBUG){
-            System.out.print("Current scores: ");
-            for(int i=0; i<chains.length; i++){
-                System.out.print("\t");
-                if(i==coldChain){
-                    System.out.print("[");
-                }
-                System.out.print(chains[i].getCurrentScore());
-                if(i==coldChain){
-                    System.out.print("]");
-                }
-            }
-            System.out.println();
-        }
-
-        int newColdChain = coldChain;
-
-        int index1 = MathUtils.nextInt(chains.length);
-        int index2 = MathUtils.nextInt(chains.length);
-        while (index1 == index2) {
-            index2 = MathUtils.nextInt(chains.length);
-        }
-
-        double score1 = chains[index1].getCurrentScore();
-        MCMCCriterion acceptor1 = ((MCMCCriterion) chains[index1].getAcceptor());
-        double temperature1 = acceptor1.getTemperature();
-        double score2 = chains[index2].getCurrentScore();
-        MCMCCriterion acceptor2 = ((MCMCCriterion) chains[index2].getAcceptor());
-        double temperature2 = acceptor2.getTemperature();
-
-        double logRatio = ((score2 - score1) * temperature1) + ((score1 - score2) * temperature2);
-        boolean swap = (Math.log(MathUtils.nextDouble()) < logRatio);
-
-        if (swap) {
-            if(DEBUG){
-                System.out.println("Swapping chain "+index1+" and chain "+index2);
-            }
-
-            acceptor1.setTemperature(temperature2);
-            acceptor2.setTemperature(temperature1);
-
-            OperatorSchedule schedule1 = schedules[index1];
-            OperatorSchedule schedule2 = schedules[index2];
-
-            for (int i = 0; i < schedule1.getOperatorCount(); i++) {
-                MCMCOperator operator1 = schedule1.getOperator(i);
-                MCMCOperator operator2 = schedule2.getOperator(i);
-
-                long tmp = operator1.getAcceptCount();
-                operator1.setAcceptCount(operator2.getAcceptCount());
-                operator2.setAcceptCount(tmp);
-
-                tmp = operator1.getRejectCount();
-                operator1.setRejectCount(operator2.getRejectCount());
-                operator2.setRejectCount(tmp);
-
-                double tmp2 = operator1.getSumDeviation();
-                operator1.setSumDeviation(operator2.getSumDeviation());
-                operator2.setSumDeviation(tmp2);
-
-                if (operator1 instanceof AdaptableMCMCOperator) {
-                    tmp2 = ((AdaptableMCMCOperator) operator1).getAdaptableParameter();
-                    ((AdaptableMCMCOperator) operator1).setAdaptableParameter(((AdaptableMCMCOperator) operator2).getAdaptableParameter());
-                    ((AdaptableMCMCOperator) operator2).setAdaptableParameter(tmp2);
-                }
-            }
-
-            if (index1 == coldChain) {
-                newColdChain = index2;
-            } else if (index2 == coldChain) {
-                newColdChain = index1;
-            }
-        }
-
-        return newColdChain;
-    }
-
     private void resetChains() {
 
         for (MarkovChain chain : chains) {
@@ -347,6 +257,8 @@ public class MCMCMC implements Runnable {
 
         System.out.println();
         System.out.println("Time taken: " + timer.toString());
+        System.out.println();
+        System.out.println(scheme.getReport());
 
         if (showOperatorAnalysis) {
             OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedules[coldChain], mcmcOptions.useAdaptation(), false);
@@ -480,6 +392,5 @@ public class MCMCMC implements Runnable {
     private int coldChain;
 
     private final ParallelTempering scheme;
-    private static final boolean USE_PARALLEL_TEMPERING_SCHEME = false;
 }
 

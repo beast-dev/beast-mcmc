@@ -27,16 +27,18 @@
 
 package dr.inference.mcmcmc;
 
-import java.util.ArrayList;
-
 /**
+ * Counts attempted and accepted temperature swaps between each pair of ranks.
+ *
  * @author Marc A. Suchard
  * @author Guy Baele
  */
 
 public class ParallelTemperingStatistics {
 
-    private final StatisticsList[][] allStatistics;
+    private final long[][] attempts;
+    private final long[][] accepts;
+    private final double[][] sumAcceptanceProbability;
     private final double[] temperatures;
 
     public ParallelTemperingStatistics(MCMCMCOptions options) {
@@ -45,12 +47,9 @@ public class ParallelTemperingStatistics {
         this.temperatures = new double[length];
         System.arraycopy(temp, 0, this.temperatures, 0, length); // deep copy to debug
 
-        this.allStatistics = new StatisticsList[length][length];
-        for (int i = 0; i < length; ++i) {
-            for (int j = 0; j < length; ++j) {
-                this.allStatistics[i][j] = new StatisticsList();
-            }
-        }
+        this.attempts = new long[length][length];
+        this.accepts = new long[length][length];
+        this.sumAcceptanceProbability = new double[length][length];
     }
 
     void recordStatistics(int index1, int index2,
@@ -61,29 +60,53 @@ public class ParallelTemperingStatistics {
             throw new IllegalArgumentException("Temperature mismatch");
         }
 
-        allStatistics[rank1][rank2].add(new Statistics(criterion, success));
+        int low = Math.min(rank1, rank2);
+        int high = Math.max(rank1, rank2);
+        attempts[low][high] += 1;
+        if (success) {
+            accepts[low][high] += 1;
+        }
+        sumAcceptanceProbability[low][high] += Math.min(1.0, Math.exp(criterion));
 
         if (DEBUG) {
             System.out.println(rank1 + " (" + index1 + ") <-> " + rank2 + " (" + index2 + ") : " + success);
         }
     }
 
-    public String getReport() {
-        return "Parallel tempering report"; // TODO
+    /**
+     * @return the proportion of accepted swaps over all rank pairs
+     */
+    public double getAcceptanceRate() {
+        long totalAttempts = 0;
+        long totalAccepts = 0;
+        for (int i = 0; i < attempts.length; ++i) {
+            for (int j = 0; j < attempts.length; ++j) {
+                totalAttempts += attempts[i][j];
+                totalAccepts += accepts[i][j];
+            }
+        }
+        return totalAttempts > 0 ? (double) totalAccepts / totalAttempts : 0.0;
     }
 
-    static class Statistics {
-
-        double criterion;
-        boolean success;
-
-        Statistics(double criterion, boolean success) {
-            this.criterion = criterion;
-            this.success = success;
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Parallel tempering swaps:\n");
+        sb.append(String.format("  %-10s %-20s %10s %10s %8s %10s%n",
+                "ranks", "temperatures", "attempts", "accepted", "rate", "mean P(a)"));
+        for (int i = 0; i < attempts.length; ++i) {
+            for (int j = i + 1; j < attempts.length; ++j) {
+                long n = attempts[i][j];
+                if (n > 0) {
+                    sb.append(String.format("  %-10s %-20s %10d %10d %8.4f %10.4f%n",
+                            i + " <-> " + j,
+                            String.format("%.4f <-> %.4f", temperatures[i], temperatures[j]),
+                            n, accepts[i][j], (double) accepts[i][j] / n,
+                            sumAcceptanceProbability[i][j] / n));
+                }
+            }
         }
+        return sb.toString();
     }
 
     private static final boolean DEBUG = false;
-
-    static class StatisticsList extends ArrayList<Statistics> {}
 }

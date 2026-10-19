@@ -497,6 +497,11 @@ public class XMLParser {
             }
 
         }
+
+        ChainContext context = ChainContext.current();
+        if (context != null && !context.writesScreen()) {
+            return ChainContext.getDiscardWriter();
+        }
         return new PrintWriter(System.out);
     }
 

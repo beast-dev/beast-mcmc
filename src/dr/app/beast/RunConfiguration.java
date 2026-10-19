@@ -31,9 +31,9 @@ import dr.app.util.Arguments;
 import dr.inference.mcmcmc.MCMCMCOptions;
 
 /**
- * How the chains of a run are arranged: the parallel tempering set run for each cold chain
- * (a single chain when there are no heated chains) and how many chain threads may compute at
- * once.
+ * How the chains of a run are arranged: the number of independent chains, the parallel
+ * tempering set run for each of them (a single chain when there are no heated chains) and
+ * how many chains may compute at once.
  *
  * @author Andrew Rambaut
  */
@@ -42,11 +42,15 @@ public class RunConfiguration {
     public static final double DEFAULT_DELTA = 1.0;
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
-    public RunConfiguration(double[] chainTemperatures, int swapChainsEvery,
+    public RunConfiguration(int independentChainCount, double[] chainTemperatures, int swapChainsEvery,
                             MCMCMCOptions.SwapScheme swapScheme, int chainThreads) {
+        if (independentChainCount < 1) {
+            throw new IllegalArgumentException("At least one chain is needed");
+        }
         if (chainTemperatures.length < 1 || chainTemperatures[0] != 1.0) {
             throw new IllegalArgumentException("The first chain must be cold (temperature 1.0)");
         }
+        this.independentChainCount = independentChainCount;
         this.chainTemperatures = chainTemperatures;
         this.swapChainsEvery = swapChainsEvery;
         this.swapScheme = swapScheme;
@@ -57,12 +61,12 @@ public class RunConfiguration {
      * A single chain with no tempering.
      */
     public static RunConfiguration singleChain() {
-        return new RunConfiguration(new double[]{1.0}, DEFAULT_SWAP_CHAIN_EVERY,
+        return new RunConfiguration(1, new double[]{1.0}, DEFAULT_SWAP_CHAIN_EVERY,
                 MCMCMCOptions.SwapScheme.ORIGINAL_FLAVOR, -1);
     }
 
     /**
-     * Reads the -mc3_* options.
+     * Reads the -chains, -chain_threads and -mc3_* options.
      *
      * @throws IllegalArgumentException if the options are inconsistent
      */
@@ -107,7 +111,17 @@ public class RunConfiguration {
             swapScheme = MCMCMCOptions.SwapScheme.parse(arguments.getStringOption("mc3_scheme"));
         }
 
-        return new RunConfiguration(chainTemperatures, swapChainsEvery, swapScheme, -1);
+        int independentChainCount = 1;
+        if (arguments.hasOption("chains")) {
+            independentChainCount = arguments.getIntegerOption("chains");
+        }
+
+        int chainThreads = -1;
+        if (arguments.hasOption("chain_threads")) {
+            chainThreads = arguments.getIntegerOption("chain_threads");
+        }
+
+        return new RunConfiguration(independentChainCount, chainTemperatures, swapChainsEvery, swapScheme, chainThreads);
     }
 
     /**
@@ -125,21 +139,37 @@ public class RunConfiguration {
     }
 
     /**
-     * @return the number of chains in the whole run
+     * @return the number of independent chains (each with its tempering set if any)
      */
-    public int getTotalChainCount() {
-        return getTemperedChainCount();
+    public int getIndependentChainCount() {
+        return independentChainCount;
     }
 
     /**
-     * @return the number of chains that may compute at once
+     * @return the number of chains in the whole run
+     */
+    public int getTotalChainCount() {
+        return independentChainCount * getTemperedChainCount();
+    }
+
+    /**
+     * @return the number of chains that may compute at once: as given, or by default as many
+     * as there are processors
      */
     public int getChainThreads() {
         int total = getTotalChainCount();
         if (chainThreads > 0) {
             return Math.min(chainThreads, total);
         }
-        return total;
+        return Math.min(total, Runtime.getRuntime().availableProcessors());
+    }
+
+    /**
+     * @return the number of threads each computing chain should use for its likelihoods so
+     * the run as a whole uses about one thread per processor
+     */
+    public int getThreadsPerChain() {
+        return Math.max(1, Runtime.getRuntime().availableProcessors() / getChainThreads());
     }
 
     public MCMCMCOptions getMCMCMCOptions() {
@@ -150,6 +180,7 @@ public class RunConfiguration {
         return chainTemperatures.clone();
     }
 
+    private final int independentChainCount;
     private final double[] chainTemperatures;
     private final int swapChainsEvery;
     private final MCMCMCOptions.SwapScheme swapScheme;

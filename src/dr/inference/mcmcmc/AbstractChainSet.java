@@ -95,6 +95,24 @@ public abstract class AbstractChainSet implements ChainSet {
         }
     }
 
+    @Override
+    public final void finish() {
+        // sets can finish at the same time: keep each set's final report together
+        synchronized (OUTPUT_LOCK) {
+            if (!contexts[0].getFileSuffix().isEmpty()) {
+                // one of several independent chains
+                System.out.println();
+                System.out.println(contexts[0].getName() + ":");
+            }
+            finishChains();
+        }
+    }
+
+    /**
+     * Finishes the chains (closing their loggers) and prints any reports.
+     */
+    protected abstract void finishChains();
+
     /**
      * Runs one task per chain, each on that chain's own thread, and waits for all of them.
      * Any exception from a chain is rethrown here after the others have finished.
@@ -153,6 +171,8 @@ public abstract class AbstractChainSet implements ChainSet {
             }
         }
     }
+
+    private static final Object OUTPUT_LOCK = new Object();
 
     protected final int index;
     protected final MCMC[] mcmcs;

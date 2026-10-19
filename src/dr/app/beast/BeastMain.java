@@ -36,6 +36,7 @@ import dr.app.util.Utils;
 import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.ChainSet;
+import dr.inference.mcmcmc.IndependentChainSet;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.mcmcmc.MultiChainRunner;
 import dr.inference.mcmcmc.TemperedChainSet;
@@ -312,37 +313,55 @@ public class BeastMain {
 
         MCMCMCOptions mc3Options = runConfiguration.getMCMCMCOptions();
         double[] chainTemperatures = mc3Options.getChainTemperatures();
+        int independentChainCount = runConfiguration.getIndependentChainCount();
         int temperedChainCount = runConfiguration.getTemperedChainCount();
 
-        // Each chain gets its own random number stream, seeded from the run's seed, so the
-        // chains are independent and the run is reproducible.
-        ChainContext[] contexts = new ChainContext[temperedChainCount];
-        for (int i = 0; i < temperedChainCount; i++) {
-            String name = (i == 0 ? "Cold chain" : "Hot chain " + i);
-            contexts[i] = new ChainContext(name, "", i == 0, nextChainSeed());
-        }
-        ChainContext swapContext = new ChainContext("Swaps", "", false, nextChainSeed());
-
+        infoLogger.info("Running " + independentChainCount + " independent chain" +
+                (independentChainCount > 1 ? "s" : "") +
+                (temperedChainCount > 1 ? ", each with " + (temperedChainCount - 1) + " heated chain" +
+                        (temperedChainCount > 2 ? "s" : "") : "") +
+                ", " + runConfiguration.getChainThreads() + " at a time");
         if (temperedChainCount > 1) {
-            infoLogger.info("Starting cold chain plus hot chains with temperatures: ");
+            infoLogger.info("Hot chain temperatures: ");
             for (int i = 1; i < chainTemperatures.length; i++) {
                 infoLogger.info("Hot Chain " + i + ": " + chainTemperatures[i]);
             }
         }
-        for (ChainContext context : contexts) {
-            infoLogger.info(context.getName() + " random number seed: " + context.getSeed());
+
+        // Each chain gets its own random number stream, seeded from the run's seed, so the
+        // chains are independent and the run is reproducible. Each independent chain writes
+        // its own output files (only its cold member writes them).
+        ChainContext[][] contexts = new ChainContext[independentChainCount][temperedChainCount];
+        ChainContext[] driverContexts = new ChainContext[independentChainCount];
+        for (int k = 0; k < independentChainCount; k++) {
+            String name = (independentChainCount > 1 ? "Chain " + (k + 1) : "Cold chain");
+            String fileSuffix = (independentChainCount > 1 ? ".chain" + (k + 1) : "");
+            for (int i = 0; i < temperedChainCount; i++) {
+                contexts[k][i] = new ChainContext(i == 0 ? name : name + " hot " + i,
+                        fileSuffix, i == 0, k == 0, nextChainSeed());
+                infoLogger.info(contexts[k][i].getName() + " random number seed: " + contexts[k][i].getSeed());
+            }
+            driverContexts[k] = new ChainContext(name + " driver", fileSuffix, false, false, nextChainSeed());
         }
 
-        MCMC[] chains = new MCMC[temperedChainCount];
+        List<ChainSet> sets = new ArrayList<ChainSet>();
         try {
-            for (int i = 0; i < temperedChainCount; i++) {
-                if (i == 0) {
-                    chains[i] = chainFactory.buildChain(firstParser, contexts[i]);
+            for (int k = 0; k < independentChainCount; k++) {
+                MCMC[] chains = new MCMC[temperedChainCount];
+                for (int i = 0; i < temperedChainCount; i++) {
+                    if (k == 0 && i == 0) {
+                        chains[i] = chainFactory.buildChain(firstParser, contexts[k][i]);
+                    } else {
+                        // turn off all messages for subsequent parses (they will be the same as the
+                        // first time).
+                        logger.setLevel(Level.OFF);
+                        chains[i] = chainFactory.buildChain(contexts[k][i]);
+                    }
+                }
+                if (temperedChainCount > 1) {
+                    sets.add(new TemperedChainSet(k, chains, contexts[k], driverContexts[k], mc3Options));
                 } else {
-                    // turn off all messages for subsequent parses (they will be the same as the
-                    // first time).
-                    logger.setLevel(Level.OFF);
-                    chains[i] = chainFactory.buildChain(contexts[i]);
+                    sets.add(new IndependentChainSet(k, chains[0], contexts[k][0], driverContexts[k]));
                 }
             }
         } finally {
@@ -356,7 +375,7 @@ public class BeastMain {
             throw new RuntimeException("Checkpointing is not yet available with parallel tempering (-mc3_chains)");
         }
 
-        return Collections.<ChainSet>singletonList(new TemperedChainSet(0, chains, contexts, swapContext, mc3Options));
+        return sets;
     }
 
     /**
@@ -462,7 +481,10 @@ public class BeastMain {
 
                         new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
 
-                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains"),
+                        new Arguments.IntegerOption("chains", null, 1, Integer.MAX_VALUE, "number of independent chains to run (default 1)"),
+                        new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "maximum number of chains computing at once (default: one per processor)"),
+
+                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains in each parallel tempering set (1 cold plus heated chains)"),
                         new Arguments.RealOption("mc3_delta", null, 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", null, -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", null, 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
@@ -983,6 +1005,18 @@ public class BeastMain {
         if (beagleFlags != 0) {
             System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
 
+        }
+
+        if (!runConfiguration.isSingleChain()) {
+            // Share the processors between the chains computing at once rather than letting
+            // every chain's likelihoods use them all (unless the thread counts were given).
+            int threadsPerChain = runConfiguration.getThreadsPerChain();
+            if (threadCount < 0) {
+                threadCount = (threadsPerChain > 1 ? threadsPerChain : 0);
+            }
+            if (System.getProperty("beagle.thread.count") == null) {
+                System.setProperty("beagle.thread.count", Integer.toString(threadsPerChain));
+            }
         }
 
         if (threadCount >= 0) {

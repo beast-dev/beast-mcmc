@@ -52,12 +52,15 @@ public final class ChainContext {
      * @param writesFiles false for the heated members of a tempering set, whose output is
      *                    discarded (the cold member's loggers are moved to whichever chain is
      *                    cold)
+     * @param writesScreen false if the chain's screen log should be discarded (only one of
+     *                     several independent chains shows its screen log)
      * @param seed        the seed of this chain's random number stream
      */
-    public ChainContext(String name, String fileSuffix, boolean writesFiles, long seed) {
+    public ChainContext(String name, String fileSuffix, boolean writesFiles, boolean writesScreen, long seed) {
         this.name = name;
         this.fileSuffix = fileSuffix;
         this.writesFiles = writesFiles;
+        this.writesScreen = writesScreen;
         this.seed = seed;
         this.random = new MathUtils.RandomStream(seed);
     }
@@ -104,6 +107,10 @@ public final class ChainContext {
 
     public boolean writesFiles() {
         return writesFiles;
+    }
+
+    public boolean writesScreen() {
+        return writesScreen;
     }
 
     public String getFileSuffix() {
@@ -178,6 +185,7 @@ public final class ChainContext {
     private final String name;
     private final String fileSuffix;
     private final boolean writesFiles;
+    private final boolean writesScreen;
     private final long seed;
     private final MathUtils.RandomStream random;
     private final ModelRegistry registry = new ModelRegistry();

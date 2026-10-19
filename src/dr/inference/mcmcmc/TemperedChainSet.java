@@ -158,7 +158,7 @@ public class TemperedChainSet extends AbstractChainSet {
     }
 
     @Override
-    public void finish() {
+    protected void finishChains() {
         // The operator tunings and counts move with the temperatures, so the cold chain's
         // schedule holds the cold statistics. Only report those.
         for (int i = 0; i < mcmcs.length; i++) {

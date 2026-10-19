@@ -141,6 +141,16 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
      * This method actually initiates the MCMC analysis.
      */
     public void chain() {
+        start();
+        runSegment(Long.MAX_VALUE);
+        finish();
+    }
+
+    /**
+     * Prepares the chain to run: starts the loggers, loads any initial state and works out
+     * the adaptation delay and the state at which the chain will end. Call before runSegment.
+     */
+    public void start() {
 
         stopping = false;
         currentState = 0;
@@ -153,51 +163,91 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             }
         }
 
-        if (!stopping) {
+        long loadedState = 0;
 
-            long loadedState = 0;
+        if (Factory.INSTANCE != null) {
+            StateLoader initialStateLoader = Factory.INSTANCE.getInitialStateLoader();
+            if (initialStateLoader != null) {
+                double[] savedLnL = new double[1];
 
-            if (Factory.INSTANCE != null) {
-                StateLoader initialStateLoader = Factory.INSTANCE.getInitialStateLoader();
-                if (initialStateLoader != null) {
-                    double[] savedLnL = new double[1];
+                loadedState = initialStateLoader.loadState(mc, savedLnL);
 
-                    loadedState = initialStateLoader.loadState(mc, savedLnL);
+                mc.setCurrentLength(loadedState);
 
-                    mc.setCurrentLength(loadedState);
+                double lnL = mc.evaluate();
 
-                    double lnL = mc.evaluate();
+                initialStateLoader.checkLoadState(savedLnL[0], lnL);
+            }
+        }
 
-                    initialStateLoader.checkLoadState(savedLnL[0], lnL);
-                }
+        mc.addMarkovChainListener(chainListener);
+
+        long chainLength = getChainLength();
+
+        //this also potentially gets the new adaptationDelay of a possibly increased chain length
+        final long adaptationDelay = getAdaptationDelay();
+
+        //assume that saved state has passed the adaptationDelay
+        //TODO: discuss whether we want to save the adaptationDelay or chainLength to file
+        if (adaptationDelay > loadedState) {
+            adaptationEndState = adaptationDelay;
+            endState = loadedState + (adaptationDelay - loadedState) + (chainLength - adaptationDelay);
+        } else {
+            adaptationEndState = -1;
+            endState = loadedState + chainLength;
+        }
+
+        fullEvaluationPending = true;
+    }
+
+    /**
+     * Runs the chain for up to the given number of states, stopping early at the end of the
+     * chain. The adaptation delay boundary is handled here: the operators are reset when it
+     * is crossed.
+     *
+     * @param maxStates the maximum number of states to run
+     * @return true if the chain has more states to run
+     */
+    public boolean runSegment(long maxStates) {
+
+        long remaining = Math.min(maxStates, endState - mc.getCurrentLength());
+
+        while (remaining > 0 && !stopping) {
+            long current = mc.getCurrentLength();
+            boolean inDelay = current < adaptationEndState;
+            long length = inDelay ? Math.min(remaining, adaptationEndState - current) : remaining;
+
+            mc.runChain(length, inDelay, !fullEvaluationPending);
+            fullEvaluationPending = false;
+
+            if (mc.isStopped() || mc.getCurrentLength() == current) {
+                // stopped by a request made directly to the Markov chain
+                stopping = true;
             }
 
-            mc.addMarkovChainListener(chainListener);
-
-            long chainLength = getChainLength();
-
-            //this also potentially gets the new adaptationDelay of a possibly increased chain length
-            final long adaptationDelay = getAdaptationDelay();
-
-            //assume that saved state has passed the adaptationDelay
-            //TODO: discuss whether we want to save the adaptationDelay or chainLength to file
-//            System.out.println("adaptationDelay = " + adaptationDelay + " vs. loadedState = " +loadedState);
-            if (adaptationDelay > loadedState) {
-                mc.runChain(adaptationDelay - loadedState, true);
-                chainLength -= adaptationDelay;
-
+            if (inDelay && mc.getCurrentLength() == adaptationEndState) {
                 for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
                 }
+                // the original single-run chain fully re-evaluated after the adaptation delay
+                fullEvaluationPending = true;
             }
 
-            mc.runChain(chainLength, false);
-
-            mc.terminateChain();
-
-            mc.removeMarkovChainListener(chainListener);
-
+            remaining -= mc.getCurrentLength() - current;
         }
+
+        return !stopping && mc.getCurrentLength() < endState;
+    }
+
+    /**
+     * Cleans up after the chain has finished (possibly early): closes the loggers and
+     * reports the operator analysis.
+     */
+    public void finish() {
+        mc.terminateChain();
+
+        mc.removeMarkovChainListener(chainListener);
+
         timer.stop();
     }
 
@@ -402,7 +452,10 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
     //private FileLogger operatorLogger = null;
     protected final boolean isAdapting = true;
-    protected boolean stopping = false;
+    protected volatile boolean stopping = false;
+    private long endState;
+    private long adaptationEndState = -1;
+    private boolean fullEvaluationPending = true;
     protected boolean showOperatorAnalysis = Boolean.parseBoolean(System.getProperty(OperatorSchedule.SHOW_OPERATORS));
     protected File operatorAnalysisFile = null;
     protected boolean operatorAnalysisCSVFile = false;

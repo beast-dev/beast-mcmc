@@ -58,10 +58,14 @@ public final class MarkovChain implements Serializable {
     private final Acceptor acceptor;
     private final Likelihood likelihood;
 
-    private boolean pleaseStop = false;
-    private boolean isStopped = false;
+    private volatile boolean pleaseStop = false;
+    private volatile boolean isStopped = false;
     private double bestScore, currentScore, initialScore;
-    private long currentLength;
+    private volatile long currentLength;
+
+    // full evaluation test state carried between continuation segments
+    private boolean fullEvaluationFinished = false;
+    private boolean fullEvaluationError = false;
 
     private final boolean useAdaptation;
     private boolean isCurrentlyAdapting;
@@ -123,11 +127,26 @@ public final class MarkovChain implements Serializable {
      * @param length number of states to run the chain.
      */
     public long runChain(long length, boolean disableAdaptation) {
+        return runChain(length, disableAdaptation, false);
+    }
+
+    /**
+     * Run the chain for a given number of states.
+     *
+     * @param length number of states to run the chain.
+     * @param disableAdaptation turn off operator adaptation for this run
+     * @param continuation if true, this continues a previous call with the model untouched in
+     *                     between: the full re-evaluation is skipped, a pending stop request is
+     *                     kept, and the full evaluation test phase carries on where it left off.
+     */
+    public long runChain(long length, boolean disableAdaptation, boolean continuation) {
 
         isCurrentlyAdapting = useAdaptation && !disableAdaptation;
 
-        likelihood.makeDirty();
-        currentScore = evaluate(likelihood);
+        if (!continuation) {
+            likelihood.makeDirty();
+            currentScore = evaluate(likelihood);
+        }
 
         long currentState = currentLength;
 
@@ -166,18 +185,21 @@ public final class MarkovChain implements Serializable {
             throw new IllegalArgumentException(message);
         }
 
-        pleaseStop = false;
-        isStopped = false;
+        if (!continuation) {
+            pleaseStop = false;
+            isStopped = false;
+            fullEvaluationFinished = false;
+            fullEvaluationError = false;
+        }
 
         //int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
         double[] logr = {0.0};
 
-        boolean usingFullEvaluation = true;
+        boolean usingFullEvaluation = !fullEvaluationFinished;
         // set ops count in mcmc element instead
         if (fullEvaluationCount == 0) // Temporary solution until full code review
             usingFullEvaluation = false;
-        boolean fullEvaluationError = false;
 
         Map<String, Double> diagnosticDensities = null;
 
@@ -454,6 +476,7 @@ public final class MarkovChain implements Serializable {
                     // operations in total.
 
                     usingFullEvaluation = false;
+                    fullEvaluationFinished = true;
                     if (fullEvaluationError) {
                         // If there has been an error then stop with an error
                         throw new RuntimeException(

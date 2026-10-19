@@ -34,8 +34,10 @@ import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.inference.mcmc.MCMC;
-import dr.inference.mcmcmc.MCMCMC;
+import dr.inference.mcmcmc.ChainSet;
 import dr.inference.mcmcmc.MCMCMCOptions;
+import dr.inference.mcmcmc.MultiChainRunner;
+import dr.inference.mcmcmc.TemperedChainSet;
 import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 import dr.util.*;
@@ -49,6 +51,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -71,6 +74,7 @@ public class BeastMain {
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
+        volatile MultiChainRunner runner = null;
         public final static String backgroundColor =  "#35484F";
         public final static String foregroundColor = "#CBB944";
 
@@ -80,6 +84,9 @@ public class BeastMain {
         }
 
         public void doStop() {
+            if (runner != null) {
+                runner.pleaseStop();
+            }
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
@@ -245,10 +252,12 @@ public class BeastMain {
                 // restart messages
                 logger.setLevel(Level.ALL);
 
-                MCMCMC mc3 = new MCMCMC(chains, mc3Options);
-//                Thread thread = new Thread(mc3);
-//                thread.start();
-                mc3.run();
+                List<ChainSet> sets = Collections.<ChainSet>singletonList(new TemperedChainSet(0, chains, mc3Options));
+                MultiChainRunner runner = new MultiChainRunner(sets, chainCount);
+                if (consoleApp != null) {
+                    consoleApp.runner = runner;
+                }
+                runner.run();
             }
 
         } catch (java.io.IOException ioe) {

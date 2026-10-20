@@ -232,6 +232,11 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
 
     @Override
     public DifferentialMassProvider.DifferentialWrapper.WrtParameter factory(Parameter parameter, int dim) {
+        if (!(lrm instanceof LogAdditiveCtmcRateProvider.DataAugmented)
+                || parameter != ((LogAdditiveCtmcRateProvider.DataAugmented) lrm).getLogRateParameter()) {
+            throw new IllegalArgumentException("Substitution-parameter gradients of " + getId()
+                    + " are only available with respect to its own log-rate parameter");
+        }
         return new LogRateSubstitutionModel.WrtLogRate(stateCount, dim);
     }
 

@@ -445,6 +445,12 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel
 
     @Override
     public WrtParameter factory(Parameter parameter, int dim) {
+        // The mixture root distribution and the missing rateScalar term make frequency differentials wrong here
+        for (SubstitutionModel baseModel : baseModels) {
+            if (parameter == baseModel.getFrequencyModel().getFrequencyParameter()) {
+                throw new IllegalArgumentException("Frequency gradients are not supported for " + getId());
+            }
+        }
         for (int i = 0; i < numBaseModel; i ++) {
             DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) baseModels.get(i);
             try{

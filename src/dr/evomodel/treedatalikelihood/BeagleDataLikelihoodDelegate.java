@@ -1250,6 +1250,51 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
     }
 
+    public double[] getPatternWeights() {
+        return patternWeights.clone();
+    }
+
+    /**
+     * Root contribution to d log L / d pi_k for root frequencies pi:
+     * out_k = sum_s w_s (sum_c w_c p_root,c,s,k) / L_s, with L_s = sum_k pi_k sum_c w_c p_root,c,s,k.
+     * The caller must have computed the likelihood. Reads the unscaled-index root partials only, so per-pattern
+     * scale factors cancel in each ratio; makes no BEAGLE writes. Fills out with NaN if any used L_s is not positive.
+     */
+    public void getRootFrequencyDerivatives(int rootNodeNumber, double[] out) {
+
+        final double[] partials = new double[categoryCount * patternCount * stateCount];
+        getPartials(rootNodeNumber, partials);
+
+        final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+        final double[] categoryWeights = siteRateModel.getCategoryProportions();
+        final double[] numerator = new double[stateCount];
+
+        Arrays.fill(out, 0.0);
+        for (int s = 0; s < patternCount; s++) {
+            if (patternWeights[s] <= 0.0) {
+                continue;
+            }
+            Arrays.fill(numerator, 0.0);
+            for (int c = 0; c < categoryCount; c++) {
+                final int offset = (c * patternCount + s) * stateCount;
+                for (int k = 0; k < stateCount; k++) {
+                    numerator[k] += categoryWeights[c] * partials[offset + k];
+                }
+            }
+            double likelihood = 0.0;
+            for (int k = 0; k < stateCount; k++) {
+                likelihood += frequencies[k] * numerator[k];
+            }
+            if (!(likelihood > 0.0) || Double.isInfinite(likelihood)) {
+                Arrays.fill(out, Double.NaN);
+                return;
+            }
+            for (int k = 0; k < stateCount; k++) {
+                out[k] += patternWeights[s] * numerator[k] / likelihood;
+            }
+        }
+    }
+
     private void setPartials(int number, double[] partials) {
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }

@@ -54,6 +54,67 @@ public final class MaximizerFisherRecoveryTest extends TestCase {
         }
     }
 
+    public void testEndpointGradientFailureKeepsBestPointWithoutRefresh() {
+        // Start at the optimum so L-BFGS returns ALREADY_MINIMIZED after one gradient call.  The
+        // endpoint gradient evaluation inside maximize() is the second call and throws, as the
+        // canonical smoother does at a near-singular endpoint.  The run must finish normally.
+        final Parameter parameter = new Parameter.Default("x", new double[]{0.0, 0.0});
+        final int[] gradientCalls = new int[]{0};
+        final Likelihood likelihood = new Likelihood.Abstract(null) {
+            @Override
+            protected boolean getLikelihoodKnown() {
+                return false;
+            }
+
+            @Override
+            protected double calculateLogLikelihood() {
+                final double x0 = parameter.getParameterValue(0);
+                final double x1 = parameter.getParameterValue(1);
+                return -0.5 * (x0 * x0 + x1 * x1);
+            }
+        };
+        final GradientWrtParameterProvider gradient = new GradientWrtParameterProvider() {
+            @Override
+            public Likelihood getLikelihood() {
+                return likelihood;
+            }
+
+            @Override
+            public Parameter getParameter() {
+                return parameter;
+            }
+
+            @Override
+            public int getDimension() {
+                return 2;
+            }
+
+            @Override
+            public double[] getGradientLogDensity() {
+                if (++gradientCalls[0] > 1) {
+                    throw new IllegalArgumentException("Matrix is not positive definite");
+                }
+                return new double[]{-parameter.getParameterValue(0), -parameter.getParameterValue(1)};
+            }
+        };
+        final MaximizerWrtParameter.Settings settings = new MaximizerWrtParameter.Settings(
+                20, 1.0e-4, true, false, false,
+                1.0e-30, 0, 1.0e-30, null, null, null, 1,
+                true, 2, 1.0e-8, 10.0, 1.0, Double.POSITIVE_INFINITY,
+                MaximizerWrtParameter.FisherInformationSource.FINITE_DIFFERENCE);
+        final MaximizerWrtParameter maximizer = new MaximizerWrtParameter(
+                likelihood, parameter, gradient, null, settings, gradient, null);
+
+        maximizer.maximize();
+
+        assertEquals(2, gradientCalls[0]);
+        assertEquals(0, maximizer.getFisherRefreshCount());
+        assertEquals(0.0, parameter.getParameterValue(0), 0.0);
+        assertEquals(0.0, parameter.getParameterValue(1), 0.0);
+        assertEquals(0.0, likelihood.getLogLikelihood(), 0.0);
+        assertTrue(maximizer.getReport().contains("Gradient: unavailable at the endpoint"));
+    }
+
     private static MaximizerWrtParameter runQuadraticRecovery(
             final MaximizerWrtParameter.FisherInformationSource source) {
         final Parameter parameter = new Parameter.Default("x", new double[]{1.0, 1.0});

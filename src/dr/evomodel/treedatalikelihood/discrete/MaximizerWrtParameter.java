@@ -378,14 +378,29 @@ public class MaximizerWrtParameter implements Reportable {
 
             minimumPoint = minimize(paramsBFGS, x0);
             setParameterFromOptimizationPoint(minimumPoint);
-            final double stageValue = function.valueAt(minimumPoint);
+            // The endpoint value and gradient are evaluated outside the L-BFGS callback, whose
+            // penalty path catches invalid evaluations.  A failure here (for example a smoother
+            // covariance that is not positive definite at a near-singular endpoint) must not
+            // abort the run before the result is logged.
+            double stageValue = Double.NaN;
+            double[] stageGradient = null;
+            try {
+                stageValue = function.valueAt(minimumPoint);
+                stageGradient = function.gradientAt(minimumPoint);
+            } catch (RuntimeException exception) {
+                if (settings.printToScreen) {
+                    System.err.println("Stage endpoint evaluation failed: " + exception.getMessage()
+                            + "; keeping the best finite endpoint and skipping any Fisher refresh.");
+                }
+            }
             if (Double.isFinite(stageValue) && stageValue < bestValue) {
                 bestValue = stageValue;
                 bestPointInParameterSpace = parameter.getParameterValues();
             }
-            final double[] stageGradient = function.gradientAt(minimumPoint);
-            final double gradientNorm = euclideanNorm(stageGradient);
-            printLargestGradientComponents(stageGradient);
+            final double gradientNorm = stageGradient == null ? Double.NaN : euclideanNorm(stageGradient);
+            if (stageGradient != null) {
+                printLargestGradientComponents(stageGradient);
+            }
             if (!shouldRefresh(returnValue, gradientNorm)) {
                 break;
             }
@@ -450,7 +465,11 @@ public class MaximizerWrtParameter implements Reportable {
                 sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
             }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
-            sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
+            try {
+                sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(function.gradientAt(minimumPoint))).append("\n");
+            } catch (RuntimeException exception) {
+                sb.append("Gradient: unavailable at the endpoint (").append(exception.getMessage()).append(")\n");
+            }
             sb.append("Gradient type: ").append(gradientType).append("\n");
             sb.append("Fx: ").append(minimumValue).append("\n");
             sb.append("LBFGS return: ").append(returnValue).append("\n");

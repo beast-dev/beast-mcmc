@@ -82,6 +82,19 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         }
 
         final LatentProcessModel latentProcess = model.getLatentProcessModel();
+        if (latentProcess instanceof OUTimeSeriesProcessAdapter) {
+            final OUProcessModel ouProcess = ((OUTimeSeriesProcessAdapter) latentProcess).getProcessModel();
+            final boolean canonicalGradient = gradientMode == GaussianGradientComputationMode.DISABLED
+                    || (gradientMode == GaussianGradientComputationMode.CANONICAL_ANALYTICAL
+                        && smootherMode == GaussianSmootherComputationMode.CANONICAL);
+            if (ouProcess.getDiffusionFloor() > 0.0
+                    && (forwardMode != GaussianForwardComputationMode.CANONICAL || !canonicalGradient)) {
+                // The moment-form engines identify the diffusion parameter by reference and would not
+                // see the floored view consistently; the canonical engines apply the floor everywhere.
+                throw new IllegalArgumentException(
+                        "ouProcessModel diffusionFloor > 0 requires canonical forward, smoother and gradient modes");
+            }
+        }
         final RepresentableProcess process = representationFor(latentProcess);
         prepareRepeatedDeltaCache(process, model);
         final LinearGaussianObservationModel observationModel = (LinearGaussianObservationModel) model.getObservationModel();
@@ -213,8 +226,12 @@ public final class GaussianTimeSeriesLikelihoodFactory {
                                                              final MatrixParameter initialCovariance,
                                                              final LinearGaussianObservationModel observationModel,
                                                              final int stateDimension) {
-        final DiffusionMatrixParameterization diffusionParameterization =
-                DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
+        // The parameterization identifies and pulls back to the raw diffusion parameters while
+        // reporting the floored values the engines use (Q + floor I).
+        final DiffusionMatrixParameterization diffusionParameterization = processModel != null
+                ? DiffusionMatrixParameterizationFactory.create(
+                        processModel.getRawDiffusionMatrix(), processModel.getDiffusionFloor())
+                : DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
         final CanonicalBlockDiagonalGradientCache blockDiagonalGradientCache =
                 createBlockDiagonalGradientCache(
                         processModel,

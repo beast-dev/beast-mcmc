@@ -24,6 +24,7 @@ public class OUProcessModelParser extends AbstractXMLObjectParser {
     public static final String DIFFUSION_MATRIX = "diffusionMatrix";
     public static final String STATIONARY_MEAN = "stationaryMean";
     public static final String INITIAL_COVARIANCE = "initialCovariance";
+    public static final String DIFFUSION_FLOOR = "diffusionFloor";
 
     @Override
     public String getParserName() {
@@ -41,9 +42,16 @@ public class OUProcessModelParser extends AbstractXMLObjectParser {
 
         OUSelectionChartParserHelper.validateSelectionChart(xo, driftMatrix, PARSER_NAME);
 
+        final double diffusionFloor = xo.getAttribute(DIFFUSION_FLOOR, 0.0);
+        if (!Double.isFinite(diffusionFloor) || diffusionFloor < 0.0) {
+            throw new XMLParseException(DIFFUSION_FLOOR + " must be a finite non-negative number, found "
+                    + diffusionFloor);
+        }
+
         final String id = xo.hasId() ? xo.getId() : PARSER_NAME;
         return new OUTimeSeriesProcessAdapter(
-                new OUProcessModel(id, stateDimension, driftMatrix, diffusionMatrix, stationaryMean, initialCovariance));
+                new OUProcessModel(id, stateDimension, driftMatrix, diffusionMatrix, stationaryMean,
+                        initialCovariance, diffusionFloor));
     }
 
     @Override
@@ -53,6 +61,9 @@ public class OUProcessModelParser extends AbstractXMLObjectParser {
 
     private static final XMLSyntaxRule[] RULES = new XMLSyntaxRule[] {
             AttributeRule.newIntegerRule(STATE_DIMENSION),
+            AttributeRule.newDoubleRule(DIFFUSION_FLOOR, true,
+                    "Constant added to every diagonal entry of the diffusion matrix (Q + floor I) in "
+                            + "per-time-unit variance; default 0 leaves the model unchanged."),
             new StringAttributeRule(OUSelectionChartParserHelper.SELECTION_CHART,
                     "Selection-matrix chart for OU models. Orthogonal block is the default; dense must be explicit.",
                     OUSelectionChartParserHelper.ALLOWED_SELECTION_CHARTS, true),

@@ -12,13 +12,27 @@ public final class CompoundSymmetricDiffusionMatrixParameterization implements D
 
     private final CompoundSymmetricMatrix matrixParameter;
     private final int dimension;
+    private final double diffusionFloor;
 
     public CompoundSymmetricDiffusionMatrixParameterization(final CompoundSymmetricMatrix matrixParameter) {
+        this(matrixParameter, 0.0);
+    }
+
+    public CompoundSymmetricDiffusionMatrixParameterization(final CompoundSymmetricMatrix matrixParameter,
+                                                            final double diffusionFloor) {
         if (matrixParameter == null) {
             throw new IllegalArgumentException("matrixParameter must not be null");
         }
+        if (!Double.isFinite(diffusionFloor) || diffusionFloor < 0.0) {
+            throw new IllegalArgumentException("diffusionFloor must be finite and non-negative");
+        }
         this.matrixParameter = matrixParameter;
         this.dimension = matrixParameter.getRowDimension();
+        this.diffusionFloor = diffusionFloor;
+    }
+
+    public double getDiffusionFloor() {
+        return diffusionFloor;
     }
 
     @Override
@@ -38,6 +52,7 @@ public final class CompoundSymmetricDiffusionMatrixParameterization implements D
             for (int j = 0; j < dimension; ++j) {
                 out[rowOffset + j] = matrixParameter.getParameterValue(i, j);
             }
+            out[rowOffset + i] += diffusionFloor;
         }
     }
 

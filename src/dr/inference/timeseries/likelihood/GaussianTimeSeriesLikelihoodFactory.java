@@ -85,6 +85,7 @@ public final class GaussianTimeSeriesLikelihoodFactory {
         final RepresentableProcess process = representationFor(latentProcess);
         prepareRepeatedDeltaCache(process, model);
         final LinearGaussianObservationModel observationModel = (LinearGaussianObservationModel) model.getObservationModel();
+        observationModel.validateStateDimension(latentProcess.getStateDimension());
 
         final LikelihoodEngine likelihoodEngine = GaussianLikelihoodEngineFactory.createForwardEngine(
                 process,

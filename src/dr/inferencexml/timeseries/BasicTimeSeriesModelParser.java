@@ -4,6 +4,7 @@ import dr.inference.timeseries.core.BasicTimeSeriesModel;
 import dr.inference.timeseries.core.LatentProcessModel;
 import dr.inference.timeseries.core.ObservationModel;
 import dr.inference.timeseries.core.TimeGrid;
+import dr.inference.timeseries.model.gaussian.LinearGaussianObservationModel;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -33,6 +34,17 @@ public class BasicTimeSeriesModelParser extends AbstractXMLObjectParser {
                 (ObservationModel) xo.getElementFirstChild(OBSERVATION_MODEL);
         final TimeGrid timeGrid =
                 (TimeGrid) xo.getElementFirstChild(TIME_GRID);
+
+        if (observationModel instanceof LinearGaussianObservationModel) {
+            // The observation model cannot know the latent state dimension on its own; check the
+            // design matrix column count here, where latent process and observation model meet.
+            try {
+                ((LinearGaussianObservationModel) observationModel)
+                        .validateStateDimension(latentProcessModel.getStateDimension());
+            } catch (final IllegalArgumentException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+        }
 
         final String id = xo.hasId() ? xo.getId() : PARSER_NAME;
         return new BasicTimeSeriesModel(id, latentProcessModel, observationModel, timeGrid);

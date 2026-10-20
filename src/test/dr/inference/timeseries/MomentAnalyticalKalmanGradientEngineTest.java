@@ -2259,8 +2259,10 @@ public class MomentAnalyticalKalmanGradientEngineTest extends TestCase {
                     grid).getLogLikelihood();
             fail("Moment-form likelihood should still reject partial observation columns");
         } catch (IllegalArgumentException expected) {
-            assertTrue("Expected partial missing observation error",
-                    expected.getMessage().contains("Partial missing observations"));
+            assertTrue("Expected partially observed column error: " + expected.getMessage(),
+                    expected.getMessage().contains("partially observed"));
+            assertTrue("Moment-form error should point to the canonical modes: " + expected.getMessage(),
+                    expected.getMessage().contains("canonical"));
         }
     }
 

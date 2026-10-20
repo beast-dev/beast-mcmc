@@ -1,5 +1,7 @@
 package dr.inference.timeseries.engine.kalman;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import dr.evomodel.treedatalikelihood.continuous.canonical.message.CanonicalBranchMessageContribution;
 import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
 
@@ -11,15 +13,29 @@ import dr.evomodel.treedatalikelihood.continuous.canonical.math.MatrixOps;
  * Parallel time-series likelihoods can therefore reuse the covariance part of the
  * RTS branch moments across independent series and only recompute the
  * data-dependent mean products.</p>
+ *
+ * <p><b>Locking.</b> {@link #makeDirty()} holds the schedule monitor and then takes each
+ * {@link Entry} monitor to invalidate it.  Evaluation threads in
+ * {@link #fillContributionFromRtsMoments} hold only the entry monitor and never take the
+ * schedule monitor: the {@code dirty} flag they clear is volatile and the counters are
+ * atomic, so the lock order is always schedule-then-entry and the two paths cannot
+ * deadlock.  Cache validity never depends on {@code dirty}; every hit is re-validated
+ * bitwise against the current covariances and a mismatch disables the schedule until the
+ * next {@link #makeDirty()}.  The flag only lets {@link #makeDirty()} skip re-invalidating
+ * entries that nobody has rebuilt since the previous invalidation.</p>
  */
 public final class SharedCanonicalTimeSeriesSchedule {
 
     private final Entry[] entries;
     private volatile boolean enabled;
-    private boolean dirty;
-    private long builds;
-    private long hits;
-    private long mismatches;
+    /**
+     * True when every entry has been invalidated and none rebuilt since.  Set under the
+     * schedule monitor in {@link #makeDirty()}, cleared by evaluation threads without it.
+     */
+    private volatile boolean dirty;
+    private final AtomicLong builds = new AtomicLong();
+    private final AtomicLong hits = new AtomicLong();
+    private final AtomicLong mismatches = new AtomicLong();
 
     public SharedCanonicalTimeSeriesSchedule(final int timeCount,
                                              final int stateDimension) {
@@ -39,15 +55,16 @@ public final class SharedCanonicalTimeSeriesSchedule {
     }
 
     public synchronized void makeDirty() {
+        enabled = true;
         if (dirty) {
-            enabled = true;
             return;
         }
-        enabled = true;
+        // Raise the flag before touching the entries: a build that races with this sweep
+        // clears it again, so the next makeDirty() repeats the full invalidation.
+        dirty = true;
         for (int i = 0; i < entries.length; ++i) {
             entries[i].makeDirty();
         }
-        dirty = true;
     }
 
     boolean fillContributionFromRtsMoments(final int branchIndex,
@@ -69,41 +86,39 @@ public final class SharedCanonicalTimeSeriesSchedule {
                         current.smoothedCovariance,
                         entry.crossCovariance,
                         next.smoothedCovariance);
-                ++builds;
-                markClean();
+                builds.incrementAndGet();
+                // Volatile write only; taking the schedule monitor here would invert the
+                // schedule-then-entry lock order used by makeDirty().
+                dirty = false;
             } else if (!entry.momentCovariancesMatch(
                     current.smoothedCovariance,
                     entry.crossCovariance,
                     next.smoothedCovariance)) {
-                ++mismatches;
+                mismatches.incrementAndGet();
                 enabled = false;
                 return false;
             } else {
-                ++hits;
+                hits.incrementAndGet();
             }
             entry.fillContribution(current.smoothedMean, next.smoothedMean, out);
             return true;
         }
     }
 
-    private synchronized void markClean() {
-        dirty = false;
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
 
-    public synchronized long getBuildCount() {
-        return builds;
+    public long getBuildCount() {
+        return builds.get();
     }
 
-    public synchronized long getHitCount() {
-        return hits;
+    public long getHitCount() {
+        return hits.get();
     }
 
-    public synchronized long getMismatchCount() {
-        return mismatches;
+    public long getMismatchCount() {
+        return mismatches.get();
     }
 
     private static final class Entry {

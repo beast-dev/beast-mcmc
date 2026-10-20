@@ -206,7 +206,7 @@ public class MomentKalmanLikelihoodEngine implements LikelihoodEngine {
             }
 
             // ── Update ──────────────────────────────────────────────────────────
-            if (observationModel.isObservationMissing(timeIndex)) {
+            if (observationModel.isObservationColumnMissing(timeIndex)) {
                 MatrixOps.copyVector(predictedMean, filteredMean);
                 copyFlatMatrix(predictedCovariance, filteredCovariance, stateDimension);
             } else {

@@ -31,6 +31,7 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
         suite.addTest(new OUProcessModelTest("testDenseDiffusionPullBackUsesMatrixParameterColumnMajorOrder"));
         suite.addTest(new OUProcessModelTest("testDefaultCovarianceGradientMethodUsesStationaryLyapunovForOrthogonalBlockDrift"));
         suite.addTest(new OUProcessModelTest("testUsesOrthogonalBlockSelectionChartDetectsExpectedCharts"));
+        suite.addTest(PartialObservationIrregularGridTest.suite());
         return suite;
     }
 

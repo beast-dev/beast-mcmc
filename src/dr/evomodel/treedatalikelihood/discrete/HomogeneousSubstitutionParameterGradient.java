@@ -32,6 +32,8 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
 import dr.evomodel.substmodel.DifferentialMassProvider;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -59,49 +61,75 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     private final Tree tree;
     private final Mode mode;
     private final Integer dim;
+    private final Double tolerance;
 
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
                                                     Parameter parameter,
                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                                    Mode mode) {
-        this(traitName, treeDataLikelihood, parameter, likelihoodDelegate, null, mode);
+                                                    Mode mode,
+                                                    Double tolerance) {
+        this(traitName, treeDataLikelihood, parameter, likelihoodDelegate, null, mode, tolerance);
     }
 
+    /**
+     * @param tolerance report check tolerance; null only prints the comparison with the numerical gradient
+     */
     public HomogeneousSubstitutionParameterGradient(String traitName,
                                                     TreeDataLikelihood treeDataLikelihood,
                                                     Parameter parameter,
                                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
                                                     Integer dim,
-                                                    Mode mode) {
+                                                    Mode mode,
+                                                    Double tolerance) {
         this.parameter = parameter;
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
         this.mode = mode;
         this.dim = dim;
+        this.tolerance = tolerance;
 
         final String name = BranchSubstitutionParameterDelegate.getName(traitName);
-        TreeTrait test = treeDataLikelihood.getTreeTrait(name);
+        if (treeDataLikelihood.getTreeTrait(name) != null) {
+            throw new IllegalArgumentException("Trait name '" + traitName + "' is already used on "
+                    + treeDataLikelihood.getId() + "; give each substitution-parameter gradient a unique traitName");
+        }
 
-        if (test == null) {
-            DifferentiableSubstitutionModel substitutionModel;
-            if (likelihoodDelegate.getBranchModel().getSubstitutionModels().size() != 1) {
-                throw new RuntimeException("Homogeneous process should contain only one substitution model!");
-            } else {
-                substitutionModel = (DifferentiableSubstitutionModel) likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0);
+        if (likelihoodDelegate.getBranchModel().getSubstitutionModels().size() != 1) {
+            throw new RuntimeException("Homogeneous process should contain only one substitution model!");
+        }
+        SubstitutionModel model = likelihoodDelegate.getBranchModel().getSubstitutionModels().get(0);
+        if (isFrequencyParameter(model, parameter)) {
+            throw new IllegalArgumentException("Parameter " + parameter.getId() + " holds the stationary frequencies of "
+                    + model.getId() + "; this gradient omits the root term and the simplex constraint."
+                    + " Use the K-dimensional frequency gradient instead");
+        }
+        DifferentiableSubstitutionModel substitutionModel = (DifferentiableSubstitutionModel) model;
+
+        if (dim != null) {
+            if (dim < 0 || dim >= parameter.getDimension()) {
+                throw new IllegalArgumentException("Dimension index " + dim + " is out of range [0, "
+                        + parameter.getDimension() + ")");
             }
-            if (dim != null) {
-                if (dim < 0 || dim > parameter.getDimension()) {
-                    throw new IllegalArgumentException("Dimension index out of range!");
-                }
-                buildTreeTraitProviderList(dim, substitutionModel, likelihoodDelegate, traitName, name);
-            } else
-                for (int i = 0; i < parameter.getDimension(); i++) {
+            buildTreeTraitProviderList(dim, substitutionModel, likelihoodDelegate, traitName, name);
+        } else {
+            for (int i = 0; i < parameter.getDimension(); i++) {
                 buildTreeTraitProviderList(i, substitutionModel, likelihoodDelegate, traitName, name);
             }
         }
+    }
 
-        assert(treeTraitProviderList.get(0) != null);
+    private static boolean isFrequencyParameter(SubstitutionModel model, Parameter parameter) {
+        FrequencyModel frequencyModel = model.getFrequencyModel();
+        if (frequencyModel == null) {
+            return false;
+        }
+        try {
+            return frequencyModel.getFrequencyParameter() == parameter;
+        } catch (RuntimeException e) {
+            // derived frequency models (e.g. Markov-modulated) have no single frequency parameter
+            return false;
+        }
     }
 
     public void buildTreeTraitProviderList(int i, DifferentiableSubstitutionModel substitutionModel,
@@ -173,6 +201,4 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     public String getReport() {
         return mode.getReport() + " " + GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
     }
-
-    private final double tolerance = 1E+2;
 }

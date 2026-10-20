@@ -94,6 +94,18 @@ public class PreOrderSettings {
         this.useHierarchicalRepresentation = useHierarchicalRepresentation;
     }
 
+    public boolean isUsePreOrder() {
+        return usePreOrder;
+    }
+
+    public boolean isBranchRateDerivative() {
+        return branchRateDerivative;
+    }
+
+    public boolean isBranchInfinitesimalDerivative() {
+        return branchInfinitesimalDerivative;
+    }
+
     public boolean useHierarchicalRepresentation() {
         return useHierarchicalRepresentation;
     }

@@ -31,10 +31,12 @@ import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
 import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -48,13 +50,15 @@ import static dr.evomodel.substmodel.DifferentialMassProvider.Mode;
  */
 public class BranchSubstitutionParameterGradientParser extends AbstractXMLObjectParser {
 
-    private static final String NAME = "branchSubstitutionParameterGradient";
-    private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
-    private static final String HOMOGENEOUS_PROCESS = "homogeneous";
-    private static final String DIMENSION = "dim";
+    public static final String NAME = "branchSubstitutionParameterGradient";
+    public static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
+    public static final String HOMOGENEOUS_PROCESS = "homogeneous";
+    public static final String DIMENSION = "dim";
     public static final String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
     public static final String USE_HESSIAN = "useHessian";
-    private static final String MODE = "mode";
+    public static final String MODE = "mode";
+
+    private static final double DEFAULT_EXACT_TOLERANCE = 1E-3;
 
     @Override
     public String getParserName() {
@@ -71,7 +75,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         BranchSpecificSubstitutionParameterBranchModel branchModel =
                 (BranchSpecificSubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
 
-        BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate();
+        BeagleDataLikelihoodDelegate beagleData = getPreOrderBeagleDelegate(treeDataLikelihood);
 
         Boolean homogeneous = xo.getAttribute(HOMOGENEOUS_PROCESS, false);
 
@@ -80,12 +84,19 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         int dim = xo.getAttribute(DIMENSION, 0);
         if (homogeneous) {
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            if (dim == -1) { // meaning all dimensions should be differentiated
-                return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
-                        mode);
-            } else {
-                return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
-                        dim, mode);
+            // firstOrder and affineCorrected are biased by design, so their reports only print
+            final Double reportTolerance = mode == Mode.EXACT ?
+                    (tolerance != null ? tolerance : DEFAULT_EXACT_TOLERANCE) : null;
+            try {
+                if (dim == -1) { // meaning all dimensions should be differentiated
+                    return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
+                            mode, reportTolerance);
+                } else {
+                    return new HomogeneousSubstitutionParameterGradient(traitName, treeDataLikelihood, parameter, beagleData,
+                            dim, mode, reportTolerance);
+                }
+            } catch (IllegalArgumentException e) {
+                throw new XMLParseException(e.getMessage());
             }
         } else {
             DifferentiableBranchRates branchRateModel =
@@ -94,6 +105,22 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             return new BranchSubstitutionParameterGradient(traitName, treeDataLikelihood, beagleData,
                     branchParameter, branchRateModel, tolerance, useHessian, dim, mode);
         }
+    }
+
+    // The per-dimension gradients write differential matrices into the branch-infinitesimal pre-order buffers
+    public static BeagleDataLikelihoodDelegate getPreOrderBeagleDelegate(TreeDataLikelihood treeDataLikelihood)
+            throws XMLParseException {
+        DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
+            throw new XMLParseException(NAME + " requires <treeDataLikelihood id=\"" + treeDataLikelihood.getId()
+                    + "\"> to use a single BEAGLE delegate (no partition splits)");
+        }
+        BeagleDataLikelihoodDelegate beagleData = (BeagleDataLikelihoodDelegate) delegate;
+        if (!beagleData.isUsePreOrder() || !beagleData.getPreOrderSettings().isBranchInfinitesimalDerivative()) {
+            throw new XMLParseException(NAME + " requires usePreOrder=\"true\" and branchInfinitesimalDerivative=\"true\""
+                    + " on <treeDataLikelihood id=\"" + treeDataLikelihood.getId() + "\">");
+        }
+        return beagleData;
     }
 
     private Mode parseMode(XMLObject xo) throws XMLParseException {
@@ -111,7 +138,8 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(TRAIT_NAME),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
+            AttributeRule.newBooleanRule(USE_HESSIAN, true),
             AttributeRule.newStringRule(MODE, true),
             new ElementRule(TreeDataLikelihood.class),
             new XORRule(
@@ -131,6 +159,6 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
     @Override
     public Class getReturnType() {
-        return BranchSubstitutionParameterGradient.class;
+        return GradientWrtParameterProvider.class;
     }
 }

@@ -63,6 +63,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String FISHER_EIGEN_FLOOR_FRACTION = "fisherEigenFloorFraction";
     private static final String FISHER_NULL_PRECISION = "fisherNullPrecision";
     private static final String FISHER_TRUST_RADIUS = "fisherTrustRadius";
+    private static final String FISHER_INFORMATION_SOURCE = "fisherInformationSource";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -91,6 +92,11 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         double fisherEigenFloorFraction = xo.getAttribute(FISHER_EIGEN_FLOOR_FRACTION, 10.0);
         double fisherNullPrecision = xo.getAttribute(FISHER_NULL_PRECISION, 1.0);
         double fisherTrustRadius = xo.getAttribute(FISHER_TRUST_RADIUS, Double.POSITIVE_INFINITY);
+        final MaximizerWrtParameter.FisherInformationSource fisherInformationSource =
+                xo.hasAttribute(FISHER_INFORMATION_SOURCE)
+                        ? MaximizerWrtParameter.FisherInformationSource.parse(
+                                xo.getStringAttribute(FISHER_INFORMATION_SOURCE))
+                        : MaximizerWrtParameter.FisherInformationSource.EMPIRICAL_SCORES;
 
         if (gradient != null) {
             parameter = gradient.getParameter();
@@ -117,7 +123,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
                         includeJacobian, lbfgsEpsilon, lbfgsPast, lbfgsDelta, lbfgsFtol, lbfgsGtol, lbfgsXtol,
                         lbfgsMaxLineSearch, fisherRefreshOnFailure, fisherMaximumRefreshes,
                         fisherGradientThreshold, fisherEigenFloorFraction, fisherNullPrecision,
-                        fisherTrustRadius), fisherGradient, fisherPriorGradient);
+                        fisherTrustRadius, fisherInformationSource), fisherGradient, fisherPriorGradient);
         maximizer.maximize();
 
         return maximizer;
@@ -175,5 +181,8 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(FISHER_EIGEN_FLOOR_FRACTION, true),
             AttributeRule.newDoubleRule(FISHER_NULL_PRECISION, true),
             AttributeRule.newDoubleRule(FISHER_TRUST_RADIUS, true),
+            AttributeRule.newStringRule(FISHER_INFORMATION_SOURCE, true,
+                    "empiricalScores (default: analytical score rows when exposed) or finiteDifference "
+                            + "(always central-difference the analytical gradient for every coordinate)"),
     };
 }

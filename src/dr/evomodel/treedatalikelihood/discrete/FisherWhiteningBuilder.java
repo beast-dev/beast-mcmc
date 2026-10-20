@@ -31,17 +31,21 @@ public final class FisherWhiteningBuilder {
         public final int nullity;
         public final double minimumPositiveEigenvalue;
         public final double maximumEigenvalue;
+        /** Eigenvalues below minus the rank threshold: directions of negative curvature, treated as null. */
+        public final int negativeCount;
 
         Result(final double[][] map,
                final int rank,
                final int nullity,
                final double minimumPositiveEigenvalue,
-               final double maximumEigenvalue) {
+               final double maximumEigenvalue,
+               final int negativeCount) {
             this.map = map;
             this.rank = rank;
             this.nullity = nullity;
             this.minimumPositiveEigenvalue = minimumPositiveEigenvalue;
             this.maximumEigenvalue = maximumEigenvalue;
+            this.negativeCount = negativeCount;
         }
     }
 
@@ -92,11 +96,15 @@ public final class FisherWhiteningBuilder {
         final double rankThreshold = Math.max(MINIMUM_PRECISION, maximum * RANK_TOLERANCE);
         final List<EigenPair> positive = new ArrayList<EigenPair>();
         final List<EigenPair> nullPairs = new ArrayList<EigenPair>();
+        int negativeCount = 0;
         for (final EigenPair pair : pairs) {
             if (pair.value > rankThreshold) {
                 positive.add(pair);
             } else {
                 nullPairs.add(pair);
+                if (pair.value < -rankThreshold) {
+                    ++negativeCount;
+                }
             }
         }
         if (positive.isEmpty()) {
@@ -139,7 +147,7 @@ public final class FisherWhiteningBuilder {
         if (column != dimension) {
             throw new IllegalStateException("Whitening basis is incomplete.");
         }
-        return new Result(map, positive.size(), nullPairs.size(), minimumPositive, maximum);
+        return new Result(map, positive.size(), nullPairs.size(), minimumPositive, maximum, negativeCount);
     }
 
     private static List<EigenPair> symmetricEigenpairs(final double[][] values) {

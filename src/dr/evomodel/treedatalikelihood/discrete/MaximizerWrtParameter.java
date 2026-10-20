@@ -77,6 +77,43 @@ public class MaximizerWrtParameter implements Reportable {
     private double fisherMinimumPositiveEigenvalue = Double.NaN;
     private double fisherMaximumEigenvalue = Double.NaN;
     private boolean fisherUsedEmpiricalScores = false;
+    private FisherInformationSource fisherMetricSourceUsed = null;
+    private int fisherNegativeEigenvalueCount = -1;
+    private double fisherLastRefreshSeconds = Double.NaN;
+
+    /** Where the refresh takes its information matrix from. */
+    public enum FisherInformationSource {
+        /** Outer products of analytical score rows when the Fisher gradient exposes them; otherwise central differences. */
+        EMPIRICAL_SCORES("empiricalScores", "empirical branch scores"),
+        /** Always central-difference the analytical gradient in transformed coordinates (observed information). */
+        FINITE_DIFFERENCE("finiteDifference", "central derivative of analytical score");
+
+        private final String xmlName;
+        private final String description;
+
+        FisherInformationSource(final String xmlName, final String description) {
+            this.xmlName = xmlName;
+            this.description = description;
+        }
+
+        public String getXmlName() {
+            return xmlName;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public static FisherInformationSource parse(final String text) {
+            for (final FisherInformationSource source : values()) {
+                if (source.xmlName.equalsIgnoreCase(text) || source.name().equalsIgnoreCase(text)) {
+                    return source;
+                }
+            }
+            throw new IllegalArgumentException("Unknown fisherInformationSource '" + text
+                    + "'; expected empiricalScores or finiteDifference.");
+        }
+    }
 
     public static class Settings {
         int numberIterations;
@@ -97,6 +134,7 @@ public class MaximizerWrtParameter implements Reportable {
         double fisherEigenFloorFraction;
         double fisherNullPrecision;
         double fisherTrustRadius;
+        FisherInformationSource fisherInformationSource;
 
         public Settings(int numberIterations, double stepSize, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
             this(numberIterations, stepSize, startAtCurrentState, printToScreen, includeJacobian,
@@ -140,6 +178,32 @@ public class MaximizerWrtParameter implements Reportable {
                         double fisherEigenFloorFraction,
                         double fisherNullPrecision,
                         double fisherTrustRadius) {
+            this(numberIterations, stepSize, startAtCurrentState, printToScreen, includeJacobian,
+                    lbfgsEpsilon, lbfgsPast, lbfgsDelta, lbfgsFtol, lbfgsGtol, lbfgsXtol,
+                    lbfgsMaxLineSearch, fisherRefreshOnFailure, fisherMaximumRefreshes,
+                    fisherGradientThreshold, fisherEigenFloorFraction, fisherNullPrecision,
+                    fisherTrustRadius, FisherInformationSource.EMPIRICAL_SCORES);
+        }
+
+        public Settings(int numberIterations,
+                        double stepSize,
+                        boolean startAtCurrentState,
+                        boolean printToScreen,
+                        boolean includeJacobian,
+                        Double lbfgsEpsilon,
+                        Integer lbfgsPast,
+                        Double lbfgsDelta,
+                        Double lbfgsFtol,
+                        Double lbfgsGtol,
+                        Double lbfgsXtol,
+                        Integer lbfgsMaxLineSearch,
+                        boolean fisherRefreshOnFailure,
+                        int fisherMaximumRefreshes,
+                        double fisherGradientThreshold,
+                        double fisherEigenFloorFraction,
+                        double fisherNullPrecision,
+                        double fisherTrustRadius,
+                        FisherInformationSource fisherInformationSource) {
             this.numberIterations = numberIterations;
             this.stepSize = stepSize;
             this.startAtCurrentState = startAtCurrentState;
@@ -158,6 +222,8 @@ public class MaximizerWrtParameter implements Reportable {
             this.fisherEigenFloorFraction = fisherEigenFloorFraction;
             this.fisherNullPrecision = fisherNullPrecision;
             this.fisherTrustRadius = fisherTrustRadius;
+            this.fisherInformationSource = fisherInformationSource == null
+                    ? FisherInformationSource.EMPIRICAL_SCORES : fisherInformationSource;
         }
     }
 
@@ -244,6 +310,28 @@ public class MaximizerWrtParameter implements Reportable {
         return fisherUsedEmpiricalScores;
     }
 
+    /** Source of the information matrix of the last refresh, or null before any refresh. */
+    public FisherInformationSource getFisherMetricSource() {
+        return fisherMetricSourceUsed;
+    }
+
+    /** Eigenvalues of the last refresh's information matrix below minus the rank threshold (indefinite directions). */
+    public int getFisherNegativeEigenvalueCount() {
+        return fisherNegativeEigenvalueCount;
+    }
+
+    public double getFisherMinimumPositiveEigenvalue() {
+        return fisherMinimumPositiveEigenvalue;
+    }
+
+    public double getFisherMaximumEigenvalue() {
+        return fisherMaximumEigenvalue;
+    }
+
+    public double getFisherLastRefreshSeconds() {
+        return fisherLastRefreshSeconds;
+    }
+
     public void maximize() {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();
@@ -312,6 +400,9 @@ public class MaximizerWrtParameter implements Reportable {
                 System.out.printf("Fisher refresh %d/%d: rank=%d, nullity=%d, eigenvalue range=[%.6g, %.6g]%n",
                         fisherRefreshCount, settings.fisherMaximumRefreshes, fisherRank, fisherNullity,
                         fisherMinimumPositiveEigenvalue, fisherMaximumEigenvalue);
+                System.out.printf("Fisher metric: source=%s, negative eigenvalues=%d, refresh seconds=%.3f%n",
+                        fisherMetricSourceUsed == null ? "unknown" : fisherMetricSourceUsed.getXmlName(),
+                        fisherNegativeEigenvalueCount, fisherLastRefreshSeconds);
             }
         }
 
@@ -366,8 +457,9 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Fisher refreshes: ").append(fisherRefreshCount).append("\n");
             if (fisherRefreshCount > 0) {
                 sb.append("Fisher metric source: ")
-                        .append(fisherUsedEmpiricalScores ? "empirical branch scores" : "central derivative of analytical score")
+                        .append(fisherMetricSourceUsed == null ? "unknown" : fisherMetricSourceUsed.getDescription())
                         .append("\n");
+                sb.append("Fisher negative eigenvalues: ").append(fisherNegativeEigenvalueCount).append("\n");
                 sb.append("Fisher rank/nullity: ").append(fisherRank).append("/").append(fisherNullity).append("\n");
                 sb.append("Fisher positive eigenvalue range: [")
                         .append(fisherMinimumPositiveEigenvalue).append(", ")
@@ -468,6 +560,7 @@ public class MaximizerWrtParameter implements Reportable {
 
     private boolean refreshFisherWhitening() {
         try {
+            final long refreshStart = System.nanoTime();
             final Transform baseTransform = nativeTransform;
             final double[] parameterValues = parameter.getParameterValues();
             final double[] reference = baseTransform == null
@@ -495,6 +588,8 @@ public class MaximizerWrtParameter implements Reportable {
             fisherNullity = result.nullity;
             fisherMinimumPositiveEigenvalue = result.minimumPositiveEigenvalue;
             fisherMaximumEigenvalue = result.maximumEigenvalue;
+            fisherNegativeEigenvalueCount = result.negativeCount;
+            fisherLastRefreshSeconds = (System.nanoTime() - refreshStart) * 1.0e-9;
             return true;
         } catch (RuntimeException exception) {
             if (settings.printToScreen) {
@@ -513,15 +608,22 @@ public class MaximizerWrtParameter implements Reportable {
         if (provider.getDimension() != parameter.getDimension()) {
             throw new IllegalArgumentException("Fisher gradient dimension differs from optimizer dimension.");
         }
-        if (provider instanceof ScoreContributionsWrtParameterProvider) {
+        if (settings.fisherInformationSource == FisherInformationSource.EMPIRICAL_SCORES
+                && provider instanceof ScoreContributionsWrtParameterProvider) {
             final double[][] information = empiricalInformation(
                     (ScoreContributionsWrtParameterProvider) provider,
                     baseTransform,
                     reference);
             if (information != null) {
-                fisherUsedEmpiricalScores = true;
+                if (provider == fisherGradient) {
+                    fisherUsedEmpiricalScores = true;
+                    fisherMetricSourceUsed = FisherInformationSource.EMPIRICAL_SCORES;
+                }
                 return information;
             }
+        }
+        if (provider == fisherGradient) {
+            fisherMetricSourceUsed = FisherInformationSource.FINITE_DIFFERENCE;
         }
         final int dimension = reference.length;
         final double[][] plus = new double[dimension][];

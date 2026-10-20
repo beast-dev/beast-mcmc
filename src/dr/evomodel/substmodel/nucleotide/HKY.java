@@ -349,7 +349,10 @@ public class HKY extends BaseSubstitutionModel implements Citable,
         for (int i = 0; i < stateCount; i++) {
             differentialMassMatrixDiagonal[i] = differentialMassMatrix[i][i];
         }
-        //TODO: fix numeric gradient for Frequencies?
+        if (wrtParameter instanceof WrtFrequencyParameter) {
+            return WrtHKYModelParameter.FREQ_A.getWeightedNormalizationGradient(
+                    differentialMassMatrixDiagonal, QDiagonal, differentialFrequencies, frequencies);
+        }
         return ((WrtHKYModelParameter) wrtParameter).getWeightedNormalizationGradient(differentialMassMatrixDiagonal, QDiagonal, differentialFrequencies, frequencies);
     }
 
@@ -360,18 +363,11 @@ public class HKY extends BaseSubstitutionModel implements Citable,
 
     @Override
     public WrtParameter factory(Parameter parameter, int dim) {
-        WrtHKYModelParameter wrt;
         if (parameter == kappaParameter) {
-            wrt = WrtHKYModelParameter.KAPPA;
-        } else if (parameter == freqModel.getFrequencyParameter()) {
-            switch(dim) {
-                case 0:
-                    wrt = WrtHKYModelParameter.FREQ_A;
-                    break;
-                default:
-                    throw new RuntimeException("Not yet implemented!");
-            }
-        } else {
+            return WrtHKYModelParameter.KAPPA;
+        }
+        WrtParameter wrt = DifferentiableSubstitutionModelUtil.frequencyFactory(this, parameter, dim);
+        if (wrt == null) {
             throw new RuntimeException("Not yet implemented!");
         }
         return wrt;
@@ -415,6 +411,7 @@ public class HKY extends BaseSubstitutionModel implements Citable,
             }
 
         },
+        // Superseded by WrtFrequencyParameter; kept as a reference for tests
         FREQ_A {
             @Override
             double getWeightedNormalizationGradient(double[] differentialMassMatrixDiagonal, double[] infinitesimalMatrixDiagonal, double[] differentialFrequencies, double[] frequencies) {

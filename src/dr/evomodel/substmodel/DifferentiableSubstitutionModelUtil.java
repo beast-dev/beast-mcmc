@@ -27,6 +27,8 @@
 
 package dr.evomodel.substmodel;
 
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
@@ -313,6 +315,10 @@ public class DifferentiableSubstitutionModelUtil {
         if (!(substitutionModel instanceof DifferentiableSubstitutionModel)) {
             throw new RuntimeException("Not supported!");
         }
+        if (wrt instanceof WrtFrequencyParameter) {
+            return getFrequencyDifferentialMatrix(substitutionModel,
+                    ((WrtFrequencyParameter) wrt).getDifferentialFrequencies());
+        }
         final double normalizingConstant = substitutionModel.setupMatrix();
 
         final int stateCount = substitutionModel.getDataType().getStateCount();
@@ -348,6 +354,67 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return differential;
+    }
+
+    /**
+     * Directional derivative of the normalized generator Q~ = Q / beta along frequencies v, where Q_ij = s_ij pi_j:
+     * dQ~ = (dQ - Q~ dbeta) / beta with dbeta = sum_i (-Q_ii v_i - dQ_ii pi_i).
+     * Requires Q to be linear in pi with frequency-independent exchangeabilities (see {@link #frequencyFactory}).
+     */
+    public static WrappedMatrix getFrequencyDifferentialMatrix(BaseSubstitutionModel substitutionModel, double[] v) {
+
+        final double beta = substitutionModel.setupMatrix();
+        final int stateCount = substitutionModel.getDataType().getStateCount();
+
+        final double[][] q = substitutionModel.getQCopy();
+        final double[] pi = substitutionModel.getPi();
+        final double[] rates = substitutionModel.relativeRates.clone();
+
+        final double[][] dq = new double[stateCount][stateCount];
+        substitutionModel.setupQMatrix(rates, v, dq);
+        substitutionModel.makeValid(dq, stateCount);
+
+        double dbeta = 0.0;
+        for (int i = 0; i < stateCount; i++) {
+            dbeta -= q[i][i] * v[i] + dq[i][i] * pi[i];
+        }
+
+        final double[][] differential = new double[stateCount][stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                differential[i][j] = (dq[i][j] - q[i][j] / beta * dbeta) / beta;
+            }
+        }
+
+        return new WrappedMatrix.ArrayOfArray(differential);
+    }
+
+    /**
+     * @return a frequency differential for dimension dim, or null if parameter is not the model's own frequency parameter
+     */
+    public static WrtFrequencyParameter frequencyFactory(BaseSubstitutionModel substitutionModel, Parameter parameter, int dim) {
+
+        final FrequencyModel frequencyModel = substitutionModel.getFrequencyModel();
+        if (frequencyModel == null || frequencyModel.getFrequencyParameter() != parameter) {
+            return null;
+        }
+        if (frequencyModel.getClass() != FrequencyModel.class) {
+            throw new IllegalArgumentException("Frequency gradients are not supported for derived frequency models ("
+                    + frequencyModel.getClass().getSimpleName() + ")");
+        }
+        if (!isFrequencyGradientSupported(substitutionModel)) {
+            throw new IllegalArgumentException("Frequency gradients are not yet supported for "
+                    + substitutionModel.getClass().getSimpleName());
+        }
+        if (dim < 0 || dim >= parameter.getDimension()) {
+            throw new IllegalArgumentException("Frequency dimension " + dim + " is out of range [0, "
+                    + parameter.getDimension() + ")");
+        }
+        return new WrtFrequencyParameter(frequencyModel, parameter, dim);
+    }
+
+    private static boolean isFrequencyGradientSupported(BaseSubstitutionModel substitutionModel) {
+        return substitutionModel.getClass() == HKY.class;
     }
 
     protected static void setupQDerivative(BaseSubstitutionModel substitutionModel, double[] differentialRates,

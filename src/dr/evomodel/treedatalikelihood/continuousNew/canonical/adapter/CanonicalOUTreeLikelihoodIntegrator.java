@@ -52,6 +52,7 @@ import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.LinearExactTipObservationModel;
 import dr.util.CanonicalPhaseTimer;
 import org.ejml.data.DenseMatrix64F;
@@ -677,19 +678,37 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         }
     }
 
+    private CanonicalTipObservationModel[] noisyTipModels;
+
+    private CanonicalTipObservationModel[] noisyTipModelBuffer() {
+        if (noisyTipModels == null) {
+            noisyTipModels = new CanonicalTipObservationModel[passer.getTipCount()];
+        }
+        return noisyTipModels;
+    }
+
     private void syncOwnedTipObservations() {
         if (ownedTipObservations == null && !blockBasisCoordinates) {
             return;
         }
         boolean observationsLoaded = false;
         if (ownedTipObservations != null && tipObservationsDirty) {
+            // Tips with observation error (repeated-measures data model) are Gaussian-link tips and are
+            // supported in natural coordinates only; block-basis coordinates keep the exact-tip contract.
+            final CanonicalTipObservationModel[] noisyModels =
+                    blockBasisCoordinates ? null : noisyTipModelBuffer();
             CanonicalTipObservationAdapter.fillTipObservations(
-                    tipTree, tipDataModel, passer.getDimension(), ownedTipObservations);
+                    tipTree, tipDataModel, passer.getDimension(), ownedTipObservations, noisyModels);
             tipObservationsDirty = false;
             if (blockBasisCoordinates) {
                 blockBasisTipObservationsDirty = true;
             } else {
                 loadTips(ownedTipObservations);
+                for (int tipIdx = 0; noisyModels != null && tipIdx < noisyModels.length; tipIdx++) {
+                    if (noisyModels[tipIdx] != null) {
+                        passer.setTipObservationModel(tipIdx, noisyModels[tipIdx]);
+                    }
+                }
                 observationsLoaded = true;
             }
         }

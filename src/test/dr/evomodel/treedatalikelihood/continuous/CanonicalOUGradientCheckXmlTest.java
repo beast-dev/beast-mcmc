@@ -23,6 +23,8 @@ public final class CanonicalOUGradientCheckXmlTest extends TestCase {
             "tests/TestXML/testCanonicalOUNodeHeightGradientCheck.xml";
     private static final String BLOCK_BASIS_PARTIAL_XML =
             "tests/TestXML/testCanonicalOUBlockBasisPartialTips.xml";
+    private static final String TIP_OBSERVATION_ERROR_XML =
+            "tests/TestXML/testCanonicalOUTipObservationError.xml";
     private static final String BLOCK_BASIS_ANOLIS_FULL_TIPS_XML =
             "tests/TestXML/testCanonicalOUBlockBasisAnolisFullTips.xml";
 
@@ -48,6 +50,16 @@ public final class CanonicalOUGradientCheckXmlTest extends TestCase {
 
     public void testBlockBasisPartialTipXmlRunsBranchRateGradientCheck() throws Exception {
         final ParsedXml parsed = parseXml(BLOCK_BASIS_PARTIAL_XML);
+
+        assertNativeObject(parsed.objects, "block.clock.gradient", CanonicalOUBranchRateGradient.class);
+        assertNativeObject(parsed.objects, "blockClockHMC", HamiltonianMonteCarloOperator.class);
+        assertGradientCheckAttributes(parsed.file, "100", "1e-4");
+
+        runMcmc(parsed.objects);
+    }
+
+    public void testTipObservationErrorXmlRunsBranchRateGradientCheck() throws Exception {
+        final ParsedXml parsed = parseXml(TIP_OBSERVATION_ERROR_XML);
 
         assertNativeObject(parsed.objects, "block.clock.gradient", CanonicalOUBranchRateGradient.class);
         assertNativeObject(parsed.objects, "blockClockHMC", HamiltonianMonteCarloOperator.class);

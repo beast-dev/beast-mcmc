@@ -161,6 +161,11 @@ public final class OrthogonalBlockDiagonalPolarStableMatrixParameter
     }
 
     @Override
+    public Parameter getCheckpointableStateParameter() {
+        return nativeCompoundParameter;
+    }
+
+    @Override
     public OrthogonalBlockDiagonalDecomposition createBlockDiagonalDecomposition() {
         return new OrthogonalBlockDiagonalDecomposition(dim, getBlockStarts(), getBlockSizes());
     }

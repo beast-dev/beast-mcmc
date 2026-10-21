@@ -21,6 +21,7 @@ public class AllTimeSeriesTests {
         suite.addTest(MomentKalmanLikelihoodEngineTest.suite());
         suite.addTest(MomentKalmanGradientEngineTest.suite());
         suite.addTest(MomentAnalyticalKalmanGradientEngineTest.suite());
+        suite.addTest(ObservationNoiseTimeSeriesGradientTest.suite());
         return suite;
     }
 

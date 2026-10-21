@@ -39,7 +39,8 @@ import java.util.concurrent.Future;
  * @author Marc A. Suchard
  */
 
-public class CompoundGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, DerivativeWrtParameterProvider, Reportable {
+public class CompoundGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider,
+        DerivativeWrtParameterProvider, ScoreContributionsWrtParameterProvider, Reportable {
 
     private static final boolean BATCH_GRADIENT_DISABLED =
             Boolean.getBoolean("beast.disableBatchGradient");
@@ -173,6 +174,52 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
         else {
             return getDerivativeLogDensitySerialImpl(JointGradient.DerivativeType.GRADIENT);
         }
+    }
+
+    @Override
+    public double[][] getScoreContributionsLogDensity() {
+        final List<double[][]> parts = new ArrayList<double[][]>(derivativeList.size());
+        int rowCount = -1;
+        for (final GradientWrtParameterProvider provider : derivativeList) {
+            if (!(provider instanceof ScoreContributionsWrtParameterProvider)) {
+                parts.add(null);
+                continue;
+            }
+            final double[][] contribution =
+                    ((ScoreContributionsWrtParameterProvider) provider)
+                            .getScoreContributionsLogDensity();
+            if (contribution == null) {
+                parts.add(null);
+                continue;
+            }
+            if (rowCount < 0) {
+                rowCount = contribution.length;
+            } else if (contribution.length != rowCount) {
+                throw new IllegalStateException("Compound score contributions have unequal row counts.");
+            }
+            parts.add(contribution);
+        }
+        if (rowCount < 0) {
+            return null;
+        }
+        final double[][] result = new double[Math.max(0, rowCount)][dimension];
+        int offset = 0;
+        for (int partIndex = 0; partIndex < parts.size(); ++partIndex) {
+            final int partDimension = derivativeList.get(partIndex).getDimension();
+            final double[][] part = parts.get(partIndex);
+            if (part == null) {
+                offset += partDimension;
+                continue;
+            }
+            for (int row = 0; row < result.length; ++row) {
+                if (part[row] == null || part[row].length != partDimension) {
+                    throw new IllegalStateException("Compound score contribution dimension mismatch.");
+                }
+                System.arraycopy(part[row], 0, result[row], offset, partDimension);
+            }
+            offset += partDimension;
+        }
+        return result;
     }
 
     private double[] getBatchGradientLogDensity() {

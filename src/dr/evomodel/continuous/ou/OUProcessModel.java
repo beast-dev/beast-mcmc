@@ -3,8 +3,10 @@ package dr.evomodel.continuous.ou;
 import dr.evomodel.continuous.ou.canonical.CanonicalOUKernel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
+import dr.inference.model.BlockDiagonalNormalizedCartesianStableMatrixParameter;
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.DiagonalFloorMatrixView;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Model;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
@@ -75,6 +77,9 @@ public class OUProcessModel extends AbstractModel
     private final int stateDimension;
     private final MatrixParameterInterface driftMatrix;
     private final MatrixParameterInterface diffusionMatrix;
+    private final double diffusionFloor;
+    /** {@code diffusionMatrix + diffusionFloor * I} as seen by every engine; the raw matrix when the floor is zero. */
+    private final MatrixParameterInterface flooredDiffusionMatrix;
     private final Parameter stationaryMean;
     private final MatrixParameter initialCovariance;
     private final CovarianceGradientMethod covarianceGradientMethod;
@@ -97,6 +102,18 @@ public class OUProcessModel extends AbstractModel
                 initialCovariance, defaultCovarianceGradientMethod(driftMatrix));
     }
 
+    /** Default V-path gradient strategy with a declared diffusion floor (see the full constructor). */
+    public OUProcessModel(final String name,
+                          final int stateDimension,
+                          final MatrixParameterInterface driftMatrix,
+                          final MatrixParameterInterface diffusionMatrix,
+                          final Parameter stationaryMean,
+                          final MatrixParameter initialCovariance,
+                          final double diffusionFloor) {
+        this(name, stateDimension, driftMatrix, diffusionMatrix, stationaryMean,
+                initialCovariance, defaultCovarianceGradientMethod(driftMatrix), diffusionFloor);
+    }
+
     /** Constructs an OUProcessModel with an explicit V-path gradient strategy. */
     public OUProcessModel(final String name,
                           final int stateDimension,
@@ -105,6 +122,26 @@ public class OUProcessModel extends AbstractModel
                           final Parameter stationaryMean,
                           final MatrixParameter initialCovariance,
                           final CovarianceGradientMethod covarianceGradientMethod) {
+        this(name, stateDimension, driftMatrix, diffusionMatrix, stationaryMean,
+                initialCovariance, covarianceGradientMethod, 0.0);
+    }
+
+    /**
+     * Constructs an OUProcessModel whose engines see the diffusion matrix
+     * {@code diffusionMatrix + diffusionFloor * I}.  A positive floor bounds the smallest
+     * eigenvalue of the diffusion away from zero (a declared isotropic white-noise component in
+     * per-time-unit variance), which keeps the Kalman recursions away from singular process
+     * covariances; zero (the default) leaves the model unchanged.  Gradients with respect to the
+     * diffusion parameters are unaffected because the added term is constant.
+     */
+    public OUProcessModel(final String name,
+                          final int stateDimension,
+                          final MatrixParameterInterface driftMatrix,
+                          final MatrixParameterInterface diffusionMatrix,
+                          final Parameter stationaryMean,
+                          final MatrixParameter initialCovariance,
+                          final CovarianceGradientMethod covarianceGradientMethod,
+                          final double diffusionFloor) {
         super(name);
         if (stateDimension < 1) {
             throw new IllegalArgumentException("stateDimension must be at least 1");
@@ -124,16 +161,23 @@ public class OUProcessModel extends AbstractModel
         if (covarianceGradientMethod == null) {
             throw new IllegalArgumentException("covarianceGradientMethod must not be null");
         }
+        if (!Double.isFinite(diffusionFloor) || diffusionFloor < 0.0) {
+            throw new IllegalArgumentException("diffusionFloor must be finite and non-negative, found " + diffusionFloor);
+        }
         this.stateDimension         = stateDimension;
         this.driftMatrix            = driftMatrix;
         this.diffusionMatrix        = diffusionMatrix;
+        this.diffusionFloor         = diffusionFloor;
+        this.flooredDiffusionMatrix = diffusionFloor > 0.0
+                ? new DiagonalFloorMatrixView(name + ".diffusionFloorView", diffusionMatrix, diffusionFloor)
+                : diffusionMatrix;
         this.stationaryMean         = stationaryMean;
         this.initialCovariance      = initialCovariance;
         this.covarianceGradientMethod = covarianceGradientMethod;
         this.selectionMatrixParameterization =
                 SelectionMatrixParameterizationFactory.create(driftMatrix);
         final DiffusionMatrixParameterization diffusionMatrixParameterization =
-                DiffusionMatrixParameterizationFactory.create(diffusionMatrix);
+                DiffusionMatrixParameterizationFactory.create(diffusionMatrix, diffusionFloor);
         final OUCovarianceGradientStrategy covarianceGradientStrategy =
                 createCovarianceGradientStrategy(covarianceGradientMethod);
         this.canonicalKernel =
@@ -141,7 +185,7 @@ public class OUProcessModel extends AbstractModel
                         stateDimension,
                         selectionMatrixParameterization,
                         diffusionMatrixParameterization,
-                        diffusionMatrix,
+                        flooredDiffusionMatrix,
                         covarianceGradientStrategy,
                         new CanonicalOUKernel.InitialMoments() {
                             @Override
@@ -172,8 +216,21 @@ public class OUProcessModel extends AbstractModel
         return driftMatrix;
     }
 
+    /**
+     * The diffusion matrix as every likelihood and gradient engine must see it: the raw
+     * parameter when the floor is zero, otherwise a read-only {@code Q + floor * I} view.
+     */
     public MatrixParameterInterface getDiffusionMatrix() {
+        return flooredDiffusionMatrix;
+    }
+
+    /** The raw diffusion matrix parameter, without the floor. */
+    public MatrixParameterInterface getRawDiffusionMatrix() {
         return diffusionMatrix;
+    }
+
+    public double getDiffusionFloor() {
+        return diffusionFloor;
     }
 
     public Parameter getStationaryMeanParameter() {
@@ -213,7 +270,8 @@ public class OUProcessModel extends AbstractModel
 
     private static boolean usesStableBlockDiagonalSelectionChart(
             final MatrixParameterInterface driftMatrix) {
-        return driftMatrix instanceof BlockDiagonalPolarStableMatrixParameter
+        return driftMatrix instanceof BlockDiagonalNormalizedCartesianStableMatrixParameter
+                || driftMatrix instanceof BlockDiagonalPolarStableMatrixParameter
                 || driftMatrix instanceof OrthogonalBlockDiagonalPolarStableMatrixParameter;
     }
 

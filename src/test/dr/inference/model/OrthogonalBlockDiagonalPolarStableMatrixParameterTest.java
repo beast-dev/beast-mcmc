@@ -3,6 +3,7 @@ package test.dr.inference.model;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.OrthogonalBlockDiagonalDecomposition;
 import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import test.dr.math.MathTestCase;
 
@@ -76,6 +77,23 @@ public class OrthogonalBlockDiagonalPolarStableMatrixParameterTest extends MathT
         assertEquals(0.50, denseD[5], 1e-15);
         assertEquals(0.25, denseD[10], 1e-15);
         assertEquals(0.25, denseD[15], 1e-15);
+    }
+
+    public void testCheckpointableStateUsesNativeCoordinates() {
+        final OrthogonalBlockDiagonalPolarStableMatrixParameter blockParameter =
+                makeFourDimensionalBlockParameter(
+                        new double[]{0.50, 0.25},
+                        OrthogonalBlockDiagonalPolarStableMatrixParameter.RhoOrdering.NONE);
+
+        final CompoundParameter checkpointableState =
+                (CompoundParameter) blockParameter.getCheckpointableStateParameter();
+
+        assertEquals(blockParameter.getParameter().getDimension(), checkpointableState.getDimension());
+        assertEquals(blockParameter.getScalarBlockParameter(), checkpointableState.getParameter(0));
+        assertEquals(blockParameter.getRhoParameter(), checkpointableState.getParameter(1));
+        assertEquals(blockParameter.getThetaParameter(), checkpointableState.getParameter(2));
+        assertEquals(blockParameter.getTParameter(), checkpointableState.getParameter(3));
+        assertEquals(blockParameter.getRotationAngleParameter(), checkpointableState.getParameter(4));
     }
 
     private static OrthogonalBlockDiagonalPolarStableMatrixParameter makeFourDimensionalBlockParameter(

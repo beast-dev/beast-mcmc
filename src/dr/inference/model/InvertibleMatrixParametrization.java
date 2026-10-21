@@ -50,6 +50,11 @@ public abstract class InvertibleMatrixParametrization extends AbstractComputedCo
         return nativeParameter;
     }
 
+    @Override
+    public final Parameter getCheckpointableStateParameter() {
+        return nativeParameter;
+    }
+
     public final int getNativeDimension() {
         return nativeDimension;
     }

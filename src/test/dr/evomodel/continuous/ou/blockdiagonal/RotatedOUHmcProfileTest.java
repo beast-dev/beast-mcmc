@@ -143,6 +143,7 @@ public final class RotatedOUHmcProfileTest extends TestCase {
                 preconditioningOptions,
                 0,
                 1.0e-3,
+                0.0,
                 10,
                 0.1,
                 0.8,

@@ -9,4 +9,8 @@ import dr.inference.model.Parameter;
 public interface TimeSeriesGradientSource {
 
     GradientProvider getGradientWrt(Parameter parameter);
+
+    default double[][] getScoreContributionsWrt(final Parameter parameter) {
+        return null;
+    }
 }

@@ -49,6 +49,7 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
     private final CompoundParameter compoundParameter;
     private final CompoundGradient parametersGradients;
     private final List<GradientSlice> gradientSlices;
+    private final boolean refreshLikelihoodBeforeBranchGradient;
 
     public DiffusionParametersGradient(BranchSpecificGradient branchSpecificGradient, CompoundGradient parametersGradients) {
 
@@ -58,6 +59,7 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
         compoundParameter = new CompoundParameter(null);
         this.parametersGradients = parametersGradients;
         this.gradientSlices = buildGradientSlices(parametersGradients, compoundParameter);
+        this.refreshLikelihoodBeforeBranchGradient = requiresFreshLikelihoodBeforeBranchGradient(gradientSlices);
         this.dim = sumResultDimensions(gradientSlices);
         validateDerivationOrder();
 
@@ -132,6 +134,15 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
         }
     }
 
+    private boolean requiresFreshLikelihoodBeforeBranchGradient(List<GradientSlice> slices) {
+        for (GradientSlice slice : slices) {
+            if (slice.gradientProvider.requiresFreshLikelihoodBeforeSharedBranchGradient()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void validateAgainstTargetOrder(final List<ContinuousTraitGradientForBranch.ProcessGradientTarget> branchOrder) {
         if (branchOrder.size() != gradientSlices.size()) {
             throw new IllegalArgumentException("Diffusion gradient block count does not match branch target count.");
@@ -178,6 +189,9 @@ public class DiffusionParametersGradient implements GradientWrtParameterProvider
 
     @Override
     public double[] getGradientLogDensity() {
+        if (refreshLikelihoodBeforeBranchGradient) {
+            likelihood.makeDirty();
+        }
         double[] gradient = branchSpecificGradient.getGradientLogDensity();
         return getGradientLogDensity(gradient);
     }

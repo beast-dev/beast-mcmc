@@ -146,8 +146,12 @@ public class NumericalDerivative
 	}
 
 	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad) {
+		gradient4thOrder(f, x, grad, Math.pow(MachineAccuracy.EPSILON, 0.333));
+	}
+
+	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad, double stepSizeRatio) {
 		for (int i = 0; i < f.getNumArguments(); ++i) {
-			double h = Math.pow(MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x[i]), 1.0);
+			double h = stepSizeRatio * Math.max(Math.abs(x[i]), 1.0);
 
 			double oldX = x[i];
 			x[i] = oldX + 2 * h;

@@ -78,13 +78,18 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
         this.backwardMessage = new CanonicalGaussianState(stateDimension);
         this.trajectory = new MomentForwardTrajectory(timeCount, stateDimension);
         this.canonicalTrajectory = new CanonicalForwardTrajectory(timeCount, stateDimension);
-        this.branchGradientCache = new CanonicalBranchGradientCache(
-                timeCount, stateDimension, transitionRepresentation, timeGrid);
         this.smootherStats = new MomentBranchSmootherStats[timeCount];
         this.messageWorkspace = new CanonicalGaussianMessageOps.Workspace(stateDimension);
         for (int t = 0; t < timeCount; ++t) {
             smootherStats[t] = new MomentBranchSmootherStats(t, stateDimension, t < timeCount - 1);
         }
+        this.branchGradientCache = new CanonicalBranchGradientCache(
+                timeCount,
+                stateDimension,
+                transitionRepresentation,
+                timeGrid,
+                trajectory,
+                smootherStats);
 
         this.observationUpdate = new CanonicalObservationUpdate(observationModel, stateDimension);
         this.stateVectorWorkspace = new double[stateDimension];
@@ -192,6 +197,7 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
     @Override
     public CanonicalBranchGradientCache getCanonicalBranchGradientCache() {
         ensureResults();
+        ensureMomentTrajectory();
         branchGradientCache.ensure(canonicalTrajectory);
         return branchGradientCache;
     }
@@ -302,6 +308,23 @@ public final class CanonicalKalmanSmootherEngine implements MomentSmootherResult
                         flatMatrixWorkspace);
                 trajectory.copyStepCovarianceFrom(timeIndex, flatMatrixWorkspace);
             }
+        }
+        for (int timeIndex = 0; timeIndex < timeCount - 1; ++timeIndex) {
+            final int filteredCovarianceOffset = trajectory.stateMatrixOffset(timeIndex);
+            final int transitionMatrixOffset = trajectory.branchMatrixOffset(timeIndex);
+
+            MatrixOps.matMulTransposedRight(
+                    trajectory.filteredCovariances,
+                    filteredCovarianceOffset,
+                    trajectory.transitionMatrices,
+                    transitionMatrixOffset,
+                    flatMatrixWorkspace,
+                    stateDimension);
+            MatrixOps.matMul(
+                    flatMatrixWorkspace,
+                    canonicalTrajectory.predictedStates[timeIndex + 1].precision,
+                    smootherStats[timeIndex].smootherGain,
+                    stateDimension);
         }
         momentTrajectoryKnown = true;
     }

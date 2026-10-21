@@ -65,4 +65,18 @@ public class AbstractComputedCompoundMatrixRestoreTest extends MathTestCase {
         // Must reflect restored child state, not stale proposed cached value.
         assertEquals(1.0, computed.getParameterValue(0, 0), 1e-15);
     }
+
+    public void testDefaultCheckpointableStateUsesUnderlyingParameters() {
+
+        final Parameter.Default source = new Parameter.Default("source", new double[]{3.0});
+        final OneByOneComputedMatrix computed = new OneByOneComputedMatrix(source);
+
+        final Parameter checkpointableState = computed.getCheckpointableStateParameter();
+
+        assertEquals(1, checkpointableState.getDimension());
+        assertEquals(3.0, checkpointableState.getParameterValue(0), 1e-15);
+        checkpointableState.setParameterUntransformedValue(0, 4.0);
+        assertEquals(4.0, source.getParameterValue(0), 1e-15);
+        assertEquals(4.0, computed.getParameterValue(0, 0), 1e-15);
+    }
 }

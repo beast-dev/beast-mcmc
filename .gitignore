@@ -11,6 +11,8 @@ out/
 *.log
 *.trees
 *.tree
+*.chkpt
+*.jfr
 *.xml
 !examples/**/*.xml
 !tests/**/*.xml

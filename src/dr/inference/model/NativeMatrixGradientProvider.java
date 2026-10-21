@@ -2,7 +2,8 @@ package dr.inference.model;
 
 /**
  * Matrix-valued parameters that expose a native optimization coordinate system
- * can pull dense matrix-entry gradients back to those native coordinates.
+ * can implement this interface to pull gradients back from dense matrix entries
+ * to those native coordinates.
  */
 public interface NativeMatrixGradientProvider {
 

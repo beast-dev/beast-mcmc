@@ -48,10 +48,12 @@ import java.util.List;
  * @author Filippo Monti
  * @author Based on AbstractTransformedCompoundMatrix by Marc Suchard and Paul Bastide
  */
-public abstract class AbstractComputedCompoundMatrix extends MatrixParameter {
+public abstract class AbstractComputedCompoundMatrix extends MatrixParameter
+        implements CheckpointableStateProvider {
 
     protected final int dim;
     private final CompoundParameter allParameters;
+    private final CompoundParameter checkpointableStateParameter;
 
     // Cache state management
     private boolean matrixKnown = false;
@@ -78,6 +80,7 @@ public abstract class AbstractComputedCompoundMatrix extends MatrixParameter {
         this.columnDimension = dimension;
 
         this.allParameters = new CompoundParameter(name + ".underlying");
+        this.checkpointableStateParameter = new CompoundParameter(name + ".checkpointable");
 //
 //        // Flatten parameters and register them as children
 //        List<Parameter> flattenedParams = flattenParameters(parameters);
@@ -92,7 +95,21 @@ public abstract class AbstractComputedCompoundMatrix extends MatrixParameter {
             addParameter(param);
             allParameters.addParameter(param);
             Parameter.CONNECTED_PARAMETER_SET.add(param);
+            addCheckpointableStateParameter(checkpointableStateParameter, param);
         }
+    }
+
+    private static void addCheckpointableStateParameter(final CompoundParameter compound,
+                                                        final Parameter parameter) {
+        if (parameter instanceof CheckpointableStateProvider) {
+            final Parameter checkpointableState =
+                    ((CheckpointableStateProvider) parameter).getCheckpointableStateParameter();
+            if (checkpointableState != null && checkpointableState != parameter) {
+                compound.addParameter(checkpointableState);
+                return;
+            }
+        }
+        compound.addParameter(parameter);
     }
 
 //    private static List<Parameter> flattenParameters(List<Parameter> parameters) {
@@ -267,6 +284,11 @@ public abstract class AbstractComputedCompoundMatrix extends MatrixParameter {
      */
     public final CompoundParameter getAllParameters() {
         return allParameters;
+    }
+
+    @Override
+    public Parameter getCheckpointableStateParameter() {
+        return checkpointableStateParameter;
     }
 
     /**

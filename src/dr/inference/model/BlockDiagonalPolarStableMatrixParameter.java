@@ -24,6 +24,9 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
     private static final String RHO_ELEMENT = "blockRho";
     private static final String THETA_ELEMENT = "blockTheta";
     private static final String T_ELEMENT = "blockT";
+    private static final String RHO_ORDERING = "blockRhoOrdering";
+
+    private final RhoOrdering rhoOrdering;
 
     public BlockDiagonalPolarStableMatrixParameter(final String name,
                                                    final MatrixParameter RParam,
@@ -31,7 +34,18 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
                                                    final Parameter rhoParam,
                                                    final Parameter thetaParam,
                                                    final Parameter tParam) {
+        this(name, RParam, scalarBlockParam, rhoParam, thetaParam, tParam, RhoOrdering.NONE);
+    }
+
+    public BlockDiagonalPolarStableMatrixParameter(final String name,
+                                                   final MatrixParameter RParam,
+                                                   final Parameter scalarBlockParam,
+                                                   final Parameter rhoParam,
+                                                   final Parameter thetaParam,
+                                                   final Parameter tParam,
+                                                   final RhoOrdering rhoOrdering) {
         super(name, RParam, scalarBlockParam, rhoParam, thetaParam, tParam);
+        this.rhoOrdering = rhoOrdering == null ? RhoOrdering.NONE : rhoOrdering;
     }
 
     @Override
@@ -52,7 +66,7 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
     @Override
     protected void fillTwoByTwoBlock(final int blockIndex,
                                      final double[] outBlock) {
-        final double rho = getTwoByTwoBlockParameterValue(0, blockIndex);
+        final double rho = getEffectiveRho(blockIndex);
         final double theta = getTwoByTwoBlockParameterValue(1, blockIndex);
         final double t = getTwoByTwoBlockParameterValue(2, blockIndex);
 
@@ -73,7 +87,7 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
                                               final double g11,
                                               final double[] out,
                                               final int baseOffset) {
-        final double rho = getTwoByTwoBlockParameterValue(0, blockIndex);
+        final double rho = getEffectiveRho(blockIndex);
         final double theta = getTwoByTwoBlockParameterValue(1, blockIndex);
 
         final double cos = Math.cos(theta);
@@ -99,9 +113,58 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
         final double gradT =
                 -g01 + g10;
 
-        out[twoByTwoGradientOffset(baseOffset, 0, blockIndex)] = gradRho;
+        addRhoGradient(out, baseOffset, blockIndex, gradRho);
         out[twoByTwoGradientOffset(baseOffset, 1, blockIndex)] = gradTheta;
         out[twoByTwoGradientOffset(baseOffset, 2, blockIndex)] = gradT;
+    }
+
+    private double getEffectiveRho(final int blockIndex) {
+        switch (rhoOrdering) {
+            case NONE:
+                return getTwoByTwoBlockParameterValue(0, blockIndex);
+            case ASCENDING:
+                return sumRhoIncrements(0, blockIndex + 1);
+            case DESCENDING:
+                return sumRhoIncrements(blockIndex, num2x2Blocks);
+            default:
+                throw new IllegalArgumentException("Unhandled block rho ordering: " + rhoOrdering);
+        }
+    }
+
+    private double sumRhoIncrements(final int fromInclusive,
+                                    final int toExclusive) {
+        double sum = 0.0;
+        for (int i = fromInclusive; i < toExclusive; i++) {
+            final double increment = getTwoByTwoBlockParameterValue(0, i);
+            if (increment < 0.0) {
+                throw new ArithmeticException("Ordered block rho increments must be non-negative");
+            }
+            sum += increment;
+        }
+        return sum;
+    }
+
+    private void addRhoGradient(final double[] out,
+                                final int baseOffset,
+                                final int blockIndex,
+                                final double gradient) {
+        switch (rhoOrdering) {
+            case NONE:
+                out[twoByTwoGradientOffset(baseOffset, 0, blockIndex)] = gradient;
+                return;
+            case ASCENDING:
+                for (int i = 0; i <= blockIndex; i++) {
+                    out[twoByTwoGradientOffset(baseOffset, 0, i)] += gradient;
+                }
+                return;
+            case DESCENDING:
+                for (int i = blockIndex; i < num2x2Blocks; i++) {
+                    out[twoByTwoGradientOffset(baseOffset, 0, i)] += gradient;
+                }
+                return;
+            default:
+                throw new IllegalArgumentException("Unhandled block rho ordering: " + rhoOrdering);
+        }
     }
 
     public Parameter getScalarBlockParameter() {
@@ -110,6 +173,10 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
 
     public Parameter getRhoParameter() {
         return getTwoByTwoBlockParameter(0);
+    }
+
+    public RhoOrdering getRhoOrdering() {
+        return rhoOrdering;
     }
 
     public Parameter getThetaParameter() {
@@ -133,6 +200,7 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
             final Parameter rhoParam = (Parameter) xo.getElementFirstChild(RHO_ELEMENT);
             final Parameter thetaParam = (Parameter) xo.getElementFirstChild(THETA_ELEMENT);
             final Parameter tParam = (Parameter) xo.getElementFirstChild(T_ELEMENT);
+            final RhoOrdering rhoOrdering = RhoOrdering.parse(xo.getAttribute(RHO_ORDERING, RhoOrdering.NONE.name));
 
             final boolean oddDimension = (R.getRowDimension() & 1) == 1;
 
@@ -146,7 +214,7 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
             }
 
             return new BlockDiagonalPolarStableMatrixParameter(
-                    name, R, scalarBlockParam, rhoParam, thetaParam, tParam
+                    name, R, scalarBlockParam, rhoParam, thetaParam, tParam, rhoOrdering
             );
         }
 
@@ -168,10 +236,35 @@ public final class BlockDiagonalPolarStableMatrixParameter extends AbstractBlock
     };
 
     private static final XMLSyntaxRule[] RULES = new XMLSyntaxRule[]{
+            AttributeRule.newStringRule(RHO_ORDERING, true,
+                    "Optional block rho ordering: none, ascending, or descending. " +
+                            "Ascending/descending interpret blockRho values as non-negative cumulative increments."),
             new ElementRule(R_ELEMENT, new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
             new ElementRule(SCALAR_ELEMENT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(RHO_ELEMENT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(THETA_ELEMENT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(T_ELEMENT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
     };
+
+    public enum RhoOrdering {
+        NONE("none"),
+        ASCENDING("ascending"),
+        DESCENDING("descending");
+
+        private final String name;
+
+        RhoOrdering(final String name) {
+            this.name = name;
+        }
+
+        private static RhoOrdering parse(final String value) throws XMLParseException {
+            for (final RhoOrdering ordering : values()) {
+                if (ordering.name.equalsIgnoreCase(value)) {
+                    return ordering;
+                }
+            }
+            throw new XMLParseException("Unknown " + RHO_ORDERING + " value '" + value +
+                    "'. Expected none, ascending, or descending.");
+        }
+    }
 }

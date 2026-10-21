@@ -58,7 +58,7 @@ public final class KernelBackedGaussianTransitionRepresentation
                                         final int toIndex,
                                         final TimeGrid timeGrid,
                                         final double[] out) {
-        repeatedDeltaCache.fillTransitionMatrixFlat(validatedDelta(timeGrid, fromIndex, toIndex), out);
+        repeatedDeltaCache.fillTransitionMatrixFlat(fromIndex, toIndex, timeGrid, out);
     }
 
     @Override
@@ -66,7 +66,7 @@ public final class KernelBackedGaussianTransitionRepresentation
                                     final int toIndex,
                                     final TimeGrid timeGrid,
                                     final double[] out) {
-        repeatedDeltaCache.fillTransitionOffset(validatedDelta(timeGrid, fromIndex, toIndex), out);
+        repeatedDeltaCache.fillTransitionOffset(fromIndex, toIndex, timeGrid, out);
     }
 
     @Override
@@ -74,7 +74,7 @@ public final class KernelBackedGaussianTransitionRepresentation
                                             final int toIndex,
                                             final TimeGrid timeGrid,
                                             final double[] out) {
-        repeatedDeltaCache.fillTransitionCovarianceFlat(validatedDelta(timeGrid, fromIndex, toIndex), out);
+        repeatedDeltaCache.fillTransitionCovarianceFlat(fromIndex, toIndex, timeGrid, out);
     }
 
     @Override
@@ -87,7 +87,7 @@ public final class KernelBackedGaussianTransitionRepresentation
                                        final int toIndex,
                                        final TimeGrid timeGrid,
                                        final CanonicalGaussianTransition out) {
-        repeatedDeltaCache.fillCanonicalTransition(validatedDelta(timeGrid, fromIndex, toIndex), out);
+        repeatedDeltaCache.fillCanonicalTransition(fromIndex, toIndex, timeGrid, out);
     }
 
     @Override
@@ -95,9 +95,7 @@ public final class KernelBackedGaussianTransitionRepresentation
                                             final int toIndex,
                                             final TimeGrid timeGrid,
                                             final TransitionMomentsView out) {
-        repeatedDeltaCache.fillTransitionMomentsView(
-                validatedDelta(timeGrid, fromIndex, toIndex),
-                out);
+        repeatedDeltaCache.fillTransitionMomentsView(fromIndex, toIndex, timeGrid, out);
         return true;
     }
 
@@ -111,8 +109,21 @@ public final class KernelBackedGaussianTransitionRepresentation
         return repeatedDeltaCache.getThreadPreparedCanonicalBranch(dt, stationaryMean);
     }
 
+    public CanonicalPreparedBranchHandle getThreadPreparedCanonicalBranch(final int fromIndex,
+                                                                          final int toIndex,
+                                                                          final TimeGrid timeGrid,
+                                                                          final double[] stationaryMean) {
+        return repeatedDeltaCache.getThreadPreparedCanonicalBranch(fromIndex, toIndex, timeGrid, stationaryMean);
+    }
+
     public CanonicalPreparedBranchHandle getReusablePreparedCanonicalBranch(final double dt) {
         return repeatedDeltaCache.getReusablePreparedCanonicalBranch(dt);
+    }
+
+    public CanonicalPreparedBranchHandle getReusablePreparedCanonicalBranch(final int fromIndex,
+                                                                           final int toIndex,
+                                                                           final TimeGrid timeGrid) {
+        return repeatedDeltaCache.getReusablePreparedCanonicalBranch(fromIndex, toIndex, timeGrid);
     }
 
     @Override

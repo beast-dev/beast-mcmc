@@ -180,7 +180,7 @@ public final class CanonicalBlockDiagonalGradientCache {
             final double dt = timeGrid.getDelta(t, t + 1);
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
-                    threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
+                    threadPreparedBranch(transitionRepresentation, t, t + 1, timeGrid, dt, stationaryMean);
             preparedGradientAccumulator.accumulateSelectionAndMean(
                     prepared,
                     diffusionMatrix,
@@ -220,7 +220,7 @@ public final class CanonicalBlockDiagonalGradientCache {
             final double dt = timeGrid.getDelta(t, t + 1);
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
-                    threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
+                    threadPreparedBranch(transitionRepresentation, t, t + 1, timeGrid, dt, stationaryMean);
             preparedGradientAccumulator.accumulateDiffusion(
                     prepared,
                     adjoints,
@@ -255,7 +255,7 @@ public final class CanonicalBlockDiagonalGradientCache {
             final double dt = timeGrid.getDelta(t, t + 1);
             final CanonicalLocalTransitionAdjoints adjoints = branchCache.getAdjoints(t);
             final CanonicalPreparedBranchHandle prepared =
-                    threadPreparedBranch(transitionRepresentation, dt, stationaryMean);
+                    threadPreparedBranch(transitionRepresentation, t, t + 1, timeGrid, dt, stationaryMean);
             preparedGradientAccumulator.accumulateSelectionDiffusionAndMean(
                     prepared,
                     diffusionMatrix,
@@ -283,18 +283,21 @@ public final class CanonicalBlockDiagonalGradientCache {
 
     private CanonicalPreparedBranchHandle threadPreparedBranch(
             final GaussianTransitionRepresentation transitionRepresentation,
+            final int fromIndex,
+            final int toIndex,
+            final TimeGrid timeGrid,
             final double dt,
             final double[] stationaryMean) {
         if (transitionRepresentation instanceof KernelBackedGaussianTransitionRepresentation) {
             final CanonicalPreparedBranchHandle cached =
                     ((KernelBackedGaussianTransitionRepresentation) transitionRepresentation)
-                            .getReusablePreparedCanonicalBranch(dt);
+                            .getReusablePreparedCanonicalBranch(fromIndex, toIndex, timeGrid);
             if (cached != null) {
                 return cached;
             }
             final CanonicalPreparedBranchHandle prepared =
                     ((KernelBackedGaussianTransitionRepresentation) transitionRepresentation)
-                            .getThreadPreparedCanonicalBranch(dt, stationaryMean);
+                            .getThreadPreparedCanonicalBranch(fromIndex, toIndex, timeGrid, stationaryMean);
             if (prepared != null) {
                 return prepared;
             }

@@ -29,4 +29,12 @@ public interface CanonicalGradientFormula {
     default void makeDirty() {
         // no-op
     }
+
+    default double[][] computeScoreContributions(final Parameter parameter,
+                                                 final CanonicalForwardTrajectory trajectory,
+                                                 final CanonicalBranchGradientCache branchGradientCache,
+                                                 final GaussianTransitionRepresentation repr,
+                                                 final TimeGrid timeGrid) {
+        return null;
+    }
 }

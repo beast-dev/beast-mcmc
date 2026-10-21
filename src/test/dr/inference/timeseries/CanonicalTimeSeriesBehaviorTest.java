@@ -20,9 +20,18 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
                 "testCanonicalAnalyticalNativeGeneralBlockGradientsMatchFiniteDifference"));
         suite.addTest(new BlockDiagonalNativeTimeSeriesGradientTest(
                 "testCanonicalAnalyticalNativeGeneralBlockDiffusionAndMeanGradientsMatchFiniteDifference"));
+        suite.addTest(new BlockDiagonalNativeTimeSeriesGradientTest(
+                "testCanonicalNativeDriftScoreContributionsSumToGradient"));
+        suite.addTest(new ObservationNoiseTimeSeriesGradientTest(
+                "testCanonicalAnalyticalDiagonalObservationNoiseGradientMatchesFiniteDifference"));
+        suite.addTest(new ObservationNoiseTimeSeriesGradientTest(
+                "testCanonicalAnalyticalScalarIdentityObservationNoiseGradientMatchesFiniteDifference"));
+        suite.addTest(new ObservationNoiseTimeSeriesGradientTest(
+                "testCanonicalDriftScoreContributionsSumToGradient"));
         suite.addTest(new OUProcessModelTest("testDenseDiffusionPullBackUsesMatrixParameterColumnMajorOrder"));
         suite.addTest(new OUProcessModelTest("testDefaultCovarianceGradientMethodUsesStationaryLyapunovForOrthogonalBlockDrift"));
         suite.addTest(new OUProcessModelTest("testUsesOrthogonalBlockSelectionChartDetectsExpectedCharts"));
+        suite.addTest(PartialObservationIrregularGridTest.suite());
         return suite;
     }
 
@@ -38,6 +47,7 @@ public final class CanonicalTimeSeriesBehaviorTest extends TestCase {
                 "testCanonicalKalmanLikelihoodMatchesMomentEngine_ExactOu",
                 "testCanonicalKalmanLikelihoodAndSmootherMatchMomentWithRectangularDesign",
                 "testCanonicalKalmanLikelihoodAndSmootherAllowPartialObservationColumns",
+                "testCanonicalAnalyticalGradientsMatchFDWithAlternatingPartialObservations",
                 "testCanonicalKalmanLikelihoodMatchesMomentEngine_Euler",
                 "testForwardLikelihoodFactorySelectsEquivalentExactOuBackends",
                 "testForwardLikelihoodFactorySelectsEquivalentEulerBackends",

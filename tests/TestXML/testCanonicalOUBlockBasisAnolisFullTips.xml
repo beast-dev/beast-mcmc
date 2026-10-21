@@ -1,0 +1,496 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <!-- Anolis morphometric data from Liam Revell phytools R book. -->
+    <!-- Variant: tanh theta transform keeps blockTheta in [-pi/4, pi/4] via theta=(pi/4)*tanh(z). -->
+    <!-- Short TestXML copy of the tuned Anolis HMC run. -->
+    <!-- The likelihood is intentionally selected through XML, not a JVM property. -->
+    <!-- Traits are standardized column-wise. -->
+    <!-- Trait order: SVL (snout-vent length), HL (head length), HLL (hindlimb length), FLL (forelimb length), LAM (lamellae count), TL (tail length) -->
+    <!-- Standardization back-transform: original = standardized * sd + mean. -->
+    <!-- 1. SVL: mean=4.0962894000, sd=0.4432070253, observed=100 -->
+    <!-- 2. HL: mean=2.9610366000, sd=0.4722132847, observed=100 -->
+    <!-- 3. HLL: mean=3.8265419000, sd=0.4693681946, observed=100 -->
+    <!-- 4. FLL: mean=3.2539689000, sd=0.4982783979, observed=100 -->
+    <!-- 5. LAM: mean=3.0189606000, sd=0.2850875372, observed=100 -->
+    <!-- 6. TL: mean=4.7236695000, sd=0.4766401131, observed=100 -->
+
+    <taxa id="taxa">
+        <taxon id="ahli">
+            <attr name="anole">-0.12896772 -0.16597712 0.28863928 0.18265111 -0.53583752 -0.46087078</attr>
+        </taxon>
+        <taxon id="alayoni">
+            <attr name="anole">-0.63308879 -0.54830435 -1.16548566 -0.90615789 0.19751618 -1.36585126</attr>
+        </taxon>
+        <taxon id="alfaroi">
+            <attr name="anole">-1.28526708 -1.23435028 -1.11026249 -1.54594079 -1.00001074 -0.64547547</attr>
+        </taxon>
+        <taxon id="aliniger">
+            <attr name="anole">-0.13476637 -0.13171294 -0.38415875 -0.19043350 0.48339328 -0.38171252</attr>
+        </taxon>
+        <taxon id="allisoni">
+            <attr name="anole">0.62972964 0.84267727 0.28580569 0.38579056 0.77256762 0.70376053</attr>
+        </taxon>
+        <taxon id="allogus">
+            <attr name="anole">-0.12668888 -0.21178269 0.24210865 0.16922488 -0.73903827 -0.42333722</attr>
+        </taxon>
+        <taxon id="altitudinalis">
+            <attr name="anole">-0.57151486 -0.22935949 -1.21416812 -0.74116980 0.62962907 -1.16660240</attr>
+        </taxon>
+        <taxon id="alumina">
+            <attr name="anole">-1.14472328 -1.15034163 -0.82138480 -1.24289735 -1.13898560 -0.11939721</attr>
+        </taxon>
+        <taxon id="alutaceus">
+            <attr name="anole">-1.22154968 -1.11599275 -1.01294017 -1.37278458 -0.82960694 -0.35443828</attr>
+        </taxon>
+        <taxon id="angusticeps">
+            <attr name="anole">-0.69423403 -0.57358954 -1.26191316 -1.02049156 -0.53997660 -1.15693053</attr>
+        </taxon>
+        <taxon id="argenteolus">
+            <attr name="anole">-0.28198876 -0.43966700 0.06599957 0.01362913 0.81129257 0.06579492</attr>
+        </taxon>
+        <taxon id="argillaceus">
+            <attr name="anole">-0.76356958 -0.73578320 -1.00667643 -0.71062463 0.01480037 -0.74099827</attr>
+        </taxon>
+        <taxon id="armouri">
+            <attr name="anole">0.05728835 0.22850564 0.34494902 0.24336014 -0.53341721 -0.02013993</attr>
+        </taxon>
+        <taxon id="bahorucoensis">
+            <attr name="anole">-0.60657748 -0.39312024 -0.27626904 -0.67363727 -0.73661796 0.08325044</attr>
+        </taxon>
+        <taxon id="baleatus">
+            <attr name="anole">2.15874421 1.94283691 1.93832499 1.98947236 1.49750285 2.06161939</attr>
+        </taxon>
+        <taxon id="baracoae">
+            <attr name="anole">2.13554963 2.04893304 1.91529403 1.89506730 2.35559017 2.22581036</attr>
+        </taxon>
+        <taxon id="barahonae">
+            <attr name="anole">2.21266935 1.94802525 2.00215547 1.99944670 1.47512376 2.03914961</attr>
+        </taxon>
+        <taxon id="barbatus">
+            <attr name="anole">2.04793821 2.35684475 1.46963111 1.88178156 1.31587443 0.64379915</attr>
+        </taxon>
+        <taxon id="barbouri">
+            <attr name="anole">-0.97552470 -1.04407609 -0.78497415 -0.83029668 -2.12327977 -0.35718668</attr>
+        </taxon>
+        <taxon id="bartschi">
+            <attr name="anole">0.41574386 0.29169743 0.75522395 0.62527515 0.94374311 0.72308329</attr>
+        </taxon>
+        <taxon id="bremeri">
+            <attr name="anole">0.03853865 -0.21303213 0.15733512 0.10412071 -0.17142314 0.01319759</attr>
+        </taxon>
+        <taxon id="breslini">
+            <attr name="anole">-0.10193746 0.08640884 0.26213557 0.16362560 -0.95476148 0.22035598</attr>
+        </taxon>
+        <taxon id="brevirostris">
+            <attr name="anole">-0.50120911 -0.68154923 -0.33764942 -0.11663941 0.04373885 -0.80156808</attr>
+        </taxon>
+        <taxon id="caudalis">
+            <attr name="anole">-0.41639548 -0.56903651 -0.37893897 -0.10901315 -0.26528904 -0.75753066</attr>
+        </taxon>
+        <taxon id="centralis">
+            <attr name="anole">-0.89878855 -0.92963628 -1.18042063 -0.91013157 -0.49114950 -0.70879368</attr>
+        </taxon>
+        <taxon id="chamaeleonides">
+            <attr name="anole">2.13457943 2.47244929 1.49151159 1.86273598 1.75486240 0.64593913</attr>
+        </taxon>
+        <taxon id="chlorocyanus">
+            <attr name="anole">0.40423682 0.23346103 0.20650760 0.24522657 1.07675489 0.51949153</attr>
+        </taxon>
+        <taxon id="christophei">
+            <attr name="anole">-0.47751815 -0.56111636 -0.17766841 -0.02490355 -0.11922864 -0.41446260</attr>
+        </taxon>
+        <taxon id="clivicola">
+            <attr name="anole">-0.76162917 -0.70274728 -0.50389418 -0.67797220 -0.57379078 -0.25656569</attr>
+        </taxon>
+        <taxon id="coelestinus">
+            <attr name="anole">0.45504829 0.35281388 0.29140897 0.32600470 0.66498663 0.67063281</attr>
+        </taxon>
+        <taxon id="confusus">
+            <attr name="anole">-0.35615275 -0.42916328 -0.12110301 -0.14401367 -0.57133539 -0.62932072</attr>
+        </taxon>
+        <taxon id="cooki">
+            <attr name="anole">-0.01071599 -0.06525992 0.20431316 0.10815460 -0.01462919 0.34948905</attr>
+        </taxon>
+        <taxon id="cristatellus">
+            <attr name="anole">0.21103140 0.13439563 0.39224665 0.40130397 0.21572111 0.08079576</attr>
+        </taxon>
+        <taxon id="cupeyalensis">
+            <attr name="anole">-1.43111315 -1.37401175 -1.39607223 -1.65068143 -1.59670466 -0.42033705</attr>
+        </taxon>
+        <taxon id="cuvieri">
+            <attr name="anole">1.75701321 1.75353686 1.84332494 1.76094549 1.31285781 1.96038998</attr>
+        </taxon>
+        <taxon id="cyanopleurus">
+            <attr name="anole">-1.05171934 -1.04668085 -0.72367899 -1.15367012 -1.04841693 0.05159134</attr>
+        </taxon>
+        <taxon id="cybotes">
+            <attr name="anole">0.25877433 0.42227402 0.54200115 0.50112768 -0.37928912 0.28046423</attr>
+        </taxon>
+        <taxon id="darlingtoni">
+            <attr name="anole">0.46423136 0.53328318 -0.03573293 0.16986709 0.40874954 -0.46966148</attr>
+        </taxon>
+        <taxon id="distichus">
+            <attr name="anole">-0.37790331 -0.52088031 -0.16799583 0.06867867 0.05826070 -0.80593196</attr>
+        </taxon>
+        <taxon id="dolichocephalus">
+            <attr name="anole">-0.42359301 -0.15416042 -0.23385031 -0.71433741 -0.26465766 0.32594928</attr>
+        </taxon>
+        <taxon id="equestris">
+            <attr name="anole">2.29621947 2.15056084 1.98372644 2.03420639 2.46822224 2.15351262</attr>
+        </taxon>
+        <taxon id="etheridgei">
+            <attr name="anole">-0.98892701 -0.96347692 -0.30405107 -0.72989096 -0.90681130 -0.43454064</attr>
+        </taxon>
+        <taxon id="eugenegrahami">
+            <attr name="anole">0.07267619 -0.30333031 0.54304510 0.47975409 0.72528390 0.29265372</attr>
+        </taxon>
+        <taxon id="evermanni">
+            <attr name="anole">0.15640682 0.09977144 0.27711315 0.35392082 1.03175117 0.09229290</attr>
+        </taxon>
+        <taxon id="fowleri">
+            <attr name="anole">0.43431306 0.28132076 0.53403299 0.56853980 -0.17142314 1.21905497</attr>
+        </taxon>
+        <taxon id="garmani">
+            <attr name="anole">1.51888522 1.35602581 1.46443263 1.45316575 1.01940409 1.69140296</attr>
+        </taxon>
+        <taxon id="grahami">
+            <attr name="anole">0.13082058 0.17016336 0.21336789 0.25375593 0.91624279 0.18437496</attr>
+        </taxon>
+        <taxon id="guafe">
+            <attr name="anole">-0.49374082 -0.60279244 -0.25521947 -0.19653451 -0.45537101 -0.77777654</attr>
+        </taxon>
+        <taxon id="guamuhaya">
+            <attr name="anole">2.12239551 2.45366540 1.60864777 1.78607201 2.02572657 0.90135196</attr>
+        </taxon>
+        <taxon id="guazuma">
+            <attr name="anole">-0.75000932 -0.65213455 -1.63456303 -1.35096946 -0.30127799 -2.09541638</attr>
+        </taxon>
+        <taxon id="gundlachi">
+            <attr name="anole">0.20715060 0.20086983 0.59709649 0.45494868 -0.77067767 0.32882356</attr>
+        </taxon>
+        <taxon id="haetianus">
+            <attr name="anole">0.49694745 0.70913592 0.84364067 0.71937917 -0.30538199 0.66282818</attr>
+        </taxon>
+        <taxon id="hendersoni">
+            <attr name="anole">-0.53351907 -0.31675644 -0.28589901 -0.71544121 -0.41310329 0.28751357</attr>
+        </taxon>
+        <taxon id="homolechis">
+            <attr name="anole">-0.14322742 -0.26707550 0.04311775 0.08015820 -0.29128106 -0.40672091</attr>
+        </taxon>
+        <taxon id="imias">
+            <attr name="anole">0.00767271 -0.22893596 0.33898356 0.32120819 -0.26381581 -0.14948280</attr>
+        </taxon>
+        <taxon id="inexpectatus">
+            <attr name="anole">-1.26092180 -1.13697903 -1.05949211 -1.57590396 -0.96335534 -0.25801332</attr>
+        </taxon>
+        <taxon id="insolitus">
+            <attr name="anole">-0.66745197 -0.63563777 -1.11373524 -0.99315744 -0.94037994 -1.66238526</attr>
+        </taxon>
+        <taxon id="isolepis">
+            <attr name="anole">-0.99095767 -0.74480454 -1.53385318 -1.15559676 -0.03286920 -1.84785014</attr>
+        </taxon>
+        <taxon id="jubar">
+            <attr name="anole">-0.32420380 -0.41035821 -0.14965202 -0.08358560 -0.37928912 -0.65099326</attr>
+        </taxon>
+        <taxon id="krugi">
+            <attr name="anole">-0.47334403 -0.42945975 -0.17841409 -0.40834381 -0.32625277 0.36551791</attr>
+        </taxon>
+        <taxon id="lineatopus">
+            <attr name="anole">0.07292439 0.26228275 0.38155142 0.29435573 -0.55130646 0.23057333</attr>
+        </taxon>
+        <taxon id="longitibialis">
+            <attr name="anole">0.32898982 0.35937871 0.72477876 0.67586936 -0.59104864 0.52284836</attr>
+        </taxon>
+        <taxon id="loysiana">
+            <attr name="anole">-0.89134282 -0.85009595 -1.14222034 -0.77900006 -0.41724237 -1.36553656</attr>
+        </taxon>
+        <taxon id="lucius">
+            <attr name="anole">0.23154100 0.10938574 0.55544475 0.57504219 1.05395488 0.36700751</attr>
+        </taxon>
+        <taxon id="luteogularis">
+            <attr name="anole">2.26711343 2.10767768 2.00818486 2.04741186 2.38877296 2.11979746</attr>
+        </taxon>
+        <taxon id="macilentus">
+            <attr name="anole">-0.85858161 -0.96116864 -0.69540694 -1.12934637 -1.09447296 -0.09399020</attr>
+        </taxon>
+        <taxon id="marcanoi">
+            <attr name="anole">-0.03792675 0.05828595 0.23635624 0.16260207 -0.28303798 0.19131940</attr>
+        </taxon>
+        <taxon id="marron">
+            <attr name="anole">-0.59674009 -0.63193182 -0.42875061 -0.20590678 -0.34333525 -0.90988880</attr>
+        </taxon>
+        <taxon id="mestrei">
+            <attr name="anole">-0.24624926 -0.36423499 0.04115767 -0.00551680 -0.41941714 -0.44192567</attr>
+        </taxon>
+        <taxon id="monticola">
+            <attr name="anole">-0.73482454 -0.73063722 -0.10898033 -0.52562764 -0.57133539 -0.00996454</attr>
+        </taxon>
+        <taxon id="noblei">
+            <attr name="anole">2.22735774 2.17842961 2.02399334 2.02834621 2.54921491 2.28518429</attr>
+        </taxon>
+        <taxon id="occultus">
+            <attr name="anole">-0.97751023 -0.91424069 -1.88692355 -1.51603783 -0.91810608 -2.25446720</attr>
+        </taxon>
+        <taxon id="olssoni">
+            <attr name="anole">-0.68227574 -0.89729919 -0.42519264 -0.85718928 -1.18739179 0.44880927</attr>
+        </taxon>
+        <taxon id="opalinus">
+            <attr name="anole">-0.58191632 -0.60520661 -0.45054587 -0.35546173 0.05980409 -0.64587409</attr>
+        </taxon>
+        <taxon id="ophiolepis">
+            <attr name="anole">-1.03412034 -1.11188443 -1.05297271 -1.07072452 -1.42489778 -0.47431908</attr>
+        </taxon>
+        <taxon id="oporinus">
+            <attr name="anole">-0.56546802 -0.51747083 -1.18745136 -0.75325140 0.08965457 -1.21798288</attr>
+        </taxon>
+        <taxon id="paternus">
+            <attr name="anole">-0.66183382 -0.57528369 -1.00179753 -0.86190552 -0.08323970 -0.70598233</attr>
+        </taxon>
+        <taxon id="placidus">
+            <attr name="anole">-0.72724344 -0.71386513 -1.68343724 -1.17857588 -0.78432261 -1.83855592</attr>
+        </taxon>
+        <taxon id="poncensis">
+            <attr name="anole">-0.62252939 -0.68315867 -0.59113912 -0.71036373 -1.35063989 0.13039293</attr>
+        </taxon>
+        <taxon id="porcatus">
+            <attr name="anole">0.36709842 0.57260863 0.02468872 0.07614438 1.16658695 0.47448902</attr>
+        </taxon>
+        <taxon id="porcus">
+            <attr name="anole">2.12483229 2.42431426 1.45710363 1.77946928 1.70740329 1.00453253</attr>
+        </taxon>
+        <taxon id="pulchellus">
+            <attr name="anole">-0.67072357 -0.50787771 -0.57778073 -0.70297830 -0.57593047 0.08755138</attr>
+        </taxon>
+        <taxon id="pumilis">
+            <attr name="anole">-1.42017018 -1.43286227 -1.69306721 -1.32018346 -0.71746595 -1.24003306</attr>
+        </taxon>
+        <taxon id="quadriocellifer">
+            <attr name="anole">-0.43922905 -0.56113754 -0.25777609 -0.19557119 -0.61388373 -0.64778329</attr>
+        </taxon>
+        <taxon id="reconditus">
+            <attr name="anole">0.87164819 0.84291021 1.24611788 1.08419531 0.11154258 1.07341050</attr>
+        </taxon>
+        <taxon id="ricordii">
+            <attr name="anole">2.07052359 1.86899316 1.91237521 1.90136900 1.38525663 1.95514493</attr>
+        </taxon>
+        <taxon id="rubribarbus">
+            <attr name="anole">-0.04020559 -0.14143312 0.28721183 0.20559009 -0.53124244 -0.34111586</attr>
+        </taxon>
+        <taxon id="sagrei">
+            <attr name="anole">-0.06572414 -0.26658843 0.06672395 -0.02267588 -0.35161341 0.10985332</attr>
+        </taxon>
+        <taxon id="semilineatus">
+            <attr name="anole">-0.90174428 -0.84450525 -0.55319449 -1.07513973 -1.09682311 0.18286438</attr>
+        </taxon>
+        <taxon id="sheplani">
+            <attr name="anole">-0.93267791 -0.98721619 -2.06186084 -1.60283669 -1.05153878 -2.04397295</attr>
+        </taxon>
+        <taxon id="shrevei">
+            <attr name="anole">-0.25561283 -0.10056176 -0.02245977 -0.09311843 -0.87366359 -0.14104877</attr>
+        </taxon>
+        <taxon id="singularis">
+            <attr name="anole">-0.08639168 -0.09181571 -0.29205622 -0.15388767 0.45876927 -0.26906988</attr>
+        </taxon>
+        <taxon id="smallwoodi">
+            <attr name="anole">2.11822139 2.10473409 1.96789665 1.89500710 2.49880934 2.13452555</attr>
+        </taxon>
+        <taxon id="strahmi">
+            <attr name="anole">0.40157441 0.39203344 0.83582165 0.78368057 -0.09916463 0.47192944</attr>
+        </taxon>
+        <taxon id="stratulus">
+            <attr name="anole">-0.51084344 -0.51653905 -0.52903435 -0.31560449 0.28401592 -0.75148837</attr>
+        </taxon>
+        <taxon id="valencienni">
+            <attr name="anole">0.50818373 0.49181886 0.00994550 0.25423759 0.65064016 -0.23673941</attr>
+        </taxon>
+        <taxon id="vanidicus">
+            <attr name="anole">-1.06063165 -0.99685167 -1.08733806 -1.44671915 -1.54472063 -0.38456583</attr>
+        </taxon>
+        <taxon id="vermiculatus">
+            <attr name="anole">1.59419991 1.47175741 1.67290436 1.34770262 0.99014991 1.73934270</attr>
+        </taxon>
+        <taxon id="websteri">
+            <attr name="anole">-0.40554276 -0.57278482 -0.37250479 -0.11453216 -0.15932159 -0.85615853</attr>
+        </taxon>
+        <taxon id="whitemani">
+            <attr name="anole">0.00268633 0.17545758 0.31363033 0.22375263 -0.83027340 0.23728699</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="startingTree">
+        ((((((((ahli:0.131,allogus:0.131):0.109,rubribarbus:0.24):0.348,imias:0.588):0.128,((((sagrei:0.258,(bremeri:0.11,quadriocellifer:0.11):0.148):0.062,ophiolepis:0.319):0.087,mestrei:0.406):0.13,(((jubar:0.119,homolechis:0.119):0.091,confusus:0.209):0.042,guafe:0.252):0.285):0.18):0.138,((((garmani:0.2,opalinus:0.2):0.02,grahami:0.22):0.218,valencienni:0.438):0.123,(lineatopus:0.471,reconditus:0.471):0.089):0.293):0.067,(((evermanni:0.214,stratulus:0.214):0.352,(((krugi:0.327,pulchellus:0.327):0.131,(gundlachi:0.386,poncensis:0.386):0.072):0.03,(cooki:0.395,cristatellus:0.395):0.093):0.077):0.15,(((brevirostris:0.276,(caudalis:0.17,marron:0.17):0.105):0.027,websteri:0.302):0.098,distichus:0.401):0.314):0.205):0.035,(((barbouri:0.802,(((alumina:0.268,semilineatus:0.268):0.219,olssoni:0.487):0.262,(etheridgei:0.588,(fowleri:0.377,insolitus:0.377):0.211):0.161):0.052):0.067,((((whitemani:0.342,((haetianus:0.267,breslini:0.267):0.07,((armouri:0.148,cybotes:0.148):0.044,shrevei:0.193):0.144):0.005):0.107,(longitibialis:0.252,strahmi:0.252):0.197):0.091,marcanoi:0.54):0.251,((((((baleatus:0.042,barahonae:0.042):0.053,ricordii:0.094):0.204,eugenegrahami:0.298):0.085,christophei:0.383):0.091,cuvieri:0.474):0.108,(barbatus:0.147,(porcus:0.093,(chamaeleonides:0.076,guamuhaya:0.076):0.017):0.054):0.435):0.209):0.079):0.076,((((((((altitudinalis:0.175,oporinus:0.175):0.092,isolepis:0.267):0.254,(allisoni:0.296,porcatus:0.296):0.225):0.037,(((argillaceus:0.114,centralis:0.114):0.025,pumilis:0.139):0.236,loysiana:0.375):0.183):0.085,guazuma:0.643):0.046,((placidus:0.187,sheplani:0.187):0.377,(alayoni:0.379,(angusticeps:0.217,paternus:0.217):0.162):0.185):0.125):0.079,((alutaceus:0.121,inexpectatus:0.121):0.404,(((clivicola:0.336,(cupeyalensis:0.086,cyanopleurus:0.086):0.25):0.119,(alfaroi:0.28,macilentus:0.28):0.175):0.009,vanidicus:0.464):0.061):0.243):0.094,(argenteolus:0.656,lucius:0.656):0.206):0.082):0.01):0.045,(((bartschi:0.525,vermiculatus:0.525):0.249,((((baracoae:0.059,(noblei:0.021,smallwoodi:0.021):0.037):0.028,luteogularis:0.087):0.018,equestris:0.105):0.63,(((monticola:0.606,(bahorucoensis:0.384,(dolichocephalus:0.151,hendersoni:0.151):0.233):0.221):0.031,darlingtoni:0.637):0.033,(((aliniger:0.178,singularis:0.178):0.138,chlorocyanus:0.316):0.214,coelestinus:0.53):0.14):0.065):0.04):0.121,occultus:0.895):0.105);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="startingTree"/>
+        <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+        <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+        <nodeTraits name="anole" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="6">
+            <parameter id="leaf.anole"/>
+        </nodeTraits>
+    </treeModel>
+
+    <multivariateDiffusionModel id="anole.diffusionModel">
+        <precisionMatrix>
+            <cachedMatrixInverse id="anole.precision.matrix">
+                <compoundSymmetricMatrix id="anole.variance.matrix" asCorrelation="true" isCholesky="true">
+                    <diagonal>
+                        <parameter id="anole.variance.diagonal" value="1.00000000 1.00000000 1.00000000 1.00000000 1.00000000 1.00000000" lower="0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000"/>
+                    </diagonal>
+                    <offDiagonal>
+                        <parameter id="anole.variance.offDiagonal" value="0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000" lower="-0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000 -0.99900000" upper="0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000 0.99900000"/>
+                    </offDiagonal>
+                </compoundSymmetricMatrix>
+            </cachedMatrixInverse>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <parameter id="blockRho" value="1.00000000 0.25000000 0.25000000" lower="0.00000000 0.00000000 0.00000000"/>
+    <parameter id="blockTheta" value="0.00000000 0.00000000 0.00000000" lower="-0.78539816 -0.78539816 -0.78539816" upper="0.78539816 0.78539816 0.78539816"/>
+    <parameter id="blockT" value="0.05000000 0.05000000 0.05000000" lower="0.00000000 0.00000000 0.00000000"/>
+    <parameter id="rotation.angle" value="0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000 0.10000000"/>
+
+    <givensRotationMatrixParameter id="rotation" dimension="6">
+        <angles><parameter idref="rotation.angle"/></angles>
+    </givensRotationMatrixParameter>
+
+    <orthogonalBlockDiagonalPolarStableMatrixParameter id="orthBlock" blockRhoOrdering="ascending">
+        <orthogonalRotationMatrix><givensRotationMatrixParameter idref="rotation"/></orthogonalRotationMatrix>
+        <blockRho><parameter idref="blockRho"/></blockRho>
+        <blockTheta><parameter idref="blockTheta"/></blockTheta>
+        <blockT><parameter idref="blockT"/></blockT>
+    </orthogonalBlockDiagonalPolarStableMatrixParameter>
+
+    <parameter id="anole.opt.1" value="0.00000000"/>
+    <parameter id="anole.opt.2" value="0.00000000"/>
+    <parameter id="anole.opt.3" value="0.00000000"/>
+    <parameter id="anole.opt.4" value="0.00000000"/>
+    <parameter id="anole.opt.5" value="0.00000000"/>
+    <parameter id="anole.opt.6" value="0.00000000"/>
+
+    <compoundParameter id="anole.meanParameter">
+        <parameter idref="anole.opt.1"/>
+        <parameter idref="anole.opt.2"/>
+        <parameter idref="anole.opt.3"/>
+        <parameter idref="anole.opt.4"/>
+        <parameter idref="anole.opt.5"/>
+        <parameter idref="anole.opt.6"/>
+    </compoundParameter>
+
+    <traitDataLikelihood id="anole.traitLikelihood" traitName="anole" implementation="canonical" reconstructTraits="false"
+        canonicalOUCoordinates="homogeneousBlockBasis"
+        useTreeLength="false" scaleByTime="true" forceFullPrecision="true" allowSingular="true"
+        reportAsMultivariate="true" integrateInternalTraits="true">
+        <multivariateDiffusionModel idref="anole.diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter><parameter idref="leaf.anole"/></traitParameter>
+        <conjugateRootPrior>
+            <meanParameter><compoundParameter idref="anole.meanParameter"/></meanParameter>
+            <priorSampleSize><parameter value="1.0"/></priorSampleSize>
+        </conjugateRootPrior>
+        <optimalTraits id="anole.opt">
+            <strictClockBranchRates><rate><parameter idref="anole.opt.1"/></rate></strictClockBranchRates>
+            <strictClockBranchRates><rate><parameter idref="anole.opt.2"/></rate></strictClockBranchRates>
+            <strictClockBranchRates><rate><parameter idref="anole.opt.3"/></rate></strictClockBranchRates>
+            <strictClockBranchRates><rate><parameter idref="anole.opt.4"/></rate></strictClockBranchRates>
+            <strictClockBranchRates><rate><parameter idref="anole.opt.5"/></rate></strictClockBranchRates>
+            <strictClockBranchRates><rate><parameter idref="anole.opt.6"/></rate></strictClockBranchRates>
+        </optimalTraits>
+        <strengthOfSelectionMatrix><orthogonalBlockDiagonalPolarStableMatrixParameter idref="orthBlock"/></strengthOfSelectionMatrix>
+    </traitDataLikelihood>
+
+    <LKJCorrelationPrior id="anole.variance.offDiagonal.prior" shapeParameter="1.0" dimension="6">
+        <data><parameter idref="anole.variance.offDiagonal"/></data>
+    </LKJCorrelationPrior>
+    <halfTPrior id="anole.variance.diagonal.prior" df="1" scale="2.5"><parameter idref="anole.variance.diagonal"/></halfTPrior>
+    <normalPrior id="anole.meanParameter.prior" mean="0" stdev="5"><parameter idref="anole.meanParameter"/></normalPrior>
+    <halfNormalPrior id="blockRho.prior" mean="0" stdev="1.5"><parameter idref="blockRho"/></halfNormalPrior>
+    <normalPrior id="blockTheta.prior" mean="0" stdev="0.5"><parameter idref="blockTheta"/></normalPrior>
+    <halfNormalPrior id="blockT.prior" mean="0" stdev="0.5"><parameter idref="blockT"/></halfNormalPrior>
+    <normalPrior id="rotation.angle.prior" mean="0" stdev="0.75"><parameter idref="rotation.angle"/></normalPrior>
+
+    <diffusionGradient id="anole.gradient">
+        <precisionGradient parameter="both" traitName="anole">
+            <traitDataLikelihood idref="anole.traitLikelihood"/>
+            <cachedMatrixInverse idref="anole.precision.matrix"/>
+        </precisionGradient>
+        <attenuationGradient parameter="both" traitName="anole" implementation="canonical">
+            <traitDataLikelihood idref="anole.traitLikelihood"/>
+            <orthogonalBlockDiagonalPolarStableMatrixParameter idref="orthBlock"/>
+        </attenuationGradient>
+        <meanGradient parameter="opt" traitName="anole">
+            <traitDataLikelihood idref="anole.traitLikelihood"/>
+            <parameter idref="anole.meanParameter"/>
+        </meanGradient>
+    </diffusionGradient>
+
+    <compoundGradient id="priorGradient">
+        <gradient><halfTPrior idref="anole.variance.diagonal.prior"/><parameter idref="anole.variance.diagonal"/></gradient>
+        <gradient><LKJCorrelationPrior idref="anole.variance.offDiagonal.prior"/></gradient>
+        <gradient><distributionLikelihood idref="blockRho.prior"/><parameter idref="blockRho"/></gradient>
+        <gradient><distributionLikelihood idref="blockTheta.prior"/><parameter idref="blockTheta"/></gradient>
+        <gradient><distributionLikelihood idref="blockT.prior"/><parameter idref="blockT"/></gradient>
+        <gradient><distributionLikelihood idref="rotation.angle.prior"/><parameter idref="rotation.angle"/></gradient>
+        <gradient><distributionLikelihood idref="anole.meanParameter.prior"/><parameter idref="anole.meanParameter"/></gradient>
+    </compoundGradient>
+
+    <jointGradient id="posteriorGradient">
+        <diffusionGradient idref="anole.gradient"/>
+        <compoundGradient idref="priorGradient"/>
+    </jointGradient>
+
+    <compoundParameter id="anole.parameter">
+        <parameter idref="anole.variance.diagonal"/>
+        <parameter idref="anole.variance.offDiagonal"/>
+        <parameter idref="blockRho"/>
+        <parameter idref="blockTheta"/>
+        <parameter idref="blockT"/>
+        <parameter idref="rotation.angle"/>
+        <parameter idref="anole.meanParameter"/>
+    </compoundParameter>
+
+    <operators id="operators" optimizationSchedule="log">
+        <hamiltonianMonteCarloOperator id="anoleBlockBasisFullTipHMC"
+                                       weight="1" nSteps="10" stepSize="0.0125" mode="vanilla"
+                                       drawVariance="1.0" autoOptimize="false" gradientCheckTolerance="1e-3" gradientCheckCount="10">
+            <gradient idref="posteriorGradient"/>
+            <compoundParameter idref="anole.parameter"/>
+            <multivariateCompoundTransform id="compound.transform">
+                <transform type="log" dim="6"/>
+                <LKJTransform dimension="6"/>
+                <transform type="log" dim="3"/>
+                <composedTransform>
+                    <inner><affineTransform location="0.0" scale="0.7853981633974483" dim="3"/></inner>
+                    <outer><transform type="fisherZ" dim="3"/></outer>
+                </composedTransform>
+                <transform type="log" dim="3"/>
+                <transform type="none" dim="15"/>
+                <transform type="none" dim="6"/>
+            </multivariateCompoundTransform>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="3" autoOptimize="true">
+        <joint id="joint">
+            <prior id="prior">
+                <halfTPrior idref="anole.variance.diagonal.prior"/>
+                <LKJCorrelationPrior idref="anole.variance.offDiagonal.prior"/>
+                <halfNormalPrior idref="blockRho.prior"/>
+                <normalPrior idref="blockTheta.prior"/>
+                <halfNormalPrior idref="blockT.prior"/>
+                <normalPrior idref="rotation.angle.prior"/>
+                <normalPrior idref="anole.meanParameter.prior"/>
+            </prior>
+            <likelihood id="likelihood"><traitDataLikelihood idref="anole.traitLikelihood"/></likelihood>
+        </joint>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <column label="Posterior" dp="4" width="12"><joint idref="joint"/></column>
+            <column label="Likelihood" dp="4" width="12"><likelihood idref="likelihood"/></column>
+            <column label="rho" sf="6" width="16"><parameter idref="blockRho"/></column>
+            <column label="theta" sf="6" width="16"><parameter idref="blockTheta"/></column>
+        </log>
+    </mcmc>
+</beast>

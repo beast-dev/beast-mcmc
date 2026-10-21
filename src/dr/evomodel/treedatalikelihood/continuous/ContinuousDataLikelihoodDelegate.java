@@ -823,6 +823,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     }
 
     public void enableCanonicalLikelihood() {
+        enableCanonicalLikelihood(CanonicalOUOptions.defaults());
+    }
+
+    public void enableCanonicalLikelihood(final CanonicalOUOptions canonicalOUOptions) {
         throw new UnsupportedOperationException(
                 "Canonical likelihood not supported in this older class");
 //        if (useCdiBMLikelihood || useMomentBMLikelihood || useCanonicalOULikelihood) {
@@ -855,6 +859,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     }
 
     public void enableCanonicalOULikelihood() {
+        enableCanonicalOULikelihood(CanonicalOUOptions.defaults());
+    }
+
+    public void enableCanonicalOULikelihood(final CanonicalOUOptions canonicalOUOptions) {
         throw new UnsupportedOperationException(
                 "Canonical likelihood not supported in this older class");
 //        if (useCanonicalOULikelihood) {

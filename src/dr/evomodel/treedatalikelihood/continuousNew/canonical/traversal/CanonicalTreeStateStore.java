@@ -32,6 +32,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalG
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.IdentityCanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.LinearExactTipObservationModel;
 
 /**
  * Owns canonical tree message buffers and their MCMC snapshots.
@@ -102,7 +103,8 @@ public final class CanonicalTreeStateStore {
         System.arraycopy(fixedRootValue, 0, storedFixedRootValue, 0, dimension);
         for (int i = 0; i < nodeCount; i++) {
             storedTipObservations[i].copyFrom(tipObservations[i]);
-            storedTipObservationModels[i] = tipObservationModels[i].copy();
+            storedTipObservationModels[i] = copyTipObservationModel(
+                    tipObservationModels[i], storedTipObservationModels[i]);
             copyState(postOrder[i], storedPostOrder[i]);
             copyState(branchAboveParent[i], storedBranchAboveParent[i]);
         }
@@ -148,8 +150,8 @@ public final class CanonicalTreeStateStore {
 
     public void setTipObservation(final int tipIndex, final CanonicalTipObservation observation) {
         tipObservations[tipIndex].copyFrom(observation);
-        tipObservationModels[tipIndex] =
-                IdentityCanonicalTipObservationModel.fromObservation(tipObservations[tipIndex]);
+        tipObservationModels[tipIndex] = copyIdentityTipObservation(
+                tipObservations[tipIndex], tipObservationModels[tipIndex]);
     }
 
     public void setTipObservationModel(final int tipIndex, final CanonicalTipObservationModel observationModel) {
@@ -161,9 +163,11 @@ public final class CanonicalTreeStateStore {
                     "Tip observation model latent dimension mismatch: "
                             + observationModel.getLatentDimension() + " vs " + dimension);
         }
-        tipObservationModels[tipIndex] = observationModel.copy();
-        if (observationModel instanceof IdentityCanonicalTipObservationModel) {
-            ((IdentityCanonicalTipObservationModel) observationModel).copyTo(tipObservations[tipIndex]);
+        tipObservationModels[tipIndex] = copyTipObservationModel(
+                observationModel, tipObservationModels[tipIndex]);
+        if (tipObservationModels[tipIndex] instanceof IdentityCanonicalTipObservationModel) {
+            ((IdentityCanonicalTipObservationModel) tipObservationModels[tipIndex])
+                    .copyTo(tipObservations[tipIndex]);
         } else {
             tipObservations[tipIndex].setMissing();
         }
@@ -192,6 +196,34 @@ public final class CanonicalTreeStateStore {
             out[i] = IdentityCanonicalTipObservationModel.missing(dimension);
         }
         return out;
+    }
+
+    private static CanonicalTipObservationModel copyIdentityTipObservation(
+            final CanonicalTipObservation observation,
+            final CanonicalTipObservationModel reusable) {
+        if (reusable instanceof IdentityCanonicalTipObservationModel) {
+            ((IdentityCanonicalTipObservationModel) reusable).copyFromObservation(observation);
+            return reusable;
+        }
+        return IdentityCanonicalTipObservationModel.fromObservation(observation);
+    }
+
+    private static CanonicalTipObservationModel copyTipObservationModel(
+            final CanonicalTipObservationModel source,
+            final CanonicalTipObservationModel reusable) {
+        if (source instanceof IdentityCanonicalTipObservationModel
+                && reusable instanceof IdentityCanonicalTipObservationModel) {
+            ((IdentityCanonicalTipObservationModel) reusable)
+                    .copyFrom((IdentityCanonicalTipObservationModel) source);
+            return reusable;
+        }
+        if (source instanceof LinearExactTipObservationModel
+                && reusable instanceof LinearExactTipObservationModel) {
+            ((LinearExactTipObservationModel) reusable)
+                    .copyFrom((LinearExactTipObservationModel) source);
+            return reusable;
+        }
+        return source.copy();
     }
 
     private static void copyState(final CanonicalGaussianState source, final CanonicalGaussianState target) {

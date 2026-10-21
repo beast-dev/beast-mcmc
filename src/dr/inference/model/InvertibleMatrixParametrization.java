@@ -5,7 +5,8 @@ import java.util.List;
 /**
  * Base class for square matrix parameters that are nonsingular by construction.
  */
-public abstract class InvertibleMatrixParametrization extends AbstractComputedCompoundMatrix {
+public abstract class InvertibleMatrixParametrization extends AbstractComputedCompoundMatrix
+        implements NativeMatrixGradientProvider {
 
     private final Parameter[] nativeParameters;
     private final int[] nativeParameterOffsets;

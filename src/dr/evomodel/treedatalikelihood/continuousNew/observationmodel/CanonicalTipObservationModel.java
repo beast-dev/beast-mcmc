@@ -23,7 +23,8 @@ public interface CanonicalTipObservationModel {
      * know about specific {@link TipObservationMode} values themselves.
      */
     default boolean requiresTransitionMomentProvider() {
-        return getMode() == TipObservationMode.PARTIAL_EXACT_IDENTITY;
+        return getMode() == TipObservationMode.PARTIAL_EXACT_IDENTITY
+                || getMode() == TipObservationMode.PARTIAL_LINEAR_EXACT;
     }
 
     /**

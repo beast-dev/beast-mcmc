@@ -15,6 +15,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalL
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.NativeMatrixGradientProvider;
 import dr.inference.model.TransposedMatrixParameter;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -48,6 +49,7 @@ public class BlockDiagonalSelectionMatrixParameterization
     protected final double[] transitionOffsetScratch;
     protected final double[] denseAdjointScratch;
     protected final double[] nativeBlockGradientScratch;
+    protected final double[] rotationNativeGradientScratch;
     protected final double[] choleskyScratch;
     protected final double[] lowerInverseScratch;
     protected final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
@@ -81,6 +83,7 @@ public class BlockDiagonalSelectionMatrixParameterization
         this.transitionOffsetScratch = new double[d];
         this.denseAdjointScratch = new double[d * d];
         this.nativeBlockGradientScratch = new double[blockParameter.getBlockDiagonalNParameters()];
+        this.rotationNativeGradientScratch = new double[getRotationGradientDimension(d)];
         this.choleskyScratch = new double[d * d];
         this.lowerInverseScratch = new double[d * d];
         this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(d);
@@ -93,7 +96,7 @@ public class BlockDiagonalSelectionMatrixParameterization
 
     @Override
     public int getSelectionGradientDimension() {
-        return blockParameter.getBlockDiagonalNParameters() + getDimension() * getDimension();
+        return blockParameter.getBlockDiagonalNParameters() + getRotationGradientDimension(getDimension());
     }
 
     @Override
@@ -1018,17 +1021,17 @@ public class BlockDiagonalSelectionMatrixParameterization
         final DenseMatrix64F gradD = workspace.gradD;
         final DenseMatrix64F gradR = workspace.gradR;
 
-        CommonOps.multTransA(rMatrix, upstreamF, temp1);
-        CommonOps.multTransB(temp1, rinvMatrix, upstreamFD);
+        BlockDiagonalDenseMatrixOps.multTransA(rMatrix, upstreamF, temp1);
+        BlockDiagonalDenseMatrixOps.multTransB(temp1, rinvMatrix, upstreamFD);
         fillFrechetAdjointExpWithFallback(
                 blockDParams, dt, upstreamFD, workspace.frechetHelper, temp3, gradD,
                 workspace.scaledNegativeBlockDScratch, workspace.denseAdjointScratch);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
-        CommonOps.multTransB(upstreamF, transitionMatrix, temp1);
-        CommonOps.multTransA(transitionMatrix, upstreamF, temp2);
-        CommonOps.subtract(temp1, temp2, temp3);
-        CommonOps.multTransB(temp3, rinvMatrix, gradR);
+        BlockDiagonalDenseMatrixOps.multTransB(upstreamF, transitionMatrix, temp1);
+        BlockDiagonalDenseMatrixOps.multTransA(transitionMatrix, upstreamF, temp2);
+        BlockDiagonalDenseMatrixOps.subtract(temp1, temp2, temp3);
+        BlockDiagonalDenseMatrixOps.multTransB(temp3, rinvMatrix, gradR);
         addDenseMatrixToFlatArray(gradR, rotationAccumulator);
     }
 
@@ -1184,10 +1187,10 @@ public class BlockDiagonalSelectionMatrixParameterization
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
         lyapunovAdjointHelper.solveAdjointInDBasis(gS, blockDParams, yAdjoint);
-        CommonOps.mult(yAdjoint, qDBasis, temp1);
-        CommonOps.multTransA(yAdjoint, qDBasis, temp2);
-        CommonOps.add(temp1, temp2, temp3);
-        CommonOps.multTransA(rinvMatrix, temp3, gradR);
+        BlockDiagonalDenseMatrixOps.mult(yAdjoint, qDBasis, temp1);
+        BlockDiagonalDenseMatrixOps.multTransA(yAdjoint, qDBasis, temp2);
+        BlockDiagonalDenseMatrixOps.add(temp1, temp2, temp3);
+        BlockDiagonalDenseMatrixOps.multTransA(rinvMatrix, temp3, gradR);
 
         BlockDiagonalMatrixOps.multiplyRightBlockDiagonal(
                 hDBasis.data,
@@ -1196,17 +1199,17 @@ public class BlockDiagonalSelectionMatrixParameterization
                 blockParameter.getBlockStarts(),
                 blockParameter.getBlockSizes(),
                 temp1.data);
-        CommonOps.mult(temp1, stationaryCovDBasis, gECov);
+        BlockDiagonalDenseMatrixOps.multSymmetricRight(temp1, stationaryCovDBasis, gECov);
         CommonOps.scale(-2.0, gECov);
         fillCovarianceExpDGradientWithFallback(
                 blockDParams, dt, gECov, frechetHelper, temp3, gradD,
                 scaledNegativeBlockDScratch, denseAdjointScratch);
         accumulateCompressedGradient(gradD, compressedDAccumulator);
 
-        CommonOps.mult(gV, rMatrix, temp1);
-        CommonOps.mult(temp1, transitionCovDBasis, temp2);
+        BlockDiagonalDenseMatrixOps.multSymmetricLeft(gV, rMatrix, temp1);
+        BlockDiagonalDenseMatrixOps.multSymmetricRight(temp1, transitionCovDBasis, temp2);
         CommonOps.scale(2.0, temp2);
-        CommonOps.addEquals(gradR, temp2);
+        BlockDiagonalDenseMatrixOps.addEquals(gradR, temp2);
         addDenseMatrixToFlatArray(gradR, rotationAccumulator);
     }
 
@@ -1248,8 +1251,8 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                       final DenseMatrix64F hDBasis,
                                                       final DenseMatrix64F gS,
                                                       final DenseMatrix64F temp) {
-        CommonOps.multTransA(rMatrix, gV, temp);
-        CommonOps.mult(temp, rMatrix, hDBasis);
+        BlockDiagonalDenseMatrixOps.multTransA(rMatrix, gV, temp);
+        BlockDiagonalDenseMatrixOps.mult(temp, rMatrix, hDBasis);
         symmetrize(hDBasis);
 
         BlockDiagonalMatrixOps.multiplyBlockDiagonalLeftTranspose(
@@ -1396,6 +1399,12 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                      final double[] out,
                                                      final int offset,
                                                      final int dimension) {
+        final NativeMatrixGradientProvider nativeMatrix = getRotationNativeGradientProvider();
+        if (nativeMatrix != null) {
+            nativeMatrix.fillPullBackGradientForParameter(
+                    nativeMatrix.getNativeParameter(), rowMajorGradient, dimension, out, offset);
+            return;
+        }
         if (blockParameter.getRotationMatrixParameter() instanceof TransposedMatrixParameter) {
             System.arraycopy(rowMajorGradient, 0, out, offset, dimension * dimension);
             return;
@@ -1412,6 +1421,16 @@ public class BlockDiagonalSelectionMatrixParameterization
                                                         final double[] out,
                                                         final int offset,
                                                         final int dimension) {
+        final NativeMatrixGradientProvider nativeMatrix = getRotationNativeGradientProvider();
+        if (nativeMatrix != null) {
+            Arrays.fill(rotationNativeGradientScratch, 0.0);
+            nativeMatrix.fillPullBackGradientForParameter(
+                    nativeMatrix.getNativeParameter(), rowMajorGradient, dimension, rotationNativeGradientScratch, 0);
+            for (int i = 0; i < rotationNativeGradientScratch.length; ++i) {
+                out[offset + i] += rotationNativeGradientScratch[i];
+            }
+            return;
+        }
         if (blockParameter.getRotationMatrixParameter() instanceof TransposedMatrixParameter) {
             for (int i = 0; i < dimension * dimension; ++i) {
                 out[offset + i] += rowMajorGradient[i];
@@ -1424,6 +1443,21 @@ public class BlockDiagonalSelectionMatrixParameterization
                 out[index++] += rowMajorGradient[row * dimension + col];
             }
         }
+    }
+
+    private int getRotationGradientDimension(final int dimension) {
+        final NativeMatrixGradientProvider nativeMatrix = getRotationNativeGradientProvider();
+        if (nativeMatrix != null) {
+            return nativeMatrix.getPullBackGradientDimension(nativeMatrix.getNativeParameter());
+        }
+        return dimension * dimension;
+    }
+
+    private NativeMatrixGradientProvider getRotationNativeGradientProvider() {
+        final MatrixParameterInterface rotationParameter = blockParameter.getRotationMatrixParameter();
+        return rotationParameter instanceof NativeMatrixGradientProvider
+                ? (NativeMatrixGradientProvider) rotationParameter
+                : null;
     }
 
     protected void checkNativeGradientFinite(final String contribution,

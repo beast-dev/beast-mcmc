@@ -21,11 +21,10 @@ import junit.framework.TestCase;
  * transition/covariance sandwich adjoints independently (the latter via
  * {@code OrthogonalBlockCovarianceAdjoint}, using a differently-shaped formula
  * than the former's {@code accumulateSpecializedCovariancePullback}). Both
- * {@code accumulateNativeGradientFrom...Flat} entry points return the dense
- * ({@code dimension x dimension}) gradient with respect to {@code R}'s entries,
- * <em>before</em> either class's angle-space pullback — so they are directly
- * comparable across backends for an orthogonal {@code R}, independent of the
- * transition-vs-covariance formula each backend happens to use internally.
+ * {@code accumulateNativeGradientFrom...Flat} entry points return a dense
+ * ({@code dimension x dimension}) adjoint for {@code R}'s entries before the
+ * angle-space pullback. That dense adjoint is not unique on the orthogonal
+ * manifold, so these tests compare it after the common Givens-angle pullback.
  */
 public class BlockDiagonalGeneralVsOrthogonalGradientCrossCheckTest extends TestCase {
 
@@ -62,7 +61,12 @@ public class BlockDiagonalGeneralVsOrthogonalGradientCrossCheckTest extends Test
                 dt, stationaryMean, dLogL_dF, dLogL_df, generalCompressed, generalRotation);
 
         assertVectorEquals("compressed transition gradient", generalCompressed, orthogonalCompressed, 1.0e-10);
-        assertVectorEquals("dense rotation transition gradient", generalRotation, orthogonalRotation, 1.0e-10);
+
+        final double[] generalAngles = new double[fixture.angles.getDimension()];
+        fixture.rotation.fillPullBackGradientFlat(generalRotation, 4, generalAngles);
+        final double[] orthogonalAngles = new double[fixture.angles.getDimension()];
+        fixture.rotation.fillPullBackGradientFlat(orthogonalRotation, 4, orthogonalAngles);
+        assertVectorEquals("angle-space transition gradient", generalAngles, orthogonalAngles, 1.0e-10);
     }
 
     public void testCovarianceDenseRotationGradientMatchesGeneralBackend() {
@@ -93,7 +97,12 @@ public class BlockDiagonalGeneralVsOrthogonalGradientCrossCheckTest extends Test
                 diffusionMatrix, dt, dLogL_dV, generalCompressed, generalRotation);
 
         assertVectorEquals("compressed covariance gradient", generalCompressed, orthogonalCompressed, 1.0e-8);
-        assertVectorEquals("dense rotation covariance gradient", generalRotation, orthogonalRotation, 1.0e-8);
+
+        final double[] generalAngles = new double[fixture.angles.getDimension()];
+        fixture.rotation.fillPullBackGradientFlat(generalRotation, 4, generalAngles);
+        final double[] orthogonalAngles = new double[fixture.angles.getDimension()];
+        fixture.rotation.fillPullBackGradientFlat(orthogonalRotation, 4, orthogonalAngles);
+        assertVectorEquals("angle-space covariance gradient", generalAngles, orthogonalAngles, 1.0e-10);
     }
 
     private static Fixture buildFixture() {
@@ -197,6 +206,10 @@ public class BlockDiagonalGeneralVsOrthogonalGradientCrossCheckTest extends Test
         System.out.println("FD angle gradient:         " + java.util.Arrays.toString(fdAngleGradient));
         System.out.println("Orthogonal-formula pullback: " + java.util.Arrays.toString(orthogonalAngleGradient));
         System.out.println("General-formula pullback:    " + java.util.Arrays.toString(generalAngleGradient));
+        assertVectorEquals("orthogonal covariance angle-gradient vs FD",
+                fdAngleGradient, orthogonalAngleGradient, 1.0e-5);
+        assertVectorEquals("general covariance angle-gradient vs FD",
+                fdAngleGradient, generalAngleGradient, 1.0e-5);
     }
 
     /**
@@ -239,7 +252,13 @@ public class BlockDiagonalGeneralVsOrthogonalGradientCrossCheckTest extends Test
                 generalParam, diffusionMatrix, stationaryMean, dLogL_dOmega, dt, generalCompressed, generalRotationDense);
 
         assertVectorEquals("prepared compressed covariance gradient", generalCompressed, orthogonalCompressed, 1.0e-10);
-        assertVectorEquals("prepared dense rotation covariance gradient", generalRotationDense, orthogonalRotationDense, 1.0e-10);
+
+        final double[] generalAngleFromPrepared = new double[fixture.angles.getDimension()];
+        fixture.rotation.fillPullBackGradientFlat(generalRotationDense, dimension, generalAngleFromPrepared);
+        final double[] orthogonalAngleFromPrepared = new double[fixture.angles.getDimension()];
+        fixture.rotation.fillPullBackGradientFlat(orthogonalRotationDense, dimension, orthogonalAngleFromPrepared);
+        assertVectorEquals("prepared angle-space covariance gradient",
+                generalAngleFromPrepared, orthogonalAngleFromPrepared, 1.0e-10);
 
         // Cross-check against finite differences too, not just against each other.
         final int angleCount = fixture.angles.getDimension();

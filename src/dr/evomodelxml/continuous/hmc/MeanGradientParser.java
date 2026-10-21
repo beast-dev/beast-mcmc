@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -67,17 +68,20 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     }
 
     private ParameterMode parseParameterMode(XMLObject xo,
-                                             ContinuousDataLikelihoodDelegate continuousData,
+                                             CtsCompatibility continuousData,
                                              Parameter parameter) throws XMLParseException {
         // Choose which parameter(s) to update.
         ParameterMode mode = ParameterMode.WRT_DRIFT;
         String parameterString = xo.getAttribute(PARAMETER, DRIFT).toLowerCase();
+        Parameter rootMeanParameter = continuousData.getRootPrior() != null
+                ? continuousData.getRootPrior().getMeanParameter()
+                : null;
         if (parameterString.compareTo(ROOT) == 0) {
             mode = ParameterMode.WRT_ROOT;
         } else if (parameterString.compareTo(BOTH) == 0) {
             mode = ParameterMode.WRT_BOTH;
         } else if (parameterString.compareTo(OPT) == 0) {
-            if (sharesRootMeanParameter(continuousData.getRootPrior().getMeanParameter(), parameter)) {
+            if (sharesRootMeanParameter(rootMeanParameter, parameter)) {
                 mode = ParameterMode.WRT_BOTH;
             } else {
                 mode = ParameterMode.WRT_DRIFT;
@@ -88,7 +92,7 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
             DiffusionProcessDelegate diffusionDelegate = continuousData.getDiffusionProcessDelegate();
             assert diffusionDelegate instanceof AbstractDriftDiffusionModelDelegate : "Model does not have drift.";
             assert ((AbstractDriftDiffusionModelDelegate) diffusionDelegate).isConstantDrift() : "Model does not have constant drift.";
-            if (sharesRootMeanParameter(continuousData.getRootPrior().getMeanParameter(), parameter)) {
+            if (sharesRootMeanParameter(rootMeanParameter, parameter)) {
                 mode = ParameterMode.WRT_BOTH;
             }
         }
@@ -169,29 +173,39 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
         int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
         Tree tree = treeDataLikelihood.getTree();
 
-        ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+        final CtsCompatibility compatibleData;
+        if (delegate instanceof CtsCompatibility) {
+            compatibleData = (CtsCompatibility) delegate;
+        } else {
+            throw new XMLParseException("meanGradient requires a continuous trait likelihood delegate.");
+        }
 
-        ParameterMode parameterMode = parseParameterMode(xo, continuousData, parameter);
+        ParameterMode parameterMode = parseParameterMode(xo, compatibleData, parameter);
 
         final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
         final boolean useCanonicalImplementation =
                 IMPLEMENTATION_CANONICAL.equals(implementation)
-                        || (IMPLEMENTATION_LEGACY.equals(implementation) && continuousData.usesCanonicalOULikelihood());
+                        || (IMPLEMENTATION_LEGACY.equals(implementation) && compatibleData.usesCanonicalOULikelihood());
 
         if (useCanonicalImplementation) {
-            if (!continuousData.usesCanonicalOULikelihood()) {
+            if (!compatibleData.usesCanonicalOULikelihood()) {
                 throw new XMLParseException(
                         "meanGradient implementation=\"canonical\" requires "
                                 + "traitDataLikelihood implementation=\"canonical\".");
             }
             return new CanonicalMeanParameterGradient(
                     treeDataLikelihood,
-                    continuousData,
+                    compatibleData,
                     parameter,
                     parameterMode != ParameterMode.WRT_ROOT,
                     parameterMode != ParameterMode.WRT_DRIFT);
         }
 
+        if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+            throw new XMLParseException(
+                    "meanGradient legacy implementation requires a legacy ContinuousDataLikelihoodDelegate.");
+        }
+        ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
         final ProcessGradientSpec gradientSpec = ProcessGradientSpec.single(parameterMode.getDerivationParameter());
         final ContinuousTraitGradientForBranch traitGradient = gradientSpec.build(
                 dim, tree, continuousData, implementation);
@@ -209,7 +223,9 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Likelihood.class),
             new ElementRule(Parameter.class),
+            AttributeRule.newStringRule(PARAMETER, true),
             AttributeRule.newStringRule(IMPLEMENTATION, true),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
     };
 
     @Override

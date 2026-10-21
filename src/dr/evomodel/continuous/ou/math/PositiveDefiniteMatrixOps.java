@@ -76,9 +76,11 @@ public final class PositiveDefiniteMatrixOps {
             final double maxAbsDiagonal,
             final PositiveDefiniteMatrixInversionOptions options) {
         final double pivotFloor = options.jitterBase(maxAbsDiagonal);
-        final PivotStats pivotStats = factorCholeskyFlatInPlace(
-                choleskyScratch, dimension, pivotFloor);
-        if (options.isPivotFloorDebugEnabled()) {
+        final boolean debugPivotFloor = options.isPivotFloorDebugEnabled();
+        final PivotStats pivotStats = debugPivotFloor ? new PivotStats() : null;
+        final double logDet = factorCholeskyFlatInPlace(
+                choleskyScratch, dimension, pivotFloor, pivotStats);
+        if (debugPivotFloor) {
             options.reportPivotFloor(
                     pivotStats.clippedPivotCount,
                     dimension,
@@ -98,12 +100,13 @@ public final class PositiveDefiniteMatrixOps {
                 inverseOut[i * dimension + j] = sum;
             }
         }
-        return 2.0 * pivotStats.logDet;
+        return 2.0 * logDet;
     }
 
-    private static PivotStats factorCholeskyFlatInPlace(final double[] cholesky,
-                                                        final int dimension,
-                                                        final double pivotFloor) {
+    private static double factorCholeskyFlatInPlace(final double[] cholesky,
+                                                    final int dimension,
+                                                    final double pivotFloor,
+                                                    final PivotStats pivotStats) {
         int clippedPivotCount = 0;
         double minPivotBeforeFloor = Double.POSITIVE_INFINITY;
         double logDet = 0.0;
@@ -129,7 +132,11 @@ public final class PositiveDefiniteMatrixOps {
                 }
             }
         }
-        return new PivotStats(clippedPivotCount, minPivotBeforeFloor, logDet);
+        if (pivotStats != null) {
+            pivotStats.clippedPivotCount = clippedPivotCount;
+            pivotStats.minPivotBeforeFloor = minPivotBeforeFloor;
+        }
+        return logDet;
     }
 
     private static void invertFlatCholesky(final double[] cholesky,
@@ -151,16 +158,7 @@ public final class PositiveDefiniteMatrixOps {
     }
 
     private static final class PivotStats {
-        private final int clippedPivotCount;
-        private final double minPivotBeforeFloor;
-        private final double logDet;
-
-        private PivotStats(final int clippedPivotCount,
-                           final double minPivotBeforeFloor,
-                           final double logDet) {
-            this.clippedPivotCount = clippedPivotCount;
-            this.minPivotBeforeFloor = minPivotBeforeFloor;
-            this.logDet = logDet;
-        }
+        private int clippedPivotCount;
+        private double minPivotBeforeFloor;
     }
 }

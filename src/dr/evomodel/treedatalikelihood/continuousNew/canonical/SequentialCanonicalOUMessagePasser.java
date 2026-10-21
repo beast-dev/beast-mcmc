@@ -194,6 +194,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
         stateStore.setTipObservation(tipIndex, observation);
     }
 
+    @Override
     public void setTipObservationModel(final int tipIndex,
                                        final CanonicalTipObservationModel observationModel) {
         stateStore.setTipObservationModel(tipIndex, observationModel);

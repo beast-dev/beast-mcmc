@@ -6,6 +6,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalB
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContributionUtils;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.LinearExactTipProjection;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.PartialIdentityTipObservationWorkspace;
 
 public final class BranchAdjointWorkspace {
@@ -17,6 +18,7 @@ public final class BranchAdjointWorkspace {
     public final CanonicalBranchMessageContribution contribution;
     public final CanonicalLocalTransitionAdjoints adjoints;
     public final PartialIdentityTipObservationWorkspace partialObservationWorkspace;
+    public final LinearExactTipProjection linearExactProjection;
     public final int[] observedIndexScratch;
     public final int[] missingIndexScratch;
     public final int[] reducedIndexByTraitScratch;
@@ -41,6 +43,7 @@ public final class BranchAdjointWorkspace {
         this.contribution = new CanonicalBranchMessageContribution(dim);
         this.adjoints = new CanonicalLocalTransitionAdjoints(dim);
         this.partialObservationWorkspace = new PartialIdentityTipObservationWorkspace(dim);
+        this.linearExactProjection = new LinearExactTipProjection(dim);
         this.observedIndexScratch = partialObservationWorkspace.partition.observedIndices;
         this.missingIndexScratch = partialObservationWorkspace.partition.missingIndices;
         this.reducedIndexByTraitScratch = partialObservationWorkspace.partition.reducedIndexByTrait;

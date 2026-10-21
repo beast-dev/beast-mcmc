@@ -31,7 +31,9 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
+import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisGlobalSnapshot;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
@@ -50,7 +52,9 @@ import dr.inference.model.Parameter;
 import dr.evomodel.continuous.ou.canonical.CanonicalGradientPackingCapability;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.SelectionMatrixParameterization;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.LinearExactTipObservationModel;
 import dr.util.CanonicalPhaseTimer;
+import org.ejml.data.DenseMatrix64F;
 
 /**
  * Integrator-style backend for the canonical OU tree passer path.
@@ -65,6 +69,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     private final CanonicalTreeMessagePasser passer;
     private final CanonicalBranchTransitionProvider transitionProvider;
     private final CanonicalRootPrior rootPrior;
+    private final Parameter stationaryMean;
     private final double[] scratchTraitCovariance;
     private final int rootIndex;
     private final double[] cachedGradientA;
@@ -77,6 +82,14 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     private final Tree tipTree;
     private final ContinuousTraitPartialsProvider tipDataModel;
     private final CanonicalTipObservation[] ownedTipObservations;
+    private final boolean blockBasisCoordinates;
+    private final HomogeneousBlockBasisCanonicalOUBranchTransitionProvider blockBasisProvider;
+    private final CanonicalTipObservation[] naturalTipObservations;
+    private final CanonicalTipObservation[] blockBasisTipObservations;
+    private final double[] blockBasisTipScratch;
+    private final int[] blockBasisObservedIndexScratch;
+    private final double[] blockBasisShiftedScratch;
+    private final double[] blockBasisLinkScratch;
     private double cachedLogLikelihood;
     private double storedCachedLogLikelihood;
     private boolean postOrderMessagesDirty;
@@ -91,6 +104,10 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     private boolean storedModelDirty;
     private boolean tipObservationsDirty;
     private boolean storedTipObservationsDirty;
+    private boolean blockBasisTipObservationsDirty;
+    private boolean storedBlockBasisTipObservationsDirty;
+    private int blockBasisObservedTipCount;
+    private int storedBlockBasisObservedTipCount;
     private int cacheDiagnosticReportCounter;
 
     /*
@@ -128,7 +145,30 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 rateModel,
                 rateTransformation,
                 null,
-                dataModel);
+                dataModel,
+                CanonicalOUOptions.defaults());
+    }
+
+    public CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
+                                               final MultivariateElasticModel elasticModel,
+                                               final MultivariateDiffusionModel diffusionModel,
+                                               final ContinuousTraitPartialsProvider dataModel,
+                                               final ConjugateRootTraitPrior conjugatePrior,
+                                               final Parameter stationaryMean,
+                                               final BranchRateModel rateModel,
+                                               final ContinuousRateTransformation rateTransformation,
+                                               final CanonicalOUOptions canonicalOUOptions) {
+        this(tree,
+                elasticModel,
+                diffusionModel,
+                allocateCanonicalTipObservations(tree.getExternalNodeCount(), diffusionModel.getDimension()),
+                conjugatePrior,
+                stationaryMean,
+                rateModel,
+                rateTransformation,
+                null,
+                dataModel,
+                canonicalOUOptions);
     }
 
     public CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
@@ -148,7 +188,30 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 rateModel,
                 rateTransformation,
                 branchProcessSpecification,
-                dataModel);
+                dataModel,
+                CanonicalOUOptions.defaults());
+    }
+
+    public CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
+                                               final CanonicalOUBranchProcessSpecification branchProcessSpecification,
+                                               final MultivariateDiffusionModel diffusionModel,
+                                               final ContinuousTraitPartialsProvider dataModel,
+                                               final ConjugateRootTraitPrior conjugatePrior,
+                                               final Parameter stationaryMean,
+                                               final BranchRateModel rateModel,
+                                               final ContinuousRateTransformation rateTransformation,
+                                               final CanonicalOUOptions canonicalOUOptions) {
+        this(tree,
+                branchProcessSpecification.getElasticModel(0),
+                diffusionModel,
+                allocateCanonicalTipObservations(tree.getExternalNodeCount(), diffusionModel.getDimension()),
+                conjugatePrior,
+                stationaryMean,
+                rateModel,
+                rateTransformation,
+                branchProcessSpecification,
+                dataModel,
+                canonicalOUOptions);
     }
 
     /*
@@ -163,7 +226,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                                                final BranchRateModel rateModel,
                                                final ContinuousRateTransformation rateTransformation) {
         this(tree, elasticModel, diffusionModel, tipObservations, conjugatePrior, stationaryMean, rateModel,
-                rateTransformation, null, null);
+                rateTransformation, null, null, CanonicalOUOptions.defaults());
     }
 
     public CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
@@ -183,7 +246,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 rateModel,
                 rateTransformation,
                 branchProcessSpecification,
-                null);
+                null,
+                CanonicalOUOptions.defaults());
     }
 
     private CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
@@ -195,19 +259,41 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                                                 final BranchRateModel rateModel,
                                                 final ContinuousRateTransformation rateTransformation,
                                                 final CanonicalOUBranchProcessSpecification branchProcessSpecification,
-                                                final ContinuousTraitPartialsProvider dataModel) {
+                                                final ContinuousTraitPartialsProvider dataModel,
+                                                final CanonicalOUOptions canonicalOUOptions) {
         final int dim = diffusionModel.getDimension();
-        this.transitionProvider = branchProcessSpecification == null
-                ? new HomogeneousCanonicalOUBranchTransitionProvider(
-                        tree, elasticModel, diffusionModel, stationaryMean, rateModel, rateTransformation)
-                : new HomogeneousCanonicalOUBranchTransitionProvider(
-                        tree,
-                        branchProcessSpecification,
-                        diffusionModel,
+        final boolean useBlockBasis = useHomogeneousBlockBasisProvider(
+                branchProcessSpecification,
+                elasticModel,
+                canonicalOUOptions);
+        final HomogeneousBlockBasisCanonicalOUBranchTransitionProvider blockProvider =
+                useBlockBasis
+                        ? new HomogeneousBlockBasisCanonicalOUBranchTransitionProvider(
+                                tree,
+                                elasticModel,
+                                diffusionModel,
+                                rateModel,
+                                rateTransformation)
+                        : null;
+        this.transitionProvider = blockProvider != null
+                ? blockProvider
+                : (branchProcessSpecification == null
+                        ? new HomogeneousCanonicalOUBranchTransitionProvider(
+                                tree, elasticModel, diffusionModel, stationaryMean, rateModel, rateTransformation)
+                        : new HomogeneousCanonicalOUBranchTransitionProvider(
+                                tree,
+                                branchProcessSpecification,
+                                diffusionModel,
+                                stationaryMean,
+                                rateModel,
+                                rateTransformation));
+        this.rootPrior = blockProvider == null
+                ? new CanonicalConjugateRootPriorAdapter(conjugatePrior, dim)
+                : new BlockBasisConjugateRootPriorAdapter(
+                        conjugatePrior,
                         stationaryMean,
-                        rateModel,
-                        rateTransformation);
-        this.rootPrior = new CanonicalConjugateRootPriorAdapter(conjugatePrior, dim);
+                        blockProvider.getBlockBasisSnapshot());
+        this.stationaryMean = stationaryMean;
         this.passer = new SequentialCanonicalOUMessagePasser(tree, dim);
         this.scratchTraitCovariance = new double[dim * dim];
         this.rootIndex = tree.getRoot().getNumber();
@@ -222,6 +308,18 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.tipTree = dataModel == null ? null : tree;
         this.tipDataModel = dataModel;
         this.ownedTipObservations = dataModel == null ? null : tipObservations;
+        this.blockBasisCoordinates = blockProvider != null;
+        this.blockBasisProvider = blockProvider;
+        this.naturalTipObservations = blockBasisCoordinates
+                ? (dataModel == null ? copyTipObservations(tipObservations) : this.ownedTipObservations)
+                : null;
+        this.blockBasisTipObservations = blockBasisCoordinates
+                ? allocateCanonicalTipObservations(tipObservations.length, dim)
+                : null;
+        this.blockBasisTipScratch = blockBasisCoordinates ? new double[dim] : null;
+        this.blockBasisObservedIndexScratch = blockBasisCoordinates ? new int[dim] : null;
+        this.blockBasisShiftedScratch = blockBasisCoordinates ? new double[dim] : null;
+        this.blockBasisLinkScratch = blockBasisCoordinates ? new double[dim * dim] : null;
         this.cachedLogLikelihood = Double.NaN;
         this.storedCachedLogLikelihood = Double.NaN;
         this.postOrderMessagesDirty = true;
@@ -236,9 +334,18 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.storedModelDirty = true;
         this.tipObservationsDirty = dataModel != null;
         this.storedTipObservationsDirty = this.tipObservationsDirty;
+        this.blockBasisTipObservationsDirty = blockBasisCoordinates;
+        this.storedBlockBasisTipObservationsDirty = this.blockBasisTipObservationsDirty;
+        this.blockBasisObservedTipCount = 0;
+        this.storedBlockBasisObservedTipCount = 0;
         this.cacheDiagnosticReportCounter = 0;
         if (dataModel == null) {
-            loadTips(tipObservations);
+            if (blockBasisCoordinates) {
+                loadBlockBasisTipObservations();
+                blockBasisTipObservationsDirty = false;
+            } else {
+                loadTips(tipObservations);
+            }
         } else {
             syncOwnedTipObservations();
         }
@@ -266,6 +373,15 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.tipTree = null;
         this.tipDataModel = null;
         this.ownedTipObservations = null;
+        this.stationaryMean = null;
+        this.blockBasisCoordinates = false;
+        this.blockBasisProvider = null;
+        this.naturalTipObservations = null;
+        this.blockBasisTipObservations = null;
+        this.blockBasisTipScratch = null;
+        this.blockBasisObservedIndexScratch = null;
+        this.blockBasisShiftedScratch = null;
+        this.blockBasisLinkScratch = null;
         this.cachedLogLikelihood = Double.NaN;
         this.storedCachedLogLikelihood = Double.NaN;
         this.postOrderMessagesDirty = true;
@@ -280,6 +396,10 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         this.storedModelDirty = true;
         this.tipObservationsDirty = false;
         this.storedTipObservationsDirty = false;
+        this.blockBasisTipObservationsDirty = false;
+        this.storedBlockBasisTipObservationsDirty = false;
+        this.blockBasisObservedTipCount = 0;
+        this.storedBlockBasisObservedTipCount = 0;
         this.cacheDiagnosticReportCounter = 0;
     }
 
@@ -288,7 +408,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         syncOwnedTipObservations();
         refreshPostOrderMessages(false);
         reportTransitionCacheDiagnostics("logLikelihood");
-        return cachedLogLikelihood;
+        return correctedLogLikelihood();
     }
 
     @Override
@@ -391,7 +511,14 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     }
 
     public void reloadTips(final CanonicalTipObservation[] tipObservations) {
-        loadTips(tipObservations);
+        if (blockBasisCoordinates) {
+            copyTipObservations(tipObservations, naturalTipObservations);
+            blockBasisTipObservationsDirty = true;
+            loadBlockBasisTipObservations();
+            blockBasisTipObservationsDirty = false;
+        } else {
+            loadTips(tipObservations);
+        }
         markMessageAndGradientCachesDirty();
     }
 
@@ -401,6 +528,9 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
             return;
         }
         tipObservationsDirty = true;
+        if (blockBasisCoordinates) {
+            blockBasisTipObservationsDirty = true;
+        }
         markMessageAndGradientCachesDirty();
     }
 
@@ -415,6 +545,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         storedJointGradientCacheDirty = jointGradientCacheDirty;
         storedModelDirty = modelDirty;
         storedTipObservationsDirty = tipObservationsDirty;
+        storedBlockBasisTipObservationsDirty = blockBasisTipObservationsDirty;
+        storedBlockBasisObservedTipCount = blockBasisObservedTipCount;
         if (!jointGradientCacheDirty) {
             System.arraycopy(cachedGradientA, 0, storedGradientA, 0, cachedGradientA.length);
             System.arraycopy(cachedGradientQ, 0, storedGradientQ, 0, cachedGradientQ.length);
@@ -433,6 +565,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         jointGradientCacheDirty = storedJointGradientCacheDirty;
         modelDirty = storedModelDirty;
         tipObservationsDirty = storedTipObservationsDirty;
+        blockBasisTipObservationsDirty = storedBlockBasisTipObservationsDirty;
+        blockBasisObservedTipCount = storedBlockBasisObservedTipCount;
         if (!jointGradientCacheDirty) {
             System.arraycopy(storedGradientA, 0, cachedGradientA, 0, storedGradientA.length);
             System.arraycopy(storedGradientQ, 0, cachedGradientQ, 0, storedGradientQ.length);
@@ -451,6 +585,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         storedJointGradientCacheDirty = jointGradientCacheDirty;
         storedModelDirty = modelDirty;
         storedTipObservationsDirty = tipObservationsDirty;
+        storedBlockBasisTipObservationsDirty = blockBasisTipObservationsDirty;
+        storedBlockBasisObservedTipCount = blockBasisObservedTipCount;
         if (!jointGradientCacheDirty) {
             System.arraycopy(cachedGradientA, 0, storedGradientA, 0, cachedGradientA.length);
             System.arraycopy(cachedGradientQ, 0, storedGradientQ, 0, cachedGradientQ.length);
@@ -463,6 +599,9 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         // Transition-provider cache invalidation is owned by the provider's
         // model listeners; this flag covers integrator-owned derived state.
         modelDirty = true;
+        if (blockBasisCoordinates) {
+            blockBasisTipObservationsDirty = true;
+        }
         markMessageAndGradientCachesDirty();
     }
 
@@ -479,15 +618,89 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         }
     }
 
+    private void loadBlockBasisTipObservations() {
+        if (!blockBasisCoordinates) {
+            throw new IllegalStateException("Block-basis tip loading requested for a natural-basis integrator.");
+        }
+        blockBasisProvider.ensureCurrentSnapshot();
+        final BlockBasisGlobalSnapshot snapshot = blockBasisProvider.getBlockBasisSnapshot();
+        final DenseMatrix64F t = snapshot.getRotationInverse();
+        final DenseMatrix64F r = snapshot.getRotation();
+        blockBasisObservedTipCount = 0;
+        for (int tipIdx = 0; tipIdx < naturalTipObservations.length; ++tipIdx) {
+            final CanonicalTipObservation natural = naturalTipObservations[tipIdx];
+            final CanonicalTipObservation transformed = blockBasisTipObservations[tipIdx];
+            if (natural.observedCount == 0) {
+                transformed.setMissing();
+                passer.setTipObservation(tipIdx, transformed);
+                continue;
+            }
+
+            if (natural.observedCount == natural.dim) {
+                for (int i = 0; i < natural.dim; ++i) {
+                    double sum = 0.0;
+                    for (int j = 0; j < natural.dim; ++j) {
+                        sum += t.get(i, j)
+                                * (natural.values[j] - stationaryMean.getParameterValue(j));
+                    }
+                    blockBasisTipScratch[i] = sum;
+                }
+                transformed.setObserved(blockBasisTipScratch);
+                passer.setTipObservation(tipIdx, transformed);
+                blockBasisObservedTipCount++;
+                continue;
+            }
+
+            transformed.setMissing();
+            int observed = 0;
+            for (int trait = 0; trait < natural.dim; ++trait) {
+                if (!natural.observed[trait]) {
+                    continue;
+                }
+                blockBasisObservedIndexScratch[observed] = trait;
+                blockBasisShiftedScratch[observed] =
+                        natural.values[trait] - stationaryMean.getParameterValue(trait);
+                final int rowOffset = observed * natural.dim;
+                for (int col = 0; col < natural.dim; ++col) {
+                    blockBasisLinkScratch[rowOffset + col] = r.get(trait, col);
+                }
+                observed++;
+            }
+            passer.setTipObservationModel(
+                    tipIdx,
+                    new LinearExactTipObservationModel(
+                            natural.dim,
+                            observed,
+                            blockBasisObservedIndexScratch,
+                            blockBasisShiftedScratch,
+                            blockBasisLinkScratch));
+        }
+    }
+
     private void syncOwnedTipObservations() {
-        if (ownedTipObservations == null || !tipObservationsDirty) {
+        if (ownedTipObservations == null && !blockBasisCoordinates) {
             return;
         }
-        CanonicalTipObservationAdapter.fillTipObservations(
-                tipTree, tipDataModel, passer.getDimension(), ownedTipObservations);
-        loadTips(ownedTipObservations);
-        tipObservationsDirty = false;
-        markMessageAndGradientCachesDirty();
+        boolean observationsLoaded = false;
+        if (ownedTipObservations != null && tipObservationsDirty) {
+            CanonicalTipObservationAdapter.fillTipObservations(
+                    tipTree, tipDataModel, passer.getDimension(), ownedTipObservations);
+            tipObservationsDirty = false;
+            if (blockBasisCoordinates) {
+                blockBasisTipObservationsDirty = true;
+            } else {
+                loadTips(ownedTipObservations);
+                observationsLoaded = true;
+            }
+        }
+        if (blockBasisCoordinates && blockBasisTipObservationsDirty) {
+            loadBlockBasisTipObservations();
+            blockBasisTipObservationsDirty = false;
+            observationsLoaded = true;
+        }
+        if (observationsLoaded) {
+            markMessageAndGradientCachesDirty();
+        }
     }
 
     private void ensureJointGradientCache() {
@@ -579,6 +792,35 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         }
     }
 
+    private double correctedLogLikelihood() {
+        if (!blockBasisCoordinates) {
+            return cachedLogLikelihood;
+        }
+        return cachedLogLikelihood
+                - blockBasisObservedTipCount
+                * blockBasisProvider.getBlockBasisSnapshot().getLogAbsDetR();
+    }
+
+    private static boolean useHomogeneousBlockBasisProvider(
+            final CanonicalOUBranchProcessSpecification branchProcessSpecification,
+            final MultivariateElasticModel elasticModel,
+            final CanonicalOUOptions canonicalOUOptions) {
+        if (!canonicalOUOptions.useHomogeneousBlockBasis()) {
+            return false;
+        }
+        if (branchProcessSpecification != null) {
+            throw new UnsupportedOperationException(
+                    canonicalOUOptions.describeSelectionSource()
+                            + " supports homogeneous OU only.");
+        }
+        if (!HomogeneousBlockBasisCanonicalOUBranchTransitionProvider.isSupported(elasticModel)) {
+            throw new UnsupportedOperationException(
+                    canonicalOUOptions.describeSelectionSource()
+                            + " requires a block-diagonal selection parametrization.");
+        }
+        return true;
+    }
+
     private static void copyGradient(final double[] source,
                                      final double[] destination,
                                      final String label) {
@@ -616,5 +858,25 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
             observations[tipIdx] = new CanonicalTipObservation(dim);
         }
         return observations;
+    }
+
+    private static CanonicalTipObservation[] copyTipObservations(final CanonicalTipObservation[] source) {
+        final CanonicalTipObservation[] copy = new CanonicalTipObservation[source.length];
+        for (int i = 0; i < source.length; ++i) {
+            copy[i] = new CanonicalTipObservation(source[i].dim);
+            copy[i].copyFrom(source[i]);
+        }
+        return copy;
+    }
+
+    private static void copyTipObservations(final CanonicalTipObservation[] source,
+                                            final CanonicalTipObservation[] target) {
+        if (source.length != target.length) {
+            throw new IllegalArgumentException(
+                    "Tip observation count mismatch: " + source.length + " vs " + target.length);
+        }
+        for (int i = 0; i < source.length; ++i) {
+            target[i].copyFrom(source[i]);
+        }
     }
 }

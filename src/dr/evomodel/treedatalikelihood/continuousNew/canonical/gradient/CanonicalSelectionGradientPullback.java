@@ -34,4 +34,8 @@ interface CanonicalSelectionGradientPullback {
                 double[] gradA,
                 double[] gradQ,
                 double[] gradMu);
+
+    default boolean handlesRootDiffusionGradient() {
+        return false;
+    }
 }

@@ -93,6 +93,15 @@ public final class CanonicalTreeGradientEngine {
                 selectGradientProcessModel(ouProvider, inputs);
         final OUProcessModel homogeneousProcessModel =
                 ouProvider.getProcessModelCount() == 1 ? processModel : null;
+        if (transitionProvider instanceof HomogeneousBlockBasisGradientCapability) {
+            final CanonicalSelectionGradientPullback selectionPullback =
+                    new BlockBasisCanonicalSelectionGradientPullback(
+                            (HomogeneousBlockBasisGradientCapability) transitionProvider,
+                            dimension);
+            CanonicalPhaseTimer.recordGradientShape(inputs.getActiveBranchCount(), 1, false);
+            computeSequential(inputs, ouProvider, homogeneousProcessModel, selectionPullback, gradA, gradQ, gradMu);
+            return;
+        }
         final CanonicalSelectionGradientPullback selectionPullback =
                 CanonicalSelectionGradientPullbacks.create(processModel, dimension, gradA, mainWorkspace);
         if (workspaces.length <= 1 || inputs.getActiveBranchCount() <= 1) {
@@ -196,7 +205,8 @@ public final class CanonicalTreeGradientEngine {
                                         final double[] gradMu) {
         selectionPullback.finish(inputs, workspace, gradA, gradQ, gradMu);
 
-        if (inputs.getRootDiffusionScale() > 0.0) {
+        if (!selectionPullback.handlesRootDiffusionGradient()
+                && inputs.getRootDiffusionScale() > 0.0) {
             accumulateRootDiffusionGradient(
                     inputs.getRootPreOrderState(),
                     inputs.getRootPostOrderState(),

@@ -173,6 +173,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),
+            AttributeRule.newStringRule(MODE, true),
+            AttributeRule.newDoubleRule(DRAW_VARIANCE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
             AttributeRule.newIntegerRule(GRADIENT_CHECK_COUNT, true),
             AttributeRule.newDoubleRule(GRADIENT_CHECK_TOLERANCE, true),
@@ -182,6 +184,7 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newStringRule(INSTABILITY_HANDLER, true),
             new ElementRule(Parameter.class, true),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
+            new ElementRule(Transform.MultivariateTransform.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(MASK, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),

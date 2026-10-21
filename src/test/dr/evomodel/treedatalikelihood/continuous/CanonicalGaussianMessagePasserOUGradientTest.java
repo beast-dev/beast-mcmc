@@ -27,7 +27,13 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
+import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalRootPrior;
@@ -37,8 +43,15 @@ import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTi
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionCachePhases;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTreeMessagePasser;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockPreparedBranchBasis;
 import dr.evomodel.continuous.ou.blockdiagonal.OrthogonalBlockPreparedBranchHandle;
+import dr.inference.model.GivensRotationMatrixParameter;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Model;
+import dr.inference.model.OrthogonalBlockDiagonalPolarStableMatrixParameter;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * Validates canonical OU tree-passer gradients against numerical finite differences.
@@ -49,6 +62,8 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
             "beast.debug.canonicalTransitionCache";
     private static final String DENSE_ORTHOGONAL_PULLBACK_PROPERTY =
             "beast.experimental.orthBlockUseDensePullback";
+    private static final String BLOCK_BASIS_HOMOGENEOUS_PROPERTY =
+            "beast.experimental.canonicalOU.blockBasisHomogeneous";
 
     public CanonicalGaussianMessagePasserOUGradientTest(final String name) {
         super(name);
@@ -163,6 +178,152 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         checkOrthogonalBlockGradientQMatchesDense(
                 buildOrthogonalBlockOUSetup("canonOrthGradQ_partial", buildPartiallyObservedTips()),
                 "partially observed");
+    }
+
+    public void testHomogeneousBlockBasisIntegratorLikelihoodMatchesStandardBlockBackend() {
+        System.out.println("\nTest: canonical OU homogeneous block-basis integrator logL matches standard block backend");
+        final BlockBasisIntegratorFixture fixture =
+                buildBlockBasisIntegratorFixture("canonBlockBasisLike_full");
+
+        final double standardLogLikelihood = fixture.standardIntegrator.calculateLogLikelihood();
+        final double blockBasisLogLikelihood = fixture.blockBasisIntegrator.calculateLogLikelihood();
+
+        System.out.printf("  Standard block logL: %.12f%n", standardLogLikelihood);
+        System.out.printf("  Block-basis    logL: %.12f%n", blockBasisLogLikelihood);
+        assertEquals("homogeneous block-basis log-likelihood",
+                standardLogLikelihood, blockBasisLogLikelihood, 1.0e-8);
+    }
+
+    public void testHomogeneousBlockBasisIntegratorPartialLikelihoodMatchesStandardBlockBackend() {
+        System.out.println(
+                "\nTest: canonical OU homogeneous block-basis integrator logL matches standard block backend "
+                        + "(partially observed)");
+        final BlockBasisIntegratorFixture fixture =
+                buildBlockBasisIntegratorFixture(
+                        "canonBlockBasisLike_partial",
+                        buildPartiallyObservedTips());
+
+        final double standardLogLikelihood = fixture.standardIntegrator.calculateLogLikelihood();
+        final double blockBasisLogLikelihood = fixture.blockBasisIntegrator.calculateLogLikelihood();
+
+        System.out.printf("  Standard block partial logL: %.12f%n", standardLogLikelihood);
+        System.out.printf("  Block-basis    partial logL: %.12f%n", blockBasisLogLikelihood);
+        assertEquals("homogeneous block-basis partial log-likelihood",
+                standardLogLikelihood, blockBasisLogLikelihood, 1.0e-8);
+    }
+
+    public void testHomogeneousBlockBasisIntegratorNativeSelectionGradientMatchesNumerical() {
+        System.out.println("\nTest: canonical OU homogeneous block-basis native ∂logL/∂A matches numerical");
+        final BlockBasisIntegratorFixture fixture =
+                buildBlockBasisIntegratorFixture("canonBlockBasisGrad_full");
+
+        final int gradientDimension = fixture.nativeParameter.getDimension();
+        final double[] analyticGradient = new double[gradientDimension];
+        fixture.blockBasisIntegrator.computeSelectionGradient(analyticGradient);
+
+        final double[] numericGradient = new double[gradientDimension];
+        for (int i = 0; i < gradientDimension; i++) {
+            final double original = fixture.nativeParameter.getParameterValue(i);
+
+            fixture.nativeParameter.setParameterValue(i, original + FD_DELTA);
+            fixture.blockBasisIntegrator.markModelDirty();
+            final double logLPlus = fixture.blockBasisIntegrator.calculateLogLikelihood();
+
+            fixture.nativeParameter.setParameterValue(i, original - FD_DELTA);
+            fixture.blockBasisIntegrator.markModelDirty();
+            final double logLMinus = fixture.blockBasisIntegrator.calculateLogLikelihood();
+
+            fixture.nativeParameter.setParameterValue(i, original);
+            fixture.blockBasisIntegrator.markModelDirty();
+            numericGradient[i] = (logLPlus - logLMinus) / (2.0 * FD_DELTA);
+        }
+
+        System.out.printf("  Analytic block-basis native ∂logL/∂A: %s%n",
+                java.util.Arrays.toString(analyticGradient));
+        System.out.printf("  Numeric  block-basis native ∂logL/∂A: %s%n",
+                java.util.Arrays.toString(numericGradient));
+        for (int i = 0; i < gradientDimension; i++) {
+            assertEquals("homogeneous block-basis native ∂logL/∂A[" + i + "]",
+                    numericGradient[i], analyticGradient[i], TOL);
+        }
+    }
+
+    public void testHomogeneousBlockBasisIntegratorPartialJointGradientsMatchStandardBlockBackend() {
+        System.out.println(
+                "\nTest: canonical OU homogeneous block-basis joint gradients match standard block backend "
+                        + "(partially observed)");
+        final BlockBasisIntegratorFixture fixture =
+                buildBlockBasisIntegratorFixture(
+                        "canonBlockBasisJointGrad_partial",
+                        buildPartiallyObservedTips());
+
+        final int selectionDim = fixture.nativeParameter.getDimension();
+        final double[] standardA = new double[selectionDim];
+        final double[] blockBasisA = new double[selectionDim];
+        final double[] standardQ = new double[dimTrait * dimTrait];
+        final double[] blockBasisQ = new double[dimTrait * dimTrait];
+        final double[] standardMu = new double[dimTrait];
+        final double[] blockBasisMu = new double[dimTrait];
+
+        fixture.standardIntegrator.computeSelectionGradient(standardA);
+        fixture.standardIntegrator.computeDiffusionGradient(standardQ);
+        fixture.standardIntegrator.computeStationaryMeanGradient(standardMu);
+        fixture.blockBasisIntegrator.computeSelectionGradient(blockBasisA);
+        fixture.blockBasisIntegrator.computeDiffusionGradient(blockBasisQ);
+        fixture.blockBasisIntegrator.computeStationaryMeanGradient(blockBasisMu);
+
+        assertArrayEquals("partial block-basis vs standard A", standardA, blockBasisA, 2.0e-8);
+        assertArrayEquals("partial block-basis vs standard Q", standardQ, blockBasisQ, 2.0e-8);
+        assertArrayEquals("partial block-basis vs standard mu", standardMu, blockBasisMu, 2.0e-8);
+    }
+
+    public void testHomogeneousBlockBasisIntegratorPartialBranchLengthGradientMatchesNumerical() {
+        System.out.println(
+                "\nTest: canonical OU homogeneous block-basis branch-length gradients match numerical "
+                        + "(partially observed)");
+        final BlockBasisIntegratorFixture fixture =
+                buildBlockBasisIntegratorFixture(
+                        "canonBlockBasisBranchGrad_partial",
+                        buildPartiallyObservedTips());
+
+        final int nodeCount = treeModel.getNodeCount();
+        final int rootIndex = treeModel.getRoot().getNumber();
+        final double[] analyticGradient = new double[nodeCount];
+        final double[] numericGradient = new double[nodeCount];
+
+        fixture.blockBasisIntegrator.computeGradientBranchLengths(analyticGradient);
+        for (int nodeIndex = 0; nodeIndex < nodeCount; ++nodeIndex) {
+            if (nodeIndex == rootIndex) {
+                continue;
+            }
+
+            final NodeRef node = treeModel.getNode(nodeIndex);
+            final double baseBranchLength = treeModel.getBranchLength(node);
+
+            fixture.branchScale[nodeIndex] += FD_DELTA;
+            fixture.blockBasisIntegrator.markModelDirty();
+            final double logLPlus = fixture.blockBasisIntegrator.calculateLogLikelihood();
+
+            fixture.branchScale[nodeIndex] -= 2.0 * FD_DELTA;
+            fixture.blockBasisIntegrator.markModelDirty();
+            final double logLMinus = fixture.blockBasisIntegrator.calculateLogLikelihood();
+
+            fixture.branchScale[nodeIndex] += FD_DELTA;
+            fixture.blockBasisIntegrator.markModelDirty();
+            numericGradient[nodeIndex] = (logLPlus - logLMinus) / (2.0 * FD_DELTA * baseBranchLength);
+        }
+
+        System.out.printf("  Analytic block-basis ∂logL/∂t: %s%n",
+                java.util.Arrays.toString(analyticGradient));
+        System.out.printf("  Numeric  block-basis ∂logL/∂t: %s%n",
+                java.util.Arrays.toString(numericGradient));
+        for (int nodeIndex = 0; nodeIndex < nodeCount; ++nodeIndex) {
+            if (nodeIndex == rootIndex) {
+                continue;
+            }
+            assertEquals("homogeneous block-basis partial ∂logL/∂t[" + nodeIndex + "]",
+                    numericGradient[nodeIndex], analyticGradient[nodeIndex], BRANCH_TOL);
+        }
     }
 
     public void testOrthogonalBlockDenseSelectionPullbackAvoidsLegacyMatrixProjection() {
@@ -449,6 +610,104 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         throw new IllegalStateException("Tree has no non-root node");
     }
 
+    private BlockBasisIntegratorFixture buildBlockBasisIntegratorFixture(final String tag) {
+        return buildBlockBasisIntegratorFixture(tag, buildFullyObservedTips());
+    }
+
+    private BlockBasisIntegratorFixture buildBlockBasisIntegratorFixture(final String tag,
+                                                                         final CanonicalTipObservation[] tips) {
+        final Parameter angles = new Parameter.Default("blockBasis.angles." + tag, ORTHOGONAL_ANGLES.clone());
+        final GivensRotationMatrixParameter rotation =
+                new GivensRotationMatrixParameter("blockBasis.R." + tag, dimTrait, angles);
+        final Parameter scalar =
+                new Parameter.Default("blockBasis.scalar." + tag, new double[]{ORTHOGONAL_SCALAR});
+        final Parameter rho =
+                new Parameter.Default("blockBasis.rho." + tag, new double[]{ORTHOGONAL_RHO});
+        final Parameter theta =
+                new Parameter.Default("blockBasis.theta." + tag, new double[]{ORTHOGONAL_THETA});
+        final Parameter t =
+                new Parameter.Default("blockBasis.t." + tag, new double[]{ORTHOGONAL_T});
+        final OrthogonalBlockDiagonalPolarStableMatrixParameter blockSelection =
+                new OrthogonalBlockDiagonalPolarStableMatrixParameter(
+                        "blockBasis.A." + tag, rotation, scalar, rho, theta, t);
+
+        final MultivariateElasticModel elasticModel = new MultivariateElasticModel(blockSelection);
+        final MultivariateDiffusionModel localDiffusionModel =
+                new MultivariateDiffusionModel(copyBasePrecisionMatrix("blockBasis.precision." + tag));
+        final Parameter stationaryMean =
+                new Parameter.Default("blockBasis.mu." + tag, MU_VALUES.clone());
+        final double[] branchScale = new double[treeModel.getNodeCount()];
+        java.util.Arrays.fill(branchScale, 1.0);
+        final BranchRateModel blockRateModel = new ArrayBranchRateModel(branchScale);
+
+        final CanonicalOUTreeLikelihoodIntegrator standardIntegrator =
+                buildIntegratorWithBlockBasisProperty(
+                        false,
+                        elasticModel,
+                        localDiffusionModel,
+                        tips,
+                        stationaryMean,
+                        blockRateModel);
+        final CanonicalOUTreeLikelihoodIntegrator blockBasisIntegrator =
+                buildIntegratorWithBlockBasisProperty(
+                        true,
+                        elasticModel,
+                        localDiffusionModel,
+                        tips,
+                        stationaryMean,
+                        blockRateModel);
+
+        return new BlockBasisIntegratorFixture(
+                blockSelection,
+                blockSelection.getParameter(),
+                branchScale,
+                standardIntegrator,
+                blockBasisIntegrator);
+    }
+
+    private CanonicalOUTreeLikelihoodIntegrator buildIntegratorWithBlockBasisProperty(
+            final boolean enabled,
+            final MultivariateElasticModel elasticModel,
+            final MultivariateDiffusionModel localDiffusionModel,
+            final CanonicalTipObservation[] tips,
+            final Parameter stationaryMean,
+            final BranchRateModel blockRateModel) {
+        final String previous = System.getProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY);
+        try {
+            if (enabled) {
+                System.setProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY, "true");
+            } else {
+                System.clearProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY);
+            }
+            return new CanonicalOUTreeLikelihoodIntegrator(
+                    treeModel,
+                    elasticModel,
+                    localDiffusionModel,
+                    tips,
+                    rootPrior,
+                    stationaryMean,
+                    blockRateModel);
+        } finally {
+            if (previous == null) {
+                System.clearProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY);
+            } else {
+                System.setProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY, previous);
+            }
+        }
+    }
+
+    private MatrixParameter copyBasePrecisionMatrix(final String id) {
+        final double[][] basePrecision = diffusionModel.getPrecisionMatrix();
+        final MatrixParameter precision = new MatrixParameter(id, dimTrait, dimTrait);
+        for (int i = 0; i < dimTrait; i++) {
+            for (int j = 0; j < dimTrait; j++) {
+                precision.setParameterValueQuietly(i, j, basePrecision[i][j]);
+            }
+        }
+        precision.fireParameterChangedEvent();
+        return precision;
+    }
+
     private void assertArrayEquals(final String label,
                                    final double[] expected,
                                    final double[] actual,
@@ -457,6 +716,58 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         for (int i = 0; i < expected.length; i++) {
             assertEquals(label + "[" + i + "]", expected[i], actual[i], tolerance);
         }
+    }
+
+    private static final class BlockBasisIntegratorFixture {
+        private final OrthogonalBlockDiagonalPolarStableMatrixParameter blockSelection;
+        private final Parameter nativeParameter;
+        private final double[] branchScale;
+        private final CanonicalOUTreeLikelihoodIntegrator standardIntegrator;
+        private final CanonicalOUTreeLikelihoodIntegrator blockBasisIntegrator;
+
+        private BlockBasisIntegratorFixture(
+                final OrthogonalBlockDiagonalPolarStableMatrixParameter blockSelection,
+                final Parameter nativeParameter,
+                final double[] branchScale,
+                final CanonicalOUTreeLikelihoodIntegrator standardIntegrator,
+                final CanonicalOUTreeLikelihoodIntegrator blockBasisIntegrator) {
+            this.blockSelection = blockSelection;
+            this.nativeParameter = nativeParameter;
+            this.branchScale = branchScale;
+            this.standardIntegrator = standardIntegrator;
+            this.blockBasisIntegrator = blockBasisIntegrator;
+        }
+    }
+
+    private static final class ArrayBranchRateModel extends AbstractBranchRateModel {
+        private final double[] branchScale;
+
+        private ArrayBranchRateModel(final double[] branchScale) {
+            super("blockBasisBranchRateModel");
+            this.branchScale = branchScale;
+        }
+
+        @Override
+        public double getBranchRate(final Tree tree, final NodeRef node) {
+            return branchScale[node.getNumber()];
+        }
+
+        @Override
+        protected void handleModelChangedEvent(final Model model, final Object object, final int index) { }
+
+        @Override
+        protected void handleVariableChangedEvent(final Variable variable,
+                                                  final int index,
+                                                  final Parameter.ChangeType type) { }
+
+        @Override
+        protected void storeState() { }
+
+        @Override
+        protected void restoreState() { }
+
+        @Override
+        protected void acceptState() { }
     }
 
     private static final class CountingPasser implements CanonicalTreeMessagePasser {
@@ -484,6 +795,12 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         @Override
         public void setTipObservation(final int tipIndex, final CanonicalTipObservation observation) {
             delegate.setTipObservation(tipIndex, observation);
+        }
+
+        @Override
+        public void setTipObservationModel(final int tipIndex,
+                                           final CanonicalTipObservationModel observationModel) {
+            delegate.setTipObservationModel(tipIndex, observationModel);
         }
 
         @Override

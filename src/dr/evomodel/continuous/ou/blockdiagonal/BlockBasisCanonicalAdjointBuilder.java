@@ -139,6 +139,42 @@ public final class BlockBasisCanonicalAdjointBuilder {
     }
 
     /**
+     * Pulls an adjoint on {@code Qtilde = T Q T^T} ({@code T = R^{-1}}) back
+     * to the natural-basis diffusion covariance {@code Q} and the basis matrix
+     * {@code R}. This is used for root-prior terms whose covariance follows the
+     * BEAST conjugate-root convention directly, rather than through the
+     * stationary Lyapunov covariance.
+     */
+    public void accumulateTransformedDiffusionPullback(final BlockBasisGlobalSnapshot snapshot,
+                                                       final double[] qTildeGradientFlat,
+                                                       final DenseMatrix64F rGradAccumulator,
+                                                       final double[] qGradFlatAccumulator) {
+        snapshot.ensureCurrent();
+        structure.checkMatches(snapshot.getStructure());
+        final int d2 = dimension * dimension;
+        System.arraycopy(qTildeGradientFlat, 0, dLogL_dOmega_mat.data, 0, d2);
+        symmetrize(dLogL_dOmega_mat);
+
+        final DenseMatrix64F qTilde = snapshot.getQDBasis();
+        CommonOps.mult(dLogL_dOmega_mat, qTilde, temp1);
+        CommonOps.multTransA(dLogL_dOmega_mat, qTilde, temp2);
+        CommonOps.add(temp1, temp2, gECov);
+        CommonOps.multTransA(snapshot.getRotationInverse(), gECov, temp1);
+        CommonOps.scale(-1.0, temp1);
+        addDenseMatrixToFlatArray(temp1, rGradAccumulator);
+
+        MatrixOps.symmetricSandwichTransposeLeft(
+                snapshot.getRotationInverse().data,
+                dLogL_dOmega_mat.data,
+                temp1.data,
+                temp2.data,
+                dimension);
+        for (int i = 0; i < d2; ++i) {
+            qGradFlatAccumulator[i] += temp1.data[i];
+        }
+    }
+
+    /**
      * One-time global step: propagates the accumulated {@code Vtilde}-adjoint
      * total to the compressed-B gradient and to {@code R}/{@code Q} via a
      * single Lyapunov-adjoint solve (the "accumulated globally rather than

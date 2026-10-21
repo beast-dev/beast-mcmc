@@ -4,6 +4,7 @@ import dr.app.beast.BeastParser;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUNodeHeightGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
 import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.xml.XMLObject;
 import junit.framework.TestCase;
@@ -18,6 +19,9 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
             "dr.evomodel.treedatalikelihood.continuousNew.MomentBMContinuousTreeLikelihoodEngine";
     private static final String CANONICAL_OU_ENGINE =
             "dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUContinuousTreeLikelihoodEngine";
+    private static final String HOMOGENEOUS_BLOCK_BASIS_PROVIDER =
+            "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter."
+                    + "HomogeneousBlockBasisCanonicalOUBranchTransitionProvider";
 
     // The CDI-backed BM engine (ContinuousTreeLikelihoodEngineFactory.cdiBM(...)) has been
     // deprecated in favor of the native moment-form engine; enableCdiBMLikelihood() is now a
@@ -72,6 +76,18 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         assertSelectedEngine(delegate, CANONICAL_OU_ENGINE);
     }
 
+    public void testParserCanonicalOUCoordinatesSelectsHomogeneousBlockBasisProvider() throws Exception {
+        final CtsCompatibility delegate = parseDelegate(
+                blockBasisOuXml("canonical-message", CanonicalOUOptions.COORDINATES_HOMOGENEOUS_BLOCK_BASIS));
+
+        assertTrue("block-basis coordinates should still select canonical OU",
+                delegate.usesCanonicalOULikelihood());
+        assertSelectedEngine(delegate, CANONICAL_OU_ENGINE);
+        assertEquals("XML coordinate switch should select the block-basis transition provider",
+                HOMOGENEOUS_BLOCK_BASIS_PROVIDER,
+                transitionProvider(delegate).getClass().getName());
+    }
+
     public void testParserCanonicalMessageOUBranchProcessesSelectsCanonicalMessageBackend() throws Exception {
         final CtsCompatibility delegate = parseDelegate(heterogeneousOuXml("canonical-message"));
 
@@ -104,6 +120,12 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         assertParseFails(
                 bmXml("natural-canonical-bm"),
                 "experimental natural-parameter BM backend");
+    }
+
+    public void testParserRejectsCanonicalOUCoordinatesForBM() {
+        assertParseFails(
+                bmXml("bm-moment", " canonicalOUCoordinates=\"homogeneousBlockBasis\""),
+                "canonicalOUCoordinates=\"homogeneousBlockBasis\" is only valid for canonical OU");
     }
 
     public void testParserRejectsOUBranchProcessesForLegacyBackend() {
@@ -214,6 +236,12 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         return field.get(target);
     }
 
+    private static Object transitionProvider(final CtsCompatibility delegate) throws Exception {
+        final Object integrator = privateFieldValue(delegate, "canonicalOUIntegrator");
+        assertNotNull("canonical OU integrator should be selected", integrator);
+        return privateFieldValue(integrator, "transitionProvider");
+    }
+
     private static Field declaredField(final Class<?> initialType, final String fieldName) throws NoSuchFieldException {
         Class<?> type = initialType;
         while (type != null) {
@@ -242,7 +270,16 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
     }
 
     private static String bmXml(final String implementation) {
-        return xml(implementation, "");
+        return bmXml(implementation, "");
+    }
+
+    private static String bmXml(final String implementation,
+                                final String extraLikelihoodAttributes) {
+        return xml(implementation, extraLikelihoodAttributes, "",
+                "    <strictClockBranchRates id=\"trait.clock\">"
+                        + "        <rate><parameter id=\"trait.clock.rate\" value=\"1.0\"/></rate>"
+                        + "    </strictClockBranchRates>",
+                "        <strictClockBranchRates idref=\"trait.clock\"/>");
     }
 
     private static String ouXml(final String implementation) {
@@ -324,6 +361,7 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
 
     private static String xml(final String implementation, final String processBlock) {
         return xml(implementation,
+                "",
                 processBlock,
                 "    <strictClockBranchRates id=\"trait.clock\">"
                         + "        <rate><parameter id=\"trait.clock.rate\" value=\"1.0\"/></rate>"
@@ -332,6 +370,14 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
     }
 
     private static String xml(final String implementation,
+                              final String processBlock,
+                              final String traitRateDefinition,
+                              final String traitRateReference) {
+        return xml(implementation, "", processBlock, traitRateDefinition, traitRateReference);
+    }
+
+    private static String xml(final String implementation,
+                              final String extraLikelihoodAttributes,
                               final String processBlock,
                               final String traitRateDefinition,
                               final String traitRateReference) {
@@ -358,7 +404,7 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
                 + "    </multivariateDiffusionModel>"
                 + traitRateDefinition
                 + "    <traitDataLikelihood id=\"likelihood\" traitName=\"X\" implementation=\"" + implementation
-                + "\" reconstructTraits=\"false\">"
+                + "\" reconstructTraits=\"false\"" + extraLikelihoodAttributes + ">"
                 + "        <multivariateDiffusionModel idref=\"diffusionModel\"/>"
                 + "        <treeModel idref=\"treeModel\"/>"
                 + traitRateReference
@@ -368,6 +414,68 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
                 + "            <priorSampleSize><parameter value=\"10.0\"/></priorSampleSize>"
                 + "        </conjugateRootPrior>"
                 + processBlock
+                + "    </traitDataLikelihood>"
+                + "</beast>";
+    }
+
+    private static String blockBasisOuXml(final String implementation,
+                                          final String canonicalOUCoordinates) {
+        return "<beast>"
+                + "    <taxa id=\"taxa\">"
+                + "        <taxon id=\"A\"><attr name=\"X\">11 12 13</attr></taxon>"
+                + "        <taxon id=\"B\"><attr name=\"X\">1 2 3</attr></taxon>"
+                + "        <taxon id=\"C\"><attr name=\"X\">3 3 4</attr></taxon>"
+                + "    </taxa>"
+                + "    <newick id=\"tree\">((A:1,B:1):1,C:2);</newick>"
+                + "    <treeModel id=\"treeModel\">"
+                + "        <newick idref=\"tree\"/>"
+                + "        <rootHeight><parameter id=\"block.tree.rootHeight\"/></rootHeight>"
+                + "        <nodeHeights internalNodes=\"true\"><parameter id=\"block.tree.internalNodeHeights\"/></nodeHeights>"
+                + "        <nodeHeights internalNodes=\"true\" rootNode=\"true\"><parameter id=\"block.tree.allInternalNodeHeights\"/></nodeHeights>"
+                + "    </treeModel>"
+                + "    <multivariateDiffusionModel id=\"diffusionModel\">"
+                + "        <precisionMatrix>"
+                + "            <matrixParameter id=\"precisionMatrix\">"
+                + "                <parameter id=\"block.precision.col1\" value=\"1.00 0.25 0.05\"/>"
+                + "                <parameter id=\"block.precision.col2\" value=\"0.25 1.50 0.10\"/>"
+                + "                <parameter id=\"block.precision.col3\" value=\"0.05 0.10 1.20\"/>"
+                + "            </matrixParameter>"
+                + "        </precisionMatrix>"
+                + "    </multivariateDiffusionModel>"
+                + "    <strictClockBranchRates id=\"trait.clock\">"
+                + "        <rate><parameter id=\"block.trait.clock.rate\" value=\"1.0\"/></rate>"
+                + "    </strictClockBranchRates>"
+                + "    <traitDataLikelihood id=\"likelihood\" traitName=\"X\" implementation=\"" + implementation
+                + "\" reconstructTraits=\"false\" selectionChart=\"rotatedBlock\" canonicalOUCoordinates=\""
+                + canonicalOUCoordinates + "\">"
+                + "        <multivariateDiffusionModel idref=\"diffusionModel\"/>"
+                + "        <treeModel idref=\"treeModel\"/>"
+                + "        <strictClockBranchRates idref=\"trait.clock\"/>"
+                + "        <traitParameter><parameter id=\"block.leafTraits\"/></traitParameter>"
+                + "        <conjugateRootPrior>"
+                + "            <meanParameter><parameter value=\"0.0 0.0 0.0\"/></meanParameter>"
+                + "            <priorSampleSize><parameter value=\"10.0\"/></priorSampleSize>"
+                + "        </conjugateRootPrior>"
+                + "        <optimalTraits>"
+                + "            <strictClockBranchRates><rate><parameter id=\"block.opt.1\" value=\"1.0\"/></rate></strictClockBranchRates>"
+                + "            <strictClockBranchRates><rate><parameter id=\"block.opt.2\" value=\"2.0\"/></rate></strictClockBranchRates>"
+                + "            <strictClockBranchRates><rate><parameter id=\"block.opt.3\" value=\"-1.0\"/></rate></strictClockBranchRates>"
+                + "        </optimalTraits>"
+                + "        <strengthOfSelectionMatrix>"
+                + "            <blockDiagonalPolarStableMatrixParameter id=\"blockSelection\">"
+                + "                <rotationMatrix>"
+                + "                    <matrixParameter id=\"R.block\">"
+                + "                        <parameter id=\"R.block.col1\" value=\"1.00 0.10 0.05\"/>"
+                + "                        <parameter id=\"R.block.col2\" value=\"0.20 1.10 0.10\"/>"
+                + "                        <parameter id=\"R.block.col3\" value=\"0.05 0.15 0.95\"/>"
+                + "                    </matrixParameter>"
+                + "                </rotationMatrix>"
+                + "                <scalarBlock><parameter id=\"block.scalar\" value=\"-2.2\" upper=\"0.0\"/></scalarBlock>"
+                + "                <blockRho><parameter id=\"block.rho\" value=\"-1.8\" upper=\"0.0\"/></blockRho>"
+                + "                <blockTheta><parameter id=\"block.theta\" value=\"0.2\" lower=\"-0.785398\" upper=\"0.785398\"/></blockTheta>"
+                + "                <blockT><parameter id=\"block.t\" value=\"0.15\"/></blockT>"
+                + "            </blockDiagonalPolarStableMatrixParameter>"
+                + "        </strengthOfSelectionMatrix>"
                 + "    </traitDataLikelihood>"
                 + "</beast>";
     }

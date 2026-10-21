@@ -33,6 +33,15 @@ package dr.evomodel.treedatalikelihood.continuousNew.canonical;
  */
 public interface CanonicalTransitionMomentProvider {
 
+    /**
+     * Whether branch-gradient preparation should prefer these moment-form
+     * transition pieces over reconstructing moments from canonical precision
+     * blocks for this branch.
+     */
+    default boolean useTransitionMomentsForBranchAdjoints(final int childNodeIndex) {
+        return false;
+    }
+
     void fillTransitionMatrixFlat(double branchLength, double[] out);
 
     default void fillTransitionMatrixFlat(final int childNodeIndex,

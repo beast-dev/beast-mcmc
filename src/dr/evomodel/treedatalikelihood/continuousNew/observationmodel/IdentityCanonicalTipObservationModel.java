@@ -12,14 +12,13 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
     private final int dimension;
     private final double[] values;
     private final boolean[] observed;
-    private final int observedCount;
+    private int observedCount;
 
     public static IdentityCanonicalTipObservationModel fromObservation(
             final CanonicalTipObservation observation) {
-        return new IdentityCanonicalTipObservationModel(
-                observation.values,
-                observation.observed,
-                observation.observedCount);
+        final IdentityCanonicalTipObservationModel model = missing(observation.dim);
+        model.copyFromObservation(observation);
+        return model;
     }
 
     public static IdentityCanonicalTipObservationModel missing(final int dimension) {
@@ -39,6 +38,26 @@ public final class IdentityCanonicalTipObservationModel implements CanonicalTipO
         this.values = values.clone();
         this.observed = observed.clone();
         this.observedCount = observedCount;
+    }
+
+    public void copyFromObservation(final CanonicalTipObservation observation) {
+        if (observation.dim != dimension) {
+            throw new IllegalArgumentException("Dimension mismatch: "
+                    + observation.dim + " vs " + dimension);
+        }
+        System.arraycopy(observation.values, 0, values, 0, dimension);
+        System.arraycopy(observation.observed, 0, observed, 0, dimension);
+        observedCount = observation.observedCount;
+    }
+
+    public void copyFrom(final IdentityCanonicalTipObservationModel source) {
+        if (source.dimension != dimension) {
+            throw new IllegalArgumentException("Dimension mismatch: "
+                    + source.dimension + " vs " + dimension);
+        }
+        System.arraycopy(source.values, 0, values, 0, dimension);
+        System.arraycopy(source.observed, 0, observed, 0, dimension);
+        observedCount = source.observedCount;
     }
 
     @Override

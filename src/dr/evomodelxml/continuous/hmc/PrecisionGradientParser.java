@@ -31,6 +31,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.*;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -94,7 +95,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
             @Override
             public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
-                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final CtsCompatibility continuousData,
                                                               final MatrixParameterInterface parameter) {
                 return new CanonicalPrecisionGradient(treeDataLikelihood, continuousData, parameter);
             }
@@ -109,7 +110,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
             @Override
             public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
-                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final CtsCompatibility continuousData,
                                                               final MatrixParameterInterface parameter) {
                 return new CanonicalCorrelationPrecisionGradient(treeDataLikelihood, continuousData, parameter);
             }
@@ -124,7 +125,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
             @Override
             public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
-                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final CtsCompatibility continuousData,
                                                               final MatrixParameterInterface parameter) {
                 return new CanonicalDiagonalPrecisionGradient(treeDataLikelihood, continuousData, parameter);
             }
@@ -139,7 +140,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
 
             @Override
             public AbstractPrecisionGradient canonicalFactory(final TreeDataLikelihood treeDataLikelihood,
-                                                              final ContinuousDataLikelihoodDelegate continuousData,
+                                                              final CtsCompatibility continuousData,
                                                               final MatrixParameterInterface parameter) {
                 return new CanonicalFullCorrelationPrecisionGradient(treeDataLikelihood, continuousData, parameter);
             }
@@ -150,7 +151,7 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
                                                    MatrixParameterInterface parameter);
 
         abstract AbstractPrecisionGradient canonicalFactory(TreeDataLikelihood treeDataLikelihood,
-                                                            ContinuousDataLikelihoodDelegate continuousData,
+                                                            CtsCompatibility continuousData,
                                                             MatrixParameterInterface parameter);
     }
 
@@ -169,25 +170,33 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
         if (wishartStatistics != null) {
             gradientWrtPrecisionProvider = new GradientWrtPrecisionProvider.WishartGradientWrtPrecisionProvider(wishartStatistics);
         } else {
-            int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-            Tree tree = treeDataLikelihood.getTree();
-
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-            ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
             final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+            final CtsCompatibility compatibleData =
+                    delegate instanceof CtsCompatibility ? (CtsCompatibility) delegate : null;
             final boolean useCanonicalImplementation =
                     IMPLEMENTATION_CANONICAL.equals(implementation)
-                            || (IMPLEMENTATION_LEGACY.equals(implementation) && continuousData.usesCanonicalOULikelihood());
+                            || (IMPLEMENTATION_LEGACY.equals(implementation)
+                            && compatibleData != null
+                            && compatibleData.usesCanonicalOULikelihood());
 
             if (useCanonicalImplementation) {
-                if (!continuousData.usesCanonicalOULikelihood()) {
+                if (compatibleData == null || !compatibleData.usesCanonicalOULikelihood()) {
                     throw new XMLParseException(
                             "precisionGradient implementation=\"canonical\" requires "
                                     + "traitDataLikelihood implementation=\"canonical\".");
                 }
                 final ParameterMode parameterMode = parseParameterMode(xo);
-                return parameterMode.canonicalFactory(treeDataLikelihood, continuousData, parameter);
+                return parameterMode.canonicalFactory(treeDataLikelihood, compatibleData, parameter);
             }
+
+            if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+                throw new XMLParseException(
+                        "precisionGradient legacy implementation requires a legacy ContinuousDataLikelihoodDelegate.");
+            }
+            ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+            int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+            Tree tree = treeDataLikelihood.getTree();
 
             ModelExtensionProvider.NormalExtensionProvider extensionProvider = (ModelExtensionProvider.NormalExtensionProvider)
                     xo.getChild(ModelExtensionProvider.NormalExtensionProvider.class);
@@ -224,7 +233,9 @@ public class PrecisionGradientParser extends AbstractXMLObjectParser {
             new ElementRule(ModelExtensionProvider.NormalExtensionProvider.class, true),
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
+            AttributeRule.newStringRule(PARAMETER, true),
             AttributeRule.newStringRule(IMPLEMENTATION, true),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
     };
 
     @Override

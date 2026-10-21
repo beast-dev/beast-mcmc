@@ -10,6 +10,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalG
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalTransitionAdjointUtils;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientMessageBundle;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.LinearExactTipProjection;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.PartialIdentityTipObservationWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationModelWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipParentMessageWorkspace;
@@ -38,6 +39,7 @@ public final class BranchGradientWorkspace {
     public final CanonicalLocalTransitionAdjoints adjoints;
     public final BranchGradientMessageBundle branchMessages;
     public final PartialIdentityTipObservationWorkspace partialObservationWorkspace;
+    public final LinearExactTipProjection linearExactProjection;
     public final int[] observedIndexScratch;
     public final int[] missingIndexScratch;
     public final int[] reducedIndexByTraitScratch;
@@ -98,6 +100,7 @@ public final class BranchGradientWorkspace {
         this.adjoints = adjoint == null ? null : adjoint.adjoints;
         this.branchMessages = adjoint == null ? null : new BranchGradientMessageBundle();
         this.partialObservationWorkspace = adjoint == null ? null : adjoint.partialObservationWorkspace;
+        this.linearExactProjection = adjoint == null ? null : adjoint.linearExactProjection;
         this.observedIndexScratch = adjoint == null ? null : adjoint.observedIndexScratch;
         this.missingIndexScratch = adjoint == null ? null : adjoint.missingIndexScratch;
         this.reducedIndexByTraitScratch = adjoint == null ? null : adjoint.reducedIndexByTraitScratch;

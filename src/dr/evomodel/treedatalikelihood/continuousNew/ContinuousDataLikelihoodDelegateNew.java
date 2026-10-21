@@ -699,10 +699,14 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
     }
 
     public void enableCanonicalLikelihood() {
+        enableCanonicalLikelihood(CanonicalOUOptions.defaults());
+    }
+
+    public void enableCanonicalLikelihood(final CanonicalOUOptions canonicalOUOptions) {
         if (useCdiBMLikelihood || useMomentBMLikelihood || useCanonicalOULikelihood) {
             return;
         }
-        applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.canonical(this));
+        applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.canonical(this, canonicalOUOptions));
     }
 
     public void enableCdiBMLikelihood() {
@@ -720,6 +724,10 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
     }
 
     public void enableCanonicalOULikelihood() {
+        enableCanonicalOULikelihood(CanonicalOUOptions.defaults());
+    }
+
+    public void enableCanonicalOULikelihood(final CanonicalOUOptions canonicalOUOptions) {
         if (useCanonicalOULikelihood) {
             return;
         }
@@ -729,7 +737,8 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
         }
         applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.canonicalOU(
                 this,
-                (OUDiffusionModelDelegate) diffusionProcessDelegate));
+                (OUDiffusionModelDelegate) diffusionProcessDelegate,
+                canonicalOUOptions));
     }
 
     private void applyEngineSelection(final ContinuousTreeLikelihoodEngineFactory.Selection selection) {
@@ -741,7 +750,8 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
         useMomentBMLikelihood = selection.usesMomentBMLikelihood();
     }
 
-    CanonicalOUIntegrator createCanonicalOUIntegrator(final OUDiffusionModelDelegate ouDelegate) {
+    CanonicalOUIntegrator createCanonicalOUIntegrator(final OUDiffusionModelDelegate ouDelegate,
+                                                      final CanonicalOUOptions canonicalOUOptions) {
         final CanonicalOUBranchProcessSpecification branchProcessSpecification =
                 ouDelegate.getCanonicalBranchProcessSpecification();
         if (branchProcessSpecification != null) {
@@ -753,7 +763,8 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
                     rootPrior,
                     ouDelegate.getCanonicalStationaryMeanParameter(),
                     rateModel,
-                    rateTransformation);
+                    rateTransformation,
+                    canonicalOUOptions);
         }
         return new CanonicalOUTreeLikelihoodIntegrator(
                 tree,
@@ -763,7 +774,8 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
                 rootPrior,
                 ouDelegate.getCanonicalStationaryMeanParameter(),
                 rateModel,
-                rateTransformation);
+                rateTransformation,
+                canonicalOUOptions);
     }
 
     public CanonicalOUGradientAdapter getCanonicalOUGradientAdapter() {
@@ -1227,4 +1239,3 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
     }
 
 }
-

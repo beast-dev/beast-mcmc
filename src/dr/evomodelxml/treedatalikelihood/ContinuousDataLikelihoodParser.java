@@ -38,6 +38,7 @@ import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
@@ -69,6 +70,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
     private static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
     private static final String DRIFT_MODELS = AbstractMultivariateTraitLikelihood.DRIFT_MODELS;
     private static final String OPTIMAL_TRAITS = AbstractMultivariateTraitLikelihood.OPTIMAL_TRAITS;
+    private static final String REPORT_MULTIVARIATE = AbstractMultivariateTraitLikelihood.REPORT_MULTIVARIATE;
+    private static final String INTEGRATE_INTERNAL_TRAITS = AbstractMultivariateTraitLikelihood.INTEGRATE;
 
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     private static final String ALLOW_SINGULAR = "allowSingular";
@@ -97,6 +100,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
     private static final String CANONICAL_OU_BRANCH_PROCESSES = "canonicalOUBranchProcesses";
     private static final String BRANCH_PROCESS_INDEX = "branchProcessIndex";
     private static final String PROCESS = "process";
+    private static final String CANONICAL_OU_COORDINATES = CanonicalOUOptions.COORDINATES_ATTRIBUTE;
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -167,6 +171,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
         final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY);
         final ImplementationMode implementationMode = ImplementationMode.parse(implementation);
+        final CanonicalOUOptions canonicalOUOptions = parseCanonicalOUOptions(xo);
 
         if (reciprocalRates) {
             throw new XMLParseException("Reciprocal rates are not yet implemented.");
@@ -291,6 +296,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         } else {
             throw new RuntimeException("Unrecognized delegate provider.");
         }
+        validateCanonicalOUOptions(
+                canonicalOUOptions,
+                implementationMode,
+                implementation,
+                delegateProvider);
 
         // End Parse Evolution Model
 
@@ -345,7 +355,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                     implementation,
                     delegateProvider,
                     delegate,
-                    reconstructTraits);
+                    reconstructTraits,
+                    canonicalOUOptions);
         }
 
 
@@ -418,7 +429,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                                                 final String implementation,
                                                 final DelegateProvider delegateProvider,
                                                 final CtsCompatibility delegate,
-                                                final boolean reconstructTraits) throws XMLParseException {
+                                                final boolean reconstructTraits,
+                                                final CanonicalOUOptions canonicalOUOptions) throws XMLParseException {
         if (implementationMode.requiresLikelihoodOnly() && reconstructTraits) {
             throw new XMLParseException(
                     "traitDataLikelihood implementation=\"" + implementation
@@ -430,7 +442,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 case LEGACY:
                     return;
                 case CANONICAL_COMPATIBILITY:
-                    delegate.enableCanonicalLikelihood();
+                    delegate.enableCanonicalLikelihood(canonicalOUOptions);
                     return;
                 case CDI_MOMENT_BM:
                     if (delegateProvider != DelegateProvider.HOMOGENOUS) {
@@ -459,7 +471,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                                         + "\" is the canonical-message OU backend and supports only OU models. "
                                         + "Use implementation=\"cdi\" or \"cdi-moment\" for production BM.");
                     }
-                    delegate.enableCanonicalOULikelihood();
+                    delegate.enableCanonicalOULikelihood(canonicalOUOptions);
                     return;
                 case NATURAL_CANONICAL_BM:
                     throw new XMLParseException(
@@ -492,6 +504,39 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                 + "\"" + IMPLEMENTATION_OU_CANONICAL_MESSAGE + "\", "
                 + "\"" + IMPLEMENTATION_NATURAL_CANONICAL_BM + "\", or "
                 + "\"" + IMPLEMENTATION_BM_NATURAL_CANONICAL + "\"";
+    }
+
+    private static CanonicalOUOptions parseCanonicalOUOptions(final XMLObject xo)
+            throws XMLParseException {
+        final String coordinates = xo.getAttribute(
+                CANONICAL_OU_COORDINATES,
+                CanonicalOUOptions.COORDINATES_AUTO);
+        try {
+            return CanonicalOUOptions.parseCoordinates(coordinates);
+        } catch (IllegalArgumentException ex) {
+            throw new XMLParseException(ex.getMessage());
+        }
+    }
+
+    private static void validateCanonicalOUOptions(final CanonicalOUOptions canonicalOUOptions,
+                                                   final ImplementationMode implementationMode,
+                                                   final String implementation,
+                                                   final DelegateProvider delegateProvider)
+            throws XMLParseException {
+        if (!canonicalOUOptions.isExplicit()) {
+            return;
+        }
+        final boolean selectsCanonicalOU =
+                delegateProvider == DelegateProvider.OU
+                        && (implementationMode == ImplementationMode.CANONICAL_COMPATIBILITY
+                        || implementationMode == ImplementationMode.CANONICAL_MESSAGE_OU);
+        if (!selectsCanonicalOU) {
+            throw new XMLParseException(
+                    CANONICAL_OU_COORDINATES + "=\"" + canonicalOUOptions.toXmlString()
+                            + "\" is only valid for canonical OU traitDataLikelihood backends; "
+                            + "implementation=\"" + implementation + "\" selected "
+                            + delegateProvider.name().toLowerCase(Locale.ROOT) + ".");
+        }
     }
 
     private static CanonicalOUBranchProcessSpecification parseCanonicalOUBranchProcesses(
@@ -593,13 +638,22 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
             AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
+            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
+            AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_OBSERVED, true),
+            AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
+            AttributeRule.newBooleanRule(INTEGRATE_INTERNAL_TRAITS, true),
             new StringAttributeRule(OUSelectionChartParserHelper.SELECTION_CHART,
                     "Selection-matrix chart for OU models. Orthogonal block is the default; dense must be explicit.",
                     OUSelectionChartParserHelper.ALLOWED_SELECTION_CHARTS, true),
             AttributeRule.newStringRule(IMPLEMENTATION, true),
+            new StringAttributeRule(CANONICAL_OU_COORDINATES,
+                    "Coordinate system for canonical OU messages. Use homogeneousBlockBasis "
+                            + "for homogeneous block-diagonal OU in the selection basis.",
+                    CanonicalOUOptions.ALLOWED_COORDINATES,
+                    true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),
     };

@@ -4,6 +4,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.Canonical
 import dr.inference.model.BlockDiagonalPolarStableMatrixParameter;
 import dr.inference.model.GivensRotationMatrixParameter;
 import dr.inference.model.InvertibleMatrixParametrization;
+import dr.inference.model.NativeMatrixGradientProvider;
 import dr.inference.model.OrthogonalMatrixProvider;
 import dr.inference.model.Parameter;
 import test.dr.math.MathTestCase;
@@ -17,6 +18,7 @@ public class GivensRotationMatrixParameterTest extends MathTestCase {
 
         assertTrue(rotation instanceof OrthogonalMatrixProvider);
         assertTrue(rotation instanceof InvertibleMatrixParametrization);
+        assertTrue(rotation instanceof NativeMatrixGradientProvider);
         assertTrue(rotation.isInvertible());
         assertTrue(rotation.supportsNativeParameter(angles));
         assertTrue(rotation.supportsNativeParameter(rotation.getNativeParameter()));

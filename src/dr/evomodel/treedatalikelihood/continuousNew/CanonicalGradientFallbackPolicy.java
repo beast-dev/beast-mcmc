@@ -33,6 +33,7 @@ public final class CanonicalGradientFallbackPolicy {
     private static final String BRANCH_GRADIENT_THREADS_PROPERTY          = "beast.experimental.canonicalBranchGradientThreads";
     private static final String TRANSITION_PRELOAD_THREADS_PROPERTY        = "beast.experimental.canonicalTransitionPreloadThreads";
     private static final String PREPARED_TRANSITION_MOMENTS_PROPERTY      = "beast.experimental.canonicalUsePreparedTransitionMoments";
+    private static final String BLOCK_BASIS_HOMOGENEOUS_PROPERTY          = CanonicalOUOptions.BLOCK_BASIS_HOMOGENEOUS_PROPERTY;
 
     /**
      * All property names recognized by this class.
@@ -50,7 +51,8 @@ public final class CanonicalGradientFallbackPolicy {
                     DISABLE_EXACT_TIP_SHORTCUT_PROPERTY,
                     BRANCH_GRADIENT_THREADS_PROPERTY,
                     TRANSITION_PRELOAD_THREADS_PROPERTY,
-                    PREPARED_TRANSITION_MOMENTS_PROPERTY)));
+                    PREPARED_TRANSITION_MOMENTS_PROPERTY,
+                    BLOCK_BASIS_HOMOGENEOUS_PROPERTY)));
 
     // -----------------------------------------------------------------------
     // Fields

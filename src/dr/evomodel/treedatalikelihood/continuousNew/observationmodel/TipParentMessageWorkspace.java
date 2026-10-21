@@ -15,6 +15,8 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalG
  *   <li>{@link #observationModelWorkspace} — covariance inversion scratch for Gaussian-link models.</li>
  *   <li>{@link #partialIdentityProjection} — Schur-complement projection for partially observed
  *       exact identity tips.</li>
+ *   <li>{@link #linearExactProjection} — moment-form projection for exact linear
+ *       observations of a child state.</li>
  * </ul>
  *
  * <p>Note: the Gaussian message-passing workspace ({@code CanonicalGaussianMessageOps.Workspace})
@@ -26,11 +28,13 @@ public final class TipParentMessageWorkspace {
     public final CanonicalGaussianState childStateScratch;
     public final TipObservationModelWorkspace observationModelWorkspace;
     public final PartialIdentityTipProjection partialIdentityProjection;
+    public final LinearExactTipProjection linearExactProjection;
 
     public TipParentMessageWorkspace(final int dim) {
         if (dim < 1) throw new IllegalArgumentException("dim must be >= 1");
         this.childStateScratch         = new CanonicalGaussianState(dim);
         this.observationModelWorkspace  = new TipObservationModelWorkspace();
         this.partialIdentityProjection  = new PartialIdentityTipProjection(dim);
+        this.linearExactProjection      = new LinearExactTipProjection(dim);
     }
 }

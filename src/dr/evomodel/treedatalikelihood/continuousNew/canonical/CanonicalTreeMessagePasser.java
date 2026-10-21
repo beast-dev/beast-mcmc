@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood.continuousNew.canonical;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientInputs;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservation;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 
 /**
  * Canonical-form tree message passer contract.
@@ -46,6 +47,8 @@ public interface CanonicalTreeMessagePasser {
     int getTipCount();
 
     void setTipObservation(int tipIndex, CanonicalTipObservation observation);
+
+    void setTipObservationModel(int tipIndex, CanonicalTipObservationModel observationModel);
 
     double computePostOrderLogLikelihood(CanonicalBranchTransitionProvider transitionProvider,
                                          CanonicalRootPrior rootPrior);

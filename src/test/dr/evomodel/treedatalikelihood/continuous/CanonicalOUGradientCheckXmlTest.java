@@ -21,13 +21,17 @@ public final class CanonicalOUGradientCheckXmlTest extends TestCase {
             "tests/TestXML/testCanonicalOUBranchRateGradientCheck.xml";
     private static final String NODE_HEIGHT_XML =
             "tests/TestXML/testCanonicalOUNodeHeightGradientCheck.xml";
+    private static final String BLOCK_BASIS_PARTIAL_XML =
+            "tests/TestXML/testCanonicalOUBlockBasisPartialTips.xml";
+    private static final String BLOCK_BASIS_ANOLIS_FULL_TIPS_XML =
+            "tests/TestXML/testCanonicalOUBlockBasisAnolisFullTips.xml";
 
     public void testStrictClockBranchRateXmlRunsHmcGradientCheck() throws Exception {
         final ParsedXml parsed = parseXml(BRANCH_RATE_XML);
 
         assertNativeObject(parsed.objects, "canonical.clock.gradient", CanonicalOUBranchRateGradient.class);
         assertNativeObject(parsed.objects, "canonicalClockHMC", HamiltonianMonteCarloOperator.class);
-        assertGradientCheckAttributes(parsed.file);
+        assertGradientCheckAttributes(parsed.file, "100", "1e-4");
 
         runMcmc(parsed.objects);
     }
@@ -37,7 +41,26 @@ public final class CanonicalOUGradientCheckXmlTest extends TestCase {
 
         assertNativeObject(parsed.objects, "canonical.nodeHeight.gradient", CanonicalOUNodeHeightGradient.class);
         assertNativeObject(parsed.objects, "canonicalNodeHeightHMC", ReflectiveHamiltonianMonteCarloOperator.class);
-        assertGradientCheckAttributes(parsed.file);
+        assertGradientCheckAttributes(parsed.file, "100", "1e-4");
+
+        runMcmc(parsed.objects);
+    }
+
+    public void testBlockBasisPartialTipXmlRunsBranchRateGradientCheck() throws Exception {
+        final ParsedXml parsed = parseXml(BLOCK_BASIS_PARTIAL_XML);
+
+        assertNativeObject(parsed.objects, "block.clock.gradient", CanonicalOUBranchRateGradient.class);
+        assertNativeObject(parsed.objects, "blockClockHMC", HamiltonianMonteCarloOperator.class);
+        assertGradientCheckAttributes(parsed.file, "100", "1e-4");
+
+        runMcmc(parsed.objects);
+    }
+
+    public void testBlockBasisAnolisFullTipXmlRunsHmcGradientCheck() throws Exception {
+        final ParsedXml parsed = parseXml(BLOCK_BASIS_ANOLIS_FULL_TIPS_XML);
+
+        assertNativeObject(parsed.objects, "anoleBlockBasisFullTipHMC", HamiltonianMonteCarloOperator.class);
+        assertGradientCheckAttributes(parsed.file, "10", "1e-3");
 
         runMcmc(parsed.objects);
     }
@@ -60,12 +83,14 @@ public final class CanonicalOUGradientCheckXmlTest extends TestCase {
                 expectedType.isInstance(object.getNativeObject()));
     }
 
-    private static void assertGradientCheckAttributes(final File file) throws Exception {
+    private static void assertGradientCheckAttributes(final File file,
+                                                      final String expectedCount,
+                                                      final String expectedTolerance) throws Exception {
         final String xml = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
         assertTrue("HMC XML should use the stress gradient check count",
-                xml.contains("gradientCheckCount=\"100\""));
+                xml.contains("gradientCheckCount=\"" + expectedCount + "\""));
         assertTrue("HMC XML should use the stress gradient check tolerance",
-                xml.contains("gradientCheckTolerance=\"1e-4\""));
+                xml.contains("gradientCheckTolerance=\"" + expectedTolerance + "\""));
     }
 
     private static void runMcmc(final Map<String, XMLObject> objects) {

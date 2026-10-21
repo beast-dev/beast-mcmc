@@ -4,6 +4,7 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.canonical.CanonicalBranchWorkspace;
 import dr.evomodel.continuous.ou.canonical.CanonicalPreparedTransitionCapability;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionMomentProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshotProvider;
@@ -16,7 +17,10 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalT
 import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.CanonicalTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.IdentityCanonicalTipObservationModel;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.LinearExactTipContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.LinearExactTipObservationModel;
 import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.PartialIdentityTipContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.observationmodel.TipObservationMode;
 
 import java.util.Arrays;
 
@@ -33,11 +37,13 @@ public final class CanonicalBranchContributionAssembler {
     private final int dim;
     private final BranchContributionStrategyFactory strategyFactory;
     private final PartialIdentityTipContribution partialIdentityContribution;
+    private final LinearExactTipContribution linearExactContribution;
 
     public CanonicalBranchContributionAssembler(final int dim) {
         this.dim = dim;
         this.strategyFactory = new BranchContributionStrategyFactory();
         this.partialIdentityContribution = new PartialIdentityTipContribution(dim);
+        this.linearExactContribution = new LinearExactTipContribution(dim);
     }
 
     public boolean fillLocalAdjointsForBranch(final int childIndex,
@@ -52,6 +58,11 @@ public final class CanonicalBranchContributionAssembler {
                                              final CanonicalBranchTransitionProvider transitionProvider,
                                              final BranchGradientWorkspace workspace) {
         final int childIndex = messages.getChildNodeIndex();
+        workspace.adjoints.clearObservedTipValueAdjoint();
+        workspace.adjoints.clearObservationBasisAdjoint();
+        if (fillLinearExactAdjointsIfNeeded(messages, transitionProvider, workspace)) {
+            return true;
+        }
         final BranchContributionStrategy strategy = strategyFactory.select(messages);
         if (!strategy.contributes()) {
             return false;
@@ -66,11 +77,58 @@ public final class CanonicalBranchContributionAssembler {
         return true;
     }
 
+    private boolean fillLinearExactAdjointsIfNeeded(
+            final BranchGradientMessageBundle messages,
+            final CanonicalBranchTransitionProvider transitionProvider,
+            final BranchGradientWorkspace workspace) {
+        if (!messages.isExternalChild()
+                || messages.getTipObservationModel().getMode() != TipObservationMode.PARTIAL_LINEAR_EXACT) {
+            return false;
+        }
+        final CanonicalTipObservationModel observationModel = messages.getTipObservationModel();
+        if (!(observationModel instanceof LinearExactTipObservationModel)) {
+            throw new IllegalStateException("Partial linear exact mode requires "
+                    + LinearExactTipObservationModel.class.getSimpleName()
+                    + " but found " + observationModel.getClass().getName());
+        }
+        if (!(transitionProvider instanceof CanonicalTransitionMomentProvider)) {
+            throw new UnsupportedOperationException(
+                    "Partial linear exact observations require a CanonicalTransitionMomentProvider.");
+        }
+        final LinearExactTipObservationModel linearTip =
+                (LinearExactTipObservationModel) observationModel;
+        final CanonicalTransitionMomentProvider momentProvider =
+                (CanonicalTransitionMomentProvider) transitionProvider;
+        final int childIndex = messages.getChildNodeIndex();
+        final double branchLength = transitionProvider.getEffectiveBranchLength(childIndex);
+        if (messages.isFixedParent()) {
+            linearExactContribution.fillLocalAdjointsForFixedParentLinearTip(
+                    linearTip,
+                    childIndex,
+                    momentProvider,
+                    branchLength,
+                    messages.getFixedRootValue(),
+                    workspace);
+        } else {
+            linearExactContribution.fillLocalAdjointsForLinearTip(
+                    messages.getAbovePreOrderAtParent(),
+                    linearTip,
+                    childIndex,
+                    momentProvider,
+                    branchLength,
+                    workspace);
+        }
+        return true;
+    }
+
     private void fillAdjointsFromContribution(final int childIndex,
                                               final CanonicalBranchTransitionProvider transitionProvider,
                                               final CanonicalGaussianTransition transition,
                                               final BranchGradientWorkspace workspace) {
         if (fillAdjointsFromPreparedMoments(childIndex, transitionProvider, transition, workspace)) {
+            return;
+        }
+        if (fillAdjointsFromProviderMoments(childIndex, transitionProvider, transition, workspace)) {
             return;
         }
         CanonicalTransitionAdjointUtils.fillFromCanonicalTransition(
@@ -130,6 +188,41 @@ public final class CanonicalBranchContributionAssembler {
         return true;
     }
 
+    private boolean fillAdjointsFromProviderMoments(final int childIndex,
+                                                    final CanonicalBranchTransitionProvider transitionProvider,
+                                                    final CanonicalGaussianTransition transition,
+                                                    final BranchGradientWorkspace workspace) {
+        if (!USE_PREPARED_TRANSITION_MOMENTS
+                || !(transitionProvider instanceof CanonicalTransitionMomentProvider)
+                || workspace.transitionMatrixFlat == null
+                || workspace.mean2 == null
+                || workspace.covariance2 == null) {
+            return false;
+        }
+
+        final CanonicalTransitionMomentProvider momentProvider =
+                (CanonicalTransitionMomentProvider) transitionProvider;
+        if (!momentProvider.useTransitionMomentsForBranchAdjoints(childIndex)) {
+            return false;
+        }
+
+        momentProvider.fillTransitionMomentsFlat(
+                childIndex,
+                transitionProvider.getEffectiveBranchLength(childIndex),
+                workspace.transitionMatrixFlat,
+                workspace.mean2,
+                workspace.covariance2);
+        CanonicalTransitionAdjointUtils.fillFromMoments(
+                transition.precisionYY,
+                workspace.covariance2,
+                workspace.transitionMatrixFlat,
+                workspace.mean2,
+                workspace.contribution,
+                workspace.transitionAdjointWorkspace,
+                workspace.adjoints);
+        return true;
+    }
+
     private CanonicalGaussianTransition transitionFor(final int childIndex,
                                                       final CanonicalBranchTransitionProvider transitionProvider,
                                                       final BranchGradientWorkspace workspace) {
@@ -178,6 +271,7 @@ public final class CanonicalBranchContributionAssembler {
             }
         }
         workspace.contribution.dLogL_dLogNormalizer = -1.0;
+        fillObservedTipValueAdjoint(transition, tipObservation, workspace.mean, workspace.adjoints);
     }
 
     void fillContributionForFixedParentObservedTip(final CanonicalGaussianTransition transition,
@@ -201,6 +295,26 @@ public final class CanonicalBranchContributionAssembler {
             }
         }
         workspace.contribution.dLogL_dLogNormalizer = -1.0;
+        fillObservedTipValueAdjoint(transition, tipObservation, fixedRootValue, workspace.adjoints);
+    }
+
+    private void fillObservedTipValueAdjoint(final CanonicalGaussianTransition transition,
+                                             final IdentityCanonicalTipObservationModel tipObservation,
+                                             final double[] parentMean,
+                                             final dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints adjoints) {
+        for (int k = 0; k < dim; ++k) {
+            final double yk = tipObservation.valueAt(k);
+            adjoints.observedTipValue[k] = yk;
+            double precisionYYy = 0.0;
+            double precisionXYTransposeMean = 0.0;
+            for (int i = 0; i < dim; ++i) {
+                precisionYYy += transition.precisionYY[k * dim + i] * tipObservation.valueAt(i);
+                precisionXYTransposeMean += transition.precisionXY[i * dim + k] * parentMean[i];
+            }
+            adjoints.dLogL_dObservedTipValue[k] =
+                    -precisionXYTransposeMean - precisionYYy + transition.informationY[k];
+        }
+        adjoints.hasObservedTipValueAdjoint = true;
     }
 
     void fillContributionForFixedParentInternalNode(final CanonicalGaussianTransition transition,

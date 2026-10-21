@@ -1,6 +1,7 @@
 package dr.evomodel.treedatalikelihood.continuousNew;
 
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.DiffusionProcessDelegate;
@@ -12,9 +13,11 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalO
 public interface CtsCompatibility extends DataLikelihoodDelegate {
     //WishartStatisticsWrapper is the only one that actually required this to be an abstractModel
     void enableCanonicalLikelihood();
+    void enableCanonicalLikelihood(CanonicalOUOptions canonicalOUOptions);
     void enableCdiBMLikelihood();
     void enableMomentBMLikelihood();
     void enableCanonicalOULikelihood();
+    void enableCanonicalOULikelihood(CanonicalOUOptions canonicalOUOptions);
     PrecisionType getPrecisionType();
     void setExtensionHelper();
     int getTraitDim();
@@ -24,6 +27,7 @@ public interface CtsCompatibility extends DataLikelihoodDelegate {
     int getActiveMatrixIndex(int nodeIndex);
     int getActivePrecisionIndex(int precisionIndex);
     DiffusionProcessDelegate getDiffusionProcessDelegate();
+    ConjugateRootTraitPrior getRootPrior();
     ContinuousDiffusionIntegrator getIntegrator();
     dr.evomodel.continuous.MultivariateDiffusionModel getDiffusionModel();
     int getPartialBufferCount();

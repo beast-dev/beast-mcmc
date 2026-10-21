@@ -51,9 +51,14 @@ final class ContinuousTreeLikelihoodEngineFactory {
 //    }
 
     static Selection canonical(final ContinuousDataLikelihoodDelegateNew delegate) {
+        return canonical(delegate, CanonicalOUOptions.defaults());
+    }
+
+    static Selection canonical(final ContinuousDataLikelihoodDelegateNew delegate,
+                               final CanonicalOUOptions canonicalOUOptions) {
         final DiffusionProcessDelegate diffusionProcessDelegate = delegate.getDiffusionProcessDelegate();
         if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-            return canonicalOU(delegate, (OUDiffusionModelDelegate) diffusionProcessDelegate);
+            return canonicalOU(delegate, (OUDiffusionModelDelegate) diffusionProcessDelegate, canonicalOUOptions);
         }
 //        if (diffusionProcessDelegate instanceof HomogeneousDiffusionModelDelegate) {
 //            return cdiBM(delegate);
@@ -100,13 +105,20 @@ final class ContinuousTreeLikelihoodEngineFactory {
 
     static Selection canonicalOU(final ContinuousDataLikelihoodDelegateNew delegate,
                                  final OUDiffusionModelDelegate ouDelegate) {
+        return canonicalOU(delegate, ouDelegate, CanonicalOUOptions.defaults());
+    }
+
+    static Selection canonicalOU(final ContinuousDataLikelihoodDelegateNew delegate,
+                                 final OUDiffusionModelDelegate ouDelegate,
+                                 final CanonicalOUOptions canonicalOUOptions) {
         validateSingleTrait(delegate, "Canonical OU likelihood");
         if (ouDelegate instanceof IntegratedOUDiffusionModelDelegate) {
             throw new UnsupportedOperationException(
                     "Canonical OU likelihood does not yet support integrated OU delegates.");
         }
 
-        final CanonicalOUIntegrator integrator = delegate.createCanonicalOUIntegrator(ouDelegate);
+        final CanonicalOUIntegrator integrator =
+                delegate.createCanonicalOUIntegrator(ouDelegate, canonicalOUOptions);
         return new Selection(
                 new CanonicalOUContinuousTreeLikelihoodEngine(delegate, integrator),
                 integrator,

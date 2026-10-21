@@ -12,6 +12,13 @@ public final class CanonicalBranchLengthGradientEngine {
                         final BranchGradientInputs inputs,
                         final double[] gradT) {
         Arrays.fill(gradT, 0.0);
+        if (provider instanceof HomogeneousBlockBasisGradientCapability) {
+            computeBlockBasis(
+                    (HomogeneousBlockBasisGradientCapability) provider,
+                    inputs,
+                    gradT);
+            return;
+        }
         final OUProcessModel homogeneousProcessModel =
                 provider.getProcessModelCount() == 1 ? provider.getProcessModel(0) : null;
         for (int activeIndex = 0; activeIndex < inputs.getActiveBranchCount(); ++activeIndex) {
@@ -26,6 +33,17 @@ public final class CanonicalBranchLengthGradientEngine {
                             inputs.getTransitionOffsetAdjoint(activeIndex),
                             inputs.getTransitionCovarianceAdjointFlat(activeIndex),
                             false);
+        }
+    }
+
+    private void computeBlockBasis(final HomogeneousBlockBasisGradientCapability provider,
+                                   final BranchGradientInputs inputs,
+                                   final double[] gradT) {
+        for (int activeIndex = 0; activeIndex < inputs.getActiveBranchCount(); ++activeIndex) {
+            gradT[inputs.getActiveChildIndex(activeIndex)] =
+                    provider.contractBranchLengthGradient(
+                            inputs.getBranchLength(activeIndex),
+                            inputs.getLocalAdjoints(activeIndex));
         }
     }
 }

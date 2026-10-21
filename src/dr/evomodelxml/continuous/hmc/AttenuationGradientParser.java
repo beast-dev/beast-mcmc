@@ -33,6 +33,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalSelectionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -140,10 +141,6 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
-        int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
-        Tree tree = treeDataLikelihood.getTree();
-
-        ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
         final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter =
                 parameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter
                         ? (AbstractBlockDiagonalTwoByTwoMatrixParameter) parameter
@@ -151,9 +148,17 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         final Parameter requestedParameter =
                 nativeBlockParameter != null ? nativeBlockParameter.getParameter() : null;
         final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+        final CtsCompatibility compatibleData =
+                delegate instanceof CtsCompatibility ? (CtsCompatibility) delegate : null;
+        final boolean useCanonicalImplementation =
+                nativeBlockParameter != null
+                        && (IMPLEMENTATION_CANONICAL.equals(implementation)
+                        || (IMPLEMENTATION_LEGACY.equals(implementation)
+                        && compatibleData != null
+                        && compatibleData.usesCanonicalOULikelihood()));
 
-        if (nativeBlockParameter != null && IMPLEMENTATION_CANONICAL.equals(implementation)) {
-            if (!continuousData.usesCanonicalOULikelihood()) {
+        if (useCanonicalImplementation) {
+            if (compatibleData == null || !compatibleData.usesCanonicalOULikelihood()) {
                 throw new XMLParseException(
                         "attenuationGradient implementation=\"canonical\" requires "
                                 + "traitDataLikelihood implementation=\"canonical\".");
@@ -161,10 +166,18 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
             requestedParameter.setId(parameter.getId());
             return new CanonicalSelectionParameterGradient(
                     treeDataLikelihood,
-                    continuousData,
+                    compatibleData,
                     requestedParameter,
                     nativeBlockParameter);
         }
+
+        if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+            throw new XMLParseException(
+                    "attenuationGradient legacy implementation requires a legacy ContinuousDataLikelihoodDelegate.");
+        }
+        ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+        int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
+        Tree tree = treeDataLikelihood.getTree();
 
         final ContinuousTraitGradientForBranch traitGradient;
         if (nativeBlockParameter != null) {
@@ -201,7 +214,9 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
+            AttributeRule.newStringRule(PARAMETER, true),
             AttributeRule.newStringRule(IMPLEMENTATION, true),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
     };
 
     @Override

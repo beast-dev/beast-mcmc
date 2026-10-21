@@ -65,7 +65,7 @@ public class TwoPathogenModelBirthRates extends Parameter.Abstract implements Va
         double moreRecentDate = Math.max(mostRecentSamplingDateOne.getParameterValue(0),
                 mostRecentSamplingDateTwo.getParameterValue(0));
 
-        this.seasonalMultipliers = getSeasonalMultipliers(moreRecentDate, originTimeNumSS,seasonalAmplitude,
+        this.seasonalMultipliers = getSeasonalMultipliers(moreRecentDate, seasonalAmplitude,
                 seasonalPeakDay, seasonalPeriod);
 
         this.susCompartmentCounts = getSusCompartmentCounts(numSS, numSI, numSC, numSR, numIS, numCS, numRS);
@@ -104,18 +104,17 @@ public class TwoPathogenModelBirthRates extends Parameter.Abstract implements Va
         }
     }
 
-    private double[] getSeasonalMultipliers(double moreRecentDate, Parameter originTimeNumSS, Parameter seasonalAmplitude,
+    private double[] getSeasonalMultipliers(double moreRecentDate, Parameter seasonalAmplitude,
                                           Parameter seasonalPeakDay, Parameter seasonalPeriod) {
         if(seasonalModel){
             double[] returnVal = new double[numGridIntervals];
-            double origNumSS = originTimeNumSS.getParameterValue(0);
             double seasonalAmp = seasonalAmplitude.getParameterValue(0);
             double seasonalPeak = seasonalPeakDay.getParameterValue(0);
             double period = seasonalPeriod.getParameterValue(0);
 
             for(int k = 0; k < numGridIntervals; k++){
                 double calendarTime = moreRecentDate - (k+1+numSkippedIntervals)*generalIntervalWidth;
-                returnVal[k] = origNumSS*(1.0 + seasonalAmp*Math.cos(2.0*Math.PI*(calendarTime-seasonalPeak)/period));
+                returnVal[k] = (1.0 + seasonalAmp*Math.cos(2.0*Math.PI*(calendarTime-seasonalPeak)/period));
             }
             return returnVal;
         }else{

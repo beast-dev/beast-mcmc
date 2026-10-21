@@ -126,7 +126,7 @@ public class TwoPathogenModel extends CompartmentalModel {
     protected void setSeasonalOffset(){
         double mostRecentSamplingDate = Math.max(mostRecentSamplingDateOne, mostRecentSamplingDateTwo);
         double simStartDate = mostRecentSamplingDate - cutOff;
-        seasonalOffset = simStartDate - Math.floor(simStartDate);
+        seasonalOffset = simStartDate - seasonalPeriod*Math.floor(simStartDate/seasonalPeriod);
     }
 
     protected void setOriginTimeCompartmentCounts(int index){
@@ -1217,9 +1217,8 @@ public class TwoPathogenModel extends CompartmentalModel {
 
     protected double getTransmissionRateOne(double simTime) {
         double tRateOne = rateParameters.get(0).getParameterValue(0);
-        double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
-            tRateOne = tRateOne*origTimeNumSS*(1.0 + seasonalAmpOne*Math.cos(2.0*Math.PI*(simTime + seasonalOffset
+            tRateOne = tRateOne*(1.0 + seasonalAmpOne*Math.cos(2.0*Math.PI*(simTime + seasonalOffset
                     - seasonalPeakDayOne)/seasonalPeriod));
         }
         return tRateOne;
@@ -1227,9 +1226,8 @@ public class TwoPathogenModel extends CompartmentalModel {
 
     protected double getTransmissionRateTwo(double simTime) {
         double tRateTwo = rateParameters.get(5).getParameterValue(0);
-        double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
-            tRateTwo = tRateTwo*origTimeNumSS*(1.0 + seasonalAmpTwo*Math.cos(2.0*Math.PI*(simTime + seasonalOffset
+            tRateTwo = tRateTwo*(1.0 + seasonalAmpTwo*Math.cos(2.0*Math.PI*(simTime + seasonalOffset
                     -seasonalPeakDayTwo)/seasonalPeriod));
         }
         return tRateTwo;
@@ -1238,9 +1236,8 @@ public class TwoPathogenModel extends CompartmentalModel {
     protected double getTranRateOneDerivative(double simTime) {
         double returnVal = 0.0;
         double tRateOne = rateParameters.get(0).getParameterValue(0);
-        double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
-            returnVal = -tRateOne*origTimeNumSS*seasonalAmpOne*(2.0*Math.PI/seasonalPeriod)
+            returnVal = -tRateOne*seasonalAmpOne*(2.0*Math.PI/seasonalPeriod)
                     *Math.sin(2.0*Math.PI*(simTime + seasonalOffset -seasonalPeakDayOne)/seasonalPeriod);
         }
         return returnVal;
@@ -1249,9 +1246,8 @@ public class TwoPathogenModel extends CompartmentalModel {
     protected double getTranRateTwoDerivative(double simTime) {
         double returnVal = 0.0;
         double tRateTwo = rateParameters.get(5).getParameterValue(0);
-        double origTimeNumSS = originTimeNumSS.getParameterValue(0);
         if(seasonalModel){
-            returnVal = -tRateTwo*origTimeNumSS*seasonalAmpTwo*(2.0*Math.PI/seasonalPeriod)
+            returnVal = -tRateTwo*seasonalAmpTwo*(2.0*Math.PI/seasonalPeriod)
                     *Math.sin(2.0*Math.PI*(simTime + seasonalOffset -seasonalPeakDayTwo)/seasonalPeriod);
         }
         return returnVal;

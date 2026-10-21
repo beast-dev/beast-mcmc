@@ -79,6 +79,11 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     double A;
     double B;
     double previousP;
+    double Ab;
+    double Am;
+    double D;
+    double oneMinusB;
+    double previousF;
 
     double lambda;
     double mu;
@@ -366,9 +371,33 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     }
 
     private double p(double eAt) {
-        double eAt1B = eAt * (1.0 + B);
-        return (lambda + mu + psi - A * ((eAt1B - (1.0 - B)) / (eAt1B + (1.0 - B)))) / (2.0 * lambda);
+        //double eAt1B = eAt * (1.0 + B);
+        //return (lambda + mu + psi - A * ((eAt1B - (1.0 - B)) / (eAt1B + (1.0 - B)))) / (2.0 * lambda);
+        return 1.0 - oneMinusP(eAt);
     }
+
+    final double oneMinusP(int model, double t) {
+        double eAt = Math.exp(A * (t - modelStartTimes[model]));
+        return oneMinusP(eAt);
+    }
+
+    final double oneMinusP(double eAt) {
+        double N = (Am + D) * eAt + Ab - D;
+        return ((eAt - 1.0) * (4.0 * lambda * psi + Ab * D) + 2.0 * A * D)
+                / (2.0 * lambda * N);
+    }
+
+    private void computeIntervalConstants() {
+        double bb = lambda - mu - psi;
+        A  = Math.sqrt(bb * bb + 4.0 * lambda * psi);
+        // take the non-cancelling branch for each, via (A+bb)(A-bb) = 4*lambda*psi
+        Ab = (bb >= 0.0) ? (A + bb) : (4.0 * lambda * psi) / (A - bb);
+        Am = (bb <= 0.0) ? (A - bb) : (4.0 * lambda * psi) / (A + bb);
+        D  = 2.0 * lambda * rho + 2.0 * lambda * (1.0 - rho) * previousF;
+        oneMinusB = (Ab - D) / A;
+        B = 1.0 - oneMinusB;        // kept so the gradient code is untouched
+    }
+
 
     double logQ(int model, double time) {
         double At = A * (time - modelStartTimes[model]);
@@ -405,7 +434,9 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
             }
 
             //logP -= Math.log(1.0 - p(model, origin));
-            double q = 1.0 - p(model, origin);
+            //double q = 1.0 - p(model, origin);
+            double q = oneMinusP(model, origin);
+
             if (!(q > 0.0)) return Double.NEGATIVE_INFINITY;
             logP -= Math.log(q);
         }
@@ -458,15 +489,19 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
 
         if (model == 0) {
             previousP = 1.0;
+            previousF = 0.0;
         } else{
-            previousP = p(model - 1, modelStartTime);
+            //previousP = p(model - 1, modelStartTime);
+            previousF = oneMinusP(model - 1, modelStartTime);
+            previousP = 1.0 - previousF;
         }
 
         updateParameterValues(model);
 
 
-        A = computeA(lambda, mu, psi);
-        B = computeB(lambda, mu, psi, rho, A, previousP);
+        //A = computeA(lambda, mu, psi);
+        //B = computeB(lambda, mu, psi, rho, A, previousP);
+        computeIntervalConstants();
     }
 
     @Override
@@ -476,15 +511,19 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
 
         if (model == 0) {
             previousP = 1.0;
+            previousF = 0.0;
         } else{
-            previousP = p(eAt_End);
+            //previousP = p(eAt_End);
+            previousF = oneMinusP(eAt_End);
+            previousP = 1.0 - previousF;
         }
 
         updateParameterValues(model);
 
-        A = computeA(lambda, mu, psi);
-        B = computeB(lambda, mu, psi, rho, A, previousP);
-        
+        //A = computeA(lambda, mu, psi);
+        //B = computeB(lambda, mu, psi, rho, A, previousP);
+        computeIntervalConstants();
+
         this.savedQ = Double.NaN;
         this.partialQKnown = false;
 
@@ -602,11 +641,13 @@ public class EpisodicBirthDeathSamplingModel extends BirthDeathModel implements 
     }
 
     final double g1(double eAt) {
-        return  (1 + B) * eAt + (1 - B);
+        //return  (1 + B) * eAt + (1 - B);
+        return (2.0 - oneMinusB) * eAt + oneMinusB;
     }
 
     final double g2(double G1) {
-        return A * (1 - 2 * (1 - B) / G1);
+        //return A * (1 - 2 * (1 - B) / G1);
+        return A * (1 - 2 * oneMinusB / G1);
     }
 
     public final double q(int model, double t) {

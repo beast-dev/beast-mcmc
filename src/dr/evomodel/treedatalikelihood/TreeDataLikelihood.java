@@ -168,7 +168,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
                 if (COUNT_TOTAL_OPERATIONS) {
                     long endTime = System.nanoTime();
-                    totalLikelihoodTime += (endTime - startTime) / 1000000;
+                    totalLikelihoodTime += endTime - startTime;
                 }
 
                 setAllNodesUpdated();
@@ -449,7 +449,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                           "\n  partial rate updates = ").append(totalRateUpdateSingleCount).append(
                           "\n  get post-order statistics = ").append(totalPostOrderStatistics).append(
                           "\n  calculate post-order statistics = ").append(totalCalculatePostOrderStatistics).append(
-                          "\n  average likelihood time = ").append(totalLikelihoodTime / totalCalculateLikelihoodCount);
+                          "\n  average likelihood time (us) = ").append(totalLikelihoodTime / 1000.0 / totalCalculateLikelihoodCount);
 
             return sb.toString();
         } else {

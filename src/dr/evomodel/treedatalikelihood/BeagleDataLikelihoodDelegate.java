@@ -105,6 +105,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private long totalMatrixUpdateCount = 0;
     private long totalPartialsUpdateCount = 0;
     private long totalEvaluationCount = 0;
+
+    // nanosecond timers per phase of calculateLikelihood, reported by getReport()
+    private long totalModelTime = 0;
+    private long totalMatrixTime = 0;
+    private long totalPartialsTime = 0;
+    private long totalRootTime = 0;
     private boolean releaseSingleton = true;
 
     /**
@@ -737,7 +743,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
     @Override
     public String getReport() {
-        return null;
+        if (!COUNT_CALCULATIONS || totalEvaluationCount == 0) {
+            return null;
+        }
+        final double n = totalEvaluationCount;
+        return getClass().getName() + " timers (us per evaluation over " + totalEvaluationCount + " evaluations):" +
+                "\n  model = " + (totalModelTime / n / 1000.0) +
+                "\n  matrix = " + (totalMatrixTime / n / 1000.0) +
+                "\n  partials = " + (totalPartialsTime / n / 1000.0) +
+                "\n  root = " + (totalRootTime / n / 1000.0) +
+                "\n  matrix updates = " + totalMatrixUpdateCount +
+                "\n  partials updates = " + totalPartialsUpdateCount + "\n";
     }
 
     @Override
@@ -1023,6 +1039,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             branchUpdateCount ++;
         }
 
+        long timerStart = COUNT_CALCULATIONS ? System.nanoTime() : 0;
+
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             evolutionaryProcessDelegate.updateSubstitutionModels(beagle, flip);
 
@@ -1048,6 +1066,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             beagle.setStateFrequencies(0, frequencies); // TODO make lazy?
         }
 
+        if (COUNT_CALCULATIONS) {
+            long now = System.nanoTime();
+            totalModelTime += now - timerStart;
+            timerStart = now;
+        }
+
         if (branchUpdateCount > 0) {
             evolutionaryProcessDelegate.updateTransitionMatrices(
                     beagle,
@@ -1058,6 +1082,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         }
 
         if (COUNT_CALCULATIONS) {
+            totalMatrixTime += System.nanoTime() - timerStart;
             totalMatrixUpdateCount += branchUpdateCount;
         }
 
@@ -1122,9 +1147,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             k += Beagle.OPERATION_TUPLE_SIZE;
         }
 
+        if (COUNT_CALCULATIONS) {
+            timerStart = System.nanoTime();
+        }
+
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
         if (COUNT_CALCULATIONS) {
+            long now = System.nanoTime();
+            totalPartialsTime += now - timerStart;
+            timerStart = now;
             totalEvaluationCount += 1;
             totalPartialsUpdateCount += operationCount;
         }
@@ -1154,6 +1186,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
         beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
                 new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
+
+        if (COUNT_CALCULATIONS) {
+            totalRootTime += System.nanoTime() - timerStart;
+        }
 
         double logL = sumLogLikelihoods[0];
 

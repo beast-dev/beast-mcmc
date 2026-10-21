@@ -45,12 +45,10 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
 
     private final HierarchicalSubstitutionModel substitutionModel;
     private final FrequencyModel rootFrequencyModel;
-    private final SiteRateModel siteRateModel;
 
+    // two model slots (BEAGLE eigen buffers), flipped on a model change so a rejected move re-uploads nothing
+    private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
-
-    private final int categoryCount;
-    private final double[] bundle;
 
     public HierarchicalSubstitutionEvolutionaryProcess(Tree tree, BranchModel branchModel, SiteRateModel siteRateModel) {
 
@@ -66,10 +64,8 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
         }
 
         this.rootFrequencyModel = branchModel.getRootFrequencyModel();
-        this.siteRateModel = siteRateModel;
-        this.categoryCount = siteRateModel.getCategoryCount();
-        this.bundle = new double[substitutionModel.getBundleLength(categoryCount)];
 
+        eigenBufferHelper = new BufferIndexHelper(1, 0);
         matrixBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, 0);
     }
 
@@ -80,7 +76,7 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
 
     @Override
     public int getEigenBufferCount() {
-        return 1;
+        return eigenBufferHelper.getBufferCount();
     }
 
     @Override
@@ -146,7 +142,7 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
 
     @Override
     public int getEigenIndex(int bufferIndex) {
-        return 0;
+        return eigenBufferHelper.getOffsetIndex(bufferIndex);
     }
 
     @Override
@@ -161,24 +157,30 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
 
     @Override
     public void updateSubstitutionModels(Beagle beagle, boolean flipBuffers) {
+        if (flipBuffers) {
+            eigenBufferHelper.flipOffset(0);
+        }
+        // The model goes into an eigen buffer; see BEAGLE_FLAG_HIERARCHICAL_REPRESENTATION in beagle.h.
+        beagle.setEigenDecomposition(eigenBufferHelper.getOffsetIndex(0),
+                substitutionModel.getBeagleModelTriples(),
+                substitutionModel.getBeagleModelUnused(),
+                substitutionModel.getBeagleModelLambdas());
     }
 
     @Override
     public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLengths, int updateCount,
                                          boolean flipBuffers) {
-        final double[] categoryRates = siteRateModel.getCategoryRates();
-        if (categoryRates == null) {
-            return;
-        }
-
-        if (flipBuffers) {
-            flipTransitionMatrices(branchIndices, updateCount);
-        }
-
+        int[] probabilityIndices = new int[updateCount];
         for (int i = 0; i < updateCount; i++) {
-            substitutionModel.fillBundle(edgeLengths[i], categoryRates, bundle);
-            beagle.setTransitionMatrix(matrixBufferHelper.getOffsetIndex(branchIndices[i]), bundle, 0);
+            if (flipBuffers) {
+                matrixBufferHelper.flipOffset(branchIndices[i]);
+            }
+            probabilityIndices[i] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
         }
+        // One call for all flagged branches: BEAGLE builds the bundles from the model, the category rates
+        // and state frequencies buffer 0 it already holds.
+        beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(0), probabilityIndices,
+                null, null, edgeLengths, updateCount);
     }
 
     @Override
@@ -190,11 +192,13 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
 
     @Override
     public void storeState() {
+        eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();
     }
 
     @Override
     public void restoreState() {
+        eigenBufferHelper.restoreState();
         matrixBufferHelper.restoreState();
     }
 }

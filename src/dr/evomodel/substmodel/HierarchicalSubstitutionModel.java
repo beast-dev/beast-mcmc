@@ -79,6 +79,15 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private EigenDecomposition eigenDecomposition;
     private boolean eigenDecompositionKnown = false;
 
+    // The model as BEAGLE's hierarchical representation reads it from an eigen buffer (see
+    // BEAGLE_FLAG_HIERARCHICAL_REPRESENTATION in beagle.h): eigenValues[0] = version word,
+    // eigenValues[1 .. S-1] = lambda per internal node in bundle numbering, eigenVectors[0 .. 3(S-1)) =
+    // post-order triples as in getBundleHeader; the inverse-eigenvector array is unused.
+    private double[] beagleModelTriples;
+    private double[] beagleModelLambdas;
+    private double[] beagleModelUnused;
+    private boolean beagleModelKnown = false;
+
     public HierarchicalSubstitutionModel(String name, HierarchicalRateProvider hierarchicalRateProvider,
                                          FrequencyModel frequency) {
         super(name);
@@ -326,6 +335,41 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         }
     }
 
+    public double[] getBeagleModelTriples() {
+        computeBeagleModel();
+        return beagleModelTriples;
+    }
+
+    public double[] getBeagleModelLambdas() {
+        computeBeagleModel();
+        return beagleModelLambdas;
+    }
+
+    public double[] getBeagleModelUnused() {
+        computeBeagleModel();
+        return beagleModelUnused;
+    }
+
+    private void computeBeagleModel() {
+        if (beagleModelKnown) {
+            return;
+        }
+        final int internalCount = stateCount - 1;
+        if (beagleModelTriples == null) {
+            beagleModelTriples = new double[stateCount * stateCount];
+            beagleModelLambdas = new double[stateCount];
+            beagleModelUnused = new double[stateCount * stateCount];
+        }
+        final double[] header = new double[getBundleHeaderLength()];
+        getBundleHeader(header);
+        System.arraycopy(header, 1, beagleModelTriples, 0, 3 * internalCount);
+        beagleModelLambdas[0] = BUNDLE_VERSION * BUNDLE_VERSION_SHIFT + internalCount;
+        for (int rank = 0; rank < internalCount; rank++) {
+            beagleModelLambdas[1 + rank] = hierarchicalRates.getRate(tree, internalNodeOfBundleRank[rank]);
+        }
+        beagleModelKnown = true;
+    }
+
     private double[] getCumulativeRates(boolean divideByPi) {
         computePi();
         final double[] cumulative = new double[tree.getNodeCount()];
@@ -433,6 +477,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         eigenDecompositionKnown = false;
+        beagleModelKnown = false;
         fireModelChanged();
     }
 
@@ -444,6 +489,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     protected void restoreState() {
         eigenDecompositionKnown = false;
+        beagleModelKnown = false;
     }
 
     @Override
@@ -454,6 +500,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         eigenDecompositionKnown = false;
+        beagleModelKnown = false;
         fireModelChanged();
     }
 

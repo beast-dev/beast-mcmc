@@ -127,11 +127,13 @@ public interface BranchHistoryModel {
      *                            category and state, [category * stateCount + state] (only if
      *                            {@link #needsComposition()})
      * @param categoryRates       the rate of each category
+     * @param unchangedTerms      {@link #getUnchangedSiteLogLikelihoods} for each category, [category * stateCount + state]
      * @param patternRates        the rate of each pattern's category
      */
     default double getCategoryBranchLogLikelihood(BranchMutations mutations, double length, double exitRateSum,
                                                   double[] categoryComposition, double[] categoryRates,
-                                                  double[] patternWeights, double[] patternRates) {
+                                                  double[] unchangedTerms, double[] patternWeights,
+                                                  double[] patternRates) {
         if (needsComposition()) {
             throw new UnsupportedOperationException("The " + getName() + " branch history model does not support " +
                     "site rate categories");
@@ -144,6 +146,20 @@ public interface BranchHistoryModel {
      * @return the log density of the history of a site with no events on a branch, in state a throughout
      */
     double getUnchangedSiteLogLikelihood(int a, double length, double nu);
+
+    /**
+     * Sets out[offset + a] to {@link #getUnchangedSiteLogLikelihood} for every state a.
+     */
+    default void getUnchangedSiteLogLikelihoods(double length, double nu, double[] out, int offset) {
+        for (int a = 0; a < getStateCount(); a++) {
+            out[offset + a] = getUnchangedSiteLogLikelihood(a, length, nu);
+        }
+    }
+
+    /**
+     * @return the number of states
+     */
+    int getStateCount();
 
     /**
      * @return the log density of the history of a site given by its substitutions [start, end) on a branch

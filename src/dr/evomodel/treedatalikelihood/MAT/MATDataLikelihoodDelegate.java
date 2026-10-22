@@ -107,6 +107,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     // site rates may have changed.
     private long modelVersion = 0;
     private long cachedModelVersion = -1;
+    // changes only when the rate matrix or the category rates change (not, e.g., the categories themselves)
+    private long ratesVersion = 0;
+    private boolean ratesKnown = false;
+    private final double[] newInfinitesimalMatrix;
     private boolean modelChangedSinceStore = false;
     private final double[] patternRates;        // nu_p
     private final double[] patternWeightRates;  // w_p nu_p
@@ -263,6 +267,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.recomputedSinceStore = new boolean[nodeCount];
         this.recomputedNodes = new int[nodeCount];
         this.infinitesimalMatrix = new double[stateCount * stateCount];
+        this.newInfinitesimalMatrix = new double[stateCount * stateCount];
         this.exitRates = new double[stateCount];
 
         this.historyModel = historyModel == null ? new SingleHitHistoryModel(stateCount) : historyModel;
@@ -442,19 +447,31 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      */
     void ensureRates() {
         if (cachedModelVersion != modelVersion) {
-            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            for (int a = 0; a < stateCount; a++) {
-                double q = 0.0;
-                for (int b = 0; b < stateCount; b++) {
-                    if (b != a) {
-                        q += infinitesimalMatrix[a * stateCount + b];
+            substitutionModel.getInfinitesimalMatrix(newInfinitesimalMatrix);
+            // (the history model's caches stay valid if the rate matrix is unchanged)
+            final boolean matrixChanged = !ratesKnown || !java.util.Arrays.equals(newInfinitesimalMatrix, infinitesimalMatrix);
+            if (matrixChanged) {
+                System.arraycopy(newInfinitesimalMatrix, 0, infinitesimalMatrix, 0, infinitesimalMatrix.length);
+                for (int a = 0; a < stateCount; a++) {
+                    double q = 0.0;
+                    for (int b = 0; b < stateCount; b++) {
+                        if (b != a) {
+                            q += infinitesimalMatrix[a * stateCount + b];
+                        }
                     }
+                    exitRates[a] = q;
                 }
-                exitRates[a] = q;
+                historyModel.setRates(substitutionModel, infinitesimalMatrix, exitRates);
+                ratesVersion++;
+                ratesKnown = true;
             }
             if (categoryCount > 1) {
                 for (int c = 0; c < categoryCount; c++) {
-                    categoryRates[c] = siteRateModel.getRateForCategory(c);
+                    double rate = siteRateModel.getRateForCategory(c);
+                    if (rate != categoryRates[c]) {
+                        categoryRates[c] = rate;
+                        ratesVersion++;
+                    }
                     categoryLogProportions[c] = Math.log(siteRateModel.getProportionForCategory(c));
                 }
                 for (int p = 0; p < patternCount; p++) {
@@ -470,7 +487,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                     patternWeightRates[p] = patternWeights[p] * patternRates[p];
                 }
             }
-            historyModel.setRates(substitutionModel, infinitesimalMatrix, exitRates);
             cachedModelVersion = modelVersion;
         }
     }
@@ -550,7 +566,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 double[] categoryComposition = historyModel.needsComposition() ?
                         mutationStore.getCategoryComposition(n) : null;
                 branchTerms[n] = historyModel.getCategoryBranchLogLikelihood(mutations, length, exitRate,
-                        categoryComposition, categoryRates, patternWeights, patternRates);
+                        categoryComposition, categoryRates, unchangedTerms[n], patternWeights, patternRates);
             } else {
                 double[] composition = historyModel.needsComposition() ? mutationStore.getComposition(n) : null;
                 branchTerms[n] = historyModel.getBranchLogLikelihood(mutations, length, exitRate, composition,
@@ -573,7 +589,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      */
     private void updateUnchangedTerm(int n, double length) {
         final double[] terms = unchangedTerms[n];
-        final boolean stale = unchangedTermModelVersions[n] != modelVersion || unchangedTermLengths[n] != length;
+        // (they depend only on the branch length and the rates, not on the states or categories)
+        final boolean stale = unchangedTermModelVersions[n] != ratesVersion || unchangedTermLengths[n] != length;
         if (unchangedTermIncluded[n] && !stale) {
             return;
         }
@@ -584,12 +601,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         }
         if (stale) {
             for (int c = 0; c < categoryCount; c++) {
-                for (int a = 0; a < stateCount; a++) {
-                    terms[c * stateCount + a] = historyModel.getUnchangedSiteLogLikelihood(a, length, categoryRates[c]);
-                }
+                historyModel.getUnchangedSiteLogLikelihoods(length, categoryRates[c], terms, c * stateCount);
             }
             unchangedTermLengths[n] = length;
-            unchangedTermModelVersions[n] = modelVersion;
+            unchangedTermModelVersions[n] = ratesVersion;
         }
         for (int i = 0; i < terms.length; i++) {
             unchangedTotals[i] += terms[i];
@@ -806,10 +821,12 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             for (int n = 0; n < tree.getNodeCount(); n++) {
                 if (n != rootNumber) {
                     double length = getBranchLength(tree.getNode(n));
+                    double[] terms = new double[categoryCount * stateCount];
                     for (int c = 0; c < categoryCount; c++) {
-                        for (int a = 0; a < stateCount; a++) {
-                            totals[c * stateCount + a] += historyModel.getUnchangedSiteLogLikelihood(a, length, categoryRates[c]);
-                        }
+                        historyModel.getUnchangedSiteLogLikelihoods(length, categoryRates[c], terms, c * stateCount);
+                    }
+                    for (int i = 0; i < terms.length; i++) {
+                        totals[i] += terms[i];
                     }
                 }
             }
@@ -931,10 +948,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             if (n != rootNumber) {
                 lengths[n] = getBranchLength(node);
                 for (int c = 0; c < categoryCount; c++) {
-                    for (int a = 0; a < stateCount; a++) {
-                        unchanged[n][c * stateCount + a] =
-                                historyModel.getUnchangedSiteLogLikelihood(a, lengths[n], categoryRates[c]);
-                    }
+                    historyModel.getUnchangedSiteLogLikelihoods(lengths[n], categoryRates[c], unchanged[n], c * stateCount);
                 }
             }
         }

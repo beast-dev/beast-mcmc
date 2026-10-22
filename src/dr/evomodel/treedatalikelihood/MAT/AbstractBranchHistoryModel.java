@@ -26,6 +26,8 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
+import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.math.MathUtils;
 
@@ -58,11 +60,89 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
     }
 
     @Override
+    public int getStateCount() {
+        return stateCount;
+    }
+
+    @Override
     public void setRates(SubstitutionModel substitutionModel, double[] infinitesimalMatrix, double[] exitRates) {
         this.substitutionModel = substitutionModel;
         this.infinitesimalMatrix = infinitesimalMatrix.clone();
         this.exitRates = exitRates.clone();
         clearTransitionProbabilityCache();
+        setEigenDecomposition(substitutionModel);
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Transition probabilities from the eigen decomposition (without the cache)
+    // ---------------------------------------------------------------------------------------------
+
+    // the rate matrix's eigen decomposition, when the substitution model computes its transition
+    // probabilities from it as BaseSubstitutionModel does (otherwise null)
+    private double[] eigenValues;
+    private double[] eigenVectors;
+    private double[] inverseEigenVectors;
+    private double[] eigenExp;
+
+    private void setEigenDecomposition(SubstitutionModel substitutionModel) {
+        eigenValues = null;
+        if (!(substitutionModel instanceof BaseSubstitutionModel)) {
+            return;
+        }
+        try {
+            if (substitutionModel.getClass().getMethod("getTransitionProbabilities", double.class, double[].class)
+                    .getDeclaringClass() != BaseSubstitutionModel.class) {
+                return;
+            }
+        } catch (NoSuchMethodException e) {
+            return;
+        }
+        EigenDecomposition eigen = substitutionModel.getEigenDecomposition();
+        if (eigen == null || eigen.getEigenValues().length != stateCount ||
+                eigen.getEigenVectors().length != stateCount * stateCount) {
+            return;
+        }
+        eigenValues = eigen.getEigenValues().clone();
+        eigenVectors = eigen.getEigenVectors().clone();
+        inverseEigenVectors = eigen.getInverseEigenVectors().clone();
+        eigenExp = new double[stateCount];
+    }
+
+    /**
+     * @return true if transition probabilities can be computed directly ({@link #getLogTransitionDiagonal},
+     * {@link #getLogTransitionProbability})
+     */
+    protected boolean hasDirectTransitionProbabilities() {
+        return eigenValues != null;
+    }
+
+    /**
+     * Sets out[offset + a] to log P_aa(distance) for every state a: the same values as the diagonal of
+     * {@link #getLogTransitionProbabilities} (computed with the same arithmetic as BaseSubstitutionModel),
+     * for S exponentials and logarithms rather than a whole matrix.
+     */
+    protected void getLogTransitionDiagonal(double distance, double[] out, int offset) {
+        for (int i = 0; i < stateCount; i++) {
+            eigenExp[i] = Math.exp(distance * eigenValues[i]);
+        }
+        for (int a = 0; a < stateCount; a++) {
+            double p = 0.0;
+            for (int k = 0; k < stateCount; k++) {
+                p += eigenVectors[a * stateCount + k] * (inverseEigenVectors[k * stateCount + a] * eigenExp[k]);
+            }
+            out[offset + a] = Math.log(Math.max(Math.abs(p), 0.0));
+        }
+    }
+
+    /**
+     * @return log P_ab(distance), as {@link #getLogTransitionProbabilities} gives it
+     */
+    protected double getLogTransitionProbability(double distance, int a, int b) {
+        double p = 0.0;
+        for (int k = 0; k < stateCount; k++) {
+            p += eigenVectors[a * stateCount + k] * (inverseEigenVectors[k * stateCount + b] * Math.exp(distance * eigenValues[k]));
+        }
+        return Math.log(Math.max(Math.abs(p), 0.0));
     }
 
     private void clearTransitionProbabilityCache() {

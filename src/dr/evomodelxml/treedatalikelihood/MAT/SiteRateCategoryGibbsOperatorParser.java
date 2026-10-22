@@ -71,7 +71,8 @@ public class SiteRateCategoryGibbsOperatorParser extends AbstractXMLObjectParser
     @Override
     public String getParserDescription() {
         return "Gibbs update of the site rate categories of a MAT likelihood whose site model has more than one " +
-                "rate category: each variable site's category is drawn from its full conditional.";
+                "rate category: each variable site's category is drawn from its full conditional. Each update " +
+                "draws them all, so a weight of about 1% of the subtree moves' weight is enough.";
     }
 
     @Override

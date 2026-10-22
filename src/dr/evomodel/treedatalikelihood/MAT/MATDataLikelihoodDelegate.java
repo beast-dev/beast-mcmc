@@ -428,7 +428,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         if (categoryCount > 1 && !hasCategoryOperator && !categoryWarningGiven) {
             // (at the info level, as BEAST prints warnings only when verbose)
             Logger.getLogger("dr.evomodel").info("WARNING: the MAT likelihood samples a site rate category for " +
-                    "each variable site, but no siteRateCategoryGibbsOperator updates them: add one to the operators.");
+                    "each variable site, but no siteRateCategoryGibbsOperator updates them: add one to the operators " +
+                    "(with a weight of about 1% of the subtree moves' weight).");
             categoryWarningGiven = true;
         }
         computeLikelihood();

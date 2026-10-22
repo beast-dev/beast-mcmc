@@ -35,7 +35,9 @@ keeps the per-branch terms and their running totals, updated as branch terms are
   D_s(root; r), plus at each of its events on the branch above node n (from a to b) the event's term minus
   the unchanged term, minus D_a(n; r) plus D_b(n; r), where D_s(n; r) is the sum of the unchanged-site
   terms in state s over the branches below n (an event changes the state of the whole subtree below it,
-  until the next event). A sweep costs O(nodes x categories x states + events x categories).
+  until the next event). A sweep costs O(nodes x categories x states + events x categories), plus a
+  full recomputation of the likelihood. The categories mix quickly, so a weight of about 1% of the subtree
+  moves' weight is enough: on small-2, 10% (16.5) took 1.0 minute per million states against 0.56 at 1%.
 - **Resampler**: the categories are its rate classes. The sparse passes count the uniform sites, and
   group the ambiguity-only sites, by (category, state), each with its own conditional, so moves still cost
   O(events + changes). The block keeps branch densities and linear matrices per rate class.

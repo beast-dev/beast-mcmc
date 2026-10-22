@@ -37,6 +37,10 @@ import dr.inference.operators.SimpleMCMCOperator;
  * With more than one rate category the MAT samples each variable site's category, as it samples its
  * history, so that its likelihood still decomposes by branch; summed over the categories it is that of
  * the site rate model. The categories only change through this operator.
+ * <p>
+ * Each update draws every site's category and makes the whole likelihood be recomputed, and the categories
+ * mix quickly, so a small weight is enough: about 1% of the subtree moves' weight (on small-2, 10% of it
+ * took nearly half the run time for no gain).
  */
 public class SiteRateCategoryGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 

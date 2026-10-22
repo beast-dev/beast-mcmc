@@ -10,10 +10,12 @@ hits) and Felsenstein posteriors are the same.
 
 With --gamma, every method also has a discrete gamma site model (4 categories, shape alpha with an
 exponential prior of mean 0.5 and a scale operator); the MAT then samples each variable site's category,
-with a siteRateCategoryGibbsOperator (weight GIBBS_WEIGHT), and sums the constant sites over them.
+with a siteRateCategoryGibbsOperator (weight --category-weight, by default 1% of the SubtreeLeap weight: each
+update draws every site's category, which mix quickly), and sums the constant sites over them.
 
 usage: make_validation_xmls.py SOURCE_DIR OUT_DIR [--name benchmark-small-2] [--chain-length N]
                                [--log-every N] [--tree-log-every N] [--gibbs-weight W] [--gamma]
+                               [--category-weight W] [--methods M,...]
 """
 import argparse
 import os
@@ -48,7 +50,8 @@ def add_gamma(xml):
     return xml
 
 
-def make(method, source, name, chain_length, log_every, tree_log_every, gibbs_weight, gamma=False):
+def make(method, source, name, chain_length, log_every, tree_log_every, gibbs_weight, gamma=False,
+         category_weight=None):
     xml = re.sub(r'chainLength="\d+"', 'chainLength="%d"' % chain_length, source)
     xml = re.sub(r'(<log id="(?:screenLog|fileLog)" logEvery=)"\d+"', r'\1"%d"' % log_every, xml)
     xml = re.sub(r'(<logTree id="treeFileLog" logEvery=)"\d+"', r'\1"%d"' % tree_log_every, xml)
@@ -74,7 +77,7 @@ def make(method, source, name, chain_length, log_every, tree_log_every, gibbs_we
                                '\t\t<siteRateCategoryGibbsOperator weight="%g">\n'
                                '\t\t\t<matDataLikelihood idref="treeLikelihood"/>\n'
                                '\t\t</siteRateCategoryGibbsOperator>\n'
-                               '\t</operators>' % gibbs_weight)
+                               '\t</operators>' % category_weight)
     return xml
 
 
@@ -88,6 +91,8 @@ def main():
     parser.add_argument('--tree-log-every', type=int, default=50000)
     parser.add_argument('--gibbs-weight', type=float, default=16.5)
     parser.add_argument('--gamma', action='store_true')
+    parser.add_argument('--category-weight', type=float, default=None,
+                        help='weight of the siteRateCategoryGibbsOperator (default 1%% of the SubtreeLeap weight)')
     parser.add_argument('--methods', default='baseline,mat-local,mat-local-gibbs')
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
@@ -97,8 +102,12 @@ def main():
         if method not in args.methods.split(','):
             continue
         with open(os.path.join(args.source_dir, source)) as f:
-            xml = make(method, f.read(), args.name, args.chain_length, args.log_every, args.tree_log_every,
-                       args.gibbs_weight, args.gamma)
+            text = f.read()
+        category_weight = args.category_weight
+        if category_weight is None:
+            category_weight = round(0.01 * float(re.search(r'<subtreeLeap [^>]*weight="([^"]+)"', text).group(1)), 3)
+        xml = make(method, text, args.name, args.chain_length, args.log_every, args.tree_log_every,
+                   args.gibbs_weight, args.gamma, category_weight)
         path = os.path.join(args.out_dir, method + '.xml')
         with open(path, 'w') as f:
             f.write(xml)

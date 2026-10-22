@@ -127,6 +127,13 @@ public class DirichletDistribution implements MultivariateDistribution, Gradient
         return dim;
     }
 
+    /**
+     * @return the value the Dirichlet-distributed vector sums to (1, or the dimension when sumToNumberOfElements)
+     */
+    public double getSumsTo() {
+        return countParameterSum;
+    }
+
     @Override
     public double[] getGradientLogDensity(Object input) {
         double[] x = (double[]) input;

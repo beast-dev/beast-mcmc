@@ -117,6 +117,17 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         return likelihood;
     }
 
+    @Override
+    public double getSimplexSum() {
+        double sum = derivativeList.get(0).getSimplexSum();
+        for (GradientWrtParameterProvider provider : derivativeList) {
+            if (Double.compare(provider.getSimplexSum(), sum) != 0) {
+                return Double.NaN;
+            }
+        }
+        return sum;
+    }
+
     public List<GradientWrtParameterProvider> getDerivativeList() {
         return derivativeList;
     }

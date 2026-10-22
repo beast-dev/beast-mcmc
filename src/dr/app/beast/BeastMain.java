@@ -39,6 +39,7 @@ import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.operators.OperatorSchedule;
+import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.math.MathUtils;
 import dr.util.*;
 import dr.xml.XMLParser;
@@ -398,7 +399,8 @@ public class BeastMain {
                         new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "op", "Print transition kernel performance to file"),
 
                         new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
-                        new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
+                        new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for all adaptive operators, overriding any set in the XML (default 0.234)"),
+                        new Arguments.StringOption("operator_weights", null, "KEY=FACTOR,...", "Multiply operator weights; KEY is an operator name (e.g. subtreeLeap or scale(clock.rate)) or * for the rest, a FACTOR of 0 removes the operator"),
 
                         new Arguments.StringOption("pattern_compression", "pc", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
                                 false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
@@ -743,8 +745,12 @@ public class BeastMain {
             System.setProperty("mcmc.use_adaptation", Boolean.FALSE.toString());
         }
         if (arguments.hasOption("adaptation_target")) {
-            System.setProperty("adaptation_target",
-                    Double.toString(arguments.getRealOption("mcmc.adaptation_target")));
+            System.setProperty("mcmc.adaptation_target",
+                    Double.toString(arguments.getRealOption("adaptation_target")));
+        }
+        if (arguments.hasOption("operator_weights")) {
+            System.setProperty(SimpleOperatorScheduleParser.OPERATOR_WEIGHTS_PROPERTY,
+                    arguments.getStringOption("operator_weights"));
         }
         if (arguments.hasOption("plugins_dir")) {
             System.setProperty("beast.plugins.dir",

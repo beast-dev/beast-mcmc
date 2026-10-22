@@ -74,6 +74,9 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     private MATDataLikelihoodDelegate delegate;
     private TreeDataLikelihood likelihood;
     private boolean integratedHits = false;
+    // with site rate categories (setUpSparseData with a site model with more than one category)
+    private SiteRateModel categoryModel = null;
+    private SiteRateCategoryGibbsOperator categoryOperator = null;
 
     public MATDataLikelihoodDelegateTest(String name) {
         super(name);
@@ -616,6 +619,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
 
     private void setUpSparseData(boolean integrated, SiteRateModel siteRateModel) {
         integratedHits = integrated;
+        categoryModel = siteRateModel != null && siteRateModel.getCategoryCount() > 1 ? siteRateModel : null;
         String[][] taxaSequence = new String[2][];
         taxaSequence[0] = PRIMATES_TAXON_SEQUENCE[0].clone();
         taxaSequence[1] = PRIMATES_TAXON_SEQUENCE[1].clone();
@@ -647,6 +651,35 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
         // the direct path density (directLogLikelihood) then uses a relative rate of 1 for every site
         siteRates = new Parameter.Default(patterns.getPatternCount(), 1.0);
+        categoryOperator = categoryModel == null ? null : new SiteRateCategoryGibbsOperator(delegate, 1.0);
+    }
+
+    /**
+     * With site rate categories, draws them all (an accepted Gibbs update).
+     */
+    private void sweepCategories() {
+        if (categoryOperator != null) {
+            likelihood.getLogLikelihood();
+            likelihood.storeModelState();
+            categoryOperator.doOperation();
+            likelihood.getLogLikelihood();
+            likelihood.acceptModelState();
+        }
+    }
+
+    /**
+     * Checks the likelihood against its direct computation (where the test has one for the model).
+     */
+    private void assertLikelihoodIsDirect(String message) {
+        if (categoryModel != null) {
+            assertEquals(message, directCategoryLogLikelihood(categoryModel), likelihood.getLogLikelihood(), 1E-6);
+        } else if (!integratedHits) {
+            assertEquals(message, directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+        }
+    }
+
+    private static SiteRateModel gammaCategories() {
+        return new GammaSiteRateModel("gamma", 0.5, 4);
     }
 
     /**
@@ -656,7 +689,21 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * States outside the block must not change, and the MAT must stay consistent.
      */
     public void testLocalBlockMatchesEnumeratedConditional() {
-        setUpSparseData();
+        checkLocalBlockAgainstEnumeration(false, null);
+    }
+
+    /**
+     * As testLocalBlockMatchesEnumeratedConditional with site rate categories (redrawn before each move), with
+     * single and integrated hits.
+     */
+    public void testLocalBlockMatchesEnumeratedConditionalWithCategories() {
+        checkLocalBlockAgainstEnumeration(false, gammaCategories());
+        checkLocalBlockAgainstEnumeration(true, gammaCategories());
+    }
+
+    private void checkLocalBlockAgainstEnumeration(boolean integrated, SiteRateModel siteModel) {
+        MathUtils.setSeed(666);
+        setUpSparseData(integrated, siteModel);
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
 
         int moves = 0;
@@ -675,6 +722,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 continue;
             }
 
+            sweepCategories();
             likelihood.getLogLikelihood();
             likelihood.storeModelState();
             String statesBefore = describeStates();
@@ -722,7 +770,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 logQNew += logConditional(site, block, newPresence, newStates, newParents);
             }
             assertEquals("move " + moves, logQOld - logQNew, logRatio, 1E-6);
-            assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+            assertLikelihoodIsDirect("move " + moves);
 
             if (MathUtils.nextBoolean()) {
                 likelihood.acceptModelState();
@@ -743,9 +791,25 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * many times and compare the frequency of each site's drawn block states with the enumerated conditional.
      */
     public void testLocalBlockDrawsExactly() {
+        checkLocalBlockDrawsExactly(false, null);
+    }
+
+    /**
+     * As testLocalBlockDrawsExactly with site rate categories, with single and integrated hits.
+     */
+    public void testLocalBlockDrawsExactlyWithCategories() {
+        checkLocalBlockDrawsExactly(false, gammaCategories());
+        checkLocalBlockDrawsExactly(true, gammaCategories());
+    }
+
+    private void checkLocalBlockDrawsExactly(boolean integrated, SiteRateModel siteModel) {
+        MathUtils.setSeed(666);
         clockRate.setParameterValue(0, 40.0);
-        setUpSparseData();
+        setUpSparseData(integrated, siteModel);
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
+        for (int i = 0; i < 3; i++) {
+            sweepCategories();
+        }
 
         final int xNumber = findTip("orangutan").getNumber();
         final int destinationNumber = findTip("human").getNumber();
@@ -804,16 +868,20 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         }
         assertTrue("sites with chains longer than one node: " + longChainSites, longChainSites > 0);
 
+        // each frequency, and (for the more probable states) a chi-square over them all
         int checked = 0;
+        double chiSquare = 0.0;
         for (java.util.Map.Entry<String, Double> e : expected.entrySet()) {
             double mean = repeats * e.getValue();
             Integer count = observed.get(e.getKey());
             int n = count == null ? 0 : count;
-            assertEquals(e.getKey(), mean, n, 5 * Math.sqrt(mean * (1 - e.getValue())) + 1);
+            assertEquals(e.getKey(), mean, n, 5 * Math.sqrt(mean * (1 - e.getValue())) + 3);
             if (mean > 5 && mean < repeats - 5) {
                 checked++;
+                chiSquare += (n - mean) * (n - mean) / (mean * (1 - e.getValue()));
             }
         }
+        assertTrue("chi-square " + chiSquare + " over " + checked + " states", chiSquare < 1.5 * checked);
         for (String key : observed.keySet()) {
             assertTrue("drawn states with no probability: " + key, expected.containsKey(key));
         }
@@ -825,7 +893,21 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * consistent and restores exactly.
      */
     public void testLocalBlockMovesKeepMATConsistent() {
-        setUpSparseData();
+        checkLocalBlockMovesKeepMATConsistent(false, null);
+    }
+
+    /**
+     * As testLocalBlockMovesKeepMATConsistent with site rate categories, also redrawn, with single and
+     * integrated hits.
+     */
+    public void testLocalBlockMovesKeepMATConsistentWithCategories() {
+        checkLocalBlockMovesKeepMATConsistent(false, gammaCategories());
+        checkLocalBlockMovesKeepMATConsistent(true, gammaCategories());
+    }
+
+    private void checkLocalBlockMovesKeepMATConsistent(boolean integrated, SiteRateModel siteModel) {
+        MathUtils.setSeed(666);
+        setUpSparseData(integrated, siteModel);
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
         List<AbstractTreeOperator> operators = new ArrayList<AbstractTreeOperator>();
         operators.add(new SubtreeLeapOperator(treeModel, 1.0, 0.05, SubtreeLeapOperator.DistanceKernelType.NORMAL,
@@ -842,10 +924,11 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             String statesBefore = describeStates();
             likelihood.storeModelState();
 
-            double logHR = operators.get(iteration % operators.size()).doOperation();
+            double logHR = categoryOperator != null && iteration % 4 == 3 ? categoryOperator.doOperation() :
+                    operators.get(iteration % operators.size()).doOperation();
             assertFalse(Double.isNaN(logHR));
             double logL = likelihood.getLogLikelihood();
-            assertEquals(directLogLikelihood(), logL, 1E-6);
+            assertLikelihoodIsDirect("iteration " + iteration);
 
             if (MathUtils.nextBoolean()) {
                 likelihood.restoreModelState();
@@ -875,10 +958,26 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         checkHistoryGibbsDrawsExactly(true);
     }
 
+    /**
+     * As testHistoryGibbsDrawsExactly with site rate categories, with single and integrated hits.
+     */
+    public void testHistoryGibbsDrawsExactlyWithCategories() {
+        checkHistoryGibbsDrawsExactly(false, gammaCategories());
+        checkHistoryGibbsDrawsExactly(true, gammaCategories());
+    }
+
     private void checkHistoryGibbsDrawsExactly(boolean integrated) {
+        checkHistoryGibbsDrawsExactly(integrated, null);
+    }
+
+    private void checkHistoryGibbsDrawsExactly(boolean integrated, SiteRateModel siteModel) {
+        MathUtils.setSeed(666);
         clockRate.setParameterValue(0, 40.0);
-        setUpSparseData(integrated);
+        setUpSparseData(integrated, siteModel);
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
+        for (int i = 0; i < 3; i++) {
+            sweepCategories();
+        }
 
         likelihood.getLogLikelihood();
         NodeRef humanChimp = treeModel.getParent(findTip("human"));
@@ -923,9 +1022,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 Integer c = observed.get(key);
                 observed.put(key, c == null ? 1 : c + 1);
             }
-            if (!integrated) {
-                assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
-            }
+            assertLikelihoodIsDirect("repeat " + r);
             likelihood.restoreModelState();
         }
 
@@ -1355,12 +1452,14 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             assertTrue("unambiguous child below ambiguous parent", a >= 0);
             double length = (treeModel.getNodeHeight(treeModel.getNode(parents[n])) -
                     treeModel.getNodeHeight(treeModel.getNode(n))) * rate;
+            double nu = categoryModel == null ? 1.0 : categoryModel.getRateForCategory(
+                    ((DefaultMutationStore) delegate.getMutationStore()).getCategory(site));
             if (integratedHits) {
                 double[] transition = new double[16];
-                hky.getTransitionProbabilities(length, transition);
+                hky.getTransitionProbabilities(nu * length, transition);
                 logL += Math.log(transition[a * 4 + b]);
             } else {
-                logL += singleHitLogDensity(q, a, b, length, 1.0);
+                logL += singleHitLogDensity(q, a, b, length, nu);
             }
         }
         return logL;

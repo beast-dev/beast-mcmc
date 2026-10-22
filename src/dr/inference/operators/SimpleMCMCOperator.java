@@ -111,6 +111,8 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         rejectCount = 0;
         lastDeviation = 0.0;
         sumDeviation = 0.0;
+        sumEvaluationTime = 0;
+        sumCalculationCount = 0;
 
         windowAcceptance.clear();
     }

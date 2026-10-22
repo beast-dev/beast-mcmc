@@ -194,6 +194,9 @@ public final class MarkovChain implements Serializable {
             final int op = schedule.getNextOperatorIndex();
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
+            // wall-clock time of the whole step (propose, evaluate, accept/restore, adapt)
+            final long stepStartTime = System.nanoTime();
+
             double oldScore = currentScore;
             if (usingFullEvaluation) {
                 diagnosticDensities = new HashMap<>();
@@ -264,7 +267,6 @@ public final class MarkovChain implements Serializable {
 
                 if (PROFILE) {
                     long duration = System.nanoTime() - elapsedTime;
-                    mcmcOperator.addEvaluationTime(duration);
                     long newCalculationCount = (likelihood instanceof Profileable) ?
                             ((Profileable) likelihood).getTotalCalculationCount() : 1;
                     mcmcOperator.addCalculationCount(newCalculationCount - calculationCount);
@@ -463,6 +465,8 @@ public final class MarkovChain implements Serializable {
                     }
                 }
             }
+
+            mcmcOperator.addEvaluationTime(System.nanoTime() - stepStartTime);
 
             fireEndCurrentIteration(currentState);
 

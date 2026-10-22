@@ -62,13 +62,13 @@ public class OperatorAnalysisPrinter {
                     formatter.formatToFieldWidth("Weight", 8) +
                     formatter.formatToFieldWidth("Tuning", 9) +
                     formatter.formatToFieldWidth("Count", 11) +
-                    formatter.formatToFieldWidth("Time(ms)", 11) +
-                    formatter.formatToFieldWidth("Time/Op", 11) +
+                    formatter.formatToFieldWidth("Time(s)", 11) +
+                    formatter.formatToFieldWidth("Time/Op(us)", 11) +
                     formatter.formatToFieldWidth("Pr(accept)", 11) +
                     //formatter.formatToFieldWidth("Smoothed_Pr(accept)", 11) +
                     (useAdaptation ? "" : " Performance suggestion"));
         } else {
-            out.println("Operator,Weight,Tuning,Count,Time (ms),Time/Op (ms),Pr(accept)" +
+            out.println("Operator,Weight,Tuning,Count,Time (s),Time/Op (us),Pr(accept)" +
                     //",Smoothed_Pr(accept)" +
                     (useAdaptation ? "" : ",Performance suggestion"));
         }
@@ -94,8 +94,8 @@ public class OperatorAnalysisPrinter {
                                 + "," + op.getWeight()
                                 + "," + parameterString(jointOp.getSubOperator(k))
                                 + "," + op.getCount()
-                                + "," + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0)
-                                + "," + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4)
+                                + "," + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1.0E9, 2)
+                                + "," + formatter.formatDecimal(op.getMeanEvaluationTime() / 1.0E3, 2)
                                 + "," + formatter.formatDecimal(op.getAcceptanceProbability(), 4)
                                 //+ "," + formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
                                 + (useAdaptation ? "" :  "," + formattedDiagnostics(jointOp, jointOp.getAcceptanceProbability()))
@@ -119,8 +119,8 @@ public class OperatorAnalysisPrinter {
                             + "," + op.getWeight()
                             + "," + parameterString(op)
                             + "," + op.getCount()
-                            + "," + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1000.0, 0)
-                            + "," + formatter.formatDecimal(op.getMeanEvaluationTime() / 1000.0, 4)
+                            + "," + formatter.formatDecimal(((double)op.getTotalEvaluationTime()) / 1.0E9, 2)
+                            + "," + formatter.formatDecimal(op.getMeanEvaluationTime() / 1.0E3, 2)
                             + "," + formatter.formatDecimal(op.getAcceptanceProbability(), 4)
                             //+ "," + formatter.formatDecimal(op.getSmoothedAcceptanceProbability(), 4) + ","
                             + (useAdaptation ? "" :  "," + formattedDiagnostics(op, op.getAcceptanceProbability()))
@@ -161,13 +161,13 @@ public class OperatorAnalysisPrinter {
     }
 
     private static String formattedTimeString(MCMCOperator op) {
-        final double time = ((double)op.getTotalEvaluationTime()) / 1000.0; // convert to milliseconds
-        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 0), 10) + " ";
+        final double time = ((double)op.getTotalEvaluationTime()) / 1.0E9; // nanoseconds to seconds
+        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 2), 10) + " ";
     }
 
     private static String formattedTimePerOpString(MCMCOperator op) {
-        final double time = op.getMeanEvaluationTime() / 1000.0; // convert to milliseconds
-        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 4), 10) + " ";
+        final double time = op.getMeanEvaluationTime() / 1.0E3; // nanoseconds to microseconds
+        return formatter.formatToFieldWidth(formatter.formatDecimal(time, 2), 10) + " ";
     }
 
     private static String formattedProbString(MCMCOperator op) {

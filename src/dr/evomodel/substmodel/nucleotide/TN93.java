@@ -28,10 +28,14 @@
 package dr.evomodel.substmodel.nucleotide;
 
 import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -44,7 +48,7 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  */
-public class TN93 extends BaseSubstitutionModel implements Citable {
+public class TN93 extends BaseSubstitutionModel implements Citable, DifferentiableSubstitutionModel {
 
     private Parameter kappaParameter1 = null;
     private Parameter kappaParameter2 = null;
@@ -85,6 +89,37 @@ public class TN93 extends BaseSubstitutionModel implements Citable {
         rates[3] = 1.0;
         rates[4] = kappa2;
         rates[5] = 1.0;
+    }
+
+    // **************************************************************
+    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies only)
+    // **************************************************************
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        return DifferentiableSubstitutionModelUtil.frequencyOnlyFactory(this, parameter, dim);
+    }
+
+    // The three methods below are only reached for non-frequency differentials, which factory() never returns
+
+    @Override
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        throw new UnsupportedOperationException("TN93 is differentiable only with respect to its frequencies");
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        throw new UnsupportedOperationException("TN93 is differentiable only with respect to its frequencies");
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
+        throw new UnsupportedOperationException("TN93 is differentiable only with respect to its frequencies");
     }
 
     public synchronized EigenDecomposition getEigenDecomposition() {

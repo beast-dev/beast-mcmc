@@ -28,9 +28,13 @@
 package dr.evomodel.substmodel.nucleotide;
 
 import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
@@ -47,7 +51,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class GTR extends BaseSubstitutionModel implements Citable {
+public class GTR extends BaseSubstitutionModel implements Citable, DifferentiableSubstitutionModel {
 
     public static final String A_TO_C = "AC";
     public static final String A_TO_G = "AG";
@@ -181,6 +185,37 @@ public class GTR extends BaseSubstitutionModel implements Citable {
         } else {
             System.arraycopy(this.ratesParameter.getParameterValues(), 0, rates, 0, rates.length);
         }
+    }
+
+    // **************************************************************
+    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies only)
+    // **************************************************************
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        return DifferentiableSubstitutionModelUtil.frequencyOnlyFactory(this, parameter, dim);
+    }
+
+    // The three methods below are only reached for non-frequency differentials, which factory() never returns
+
+    @Override
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        throw new UnsupportedOperationException("GTR is differentiable only with respect to its frequencies");
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        throw new UnsupportedOperationException("GTR is differentiable only with respect to its frequencies");
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
+        throw new UnsupportedOperationException("GTR is differentiable only with respect to its frequencies");
     }
 
     // **************************************************************

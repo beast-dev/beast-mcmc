@@ -27,9 +27,12 @@
 
 package test.dr.evomodel.substmodel;
 
+import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.HiddenNucleotides;
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
 import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
 import dr.evomodel.substmodel.DifferentialMassProvider;
 import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
@@ -39,8 +42,11 @@ import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.WrtFrequencyParameter;
+import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
+import dr.evomodel.substmodel.aminoacid.WAG;
 import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import junit.framework.TestCase;
@@ -166,16 +172,65 @@ public class FrequencyDifferentialTest extends TestCase {
     }
 
     public void testUnsupportedModelRefused() {
-        Parameter gtrFrequencies = new Parameter.Default(PI.clone());
-        GTR gtr = new GTR(new Parameter.Default(new double[]{1.0, 2.0, 0.5, 1.5, 3.0, 1.0}),
-                new FrequencyModel(Nucleotides.INSTANCE, gtrFrequencies));
+        // only the listed classes are accepted; a subclass may change the generator
+        Parameter subclassFrequencies = new Parameter.Default(PI.clone());
+        HKY subclass = new HKY(KAPPA, new FrequencyModel(Nucleotides.INSTANCE, subclassFrequencies)) {
+        };
         try {
-            DifferentiableSubstitutionModelUtil.frequencyFactory(gtr, gtrFrequencies, 0);
-            fail("GTR frequency gradients must be refused until supported");
+            DifferentiableSubstitutionModelUtil.frequencyFactory(subclass, subclassFrequencies, 0);
+            fail("frequency gradients must be refused for a class outside the allowlist");
         } catch (IllegalArgumentException expected) {
             // expected
         }
-        assertNull(DifferentiableSubstitutionModelUtil.frequencyFactory(gtr, frequencies, 0));
+        assertNull(DifferentiableSubstitutionModelUtil.frequencyFactory(subclass, frequencies, 0));
+    }
+
+    public void testOtherModelsMatchFiniteDifferenceOfGenerator() {
+        Parameter tn93Frequencies = new Parameter.Default(PI.clone());
+        checkAgainstFiniteDifference(new TN93(new Parameter.Default(2.0), new Parameter.Default(4.0),
+                new FrequencyModel(Nucleotides.INSTANCE, tn93Frequencies)), tn93Frequencies);
+
+        Parameter gtrFrequencies = new Parameter.Default(PI.clone());
+        checkAgainstFiniteDifference(new GTR(new Parameter.Default(new double[]{1.0, 2.0, 0.5, 1.5, 3.0, 1.0}),
+                new FrequencyModel(Nucleotides.INSTANCE, gtrFrequencies)), gtrFrequencies);
+
+        Parameter variableFrequencies = new Parameter.Default(PI.clone());
+        checkAgainstFiniteDifference(new GTR(new Parameter.Default(1.0), new Parameter.Default(2.0),
+                new Parameter.Default(0.5), new Parameter.Default(1.5), new Parameter.Default(3.0),
+                new Parameter.Default(1.0), new FrequencyModel(Nucleotides.INSTANCE, variableFrequencies)),
+                variableFrequencies);
+
+        Parameter aaFrequencies = new Parameter.Default(skewedAminoAcidFrequencies());
+        checkAgainstFiniteDifference(new EmpiricalAminoAcidModel(WAG.INSTANCE,
+                new FrequencyModel(AminoAcids.INSTANCE, aaFrequencies)), aaFrequencies);
+    }
+
+    public void testGtrWithHkyRatesEqualsHky() {
+        Parameter gtrFrequencies = new Parameter.Default(PI.clone());
+        GTR gtr = new GTR(new Parameter.Default(new double[]{1.0, KAPPA, 1.0, 1.0, KAPPA, 1.0}),
+                new FrequencyModel(Nucleotides.INSTANCE, gtrFrequencies));
+        for (int k = 0; k < K; k++) {
+            double[][] viaGtr = toArray(gtr.getInfinitesimalDifferentialMatrix(gtr.factory(gtrFrequencies, k)));
+            double[][] viaHky = toArray(hky.getInfinitesimalDifferentialMatrix(hky.factory(frequencies, k)));
+            for (int i = 0; i < K; i++) {
+                for (int j = 0; j < K; j++) {
+                    assertEquals("k=" + k + " (" + i + "," + j + ")", viaHky[i][j], viaGtr[i][j], 1E-14);
+                }
+            }
+        }
+    }
+
+    public void testFrequencyOnlyModelsRefuseOtherParameters() {
+        Parameter kappa1 = new Parameter.Default(2.0);
+        Parameter tn93Frequencies = new Parameter.Default(PI.clone());
+        TN93 tn93 = new TN93(kappa1, new Parameter.Default(4.0), new FrequencyModel(Nucleotides.INSTANCE, tn93Frequencies));
+        assertTrue(tn93.factory(tn93Frequencies, 0) instanceof WrtFrequencyParameter);
+        try {
+            tn93.factory(kappa1, 0);
+            fail("TN93 is differentiable only wrt its frequencies");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("only with respect to its own frequency parameter"));
+        }
     }
 
     public void testLogRateFactoryRefusesForeignParameter() {
@@ -205,6 +260,46 @@ public class FrequencyDifferentialTest extends TestCase {
         } catch (IllegalArgumentException expected) {
             // expected
         }
+    }
+
+    // dQ~/dpi_k against central differences of the model's own normalized generator, at any state count
+    private static void checkAgainstFiniteDifference(BaseSubstitutionModel model, Parameter pi) {
+        final int stateCount = pi.getDimension();
+        final double h = 1E-6;
+        for (int k = 0; k < stateCount; k++) {
+            WrappedMatrix analytic = ((DifferentiableSubstitutionModel) model)
+                    .getInfinitesimalDifferentialMatrix(((DifferentiableSubstitutionModel) model).factory(pi, k));
+
+            final double value = pi.getParameterValue(k);
+            double[] plus = new double[stateCount * stateCount];
+            double[] minus = new double[stateCount * stateCount];
+            pi.setParameterValue(k, value + h);
+            model.getInfinitesimalMatrix(plus);
+            pi.setParameterValue(k, value - h);
+            model.getInfinitesimalMatrix(minus);
+            pi.setParameterValue(k, value);
+
+            for (int i = 0; i < stateCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    double numeric = (plus[i * stateCount + j] - minus[i * stateCount + j]) / (2 * h);
+                    assertEquals(model.getModelName() + " k=" + k + " (" + i + "," + j + ")",
+                            numeric, analytic.get(i, j), 1E-7 * Math.max(1.0, Math.abs(numeric)));
+                }
+            }
+        }
+    }
+
+    private static double[] skewedAminoAcidFrequencies() {
+        double[] pi = new double[AminoAcids.INSTANCE.getStateCount()];
+        double sum = 0.0;
+        for (int k = 0; k < pi.length; k++) {
+            pi[k] = 1.0 + k;
+            sum += pi[k];
+        }
+        for (int k = 0; k < pi.length; k++) {
+            pi[k] /= sum;
+        }
+        return pi;
     }
 
     private double[] generatorWithFrequency(int k, double value) {

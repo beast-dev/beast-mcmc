@@ -39,7 +39,10 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.DifferentialMassProvider.Mode;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
@@ -53,8 +56,8 @@ import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 
 /**
- * Analytic gradient wrt HKY stationary frequencies (plan 5, FQ6) on the b1 oracle fixture:
- * 5 taxa, 44 sites, HKY kappa = 2.5, pi = (0.1, 0.2, 0.3, 0.4), strict clock 1.0.
+ * Analytic gradient wrt stationary frequencies (plan 5, FQ6 and FQ8) on the b1 oracle fixture:
+ * 5 taxa, 44 sites, HKY kappa = 2.5, pi = (0.1, 0.2, 0.3, 0.4), strict clock 1.0. TN93 and GTR reuse the fixture.
  */
 public class FrequencyGradientTest extends TestCase {
 
@@ -101,24 +104,34 @@ public class FrequencyGradientTest extends TestCase {
     }
 
     public void testFrequencyWeightedSumMatchesClockDerivative() throws Exception {
-        // sum_k pi_k R_k = N and sum_k pi_k B_k = -r d log L / d r, so pi.g = N - r d log L / d r
         Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false);
-        double[] g = f.gradient(Backend.ADJOINT).getGradientLogDensity();
-        double piG = 0.0;
-        for (int k = 0; k < PI.length; k++) {
-            piG += PI[k] * g[k];
-        }
-
-        final double h = 1E-6;
-        f.clockRate.setParameterValue(0, 1.0 + h);
-        double plus = f.likelihood.getLogLikelihood();
-        f.clockRate.setParameterValue(0, 1.0 - h);
-        double minus = f.likelihood.getLogLikelihood();
-        f.clockRate.setParameterValue(0, 1.0);
-        double clockDerivative = (plus - minus) / (2 * h);
-
-        assertEquals(SITE_COUNT - clockDerivative, piG, 1E-6 * Math.abs(piG));
+        double piG = assertFrequencyWeightedSumIdentity(f, f.gradient(Backend.ADJOINT).getGradientLogDensity());
         assertEquals(64.2441088627, piG, 1E-8);
+    }
+
+    public void testGtrWithHkyRatesMatchesHkyLiterals() throws Exception {
+        Fixture f = new Fixture(new GammaSiteRateModel("siteModel", 0.5, 4), PartialsRescalingScheme.NONE, false,
+                Model.GTR_HKY_RATES);
+        assertEquals(-195.67140160238029, f.likelihood.getLogLikelihood(), 1E-10);
+
+        double[] expected = {209.49044382424393, 59.60081659045633, 26.154964286906672, 16.20375178298842};
+        assertArrayEquals(expected, f.gradient(Backend.ADJOINT).getGradientLogDensity(), 1E-8);
+        assertArrayEquals(expected, f.gradient(Backend.PER_DIMENSION).getGradientLogDensity(), 1E-8);
+    }
+
+    public void testTn93AndGtrEnginesAgreeAndPassTangentCheck() throws Exception {
+        for (Model model : new Model[]{Model.TN93, Model.GTR}) {
+            Fixture f = new Fixture(new GammaSiteRateModel("siteModel", 0.5, 4, 0.3),
+                    PartialsRescalingScheme.ALWAYS, false, model);
+
+            double[] adjoint = f.gradient(Backend.ADJOINT).getGradientLogDensity();
+            double[] perDimension = f.gradient(Backend.PER_DIMENSION).getGradientLogDensity();
+            assertArrayEquals(adjoint, perDimension, 1E-9);
+            assertFrequencyWeightedSumIdentity(f, adjoint);
+
+            String report = f.gradient(Backend.AUTO).getReport(); // throws if the tangent check fails
+            assertTrue(model + ": " + report, report.contains("engine: adjoint"));
+        }
     }
 
     public void testSeparateRootFrequencies() throws Exception {
@@ -189,12 +202,33 @@ public class FrequencyGradientTest extends TestCase {
         assertFalse(HomogeneousSubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.kappa));
     }
 
+    // sum_k pi_k R_k = N and sum_k pi_k B_k = -r d log L / d r, so pi.g = N - r d log L / d r for any normalized Q
+    private static double assertFrequencyWeightedSumIdentity(Fixture f, double[] g) {
+        double piG = 0.0;
+        for (int k = 0; k < g.length; k++) {
+            piG += f.frequencies.getParameterValue(k) * g[k];
+        }
+
+        final double h = 1E-6;
+        f.clockRate.setParameterValue(0, 1.0 + h);
+        double plus = f.likelihood.getLogLikelihood();
+        f.clockRate.setParameterValue(0, 1.0 - h);
+        double minus = f.likelihood.getLogLikelihood();
+        f.clockRate.setParameterValue(0, 1.0);
+        double clockDerivative = (plus - minus) / (2 * h);
+
+        assertEquals(SITE_COUNT - clockDerivative, piG, 1E-6 * Math.abs(piG));
+        return piG;
+    }
+
     private static void assertArrayEquals(double[] expected, double[] actual, double relativeTolerance) {
         assertEquals(expected.length, actual.length);
         for (int k = 0; k < expected.length; k++) {
             assertEquals("k=" + k, expected[k], actual[k], relativeTolerance * Math.max(1.0, Math.abs(expected[k])));
         }
     }
+
+    private enum Model {HKY, TN93, GTR_HKY_RATES, GTR}
 
     private static class Fixture {
 
@@ -208,11 +242,21 @@ public class FrequencyGradientTest extends TestCase {
 
         Fixture(GammaSiteRateModel siteRateModel, PartialsRescalingScheme scheme, boolean separateRoot)
                 throws Exception {
-            this(siteRateModel, scheme, separateRoot, new PreOrderSettings(true, false, true, true));
+            this(siteRateModel, scheme, separateRoot, new PreOrderSettings(true, false, true, true), Model.HKY);
+        }
+
+        Fixture(GammaSiteRateModel siteRateModel, PartialsRescalingScheme scheme, boolean separateRoot, Model model)
+                throws Exception {
+            this(siteRateModel, scheme, separateRoot, new PreOrderSettings(true, false, true, true), model);
         }
 
         Fixture(GammaSiteRateModel siteRateModel, PartialsRescalingScheme scheme, boolean separateRoot,
                 PreOrderSettings settings) throws Exception {
+            this(siteRateModel, scheme, separateRoot, settings, Model.HKY);
+        }
+
+        Fixture(GammaSiteRateModel siteRateModel, PartialsRescalingScheme scheme, boolean separateRoot,
+                PreOrderSettings settings, Model model) throws Exception {
 
             SimpleAlignment alignment = new SimpleAlignment();
             alignment.setDataType(Nucleotides.INSTANCE);
@@ -222,19 +266,34 @@ public class FrequencyGradientTest extends TestCase {
             Tree newick = new NewickImporter(NEWICK).importTree(null);
             tree = new DefaultTreeModel("treeModel", newick);
 
-            HKY hky = new HKY(kappa, new FrequencyModel(Nucleotides.INSTANCE, frequencies));
+            SubstitutionModel substitutionModel = create(model, new FrequencyModel(Nucleotides.INSTANCE, frequencies));
             HomogeneousBranchModel branchModel;
             if (separateRoot) {
                 rootFrequencies = new Parameter.Default(new double[]{0.4, 0.3, 0.2, 0.1});
-                branchModel = new HomogeneousBranchModel(hky, new FrequencyModel(Nucleotides.INSTANCE, rootFrequencies));
+                branchModel = new HomogeneousBranchModel(substitutionModel, new FrequencyModel(Nucleotides.INSTANCE, rootFrequencies));
             } else {
                 rootFrequencies = null;
-                branchModel = new HomogeneousBranchModel(hky);
+                branchModel = new HomogeneousBranchModel(substitutionModel);
             }
 
             delegate = new BeagleDataLikelihoodDelegate(tree, new SitePatterns(alignment, null, 0, -1, 1, true),
                     branchModel, siteRateModel, true, false, scheme, false, settings);
             likelihood = new TreeDataLikelihood(delegate, tree, new StrictClockBranchRates(clockRate));
+        }
+
+        private SubstitutionModel create(Model model, FrequencyModel frequencyModel) {
+            switch (model) {
+                case HKY:
+                    return new HKY(kappa, frequencyModel);
+                case TN93:
+                    return new TN93(new Parameter.Default(2.0), new Parameter.Default(4.0), frequencyModel);
+                case GTR_HKY_RATES:
+                    return new GTR(new Parameter.Default(new double[]{1.0, 2.5, 1.0, 1.0, 2.5, 1.0}), frequencyModel);
+                case GTR:
+                    return new GTR(new Parameter.Default(new double[]{1.0, 2.0, 0.5, 1.5, 3.0, 1.0}), frequencyModel);
+                default:
+                    throw new IllegalArgumentException(model.name());
+            }
         }
 
         HomogeneousSubstitutionModelGradient gradient(Backend backend) {

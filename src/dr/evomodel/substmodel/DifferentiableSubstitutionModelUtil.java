@@ -27,7 +27,10 @@
 
 package dr.evomodel.substmodel;
 
+import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
+import dr.evomodel.substmodel.nucleotide.GTR;
 import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.ReadableMatrix;
 import dr.math.matrixAlgebra.WrappedMatrix;
@@ -413,8 +416,22 @@ public class DifferentiableSubstitutionModelUtil {
         return new WrtFrequencyParameter(frequencyModel, parameter, dim);
     }
 
+    /**
+     * frequencyFactory for models that are differentiable only with respect to their frequencies
+     */
+    public static WrtFrequencyParameter frequencyOnlyFactory(BaseSubstitutionModel substitutionModel, Parameter parameter, int dim) {
+        final WrtFrequencyParameter wrt = frequencyFactory(substitutionModel, parameter, dim);
+        if (wrt == null) {
+            throw new IllegalArgumentException(substitutionModel.getClass().getSimpleName()
+                    + " is differentiable only with respect to its own frequency parameter, not " + parameter.getId());
+        }
+        return wrt;
+    }
+
+    // Models whose relative rates do not depend on the frequencies and whose generator is setupQMatrix(rates, pi)
     private static boolean isFrequencyGradientSupported(BaseSubstitutionModel substitutionModel) {
-        return substitutionModel.getClass() == HKY.class;
+        final Class<?> c = substitutionModel.getClass();
+        return c == HKY.class || c == TN93.class || c == GTR.class || c == EmpiricalAminoAcidModel.class;
     }
 
     protected static void setupQDerivative(BaseSubstitutionModel substitutionModel, double[] differentialRates,

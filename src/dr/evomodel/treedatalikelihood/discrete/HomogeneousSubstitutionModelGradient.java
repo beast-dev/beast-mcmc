@@ -1,5 +1,5 @@
 /*
- * SubstitutionModelGradient.java
+ * HomogeneousSubstitutionModelGradient.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -56,7 +56,7 @@ import java.util.logging.Logger;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class SubstitutionModelGradient implements GradientWrtParameterProvider, Reportable {
+public class HomogeneousSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable {
 
     public enum Backend {
         AUTO("auto"),
@@ -100,7 +100,7 @@ public class SubstitutionModelGradient implements GradientWrtParameterProvider, 
     private boolean adjointDisabled = false;
     private boolean fallbackLogged = false;
 
-    public SubstitutionModelGradient(TreeDataLikelihood treeDataLikelihood,
+    public HomogeneousSubstitutionModelGradient(TreeDataLikelihood treeDataLikelihood,
                                      Parameter parameter,
                                      Backend backend,
                                      Double tolerance) {
@@ -235,7 +235,7 @@ public class SubstitutionModelGradient implements GradientWrtParameterProvider, 
 
     private BranchTermEngine newPerDimensionEngine() {
         return new PerDimensionEngine(treeDataLikelihood, likelihoodDelegate, substitutionModel, wrts,
-                "substitutionModelGradient:" + parameter.getId());
+                "homogeneousSubstitutionModelGradient:" + parameter.getId());
     }
 
     private int stateCount() {
@@ -341,7 +341,7 @@ public class SubstitutionModelGradient implements GradientWrtParameterProvider, 
             piGradient += pi[k] * (branch[k] + root[k]);
         }
 
-        StringBuilder sb = new StringBuilder("substitutionModelGradient." + parameter.getId()
+        StringBuilder sb = new StringBuilder("homogeneousSubstitutionModelGradient." + parameter.getId()
                 + " (engine: " + getEngineName() + "; terms:" + (includeBranch ? " branch" : "")
                 + (includeRoot ? " root" : "") + ")\n");
         sb.append("branch: ").append(new dr.math.matrixAlgebra.Vector(branch)).append("\n");

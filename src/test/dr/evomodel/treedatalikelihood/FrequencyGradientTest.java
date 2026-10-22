@@ -45,8 +45,8 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionParameterGradient;
-import dr.evomodel.treedatalikelihood.discrete.SubstitutionModelGradient;
-import dr.evomodel.treedatalikelihood.discrete.SubstitutionModelGradient.Backend;
+import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionModelGradient;
+import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionModelGradient.Backend;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
@@ -94,7 +94,7 @@ public class FrequencyGradientTest extends TestCase {
 
     public void testTangentCheckPasses() throws Exception {
         Fixture f = new Fixture(new GammaSiteRateModel("siteModel", 0.5, 4), PartialsRescalingScheme.DYNAMIC, false);
-        SubstitutionModelGradient gradient = f.gradient(Backend.AUTO);
+        HomogeneousSubstitutionModelGradient gradient = f.gradient(Backend.AUTO);
         assertEquals(1.0, gradient.getSimplexSum());
         String report = gradient.getReport(); // throws if the tangent check fails
         assertTrue(report.contains("engine: adjoint"));
@@ -123,9 +123,9 @@ public class FrequencyGradientTest extends TestCase {
 
     public void testSeparateRootFrequencies() throws Exception {
         Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, true);
-        SubstitutionModelGradient branchOnly = f.gradient(Backend.ADJOINT);
-        SubstitutionModelGradient rootOnly = new SubstitutionModelGradient(f.likelihood, f.rootFrequencies,
-                Backend.ADJOINT, 1E-5);
+        HomogeneousSubstitutionModelGradient branchOnly = f.gradient(Backend.ADJOINT);
+        HomogeneousSubstitutionModelGradient rootOnly = new HomogeneousSubstitutionModelGradient(f.likelihood,
+                f.rootFrequencies, Backend.ADJOINT, 1E-5);
 
         double[] root = rootOnly.getGradientLogDensity();
         double piRoot = 0.0;
@@ -145,7 +145,8 @@ public class FrequencyGradientTest extends TestCase {
 
     public void testKappaThroughAdjointMatchesPerDimension() throws Exception {
         Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false);
-        SubstitutionModelGradient adjoint = new SubstitutionModelGradient(f.likelihood, f.kappa, Backend.ADJOINT, 1E-3);
+        HomogeneousSubstitutionModelGradient adjoint = new HomogeneousSubstitutionModelGradient(f.likelihood,
+                f.kappa, Backend.ADJOINT, 1E-3);
         HomogeneousSubstitutionParameterGradient reference = new HomogeneousSubstitutionParameterGradient(
                 "kappa", f.likelihood, f.kappa, f.delegate, 0, Mode.EXACT, 1E-3);
 
@@ -157,14 +158,14 @@ public class FrequencyGradientTest extends TestCase {
 
     public void testAdjointFollowsTreeAndClockChanges() throws Exception {
         Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false);
-        SubstitutionModelGradient gradient = f.gradient(Backend.ADJOINT);
+        HomogeneousSubstitutionModelGradient gradient = f.gradient(Backend.ADJOINT);
         gradient.getGradientLogDensity();
 
         f.clockRate.setParameterValue(0, 1.7);
         f.tree.setNodeHeight(f.tree.getRoot(), f.tree.getNodeHeight(f.tree.getRoot()) + 0.2);
 
         double[] sameObject = gradient.getGradientLogDensity();
-        double[] fresh = new SubstitutionModelGradient(f.likelihood, f.frequencies, Backend.ADJOINT, 1E-3)
+        double[] fresh = new HomogeneousSubstitutionModelGradient(f.likelihood, f.frequencies, Backend.ADJOINT, 1E-3)
                 .getGradientLogDensity();
         assertArrayEquals(fresh, sameObject, 1E-10);
         gradient.getReport(); // tangent check at the new state
@@ -183,9 +184,9 @@ public class FrequencyGradientTest extends TestCase {
 
     public void testFrequencyParameterDetection() throws Exception {
         Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, true);
-        assertTrue(SubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.frequencies));
-        assertTrue(SubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.rootFrequencies));
-        assertFalse(SubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.kappa));
+        assertTrue(HomogeneousSubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.frequencies));
+        assertTrue(HomogeneousSubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.rootFrequencies));
+        assertFalse(HomogeneousSubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.kappa));
     }
 
     private static void assertArrayEquals(double[] expected, double[] actual, double relativeTolerance) {
@@ -236,8 +237,8 @@ public class FrequencyGradientTest extends TestCase {
             likelihood = new TreeDataLikelihood(delegate, tree, new StrictClockBranchRates(clockRate));
         }
 
-        SubstitutionModelGradient gradient(Backend backend) {
-            return new SubstitutionModelGradient(likelihood, frequencies, backend, 1E-5);
+        HomogeneousSubstitutionModelGradient gradient(Backend backend) {
+            return new HomogeneousSubstitutionModelGradient(likelihood, frequencies, backend, 1E-5);
         }
     }
 }

@@ -35,7 +35,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
 import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionParameterGradient;
-import dr.evomodel.treedatalikelihood.discrete.SubstitutionModelGradient;
+import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionModelGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.CompoundParameter;
@@ -90,12 +90,12 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             final Double reportTolerance = mode == Mode.EXACT ?
                     (tolerance != null ? tolerance : DEFAULT_EXACT_TOLERANCE) : null;
 
-            SubstitutionModelGradient.Backend backend = parseBackend(xo);
+            HomogeneousSubstitutionModelGradient.Backend backend = parseBackend(xo);
             getBeagleDelegate(treeDataLikelihood);
-            if (SubstitutionModelGradient.isFrequencyParameter(treeDataLikelihood, parameter)
-                    || backend == SubstitutionModelGradient.Backend.ADJOINT) {
-                return parseSubstitutionModelGradient(xo, treeDataLikelihood, parameter, backend, mode, useHessian,
-                        reportTolerance);
+            if (HomogeneousSubstitutionModelGradient.isFrequencyParameter(treeDataLikelihood, parameter)
+                    || backend == HomogeneousSubstitutionModelGradient.Backend.ADJOINT) {
+                return parseHomogeneousSubstitutionModelGradient(xo, treeDataLikelihood, parameter, backend, mode,
+                        useHessian, reportTolerance);
             }
 
             BeagleDataLikelihoodDelegate beagleData = getPreOrderBeagleDelegate(treeDataLikelihood);
@@ -121,10 +121,12 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
     }
 
     // All dimensions of one parameter, from one adjoint pass (or per dimension); frequencies add the root term
-    private static Object parseSubstitutionModelGradient(XMLObject xo, TreeDataLikelihood treeDataLikelihood,
-                                                         Parameter parameter,
-                                                         SubstitutionModelGradient.Backend backend,
-                                                         Mode mode, boolean useHessian, Double reportTolerance)
+    private static Object parseHomogeneousSubstitutionModelGradient(XMLObject xo,
+                                                                    TreeDataLikelihood treeDataLikelihood,
+                                                                    Parameter parameter,
+                                                                    HomogeneousSubstitutionModelGradient.Backend backend,
+                                                                    Mode mode, boolean useHessian,
+                                                                    Double reportTolerance)
             throws XMLParseException {
 
         // dim defaults to 0 when omitted, so route on whether it was given
@@ -143,16 +145,16 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         }
 
         try {
-            return new SubstitutionModelGradient(treeDataLikelihood, parameter, backend, reportTolerance);
+            return new HomogeneousSubstitutionModelGradient(treeDataLikelihood, parameter, backend, reportTolerance);
         } catch (IllegalArgumentException | UnsupportedOperationException e) {
             throw new XMLParseException(e.getMessage());
         }
     }
 
-    private static SubstitutionModelGradient.Backend parseBackend(XMLObject xo) throws XMLParseException {
+    private static HomogeneousSubstitutionModelGradient.Backend parseBackend(XMLObject xo) throws XMLParseException {
         try {
-            return SubstitutionModelGradient.Backend.parse(
-                    xo.getAttribute(BACKEND, SubstitutionModelGradient.Backend.AUTO.getLabel()));
+            return HomogeneousSubstitutionModelGradient.Backend.parse(
+                    xo.getAttribute(BACKEND, HomogeneousSubstitutionModelGradient.Backend.AUTO.getLabel()));
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(e.getMessage());
         }

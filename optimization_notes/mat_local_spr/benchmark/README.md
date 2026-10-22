@@ -64,6 +64,25 @@ On small-2, posterior means of the four seeds:
   parameters mix too slowly for it to show: the earlier agreement of the plain local block with BEAGLE
   (two seeds) was luck.
 
+### Site rate categories (discrete gamma)
+
+small-2 with a discrete gamma site model (4 categories, shape alpha estimated) in every method; the MAT
+samples each variable site's category with a `siteRateCategoryGibbsOperator` (weight 16.5) and sums the
+constant sites over the categories (see optimization_notes/mat_site_rate_categories/DESIGN.md). Four seeds
+of 40 million states per method, 10% burn-in, at 8fed6a989; full tables in
+[validation-gamma-results.md](validation-gamma-results.md). The runs were made concurrently, so their
+timings are not comparable.
+
+| Method | Tree length | Root height | Population size | Clock rate (x10^-3) | alpha |
+|---|---|---|---|---|---|
+| BEAGLE | 62.62-63.30 | 6.23-6.30 | 3.72-3.76 | 3.75-3.78 | 0.303-0.304 |
+| MAT local + Gibbs (history and categories) | 62.08-62.86 | 6.21-6.25 | 3.68-3.74 | 3.77-3.82 | 0.304-0.305 |
+
+Pooled over seeds, every parameter is within 1.7 Monte Carlo standard errors of BEAGLE (alpha 0.1), and
+the seeds of each method agree with each other about as well as BEAGLE's do (largest pairwise |z| 2.5 for
+the MAT, 2.9 for BEAGLE). The excess of mutations over parsimony is 0.85-0.89 in every seed: higher than
+without rate heterogeneity, as fast sites now carry more of the homoplasy, but the same in every run.
+
 ### Speed
 
 | | Method | Time per million states | Cores | ESS per minute: root height | tree length | population size | clock rate | coalescent |

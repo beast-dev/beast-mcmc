@@ -32,6 +32,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.GradientWrtParameterProvider.CheckGradientNumerically;
 import dr.inference.hmc.GradientWrtParameterProvider.MismatchException;
 import dr.inference.hmc.JointGradient;
+import dr.inference.hmc.SimplexTangent;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.DirichletDistribution;
@@ -79,7 +80,7 @@ public class SimplexTangentCheckTest extends TestCase {
         assertEquals(1.0, dirichlet.getSimplexSum());
 
         double[] expected = {10.0, -5.0, 10.0 / 3.0, -2.5};
-        double[] analytic = GradientWrtParameterProvider.projectOntoTangent(
+        double[] analytic = SimplexTangent.project(
                 dirichlet.getGradientLogDensity(), x.getParameterValues(), 1.0);
         double[] numeric = checker(dirichlet, 1E-6).getTangentNumerical(1.0);
         for (int k = 0; k < expected.length; k++) {

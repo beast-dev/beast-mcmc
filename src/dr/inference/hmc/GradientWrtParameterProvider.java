@@ -293,7 +293,7 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
         private String getSimplexReport(double[] analytic, double simplexSum) throws MismatchException {
 
             final double[] numericTangent = getTangentNumerical(simplexSum);
-            final double[] analyticTangent = projectOntoTangent(analytic, parameter.getParameterValues(), simplexSum);
+            final double[] analyticTangent = SimplexTangent.project(analytic, parameter.getParameterValues(), simplexSum);
 
             StringBuilder sb = new StringBuilder("Gradient (simplex, sum = " + simplexSum + ")\n");
             sb.append("analytic (tangent): ").append(new dr.math.matrixAlgebra.Vector(analyticTangent)).append("\n");
@@ -328,50 +328,38 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
 
         private static final double TANGENT_STEP = 1E-6;
         private static final double SIMPLEX_PRECONDITION = 1E-10;
-    }
 
-    static double[] projectOntoTangent(double[] gradient, double[] x, double simplexSum) {
-        double inner = 0.0;
-        for (int i = 0; i < x.length; ++i) {
-            inner += x[i] * gradient[i];
-        }
-        double[] tangent = new double[gradient.length];
-        for (int i = 0; i < gradient.length; ++i) {
-            tangent[i] = gradient[i] - inner / simplexSum;
-        }
-        return tangent;
-    }
-
-    static boolean hasDirichletOn(Likelihood likelihood, Parameter parameter) {
-        if (likelihood instanceof MultivariateDistributionLikelihood) {
-            MultivariateDistributionLikelihood mdl = (MultivariateDistributionLikelihood) likelihood;
-            if (mdl.getDistribution() instanceof DirichletDistribution) {
-                for (Attribute<double[]> data : mdl.getDataList()) {
-                    if (data == parameter) {
+        private static boolean hasDirichletOn(Likelihood likelihood, Parameter parameter) {
+            if (likelihood instanceof MultivariateDistributionLikelihood) {
+                MultivariateDistributionLikelihood mdl = (MultivariateDistributionLikelihood) likelihood;
+                if (mdl.getDistribution() instanceof DirichletDistribution) {
+                    for (Attribute<double[]> data : mdl.getDataList()) {
+                        if (data == parameter) {
+                            return true;
+                        }
+                    }
+                }
+            } else if (likelihood instanceof CompoundLikelihood) {
+                for (Likelihood child : ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                    if (hasDirichletOn(child, parameter)) {
                         return true;
                     }
                 }
             }
-        } else if (likelihood instanceof CompoundLikelihood) {
-            for (Likelihood child : ((CompoundLikelihood) likelihood).getLikelihoods()) {
-                if (hasDirichletOn(child, parameter)) {
-                    return true;
+            return false;
+        }
+
+        private static String checkLengthAndFinite(double[] analytic, double[] numeric) {
+            if (analytic.length != numeric.length) {
+                return "Length mismatch: analytic " + analytic.length + ", numeric " + numeric.length;
+            }
+            for (int i = 0; i < analytic.length; ++i) {
+                if (!Double.isFinite(analytic[i]) || !Double.isFinite(numeric[i])) {
+                    return "Non-finite entry @ " + (i + 1) + ": " + analytic[i] + " " + numeric[i];
                 }
             }
+            return null;
         }
-        return false;
-    }
-
-    static String checkLengthAndFinite(double[] analytic, double[] numeric) {
-        if (analytic.length != numeric.length) {
-            return "Length mismatch: analytic " + analytic.length + ", numeric " + numeric.length;
-        }
-        for (int i = 0; i < analytic.length; ++i) {
-            if (!Double.isFinite(analytic[i]) || !Double.isFinite(numeric[i])) {
-                return "Non-finite entry @ " + (i + 1) + ": " + analytic[i] + " " + numeric[i];
-            }
-        }
-        return null;
     }
 
     static String makeReport(String header,
@@ -388,7 +376,7 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
         sb.append("\n");
 
         if (checkValues) {
-            String failure = checkLengthAndFinite(analytic, numeric);
+            String failure = CheckGradientNumerically.checkLengthAndFinite(analytic, numeric);
             if (failure != null) {
                 sb.append("\n").append(failure).append("\n");
                 Logger.getLogger("dr.inference.hmc").info(sb.toString());

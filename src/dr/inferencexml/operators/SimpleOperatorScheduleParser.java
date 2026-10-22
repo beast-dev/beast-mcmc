@@ -32,6 +32,8 @@ import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.SimpleOperatorSchedule;
 import dr.xml.*;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -45,6 +47,14 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
 
     public static final String ACCEPTANCE_THRESHOLD = "minAcceptance";
     public static final String USE_THRESHOLD = "minUsage";
+
+    /**
+     * System property (set by the -operator_weights command line option) holding a comma separated
+     * list of key=factor pairs that multiply the XML weights. A key matches an operator's full name
+     * (e.g. "scale(clock.rate)") or the part before the first '(' (e.g. "subtreeLeap"); "*" matches
+     * any operator not otherwise matched. A factor of 0 removes the operator from the schedule.
+     */
+    public static final String OPERATOR_WEIGHTS_PROPERTY = "mcmc.operator_weights";
 
     public String getParserName() {
         return OPERATOR_SCHEDULE;
@@ -78,13 +88,69 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
             }
         }
 
+        Map<String, Double> weightFactors = parseWeightFactors(System.getProperty(OPERATOR_WEIGHTS_PROPERTY));
+
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);
             if (child instanceof MCMCOperator) {
-                schedule.addOperator((MCMCOperator) child);
+                MCMCOperator operator = (MCMCOperator) child;
+                if (weightFactors != null && !applyWeightFactor(operator, weightFactors)) {
+                    continue;
+                }
+                schedule.addOperator(operator);
             }
         }
         return schedule;
+    }
+
+    private static Map<String, Double> parseWeightFactors(String spec) {
+        if (spec == null || spec.trim().isEmpty()) {
+            return null;
+        }
+        Map<String, Double> factors = new LinkedHashMap<>();
+        for (String entry : spec.split(",")) {
+            String[] parts = entry.split("=");
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("Operator weight override should be key=factor: " + entry);
+            }
+            double factor = Double.parseDouble(parts[1].trim());
+            if (factor < 0.0) {
+                throw new IllegalArgumentException("Operator weight factor must be non-negative: " + entry);
+            }
+            factors.put(parts[0].trim(), factor);
+        }
+        return factors;
+    }
+
+    /**
+     * Multiplies the operator's weight by the matching factor.
+     * @return false if the factor is zero and the operator should be left out of the schedule
+     */
+    private static boolean applyWeightFactor(MCMCOperator operator, Map<String, Double> factors) {
+        String name = operator.getOperatorName();
+        int bracket = name.indexOf('(');
+        String prefix = (bracket > 0 ? name.substring(0, bracket) : name).trim();
+
+        Double factor = factors.get(name);
+        if (factor == null) {
+            factor = factors.get(prefix);
+        }
+        if (factor == null) {
+            factor = factors.get("*");
+        }
+        if (factor == null || factor == 1.0) {
+            return true;
+        }
+
+        Logger logger = Logger.getLogger("dr.inference");
+        if (factor == 0.0) {
+            logger.info("  Operator weight override: removing " + name);
+            return false;
+        }
+        double weight = operator.getWeight() * factor;
+        logger.info("  Operator weight override: " + name + " weight " + operator.getWeight() + " -> " + weight);
+        operator.setWeight(weight);
+        return true;
     }
 
     //************************************************************************

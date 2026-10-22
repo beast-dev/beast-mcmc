@@ -83,6 +83,24 @@ the seeds of each method agree with each other about as well as BEAGLE's do (lar
 the MAT, 2.9 for BEAGLE). The excess of mutations over parsimony is 0.85-0.89 in every seed: higher than
 without rate heterogeneity, as fast sites now carry more of the homoplasy, but the same in every run.
 
+With the category operator at 1% of the SubtreeLeap weight (1.65), the MAT seeds run one at a time
+([validation-gamma2-results.md](validation-gamma2-results.md); the BEAGLE runs are the same four), every
+parameter is within 1.3 standard errors of BEAGLE (alpha -0.1), and ESS per state is about 18% higher for
+the tree parameters. ESS per minute (mean over seeds; BEAGLE from runs of 5 million states made one at a
+time, at 0.70 minutes per million states with 18 threads and 0.80 with one):
+
+| ESS per minute | Root height | Tree length | Population size | Clock rate | alpha |
+|---|---|---|---|---|---|
+| MAT, category weight 1.65 (1 core) | 53 | 28 | 38 | 39 | 159 |
+| MAT, category weight 16.5 (1 core) | 26 | 14 | 18 | 20 | 98 |
+| BEAGLE, 1 thread | 47 | 23 | 32 | 32 | 121 |
+| BEAGLE, 18 threads | 53 | 27 | 36 | 37 | 139 |
+| BEAGLE, 18 threads, per core | 3.0 | 1.5 | 2.0 | 2.0 | 7.7 |
+
+Per core, the MAT has about 1.2 times the ESS per minute of BEAGLE on one thread (and as much as BEAGLE on
+all 18), so independent MAT chains, one per core, would give about 20 times the ESS per minute of one
+BEAGLE run on all cores, less their burn-in. With 258 patterns BEAGLE gains little from threads.
+
 ### Speed
 
 | | Method | Time per million states | Cores | ESS per minute: root height | tree length | population size | clock rate | coalescent |

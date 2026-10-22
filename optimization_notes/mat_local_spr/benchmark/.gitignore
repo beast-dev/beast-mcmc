@@ -3,3 +3,5 @@ xmls/
 __pycache__/
 validation-xmls/
 validation-runs/
+validation-gamma-xmls/
+validation-gamma-runs/

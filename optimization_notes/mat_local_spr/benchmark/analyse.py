@@ -28,7 +28,7 @@ import numpy as np
 import tree_parsimony
 
 BASKET = ['rootHeight', 'treeLength', 'constant.popSize', 'kappa', 'clock.rate',
-          'frequencies1', 'frequencies2', 'frequencies3', 'frequencies4', 'coalescent', 'prior',
+          'frequencies1', 'frequencies2', 'frequencies3', 'frequencies4', 'alpha', 'coalescent', 'prior',
           'treeLikelihood', 'mat.mutations', 'excess']
 # parameters that differ in meaning between the baseline and the MAT
 MAT_ONLY = {'treeLikelihood', 'mat.mutations', 'excess'}

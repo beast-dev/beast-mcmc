@@ -188,7 +188,7 @@ public class GTR extends BaseSubstitutionModel implements Citable, Differentiabl
     }
 
     // **************************************************************
-    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies only)
+    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies and relative rates)
     // **************************************************************
 
     @Override
@@ -198,24 +198,38 @@ public class GTR extends BaseSubstitutionModel implements Citable, Differentiabl
 
     @Override
     public WrtParameter factory(Parameter parameter, int dim) {
-        return DifferentiableSubstitutionModelUtil.frequencyOnlyFactory(this, parameter, dim);
+        if (parameter == getFrequencyModel().getFrequencyParameter()) {
+            return DifferentiableSubstitutionModelUtil.frequencyFactory(this, parameter, dim);
+        }
+        if (parameter == ratesParameter) {
+            return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, dim);
+        }
+        // AC, AG, AT, CG, CT, GT, in the order of setupRelativeRates
+        final Variable<?>[] variables = {rateACVariable, rateAGVariable, rateATVariable,
+                rateCGVariable, rateCTVariable, rateGTVariable};
+        for (int m = 0; m < variables.length; ++m) {
+            if (variables[m] != null && variables[m] == parameter) {
+                return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, m);
+            }
+        }
+        throw new IllegalArgumentException("GTR has no differential with respect to " + parameter.getId());
     }
 
-    // The three methods below are only reached for non-frequency differentials, which factory() never returns
+    // The three methods below are only reached for enum-style differentials, which factory() never returns
 
     @Override
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
-        throw new UnsupportedOperationException("GTR is differentiable only with respect to its frequencies");
+        throw new UnsupportedOperationException("GTR uses the generic frequency and rate differentials");
     }
 
     @Override
     public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
-        throw new UnsupportedOperationException("GTR is differentiable only with respect to its frequencies");
+        throw new UnsupportedOperationException("GTR uses the generic frequency and rate differentials");
     }
 
     @Override
     public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
-        throw new UnsupportedOperationException("GTR is differentiable only with respect to its frequencies");
+        throw new UnsupportedOperationException("GTR uses the generic frequency and rate differentials");
     }
 
     // **************************************************************

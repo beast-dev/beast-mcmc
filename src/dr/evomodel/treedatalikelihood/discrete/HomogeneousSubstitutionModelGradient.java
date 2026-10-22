@@ -34,6 +34,7 @@ import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtPa
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.WrtFrequencyParameter;
+import dr.evomodel.substmodel.WrtRateParameter;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -173,6 +174,26 @@ public class HomogeneousSubstitutionModelGradient implements GradientWrtParamete
         return false;
     }
 
+    /**
+     * @return true if parameter sets a relative rate of the likelihood's single substitution model through the generic
+     * rate differential (e.g. TN93 kappa1/kappa2, GTR rates), which only the adjoint engine needs
+     */
+    public static boolean isRateParameter(TreeDataLikelihood treeDataLikelihood, Parameter parameter) {
+        DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
+            return false;
+        }
+        List<SubstitutionModel> models = ((BeagleDataLikelihoodDelegate) delegate).getBranchModel().getSubstitutionModels();
+        if (models.size() != 1 || !(models.get(0) instanceof DifferentiableSubstitutionModel)) {
+            return false;
+        }
+        try {
+            return ((DifferentiableSubstitutionModel) models.get(0)).factory(parameter, 0) instanceof WrtRateParameter;
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
     private static Parameter frequencyParameterOf(FrequencyModel frequencyModel) {
         if (frequencyModel == null) {
             return null;
@@ -234,8 +255,10 @@ public class HomogeneousSubstitutionModelGradient implements GradientWrtParamete
     }
 
     private BranchTermEngine newPerDimensionEngine() {
+        // The engine reuses traits by name, so the name must identify the parameter object: ids may be absent or shared
         return new PerDimensionEngine(treeDataLikelihood, likelihoodDelegate, substitutionModel, wrts,
-                "homogeneousSubstitutionModelGradient:" + parameter.getId());
+                "homogeneousSubstitutionModelGradient:" + parameter.getId()
+                        + "@" + Integer.toHexString(System.identityHashCode(parameter)));
     }
 
     private int stateCount() {

@@ -92,7 +92,7 @@ public class TN93 extends BaseSubstitutionModel implements Citable, Differentiab
     }
 
     // **************************************************************
-    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies only)
+    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies and relative rates)
     // **************************************************************
 
     @Override
@@ -102,24 +102,33 @@ public class TN93 extends BaseSubstitutionModel implements Citable, Differentiab
 
     @Override
     public WrtParameter factory(Parameter parameter, int dim) {
-        return DifferentiableSubstitutionModelUtil.frequencyOnlyFactory(this, parameter, dim);
+        if (parameter == getFrequencyModel().getFrequencyParameter()) {
+            return DifferentiableSubstitutionModelUtil.frequencyFactory(this, parameter, dim);
+        }
+        if (parameter == kappaParameter1) {
+            return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, 1); // A<->G
+        }
+        if (parameter == kappaParameter2) {
+            return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, 4); // C<->T
+        }
+        throw new IllegalArgumentException("TN93 has no differential with respect to " + parameter.getId());
     }
 
-    // The three methods below are only reached for non-frequency differentials, which factory() never returns
+    // The three methods below are only reached for enum-style differentials, which factory() never returns
 
     @Override
     public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
-        throw new UnsupportedOperationException("TN93 is differentiable only with respect to its frequencies");
+        throw new UnsupportedOperationException("TN93 uses the generic frequency and rate differentials");
     }
 
     @Override
     public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
-        throw new UnsupportedOperationException("TN93 is differentiable only with respect to its frequencies");
+        throw new UnsupportedOperationException("TN93 uses the generic frequency and rate differentials");
     }
 
     @Override
     public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
-        throw new UnsupportedOperationException("TN93 is differentiable only with respect to its frequencies");
+        throw new UnsupportedOperationException("TN93 uses the generic frequency and rate differentials");
     }
 
     public synchronized EigenDecomposition getEigenDecomposition() {

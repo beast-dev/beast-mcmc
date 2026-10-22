@@ -322,6 +322,9 @@ public class DifferentiableSubstitutionModelUtil {
             return getFrequencyDifferentialMatrix(substitutionModel,
                     ((WrtFrequencyParameter) wrt).getDifferentialFrequencies());
         }
+        if (wrt instanceof WrtRateParameter) {
+            return getRateDifferentialMatrix(substitutionModel, ((WrtRateParameter) wrt).getDifferentialRates());
+        }
         final double normalizingConstant = substitutionModel.setupMatrix();
 
         final int stateCount = substitutionModel.getDataType().getStateCount();
@@ -390,6 +393,60 @@ public class DifferentiableSubstitutionModelUtil {
         }
 
         return new WrappedMatrix.ArrayOfArray(differential);
+    }
+
+    /**
+     * Directional derivative of the normalized generator Q~ = Q / beta along exchangeabilities u, where Q_ij = s_ij pi_j:
+     * dQ = Q(u, pi) and dQ~ = (dQ - Q~ dbeta) / beta with dbeta = -sum_i dQ_ii pi_i.
+     * Requires Q to be linear in the relative rates (see {@link #rateFactory}).
+     */
+    public static WrappedMatrix getRateDifferentialMatrix(BaseSubstitutionModel substitutionModel, double[] u) {
+
+        final double beta = substitutionModel.setupMatrix();
+        final int stateCount = substitutionModel.getDataType().getStateCount();
+
+        final double[][] q = substitutionModel.getQCopy();
+        final double[] pi = substitutionModel.getPi();
+
+        final double[][] dq = new double[stateCount][stateCount];
+        substitutionModel.setupQMatrix(u, pi, dq);
+        substitutionModel.makeValid(dq, stateCount);
+
+        double dbeta = 0.0;
+        for (int i = 0; i < stateCount; i++) {
+            dbeta -= dq[i][i] * pi[i];
+        }
+
+        final double[][] differential = new double[stateCount][stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                differential[i][j] = (dq[i][j] - q[i][j] / beta * dbeta) / beta;
+            }
+        }
+
+        return new WrappedMatrix.ArrayOfArray(differential);
+    }
+
+    /**
+     * @return a differential for parameter[dim], which the model uses directly as relative rate rateIndex
+     */
+    public static WrtRateParameter rateFactory(BaseSubstitutionModel substitutionModel, Parameter parameter, int dim,
+                                               int rateIndex) {
+        if (!isRateGradientSupported(substitutionModel)) {
+            throw new IllegalArgumentException("Rate gradients are not yet supported for "
+                    + substitutionModel.getClass().getSimpleName());
+        }
+        if (dim < 0 || dim >= parameter.getDimension()) {
+            throw new IllegalArgumentException("Dimension " + dim + " of " + parameter.getId()
+                    + " is out of range [0, " + parameter.getDimension() + ")");
+        }
+        return new WrtRateParameter(parameter, dim, rateIndex, substitutionModel.relativeRates.length);
+    }
+
+    // Models whose relative rates are their parameter values and whose generator is setupQMatrix(rates, pi)
+    private static boolean isRateGradientSupported(BaseSubstitutionModel substitutionModel) {
+        final Class<?> c = substitutionModel.getClass();
+        return c == TN93.class || c == GTR.class;
     }
 
     /**

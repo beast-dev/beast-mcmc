@@ -220,14 +220,24 @@ public class FrequencyDifferentialTest extends TestCase {
         }
     }
 
-    public void testFrequencyOnlyModelsRefuseOtherParameters() {
-        Parameter kappa1 = new Parameter.Default(2.0);
+    public void testForeignParametersRefused() {
+        Parameter foreign = new Parameter.Default(2.0);
         Parameter tn93Frequencies = new Parameter.Default(PI.clone());
-        TN93 tn93 = new TN93(kappa1, new Parameter.Default(4.0), new FrequencyModel(Nucleotides.INSTANCE, tn93Frequencies));
+        TN93 tn93 = new TN93(new Parameter.Default(2.0), new Parameter.Default(4.0),
+                new FrequencyModel(Nucleotides.INSTANCE, tn93Frequencies));
         assertTrue(tn93.factory(tn93Frequencies, 0) instanceof WrtFrequencyParameter);
         try {
-            tn93.factory(kappa1, 0);
-            fail("TN93 is differentiable only wrt its frequencies");
+            tn93.factory(foreign, 0);
+            fail("a parameter TN93 does not use must be refused");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("has no differential"));
+        }
+
+        EmpiricalAminoAcidModel wag = new EmpiricalAminoAcidModel(WAG.INSTANCE,
+                new FrequencyModel(AminoAcids.INSTANCE, new Parameter.Default(skewedAminoAcidFrequencies())));
+        try {
+            wag.factory(foreign, 0);
+            fail("empirical amino-acid models are differentiable only wrt their frequencies");
         } catch (IllegalArgumentException expected) {
             assertTrue(expected.getMessage().contains("only with respect to its own frequency parameter"));
         }

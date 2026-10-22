@@ -93,6 +93,7 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             HomogeneousSubstitutionModelGradient.Backend backend = parseBackend(xo);
             getBeagleDelegate(treeDataLikelihood);
             if (HomogeneousSubstitutionModelGradient.isFrequencyParameter(treeDataLikelihood, parameter)
+                    || HomogeneousSubstitutionModelGradient.isRateParameter(treeDataLikelihood, parameter)
                     || backend == HomogeneousSubstitutionModelGradient.Backend.ADJOINT) {
                 return parseHomogeneousSubstitutionModelGradient(xo, treeDataLikelihood, parameter, backend, mode,
                         useHessian, reportTolerance);

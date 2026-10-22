@@ -55,9 +55,13 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Analytic gradient wrt stationary frequencies (plan 5, FQ6 and FQ8) on the b1 oracle fixture:
- * 5 taxa, 44 sites, HKY kappa = 2.5, pi = (0.1, 0.2, 0.3, 0.4), strict clock 1.0. TN93 and GTR reuse the fixture.
+ * 5 taxa, 44 sites, HKY kappa = 2.5, pi = (0.1, 0.2, 0.3, 0.4), strict clock 1.0. TN93 and GTR reuse the fixture,
+ * which also checks their relative-rate gradients (kappa1/kappa2, exchangeabilities) on the adjoint.
  */
 public class FrequencyGradientTest extends TestCase {
 
@@ -202,6 +206,83 @@ public class FrequencyGradientTest extends TestCase {
         assertFalse(HomogeneousSubstitutionModelGradient.isFrequencyParameter(f.likelihood, f.kappa));
     }
 
+    public void testRateGradientsMatchFiniteDifferences() throws Exception {
+        for (Model model : new Model[]{Model.TN93, Model.GTR}) {
+            Fixture f = new Fixture(new GammaSiteRateModel("siteModel", 0.5, 4, 0.3),
+                    PartialsRescalingScheme.ALWAYS, false, model);
+            for (Parameter rates : f.rateParameters) {
+                assertTrue(HomogeneousSubstitutionModelGradient.isRateParameter(f.likelihood, rates));
+                double[] adjoint = rateGradient(f, rates, Backend.ADJOINT);
+                assertArrayEquals(finiteDifference(f, rates), adjoint, 1E-6);
+                assertArrayEquals(adjoint, rateGradient(f, rates, Backend.PER_DIMENSION), 1E-9);
+            }
+        }
+    }
+
+    public void testGtrRateGradientIsScaleInvariant() throws Exception {
+        // Q~ does not change when all exchangeabilities are scaled, so s.g = 0
+        Fixture f = new Fixture(new GammaSiteRateModel("siteModel", 0.5, 4), PartialsRescalingScheme.NONE, false,
+                Model.GTR);
+        Parameter rates = f.rateParameters.get(0);
+        double[] g = rateGradient(f, rates, Backend.ADJOINT);
+        double sg = 0.0;
+        double scale = 0.0;
+        for (int m = 0; m < g.length; m++) {
+            sg += rates.getParameterValue(m) * g[m];
+            scale += Math.abs(rates.getParameterValue(m) * g[m]);
+        }
+        assertEquals(0.0, sg, 1E-10 * scale);
+    }
+
+    public void testGtrWithHkyRatesMatchesHkyKappa() throws Exception {
+        // dlogL/dkappa = dlogL/ds_AG + dlogL/ds_CT at s = (1, kappa, 1, 1, kappa, 1)
+        Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false,
+                Model.GTR_HKY_RATES);
+        double[] g = rateGradient(f, f.rateParameters.get(0), Backend.ADJOINT);
+        assertEquals(3.277118846996384, g[1] + g[4], 1E-9);
+    }
+
+    public void testPerDimensionKeepsUnnamedParametersApart() throws Exception {
+        // TN93's kappas have no ids here; each must get its own per-dimension traits
+        Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false, Model.TN93);
+        double first = rateGradient(f, f.rateParameters.get(0), Backend.PER_DIMENSION)[0];
+        double second = rateGradient(f, f.rateParameters.get(1), Backend.PER_DIMENSION)[0];
+        assertEquals(rateGradient(f, f.rateParameters.get(0), Backend.ADJOINT)[0], first, 1E-9);
+        assertEquals(rateGradient(f, f.rateParameters.get(1), Backend.ADJOINT)[0], second, 1E-9);
+    }
+
+    public void testRateParameterDetection() throws Exception {
+        Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false, Model.TN93);
+        assertFalse(HomogeneousSubstitutionModelGradient.isRateParameter(f.likelihood, f.frequencies));
+        Fixture hky = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false);
+        assertFalse(HomogeneousSubstitutionModelGradient.isRateParameter(hky.likelihood, hky.kappa));
+    }
+
+    private static double[] rateGradient(Fixture f, Parameter rates, Backend backend) {
+        HomogeneousSubstitutionModelGradient gradient = new HomogeneousSubstitutionModelGradient(f.likelihood,
+                rates, backend, 1E-5);
+        assertTrue(Double.isNaN(gradient.getSimplexSum()));
+        for (double value : gradient.getRootTerm()) {
+            assertEquals(0.0, value, 0.0);
+        }
+        return gradient.getGradientLogDensity();
+    }
+
+    private static double[] finiteDifference(Fixture f, Parameter parameter) {
+        final double h = 1E-6;
+        double[] numeric = new double[parameter.getDimension()];
+        for (int d = 0; d < numeric.length; d++) {
+            final double value = parameter.getParameterValue(d);
+            parameter.setParameterValue(d, value + h);
+            double plus = f.likelihood.getLogLikelihood();
+            parameter.setParameterValue(d, value - h);
+            double minus = f.likelihood.getLogLikelihood();
+            parameter.setParameterValue(d, value);
+            numeric[d] = (plus - minus) / (2 * h);
+        }
+        return numeric;
+    }
+
     // sum_k pi_k R_k = N and sum_k pi_k B_k = -r d log L / d r, so pi.g = N - r d log L / d r for any normalized Q
     private static double assertFrequencyWeightedSumIdentity(Fixture f, double[] g) {
         double piG = 0.0;
@@ -235,6 +316,7 @@ public class FrequencyGradientTest extends TestCase {
         final Parameter frequencies = new Parameter.Default(PI.clone());
         final Parameter kappa = new Parameter.Default(2.5);
         final Parameter clockRate = new Parameter.Default(1.0);
+        final List<Parameter> rateParameters = new ArrayList<Parameter>();
         final Parameter rootFrequencies;
         final DefaultTreeModel tree;
         final BeagleDataLikelihoodDelegate delegate;
@@ -286,11 +368,15 @@ public class FrequencyGradientTest extends TestCase {
                 case HKY:
                     return new HKY(kappa, frequencyModel);
                 case TN93:
-                    return new TN93(new Parameter.Default(2.0), new Parameter.Default(4.0), frequencyModel);
+                    rateParameters.add(new Parameter.Default(2.0));
+                    rateParameters.add(new Parameter.Default(4.0));
+                    return new TN93(rateParameters.get(0), rateParameters.get(1), frequencyModel);
                 case GTR_HKY_RATES:
-                    return new GTR(new Parameter.Default(new double[]{1.0, 2.5, 1.0, 1.0, 2.5, 1.0}), frequencyModel);
+                    rateParameters.add(new Parameter.Default(new double[]{1.0, 2.5, 1.0, 1.0, 2.5, 1.0}));
+                    return new GTR(rateParameters.get(0), frequencyModel);
                 case GTR:
-                    return new GTR(new Parameter.Default(new double[]{1.0, 2.0, 0.5, 1.5, 3.0, 1.0}), frequencyModel);
+                    rateParameters.add(new Parameter.Default(new double[]{1.0, 2.0, 0.5, 1.5, 3.0, 1.0}));
+                    return new GTR(rateParameters.get(0), frequencyModel);
                 default:
                     throw new IllegalArgumentException(model.name());
             }

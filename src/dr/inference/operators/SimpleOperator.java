@@ -84,6 +84,8 @@ public abstract class SimpleOperator implements MCMCOperator {
         rejected = 0;
         lastDeviation = 0.0;
         sumDeviation = 0.0;
+        sumEvaluationTime = 0;
+        sumCalculationCount = 0;
     }
 
     public final long getCount() {

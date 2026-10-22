@@ -35,6 +35,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.math.SimplexTangent;
 import dr.math.distributions.DirichletDistribution;
 import dr.util.Attribute;
 import dr.xml.Reportable;

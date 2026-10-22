@@ -25,7 +25,7 @@
  *
  */
 
-package dr.inference.hmc;
+package dr.math;
 
 /**
  * Gradients of functions of x on the simplex {x > 0, sum x = S}. Only the tangent part is defined there:

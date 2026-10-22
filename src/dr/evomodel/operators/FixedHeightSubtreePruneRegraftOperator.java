@@ -31,7 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
+import dr.evomodelxml.operators.FixedHeightSubtreePruneRegraftOperatorParser;
 import dr.inference.operators.*;
 import dr.math.distributions.NormalDistribution;
 import dr.math.MathUtils;
@@ -162,6 +162,6 @@ public class FixedHeightSubtreePruneRegraftOperator extends AbstractTreeOperator
 
 
     public String getOperatorName() {
-        return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";
+        return FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT + "(" + tree.getId() + ")";
     }
 }

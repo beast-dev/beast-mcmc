@@ -156,6 +156,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      *                   come only from the moved subtree) instead of the path block
      */
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, boolean localBlock) {
+        if (delegate.getCategoryCount() > 1) {
+            throw new IllegalArgumentException("The mutation history resampler does not yet support site rate categories");
+        }
         this.delegate = delegate;
         this.historyModel = delegate.getHistoryModel();
         this.tree = delegate.getTree();

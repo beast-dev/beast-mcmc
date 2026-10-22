@@ -32,6 +32,8 @@ import dr.evolution.parsimony.FitchParsimony;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.operators.SubtreeJumpOperator;
@@ -46,6 +48,7 @@ import dr.evomodel.treedatalikelihood.MAT.Mutation;
 import dr.evomodel.treedatalikelihood.MAT.MutationHistoryGibbsOperator;
 import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 import dr.evomodel.treedatalikelihood.MAT.MutationStore;
+import dr.evomodel.treedatalikelihood.MAT.SiteRateCategoryGibbsOperator;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
@@ -608,6 +611,10 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * @param integrated whether to use integrated hits (and siteLogLikelihood then log P(t)) rather than single hits
      */
     private void setUpSparseData(boolean integrated) {
+        setUpSparseData(integrated, null);
+    }
+
+    private void setUpSparseData(boolean integrated, SiteRateModel siteRateModel) {
         integratedHits = integrated;
         String[][] taxaSequence = new String[2][];
         taxaSequence[0] = PRIMATES_TAXON_SEQUENCE[0].clone();
@@ -636,7 +643,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         patterns = new SitePatterns(alignment, null, 0, -1, 1, true, SitePatterns.CompressionType.CONSTANT_ONLY);
         branchRates = new StrictClockBranchRates(clockRate);
         delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
-                null, branchRates, null, integrated ? new IntegratedHitsHistoryModel(4) : null);
+                siteRateModel, branchRates, null, integrated ? new IntegratedHitsHistoryModel(4) : null);
         likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
         // the direct path density (directLogLikelihood) then uses a relative rate of 1 for every site
         siteRates = new Parameter.Default(patterns.getPatternCount(), 1.0);
@@ -989,6 +996,215 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             }
         }
         return false;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Site rate categories
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * With a discrete gamma site model, the likelihood (with each variable site's category sampled and the
+     * constant sites summed over the categories) equals its direct computation, site by site, as the
+     * categories, node heights and topology change and states are stored and restored.
+     */
+    public void testCategoryLikelihoodMatchesDirect() {
+        for (boolean integrated : new boolean[]{false, true}) {
+            MathUtils.setSeed(666);
+            GammaSiteRateModel gamma = new GammaSiteRateModel("gamma", 0.5, 4);
+            setUpSparseData(integrated, gamma);
+            SiteRateCategoryGibbsOperator categories = new SiteRateCategoryGibbsOperator(delegate, 1.0);
+            FixedHeightSubtreePruneRegraftOperator spr = new FixedHeightSubtreePruneRegraftOperator(treeModel, 1.0);
+            assertEquals(4, delegate.getCategoryCount());
+            assertEquals(directCategoryLogLikelihood(gamma), likelihood.getLogLikelihood(), 1E-8);
+
+            int changedCategories = 0;
+            for (int iteration = 0; iteration < 120; iteration++) {
+                double logLBefore = likelihood.getLogLikelihood();
+                byte[] categoriesBefore = currentCategories();
+                likelihood.storeModelState();
+                switch (iteration % 3) {
+                    case 0:
+                        categories.doOperation();
+                        if (!java.util.Arrays.equals(categoriesBefore, currentCategories())) {
+                            changedCategories++;
+                        }
+                        break;
+                    case 1: {
+                        NodeRef node = treeModel.getInternalNode(MathUtils.nextInt(treeModel.getInternalNodeCount()));
+                        double lower = 0.0;
+                        for (int i = 0; i < treeModel.getChildCount(node); i++) {
+                            lower = Math.max(lower, treeModel.getNodeHeight(treeModel.getChild(node, i)));
+                        }
+                        NodeRef parent = treeModel.getParent(node);
+                        double upper = parent == null ? 2 * treeModel.getNodeHeight(node) : treeModel.getNodeHeight(parent);
+                        treeModel.setNodeHeight(node, lower + MathUtils.nextDouble() * (upper - lower));
+                        break;
+                    }
+                    default:
+                        // (the MAT follows by parsimony)
+                        spr.doOperation();
+                }
+                double logL = likelihood.getLogLikelihood();
+                assertEquals("iteration " + iteration + (integrated ? " (integrated)" : ""),
+                        directCategoryLogLikelihood(gamma), logL, 1E-8);
+                double sum = 0.0;
+                for (double siteLogL : delegate.getSiteLogLikelihoods()) {
+                    sum += siteLogL;
+                }
+                assertEquals(logL, sum, 1E-8);
+                if (MathUtils.nextBoolean()) {
+                    likelihood.restoreModelState();
+                    assertTrue(java.util.Arrays.equals(categoriesBefore, currentCategories()));
+                    assertEquals(logLBefore, likelihood.getLogLikelihood(), 1E-8);
+                } else {
+                    likelihood.acceptModelState();
+                }
+            }
+            assertTrue("category updates that changed a category: " + changedCategories, changedCategories > 20);
+        }
+    }
+
+    /**
+     * The category Gibbs operator draws each variable site's category from its full conditional: the prior
+     * proportion times the site's likelihood at the category's rate (the history and tree stay fixed).
+     */
+    public void testCategoryGibbsDrawsExactly() {
+        for (boolean integrated : new boolean[]{false, true}) {
+            MathUtils.setSeed(666);
+            clockRate.setParameterValue(0, 40.0);
+            GammaSiteRateModel gamma = new GammaSiteRateModel("gamma", 0.5, 4);
+            setUpSparseData(integrated, gamma);
+            SiteRateCategoryGibbsOperator categories = new SiteRateCategoryGibbsOperator(delegate, 1.0);
+            likelihood.getLogLikelihood();
+
+            final int[] sites = variableSites();
+            final int categoryCount = gamma.getCategoryCount();
+            final double[] expected = new double[sites.length * categoryCount];
+            for (int i = 0; i < sites.length; i++) {
+                double[] logW = new double[categoryCount];
+                double max = Double.NEGATIVE_INFINITY;
+                for (int c = 0; c < categoryCount; c++) {
+                    logW[c] = Math.log(gamma.getProportionForCategory(c)) +
+                            directSiteLogLikelihood(sites[i], gamma.getRateForCategory(c));
+                    max = Math.max(max, logW[c]);
+                }
+                double sum = 0.0;
+                for (int c = 0; c < categoryCount; c++) {
+                    sum += Math.exp(logW[c] - max);
+                }
+                for (int c = 0; c < categoryCount; c++) {
+                    expected[i * categoryCount + c] = Math.exp(logW[c] - max) / sum;
+                }
+            }
+
+            final int repeats = 2000;
+            final int[] observed = new int[sites.length * categoryCount];
+            DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+            for (int r = 0; r < repeats; r++) {
+                likelihood.storeModelState();
+                categories.doOperation();
+                likelihood.getLogLikelihood();
+                likelihood.acceptModelState();
+                for (int i = 0; i < sites.length; i++) {
+                    observed[i * categoryCount + store.getCategory(sites[i])]++;
+                }
+            }
+            int checked = 0;
+            double chiSquare = 0.0;
+            for (int j = 0; j < observed.length; j++) {
+                double mean = repeats * expected[j];
+                assertEquals("site " + sites[j / categoryCount] + " category " + (j % categoryCount),
+                        mean, observed[j], 5 * Math.sqrt(mean * (1 - expected[j])) + 3);
+                if (mean > 5 && mean < repeats - 5) {
+                    checked++;
+                    chiSquare += (observed[j] - mean) * (observed[j] - mean) / (mean * (1 - expected[j]));
+                }
+            }
+            assertTrue("categories with intermediate probabilities: " + checked, checked > 50);
+            assertTrue("chi-square " + chiSquare + " over " + checked, chiSquare < 1.5 * checked);
+        }
+    }
+
+    private byte[] currentCategories() {
+        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        byte[] categories = new byte[patterns.getPatternCount()];
+        for (int p = 0; p < categories.length; p++) {
+            categories[p] = (byte) store.getCategory(p);
+        }
+        return categories;
+    }
+
+    /**
+     * @return the log likelihood with site rate categories, site by site: each variable site at its
+     * category's rate (plus the log of the category's proportion), each constant site summed over the categories
+     */
+    private double directCategoryLogLikelihood(SiteRateModel siteRateModel) {
+        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        double[] pi = hky.getFrequencyModel().getFrequencies();
+        int root = treeModel.getRoot().getNumber();
+        double logL = 0.0;
+        for (int p = 0; p < patterns.getPatternCount(); p++) {
+            double w = patterns.getPatternWeight(p);
+            if (delegate.isConstantPattern(p)) {
+                int a = store.getState(root, p);
+                double max = Double.NEGATIVE_INFINITY;
+                double[] logW = new double[siteRateModel.getCategoryCount()];
+                for (int c = 0; c < logW.length; c++) {
+                    logW[c] = Math.log(siteRateModel.getProportionForCategory(c)) +
+                            directSiteLogLikelihood(p, siteRateModel.getRateForCategory(c)) - Math.log(pi[a]);
+                    max = Math.max(max, logW[c]);
+                }
+                double sum = 0.0;
+                for (double x : logW) {
+                    sum += Math.exp(x - max);
+                }
+                logL += w * (Math.log(pi[a]) + max + Math.log(sum));
+            } else {
+                int c = store.getCategory(p);
+                logL += w * (Math.log(siteRateModel.getProportionForCategory(c)) +
+                        directSiteLogLikelihood(p, siteRateModel.getRateForCategory(c)));
+            }
+        }
+        return logL;
+    }
+
+    /**
+     * @return the log likelihood of one site's states at the given rate (single hits, or with integrated
+     * hits log P(r t)), including the root frequency
+     */
+    private double directSiteLogLikelihood(int site, double rate) {
+        MutationStore store = delegate.getMutationStore();
+        double[] q = new double[16];
+        hky.getInfinitesimalMatrix(q);
+        double[] pi = hky.getFrequencyModel().getFrequencies();
+        double[] transition = new double[16];
+        int root = treeModel.getRoot().getNumber();
+        if (store.getState(root, site) < 0) {
+            // no data at the site
+            return 0.0;
+        }
+        double logL = Math.log(pi[store.getState(root, site)]);
+        for (int n = 0; n < treeModel.getNodeCount(); n++) {
+            NodeRef node = treeModel.getNode(n);
+            NodeRef parent = treeModel.getParent(node);
+            if (parent == null) {
+                continue;
+            }
+            int b = store.getState(n, site);
+            if (b < 0) {
+                continue;
+            }
+            int a = store.getState(parent.getNumber(), site);
+            double length = (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(node)) *
+                    branchRates.getBranchRate(treeModel, node);
+            if (integratedHits) {
+                hky.getTransitionProbabilities(rate * length, transition);
+                logL += Math.log(transition[a * 4 + b]);
+            } else {
+                logL += singleHitLogDensity(q, a, b, length, rate);
+            }
+        }
+        return logL;
     }
 
     private int[] currentParents() {

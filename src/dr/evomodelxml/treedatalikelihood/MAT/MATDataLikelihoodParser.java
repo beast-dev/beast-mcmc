@@ -76,18 +76,13 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
         Parameter siteRates = xo.hasChildNamed(SITE_RATES) ? (Parameter) xo.getElementFirstChild(SITE_RATES) : null;
 
         final String historyName = xo.getAttribute(BRANCH_HISTORY, IntegratedHitsHistoryModel.NAME);
-        if (historyName.equalsIgnoreCase(IntegratedHitsHistoryModel.NAME)) {
-            final boolean rateCategories = siteRateModel != null && siteRateModel.getCategoryCount() > 1;
-            if (siteRates != null || rateCategories) {
-                throw new XMLParseException("Site rate heterogeneity (" +
-                        (siteRates != null ? "a per-site rate parameter" :
-                                "a site model with " + siteRateModel.getCategoryCount() + " rate categories") +
-                        ") is not yet implemented for the " + IntegratedHitsHistoryModel.NAME + " branch history model" +
-                        (xo.hasAttribute(BRANCH_HISTORY) ? "" : " (the default)") + " in " + xo.getId() +
-                        ": use " + BRANCH_HISTORY + "=\"" + SingleHitHistoryModel.NAME + "\", \"" +
-                        ExplicitHitsHistoryModel.NAME + "\" or \"" + TimedHitsHistoryModel.NAME +
-                        "\" with a per-site rate parameter (" + SITE_RATES + ")");
-            }
+        if (historyName.equalsIgnoreCase(IntegratedHitsHistoryModel.NAME) && siteRates != null) {
+            throw new XMLParseException("A per-site rate parameter (" + SITE_RATES + ") is not yet implemented for the " +
+                    IntegratedHitsHistoryModel.NAME + " branch history model" +
+                    (xo.hasAttribute(BRANCH_HISTORY) ? "" : " (the default)") + " in " + xo.getId() +
+                    ": use a site model with rate categories (e.g. gammaCategories), or " + BRANCH_HISTORY + "=\"" +
+                    SingleHitHistoryModel.NAME + "\", \"" + ExplicitHitsHistoryModel.NAME + "\" or \"" +
+                    TimedHitsHistoryModel.NAME + "\" with the per-site rate parameter");
         }
 
         MATDataLikelihoodDelegate delegate;
@@ -108,7 +103,8 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
         return new XMLSyntaxRule[] {
                 AttributeRule.newStringRule(BRANCH_HISTORY, true, "How each site's history along a branch is " +
                         "represented: " + String.join(", ", BranchHistoryModel.NAMES) + " (default " +
-                        IntegratedHitsHistoryModel.NAME + ", which does not yet support site rate heterogeneity)"),
+                        IntegratedHitsHistoryModel.NAME + ", which supports site rate categories but not a per-site rate " +
+                        "parameter)"),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new XORRule(
@@ -124,7 +120,9 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserDescription() {
-        return "Constructs a TreeDataLikelihood whose likelihood is that of a parsimonious mutation annotated tree.";
+        return "Constructs a TreeDataLikelihood whose likelihood is that of a parsimonious mutation annotated tree. " +
+                "With a site model with more than one rate category, each variable site's category is sampled (with a " +
+                "siteRateCategoryGibbsOperator) and the constant sites are summed over the categories.";
     }
 
     @Override

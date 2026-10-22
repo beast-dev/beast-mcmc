@@ -119,6 +119,28 @@ public interface BranchHistoryModel {
                                   double[] patternWeights, double[] patternRates);
 
     /**
+     * As {@link #getBranchLogLikelihood}, with discrete site rate categories: for the variable sites only (the
+     * constant ones are summed over the categories by the likelihood), each at its category's rate.
+     *
+     * @param exitRateSum         lambda over the variable sites present at the node
+     * @param categoryComposition the summed weights of the variable sites present at the node in each
+     *                            category and state, [category * stateCount + state] (only if
+     *                            {@link #needsComposition()})
+     * @param categoryRates       the rate of each category
+     * @param patternRates        the rate of each pattern's category
+     */
+    default double getCategoryBranchLogLikelihood(BranchMutations mutations, double length, double exitRateSum,
+                                                  double[] categoryComposition, double[] categoryRates,
+                                                  double[] patternWeights, double[] patternRates) {
+        if (needsComposition()) {
+            throw new UnsupportedOperationException("The " + getName() + " branch history model does not support " +
+                    "site rate categories");
+        }
+        // the exit rate already covers the unchanged sites of every category
+        return getBranchLogLikelihood(mutations, length, exitRateSum, null, patternWeights, patternRates);
+    }
+
+    /**
      * @return the log density of the history of a site with no events on a branch, in state a throughout
      */
     double getUnchangedSiteLogLikelihood(int a, double length, double nu);

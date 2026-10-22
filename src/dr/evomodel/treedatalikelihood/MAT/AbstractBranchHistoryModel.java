@@ -45,7 +45,9 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
 
     // cache of transition probability matrices (and their logs) by distance, for the current rates: an
     // open-addressing table, emptied when the rates change or it is half full
-    private static final int CACHE_CAPACITY = 8192;
+    // (large enough for a distance per branch for each of several site rate categories)
+    private static final int CACHE_CAPACITY = 32768;
+    private static final int CACHE_HASH_SHIFT = 64 - Integer.numberOfTrailingZeros(CACHE_CAPACITY);
     private final long[] cachedDistances = new long[CACHE_CAPACITY];
     private final double[][] cachedTransitionProbabilities = new double[CACHE_CAPACITY][];
     private final double[][] cachedLogTransitionProbabilities = new double[CACHE_CAPACITY][];
@@ -102,7 +104,7 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
         final long key = Double.doubleToLongBits(distance);
         final int mask = CACHE_CAPACITY - 1;
         long h = key * 0x9E3779B97F4A7C15L;
-        int slot = (int) (h >>> 51) & mask;
+        int slot = (int) (h >>> CACHE_HASH_SHIFT) & mask;
         while (cachedTransitionProbabilities[slot] != null) {
             if (cachedDistances[slot] == key) {
                 return slot;
@@ -111,7 +113,7 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
         }
         if (cachedCount >= CACHE_CAPACITY / 2) {
             clearTransitionProbabilityCache();
-            slot = (int) (h >>> 51) & mask;
+            slot = (int) (h >>> CACHE_HASH_SHIFT) & mask;
         }
         double[] p = new double[stateCount * stateCount];
         substitutionModel.getTransitionProbabilities(distance, p);

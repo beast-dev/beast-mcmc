@@ -99,6 +99,34 @@ public class IntegratedHitsHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
+    public double getCategoryBranchLogLikelihood(BranchMutations mutations, double length, double exitRateSum,
+                                                 double[] categoryComposition, double[] categoryRates,
+                                                 double[] patternWeights, double[] patternRates) {
+        double term = 0.0;
+        for (int c = 0; c < categoryRates.length; c++) {
+            double[] logP = null;
+            for (int a = 0; a < stateCount; a++) {
+                double count = categoryComposition[c * stateCount + a];
+                if (count > 0.0) {
+                    if (logP == null) {
+                        logP = getLogTransitionProbabilities(categoryRates[c] * length);
+                    }
+                    term += count * logP[a * stateCount + a];
+                }
+            }
+        }
+        for (int k = 0; k < mutations.getSubstitutionCount(); k++) {
+            int p = mutations.getPattern(k);
+            int a = mutations.getFromState(k);
+            int b = mutations.getToState(k);
+            double[] logP = getLogTransitionProbabilities(patternRates[p] * length);
+            // the composition counted the site as staying in state b
+            term += patternWeights[p] * (logP[a * stateCount + b] - logP[b * stateCount + b]);
+        }
+        return term;
+    }
+
+    @Override
     public double getUnchangedSiteLogLikelihood(int a, double length, double nu) {
         return getLogTransitionProbabilities(nu * length)[a * stateCount + a];
     }

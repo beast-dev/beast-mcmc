@@ -1,0 +1,115 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Analytic gradients wrt the gamma shape, the proportion of invariant sites and the relative rate   -->
+<!-- (siteRateModelGradient) on the b1 fixture: 5 taxa, 44 sites, HKY kappa=2.5, pi=(0.1,0.2,0.3,0.4), -->
+<!-- strict clock 1.0. Each report also checks the analytic value against finite differences of log L. -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/>
+    <taxon id="B"/>
+    <taxon id="C"/>
+    <taxon id="D"/>
+    <taxon id="E"/>
+  </taxa>
+  <alignment id="alignment" dataType="nucleotide">
+    <sequence><taxon idref="A"/>AAAAAACCCCGGGGGTTTTTTTAACAAAGTTACGARACCCGGTA</sequence>
+    <sequence><taxon idref="B"/>AAAAAACCCCGGGGGTTTTTTTAACGGCGTTATATAACCCGGCC</sequence>
+    <sequence><taxon idref="C"/>AAAAAACCCCGGGGGTTTTTTTGGTAAGGCCACGAA-CCCAATC</sequence>
+    <sequence><taxon idref="D"/>AAAAAACCCCGGGGGTTTTTTTGGTAATATTATATGGCCCGGCC</sequence>
+    <sequence><taxon idref="E"/>AAAAAACCCCGGGGGTTTTTTTGGTAAAATTGCGAGGTTTGGCA</sequence>
+  </alignment>
+  <patterns id="patterns" from="1">
+    <alignment idref="alignment"/>
+  </patterns>
+  <newick id="startingTree">
+    ((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);
+  </newick>
+  <treeModel id="treeModel">
+    <tree idref="startingTree"/>
+    <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+  <strictClockBranchRates id="branchRates">
+    <rate><parameter id="clock.rate" value="1.0" lower="0.0"/></rate>
+  </strictClockBranchRates>
+  <hkyModel id="hky">
+    <frequencies><frequencyModel dataType="nucleotide"><frequencies><parameter id="frequencies" value="0.1 0.2 0.3 0.4"/></frequencies></frequencyModel></frequencies>
+    <kappa><parameter id="kappa" value="2.5"/></kappa>
+  </hkyModel>
+
+  <!-- Gamma4 + I with a relative rate: all three parameters have analytic gradients -->
+  <siteModel id="siteModel.gammaI">
+    <substitutionModel><hkyModel idref="hky"/></substitutionModel>
+    <relativeRate><parameter id="nu" value="1.3"/></relativeRate>
+    <gammaShape gammaCategories="4"><parameter id="alpha" value="0.5"/></gammaShape>
+    <proportionInvariant><parameter id="pInv" value="0.3"/></proportionInvariant>
+  </siteModel>
+  <treeDataLikelihood id="likelihood.gammaI" usePreOrder="true" scalingScheme="always">
+    <partition><patterns idref="patterns"/><siteModel idref="siteModel.gammaI"/></partition>
+    <treeModel idref="treeModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+
+  <!-- Gamma4 alone -->
+  <siteModel id="siteModel.gamma">
+    <substitutionModel><hkyModel idref="hky"/></substitutionModel>
+    <gammaShape gammaCategories="4"><parameter id="alpha.gamma" value="2.0"/></gammaShape>
+  </siteModel>
+  <treeDataLikelihood id="likelihood.gamma" usePreOrder="true">
+    <partition><patterns idref="patterns"/><siteModel idref="siteModel.gamma"/></partition>
+    <treeModel idref="treeModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+
+  <siteRateModelGradient id="gradient.alpha"><treeDataLikelihood idref="likelihood.gammaI"/><parameter idref="alpha"/></siteRateModelGradient>
+  <siteRateModelGradient id="gradient.pInv" gradientCheckTolerance="1E-6"><treeDataLikelihood idref="likelihood.gammaI"/><parameter idref="pInv"/></siteRateModelGradient>
+  <siteRateModelGradient id="gradient.nu" gradientCheckTolerance="1E-6"><treeDataLikelihood idref="likelihood.gammaI"/><parameter idref="nu"/></siteRateModelGradient>
+  <siteRateModelGradient id="gradient.alpha.gamma"><treeDataLikelihood idref="likelihood.gamma"/><parameter idref="alpha.gamma"/></siteRateModelGradient>
+
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>log likelihood (Gamma4 + I, nu = 1.3)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.gammaI"/></likelihood>
+    </actual>
+    <expected>-197.3685218176762</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>log likelihood (Gamma4, alpha = 2)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.gamma"/></likelihood>
+    </actual>
+    <expected>-196.73205561166728</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.alpha">
+    <report><siteRateModelGradient idref="gradient.alpha"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (alpha, Gamma4 + I)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.alpha"/></actual>
+    <expected>-0.7698598858541796</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.pInv">
+    <report><siteRateModelGradient idref="gradient.pInv"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (pInv, Gamma4 + I)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.pInv"/></actual>
+    <expected>0.9454473499505451</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.nu">
+    <report><siteRateModelGradient idref="gradient.nu"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (nu, Gamma4 + I)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.nu"/></actual>
+    <expected>-3.6833097131639465</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.alpha.gamma">
+    <report><siteRateModelGradient idref="gradient.alpha.gamma"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (alpha, Gamma4)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.alpha.gamma"/></actual>
+    <expected>-0.9593421830982737</expected>
+  </assertEqual>
+</beast>

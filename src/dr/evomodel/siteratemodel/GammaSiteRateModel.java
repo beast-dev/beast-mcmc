@@ -45,7 +45,7 @@ import java.util.List;
  * @author Andrew Rambaut
  */
 
-public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
+public class GammaSiteRateModel extends AbstractModel implements DifferentiableSiteRateModel, Citable {
 
     public GammaSiteRateModel(String name) {
         this(name,
@@ -161,6 +161,48 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
     public void setRelativeRateParameter(Parameter nu) {
         this.nuParameter = nu;
+    }
+
+    // *****************************************************************
+    // Interface DifferentiableSiteRateModel
+    // *****************************************************************
+
+    @Override
+    public boolean isDifferentiableWrtParameter(Parameter parameter) {
+        return parameter != null
+                && (parameter == shapeParameter || parameter == invarParameter || parameter == nuParameter);
+    }
+
+    @Override
+    public boolean hasQuantileNoise(Parameter parameter) {
+        return parameter != null && parameter == shapeParameter;
+    }
+
+    @Override
+    public void getCategoryDifferentials(Parameter parameter, double[] dRates, double[] dProportions) {
+        if (!isDifferentiableWrtParameter(parameter)) {
+            throw new IllegalArgumentException(parameter.getId() + " is not a parameter of this site-rate model");
+        }
+        if (parameter == nuParameter) {
+            // every rate is proportional to mu = nu * muWeight
+            final double[] rates = getCategoryRates();
+            for (int i = 0; i < dRates.length; i++) {
+                dRates[i] = rates[i] / nuParameter.getParameterValue(0);
+                dProportions[i] = 0.0;
+            }
+            return;
+        }
+        // same arithmetic as calculateCategoryRates
+        GammaSiteRateDelegate.getCategoryDifferentials(
+                shapeParameter == null ? Double.NaN : shapeParameter.getParameterValue(0),
+                invarParameter == null ? Double.NaN : invarParameter.getParameterValue(0),
+                categoryCount, parameter == shapeParameter, dRates, dProportions);
+        if (nuParameter != null) {
+            final double mu = getMu();
+            for (int i = 0; i < dRates.length; i++) {
+                dRates[i] *= mu;
+            }
+        }
     }
 
     // *****************************************************************

@@ -37,7 +37,7 @@ import java.util.Comparator;
  * @author Andrew Rambaut
  */
 
-public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateModel {
+public class DiscretizedSiteRateModel extends AbstractModel implements DifferentiableSiteRateModel {
 
     /**
      * Constructor for a rate homogenous (single category) SiteRateModel.
@@ -102,6 +102,44 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
      */
     public final double getMu() {
         return nuParameter.getParameterValue(0) * muWeight;
+    }
+
+    // *****************************************************************
+    // Interface DifferentiableSiteRateModel
+    // *****************************************************************
+
+    @Override
+    public boolean isDifferentiableWrtParameter(Parameter parameter) {
+        return parameter != null && (parameter == nuParameter || (delegate instanceof GammaSiteRateDelegate
+                && ((GammaSiteRateDelegate) delegate).isDifferentiableWrtParameter(parameter)));
+    }
+
+    @Override
+    public boolean hasQuantileNoise(Parameter parameter) {
+        return delegate instanceof GammaSiteRateDelegate && ((GammaSiteRateDelegate) delegate).isShape(parameter);
+    }
+
+    @Override
+    public void getCategoryDifferentials(Parameter parameter, double[] dRates, double[] dProportions) {
+        if (!isDifferentiableWrtParameter(parameter)) {
+            throw new IllegalArgumentException(parameter.getId() + " is not a parameter of this site-rate model");
+        }
+        if (parameter == nuParameter) {
+            // every rate is proportional to mu = nu * muWeight
+            final double[] rates = getCategoryRates();
+            for (int i = 0; i < dRates.length; i++) {
+                dRates[i] = rates[i] / nuParameter.getParameterValue(0);
+                dProportions[i] = 0.0;
+            }
+            return;
+        }
+        ((GammaSiteRateDelegate) delegate).getCategoryDifferentials(parameter, dRates, dProportions);
+        if (nuParameter != null) {
+            final double mu = getMu();
+            for (int i = 0; i < dRates.length; i++) {
+                dRates[i] *= mu;
+            }
+        }
     }
 
     // *****************************************************************

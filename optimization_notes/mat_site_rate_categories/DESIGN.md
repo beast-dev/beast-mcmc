@@ -42,6 +42,15 @@ keeps the per-branch terms and their running totals, updated as branch terms are
   group the ambiguity-only sites, by (category, state), each with its own conditional, so moves still cost
   O(events + changes). The block keeps branch densities and linear matrices per rate class.
 
+## Cost
+
+With integrated hits the constant sites' and the branch terms' unchanged parts need only the diagonals
+log P_aa(r_c t), computed from the rate matrix's eigen decomposition with BaseSubstitutionModel's arithmetic
+(the same values as the transition-probability cache); they are versioned by the rates, so a category sweep
+does not recompute them. A sweep gives the store all the categories and the nodes' category compositions at
+once (each node's from its parent's and the events on its branch), and the compositions are journaled. With
+4 categories: small-2 0.33 minutes per million states (0.18 without), big-3 1.56 (0.76 without).
+
 ## Validation
 
 - Unit tests: the likelihood against a direct site-by-site computation (through category, height and

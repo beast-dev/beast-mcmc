@@ -101,6 +101,23 @@ Per core, the MAT has about 1.2 times the ESS per minute of BEAGLE on one thread
 all 18), so independent MAT chains, one per core, would give about 20 times the ESS per minute of one
 BEAGLE run on all cores, less their burn-in. With 258 patterns BEAGLE gains little from threads.
 
+After the speed-ups of f66c423e0 and 47c3fee5e (identical chains, so the same ESS per state) the MAT with
+gamma categories runs small-2 at 0.33 minutes per million states (0.18 without categories), about 1.7 times
+the ESS per minute of BEAGLE on all 18 cores, on one, and about twice that of BEAGLE on one thread.
+
+On big-3 with the same gamma site model (and the history Gibbs operator, category operator at weight 9),
+from runs of a few hundred thousand states from the starting tree, one at a time:
+
+| big-3, gamma (4 categories) | Minutes per million states | Cores |
+|---|---|---|
+| MAT, local block | 1.56 | 1 |
+| MAT, local block, no categories (reference) | 0.76 | 1 |
+| BEAGLE, 18 threads | 10.2 | 18 |
+| BEAGLE, 1 thread | 92 | 1 |
+
+So per state the MAT is about 6.5 times as fast as BEAGLE on all cores and about 60 times as fast per core
+(ESS per state with gamma categories on big-3 has not been measured).
+
 ### Speed
 
 | | Method | Time per million states | Cores | ESS per minute: root height | tree length | population size | clock rate | coalescent |

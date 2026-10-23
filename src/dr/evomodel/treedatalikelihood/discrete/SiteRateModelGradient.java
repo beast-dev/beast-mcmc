@@ -109,6 +109,19 @@ public class SiteRateModelGradient implements GradientWrtParameterProvider, Repo
     }
 
     /**
+     * @return true if parameter changes the site-rate categories of this likelihood's site model
+     */
+    public static boolean isSiteRateParameter(TreeDataLikelihood treeDataLikelihood, Parameter parameter) {
+        final DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (!(delegate instanceof BeagleDataLikelihoodDelegate)) {
+            return false;
+        }
+        final SiteRateModel model = ((BeagleDataLikelihoodDelegate) delegate).getSiteRateModel();
+        return model instanceof DifferentiableSiteRateModel
+                && ((DifferentiableSiteRateModel) model).isDifferentiableWrtParameter(parameter);
+    }
+
+    /**
      * @return null if the gradient applies to this likelihood, otherwise the reason it does not
      */
     static String whyIneligible(BeagleDataLikelihoodDelegate likelihoodDelegate) {

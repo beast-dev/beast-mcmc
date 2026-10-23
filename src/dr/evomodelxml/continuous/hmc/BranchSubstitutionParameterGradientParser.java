@@ -32,13 +32,17 @@ import dr.evomodel.branchmodel.BranchSpecificSubstitutionParameterBranchModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.PartitionedGradients;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.BranchSubstitutionParameterGradient;
 import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionParameterGradient;
 import dr.evomodel.treedatalikelihood.discrete.HomogeneousSubstitutionModelGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Likelihood;
+import dr.inference.model.ModelDependency;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -74,7 +78,10 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
         String traitName = xo.getAttribute(TRAIT_NAME, DEFAULT_TRAIT_NAME);
         boolean useHessian = xo.getAttribute(USE_HESSIAN, false);
-        final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        final Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
+        // a multi-partition <treeDataLikelihood> parses to a CompoundLikelihood of one tree data likelihood per partition
+        final TreeDataLikelihood treeDataLikelihood =
+                likelihood instanceof TreeDataLikelihood ? (TreeDataLikelihood) likelihood : null;
         final Double tolerance = xo.hasAttribute(GRADIENT_CHECK_TOLERANCE) ? xo.getDoubleAttribute(GRADIENT_CHECK_TOLERANCE) : null;
         BranchSpecificSubstitutionParameterBranchModel branchModel =
                 (BranchSpecificSubstitutionParameterBranchModel) xo.getChild(BranchModel.class);
@@ -91,6 +98,10 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
                     (tolerance != null ? tolerance : DEFAULT_EXACT_TOLERANCE) : null;
 
             HomogeneousSubstitutionModelGradient.Backend backend = parseBackend(xo);
+            if (treeDataLikelihood == null) {
+                return parsePartitionedSubstitutionModelGradient(xo, likelihood, parameter, backend, mode, useHessian,
+                        reportTolerance);
+            }
             getBeagleDelegate(treeDataLikelihood);
             // rate parameters keep the old path for the modes and Hessians only it provides
             final boolean rateOnAdjoint = HomogeneousSubstitutionModelGradient.isRateParameter(treeDataLikelihood, parameter)
@@ -115,6 +126,10 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
                 throw new XMLParseException(e.getMessage());
             }
         } else {
+            if (treeDataLikelihood == null) {
+                throw new XMLParseException("Branch-specific substitution gradients need a single-partition"
+                        + " treeDataLikelihood, not " + likelihood.getId());
+            }
             BeagleDataLikelihoodDelegate beagleData = getPreOrderBeagleDelegate(treeDataLikelihood);
             DifferentiableBranchRates branchRateModel =
                     (DifferentiableBranchRates) xo.getChild(DifferentiableBranchRates.class);
@@ -133,6 +148,46 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
                                                                     Double reportTolerance)
             throws XMLParseException {
 
+        checkHomogeneousAttributes(xo, parameter, mode, useHessian);
+        try {
+            return new HomogeneousSubstitutionModelGradient(treeDataLikelihood, parameter, backend, reportTolerance);
+        } catch (IllegalArgumentException | UnsupportedOperationException e) {
+            throw new XMLParseException(e.getMessage());
+        }
+    }
+
+    // The gradient of a multi-partition likelihood, summed over the partitions whose models use the parameter
+    private static Object parsePartitionedSubstitutionModelGradient(XMLObject xo,
+                                                                    Likelihood likelihood,
+                                                                    Parameter parameter,
+                                                                    final HomogeneousSubstitutionModelGradient.Backend backend,
+                                                                    Mode mode, boolean useHessian,
+                                                                    final Double reportTolerance)
+            throws XMLParseException {
+
+        checkHomogeneousAttributes(xo, parameter, mode, useHessian);
+        try {
+            return PartitionedGradients.create(PartitionedGradients.treeDataLikelihoods(likelihood), parameter,
+                    new PartitionedGradients.Factory() {
+                        @Override
+                        public boolean appliesTo(TreeDataLikelihood treeDataLikelihood, Parameter p) {
+                            return !ModelDependency.findHolders(treeDataLikelihood, p).isEmpty();
+                        }
+
+                        @Override
+                        public GradientWrtParameterProvider create(TreeDataLikelihood treeDataLikelihood, Parameter p) {
+                            return new HomogeneousSubstitutionModelGradient(treeDataLikelihood, p, backend,
+                                    reportTolerance);
+                        }
+                    }, Double.NaN, reportTolerance);
+        } catch (IllegalArgumentException | UnsupportedOperationException e) {
+            throw new XMLParseException(e.getMessage());
+        }
+    }
+
+    private static void checkHomogeneousAttributes(XMLObject xo, Parameter parameter, Mode mode, boolean useHessian)
+            throws XMLParseException {
+
         // dim defaults to 0 when omitted, so route on whether it was given; dim="0" of a scalar is all of it
         if (xo.hasAttribute(DIMENSION)) {
             final int given = xo.getIntegerAttribute(DIMENSION);
@@ -149,12 +204,6 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
         }
         if (xo.hasAttribute(TRAIT_NAME)) {
             Logger.getLogger("dr.evomodelxml").info("traitName is ignored for the gradient wrt " + parameter.getId());
-        }
-
-        try {
-            return new HomogeneousSubstitutionModelGradient(treeDataLikelihood, parameter, backend, reportTolerance);
-        } catch (IllegalArgumentException | UnsupportedOperationException e) {
-            throw new XMLParseException(e.getMessage());
         }
     }
 
@@ -207,7 +256,9 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
             AttributeRule.newBooleanRule(USE_HESSIAN, true),
             AttributeRule.newStringRule(MODE, true),
             AttributeRule.newStringRule(BACKEND, true),
-            new ElementRule(TreeDataLikelihood.class),
+            new XORRule(
+                    new ElementRule(TreeDataLikelihood.class),
+                    new ElementRule(CompoundLikelihood.class)),
             new XORRule(
                     new AndRule(
                             new ElementRule(BranchSpecificSubstitutionParameterBranchModel.class),

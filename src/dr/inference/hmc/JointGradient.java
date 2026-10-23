@@ -267,6 +267,16 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     private static final boolean DEBUG = false;
     private static final boolean DEBUG_KILL = false;
 
+    // a member whose likelihood is only smooth on coarse steps sets the step for the whole check
+    @Override
+    public double getNumericGradientStepSize() {
+        double step = derivativeList.get(0).getNumericGradientStepSize();
+        for (GradientWrtParameterProvider provider : derivativeList) {
+            step = Math.max(step, provider.getNumericGradientStepSize());
+        }
+        return step;
+    }
+
     @Override
     public String getReport() {
         return  "jointGradient." + parameter.getParameterName() + "\n" +

@@ -27,15 +27,23 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.treedatalikelihood.PartitionedGradients;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.SiteRateModelGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
  * Parses {@code <siteRateModelGradient>}: the analytic gradient of a tree data likelihood with respect to the gamma
  * shape, the proportion of invariant sites or the relative rate of its site model.
+ * <p>
+ * The likelihood may be a multi-partition {@code <treeDataLikelihood>} (a CompoundLikelihood of one tree data
+ * likelihood per partition): a site-model parameter shared by several partitions gets the sum of their gradients,
+ * and a compound of per-partition parameters, such as allNus, gets one block per partition. Give such a compound
+ * its fixed sum with {@code simplexSum} (allNus sums to one), so gradient checks and transforms use the tangent.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -44,6 +52,7 @@ public class SiteRateModelGradientParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "siteRateModelGradient";
     private static final String GRADIENT_CHECK_TOLERANCE = "gradientCheckTolerance";
+    private static final String SIMPLEX_SUM = "simplexSum";
     private static final double DEFAULT_TOLERANCE = 1E-4;
 
     @Override
@@ -53,11 +62,23 @@ public class SiteRateModelGradientParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        final TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        final Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
         final Parameter parameter = (Parameter) xo.getChild(Parameter.class);
         final double tolerance = xo.getAttribute(GRADIENT_CHECK_TOLERANCE, DEFAULT_TOLERANCE);
+        final double simplexSum = xo.getAttribute(SIMPLEX_SUM, Double.NaN);
         try {
-            return new SiteRateModelGradient(treeDataLikelihood, parameter, tolerance);
+            return PartitionedGradients.create(PartitionedGradients.treeDataLikelihoods(likelihood), parameter,
+                    new PartitionedGradients.Factory() {
+                        @Override
+                        public boolean appliesTo(TreeDataLikelihood treeDataLikelihood, Parameter p) {
+                            return SiteRateModelGradient.isSiteRateParameter(treeDataLikelihood, p);
+                        }
+
+                        @Override
+                        public GradientWrtParameterProvider create(TreeDataLikelihood treeDataLikelihood, Parameter p) {
+                            return new SiteRateModelGradient(treeDataLikelihood, p, tolerance);
+                        }
+                    }, simplexSum, tolerance);
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(e.getMessage());
         }
@@ -69,15 +90,18 @@ public class SiteRateModelGradientParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(TreeDataLikelihood.class),
+            new XORRule(
+                    new ElementRule(TreeDataLikelihood.class),
+                    new ElementRule(CompoundLikelihood.class)),
             new ElementRule(Parameter.class),
             AttributeRule.newDoubleRule(GRADIENT_CHECK_TOLERANCE, true),
+            AttributeRule.newDoubleRule(SIMPLEX_SUM, true),
     };
 
     @Override
     public String getParserDescription() {
-        return "Analytic gradient of a tree data likelihood wrt the gamma shape, proportion of invariant sites or"
-                + " relative rate of its site model";
+        return "Analytic gradient of a tree data likelihood (or a compound of per-partition ones) wrt the gamma shape,"
+                + " proportion of invariant sites or relative rate of its site model(s)";
     }
 
     @Override

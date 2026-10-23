@@ -255,7 +255,9 @@ public class FrequencyGradientTest extends TestCase {
         Fixture f = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false, Model.TN93);
         assertFalse(HomogeneousSubstitutionModelGradient.isRateParameter(f.likelihood, f.frequencies));
         Fixture hky = new Fixture(new GammaSiteRateModel("siteModel"), PartialsRescalingScheme.NONE, false);
-        assertFalse(HomogeneousSubstitutionModelGradient.isRateParameter(hky.likelihood, hky.kappa));
+        assertTrue(HomogeneousSubstitutionModelGradient.isRateParameter(hky.likelihood, hky.kappa));
+        assertFalse(HomogeneousSubstitutionModelGradient.isRateParameter(hky.likelihood, hky.frequencies));
+        assertFalse(HomogeneousSubstitutionModelGradient.isRateParameter(hky.likelihood, hky.clockRate));
     }
 
     private static double[] rateGradient(Fixture f, Parameter rates, Backend backend) {

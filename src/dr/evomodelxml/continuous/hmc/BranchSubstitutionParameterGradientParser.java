@@ -92,8 +92,11 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
 
             HomogeneousSubstitutionModelGradient.Backend backend = parseBackend(xo);
             getBeagleDelegate(treeDataLikelihood);
+            // rate parameters keep the old path for the modes and Hessians only it provides
+            final boolean rateOnAdjoint = HomogeneousSubstitutionModelGradient.isRateParameter(treeDataLikelihood, parameter)
+                    && mode == Mode.EXACT && !useHessian;
             if (HomogeneousSubstitutionModelGradient.isFrequencyParameter(treeDataLikelihood, parameter)
-                    || HomogeneousSubstitutionModelGradient.isRateParameter(treeDataLikelihood, parameter)
+                    || rateOnAdjoint
                     || backend == HomogeneousSubstitutionModelGradient.Backend.ADJOINT) {
                 return parseHomogeneousSubstitutionModelGradient(xo, treeDataLikelihood, parameter, backend, mode,
                         useHessian, reportTolerance);
@@ -130,10 +133,13 @@ public class BranchSubstitutionParameterGradientParser extends AbstractXMLObject
                                                                     Double reportTolerance)
             throws XMLParseException {
 
-        // dim defaults to 0 when omitted, so route on whether it was given
-        if (xo.hasAttribute(DIMENSION) && xo.getIntegerAttribute(DIMENSION) != -1) {
-            throw new XMLParseException("The gradient wrt " + parameter.getId() + " covers all dimensions together;"
-                    + " remove dim (or use dim=\"-1\"). Single frequency dimensions are not meaningful on the simplex");
+        // dim defaults to 0 when omitted, so route on whether it was given; dim="0" of a scalar is all of it
+        if (xo.hasAttribute(DIMENSION)) {
+            final int given = xo.getIntegerAttribute(DIMENSION);
+            if (given != -1 && !(given == 0 && parameter.getDimension() == 1)) {
+                throw new XMLParseException("The gradient wrt " + parameter.getId() + " covers all dimensions together;"
+                        + " remove dim (or use dim=\"-1\"). Single frequency dimensions are not meaningful on the simplex");
+            }
         }
         if (mode != Mode.EXACT) {
             throw new XMLParseException("Only mode=\"exact\" is supported for the gradient wrt " + parameter.getId());

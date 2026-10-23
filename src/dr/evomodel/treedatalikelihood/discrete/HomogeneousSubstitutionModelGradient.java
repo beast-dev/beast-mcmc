@@ -34,7 +34,9 @@ import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtPa
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.WrtFrequencyParameter;
-import dr.evomodel.substmodel.WrtRateParameter;
+import dr.evomodel.substmodel.nucleotide.GTR;
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -46,6 +48,7 @@ import dr.inference.model.Parameter;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -175,8 +178,8 @@ public class HomogeneousSubstitutionModelGradient implements GradientWrtParamete
     }
 
     /**
-     * @return true if parameter sets a relative rate of the likelihood's single substitution model through the generic
-     * rate differential (e.g. TN93 kappa1/kappa2, GTR rates), which only the adjoint engine needs
+     * @return true if parameter is a rate parameter of the likelihood's single substitution model, and that model's
+     * gradients use the adjoint by default: HKY kappa, TN93 kappa1/kappa2, GTR rates
      */
     public static boolean isRateParameter(TreeDataLikelihood treeDataLikelihood, Parameter parameter) {
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
@@ -184,15 +187,19 @@ public class HomogeneousSubstitutionModelGradient implements GradientWrtParamete
             return false;
         }
         List<SubstitutionModel> models = ((BeagleDataLikelihoodDelegate) delegate).getBranchModel().getSubstitutionModels();
-        if (models.size() != 1 || !(models.get(0) instanceof DifferentiableSubstitutionModel)) {
+        if (models.size() != 1 || !ADJOINT_BY_DEFAULT.contains(models.get(0).getClass())) {
             return false;
         }
         try {
-            return ((DifferentiableSubstitutionModel) models.get(0)).factory(parameter, 0) instanceof WrtRateParameter;
+            WrtParameter wrt = ((DifferentiableSubstitutionModel) models.get(0)).factory(parameter, 0);
+            return wrt != null && !(wrt instanceof WrtFrequencyParameter);
         } catch (RuntimeException e) {
             return false;
         }
     }
+
+    // Models whose rate-parameter gradients go to this class (adjoint, per-dimension fallback) by default
+    private static final List<Class<?>> ADJOINT_BY_DEFAULT = Arrays.<Class<?>>asList(HKY.class, TN93.class, GTR.class);
 
     private static Parameter frequencyParameterOf(FrequencyModel frequencyModel) {
         if (frequencyModel == null) {

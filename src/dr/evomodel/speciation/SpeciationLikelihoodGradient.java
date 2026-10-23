@@ -64,6 +64,10 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
         this.tree = tree;
         this.wrtParameter = wrtParameter;
         this.provider = likelihood.getGradientProvider();
+        if (wrtParameter != WrtParameter.NODE_HEIGHT && !likelihood.isWholeTreeLikelihood()) {
+            throw new IllegalArgumentException("Gradients wrt " + wrtParameter.name + " do not include excluded taxa"
+                    + " or calibration corrections, which " + likelihood.getId() + " has");
+        }
         this.parameter = wrtParameter.getParameter(provider, tree);
     }
 

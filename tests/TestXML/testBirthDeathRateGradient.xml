@@ -1,0 +1,90 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Gradients of the Yule and birth-death (Gernhard 2008) tree priors wrt their parameters, as BEAUti writes them:  -->
+<!-- yule.birthRate; birthDeath.meanGrowthRate (r = lambda - mu), birthDeath.relativeDeathRate (a = mu / lambda) and   -->
+<!-- birthDeath.sampleProbability (rho). Each report also checks the analytic value against finite differences.     -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/><taxon id="B"/><taxon id="C"/><taxon id="D"/><taxon id="E"/>
+  </taxa>
+  <newick id="startingTree">((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);</newick>
+  <treeModel id="treeModel">
+    <tree idref="startingTree"/>
+    <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+
+  <yuleModel id="yule" units="years">
+    <birthRate><parameter id="yule.birthRate" value="2.0" lower="0.0"/></birthRate>
+  </yuleModel>
+  <speciationLikelihood id="speciation.yule">
+    <model><yuleModel idref="yule"/></model>
+    <speciesTree><treeModel idref="treeModel"/></speciesTree>
+  </speciationLikelihood>
+
+  <birthDeathModel id="birthDeath" units="years">
+    <birthMinusDeathRate><parameter id="birthDeath.meanGrowthRate" value="1.5" lower="0.0"/></birthMinusDeathRate>
+    <relativeDeathRate><parameter id="birthDeath.relativeDeathRate" value="0.4" lower="0.0" upper="1.0"/></relativeDeathRate>
+    <sampleProbability><parameter id="birthDeath.sampleProbability" value="0.3" lower="0.0" upper="1.0"/></sampleProbability>
+  </birthDeathModel>
+  <speciationLikelihood id="speciation.birthDeath">
+    <model><birthDeathModel idref="birthDeath"/></model>
+    <speciesTree><treeModel idref="treeModel"/></speciesTree>
+  </speciationLikelihood>
+
+  <speciationLikelihoodGradient id="gradient.yule.birthRate" wrtParameter="birthRate">
+    <speciationLikelihood idref="speciation.yule"/><treeModel idref="treeModel"/>
+  </speciationLikelihoodGradient>
+  <speciationLikelihoodGradient id="gradient.birthDeath.birthRate" wrtParameter="birthRate">
+    <speciationLikelihood idref="speciation.birthDeath"/><treeModel idref="treeModel"/>
+  </speciationLikelihoodGradient>
+  <speciationLikelihoodGradient id="gradient.birthDeath.deathRate" wrtParameter="deathRate">
+    <speciationLikelihood idref="speciation.birthDeath"/><treeModel idref="treeModel"/>
+  </speciationLikelihoodGradient>
+  <speciationLikelihoodGradient id="gradient.birthDeath.samplingProbability" wrtParameter="samplingProbability">
+    <speciationLikelihood idref="speciation.birthDeath"/><treeModel idref="treeModel"/>
+  </speciationLikelihoodGradient>
+
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>log likelihood (Yule)</message>
+    <actual regex="likelihood:\s+(.*)\n"><likelihood><speciationLikelihood idref="speciation.yule"/></likelihood></actual>
+    <expected>0.17258872223978128</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>log likelihood (birth-death with sampling)</message>
+    <actual regex="likelihood:\s+(.*)\n"><likelihood><speciationLikelihood idref="speciation.birthDeath"/></likelihood></actual>
+    <expected>-1.6724022937501262</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.yule.birthRate">
+    <report><speciationLikelihoodGradient idref="gradient.yule.birthRate"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (Yule birth rate)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.yule.birthRate"/></actual>
+    <expected>0.6999999999999998</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.birthDeath.birthRate">
+    <report><speciationLikelihoodGradient idref="gradient.birthDeath.birthRate"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (birth-death r = lambda - mu)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.birthDeath.birthRate"/></actual>
+    <expected>2.189801940049803</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.birthDeath.deathRate">
+    <report><speciationLikelihoodGradient idref="gradient.birthDeath.deathRate"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (birth-death a = mu / lambda)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.birthDeath.deathRate"/></actual>
+    <expected>4.016028909923741</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.birthDeath.samplingProbability">
+    <report><speciationLikelihoodGradient idref="gradient.birthDeath.samplingProbability"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (birth-death rho)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.birthDeath.samplingProbability"/></actual>
+    <expected>8.032057819847477</expected>
+  </assertEqual>
+</beast>

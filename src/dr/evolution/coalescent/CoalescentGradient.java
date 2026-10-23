@@ -147,7 +147,8 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
                 final int lineageCount = bigFastTreeIntervals.getLineageCount(i);
                 final double kChoose2 = Binomial.choose2(lineageCount);
                 final double intensitySecondDerivative = demographicFunction.getIntensitySecondDerivative(time);
-                thisSecondDerivative += demographicFunction.getLogDemographicSecondDerivative(time);
+                // log L has -log N(t) at each coalescent time
+                thisSecondDerivative -= demographicFunction.getLogDemographicSecondDerivative(time);
 
                 if (bigFastTreeIntervals.getInterval(i) != 0) {
                     thisSecondDerivative -= kChoose2 * intensitySecondDerivative;
@@ -224,7 +225,8 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
                 final int lineageCount = bigFastTreeIntervals.getLineageCount(i);
                 final double kChoose2 = Binomial.choose2(lineageCount);
                 final double intensityGradient = demographicFunction.getIntensityGradient(time);
-                thisGradient += demographicFunction.getLogDemographicGradient(time);
+                // log L has -log N(t) at each coalescent time, and getLogDemographicGradient is d log N / dt
+                thisGradient -= demographicFunction.getLogDemographicGradient(time);
 
                 if (bigFastTreeIntervals.getInterval(i) != 0 || first) {
                     thisGradient -= kChoose2 * intensityGradient;

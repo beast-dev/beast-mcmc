@@ -140,14 +140,14 @@ public class DiscreteTraitBranchRateGradient
         double[] diagonalHessian = (double[]) treeDataLikelihood.getTreeTrait(DiscreteTraitBranchRateDelegate.HESSIAN_TRAIT_NAME).getTrait(tree, null);
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
+        // indexed by branch (node number with the root skipped), as in getGradientLogDensity
         int v = 0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                final int destinationIndex = getParameterIndexFromNode(node);
                 final double chainGradient = getChainGradient(tree, node);
                 final double chainSecondDerivative = getChainSecondDerivative(tree, node);
-                result[destinationIndex] = diagonalHessian[v] * chainGradient * chainGradient + gradient[v] * chainSecondDerivative;
+                result[v] = diagonalHessian[v] * chainGradient * chainGradient + gradient[v] * chainSecondDerivative;
                 v++;
             }
         }
@@ -174,14 +174,15 @@ public class DiscreteTraitBranchRateGradient
         //Do single call to traitProvider with node == null (get full tree)
         double[] gradient = (double[]) treeTraitProvider.getTrait(tree, null);
 
+        // Indexed by branch: node number with the root skipped, the order of the trait. This is the parameter index
+        // of every per-branch rate model (TreeParameterModel without the root), and single-rate models such as the
+        // strict clock sum it. getParameterIndexFromNode is not used: the strict clock returns the raw node number,
+        // which overflows this array whenever the root is not node 2n-2.
         int v = 0;
         for (int i = 0; i < tree.getNodeCount(); ++i) {
             final NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
-                final int destinationIndex = getParameterIndexFromNode(node);
-                final double nodeResult = gradient[v] * getChainGradient(tree, node);
-                result[destinationIndex] = nodeResult; //TODO: XJ thinks destinationIndex == v here.
-                result[v] = nodeResult;
+                result[v] = gradient[v] * getChainGradient(tree, node);
                 v++;
             }
         }

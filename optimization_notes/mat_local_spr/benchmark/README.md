@@ -115,8 +115,12 @@ from runs of a few hundred thousand states from the starting tree, one at a time
 | BEAGLE, 18 threads | 10.2 | 18 |
 | BEAGLE, 1 thread | 92 | 1 |
 
-So per state the MAT is about 6.5 times as fast as BEAGLE on all cores and about 60 times as fast per core
-(ESS per state with gamma categories on big-3 has not been measured).
+These runs were still burning in (root height falling from 3; tree lengths of 85-140 against about 66 at
+equilibrium without rate heterogeneity), so they only indicate the speed per state: the MAT's cost per state
+grows with the number of mutations in the history, so it is probably faster at equilibrium than here, while
+BEAGLE's hardly depends on the state. On that basis the MAT is roughly 6.5 times as fast per state as BEAGLE
+on all cores and roughly 60 times as fast per core; neither the speed at equilibrium nor the ESS per state
+with gamma categories on big-3 has been measured (that needs runs of the length of the big-3 benchmark).
 
 ### Speed
 

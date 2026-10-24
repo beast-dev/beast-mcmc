@@ -172,6 +172,13 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
         return exclude == null && calibration == null;
     }
 
+    /**
+     * @return true if the likelihood carries the calibration correction for tMRCA priors
+     */
+    public boolean hasCalibration() {
+        return calibration != null;
+    }
+
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).
     public SpeciationModelGradientProvider getGradientProvider() {
         if (gradientProvider == null) {

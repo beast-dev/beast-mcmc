@@ -51,6 +51,10 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
             throw new RuntimeException("Not yet implemented for other cases.");
         }
 
+        if (likelihood.hasCalibration()) {
+            throw new XMLParseException(SpeciationLikelihoodGradient.TMRCA_CALIBRATION_NOT_IMPLEMENTED);
+        }
+
         SpeciationLikelihoodGradient.WrtParameter type = SpeciationLikelihoodGradient.WrtParameter.factory(wrtParamter);
 
         boolean newLoop = xo.getAttribute(USE_NEW_LOOP, false);

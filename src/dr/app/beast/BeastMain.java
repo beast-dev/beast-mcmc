@@ -363,10 +363,6 @@ public class BeastMain {
         System.out.println();
     }
 
-    private static long updateSeedByRank(long seed, int rank) {
-        return seed + 1000 * 1000 * rank;
-    }
-
     //Main method
     public static void main(String[] args) throws java.io.IOException {
 
@@ -431,7 +427,6 @@ public class BeastMain {
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
-                        new Arguments.Option("mpi", null, "Use MPI rank to label output"),
 
                         new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
 
@@ -512,7 +507,6 @@ public class BeastMain {
         final boolean working = arguments.hasOption("working");
         String fileNamePrefix = null;
         boolean allowOverwrite = arguments.hasOption("overwrite");
-        boolean useMPI = arguments.hasOption("mpi");
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
@@ -814,24 +808,6 @@ public class BeastMain {
                 String citationsFile = arguments.getStringOption("citations_file");
                 System.setProperty("citations.filename", citationsFile);
             }
-
-            if (useMPI) {
-                String[] nullArgs = new String[0];
-                try {
-                    BeastMPI.Init(nullArgs);
-                } catch (Exception e) {
-                    throw new RuntimeException("Unable to access MPI.");
-                }
-                int rank = BeastMPI.COMM_WORLD.Rank();
-                System.setProperty("mpi.rank.postfix", String.valueOf(rank));
-
-            }
-
-            String rankProp = System.getProperty("mpi.rank.postfix");
-            if (rankProp != null) {
-                int rank = Integer.valueOf(rankProp);
-                seed = updateSeedByRank(seed, rank);
-            }
         }
 
         int maxErrorCount = 0;
@@ -1039,10 +1015,6 @@ public class BeastMain {
                 System.err.flush();
                 System.exit(1);
             }
-        }
-
-        if (useMPI) {
-            BeastMPI.Finalize();
         }
 
         if (!usingMC3 && !window) { // DM: with MC3 the main thread gets here and terminates all threads prematurely 

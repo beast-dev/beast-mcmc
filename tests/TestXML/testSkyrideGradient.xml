@@ -1,0 +1,190 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- GMRF Skyride gradients wrt the log population sizes, the precision and the node heights, against finite      -->
+<!-- differences: BEAUti's default (time-aware smoothing rescaled by the root height), time-aware without         -->
+<!-- rescaling, uniform smoothing, lambda < 1, and a tree with tips sampled at different times.                   -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/><taxon id="B"/><taxon id="C"/><taxon id="D"/><taxon id="E"/>
+  </taxa>
+  <newick id="tree.start" usingDates="false">((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);</newick>
+  <treeModel id="tree">
+    <tree idref="tree.start"/>
+    <rootHeight><parameter id="tree.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="tree.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="tree.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+  <newick id="datedTree.start" usingDates="false">((A:0.12,B:0.32):0.31,(C:0.25,(D:0.07,E:0.17):0.18):0.18);</newick>
+  <treeModel id="datedTree">
+    <tree idref="datedTree.start"/>
+    <rootHeight><parameter id="datedTree.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="datedTree.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="datedTree.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+
+  <gmrfSkyrideLikelihood id="skyride" timeAwareSmoothing="true" randomizeTree="false">
+    <populationSizes><parameter id="skyride.logPopSize" value="0.3 -0.2 0.5 0.1"/></populationSizes>
+    <groupSizes><parameter id="skyride.groupSize" dimension="4"/></groupSizes>
+    <precisionParameter><parameter id="skyride.precision" value="2.5" lower="0.0"/></precisionParameter>
+    <populationTree><treeModel idref="tree"/></populationTree>
+  </gmrfSkyrideLikelihood>
+  <gmrfSkyrideGradient id="gradient.skyride.logPopulationSizes" wrtParameter="logPopulationSizes">
+    <gmrfSkyrideLikelihood idref="skyride"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.skyride.logPopulationSizes"><report><gmrfSkyrideGradient idref="gradient.skyride.logPopulationSizes"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>skyride gradient wrt logPopulationSizes, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.skyride.logPopulationSizes"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.skyride.logPopulationSizes"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.skyride.precision" wrtParameter="precision">
+    <gmrfSkyrideLikelihood idref="skyride"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.skyride.precision"><report><gmrfSkyrideGradient idref="gradient.skyride.precision"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>skyride gradient wrt precision, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.skyride.precision"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.skyride.precision"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.skyride.nodeHeight" wrtParameter="nodeHeight">
+    <gmrfSkyrideLikelihood idref="skyride"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.skyride.nodeHeight"><report><gmrfSkyrideGradient idref="gradient.skyride.nodeHeight"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>skyride gradient wrt nodeHeight, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.skyride.nodeHeight"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.skyride.nodeHeight"/></expected>
+  </assertEqual>
+  <gmrfSkyrideLikelihood id="noRescale" timeAwareSmoothing="true" rescaleByRootHeight="false" randomizeTree="false">
+    <populationSizes><parameter id="noRescale.logPopSize" value="0.3 -0.2 0.5 0.1"/></populationSizes>
+    <groupSizes><parameter id="noRescale.groupSize" dimension="4"/></groupSizes>
+    <precisionParameter><parameter id="noRescale.precision" value="2.5" lower="0.0"/></precisionParameter>
+    <populationTree><treeModel idref="tree"/></populationTree>
+  </gmrfSkyrideLikelihood>
+  <gmrfSkyrideGradient id="gradient.noRescale.logPopulationSizes" wrtParameter="logPopulationSizes">
+    <gmrfSkyrideLikelihood idref="noRescale"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.noRescale.logPopulationSizes"><report><gmrfSkyrideGradient idref="gradient.noRescale.logPopulationSizes"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>noRescale gradient wrt logPopulationSizes, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.noRescale.logPopulationSizes"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.noRescale.logPopulationSizes"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.noRescale.precision" wrtParameter="precision">
+    <gmrfSkyrideLikelihood idref="noRescale"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.noRescale.precision"><report><gmrfSkyrideGradient idref="gradient.noRescale.precision"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>noRescale gradient wrt precision, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.noRescale.precision"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.noRescale.precision"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.noRescale.nodeHeight" wrtParameter="nodeHeight">
+    <gmrfSkyrideLikelihood idref="noRescale"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.noRescale.nodeHeight"><report><gmrfSkyrideGradient idref="gradient.noRescale.nodeHeight"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>noRescale gradient wrt nodeHeight, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.noRescale.nodeHeight"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.noRescale.nodeHeight"/></expected>
+  </assertEqual>
+  <gmrfSkyrideLikelihood id="uniform" timeAwareSmoothing="false" randomizeTree="false">
+    <populationSizes><parameter id="uniform.logPopSize" value="0.3 -0.2 0.5 0.1"/></populationSizes>
+    <groupSizes><parameter id="uniform.groupSize" dimension="4"/></groupSizes>
+    <precisionParameter><parameter id="uniform.precision" value="2.5" lower="0.0"/></precisionParameter>
+    <populationTree><treeModel idref="tree"/></populationTree>
+  </gmrfSkyrideLikelihood>
+  <gmrfSkyrideGradient id="gradient.uniform.logPopulationSizes" wrtParameter="logPopulationSizes">
+    <gmrfSkyrideLikelihood idref="uniform"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.uniform.logPopulationSizes"><report><gmrfSkyrideGradient idref="gradient.uniform.logPopulationSizes"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>uniform gradient wrt logPopulationSizes, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.uniform.logPopulationSizes"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.uniform.logPopulationSizes"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.uniform.precision" wrtParameter="precision">
+    <gmrfSkyrideLikelihood idref="uniform"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.uniform.precision"><report><gmrfSkyrideGradient idref="gradient.uniform.precision"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>uniform gradient wrt precision, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.uniform.precision"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.uniform.precision"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.uniform.nodeHeight" wrtParameter="nodeHeight">
+    <gmrfSkyrideLikelihood idref="uniform"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.uniform.nodeHeight"><report><gmrfSkyrideGradient idref="gradient.uniform.nodeHeight"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>uniform gradient wrt nodeHeight, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.uniform.nodeHeight"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.uniform.nodeHeight"/></expected>
+  </assertEqual>
+  <gmrfSkyrideLikelihood id="lambda" timeAwareSmoothing="true" randomizeTree="false">
+    <populationSizes><parameter id="lambda.logPopSize" value="0.3 -0.2 0.5 0.1"/></populationSizes>
+    <groupSizes><parameter id="lambda.groupSize" dimension="4"/></groupSizes>
+    <precisionParameter><parameter id="lambda.precision" value="2.5" lower="0.0"/></precisionParameter>
+    <lambdaParameter><parameter id="lambda.lambda" value="0.6"/></lambdaParameter>
+    <populationTree><treeModel idref="tree"/></populationTree>
+  </gmrfSkyrideLikelihood>
+  <gmrfSkyrideGradient id="gradient.lambda.logPopulationSizes" wrtParameter="logPopulationSizes">
+    <gmrfSkyrideLikelihood idref="lambda"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.lambda.logPopulationSizes"><report><gmrfSkyrideGradient idref="gradient.lambda.logPopulationSizes"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>lambda gradient wrt logPopulationSizes, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.lambda.logPopulationSizes"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.lambda.logPopulationSizes"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.lambda.precision" wrtParameter="precision">
+    <gmrfSkyrideLikelihood idref="lambda"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.lambda.precision"><report><gmrfSkyrideGradient idref="gradient.lambda.precision"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>lambda gradient wrt precision, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.lambda.precision"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.lambda.precision"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.lambda.nodeHeight" wrtParameter="nodeHeight">
+    <gmrfSkyrideLikelihood idref="lambda"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.lambda.nodeHeight"><report><gmrfSkyrideGradient idref="gradient.lambda.nodeHeight"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>lambda gradient wrt nodeHeight, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.lambda.nodeHeight"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.lambda.nodeHeight"/></expected>
+  </assertEqual>
+  <gmrfSkyrideLikelihood id="dated" timeAwareSmoothing="true" randomizeTree="false">
+    <populationSizes><parameter id="dated.logPopSize" value="0.3 -0.2 0.5 0.1"/></populationSizes>
+    <groupSizes><parameter id="dated.groupSize" dimension="4"/></groupSizes>
+    <precisionParameter><parameter id="dated.precision" value="2.5" lower="0.0"/></precisionParameter>
+    <populationTree><treeModel idref="datedTree"/></populationTree>
+  </gmrfSkyrideLikelihood>
+  <gmrfSkyrideGradient id="gradient.dated.logPopulationSizes" wrtParameter="logPopulationSizes">
+    <gmrfSkyrideLikelihood idref="dated"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.dated.logPopulationSizes"><report><gmrfSkyrideGradient idref="gradient.dated.logPopulationSizes"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>dated gradient wrt logPopulationSizes, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.dated.logPopulationSizes"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.dated.logPopulationSizes"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.dated.precision" wrtParameter="precision">
+    <gmrfSkyrideLikelihood idref="dated"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.dated.precision"><report><gmrfSkyrideGradient idref="gradient.dated.precision"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>dated gradient wrt precision, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.dated.precision"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.dated.precision"/></expected>
+  </assertEqual>
+  <gmrfSkyrideGradient id="gradient.dated.nodeHeight" wrtParameter="nodeHeight">
+    <gmrfSkyrideLikelihood idref="dated"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.gradient.dated.nodeHeight"><report><gmrfSkyrideGradient idref="gradient.dated.nodeHeight"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>dated gradient wrt nodeHeight, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.gradient.dated.nodeHeight"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.gradient.dated.nodeHeight"/></expected>
+  </assertEqual>
+</beast>

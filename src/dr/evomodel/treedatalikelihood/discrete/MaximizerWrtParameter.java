@@ -70,7 +70,13 @@ public class MaximizerWrtParameter implements Reportable {
         boolean printToScreen;
         boolean includeJacobian;
 
-        public Settings(int numberIterations, double stepSize, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
+        /**
+         * @param includeJacobian false (the default, used for optimization in TreeLime): maximize the unweighted log
+         *                        density, whose optimum does not depend on the transform; true: maximize the density
+         *                        of the transformed variable, log L - logJacobian, as HMC samples it
+         */
+        public Settings(int numberIterations, double stepSize, boolean startAtCurrentState, boolean printToScreen,
+                        boolean includeJacobian) {
             this.numberIterations = numberIterations;
             this.stepSize = stepSize;
             this.startAtCurrentState = startAtCurrentState;
@@ -215,8 +221,11 @@ public class MaximizerWrtParameter implements Reportable {
 
                 if (settings.includeJacobian) {
                     assert transform != null;
-                    return -evaluateLogLikelihood() - transform.logJacobian(argument, 0, argument.length);
+                    // the transformed density, log L - logJacobian (HamiltonianMonteCarloOperator's convention), whose
+                    // gradient is updateGradientLogDensity below
+                    return -evaluateLogLikelihood() + transform.logJacobian(argument, 0, argument.length);
                 }
+                // the unweighted log density: the transform only reparameterizes, so the optimum is unchanged
                 return -evaluateLogLikelihood();
             }
 
@@ -232,14 +241,12 @@ public class MaximizerWrtParameter implements Reportable {
                 double[] result = gradient.getGradientLogDensity();
 
                 if (transform != null) {
-
                     if (settings.includeJacobian) {
                         result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
                     } else {
+                        // chain rule only, matching valueAt's unweighted log density
                         result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
                     }
-
-
                 }
                 for (int i = 0; i < result.length; ++i) {
                     result[i] = -result[i];

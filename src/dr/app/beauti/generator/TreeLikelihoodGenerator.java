@@ -95,7 +95,8 @@ public class TreeLikelihoodGenerator extends Generator {
                 new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
                 new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER,
                         clockModel.getClockType() == ClockType.HMC_CLOCK ||
-                                clockModel.getClockType() == ClockType.SHRINKAGE_LOCAL_CLOCK)
+                                clockModel.getClockType() == ClockType.SHRINKAGE_LOCAL_CLOCK ||
+                                clockModel.getClockType() == ClockType.MIXED_EFFECTS_CLOCK)
         };
 
         writer.writeComment("Likelihood for tree given sequence data");

@@ -27,6 +27,7 @@
 
 package dr.inference.hmc;
 
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.GradientProvider;
@@ -128,7 +129,23 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
 
         @Override
         public double[] getGradientLogDensity() {
-            return provider.getGradientLogDensity(parameter.getParameterValues());
+            double[] x = parameter.getParameterValues();
+            if (likelihood instanceof DistributionLikelihood) {
+                // the likelihood evaluates log f((x - offset) / scale) - log scale
+                final double offset = ((DistributionLikelihood) likelihood).getOffset();
+                final double scale = ((DistributionLikelihood) likelihood).getScale();
+                if (offset != 0.0 || scale != 1.0) {
+                    for (int i = 0; i < x.length; ++i) {
+                        x[i] = (x[i] - offset) / scale;
+                    }
+                    double[] gradient = provider.getGradientLogDensity(x);
+                    for (int i = 0; i < gradient.length; ++i) {
+                        gradient[i] /= scale;
+                    }
+                    return gradient;
+                }
+            }
+            return provider.getGradientLogDensity(x);
         }
 
         @Override

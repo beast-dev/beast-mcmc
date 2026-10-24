@@ -88,6 +88,14 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood imple
         return distribution;
     }
 
+    public double getOffset() {
+        return offset;
+    }
+
+    public double getScale() {
+        return scale;
+    }
+
     public void setRange(int from, int to) {
         this.from = from;
         this.to = to;

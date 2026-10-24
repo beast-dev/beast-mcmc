@@ -1211,20 +1211,26 @@ public interface Transform {
         }
 
         public double gradientInverse(double value) {
-            throw new RuntimeException("Not yet implemented");
+            return gradient(inverse(value));
         }
 
+        // with J = dx/dy = (x - lower)(upper - x) / (upper - lower), d log J / dy = (upper + lower - 2x) / (upper - lower)
         public double updateGradientLogDensity(double gradient, double value) {
-            throw new RuntimeException("Not yet implemented");
+            return gradient * gradient(value) + (upper + lower - 2.0 * value) / (upper - lower);
         }
 
         public double gradientLogJacobianInverse(double value) {
-            throw new RuntimeException("Not yet implemented");
+            final double x = inverse(value);
+            return (upper + lower - 2.0 * x) / (upper - lower);
         }
 
+        // d^2 / dy^2 of f(x(y)) + log J, given f' (gradient) and f'' (diagonalHessian) at x (value)
         @Override
         public double updateDiagonalHessianLogDensity(double diagonalHessian, double gradient, double value) {
-            throw new RuntimeException("Not yet implemented");
+            final double jacobian = gradient(value);
+            final double logJacobianSlope = (upper + lower - 2.0 * value) / (upper - lower);
+            return diagonalHessian * jacobian * jacobian + gradient * logJacobianSlope * jacobian
+                    - 2.0 * jacobian / (upper - lower);
         }
 
         @Override

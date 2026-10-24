@@ -277,6 +277,18 @@ public class TransformParsers {
                  throw new XMLParseException("Unrecognized transform type, " + name);
              }
 
+             if (xo.hasAttribute(LOWER) || xo.hasAttribute(UPPER)) {
+                 if (!(thisTransform instanceof Transform.LogitTransform)) {
+                     throw new XMLParseException("Only the logit transform takes 'lower' and 'upper' bounds");
+                 }
+                 final double lower = xo.getAttribute(LOWER, 0.0);
+                 final double upper = xo.getAttribute(UPPER, 1.0);
+                 if (!(lower < upper) || Double.isInfinite(lower) || Double.isInfinite(upper)) {
+                     throw new XMLParseException("A logit transform needs finite bounds with lower < upper");
+                 }
+                 thisTransform = new Transform.ScaledLogitTransform(upper, lower);
+             }
+
              if (xo.getAttribute(INVERSE, false)) {
                  if (thisTransform instanceof Transform.UnivariableTransform) {
                      thisTransform = new Transform.Inverse((Transform.UnivariableTransform)thisTransform);
@@ -328,6 +340,8 @@ public class TransformParsers {
                      AttributeRule.newDoubleRule(SUM, true),
                      AttributeRule.newBooleanRule(INVERSE, true),
                      AttributeRule.newIntegerRule(DIM, true),
+                     AttributeRule.newDoubleRule(LOWER, true),
+                     AttributeRule.newDoubleRule(UPPER, true),
                      new ElementRule(Transform.ParsedTransform.class, 0, 1),
                      new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)
              };
@@ -359,5 +373,7 @@ public class TransformParsers {
     private static final String INNER = "inner";
     private static final String COMPOUND = "compoundTransform";
     private static final String DIM = "dim";
+    private static final String LOWER = "lower";
+    private static final String UPPER = "upper";
     private static final String COMPOUND_MULTIVARIATE = "multivariateCompoundTransform";
 }

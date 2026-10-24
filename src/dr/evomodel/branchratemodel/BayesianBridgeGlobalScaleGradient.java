@@ -42,11 +42,24 @@ import dr.xml.Reportable;
  */
 public class BayesianBridgeGlobalScaleGradient implements GradientWrtParameterProvider, Reportable {
 
+    /**
+     * Shrinkage-clock gradients are switched off until the clock is supported for gradient-based inference: BEAUti's
+     * default exponent (0.25) makes the bridge non-differentiable at zero increments, and node-height gradients do
+     * not yet account for the clock's tree-time normalization.
+     */
+    public static final String SHRINKAGE_CLOCK_NOT_IMPLEMENTED =
+            "Gradients for the shrinkage local clock are not yet implemented";
+
+    private static final boolean ENABLED = false;
+
     private final AutoCorrelatedBranchRatesDistribution ratesPrior;
     private final BayesianBridgeDistributionModel bridge;
     private final double tolerance;
 
     public BayesianBridgeGlobalScaleGradient(AutoCorrelatedBranchRatesDistribution ratesPrior, double tolerance) {
+        if (!ENABLED) {
+            throw new UnsupportedOperationException(SHRINKAGE_CLOCK_NOT_IMPLEMENTED);
+        }
         if (!(ratesPrior.getPrior() instanceof BayesianBridgeDistributionModel)) {
             throw new IllegalArgumentException("The prior on the increments of " + ratesPrior.getId()
                     + " is not a Bayesian bridge");

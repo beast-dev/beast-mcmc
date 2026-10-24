@@ -48,7 +48,13 @@ public class TreeTimeMeanRateGradient extends DiscreteTraitBranchRateGradient {
         super(traitName, treeDataLikelihood, likelihoodDelegate, getMeanRate(treeDataLikelihood), false);
     }
 
+    private static final boolean ENABLED = false;
+
     private static dr.inference.model.Parameter getMeanRate(TreeDataLikelihood treeDataLikelihood) {
+        if (!ENABLED) {
+            throw new UnsupportedOperationException(
+                    dr.evomodel.branchratemodel.BayesianBridgeGlobalScaleGradient.SHRINKAGE_CLOCK_NOT_IMPLEMENTED);
+        }
         if (!(treeDataLikelihood.getBranchRateModel() instanceof ScaledByTreeTimeBranchRateModel)) {
             throw new IllegalArgumentException("The branch rate model of " + treeDataLikelihood.getId()
                     + " is not scaled by tree time");

@@ -149,6 +149,10 @@ public class ScaledByTreeTimeBranchRateModel extends AbstractBranchRateModel imp
         return differentiableBranchRateModel.getParameterIndexFromNode(node);
     }
 
+    public Parameter getMeanRateParameter() {
+        return meanRateParameter;
+    }
+
     public double getPriorRateAsIncrement(Tree tree){
         return 0;
     }

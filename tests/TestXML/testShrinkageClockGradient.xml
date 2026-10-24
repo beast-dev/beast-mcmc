@@ -1,0 +1,114 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Shrinkage local clock (as BEAUti writes it): gradients wrt the Bayesian bridge's global scale for the joint     -->
+<!-- bridge (BEAUti's slab-regularized form, local scales held fixed) and the marginal bridge (local scales         -->
+<!-- integrated out; exponent 1 and 1.5), and wrt the clock's mean rate (scaledByTreeTimeBranchRates). Each report   -->
+<!-- checks the analytic gradient against finite differences.                                                        -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/><taxon id="B"/><taxon id="C"/><taxon id="D"/><taxon id="E"/>
+  </taxa>
+  <alignment id="alignment" dataType="nucleotide">
+    <sequence><taxon idref="A"/>ACGTACGTTACGATCGATCGTAGCTAGCTAGCATCG</sequence>
+    <sequence><taxon idref="B"/>ACGTACGTAACGATCGTTCGTAGCTAGCTAGCATCA</sequence>
+    <sequence><taxon idref="C"/>ACGAACGTTACGTTCGATCGTAGGTAGCTAGGATCG</sequence>
+    <sequence><taxon idref="D"/>TCGTACGATACGATCGATCCTAGCTAGCAAGCATCG</sequence>
+    <sequence><taxon idref="E"/>TCGTACGATACGATCGATCCTAGCTTGCAAGCATGG</sequence>
+  </alignment>
+  <patterns id="patterns" from="1" strip="false"><alignment idref="alignment"/></patterns>
+  <newick id="startingTree">((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);</newick>
+  <treeModel id="treeModel">
+    <tree idref="startingTree"/>
+    <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+
+  <arbitraryBranchRates id="substBranchRates" centerAtOne="false">
+    <treeModel idref="treeModel"/>
+    <rates><parameter id="substBranchRates.rates" value="1.3 0.7 1.1 0.9 1.6 0.8 1.2 1.05" lower="0.0"/></rates>
+  </arbitraryBranchRates>
+
+  <bayesianBridgeDistribution id="joint">
+    <dimension><parameter idref="substBranchRates.rates"/></dimension>
+    <slabWidth><parameter id="joint.slabWidth" value="2.0"/></slabWidth>
+    <globalScale><parameter id="joint.globalScale" value="0.8" lower="0.0"/></globalScale>
+    <exponent><parameter id="joint.exponent" value="0.25"/></exponent>
+    <localScale><parameter id="joint.localScale" value="10.0 2.0 5.0 0.5 3.0 8.0 1.5 4.0"/></localScale>
+  </bayesianBridgeDistribution>
+  <autoCorrelatedRatesPrior id="joint.ratesPrior" scaling="none" log="true" operateOnIncrements="true">
+    <arbitraryBranchRates idref="substBranchRates"/>
+    <bayesianBridgeDistribution idref="joint"/>
+  </autoCorrelatedRatesPrior>
+  <bayesianBridgeGlobalScaleGradient id="joint.globalScaleGradient">
+    <autoCorrelatedRatesPrior idref="joint.ratesPrior"/>
+  </bayesianBridgeGlobalScaleGradient>
+  <cachedReport id="report.joint.globalScaleGradient"><report><bayesianBridgeGlobalScaleGradient idref="joint.globalScaleGradient"/></report></cachedReport>
+  <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+    <message>joint global-scale gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.joint.globalScaleGradient"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.joint.globalScaleGradient"/></expected>
+  </assertEqual>
+  <bayesianBridgeDistribution id="laplace">
+    <dimension><parameter idref="substBranchRates.rates"/></dimension>
+    <globalScale><parameter id="laplace.globalScale" value="0.6" lower="0.0"/></globalScale>
+    <exponent><parameter id="laplace.exponent" value="1.0"/></exponent>
+  </bayesianBridgeDistribution>
+  <autoCorrelatedRatesPrior id="laplace.ratesPrior" scaling="none" log="true" operateOnIncrements="true">
+    <arbitraryBranchRates idref="substBranchRates"/>
+    <bayesianBridgeDistribution idref="laplace"/>
+  </autoCorrelatedRatesPrior>
+  <bayesianBridgeGlobalScaleGradient id="laplace.globalScaleGradient">
+    <autoCorrelatedRatesPrior idref="laplace.ratesPrior"/>
+  </bayesianBridgeGlobalScaleGradient>
+  <cachedReport id="report.laplace.globalScaleGradient"><report><bayesianBridgeGlobalScaleGradient idref="laplace.globalScaleGradient"/></report></cachedReport>
+  <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+    <message>laplace global-scale gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.laplace.globalScaleGradient"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.laplace.globalScaleGradient"/></expected>
+  </assertEqual>
+  <bayesianBridgeDistribution id="marginal">
+    <dimension><parameter idref="substBranchRates.rates"/></dimension>
+    <globalScale><parameter id="marginal.globalScale" value="0.7" lower="0.0"/></globalScale>
+    <exponent><parameter id="marginal.exponent" value="1.5"/></exponent>
+  </bayesianBridgeDistribution>
+  <autoCorrelatedRatesPrior id="marginal.ratesPrior" scaling="none" log="true" operateOnIncrements="true">
+    <arbitraryBranchRates idref="substBranchRates"/>
+    <bayesianBridgeDistribution idref="marginal"/>
+  </autoCorrelatedRatesPrior>
+  <bayesianBridgeGlobalScaleGradient id="marginal.globalScaleGradient">
+    <autoCorrelatedRatesPrior idref="marginal.ratesPrior"/>
+  </bayesianBridgeGlobalScaleGradient>
+  <cachedReport id="report.marginal.globalScaleGradient"><report><bayesianBridgeGlobalScaleGradient idref="marginal.globalScaleGradient"/></report></cachedReport>
+  <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+    <message>marginal global-scale gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.marginal.globalScaleGradient"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.marginal.globalScaleGradient"/></expected>
+  </assertEqual>
+
+  <scaledByTreeTimeBranchRates id="branchRates">
+    <arbitraryBranchRates idref="substBranchRates"/>
+    <treeModel idref="treeModel"/>
+    <parameter id="branchRatesShrinkage.rate" value="0.9" lower="0.0"/>
+  </scaledByTreeTimeBranchRates>
+  <HKYModel id="hky">
+    <frequencies><frequencyModel dataType="nucleotide">
+      <frequencies><parameter id="frequencies" value="0.1 0.2 0.3 0.4"/></frequencies>
+    </frequencyModel></frequencies>
+    <kappa><parameter id="kappa" value="2.0" lower="0.0"/></kappa>
+  </HKYModel>
+  <siteModel id="siteModel"><substitutionModel><HKYModel idref="hky"/></substitutionModel></siteModel>
+  <treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
+    <partition><patterns idref="patterns"/><siteModel idref="siteModel"/></partition>
+    <treeModel idref="treeModel"/>
+    <scaledByTreeTimeBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <treeTimeMeanRateGradient id="meanRateGradient">
+    <treeDataLikelihood idref="treeLikelihood"/>
+  </treeTimeMeanRateGradient>
+  <cachedReport id="report.meanRateGradient"><report><treeTimeMeanRateGradient idref="meanRateGradient"/></report></cachedReport>
+  <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+    <message>mean-rate gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.meanRateGradient"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.meanRateGradient"/></expected>
+  </assertEqual>
+</beast>

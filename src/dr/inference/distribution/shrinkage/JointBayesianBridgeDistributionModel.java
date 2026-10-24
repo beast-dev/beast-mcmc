@@ -77,6 +77,24 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
         return gradient;
     }
 
+    // sigma_i = u_i / sqrt(1 + (u_i / slab)^2) with u_i = tau lambda_i, so d sigma_i / d tau = lambda_i (1 + (u_i / slab)^2)^(-3/2)
+    @Override
+    public double getGradientLogDensityWrtGlobalScale(double[] x) {
+        double gradient = 0.0;
+        for (int i = 0; i < dim; ++i) {
+            final double sd = getStandardDeviation(i);
+            double dSdTau = localScale.getParameterValue(i);
+            if (slabWidth != null) {
+                final double ratio = globalScale.getParameterValue(0) * localScale.getParameterValue(i)
+                        / slabWidth.getParameterValue(0);
+                dSdTau /= Math.pow(1.0 + ratio * ratio, 1.5);
+            }
+            // d log N(x; 0, sd) / d sd = (x^2 / sd^2 - 1) / sd
+            gradient += (x[i] * x[i] / (sd * sd) - 1.0) / sd * dSdTau;
+        }
+        return gradient;
+    }
+
     @Override
     public double logPdf(double[] x) {
 

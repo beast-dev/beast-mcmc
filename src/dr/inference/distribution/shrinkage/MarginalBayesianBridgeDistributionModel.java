@@ -80,6 +80,18 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
         return gradient;
     }
 
+    // log p(x) = -log(tau) - |x / tau|^alpha per entry (alpha = 1: the Laplace density), up to constants in alpha
+    @Override
+    public double getGradientLogDensityWrtGlobalScale(double[] x) {
+        final double scale = globalScale.getParameterValue(0);
+        final double alpha = exponent.getParameterValue(0);
+        double gradient = 0.0;
+        for (double value : x) {
+            gradient += -1.0 / scale + alpha * Math.pow(Math.abs(value) / scale, alpha) / scale;
+        }
+        return gradient;
+    }
+
     @Override
     public double logPdf(double[] v) {
         final double scale = globalScale.getParameterValue(0);

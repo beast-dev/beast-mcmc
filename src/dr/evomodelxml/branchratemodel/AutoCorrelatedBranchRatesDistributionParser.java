@@ -58,7 +58,9 @@ public class AutoCorrelatedBranchRatesDistributionParser extends AbstractXMLObje
 
         boolean operateOnIncrements = xo.getAttribute(OPERATE_ON_INCREMENTS, false);
 
-        if (distribution instanceof BayesianBridgeDistributionModel) {
+        // the local-scale variant needs a joint bridge; a marginal bridge has its local scales integrated out
+        if (distribution instanceof BayesianBridgeDistributionModel
+                && ((BayesianBridgeDistributionModel) distribution).getLocalScale() != null) {
             return new BayesianBridgeAutoCorrelatedBranchRates(xo.getId(), branchRates,
                     (BayesianBridgeDistributionModel) distribution, scaling, log, operateOnIncrements);
         } else {

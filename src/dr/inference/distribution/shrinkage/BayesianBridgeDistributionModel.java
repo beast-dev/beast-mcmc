@@ -71,6 +71,12 @@ public abstract class BayesianBridgeDistributionModel extends AbstractModel impl
 
     abstract double[] gradientLogPdf(double[] x);
 
+    /**
+     * @return d logPdf(x) / d globalScale, holding the exponent (and, for the joint bridge, the local scales and
+     * slab width) fixed
+     */
+    public abstract double getGradientLogDensityWrtGlobalScale(double[] x);
+
     @Override
     public double[] getGradientLogDensity(Object obj) {
         return gradientLogPdf((double[]) obj);

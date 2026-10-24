@@ -1,0 +1,74 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Skygrid node-height gradients with several loci: two loci on one shared tree (their contributions add), and  -->
+<!-- two loci on different trees (one stacked block per tree), each with its own ploidy, against finite           -->
+<!-- differences; plus the single-locus case.                                                                       -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/><taxon id="B"/><taxon id="C"/><taxon id="D"/><taxon id="E"/>
+  </taxa>
+  <newick id="tree1.start">((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);</newick>
+  <treeModel id="tree1">
+    <tree idref="tree1.start"/>
+    <rootHeight><parameter id="tree1.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="tree1.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="tree1.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+  <newick id="tree2.start">(((A:0.05,B:0.05):0.22,C:0.27):0.4,(D:0.33,E:0.33):0.34);</newick>
+  <treeModel id="tree2">
+    <tree idref="tree2.start"/>
+    <rootHeight><parameter id="tree2.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="tree2.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="tree2.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+
+  <gmrfSkyGridLikelihood id="single">
+    <populationSizes><parameter id="single.logPopSize" value="0.3 -0.2 0.5 0.1 -0.4 0.2"/></populationSizes>
+    <precisionParameter><parameter id="single.precision" value="2.0" lower="0.0"/></precisionParameter>
+    <numGridPoints><parameter id="single.numGridPoints" value="5.0"/></numGridPoints>
+    <cutOff><parameter id="single.cutOff" value="0.5"/></cutOff>
+    <populationTree><treeModel idref="tree1"/></populationTree>
+  </gmrfSkyGridLikelihood>
+  <gmrfSkyrideGradient id="gradient.single" wrtParameter="nodeHeight">
+    <gmrfSkyGridLikelihood idref="single"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.single"><report><gmrfSkyrideGradient idref="gradient.single"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>single node-height gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.single"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.single"/></expected>
+  </assertEqual>
+  <gmrfSkyGridLikelihood id="sharedTree">
+    <populationSizes><parameter id="sharedTree.logPopSize" value="0.3 -0.2 0.5 0.1 -0.4 0.2"/></populationSizes>
+    <precisionParameter><parameter id="sharedTree.precision" value="2.0" lower="0.0"/></precisionParameter>
+    <numGridPoints><parameter id="sharedTree.numGridPoints" value="5.0"/></numGridPoints>
+    <cutOff><parameter id="sharedTree.cutOff" value="0.5"/></cutOff>
+    <populationTree><treeModel idref="tree1"/><treeModel idref="tree1"/></populationTree>
+    <ploidy><parameter id="sharedTree.ploidy" value="1.0 0.25"/></ploidy>
+  </gmrfSkyGridLikelihood>
+  <gmrfSkyrideGradient id="gradient.sharedTree" wrtParameter="nodeHeight">
+    <gmrfSkyGridLikelihood idref="sharedTree"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.sharedTree"><report><gmrfSkyrideGradient idref="gradient.sharedTree"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>sharedTree node-height gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.sharedTree"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.sharedTree"/></expected>
+  </assertEqual>
+  <gmrfSkyGridLikelihood id="twoTrees">
+    <populationSizes><parameter id="twoTrees.logPopSize" value="0.3 -0.2 0.5 0.1 -0.4 0.2"/></populationSizes>
+    <precisionParameter><parameter id="twoTrees.precision" value="2.0" lower="0.0"/></precisionParameter>
+    <numGridPoints><parameter id="twoTrees.numGridPoints" value="5.0"/></numGridPoints>
+    <cutOff><parameter id="twoTrees.cutOff" value="0.5"/></cutOff>
+    <populationTree><treeModel idref="tree1"/><treeModel idref="tree2"/></populationTree>
+    <ploidy><parameter id="twoTrees.ploidy" value="1.0 0.5"/></ploidy>
+  </gmrfSkyGridLikelihood>
+  <gmrfSkyrideGradient id="gradient.twoTrees" wrtParameter="nodeHeight">
+    <gmrfSkyGridLikelihood idref="twoTrees"/>
+  </gmrfSkyrideGradient>
+  <cachedReport id="report.twoTrees"><report><gmrfSkyrideGradient idref="gradient.twoTrees"/></report></cachedReport>
+  <assertEqual tolerance="1E-5" verbose="true" charactersToStrip="\[\],">
+    <message>twoTrees node-height gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.twoTrees"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.twoTrees"/></expected>
+  </assertEqual>
+</beast>

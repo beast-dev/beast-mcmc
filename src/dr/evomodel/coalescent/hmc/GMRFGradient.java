@@ -11,6 +11,7 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.MatrixVectorProductParameter;
@@ -243,17 +244,20 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
                 }
             }
         },
+        // With several loci, the internal node heights of each distinct tree are stacked in order of first
+        // appearance; loci that share a tree add their contributions to the same block.
         NODE_HEIGHT("nodeHeight") {
-
-            Parameter parameter;
 
             @Override
             Parameter getParameter(GMRFMultilocusSkyrideLikelihood likelihood) {
-                if (parameter == null) {
-                    TreeModel treeModel = (TreeModel) likelihood.getTree(0);
-                    parameter = new NodeHeightProxyParameter("allInternalNode", treeModel, true);
-//                    DefaultTreeModel treeModel = (DefaultTreeModel) likelihood.getTree(0);
-//                    parameter = treeModel.createNodeHeightsParameter(true, true, false);
+                List<Tree> trees = getDistinctTrees(likelihood);
+                if (trees.size() == 1) {
+                    return new NodeHeightProxyParameter("allInternalNode", (TreeModel) trees.get(0), true);
+                }
+                CompoundParameter parameter = new CompoundParameter("allInternalNode");
+                for (Tree tree : trees) {
+                    parameter.addParameter(new NodeHeightProxyParameter("allInternalNode." + tree.getId(),
+                            (TreeModel) tree, true));
                 }
                 return parameter;
             }
@@ -265,7 +269,11 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
 
             @Override
             double[] getDiagonalHessianLogDensity(GMRFMultilocusSkyrideLikelihood likelihood) {
-                return new double[likelihood.getTree(0).getInternalNodeCount()];
+                int dimension = 0;
+                for (Tree tree : getDistinctTrees(likelihood)) {
+                    dimension += tree.getInternalNodeCount();
+                }
+                return new double[dimension];
             }
 
             @Override
@@ -274,28 +282,56 @@ public class GMRFGradient implements GradientWrtParameterProvider, HessianWrtPar
             }
 
             public void getWarning(GMRFMultilocusSkyrideLikelihood likelihood) throws XMLParseException {
-                if (likelihood.nLoci() > 1) {
-                    throw new XMLParseException("Not yet implemented for multiple loci.");
+            }
+
+            private List<Tree> getDistinctTrees(GMRFMultilocusSkyrideLikelihood likelihood) {
+                List<Tree> trees = new ArrayList<Tree>();
+                for (int locus = 0; locus < likelihood.nLoci(); locus++) {
+                    if (!trees.contains(likelihood.getTree(locus))) {
+                        trees.add(likelihood.getTree(locus));
+                    }
                 }
+                return trees;
             }
 
             private double[] getGradientWrtNodeHeights(GMRFMultilocusSkyrideLikelihood likelihood) {
 
                 likelihood.getLogLikelihood();
 
-                Tree tree = likelihood.getTree(0);
+                List<Tree> trees = getDistinctTrees(likelihood);
+                int[] offsets = new int[trees.size()];
+                int dimension = 0;
+                for (int t = 0; t < trees.size(); t++) {
+                    offsets[t] = dimension;
+                    dimension += trees.get(t).getInternalNodeCount();
+                }
+
+                double[] gradient = new double[dimension];
+                for (int locus = 0; locus < likelihood.nLoci(); locus++) {
+                    final int offset = offsets[trees.indexOf(likelihood.getTree(locus))];
+                    double[] locusGradient = getGradientWrtNodeHeights(likelihood, locus);
+                    for (int i = 0; i < locusGradient.length; i++) {
+                        gradient[offset + i] += locusGradient[i];
+                    }
+                }
+                return gradient;
+            }
+
+            private double[] getGradientWrtNodeHeights(GMRFMultilocusSkyrideLikelihood likelihood, int locus) {
+
+                Tree tree = likelihood.getTree(locus);
 
                 double[] gradient = new double[tree.getInternalNodeCount()];
                 double[] currentGamma = likelihood.getPopSizeParameter().getParameterValues();
 
-                double ploidyFactor = 1 / likelihood.getPopulationFactor(0);
+                double ploidyFactor = 1 / likelihood.getPopulationFactor(locus);
 
-                final TreeIntervals intervals = likelihood.getTreeIntervals(0);
+                final TreeIntervals intervals = likelihood.getTreeIntervals(locus);
 
                 int[] intervalIndices = new int[tree.getInternalNodeCount()];
                 int[] gridIndices = new int[tree.getInternalNodeCount()];
 
-                getGridIndexForInternalNodes(likelihood, 0, intervalIndices, gridIndices);
+                getGridIndexForInternalNodes(likelihood, locus, intervalIndices, gridIndices);
 
                 for (int i = 0; i < tree.getInternalNodeCount(); i++) {
                     NodeRef node = tree.getNode(i + tree.getExternalNodeCount());

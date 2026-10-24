@@ -76,9 +76,10 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
     }
 
     protected ProcessSimulationDelegate makeGradientDelegate(String traitName, Tree tree, BeagleDataLikelihoodDelegate likelihoodDelegate) {
+        // any clock: node heights only need the branch rates themselves, not their derivatives
         return new DiscreteTraitNodeHeightDelegate(traitName,
                 tree,
-                likelihoodDelegate, branchRateModel);
+                likelihoodDelegate, treeDataLikelihood.getBranchRateModel());
     }
     @Override
     public Parameter getParameter() {
@@ -87,7 +88,7 @@ public class NodeHeightGradientForDiscreteTrait extends DiscreteTraitBranchRateG
 
     protected double getChainGradient(Tree tree, NodeRef node) {
 //        throw new RuntimeException("This should not be called anymore.");
-        return branchRateModel.getBranchRate(tree, node);
+        return treeDataLikelihood.getBranchRateModel().getBranchRate(tree, node);
     }
 
     @Override

@@ -29,9 +29,9 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import beagle.Beagle;
+import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 
 import java.util.Arrays;
@@ -46,12 +46,12 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
     static final String HESSIAN_TRAIT_NAME = "NodeHeightHessian";
 
-    private final DifferentiableBranchRates branchRates;
+    private final BranchRates branchRates;
 
     DiscreteTraitNodeHeightDelegate(String name,
                                     Tree tree,
                                     BeagleDataLikelihoodDelegate likelihoodDelegate,
-                                    DifferentiableBranchRates branchRates) {
+                                    BranchRates branchRates) {
         super(name, tree, likelihoodDelegate, branchRates);
         this.branchRates = branchRates;
     }

@@ -245,4 +245,96 @@ public class HierarchicalSubstitutionModelTest extends TestCase {
         for (int x = 0; x < S; x++)
             assertEquals(prZ0[x], bundle[block + n + x], 1e-6);
     }
+
+    public void testSharedFrequencyModel() throws Exception {
+        Tree imported = new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null);
+        TreeModel tree = new DefaultTreeModel("characterTree", imported);
+        double[] pi = {0.1, 0.2, 0.3, 0.4};
+        FrequencyModel shared = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(pi));
+        FrequencyModel other = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(pi));
+        HierarchicalSubstitutionModel.HierarchicalRateProvider normalised =
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(
+                        new Parameter.Default(new double[]{1.0, 2.0, 3.0}), tree, shared, true);
+        try {
+            new HierarchicalSubstitutionModel("hierarchical", normalised, other);
+            fail("a provider with another FrequencyModel must be refused");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("share one FrequencyModel"));
+        }
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical", normalised);
+        assertSame(normalised, model.getRateProvider());
+
+        HierarchicalSubstitutionModel.HierarchicalRateProvider plain =
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(
+                        new Parameter.Default(new double[]{1.0, 2.0, 3.0}), tree);
+        assertNull(plain.getFrequencyModel());
+        assertSame(plain, new HierarchicalSubstitutionModel("hierarchical", plain, other).getRateProvider());
+        try {
+            new HierarchicalSubstitutionModel("hierarchical", plain);
+            fail("a provider without a FrequencyModel needs the three-argument constructor");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("has no FrequencyModel"));
+        }
+    }
+
+    public void testDefaultRatesParameter() throws Exception {
+        Tree imported = new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null);
+        TreeModel tree = new DefaultTreeModel("characterTree", imported);
+        try {
+            new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(2, 1.0), tree);
+            fail("wrong dimension must be refused");
+        } catch (IllegalArgumentException e) {
+            assertEquals("ratesParameter has dimension 2 but the character tree has 3 internal nodes", e.getMessage());
+        }
+        Parameter rates = new Parameter.Default(3, 1.0);
+        new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, tree);
+        for (int i = 0; i < 3; i++) {
+            assertEquals(0.0, rates.getBounds().getLowerLimit(i));
+            assertEquals(Double.POSITIVE_INFINITY, rates.getBounds().getUpperLimit(i));
+        }
+        try {
+            new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(3, 1.0), tree, null, true);
+            fail("normalised rates need a FrequencyModel");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("FrequencyModel"));
+        }
+    }
+
+    public void testNormalisedRates() throws Exception {
+        double[] pi = {0.1, 0.2, 0.3, 0.4};
+        for (String newick : new String[]{"((A:1,G:1):1,(C:1,T:1):1);", "((T:1,C:1):1,(G:1,A:1):1);",
+                "(((A:1,C:1):1,G:1):1,T:1);"}) {
+            Built raw = build(newick, agct(1.3, 0.7, 2.1), pi);
+            Parameter frequencies = new Parameter.Default(pi);
+            FrequencyModel frequencyModel = new FrequencyModel(Nucleotides.INSTANCE, frequencies);
+            Parameter scaled = new Parameter.Default(raw.rates.getDimension());
+            for (int i = 0; i < scaled.getDimension(); i++)
+                scaled.setParameterValue(i, 3.7 * raw.rates.getParameterValue(i));
+            HierarchicalSubstitutionModel.HierarchicalRateProvider.Default provider =
+                    new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(scaled, raw.tree, frequencyModel, true);
+            HierarchicalSubstitutionModel normalised = new HierarchicalSubstitutionModel("normalised", provider);
+
+            double[] qRaw = new double[S * S], q = new double[S * S];
+            raw.model.getInfinitesimalMatrix(qRaw);
+            normalised.getInfinitesimalMatrix(q);
+            double muRaw = 0.0, mu = 0.0;
+            for (int i = 0; i < S; i++) {
+                muRaw -= pi[i] * qRaw[i * S + i];
+                mu -= pi[i] * q[i * S + i];
+            }
+            assertEquals(newick, 1.0, mu, 1e-14);
+            assertEquals(newick, 3.7 * muRaw, provider.getNormalization(), 1e-13);
+            for (int i = 0; i < S * S; i++)
+                assertEquals(newick, qRaw[i] / muRaw, q[i], 1e-14);
+
+            scaled.setParameterValue(0, 2.0 * scaled.getParameterValue(0));
+            frequencies.setParameterValue(0, 0.15);
+            frequencies.setParameterValue(3, 0.35);
+            normalised.getInfinitesimalMatrix(q);
+            mu = 0.0;
+            for (int i = 0; i < S; i++)
+                mu -= frequencyModel.getFrequency(i) * q[i * S + i];
+            assertEquals(newick + " after changes", 1.0, mu, 1e-14);
+        }
+    }
 }

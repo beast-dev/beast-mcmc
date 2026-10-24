@@ -91,6 +91,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     public HierarchicalSubstitutionModel(String name, HierarchicalRateProvider hierarchicalRateProvider,
                                          FrequencyModel frequency) {
         super(name);
+        if (hierarchicalRateProvider.getFrequencyModel() != null && hierarchicalRateProvider.getFrequencyModel() != frequency) {
+            throw new IllegalArgumentException("The rate provider and the substitution model must share one FrequencyModel");
+        }
         this.hierarchicalRates = hierarchicalRateProvider;
         this.tree = hierarchicalRateProvider.getTreeModel();
         this.frequency = frequency;
@@ -155,6 +158,23 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         addModel(tree);
         hierarchicalRates.addToModelListener(this);
         addModel(frequency);
+    }
+
+    public HierarchicalSubstitutionModel(String name, HierarchicalRateProvider hierarchicalRateProvider) {
+        this(name, hierarchicalRateProvider, frequencyOf(hierarchicalRateProvider));
+    }
+
+    private static FrequencyModel frequencyOf(HierarchicalRateProvider hierarchicalRateProvider) {
+        FrequencyModel frequency = hierarchicalRateProvider.getFrequencyModel();
+        if (frequency == null) {
+            throw new IllegalArgumentException("rate provider " + hierarchicalRateProvider
+                    + " has no FrequencyModel; use the three-argument constructor");
+        }
+        return frequency;
+    }
+
+    public HierarchicalRateProvider getRateProvider() {
+        return hierarchicalRates;
     }
 
     private void computePi() {
@@ -509,31 +529,127 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         TreeModel getTreeModel();
         void addToModelListener(AbstractModel listener);
 
+        default FrequencyModel getFrequencyModel() {
+            return null;
+        }
+
         class Default implements HierarchicalRateProvider {
 
             private final TreeParameterModel hierarchicalPoissonRates;
             private final TreeModel tree;
+            private final Parameter rateParameter;
+            private final FrequencyModel frequency;
+            private final boolean normalised;
+            private final int[][] cladeStates;
+            private final double[] lastRates;
+            private final double[] lastFrequencies;
+            private double normalization = Double.NaN;
 
             public Default(Parameter rateParameter, TreeModel treeModel) {
+                this(rateParameter, treeModel, null, false);
+            }
+
+            public Default(Parameter rateParameter, TreeModel treeModel, FrequencyModel frequency, boolean normalised) {
                 if (rateParameter.getDimension() != treeModel.getInternalNodeCount()) {
-                    throw new RuntimeException("Incorrect parameter dimension");
+                    throw new IllegalArgumentException("ratesParameter has dimension " + rateParameter.getDimension()
+                            + " but the character tree has " + treeModel.getInternalNodeCount() + " internal nodes");
                 }
+                if (normalised && frequency == null) {
+                    throw new IllegalArgumentException("a normalised ratesParameter needs the FrequencyModel");
+                }
+                rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+                        rateParameter.getDimension()));
                 this.hierarchicalPoissonRates = new TreeParameterModel(treeModel,
                         new CompoundParameter("Default.Poisson.rates", new Parameter[]{
                                 new Parameter.Default(treeModel.getExternalNodeCount(), 1.0),
                                 rateParameter}), true);
                 this.tree = treeModel;
+                this.rateParameter = rateParameter;
+                this.frequency = frequency;
+                this.normalised = normalised;
+                if (normalised) {
+                    final int tips = treeModel.getExternalNodeCount();
+                    final DataType dataType = frequency.getDataType();
+                    this.cladeStates = new int[treeModel.getInternalNodeCount()][];
+                    for (int i = 0; i < cladeStates.length; i++) {
+                        List<Integer> states = new ArrayList<>();
+                        collectStates(treeModel, treeModel.getNode(tips + i), dataType, states);
+                        cladeStates[i] = new int[states.size()];
+                        for (int k = 0; k < states.size(); k++) {
+                            cladeStates[i][k] = states.get(k);
+                        }
+                    }
+                    this.lastRates = new double[rateParameter.getDimension()];
+                    this.lastFrequencies = new double[dataType.getStateCount()];
+                } else {
+                    this.cladeStates = null;
+                    this.lastRates = null;
+                    this.lastFrequencies = null;
+                }
+            }
 
+            private static void collectStates(TreeModel tree, NodeRef node, DataType dataType, List<Integer> states) {
+                if (tree.isExternal(node)) {
+                    states.add(dataType.getState(tree.getTaxonId(node.getNumber())));
+                } else {
+                    for (int i = 0; i < tree.getChildCount(node); i++) {
+                        collectStates(tree, tree.getChild(node, i), dataType, states);
+                    }
+                }
+            }
+
+            public boolean isNormalised() {
+                return normalised;
+            }
+
+            public double getNormalization() {
+                if (!normalised) {
+                    return 1.0;
+                }
+                boolean changed = Double.isNaN(normalization);
+                for (int i = 0; i < lastRates.length; i++) {
+                    final double rate = rateParameter.getParameterValue(i);
+                    if (rate != lastRates[i]) {
+                        lastRates[i] = rate;
+                        changed = true;
+                    }
+                }
+                for (int i = 0; i < lastFrequencies.length; i++) {
+                    final double f = frequency.getFrequency(i);
+                    if (f != lastFrequencies[i]) {
+                        lastFrequencies[i] = f;
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    double mu = 0.0;
+                    for (int i = 0; i < cladeStates.length; i++) {
+                        double piClade = 0.0, sumSquares = 0.0;
+                        for (int state : cladeStates[i]) {
+                            piClade += lastFrequencies[state];
+                            sumSquares += lastFrequencies[state] * lastFrequencies[state];
+                        }
+                        mu += lastRates[i] * (piClade - sumSquares / piClade);
+                    }
+                    normalization = mu;
+                }
+                return normalization;
             }
 
             @Override
             public double getRate(TreeModel tree, int node) {
-                return hierarchicalPoissonRates.getNodeValue(tree, tree.getNode(node));
+                final double rate = hierarchicalPoissonRates.getNodeValue(tree, tree.getNode(node));
+                return normalised ? rate / getNormalization() : rate;
             }
 
             @Override
             public TreeModel getTreeModel() {
                 return tree;
+            }
+
+            @Override
+            public FrequencyModel getFrequencyModel() {
+                return frequency;
             }
 
             @Override

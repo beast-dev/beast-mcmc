@@ -46,17 +46,29 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     public static final String HIERARCHICAL_SUBSTITUTION_MODEL = "hierarchicalSubstitutionModel";
     public static final String CHARACTER_TREE = "characterTree";
     public static final String RATES_PARAMETER = "ratesParameter";
+    public static final String NORMALISED = "normalised";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FrequencyModelParser.FREQUENCIES);
         TreeModel tree = (TreeModel) xo.getElementFirstChild(CHARACTER_TREE);
 
-        HierarchicalSubstitutionModel.HierarchicalRateProvider hierarchicalRateProvider = xo.hasChildNamed(RATES_PARAMETER) ?
-                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default((Parameter) xo.getElementFirstChild(RATES_PARAMETER), tree)
-                : new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(tree.getInternalNodeCount(), 1.0), tree);
-
-        return new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL, hierarchicalRateProvider, freqModel);
+        try {
+            HierarchicalSubstitutionModel.HierarchicalRateProvider hierarchicalRateProvider;
+            if (xo.hasChildNamed(RATES_PARAMETER)) {
+                XMLObject cxo = xo.getChild(RATES_PARAMETER);
+                boolean normalised = cxo.getAttribute(NORMALISED, false);
+                hierarchicalRateProvider = new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(
+                        (Parameter) cxo.getChild(Parameter.class), tree, normalised ? freqModel : null, normalised);
+            } else {
+                hierarchicalRateProvider = new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(
+                        new Parameter.Default(tree.getInternalNodeCount(), 1.0), tree);
+            }
+            return new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL, hierarchicalRateProvider, freqModel);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(!xo.hasId() ? e.getMessage()
+                    : "hierarchicalSubstitutionModel '" + xo.getId() + "': " + e.getMessage());
+        }
     }
 
     @Override
@@ -70,7 +82,9 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             new ElementRule(CHARACTER_TREE,
                     new XMLSyntaxRule[]{new ElementRule(TreeModel.class)}),
             new ElementRule(RATES_PARAMETER,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true)
+                    new XMLSyntaxRule[]{
+                            AttributeRule.newBooleanRule(NORMALISED, true),
+                            new ElementRule(Parameter.class)}, true)
     };
 
     @Override

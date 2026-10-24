@@ -47,8 +47,13 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
 
+        if (likelihood.getSpeciationModel() instanceof BirthDeathSerialSamplingModel) {
+            throw new XMLParseException("Gradients for the birth-death serial-sampling model (BDSS, " +
+                    likelihood.getSpeciationModel().getId() + ") are not yet implemented");
+        }
         if (! ((likelihood.getSpeciationModel() instanceof BirthDeathGernhard08Model) || (likelihood.getSpeciationModel() instanceof NewBirthDeathSerialSamplingModel) || (likelihood.getSpeciationModel() instanceof BirthDeathEpisodicSeriallySampledModel)) ) {
-            throw new RuntimeException("Not yet implemented for other cases.");
+            throw new XMLParseException("Gradients are not yet implemented for the speciation model " +
+                    likelihood.getSpeciationModel().getClass().getSimpleName());
         }
 
         if (likelihood.hasCalibration()) {

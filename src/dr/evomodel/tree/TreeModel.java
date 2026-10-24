@@ -53,6 +53,42 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
      */
     private Type units = Type.SUBSTITUTIONS;
 
+    // tip heights handed out as parameters (tip-date sampling); weakly held so trees can be collected
+    private static final Set<dr.inference.model.Parameter> SAMPLED_TIP_HEIGHTS =
+            Collections.newSetFromMap(new WeakHashMap<dr.inference.model.Parameter, Boolean>());
+
+    public static final String TIP_DATE_GRADIENT_NOT_IMPLEMENTED =
+            "Gradients with respect to sampled tip dates are not yet implemented";
+
+    static void registerSampledTipHeight(dr.inference.model.Parameter parameter) {
+        synchronized (SAMPLED_TIP_HEIGHTS) {
+            SAMPLED_TIP_HEIGHTS.add(parameter);
+        }
+    }
+
+    /**
+     * @return true if the parameter is, or contains (as a compound parameter), a sampled tip height
+     */
+    public static boolean containsSampledTipHeight(dr.inference.model.Parameter parameter) {
+        if (parameter == null) {
+            return false;
+        }
+        synchronized (SAMPLED_TIP_HEIGHTS) {
+            if (SAMPLED_TIP_HEIGHTS.contains(parameter)) {
+                return true;
+            }
+        }
+        if (parameter instanceof dr.inference.model.CompoundParameter) {
+            dr.inference.model.CompoundParameter compound = (dr.inference.model.CompoundParameter) parameter;
+            for (int i = 0; i < compound.getParameterCount(); i++) {
+                if (containsSampledTipHeight(compound.getParameter(i))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public TreeModel(String name, boolean isVariable) {
         super(name);
         this.isVariable = isVariable;

@@ -27,9 +27,11 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.NumericGradientStepSizeProvider;
+import dr.inference.hmc.NumericalGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.util.Transform;
@@ -70,6 +72,11 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             XMLObject cxo = xo.getChild(DENSITY);
             parameter = (Parameter) cxo.getChild(Parameter.class);
             likelihood = (Likelihood) cxo.getChild(Likelihood.class);
+        }
+
+        if (gradient != null && !(gradient instanceof NumericalGradient)
+                && TreeModel.containsSampledTipHeight(parameter)) {
+            throw new XMLParseException(TreeModel.TIP_DATE_GRADIENT_NOT_IMPLEMENTED);
         }
 
         Transform transform = (Transform) xo.getChild(Transform.class);

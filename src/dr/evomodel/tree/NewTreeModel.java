@@ -1004,6 +1004,7 @@ public class NewTreeModel extends AbstractModel implements MutableTree, Citable 
         }
 
         isTipDateSampled = true;
+        TreeModel.registerSampledTipHeight(nodes[node.getNumber()].heightParameter);
 
         return nodes[node.getNumber()].heightParameter;
     }

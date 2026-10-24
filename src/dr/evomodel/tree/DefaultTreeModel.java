@@ -778,6 +778,7 @@ public class DefaultTreeModel extends TreeModel {
         }
 
         setTipDateSampled(true);
+        registerSampledTipHeight(nodes[node.getNumber()].heightParameter);
 
         return nodes[node.getNumber()].heightParameter;
     }

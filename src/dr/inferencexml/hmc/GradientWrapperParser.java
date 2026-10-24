@@ -28,6 +28,7 @@
 package dr.inferencexml.hmc;
 
 import dr.evomodel.tree.TMRCAStatistic;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -51,6 +52,15 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        Object gradient = parseGradient(xo);
+        if (gradient instanceof GradientWrtParameterProvider
+                && TreeModel.containsSampledTipHeight(((GradientWrtParameterProvider) gradient).getParameter())) {
+            throw new XMLParseException(TreeModel.TIP_DATE_GRADIENT_NOT_IMPLEMENTED);
+        }
+        return gradient;
+    }
+
+    private Object parseGradient(XMLObject xo) throws XMLParseException {
 
         Object obj = xo.getChild(0);
 

@@ -54,11 +54,15 @@ public class CoalescentGradientParser extends AbstractXMLObjectParser {
         CoalescentLikelihood likelihood = (CoalescentLikelihood) xo.getChild(CoalescentLikelihood.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 
-        if (xo.hasChildNamed(WRT)) {
-            Parameter wrtParameter = (Parameter) xo.getElementFirstChild(WRT);
-            return new CoalescentGradient(likelihood, tree, wrtParameter, Wrt.PARAMETER, tolerance);
-        } else {
-            return new CoalescentGradient(likelihood, tree, null, Wrt.NODE_HEIGHTS, tolerance);
+        try {
+            if (xo.hasChildNamed(WRT)) {
+                Parameter wrtParameter = (Parameter) xo.getElementFirstChild(WRT);
+                return new CoalescentGradient(likelihood, tree, wrtParameter, Wrt.PARAMETER, tolerance);
+            } else {
+                return new CoalescentGradient(likelihood, tree, null, Wrt.NODE_HEIGHTS, tolerance);
+            }
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
         }
     }
 

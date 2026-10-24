@@ -85,6 +85,67 @@ public class Expansion extends ExponentialGrowth {
         return Math.log(b + N1 * Math.exp(r * t)) / (r * N1);
     }
 
+    // N(t) = N1 + (N0 - N1) e^{-rt}; the exponential-growth overrides do not apply when N1 > 0
+    @Override
+    public double getIntensityGradient(double finishTime) {
+        return 1.0 / getDemographic(finishTime);
+    }
+
+    @Override
+    public double getIntensitySecondDerivative(double finishTime) {
+        final double demographic = getDemographic(finishTime);
+        return getGrowthRate() * decayingPart(finishTime) / (demographic * demographic);
+    }
+
+    @Override
+    public double getLogDemographicGradient(double finishTime) {
+        return -getGrowthRate() * decayingPart(finishTime) / getDemographic(finishTime);
+    }
+
+    @Override
+    public double getLogDemographicSecondDerivative(double finishTime) {
+        final double r = getGrowthRate();
+        final double demographic = getDemographic(finishTime);
+        return r * r * decayingPart(finishTime) * getN1() / (demographic * demographic);
+    }
+
+    // I(t) = log D / (r N1) with D = N0 - N1 + N1 e^{rt}
+    @Override
+    public double getIntensityArgumentGradient(int n, double t) {
+        checkArgument(n, 3);
+        final double N1 = getN1();
+        final double r = getGrowthRate();
+        final double ert = Math.exp(r * t);
+        final double D = getN0() - N1 + N1 * ert;
+        switch (n) {
+            case 0:
+                return 1.0 / (D * r * N1);
+            case 1:
+                return t * ert / (r * D) - Math.log(D) / (r * r * N1);
+            default:
+                return Math.expm1(r * t) / (D * r * N1) - Math.log(D) / (r * N1 * N1);
+        }
+    }
+
+    @Override
+    public double getLogDemographicArgumentGradient(int n, double t) {
+        checkArgument(n, 3);
+        final double r = getGrowthRate();
+        final double demographic = getDemographic(t);
+        switch (n) {
+            case 0:
+                return Math.exp(-r * t) / demographic;
+            case 1:
+                return -t * decayingPart(t) / demographic;
+            default:
+                return -Math.expm1(-r * t) / demographic;
+        }
+    }
+
+    private double decayingPart(double t) {
+        return (getN0() - getN1()) * Math.exp(-getGrowthRate() * t);
+    }
+
     public double getInverseIntensity(double x) {
 
         /* AER - I think this is right but until someone checks it...

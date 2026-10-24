@@ -38,7 +38,7 @@ import dr.inference.model.Parameter;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class ConstantPopulationModel extends DemographicModel {
+public class ConstantPopulationModel extends DemographicModel implements DifferentiableDemographicModel {
     //
     // Public stuff
     //
@@ -70,6 +70,19 @@ public class ConstantPopulationModel extends DemographicModel {
     public DemographicFunction getDemographicFunction() {
         constantPopulation.setN0(N0Parameter.getParameterValue(0));
         return constantPopulation;
+    }
+
+    @Override
+    public boolean isDifferentiableWrtParameter(Parameter parameter) {
+        return parameter == N0Parameter;
+    }
+
+    @Override
+    public double[] getArgumentDerivatives(Parameter parameter) {
+        if (!isDifferentiableWrtParameter(parameter)) {
+            throw new IllegalArgumentException("Not a parameter of " + getId() + ": " + parameter.getId());
+        }
+        return new double[]{1.0};
     }
 
     //

@@ -40,7 +40,7 @@ import dr.inference.model.Parameter;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ExponentialGrowthModel extends DemographicModel {
+public class ExponentialGrowthModel extends DemographicModel implements DifferentiableDemographicModel {
 
     //
     // Public stuff
@@ -93,6 +93,36 @@ public class ExponentialGrowthModel extends DemographicModel {
 
         return exponentialGrowth;
     }
+    @Override
+    public boolean isDifferentiableWrtParameter(Parameter parameter) {
+        return parameter == N0Parameter || parameter == growthRateParameter;
+    }
+
+    // arguments of ExponentialGrowth: N0, r
+    @Override
+    public double[] getArgumentDerivatives(Parameter parameter) {
+        if (!isDifferentiableWrtParameter(parameter)) {
+            throw new IllegalArgumentException("Not a parameter of " + getId() + ": " + parameter.getId());
+        }
+        double[] derivatives = new double[2];
+        if (parameter == N0Parameter) {
+            derivatives[0] += 1.0;
+        }
+        if (parameter == growthRateParameter) {
+            derivatives[1] += getGrowthRateDerivative();
+        }
+        return derivatives;
+    }
+
+    // d r / d parameter, where the parameter is either the growth rate or the doubling time ln 2 / r
+    private double getGrowthRateDerivative() {
+        if (usingGrowthRate) {
+            return 1.0;
+        }
+        final double doublingTime = growthRateParameter.getParameterValue(0);
+        return -Math.log(2) / (doublingTime * doublingTime);
+    }
+
     //
     // protected stuff
     //

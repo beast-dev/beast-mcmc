@@ -126,6 +126,21 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 
 	double getIntensitySecondDerivative(double finishTime);
 
+    /**
+     * @return the derivative of getIntensity(t) with respect to the n'th argument (see getArgument). Only
+     * differences of these values are meaningful, since getIntensity may carry an argument-dependent constant.
+     */
+    default double getIntensityArgumentGradient(int n, double t) {
+        throw new UnsupportedOperationException("Argument gradients are not implemented for " + getClass().getSimpleName());
+    }
+
+    /**
+     * @return the derivative of log N(t) with respect to the n'th argument (see getArgument)
+     */
+    default double getLogDemographicArgumentGradient(int n, double t) {
+        throw new UnsupportedOperationException("Argument gradients are not implemented for " + getClass().getSimpleName());
+    }
+
     public abstract class Abstract implements DemographicFunction
 	{
        // private static final double LARGE_POSITIVE_NUMBER = 1.0e50;

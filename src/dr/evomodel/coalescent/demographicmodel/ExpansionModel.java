@@ -44,7 +44,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ExpansionModel extends DemographicModel implements Citable {
+public class ExpansionModel extends DemographicModel implements Citable, DifferentiableDemographicModel {
 
     //
     // Public stuff
@@ -107,6 +107,43 @@ public class ExpansionModel extends DemographicModel implements Citable {
         expansion.setProportion(N1);
 
         return expansion;
+    }
+
+    @Override
+    public boolean isDifferentiableWrtParameter(Parameter parameter) {
+        return parameter == N0Parameter || parameter == N1Parameter || parameter == growthRateParameter;
+    }
+
+    // arguments of Expansion: N0, r, N1, with N1 = p N0 where N1Parameter holds the proportion p
+    @Override
+    public double[] getArgumentDerivatives(Parameter parameter) {
+        if (!isDifferentiableWrtParameter(parameter)) {
+            throw new IllegalArgumentException("Not a parameter of " + getId() + ": " + parameter.getId());
+        }
+        final double N0 = N0Parameter.getParameterValue(0);
+        final double proportion = N1Parameter.getParameterValue(0);
+
+        double[] derivatives = new double[3];
+        if (parameter == N0Parameter) {
+            derivatives[0] += 1.0;
+            derivatives[2] += proportion;
+        }
+        if (parameter == growthRateParameter) {
+            derivatives[1] += getGrowthRateDerivative();
+        }
+        if (parameter == N1Parameter) {
+            derivatives[2] += N0;
+        }
+        return derivatives;
+    }
+
+    // d r / d parameter, where the parameter is either the growth rate or the doubling time ln 2 / r
+    private double getGrowthRateDerivative() {
+        if (usingGrowthRate) {
+            return 1.0;
+        }
+        final double doublingTime = growthRateParameter.getParameterValue(0);
+        return -Math.log(2) / (doublingTime * doublingTime);
     }
 
     //

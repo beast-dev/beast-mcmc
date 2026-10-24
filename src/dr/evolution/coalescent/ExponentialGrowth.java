@@ -88,7 +88,8 @@ public class ExponentialGrowth extends ConstantPopulation {
         if (r == 0.0) {
             return (finish - start)/getN0();
         } else {
-            return (Math.exp(finish*r) - Math.exp(start*r))/getN0()/r;
+            // expm1 avoids cancellation when r is near zero
+            return Math.exp(start*r) * Math.expm1((finish - start)*r)/getN0()/r;
         }
     }
 
@@ -98,7 +99,7 @@ public class ExponentialGrowth extends ConstantPopulation {
         if (r == 0.0) {
             return t/getN0();
         } else {
-            return (Math.exp(t*r)-1.0)/getN0()/r;
+            return Math.expm1(t*r)/getN0()/r;
         }
     }
 
@@ -133,6 +134,27 @@ public class ExponentialGrowth extends ConstantPopulation {
 
     public double getLogDemographicSecondDerivative(double finishTime) {
         return 0;
+    }
+
+    @Override
+    public double getIntensityArgumentGradient(int n, double t) {
+        checkArgument(n, 2);
+        if (n == 0) {
+            return -getIntensity(t) / getN0();
+        }
+        // d/dr of (e^{rt} - 1) / (N0 r), by its Taylor series when rt is small to avoid cancellation
+        final double r = getGrowthRate();
+        final double rt = r * t;
+        if (Math.abs(rt) < 1E-4) {
+            return t * t * (0.5 + rt / 3.0 + rt * rt / 8.0) / getN0();
+        }
+        return (t * Math.exp(rt) / r - Math.expm1(rt) / (r * r)) / getN0();
+    }
+
+    @Override
+    public double getLogDemographicArgumentGradient(int n, double t) {
+        checkArgument(n, 2);
+        return n == 0 ? 1.0 / getN0() : -t;
     }
 
 

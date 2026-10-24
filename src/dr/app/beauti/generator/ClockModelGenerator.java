@@ -1090,6 +1090,9 @@ public class ClockModelGenerator extends Generator {
             case STRICT_CLOCK:
             case RANDOM_LOCAL_CLOCK:
                 writer.writeIDref(PARAMETER, prefix + "clock.rate");
+                if (model.usesHierarchicalExponentialClockRate()) {
+                    writer.writeIDref(PARAMETER, prefix + PartitionClockModel.CLOCK_RATE_EXP_MEAN);
+                }
                 break;
 
             case FIXED_LOCAL_CLOCK:

@@ -379,6 +379,12 @@ public class ParameterPriorGenerator extends Generator {
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
                 break;
+            case HIERARCHICAL_EXPONENTIAL_PRIOR:
+                // the exponential density is defined alongside the trait model because its mean is
+                // an estimated parameter; the prior on that mean is written from the mean parameter
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
+                        ((PartitionClockModel) parameter.getOptions()).getPrefix() + PartitionClockModel.CLOCK_RATE_EXP);
+                break;
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:
             case EXPONENTIAL_HPM_PRIOR:

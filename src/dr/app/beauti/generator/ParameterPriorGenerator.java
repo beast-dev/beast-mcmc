@@ -72,30 +72,30 @@ public class ParameterPriorGenerator extends Generator {
      * Cannot be done in constructor as the models have not been defined by the user at that point
      */
     public void addParametersToPrior() {
-        int totalModels = options.getPartitionClockModels().size();
-        List<PartitionClockModel> partitionClockModels = options.getPartitionClockModels();
+        // keyed by the parameter's full (prefixed) name, as looked up from parameter.getName()
         //HMC skygrid
-        mapParameterToPrior.put(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
-        //HMC relaxed clock
-        for (int i = 0; i < totalModels; i++) {
-            String prefix = partitionClockModels.get(i).getPrefix();
-            mapParameterToPrior.put(ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
-            mapParameterToPrior.put(ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
-            mapParameterToPrior.put(ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+        for (PartitionTreePrior treePrior : options.getPartitionTreePriors()) {
+            String prefix = treePrior.getPrefix();
+            mapParameterToPrior.put(prefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION,
+                    prefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
         }
-        //mixed effects clock
-        //always write distribution likelihoods for rate, scale and intercept
-        for (int i = 0; i < totalModels; i++) {
-            String prefix = partitionClockModels.get(i).getPrefix();
-            mapParameterToPrior.put(ClockType.ME_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
-            mapParameterToPrior.put(ClockType.ME_CLOCK_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
-            mapParameterToPrior.put(BranchSpecificFixedEffectsParser.INTERCEPT, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+        for (PartitionClockModel clockModel : options.getPartitionClockModels()) {
+            String prefix = clockModel.getPrefix();
+            //HMC relaxed clock
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            //mixed effects clock
+            //always write distribution likelihoods for rate, scale and intercept
+            mapParameterToPrior.put(prefix + ClockType.ME_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.ME_CLOCK_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            mapParameterToPrior.put(prefix + BranchSpecificFixedEffectsParser.INTERCEPT, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
             //check for coefficients
             String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
             int number = 1;
             String concat = coeff + number;
-            while (partitionClockModels.get(i).hasParameter(concat)) {
-                mapParameterToPrior.put(concat, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+            while (clockModel.hasParameter(concat)) {
+                mapParameterToPrior.put(prefix + concat, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
                 number++;
                 concat = coeff + number;
             }

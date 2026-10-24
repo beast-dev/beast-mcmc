@@ -27,88 +27,35 @@
 
 package test.dr.app.beauti;
 
-import dr.app.beast.BeastParser;
-import dr.app.beast.BeastVersion;
-import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
-import dr.app.beauti.components.continuous.ContinuousComponentFactory;
-import dr.app.beauti.components.discrete.DiscreteTraitsComponentFactory;
-import dr.app.beauti.components.dollo.DolloComponentFactory;
-import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
-import dr.app.beauti.components.linkedparameters.LinkedParameterComponentFactory;
-import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory;
-import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
-import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.util.BEAUTiImporter;
 import dr.evolution.util.Taxa;
-import dr.xml.XMLObject;
 import junit.framework.TestCase;
-
-import java.io.File;
-import java.io.FileReader;
-import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * The mixed-effects clock XML that BEAUti writes must parse (plan 3, E7): one fixed effect and one category per
- * monophyletic taxon set, consecutively numbered, and every id prefixed so that several clock models can coexist.
+ * monophyletic taxon set, consecutively numbered, every id prefixed so that several clock models can coexist, and
+ * each clock's priors in the prior block.
  */
 public class MixedEffectsClockGeneratorTest extends TestCase {
-
-    private static final String DATA = "examples/Data/Primates_two_partition.nex";
 
     public MixedEffectsClockGeneratorTest(String name) {
         super(name);
     }
 
     public void testOneClockWithNonMonophyleticTaxonSet() throws Exception {
-        checkGeneratedXmlParses(false);
+        check(false);
     }
 
     public void testTwoUnlinkedClocks() throws Exception {
-        checkGeneratedXmlParses(true);
+        check(true);
     }
 
-    private void checkGeneratedXmlParses(boolean unlinkClocks) throws Exception {
-        File data = new File(DATA);
-        if (!data.exists()) {
-            System.err.println("Skipping: " + DATA + " not found from " + new File(".").getAbsolutePath());
+    private void check(boolean unlinkClocks) throws Exception {
+        BeautiOptions options = BeautiGeneratorHarness.importData(BeautiGeneratorHarness.TWO_PARTITIONS);
+        if (options == null) {
             return;
-        }
-
-        ComponentFactory[] components = {
-                AncestralStatesComponentFactory.INSTANCE,
-                ContinuousComponentFactory.INSTANCE,
-                DiscreteTraitsComponentFactory.INSTANCE,
-                DolloComponentFactory.INSTANCE,
-                LinkedParameterComponentFactory.INSTANCE,
-                HierarchicalModelComponentFactory.INSTANCE,
-                MarginalLikelihoodEstimationComponentFactory.INSTANCE,
-                SequenceErrorModelComponentFactory.INSTANCE,
-                TipDateSamplingComponentFactory.INSTANCE
-        };
-        BeautiOptions options = new BeautiOptions(components);
-        new BEAUTiImporter(null, options).importFromFile(data);
-
-        File xml = File.createTempFile("mixedEffectsClock", ".xml");
-        xml.deleteOnExit();
-        options.fileNameStem = xml.getName().replace(".xml", "");
-        options.logFileName = options.fileNameStem + ".log";
-        options.chainLength = 10;
-        options.logEvery = 10;
-        options.echoEvery = 10;
-        options.treeFileName.clear();
-        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            options.treeFileName.add(options.fileNameStem + "." + tree.getPrefix() + "trees");
         }
 
         // a non-monophyletic set first, so the numbering of the monophyletic ones is exercised
@@ -127,44 +74,23 @@ public class MixedEffectsClockGeneratorTest extends TestCase {
         }
 
         if (unlinkClocks) {
-            for (AbstractPartitionData partition : options.dataPartitions) {
-                PartitionClockModel clockModel = partition.getPartitionClockModel();
-                if (!clockModel.getName().equals(partition.getName())) {
-                    clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
-                    partition.setPartitionClockModel(clockModel);
-                }
-                clockModel.setPartitionTreeModel(partition.getPartitionTreeModel());
-            }
+            BeautiGeneratorHarness.unlinkClockModels(options);
             assertEquals(2, options.getPartitionClockModels().size());
         }
         for (PartitionClockModel clock : options.getPartitionClockModels()) {
             clock.setClockType(ClockType.MIXED_EFFECTS_CLOCK);
         }
-        options.selectParameters();
-        options.selectOperators();
-        new BeastGenerator(options, components).generateXML(xml);
 
-        String text = new String(Files.readAllBytes(xml.toPath()));
-        assertNoDanglingIdrefs(text);
-        assertTrue(text.contains("usePreOrder=\"true\""));
-
-        // parsing builds the fixed-effects model, which checks the coefficient dimension
-        BeastParser parser = new BeastParser(new String[]{}, null, false, false, false, new BeastVersion());
-        parser.parse(new FileReader(xml), XMLObject.class);
-    }
-
-    private static void assertNoDanglingIdrefs(String xml) {
-        Map<String, Integer> ids = new HashMap<>();
-        Matcher id = Pattern.compile("\\sid=\"([^\"]+)\"").matcher(xml);
-        while (id.find()) {
-            ids.merge(id.group(1), 1, Integer::sum);
-        }
-        for (Map.Entry<String, Integer> entry : ids.entrySet()) {
-            assertEquals("duplicate id " + entry.getKey(), 1, (int) entry.getValue());
-        }
-        Matcher idref = Pattern.compile("idref=\"([^\"]+)\"").matcher(xml);
-        while (idref.find()) {
-            assertTrue("dangling idref " + idref.group(1), ids.containsKey(idref.group(1)));
+        String xml = BeautiGeneratorHarness.generateAndParse(options);
+        assertTrue(xml.contains("usePreOrder=\"true\""));
+        for (PartitionClockModel clock : options.getPartitionClockModels()) {
+            String prefix = clock.getPrefix();
+            // the rate prior is left out when BEAUti fixes the rate (no tip dates in this data set)
+            for (String prior : new String[]{"scalePrior", "interceptPrior",
+                    "fixedEffectsLikelihood1", "fixedEffectsLikelihood2"}) {
+                assertTrue("prior block refers to " + prefix + prior,
+                        xml.contains("idref=\"" + prefix + prior + "\""));
+            }
         }
     }
 }

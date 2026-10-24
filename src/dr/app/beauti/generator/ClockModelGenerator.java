@@ -305,10 +305,10 @@ public class ClockModelGenerator extends Generator {
                 boolean generateScaleGradient = false;
 
                 for (Operator operator : options.selectOperators()) {
-                    if (operator.getName().equals(ClockType.HMC_CLOCK_RATES_DESCRIPTION) && operator.isUsed()) {
+                    if (operator.getName().equals(prefix + ClockType.HMC_CLOCK_RATES_DESCRIPTION) && operator.isUsed()) {
                         generateRatesGradient = true;
                     }
-                    if (operator.getName().equals(ClockType.HMC_CLOCK_LOCATION_SCALE_DESCRIPTION) && operator.isUsed()) {
+                    if (operator.getName().equals(prefix + ClockType.HMC_CLOCK_LOCATION_SCALE_DESCRIPTION) && operator.isUsed()) {
                         generateScaleGradient = true;
                     }
                 }

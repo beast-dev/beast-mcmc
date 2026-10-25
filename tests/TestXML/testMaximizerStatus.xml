@@ -1,0 +1,83 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- maximizeWrtParameter's stop reasons, budgets and gradient check, with analytic and numerical gradients.       -->
+<!-- The objective is a product of Gamma(3, 0.5) densities, whose mode is 1.0 in every coordinate. Runs with the  -->
+<!-- The report has no side effects, so each assertion can call it again.                                       -->
+<beast>
+  <parameter id="x.analytic" value="0.4 2.2" lower="0.0"/>
+  <gammaPrior shape="3.0" scale="0.5" id="prior.analytic">
+    <parameter idref="x.analytic"/>
+  </gammaPrior>
+  <multivariateCompoundTransform id="transform.analytic">
+    <transform type="log" dim="2"/>
+  </multivariateCompoundTransform>
+
+  <maximizeWrtParameter id="maximizer.analytic" nIterations="100" maxEvaluations="1000" maxSeconds="60"
+                        checkGradientEvery="1" epsilon="1E-8" past="0" delta="1E-10">
+    <gradient>
+      <gammaPrior idref="prior.analytic"/>
+      <parameter idref="x.analytic"/>
+    </gradient>
+    <multivariateCompoundTransform idref="transform.analytic"/>
+  </maximizeWrtParameter>
+
+  <assertEqual verbose="true">
+    <message>analytic: stop reason</message>
+    <actual regex="Reason: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.analytic"/></report></actual>
+    <expected>converged</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-6" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+    <message>analytic: the mode</message>
+    <actual regex="Untransformed X: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.analytic"/></report></actual>
+    <expected>1.0 1.0</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-5" toleranceType="absolute" verbose="true">
+    <message>analytic: the gradient agrees with finite differences along the path</message>
+    <actual regex="WorstGradientCheckError: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.analytic"/></report></actual>
+    <expected>0.0</expected>
+  </assertEqual>
+
+  <parameter id="x.numerical" value="0.4 2.2" lower="0.0"/>
+  <gammaPrior shape="3.0" scale="0.5" id="prior.numerical">
+    <parameter idref="x.numerical"/>
+  </gammaPrior>
+  <multivariateCompoundTransform id="transform.numerical">
+    <transform type="log" dim="2"/>
+  </multivariateCompoundTransform>
+
+  <maximizeWrtParameter id="maximizer.numerical" nIterations="100" numericStepSize="small">
+    <numericalGradient>
+      <gammaPrior idref="prior.numerical"/>
+      <parameter idref="x.numerical"/>
+    </numericalGradient>
+    <multivariateCompoundTransform idref="transform.numerical"/>
+  </maximizeWrtParameter>
+
+  <assertEqual tolerance="1E-4" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+    <message>numerical: the mode</message>
+    <actual regex="Untransformed X: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.numerical"/></report></actual>
+    <expected>1.0 1.0</expected>
+  </assertEqual>
+
+  <!-- a budget of 3 evaluations stops the run early -->
+  <parameter id="x.budget" value="0.01 20.0" lower="0.0"/>
+  <gammaPrior shape="3.0" scale="0.5" id="prior.budget">
+    <parameter idref="x.budget"/>
+  </gammaPrior>
+  <multivariateCompoundTransform id="transform.budget">
+    <transform type="log" dim="2"/>
+  </multivariateCompoundTransform>
+
+  <maximizeWrtParameter id="maximizer.budget" nIterations="100" maxEvaluations="3">
+    <gradient>
+      <gammaPrior idref="prior.budget"/>
+      <parameter idref="x.budget"/>
+    </gradient>
+    <multivariateCompoundTransform idref="transform.budget"/>
+  </maximizeWrtParameter>
+
+  <assertEqual verbose="true">
+    <message>budget: stop reason</message>
+    <actual regex="Reason: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.budget"/></report></actual>
+    <expected>maxEvaluations</expected>
+  </assertEqual>
+</beast>

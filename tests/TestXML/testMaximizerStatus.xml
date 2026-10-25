@@ -11,7 +11,7 @@
     <transform type="log" dim="2"/>
   </multivariateCompoundTransform>
 
-  <maximizeWrtParameter id="maximizer.analytic" nIterations="100" maxEvaluations="1000" maxSeconds="60"
+  <maximizeWrtParameter id="maximizer.analytic" nIterations="100" maxEvaluations="1000" maxRunTime="1min"
                         checkGradientEvery="1" epsilon="1E-8" past="0" delta="1E-10">
     <gradient>
       <gammaPrior idref="prior.analytic"/>

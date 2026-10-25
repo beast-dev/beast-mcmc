@@ -30,12 +30,14 @@ package test.dr.evomodel.treedatalikelihood;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.ReturnValue;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter.Reason;
+import dr.evomodelxml.continuous.hmc.MaximizeWrtParameterParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.GammaDistribution;
 import dr.util.Transform;
+import dr.xml.XMLParseException;
 import junit.framework.TestCase;
 
 /**
@@ -118,13 +120,34 @@ public class MaximizerStatusTest extends TestCase {
         assertTrue(maximizer.getReport().contains("Reason: maxEvaluations"));
     }
 
-    public void testMaxSeconds() {
+    public void testMaxRunTime() {
         Parameter x = new Parameter.Default(new double[]{0.01, 20.0});
         MaximizerWrtParameter maximizer = maximizer(x, true, settings(0).setBudgets(1E-12, 0, 0, 0));
         maximizer.maximize();
 
-        assertEquals(Reason.MAX_SECONDS, maximizer.getReason());
+        assertEquals(Reason.MAX_RUN_TIME, maximizer.getReason());
         assertEquals(1, maximizer.getIterations());
+    }
+
+    // maxRunTime takes a number with an optional unit; seconds by default
+    public void testParseRunTime() throws XMLParseException {
+        assertEquals(90.0, MaximizeWrtParameterParser.parseRunTime("90"), 0.0);
+        assertEquals(90.0, MaximizeWrtParameterParser.parseRunTime("90s"), 0.0);
+        assertEquals(0.25, MaximizeWrtParameterParser.parseRunTime("250ms"), 1E-15);
+        assertEquals(90.0, MaximizeWrtParameterParser.parseRunTime("1.5min"), 0.0);
+        assertEquals(120.0, MaximizeWrtParameterParser.parseRunTime(" 2 m "), 0.0);
+        assertEquals(7200.0, MaximizeWrtParameterParser.parseRunTime("2 hours"), 0.0);
+        assertEquals(3600.0, MaximizeWrtParameterParser.parseRunTime("1H"), 0.0);
+        assertEquals(86400.0, MaximizeWrtParameterParser.parseRunTime("1d"), 0.0);
+        assertEquals(1000.0, MaximizeWrtParameterParser.parseRunTime("1e3s"), 0.0);
+        for (String bad : new String[]{"", "fast", "10 weeks", "-5s", "1.2.3s", "s10"}) {
+            try {
+                MaximizeWrtParameterParser.parseRunTime(bad);
+                fail("\"" + bad + "\" should not parse");
+            } catch (XMLParseException expected) {
+                // expected
+            }
+        }
     }
 
     public void testStall() {

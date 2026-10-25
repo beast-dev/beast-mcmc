@@ -109,7 +109,7 @@ public class MaximizerWrtParameter implements Reportable {
         boolean includeJacobian;
 
         // optional budgets and lbfgs4j settings; the defaults keep the behaviour of earlier versions
-        double maxSeconds = 0.0;
+        double maxRunTime = 0.0; // seconds
         long maxEvaluations = 0;
         double relTol = 0.0;
         int stallWindow = 0;
@@ -133,11 +133,11 @@ public class MaximizerWrtParameter implements Reportable {
         }
 
         /**
-         * Stop after maxSeconds of wall-clock time or maxEvaluations objective evaluations (0: no limit), or when the
+         * Stop after maxRunTime seconds of wall-clock time or maxEvaluations objective evaluations (0: no limit), or when the
          * objective has not improved by more than relTol (relative) over the last stallWindow iterations (0: off).
          */
-        public Settings setBudgets(double maxSeconds, long maxEvaluations, double relTol, int stallWindow) {
-            this.maxSeconds = maxSeconds;
+        public Settings setBudgets(double maxRunTime, long maxEvaluations, double relTol, int stallWindow) {
+            this.maxRunTime = maxRunTime;
             this.maxEvaluations = maxEvaluations;
             this.relTol = relTol;
             this.stallWindow = stallWindow;
@@ -171,7 +171,7 @@ public class MaximizerWrtParameter implements Reportable {
     public enum Reason {
         CONVERGED("converged"),
         MAX_ITERATIONS("maxIterations"),
-        MAX_SECONDS("maxSeconds"),
+        MAX_RUN_TIME("maxRunTime"),
         MAX_EVALUATIONS("maxEvaluations"),
         STALL("stall"),
         LINE_SEARCH_FAILURE("lineSearchFailure"),
@@ -265,7 +265,7 @@ public class MaximizerWrtParameter implements Reportable {
      */
     public String[] getWarnings() {
         java.util.List<String> warnings = new java.util.ArrayList<>();
-        if (settings.numberIterations <= 0 && settings.maxSeconds <= 0 && settings.maxEvaluations <= 0
+        if (settings.numberIterations <= 0 && settings.maxRunTime <= 0 && settings.maxEvaluations <= 0
                 && settings.stallWindow <= 0 && settings.past == null) {
             warnings.add("nIterations is 0 or absent and no budget is set: the maximizer runs until the gradient " +
                     "test passes, which may never happen");
@@ -404,7 +404,7 @@ public class MaximizerWrtParameter implements Reportable {
                 .append(" (dim ").append(function.getDimension())
                 .append(", ").append(gradientType).append(" gradient")
                 .append(", nIterations = ").append(settings.numberIterations > 0 ? settings.numberIterations : "unlimited");
-        if (settings.maxSeconds > 0) sb.append(", maxSeconds = ").append(settings.maxSeconds);
+        if (settings.maxRunTime > 0) sb.append(", maxRunTime = ").append(settings.maxRunTime).append("s");
         if (settings.maxEvaluations > 0) sb.append(", maxEvaluations = ").append(settings.maxEvaluations);
         if (settings.stallWindow > 0) {
             sb.append(", stall: relTol = ").append(settings.relTol).append(" over ").append(settings.stallWindow);
@@ -421,8 +421,8 @@ public class MaximizerWrtParameter implements Reportable {
     }
 
     private Reason checkBudgets(double fx, int k) {
-        if (settings.maxSeconds > 0 && elapsedSeconds() >= settings.maxSeconds) {
-            return Reason.MAX_SECONDS;
+        if (settings.maxRunTime > 0 && elapsedSeconds() >= settings.maxRunTime) {
+            return Reason.MAX_RUN_TIME;
         }
         if (settings.maxEvaluations > 0 && valueCalls >= settings.maxEvaluations) {
             return Reason.MAX_EVALUATIONS;

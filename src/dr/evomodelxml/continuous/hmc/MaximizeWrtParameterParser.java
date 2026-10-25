@@ -37,6 +37,9 @@ import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.*;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
@@ -50,7 +53,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String INITIAL_GUESS = "startAtCurrentState";
     private static final String PRINT_SCREEN = "printToScreen";
     private static final String INCLUDE_JACOBIAN = "includeJacobian";
-    private static final String MAX_SECONDS = "maxSeconds";
+    private static final String MAX_RUN_TIME = "maxRunTime";
     private static final String MAX_EVALUATIONS = "maxEvaluations";
     private static final String REL_TOL = "relTol";
     private static final String STALL_WINDOW = "stallWindow";
@@ -91,13 +94,13 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         final double numericGradientStepSize = NumericGradientStepSizeProvider.parseStepSizeRatio(xo);
 
-        double maxSeconds = xo.getAttribute(MAX_SECONDS, 0.0);
+        double maxRunTime = xo.hasAttribute(MAX_RUN_TIME) ? parseRunTime(xo.getStringAttribute(MAX_RUN_TIME)) : 0.0;
         long maxEvaluations = xo.getLongIntegerAttribute(MAX_EVALUATIONS, 0);
         double relTol = xo.getAttribute(REL_TOL, 0.0);
         int stallWindow = xo.getAttribute(STALL_WINDOW, 0);
         int checkGradientEvery = xo.getAttribute(CHECK_GRADIENT_EVERY, 0);
-        if (maxSeconds < 0 || maxEvaluations < 0 || relTol < 0 || stallWindow < 0 || checkGradientEvery < 0) {
-            throw new XMLParseException(MAX_SECONDS + ", " + MAX_EVALUATIONS + ", " + REL_TOL + ", " + STALL_WINDOW +
+        if (maxEvaluations < 0 || relTol < 0 || stallWindow < 0 || checkGradientEvery < 0) {
+            throw new XMLParseException(MAX_EVALUATIONS + ", " + REL_TOL + ", " + STALL_WINDOW +
                     " and " + CHECK_GRADIENT_EVERY + " must not be negative");
         }
 
@@ -111,7 +114,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         MaximizerWrtParameter.Settings settings =
                 new MaximizerWrtParameter.Settings(nIterations, numericGradientStepSize, initialGuess, printScreen, includeJacobian)
-                        .setBudgets(maxSeconds, maxEvaluations, relTol, stallWindow)
+                        .setBudgets(maxRunTime, maxEvaluations, relTol, stallWindow)
                         .setCheckGradientEvery(checkGradientEvery)
                         .setConvergence(epsilon, past, delta);
 
@@ -121,6 +124,40 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         return maximizer;
     }
+
+    /**
+     * A duration in seconds, from a number with an optional unit: ms, s (the default), min (or m), h or d; for example
+     * "90", "90s", "1.5min", "2 h".
+     */
+    public static double parseRunTime(String value) throws XMLParseException {
+        Matcher matcher = RUN_TIME.matcher(value.trim());
+        if (!matcher.matches()) {
+            throw new XMLParseException(MAX_RUN_TIME + "=\"" + value + "\" is not a duration; use a number with an " +
+                    "optional unit, ms, s, min, h or d, for example \"30min\"");
+        }
+        final double amount;
+        try {
+            amount = Double.parseDouble(matcher.group(1));
+        } catch (NumberFormatException e) {
+            throw new XMLParseException(MAX_RUN_TIME + "=\"" + value + "\": " + matcher.group(1) + " is not a number");
+        }
+        if (amount < 0) {
+            throw new XMLParseException(MAX_RUN_TIME + " must not be negative");
+        }
+        final String unit = matcher.group(2).toLowerCase();
+        switch (unit) {
+            case "ms": return amount / 1000.0;
+            case "": case "s": case "sec": case "secs": case "second": case "seconds": return amount;
+            case "m": case "min": case "mins": case "minute": case "minutes": return amount * 60.0;
+            case "h": case "hr": case "hrs": case "hour": case "hours": return amount * 3600.0;
+            case "d": case "day": case "days": return amount * 86400.0;
+            default:
+                throw new XMLParseException(MAX_RUN_TIME + "=\"" + value + "\": unknown unit \"" + matcher.group(2) +
+                        "\"; use ms, s, min, h or d");
+        }
+    }
+
+    private static final Pattern RUN_TIME = Pattern.compile("([0-9.eE+-]+)\\s*([a-zA-Z]*)");
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -158,7 +195,8 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(INCLUDE_JACOBIAN, true),
             new StringAttributeRule(NumericGradientStepSizeProvider.NUMERIC_STEP_SIZE,
                     "a step-size ratio, or tiny, small, medium or large", true),
-            AttributeRule.newDoubleRule(MAX_SECONDS, true, "stop after this many seconds (default 0: no limit)"),
+            new StringAttributeRule(MAX_RUN_TIME, "stop after this much wall-clock time: a number with an optional unit, " +
+                    "ms, s, min, h or d (default unit s; default 0: no limit)", true),
             AttributeRule.newLongIntegerRule(MAX_EVALUATIONS, true, "stop after this many objective evaluations (default 0: no limit)"),
             AttributeRule.newDoubleRule(REL_TOL, true, "the relative improvement below which stallWindow iterations count as a stall"),
             AttributeRule.newIntegerRule(STALL_WINDOW, true, "stop when the objective has improved by at most relTol over this many iterations (default 0: off)"),

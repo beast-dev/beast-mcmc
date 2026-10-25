@@ -211,6 +211,43 @@ public class MaximizerStatusTest extends TestCase {
         assertTrue(maximizer.getReport().contains("Gradient type: numerical"));
     }
 
+    // a holds at 1.5, above its mode 1.0, once a step takes it below; b, not held, still reaches the mode
+    public void testHoldAtLowerBound() {
+        Parameter a = new Parameter.Default(new double[]{3.0});
+        Parameter b = new Parameter.Default(new double[]{0.4});
+        dr.inference.model.CompoundParameter x = new dr.inference.model.CompoundParameter("x");
+        x.addParameter(a);
+        x.addParameter(b);
+        MaximizerWrtParameter maximizer = maximizer(x, true, settings(0).addLowerBoundHold(a, 1.5)
+                .setCheckGradientEvery(1));
+        maximizer.maximize();
+
+        assertEquals(Reason.CONVERGED, maximizer.getReason());
+        assertEquals(1.5, a.getParameterValue(0), 0.0);
+        assertEquals(MODE, b.getParameterValue(0), 1E-5);
+        assertEquals(1, maximizer.getHeld().size());
+        // d/dlog a of log Gamma(a; 3, 0.5) = 2 - 2a: negative, the optimum lies below the bound
+        assertEquals(2 - 2 * 1.5, maximizer.getHeld().get(0).gradient, 1E-6);
+        assertTrue(maximizer.getReport().contains("HeldAtLowerBound: "));
+        for (double error : maximizer.getGradientCheckErrors()) {
+            assertTrue(error < 1E-6);
+        }
+
+        // a bound the iterates never cross changes nothing
+        a.setParameterValue(0, 3.0);
+        maximizer = maximizer(x, true, settings(0).addLowerBoundHold(a, 0.5));
+        maximizer.maximize();
+        assertEquals(MODE, a.getParameterValue(0), 1E-5);
+        assertTrue(maximizer.getHeld().isEmpty());
+
+        try {
+            maximizer(x, true, settings(0).addLowerBoundHold(new Parameter.Default(1.0), 0.5));
+            fail("a parameter outside the maximized one");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().contains("holdAtLowerBound"));
+        }
+    }
+
     public void testWarnings() {
         Parameter x = new Parameter.Default(new double[]{0.4});
         x.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));

@@ -851,6 +851,10 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<Boolean>("includeJacobian", false));
         // a line search that fails far from the optimum (e.g. from a poor starting tree) restarts from the best point
         attributes.add(new Attribute.Default<Integer>("lineSearchRestarts", 5));
+        // also stop when the density has stopped improving: zero-length branches (a node ratio running to 1) leave a
+        // plateau where the gradient norm test may never pass
+        attributes.add(new Attribute.Default<Integer>("past", 10));
+        attributes.add(new Attribute.Default<Double>("delta", 1E-8));
         if (!maximization.isAnalytic()) {
             attributes.add(new Attribute.Default<String>("numericStepSize", maximization.stepSize.getName()));
         }
@@ -880,6 +884,16 @@ public class BeastGenerator extends Generator {
         }
         if (!heightPlans.isEmpty()) {
             writer.writeCloseTag("multivariateCompoundTransform");
+        }
+
+        // e.g. a gamma shape whose optimum lies at 0: held at its bound instead of chased down a plateau
+        for (Parameter parameter : parameters) {
+            Double bound = maximization.getLowerBound(parameter);
+            if (bound != null) {
+                writer.writeOpenTag("holdAtLowerBound", new Attribute.Default<Double>("value", bound));
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                writer.writeCloseTag("holdAtLowerBound");
+            }
         }
 
         writer.writeCloseTag("maximizeWrtParameter");

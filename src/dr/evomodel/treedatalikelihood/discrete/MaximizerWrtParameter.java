@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Bounds;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Profileable;
@@ -100,6 +101,12 @@ public class MaximizerWrtParameter implements Reportable {
     private double valueAtLastRestart = Double.POSITIVE_INFINITY;
     private final List<Double> gradientCheckErrors = new ArrayList<Double>();
 
+    // coordinates held at a lower bound (holdAtLowerBound) in the latest run, by index; null when none is set
+    private boolean[] heldCoordinates = null;
+    private double[] cachedUnmaskedGradient = null;
+    private double[] holdPoint = null;
+    private int holds = 0;
+
     private double lastFiniteValue = 0.0;
     private boolean lastEvaluationNonFinite = false;
     private static final double NON_FINITE_PENALTY = 1E10;
@@ -123,6 +130,7 @@ public class MaximizerWrtParameter implements Reportable {
         Double epsilon = null;
         Integer past = null;
         Double delta = null;
+        final List<LowerBoundHold> lowerBoundHolds = new ArrayList<LowerBoundHold>();
 
         /**
          * @param includeJacobian false (the default, used for optimization in TreeLime): maximize the unweighted log
@@ -169,6 +177,18 @@ public class MaximizerWrtParameter implements Reportable {
         }
 
         /**
+         * Once an accepted iterate takes an element of the parameter (part of the maximized parameter) below the
+         * bound, set that element to the bound and keep it there for the rest of the run: its gradient coordinate is
+         * zeroed and L-BFGS restarts with a cleared memory. For a parameter whose optimum lies on its boundary, such
+         * as a gamma shape that runs to 0, where L-BFGS would otherwise chase a plateau until its line search fails.
+         * The parameter's transform must act element by element (log, logit, none).
+         */
+        public Settings addLowerBoundHold(Parameter parameter, double bound) {
+            lowerBoundHolds.add(new LowerBoundHold(parameter, bound));
+            return this;
+        }
+
+        /**
          * lbfgs4j's convergence tests: epsilon (gradient norm relative to max(1, |x|)), and past/delta (relative
          * decrease of the objective over the last past iterations); null keeps lbfgs4j's default.
          */
@@ -177,6 +197,44 @@ public class MaximizerWrtParameter implements Reportable {
             this.past = past;
             this.delta = delta;
             return this;
+        }
+    }
+
+    private static final class LowerBoundHold {
+        final Parameter parameter;
+        final double bound;
+        int offset = -1; // of the parameter's first element in the maximized parameter
+
+        LowerBoundHold(Parameter parameter, double bound) {
+            this.parameter = parameter;
+            this.bound = bound;
+        }
+
+        String name(int element) {
+            String name = parameter.getId() != null ? parameter.getId() : parameter.getParameterName();
+            return parameter.getDimension() > 1 ? name + "[" + element + "]" : name;
+        }
+    }
+
+    /**
+     * An element held at its lower bound at the end of the latest run, with the derivative of the log density along
+     * its transformed coordinate there: negative when the density still increases towards the boundary, which
+     * confirms an optimum on the boundary; positive when it points back inside, where the bound may be too high.
+     */
+    public static final class Held {
+        public final String name;
+        public final double bound;
+        public final double gradient;
+
+        Held(String name, double bound, double gradient) {
+            this.name = name;
+            this.bound = bound;
+            this.gradient = gradient;
+        }
+
+        public String toString() {
+            return name + " = " + bound + " (dlogDensity/dy = " + gradient + (gradient <= 0 ?
+                    ": the optimum lies on the boundary)" : ": points back inside, the bound may be too high)");
         }
     }
 
@@ -215,6 +273,34 @@ public class MaximizerWrtParameter implements Reportable {
 
         this.function = constructFunction();
         this.settings = settings;
+
+        for (LowerBoundHold hold : settings.lowerBoundHolds) {
+            hold.offset = locate(this.parameter, hold.parameter);
+            if (hold.offset < 0) {
+                throw new IllegalArgumentException("holdAtLowerBound: " + hold.name(0) + " is not part of " +
+                        parameterName());
+            }
+        }
+    }
+
+    // the offset of target's first element in root, or -1
+    private static int locate(Parameter root, Parameter target) {
+        if (root == target) {
+            return 0;
+        }
+        if (root instanceof CompoundParameter) {
+            CompoundParameter compound = (CompoundParameter) root;
+            int offset = 0;
+            for (int i = 0; i < compound.getParameterCount(); ++i) {
+                Parameter child = compound.getParameter(i);
+                int at = locate(child, target);
+                if (at >= 0) {
+                    return offset + at;
+                }
+                offset += child.getDimension();
+            }
+        }
+        return -1;
     }
 
     public Likelihood getLikelihood() {
@@ -260,6 +346,27 @@ public class MaximizerWrtParameter implements Reportable {
     public int getRestarts() {
         return restarts;
     }
+
+    /**
+     * @return the elements held at their lower bound at the end of the latest run
+     */
+    public List<Held> getHeld() {
+        List<Held> held = new ArrayList<Held>();
+        if (heldCoordinates == null || minimumGradient == null) {
+            return held;
+        }
+        for (LowerBoundHold hold : settings.lowerBoundHolds) {
+            for (int j = 0; j < hold.parameter.getDimension(); ++j) {
+                int index = hold.offset + j;
+                if (heldCoordinates[index]) {
+                    held.add(new Held(hold.name(j), hold.bound, -heldGradient[index]));
+                }
+            }
+        }
+        return held;
+    }
+
+    private double[] heldGradient = null; // the objective's unmasked gradient at the optimum
 
     public long getValueCalls() {
         return valueCalls;
@@ -359,6 +466,16 @@ public class MaximizerWrtParameter implements Reportable {
         useCache = true;
         lastFiniteValue = 0.0;
         lastEvaluationNonFinite = false;
+        heldCoordinates = settings.lowerBoundHolds.isEmpty() ? null : new boolean[dim];
+        holdPoint = null;
+        holds = 0;
+        if (heldCoordinates != null) {
+            // a start below a bound is held at once
+            double[] held = holdAtBounds(x);
+            if (held != null) {
+                x = held;
+            }
+        }
 
         startNanos = System.nanoTime();
 
@@ -386,7 +503,10 @@ public class MaximizerWrtParameter implements Reportable {
                 System.out.printf("\tevaluations = %d, seconds = %.3f\n\n", valueCalls, elapsedSeconds());
             }
             stopRequest = checkBudgets(fx, iterations);
-            return stopRequest == null ? ReturnValue.LBFGS_SUCCESS : ReturnValue.LBFGS_STOP;
+            if (stopRequest == null && heldCoordinates != null && belowBound(point)) {
+                holdPoint = point.clone();
+            }
+            return stopRequest == null && holdPoint == null ? ReturnValue.LBFGS_SUCCESS : ReturnValue.LBFGS_STOP;
         };
 
         final MutableDouble fx = new MutableDouble();
@@ -394,6 +514,28 @@ public class MaximizerWrtParameter implements Reportable {
         while (true) {
             status = Lbfgs.lbfgs(dim, x, fx, evaluate, progress, null, paramsBFGS);
             reason = stopRequest != null ? stopRequest : reasonFor(status);
+
+            if (holdPoint != null) {
+                // an element went below its bound: hold it there and restart with a cleared memory
+                x = holdAtBounds(holdPoint);
+                holdPoint = null;
+                holds++;
+                previousIterations[0] = iterations;
+                bestValue[0] = Double.POSITIVE_INFINITY;
+                bestPoint[0] = x.clone();
+                valueAtLastRestart = Double.POSITIVE_INFINITY;
+                if (settings.numberIterations > 0) {
+                    if (settings.numberIterations - iterations <= 0) {
+                        reason = Reason.MAX_ITERATIONS;
+                        break;
+                    }
+                    paramsBFGS.max_iterations = settings.numberIterations - iterations;
+                }
+                if (settings.printToScreen) {
+                    LOGGER.info("maximizeWrtParameter: holding " + describeHeld() + " at the lower bound; restart");
+                }
+                continue;
+            }
 
             // a failed line search ends the run; restarting from the best point with a cleared memory (a steepest-
             // descent first step) often gets past it, as long as each restart has made progress
@@ -423,6 +565,7 @@ public class MaximizerWrtParameter implements Reportable {
         minimumPoint = x;
         minimumValue = function.valueAt(minimumPoint);
         minimumGradient = function.gradientAt(minimumPoint).clone();
+        heldGradient = cachedUnmaskedGradient != null ? cachedUnmaskedGradient.clone() : minimumGradient;
         likelihoodRecomputes = getLikelihoodCalculationCount() - recomputesAtStart;
         useCache = false;
         cachedPoint = null;
@@ -441,6 +584,81 @@ public class MaximizerWrtParameter implements Reportable {
                     ") after " + iterations + " iterations, " + valueCalls + " evaluations, " +
                     String.format("%.3f", seconds) + "s; -log density = " + minimumValue);
         }
+        for (Held held : getHeld()) {
+            if (settings.printToScreen || held.gradient > 0) {
+                LOGGER.info((held.gradient > 0 ? "WARNING: " : "") + "maximizeWrtParameter: held at the lower bound: "
+                        + held);
+            }
+        }
+    }
+
+    private String describeHeld() {
+        StringBuilder sb = new StringBuilder();
+        for (LowerBoundHold hold : settings.lowerBoundHolds) {
+            for (int j = 0; j < hold.parameter.getDimension(); ++j) {
+                if (heldCoordinates[hold.offset + j]) {
+                    sb.append(sb.length() > 0 ? ", " : "").append(hold.name(j)).append(" = ").append(hold.bound);
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private double[] untransformed(double[] point) {
+        return transform != null ? transform.inverse(point, 0, point.length) : point.clone();
+    }
+
+    // whether an element not yet held lies below its bound at the transformed point
+    private boolean belowBound(double[] point) {
+        final double[] values = untransformed(point);
+        for (LowerBoundHold hold : settings.lowerBoundHolds) {
+            for (int j = 0; j < hold.parameter.getDimension(); ++j) {
+                int index = hold.offset + j;
+                if (!heldCoordinates[index] && values[index] < hold.bound) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Set the elements below their bounds to the bounds and mark them held.
+     *
+     * @return the new transformed point, or null when no element is below its bound
+     */
+    private double[] holdAtBounds(double[] point) {
+        final double[] values = untransformed(point);
+        final List<Integer> newlyHeld = new ArrayList<Integer>();
+        for (LowerBoundHold hold : settings.lowerBoundHolds) {
+            for (int j = 0; j < hold.parameter.getDimension(); ++j) {
+                int index = hold.offset + j;
+                if (!heldCoordinates[index] && values[index] < hold.bound) {
+                    values[index] = hold.bound;
+                    newlyHeld.add(index);
+                }
+            }
+        }
+        if (newlyHeld.isEmpty()) {
+            return null;
+        }
+        final double[] transformed = transform != null ? transform.transform(values, 0, values.length) : values;
+        // change only the held coordinates, and check that each maps to its own element alone
+        final double[] result = point.clone();
+        for (int index : newlyHeld) {
+            result[index] = transformed[index];
+        }
+        final double[] check = untransformed(result);
+        for (int i = 0; i < check.length; ++i) {
+            if (!(Math.abs(check[i] - values[i]) <= 1E-8 * Math.max(1.0, Math.abs(values[i])))) {
+                throw new IllegalStateException("holdAtLowerBound needs a transform that acts element by element " +
+                        "on the held parameter (log, logit or none)");
+            }
+        }
+        for (int index : newlyHeld) {
+            heldCoordinates[index] = true;
+        }
+        return result;
     }
 
     private String getBanner() {
@@ -552,6 +770,12 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Reason: ").append(reason).append("\n");
             sb.append("Iterations: ").append(iterations).append("\n");
             sb.append("Restarts: ").append(restarts).append("\n");
+            if (!settings.lowerBoundHolds.isEmpty()) {
+                sb.append("Holds: ").append(holds).append("\n");
+                for (Held held : getHeld()) {
+                    sb.append("HeldAtLowerBound: ").append(held).append("\n");
+                }
+            }
             sb.append("ValueCalls: ").append(valueCalls).append("\n");
             sb.append("GradientCalls: ").append(gradientCalls).append("\n");
             sb.append("LikelihoodRecomputes: ").append(likelihoodRecomputes).append("\n");
@@ -651,6 +875,16 @@ public class MaximizerWrtParameter implements Reportable {
             lastFiniteValue = value;
         }
 
+        if (heldCoordinates != null) {
+            // held coordinates do not move: L-BFGS's steps are zero along a zero gradient after a cleared memory
+            cachedUnmaskedGradient = result.clone();
+            for (int i = 0; i < result.length; ++i) {
+                if (heldCoordinates[i]) {
+                    result[i] = 0.0;
+                }
+            }
+        }
+
         cachedPoint = point.clone();
         cachedPointApplied = finitePoint;
         cachedValue = value;
@@ -681,9 +915,13 @@ public class MaximizerWrtParameter implements Reportable {
 
         final double[] direction = new double[point.length];
         for (int i = 0; i < direction.length; ++i) {
-            direction[i] = MathUtils.nextGaussian();
+            // held coordinates have a zeroed gradient: check the others
+            direction[i] = heldCoordinates != null && heldCoordinates[i] ? 0.0 : MathUtils.nextGaussian();
         }
         final double length = norm(direction);
+        if (length == 0.0) {
+            return;
+        }
         double directional = 0.0;
         for (int i = 0; i < direction.length; ++i) {
             direction[i] /= length;

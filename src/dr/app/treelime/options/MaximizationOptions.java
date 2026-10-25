@@ -29,8 +29,10 @@ package dr.app.treelime.options;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -108,6 +110,14 @@ public class MaximizationOptions implements Serializable {
     public StepSize stepSize = StepSize.MEDIUM;
     public final Set<String> excluded = new HashSet<String>(); // ids of parameters held at their initial values
     public String reportFileName = null; // null: <stem>.max.txt
+    // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
+    private Map<String, Double> lowerBounds = new HashMap<String, Double>();
+
+    /**
+     * The gamma shape's default: its optimum often lies at 0, where L-BFGS chases a plateau (the discrete gamma tends
+     * to a model of invariant sites); the maximizer holds it here instead.
+     */
+    public static final double GAMMA_SHAPE_LOWER_BOUND = 0.05;
 
     // null in files saved before the setting existed
     public GradientMode getGradientMode() {
@@ -120,6 +130,31 @@ public class MaximizationOptions implements Serializable {
 
     public boolean isAnalytic() {
         return getGradientMode() == GradientMode.ANALYTIC_WHERE_AVAILABLE;
+    }
+
+    /**
+     * @return the bound at which the maximizer holds the parameter once a step goes below it (holdAtLowerBound), or
+     * null for none
+     */
+    public Double getLowerBound(Parameter parameter) {
+        if (lowerBounds != null && lowerBounds.containsKey(parameter.getName())) {
+            return lowerBounds.get(parameter.getName());
+        }
+        return getDefaultLowerBound(parameter);
+    }
+
+    public static Double getDefaultLowerBound(Parameter parameter) {
+        return parameter.getBaseName().equals("alpha") ? GAMMA_SHAPE_LOWER_BOUND : null;
+    }
+
+    /**
+     * @param bound null for none
+     */
+    public void setLowerBound(Parameter parameter, Double bound) {
+        if (lowerBounds == null) {
+            lowerBounds = new HashMap<String, Double>();
+        }
+        lowerBounds.put(parameter.getName(), bound);
     }
 
     public String getReportFileName(String fileNameStem) {

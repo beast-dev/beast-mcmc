@@ -64,6 +64,8 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String EPSILON = "epsilon";
     private static final String PAST = "past";
     private static final String DELTA = "delta";
+    private static final String HOLD_AT_LOWER_BOUND = "holdAtLowerBound";
+    private static final String VALUE = "value";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -129,8 +131,16 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
                         .setLineSearchRestarts(lineSearchRestarts)
                         .setConvergence(epsilon, past, delta);
 
-        MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
-                settings);
+        for (XMLObject cxo : xo.getAllChildren(HOLD_AT_LOWER_BOUND)) {
+            settings.addLowerBoundHold((Parameter) cxo.getChild(Parameter.class), cxo.getDoubleAttribute(VALUE));
+        }
+
+        MaximizerWrtParameter maximizer;
+        try {
+            maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform, settings);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
         // false: parse only, and let a <maximizerWrtParameterOperator> (or the caller) run it later
         if (xo.getAttribute(MAXIMIZE_ON_PARSE, true)) {
             maximizer.maximize();
@@ -224,5 +234,10 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(EPSILON, true, "lbfgs4j's gradient-norm convergence tolerance"),
             AttributeRule.newIntegerRule(PAST, true, "lbfgs4j's delta-test period in iterations (0: off)"),
             AttributeRule.newDoubleRule(DELTA, true, "lbfgs4j's relative-decrease convergence tolerance"),
+            // e.g. a gamma shape whose optimum lies at 0: hold it at the bound once a step goes below it
+            new ElementRule(HOLD_AT_LOWER_BOUND, new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule(VALUE, false, "the lower bound"),
+                    new ElementRule(Parameter.class, "a parameter that is part of the maximized parameter"),
+            }, "hold the parameter's elements at the lower bound once an iterate goes below it", 0, Integer.MAX_VALUE),
     };
 }

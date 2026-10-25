@@ -178,6 +178,7 @@ public class MaximizationPanel extends TreeLimePanel {
         JTable table = new JTable(tableModel);
         table.getColumnModel().getColumn(0).setMaxWidth(70);
         table.getColumnModel().getColumn(3).setMaxWidth(90);
+        table.getColumnModel().getColumn(4).setMaxWidth(90);
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setOpaque(false);
 
@@ -185,7 +186,8 @@ public class MaximizationPanel extends TreeLimePanel {
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(new Insets(6, 12, 12, 12)));
         tablePanel.add(new JLabel("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's root " +
-                "height row stands for all its internal node heights. The topology stays as in the starting tree.</html>"),
+                "height row stands for all its internal node heights. The topology stays as in the starting tree. " +
+                "A parameter that goes below its lower bound is held there (blank for none).</html>"),
                 BorderLayout.NORTH);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         tablePanel.add(statusLabel, BorderLayout.SOUTH);
@@ -289,7 +291,8 @@ public class MaximizationPanel extends TreeLimePanel {
 
     private class ParameterTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"Optimize", "Parameter", "Description", "Transform", "Likelihood gradient"};
+        private final String[] columnNames = {"Optimize", "Parameter", "Description", "Transform", "Lower bound",
+                "Likelihood gradient"};
         private List<Parameter> parameters = new ArrayList<Parameter>();
 
         void setParameters(List<Parameter> parameters) {
@@ -326,6 +329,12 @@ public class MaximizationPanel extends TreeLimePanel {
                 case 3:
                     return treatment.isOptimized() ? treatment.getTransform() : "held fixed: " + treatment.getReason();
                 case 4:
+                    if (!hasLowerBound(treatment)) {
+                        return "";
+                    }
+                    Double bound = maximization().getLowerBound(parameter);
+                    return bound != null ? bound.toString() : "";
+                case 5:
                     if (!treatment.isOptimized()) {
                         return "";
                     }
@@ -343,10 +352,30 @@ public class MaximizationPanel extends TreeLimePanel {
 
         public boolean isCellEditable(int row, int column) {
             // only parameters that could be optimized can be ticked or unticked
+            if (column == 4) {
+                return hasLowerBound(maximization().classify(parameters.get(row), false));
+            }
             return column == 0 && maximization().classify(parameters.get(row), true).isOptimized();
         }
 
+        // element-by-element transforms only: the maximizer holds single elements at their bounds
+        private boolean hasLowerBound(Treatment treatment) {
+            return treatment == Treatment.LOG || treatment == Treatment.LOGIT || treatment == Treatment.NONE;
+        }
+
         public void setValueAt(Object value, int row, int column) {
+            if (column == 4) {
+                String text = ((String) value).trim();
+                try {
+                    maximization().setLowerBound(parameters.get(row), text.isEmpty() ? null : Double.parseDouble(text));
+                } catch (NumberFormatException e) {
+                    Toolkit.getDefaultToolkit().beep();
+                    return;
+                }
+                fireTableRowsUpdated(row, row);
+                frame.setDirty();
+                return;
+            }
             String id = parameters.get(row).getName();
             if ((Boolean) value) {
                 maximization().excluded.remove(id);

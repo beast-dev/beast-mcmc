@@ -114,11 +114,21 @@ public class TreeLimeMaximizationTest extends TestCase {
         String xml = TreeLimeHarness.generate(quiet(options));
         assertTrue(between(xml, "<jointGradient id=\"gradient.alpha\">", "</jointGradient>")
                 .contains("<siteRateModelGradient>"));
+        // the gamma shape's default lower bound
+        assertTrue(xml.contains("<holdAtLowerBound value=\"0.05\">\n\t\t\t<parameter idref=\"alpha\"/>"));
 
         Run run = run(xml);
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertGradientChecked(run);
+
+        // a blank bound writes none
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getBaseName().equals("alpha")) {
+                options.maximizationOptions.setLowerBound(parameter, null);
+            }
+        }
+        assertFalse(TreeLimeHarness.generate(options).contains("<holdAtLowerBound"));
     }
 
     public void testMaximumLikelihood() throws Exception {
@@ -275,17 +285,70 @@ public class TreeLimeMaximizationTest extends TestCase {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             model.setGammaHetero(true);
         }
-        // with free node heights the gamma shape of these data runs to its boundary (alpha -> 0, log alpha -> -Inf),
-        // where no L-BFGS run converges; the heights are tested elsewhere
-        quiet(options).maximizationOptions.excluded.add("treeModel.rootHeight");
+        // 70 node heights: L-BFGS needs more iterations
+        quiet(options).maximizationOptions.nIterations = 2000;
         String xml = TreeLimeHarness.generate(options);
         assertTrue(between(xml, "<jointGradient id=\"gradient.alpha\">", "</jointGradient>")
                 .contains("<siteRateModelGradient>"));
+        assertGammaShapeHeldAtBound(run(xml));
+    }
 
-        Run run = run(xml);
+    // with tip dates and free node heights the gamma shape of these data also runs to its boundary
+    public void testDatedGammaShapeAtBoundary() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");
+        if (options == null) {
+            return;
+        }
+        TreeLimeHarness.setTipDatesFromNames(options);
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            model.setGammaHetero(true);
+        }
+        quiet(options).maximizationOptions.nIterations = 2000;
+        assertGammaShapeHeldAtBound(run(TreeLimeHarness.generate(options)));
+    }
+
+    // with free node heights the shape of these data runs to 0, where the discrete gamma tends to a model of invariant
+    // sites and L-BFGS would chase a plateau until its line search fails: it is held at its default bound instead,
+    // where the density still increases towards 0
+    private static void assertGammaShapeHeldAtBound(Run run) {
+        System.err.println(run.maximizer.getReport());
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
-        assertGradientChecked(run);
+        assertEquals(MaximizationOptions.GAMMA_SHAPE_LOWER_BOUND, run.parameter("alpha").getParameterValue(0), 0.0);
+        assertEquals(1, run.maximizer.getHeld().size());
+        assertTrue(run.maximizer.getHeld().get(0).toString(), run.maximizer.getHeld().get(0).gradient < 0);
+        assertTrue(run.parameter("treeModel.rootHeight").getParameterValue(0) != run.startValue("treeModel.rootHeight"));
+        // zero-length branches at the optimum put nodes next to tip dates, where the coalescent has kinks and central
+        // differences along a random direction straddle them: check each coordinate at the optimum instead, against
+        // whichever one-sided difference applies
+        assertGradientMatchesAtOptimum(run);
+    }
+
+    private static void assertGradientMatchesAtOptimum(Run run) {
+        com.github.lbfgs4j.liblbfgs.Function function = run.maximizer.getFunction();
+        double[] y = run.maximizer.getMinimumPoint(false).clone();
+        double[] gradient = function.gradientAt(y.clone());
+        double value = function.valueAt(y.clone());
+        final double h = 1E-6;
+        for (int i = 0; i < y.length; i++) {
+            if (gradient[i] == 0.0) {
+                continue; // a held coordinate
+            }
+            double[] plus = y.clone();
+            plus[i] += h;
+            double[] minus = y.clone();
+            minus[i] -= h;
+            double up = function.valueAt(plus);
+            double down = function.valueAt(minus);
+            double tolerance = 1E-3 * Math.max(1.0, Math.abs(gradient[i]));
+            double central = (up - down) / (2 * h);
+            double forward = (up - value) / h;
+            double backward = (value - down) / h;
+            assertTrue("coordinate " + i + ": analytic " + gradient[i] + ", central " + central + ", forward " +
+                            forward + ", backward " + backward,
+                    Math.abs(gradient[i] - central) < tolerance || Math.abs(gradient[i] - forward) < tolerance ||
+                            Math.abs(gradient[i] - backward) < tolerance);
+        }
     }
 
     // each tree prior's analytic node-height gradient, joined with the tree likelihood's

@@ -54,6 +54,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String PRINT_SCREEN = "printToScreen";
     private static final String INCLUDE_JACOBIAN = "includeJacobian";
     private static final String MAX_RUN_TIME = "maxRunTime";
+    private static final String MAXIMIZE_ON_PARSE = "maximizeOnParse";
     private static final String MAX_EVALUATIONS = "maxEvaluations";
     private static final String REL_TOL = "relTol";
     private static final String STALL_WINDOW = "stallWindow";
@@ -120,7 +121,10 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
                 settings);
-        maximizer.maximize();
+        // false: parse only, and let a <maximizerWrtParameterOperator> (or the caller) run it later
+        if (xo.getAttribute(MAXIMIZE_ON_PARSE, true)) {
+            maximizer.maximize();
+        }
 
         return maximizer;
     }
@@ -188,11 +192,13 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
                                     new ElementRule(Parameter.class),
                             })
             ),
-            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
+            // any multivariable transform, including <nodeHeightTransform> and <multivariateCompoundTransform>
+            new ElementRule(Transform.MultivariableTransform.class, true),
             AttributeRule.newDoubleRule(N_ITERATIONS, true),
             AttributeRule.newBooleanRule(INITIAL_GUESS, true),
             AttributeRule.newBooleanRule(PRINT_SCREEN, true),
             AttributeRule.newBooleanRule(INCLUDE_JACOBIAN, true),
+            AttributeRule.newBooleanRule(MAXIMIZE_ON_PARSE, true, "maximize while parsing (default true); false leaves it to a maximizerWrtParameterOperator"),
             new StringAttributeRule(NumericGradientStepSizeProvider.NUMERIC_STEP_SIZE,
                     "a step-size ratio, or tiny, small, medium or large", true),
             new StringAttributeRule(MAX_RUN_TIME, "stop after this much wall-clock time: a number with an optional unit, " +

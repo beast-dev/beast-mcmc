@@ -578,6 +578,14 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(PHYLOGEOFAST, true),
             AttributeRule.newBooleanRule(USE_HIERARCHICAL_REPRESENTATION, true),
             AttributeRule.newStringRule(PHYLOGEOFAST_REPRESENTATION, true),
+            // read by parseXMLObject; declared so that -strict accepts them
+            AttributeRule.newBooleanRule(USE_PREORDER, true),
+            AttributeRule.newBooleanRule(USE_SPECTRAL_REPRESENTATION, true),
+            AttributeRule.newBooleanRule(BRANCHRATE_DERIVATIVE, true),
+            AttributeRule.newBooleanRule(BRANCHINFINITESIMAL_DERIVATIVE, true),
+            AttributeRule.newBooleanRule("useRewardAwareBranchModelDelegate", true),
+            AttributeRule.newBooleanRule("useAugmentedEpochNodes", true),
+            AttributeRule.newBooleanRule(DELAY_SCALING, true),
 
             // really it should be this set of elements or the PARTITION elements
             new OrRule(

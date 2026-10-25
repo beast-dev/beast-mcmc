@@ -86,4 +86,47 @@
     <actual regex="Reason: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.budget"/></report></actual>
     <expected>maxEvaluations</expected>
   </assertEqual>
+
+  <!-- maximizeOnParse="false": the maximizer is parsed without running; a one-step MCMC runs it through the operator -->
+  <parameter id="x.later" value="0.4 2.2" lower="0.0"/>
+  <gammaPrior shape="3.0" scale="0.5" id="prior.later">
+    <parameter idref="x.later"/>
+  </gammaPrior>
+  <multivariateCompoundTransform id="transform.later">
+    <transform type="log" dim="2"/>
+  </multivariateCompoundTransform>
+  <maximizeWrtParameter id="maximizer.later" nIterations="100" maximizeOnParse="false">
+    <gradient>
+      <gammaPrior idref="prior.later"/>
+      <parameter idref="x.later"/>
+    </gradient>
+    <multivariateCompoundTransform idref="transform.later"/>
+  </maximizeWrtParameter>
+
+  <assertEqual verbose="true">
+    <message>maximizeOnParse=false: not run while parsing</message>
+    <actual regex="(Not yet executed\.)"><report><maximizeWrtParameter idref="maximizer.later"/></report></actual>
+    <expected>Not yet executed.</expected>
+  </assertEqual>
+
+  <operators id="operators.later">
+    <maximizerWrtParameterOperator weight="1" MAX_STEPS="1">
+      <maximizeWrtParameter idref="maximizer.later"/>
+    </maximizerWrtParameterOperator>
+  </operators>
+  <mcmc id="mcmc.later" chainLength="1" autoOptimize="false">
+    <prior id="joint.later">
+      <gammaPrior idref="prior.later"/>
+    </prior>
+    <operators idref="operators.later"/>
+    <log logEvery="1">
+      <parameter idref="x.later"/>
+    </log>
+  </mcmc>
+
+  <assertEqual tolerance="1E-6" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+    <message>maximizeOnParse=false: the operator reaches the mode</message>
+    <actual regex="Untransformed X: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.later"/></report></actual>
+    <expected>1.0 1.0</expected>
+  </assertEqual>
 </beast>

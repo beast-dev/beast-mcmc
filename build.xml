@@ -107,6 +107,7 @@
                encoding="UTF-8">
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
+            <include name="dr/app/treelime/**"/>
             <include name="dr/app/bss/**"/>
             <include name="dr/app/checkpoint/**"/>
             <include name="dr/app/gui/**"/>
@@ -156,6 +157,7 @@
                 <include name="dr/app/beast/**/*.class"/>
                 <!--<include name="dr/app/beastdev/**/*.class"/>-->
                 <include name="dr/app/beauti/**/*.class"/>
+                <include name="dr/app/treelime/**/*.class"/>
                 <include name="dr/app/bss/**/*.class"/>
                 <include name="dr/app/checkpoint/**"/>
                 <include name="dr/app/gui/**/*.class"/>

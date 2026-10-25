@@ -67,6 +67,11 @@ public class MaskedGradient implements GradientWrtParameterProvider, VariableLis
     }
 
     @Override
+    public GradientType getGradientType() {
+        return gradient.getGradientType();
+    }
+
+    @Override
     public int getDimension() {
         return dimension;
     }

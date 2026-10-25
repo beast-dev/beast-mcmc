@@ -41,6 +41,7 @@ import dr.math.distributions.DirichletDistribution;
 import dr.util.Attribute;
 import dr.xml.Reportable;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -65,6 +66,43 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
         return Double.NaN;
     }
 
+    /**
+     * @return how the gradient is computed: analytically, by finite differences, or a mix of blocks of both kinds
+     */
+    default GradientType getGradientType() {
+        return GradientType.ANALYTIC;
+    }
+
+    enum GradientType {
+        ANALYTIC("analytic"),
+        NUMERICAL("numerical"),
+        MIXED("mixed");
+
+        private final String name;
+
+        GradientType(String name) {
+            this.name = name;
+        }
+
+        public String toString() { return name; }
+
+        /**
+         * @return the type of a gradient stacked or summed from these blocks
+         */
+        public static GradientType combine(List<GradientWrtParameterProvider> blocks) {
+            GradientType type = null;
+            for (GradientWrtParameterProvider block : blocks) {
+                GradientType blockType = block.getGradientType();
+                if (type == null) {
+                    type = blockType;
+                } else if (type != blockType) {
+                    return MIXED;
+                }
+            }
+            return type == null ? ANALYTIC : type;
+        }
+    }
+
     class Negative implements GradientWrtParameterProvider {
 
         private final GradientWrtParameterProvider provider;
@@ -86,6 +124,11 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
         @Override
         public int getDimension() {
             return provider.getDimension();
+        }
+
+        @Override
+        public GradientType getGradientType() {
+            return provider.getGradientType();
         }
 
         @Override

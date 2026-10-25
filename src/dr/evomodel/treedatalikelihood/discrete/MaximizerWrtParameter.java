@@ -59,7 +59,6 @@ import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 public class MaximizerWrtParameter implements Reportable {
 
     private final GradientWrtParameterProvider gradient;
-    private final GradientType gradientType;
     private final Parameter parameter;
     private final Likelihood likelihood;
     private final Transform transform;
@@ -196,13 +195,7 @@ public class MaximizerWrtParameter implements Reportable {
         this.parameter = parameter;
         this.transform = transform;
 
-        if (gradient == null) {
-            this.gradient = constructGradient();
-            this.gradientType = GradientType.NUMERICAL;
-        } else {
-            this.gradient = gradient;
-            this.gradientType = GradientType.ANALYTIC;
-        }
+        this.gradient = gradient == null ? constructGradient() : gradient;
 
         this.function = constructFunction();
         this.settings = settings;
@@ -270,21 +263,9 @@ public class MaximizerWrtParameter implements Reportable {
             warnings.add("nIterations is 0 or absent and no budget is set: the maximizer runs until the gradient " +
                     "test passes, which may never happen");
         }
-        if (transform == null) {
-            Bounds<Double> bounds;
-            try {
-                bounds = parameter.getBounds();
-            } catch (NullPointerException e) { // Parameter.Default without bounds
-                bounds = null;
-            }
-            for (int i = 0; i < parameter.getDimension(); ++i) {
-                if (bounds != null && (bounds.getLowerLimit(i) > Double.NEGATIVE_INFINITY
-                        || bounds.getUpperLimit(i) < Double.POSITIVE_INFINITY)) {
-                    warnings.add("parameter " + parameterName() + " is bounded but has no transform: " +
-                            "steps can leave its domain");
-                    break;
-                }
-            }
+        if (transform == null && isBounded(parameter)) {
+            warnings.add("parameter " + parameterName() + " is bounded but has no transform: " +
+                    "steps can leave its domain");
         }
         if (!settings.startAtCurrentState) {
             warnings.add("startAtCurrentState is false: the search starts at 0 in " +
@@ -402,7 +383,7 @@ public class MaximizerWrtParameter implements Reportable {
     private String getBanner() {
         StringBuilder sb = new StringBuilder("Maximizing wrt ").append(parameterName())
                 .append(" (dim ").append(function.getDimension())
-                .append(", ").append(gradientType).append(" gradient")
+                .append(", ").append(gradient.getGradientType()).append(" gradient")
                 .append(", nIterations = ").append(settings.numberIterations > 0 ? settings.numberIterations : "unlimited");
         if (settings.maxRunTime > 0) sb.append(", maxRunTime = ").append(settings.maxRunTime).append("s");
         if (settings.maxEvaluations > 0) sb.append(", maxEvaluations = ").append(settings.maxEvaluations);
@@ -410,6 +391,21 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append(", stall: relTol = ").append(settings.relTol).append(" over ").append(settings.stallWindow);
         }
         return sb.append(")").toString();
+    }
+
+    private static boolean isBounded(Parameter parameter) {
+        try {
+            Bounds<Double> bounds = parameter.getBounds();
+            for (int i = 0; i < parameter.getDimension(); ++i) {
+                if (bounds != null && (bounds.getLowerLimit(i) > Double.NEGATIVE_INFINITY
+                        || bounds.getUpperLimit(i) < Double.POSITIVE_INFINITY)) {
+                    return true;
+                }
+            }
+        } catch (NullPointerException e) { // Parameter.Default, alone or inside a CompoundParameter, without bounds
+            return false;
+        }
+        return false;
     }
 
     private String parameterName() {
@@ -483,7 +479,7 @@ public class MaximizerWrtParameter implements Reportable {
             }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(minimumGradient)).append("\n");
-            sb.append("Gradient type: ").append(gradientType).append("\n");
+            sb.append("Gradient type: ").append(gradient.getGradientType()).append("\n");
             sb.append("Fx: ").append(minimumValue).append("\n");
             sb.append("Time: ").append(time).append("s\n");
             // calls through evaluateLogLikelihood, over every run
@@ -713,6 +709,11 @@ public class MaximizerWrtParameter implements Reportable {
             }
 
             @Override
+            public GradientType getGradientType() {
+                return GradientType.NUMERICAL;
+            }
+
+            @Override
             public double[] getGradientLogDensity() {
                 double[] gradient = new double[parameter.getDimension()];
                 final double[] x = parameter.getParameterValues();
@@ -724,16 +725,4 @@ public class MaximizerWrtParameter implements Reportable {
         };
     }
 
-    private enum GradientType {
-        ANALYTIC("analytic"),
-        NUMERICAL("numerical");
-
-        private final String type;
-
-        GradientType(String type) {
-            this.type = type;
-        }
-
-        public String toString() { return type; }
-    }
 }

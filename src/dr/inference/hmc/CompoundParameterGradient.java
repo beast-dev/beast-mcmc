@@ -94,6 +94,11 @@ public class CompoundParameterGradient implements GradientWrtParameterProvider, 
     }
 
     @Override
+    public GradientType getGradientType() {
+        return GradientType.combine(blocks);
+    }
+
+    @Override
     public int getDimension() {
         return parameter.getDimension();
     }

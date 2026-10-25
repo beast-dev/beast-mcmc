@@ -64,6 +64,11 @@ public class GradientWrtIncrement implements GradientWrtParameterProvider, Repor
     }
 
     @Override
+    public GradientType getGradientType() {
+        return gradient.getGradientType();
+    }
+
+    @Override
     public int getDimension() {
         return dim;
     }

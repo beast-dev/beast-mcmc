@@ -58,6 +58,12 @@
     <expected>1.0 1.0</expected>
   </assertEqual>
 
+  <assertEqual verbose="true">
+    <message>numerical: gradient type</message>
+    <actual regex="Gradient type: (.*?)\n"><report><maximizeWrtParameter idref="maximizer.numerical"/></report></actual>
+    <expected>numerical</expected>
+  </assertEqual>
+
   <!-- a budget of 3 evaluations stops the run early -->
   <parameter id="x.budget" value="0.01 20.0" lower="0.0"/>
   <gammaPrior shape="3.0" scale="0.5" id="prior.budget">

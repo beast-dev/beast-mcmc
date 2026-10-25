@@ -143,6 +143,11 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     }
 
     @Override
+    public GradientType getGradientType() {
+        return GradientType.combine(derivativeList);
+    }
+
+    @Override
     public int getDimension() {
         return dimension;
     }

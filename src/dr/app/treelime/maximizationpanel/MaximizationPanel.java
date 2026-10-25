@@ -38,6 +38,8 @@ import dr.app.treelime.options.MaximizationOptions.Objective;
 import dr.app.treelime.options.MaximizationOptions.StepSize;
 import dr.app.treelime.options.MaximizationOptions.Treatment;
 import dr.app.treelime.options.Parameter;
+import dr.app.treelime.options.PartitionOptions;
+import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.util.OSType;
 import dr.evomodelxml.continuous.hmc.MaximizeWrtParameterParser;
@@ -182,8 +184,9 @@ public class MaximizationPanel extends TreeLimePanel {
         JPanel tablePanel = new JPanel(new BorderLayout(0, 6));
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(new Insets(6, 12, 12, 12)));
-        tablePanel.add(new JLabel("<html>Parameters to optimize. The tree topology and node heights stay as in the " +
-                "starting tree; fix a parameter here or in the Priors tab.</html>"), BorderLayout.NORTH);
+        tablePanel.add(new JLabel("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's root " +
+                "height row stands for all its internal node heights. The topology stays as in the starting tree.</html>"),
+                BorderLayout.NORTH);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         tablePanel.add(statusLabel, BorderLayout.SOUTH);
 
@@ -257,9 +260,10 @@ public class MaximizationPanel extends TreeLimePanel {
         int optimized = 0;
         int numeric = 0;
         for (Parameter parameter : tableModel.parameters) {
-            if (maximization.classify(parameter, false).isOptimized()) {
+            Treatment treatment = maximization.classify(parameter, false);
+            if (treatment.isOptimized()) {
                 optimized++;
-                if (likelihoodGradient(parameter) == LikelihoodTerm.NUMERIC) {
+                if (treatment != Treatment.NODE_HEIGHTS && likelihoodGradient(parameter) == LikelihoodTerm.NUMERIC) {
                     numeric++;
                 }
             }
@@ -324,6 +328,11 @@ public class MaximizationPanel extends TreeLimePanel {
                 case 4:
                     if (!treatment.isOptimized()) {
                         return "";
+                    }
+                    if (treatment == Treatment.NODE_HEIGHTS) {
+                        PartitionOptions tree = GradientRegistry.findOwner(options, parameter);
+                        return tree instanceof PartitionTreeModel ?
+                                GradientRegistry.nodeHeightPlan(options, (PartitionTreeModel) tree).getDescription() : "";
                     }
                     LikelihoodTerm term = likelihoodGradient(parameter);
                     return term + (term == LikelihoodTerm.NUMERIC || term == LikelihoodTerm.NONE ? "" :

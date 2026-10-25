@@ -27,7 +27,10 @@
 
 package dr.app.treelime.options;
 
+import dr.app.treelime.components.tipdatesampling.TipDateSamplingComponentOptions;
 import dr.app.treelime.types.ClockType;
+import dr.app.treelime.types.PriorType;
+import dr.app.treelime.types.TipDateSamplingType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -136,4 +139,158 @@ public final class GradientRegistry {
         }
         return false;
     }
+
+    /**
+     * How the internal node heights of one tree are optimized: held fixed (with the reason), or with the tree
+     * likelihoods' analytic node-height gradient and, on the prior side, either the tree prior's analytic gradient
+     * plus any CTMC rate reference priors on the tree, or finite differences of the prior compound when another prior
+     * also depends on the heights.
+     */
+    public static final class NodeHeightPlan {
+        public final String fixedReason;
+        public final String treePriorGradient; // element of the tree prior's node-height gradient, or null
+        public final String treePriorLikelihood; // element of the tree prior's likelihood
+        public final String treePriorId;
+        public final boolean numericPrior;
+        public final List<Parameter> ctmcPriors;
+
+        private NodeHeightPlan(String fixedReason, String treePriorGradient, String treePriorLikelihood,
+                               String treePriorId, boolean numericPrior, List<Parameter> ctmcPriors) {
+            this.fixedReason = fixedReason;
+            this.treePriorGradient = treePriorGradient;
+            this.treePriorLikelihood = treePriorLikelihood;
+            this.treePriorId = treePriorId;
+            this.numericPrior = numericPrior;
+            this.ctmcPriors = ctmcPriors;
+        }
+
+        static NodeHeightPlan fixed(String reason) {
+            return new NodeHeightPlan(reason, null, null, null, false, new ArrayList<Parameter>());
+        }
+
+        public boolean isOptimized() {
+            return fixedReason == null;
+        }
+
+        public String getDescription() {
+            if (fixedReason != null) {
+                return "held fixed: " + fixedReason;
+            }
+            return "analytic (<nodeHeightGradient>" + (numericPrior ? ", numeric prior" :
+                    (treePriorGradient != null ? ", <" + treePriorGradient + ">" : "") +
+                            (ctmcPriors.isEmpty() ? "" : ", <ctmcScalePriorNodeHeightGradient>")) + ")";
+        }
+    }
+
+    public static NodeHeightPlan nodeHeightPlan(TreeLimeOptions options, PartitionTreeModel tree) {
+
+        TipDateSamplingComponentOptions tipDates = (TipDateSamplingComponentOptions)
+                options.getComponentOptions(TipDateSamplingComponentOptions.class);
+        if (tipDates != null && tipDates.tipDateSamplingType != TipDateSamplingType.NO_SAMPLING) {
+            return NodeHeightPlan.fixed("gradients with sampled tip dates are not implemented");
+        }
+
+        PartitionTreePrior prior = tree.getPartitionTreePrior();
+        String treePrefix = tree.getPrefix();
+        String gradient = null;
+        String likelihood = null;
+        String id = null;
+        boolean numericPrior = false;
+
+        switch (prior.getNodeHeightPrior()) {
+            case CONSTANT:
+            case EXPONENTIAL:
+            case LOGISTIC:
+            case EXPANSION:
+                gradient = "coalescentGradient";
+                likelihood = "coalescentLikelihood";
+                id = treePrefix + "coalescent";
+                break;
+            case SKYGRID:
+            case SKYGRID_HMC:
+                gradient = "gmrfSkyrideGradient";
+                likelihood = "gmrfSkyGridLikelihood";
+                id = prior.getPrefix() + "skygrid";
+                // a Skygrid shared by several trees differentiates all their heights together
+                numericPrior = treesWithPrior(options, prior) > 1;
+                break;
+            case GMRF_SKYRIDE:
+                gradient = "gmrfSkyrideGradient";
+                likelihood = "gmrfSkyrideLikelihood";
+                id = treePrefix + "skyride";
+                break;
+            case YULE:
+            case BIRTH_DEATH:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+                gradient = "speciationLikelihoodGradient";
+                likelihood = "speciationLikelihood";
+                id = treePrefix + "speciation";
+                break;
+            case YULE_CALIBRATION:
+                return NodeHeightPlan.fixed("gradients with calibration priors are not implemented");
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+                return NodeHeightPlan.fixed("node-height gradients of the serially sampled birth-death model are " +
+                        "not implemented");
+            default:
+                numericPrior = true;
+        }
+        if (prior.getSubtreeTaxonSet() != null) {
+            numericPrior = true;
+        }
+
+        List<Parameter> ctmcPriors = new ArrayList<Parameter>();
+        for (Parameter parameter : options.selectParameters()) {
+            PriorType type = parameter.priorType;
+            if ((parameter.isNodeHeight || parameter.isStatistic) && type != PriorType.NONE_TREE_PRIOR &&
+                    type != PriorType.NONE_STATISTIC && type != PriorType.UNDEFINED) {
+                // a prior on the root height or a tMRCA also depends on the heights
+                numericPrior = true;
+            }
+            if (type == PriorType.CTMC_RATE_REFERENCE_PRIOR) {
+                PartitionTreeModel rateTree = ctmcTree(options, parameter);
+                if (rateTree == null) {
+                    numericPrior = true;
+                } else if (rateTree == tree) {
+                    ctmcPriors.add(parameter);
+                }
+            }
+        }
+        if (numericPrior) {
+            return new NodeHeightPlan(null, null, null, null, true, new ArrayList<Parameter>());
+        }
+        return new NodeHeightPlan(null, gradient, likelihood, id, false, ctmcPriors);
+    }
+
+    private static int treesWithPrior(TreeLimeOptions options, PartitionTreePrior prior) {
+        int count = 0;
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            if (tree.getPartitionTreePrior() == prior) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * @return the tree whose length a CTMC rate reference prior uses, as ParameterPriorGenerator finds it, or null
+     * when that is not a plain clock rate
+     */
+    private static PartitionTreeModel ctmcTree(TreeLimeOptions options, Parameter parameter) {
+        if (parameter.getTaxonSet() != null) {
+            return null;
+        }
+        PartitionOptions owner = findOwner(options, parameter);
+        if (!(owner instanceof PartitionClockModel)) {
+            return null;
+        }
+        PartitionClockModel clock = (PartitionClockModel) owner;
+        if (clock.getClockType() == ClockType.FIXED_LOCAL_CLOCK || clock.performModelAveraging()) {
+            return null;
+        }
+        for (AbstractPartitionData partition : options.getDataPartitions(clock)) {
+            return partition.getPartitionTreeModel();
+        }
+        return null;
+    }
+
 }

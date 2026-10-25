@@ -77,7 +77,7 @@ public class MaximizerStatusTest extends TestCase {
         String report = maximizer.getReport();
         for (String key : new String[]{"Untransformed X: ", "X: ", "Gradient: ", "Gradient type: analytic", "Fx: ",
                 "Time: ", "Count: ", "Status: LBFGS_SUCCESS", "Reason: converged", "Iterations: ", "ValueCalls: ",
-                "GradientCalls: ", "LikelihoodRecomputes: ", "NonFiniteEvaluations: 0", "Seconds: ", "GradientNorm: "}) {
+                "GradientCalls: ", "Restarts: 0", "LikelihoodRecomputes: ", "NonFiniteEvaluations: 0", "Seconds: ", "GradientNorm: "}) {
             assertTrue("report has " + key, report.contains(key));
         }
     }

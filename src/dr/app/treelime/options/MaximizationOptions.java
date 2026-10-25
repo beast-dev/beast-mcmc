@@ -133,11 +133,12 @@ public class MaximizationOptions implements Serializable {
         LOG("log", null),
         LOGIT("logit", null),
         NONE("none", null),
+        NODE_HEIGHTS("node-height ratios: the root and every internal node", null),
         FIXED_BY_PRIOR(null, "fixed in the Priors tab"),
         EXCLUDED(null, "not selected"),
         STATISTIC(null, "a statistic, not a parameter"),
         DISCRETE(null, "discrete"),
-        NODE_HEIGHT(null, "node heights are not optimized yet"),
+        NODE_HEIGHT(null, "node heights need the analytic gradient mode"),
         SIMPLEX(null, "sums to a constant: needs a simplex transform, not available yet"),
         LINKED(null, "linked parameters are not optimized yet"),
         UNSUPPORTED(null, "no suitable transform");
@@ -187,7 +188,14 @@ public class MaximizationOptions implements Serializable {
             return Treatment.FIXED_BY_PRIOR;
         }
         if (parameter.isNodeHeight) {
-            return Treatment.NODE_HEIGHT;
+            // the root height stands for its tree's whole node-height block
+            if (!isAnalytic()) {
+                return Treatment.NODE_HEIGHT;
+            }
+            if (!ignoreSelection && excluded.contains(parameter.getName())) {
+                return Treatment.EXCLUDED;
+            }
+            return Treatment.NODE_HEIGHTS;
         }
         if (parameter.isMaintainedSum) {
             return Treatment.SIMPLEX;

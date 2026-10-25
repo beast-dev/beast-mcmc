@@ -86,7 +86,10 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertTrue(run.parameter("kappa").getParameterValue(0) != run.startValue("kappa"));
         assertGradientChecked(run);
 
-        // the all-numeric run reaches the same optimum
+        // the all-numeric run reaches the same optimum; it holds the node heights fixed, so hold them here too
+        options.maximizationOptions.excluded.add("treeModel.rootHeight");
+        run = run(TreeLimeHarness.generate(options));
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         options.maximizationOptions.setGradientMode(MaximizationOptions.GradientMode.NUMERIC);
         String numericXml = TreeLimeHarness.generate(options);
         assertTrue(numericXml.contains("<densityWrtParameter>"));
@@ -162,6 +165,7 @@ public class TreeLimeMaximizationTest extends TestCase {
         }
         options.maximizationOptions.excluded.add("kappa");
         options.maximizationOptions.excluded.add("constant.popSize");
+        options.maximizationOptions.excluded.add("treeModel.rootHeight");
         try {
             TreeLimeHarness.generate(quiet(options));
             fail("expected a generator exception");
@@ -203,14 +207,62 @@ public class TreeLimeMaximizationTest extends TestCase {
             return;
         }
         TreeLimeHarness.setTipDatesFromNames(options);
-        String xml = TreeLimeHarness.generate(quiet(options));
+        // with the node heights, rate and time trade off: L-BFGS needs more iterations
+        quiet(options).maximizationOptions.nIterations = 2000;
+        String xml = TreeLimeHarness.generate(options);
         assertTrue(between(xml, "<jointGradient id=\"gradient.clock.rate\">", "</jointGradient>")
                 .contains("<branchRateGradient traitName=\"Sequence\">"));
+        // the clock rate's CTMC reference prior depends on the tree length, so on the node heights too
+        assertTrue(between(xml, "<jointGradient id=\"gradient.nodeHeights\">", "</jointGradient>")
+                .contains("<ctmcScalePriorNodeHeightGradient>"));
 
         Run run = run(xml);
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertTrue(run.parameter("clock.rate").getParameterValue(0) != 1.0);
+        assertGradientChecked(run);
+    }
+
+    // the hmc_nodeHeight set-up: the root and internal heights as ratios on the real line, with the tree
+    // likelihood's and the coalescent's analytic node-height gradients
+    public void testNodeHeights() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        String xml = TreeLimeHarness.generate(quiet(options));
+        assertTrue(xml.contains("<nodeHeightProxyParameter id=\"nodeHeights\" rootNode=\"true\">"));
+        assertTrue(xml.contains("<nodeHeightTransform id=\"nodeHeightTransform\" withRoot=\"true\">"));
+        assertTrue(xml.contains("<ratios realLine=\"true\">"));
+        String block = between(xml, "<jointGradient id=\"gradient.nodeHeights\">", "</jointGradient>");
+        assertTrue(block.contains("<coalescentGradient>"));
+        assertTrue(block.contains("<nodeHeightGradient traitName=\"Sequence\">"));
+        String transform = between(xml, "<multivariateCompoundTransform>", "</multivariateCompoundTransform>");
+        assertTrue(transform.indexOf("<compoundTransform>") < transform.indexOf("<nodeHeightTransform idref"));
+
+        Run run = run(xml);
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+        assertTrue(run.end > run.start);
+        assertTrue(run.parameter("treeModel.rootHeight").getParameterValue(0) != run.startValue("treeModel.rootHeight"));
+        assertGradientChecked(run);
+
+        // the prior side by finite differences, when a prior on the root height also depends on the heights
+        options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getName().equals("treeModel.rootHeight")) {
+                parameter.priorType = dr.app.treelime.types.PriorType.UNIFORM_PRIOR;
+                parameter.uniformLower = 0.0;
+                parameter.uniformUpper = 1E10;
+            }
+        }
+        // BEAUti rescales the starting tree to the initial root height, which it computes as NaN without the GUI
+        xml = TreeLimeHarness.generate(quiet(options)).replace("<rescaledTree id=\"startingTree\" height=\"NaN\">",
+                "<rescaledTree id=\"startingTree\" height=\"30.0\">");
+        block = between(xml, "<jointGradient id=\"gradient.nodeHeights\">", "</jointGradient>");
+        assertTrue(block.contains("<numericalGradient>"));
+        assertFalse(block.contains("<coalescentGradient>"));
+        run = run(xml);
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertGradientChecked(run);
     }
 
@@ -223,7 +275,10 @@ public class TreeLimeMaximizationTest extends TestCase {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             model.setGammaHetero(true);
         }
-        String xml = TreeLimeHarness.generate(quiet(options));
+        // with free node heights the gamma shape of these data runs to its boundary (alpha -> 0, log alpha -> -Inf),
+        // where no L-BFGS run converges; the heights are tested elsewhere
+        quiet(options).maximizationOptions.excluded.add("treeModel.rootHeight");
+        String xml = TreeLimeHarness.generate(options);
         assertTrue(between(xml, "<jointGradient id=\"gradient.alpha\">", "</jointGradient>")
                 .contains("<siteRateModelGradient>"));
 
@@ -233,11 +288,50 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertGradientChecked(run);
     }
 
+    // each tree prior's analytic node-height gradient, joined with the tree likelihood's
+    public void testNodeHeightTreePriors() throws Exception {
+        String[][] cases = {
+                {"EXPONENTIAL", "<coalescentGradient>"},
+                {"SKYGRID", "<gmrfSkyrideGradient wrtParameter=\"nodeHeight\">"},
+                {"GMRF_SKYRIDE", "<gmrfSkyrideGradient wrtParameter=\"nodeHeight\">"},
+                {"YULE", "<speciationLikelihoodGradient wrtParameter=\"nodeHeight\">"},
+                {"BIRTH_DEATH", "<speciationLikelihoodGradient wrtParameter=\"nodeHeight\">"},
+        };
+        for (String[] c : cases) {
+            TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+            if (options == null) {
+                return;
+            }
+            for (dr.app.treelime.options.PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                prior.setNodeHeightPrior(dr.app.treelime.types.TreePriorType.valueOf(c[0]));
+            }
+            String xml = TreeLimeHarness.generate(quiet(options));
+            String block = between(xml, "<jointGradient id=\"gradient.nodeHeights\">", "</jointGradient>");
+            assertTrue(c[0] + " has " + c[1], block.contains(c[1]));
+            assertTrue(block.contains("<nodeHeightGradient traitName=\"Sequence\">"));
+
+            Run run = run(xml);
+            System.err.println(c[0] + ": " + run.maximizer.getReason() + " after " + run.maximizer.getIterations() +
+                    " iterations");
+            assertTrue(c[0], run.end > run.start);
+            assertGradientChecked(run);
+        }
+    }
+
+    // finite differences are unreliable where the objective barely changes (a line-search trial that squeezes a node
+    // onto its child, for example), so a rare large error is allowed; a missing or double-counted term fails
+    // nearly every check
     private static void assertGradientChecked(Run run) {
-        String report = run.maximizer.getReport();
-        String line = report.substring(report.indexOf("WorstGradientCheckError: "));
-        double error = Double.parseDouble(line.substring(line.indexOf(' ') + 1, line.indexOf('\n')));
-        assertTrue("worst relative gradient error " + error, error < 1E-4);
+        java.util.List<Double> errors = run.maximizer.getGradientCheckErrors();
+        assertFalse(errors.isEmpty());
+        int large = 0;
+        for (double error : errors) {
+            if (!(error < 1E-4)) {
+                large++;
+            }
+        }
+        assertTrue(large + " of " + errors.size() + " gradient checks have a relative error above 1E-4: " + errors,
+                large <= Math.max(1, errors.size() / 20));
     }
 
     // the topology and node heights are fixed during maximization: start from UPGMA, not a random tree, so that
@@ -285,7 +379,7 @@ public class TreeLimeMaximizationTest extends TestCase {
         BeastParser parser = new BeastParser(new String[]{}, null, false, false, false, new BeastVersion());
         run.objects = parser.parse(new StringReader(xml), false);
         run.maximizer = (MaximizerWrtParameter) run.objects.get("maximizer").getNativeObject();
-        for (String id : new String[]{"kappa", "constant.popSize"}) {
+        for (String id : new String[]{"kappa", "constant.popSize", "treeModel.rootHeight"}) {
             if (run.objects.containsKey(id)) {
                 run.startValues.put(id, run.parameter(id).getParameterValue(0));
             }

@@ -46,7 +46,9 @@ import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Progress;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.ReturnValue;
 import com.github.lbfgs4j.liblbfgs.MutableDouble;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
@@ -79,6 +81,7 @@ public class MaximizerWrtParameter implements Reportable {
     private double cachedValue = Double.NaN;
     private double[] cachedGradient = null;
     private double[] parameterPoint = null;
+    private boolean cachedPointApplied = true; // false when the point's untransformed values were not finite
 
     // the latest run of maximize()
     private ReturnValue status = null;
@@ -93,6 +96,9 @@ public class MaximizerWrtParameter implements Reportable {
     private long startNanos = 0;
     private double[] stallHistory = null;
     private double worstGradientCheckError = Double.NaN;
+    private int restarts = 0;
+    private double valueAtLastRestart = Double.POSITIVE_INFINITY;
+    private final List<Double> gradientCheckErrors = new ArrayList<Double>();
 
     private double lastFiniteValue = 0.0;
     private boolean lastEvaluationNonFinite = false;
@@ -113,6 +119,7 @@ public class MaximizerWrtParameter implements Reportable {
         double relTol = 0.0;
         int stallWindow = 0;
         int checkGradientEvery = 0;
+        int lineSearchRestarts = 0;
         Double epsilon = null;
         Integer past = null;
         Double delta = null;
@@ -149,6 +156,15 @@ public class MaximizerWrtParameter implements Reportable {
          */
         public Settings setCheckGradientEvery(int checkGradientEvery) {
             this.checkGradientEvery = checkGradientEvery;
+            return this;
+        }
+
+        /**
+         * After a failed line search, restart L-BFGS from the best point so far with a cleared memory, up to this
+         * many times, while each restart makes progress (0: stop at the failure).
+         */
+        public Settings setLineSearchRestarts(int lineSearchRestarts) {
+            this.lineSearchRestarts = lineSearchRestarts;
             return this;
         }
 
@@ -241,6 +257,10 @@ public class MaximizerWrtParameter implements Reportable {
         return iterations;
     }
 
+    public int getRestarts() {
+        return restarts;
+    }
+
     public long getValueCalls() {
         return valueCalls;
     }
@@ -251,6 +271,15 @@ public class MaximizerWrtParameter implements Reportable {
 
     public long getNonFiniteEvaluations() {
         return nonFiniteEvaluations;
+    }
+
+    /**
+     * @return the relative errors of the latest run's gradient checks (checkGradientEvery), in order; finite
+     * differences are unreliable where the objective barely changes, so single large values need not mean a wrong
+     * gradient
+     */
+    public List<Double> getGradientCheckErrors() {
+        return new ArrayList<Double>(gradientCheckErrors);
     }
 
     /**
@@ -324,6 +353,7 @@ public class MaximizerWrtParameter implements Reportable {
         stopRequest = null;
         stallHistory = settings.stallWindow > 0 ? new double[settings.stallWindow + 1] : null;
         worstGradientCheckError = Double.NaN;
+        gradientCheckErrors.clear();
         final long recomputesAtStart = getLikelihoodCalculationCount();
         cachedPoint = null;
         useCache = true;
@@ -338,24 +368,57 @@ public class MaximizerWrtParameter implements Reportable {
             return value;
         };
 
+        // iterations before the current L-BFGS run, and the best accepted point, for restarts
+        final int[] previousIterations = {0};
+        final double[] bestValue = {Double.POSITIVE_INFINITY};
+        final double[][] bestPoint = {x.clone()};
+
         final LBFGS_Progress progress = (instance, point, g, fx, xnorm, gnorm, step, n, k, ls) -> {
-            iterations = k;
+            iterations = previousIterations[0] + k;
+            if (fx < bestValue[0]) {
+                bestValue[0] = fx;
+                bestPoint[0] = point.clone();
+            }
             if (settings.printToScreen) {
-                System.out.printf("Iteration %d:\n", k);
+                System.out.printf("Iteration %d:\n", iterations);
                 System.out.printf("\tfx = %f, xnorm = %f, gnorm = %f, step = %f\n", fx, xnorm, gnorm, step);
                 System.out.printf("\tn = %d, k = %d, ls = %d\n", n, k, ls);
                 System.out.printf("\tevaluations = %d, seconds = %.3f\n\n", valueCalls, elapsedSeconds());
             }
-            stopRequest = checkBudgets(fx, k);
+            stopRequest = checkBudgets(fx, iterations);
             return stopRequest == null ? ReturnValue.LBFGS_SUCCESS : ReturnValue.LBFGS_STOP;
         };
 
         final MutableDouble fx = new MutableDouble();
-        status = Lbfgs.lbfgs(dim, x, fx, evaluate, progress, null, paramsBFGS);
+        restarts = 0;
+        while (true) {
+            status = Lbfgs.lbfgs(dim, x, fx, evaluate, progress, null, paramsBFGS);
+            reason = stopRequest != null ? stopRequest : reasonFor(status);
+
+            // a failed line search ends the run; restarting from the best point with a cleared memory (a steepest-
+            // descent first step) often gets past it, as long as each restart has made progress
+            final int remaining = settings.numberIterations > 0 ? settings.numberIterations - iterations : 1;
+            if (reason == Reason.LINE_SEARCH_FAILURE && restarts < settings.lineSearchRestarts && remaining > 0 &&
+                    bestValue[0] < valueAtLastRestart) {
+                restarts++;
+                valueAtLastRestart = bestValue[0];
+                previousIterations[0] = iterations;
+                x = bestPoint[0].clone();
+                if (settings.numberIterations > 0) {
+                    paramsBFGS.max_iterations = remaining;
+                }
+                if (settings.printToScreen) {
+                    LOGGER.info("maximizeWrtParameter: line search failed (" + status + "); restart " + restarts +
+                            " from the best point");
+                }
+                continue;
+            }
+            break;
+        }
+        valueAtLastRestart = Double.POSITIVE_INFINITY;
 
         seconds = elapsedSeconds();
         time += seconds;
-        reason = stopRequest != null ? stopRequest : reasonFor(status);
 
         minimumPoint = x;
         minimumValue = function.valueAt(minimumPoint);
@@ -488,6 +551,7 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Status: ").append(status).append("\n");
             sb.append("Reason: ").append(reason).append("\n");
             sb.append("Iterations: ").append(iterations).append("\n");
+            sb.append("Restarts: ").append(restarts).append("\n");
             sb.append("ValueCalls: ").append(valueCalls).append("\n");
             sb.append("GradientCalls: ").append(gradientCalls).append("\n");
             sb.append("LikelihoodRecomputes: ").append(likelihoodRecomputes).append("\n");
@@ -531,17 +595,23 @@ public class MaximizerWrtParameter implements Reportable {
     private double evaluate(double[] point) {
 
         if (useCache && cachedPoint != null && Arrays.equals(point, cachedPoint)) {
-            if (!Arrays.equals(point, parameterPoint)) {
+            if (cachedPointApplied && !Arrays.equals(point, parameterPoint)) {
                 setPoint(point);
             }
             return cachedValue;
         }
 
-        setPoint(point);
-        final double[] argument = parameter.getParameterValues();
-
         ++valueCalls;
-        final double logLikelihood = evaluateLogLikelihood();
+        // a step can overflow a transform (e.g. a log-scale root height to +Inf); leave the model where it was
+        final double[] proposed = transform != null ? transform.inverse(point, 0, point.length) : point;
+        final boolean finitePoint = allFinite(proposed);
+        double[] argument = proposed;
+        double logLikelihood = Double.NaN;
+        if (finitePoint) {
+            setPoint(point);
+            argument = parameter.getParameterValues();
+            logLikelihood = evaluateLogLikelihood();
+        }
 
         double value;
         double[] result;
@@ -582,6 +652,7 @@ public class MaximizerWrtParameter implements Reportable {
         }
 
         cachedPoint = point.clone();
+        cachedPointApplied = finitePoint;
         cachedValue = value;
         cachedGradient = result;
 
@@ -591,6 +662,15 @@ public class MaximizerWrtParameter implements Reportable {
         }
 
         return value;
+    }
+
+    private static boolean allFinite(double[] values) {
+        for (double value : values) {
+            if (!Double.isFinite(value)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -618,8 +698,17 @@ public class MaximizerWrtParameter implements Reportable {
             minus[i] -= h * direction[i];
         }
         final double numeric = (objectiveOnly(plus) - objectiveOnly(minus)) / (2 * h);
+        if (!Double.isFinite(numeric)) {
+            // no finite difference here: skip the check
+            setPoint(point);
+            cachedPoint = point;
+            cachedValue = value;
+            cachedGradient = grad;
+            return;
+        }
         final double error = Math.abs(numeric - directional) / Math.max(1.0, Math.abs(numeric));
 
+        gradientCheckErrors.add(error);
         if (Double.isFinite(error) && !(error <= worstGradientCheckError)) {
             worstGradientCheckError = error;
         }
@@ -633,6 +722,9 @@ public class MaximizerWrtParameter implements Reportable {
     }
 
     private double objectiveOnly(double[] point) {
+        if (transform != null && !allFinite(transform.inverse(point, 0, point.length))) {
+            return Double.NaN; // the transform overflows here; leave the model where it is
+        }
         setPoint(point);
         final double[] argument = parameter.getParameterValues();
         double value = -evaluateLogLikelihood();

@@ -25,16 +25,16 @@
  *
  */
 
-package test.dr.app.beauti;
+package test.dr.app.treelime;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.types.ClockType;
+import dr.app.treelime.options.TreeLimeOptions;
+import dr.app.treelime.options.PartitionClockModel;
+import dr.app.treelime.types.ClockType;
 import dr.evolution.util.Taxa;
 import junit.framework.TestCase;
 
 /**
- * The mixed-effects clock XML that BEAUti writes must parse (plan 3, E7): one fixed effect and one category per
+ * The mixed-effects clock XML that TreeLime writes must parse (plan 3, E7): one fixed effect and one category per
  * monophyletic taxon set, consecutively numbered, every id prefixed so that several clock models can coexist, and
  * each clock's priors in the prior block.
  */
@@ -53,7 +53,7 @@ public class MixedEffectsClockGeneratorTest extends TestCase {
     }
 
     private void check(boolean unlinkClocks) throws Exception {
-        BeautiOptions options = BeautiGeneratorHarness.importData(BeautiGeneratorHarness.TWO_PARTITIONS);
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
         if (options == null) {
             return;
         }
@@ -73,19 +73,24 @@ public class MixedEffectsClockGeneratorTest extends TestCase {
             options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
         }
 
+        // TreeLime's default UPGMA starting tree does not honour monophyletic taxon sets; BEAUti's random tree does
+        for (dr.app.treelime.options.PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            tree.setStartingTreeType(dr.app.treelime.types.StartingTreeType.RANDOM);
+        }
+
         if (unlinkClocks) {
-            BeautiGeneratorHarness.unlinkClockModels(options);
+            TreeLimeHarness.unlinkClockModels(options);
             assertEquals(2, options.getPartitionClockModels().size());
         }
         for (PartitionClockModel clock : options.getPartitionClockModels()) {
             clock.setClockType(ClockType.MIXED_EFFECTS_CLOCK);
         }
 
-        String xml = BeautiGeneratorHarness.generateAndParse(options);
+        String xml = TreeLimeHarness.generateAndParse(options);
         assertTrue(xml.contains("usePreOrder=\"true\""));
         for (PartitionClockModel clock : options.getPartitionClockModels()) {
             String prefix = clock.getPrefix();
-            // the rate prior is left out when BEAUti fixes the rate (no tip dates in this data set)
+            // the rate prior is left out when TreeLime fixes the rate (no tip dates in this data set)
             for (String prior : new String[]{"scalePrior", "interceptPrior",
                     "fixedEffectsLikelihood1", "fixedEffectsLikelihood2"}) {
                 assertTrue("prior block refers to " + prefix + prior,

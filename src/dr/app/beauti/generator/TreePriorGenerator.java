@@ -792,63 +792,67 @@ public class TreePriorGenerator extends Generator {
             Parameter parameter = prior.getParameter(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
             writer.writeOpenTag(PriorParsers.GAMMA_PRIOR,
                     new Attribute[]{
-                            new Attribute.Default<>(XMLParser.ID, priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR),
+                            new Attribute.Default<>(XMLParser.ID, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR),
                             new Attribute.Default<>(GammaDistributionModelParser.SHAPE, parameter.shape),
                             new Attribute.Default<>(GammaDistributionModelParser.SCALE, parameter.scale),
                             new Attribute.Default<>(GammaDistributionModelParser.OFFSET, parameter.offset)
                     }
             );
-            writer.writeIDref(ParameterParser.PARAMETER, priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
+            writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
             writer.writeCloseTag(PriorParsers.GAMMA_PRIOR);
 
-            //add gradient information to XML file, used by an HMC transition kernel mix and by gradient-based maximization
-            writer.writeOpenTag(GMRFSkyrideGradientParser.NAME,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, priorPrefix + "gmrfGradientPop"),
-                            new Attribute.Default<String>(GMRFSkyrideGradientParser.WRT_PARAMETER, "logPopulationSizes")
-                    }
-            );
-            writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, priorPrefix + "skygrid");
-            writer.writeCloseTag(GMRFSkyrideGradientParser.NAME);
+            //add gradient information to XML file in case of an HMC transition kernel mix
+            if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC) {
 
-            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, priorPrefix + "skygrid.parameters")
-                    }
-            );
-            writer.writeIDref(ParameterParser.PARAMETER, priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
-            writer.writeIDref(ParameterParser.PARAMETER, priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE);
-            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+                writer.writeOpenTag(GMRFSkyrideGradientParser.NAME,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "gmrfGradientPop"),
+                                new Attribute.Default<String>(GMRFSkyrideGradientParser.WRT_PARAMETER, "logPopulationSizes")
+                        }
+                );
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, "skygrid");
+                writer.writeCloseTag(GMRFSkyrideGradientParser.NAME);
 
-            writer.writeOpenTag(GMRFSkyrideGradientParser.NAME,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, priorPrefix + "gmrfGradientPrec"),
-                            new Attribute.Default<String>(GMRFSkyrideGradientParser.WRT_PARAMETER, "precision")
-                    }
-            );
-            writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, priorPrefix + "skygrid");
-            writer.writeCloseTag(GMRFSkyrideGradientParser.NAME);
+                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "skygrid.parameters")
+                        }
+                );
+                writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
+                writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_LOGPOPSIZE);
+                writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
 
-            writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, priorPrefix + "joint.skygrid.precision")
-                    }
-            );
-            writer.writeIDref(GMRFSkyrideGradientParser.NAME, priorPrefix + "gmrfGradientPrec");
-            writer.writeOpenTag(GradientWrapperParser.NAME);
-            writer.writeIDref(PriorParsers.GAMMA_PRIOR, priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
-            writer.writeIDref(ParameterParser.PARAMETER, priorPrefix + GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
-            writer.writeCloseTag(GradientWrapperParser.NAME);
-            writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
+                writer.writeOpenTag(GMRFSkyrideGradientParser.NAME,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "gmrfGradientPrec"),
+                                new Attribute.Default<String>(GMRFSkyrideGradientParser.WRT_PARAMETER, "precision")
+                        }
+                );
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, "skygrid");
+                writer.writeCloseTag(GMRFSkyrideGradientParser.NAME);
 
-            writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, priorPrefix + "full.skygrid.gradient")
-                    }
-            );
-            writer.writeIDref(JointGradientParser.JOINT_GRADIENT, priorPrefix + "joint.skygrid.precision");
-            writer.writeIDref(GMRFSkyrideGradientParser.NAME, priorPrefix + "gmrfGradientPop");
-            writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
+                writer.writeOpenTag(JointGradientParser.JOINT_GRADIENT,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "joint.skygrid.precision")
+                        }
+                );
+                writer.writeIDref(GMRFSkyrideGradientParser.NAME, "gmrfGradientPrec");
+                writer.writeOpenTag(GradientWrapperParser.NAME);
+                writer.writeIDref(PriorParsers.GAMMA_PRIOR, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
+                writer.writeIDref(ParameterParser.PARAMETER, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION);
+                writer.writeCloseTag(GradientWrapperParser.NAME);
+                writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
+
+                writer.writeOpenTag(CompoundGradientParser.COMPOUND_GRADIENT,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID,  "full.skygrid.gradient")
+                        }
+                );
+                writer.writeIDref(JointGradientParser.JOINT_GRADIENT, "joint.skygrid.precision");
+                writer.writeIDref(GMRFSkyrideGradientParser.NAME, "gmrfGradientPop");
+                writer.writeCloseTag(CompoundGradientParser.COMPOUND_GRADIENT);
+
+            }
         }
     }
 

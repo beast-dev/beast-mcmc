@@ -25,16 +25,16 @@
  *
  */
 
-package test.dr.app.beauti;
+package test.dr.app.treelime;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.treelime.options.TreeLimeOptions;
+import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.options.PartitionTreePrior;
+import dr.app.treelime.types.TreePriorType;
 import junit.framework.TestCase;
 
 /**
- * The Skygrid XML that BEAUti writes must parse with its gradient blocks (plan 3, G4): written for Skygrid and
+ * The Skygrid XML that TreeLime writes must parse with its gradient blocks (plan 3, G4): written for Skygrid and
  * Skygrid-HMC alike, with ids prefixed so that several tree priors can coexist.
  */
 public class SkygridGeneratorTest extends TestCase {
@@ -45,52 +45,52 @@ public class SkygridGeneratorTest extends TestCase {
 
     public void testOneTree() throws Exception {
         for (TreePriorType type : new TreePriorType[]{TreePriorType.SKYGRID, TreePriorType.SKYGRID_HMC}) {
-            BeautiOptions options = BeautiGeneratorHarness.importData(BeautiGeneratorHarness.TWO_PARTITIONS);
+            TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
             if (options == null) {
                 return;
             }
             setSkygrid(options, type);
-            checkGradients(BeautiGeneratorHarness.generateAndParse(options), options);
+            checkGradients(TreeLimeHarness.generateAndParse(options), options);
         }
     }
 
     // two loci sharing one Skygrid
     public void testTwoTreesSharedPrior() throws Exception {
         for (TreePriorType type : new TreePriorType[]{TreePriorType.SKYGRID, TreePriorType.SKYGRID_HMC}) {
-            BeautiOptions options = BeautiGeneratorHarness.importData(BeautiGeneratorHarness.TWO_PARTITIONS);
+            TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
             if (options == null) {
                 return;
             }
-            BeautiGeneratorHarness.unlinkTreeModels(options);
+            TreeLimeHarness.unlinkTreeModels(options);
             assertEquals(2, options.getPartitionTreeModels().size());
             assertTrue(options.isShareSameTreePrior());
             setSkygrid(options, type);
-            checkGradients(BeautiGeneratorHarness.generateAndParse(options), options);
+            checkGradients(TreeLimeHarness.generateAndParse(options), options);
         }
     }
 
     // a separate, prefixed Skygrid per tree
     public void testTwoTreesSeparatePriors() throws Exception {
         for (TreePriorType type : new TreePriorType[]{TreePriorType.SKYGRID, TreePriorType.SKYGRID_HMC}) {
-            BeautiOptions options = BeautiGeneratorHarness.importData(BeautiGeneratorHarness.TWO_PARTITIONS);
+            TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
             if (options == null) {
                 return;
             }
-            BeautiGeneratorHarness.unlinkTreeModels(options);
+            TreeLimeHarness.unlinkTreeModels(options);
             options.unLinkTreePriors(options.getPartitionTreeModels().get(0));
             assertEquals(2, options.getPartitionTreePriors().size());
             setSkygrid(options, type);
-            checkGradients(BeautiGeneratorHarness.generateAndParse(options), options);
+            checkGradients(TreeLimeHarness.generateAndParse(options), options);
         }
     }
 
-    private static void setSkygrid(BeautiOptions options, TreePriorType type) {
+    private static void setSkygrid(TreeLimeOptions options, TreePriorType type) {
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             prior.setNodeHeightPrior(type);
         }
     }
 
-    private static void checkGradients(String xml, BeautiOptions options) {
+    private static void checkGradients(String xml, TreeLimeOptions options) {
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             String prefix = prior.getPrefix();
             for (String id : new String[]{"gmrfGradientPop", "gmrfGradientPrec", "full.skygrid.gradient"}) {

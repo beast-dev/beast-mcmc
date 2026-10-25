@@ -37,18 +37,31 @@ import dr.app.treelime.components.linkedparameters.LinkedParameterComponentFacto
 import dr.app.treelime.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
 import dr.app.treelime.components.sequenceerror.SequenceErrorModelComponentFactory;
 import dr.app.treelime.components.tipdatesampling.TipDateSamplingComponentFactory;
+import dr.app.beast.BeastParser;
+import dr.app.beast.BeastVersion;
 import dr.app.treelime.generator.BeastGenerator;
+import dr.app.treelime.options.AbstractPartitionData;
+import dr.app.treelime.options.PartitionClockModel;
+import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.util.TreeLimeImporter;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.xml.XMLObject;
+import junit.framework.Assert;
 
 import java.io.File;
+import java.io.StringReader;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Drives TreeLime's generator without the GUI: import data, let a test set the options, write the XML.
+ * Drives TreeLime's generator without the GUI: import data, let a test set the options, write the XML, and optionally
+ * check its ids and parse it with BEAST.
  */
 class TreeLimeHarness {
 
@@ -99,6 +112,68 @@ class TreeLimeHarness {
             double height = mostRecent.getTimeValue() - taxon.getDate().getTimeValue();
             taxon.setAttribute("_height", height);
             options.maximumTipHeight = Math.max(options.maximumTipHeight, height);
+        }
+    }
+
+    // as the Data panel's "unlink clock models" does
+    static void unlinkClockModels(TreeLimeOptions options) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            if (!clockModel.getName().equals(partition.getName())) {
+                clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
+                partition.setPartitionClockModel(clockModel);
+            }
+            clockModel.setPartitionTreeModel(partition.getPartitionTreeModel());
+        }
+    }
+
+    // as the Data panel's "unlink trees" does (which also unlinks the clocks and links the tree priors)
+    static void unlinkTreeModels(TreeLimeOptions options) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+            if (!treeModel.getName().equals(partition.getName())) {
+                treeModel = new PartitionTreeModel(options, partition.getName(), treeModel);
+                partition.setPartitionTreeModel(treeModel);
+            }
+            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            if (!clockModel.getName().equals(partition.getName())) {
+                clockModel = new PartitionClockModel(options, partition.getName(), clockModel);
+                partition.setPartitionClockModel(clockModel);
+            }
+            clockModel.setPartitionTreeModel(treeModel);
+        }
+        options.linkTreePriors(options.getPartitionTreeModels().get(0).getPartitionTreePrior());
+    }
+
+    /**
+     * Writes the XML, checks that every idref resolves and no id repeats, and parses it with a one-iteration
+     * maximizer; returns the XML text.
+     */
+    static String generateAndParse(TreeLimeOptions options) throws Exception {
+        options.maximizationOptions.nIterations = 1;
+        options.maximizationOptions.printToScreen = false;
+        String xml = generate(options);
+        assertIdsResolve(xml);
+
+        // the reports would write files: drop them
+        String parsed = xml.substring(0, xml.indexOf("<!-- The optimum")) + "</beast>\n";
+        BeastParser parser = new BeastParser(new String[]{}, null, false, false, false, new BeastVersion());
+        parser.parse(new StringReader(parsed), XMLObject.class);
+        return xml;
+    }
+
+    static void assertIdsResolve(String xml) {
+        Map<String, Integer> ids = new HashMap<>();
+        Matcher id = Pattern.compile("\\sid=\"([^\"]+)\"").matcher(xml);
+        while (id.find()) {
+            ids.merge(id.group(1), 1, Integer::sum);
+        }
+        for (Map.Entry<String, Integer> entry : ids.entrySet()) {
+            Assert.assertEquals("duplicate id " + entry.getKey(), 1, (int) entry.getValue());
+        }
+        Matcher idref = Pattern.compile("idref=\"([^\"]+)\"").matcher(xml);
+        while (idref.find()) {
+            Assert.assertTrue("dangling idref " + idref.group(1), ids.containsKey(idref.group(1)));
         }
     }
 

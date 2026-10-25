@@ -25,15 +25,15 @@
  *
  */
 
-package test.dr.app.beauti;
+package test.dr.app.treelime;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.types.ClockType;
+import dr.app.treelime.options.TreeLimeOptions;
+import dr.app.treelime.options.PartitionClockModel;
+import dr.app.treelime.types.ClockType;
 import junit.framework.TestCase;
 
 /**
- * The HMC relaxed clock XML that BEAUti writes, with one clock and with two unlinked (prefixed) clocks, must parse
+ * The HMC relaxed clock XML that TreeLime writes, with one clock and with two unlinked (prefixed) clocks, must parse
  * with every idref resolved and each clock's priors in the prior block.
  */
 public class HmcClockGeneratorTest extends TestCase {
@@ -51,18 +51,18 @@ public class HmcClockGeneratorTest extends TestCase {
     }
 
     private void check(boolean unlinkClocks) throws Exception {
-        BeautiOptions options = BeautiGeneratorHarness.importData(BeautiGeneratorHarness.TWO_PARTITIONS);
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
         if (options == null) {
             return;
         }
         if (unlinkClocks) {
-            BeautiGeneratorHarness.unlinkClockModels(options);
+            TreeLimeHarness.unlinkClockModels(options);
             assertEquals(2, options.getPartitionClockModels().size());
         }
         for (PartitionClockModel clock : options.getPartitionClockModels()) {
             clock.setClockType(ClockType.HMC_CLOCK);
         }
-        String xml = BeautiGeneratorHarness.generateAndParse(options);
+        String xml = TreeLimeHarness.generateAndParse(options);
         for (PartitionClockModel clock : options.getPartitionClockModels()) {
             String prefix = clock.getPrefix();
             for (String prior : new String[]{"ratesPrior", "scalePrior"}) {

@@ -40,15 +40,15 @@ import dr.evolution.datatype.Nucleotides;
 public abstract class PartitionOptions extends ModelOptions {
 
     private String name;
-    protected final BeautiOptions options;
+    protected final TreeLimeOptions options;
 
 //    protected double[] avgRootAndRate = new double[]{1.0, 1.0};
 
-    public PartitionOptions(BeautiOptions options) {
+    public PartitionOptions(TreeLimeOptions options) {
         this.options = options;
     }
 
-    public PartitionOptions(BeautiOptions options, String name) {
+    public PartitionOptions(TreeLimeOptions options, String name) {
         this.options = options;
         this.name = name;
     }
@@ -108,7 +108,7 @@ public abstract class PartitionOptions extends ModelOptions {
         return options.getDataPartitions(this).get(0).getDataType();
     }
 
-    public BeautiOptions getOptions() {
+    public TreeLimeOptions getOptions() {
         return options;
     }
 

@@ -30,7 +30,7 @@ package dr.app.treelime.ancestralstatespanel;
 import dr.app.treelime.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.treelime.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.treelime.options.AbstractPartitionData;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.SequenceErrorType;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.util.OSType;
@@ -92,7 +92,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 //    private JCheckBox dNdSCountingCheck = new JCheckBox(
 //            "Reconstruct synonymous/non-synonymous counts");
 
-    final BeautiOptions options;
+    final TreeLimeOptions options;
 
     //    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR, SequenceErrorType.BASE_ALL).toArray());
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
@@ -100,7 +100,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
     AncestralStatesComponentOptions ancestralStatesComponent;
     SequenceErrorModelComponentOptions sequenceErrorComponent;
 
-    public AncestralStatesOptionsPanel(final AncestralStatesPanel ancestralStatesPanel, final BeautiOptions options, final AbstractPartitionData partition) {
+    public AncestralStatesOptionsPanel(final AncestralStatesPanel ancestralStatesPanel, final TreeLimeOptions options, final AbstractPartitionData partition) {
 
         super(12, (OSType.isMac() ? 6 : 24));
         setOpaque(false);

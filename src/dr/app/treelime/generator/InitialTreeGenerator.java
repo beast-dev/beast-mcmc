@@ -55,7 +55,7 @@ import java.util.List;
 public class InitialTreeGenerator extends Generator {
     final static public String STARTING_TREE = "startingTree";
 
-    public InitialTreeGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public InitialTreeGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

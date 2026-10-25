@@ -78,7 +78,7 @@ import static dr.inferencexml.distribution.shrinkage.BayesianBridgeLikelihoodPar
  */
 public class ClockModelGenerator extends Generator {
 
-    public ClockModelGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public ClockModelGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

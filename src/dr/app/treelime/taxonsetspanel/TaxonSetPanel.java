@@ -27,11 +27,11 @@
 
 package dr.app.treelime.taxonsetspanel;
 
-import dr.app.treelime.BeautiApp;
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeApp;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.ComboBoxRenderer;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
@@ -69,7 +69,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class TaxonSetPanel extends BeautiPanel implements Exportable {
+public class TaxonSetPanel extends TreeLimePanel implements Exportable {
 
     private static final long serialVersionUID = -3138832889782090814L;
 
@@ -81,8 +81,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     protected String TAXA;
     protected String TAXON;
 
-    protected BeautiFrame frame = null;
-    protected BeautiOptions options = null;
+    protected TreeLimeFrame frame = null;
+    protected TreeLimeOptions options = null;
 
     ImportTaxonSetsAction importTaxonSetsAction = new ImportTaxonSetsAction();
 
@@ -118,7 +118,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     public TaxonSetPanel() {
     }
 
-    public TaxonSetPanel(BeautiFrame parent) {
+    public TaxonSetPanel(TreeLimeFrame parent) {
 
         this.frame = parent;
 
@@ -224,8 +224,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         Icon includeIcon = null, excludeIcon = null;
         try {
-            includeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/include.png"));
-            excludeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/exclude.png"));
+            includeIcon = new ImageIcon(IconUtils.getImage(TreeLimeApp.class, "images/include.png"));
+            excludeIcon = new ImageIcon(IconUtils.getImage(TreeLimeApp.class, "images/exclude.png"));
         } catch (Exception e) {
             // do nothing
         }
@@ -614,7 +614,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
 
         this.options = options;
 
@@ -630,7 +630,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetsTableModel.fireTableDataChanged();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
 //		options.datesUnits = unitsCombo.getSelectedIndex();
 //		options.datesDirection = directionCombo.getSelectedIndex();
 //		options.translation = translationCombo.getSelectedIndex();

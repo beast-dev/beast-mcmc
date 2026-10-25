@@ -43,10 +43,10 @@ public class TreeModelOptions extends ModelOptions {
     private static final long serialVersionUID = 5328826852511460749L;
 
     // Instance variables
-    private final BeautiOptions options;
+    private final TreeLimeOptions options;
 
 
-    public TreeModelOptions(BeautiOptions options) {
+    public TreeModelOptions(TreeLimeOptions options) {
         this.options = options;
 
         initModelParametersAndOpererators();

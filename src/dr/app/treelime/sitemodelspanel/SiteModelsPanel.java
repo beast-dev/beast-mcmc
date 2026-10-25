@@ -27,10 +27,10 @@
 
 package dr.app.treelime.sitemodelspanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.options.AbstractPartitionData;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionSubstitutionModel;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
@@ -56,7 +56,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class SiteModelsPanel extends BeautiPanel implements Exportable {
+public class SiteModelsPanel extends TreeLimePanel implements Exportable {
 
     public final static boolean DEBUG = false;
 
@@ -66,7 +66,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private JTable modelTable = null;
     private ModelTableModel modelTableModel = null;
-    private BeautiOptions options = null;
+    private TreeLimeOptions options = null;
 
     private JPanel modelPanelParent;
     private PartitionSubstitutionModel currentModel = null;
@@ -74,13 +74,13 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     private TitledBorder modelBorder;
     private CloneModelDialog cloneModelDialog = null;
 
-    private final BeautiFrame frame;
+    private final TreeLimeFrame frame;
     //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
     CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
-    public SiteModelsPanel(final BeautiFrame frame, Action removeModelAction) {
+    public SiteModelsPanel(final TreeLimeFrame frame, Action removeModelAction) {
 
         super();
 
@@ -175,7 +175,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
 
         if (DEBUG) {
             Logger.getLogger("dr.app.treelime").info("ModelsPanel.setOptions");
@@ -206,7 +206,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
     }
 
     private void fireModelsChanged() {

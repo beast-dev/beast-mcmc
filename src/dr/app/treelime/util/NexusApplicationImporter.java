@@ -34,7 +34,7 @@ import dr.app.beauti.util.CharSet;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionSubstitutionModel;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.types.StartingTreeType;
@@ -128,7 +128,7 @@ public class NexusApplicationImporter extends NexusImporter {
      *                             if PAUP block is poorly formed
      * @throws java.io.IOException if I/O fails
      */
-    public PartitionSubstitutionModel parsePAUPBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
+    public PartitionSubstitutionModel parsePAUPBlock(TreeLimeOptions options, List<CharSet> charSets) throws ImportException, IOException {
         PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs");
         readTopLevelBlock(options, model, charSets);
         return model;
@@ -144,7 +144,7 @@ public class NexusApplicationImporter extends NexusImporter {
      *                             if MRBAYES block is poorly formed
      * @throws java.io.IOException if I/O fails
      */
-    public PartitionSubstitutionModel parseMrBayesBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
+    public PartitionSubstitutionModel parseMrBayesBlock(TreeLimeOptions options, List<CharSet> charSets) throws ImportException, IOException {
         PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs");
         readTopLevelBlock(options, model, charSets);
         return model;
@@ -257,7 +257,7 @@ public class NexusApplicationImporter extends NexusImporter {
      *                             if top-level block is poorly formed
      * @throws java.io.IOException if I/O fails
      */
-    private void readTopLevelBlock(BeautiOptions options, PartitionSubstitutionModel model, List<CharSet> charSets)
+    private void readTopLevelBlock(TreeLimeOptions options, PartitionSubstitutionModel model, List<CharSet> charSets)
             throws ImportException, IOException {
         boolean done = false;
 
@@ -343,7 +343,7 @@ public class NexusApplicationImporter extends NexusImporter {
         }
     }
 
-    private void readMCMCCommand(BeautiOptions options) throws ImportException, IOException {
+    private void readMCMCCommand(TreeLimeOptions options) throws ImportException, IOException {
         boolean done = false;
 
         while (!done) {

@@ -54,13 +54,13 @@ public abstract class Generator {
 
     protected static final String COALESCENT = "coalescent";
 
-    protected final BeautiOptions options;
+    protected final TreeLimeOptions options;
 
-    protected Generator(BeautiOptions options) {
+    protected Generator(TreeLimeOptions options) {
         this.options = options;
     }
 
-    public Generator(BeautiOptions options, ComponentFactory[] components) {
+    public Generator(TreeLimeOptions options, ComponentFactory[] components) {
         this.options = options;
         if (components != null) {
             for (ComponentFactory component : components) {

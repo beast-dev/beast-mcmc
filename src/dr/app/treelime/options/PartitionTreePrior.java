@@ -61,7 +61,7 @@ public class PartitionTreePrior extends PartitionOptions {
     private Taxa subtreeTaxonSet = null;
     private TreePriorType subtreePrior = null;
 
-    public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
+    public PartitionTreePrior(TreeLimeOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
 
         initModelParametersAndOpererators();
@@ -74,7 +74,7 @@ public class PartitionTreePrior extends PartitionOptions {
      * @param name    the name of the new model
      * @param source  the source model
      */
-    public PartitionTreePrior(BeautiOptions options, String name, PartitionTreePrior source) {
+    public PartitionTreePrior(TreeLimeOptions options, String name, PartitionTreePrior source) {
         super(options, name);
 
         this.nodeHeightPrior = source.nodeHeightPrior;
@@ -599,7 +599,7 @@ public class PartitionTreePrior extends PartitionOptions {
         this.calibCorrectionType = calibCorrectionType;
     }
 
-    public BeautiOptions getOptions() {
+    public TreeLimeOptions getOptions() {
         return options;
     }
 

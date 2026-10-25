@@ -81,7 +81,7 @@ public class OperatorsGenerator extends Generator {
 
     public static final boolean NEW_AVMVN = true;
 
-    public OperatorsGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public OperatorsGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

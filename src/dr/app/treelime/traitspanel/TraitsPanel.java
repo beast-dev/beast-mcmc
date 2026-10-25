@@ -27,11 +27,11 @@
 
 package dr.app.treelime.traitspanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.ComboBoxRenderer;
 import dr.app.treelime.datapanel.DataPanel;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.TraitData;
 import dr.app.treelime.options.TraitGuesser;
 import dr.app.treelime.util.PanelUtils;
@@ -57,7 +57,7 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  */
-public class TraitsPanel extends BeautiPanel implements Exportable {
+public class TraitsPanel extends TreeLimePanel implements Exportable {
 
     private static final long serialVersionUID = 5283922195494563924L;
 
@@ -81,10 +81,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private final JTable dataTable;
     private final DataTableModel dataTableModel;
 
-    private final BeautiFrame frame;
+    private final TreeLimeFrame frame;
     private final DataPanel dataPanel;
 
-    private BeautiOptions options = null;
+    private TreeLimeOptions options = null;
 
     private TraitData currentTrait = null; // current trait
 
@@ -98,7 +98,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     GuessTraitsAction guessTraitsAction = new GuessTraitsAction();
     SetValueAction setValueAction = new SetValueAction();
 
-    public TraitsPanel(BeautiFrame parent, DataPanel dataPanel, Action importTraitsAction) {
+    public TraitsPanel(TreeLimeFrame parent, DataPanel dataPanel, Action importTraitsAction) {
 
         this.frame = parent;
         this.dataPanel = dataPanel;
@@ -244,7 +244,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
         this.options = options;
 
         updateButtons();
@@ -269,7 +269,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
 //        int selRow = predictorsTable.getSelectedRow();
 //        if (selRow >= 0 && options.traitsOptions.selecetedTraits.size() > 0) {
 //            selectedTrait = options.traitsOptions.selecetedTraits.get(selRow);
@@ -497,7 +497,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         boolean success = dataPanel.createPartitionFromTraits(traits, null, TraitsPanel.this);
 
         if (success) {
-            frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
+            frame.switchToPanel(TreeLimeFrame.DATA_PARTITIONS);
         }
     }
 

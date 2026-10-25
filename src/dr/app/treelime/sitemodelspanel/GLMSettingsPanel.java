@@ -27,11 +27,11 @@
 
 package dr.app.treelime.sitemodelspanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.Predictor;
 import dr.app.treelime.options.TraitData;
-import dr.app.treelime.util.BEAUTiImporter;
+import dr.app.treelime.util.TreeLimeImporter;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
@@ -61,16 +61,16 @@ public class GLMSettingsPanel extends JPanel {
             "file. Taxa should be in the first column and the trait names<br>" +
             "in the first row</html>";
 
-    private final BeautiFrame frame;
+    private final TreeLimeFrame frame;
     private JDialog dialog;
-    private BeautiOptions options;
+    private TreeLimeOptions options;
 
     private TraitData trait;
 
     public final JTable predictorsTable;
     private final PredictorsTableModel predictorsTableModel;
 
-    public GLMSettingsPanel(BeautiFrame frame) {
+    public GLMSettingsPanel(TreeLimeFrame frame) {
         this.frame = frame;
 
         predictorsTableModel = new PredictorsTableModel();
@@ -150,11 +150,11 @@ public class GLMSettingsPanel extends JPanel {
         add(toolBar1, BorderLayout.NORTH);
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
         this.options = options;
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
     }
 
     public void setDialog(final JDialog dialog) {
@@ -234,7 +234,7 @@ public class GLMSettingsPanel extends JPanel {
 
         if (files != null && files.length != 0) {
             try {
-                BEAUTiImporter beautiImporter = new BEAUTiImporter(frame, options);
+                TreeLimeImporter beautiImporter = new TreeLimeImporter(frame, options);
                 beautiImporter.importPredictors(files[0], trait);
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",

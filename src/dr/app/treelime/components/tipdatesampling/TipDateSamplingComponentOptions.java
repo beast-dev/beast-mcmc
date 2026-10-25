@@ -46,9 +46,9 @@ import java.util.Map;
  */
 public class TipDateSamplingComponentOptions implements ComponentOptions {
 
-    private final BeautiOptions options;
+    private final TreeLimeOptions options;
 
-    public TipDateSamplingComponentOptions(final BeautiOptions options) {
+    public TipDateSamplingComponentOptions(final TreeLimeOptions options) {
         this.options = options;
     }
 

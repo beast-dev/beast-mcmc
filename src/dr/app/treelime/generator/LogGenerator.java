@@ -63,7 +63,7 @@ public class LogGenerator extends Generator {
     private final static String TREE_FILE_LOG = "treeFileLog";
     private final static String SUB_TREE_FILE_LOG = "substTreeFileLog";
 
-    public LogGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public LogGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

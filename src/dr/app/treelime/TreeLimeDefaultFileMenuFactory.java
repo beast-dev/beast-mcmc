@@ -1,5 +1,5 @@
 /*
- * BeautiDefaultFileMenuFactory.java
+ * TreeLimeDefaultFileMenuFactory.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -41,10 +41,10 @@ import java.awt.event.ActionEvent;
  *         Date: Dec 26, 2004
  *         Time: 11:01:06 AM
  */
-public class BeautiDefaultFileMenuFactory implements MenuFactory {
+public class TreeLimeDefaultFileMenuFactory implements MenuFactory {
 
 
-    public BeautiDefaultFileMenuFactory() {
+    public TreeLimeDefaultFileMenuFactory() {
     }
 
     public String getMenuName() {
@@ -79,7 +79,7 @@ public class BeautiDefaultFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
-        item = new JMenuItem(((BeautiFrame)frame).getImportTraitsAction());
+        item = new JMenuItem(((TreeLimeFrame)frame).getImportTraitsAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
         menu.add(item);
 

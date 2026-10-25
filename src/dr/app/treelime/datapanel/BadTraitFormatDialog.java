@@ -27,7 +27,7 @@
 
 package dr.app.treelime.datapanel;
 
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.traitspanel.CreateTraitDialog;
 import jam.panels.OptionsPanel;
 
@@ -37,13 +37,13 @@ import java.awt.event.ActionListener;
 
 public class BadTraitFormatDialog {
 
-    private final BeautiFrame frame;
+    private final TreeLimeFrame frame;
     private final JButton exampleButton = new JButton("Show example of mapping file format");
 
 
     OptionsPanel optionPanel;
 
-    public BadTraitFormatDialog(final BeautiFrame frame) {
+    public BadTraitFormatDialog(final TreeLimeFrame frame) {
         this.frame = frame;
         optionPanel = new OptionsPanel(12, 12);
 

@@ -27,8 +27,8 @@
 
 package dr.app.treelime.clockmodelspanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.options.*;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
@@ -54,7 +54,7 @@ import java.util.logging.Logger;
 /**
  * @author Andrew Rambaut
  */
-public class ClockModelsPanel extends BeautiPanel implements Exportable {
+public class ClockModelsPanel extends TreeLimePanel implements Exportable {
 
     public final static boolean DEBUG = false;
 
@@ -64,7 +64,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     private JTable modelTable = null;
     private ModelTableModel modelTableModel = null;
-    private BeautiOptions options = null;
+    private TreeLimeOptions options = null;
 
     JPanel modelPanelParent;
     PartitionClockModel currentModel = null;
@@ -74,7 +74,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean rate of molecular clock model to: ");
     RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
-    BeautiFrame frame = null;
+    TreeLimeFrame frame = null;
     //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
@@ -82,7 +82,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
-    public ClockModelsPanel(BeautiFrame parent) {
+    public ClockModelsPanel(TreeLimeFrame parent) {
 
         super();
 
@@ -173,7 +173,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
 
         if (DEBUG) {
             Logger.getLogger("dr.app.treelime").info("ModelsPanel.setOptions");
@@ -204,7 +204,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
         if (settingOptions) return;
 
 //        options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());

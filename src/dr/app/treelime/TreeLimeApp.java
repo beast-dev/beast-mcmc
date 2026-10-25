@@ -1,5 +1,5 @@
 /*
- * BeautiApp.java
+ * TreeLimeApp.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -44,15 +44,15 @@ import java.util.Locale;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class BeautiApp extends MultiDocApplication {
+public class TreeLimeApp extends MultiDocApplication {
     public final static Version VERSION = new BeastVersion();
 
     public final static String backgroundColor =  "#35484F";
     public final static String foregroundColor = "#CBB944";
 
-    public BeautiApp(String nameString, String aboutString, Icon icon,
+    public TreeLimeApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
-        super(new BeautiMenuBarFactory(), nameString, nameString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, websiteURLString, helpURLString);
+        super(new TreeLimeMenuBarFactory(), nameString, nameString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, websiteURLString, helpURLString);
     }
 
     public static void centreLine(String line, int pageWidth) {
@@ -66,8 +66,8 @@ public class BeautiApp extends MultiDocApplication {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEAUti " + VERSION.getVersionString() + ", " + VERSION.getDateString(), 60);
-        centreLine("Bayesian Evolutionary Analysis Utility", 60);
+        centreLine("TreeLime " + VERSION.getVersionString() + ", " + VERSION.getDateString(), 60);
+        centreLine("Maximum likelihood and MAP estimation for BEAST models", 60);
         for (String creditLine : VERSION.getCredits()) {
             centreLine(creditLine, 60);
         }
@@ -76,10 +76,10 @@ public class BeautiApp extends MultiDocApplication {
 
     public static void printUsage(Arguments arguments) {
 
-        arguments.printUsage("beauti", "[<input-file-name> ...]");
+        arguments.printUsage("treelime", "[<input-file-name> ...]");
         System.out.println();
-        System.out.println("  Example: beauti test.nex");
-        System.out.println("  Example: beauti -help");
+        System.out.println("  Example: treelime test.nex");
+        System.out.println("  Example: treelime -help");
         System.out.println();
     }
 
@@ -88,7 +88,7 @@ public class BeautiApp extends MultiDocApplication {
 //     * In a departure from the standard UI, there is no "Open" command for this application
 //     * Instead, the user can create a New window, Import a NEXUS file and Apply a Template file.
 //     * None of these operations result in a file being associated with the DocumentFrame. All
-//     * these actions are located in the BeautiFrame class. This overriden method should never
+//     * these actions are located in the TreeLimeFrame class. This overriden method should never
 //     * be called and throw a RuntimeException if it is.
 //     *
 //     * @return the action
@@ -202,9 +202,9 @@ public class BeautiApp extends MultiDocApplication {
                 }
             }
 
-            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeautiApp.class, "images/beauti.png"), 128, 128);
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(TreeLimeApp.class, "images/beauti.png"), 128, 128);
 
-            final String nameString = "BEAUti";
+            final String nameString = "TreeLime";
             final String versionString = VERSION.getVersionString();
 
             String aboutString = "<html>" +
@@ -213,7 +213,7 @@ public class BeautiApp extends MultiDocApplication {
                     "background-color: " + backgroundColor + "; color: " + foregroundColor + ";" +
                     "\">" +
                     "<center>" +
-                    "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
+                    "<div style=\"font-size:13\"><p>Maximum likelihood and MAP estimation for BEAST models<br>" +
                     "Version " + versionString + ", " + VERSION.getDateString() + "</p>" +
                     "<hr><div style=\"font-size:11;\">Part of the BEAST package:" +
                     VERSION.getHTMLCredits() +
@@ -224,11 +224,11 @@ public class BeautiApp extends MultiDocApplication {
 
             System.setProperty("BEAST & BEAUTi Version", VERSION.getVersion());
 
-            BeautiApp app = new BeautiApp(nameString, aboutString, icon,
+            TreeLimeApp app = new TreeLimeApp(nameString, aboutString, icon,
                     websiteURLString, helpURLString);
             app.setDocumentFrameFactory(new DocumentFrameFactory() {
                 public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
-                    return new BeautiFrame(nameString);
+                    return new TreeLimeFrame(nameString);
                 }
             });
             app.initialize();

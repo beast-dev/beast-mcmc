@@ -35,6 +35,6 @@ import dr.app.treelime.options.*;
  */
 public interface ComponentFactory {
     Class getOptionsClass();
-    ComponentGenerator createGenerator(BeautiOptions beautiOptions);
-    ComponentOptions createOptions(BeautiOptions beautiOptions);
+    ComponentGenerator createGenerator(TreeLimeOptions beautiOptions);
+    ComponentOptions createOptions(TreeLimeOptions beautiOptions);
 }

@@ -32,7 +32,7 @@ import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.treelime.types.TipDateSamplingType;
 import dr.app.treelime.generator.BaseComponentGenerator;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -50,7 +50,7 @@ import java.util.Set;
  */
 public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
 
-    public TipDateSamplingComponentGenerator(final BeautiOptions options) {
+    public TipDateSamplingComponentGenerator(final TreeLimeOptions options) {
         super(options);
     }
 

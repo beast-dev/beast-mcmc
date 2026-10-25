@@ -81,8 +81,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
 //    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
-//	private BeautiFrame frame = null;
-//	private BeautiOptions options = null;
+//	private TreeLimeFrame frame = null;
+//	private TreeLimeOptions options = null;
 
     PartitionTreePrior partitionTreePrior;
     private final TreesPanel treesPanel;

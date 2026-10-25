@@ -29,7 +29,7 @@ package dr.app.treelime.components.continuous;
 
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.generator.ComponentGenerator;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.ComponentOptions;
 
 /**
@@ -45,11 +45,11 @@ public class ContinuousComponentFactory implements ComponentFactory {
         return ContinuousComponentOptions.class;
     }
 
-    public ComponentGenerator createGenerator(BeautiOptions beautiOptions) {
+    public ComponentGenerator createGenerator(TreeLimeOptions beautiOptions) {
 		return new ContinuousComponentGenerator(beautiOptions);
 	}
 
-	public ComponentOptions createOptions(BeautiOptions beautiOptions) {
+	public ComponentOptions createOptions(TreeLimeOptions beautiOptions) {
         return new ContinuousComponentOptions(beautiOptions);
 	}
 

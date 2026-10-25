@@ -93,7 +93,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return traitData;
     }
 
-    public PartitionSubstitutionModel(BeautiOptions options, String name, AbstractPartitionData partition) {
+    public PartitionSubstitutionModel(TreeLimeOptions options, String name, AbstractPartitionData partition) {
         super(options, name);
 
         if (partition.getTraits() != null && partition.getDataType().getType() == DataType.CONTINUOUS) {
@@ -121,7 +121,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
      * @param name    the name of the new model
      * @param source  the source model
      */
-    public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
+    public PartitionSubstitutionModel(TreeLimeOptions options, String name, PartitionSubstitutionModel source) {
         super(options, name);
 
         nucSubstitutionModel = source.nucSubstitutionModel;
@@ -155,7 +155,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         initModelParametersAndOpererators();
     }
 
-    public PartitionSubstitutionModel(BeautiOptions options, String name) {
+    public PartitionSubstitutionModel(TreeLimeOptions options, String name) {
         super(options, name);
         continuousTraitCount = 0;
         extendedTraitCount = continuousTraitCount;
@@ -367,7 +367,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
             createScaleOperator("CP1+2.alpha", demoTuning, substWeights);
 
-            // if (!options.classicOperatorsAndPriors && LOGIT_PINV_KERNEL) { // a switch at the top of BeautiOptions
+            // if (!options.classicOperatorsAndPriors && LOGIT_PINV_KERNEL) { // a switch at the top of TreeLimeOptions
             createOperator("rwPInv", "rwPInv", "Random walk on pInv in logit space", "pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);
             for (int i = 1; i <= 3; i++) {
                 createOperator("CP" + i + ".rwPInv", "CP" + i + ".rwPInv", "Random walk on pInv in logit space", "CP" + i + ".pInv", OperatorType.RANDOM_WALK_LOGIT, demoTuning, substWeights);

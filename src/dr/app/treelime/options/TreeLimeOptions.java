@@ -1,5 +1,5 @@
 /*
- * BeautiOptions.java
+ * TreeLimeOptions.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -53,7 +53,7 @@ import dr.inference.operators.OperatorSchedule;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class BeautiOptions extends ModelOptions {
+public class TreeLimeOptions extends ModelOptions {
 
     // Switches to a dirichlet prior & delta exchange on nus
     private static final boolean NEW_RELATIVE_RATE_PARAMETERIZATION = true;
@@ -77,11 +77,11 @@ public class BeautiOptions extends ModelOptions {
 
     private static final long serialVersionUID = -3676802825545741012L;
 
-    public BeautiOptions() {
+    public TreeLimeOptions() {
         this(new ComponentFactory[]{});
     }
 
-    public BeautiOptions(ComponentFactory[] components) {
+    public TreeLimeOptions(ComponentFactory[] components) {
 
         // Install all the component's options from the given list of factories:
         registerComponents(components);

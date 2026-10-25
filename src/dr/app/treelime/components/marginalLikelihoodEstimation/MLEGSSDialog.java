@@ -27,7 +27,7 @@
 
 package dr.app.treelime.components.marginalLikelihoodEstimation;
 
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.TreePriorType;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
@@ -68,11 +68,11 @@ public class MLEGSSDialog {
     private JComboBox treeWorkingPrior = new JComboBox();
 
     private MarginalLikelihoodEstimationOptions options;
-    private BeautiOptions beautiOptions;
+    private TreeLimeOptions beautiOptions;
 
     private String description = "Settings for marginal likelihood estimation using GSS";
 
-    public MLEGSSDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options, final BeautiOptions beautiOptions) {
+    public MLEGSSDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options, final TreeLimeOptions beautiOptions) {
         this.frame = frame;
         this.options = options;
         this.beautiOptions = beautiOptions;

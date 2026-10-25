@@ -28,13 +28,13 @@
 package dr.app.treelime.mcmcpanel;
 
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.components.marginalLikelihoodEstimation.MLEDialog;
 import dr.app.treelime.components.marginalLikelihoodEstimation.MLEGSSDialog;
 import dr.app.treelime.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
 import dr.app.treelime.options.AbstractPartitionData;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
@@ -54,7 +54,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class MCMCPanel extends BeautiPanel {
+public class MCMCPanel extends TreeLimePanel {
 
     private static final long serialVersionUID = -3710586474593827540L;
     private static final Insets FIELD_INSETS = new Insets(3,6,3,6);
@@ -91,15 +91,15 @@ public class MCMCPanel extends BeautiPanel {
     JCheckBox operatorAnalysisCheck = new JCheckBox("Create operator analysis file:");
     JTextArea operatorAnalysisFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".ops");
 
-    BeautiFrame frame = null;
+    TreeLimeFrame frame = null;
     private final OptionsPanel optionsPanel;
-    private BeautiOptions options;
+    private TreeLimeOptions options;
 
     private MLEDialog mleDialog = null;
     private MLEGSSDialog mleGssDialog = null;
     private MarginalLikelihoodEstimationOptions mleOptions = new MarginalLikelihoodEstimationOptions();
 
-    public MCMCPanel(BeautiFrame parent) {
+    public MCMCPanel(TreeLimeFrame parent) {
         setLayout(new BorderLayout());
 
         // Mac OS X components have more spacing round them already
@@ -451,7 +451,7 @@ public class MCMCPanel extends BeautiPanel {
         }
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
         this.options = options;
 
         /*System.err.println("mleOptions: " + mleOptions);
@@ -500,7 +500,7 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.repaint();
     }
 
-    private void updateOtherFileNames(BeautiOptions options) {
+    private void updateOtherFileNames(TreeLimeOptions options) {
         if (options.fileNameStem != null) {
 //            fileNameStemField.setText(options.fileNameStem);
 
@@ -580,7 +580,7 @@ public class MCMCPanel extends BeautiPanel {
         mleGssDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
         options.fileNameStem = fileNameStemField.getText();
         options.logFileName = logFileNameField.getText();
         options.checkpointFileName = checkpointFileNameField.getText();

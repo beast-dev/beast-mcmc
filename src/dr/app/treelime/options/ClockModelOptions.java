@@ -48,9 +48,9 @@ public class ClockModelOptions extends ModelOptions {
 
     private static final long serialVersionUID = 3544930558477534541L;
     // Instance variables
-    private final BeautiOptions options;
+    private final TreeLimeOptions options;
 
-    public ClockModelOptions(BeautiOptions options) {
+    public ClockModelOptions(TreeLimeOptions options) {
         this.options = options;
 
         initModelParametersAndOpererators();

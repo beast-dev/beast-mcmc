@@ -52,7 +52,7 @@ public class PartitionData extends AbstractPartitionData {
     private final int every;
 
 
-    public PartitionData(BeautiOptions options, String name, String fileName, PatternList patterns) {
+    public PartitionData(TreeLimeOptions options, String name, String fileName, PatternList patterns) {
         super(options, name, fileName);
         this.alignment = null;
         this.patterns = patterns;
@@ -68,7 +68,7 @@ public class PartitionData extends AbstractPartitionData {
         calculateMeanDistance(null);
     }
 
-    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
+    public PartitionData(TreeLimeOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
         super(options, name, fileName);
         this.alignment = alignment;
 
@@ -83,7 +83,7 @@ public class PartitionData extends AbstractPartitionData {
         calculateMeanDistance(null);
     }
 
-    public PartitionData(BeautiOptions options, String name, String fileName, List<TraitData> traits) {
+    public PartitionData(TreeLimeOptions options, String name, String fileName, List<TraitData> traits) {
         super(options, name, fileName);
         this.alignment = null;
 
@@ -96,7 +96,7 @@ public class PartitionData extends AbstractPartitionData {
         calculateMeanDistance(null);
     }
 
-    public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
+    public PartitionData(TreeLimeOptions options, String name, String fileName, Alignment alignment) {
         this(options, name, fileName, alignment, -1, -1, 1);
     }
 

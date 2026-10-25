@@ -38,7 +38,7 @@ import java.util.*;
 public class LinkedParameterComponentOptions implements ComponentOptions {
     private static final long serialVersionUID = 1L;
 
-    public LinkedParameterComponentOptions(final BeautiOptions options) {
+    public LinkedParameterComponentOptions(final TreeLimeOptions options) {
         this.options = options;
         linkedParameterMap = new HashMap<Parameter, LinkedParameter>();
         argumentParameterMap = new HashMap<Parameter, LinkedParameter>();
@@ -160,7 +160,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
     }
 
 
-    final private BeautiOptions options;
+    final private TreeLimeOptions options;
     final private Map<Parameter, LinkedParameter> linkedParameterMap;
     final private Map<Parameter, LinkedParameter> argumentParameterMap;
 }

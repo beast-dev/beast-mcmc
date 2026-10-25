@@ -63,7 +63,7 @@ import java.util.List;
  */
 public class SubstitutionModelGenerator extends Generator {
 
-    public SubstitutionModelGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public SubstitutionModelGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

@@ -1,5 +1,5 @@
 /*
- * BeautiMacFileMenuFactory.java
+ * TreeLimeMacFileMenuFactory.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -41,9 +41,9 @@ import java.awt.event.ActionEvent;
  *         Date: Dec 26, 2004
  *         Time: 11:02:45 AM
  */
-public class BeautiMacFileMenuFactory implements MenuFactory {
+public class TreeLimeMacFileMenuFactory implements MenuFactory {
 
-    public BeautiMacFileMenuFactory() {
+    public TreeLimeMacFileMenuFactory() {
     }
 
     public String getMenuName() {
@@ -69,14 +69,14 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
         }
 
 
-        if (frame != null && frame instanceof BeautiFrame) {
+        if (frame != null && frame instanceof TreeLimeFrame) {
             menu.addSeparator();
 
             item = new JMenuItem(frame.getImportAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
             menu.add(item);
 
-            item = new JMenuItem(((BeautiFrame)frame).getImportTraitsAction());
+            item = new JMenuItem(((TreeLimeFrame)frame).getImportTraitsAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
             menu.add(item);
 
@@ -86,7 +86,7 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
             menu.add(item);
         } else {
-            // If the frame is not a BeautiFrame then create a dummy set of disabled menu options.
+            // If the frame is not a TreeLimeFrame then create a dummy set of disabled menu options.
             // At present the only situation where this may happen is in Mac OS X when no windows
             // are open and the menubar is created by the hidden frame.
 

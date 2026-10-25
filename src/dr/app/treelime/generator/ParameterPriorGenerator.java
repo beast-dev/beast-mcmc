@@ -61,7 +61,7 @@ public class ParameterPriorGenerator extends Generator {
     //map parameters to prior IDs, for use with HMC or other approaches that define their prior befor the <mcmc> XML block
     private final HashMap<String, String> mapParameterToPrior;
 
-    public ParameterPriorGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public ParameterPriorGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
         //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
         mapParameterToPrior = new HashMap<String, String>();

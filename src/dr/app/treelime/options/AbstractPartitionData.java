@@ -48,7 +48,7 @@ public abstract class AbstractPartitionData implements Serializable {
     protected String name;
     protected List<TraitData> traits;
 
-    protected BeautiOptions options;
+    protected TreeLimeOptions options;
     protected PartitionSubstitutionModel model;
     protected PartitionClockModel clockModel;
     protected PartitionTreeModel treeModel;
@@ -57,7 +57,7 @@ public abstract class AbstractPartitionData implements Serializable {
 
     protected DistanceMatrix distances;
 
-    public AbstractPartitionData(BeautiOptions options, String name, String fileName) {
+    public AbstractPartitionData(TreeLimeOptions options, String name, String fileName) {
         this.options = options;
         this.name = name;
         this.fileName = fileName;

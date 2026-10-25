@@ -28,7 +28,7 @@
 package dr.app.treelime.generator;
 
 import dr.app.treelime.components.ComponentFactory;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
@@ -54,7 +54,7 @@ import java.util.Map;
 public class TMRCAStatisticsGenerator extends Generator {
 
 
-    public TMRCAStatisticsGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public TMRCAStatisticsGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

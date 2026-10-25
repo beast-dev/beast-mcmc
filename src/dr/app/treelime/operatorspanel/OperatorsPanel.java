@@ -27,9 +27,9 @@
 
 package dr.app.treelime.operatorspanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.Operator;
 import dr.app.treelime.types.OperatorSetType;
 import dr.app.treelime.util.PanelUtils;
@@ -49,7 +49,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class OperatorsPanel extends BeautiPanel implements Exportable {
+public class OperatorsPanel extends TreeLimePanel implements Exportable {
 
     /**
      *
@@ -72,10 +72,10 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     public List<Operator> operators = new ArrayList<Operator>();
 
-    private BeautiOptions options;
-    BeautiFrame frame = null;
+    private TreeLimeOptions options;
+    TreeLimeFrame frame = null;
 
-    public OperatorsPanel(BeautiFrame parent) {
+    public OperatorsPanel(TreeLimeFrame parent) {
 
         this.frame = parent;
 
@@ -167,7 +167,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         frame.setDirty();
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
         this.options = options;
 
         operatorSetCombo.setSelectedItem(options.operatorSetType);
@@ -177,7 +177,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         operatorTableModel.fireTableDataChanged();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
     }
 
     public JComponent getExportableComponent() {

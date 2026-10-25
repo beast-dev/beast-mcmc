@@ -1,5 +1,5 @@
 /*
- * BEAUTiImporter.java
+ * TreeLimeImporter.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -31,7 +31,7 @@ import dr.app.beauti.util.CharSetBlock;
 
 import dr.app.beauti.util.CharSet;
 
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.datapanel.BadTraitFormatDialog;
 import dr.app.treelime.mcmcpanel.MCMCPanel;
 import dr.app.treelime.options.*;
@@ -63,17 +63,17 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class BEAUTiImporter {
+public class TreeLimeImporter {
 
     private static final long MAX_FILE_SIZE = 1024 * 1024 * 128; // 0.1GB
     private final String DEFAULT_NAME = "default";
 
-    private final BeautiOptions options;
-    private final BeautiFrame frame;
+    private final TreeLimeOptions options;
+    private final TreeLimeFrame frame;
 
     private PartitionNameDialog partitionNameDialog = null;
 
-    public BEAUTiImporter(BeautiFrame frame, BeautiOptions options) {
+    public TreeLimeImporter(TreeLimeFrame frame, TreeLimeOptions options) {
         this.frame = frame;
         this.options = options;
     }

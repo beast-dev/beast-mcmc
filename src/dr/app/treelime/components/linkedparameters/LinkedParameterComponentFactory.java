@@ -29,7 +29,7 @@ package dr.app.treelime.components.linkedparameters;
 
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.generator.ComponentGenerator;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.ComponentOptions;
 
 /**
@@ -46,11 +46,11 @@ public class LinkedParameterComponentFactory implements ComponentFactory {
         return LinkedParameterComponentOptions.class;
     }
 
-    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+    public ComponentGenerator createGenerator(final TreeLimeOptions beautiOptions) {
         return new LinkedParameterComponentGenerator(beautiOptions);
     }
 
-    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+    public ComponentOptions createOptions(final TreeLimeOptions beautiOptions) {
         return new LinkedParameterComponentOptions(beautiOptions);
     }
 

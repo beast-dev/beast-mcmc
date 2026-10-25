@@ -62,9 +62,9 @@ public class Predictor implements Serializable {
     private final double[][] data;
     private final String[] rowLabels;
 
-    protected final BeautiOptions options;
+    protected final TreeLimeOptions options;
 
-    public Predictor(BeautiOptions options, String name, TraitData trait, String[] rowLabels, double[][] data, Type predictorType) {
+    public Predictor(TreeLimeOptions options, String name, TraitData trait, String[] rowLabels, double[][] data, Type predictorType) {
         this.options = options;
         this.name = name;
         this.trait = trait;

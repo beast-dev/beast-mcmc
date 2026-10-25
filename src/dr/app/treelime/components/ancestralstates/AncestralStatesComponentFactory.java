@@ -29,7 +29,7 @@ package dr.app.treelime.components.ancestralstates;
 
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.generator.ComponentGenerator;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.ComponentOptions;
 
 /**
@@ -47,12 +47,12 @@ public class AncestralStatesComponentFactory implements ComponentFactory {
     }
 
     @Override
-    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+    public ComponentGenerator createGenerator(final TreeLimeOptions beautiOptions) {
         return new AncestralStatesComponentGenerator(beautiOptions);
     }
 
     @Override
-    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+    public ComponentOptions createOptions(final TreeLimeOptions beautiOptions) {
         return new AncestralStatesComponentOptions();
     }
 

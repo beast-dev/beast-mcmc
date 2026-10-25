@@ -30,7 +30,7 @@ package dr.app.treelime.generator;
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.treelime.components.sequenceerror.SequenceErrorModelComponentOptions;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionData;
 import dr.app.treelime.options.PartitionSubstitutionModel;
 import dr.app.treelime.types.BinaryModelType;
@@ -52,7 +52,7 @@ import java.util.List;
  */
 public class PatternListGenerator extends Generator {
 
-    public PatternListGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public PatternListGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

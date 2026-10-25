@@ -27,8 +27,8 @@
 
 package dr.app.treelime.treespanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.options.*;
 import dr.app.gui.table.TableEditorStopper;
 import jam.framework.Exportable;
@@ -54,14 +54,14 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class TreesPanel extends BeautiPanel implements Exportable {
+public class TreesPanel extends TreeLimePanel implements Exportable {
 
     public final static boolean DEBUG = false;
 
     private static final long serialVersionUID = 2778103564318492601L;
 
-    private BeautiFrame frame = null;
-    public BeautiOptions options = null;
+    private TreeLimeFrame frame = null;
+    public TreeLimeOptions options = null;
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
@@ -78,7 +78,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     TitledBorder treePriorBorder;
     Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<PartitionTreePrior, PartitionTreePriorPanel>();
 
-    public TreesPanel(BeautiFrame parent, Action removeTreeAction) {
+    public TreesPanel(TreeLimeFrame parent, Action removeTreeAction) {
         super();
         this.frame = parent;
 
@@ -269,7 +269,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         linkTreePriorCheck.setEnabled(selected);
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
         this.options = options;
 
         resetPanel();
@@ -314,7 +314,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
         if (settingOptions) return;
 
 //    	Set<PartitionTreeModel> models = treeModelPanels.keySet();
@@ -331,7 +331,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public BeautiFrame getFrame() {
+    public TreeLimeFrame getFrame() {
         return frame;
     }
 

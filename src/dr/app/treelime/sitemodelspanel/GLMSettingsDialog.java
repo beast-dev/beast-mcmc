@@ -27,7 +27,7 @@
 
 package dr.app.treelime.sitemodelspanel;
 
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.options.TraitData;
 import dr.app.util.OSType;
 
@@ -40,12 +40,12 @@ import java.awt.*;
  */
 public class GLMSettingsDialog  {
 
-    private final BeautiFrame frame;
+    private final TreeLimeFrame frame;
 
     private final GLMSettingsPanel glmSettingsPanel;
     private TraitData trait;
 
-    public GLMSettingsDialog(BeautiFrame frame) {
+    public GLMSettingsDialog(TreeLimeFrame frame) {
         this.frame = frame;
 
         glmSettingsPanel = new GLMSettingsPanel(frame);

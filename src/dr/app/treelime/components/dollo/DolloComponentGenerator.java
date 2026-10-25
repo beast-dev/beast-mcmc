@@ -57,7 +57,7 @@ import dr.xml.XMLParser;
 
 public class DolloComponentGenerator extends BaseComponentGenerator {
 
-	protected DolloComponentGenerator(BeautiOptions options) {
+	protected DolloComponentGenerator(TreeLimeOptions options) {
 		super(options);
 	}
 

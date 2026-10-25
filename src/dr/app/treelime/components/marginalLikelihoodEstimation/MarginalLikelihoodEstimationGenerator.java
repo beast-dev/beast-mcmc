@@ -27,7 +27,7 @@
 
 package dr.app.treelime.components.marginalLikelihoodEstimation;
 
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.generator.BaseComponentGenerator;
 import dr.app.treelime.generator.TreePriorGenerator;
 import dr.app.treelime.options.*;
@@ -80,9 +80,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
     public static final boolean DEBUG = false;
 
-    private BeautiOptions beautiOptions = null;
+    private TreeLimeOptions beautiOptions = null;
 
-    MarginalLikelihoodEstimationGenerator(final BeautiOptions options) {
+    MarginalLikelihoodEstimationGenerator(final TreeLimeOptions options) {
         super(options);
         this.beautiOptions = options;
     }
@@ -104,7 +104,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                     throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
                             "\nhas an improper prior and will not sample correctly when estimating " +
                             "the marginal likelihood. " +
-                            "\nPlease check the Prior panel.", BeautiFrame.PRIORS);
+                            "\nPlease check the Prior panel.", TreeLimeFrame.PRIORS);
                 }
             }
         }
@@ -120,7 +120,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
                             "on standard parametric coalescent tree priors and the Skyride and Skygrid models. " +
-                            "\nPlease check the Trees panel.", BeautiFrame.TREES);
+                            "\nPlease check the Trees panel.", TreeLimeFrame.TREES);
                 }
                 if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("A Matching Coalescent Model cannot be constructed for\n" +
@@ -139,7 +139,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             "Generalized stepping-stone sampling is not currently\n" +
                                     "compatible with substitution models other than those\n" +
                                     "for nucleotide data. \n\n" +
-                                    BeautiFrame.MCMC);
+                                    TreeLimeFrame.MCMC);
                 }
             }*/
 

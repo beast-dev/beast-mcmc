@@ -59,7 +59,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
     private final TreePartitionData treePartitionData;
 
-    public PartitionTreeModel(BeautiOptions options, String name) {
+    public PartitionTreeModel(TreeLimeOptions options, String name) {
         super(options, name);
 
         treePartitionData = null;
@@ -71,7 +71,7 @@ public class PartitionTreeModel extends PartitionOptions {
         return treePartitionData;
     }
 
-    public PartitionTreeModel(BeautiOptions options, TreePartitionData treePartitionData) {
+    public PartitionTreeModel(TreeLimeOptions options, TreePartitionData treePartitionData) {
         super(options, treePartitionData.getName());
 
         this.treePartitionData = treePartitionData;
@@ -85,7 +85,7 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param name    the name of the new model
      * @param source  the source model
      */
-    public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
+    public PartitionTreeModel(TreeLimeOptions options, String name, PartitionTreeModel source) {
         super(options, name);
 
         treePartitionData = null;

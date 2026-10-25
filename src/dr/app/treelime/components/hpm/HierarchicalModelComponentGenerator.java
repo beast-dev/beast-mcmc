@@ -28,7 +28,7 @@
 package dr.app.treelime.components.hpm;
 
 import dr.app.treelime.generator.BaseComponentGenerator;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
 import dr.inference.distribution.DistributionLikelihood;
@@ -57,7 +57,7 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
     public static final String MEAN_PRIOR_SUFFIX = ".prior.mean";
     public static final String PRECISION_PRIOR_SUFFIX = ".prior.precision";
 
-    public HierarchicalModelComponentGenerator(final BeautiOptions options) {
+    public HierarchicalModelComponentGenerator(final TreeLimeOptions options) {
         super(options);
     }
 

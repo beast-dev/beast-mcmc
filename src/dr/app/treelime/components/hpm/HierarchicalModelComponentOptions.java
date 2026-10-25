@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class HierarchicalModelComponentOptions implements ComponentOptions {
 
-    public HierarchicalModelComponentOptions(final BeautiOptions options) {
+    public HierarchicalModelComponentOptions(final TreeLimeOptions options) {
         this.options = options;
         hpmList = new ArrayList<HierarchicalPhylogeneticModel>();
     }
@@ -163,7 +163,7 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
 //        }
 //    }
 
-    final private BeautiOptions options;
+    final private TreeLimeOptions options;
     final private List<HierarchicalPhylogeneticModel> hpmList;
 
 

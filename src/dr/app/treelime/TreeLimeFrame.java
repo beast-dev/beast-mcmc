@@ -1,5 +1,5 @@
 /*
- * BeautiFrame.java
+ * TreeLimeFrame.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -26,7 +26,7 @@
  */
 
 /*
- * BeautiFrame.java
+ * TreeLimeFrame.java
  *
  * (c) 2002-2005 BEAST Development Core Team
  *
@@ -52,7 +52,7 @@ import dr.app.treelime.generator.BeastGenerator;
 import dr.app.treelime.generator.Generator;
 import dr.app.treelime.mcmcpanel.MCMCPanel;
 import dr.app.treelime.operatorspanel.OperatorsPanel;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreePrior;
 import dr.app.treelime.priorspanel.DefaultPriorTableDialog;
 import dr.app.treelime.priorspanel.PriorsPanel;
@@ -61,7 +61,7 @@ import dr.app.treelime.taxonsetspanel.TaxonSetPanel;
 import dr.app.treelime.tipdatepanel.TipDatesPanel;
 import dr.app.treelime.traitspanel.TraitsPanel;
 import dr.app.treelime.treespanel.TreesPanel;
-import dr.app.treelime.util.BEAUTiImporter;
+import dr.app.treelime.util.TreeLimeImporter;
 import dr.app.treelime.util.TextUtil;
 import dr.app.gui.FileDrop;
 import dr.app.util.OSType;
@@ -90,7 +90,7 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class BeautiFrame extends DocumentFrame {
+public class TreeLimeFrame extends DocumentFrame {
 
     private static final long serialVersionUID = 2114148696789612509L;
 
@@ -106,7 +106,7 @@ public class BeautiFrame extends DocumentFrame {
     public final static String OPERATORS = "Operators";
     public final static String MCMC = "MCMC";
 
-    private BeautiOptions options;
+    private TreeLimeOptions options;
     private BeastGenerator generator;
     private final ComponentFactory[] components;
 
@@ -125,14 +125,14 @@ public class BeautiFrame extends DocumentFrame {
     private OperatorsPanel operatorsPanel;
     private MCMCPanel mcmcPanel;
 
-    private BeautiPanel currentPanel;
+    private TreeLimePanel currentPanel;
 
     private Map<String, FileDialog> fileDialogs = new HashMap<String, FileDialog>();
     private Map<String, JFileChooser> fileChoosers = new HashMap<String, JFileChooser>();
 
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
-    public BeautiFrame(String title) {
+    public TreeLimeFrame(String title) {
         super();
 
         setTitle(title);
@@ -161,7 +161,7 @@ public class BeautiFrame extends DocumentFrame {
                 TipDateSamplingComponentFactory.INSTANCE
         };
 
-        options = new BeautiOptions(components);
+        options = new TreeLimeOptions(components);
         generator = new BeastGenerator(options, components);
 
         this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener() {
@@ -255,11 +255,11 @@ public class BeautiFrame extends DocumentFrame {
             tabbedPane.setEnabledAt(i, false);
         }
 
-        currentPanel = (BeautiPanel) tabbedPane.getSelectedComponent();
+        currentPanel = (TreeLimePanel) tabbedPane.getSelectedComponent();
 
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                BeautiPanel selectedPanel = (BeautiPanel) tabbedPane.getSelectedComponent();
+                TreeLimePanel selectedPanel = (TreeLimePanel) tabbedPane.getSelectedComponent();
                 if (selectedPanel == dataPanel) {
                     dataPanel.selectionChanged();
                 } else {
@@ -448,18 +448,18 @@ public class BeautiFrame extends DocumentFrame {
                 new FileInputStream(file);
         try {
             ObjectInputStream in = new ObjectInputStream(fileIn);
-            options = (BeautiOptions) in.readObject();
+            options = (TreeLimeOptions) in.readObject();
             in.close();
         } catch (IOException ioe) {
             JOptionPane.showMessageDialog(this,
-                    "Unable to read BEAUti file. BEAUti can only read files\n" +
-                            "created by 'Saving' within BEAUti. It cannot read BEAST\n" +
+                    "Unable to read TreeLime file. TreeLime can only read files\n" +
+                            "created by 'Saving' within TreeLime. It cannot read BEAST\n" +
                             "XML files. To read data within BEAST XML files, use\n" +
                             "the 'Import' option.",
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
         } catch (ClassNotFoundException cnfe) {
-            JOptionPane.showMessageDialog(this, "Unable to read BEAUti file: " + cnfe.getMessage(),
+            JOptionPane.showMessageDialog(this, "Unable to read TreeLime file: " + cnfe.getMessage(),
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
             cnfe.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -474,7 +474,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public String getDefaultFileName() {
-        return options.fileNameStem + ".beauti";
+        return options.fileNameStem + ".treelime";
     }
 
     protected boolean writeToFile(File file) throws IOException {
@@ -504,7 +504,7 @@ public class BeautiFrame extends DocumentFrame {
                         "Invalid file name", JOptionPane.ERROR_MESSAGE);
             } else {
                 try {
-                    BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                    TreeLimeImporter beautiImporter = new TreeLimeImporter(this, options);
                     beautiImporter.importFromFile(file);
 
                     setDirty();
@@ -552,7 +552,7 @@ public class BeautiFrame extends DocumentFrame {
 
         if (files != null && files.length != 0) {
             try {
-                BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                TreeLimeImporter beautiImporter = new TreeLimeImporter(this, options);
                 if (options.taxonList == null) {
                     beautiImporter.importTaxaFromTraits(files[0]);
                     setDirty();
@@ -644,7 +644,7 @@ public class BeautiFrame extends DocumentFrame {
             generator.checkOptions();
         } catch (Generator.GeneratorException ge) {
             ge.printStackTrace(System.err);
-            JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid BEAUti setting : ",
+            JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid TreeLime setting : ",
                     JOptionPane.ERROR_MESSAGE);
             if (ge.getSwitchToPanel() != null) {
                 switchToPanel(ge.getSwitchToPanel());

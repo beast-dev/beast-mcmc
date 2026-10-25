@@ -35,7 +35,7 @@ import dr.evomodelxml.branchratemodel.BranchSpecificFixedEffectsParser;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.app.treelime.options.BeautiOptions.DEFAULT_QUANTILE_RELAXED_CLOCK;
+import static dr.app.treelime.options.TreeLimeOptions.DEFAULT_QUANTILE_RELAXED_CLOCK;
 
 /**
  * @author Alexei Drummond
@@ -47,7 +47,7 @@ public class PartitionClockModel extends PartitionOptions {
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
-    private boolean continuousQuantile = DEFAULT_QUANTILE_RELAXED_CLOCK; // a switch at the top of BeautiOptions
+    private boolean continuousQuantile = DEFAULT_QUANTILE_RELAXED_CLOCK; // a switch at the top of TreeLimeOptions
     private boolean performModelAveraging = false;
 
     private PartitionTreeModel treeModel = null;
@@ -55,7 +55,7 @@ public class PartitionClockModel extends PartitionOptions {
     private final AbstractPartitionData partition;
     private final int dataLength;
 
-    public PartitionClockModel(final BeautiOptions options, String name, AbstractPartitionData partition, PartitionTreeModel treeModel) {
+    public PartitionClockModel(final TreeLimeOptions options, String name, AbstractPartitionData partition, PartitionTreeModel treeModel) {
         super(options, name);
 
         dataLength = partition.getSiteCount();
@@ -73,7 +73,7 @@ public class PartitionClockModel extends PartitionOptions {
      * @param name    the name of the new model
      * @param source  the source model
      */
-    public PartitionClockModel(BeautiOptions options, String name, PartitionClockModel source) {
+    public PartitionClockModel(TreeLimeOptions options, String name, PartitionClockModel source) {
         super(options, name);
 
         this.clockType = source.clockType;

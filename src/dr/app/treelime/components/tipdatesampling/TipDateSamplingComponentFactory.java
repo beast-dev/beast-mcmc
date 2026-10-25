@@ -30,7 +30,7 @@ package dr.app.treelime.components.tipdatesampling;
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.generator.ComponentGenerator;
 import dr.app.treelime.options.ComponentOptions;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 
 /**
  * @author Andrew Rambaut
@@ -46,11 +46,11 @@ public class TipDateSamplingComponentFactory implements ComponentFactory {
         return TipDateSamplingComponentOptions.class;
     }
 
-    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+    public ComponentGenerator createGenerator(final TreeLimeOptions beautiOptions) {
         return new TipDateSamplingComponentGenerator(beautiOptions);
     }
 
-    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+    public ComponentOptions createOptions(final TreeLimeOptions beautiOptions) {
         return new TipDateSamplingComponentOptions(beautiOptions);
     }
 

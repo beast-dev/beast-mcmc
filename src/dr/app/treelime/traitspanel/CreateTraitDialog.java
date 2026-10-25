@@ -27,7 +27,7 @@
 
 package dr.app.treelime.traitspanel;
 
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.options.TraitData;
 import dr.app.treelime.util.TextUtil;
 import jam.panels.OptionsPanel;
@@ -56,7 +56,7 @@ public class CreateTraitDialog {
             "... ...<br>.</html>";
 
 
-    private final BeautiFrame frame;
+    private final TreeLimeFrame frame;
 
     private JTextField nameField;
     private JComboBox typeCombo;
@@ -72,7 +72,7 @@ public class CreateTraitDialog {
 
     OptionsPanel optionPanel;
 
-    public CreateTraitDialog(final BeautiFrame frame) {
+    public CreateTraitDialog(final TreeLimeFrame frame) {
         this.frame = frame;
 
         nameField = new JTextField("untitled_trait");
@@ -104,7 +104,7 @@ public class CreateTraitDialog {
         });
     }
 
-    public static void showExampleTraitFormat(BeautiFrame frame) {
+    public static void showExampleTraitFormat(TreeLimeFrame frame) {
         JScrollPane scrollPane = TextUtil.createHTMLScrollPane(EXAMPLE_FORMAT, new Dimension(400,300));
 
         JOptionPane.showMessageDialog(frame, scrollPane,

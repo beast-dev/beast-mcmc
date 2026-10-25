@@ -35,7 +35,7 @@ package dr.app.treelime.priorspanel;
 
 import dr.app.treelime.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.treelime.components.hpm.HierarchicalPhylogeneticModel;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.Parameter;
 import dr.app.treelime.types.PriorType;
 import dr.app.gui.chart.Axis;
@@ -86,7 +86,7 @@ public class HierarchicalPriorDialog {
     private java.util.List<Parameter> parameterList;
     private Parameter parameter;
 
-    final private BeautiOptions options;
+    final private TreeLimeOptions options;
 
     private double hpmMeanMean = 0.0;
     private double hpmMeanStDev = 100.0;
@@ -95,7 +95,7 @@ public class HierarchicalPriorDialog {
     private double hpmPrecScale = 1000.0;
     private double hpmPrecInitial = 1.0;
 
-    public HierarchicalPriorDialog(JFrame frame, BeautiOptions options) {
+    public HierarchicalPriorDialog(JFrame frame, TreeLimeOptions options) {
         this.frame = frame;
         this.options = options;
 

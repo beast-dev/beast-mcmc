@@ -27,8 +27,8 @@
 
 package dr.app.treelime.priorspanel;
 
-import dr.app.treelime.options.BeautiOptions;
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.options.TreeLimeOptions;
+import dr.app.treelime.TreeLimeFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -44,10 +44,10 @@ import java.awt.*;
  */
 public class DefaultPriorTableDialog {
 
-    private BeautiFrame frame;
+    private TreeLimeFrame frame;
     private PriorsPanel priorsPanel;
 
-    public DefaultPriorTableDialog(BeautiFrame frame) {
+    public DefaultPriorTableDialog(TreeLimeFrame frame) {
         this.frame = frame;
         priorsPanel = new PriorsPanel(frame, true);
     }
@@ -70,7 +70,7 @@ public class DefaultPriorTableDialog {
         return null;
     }
 
-    public boolean showDialog(BeautiOptions options) {
+    public boolean showDialog(TreeLimeOptions options) {
         priorsPanel.setParametersList(options);
 
         Object[] buttons;

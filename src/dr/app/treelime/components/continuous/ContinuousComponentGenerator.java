@@ -51,7 +51,7 @@ import dr.xml.AttributeParser;
 
 public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
-    protected ContinuousComponentGenerator(BeautiOptions options) {
+    protected ContinuousComponentGenerator(TreeLimeOptions options) {
         super(options);
     }
 

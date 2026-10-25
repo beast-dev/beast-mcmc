@@ -27,8 +27,8 @@
 
 package dr.app.treelime.tipdatepanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.components.tipdatesampling.TipDateSamplingComponentOptions;
 import dr.app.treelime.options.*;
 import dr.app.treelime.types.TipDateSamplingType;
@@ -64,7 +64,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Tommy Lam
  */
-public class TipDatesPanel extends BeautiPanel implements Exportable {
+public class TipDatesPanel extends TreeLimePanel implements Exportable {
 
     /**
      *
@@ -104,9 +104,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     });
     private JComboBox tipDateTaxonSetCombo = new JComboBox();
 
-    private BeautiFrame frame = null;
+    private TreeLimeFrame frame = null;
 
-    private BeautiOptions options = null;
+    private TreeLimeOptions options = null;
 
     private double[] heights = null;
 
@@ -115,7 +115,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     private SetValueDialog precisionValueDialog = null;
     private boolean shownTipDateSamplingDialog = false;
 
-    public TipDatesPanel(BeautiFrame parent) {
+    public TipDatesPanel(TreeLimeFrame parent) {
 
         this.frame = parent;
 
@@ -396,7 +396,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
         this.options = options;
 
         unitsCombo.setSelectedItem(options.datesUnits);
@@ -449,7 +449,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         dataTableModel.fireTableDataChanged();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
         options.datesUnits = (DateUnitsType) unitsCombo.getSelectedItem();
         options.datesDirection = (DateUnitsType) directionCombo.getSelectedItem();
 

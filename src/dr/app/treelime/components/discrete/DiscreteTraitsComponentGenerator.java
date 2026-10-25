@@ -70,7 +70,7 @@ import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQ
  */
 public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
-    public DiscreteTraitsComponentGenerator(final BeautiOptions options) {
+    public DiscreteTraitsComponentGenerator(final TreeLimeOptions options) {
         super(options);
     }
 

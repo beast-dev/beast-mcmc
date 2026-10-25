@@ -35,7 +35,7 @@ package dr.app.treelime.priorspanel;
 
 import dr.app.treelime.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.treelime.components.linkedparameters.LinkedParameter;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.Parameter;
 import dr.app.util.OSType;
 import jam.panels.ActionPanel;
@@ -78,13 +78,13 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
     private Parameter parameter;
 
-    final private BeautiOptions options;
+    final private TreeLimeOptions options;
 
     private SelectParametersDialog selectParametersDialog = null;
     private List<Parameter> compatibleParameterList;
     private List<Parameter> dependentParameterList;
 
-    public JointPriorDialog(JFrame frame, BeautiOptions options) {
+    public JointPriorDialog(JFrame frame, TreeLimeOptions options) {
         this.frame = frame;
 
         this.options = options;

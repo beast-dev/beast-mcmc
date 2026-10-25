@@ -27,8 +27,8 @@
 
 package dr.app.treelime.datapanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.ComboBoxRenderer;
 import dr.app.treelime.alignmentviewer.AlignmentViewer;
 import dr.app.treelime.alignmentviewer.AminoAcidDecorator;
@@ -61,7 +61,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class DataPanel extends BeautiPanel implements Exportable {
+public class DataPanel extends TreeLimePanel implements Exportable {
 
     private static final int NAME_COLUMN = 0;
     private static final int FILENAME_COLUMN = 1;
@@ -104,11 +104,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
     CreateTraitPartitionDialog selectTraitDialog = null;
     CreateTreePartitionDialog createTreeDialog = null;
     CompressPatternsDialog compressPatternsDialog = null;
-    BeautiFrame frame = null;
+    TreeLimeFrame frame = null;
 
-    BeautiOptions options = null;
+    TreeLimeOptions options = null;
 
-    public DataPanel(BeautiFrame parent, Action importDataAction, Action removePartitionAction) {
+    public DataPanel(TreeLimeFrame parent, Action importDataAction, Action removePartitionAction) {
 
         this.frame = parent;
 
@@ -274,7 +274,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             } else {
                 // no colouring
             }
-            viewer.setAlignmentBuffer(new BeautiAlignmentBuffer(alignment));
+            viewer.setAlignmentBuffer(new TreeLimeAlignmentBuffer(alignment));
 
             JPanel panel = new JPanel(new BorderLayout());
             panel.setOpaque(false);
@@ -376,7 +376,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         viewPartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
 
         this.options = options;
 
@@ -391,7 +391,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTableModel.fireTableDataChanged();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
     }
 
     public JComponent getExportableComponent() {

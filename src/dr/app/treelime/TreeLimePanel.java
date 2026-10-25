@@ -1,5 +1,5 @@
 /*
- * BeautiPanel.java
+ * TreeLimePanel.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -31,15 +31,15 @@ import jam.framework.Exportable;
 
 import javax.swing.*;
 
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public abstract class BeautiPanel extends JPanel implements Exportable {
+public abstract class TreeLimePanel extends JPanel implements Exportable {
 
-    public abstract void setOptions(BeautiOptions options);
+    public abstract void setOptions(TreeLimeOptions options);
 
-    public abstract void getOptions(BeautiOptions options);
+    public abstract void getOptions(TreeLimeOptions options);
 }

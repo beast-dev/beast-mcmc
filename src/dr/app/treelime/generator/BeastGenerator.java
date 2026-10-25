@@ -28,8 +28,8 @@
 package dr.app.treelime.generator;
 
 import dr.app.beast.BeastVersion;
-import dr.app.treelime.BeautiApp;
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.TreeLimeApp;
+import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.options.*;
 import dr.app.treelime.types.*;
@@ -88,7 +88,7 @@ public class BeastGenerator extends Generator {
     private final LogGenerator logGenerator;
     private final TMRCAStatisticsGenerator tmrcaStatisticsGenerator;
 
-    public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public BeastGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
 
         alignmentGenerator = new AlignmentGenerator(options, components);
@@ -148,7 +148,7 @@ public class BeastGenerator extends Generator {
                     if (options.treeModelOptions.isNodeCalibrated(model) > 0) { // internal node calibration
                         List taxonSetsList = options.getKeysFromValue(options.taxonSetsTreeModel, model);
                         if (taxonSetsList.size() != 1 || !options.taxonSetsMono.get(taxonSetsList.get(0))) { // 1 tmrca per tree && monophyletic
-                            throw new GeneratorException(MESSAGE_CAL_YULE, BeautiFrame.TAXON_SETS);
+                            throw new GeneratorException(MESSAGE_CAL_YULE, TreeLimeFrame.TAXON_SETS);
                         }
                     }
                 }
@@ -161,11 +161,11 @@ public class BeastGenerator extends Generator {
                     throw new GeneratorException(
                             "Taxon set, " + taxa.getId() + ", should contain \n" +
                                     "at least one taxa. Please go back to Taxon Sets \n" +
-                                    "panel to correct this.", BeautiFrame.TAXON_SETS);
+                                    "panel to correct this.", TreeLimeFrame.TAXON_SETS);
                 }
                 if (ids.contains(taxa.getId())) {
                     throw new GeneratorException("A taxon set has the same id," + taxa.getId() +
-                            MESSAGE_CAL, BeautiFrame.TAXON_SETS);
+                            MESSAGE_CAL, TreeLimeFrame.TAXON_SETS);
                 }
                 ids.add(taxa.getId());
             }
@@ -187,7 +187,7 @@ public class BeastGenerator extends Generator {
                 for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                     if (prior.getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
                         throw new GeneratorException("For the Skyride, tree model/tree prior combination not implemented by BEAST." +
-                                "\nThe Skyride is only available for a single tree model partition in this release.", BeautiFrame.TREES);
+                                "\nThe Skyride is only available for a single tree model partition in this release.", TreeLimeFrame.TREES);
                     }
                 }
             }
@@ -195,7 +195,7 @@ public class BeastGenerator extends Generator {
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)
                         && Double.isNaN(prior.getSkyGridInterval())) {
-                    throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", BeautiFrame.TREES);
+                    throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", TreeLimeFrame.TREES);
                 }
             }
 
@@ -203,8 +203,8 @@ public class BeastGenerator extends Generator {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 if (model.getStartingTreeType() == StartingTreeType.USER) {
                     if (model.getUserStartingTree() == null) {
-                        throw new GeneratorException("Please select a starting tree in " + BeautiFrame.TREES + " panel, " +
-                                "\nwhen choosing user specified starting tree option.", BeautiFrame.TREES);
+                        throw new GeneratorException("Please select a starting tree in " + TreeLimeFrame.TREES + " panel, " +
+                                "\nwhen choosing user specified starting tree option.", TreeLimeFrame.TREES);
                     }
                 }
             }
@@ -216,7 +216,7 @@ public class BeastGenerator extends Generator {
                     PartitionTreeModel treeModel = null;
                     for (AbstractPartitionData pd : options.getDataPartitions(model)) { // only the PDs linked to this tree model
                         if (treeModel != null && treeModel != pd.getPartitionTreeModel()) {
-                            throw new GeneratorException("A single random local clock cannot be applied to multiple trees.", BeautiFrame.CLOCK_MODELS);
+                            throw new GeneratorException("A single random local clock cannot be applied to multiple trees.", TreeLimeFrame.CLOCK_MODELS);
                         }
                         treeModel = pd.getPartitionTreeModel();
                     }
@@ -230,7 +230,7 @@ public class BeastGenerator extends Generator {
                     if (pd.getTaxonCount() > 0) {
                         if (numOfTaxa > 0) {
                             if (numOfTaxa != pd.getTaxonCount()) {
-                                throw new GeneratorException("Partitions with different taxa cannot share the same tree.", BeautiFrame.DATA_PARTITIONS);
+                                throw new GeneratorException("Partitions with different taxa cannot share the same tree.", TreeLimeFrame.DATA_PARTITIONS);
                             }
                         } else {
                             numOfTaxa = pd.getTaxonCount();
@@ -245,20 +245,20 @@ public class BeastGenerator extends Generator {
                     if (param.isTruncated && (param.getInitial() < param.truncationLower || param.getInitial() > param.truncationUpper)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
                                 "\ninitial value " + param.getInitial() + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
-                                "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\nor this range is wrong. Please check the Prior panel.", TreeLimeFrame.PRIORS);
                     } else if (param.priorType == PriorType.UNIFORM_PRIOR && (param.getInitial() < param.uniformLower || param.getInitial() > param.uniformUpper)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
                                 "\ninitial value " + param.getInitial() + " is NOT in the range [" + param.uniformLower + ", " + param.uniformUpper + "]," +
-                                "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\nor this range is wrong. Please check the Prior panel.", TreeLimeFrame.PRIORS);
                     }
                     if (param.isNonNegative && param.getInitial() < 0.0) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.getInitial() + " should be non-negative. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\ninitial value " + param.getInitial() + " should be non-negative. Please check the Prior panel.", TreeLimeFrame.PRIORS);
                     }
 
                     if (param.isZeroOne && (param.getInitial() < 0.0 || param.getInitial() > 1.0)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.getInitial() + " should lie in the interval [0, 1]. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\ninitial value " + param.getInitial() + " should lie in the interval [0, 1]. Please check the Prior panel.", TreeLimeFrame.PRIORS);
                     }
                 }
             }
@@ -307,13 +307,13 @@ public class BeastGenerator extends Generator {
         XMLWriter writer = new XMLWriter(new BufferedWriter(new FileWriter(file)));
 
         writer.writeText("<?xml version=\"1.0\" standalone=\"yes\"?>");
-        writer.writeComment("Generated by BEAUTi " + VERSION.getVersionString(),
+        writer.writeComment("Generated by TreeLime " + VERSION.getVersionString(),
                 "      by Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard",
                 "      Department of Computer Science, University of Auckland and",
                 "      Institute of Evolutionary Biology, University of Edinburgh",
                 "      David Geffen School of Medicine, University of California, Los Angeles",
                 "      http://beast.community/");
-        writer.writeOpenTag("beast", new Attribute.Default<String>("version", BeautiApp.VERSION.getVersion()) );
+        writer.writeOpenTag("beast", new Attribute.Default<String>("version", TreeLimeApp.VERSION.getVersion()) );
         writer.writeText("");
 
         // this gives any added implementations of the 'Component' interface a

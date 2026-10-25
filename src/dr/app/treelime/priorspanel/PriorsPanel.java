@@ -27,8 +27,8 @@
 
 package dr.app.treelime.priorspanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.treelime.components.hpm.HierarchicalPhylogeneticModel;
 import dr.app.treelime.components.linkedparameters.LinkedParameter;
@@ -58,7 +58,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class PriorsPanel extends BeautiPanel implements Exportable {
+public class PriorsPanel extends TreeLimePanel implements Exportable {
     private static final long serialVersionUID = -2936049032365493416L;
     JScrollPane scrollPane = new JScrollPane();
     JTable priorTable = null;
@@ -72,8 +72,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     public List<Parameter> parameters = new ArrayList<Parameter>();
 
-    BeautiFrame frame = null;
-    BeautiOptions options = null;
+    TreeLimeFrame frame = null;
+    TreeLimeOptions options = null;
 
     boolean hasUndefinedPrior = false;
     boolean hasImproperPrior = false;
@@ -81,7 +81,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private final boolean isDefaultOnly;
 
-    public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
+    public PriorsPanel(TreeLimeFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
         this.isDefaultOnly = isDefaultOnly;
 
@@ -282,7 +282,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
         this.options = options;
 
         parameters = options.selectParameters();
@@ -340,7 +340,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         return message + "</html>";
     }
 
-    public void setParametersList(BeautiOptions options) {
+    public void setParametersList(TreeLimeOptions options) {
         this.options = options;
 
         parameters.clear();
@@ -715,7 +715,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
     }
 
     public JComponent getExportableComponent() {

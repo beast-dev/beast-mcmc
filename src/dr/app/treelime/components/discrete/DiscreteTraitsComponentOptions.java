@@ -41,9 +41,9 @@ import java.util.Set;
  */
 public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
-    private final BeautiOptions options;
+    private final TreeLimeOptions options;
 
-    public DiscreteTraitsComponentOptions(final BeautiOptions options) {
+    public DiscreteTraitsComponentOptions(final TreeLimeOptions options) {
         this.options = options;
     }
 

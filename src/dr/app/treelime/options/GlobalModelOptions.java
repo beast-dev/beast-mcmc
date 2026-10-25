@@ -40,10 +40,10 @@ public class GlobalModelOptions extends ModelOptions {
     private static final long serialVersionUID = -3347506415688390314L;
 
     // Instance variables
-    private final BeautiOptions options;
+    private final TreeLimeOptions options;
 
 
-    public GlobalModelOptions(BeautiOptions options) {
+    public GlobalModelOptions(TreeLimeOptions options) {
         this.options = options;
 
         initModelParametersAndOpererators();

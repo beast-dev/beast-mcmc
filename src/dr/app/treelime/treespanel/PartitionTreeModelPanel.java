@@ -27,14 +27,14 @@
 
 package dr.app.treelime.treespanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.options.TreeHolder;
 import dr.app.treelime.types.StartingTreeType;
 import dr.app.treelime.types.TreeAsDataType;
 import dr.app.treelime.types.TreePriorType;
-import dr.app.treelime.util.BEAUTiImporter;
+import dr.app.treelime.util.TreeLimeImporter;
 import dr.app.treelime.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
@@ -102,13 +102,13 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private final RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
-    private BeautiOptions options = null;
-    private final BeautiFrame parent;
+    private TreeLimeOptions options = null;
+    private final TreeLimeFrame parent;
     private boolean settingOptions = false;
 
     PartitionTreeModel partitionTreeModel;
 
-    public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel partitionTreeModel, final BeautiOptions options) {
+    public PartitionTreeModelPanel(final TreeLimeFrame parent, PartitionTreeModel partitionTreeModel, final TreeLimeOptions options) {
         super(12, (OSType.isMac() ? 6 : 24));
 
         this.partitionTreeModel = partitionTreeModel;
@@ -307,7 +307,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         empiricalFilenameField.setText(partitionTreeModel.getEmpiricalTreesFilename());
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
         if (settingOptions) return;
     }
 

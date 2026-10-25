@@ -1,5 +1,5 @@
 /*
- * BeautiAlignmentBuffer.java
+ * TreeLimeAlignmentBuffer.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -39,9 +39,9 @@ import dr.evolution.sequence.Sequence;
 /**
  * @author Andrew Rambaut
  */
-public class BeautiAlignmentBuffer implements AlignmentBuffer {
+public class TreeLimeAlignmentBuffer implements AlignmentBuffer {
 
-    public BeautiAlignmentBuffer(Alignment alignment) {
+    public TreeLimeAlignmentBuffer(Alignment alignment) {
         this.alignment = alignment;
         DataType type = alignment.getDataType();
 

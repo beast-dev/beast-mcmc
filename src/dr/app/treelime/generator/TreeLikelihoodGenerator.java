@@ -55,7 +55,7 @@ import java.util.List;
  */
 public class TreeLikelihoodGenerator extends Generator {
 
-    public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public TreeLikelihoodGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

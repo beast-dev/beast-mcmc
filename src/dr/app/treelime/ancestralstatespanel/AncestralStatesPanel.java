@@ -27,10 +27,10 @@
 
 package dr.app.treelime.ancestralstatespanel;
 
-import dr.app.treelime.BeautiFrame;
-import dr.app.treelime.BeautiPanel;
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
 import dr.app.treelime.options.AbstractPartitionData;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
@@ -49,7 +49,7 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class AncestralStatesPanel extends BeautiPanel implements Exportable {
+public class AncestralStatesPanel extends TreeLimePanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
@@ -57,17 +57,17 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
     JTable partitionTable = null;
     PartitionTableModel partitionTableModel = null;
-    BeautiOptions options = null;
+    TreeLimeOptions options = null;
 
     JPanel optionsPanelParent;
     AbstractPartitionData currentPartition = null;
     Map<AbstractPartitionData, AncestralStatesOptionsPanel> optionsPanels = new HashMap<AbstractPartitionData, AncestralStatesOptionsPanel>();
     TitledBorder optionsBorder;
 
-    BeautiFrame frame = null;
+    TreeLimeFrame frame = null;
     boolean settingOptions = false;
 
-    public AncestralStatesPanel(BeautiFrame parent) {
+    public AncestralStatesPanel(TreeLimeFrame parent) {
 
         super();
 
@@ -134,7 +134,7 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void setOptions(BeautiOptions options) {
+    public void setOptions(TreeLimeOptions options) {
 
         this.options = options;
 
@@ -164,7 +164,7 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    public void getOptions(BeautiOptions options) {
+    public void getOptions(TreeLimeOptions options) {
     }
 
     public void fireModelChanged() {

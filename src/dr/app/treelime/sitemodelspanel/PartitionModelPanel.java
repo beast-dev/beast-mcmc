@@ -27,7 +27,7 @@
 
 package dr.app.treelime.sitemodelspanel;
 
-import dr.app.treelime.BeautiFrame;
+import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.components.continuous.ContinuousModelExtensionType;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
@@ -137,9 +137,9 @@ public class PartitionModelPanel extends OptionsPanel {
 
     protected final PartitionSubstitutionModel model;
 
-    final BeautiFrame frame;
+    final TreeLimeFrame frame;
 
-    public PartitionModelPanel(final BeautiFrame frame, final PartitionSubstitutionModel partitionModel) {
+    public PartitionModelPanel(final TreeLimeFrame frame, final PartitionSubstitutionModel partitionModel) {
 
         super(12, (OSType.isMac() ? 6 : 24));
 

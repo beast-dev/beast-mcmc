@@ -39,7 +39,7 @@ import dr.evolution.util.TaxonList;
  * @author Andrew Rambaut
  */
 public class TreePartitionData extends AbstractPartitionData {
-    public TreePartitionData(BeautiOptions options, String name, String fileName, TreeHolder trees) {
+    public TreePartitionData(TreeLimeOptions options, String name, String fileName, TreeHolder trees) {
         super(options, name, fileName);
 
         this.trees = trees;

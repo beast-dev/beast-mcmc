@@ -42,9 +42,9 @@ public class DolloComponentOptions implements ComponentOptions {
     public static final String DATA_NAME = "binaryDolloDataType";
     public static final String MODEL_NAME = "binaryDolloSubstModel";
 
-	final private BeautiOptions options;
+	final private TreeLimeOptions options;
 
-	public DolloComponentOptions(final BeautiOptions options) {
+	public DolloComponentOptions(final TreeLimeOptions options) {
 		this.options = options;
 	}
 
@@ -87,7 +87,7 @@ public class DolloComponentOptions implements ComponentOptions {
 		// Do nothing
 	}
 
-	public BeautiOptions getOptions() {
+	public TreeLimeOptions getOptions() {
 		return options;
 	}
 

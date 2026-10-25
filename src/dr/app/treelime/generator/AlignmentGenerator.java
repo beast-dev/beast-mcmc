@@ -29,7 +29,7 @@ package dr.app.treelime.generator;
 
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.components.dollo.DolloComponentOptions;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
@@ -56,7 +56,7 @@ public class AlignmentGenerator extends Generator {
     // three characters long in case it is codon partitioned.
     private static final String NULL_SEQUENCE = "???";
 
-    public AlignmentGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public AlignmentGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

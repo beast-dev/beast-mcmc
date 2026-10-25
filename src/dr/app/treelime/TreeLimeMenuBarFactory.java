@@ -1,5 +1,5 @@
 /*
- * BeautiMenuBarFactory.java
+ * TreeLimeMenuBarFactory.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -37,16 +37,16 @@ import jam.framework.DefaultHelpMenuFactory;
 import dr.app.util.OSType;
 
 
-public class BeautiMenuBarFactory extends DefaultMenuBarFactory {
+public class TreeLimeMenuBarFactory extends DefaultMenuBarFactory {
 
-	public BeautiMenuBarFactory() {
+	public TreeLimeMenuBarFactory() {
 		if (OSType.isMac()) {
-			registerMenuFactory(new BeautiMacFileMenuFactory());
+			registerMenuFactory(new TreeLimeMacFileMenuFactory());
 			registerMenuFactory(new MacEditMenuFactory());
 			registerMenuFactory(new MacWindowMenuFactory());
 			registerMenuFactory(new MacHelpMenuFactory());
 		} else {
-			registerMenuFactory(new BeautiDefaultFileMenuFactory());
+			registerMenuFactory(new TreeLimeDefaultFileMenuFactory());
 			registerMenuFactory(new DefaultEditMenuFactory());
 			registerMenuFactory(new DefaultHelpMenuFactory());
 		}

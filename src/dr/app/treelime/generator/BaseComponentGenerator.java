@@ -27,7 +27,7 @@
 
 package dr.app.treelime.generator;
 
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.beauti.util.XMLWriter;
 
 /**
@@ -38,7 +38,7 @@ import dr.app.beauti.util.XMLWriter;
 public abstract class BaseComponentGenerator extends Generator implements ComponentGenerator {
     private Generator callingGenerator;
 
-    protected BaseComponentGenerator(final BeautiOptions options) {
+    protected BaseComponentGenerator(final TreeLimeOptions options) {
         super(options, null);
     }
 

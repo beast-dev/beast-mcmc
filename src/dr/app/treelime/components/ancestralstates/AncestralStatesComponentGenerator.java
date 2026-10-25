@@ -29,7 +29,7 @@ package dr.app.treelime.components.ancestralstates;
 
 import dr.app.treelime.generator.BaseComponentGenerator;
 import dr.app.treelime.options.AbstractPartitionData;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionSubstitutionModel;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
@@ -54,7 +54,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     private final static String DNDS_LOG_SUFFIX = ".dNdS.log";
     private final static String STATE_LOG_SUFFIX = ".states.log";
 
-    public AncestralStatesComponentGenerator(final BeautiOptions options) {
+    public AncestralStatesComponentGenerator(final TreeLimeOptions options) {
         super(options);
     }
 

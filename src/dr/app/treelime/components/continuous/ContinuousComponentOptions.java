@@ -53,9 +53,9 @@ public class ContinuousComponentOptions implements ComponentOptions {
     public final static String RRW_CATEGORIES = "rrwCategories";
     public final static String DRIFT_RATE = "driftRate";
 
-    final private BeautiOptions options;
+    final private TreeLimeOptions options;
 
-    public ContinuousComponentOptions(final BeautiOptions options) {
+    public ContinuousComponentOptions(final TreeLimeOptions options) {
         this.options = options;
     }
 
@@ -172,7 +172,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
         // Do nothing
     }
 
-    public BeautiOptions getOptions() {
+    public TreeLimeOptions getOptions() {
         return options;
     }
 

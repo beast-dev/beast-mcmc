@@ -62,11 +62,11 @@ public class TraitData implements Serializable {
     private final String fileName;
     private String name;
 
-    protected final BeautiOptions options;
+    protected final TreeLimeOptions options;
 
     private List<Predictor> predictorList = new ArrayList<Predictor>();
 
-    public TraitData(BeautiOptions options, String name, String fileName, TraitType traitType) {
+    public TraitData(TreeLimeOptions options, String name, String fileName, TraitType traitType) {
         this.options = options;
         this.name = name;
         this.fileName = fileName;

@@ -29,7 +29,7 @@ package dr.app.treelime.components.sequenceerror;
 
 import dr.app.treelime.generator.BaseComponentGenerator;
 import dr.app.treelime.options.AbstractPartitionData;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.SequenceErrorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.HypermutantAlignment;
@@ -47,7 +47,7 @@ import dr.xml.XMLParser;
  */
 public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator {
 
-    SequenceErrorModelComponentGenerator(final BeautiOptions options) {
+    SequenceErrorModelComponentGenerator(final TreeLimeOptions options) {
         super(options);
     }
 

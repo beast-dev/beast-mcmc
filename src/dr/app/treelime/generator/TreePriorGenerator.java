@@ -28,7 +28,7 @@
 package dr.app.treelime.generator;
 
 import dr.app.treelime.components.ComponentFactory;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.Parameter;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.options.PartitionTreePrior;
@@ -71,7 +71,7 @@ import static dr.evomodelxml.coalescent.CoalescentLikelihoodParser.INTERVALS;
  */
 public class TreePriorGenerator extends Generator {
 
-    public TreePriorGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public TreePriorGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

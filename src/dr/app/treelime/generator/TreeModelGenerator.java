@@ -28,7 +28,7 @@
 package dr.app.treelime.generator;
 
 import dr.app.treelime.components.ComponentFactory;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -50,7 +50,7 @@ import dr.xml.XMLParser;
  */
 public class TreeModelGenerator extends Generator {
 
-    public TreeModelGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public TreeModelGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 

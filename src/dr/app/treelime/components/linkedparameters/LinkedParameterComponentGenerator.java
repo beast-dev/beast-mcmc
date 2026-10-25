@@ -28,7 +28,7 @@
 package dr.app.treelime.components.linkedparameters;
 
 import dr.app.treelime.generator.BaseComponentGenerator;
-import dr.app.treelime.options.BeautiOptions;
+import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
 import dr.inference.model.ParameterParser;
@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class LinkedParameterComponentGenerator extends BaseComponentGenerator {
 
-    public LinkedParameterComponentGenerator(final BeautiOptions options) {
+    public LinkedParameterComponentGenerator(final TreeLimeOptions options) {
         super(options);
     }
 

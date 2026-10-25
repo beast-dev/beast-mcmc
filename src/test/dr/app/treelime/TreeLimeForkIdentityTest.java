@@ -189,6 +189,14 @@ public class TreeLimeForkIdentityTest extends TestCase {
         Object importer = twoArgumentConstructor(importerType).newInstance(null, options);
         importerType.getMethod("importFromFile", File.class).invoke(importer, new File(data));
 
+        // TreeLime starts from UPGMA by default and BEAUti from a random tree: compare like with like
+        apply(options, new Step("treeModels", "setStartingTreeType", "UPGMA"));
+        if (app.equals(TREELIME)) {
+            // the model as BEAUti writes it: no pre-order flags for analytic gradients
+            Object maximization = get(options, "maximizationOptions");
+            Method setMode = method(maximization, "setGradientMode");
+            setMode.invoke(maximization, enumValue(setMode.getParameterTypes()[0], "NUMERIC"));
+        }
         for (Step step : steps) {
             apply(options, step);
         }
@@ -243,7 +251,8 @@ public class TreeLimeForkIdentityTest extends TestCase {
                 String getter = "get" + Character.toUpperCase(step.target.charAt(0)) + step.target.substring(1);
                 getter = getter.replace("getClocks", "getPartitionClockModels")
                         .replace("getTreePriors", "getPartitionTreePriors")
-                        .replace("getSubstitutionModels", "getPartitionSubstitutionModels");
+                        .replace("getSubstitutionModels", "getPartitionSubstitutionModels")
+                        .replace("getTreeModels", "getPartitionTreeModels");
                 for (Object model : (List<?>) call(options, getter)) {
                     Method setter = method(model, step.method);
                     Class<?> type = setter.getParameterTypes()[0];

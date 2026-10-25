@@ -754,26 +754,65 @@ public class BeastGenerator extends Generator {
     }
 
     /**
-     * Write the maximizer with a numeric gradient: L-BFGS over the selected parameters, each mapped to the real line
-     * by its transform, then a report of the optimum.
+     * Write the maximizer: L-BFGS over the selected parameters, each mapped to the real line by its transform, then a
+     * report of the optimum. With analytic gradients, each parameter gets a gradient block: the tree-likelihood term
+     * (analytic where BEAST has one, numeric otherwise) and a numeric term from the cheap prior compound, which covers
+     * every prior on the parameter. The maximizer's value is the chosen density itself (<objective>), not the union
+     * of the blocks' terms.
      *
      * @param writer XMLWriter
      */
     public void writeMaximizer(XMLWriter writer) throws GeneratorException {
         MaximizationOptions maximization = options.maximizationOptions;
+        MaximizationOptions.Objective objective = maximization.objective;
 
-        if (maximization.objective != MaximizationOptions.Objective.PRIOR && !options.hasData()) {
+        if (objective != MaximizationOptions.Objective.PRIOR && !options.hasData()) {
             throw new GeneratorException("There are no data to compute a likelihood: choose the prior-only objective.");
         }
 
         List<Parameter> parameters = maximization.selectOptimized(options.selectParameters());
+        Map<Parameter, GradientRegistry.LikelihoodTerm> terms = new LinkedHashMap<Parameter, GradientRegistry.LikelihoodTerm>();
+        if (maximization.isAnalytic()) {
+            for (Parameter parameter : parameters) {
+                terms.put(parameter, likelihoodTerm(parameter));
+            }
+            if (objective == MaximizationOptions.Objective.ML) {
+                // the likelihood is flat in these: they are identified only by their priors
+                List<Parameter> identified = new ArrayList<Parameter>();
+                for (Parameter parameter : parameters) {
+                    if (terms.get(parameter) != GradientRegistry.LikelihoodTerm.NONE) {
+                        identified.add(parameter);
+                    }
+                }
+                parameters = identified;
+            }
+        }
         if (parameters.isEmpty()) {
             throw new GeneratorException("No parameter is selected for optimization in the Maximization tab.");
         }
 
-        writer.writeComment("Maximize the " + maximization.objective.getDensityId() + " density by L-BFGS, " +
-                        "with a numeric gradient",
-                "Optimized: " + parameters.size() + " parameters; the tree topology and node heights are fixed");
+        int analyticCount = 0;
+        for (GradientRegistry.LikelihoodTerm term : terms.values()) {
+            if (term.isAnalytic()) {
+                analyticCount++;
+            }
+        }
+        writer.writeComment("Maximize the " + objective.getDensityId() + " density by L-BFGS, with " +
+                        (maximization.isAnalytic() ? "analytic tree-likelihood gradients for " + analyticCount + " of " +
+                                parameters.size() + " parameters" : "a numeric gradient"),
+                "The tree topology and node heights are fixed");
+
+        writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+                new Attribute.Default<String>(XMLParser.ID, OPTIMIZED_PARAMETERS));
+        for (Parameter parameter : parameters) {
+            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        }
+        writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+        writer.writeText("");
+
+        if (maximization.isAnalytic()) {
+            writeGradientBlocks(parameters, terms, objective, writer);
+        }
 
         List<Attribute> attributes = new ArrayList<Attribute>();
         attributes.add(new Attribute.Default<String>(XMLParser.ID, MAXIMIZER));
@@ -787,20 +826,24 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<Boolean>("startAtCurrentState", true));
         attributes.add(new Attribute.Default<Boolean>("printToScreen", maximization.printToScreen));
         attributes.add(new Attribute.Default<Boolean>("includeJacobian", false));
-        attributes.add(new Attribute.Default<String>("numericStepSize", maximization.stepSize.getName()));
+        if (!maximization.isAnalytic()) {
+            attributes.add(new Attribute.Default<String>("numericStepSize", maximization.stepSize.getName()));
+        }
         writer.writeOpenTag("maximizeWrtParameter", attributes);
 
-        writer.writeOpenTag("densityWrtParameter");
-        writer.writeIDref(maximization.objective.getDensityId(), maximization.objective.getDensityId());
-        writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                new Attribute.Default<String>(XMLParser.ID, OPTIMIZED_PARAMETERS));
-        for (Parameter parameter : parameters) {
-            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        if (maximization.isAnalytic()) {
+            writer.writeOpenTag("objective");
+            writer.writeIDref(objective.getDensityId(), objective.getDensityId());
+            writer.writeCloseTag("objective");
+            writer.writeIDref("compoundGradient", MAXIMIZER_GRADIENT);
+        } else {
+            writer.writeOpenTag("densityWrtParameter");
+            writer.writeIDref(objective.getDensityId(), objective.getDensityId());
+            writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, OPTIMIZED_PARAMETERS);
+            writer.writeCloseTag("densityWrtParameter");
         }
-        writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-        writer.writeCloseTag("densityWrtParameter");
 
-        // one segment per transform; the parameters are grouped by transform in the compound parameter
+        // one segment per run of parameters with the same transform, in the order of the compound parameter
         writer.writeOpenTag("compoundTransform");
         int start = 0;
         while (start < parameters.size()) {
@@ -830,6 +873,118 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag(Report.REPORT);
     }
 
+    /**
+     * The tree-likelihood term for a parameter; analytic terms need every partition in a tree data likelihood
+     * (BEAUti's older tree likelihoods and trait likelihoods have no gradients).
+     */
+    private GradientRegistry.LikelihoodTerm likelihoodTerm(Parameter parameter) {
+        GradientRegistry.LikelihoodTerm term = GradientRegistry.likelihoodTerm(options, parameter);
+        if (term.isAnalytic() && (!options.otherPartitions.isEmpty() || !options.traits.isEmpty())) {
+            return GradientRegistry.LikelihoodTerm.NUMERIC;
+        }
+        return term;
+    }
+
+    private void writeGradientBlocks(List<Parameter> parameters, Map<Parameter, GradientRegistry.LikelihoodTerm> terms,
+                                     MaximizationOptions.Objective objective, XMLWriter writer) {
+        writer.writeComment("Gradient blocks, one per optimized parameter, in the order of " + OPTIMIZED_PARAMETERS);
+        Map<Parameter, String> tags = new LinkedHashMap<Parameter, String>();
+        for (Parameter parameter : parameters) {
+            GradientRegistry.LikelihoodTerm term = terms.get(parameter);
+            boolean likelihoodTerm = objective != MaximizationOptions.Objective.PRIOR &&
+                    term != GradientRegistry.LikelihoodTerm.NONE;
+            boolean priorTerm = objective != MaximizationOptions.Objective.ML;
+
+            List<String> treeLikelihoods = new ArrayList<String>();
+            if (likelihoodTerm && term.isAnalytic()) {
+                for (List<PartitionData> partitions : options.multiPartitionLists) {
+                    if (GradientRegistry.usesOwner(options, partitions, parameter)) {
+                        treeLikelihoods.add(partitions.get(0).getPartitionTreeModel().getPrefix() +
+                                partitions.get(0).getPartitionClockModel().getPrefix() + "treeLikelihood");
+                    }
+                }
+            }
+            int members = (priorTerm ? 1 : 0) + (likelihoodTerm ? Math.max(1, treeLikelihoods.size()) : 0);
+
+            String id = "gradient." + parameter.getName();
+            if (members > 1) {
+                tags.put(parameter, "jointGradient");
+                writer.writeOpenTag("jointGradient", new Attribute.Default<String>(XMLParser.ID, id));
+            }
+            // the prior term first, so the block's parameter is the parameter itself
+            String tag = null;
+            if (priorTerm) {
+                tag = writeNumericalGradient(members > 1 ? null : id, "prior", parameter, writer);
+            }
+            if (likelihoodTerm) {
+                if (!term.isAnalytic()) {
+                    tag = writeNumericalGradient(members > 1 ? null : id, "likelihood", parameter, writer);
+                } else {
+                    for (String treeLikelihood : treeLikelihoods) {
+                        tag = writeLikelihoodGradient(members > 1 ? null : id, term, treeLikelihood, parameter, writer);
+                    }
+                }
+            }
+            if (members == 1) {
+                tags.put(parameter, tag);
+            }
+            if (members > 1) {
+                writer.writeCloseTag("jointGradient");
+            }
+        }
+        writer.writeText("");
+
+        writer.writeOpenTag("compoundGradient", new Attribute.Default<String>(XMLParser.ID, MAXIMIZER_GRADIENT));
+        for (Parameter parameter : parameters) {
+            writer.writeIDref(tags.get(parameter), "gradient." + parameter.getName());
+        }
+        writer.writeCloseTag("compoundGradient");
+        writer.writeText("");
+    }
+
+    // returns the tag written
+    private String writeNumericalGradient(String id, String density, Parameter parameter, XMLWriter writer) {
+        writer.writeOpenTag("numericalGradient", id == null ? new Attribute[0] :
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, id)});
+        writer.writeIDref(density, density);
+        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        writer.writeCloseTag("numericalGradient");
+        return "numericalGradient";
+    }
+
+    // returns the tag written
+    private String writeLikelihoodGradient(String id, GradientRegistry.LikelihoodTerm term, String treeLikelihood,
+                                         Parameter parameter, XMLWriter writer) {
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        if (id != null) {
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
+        }
+        switch (term) {
+            case SUBSTITUTION:
+                attributes.add(new Attribute.Default<Boolean>("homogeneous", true));
+                writer.writeOpenTag("branchSubstitutionParameterGradient", attributes);
+                writer.writeIDref("treeDataLikelihood", treeLikelihood);
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                writer.writeCloseTag("branchSubstitutionParameterGradient");
+                return "branchSubstitutionParameterGradient";
+            case SITE_RATE:
+                writer.writeOpenTag("siteRateModelGradient", attributes);
+                writer.writeIDref("treeDataLikelihood", treeLikelihood);
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                writer.writeCloseTag("siteRateModelGradient");
+                return "siteRateModelGradient";
+            case BRANCH_RATE:
+                attributes.add(new Attribute.Default<String>("traitName", "Sequence"));
+                writer.writeOpenTag("branchRateGradient", attributes);
+                writer.writeIDref("treeDataLikelihood", treeLikelihood);
+                writer.writeCloseTag("branchRateGradient");
+                return "branchRateGradient";
+            default:
+                throw new IllegalArgumentException("Not an analytic term: " + term);
+        }
+    }
+
+    public static final String MAXIMIZER_GRADIENT = "maximizerGradient";
     public static final String MAXIMIZER = "maximizer";
     public static final String OPTIMIZED_PARAMETERS = "optimizedParameters";
 

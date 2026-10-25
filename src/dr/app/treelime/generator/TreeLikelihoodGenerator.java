@@ -46,6 +46,7 @@ import dr.evoxml.SitePatternsParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -90,14 +91,19 @@ public class TreeLikelihoodGenerator extends Generator {
         String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
         String idString = prefix + "treeLikelihood";
 
-        Attribute[] attributes = new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, idString),
-                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
-                new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER,
+        // analytic gradients need pre-order traversals, and substitution-model gradients the branch differentials
+        boolean analytic = options.maximizationOptions.isAnalytic();
+        List<Attribute> attributeList = new ArrayList<Attribute>();
+        attributeList.add(new Attribute.Default<String>(XMLParser.ID, idString));
+        attributeList.add(new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()));
+        attributeList.add(new Attribute.Default<Boolean>(TreeDataLikelihoodParser.USE_PREORDER, analytic ||
                         clockModel.getClockType() == ClockType.HMC_CLOCK ||
                                 clockModel.getClockType() == ClockType.SHRINKAGE_LOCAL_CLOCK ||
-                                clockModel.getClockType() == ClockType.MIXED_EFFECTS_CLOCK)
-        };
+                                clockModel.getClockType() == ClockType.MIXED_EFFECTS_CLOCK));
+        if (analytic) {
+            attributeList.add(new Attribute.Default<Boolean>(TreeDataLikelihoodParser.BRANCHINFINITESIMAL_DERIVATIVE, true));
+        }
+        Attribute[] attributes = attributeList.toArray(new Attribute[0]);
 
         writer.writeComment("Likelihood for tree given sequence data");
         writer.writeOpenTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, attributes);

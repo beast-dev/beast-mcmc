@@ -30,7 +30,10 @@ package dr.app.treelime.maximizationpanel;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.treelime.TreeLimeFrame;
 import dr.app.treelime.TreeLimePanel;
+import dr.app.treelime.options.GradientRegistry;
+import dr.app.treelime.options.GradientRegistry.LikelihoodTerm;
 import dr.app.treelime.options.MaximizationOptions;
+import dr.app.treelime.options.MaximizationOptions.GradientMode;
 import dr.app.treelime.options.MaximizationOptions.Objective;
 import dr.app.treelime.options.MaximizationOptions.StepSize;
 import dr.app.treelime.options.MaximizationOptions.Treatment;
@@ -62,6 +65,7 @@ public class MaximizationPanel extends TreeLimePanel {
     private final WholeNumberField iterationsField = new WholeNumberField(1, Integer.MAX_VALUE);
     private final JTextField maxRunTimeField = new JTextField(10);
     private final WholeNumberField maxEvaluationsField = new WholeNumberField(0, Integer.MAX_VALUE);
+    private final JComboBox<GradientMode> gradientModeCombo = new JComboBox<GradientMode>(GradientMode.values());
     private final JComboBox<StepSize> stepSizeCombo = new JComboBox<StepSize>(StepSize.values());
     private final JCheckBox printToScreenCheck = new JCheckBox("Print each iteration to the screen");
     private final JTextField reportFileField = new JTextField(32);
@@ -128,7 +132,21 @@ public class MaximizationPanel extends TreeLimePanel {
 
         optionsPanel.addSeparator();
 
-        stepSizeCombo.setToolTipText("The finite-difference step of the numeric gradient, relative to each value.");
+        gradientModeCombo.setToolTipText("<html>Analytic: the tree-likelihood gradient is computed exactly where BEAST " +
+                "can (substitution, site and branch-rate parameters),<br>and by finite differences otherwise; the " +
+                "prior side is always taken by finite differences of the priors, which is cheap.</html>");
+        optionsPanel.addComponentWithLabel("Gradient:", gradientModeCombo);
+        gradientModeCombo.addActionListener(e -> {
+            if (!settingOptions) {
+                maximization().setGradientMode((GradientMode) gradientModeCombo.getSelectedItem());
+                stepSizeCombo.setEnabled(!maximization().isAnalytic());
+                tableModel.fireTableDataChanged();
+                updateStatus();
+                frame.setDirty();
+            }
+        });
+
+        stepSizeCombo.setToolTipText("The finite-difference step of the all-numeric gradient, relative to each value.");
         optionsPanel.addComponentWithLabel("Numeric gradient step:", stepSizeCombo);
         stepSizeCombo.addActionListener(e -> {
             if (!settingOptions) {
@@ -177,6 +195,11 @@ public class MaximizationPanel extends TreeLimePanel {
         return options.maximizationOptions;
     }
 
+    // the generator also falls back to numeric when some partition is not in a tree data likelihood
+    private LikelihoodTerm likelihoodGradient(Parameter parameter) {
+        return maximization().isAnalytic() ? GradientRegistry.likelihoodTerm(options, parameter) : LikelihoodTerm.NUMERIC;
+    }
+
     private void onEdit(JTextField field, Runnable update) {
         field.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
@@ -210,7 +233,9 @@ public class MaximizationPanel extends TreeLimePanel {
         iterationsField.setValue(maximization.nIterations);
         maxRunTimeField.setText(maximization.maxRunTime);
         maxEvaluationsField.setValue((int) maximization.maxEvaluations);
+        gradientModeCombo.setSelectedItem(maximization.getGradientMode());
         stepSizeCombo.setSelectedItem(maximization.stepSize);
+        stepSizeCombo.setEnabled(!maximization.isAnalytic());
         printToScreenCheck.setSelected(maximization.printToScreen);
         reportFileField.setText(maximization.getReportFileName(options.fileNameStem));
         settingOptions = false;
@@ -230,15 +255,19 @@ public class MaximizationPanel extends TreeLimePanel {
         }
         MaximizationOptions maximization = maximization();
         int optimized = 0;
-        int dimensions = 0;
+        int numeric = 0;
         for (Parameter parameter : tableModel.parameters) {
             if (maximization.classify(parameter, false).isOptimized()) {
                 optimized++;
-                dimensions += parameter.getDimensionWeight();
+                if (likelihoodGradient(parameter) == LikelihoodTerm.NUMERIC) {
+                    numeric++;
+                }
             }
         }
-        String status = optimized + " parameters optimized, all with numeric gradients (2 likelihood evaluations " +
-                "per dimension and gradient).";
+        String status = !maximization.isAnalytic() ?
+                optimized + " parameters optimized, all with numeric gradients (2 evaluations per dimension and step)." :
+                optimized + " parameters optimized: " + (optimized - numeric) + " with analytic or no tree-likelihood " +
+                        "gradients, " + numeric + " by finite differences of the tree likelihoods.";
         if (!maximization.maxRunTime.isEmpty()) {
             try {
                 MaximizeWrtParameterParser.parseRunTime(maximization.maxRunTime);
@@ -256,7 +285,7 @@ public class MaximizationPanel extends TreeLimePanel {
 
     private class ParameterTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {"Optimize", "Parameter", "Description", "Transform"};
+        private final String[] columnNames = {"Optimize", "Parameter", "Description", "Transform", "Likelihood gradient"};
         private List<Parameter> parameters = new ArrayList<Parameter>();
 
         void setParameters(List<Parameter> parameters) {
@@ -292,6 +321,13 @@ public class MaximizationPanel extends TreeLimePanel {
                     return parameter.getDescription();
                 case 3:
                     return treatment.isOptimized() ? treatment.getTransform() : "held fixed: " + treatment.getReason();
+                case 4:
+                    if (!treatment.isOptimized()) {
+                        return "";
+                    }
+                    LikelihoodTerm term = likelihoodGradient(parameter);
+                    return term + (term == LikelihoodTerm.NUMERIC || term == LikelihoodTerm.NONE ? "" :
+                            " (" + term.getDescription() + ")");
             }
             return null;
         }

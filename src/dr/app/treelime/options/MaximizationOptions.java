@@ -84,7 +84,23 @@ public class MaximizationOptions implements Serializable {
         }
     }
 
+    public enum GradientMode {
+        ANALYTIC_WHERE_AVAILABLE("Analytic where available, numeric otherwise"),
+        NUMERIC("Numeric for everything");
+
+        private final String label;
+
+        GradientMode(String label) {
+            this.label = label;
+        }
+
+        public String toString() {
+            return label;
+        }
+    }
+
     public Objective objective = Objective.MAP;
+    private GradientMode gradientMode = GradientMode.ANALYTIC_WHERE_AVAILABLE;
     public int nIterations = 1000; // at least 1: 0 means no limit to lbfgs4j
     public String maxRunTime = ""; // a duration with an optional unit, "" for none
     public long maxEvaluations = 0; // 0 for none
@@ -92,6 +108,19 @@ public class MaximizationOptions implements Serializable {
     public StepSize stepSize = StepSize.MEDIUM;
     public final Set<String> excluded = new HashSet<String>(); // ids of parameters held at their initial values
     public String reportFileName = null; // null: <stem>.max.txt
+
+    // null in files saved before the setting existed
+    public GradientMode getGradientMode() {
+        return gradientMode != null ? gradientMode : GradientMode.ANALYTIC_WHERE_AVAILABLE;
+    }
+
+    public void setGradientMode(GradientMode gradientMode) {
+        this.gradientMode = gradientMode;
+    }
+
+    public boolean isAnalytic() {
+        return getGradientMode() == GradientMode.ANALYTIC_WHERE_AVAILABLE;
+    }
 
     public String getReportFileName(String fileNameStem) {
         return reportFileName != null ? reportFileName : fileNameStem + ".max.txt";

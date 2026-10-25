@@ -40,6 +40,9 @@ import dr.app.treelime.components.tipdatesampling.TipDateSamplingComponentFactor
 import dr.app.treelime.generator.BeastGenerator;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.util.TreeLimeImporter;
+import dr.evolution.util.Date;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.Units;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -75,6 +78,28 @@ class TreeLimeHarness {
         TreeLimeOptions options = new TreeLimeOptions(COMPONENTS);
         new TreeLimeImporter(null, options).importFromFile(data);
         return options;
+    }
+
+    // dates from the two-digit year that ends each name (D4Brazi82 is 1982), as the Tip Dates panel would set them
+    static void setTipDatesFromNames(TreeLimeOptions options) {
+        Date mostRecent = null;
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            Taxon taxon = options.taxonList.getTaxon(i);
+            String name = taxon.getId();
+            Date date = new Date(1900 + Integer.parseInt(name.substring(name.length() - 2)), Units.Type.YEARS, false);
+            taxon.setDate(date);
+            if (mostRecent == null || date.after(mostRecent)) {
+                mostRecent = date;
+            }
+        }
+        options.useTipDates = true;
+        options.maximumTipHeight = 0.0;
+        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+            Taxon taxon = options.taxonList.getTaxon(i);
+            double height = mostRecent.getTimeValue() - taxon.getDate().getTimeValue();
+            taxon.setAttribute("_height", height);
+            options.maximumTipHeight = Math.max(options.maximumTipHeight, height);
+        }
     }
 
     static String generate(TreeLimeOptions options) throws Exception {

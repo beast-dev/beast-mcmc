@@ -44,7 +44,8 @@ public class PartitionTreeModel extends PartitionOptions {
 
     private PartitionTreePrior treePrior;
 
-    private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
+    // TreeLime keeps the topology and node heights fixed: a random tree would give a different answer every run
+    private StartingTreeType startingTreeType = StartingTreeType.UPGMA;
     private Tree userStartingTree = null;
 
     private TreeAsDataType treeAsDataType = TreeAsDataType.EMPRICAL_TREES;

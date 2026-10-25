@@ -49,6 +49,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "maximizeWrtParameter";
     private static final String DENSITY = "densityWrtParameter";
+    private static final String OBJECTIVE = "objective";
     private static final String N_ITERATIONS = "nIterations";
     private static final String INITIAL_GUESS = "startAtCurrentState";
     private static final String PRINT_SCREEN = "printToScreen";
@@ -79,8 +80,14 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         if (gradient != null) {
             parameter = gradient.getParameter();
-            likelihood = gradient.getLikelihood();
+            // the density to maximize; without <objective>, the union of the gradient's terms
+            likelihood = xo.hasChildNamed(OBJECTIVE) ?
+                    (Likelihood) xo.getChild(OBJECTIVE).getChild(Likelihood.class) : gradient.getLikelihood();
         } else {
+            if (xo.hasChildNamed(OBJECTIVE)) {
+                throw new XMLParseException("<" + OBJECTIVE + "> goes with a gradient; <" + DENSITY +
+                        "> already names the density");
+            }
             XMLObject cxo = xo.getChild(DENSITY);
             parameter = (Parameter) cxo.getChild(Parameter.class);
             likelihood = (Likelihood) cxo.getChild(Likelihood.class);
@@ -194,6 +201,9 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             ),
             // any multivariable transform, including <nodeHeightTransform> and <multivariateCompoundTransform>
             new ElementRule(Transform.MultivariableTransform.class, true),
+            // with a gradient: the density whose value is maximized, e.g. the joint while the gradient blocks
+            // differentiate its terms (a nested <compoundGradient> would otherwise count shared terms twice)
+            new ElementRule(OBJECTIVE, new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}, true),
             AttributeRule.newDoubleRule(N_ITERATIONS, true),
             AttributeRule.newBooleanRule(INITIAL_GUESS, true),
             AttributeRule.newBooleanRule(PRINT_SCREEN, true),

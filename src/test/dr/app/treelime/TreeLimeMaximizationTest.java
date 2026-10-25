@@ -31,8 +31,11 @@ import dr.app.beast.BeastParser;
 import dr.app.beast.BeastVersion;
 import dr.app.treelime.options.MaximizationOptions;
 import dr.app.treelime.options.PartitionClockModel;
+import dr.app.treelime.options.PartitionSubstitutionModel;
+import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.ClockType;
+import dr.app.treelime.types.StartingTreeType;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.model.Parameter;
 import dr.xml.XMLObject;
@@ -43,7 +46,9 @@ import java.util.Map;
 
 /**
  * The XML that TreeLime's generator writes for the Maximization tab: it parses, the maximizer optimizes the chosen
- * density over the chosen parameters with a numeric gradient, and it stops by converging.
+ * density over the chosen parameters, and it stops by converging. With analytic gradients every run also checks, at
+ * every evaluation, that the gradient blocks add up to the derivative of the objective (a missing or double-counted
+ * term shows up there), and the optimum must match the all-numeric run's.
  */
 public class TreeLimeMaximizationTest extends TestCase {
 
@@ -61,7 +66,12 @@ public class TreeLimeMaximizationTest extends TestCase {
 
         assertTrue(xml.contains("<maximizeWrtParameter id=\"maximizer\" nIterations=\"200\""));
         assertTrue(xml.contains("includeJacobian=\"false\""));
-        assertTrue(xml.contains("<joint idref=\"joint\"/>"));
+        assertTrue(between(xml, "<objective>", "</objective>").contains("<joint idref=\"joint\"/>"));
+        // kappa: the analytic substitution-model gradient plus the numeric prior term; popSize: the prior term only
+        assertTrue(between(xml, "<jointGradient id=\"gradient.kappa\">", "</jointGradient>")
+                .contains("<branchSubstitutionParameterGradient homogeneous=\"true\">"));
+        assertTrue(xml.contains("<numericalGradient id=\"gradient.constant.popSize\">"));
+        assertTrue(xml.contains("usePreOrder=\"true\" branchInfinitesimalDerivative=\"true\""));
         // kappa and the population size on the log scale; the frequencies (a simplex) are held fixed
         assertTrue(xml.contains("<transform type=\"log\">"));
         assertFalse(between(xml, "<compoundParameter id=\"optimizedParameters\">", "</compoundParameter>")
@@ -74,6 +84,38 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue("the joint density increased", run.end > run.start);
         assertTrue(run.parameter("kappa").getParameterValue(0) != run.startValue("kappa"));
+        assertGradientChecked(run);
+
+        // the all-numeric run reaches the same optimum
+        options.maximizationOptions.setGradientMode(MaximizationOptions.GradientMode.NUMERIC);
+        String numericXml = TreeLimeHarness.generate(options);
+        assertTrue(numericXml.contains("<densityWrtParameter>"));
+        assertFalse(numericXml.contains("branchInfinitesimalDerivative"));
+        Run numeric = run(numericXml);
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, numeric.maximizer.getReason());
+        for (String id : new String[]{"kappa", "constant.popSize"}) {
+            double analytic = run.parameter(id).getParameterValue(0);
+            assertEquals(id, analytic, numeric.parameter(id).getParameterValue(0), 1E-4 * analytic);
+        }
+        assertEquals(run.end, numeric.end, 1E-6 * Math.abs(run.end));
+    }
+
+    public void testGammaShape() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            model.setGammaHetero(true);
+        }
+        String xml = TreeLimeHarness.generate(quiet(options));
+        assertTrue(between(xml, "<jointGradient id=\"gradient.alpha\">", "</jointGradient>")
+                .contains("<siteRateModelGradient>"));
+
+        Run run = run(xml);
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+        assertTrue(run.end > run.start);
+        assertGradientChecked(run);
     }
 
     public void testMaximumLikelihood() throws Exception {
@@ -83,13 +125,17 @@ public class TreeLimeMaximizationTest extends TestCase {
         }
         options.maximizationOptions.objective = MaximizationOptions.Objective.ML;
         String xml = TreeLimeHarness.generate(quiet(options));
-        assertTrue(between(xml, "<densityWrtParameter>", "</densityWrtParameter>")
-                .contains("<likelihood idref=\"likelihood\"/>"));
+        assertTrue(between(xml, "<objective>", "</objective>").contains("<likelihood idref=\"likelihood\"/>"));
+        // the likelihood does not depend on the population size, so ML leaves it out; kappa has no prior term
+        assertFalse(between(xml, "<compoundParameter id=\"optimizedParameters\">", "</compoundParameter>")
+                .contains("constant.popSize"));
+        assertFalse(xml.contains("<prior idref=\"prior\"/>\n\t\t\t<parameter idref=\"kappa\"/>"));
 
         Run run = run(xml);
         assertEquals("likelihood", run.maximizer.getLikelihood().getId());
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
+        assertGradientChecked(run);
     }
 
     // a parameter unticked in the Maximization tab keeps its initial value
@@ -139,14 +185,67 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertTrue(between(xml, "<compoundParameter id=\"optimizedParameters\">", "</compoundParameter>")
                 .contains("branchRatesHMC.rates"));
 
+        assertTrue(between(xml, "<jointGradient id=\"gradient.branchRatesHMC.rates\">", "</jointGradient>")
+                .contains("<branchRateGradient traitName=\"Sequence\">"));
+
         Run run = run(xml);
         Parameter rates = run.parameter("branchRatesHMC.rates");
         assertTrue(rates.getDimension() > 1);
         assertEquals(MaximizerWrtParameter.Reason.MAX_ITERATIONS, run.maximizer.getReason());
         assertTrue(run.end > run.start);
+        assertGradientChecked(run);
     }
 
+    // with tip dates BEAUti estimates the strict clock rate: the analytic branch-rate gradient
+    public void testStrictClockRateWithTipDates() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");
+        if (options == null) {
+            return;
+        }
+        TreeLimeHarness.setTipDatesFromNames(options);
+        String xml = TreeLimeHarness.generate(quiet(options));
+        assertTrue(between(xml, "<jointGradient id=\"gradient.clock.rate\">", "</jointGradient>")
+                .contains("<branchRateGradient traitName=\"Sequence\">"));
+
+        Run run = run(xml);
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+        assertTrue(run.end > run.start);
+        assertTrue(run.parameter("clock.rate").getParameterValue(0) != 1.0);
+        assertGradientChecked(run);
+    }
+
+    // 20 states: the site-model gradient needs BEAGLE's transposed pre-order
+    public void testAminoAcidsGamma() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/YFV.aa.fasta");
+        if (options == null) {
+            return;
+        }
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            model.setGammaHetero(true);
+        }
+        String xml = TreeLimeHarness.generate(quiet(options));
+        assertTrue(between(xml, "<jointGradient id=\"gradient.alpha\">", "</jointGradient>")
+                .contains("<siteRateModelGradient>"));
+
+        Run run = run(xml);
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+        assertTrue(run.end > run.start);
+        assertGradientChecked(run);
+    }
+
+    private static void assertGradientChecked(Run run) {
+        String report = run.maximizer.getReport();
+        String line = report.substring(report.indexOf("WorstGradientCheckError: "));
+        double error = Double.parseDouble(line.substring(line.indexOf(' ') + 1, line.indexOf('\n')));
+        assertTrue("worst relative gradient error " + error, error < 1E-4);
+    }
+
+    // the topology and node heights are fixed during maximization: start from UPGMA, not a random tree, so that
+    // runs maximize the same model
     private static TreeLimeOptions quiet(TreeLimeOptions options) {
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            tree.setStartingTreeType(StartingTreeType.UPGMA);
+        }
         options.maximizationOptions.nIterations = 200;
         options.maximizationOptions.printToScreen = false;
         return options;
@@ -176,8 +275,9 @@ public class TreeLimeMaximizationTest extends TestCase {
 
     // parse without maximizing, so the start can be recorded, then maximize
     private static Run run(String xml) throws Exception {
+        // check the gradient against finite differences of the objective at every evaluation
         xml = xml.replace("<maximizeWrtParameter id=\"maximizer\"",
-                "<maximizeWrtParameter id=\"maximizer\" maximizeOnParse=\"false\"");
+                "<maximizeWrtParameter id=\"maximizer\" maximizeOnParse=\"false\" checkGradientEvery=\"1\"");
         // the generated reports would write files and maximize nothing: drop them
         xml = xml.substring(0, xml.indexOf("<!-- The optimum")) + "</beast>\n";
 

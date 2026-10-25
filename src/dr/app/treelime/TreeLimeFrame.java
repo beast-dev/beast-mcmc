@@ -50,8 +50,7 @@ import dr.app.treelime.components.tipdatesampling.TipDateSamplingComponentFactor
 import dr.app.treelime.datapanel.DataPanel;
 import dr.app.treelime.generator.BeastGenerator;
 import dr.app.treelime.generator.Generator;
-import dr.app.treelime.mcmcpanel.MCMCPanel;
-import dr.app.treelime.operatorspanel.OperatorsPanel;
+import dr.app.treelime.maximizationpanel.MaximizationPanel;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreePrior;
 import dr.app.treelime.priorspanel.DefaultPriorTableDialog;
@@ -105,6 +104,7 @@ public class TreeLimeFrame extends DocumentFrame {
     public final static String PRIORS = "Priors";
     public final static String OPERATORS = "Operators";
     public final static String MCMC = "MCMC";
+    public final static String MAXIMIZATION = "Maximization";
 
     private TreeLimeOptions options;
     private BeastGenerator generator;
@@ -122,8 +122,7 @@ public class TreeLimeFrame extends DocumentFrame {
     private ClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
-    private OperatorsPanel operatorsPanel;
-    private MCMCPanel mcmcPanel;
+    private MaximizationPanel maximizationPanel;
 
     private TreeLimePanel currentPanel;
 
@@ -192,8 +191,7 @@ public class TreeLimeFrame extends DocumentFrame {
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
         priorsPanel = new PriorsPanel(this, false);
-        operatorsPanel = new OperatorsPanel(this);
-        mcmcPanel = new MCMCPanel(this);
+        maximizationPanel = new MaximizationPanel(this);
 
         int index = 0;
         tabbedPane.addTab(DATA_PARTITIONS, dataPanel);
@@ -241,15 +239,10 @@ public class TreeLimeFrame extends DocumentFrame {
         tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Specify prior probability distributions on each and every<br>" +
                 "parameter of the current model.</html>");
-        tabbedPane.addTab(OPERATORS, operatorsPanel);
+        tabbedPane.addTab(MAXIMIZATION, maximizationPanel);
         tabbedPane.setToolTipTextAt(index++, "<html>" +
-                "Select and adjust the menu of operators that will be used<br>" +
-                "to propose changes to the parameters. Switch off operators<br>" +
-                "on certain parameters to fix them to initial values.</html>");
-        tabbedPane.addTab(MCMC, mcmcPanel);
-        tabbedPane.setToolTipTextAt(index++, "<html>" +
-                "Specify the details of MCMC sampling. This includes chain<br>" +
-                "length, sampling frequencies, log file names and more.</html>");
+                "Choose what to maximize (posterior mode or likelihood),<br>" +
+                "the iteration and time limits, and the parameters to optimize.</html>");
 
         for (int i = 1; i < tabbedPane.getTabCount(); i++) {
             tabbedPane.setEnabledAt(i, false);
@@ -332,8 +325,7 @@ public class TreeLimeFrame extends DocumentFrame {
             treesPanel.setOptions(options);
             ancestralStatesPanel.setOptions(options);
             priorsPanel.setOptions(options);
-            operatorsPanel.setOptions(options);
-            mcmcPanel.setOptions(options);
+            maximizationPanel.setOptions(options);
 
             setStatusMessage();
         } catch (IllegalArgumentException iae) {
@@ -365,8 +357,7 @@ public class TreeLimeFrame extends DocumentFrame {
             treesPanel.getOptions(options);
             ancestralStatesPanel.getOptions(options);
             priorsPanel.getOptions(options);
-            operatorsPanel.getOptions(options);
-            mcmcPanel.getOptions(options);
+            maximizationPanel.getOptions(options);
         } catch (IllegalArgumentException iae) {
             iae.printStackTrace(System.err);
             JOptionPane.showMessageDialog(this, iae.getMessage(),
@@ -864,7 +855,7 @@ public class TreeLimeFrame extends DocumentFrame {
         return generateAction;
     }
 
-    protected AbstractAction generateAction = new AbstractAction("Generate BEAST File...", gearIcon) {
+    protected AbstractAction generateAction = new AbstractAction("Generate TreeLime XML...", gearIcon) {
         private static final long serialVersionUID = -5329102618630268783L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {

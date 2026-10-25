@@ -27,6 +27,7 @@
 
 package dr.util;
 
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inferencexml.model.MaskingParser;
 import dr.xml.*;
@@ -49,8 +50,50 @@ public class TransformParsers {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            return new Transform.Collection(xo.getAllChildren(Transform.ParsedTransform.class),
-                    parameter);
+            List<Transform.ParsedTransform> segments = xo.getAllChildren(Transform.ParsedTransform.class);
+            for (Transform.ParsedTransform segment : segments) {
+                if (segment.parameters != null) {
+                    locateSegment(segment, parameter);
+                }
+            }
+            return new Transform.Collection(segments, parameter);
+        }
+
+        /**
+         * A segment given by its parameters, <transform type="log"><parameter idref="kappa"/></transform>, covers
+         * where those parameters sit, one after another, in the compound parameter, so the XML needs no dimensions.
+         */
+        private void locateSegment(Transform.ParsedTransform segment, Parameter parameter) throws XMLParseException {
+            if (!(parameter instanceof CompoundParameter)) {
+                throw new XMLParseException("A <transform> with parameters needs a <compoundParameter> to place them in");
+            }
+            CompoundParameter compound = (CompoundParameter) parameter;
+            int start = -1;
+            int end = -1;
+            for (Parameter member : segment.parameters) {
+                int offset = 0;
+                int found = -1;
+                for (int i = 0; i < compound.getParameterCount(); ++i) {
+                    if (compound.getParameter(i) == member) {
+                        found = offset;
+                        break;
+                    }
+                    offset += compound.getParameter(i).getDimension();
+                }
+                if (found < 0) {
+                    throw new XMLParseException("Parameter " + member.getId() + " is not in compound parameter " +
+                            compound.getId());
+                }
+                if (start < 0) {
+                    start = found;
+                } else if (found != end) {
+                    throw new XMLParseException("The parameters of a <transform> must be adjacent, in order, in " +
+                            "compound parameter " + compound.getId());
+                }
+                end = found + member.getDimension();
+            }
+            segment.start = start;
+            segment.end = end;
         }
 
         @Override

@@ -48,6 +48,10 @@ import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
+import dr.inferencexml.model.CompoundParameterParser;
+import dr.inference.model.ParameterParser;
+import dr.util.TransformParsers;
+import dr.xml.Report;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
 import dr.util.Pair;
@@ -572,42 +576,16 @@ public class BeastGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
 
-        //++++++++++++++++ Operators ++++++++++++++++++
+        //++++++++++++++++ Maximization ++++++++++++++++++
         try {
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_OPERATORS, writer);
-
-            List<Operator> operators = options.selectOperators();
-            operatorsGenerator.writeOperatorSchedule(operators, writer);
+            writeObjective(writer);
             writer.writeText("");
 
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new GeneratorException("Operators generation has failed:\n" + e.getMessage());
-        }
-
-        //++++++++++++++++ MCMC ++++++++++++++++++
-        try {
-            // XMLWriter writer, List<PartitionSubstitutionModel> models,
-            writeMCMC(writer);
+            writeMaximizer(writer);
             writer.writeText("");
-
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new GeneratorException("MCMC or log generation has failed:\n" + e.getMessage());
-        }
-
-        //++++++++++++++++  ++++++++++++++++++
-        try {
-            writeTimerReport(writer);
-            writer.writeText("");
-            if (options.performTraceAnalysis) {
-                writeTraceAnalysis(writer);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new GeneratorException("The last part of XML generation has failed:\n" + e.getMessage());
+            throw new GeneratorException("Maximizer generation has failed:\n" + e.getMessage());
         }
 
         writer.writeCloseTag("beast");
@@ -722,47 +700,14 @@ public class BeastGenerator extends Generator {
      *
      * @param writer the writer
      */
-    public void writeTimerReport(XMLWriter writer) {
-        writer.writeOpenTag("report");
-        writer.writeOpenTag("property", new Attribute.Default<String>("name", "timer"));
-        writer.writeIDref("mcmc", "mcmc");
-        writer.writeCloseTag("property");
-        writer.writeCloseTag("report");
-    }
-
     /**
-     * Write the trace analysis block.
-     *
-     * @param writer the writer
-     */
-    public void writeTraceAnalysis(XMLWriter writer) {
-        writer.writeTag(
-                "traceAnalysis",
-                new Attribute[]{
-                        new Attribute.Default<String>("fileName", options.logFileName)
-                },
-                true
-        );
-    }
-
-    /**
-     * Write the MCMC block.
+     * Write the densities the maximizer can maximize, at the top level: prior, likelihood and their joint, as BEAUti
+     * writes them inside the MCMC element.
      *
      * @param writer XMLWriter
      */
-    public void writeMCMC(XMLWriter writer) {
-        writer.writeComment("Define MCMC");
-
-        List<Attribute> attributes = new ArrayList<Attribute>();
-        attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
-        attributes.add(new Attribute.Default<Integer>("chainLength", options.chainLength));
-        attributes.add(new Attribute.Default<String>("autoOptimize", options.autoOptimize ? "true" : "false"));
-
-        if (options.operatorAnalysis) {
-            attributes.add(new Attribute.Default<String>("operatorAnalysis", options.operatorAnalysisFileName));
-        }
-
-        writer.writeOpenTag("mcmc", attributes);
+    public void writeObjective(XMLWriter writer) {
+        writer.writeComment("The densities to maximize: priors, tree likelihoods and their joint");
 
         if (options.hasData()) {
             writer.writeOpenTag(CompoundLikelihoodParser.JOINT, new Attribute.Default<String>(XMLParser.ID, "joint"));
@@ -806,23 +751,86 @@ public class BeastGenerator extends Generator {
 
             writer.writeCloseTag(CompoundLikelihoodParser.JOINT);
         }
-
-        writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");
-
-        // write log to screen
-        logGenerator.writeLogToScreen(writer, clockModelGenerator, substitutionModelGenerator);
-
-        // write log to file
-        logGenerator.writeLogToFile(writer, treePriorGenerator, clockModelGenerator,
-                substitutionModelGenerator, treeLikelihoodGenerator, tmrcaStatisticsGenerator);
-
-        // write tree log to file
-        logGenerator.writeTreeLogToFile(writer);
-
-        //write current state of chain to checkpoint file
-        logGenerator.writeCheckpointToFile(writer);
-
-        writer.writeCloseTag("mcmc");
     }
+
+    /**
+     * Write the maximizer with a numeric gradient: L-BFGS over the selected parameters, each mapped to the real line
+     * by its transform, then a report of the optimum.
+     *
+     * @param writer XMLWriter
+     */
+    public void writeMaximizer(XMLWriter writer) throws GeneratorException {
+        MaximizationOptions maximization = options.maximizationOptions;
+
+        if (maximization.objective != MaximizationOptions.Objective.PRIOR && !options.hasData()) {
+            throw new GeneratorException("There are no data to compute a likelihood: choose the prior-only objective.");
+        }
+
+        List<Parameter> parameters = maximization.selectOptimized(options.selectParameters());
+        if (parameters.isEmpty()) {
+            throw new GeneratorException("No parameter is selected for optimization in the Maximization tab.");
+        }
+
+        writer.writeComment("Maximize the " + maximization.objective.getDensityId() + " density by L-BFGS, " +
+                        "with a numeric gradient",
+                "Optimized: " + parameters.size() + " parameters; the tree topology and node heights are fixed");
+
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, MAXIMIZER));
+        attributes.add(new Attribute.Default<Integer>("nIterations", Math.max(1, maximization.nIterations)));
+        if (!maximization.maxRunTime.isEmpty()) {
+            attributes.add(new Attribute.Default<String>("maxRunTime", maximization.maxRunTime));
+        }
+        if (maximization.maxEvaluations > 0) {
+            attributes.add(new Attribute.Default<Long>("maxEvaluations", maximization.maxEvaluations));
+        }
+        attributes.add(new Attribute.Default<Boolean>("startAtCurrentState", true));
+        attributes.add(new Attribute.Default<Boolean>("printToScreen", maximization.printToScreen));
+        attributes.add(new Attribute.Default<Boolean>("includeJacobian", false));
+        attributes.add(new Attribute.Default<String>("numericStepSize", maximization.stepSize.getName()));
+        writer.writeOpenTag("maximizeWrtParameter", attributes);
+
+        writer.writeOpenTag("densityWrtParameter");
+        writer.writeIDref(maximization.objective.getDensityId(), maximization.objective.getDensityId());
+        writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+                new Attribute.Default<String>(XMLParser.ID, OPTIMIZED_PARAMETERS));
+        for (Parameter parameter : parameters) {
+            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        }
+        writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+        writer.writeCloseTag("densityWrtParameter");
+
+        // one segment per transform; the parameters are grouped by transform in the compound parameter
+        writer.writeOpenTag("compoundTransform");
+        int start = 0;
+        while (start < parameters.size()) {
+            String type = maximization.classify(parameters.get(start), false).getTransform();
+            writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute.Default<String>(TransformParsers.TYPE, type));
+            int end = start;
+            while (end < parameters.size() && maximization.classify(parameters.get(end), false).getTransform().equals(type)) {
+                writer.writeIDref(ParameterParser.PARAMETER, parameters.get(end).getName());
+                end++;
+            }
+            writer.writeCloseTag(TransformParsers.TRANSFORM);
+            start = end;
+        }
+        writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, OPTIMIZED_PARAMETERS);
+        writer.writeCloseTag("compoundTransform");
+
+        writer.writeCloseTag("maximizeWrtParameter");
+        writer.writeText("");
+
+        writer.writeComment("The optimum, the gradient there, and why the maximizer stopped");
+        writer.writeOpenTag(Report.REPORT, new Attribute.Default<String>(Report.FILENAME,
+                maximization.getReportFileName(options.fileNameStem)));
+        writer.writeIDref("maximizeWrtParameter", MAXIMIZER);
+        writer.writeCloseTag(Report.REPORT);
+        writer.writeOpenTag(Report.REPORT);
+        writer.writeIDref("maximizeWrtParameter", MAXIMIZER);
+        writer.writeCloseTag(Report.REPORT);
+    }
+
+    public static final String MAXIMIZER = "maximizer";
+    public static final String OPTIMIZED_PARAMETERS = "optimizedParameters";
 
 }

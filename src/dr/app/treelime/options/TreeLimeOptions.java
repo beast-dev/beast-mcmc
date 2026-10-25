@@ -1214,6 +1214,8 @@ public class TreeLimeOptions extends ModelOptions {
     public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
 
     // MCMC options
+    public MaximizationOptions maximizationOptions = new MaximizationOptions();
+
     public int chainLength = 10000000;
     public int logEvery = 1000;
     public int echoEvery = 1000;

@@ -69,6 +69,10 @@ public class PriorsPanel extends TreeLimePanel implements Exportable {
     JButton unlinkButton = null;
 
     JCheckBox classicPriorsCheck = null;
+    // the Maximization tab's objective, ML or MAP, set from here too
+    private final JCheckBox maximumLikelihoodCheck = new JCheckBox(
+            "Maximum likelihood: leave the priors out of the objective (tree likelihoods only)");
+    private boolean settingOptions = false;
 
     public List<Parameter> parameters = new ArrayList<Parameter>();
 
@@ -238,7 +242,21 @@ public class PriorsPanel extends TreeLimePanel implements Exportable {
             toolBar1.add(unlinkButton);
 
             southPanel.add(toolBar1, BorderLayout.NORTH);
-            southPanel.add(messageLabel, BorderLayout.SOUTH);
+            southPanel.add(messageLabel, BorderLayout.CENTER);
+
+            maximumLikelihoodCheck.setOpaque(false);
+            maximumLikelihoodCheck.setToolTipText("<html>Maximize the tree likelihoods only (maximum likelihood) " +
+                    "instead of likelihood times priors (MAP).<br>The priors then only fix parameters and give " +
+                    "their starting values. The same choice as the Objective on the Maximization tab.</html>");
+            maximumLikelihoodCheck.addActionListener(e -> {
+                if (settingOptions || options == null) {
+                    return;
+                }
+                options.maximizationOptions.objective = maximumLikelihoodCheck.isSelected() ?
+                        MaximizationOptions.Objective.ML : MaximizationOptions.Objective.MAP;
+                frame.setDirty();
+            });
+            southPanel.add(maximumLikelihoodCheck, BorderLayout.SOUTH);
             add(southPanel, BorderLayout.SOUTH);
 
             JToolBar toolBar2 = new JToolBar();
@@ -288,6 +306,10 @@ public class PriorsPanel extends TreeLimePanel implements Exportable {
         parameters = options.selectParameters();
 
         messageLabel.setText(getMessage());
+
+        settingOptions = true;
+        maximumLikelihoodCheck.setSelected(options.maximizationOptions.objective == MaximizationOptions.Objective.ML);
+        settingOptions = false;
 
         priorTableModel.fireTableDataChanged();
 

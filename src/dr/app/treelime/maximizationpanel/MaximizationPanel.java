@@ -242,8 +242,9 @@ public class MaximizationPanel extends TreeLimePanel {
         JPanel tablePanel = new JPanel(new BorderLayout(0, 6));
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(new Insets(6, 12, 12, 12)));
-        tablePanel.add(new JLabel("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's root " +
-                "height row stands for all its internal node heights. The topology stays as in the starting tree. " +
+        tablePanel.add(new JLabel("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's " +
+                "nodeHeights row is all its internal node heights, the root included. The topology stays as in the " +
+                "starting tree. " +
                 "A parameter that goes below its lower bound is held there (blank for none).</html>"),
                 BorderLayout.NORTH);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
@@ -397,9 +398,10 @@ public class MaximizationPanel extends TreeLimePanel {
                 case 0:
                     return treatment.isOptimized();
                 case 1:
-                    return parameter.getName();
+                    return MaximizationOptions.displayName(parameter);
                 case 2:
-                    return parameter.getDescription();
+                    return parameter.isNodeHeight && !parameter.isStatistic ?
+                            "internal node heights and the root" : parameter.getDescription();
                 case 3:
                     return treatment.isOptimized() ? treatment.getTransform() : "held fixed: " + treatment.getReason();
                 case 4:
@@ -450,12 +452,7 @@ public class MaximizationPanel extends TreeLimePanel {
                 frame.setDirty();
                 return;
             }
-            String id = parameters.get(row).getName();
-            if ((Boolean) value) {
-                maximization().excluded.remove(id);
-            } else {
-                maximization().excluded.add(id);
-            }
+            maximization().setExcluded(parameters.get(row), !(Boolean) value);
             fireTableRowsUpdated(row, row);
             updateStatus();
             frame.setDirty();

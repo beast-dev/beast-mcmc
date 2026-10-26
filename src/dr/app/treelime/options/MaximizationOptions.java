@@ -213,6 +213,39 @@ public class MaximizationOptions implements Serializable {
     }
 
     /**
+     * A tree's node heights are optimized together, all internal nodes with the root, so they are listed as one row
+     * under this name rather than as the root height, which the options use to stand for them.
+     *
+     * @return the name of the row of the tree whose root height this is
+     */
+    public static String nodeHeightsName(Parameter rootHeight) {
+        return rootHeight.getName().replace("treeModel.rootHeight", "treeModel.nodeHeights");
+    }
+
+    /**
+     * @return the name a parameter is listed and selected under in the Maximization tab
+     */
+    public static String displayName(Parameter parameter) {
+        return parameter.isNodeHeight && !parameter.isStatistic ? nodeHeightsName(parameter) : parameter.getName();
+    }
+
+    // node heights excluded under the root height's name (files saved before nodeHeightsName) still count
+    private boolean isExcluded(Parameter parameter) {
+        return excluded.contains(parameter.getName()) || excluded.contains(displayName(parameter));
+    }
+
+    /**
+     * Selects or deselects a parameter for optimization.
+     */
+    public void setExcluded(Parameter parameter, boolean exclude) {
+        excluded.remove(parameter.getName());
+        excluded.remove(displayName(parameter));
+        if (exclude) {
+            excluded.add(displayName(parameter));
+        }
+    }
+
+    /**
      * @param ignoreSelection true to classify as if every parameter were selected (for the Optimize column)
      */
     public Treatment classify(Parameter parameter, boolean ignoreSelection) {
@@ -226,11 +259,11 @@ public class MaximizationOptions implements Serializable {
             return Treatment.FIXED_BY_PRIOR;
         }
         if (parameter.isNodeHeight) {
-            // the root height stands for its tree's whole node-height block
+            // the tree's node heights, the root included, listed as one row (nodeHeightsName)
             if (!isAnalytic()) {
                 return Treatment.NODE_HEIGHT;
             }
-            if (!ignoreSelection && excluded.contains(parameter.getName())) {
+            if (!ignoreSelection && isExcluded(parameter)) {
                 return Treatment.EXCLUDED;
             }
             return Treatment.NODE_HEIGHTS;
@@ -241,7 +274,7 @@ public class MaximizationOptions implements Serializable {
         if (parameter.isLinked) {
             return Treatment.LINKED;
         }
-        if (!ignoreSelection && excluded.contains(parameter.getName())) {
+        if (!ignoreSelection && isExcluded(parameter)) {
             return Treatment.EXCLUDED;
         }
         if (parameter.isZeroOne) {

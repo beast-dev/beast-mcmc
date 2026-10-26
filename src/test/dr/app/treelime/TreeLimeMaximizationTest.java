@@ -170,6 +170,38 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertGradientChecked(run);
     }
 
+    // a tree's node heights, the root included, are one row named nodeHeights; deselecting it holds them all fixed,
+    // and files that deselected the root height still do
+    public void testNodeHeightsRow() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        dr.app.treelime.options.Parameter rootHeight = null;
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getName().equals("treeModel.rootHeight")) {
+                rootHeight = parameter;
+            }
+        }
+        assertNotNull(rootHeight);
+        MaximizationOptions maximization = options.maximizationOptions;
+        assertEquals("treeModel.nodeHeights", MaximizationOptions.displayName(rootHeight));
+        assertEquals(MaximizationOptions.Treatment.NODE_HEIGHTS, maximization.classify(rootHeight, false));
+        assertTrue(TreeLimeHarness.generate(quiet(options)).contains("<nodeHeightProxyParameter"));
+
+        maximization.setExcluded(rootHeight, true);
+        assertTrue(maximization.excluded.contains("treeModel.nodeHeights"));
+        assertEquals(MaximizationOptions.Treatment.EXCLUDED, maximization.classify(rootHeight, false));
+        assertFalse(TreeLimeHarness.generate(options).contains("<nodeHeightProxyParameter"));
+
+        maximization.setExcluded(rootHeight, false);
+        assertTrue(maximization.excluded.isEmpty());
+        maximization.excluded.add("treeModel.rootHeight"); // as saved before the row was renamed
+        assertEquals(MaximizationOptions.Treatment.EXCLUDED, maximization.classify(rootHeight, false));
+        maximization.setExcluded(rootHeight, false);
+        assertTrue(maximization.excluded.isEmpty());
+    }
+
     // the fixed and random local clocks are not offered; a file that still has one is refused at Generate
     public void testLocalClocksAreRefused() throws Exception {
         for (ClockType type : new ClockType[]{ClockType.FIXED_LOCAL_CLOCK, ClockType.RANDOM_LOCAL_CLOCK}) {

@@ -344,6 +344,31 @@
         </java>
     </target>
 
+    <!-- a double-clickable TreeLime.app in ${dist}, for this Mac (not signed; the mac target builds the release one) -->
+    <target name="mac_treelime" depends="dist" description="build a double-clickable TreeLime.app in the dist folder">
+        <delete dir="${dist}/${TreeLime_name}.app"/>
+        <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler" classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
+        <jarbundler dir="${dist}"
+                    name="${TreeLime_name}"
+                    mainclass="${main_class_TREELIME}"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+                    useJavaXKey="true"
+                    icon="${common_dir}/icons/treelime.icns"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M -Djava.library.path=/usr/local/lib"
+                    arguments=""
+                    version="${version}"
+                    highresolutioncapable="true"
+                    copyright="${TreeLime_name} v${version}, ${copyright}"
+                    bundleid="dr.app.treelime">
+            <jarfileset dir="${dist}">
+                <include name="beast.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+        </jarbundler>
+        <echo message="Built ${dist}/${TreeLime_name}.app"/>
+    </target>
+
     <!-- run beast.jar -->
     <target name="dist_test_jar" depends="dist">
         <jar jarfile="${dist}/beastTest.jar">
@@ -434,6 +459,7 @@
     <property name="BEAST_package_name" value="BEAST X"/>
     <property name="BEAST_package_name_linux" value="BEAST_X"/>
     <property name="BEAUti_name" value="BEAUti"/>
+    <property name="TreeLime_name" value="TreeLime"/>
     <property name="TreeAnnotator_name" value="TreeAnnotator"/>
     <property name="LogCombiner_name" value="LogCombiner"/>
     <property name="LogAnalyser_name" value="LogAnalyser"/>
@@ -813,6 +839,35 @@
             <arg value="${AppleSignerApplication}"/>
             <arg value="-v"/>
             <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
+        </exec>
+
+        <!-- TreeLime runs from beast.jar, which carries its classes, its icon and the optimizer -->
+        <jarbundler dir="${Mac_package_dir}"
+                    name="${TreeLime_name} v${version}"
+                    mainclass="${main_class_TREELIME}"
+                    stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+					useJavaXKey="true"
+                    icon="${common_dir}/icons/treelime.icns"
+                    jvmversion="${jvm_version}"
+                    vmoptions="-Xmx2048M -Djava.library.path=/usr/local/lib"
+                    arguments=""
+                    version="${version}"
+                    highresolutioncapable="true"
+                    copyright="${TreeLime_name} v${version}, ${copyright}"
+                    bundleid="dr.app.treelime">
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+        </jarbundler>
+
+        <!-- code signing -->
+        <exec executable="codesign">
+            <arg value="--deep"/>
+            <arg value="-s"/>
+            <arg value="${AppleSignerApplication}"/>
+            <arg value="-v"/>
+            <arg value="${Mac_package_dir}/${TreeLime_name} v${version}.app"/>
         </exec>
 
         <jarbundler dir="${Mac_package_dir}"

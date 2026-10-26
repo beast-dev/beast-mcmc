@@ -298,16 +298,21 @@ public class TreeLimeBootstrapTest extends TestCase {
         return directory;
     }
 
-    // after the runs, the script gathers every replicate's time tree in one tree log and every replicate's estimates
-    // in one table, leaving out a replicate that wrote nothing; BEAST itself is replaced by the outputs it would write
+    // the script runs the replicates JOBS at a time (the option's value unless JOBS is set), then gathers every
+    // replicate's time tree in one tree log and every replicate's estimates in one table, leaving out a replicate that
+    // wrote nothing; BEAST itself is replaced by the outputs it would write
     public void testScriptGathersTheReplicates() throws Exception {
         TreeLimeOptions options = options();
         if (options == null || System.getProperty("os.name").toLowerCase().startsWith("windows")) {
             return;
         }
         File directory = directory();
+        options.maximizationOptions.setBootstrapJobs(3);
         BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
         generator.generate(directory, 3, 42);
+        String script = new String(bytes(directory, BootstrapGenerator.SCRIPT_FILE));
+        assertTrue(script.contains("JOBS=\"${JOBS:-3}\""));
+        assertTrue(script.contains("xargs -n 1 -P \"$JOBS\""));
         for (int b : new int[]{1, 3}) { // replicate 2 failed
             write(directory, "dengue.rep" + b + ".params.tsv", "name\tvalue\ttransformed\n" +
                     "kappa\t" + (10 + b) + "\t0\nclock.rate\t0.00" + b + "\t0\n");
@@ -318,9 +323,19 @@ public class TreeLimeBootstrapTest extends TestCase {
         }
         ProcessBuilder process = new ProcessBuilder("sh", BootstrapGenerator.SCRIPT_FILE);
         process.directory(directory);
-        process.environment().put("BEAST", "true");
+        // the command each replicate's BEAST runs: it records its arguments, and fails for replicate 2
+        write(directory, "fake_beast.sh", "echo \"$@\" >> calls.txt; case \"$@\" in *rep2.xml*) exit 1;; esac\n");
+        process.environment().put("BEAST", "sh fake_beast.sh");
+        process.environment().put("JOBS", "2");
         process.redirectErrorStream(true);
-        assertEquals(0, process.start().waitFor());
+        Process running = process.start();
+        String output = new String(readAll(running.getInputStream()));
+        assertEquals(0, running.waitFor());
+        assertTrue(output, output.contains("replicate 2 failed: see rep2.log"));
+        List<String> calls = Files.readAllLines(new File(directory, "calls.txt").toPath());
+        java.util.Collections.sort(calls);
+        assertEquals(Arrays.asList("-overwrite -seed 1 rep1.xml", "-overwrite -seed 2 rep2.xml",
+                "-overwrite -seed 3 rep3.xml"), calls);
 
         List<String> table = Files.readAllLines(new File(directory, generator.getBootstrapParametersFile()).toPath());
         assertEquals(Arrays.asList("replicate\tkappa\tclock.rate", "1\t11\t0.001", "3\t13\t0.003"), table);
@@ -339,6 +354,15 @@ public class TreeLimeBootstrapTest extends TestCase {
         for (File file : directory.listFiles()) {
             file.deleteOnExit();
         }
+    }
+
+    private static byte[] readAll(java.io.InputStream stream) throws Exception {
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        for (int n; (n = stream.read(buffer)) > 0; ) {
+            bytes.write(buffer, 0, n);
+        }
+        return bytes.toByteArray();
     }
 
     private static void write(File directory, String name, String text) throws Exception {

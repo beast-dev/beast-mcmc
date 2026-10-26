@@ -669,7 +669,8 @@ public class TreeLimeFrame extends DocumentFrame {
             return false;
         }
         JOptionPane.showMessageDialog(this, "<html>Wrote " + replicates + " replicate files to " + directory +
-                        ".<br>Run them with " + BootstrapGenerator.SCRIPT_FILE + "; " + BootstrapGenerator.COUNTS_FILE +
+                        ".<br>Run them with " + BootstrapGenerator.SCRIPT_FILE + ", " +
+                        options.maximizationOptions.getBootstrapJobs() + " at a time (JOBS=n changes it); " + BootstrapGenerator.COUNTS_FILE +
                         " records the draws.<br>Each replicate keeps the original starting tree (fixed topology).</html>",
                 "Bootstrap replicates", JOptionPane.INFORMATION_MESSAGE);
         return true;

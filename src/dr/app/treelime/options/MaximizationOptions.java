@@ -113,6 +113,8 @@ public class MaximizationOptions implements Serializable {
     // bootstrap replicate files (plan 8 S3g); 0 in files saved before the setting existed
     public int bootstrapReplicates = 100;
     public long bootstrapSeed = 1;
+    // replicates the run script runs at once (JOBS); 0 in files saved before the setting existed
+    private int bootstrapJobs = 1;
     // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
     private Map<String, Double> lowerBounds = new HashMap<String, Double>();
 
@@ -158,6 +160,14 @@ public class MaximizationOptions implements Serializable {
             lowerBounds = new HashMap<String, Double>();
         }
         lowerBounds.put(parameter.getName(), bound);
+    }
+
+    public int getBootstrapJobs() {
+        return Math.max(1, bootstrapJobs);
+    }
+
+    public void setBootstrapJobs(int jobs) {
+        this.bootstrapJobs = jobs;
     }
 
     public String getReportFileName(String fileNameStem) {

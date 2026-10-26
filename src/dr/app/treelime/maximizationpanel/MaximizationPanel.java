@@ -75,6 +75,7 @@ public class MaximizationPanel extends TreeLimePanel {
     private final JLabel statusLabel = new JLabel();
     private final WholeNumberField replicatesField = new WholeNumberField(1, 100000);
     private final WholeNumberField seedField = new WholeNumberField(0, Integer.MAX_VALUE);
+    private final WholeNumberField jobsField = new WholeNumberField(1, 1024);
 
     private final ParameterTableModel tableModel = new ParameterTableModel();
     private final OptionsPanel optionsPanel;
@@ -188,6 +189,11 @@ public class MaximizationPanel extends TreeLimePanel {
         seedField.setColumns(8);
         seedField.setBorder(new EmptyBorder(FIELD_INSETS));
         seedField.setToolTipText("The same seed always writes the same replicates.");
+        jobsField.setColumns(3);
+        jobsField.setBorder(new EmptyBorder(FIELD_INSETS));
+        jobsField.setToolTipText("<html>How many replicates the run script runs at once, each in its own BEAST " +
+                "(JOBS=n overrides it).<br>Each BEAST also uses several threads: with many parallel runs, consider " +
+                "BEAST=\"beast -threads 1 -beagle_threads 1\".</html>");
         JButton bootstrapButton = new JButton("Generate replicate files...");
         bootstrapButton.setToolTipText("<html>Writes one TreeLime XML per replicate, the counts that rebuild them " +
                 "and a script that runs them in BEAST.</html>");
@@ -203,12 +209,20 @@ public class MaximizationPanel extends TreeLimePanel {
         bootstrapPanel.add(replicatesField);
         bootstrapPanel.add(new JLabel("seed:"));
         bootstrapPanel.add(seedField);
+        bootstrapPanel.add(new JLabel("parallel runs:"));
+        bootstrapPanel.add(jobsField);
         bootstrapPanel.add(bootstrapButton);
         optionsPanel.addComponentWithLabel("Bootstrap replicates:", bootstrapPanel);
         onEdit(replicatesField, () -> {
             Integer value = replicatesField.getValue();
             if (value != null && value >= 1) {
                 maximization().bootstrapReplicates = value;
+            }
+        });
+        onEdit(jobsField, () -> {
+            Integer value = jobsField.getValue();
+            if (value != null && value >= 1) {
+                maximization().setBootstrapJobs(value);
             }
         });
         onEdit(seedField, () -> {
@@ -304,6 +318,7 @@ public class MaximizationPanel extends TreeLimePanel {
         // files saved before these settings existed have zeros
         replicatesField.setValue(maximization.bootstrapReplicates >= 1 ? maximization.bootstrapReplicates : 100);
         seedField.setValue((int) Math.max(0, Math.min(Integer.MAX_VALUE, maximization.bootstrapSeed)));
+        jobsField.setValue(maximization.getBootstrapJobs());
         settingOptions = false;
 
         tableModel.setParameters(options.selectParameters());

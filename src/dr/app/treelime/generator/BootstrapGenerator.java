@@ -407,18 +407,23 @@ public class BootstrapGenerator extends Generator {
         PrintWriter out = new PrintWriter(new FileWriter(script));
         try {
             out.println("#!/bin/sh");
+            int jobs = options.maximizationOptions.getBootstrapJobs();
             out.println("# Runs the " + replicates + " bootstrap replicates of " + options.fileNameStem +
-                    " with BEAST, one after another, then gathers their time trees in " +
+                    " with BEAST, " + jobs + " at a time, then gathers their time trees in " +
                     options.fileNameStem + ".bootstrap.*trees and their estimates in " + getBootstrapParametersFile() + ".");
             out.println("# Fixed-topology bootstrap: every replicate keeps the original starting tree.");
-            out.println("# Set BEAST to the BEAST command if it is not 'beast', e.g.");
-            out.println("#   BEAST=\"java -Djava.library.path=/usr/local/lib -jar /path/to/beast.jar\" sh " + SCRIPT_FILE);
+            out.println("# Set BEAST to the BEAST command if it is not 'beast', and JOBS to the number of replicates");
+            out.println("# to run at once; each BEAST also uses several threads, which parallel runs share, e.g.");
+            out.println("#   BEAST=\"java -Djava.library.path=/usr/local/lib -jar /path/to/beast.jar -threads 1\" " +
+                    "JOBS=8 sh " + SCRIPT_FILE);
             out.println("cd \"$(dirname \"$0\")\" || exit 1");
             out.println("BEAST=\"${BEAST:-beast}\"");
-            out.println("for b in $(seq 1 " + replicates + "); do");
-            out.println("    $BEAST -overwrite -seed \"$b\" \"rep$b.xml\" > \"rep$b.log\" 2>&1 || " +
-                    "echo \"replicate $b failed: see rep$b.log\"");
-            out.println("done");
+            out.println("JOBS=\"${JOBS:-" + jobs + "}\"");
+            out.println("export BEAST");
+            out.println("# each replicate in its own BEAST, JOBS at a time; the gathering below waits for all of them");
+            out.println("seq 1 " + replicates + " | xargs -n 1 -P \"$JOBS\" sh -c " +
+                    "'$BEAST -overwrite -seed \"$1\" \"rep$1.xml\" > \"rep$1.log\" 2>&1 || " +
+                    "echo \"replicate $1 failed: see rep$1.log\"' replicate");
             writeCollection(out, replicates);
         } finally {
             out.close();

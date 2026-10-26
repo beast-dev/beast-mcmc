@@ -228,6 +228,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
             for (int j = 0; j < bic; j++) {
                 PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
+                // the partition's id, so its likelihood can be reported by partition (timeTreeExport)
+                subPatterns.setId(partitionPatterns.getId());
                 DataLikelihoodDelegate dataLikelihoodDelegate;
                 if (settings.useHierarchicalRepresentation() &&
                         (phyloGeoFast || branchModels.get(i) instanceof RewardsAwareBranchModel)) {

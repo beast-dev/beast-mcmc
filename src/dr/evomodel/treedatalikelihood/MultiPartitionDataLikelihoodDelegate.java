@@ -603,6 +603,13 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         return this.patternLists;
     }
 
+    /**
+     * @return the log likelihood of each partition at the last calculation, in the order of getPatternLists()
+     */
+    public double[] getLogLikelihoodsByPartition() {
+        return cachedLogLikelihoodsByPartition.clone();
+    }
+
     @Override
     public int getTraitCount() {
         return 1;

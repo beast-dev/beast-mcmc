@@ -49,6 +49,8 @@ import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
+import dr.evomodelxml.tree.TimeTreeExportParser;
+import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inference.model.ParameterParser;
@@ -979,6 +981,130 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag(Report.REPORT);
         writer.writeIDref("maximizeWrtParameter", MAXIMIZER);
         writer.writeCloseTag(Report.REPORT);
+        writer.writeText("");
+
+        List<Parameter> optimized = new ArrayList<Parameter>(parameters);
+        optimized.addAll(frequencies);
+        writeTimeTreeExport(optimized, writer);
+    }
+
+    /**
+     * Write the trees at the optimum through BEAST's tree loggers, logged once by the export: the time tree with the
+     * clock's rates (<stem>.timetree.nex) and the same tree in substitutions (<stem>.subst.nex); then the export's
+     * tables of dates, rates and parameters and the run record (<stem>.dates.tsv, .rates.tsv, .params.tsv,
+     * .summary.txt).
+     *
+     * @param optimized the parameters the maximizer moves, node heights aside
+     */
+    private void writeTimeTreeExport(List<Parameter> optimized, XMLWriter writer) {
+        MaximizationOptions maximization = options.maximizationOptions;
+
+        // the clock of each tree; a tree with several clocks has no single rate per branch
+        Map<PartitionTreeModel, PartitionClockModel> treeClocks = new LinkedHashMap<PartitionTreeModel, PartitionClockModel>();
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            List<PartitionClockModel> clocks = new ArrayList<PartitionClockModel>();
+            for (PartitionClockModel clock : options.getPartitionClockModels()) {
+                if (clock.getPartitionTreeModel() == tree) {
+                    clocks.add(clock);
+                }
+            }
+            treeClocks.put(tree, clocks.size() == 1 ? clocks.get(0) : null);
+        }
+
+        writer.writeComment("The trees at the optimum, logged once by timeTreeExport");
+        List<String> treeLogs = new ArrayList<String>();
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            PartitionClockModel clock = treeClocks.get(tree);
+            treeLogs.add(writeOptimumTreeLog(tree, clock, false, writer));
+            if (clock != null) {
+                treeLogs.add(writeOptimumTreeLog(tree, clock, true, writer));
+            }
+        }
+        writer.writeText("");
+
+        writer.writeComment("Log the trees; the dates and rates, the parameters and a record of the run");
+        writer.writeOpenTag(TimeTreeExportParser.TIME_TREE_EXPORT, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, TIME_TREE_EXPORT),
+                new Attribute.Default<String>(TimeTreeExportParser.FILE_NAME_STEM, options.fileNameStem)});
+        for (String treeLog : treeLogs) {
+            writer.writeIDref(TreeLoggerParser.LOG_TREE, treeLog);
+        }
+        writer.writeIDref("maximizeWrtParameter", MAXIMIZER);
+        if (options.hasData()) {
+            writer.writeOpenTag(TimeTreeExportParser.TREE_LIKELIHOODS);
+            writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
+            writer.writeCloseTag(TimeTreeExportParser.TREE_LIKELIHOODS);
+        }
+        writer.writeOpenTag(TimeTreeExportParser.PRIORS);
+        writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
+        writer.writeCloseTag(TimeTreeExportParser.PRIORS);
+
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            writer.writeOpenTag(TimeTreeExportParser.TIME_TREE);
+            writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
+            if (treeClocks.get(tree) != null) {
+                ClockModelGenerator.writeBranchRatesModelRef(treeClocks.get(tree), writer);
+            }
+            for (Taxa taxa : options.taxonSets) {
+                if (options.taxonSetsTreeModel.get(taxa) == tree) {
+                    writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+                }
+            }
+            writer.writeCloseTag(TimeTreeExportParser.TIME_TREE);
+        }
+
+        // the parameters the maximizer does not move, by reason; node heights are reported with the trees
+        Map<String, List<Parameter>> fixed = new LinkedHashMap<String, List<Parameter>>();
+        for (Parameter parameter : options.selectParameters()) {
+            if (parameter.isStatistic || parameter.isDiscrete || parameter.isNodeHeight || optimized.contains(parameter)) {
+                continue;
+            }
+            MaximizationOptions.Treatment treatment = maximization.classify(parameter, false);
+            String reason = treatment.isOptimized() ? "not identified by the objective" : treatment.getReason();
+            if (!fixed.containsKey(reason)) {
+                fixed.put(reason, new ArrayList<Parameter>());
+            }
+            fixed.get(reason).add(parameter);
+        }
+        for (Map.Entry<String, List<Parameter>> group : fixed.entrySet()) {
+            writer.writeOpenTag(TimeTreeExportParser.NOT_OPTIMIZED,
+                    new Attribute.Default<String>(TimeTreeExportParser.REASON, group.getKey()));
+            for (Parameter parameter : group.getValue()) {
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+            }
+            writer.writeCloseTag(TimeTreeExportParser.NOT_OPTIMIZED);
+        }
+        writer.writeCloseTag(TimeTreeExportParser.TIME_TREE_EXPORT);
+    }
+
+    /**
+     * A tree logger for the tree at the optimum: annotated with the clock's rates and, as the tree's comment, the
+     * maximized log density (lnP).
+     *
+     * @return its id
+     */
+    private String writeOptimumTreeLog(PartitionTreeModel tree, PartitionClockModel clock, boolean substitutions,
+                                       XMLWriter writer) {
+        String id = tree.getPrefix() + (substitutions ? SUBST_TREE_LOG : TIME_TREE_LOG);
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
+        attributes.add(new Attribute.Default<Integer>(TreeLoggerParser.LOG_EVERY, 1));
+        attributes.add(new Attribute.Default<Boolean>(TreeLoggerParser.NEXUS_FORMAT, true));
+        attributes.add(new Attribute.Default<Boolean>(TreeLoggerParser.SORT_TRANSLATION_TABLE, true));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." +
+                tree.getPrefix() + (substitutions ? "subst.nex" : "timetree.nex")));
+        if (substitutions) {
+            attributes.add(new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS));
+        }
+        writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
+        if (clock != null) {
+            ClockModelGenerator.writeBranchRatesModelRef(clock, writer);
+        }
+        String density = options.maximizationOptions.objective.getDensityId();
+        writer.writeIDref(density, density);
+        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+        return id;
     }
 
     // one segment per run of parameters with the same transform, in the order of the compound parameter
@@ -1265,6 +1391,9 @@ public class BeastGenerator extends Generator {
     public static final String MAXIMIZER_GRADIENT = "maximizerGradient";
     private static final String UNIT_SIMPLEX_TRANSFORM = "UnitSimplexTransform";
     public static final String MAXIMIZER = "maximizer";
+    public static final String TIME_TREE_EXPORT = "timeTreeExport";
+    public static final String TIME_TREE_LOG = "timeTreeLog";
+    public static final String SUBST_TREE_LOG = "substTreeLog";
     public static final String OPTIMIZED_PARAMETERS = "optimizedParameters";
 
 }

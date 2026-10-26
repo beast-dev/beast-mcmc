@@ -38,6 +38,7 @@ import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.util.Transform;
+import dr.util.UnitSimplexToRealsTransform;
 import dr.xml.Reportable;
 import com.github.lbfgs4j.liblbfgs.Lbfgs;
 import com.github.lbfgs4j.liblbfgs.Function;
@@ -390,6 +391,160 @@ public class MaximizerWrtParameter implements Reportable {
      */
     public List<Double> getGradientCheckErrors() {
         return new ArrayList<Double>(gradientCheckErrors);
+    }
+
+    public Parameter getParameter() {
+        return parameter;
+    }
+
+    /**
+     * @return the objective at the optimum of the latest run: -log density (plus the log-Jacobian with includeJacobian)
+     */
+    public double getMinimumValue() {
+        return minimumValue;
+    }
+
+    public boolean includesJacobian() {
+        return settings.includeJacobian;
+    }
+
+    /**
+     * @return the wall-clock seconds of the latest run
+     */
+    public double getSeconds() {
+        return seconds;
+    }
+
+    public double getWorstGradientCheckError() {
+        return worstGradientCheckError;
+    }
+
+    /**
+     * @return the settings that decide when a run stops, as name = value pairs
+     */
+    public String describeSettings() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("nIterations = ").append(settings.numberIterations);
+        if (settings.maxRunTime > 0) {
+            sb.append(", maxRunTime = ").append(settings.maxRunTime).append("s");
+        }
+        if (settings.maxEvaluations > 0) {
+            sb.append(", maxEvaluations = ").append(settings.maxEvaluations);
+        }
+        if (settings.stallWindow > 0) {
+            sb.append(", relTol = ").append(settings.relTol).append(", stallWindow = ").append(settings.stallWindow);
+        }
+        if (settings.epsilon != null) {
+            sb.append(", epsilon = ").append(settings.epsilon);
+        }
+        if (settings.past != null) {
+            sb.append(", past = ").append(settings.past);
+        }
+        if (settings.delta != null) {
+            sb.append(", delta = ").append(settings.delta);
+        }
+        sb.append(", lineSearchRestarts = ").append(settings.lineSearchRestarts);
+        if (settings.checkGradientEvery > 0) {
+            sb.append(", checkGradientEvery = ").append(settings.checkGradientEvery);
+        }
+        sb.append(", includeJacobian = ").append(settings.includeJacobian);
+        return sb.toString();
+    }
+
+    /**
+     * One coordinate of the optimum. The transformed value is the coordinate L-BFGS moves; with a multivariate
+     * transform (node-height ratios, the stick-breaking simplex) it belongs to the block, not to the element of the
+     * same name.
+     */
+    public static final class Coordinate {
+        public final String name;
+        public final double value; // natural scale
+        public final double transformed;
+        public final String transform;
+        public final boolean free; // false for the stick-breaking simplex's last coordinate, which is always 0
+        public final boolean held; // at its lower bound (holdAtLowerBound)
+        public final double gradient; // dlogDensity/d(transformed), before held coordinates are masked
+
+        Coordinate(String name, double value, double transformed, String transform, boolean free, boolean held,
+                   double gradient) {
+            this.name = name;
+            this.value = value;
+            this.transformed = transformed;
+            this.transform = transform;
+            this.free = free;
+            this.held = held;
+            this.gradient = gradient;
+        }
+
+        /**
+         * @return optimized, held_at_bound or dependent
+         */
+        public String getStatus() {
+            return held ? "held_at_bound" : (free ? "optimized" : "dependent");
+        }
+    }
+
+    /**
+     * @return the coordinates of the latest run's optimum, named by the maximized parameter's dimension names, or an
+     * empty list before a run
+     */
+    public List<Coordinate> getOptimum() {
+        List<Coordinate> coordinates = new ArrayList<Coordinate>();
+        if (!executed) {
+            return coordinates;
+        }
+        final double[] values = modelValues(minimumPoint);
+        final String[] transforms = new String[minimumPoint.length];
+        final boolean[] free = new boolean[minimumPoint.length];
+        Arrays.fill(free, true);
+        describeTransform(transform, 0, minimumPoint.length, transforms, free);
+        final double[] grad = heldGradient != null ? heldGradient : minimumGradient;
+        for (int i = 0; i < minimumPoint.length; ++i) {
+            coordinates.add(new Coordinate(parameter.getDimensionName(i), values[i], minimumPoint[i], transforms[i],
+                    free[i], heldCoordinates != null && heldCoordinates[i], -grad[i]));
+        }
+        return coordinates;
+    }
+
+    /**
+     * @return the number of free coordinates (k), held ones included
+     */
+    public int getFreeCoordinateCount() {
+        int k = 0;
+        for (Coordinate coordinate : getOptimum()) {
+            if (coordinate.free) {
+                ++k;
+            }
+        }
+        return k;
+    }
+
+    // the name of the transform acting on each coordinate in [from, to)
+    private static void describeTransform(Transform transform, int from, int to, String[] names, boolean[] free) {
+        if (transform == null) {
+            Arrays.fill(names, from, to, "none");
+        } else if (transform instanceof Transform.MultivariateArray) {
+            int start = from;
+            for (Transform.MultivariableTransform part : ((Transform.MultivariateArray) transform).getTransforms()) {
+                int end = Math.min(to, start + part.getDimension());
+                describeTransform(part, start, end, names, free);
+                start = end;
+            }
+        } else if (transform instanceof Transform.Collection) {
+            for (Transform.ParsedTransform segment : ((Transform.Collection) transform).getSegments()) {
+                describeTransform(segment.transform, from + segment.start, Math.min(to, from + segment.end), names,
+                        free);
+            }
+        } else if (transform instanceof Transform.Array) {
+            for (int i = from; i < to; ++i) {
+                describeTransform(((Transform.Array) transform).getTransform(i - from), i, i + 1, names, free);
+            }
+        } else {
+            Arrays.fill(names, from, to, transform.getTransformName());
+            if (transform instanceof UnitSimplexToRealsTransform && to > from) {
+                free[to - 1] = false;
+            }
+        }
     }
 
     /**
@@ -802,6 +957,15 @@ public class MaximizerWrtParameter implements Reportable {
                     .append(" (relative ").append(gradientNorm / Math.max(1.0, norm(minimumPoint))).append(")\n");
             if (settings.checkGradientEvery > 0) {
                 sb.append("WorstGradientCheckError: ").append(worstGradientCheckError).append("\n");
+            }
+            // the same rows as timeTreeExport's params.tsv
+            sb.append("Optimum:\n");
+            for (Coordinate coordinate : getOptimum()) {
+                sb.append("  ").append(coordinate.name).append(" = ").append(coordinate.value);
+                if (!coordinate.getStatus().equals("optimized")) {
+                    sb.append(" (").append(coordinate.getStatus()).append(")");
+                }
+                sb.append("\n");
             }
         }
 

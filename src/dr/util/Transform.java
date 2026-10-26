@@ -2196,6 +2196,10 @@ public interface Transform {
               this.array = repArray;
           }
 
+          public Transform getTransform(int index) {
+              return array.get(index);
+          }
+
           public int getDimension() {
               return array.size();
           }
@@ -2372,6 +2376,11 @@ public interface Transform {
         }
 
         public Parameter getParameter() { return parameter; }
+
+        /**
+         * @return the segments, contiguous and covering the whole parameter
+         */
+        public List<ParsedTransform> getSegments() { return segments; }
 
         private List<ParsedTransform> ensureContiguous(List<ParsedTransform> segments) {
 
@@ -2603,6 +2612,10 @@ public interface Transform {
         public MultivariateArray(List<MultivariableTransform> array) {
             super(getInputDimensionArray(array), getOutputDimensionArray(array));
             this.array = array;
+        }
+
+        public List<MultivariableTransform> getTransforms() {
+            return array;
         }
 
         private static int getDimensionArray(List<MultivariableTransform> array) {

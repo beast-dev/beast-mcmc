@@ -298,6 +298,53 @@ public class TreeLimeBootstrapTest extends TestCase {
         return directory;
     }
 
+    // after the runs, the script gathers every replicate's time tree in one tree log and every replicate's estimates
+    // in one table, leaving out a replicate that wrote nothing; BEAST itself is replaced by the outputs it would write
+    public void testScriptGathersTheReplicates() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null || System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            return;
+        }
+        File directory = directory();
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        generator.generate(directory, 3, 42);
+        for (int b : new int[]{1, 3}) { // replicate 2 failed
+            write(directory, "dengue.rep" + b + ".params.tsv", "name\tvalue\ttransformed\n" +
+                    "kappa\t" + (10 + b) + "\t0\nclock.rate\t0.00" + b + "\t0\n");
+            write(directory, "dengue.rep" + b + ".timetree.nex", "#NEXUS\n\nBegin taxa;\n\tDimensions ntax=3;\n" +
+                    "\tTaxlabels\n\t\tA\n\t\tB\n\t\tC\n\t\t;\nEnd;\n\nBegin trees;\n\tTranslate\n\t\t1 A,\n" +
+                    "\t\t2 B,\n\t\t3 C\n\t\t;\ntree STATE_0 [&lnP=-1.0] = [&R] ((1:1.0,2:1.0):" + b + ".0,3:" +
+                    (1 + b) + ".0);\nEnd;\n");
+        }
+        ProcessBuilder process = new ProcessBuilder("sh", BootstrapGenerator.SCRIPT_FILE);
+        process.directory(directory);
+        process.environment().put("BEAST", "true");
+        process.redirectErrorStream(true);
+        assertEquals(0, process.start().waitFor());
+
+        List<String> table = Files.readAllLines(new File(directory, generator.getBootstrapParametersFile()).toPath());
+        assertEquals(Arrays.asList("replicate\tkappa\tclock.rate", "1\t11\t0.001", "3\t13\t0.003"), table);
+
+        File trees = new File(directory, generator.getBootstrapTreesFile(options.getPartitionTreeModels().get(0)));
+        assertEquals("dengue.bootstrap.trees", trees.getName());
+        java.io.FileReader reader = new java.io.FileReader(trees);
+        dr.evolution.io.NexusImporter importer = new dr.evolution.io.NexusImporter(reader);
+        Tree first = importer.importNextTree();
+        Tree second = importer.importNextTree();
+        assertFalse(importer.hasTree());
+        reader.close();
+        assertEquals("REPLICATE_1", first.getId());
+        assertEquals("REPLICATE_3", second.getId());
+        assertEquals(4.0, second.getNodeHeight(second.getRoot()), 1E-12);
+        for (File file : directory.listFiles()) {
+            file.deleteOnExit();
+        }
+    }
+
+    private static void write(File directory, String name, String text) throws Exception {
+        Files.write(new File(directory, name).toPath(), text.getBytes("UTF-8"));
+    }
+
     private static TreeLimeOptions options() throws Exception {
         TreeLimeOptions options = TreeLimeHarness.importData(DATA);
         if (options == null) {

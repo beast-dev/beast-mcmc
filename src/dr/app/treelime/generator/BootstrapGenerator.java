@@ -32,6 +32,7 @@ import dr.app.treelime.options.AbstractPartitionData;
 import dr.app.treelime.options.BootstrapReplicate;
 import dr.app.treelime.options.PartitionData;
 import dr.app.treelime.options.PartitionSubstitutionModel;
+import dr.app.treelime.options.PartitionTreeModel;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
@@ -351,13 +352,64 @@ public class BootstrapGenerator extends Generator {
         writeScript(directory, replicates);
     }
 
+    /**
+     * @return the file every replicate's time tree is gathered in, one per tree
+     */
+    public String getBootstrapTreesFile(PartitionTreeModel tree) {
+        return options.fileNameStem + ".bootstrap." + tree.getPrefix() + "trees";
+    }
+
+    /**
+     * @return the table every replicate's estimates are gathered in, one row per replicate
+     */
+    public String getBootstrapParametersFile() {
+        return options.fileNameStem + ".bootstrap.params.tsv";
+    }
+
+    // after the runs: every replicate's time tree in one tree log per tree, and every replicate's estimates (the
+    // value column of its params.tsv) in one table; a replicate that failed is left out of both
+    private void writeCollection(PrintWriter out, int replicates) {
+        String stem = options.fileNameStem;
+        out.println();
+        out.println("# Gather the replicates: their time trees in one tree log, their estimates in one table");
+        out.println("REPLICATES=\"$(seq 1 " + replicates + ")\"");
+        out.println("gather_trees() { # the replicates' tree file suffix, the tree log");
+        out.println("    first=1");
+        out.println("    for b in $REPLICATES; do");
+        out.println("        f=\"" + stem + ".rep$b.$1\"");
+        out.println("        [ -f \"$f\" ] || continue");
+        out.println("        # the taxa and the translation table, the same in every replicate");
+        out.println("        if [ $first = 1 ]; then sed '/^tree /,$d' \"$f\" > \"$2\"; first=0; fi");
+        out.println("        sed -n \"s/^tree STATE_0 /tree REPLICATE_$b /p\" \"$f\" >> \"$2\"");
+        out.println("    done");
+        out.println("    if [ $first = 0 ]; then echo 'End;' >> \"$2\"; fi");
+        out.println("}");
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            out.println("gather_trees \"" + tree.getPrefix() + "timetree.nex\" \"" + getBootstrapTreesFile(tree) + "\"");
+        }
+        String table = getBootstrapParametersFile();
+        out.println("first=1");
+        out.println("for b in $REPLICATES; do");
+        out.println("    f=\"" + stem + ".rep$b.params.tsv\"");
+        out.println("    [ -f \"$f\" ] || continue");
+        out.println("    if [ $first = 1 ]; then");
+        out.println("        awk -F'\\t' 'BEGIN { printf \"replicate\" } NR > 1 { printf \"\\t%s\", $1 } " +
+                "END { print \"\" }' \"$f\" > \"" + table + "\"");
+        out.println("        first=0");
+        out.println("    fi");
+        out.println("    awk -F'\\t' -v b=\"$b\" 'BEGIN { printf \"%s\", b } NR > 1 { printf \"\\t%s\", $2 } " +
+                "END { print \"\" }' \"$f\" >> \"" + table + "\"");
+        out.println("done");
+    }
+
     private void writeScript(File directory, int replicates) throws IOException {
         File script = new File(directory, SCRIPT_FILE);
         PrintWriter out = new PrintWriter(new FileWriter(script));
         try {
             out.println("#!/bin/sh");
             out.println("# Runs the " + replicates + " bootstrap replicates of " + options.fileNameStem +
-                    " with BEAST, one after another.");
+                    " with BEAST, one after another, then gathers their time trees in " +
+                    options.fileNameStem + ".bootstrap.*trees and their estimates in " + getBootstrapParametersFile() + ".");
             out.println("# Fixed-topology bootstrap: every replicate keeps the original starting tree.");
             out.println("# Set BEAST to the BEAST command if it is not 'beast', e.g.");
             out.println("#   BEAST=\"java -Djava.library.path=/usr/local/lib -jar /path/to/beast.jar\" sh " + SCRIPT_FILE);
@@ -367,6 +419,7 @@ public class BootstrapGenerator extends Generator {
             out.println("    $BEAST -overwrite -seed \"$b\" \"rep$b.xml\" > \"rep$b.log\" 2>&1 || " +
                     "echo \"replicate $b failed: see rep$b.log\"");
             out.println("done");
+            writeCollection(out, replicates);
         } finally {
             out.close();
         }

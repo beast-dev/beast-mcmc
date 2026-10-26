@@ -37,6 +37,7 @@ import dr.app.treelime.options.MaximizationOptions.GradientMode;
 import dr.app.treelime.options.MaximizationOptions.Objective;
 import dr.app.treelime.options.MaximizationOptions.StepSize;
 import dr.app.treelime.options.MaximizationOptions.Treatment;
+import dr.app.treelime.options.MaximizationWarnings;
 import dr.app.treelime.options.Parameter;
 import dr.app.treelime.options.PartitionOptions;
 import dr.app.treelime.options.PartitionTreeModel;
@@ -294,14 +295,18 @@ public class MaximizationPanel extends TreeLimePanel {
                         " optimized: " + (optimized - numeric) + " parameters with analytic or no tree-likelihood " +
                         "gradients, " + numeric + " by finite differences of the tree likelihoods" +
                         (trees > 0 ? "; node heights analytic." : ".");
+        StringBuilder problems = new StringBuilder();
         if (!maximization.maxRunTime.isEmpty()) {
             try {
                 MaximizeWrtParameterParser.parseRunTime(maximization.maxRunTime);
             } catch (XMLParseException e) {
-                status = "<html><font color=\"red\">" + e.getMessage() + "</font><br>" + status + "</html>";
+                problems.append("<font color=\"red\">").append(e.getMessage()).append("</font><br>");
             }
         }
-        statusLabel.setText(status);
+        for (String warning : MaximizationWarnings.get(options)) {
+            problems.append("<font color=\"#b35c00\">Warning: ").append(warning).append("</font><br>");
+        }
+        statusLabel.setText(problems.length() == 0 ? status : "<html>" + problems + status + "</html>");
     }
 
     private static String count(int n, String noun) {

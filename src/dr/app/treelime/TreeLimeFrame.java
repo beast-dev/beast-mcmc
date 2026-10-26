@@ -51,6 +51,7 @@ import dr.app.treelime.datapanel.DataPanel;
 import dr.app.treelime.generator.BeastGenerator;
 import dr.app.treelime.generator.Generator;
 import dr.app.treelime.maximizationpanel.MaximizationPanel;
+import dr.app.treelime.options.MaximizationWarnings;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreePrior;
 import dr.app.treelime.priorspanel.DefaultPriorTableDialog;
@@ -83,6 +84,7 @@ import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -641,6 +643,22 @@ public class TreeLimeFrame extends DocumentFrame {
                 switchToPanel(ge.getSwitchToPanel());
             }
             return false;
+        }
+
+        // valid XML that does not do what the user probably expects: ask before writing it
+        List<String> warnings = MaximizationWarnings.get(options);
+        if (!warnings.isEmpty()) {
+            StringBuilder message = new StringBuilder("<html><body style=\"width: 420px\">");
+            for (String warning : warnings) {
+                message.append("<p>").append(warning).append("</p><br>");
+            }
+            message.append("Generate the XML anyway?</body></html>");
+            int answer = JOptionPane.showConfirmDialog(this, message.toString(), "TreeLime maximization warnings",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (answer != JOptionPane.OK_OPTION) {
+                switchToPanel(MAXIMIZATION);
+                return false;
+            }
         }
 
         DefaultPriorTableDialog defaultPriorDialog = new DefaultPriorTableDialog(this);

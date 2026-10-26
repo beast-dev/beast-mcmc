@@ -30,6 +30,7 @@ package dr.app.treelime.generator;
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.options.*;
 import dr.app.treelime.types.PriorType;
+import dr.app.treelime.types.StartingTreeType;
 import dr.app.treelime.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.tree.NodeRef;
@@ -93,9 +94,11 @@ public class InitialTreeGenerator extends Generator {
                             writer.writeOpenTag(RescaledTreeParser.CLADE, new Attribute.Default<String>(RescaledTreeParser.HEIGHT, height.toString()));
                             writer.writeTag("taxa", new Attribute.Default<String>(XMLParser.IDREF, taxa.getId()), true);
                             writer.writeCloseTag(RescaledTreeParser.CLADE);
-                        } else if (options.taxonSetsMono.get(taxa)) {
+                        } else if (options.taxonSetsMono.get(taxa) &&
+                                model.getStartingTreeType() != StartingTreeType.UPGMA) {
                             // if monophyly is enforced then placing this clade element here will force BEAST to check
-                            // the clade exists in the tree.
+                            // the clade exists in the tree. The UPGMA tree is built with the clade as a constraint,
+                            // and <rescaledTree> refuses a clade without a height
                             writer.writeOpenTag(RescaledTreeParser.CLADE);
                             writer.writeTag("taxa", new Attribute.Default<String>(XMLParser.IDREF, taxa.getId()), true);
                             writer.writeCloseTag(RescaledTreeParser.CLADE);
@@ -164,6 +167,19 @@ public class InitialTreeGenerator extends Generator {
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
+                // plain UPGMA can split a taxon set that must be a clade, which the rescaled tree then rejects: a
+                // monophyletic set, or one whose height the rescaled tree sets
+                if (options.taxonSets != null) {
+                    for (Taxa taxa : options.taxonSets) {
+                        if ((Boolean.TRUE.equals(options.taxonSetsMono.get(taxa)) ||
+                                options.taxonSetsHeights.get(taxa) != null) &&
+                                model.equals(options.taxonSetsTreeModel.get(taxa))) {
+                            writer.writeOpenTag(UPGMATreeParser.CONSTRAINT);
+                            writer.writeTag("taxa", new Attribute.Default<String>(XMLParser.IDREF, taxa.getId()), true);
+                            writer.writeCloseTag(UPGMATreeParser.CONSTRAINT);
+                        }
+                    }
+                }
                 writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
                 break;
 

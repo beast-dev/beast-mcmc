@@ -30,12 +30,16 @@ package dr.evoxml;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.ConstrainedUPGMATree;
 import dr.evolution.tree.UPGMATree;
+import dr.evolution.util.TaxonList;
 import dr.evolution.util.TimeScale;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -53,6 +57,7 @@ public class UPGMATreeParser extends AbstractXMLObjectParser {
     //public static final String DISTANCES = "distances";
     public static final String ROOT_HEIGHT = TreeModelParser.ROOT_HEIGHT;
     public static final String RANDOMIZE = "nonzeroBranchLengths";
+    public static final String CONSTRAINT = "constraint";
 
     public String getParserName() {
         return UPGMA_TREE;
@@ -71,7 +76,17 @@ public class UPGMATreeParser extends AbstractXMLObjectParser {
 
         DistanceMatrix distances = (DistanceMatrix) xo.getChild(DistanceMatrix.class);
 
-        UPGMATree tree = new UPGMATree(distances);
+        // taxon sets to keep monophyletic, e.g. for a starting tree that must contain given clades
+        List<TaxonList> monophyletic = new ArrayList<TaxonList>();
+        for (XMLObject cxo : xo.getAllChildren(CONSTRAINT)) {
+            monophyletic.add((TaxonList) cxo.getChild(TaxonList.class));
+        }
+        UPGMATree tree;
+        try {
+            tree = monophyletic.isEmpty() ? new UPGMATree(distances) : new ConstrainedUPGMATree(distances, monophyletic);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
 
         if (rootHeight > 0) {
             double scaleFactor = rootHeight / tree.getNodeHeight(tree.getRoot());
@@ -220,7 +235,10 @@ public class UPGMATreeParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
             AttributeRule.newDoubleRule(ROOT_HEIGHT, true),
             AttributeRule.newBooleanRule(RANDOMIZE, true),
-            new ElementRule(DistanceMatrix.class)
+            new ElementRule(DistanceMatrix.class),
+            new ElementRule(CONSTRAINT, new XMLSyntaxRule[]{new ElementRule(TaxonList.class)},
+                    "a taxon set the tree keeps monophyletic (UPGMA joins only clusters that respect it)",
+                    0, Integer.MAX_VALUE)
     };
 
     public String getParserDescription() {

@@ -56,6 +56,13 @@ public class TreeLimeMaximizationTest extends TestCase {
         super(name);
     }
 
+    // the gradient checks go along random directions: fix them, so a run does not depend on what ran before
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        dr.math.MathUtils.setSeed(666);
+    }
+
     // BEAUti's default model: HKY, strict clock, constant-size coalescent
     public void testMapOfTheDefaultModel() throws Exception {
         TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
@@ -129,6 +136,46 @@ public class TreeLimeMaximizationTest extends TestCase {
             }
         }
         assertFalse(TreeLimeHarness.generate(options).contains("<holdAtLowerBound"));
+    }
+
+    // a fixed local clock on a monophyletic taxon set: the UPGMA start keeps the clade (plain UPGMA splits this
+    // pair), and the clade rate gets the clock's analytic branch-rate gradient, masked to its own coordinate
+    public void testFixedLocalClockOnAMonophyleticSet() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        dr.evolution.util.Taxa clade = new dr.evolution.util.Taxa("clade");
+        clade.addTaxon(options.taxonList.getTaxon(0));
+        clade.addTaxon(options.taxonList.getTaxon(7));
+        options.taxonSets.add(clade);
+        options.taxonSetsMono.put(clade, true);
+        options.taxonSetsIncludeStem.put(clade, false);
+        options.taxonSetsTreeModel.put(clade, options.getPartitionTreeModels().get(0));
+        for (PartitionClockModel clock : options.getPartitionClockModels()) {
+            clock.setClockType(ClockType.FIXED_LOCAL_CLOCK);
+        }
+        String xml = TreeLimeHarness.generate(quiet(options));
+        assertTrue(between(xml, "<upgmaTree>", "</upgmaTree>").contains("<constraint>"));
+        String block = between(xml, "<jointGradient id=\"gradient.clade.rate\">", "</jointGradient>");
+        assertTrue(block.contains("<maskedGradient>"));
+        assertTrue(block.contains("<parameter value=\"0 1\"/>"));
+        assertTrue(block.contains("<branchRateGradient traitName=\"Sequence\">"));
+
+        java.util.Set<String> pair = new java.util.HashSet<String>(java.util.Arrays.asList(
+                clade.getTaxon(0).getId(), clade.getTaxon(1).getId()));
+        // without the constraint UPGMA splits the pair
+        String unconstrained = xml.replaceAll("(?s)<constraint>.*?</constraint>", "");
+        Run plain = run(unconstrained);
+        assertFalse(dr.evolution.tree.TreeUtils.isMonophyletic(
+                (dr.evolution.tree.Tree) plain.objects.get("startingTree").getNativeObject(), pair));
+
+        Run run = run(xml);
+        assertTrue(dr.evolution.tree.TreeUtils.isMonophyletic(
+                (dr.evolution.tree.Tree) run.objects.get("treeModel").getNativeObject(), pair));
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+        assertTrue(run.end > run.start);
+        assertGradientChecked(run);
     }
 
     // Generate refuses a run time BEAST could not parse, and points at the Maximization tab

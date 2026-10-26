@@ -73,11 +73,6 @@ public class MixedEffectsClockGeneratorTest extends TestCase {
             options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
         }
 
-        // TreeLime's default UPGMA starting tree does not honour monophyletic taxon sets; BEAUti's random tree does
-        for (dr.app.treelime.options.PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            tree.setStartingTreeType(dr.app.treelime.types.StartingTreeType.RANDOM);
-        }
-
         if (unlinkClocks) {
             TreeLimeHarness.unlinkClockModels(options);
             assertEquals(2, options.getPartitionClockModels().size());

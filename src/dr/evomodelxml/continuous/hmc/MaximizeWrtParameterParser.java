@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.continuous.hmc;
 
-import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.SampledTipHeights;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.NumericGradientStepSizeProvider;
@@ -97,8 +97,8 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         }
 
         if (gradient != null && !(gradient instanceof NumericalGradient)
-                && TreeModel.containsSampledTipHeight(parameter)) {
-            throw new XMLParseException(TreeModel.TIP_DATE_GRADIENT_NOT_IMPLEMENTED);
+                && SampledTipHeights.containsSampledTipHeight(parameter, getStore())) {
+            throw new XMLParseException(SampledTipHeights.GRADIENT_NOT_IMPLEMENTED);
         }
 
         Transform transform = (Transform) xo.getChild(Transform.class);

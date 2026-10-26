@@ -29,6 +29,8 @@ package test.dr.evomodel.tree;
 
 import dr.app.beast.BeastParser;
 import dr.app.beast.BeastVersion;
+import dr.evomodelxml.tree.SampledTipHeights;
+import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 
 import java.io.StringReader;
@@ -71,6 +73,26 @@ public class UnsupportedGradientRefusalTest extends TestCase {
                 "  <gradient id=\"gradient\"><uniformPrior idref=\"xPrior\"/><parameter idref=\"x\"/></gradient>\n" +
                 "</beast>\n";
         parser().parse(new StringReader(xml), null);
+    }
+
+    // the trees are found among the parsed objects; a leaf height counts alone or inside a compound parameter
+    public void testSampledTipHeightLookup() throws Exception {
+        String xml = "<beast>\n" +
+                TREE.replace("LEAF", "<leafHeight taxon=\"a\"><parameter id=\"age(a)\"/></leafHeight>") +
+                "  <parameter id=\"x\" value=\"0.2\"/>\n" +
+                "  <compoundParameter id=\"both\"><parameter idref=\"x\"/><parameter idref=\"age(a)\"/></compoundParameter>\n" +
+                "</beast>\n";
+        java.util.Map<String, dr.xml.XMLObject> store = parser().parse(new StringReader(xml), false);
+        assertTrue(SampledTipHeights.containsSampledTipHeight(parameter(store, "age(a)"), store));
+        assertTrue(SampledTipHeights.containsSampledTipHeight(parameter(store, "both"), store));
+        assertFalse(SampledTipHeights.containsSampledTipHeight(parameter(store, "x"), store));
+        assertFalse(SampledTipHeights.containsSampledTipHeight(parameter(store, "treeModel.rootHeight"), store));
+        assertFalse(SampledTipHeights.containsSampledTipHeight(parameter(store, "treeModel.allInternalNodeHeights"),
+                store));
+    }
+
+    private static Parameter parameter(java.util.Map<String, dr.xml.XMLObject> store, String id) {
+        return (Parameter) store.get(id).getNativeObject();
     }
 
     public void testBirthDeathSerialSampling() {

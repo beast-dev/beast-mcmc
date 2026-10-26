@@ -99,6 +99,30 @@ public class TreeLimeApp extends MultiDocApplication {
 
     private static boolean lafLoaded = false;
 
+    /**
+     * Sets the Dock (or taskbar) icon where the platform has one. java.awt.Taskbar is Java 9 and later, and the build
+     * targets Java 8, so it is reached by reflection; without it the icon stays the default.
+     */
+    private static void setDockIcon(Image image) {
+        if (image == null) {
+            return;
+        }
+        try {
+            Class<?> taskbarClass = Class.forName("java.awt.Taskbar");
+            if (!(Boolean) taskbarClass.getMethod("isTaskbarSupported").invoke(null)) {
+                return;
+            }
+            Object taskbar = taskbarClass.getMethod("getTaskbar").invoke(null);
+            Class<?> featureClass = Class.forName("java.awt.Taskbar$Feature");
+            Object iconFeature = featureClass.getField("ICON_IMAGE").get(null);
+            if ((Boolean) taskbarClass.getMethod("isSupported", featureClass).invoke(taskbar, iconFeature)) {
+                taskbarClass.getMethod("setIconImage", Image.class).invoke(taskbar, image);
+            }
+        } catch (Exception e) {
+            // Java 8, or a platform without a taskbar icon
+        }
+    }
+
     // Main entry point
     static public void main(String[] args) {
 
@@ -202,7 +226,9 @@ public class TreeLimeApp extends MultiDocApplication {
                 }
             }
 
-            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(TreeLimeApp.class, "images/beauti.png"), 128, 128);
+            final Image iconImage = IconUtils.getImage(TreeLimeApp.class, "images/treelime.png");
+            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(TreeLimeApp.class, "images/treelime.png"), 128, 128);
+            setDockIcon(iconImage);
 
             final String nameString = "TreeLime";
             final String versionString = VERSION.getVersionString();
@@ -228,7 +254,9 @@ public class TreeLimeApp extends MultiDocApplication {
                     websiteURLString, helpURLString);
             app.setDocumentFrameFactory(new DocumentFrameFactory() {
                 public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
-                    return new TreeLimeFrame(nameString);
+                    TreeLimeFrame frame = new TreeLimeFrame(nameString);
+                    frame.setIconImage(iconImage); // the window's icon on Windows and Linux
+                    return frame;
                 }
             });
             app.initialize();

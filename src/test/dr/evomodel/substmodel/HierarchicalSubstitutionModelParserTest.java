@@ -28,10 +28,13 @@
 package test.dr.evomodel.substmodel;
 
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
+import dr.evomodel.substmodel.RelativeRatesProvider;
 import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.HierarchicalSubstitutionModelParser;
+import dr.evomodelxml.substmodel.TN93Parser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.TaxaParser;
@@ -101,6 +104,7 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         parser.addXMLObjectParser(new ParameterParser());
         parser.addXMLObjectParser(new FrequencyModelParser());
         parser.addXMLObjectParser(new HKYParser());
+        parser.addXMLObjectParser(new TN93Parser());
         parser.addXMLObjectParser(new HierarchicalSubstitutionModelParser());
         return parser.parse(new StringReader("<?xml version=\"1.0\" standalone=\"yes\"?>\n<beast>\n" + body + "</beast>\n"), false);
     }
@@ -149,7 +153,7 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
 
     public void testMissingCharacterTree() throws Exception {
         String message = parseFailure(TAXA_AND_TREE + model("", RATES));
-        assertTrue(message, message.contains("hierarchicalSubstitutionModel") && message.contains("characterTree"));
+        assertTrue(message, message.contains("characterTree is required with ratesParameter on data type nucleotide"));
     }
 
     public void testMissingFrequencies() throws Exception {
@@ -176,5 +180,136 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
                 "    <frequencies><frequencyModel dataType=\"binary\"><frequencies><parameter value=\"0.3 0.7\"/></frequencies></frequencyModel></frequencies>\n" +
                 CHARACTER_TREE + RATES + "  </hierarchicalSubstitutionModel>\n");
         assertTrue(message, message.contains("Character tree has 4 tips but the data type has 2 states"));
+    }
+
+    private static final String SHARED_FREQUENCIES = "    <frequencies><frequencyModel idref=\"hky.frequencies.model\"/></frequencies>\n";
+    private static final String HKY_SHARED =
+            "  <HKYModel id=\"hky\">\n" +
+            "    <frequencies>\n" +
+            "      <frequencyModel id=\"hky.frequencies.model\" dataType=\"nucleotide\">\n" +
+            "        <frequencies><parameter id=\"hky.frequencies\" value=\"0.1 0.2 0.3 0.4\"/></frequencies>\n" +
+            "      </frequencyModel>\n" +
+            "    </frequencies>\n" +
+            "    <kappa><parameter id=\"kappa\" value=\"2.5\" lower=\"0.0\"/></kappa>\n" +
+            "  </HKYModel>\n";
+
+    private static String hrate(String attributes, String body) {
+        return "  <hierarchicalSubstitutionModel id=\"hrate\"" + attributes + ">\n" + body + "  </hierarchicalSubstitutionModel>\n";
+    }
+
+    public void testKappaForm() throws Exception {
+        for (String attributes : new String[]{"", " characterTreeNewick=\"((T:1,C:1):1,(G:1,A:1):1);\""}) {
+            Map<String, XMLObject> store = parse(HKY_SHARED + hrate(attributes,
+                    SHARED_FREQUENCIES + "    <kappa><parameter idref=\"kappa\"/></kappa>\n"));
+            HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+            HKY hky = (HKY) store.get("hky").getNativeObject();
+            assertTrue(model.getRateProvider() instanceof RelativeRatesProvider);
+            RelativeRatesProvider provider = (RelativeRatesProvider) model.getRateProvider();
+            assertEquals(3, provider.getCladeNames().length);
+            assertEquals(0.5825242718446603, provider.getLambda("AG"), 1e-15);
+            assertEquals(0.0, maxPDiff(model, hky), 1e-13);
+        }
+    }
+
+    public void testKappaWithCharacterTree() throws Exception {
+        Map<String, XMLObject> store = parse(TAXA_AND_TREE + HKY_SHARED + hrate("",
+                SHARED_FREQUENCIES + CHARACTER_TREE + "    <kappa><parameter idref=\"kappa\"/></kappa>\n"));
+        HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+        assertEquals(0.0, maxPDiff(model, (HKY) store.get("hky").getNativeObject()), 1e-13);
+    }
+
+    public void testTN93Form() throws Exception {
+        Map<String, XMLObject> store = parse(
+                "  <TN93Model id=\"tn93\">\n" +
+                "    <frequencies><frequencyModel id=\"f\" dataType=\"nucleotide\"><frequencies><parameter value=\"0.1 0.2 0.3 0.4\"/></frequencies></frequencyModel></frequencies>\n" +
+                "    <kappa1><parameter id=\"k1\" value=\"1.7\"/></kappa1>\n" +
+                "    <kappa2><parameter id=\"k2\" value=\"3.1\"/></kappa2>\n" +
+                "  </TN93Model>\n" +
+                hrate("", "    <frequencies><frequencyModel idref=\"f\"/></frequencies>\n" +
+                        "    <kappa1><parameter idref=\"k1\"/></kappa1><kappa2><parameter idref=\"k2\"/></kappa2>\n"));
+        HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+        TN93 tn93 = (TN93) store.get("tn93").getNativeObject();
+        double[] ph = new double[16], pd = new double[16];
+        for (double t : new double[]{0.05, 0.37, 1.9}) {
+            model.getTransitionProbabilities(t, ph);
+            tn93.getTransitionProbabilities(t, pd);
+            for (int i = 0; i < 16; i++)
+                assertEquals(pd[i], ph[i], 1e-13);
+        }
+    }
+
+    public void testSelectorErrors() throws Exception {
+        String message = parseFailure(TAXA_AND_TREE + hrate("", FREQUENCIES + CHARACTER_TREE + RATES
+                + "    <kappa><parameter value=\"2.0\"/></kappa>\n"));
+        assertTrue(message, message.contains("give at most one of ratesParameter, kappa"));
+
+        message = parseFailure(hrate("", FREQUENCIES + "    <kappa1><parameter value=\"2.0\"/></kappa1>\n"));
+        assertTrue(message, message.contains("kappa1 and kappa2 must be given together"));
+
+        message = parseFailure(hrate("",
+                "    <frequencies><frequencyModel dataType=\"binary\"><frequencies><parameter value=\"0.3 0.7\"/></frequencies></frequencyModel></frequencies>\n"
+                        + "    <kappa><parameter value=\"2.0\"/></kappa>\n"));
+        assertTrue(message, message.contains("a nucleotide frequency model"));
+
+        message = parseFailure(hrate(" characterTreeNewick=\"((A:1,C:1):1,(G:1,T:1):1);\"",
+                FREQUENCIES + "    <kappa><parameter value=\"1.0\"/></kappa>\n"));
+        assertTrue(message, message.contains("the character tree must have the clades {A,G} and {C,T}"));
+
+        message = parseFailure(TAXA_AND_TREE + hrate(" characterTreeNewick=\"((A:1,G:1):1,(C:1,T:1):1);\"",
+                FREQUENCIES + CHARACTER_TREE + "    <kappa><parameter value=\"2.0\"/></kappa>\n"));
+        assertTrue(message, message.contains("characterTree or characterTreeNewick, not both"));
+
+        message = parseFailure(hrate("", FREQUENCIES));
+        assertTrue(message, message.contains("characterTree is required with no rate selector"));
+    }
+
+    public void testRatesFromHKY() throws Exception {
+        for (String frequencies : new String[]{"", SHARED_FREQUENCIES}) {
+            Map<String, XMLObject> store = parse(HKY_SHARED + hrate("",
+                    frequencies + "    <ratesFrom><HKYModel idref=\"hky\"/></ratesFrom>\n"));
+            HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+            HKY hky = (HKY) store.get("hky").getNativeObject();
+            assertSame(hky.getFrequencyModel(), model.getFrequencyModel());
+            RelativeRatesProvider provider = (RelativeRatesProvider) model.getRateProvider();
+            assertEquals(0.5825242718446603, provider.getLambda("AG"), 1e-15);
+            assertEquals(0.0, maxPDiff(model, hky), 1e-13);
+            ((dr.inference.model.Parameter) store.get("kappa").getNativeObject()).setParameterValue(0, 7.0);
+            assertEquals(0.0, maxPDiff(model, hky), 1e-13);
+        }
+    }
+
+    public void testRatesFromTN93() throws Exception {
+        Map<String, XMLObject> store = parse(
+                "  <TN93Model id=\"tn93\">\n" +
+                "    <frequencies><frequencyModel id=\"f\" dataType=\"nucleotide\"><frequencies><parameter value=\"0.1 0.2 0.3 0.4\"/></frequencies></frequencyModel></frequencies>\n" +
+                "    <kappa1><parameter id=\"k1\" value=\"1.7\"/></kappa1>\n" +
+                "    <kappa2><parameter id=\"k2\" value=\"3.1\"/></kappa2>\n" +
+                "  </TN93Model>\n" +
+                hrate(" characterTreeNewick=\"((T:1,C:1):1,(G:1,A:1):1);\"", "    <ratesFrom><TN93Model idref=\"tn93\"/></ratesFrom>\n"));
+        HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+        TN93 tn93 = (TN93) store.get("tn93").getNativeObject();
+        double[] ph = new double[16], pd = new double[16];
+        for (double t : new double[]{0.05, 0.37, 1.9}) {
+            model.getTransitionProbabilities(t, ph);
+            tn93.getTransitionProbabilities(t, pd);
+            for (int i = 0; i < 16; i++)
+                assertEquals(pd[i], ph[i], 1e-13);
+        }
+    }
+
+    public void testRatesFromErrors() throws Exception {
+        String message = parseFailure(HKY_SHARED + hrate("", FREQUENCIES + "    <ratesFrom><HKYModel idref=\"hky\"/></ratesFrom>\n"));
+        assertTrue(message, message.contains("the frequency model of ratesFrom's model must be"));
+
+        message = parseFailure(HKY_SHARED + hrate("", "    <ratesFrom><HKYModel idref=\"hky\"/></ratesFrom>\n"
+                + "    <kappa><parameter value=\"2.0\"/></kappa>\n"));
+        assertTrue(message, message.contains("give at most one of") && message.contains("ratesFrom"));
+
+        message = parseFailure(HKY_SHARED + hrate(" characterTreeNewick=\"((A:1,C:1):1,(G:1,T:1):1);\"",
+                "    <ratesFrom><HKYModel idref=\"hky\"/></ratesFrom>\n"));
+        assertTrue(message, message.contains("the character tree must have the clades {A,G} and {C,T}"));
+
+        message = parseFailure(hrate("", ""));
+        assertTrue(message, message.contains("frequencies is required unless ratesFrom gives the model"));
     }
 }

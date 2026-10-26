@@ -370,6 +370,73 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         return beagleModelUnused;
     }
 
+    private static final double GENERATOR_TOLERANCE = 8.0 * Math.ulp(1.0);
+
+    /**
+     * The generator has non-negative off-diagonal entries iff the clade exchangeability
+     * sigma(m) = sum over the path from m to the root of lambda_k / pi_k is non-negative at every internal node
+     * (docs/generator-constraints). Negative clade rates are allowed as long as this holds.
+     */
+    public boolean isValidGenerator() {
+        return getInvalidGeneratorDescription() == null;
+    }
+
+    public String getInvalidGeneratorDescription() {
+        computePi();
+        final double[] sigma = new double[tree.getNodeCount()];
+        final double[] scale = new double[tree.getNodeCount()];
+        for (int nodeNumber : preOrderTraversal) {
+            final NodeRef node = tree.getNode(nodeNumber);
+            if (tree.isExternal(node)) {
+                continue;
+            }
+            final double term = hierarchicalRates.getRate(tree, nodeNumber) / pi[nodeNumber];
+            final NodeRef parent = tree.getParent(node);
+            sigma[nodeNumber] = (parent == null ? 0.0 : sigma[parent.getNumber()]) + term;
+            scale[nodeNumber] = (parent == null ? 0.0 : scale[parent.getNumber()]) + Math.abs(term);
+            if (!(sigma[nodeNumber] >= -GENERATOR_TOLERANCE * scale[nodeNumber])) {
+                return "clade " + cladeName(nodeNumber) + " has exchangeability " + sigma[nodeNumber]
+                        + " < 0, so the hierarchical rates do not give a valid generator";
+            }
+        }
+        return null;
+    }
+
+    public boolean hasNonNegativeRates() {
+        return getNegativeRateDescription() == null;
+    }
+
+    public String getNegativeRateDescription() {
+        final double[] lambdas = getBeagleModelLambdas();
+        for (int rank = 0; rank < stateCount - 1; rank++) {
+            if (!(lambdas[1 + rank] >= 0.0)) {
+                return "clade " + cladeName(internalNodeOfBundleRank[rank]) + " has rate " + lambdas[1 + rank];
+            }
+        }
+        return null;
+    }
+
+    private String cladeName(int nodeNumber) {
+        final List<String> codes = new ArrayList<>();
+        collectTipIds(tree.getNode(nodeNumber), codes);
+        Collections.sort(codes);
+        final StringBuilder sb = new StringBuilder();
+        for (String code : codes) {
+            sb.append(code);
+        }
+        return sb.toString();
+    }
+
+    private void collectTipIds(NodeRef node, List<String> codes) {
+        if (tree.isExternal(node)) {
+            codes.add(tree.getTaxonId(node.getNumber()));
+        } else {
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                collectTipIds(tree.getChild(node, i), codes);
+            }
+        }
+    }
+
     private void computeBeagleModel() {
         if (beagleModelKnown) {
             return;
@@ -557,8 +624,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 if (normalised && frequency == null) {
                     throw new IllegalArgumentException("a normalised ratesParameter needs the FrequencyModel");
                 }
-                rateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
-                        rateParameter.getDimension()));
+                rateParameter.addBounds(frequency == null
+                        ? new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, rateParameter.getDimension())
+                        : new GeneratorBounds(rateParameter, treeModel, frequency));
                 this.hierarchicalPoissonRates = new TreeParameterModel(treeModel,
                         new CompoundParameter("Default.Poisson.rates", new Parameter[]{
                                 new Parameter.Default(treeModel.getExternalNodeCount(), 1.0),
@@ -585,6 +653,97 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                     this.cladeStates = null;
                     this.lastRates = null;
                     this.lastFrequencies = null;
+                }
+            }
+
+            /**
+             * The exact lower limits of the clade rates (docs/generator-constraints): with the other rates held
+             * fixed, lambda_m must keep sigma(n) >= 0 at m and at every internal node n below m, which gives
+             * lambda_m >= -pi_m (sigma(parent(m)) + min(0, min_n sum_{k on the path from n up to a child of m}
+             * lambda_k / pi_k)). All rates within their limits is exactly the valid-generator cone, which
+             * contains negative rates (HKY with kappa < 1). Frequency moves are not covered by these limits;
+             * the likelihood rejects a model that leaves the cone.
+             */
+            static final class GeneratorBounds implements Bounds<Double> {
+
+                private final Parameter rates;
+                private final FrequencyModel frequency;
+                private final int tips;
+                private final int[] parentRate;
+                private final int[][] childRates;
+                private final int[][] cladeStates;
+
+                GeneratorBounds(Parameter rates, TreeModel tree, FrequencyModel frequency) {
+                    this.rates = rates;
+                    this.frequency = frequency;
+                    this.tips = tree.getExternalNodeCount();
+                    final int internal = tree.getInternalNodeCount();
+                    this.parentRate = new int[internal];
+                    this.childRates = new int[internal][];
+                    this.cladeStates = new int[internal][];
+                    for (int i = 0; i < internal; i++) {
+                        final NodeRef node = tree.getNode(tips + i);
+                        final NodeRef parent = tree.getParent(node);
+                        parentRate[i] = parent == null ? -1 : parent.getNumber() - tips;
+                        final List<Integer> children = new ArrayList<>();
+                        for (int c = 0; c < tree.getChildCount(node); c++) {
+                            final NodeRef child = tree.getChild(node, c);
+                            if (!tree.isExternal(child)) {
+                                children.add(child.getNumber() - tips);
+                            }
+                        }
+                        childRates[i] = new int[children.size()];
+                        for (int c = 0; c < children.size(); c++) {
+                            childRates[i][c] = children.get(c);
+                        }
+                        final List<Integer> states = new ArrayList<>();
+                        collectStates(tree, node, frequency.getDataType(), states);
+                        cladeStates[i] = new int[states.size()];
+                        for (int k = 0; k < states.size(); k++) {
+                            cladeStates[i][k] = states.get(k);
+                        }
+                    }
+                }
+
+                private double cladeFrequency(int i) {
+                    double sum = 0.0;
+                    for (int state : cladeStates[i]) {
+                        sum += frequency.getFrequency(state);
+                    }
+                    return sum;
+                }
+
+                private double term(int i) {
+                    return rates.getParameterValue(i) / cladeFrequency(i);
+                }
+
+                private double minimumBelow(int i, double above) {
+                    double minimum = Double.POSITIVE_INFINITY;
+                    for (int c : childRates[i]) {
+                        final double sum = above + term(c);
+                        minimum = Math.min(minimum, Math.min(sum, minimumBelow(c, sum)));
+                    }
+                    return minimum;
+                }
+
+                @Override
+                public Double getUpperLimit(int dimension) {
+                    return Double.POSITIVE_INFINITY;
+                }
+
+                @Override
+                public Double getLowerLimit(int dimension) {
+                    double sigmaParent = 0.0;
+                    for (int k = parentRate[dimension]; k >= 0; k = parentRate[k]) {
+                        sigmaParent += term(k);
+                    }
+                    final double below = Math.min(0.0, minimumBelow(dimension, 0.0));
+                    return -cladeFrequency(dimension) * (sigmaParent + below);
+                }
+
+                @Override
+                public int getBoundsDimension() {
+                    return rates.getDimension();
                 }
             }
 

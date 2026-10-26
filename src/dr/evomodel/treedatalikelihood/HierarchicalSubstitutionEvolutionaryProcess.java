@@ -63,6 +63,16 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
             throw new IllegalArgumentException("The hierarchical representation needs a binary character tree");
         }
 
+        final String invalid = substitutionModel.getInvalidGeneratorDescription();
+        if (invalid != null) {
+            throw new IllegalArgumentException(invalid);
+        }
+        final String negative = substitutionModel.getNegativeRateDescription();
+        if (negative != null) {
+            throw new IllegalArgumentException(negative + "; the generator is valid, but the hierarchical BEAGLE "
+                    + "representation needs non-negative clade rates, for HKY and TN93 kappa >= 1");
+        }
+
         this.rootFrequencyModel = branchModel.getRootFrequencyModel();
 
         eigenBufferHelper = new BufferIndexHelper(1, 0);
@@ -153,6 +163,11 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
     @Override
     public double[] getRootStateFrequencies() {
         return rootFrequencyModel.getFrequencies();
+    }
+
+    @Override
+    public boolean canUpdateSubstitutionModels() {
+        return substitutionModel.isValidGenerator() && substitutionModel.hasNonNegativeRates();
     }
 
     @Override

@@ -42,8 +42,10 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
+import dr.evomodel.substmodel.RelativeRatesProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
@@ -130,21 +132,6 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
                 new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(pi)));
     }
 
-    private static HierarchicalSubstitutionModel hierarchicalHKY(double[] pi, double kappa) throws Exception {
-        final int[] partner = {2, 3, 0, 1};
-        double norm = 0.0;
-        for (int i = 0; i < S; i++) {
-            for (int j = 0; j < S; j++) {
-                if (i != j) {
-                    norm += pi[i] * pi[j] * (j == partner[i] ? kappa : 1.0);
-                }
-            }
-        }
-        final double beta = 1.0 / norm;
-        return hierarchical("((A:1,G:1):1,(C:1,T:1):1);", pi, beta,
-                (kappa - 1.0) * beta * (pi[0] + pi[2]), (kappa - 1.0) * beta * (pi[1] + pi[3]));
-    }
-
     private TreeDataLikelihood likelihood(SubstitutionModel model, GammaSiteRateModel siteRateModel,
                                           boolean useHierarchicalRepresentation) {
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
@@ -199,9 +186,11 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
 
     private void checkAgainstPublished(String name, double[] pi, GammaSiteRateModel hierarchicalSites,
                                        GammaSiteRateModel referenceSites, double expected) throws Exception {
-        HierarchicalSubstitutionModel model = hierarchicalHKY(pi, 8.0);
-        HKY hky = new HKY(new Parameter.Default(HKYParser.KAPPA, 8.0),
-                new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(pi)));
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(pi));
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 8.0);
+        HKY hky = new HKY(kappa, frequencies);
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                RelativeRatesProvider.hky(kappa, frequencies));
 
         double hierarchical = likelihood(model, hierarchicalSites, true).getLogLikelihood();
         double eigen = likelihood(model, hierarchicalSites, false).getLogLikelihood();
@@ -238,5 +227,140 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
         }
         double[] pi = alignment.getStateFrequencies();
         checkAgainstPublished("HKY85G", pi, gamma(0.5, 4), gamma(0.5, 4), -1816.82611);
+    }
+
+    public void testTN93ThroughBeagle() throws Exception {
+        if (skip("testTN93ThroughBeagle")) {
+            return;
+        }
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE,
+                new Parameter.Default(alignment.getStateFrequencies()));
+        Parameter kappa1 = new Parameter.Default(1.7), kappa2 = new Parameter.Default(3.1);
+        TN93 tn93 = new TN93(kappa1, kappa2, frequencies);
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                RelativeRatesProvider.tn93(kappa1, kappa2, frequencies));
+        double hierarchical = likelihood(model, gamma(0.5, 4), true).getLogLikelihood();
+        double reference = likelihood(tn93, gamma(0.5, 4), false).getLogLikelihood();
+        assertEquals("TN93 vs dense", reference, hierarchical, 1e-10 * Math.abs(reference));
+    }
+
+    public void testKappaChangeAndRestoreThroughBeagle() throws Exception {
+        if (skip("testKappaChangeAndRestoreThroughBeagle")) {
+            return;
+        }
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE,
+                new Parameter.Default(alignment.getStateFrequencies()));
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 8.0);
+        HKY hky = new HKY(kappa, frequencies);
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                RelativeRatesProvider.hky(kappa, frequencies));
+        TreeDataLikelihood hierarchical = likelihood(model, new GammaSiteRateModel("gamma"), true);
+        TreeDataLikelihood reference = likelihood(hky, new GammaSiteRateModel("gamma"), false);
+
+        final double first = hierarchical.getLogLikelihood();
+        assertEquals("kappa 8", reference.getLogLikelihood(), first, 1e-10 * Math.abs(first));
+        hierarchical.storeModelState();
+        reference.storeModelState();
+        kappa.setParameterValue(0, 3.0);
+        final double moved = hierarchical.getLogLikelihood();
+        assertEquals("kappa 3", reference.getLogLikelihood(), moved, 1e-10 * Math.abs(moved));
+        assertTrue("the likelihood moved", Math.abs(moved - first) > 1e-6);
+        hierarchical.restoreModelState();
+        reference.restoreModelState();
+        assertEquals("restored", first, hierarchical.getLogLikelihood(), 0.0);
+        kappa.setParameterValue(0, 5.0);
+        assertEquals("after restore", reference.getLogLikelihood(), hierarchical.getLogLikelihood(),
+                1e-10 * Math.abs(first));
+    }
+
+    public void testNegativeRatesRejected() throws Exception {
+        if (skip("testNegativeRatesRejected")) {
+            return;
+        }
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE,
+                new Parameter.Default(alignment.getStateFrequencies()));
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 0.5);
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                RelativeRatesProvider.hky(kappa, frequencies));
+        assertFalse(model.hasNonNegativeRates());
+        try {
+            likelihood(model, new GammaSiteRateModel("gamma"), true);
+            fail("kappa 0.5 must be refused at construction");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("clade AG has rate -")
+                    && e.getMessage().contains("non-negative clade rates"));
+        }
+        assertTrue("the eigen path keeps kappa < 1",
+                !Double.isInfinite(likelihood(model, new GammaSiteRateModel("gamma"), false).getLogLikelihood()));
+
+        kappa.setParameterValue(0, 2.0);
+        HKY hky = new HKY(kappa, frequencies);
+        TreeDataLikelihood hierarchical = likelihood(model, new GammaSiteRateModel("gamma"), true);
+        TreeDataLikelihood reference = likelihood(hky, new GammaSiteRateModel("gamma"), false);
+        final double first = hierarchical.getLogLikelihood();
+        assertEquals(reference.getLogLikelihood(), first, 1e-10 * Math.abs(first));
+
+        hierarchical.storeModelState();
+        kappa.setParameterValue(0, 0.5);
+        assertEquals("kappa 0.5 rejected", Double.NEGATIVE_INFINITY, hierarchical.getLogLikelihood());
+        hierarchical.restoreModelState();
+        assertEquals("restored", first, hierarchical.getLogLikelihood(), 0.0);
+
+        kappa.setParameterValue(0, 0.5);
+        assertEquals(Double.NEGATIVE_INFINITY, hierarchical.getLogLikelihood());
+        kappa.setParameterValue(0, 3.0);
+        assertEquals("valid again", reference.getLogLikelihood(), hierarchical.getLogLikelihood(),
+                1e-10 * Math.abs(first));
+    }
+
+    public void testEigenPathInsideTheGeneratorCone() throws Exception {
+        if (skip("testEigenPathInsideTheGeneratorCone")) {
+            return;
+        }
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE,
+                new Parameter.Default(alignment.getStateFrequencies()));
+        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 0.5);
+        HKY hky = new HKY(kappa, frequencies);
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                RelativeRatesProvider.hky(kappa, frequencies));
+        double eigen = likelihood(model, gamma(0.5, 4), false).getLogLikelihood();
+        double reference = likelihood(hky, gamma(0.5, 4), false).getLogLikelihood();
+        assertEquals("kappa 0.5, negative clade rates, eigen path", reference, eigen, 1e-10 * Math.abs(reference));
+    }
+
+    public void testEigenPathRejectsFrequenciesOutsideTheCone() throws Exception {
+        if (skip("testEigenPathRejectsFrequenciesOutsideTheCone")) {
+            return;
+        }
+        Parameter pi = new Parameter.Default(new double[]{0.1, 0.2, 0.3, 0.4});
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE, pi);
+        TreeModel characterTree = new DefaultTreeModel("characterTree",
+                new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null));
+        Parameter rates = new Parameter.Default(3, 0.0);
+        for (int i = 0; i < 3; i++) {
+            String clade = clade(characterTree, characterTree.getNode(S + i));
+            rates.setParameterValue(i, clade.equals("AG") ? -0.35 : clade.equals("CT") ? 0.2 : 1.0);
+        }
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, characterTree, frequencies, false));
+        assertTrue(model.isValidGenerator());
+        assertTrue(rates.isWithinBounds());
+        TreeDataLikelihood eigen = likelihood(model, new GammaSiteRateModel("gamma"), false);
+        final double first = eigen.getLogLikelihood();
+        assertFalse(Double.isInfinite(first));
+        try {
+            likelihood(model, new GammaSiteRateModel("gamma"), true);
+            fail("the plugin cannot take the negative AG rate");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("the generator is valid"));
+        }
+
+        eigen.storeModelState();
+        pi.setParameterValue(1, 0.3);
+        pi.setParameterValue(2, 0.2);
+        assertFalse("pi_AG 0.3 puts sigma(AG) below 0", model.isValidGenerator());
+        assertEquals(Double.NEGATIVE_INFINITY, eigen.getLogLikelihood());
+        eigen.restoreModelState();
+        assertEquals("restored", first, eigen.getLogLikelihood(), 0.0);
     }
 }

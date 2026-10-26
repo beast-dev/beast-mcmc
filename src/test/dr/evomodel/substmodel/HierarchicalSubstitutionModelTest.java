@@ -337,4 +337,121 @@ public class HierarchicalSubstitutionModelTest extends TestCase {
             assertEquals(newick + " after changes", 1.0, mu, 1e-14);
         }
     }
+
+    private static HierarchicalSubstitutionModel.HierarchicalRateProvider.Default coneProvider(
+            TreeModel tree, Parameter rates, FrequencyModel frequencyModel) {
+        return new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, tree, frequencyModel, false);
+    }
+
+    private static int rateIndex(TreeModel tree, String clade) {
+        for (int i = 0; i < tree.getInternalNodeCount(); i++)
+            if (tipSet(tree, tree.getNode(tree.getExternalNodeCount() + i)).equals(clade))
+                return i;
+        throw new IllegalArgumentException(clade);
+    }
+
+    public void testGeneratorBoundsOnTheDocumentExamples() throws Exception {
+        double[] pi = {0.1, 0.2, 0.3, 0.4};
+        TreeModel tree = new DefaultTreeModel("characterTree", new NewickImporter("(((A:1,G:1):1,C:1):1,T:1);").importTree(null));
+        Parameter rates = new Parameter.Default(3, 0.0);
+        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(pi));
+        coneProvider(tree, rates, f);
+        final int root = rateIndex(tree, "ACGT"), agc = rateIndex(tree, "ACG"), ag = rateIndex(tree, "AG");
+        rates.setParameterValue(root, 1.0);
+        rates.setParameterValue(agc, -0.3);
+        rates.setParameterValue(ag, 0.0);
+        assertEquals(-0.2, rates.getBounds().getLowerLimit(ag), 1e-15);
+        assertEquals(-0.6, rates.getBounds().getLowerLimit(agc), 1e-15);
+        assertEquals(0.5, rates.getBounds().getLowerLimit(root), 1e-15);
+        rates.setParameterValue(ag, -0.1);
+        assertEquals(-0.45, rates.getBounds().getLowerLimit(agc), 1e-15);
+        assertTrue(rates.isWithinBounds());
+        rates.setParameterValue(ag, -0.21);
+        assertFalse(rates.isWithinBounds());
+
+        TreeModel balanced = new DefaultTreeModel("characterTree", new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null));
+        Parameter balancedRates = new Parameter.Default(3, 0.0);
+        coneProvider(balanced, balancedRates, f);
+        balancedRates.setParameterValue(rateIndex(balanced, "ACGT"), 2.0);
+        assertEquals(-0.8, balancedRates.getBounds().getLowerLimit(rateIndex(balanced, "AG")), 1e-15);
+        assertEquals(-1.2, balancedRates.getBounds().getLowerLimit(rateIndex(balanced, "CT")), 1e-15);
+        balancedRates.setParameterValue(rateIndex(balanced, "CT"), -1.0);
+        assertEquals(1.0 / 0.6, balancedRates.getBounds().getLowerLimit(rateIndex(balanced, "ACGT")), 1e-15);
+    }
+
+    private static String randomNewick(String[] codes, java.util.Random random) {
+        java.util.List<String> pool = new java.util.ArrayList<>();
+        for (String code : codes)
+            pool.add(code + ":1");
+        while (pool.size() > 1) {
+            String a = pool.remove(random.nextInt(pool.size()));
+            String b = pool.remove(random.nextInt(pool.size()));
+            pool.add("(" + a + "," + b + "):1");
+        }
+        String root = pool.get(0);
+        return root.substring(0, root.length() - 2) + ";";
+    }
+
+    public void testBoundsMatchTheValidGeneratorCone() throws Exception {
+        java.util.Random random = new java.util.Random(20261026);
+        dr.evolution.datatype.DataType[] types = {Nucleotides.INSTANCE, dr.evolution.datatype.AminoAcids.INSTANCE};
+        int valid = 0, validWithNegative = 0, invalid = 0;
+        for (dr.evolution.datatype.DataType type : types) {
+            final int n = type.getStateCount();
+            String[] codes = new String[n];
+            for (int i = 0; i < n; i++)
+                codes[i] = type.getCode(i);
+            for (int rep = 0; rep < 40; rep++) {
+                TreeModel tree = new DefaultTreeModel("characterTree", new NewickImporter(randomNewick(codes, random)).importTree(null));
+                double[] pi = new double[n];
+                double total = 0.0;
+                for (int i = 0; i < n; i++)
+                    total += pi[i] = 0.2 + random.nextDouble();
+                for (int i = 0; i < n; i++)
+                    pi[i] /= total;
+                FrequencyModel f = new FrequencyModel(type, new Parameter.Default(pi));
+                Parameter rates = new Parameter.Default(n - 1, 0.0);
+                HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                        coneProvider(tree, rates, f));
+                for (int draw = 0; draw < 25; draw++) {
+                    boolean negative = false;
+                    for (int i = 0; i < n - 1; i++) {
+                        double r = random.nextDouble() * 2.0 - (i == tree.getRoot().getNumber() - n ? 0.0 : 0.6);
+                        rates.setParameterValue(i, r);
+                        negative |= r < 0.0;
+                    }
+                    double[] q = new double[n * n];
+                    model.getInfinitesimalMatrix(q);
+                    boolean offDiagonalNonNegative = true;
+                    for (int i = 0; i < n; i++)
+                        for (int j = 0; j < n; j++)
+                            if (i != j && q[i * n + j] < -1e-12)
+                                offDiagonalNonNegative = false;
+                    assertEquals(offDiagonalNonNegative, rates.isWithinBounds());
+                    assertEquals(offDiagonalNonNegative, model.isValidGenerator());
+                    if (offDiagonalNonNegative) {
+                        valid++;
+                        if (negative) {
+                            validWithNegative++;
+                            double[] p = new double[n * n];
+                            model.getTransitionProbabilities(0.7, p);
+                            for (int i = 0; i < n; i++) {
+                                double row = 0.0;
+                                for (int j = 0; j < n; j++) {
+                                    assertTrue(p[i * n + j] > -1e-12);
+                                    row += p[i * n + j];
+                                }
+                                assertEquals(1.0, row, 1e-12);
+                            }
+                        }
+                    } else {
+                        invalid++;
+                        assertTrue(model.getInvalidGeneratorDescription().contains("< 0"));
+                    }
+                }
+            }
+        }
+        assertTrue("valid " + valid + " with negative rates " + validWithNegative + " invalid " + invalid,
+                validWithNegative > 100 && invalid > 100);
+    }
 }

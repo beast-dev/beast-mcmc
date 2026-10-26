@@ -32,6 +32,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 
 import java.io.Serializable;
@@ -119,6 +120,12 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
     @Override
     public boolean canReturnComplexDiagonalization() {
         return substitutionModel.canReturnComplexDiagonalization();
+    }
+
+    @Override
+    public boolean canUpdateSubstitutionModels() {
+        return !(substitutionModel instanceof HierarchicalSubstitutionModel)
+                || ((HierarchicalSubstitutionModel) substitutionModel).isValidGenerator();
     }
 
     @Override

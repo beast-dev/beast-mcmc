@@ -134,7 +134,7 @@ public class TreeLikelihoodGenerator extends Generator {
             } else {
                 String prefix1 = partition.getPrefix();
                 writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
-                writer.writeIDref(patternsTag(partition), prefix1 + SitePatternsParser.PATTERNS);
+                writer.writeIDref(SitePatternsParser.PATTERNS, prefix1 + SitePatternsParser.PATTERNS);
                 writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
                 writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
             }
@@ -249,7 +249,7 @@ public class TreeLikelihoodGenerator extends Generator {
             if (num > 0) {
                 writeCodonPatternsRef(prefix, num, substModel.getCodonPartitionCount(), writer);
             } else {
-                writer.writeIDref(patternsTag(partition), prefix + SitePatternsParser.PATTERNS);
+                writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
             }
         } else {
             // We just need to use the dummy alignment

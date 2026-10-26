@@ -296,15 +296,6 @@ public abstract class Generator {
         writer.writeCloseTag(wrapperName);
     }
 
-    /**
-     * @return the element that holds a partition's patterns: a merge of the alignment's patterns and the constant
-     * columns when the partition has constant-site counts
-     */
-    protected static String patternsTag(AbstractPartitionData partition) {
-        return partition instanceof PartitionData && ((PartitionData) partition).getConstantSiteCounts() != null ?
-                MergePatternsParser.MERGE_PATTERNS : SitePatternsParser.PATTERNS;
-    }
-
     protected void writeCodonPatternsRef(String prefix, int num, int codonPartitionCount, XMLWriter writer) {
         if (codonPartitionCount == 2 && num == 1) { // "11" of "112", num start from 1
             writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + SitePatternsParser.PATTERNS);

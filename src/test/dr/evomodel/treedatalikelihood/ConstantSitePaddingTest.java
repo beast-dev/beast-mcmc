@@ -38,10 +38,11 @@ import java.io.StringReader;
 import java.util.Map;
 
 /**
- * Constant-site padding (plan 8 M4a, IQ-TREE -fconst): the variable columns plus counts of constant columns, merged
- * with <constantPatterns> and <mergePatterns>, give the same likelihood and analytic gradient as the full alignment,
- * since the counts are pattern weights and the constant columns' likelihoods do not depend on which columns they
- * were. And treeDataLikelihood refuses ascertained patterns, whose correction it would ignore (M4-guard).
+ * Constant-site padding (plan 8 M4a, IQ-TREE -fconst) with BEAST's own <patterns><constantPatterns>: the variable
+ * columns plus counts of constant columns give the same likelihood and analytic gradient as the full alignment,
+ * since the counts are pattern weights. This holds under every compression; under the default (unique patterns) the
+ * counts used to be dropped silently. And treeDataLikelihood refuses ascertained patterns, whose correction it would
+ * ignore (M4-guard).
  */
 public class ConstantSitePaddingTest extends TestCase {
 
@@ -57,23 +58,26 @@ public class ConstantSitePaddingTest extends TestCase {
 
     public void testPaddingEqualsTheFullAlignment() throws Exception {
         Map<String, XMLObject> full = parse(alignment(true), "<patterns id=\"patterns\"><alignment idref=\"alignment\"/></patterns>");
-        Map<String, XMLObject> padded = parse(alignment(false),
-                "<mergePatterns id=\"patterns\">" +
-                        "<patterns id=\"variable\"><alignment idref=\"alignment\"/></patterns>" +
-                        "<constantPatterns><patterns idref=\"variable\"/>" +
-                        "<counts><parameter value=\"" + COUNTS + "\"/></counts></constantPatterns>" +
-                        "</mergePatterns>");
-
         double fullLogL = logL(full);
-        double paddedLogL = logL(padded);
-        assertEquals(fullLogL, paddedLogL, 1E-8 * Math.abs(fullLogL));
-        // without the padding the likelihood is that of the variable columns alone
+        double[] fullGradient = gradient(full);
+
+        // without the counts the likelihood is that of the variable columns alone
         Map<String, XMLObject> unpadded = parse(alignment(false), "<patterns id=\"patterns\"><alignment idref=\"alignment\"/></patterns>");
         assertTrue(Math.abs(logL(unpadded) - fullLogL) > 1.0);
 
-        double[] fullGradient = gradient(full);
-        double[] paddedGradient = gradient(padded);
-        assertEquals(fullGradient[0], paddedGradient[0], 1E-8 * Math.max(1.0, Math.abs(fullGradient[0])));
+        // the default compression (unique patterns), none, and compression of ambiguously constant sites
+        for (String compression : new String[]{"", " unique=\"false\"", " ambiguousConstant=\"true\""}) {
+            Map<String, XMLObject> padded = parse(alignment(false),
+                    "<patterns id=\"patterns\"" + compression + "><alignment idref=\"alignment\"/>" +
+                            "<constantPatterns><parameter value=\"" + COUNTS + "\"/></constantPatterns></patterns>");
+            assertEquals(compression, fullLogL, logL(padded), 1E-8 * Math.abs(fullLogL));
+            assertEquals(compression, fullGradient[0], gradient(padded)[0], 1E-8 * Math.max(1.0, Math.abs(fullGradient[0])));
+        }
+
+        // padding an alignment that has the constant columns already counts them twice: the counts are not ignored
+        Map<String, XMLObject> twice = parse(alignment(true), "<patterns id=\"patterns\"><alignment idref=\"alignment\"/>" +
+                "<constantPatterns><parameter value=\"" + COUNTS + "\"/></constantPatterns></patterns>");
+        assertTrue(logL(twice) < fullLogL - 1.0);
     }
 
     public void testAscertainedPatternsAreRefused() {
@@ -125,9 +129,9 @@ public class ConstantSitePaddingTest extends TestCase {
                 "<treeDataLikelihood idref=\"treeLikelihood\"/><parameter idref=\"kappa\"/>" +
                 "</branchSubstitutionParameterGradient>\n" +
                 "</beast>\n";
-        xml = xml.replace("<patterns idref=\"patterns\"/>", patterns.startsWith("<mergePatterns") ?
-                "<mergePatterns idref=\"patterns\"/>" : patterns.startsWith("<ascertainedPatterns") ?
-                "<ascertainedPatterns idref=\"patterns\"/>" : "<patterns idref=\"patterns\"/>");
+        if (patterns.startsWith("<ascertainedPatterns")) {
+            xml = xml.replace("<patterns idref=\"patterns\"/>", "<ascertainedPatterns idref=\"patterns\"/>");
+        }
         BeastParser parser = new BeastParser(new String[]{}, null, false, false, false, new BeastVersion());
         return parser.parse(new StringReader(xml), false);
     }

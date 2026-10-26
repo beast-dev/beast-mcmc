@@ -300,9 +300,9 @@ public class BeastGenerator extends Generator {
                         "nucleotide data and four counts, for A, C, G and T.", TreeLimeFrame.DATA_PARTITIONS);
             }
             for (double count : counts) {
-                if (!(count >= 0) || Double.isInfinite(count)) {
+                if (!(count >= 0) || Double.isInfinite(count) || count != Math.rint(count)) {
                     throw new GeneratorException("Constant-site counts (partition " + data.getName() + ") must be " +
-                            "finite and not negative.", TreeLimeFrame.DATA_PARTITIONS);
+                            "whole numbers, not negative.", TreeLimeFrame.DATA_PARTITIONS);
                 }
             }
             if (data.getPartitionSubstitutionModel().getCodonPartitionCount() > 1) {

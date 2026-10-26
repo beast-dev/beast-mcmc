@@ -618,8 +618,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     private static void checkNotAscertained(PatternList patterns, XMLObject xo) throws XMLParseException {
         if (patterns instanceof AscertainedSitePatterns) {
             throw new XMLParseException("The ascertainment correction of '" + patterns.getId() + "' is not applied by " +
-                    "treeDataLikelihood '" + xo.getId() + "'; pad the constant sites with <constantPatterns> " +
-                    "(merged with <mergePatterns>), or use beagleTreeLikelihood");
+                    "treeDataLikelihood '" + xo.getId() + "'; give the constant-site counts in <constantPatterns> " +
+                    "inside <patterns> instead, or use beagleTreeLikelihood");
         }
     }
 

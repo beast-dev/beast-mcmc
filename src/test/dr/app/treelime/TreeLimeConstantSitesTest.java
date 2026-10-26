@@ -116,9 +116,11 @@ public class TreeLimeConstantSitesTest extends TestCase {
             tree.setUserStartingTree(start);
         }
         String snpXml = TreeLimeHarness.generate(quiet(snps));
-        assertTrue(snpXml.contains("<mergePatterns id=\"patterns\">"));
-        assertTrue(snpXml.contains("<constantPatterns>"));
-        assertTrue(snpXml.contains("<mergePatterns idref=\"patterns\"/>"));
+        // BEAST's own form: the counts inside the partition's <patterns>
+        String patterns = snpXml.substring(snpXml.indexOf("<patterns id=\"patterns\""), snpXml.indexOf("</patterns>"));
+        assertTrue(patterns, patterns.contains("<constantPatterns>") && patterns.contains("<parameter value=\"" +
+                (long) counts[0] + " " + (long) counts[1] + " " + (long) counts[2] + " " + (long) counts[3] + "\"/>"));
+        assertFalse(snpXml.contains("mergePatterns"));
 
         Run fullRun = run(fullXml);
         Run snpRun = run(snpXml);
@@ -155,7 +157,7 @@ public class TreeLimeConstantSitesTest extends TestCase {
         double[] counts = PartitionData.parseConstantSiteCounts("1234,567,890,1011\n"); // snp-sites -C
         assertEquals(1011.0, counts[3], 0.0);
         assertEquals(567.0, PartitionData.parseConstantSiteCounts("1234 567\t890 1011")[1], 0.0);
-        for (String bad : new String[]{"1 2 3", "1 2 3 x", "1 2 -3 4", "1 2 3 4 5"}) {
+        for (String bad : new String[]{"1 2 3", "1 2 3 x", "1 2 -3 4", "1 2 3 4 5", "1 2 3.5 4"}) {
             try {
                 PartitionData.parseConstantSiteCounts(bad);
                 fail(bad);

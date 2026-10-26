@@ -122,8 +122,8 @@ public class PartitionData extends AbstractPartitionData {
     }
 
     /**
-     * Reads constant-site counts as typed or as written by snp-sites -C: four numbers for A, C, G and T, separated by
-     * commas or white space.
+     * Reads constant-site counts as typed or as written by snp-sites -C: four whole numbers for A, C, G and T,
+     * separated by commas or white space.
      *
      * @return the counts, or null for blank text (no counts)
      * @throws IllegalArgumentException for anything else, with a message for the user
@@ -145,8 +145,8 @@ public class PartitionData extends AbstractPartitionData {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Not a count: " + fields[i]);
             }
-            if (!(counts[i] >= 0) || Double.isInfinite(counts[i])) {
-                throw new IllegalArgumentException("Counts must be finite and not negative: " + fields[i]);
+            if (!(counts[i] >= 0) || Double.isInfinite(counts[i]) || counts[i] != Math.rint(counts[i])) {
+                throw new IllegalArgumentException("Counts must be whole numbers, not negative: " + fields[i]);
             }
         }
         return counts;

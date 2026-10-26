@@ -240,7 +240,12 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         siteCount = ((to - from) / every) + 1;
 
-        if (compression == AMBIGUOUS_CONSTANT || compression == AMBIGUOUS_UNIQUE) {
+        if (compression == UNCOMPRESSED && constantSiteCounts != null) {
+            // one pattern per constant site, as for the alignment's own sites
+            for (int count : constantSiteCounts) {
+                siteCount += count;
+            }
+        } else if (compression == AMBIGUOUS_CONSTANT || compression == AMBIGUOUS_UNIQUE || constantSiteCounts != null) {
             // add some space for the set of constant sites
             siteCount += siteList.getStateCount();
         }
@@ -273,6 +278,28 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                     pattern[j] = i;
                 }
                 addPattern(pattern, constantSiteCounts != null ? constantSiteCounts[i] : 0, null);
+            }
+        } else if (constantSiteCounts != null) {
+            // constant sites left out of the alignment (e.g. a SNP alignment), added as weights of the constant
+            // patterns; without compression by ambiguity they used to be dropped silently
+            if (uncertainSites) {
+                throw new IllegalArgumentException("Constant site counts are not supported with uncertain sites");
+            }
+            for (int i = 0; i < siteList.getStateCount(); i++) {
+                if (constantSiteCounts[i] > 0) {
+                    int[] pattern = new int[siteList.getPatternLength()];
+                    for (int j = 0; j < siteList.getPatternLength(); j++) {
+                        pattern[j] = i;
+                    }
+                    if (compression == UNCOMPRESSED) {
+                        // uncompressed lists are copied with weight 1 per pattern (Patterns.addPatterns)
+                        for (int k = 0; k < constantSiteCounts[i]; k++) {
+                            addPattern(pattern, 1.0, compression);
+                        }
+                    } else {
+                        addPattern(pattern, constantSiteCounts[i], compression);
+                    }
+                }
             }
         }
 

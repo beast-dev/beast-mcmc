@@ -112,32 +112,11 @@ public class PatternListGenerator extends Generator {
 
             }// END: pattern is 123
 
-        } else if (partition.getConstantSiteCounts() != null) {
-            // a SNP alignment padded with the constant columns left out of it (IQ-TREE -fconst): the counts are
-            // pattern weights, so the likelihood and every gradient are those of the full alignment
-            String id = partition.getPrefix() + SitePatternsParser.PATTERNS;
-            writer.writeComment("The variable columns, padded with counts of constant columns (A C G T)");
-            writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS, new Attribute.Default<String>(XMLParser.ID, id));
-            writePatternList(partition, 0, 1, VARIABLE, unique, strip, writer);
-            writer.writeOpenTag(ConstantPatternsParser.CONSTANT_PATTERNS);
-            writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + VARIABLE + SitePatternsParser.PATTERNS);
-            writer.writeOpenTag(COUNTS);
-            StringBuilder counts = new StringBuilder();
-            for (double count : partition.getConstantSiteCounts()) {
-                counts.append(counts.length() > 0 ? " " : "").append(count);
-            }
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(ParameterParser.VALUE,
-                    counts.toString()), true);
-            writer.writeCloseTag(COUNTS);
-            writer.writeCloseTag(ConstantPatternsParser.CONSTANT_PATTERNS);
-            writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
         } else {
             writePatternList(partition, 0, 1, "", unique, strip, writer);
         }
     }
 
-    private static final String VARIABLE = "variable.";
-    private static final String COUNTS = "counts"; // ConstantPatternsParser's child
 
     /**
      * Write a single pattern list
@@ -192,6 +171,20 @@ public class PatternListGenerator extends Generator {
         // generate <patterns>
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
         writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
+        double[] counts = partition.getConstantSiteCounts();
+        if (counts != null) {
+            // a SNP alignment padded with the constant columns left out of it (IQ-TREE -fconst): the counts become
+            // weights of the constant patterns, so the likelihood and every gradient are those of the full alignment
+            writer.writeComment("Counts of the constant columns left out of the alignment (A C G T)");
+            writer.writeOpenTag(SitePatternsParser.CONSTANT_PATTERNS);
+            StringBuilder value = new StringBuilder();
+            for (double count : counts) {
+                value.append(value.length() > 0 ? " " : "").append((long) count);
+            }
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(ParameterParser.VALUE,
+                    value.toString()), true);
+            writer.writeCloseTag(SitePatternsParser.CONSTANT_PATTERNS);
+        }
         writer.writeCloseTag(SitePatternsParser.PATTERNS);
     }
 

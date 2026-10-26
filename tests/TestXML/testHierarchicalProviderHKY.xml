@@ -1,0 +1,346 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Rate providers of the hierarchical substitution model: HKY and TN93 through the hierarchical BEAGLE
+     representation against the dense models, and a short MCMC. -->
+<beast>
+    <taxa id="taxa">
+        <taxon id="human"/>
+        <taxon id="chimp"/>
+        <taxon id="gorilla"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="human"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="chimp"/>
+            AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAATCCCCTTATTTCTACTA
+            GGACTATAAGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="gorilla"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGAGGTTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATTGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTGTCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTCACATCCTTCCCGTACTAAGAAATT
+            TAGGTTAAACATAGACCAAGAGCCTTCAAAGCCCTTAGTAAGTTA-CAACACTTAATTTCTGTAAGGACTGC
+        </sequence>
+    </alignment>
+
+    <patterns id="patterns" from="1" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        ((human:0.1,chimp:0.1):0.1,gorilla:0.2);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <frequencyModel id="frequencies" dataType="nucleotide">
+        <frequencies>
+            <parameter id="frequencies.parameter" value="0.1 0.2 0.3 0.4"/>
+        </frequencies>
+    </frequencyModel>
+
+    <!-- HKY: the provider shares kappa and the frequency model with the dense HKYModel; the character tree
+         ((A,G),(C,T)) is built by the provider -->
+    <HKYModel id="hky">
+        <frequencies>
+            <frequencyModel idref="frequencies"/>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="2.5" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+
+    <hierarchicalSubstitutionModel id="hrate">
+        <frequencies>
+            <frequencyModel idref="frequencies"/>
+        </frequencies>
+        <kappa>
+            <parameter idref="kappa"/>
+        </kappa>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="hrate.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="hrate.alpha" value="0.5"/>
+        </gammaShape>
+    </siteModel>
+
+    <siteModel id="hky.siteModel">
+        <substitutionModel>
+            <HKYModel idref="hky"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="hky.alpha" value="0.5"/>
+        </gammaShape>
+    </siteModel>
+
+    <treeDataLikelihood id="hierarchical.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="eigen.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="hky.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hky.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <!-- HKY again, built from the existing HKYModel: the provider reads its kappa and frequency model -->
+    <hierarchicalSubstitutionModel id="hrate.borrowed">
+        <ratesFrom>
+            <HKYModel idref="hky"/>
+        </ratesFrom>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="hrate.borrowed.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.borrowed"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="hrate.borrowed.alpha" value="0.5"/>
+        </gammaShape>
+    </siteModel>
+
+    <treeDataLikelihood id="hierarchical.borrowed.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.borrowed.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <!-- TN93: the provider shares kappa1, kappa2 and the frequency model with the dense TN93Model -->
+    <TN93Model id="tn93">
+        <frequencies>
+            <frequencyModel idref="frequencies"/>
+        </frequencies>
+        <kappa1>
+            <parameter id="kappa1" value="3.0" lower="0.0"/>
+        </kappa1>
+        <kappa2>
+            <parameter id="kappa2" value="1.5" lower="0.0"/>
+        </kappa2>
+    </TN93Model>
+
+    <hierarchicalSubstitutionModel id="hrate.tn93">
+        <frequencies>
+            <frequencyModel idref="frequencies"/>
+        </frequencies>
+        <kappa1>
+            <parameter idref="kappa1"/>
+        </kappa1>
+        <kappa2>
+            <parameter idref="kappa2"/>
+        </kappa2>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="hrate.tn93.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.tn93"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="hrate.tn93.alpha" value="0.5"/>
+        </gammaShape>
+    </siteModel>
+
+    <siteModel id="tn93.siteModel">
+        <substitutionModel>
+            <TN93Model idref="tn93"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter id="tn93.alpha" value="0.5"/>
+        </gammaShape>
+    </siteModel>
+
+    <treeDataLikelihood id="hierarchical.tn93.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.tn93.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="tn93.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="tn93.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <report>
+        <treeDataLikelihood idref="hierarchical.likelihood"/>
+        <treeDataLikelihood idref="eigen.likelihood"/>
+        <treeDataLikelihood idref="hky.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.borrowed.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.tn93.likelihood"/>
+        <treeDataLikelihood idref="tn93.likelihood"/>
+    </report>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            HKY provider: hierarchical BEAGLE representation against plain BEAGLE with the analytic eigen decomposition
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="eigen.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            HKY provider: hierarchical BEAGLE representation against the HKY model sharing kappa and frequencies
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hky.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-5" toleranceType="absolute" verbose="true">
+        <message>
+            HKY provider: hierarchical BEAGLE representation against the pinned value
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.likelihood"/>
+        </actual>
+        <expected>-624.36646</expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            HKY from the existing HKYModel (ratesFrom): hierarchical BEAGLE representation against the HKY model
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.borrowed.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hky.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            TN93 provider: hierarchical BEAGLE representation against the TN93 model sharing kappa1, kappa2 and frequencies
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.tn93.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="tn93.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <!-- short MCMC through the hierarchical representation: guards store and restore of the provider and the
+         rejection of kappa < 1 (negative clade rates, which the hierarchical representation cannot take; such a
+         proposal gets likelihood zero). It uses its own kappa, so the blocks above keep their values; the
+         frequency model and the tree are shared. -->
+    <hierarchicalSubstitutionModel id="hrate.mcmc">
+        <frequencies>
+            <frequencyModel idref="frequencies"/>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa.mcmc" value="1.2" lower="0.0"/>
+        </kappa>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="hrate.mcmc.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.mcmc"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="mcmc.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.mcmc.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <operators id="operators" optimizationSchedule="log">
+        <scaleOperator scaleFactor="0.5" weight="1">
+            <parameter idref="kappa.mcmc"/>
+        </scaleOperator>
+        <deltaExchange delta="0.01" weight="1">
+            <parameter idref="frequencies.parameter"/>
+        </deltaExchange>
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="treeModel.rootHeight"/>
+        </scaleOperator>
+        <uniformOperator weight="1">
+            <parameter idref="treeModel.internalNodeHeights"/>
+        </uniformOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="1000" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <!-- centred on kappa = 1 so that about half of the kappa proposals fall below 1 -->
+                <logNormalPrior mu="0.0" sigma="0.25" offset="0.0">
+                    <parameter idref="kappa.mcmc"/>
+                </logNormalPrior>
+                <dirichletPrior alpha="1.0" sumsTo="1.0">
+                    <parameter idref="frequencies.parameter"/>
+                </dirichletPrior>
+                <uniformPrior lower="0.0" upper="1.0">
+                    <parameter idref="treeModel.rootHeight"/>
+                </uniformPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <treeDataLikelihood idref="mcmc.likelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log logEvery="500">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="10" fileName="testHierarchicalProviderHKY.log">
+            <posterior idref="posterior"/>
+            <parameter idref="kappa.mcmc"/>
+            <parameter idref="frequencies.parameter"/>
+            <parameter idref="treeModel.rootHeight"/>
+        </log>
+    </mcmc>
+</beast>

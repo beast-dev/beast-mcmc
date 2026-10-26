@@ -63,6 +63,16 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
             throw new IllegalArgumentException("The hierarchical representation needs a binary character tree");
         }
 
+        final String invalid = substitutionModel.getInvalidGeneratorDescription();
+        if (invalid != null) {
+            throw new IllegalArgumentException(invalid);
+        }
+        final String negative = substitutionModel.getNegativeRateDescription();
+        if (negative != null) {
+            throw new IllegalArgumentException(negative + "; the generator is valid, but the hierarchical BEAGLE "
+                    + "representation needs non-negative clade rates, for HKY and TN93 kappa >= 1");
+        }
+
         this.rootFrequencyModel = branchModel.getRootFrequencyModel();
 
         eigenBufferHelper = new BufferIndexHelper(1, 0);
@@ -155,8 +165,22 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
         return rootFrequencyModel.getFrequencies();
     }
 
+    public boolean canUpdateSubstitutionModels() {
+        return substitutionModel.isValidGenerator() && substitutionModel.hasNonNegativeRates();
+    }
+
+    /**
+     * A model the plugin cannot take (an invalid generator, or a valid one with a negative clade rate, e.g. HKY
+     * with kappa < 1) is not uploaded: the evaluation ends with a LikelihoodException, which TreeDataLikelihood
+     * turns into a zero likelihood, so the move is rejected. Nothing has been flipped or uploaded at that point,
+     * and the substitution-model flag stays set, so the restored model is uploaded at the next evaluation.
+     */
     @Override
     public void updateSubstitutionModels(Beagle beagle, boolean flipBuffers) {
+        if (!canUpdateSubstitutionModels()) {
+            throw HierarchicalSubstitutionEvolutionaryProcess.<RuntimeException>sneakyThrow(
+                    new DataLikelihoodDelegate.LikelihoodException());
+        }
         if (flipBuffers) {
             eigenBufferHelper.flipOffset(0);
         }
@@ -165,6 +189,11 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
                 substitutionModel.getBeagleModelTriples(),
                 substitutionModel.getBeagleModelUnused(),
                 substitutionModel.getBeagleModelLambdas());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> E sneakyThrow(Throwable e) throws E {
+        throw (E) e;
     }
 
     @Override

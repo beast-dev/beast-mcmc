@@ -98,6 +98,7 @@ public class MaximizerWrtParameter implements Reportable {
     private double[] stallHistory = null;
     private double worstGradientCheckError = Double.NaN;
     private int restarts = 0;
+    private boolean convergedToPrecision = false; // CONVERGED after a line search failure no restart could improve on
     private double valueAtLastRestart = Double.POSITIVE_INFINITY;
     private final List<Double> gradientCheckErrors = new ArrayList<Double>();
 
@@ -170,7 +171,8 @@ public class MaximizerWrtParameter implements Reportable {
 
         /**
          * After a failed line search, restart L-BFGS from the best point so far with a cleared memory, up to this
-         * many times, while each restart makes progress (0: stop at the failure).
+         * many times, while each restart makes progress (0: stop at the failure). With delta set (setConvergence), a
+         * restart that finds no decrease at all ends the run as converged, to numerical precision.
          */
         public Settings setLineSearchRestarts(int lineSearchRestarts) {
             this.lineSearchRestarts = lineSearchRestarts;
@@ -557,6 +559,16 @@ public class MaximizerWrtParameter implements Reportable {
                 }
                 continue;
             }
+            convergedToPrecision = false;
+            if (reason == Reason.LINE_SEARCH_FAILURE && restarts > 0 && !(bestValue[0] < valueAtLastRestart) &&
+                    settings.delta != null) {
+                // a restart from the best point with a cleared memory found no decrease at all: the objective has
+                // stopped improving, the past/delta stopping rule's condition, so the best point is a minimum to
+                // numerical precision
+                reason = Reason.CONVERGED;
+                convergedToPrecision = true;
+                x = bestPoint[0].clone();
+            }
             break;
         }
         valueAtLastRestart = Double.POSITIVE_INFINITY;
@@ -766,7 +778,12 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Count: ").append(count).append("\n");
             // the latest run
             sb.append("Status: ").append(status).append("\n");
-            sb.append("Reason: ").append(reason).append("\n");
+            sb.append("Reason: ").append(reason);
+            if (convergedToPrecision) {
+                sb.append(" (to numerical precision: a restart from the best point after a failed line search found " +
+                        "no decrease)");
+            }
+            sb.append("\n");
             sb.append("Iterations: ").append(iterations).append("\n");
             sb.append("Restarts: ").append(restarts).append("\n");
             if (!settings.lowerBoundHolds.isEmpty()) {

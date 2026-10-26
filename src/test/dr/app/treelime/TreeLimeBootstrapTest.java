@@ -390,7 +390,13 @@ public class TreeLimeBootstrapTest extends TestCase {
         Process running = process.start();
         String output = new String(readAll(running.getInputStream()));
         assertEquals(output, 0, running.waitFor());
-        assertTrue(output, output.contains("Bootstrap intervals written"));
+        if (!output.contains("Bootstrap intervals written")) {
+            // why BEAST failed, e.g. a missing library on this machine
+            File log = new File(directory, "dengue.log");
+            String text = log.exists() ? new String(Files.readAllBytes(log.toPath())) : "(no dengue.log)";
+            fail(output + "\nBEAST: " + process.environment().get("BEAST") + "\ndengue.log:\n" +
+                    text.substring(Math.max(0, text.length() - 3000)));
+        }
 
         List<String[]> parameters = rows(directory, "dengue.params.tsv");
         List<String> header = Arrays.asList(parameters.get(0));

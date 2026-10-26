@@ -222,7 +222,7 @@ public class MaximizationPanel extends TreeLimePanel {
         runsPanel.add(new JLabel("threads per run:"));
         runsPanel.add(threadsField);
         runsPanel.add(cpuLabel);
-        optionsPanel.addComponentWithLabel("Replicates run at once:", runsPanel);
+        optionsPanel.addComponentWithLabel("Replicates run in parallel:", runsPanel);
         onEdit(replicatesField, () -> {
             Integer value = replicatesField.getValue();
             if (value != null && value >= 1) {
@@ -295,11 +295,10 @@ public class MaximizationPanel extends TreeLimePanel {
         int available = Runtime.getRuntime().availableProcessors();
         Integer jobs = jobsField.getValue();
         Integer threads = threadsField.getValue();
-        String text = "(this computer: " + available + " threads)";
+        String text = "(runs \u00d7 threads \u2264 " + available + " threads on this computer)";
         String tip = "<html>The threads Java reports on this computer; the run script may run elsewhere.</html>";
         if (jobs != null && threads != null && threads > 0 && jobs * threads > available) {
-            text = "(this computer: " + available + " threads; " + jobs + " runs x " + threads + " threads = " +
-                    (jobs * threads) + ")";
+            text = "(runs \u00d7 threads = " + (jobs * threads) + " > " + available + " threads on this computer)";
             tip = "<html>More threads than this computer has: the runs will compete for them.</html>";
         } else if (jobs != null && threads != null && threads == 0 && jobs > 1) {
             tip = "<html>With threads per run 0, each of the " + jobs + " runs lets BEAST decide, and together they " +

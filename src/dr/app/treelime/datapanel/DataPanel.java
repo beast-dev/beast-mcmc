@@ -94,6 +94,7 @@ public class DataPanel extends TreeLimePanel implements Exportable {
     private final Action removePartitionAction;
 
     ViewPartitionAction viewPartitionAction = new ViewPartitionAction();
+    ConstantSitesAction constantSitesAction = new ConstantSitesAction();
 
 //    ShowAction showAction = new ShowAction();
 
@@ -238,6 +239,12 @@ public class DataPanel extends TreeLimePanel implements Exportable {
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
+        button = new JButton(constantSitesAction);
+        controlPanel1.add(new JLabel("   "));
+        constantSitesAction.setEnabled(false);
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
+
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
@@ -374,6 +381,73 @@ public class DataPanel extends TreeLimePanel implements Exportable {
 
         removePartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
         viewPartitionAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
+        constantSitesAction.setEnabled(!options.dataPartitions.isEmpty() && hasSelection);
+    }
+
+    /**
+     * Constant-site counts for the selected nucleotide partitions: a SNP alignment padded with the constant columns
+     * left out of it (IQ-TREE -fconst), typed or imported from snp-sites -C run on the full alignment.
+     */
+    private void editConstantSites() {
+        java.util.List<PartitionData> partitions = new java.util.ArrayList<PartitionData>();
+        for (int row : dataTable.getSelectedRows()) {
+            AbstractPartitionData partition = options.dataPartitions.get(row);
+            if (partition instanceof PartitionData && ((PartitionData) partition).getAlignment() != null &&
+                    partition.getDataType().getType() == DataType.NUCLEOTIDES) {
+                partitions.add((PartitionData) partition);
+            }
+        }
+        if (partitions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Constant-site counts apply to nucleotide alignments only.",
+                    "Constant sites", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        double[] current = partitions.get(0).getConstantSiteCounts();
+        final JTextField field = new JTextField(current == null ? "" : String.format("%s %s %s %s",
+                format(current[0]), format(current[1]), format(current[2]), format(current[3])), 24);
+        JButton importButton = new JButton("Import from file...");
+        importButton.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            if (chooser.showOpenDialog(DataPanel.this) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    field.setText(new String(java.nio.file.Files.readAllBytes(chooser.getSelectedFile().toPath())).trim());
+                } catch (java.io.IOException ioe) {
+                    JOptionPane.showMessageDialog(DataPanel.this, "Cannot read the file: " + ioe.getMessage(),
+                            "Constant sites", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.add(new JLabel("<html><body style=\"width: 360px\">Counts of the constant A, C, G and T columns left " +
+                "out of a SNP alignment, e.g. the output of <tt>snp-sites -C</tt> on the full alignment " +
+                "(\"a,c,g,t\"). They are added as pattern weights, like IQ-TREE's <tt>-fconst</tt>. Leave blank " +
+                "for none.</body></html>"), BorderLayout.NORTH);
+        panel.add(field, BorderLayout.CENTER);
+        panel.add(importButton, BorderLayout.EAST);
+
+        while (true) {
+            int answer = JOptionPane.showConfirmDialog(this, panel, "Constant sites (" + partitions.size() +
+                    " partition" + (partitions.size() > 1 ? "s" : "") + ")", JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
+            if (answer != JOptionPane.OK_OPTION) {
+                return;
+            }
+            try {
+                double[] counts = PartitionData.parseConstantSiteCounts(field.getText());
+                for (PartitionData partition : partitions) {
+                    partition.setConstantSiteCounts(counts);
+                }
+                break;
+            } catch (IllegalArgumentException iae) {
+                JOptionPane.showMessageDialog(this, iae.getMessage(), "Constant sites", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        frame.setDirty();
+    }
+
+    private static String format(double count) {
+        return count == Math.rint(count) ? Long.toString((long) count) : Double.toString(count);
     }
 
     public void setOptions(TreeLimeOptions options) {
@@ -1138,6 +1212,17 @@ public class DataPanel extends TreeLimePanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             linkTreeModels();
+        }
+    }
+
+    public class ConstantSitesAction extends AbstractAction {
+        public ConstantSitesAction() {
+            super("Constant sites ...");
+            setToolTipText("Pad a SNP alignment with counts of the constant columns left out of it.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            editConstantSites();
         }
     }
 

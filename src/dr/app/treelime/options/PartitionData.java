@@ -50,6 +50,8 @@ public class PartitionData extends AbstractPartitionData {
     private final int fromSite;
     private final int toSite;
     private final int every;
+    // counts of the constant A, C, G and T columns left out of a SNP alignment (IQ-TREE -fconst); null for none
+    private double[] constantSiteCounts = null;
 
 
     public PartitionData(TreeLimeOptions options, String name, String fileName, PatternList patterns) {
@@ -103,6 +105,78 @@ public class PartitionData extends AbstractPartitionData {
 
     public Alignment getAlignment() {
         return alignment;
+    }
+
+    /**
+     * @return the counts of constant columns, one per state (A, C, G, T), added to the patterns as weights, or null
+     */
+    public double[] getConstantSiteCounts() {
+        return constantSiteCounts;
+    }
+
+    /**
+     * @param counts one count per state, or null for none
+     */
+    public void setConstantSiteCounts(double[] counts) {
+        this.constantSiteCounts = counts == null ? null : counts.clone();
+    }
+
+    /**
+     * Reads constant-site counts as typed or as written by snp-sites -C: four numbers for A, C, G and T, separated by
+     * commas or white space.
+     *
+     * @return the counts, or null for blank text (no counts)
+     * @throws IllegalArgumentException for anything else, with a message for the user
+     */
+    public static double[] parseConstantSiteCounts(String text) {
+        String trimmed = text == null ? "" : text.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        String[] fields = trimmed.split("[,\\s]+");
+        if (fields.length != 4) {
+            throw new IllegalArgumentException("Expected four counts, for A, C, G and T, but found " + fields.length +
+                    ": " + trimmed);
+        }
+        double[] counts = new double[4];
+        for (int i = 0; i < 4; i++) {
+            try {
+                counts[i] = Double.parseDouble(fields[i]);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Not a count: " + fields[i]);
+            }
+            if (!(counts[i] >= 0) || Double.isInfinite(counts[i])) {
+                throw new IllegalArgumentException("Counts must be finite and not negative: " + fields[i]);
+            }
+        }
+        return counts;
+    }
+
+    /**
+     * @return the number of this partition's columns where every taxon has the same, unambiguous state
+     */
+    public int getConstantColumnCount() {
+        if (alignment == null) {
+            return 0;
+        }
+        int from = fromSite < 1 ? 0 : fromSite - 1;
+        int to = toSite < 1 ? alignment.getSiteCount() : toSite;
+        int count = 0;
+        for (int site = from; site < to; site += every) {
+            int state = -1;
+            boolean constant = true;
+            for (int taxon = 0; taxon < alignment.getSequenceCount() && constant; taxon++) {
+                int s = alignment.getState(taxon, site);
+                if (alignment.getDataType().isAmbiguousState(s) || (state >= 0 && s != state)) {
+                    constant = false;
+                }
+                state = s;
+            }
+            if (constant) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public int getFromSite() {

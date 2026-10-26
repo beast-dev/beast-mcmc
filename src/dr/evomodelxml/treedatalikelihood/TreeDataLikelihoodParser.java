@@ -27,6 +27,7 @@
 
 package dr.evomodelxml.treedatalikelihood;
 
+import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.tree.Tree;
@@ -410,6 +411,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         PatternList patternList = (PatternList)xo.getChild(PatternList.class);
         if (patternList != null) {
             hasSinglePartition = true;
+            checkNotAscertained(patternList, xo);
             patternLists.add(patternList);
 
             SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
@@ -463,6 +465,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //                }
 
                 patternList = (PatternList) cxo.getChild(PatternList.class);
+                checkNotAscertained(patternList, xo);
                 patternLists.add(patternList);
 
                 indicators = (Parameter) cxo.getChild(Parameter.class);
@@ -610,6 +613,15 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(Tree.class),
             new ElementRule(TipStatesModel.class, true)
     };
+
+    // the likelihood delegates use the patterns' weights only: an ascertainment correction would be silently lost
+    private static void checkNotAscertained(PatternList patterns, XMLObject xo) throws XMLParseException {
+        if (patterns instanceof AscertainedSitePatterns) {
+            throw new XMLParseException("The ascertainment correction of '" + patterns.getId() + "' is not applied by " +
+                    "treeDataLikelihood '" + xo.getId() + "'; pad the constant sites with <constantPatterns> " +
+                    "(merged with <mergePatterns>), or use beagleTreeLikelihood");
+        }
+    }
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;

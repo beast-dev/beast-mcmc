@@ -60,6 +60,18 @@ public final class MaximizationWarnings {
             }
         }
 
+        // constant-site counts are meant for SNP alignments: constant columns already present would count twice
+        for (AbstractPartitionData data : options.dataPartitions) {
+            if (data instanceof PartitionData && ((PartitionData) data).getConstantSiteCounts() != null) {
+                int constant = ((PartitionData) data).getConstantColumnCount();
+                if (constant > 0) {
+                    warnings.add("Partition " + data.getName() + " has constant-site counts and also " + constant +
+                            " constant column(s) of its own: if the counts came from the full alignment, these " +
+                            "columns are counted twice.");
+                }
+            }
+        }
+
         // calibrations are priors: maximum likelihood ignores them
         if (maximization.objective == MaximizationOptions.Objective.ML) {
             List<String> calibrations = new ArrayList<String>();

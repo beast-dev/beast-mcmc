@@ -290,6 +290,27 @@ public class BeastGenerator extends Generator {
                         TreeLimeFrame.CLOCK_MODELS);
             }
         }
+        for (AbstractPartitionData data : options.dataPartitions) {
+            double[] counts = data instanceof PartitionData ? ((PartitionData) data).getConstantSiteCounts() : null;
+            if (counts == null) {
+                continue;
+            }
+            if (data.getDataType().getType() != DataType.NUCLEOTIDES || counts.length != 4) {
+                throw new GeneratorException("Constant-site counts (partition " + data.getName() + ") need " +
+                        "nucleotide data and four counts, for A, C, G and T.", TreeLimeFrame.DATA_PARTITIONS);
+            }
+            for (double count : counts) {
+                if (!(count >= 0) || Double.isInfinite(count)) {
+                    throw new GeneratorException("Constant-site counts (partition " + data.getName() + ") must be " +
+                            "finite and not negative.", TreeLimeFrame.DATA_PARTITIONS);
+                }
+            }
+            if (data.getPartitionSubstitutionModel().getCodonPartitionCount() > 1) {
+                throw new GeneratorException("Constant-site counts (partition " + data.getName() + ") cannot be " +
+                        "split by codon position: turn off codon partitioning for this partition.",
+                        TreeLimeFrame.DATA_PARTITIONS);
+            }
+        }
         String maxRunTime = options.maximizationOptions.maxRunTime;
         if (!maxRunTime.isEmpty()) {
             try {

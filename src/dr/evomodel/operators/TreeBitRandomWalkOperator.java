@@ -132,7 +132,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
     }
 
     // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return TreeBitRandomWalkOperatorParser.BIT_RANDOM_WALK_OPERATOR + "(" + indicatorTrait + ")";
     }
 

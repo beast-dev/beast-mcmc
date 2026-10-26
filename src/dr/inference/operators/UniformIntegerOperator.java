@@ -98,7 +98,7 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "uniformInteger(" + parameter.getId() + ")";
     }
 

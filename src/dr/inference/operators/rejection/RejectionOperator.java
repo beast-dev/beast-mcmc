@@ -51,7 +51,7 @@ public class RejectionOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return REJECTION_OPERATOR;
     }
 

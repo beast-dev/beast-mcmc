@@ -80,7 +80,7 @@ public class GibbsIndependentCoalescentOperator extends SimpleMCMCOperator imple
 		return "";
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return "GibbsIndependentCoalescent(" + treeModel.getModelName() + ")";
 	}
 	

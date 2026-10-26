@@ -83,7 +83,7 @@ public class BayesianBridgeShrinkageOperator extends SimpleMCMCOperator implemen
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return BAYESIAN_BRIDGE_PARSER;
     }
 

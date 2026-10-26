@@ -86,7 +86,7 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
         swap(index1, index2);
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TIP_STATE_OPERATOR;
     }
 

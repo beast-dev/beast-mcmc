@@ -85,7 +85,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Latent Factor Hamiltonian Monte Carlo";
     }
 

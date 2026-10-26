@@ -667,7 +667,7 @@ public class GaussianProcessSkytrackTreeOperator extends AbstractAdaptableOperat
 
 	//MCMCOperator INTERFACE
 
-	public final String getOperatorName() {
+	protected final String getBaseOperatorName() {
 		return GaussianProcessSkytrackTreeOperatorParser.BLOCK_UPDATE_OPERATOR;
 	}
 

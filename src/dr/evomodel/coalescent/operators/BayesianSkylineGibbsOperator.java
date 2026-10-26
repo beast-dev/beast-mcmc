@@ -421,7 +421,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
 
     }
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return BayesianSkylineGibbsOperatorParser.BAYESIAN_SKYLINE_GIBBS_OPERATOR;
     }
 

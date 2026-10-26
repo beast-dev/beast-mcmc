@@ -152,7 +152,7 @@ public class FreeRateDeltaExchangeOperator extends AbstractAdaptableOperator {
     }
 
     // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "freeRateDeltaExchange(weights:" + weightsParameter.getParameterName() + ", rates: " + ratesParameter + ")";
     }
 

@@ -29,15 +29,39 @@ package dr.inference.operators;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.util.Identifiable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public abstract class SimpleMCMCOperator implements MCMCOperator {
+public abstract class SimpleMCMCOperator implements MCMCOperator, Identifiable {
+
+    private String id = null;
 
     private final static int SMOOTHED_ACCEPTANCE_WINDOW_SIZE = 100;
 
-    public abstract String getOperatorName();
+    /**
+     * @return the operator's name: its XML id, if it has one, then its own description,
+     * e.g. "stl1:subtreeLeap(treeModel)". Final so that every caller sees the id, which is
+     * what tells apart two operators of the same kind on the same model.
+     */
+    public final String getOperatorName() {
+        final String name = getBaseOperatorName();
+        return id == null ? name : id + ":" + name;
+    }
+
+    /**
+     * @return the operator's own description, e.g. "subtreeLeap(treeModel)", without its id.
+     */
+    protected abstract String getBaseOperatorName();
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public SimpleMCMCOperator() {
     }

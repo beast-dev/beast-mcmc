@@ -66,7 +66,7 @@ public class CompoundPrecisionMatrixGibbsOperator extends SimpleMCMCOperator imp
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return COMPOUND_OPERATOR;
     }
 

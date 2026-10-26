@@ -54,7 +54,7 @@ public class LatentFactorLiabilityGibbsOperator extends SimpleMCMCOperator imple
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "LatentFactorLiabilityGibbsOperator";
     }
 

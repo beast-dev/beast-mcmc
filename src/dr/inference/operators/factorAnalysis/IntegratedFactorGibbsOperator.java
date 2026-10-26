@@ -47,7 +47,7 @@ public class IntegratedFactorGibbsOperator extends SimpleMCMCOperator implements
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return INTEGRATED_FACTORS_GIBBS;
     }
 

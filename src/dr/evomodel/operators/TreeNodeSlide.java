@@ -84,7 +84,7 @@ public class TreeNodeSlide extends SimpleMCMCOperator {
         return "none";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TreeNodeSlideParser.TREE_NODE_REHEIGHT + "(" + tree.getId() + "," + species.getId() + ")";
     }
 

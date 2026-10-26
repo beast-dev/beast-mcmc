@@ -538,7 +538,7 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 	}
 
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return mode;
 	}
 

@@ -113,7 +113,7 @@ public class HDPStickPropsOperator extends SimpleMCMCOperator implements GibbsOp
         pathWeight = beta;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return HDP_STICK_PROPS_OPERATOR;
     }
 

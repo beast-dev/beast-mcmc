@@ -99,7 +99,7 @@ public class BitMoveOperator extends SimpleMCMCOperator {
     }
 
     // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         StringBuilder builder = new StringBuilder();
         builder.append("bitMove(");
         builder.append(bitsParameter.getParameterName());

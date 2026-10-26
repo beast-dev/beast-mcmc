@@ -115,7 +115,7 @@ public class LinkageGroupSwap extends SimpleMCMCOperator {
 		return 0;
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return "linkageGroupSwap";
 	}
 

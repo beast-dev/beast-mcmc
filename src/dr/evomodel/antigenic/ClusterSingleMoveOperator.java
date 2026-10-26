@@ -168,7 +168,7 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
 
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return CLUSTER_SINGLE_MOVE_OPERATOR +"(" + allocationParameter.getId() + ")";
     }
 

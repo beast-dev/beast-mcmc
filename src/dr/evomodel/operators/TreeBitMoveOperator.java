@@ -114,7 +114,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
     }
 
     // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "treeBitMove()";
     }
 

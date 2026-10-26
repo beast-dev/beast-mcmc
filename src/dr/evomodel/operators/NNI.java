@@ -127,7 +127,7 @@ public class NNI extends AbstractTreeOperator implements ConstrainableTreeOperat
      * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
      */
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return NNIParser.NNI;
     }
 

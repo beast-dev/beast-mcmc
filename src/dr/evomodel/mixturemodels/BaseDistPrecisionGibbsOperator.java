@@ -157,7 +157,7 @@ public class BaseDistPrecisionGibbsOperator extends SimpleMCMCOperator implement
         pathWeight = beta;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return BASE_DIST_PREC_OPERATOR;
     }
 

@@ -101,7 +101,7 @@ public class FreeRateUpDownOperator extends AbstractAdaptableOperator {
         return "scaleFactor";
     }
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "freeRateUpDownOperator(weights:" + weightsParameter.getParameterName() + ", rates: " + ratesParameter + ")";
     }
 

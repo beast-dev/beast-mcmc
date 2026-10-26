@@ -228,7 +228,7 @@ public class WilsonBalding extends AbstractTreeOperator implements Constrainable
 //        }
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return WilsonBaldingParser.WILSON_BALDING + "(" + tree.getId() + ")";
     }
 }

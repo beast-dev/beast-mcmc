@@ -63,7 +63,7 @@ public class MoveLinkageGroup extends SimpleMCMCOperator {
 		return logHastings;
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return MoveLinkageGroupParser.MOVE_LINKAGE_GROUP + "(" + hlm.getId() + ")";
 	}
 

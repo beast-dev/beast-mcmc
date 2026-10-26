@@ -79,7 +79,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "LoadingsHamiltonianMC";
     }
 

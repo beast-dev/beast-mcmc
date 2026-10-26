@@ -56,7 +56,7 @@ public class AlloppHybPopSizesScale  extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return AlloppHybPopSizesScaleParser.HYB_POP_SIZES_SCALE + "(" + apspnet.getId() +
                 "," + apsp.getId() + ")";
     }

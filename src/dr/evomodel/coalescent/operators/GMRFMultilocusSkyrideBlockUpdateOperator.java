@@ -404,7 +404,7 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractAdaptableO
 
     //MCMCOperator INTERFACE
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 

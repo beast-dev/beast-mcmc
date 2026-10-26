@@ -68,7 +68,7 @@ public class SelectorOperator extends SimpleMCMCOperator {
         }
     }
     
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return SelectorOperatorParser.SELECTOR_OPERATOR + "(" + selector.getParameterName() + ")";
     }
 

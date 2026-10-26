@@ -272,7 +272,7 @@ public class TwoPhaseOperator extends AbstractAdaptableOperator {
 //        return currentOperators.get(currentOperatorIndex).getTargetAcceptanceProbability();
 //    }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "twoPhaseOperator(use at own risk)";
     }
 

@@ -153,7 +153,7 @@ public class serumDriftActiveScaledMu1Operator extends AbstractAdaptableOperator
 
     public final static String SERUMDRIFTACTIVESCALEDMU1Operator = "serumDriftActiveScaledMu1Operator";
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return SERUMDRIFTACTIVESCALEDMU1Operator;
     }
 

@@ -201,7 +201,7 @@ public class FunkyPriorMixerOperator extends
 
     //MCMCOperator INTERFACE
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return FunkyPriorMixerOperatorParser.FUNKY_OPERATOR;
     }
 

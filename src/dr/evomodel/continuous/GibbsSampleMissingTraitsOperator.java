@@ -100,7 +100,7 @@ public class GibbsSampleMissingTraitsOperator extends SimpleMCMCOperator
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME + "(" + "TODO" + ")";
     }
 

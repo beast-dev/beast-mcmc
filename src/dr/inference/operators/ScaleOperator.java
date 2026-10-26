@@ -235,7 +235,7 @@ public class ScaleOperator extends AbstractAdaptableOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "scale(" + variable.getVariableName() + ")";
     }
 

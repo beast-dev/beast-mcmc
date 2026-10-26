@@ -46,7 +46,7 @@ public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOp
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return FireParameterOperatorParser.FIRE_PARAMETER_OPERATOR;
     }
 

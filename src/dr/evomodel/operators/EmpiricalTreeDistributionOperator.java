@@ -65,7 +65,7 @@ public class EmpiricalTreeDistributionOperator extends SimpleMCMCOperator {
         return "";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return EMPIRICAL_TREE_DISTRIBUTION_OPERATOR;
     }
 

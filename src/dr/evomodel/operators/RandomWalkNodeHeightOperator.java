@@ -214,7 +214,7 @@ public class RandomWalkNodeHeightOperator extends AbstractAdaptableTreeOperator 
         return "windowSize";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "randomWalk(" + tree.getId() + " internal nodes)";
     }
 }

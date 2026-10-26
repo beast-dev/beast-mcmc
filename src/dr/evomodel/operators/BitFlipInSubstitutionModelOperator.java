@@ -121,7 +121,7 @@ public class BitFlipInSubstitutionModelOperator extends AbstractAdaptableOperato
     }
 
     // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "bitflip(" + indicatorParameter.getParameterName() + ")";
     }
 

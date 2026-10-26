@@ -74,7 +74,7 @@ public class SetOperator extends SimpleMCMCOperator {
         throw new RuntimeException("Not implememented!");
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "setOperator(" + parameter.getParameterName() + ")";
     }
 

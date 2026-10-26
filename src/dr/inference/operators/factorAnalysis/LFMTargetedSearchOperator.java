@@ -58,7 +58,7 @@ public class LFMTargetedSearchOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Latent Factor Model Targeted Search Operator";
     }
 

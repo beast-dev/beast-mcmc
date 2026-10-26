@@ -30,11 +30,15 @@
  */
 package dr.inference.operators;
 
+import dr.util.Identifiable;
+
 /**
  * @author Sebastian Hoehna
  *
  */
-public abstract class SimpleOperator implements MCMCOperator {
+public abstract class SimpleOperator implements MCMCOperator, Identifiable {
+
+    private String id = null;
 
     /**
      *
@@ -43,7 +47,28 @@ public abstract class SimpleOperator implements MCMCOperator {
         // TODO Auto-generated constructor stub
     }
 
-    public abstract String getOperatorName();
+    /**
+     * @return the operator's name: its XML id, if it has one, then its own description,
+     * e.g. "stl1:subtreeLeap(treeModel)". Final so that every caller sees the id, which is
+     * what tells apart two operators of the same kind on the same model.
+     */
+    public final String getOperatorName() {
+        final String name = getBaseOperatorName();
+        return id == null ? name : id + ":" + name;
+    }
+
+    /**
+     * @return the operator's own description, e.g. "subtreeLeap(treeModel)", without its id.
+     */
+    protected abstract String getBaseOperatorName();
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     /**
      * @return the weight of this operator.

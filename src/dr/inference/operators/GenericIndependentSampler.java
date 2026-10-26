@@ -72,7 +72,7 @@ public class GenericIndependentSampler extends SimpleMCMCOperator {
         return "";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "genericIndependentSampler(" + variable.getVariableName() + ")";
     }
 

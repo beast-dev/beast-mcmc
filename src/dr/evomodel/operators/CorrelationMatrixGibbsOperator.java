@@ -266,7 +266,7 @@ public class CorrelationMatrixGibbsOperator extends SimpleMCMCOperator implement
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return CORRELATION_OPERATOR;
     }
 

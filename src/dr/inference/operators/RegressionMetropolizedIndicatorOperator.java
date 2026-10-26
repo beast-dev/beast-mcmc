@@ -60,7 +60,7 @@ public class RegressionMetropolizedIndicatorOperator extends SimpleMCMCOperator 
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return MH_OPERATOR;
     }
 

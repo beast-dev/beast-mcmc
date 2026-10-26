@@ -246,7 +246,7 @@ public class IstvanOperator extends SimpleMCMCOperator {
         return nodeNumber;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "IstvansOperator";
     }
 

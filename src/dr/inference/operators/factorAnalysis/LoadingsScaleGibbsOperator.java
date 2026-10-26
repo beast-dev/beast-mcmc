@@ -80,7 +80,7 @@ public class LoadingsScaleGibbsOperator extends SimpleMCMCOperator implements Gi
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return LOADINGS_SCALE_OPERATOR;
     }
 

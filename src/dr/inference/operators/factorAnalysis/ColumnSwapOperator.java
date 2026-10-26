@@ -44,7 +44,7 @@ public class ColumnSwapOperator extends SimpleMCMCOperator {
 
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return COLUMN_SWAP;
     }
 

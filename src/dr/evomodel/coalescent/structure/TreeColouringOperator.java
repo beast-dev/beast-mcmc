@@ -55,7 +55,7 @@ public class TreeColouringOperator extends SimpleMCMCOperator {
         return "This operator cannot be optimized";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "twoColourTree";
     }
 

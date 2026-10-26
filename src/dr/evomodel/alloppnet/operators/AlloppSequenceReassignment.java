@@ -61,7 +61,7 @@ public class AlloppSequenceReassignment extends SimpleMCMCOperator {
 	}
 
 	@Override
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return AlloppSequenceReassignmentParser.SEQUENCE_REASSIGNMENT + "(" + apspnet.getId() +
 		"," + apsp.getId() + ")";
 	}

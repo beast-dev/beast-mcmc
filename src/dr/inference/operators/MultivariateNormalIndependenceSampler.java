@@ -73,7 +73,7 @@ public class MultivariateNormalIndependenceSampler extends AbstractAdaptableOper
         return "scaleFactor";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "independentNormalDistribution(" + parameter.getVariableName() + ")";
     }
 

@@ -161,7 +161,7 @@ public class FixedHeightSubtreePruneRegraftOperator extends AbstractTreeOperator
     }
 
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT + "(" + tree.getId() + ")";
     }
 }

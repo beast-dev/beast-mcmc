@@ -333,12 +333,15 @@ public class TreeLimeBootstrapTest extends TestCase {
         Process running = process.start();
         String output = new String(readAll(running.getInputStream()));
         assertEquals(0, running.waitFor());
-        assertTrue(output, output.contains("replicate 2 failed: see rep2.log"));
+        assertTrue(output, output.contains("rep2.xml failed: see rep2.log"));
         List<String> calls = Files.readAllLines(new File(directory, "calls.txt").toPath());
         java.util.Collections.sort(calls);
-        assertEquals(Arrays.asList("-threads 2 -beagle_threads 2 -overwrite -seed 1 rep1.xml",
+        // the original analysis runs with the replicates; without its params.tsv there is no summary
+        assertEquals(Arrays.asList("-threads 2 -beagle_threads 2 -overwrite -seed 1 dengue.xml",
+                "-threads 2 -beagle_threads 2 -overwrite -seed 1 rep1.xml",
                 "-threads 2 -beagle_threads 2 -overwrite -seed 2 rep2.xml",
                 "-threads 2 -beagle_threads 2 -overwrite -seed 3 rep3.xml"), calls);
+        assertTrue(output, output.contains("no bootstrap summary"));
 
         List<String> table = Files.readAllLines(new File(directory, generator.getBootstrapParametersFile()).toPath());
         assertEquals(Arrays.asList("replicate\tkappa\tclock.rate", "1\t11\t0.001", "3\t13\t0.003"), table);
@@ -357,6 +360,91 @@ public class TreeLimeBootstrapTest extends TestCase {
         for (File file : directory.listFiles()) {
             file.deleteOnExit();
         }
+    }
+
+    // the whole run with BEAST itself: the original analysis and the replicates in parallel, then the summary writes
+    // percentile intervals into the original's tables and time tree
+    public void testSummaryOfRealReplicates() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null || System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            return;
+        }
+        options.maximizationOptions.nIterations = 300;
+        File directory = directory();
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        generator.generate(directory, 4, 42);
+
+        String java = new File(new File(System.getProperty("java.home"), "bin"), "java").getPath();
+        // the script runs in the replicates' folder: an absolute class path
+        StringBuilder classPath = new StringBuilder();
+        for (String entry : System.getProperty("java.class.path").split(File.pathSeparator)) {
+            classPath.append(classPath.length() > 0 ? File.pathSeparator : "").append(new File(entry).getAbsolutePath());
+        }
+        ProcessBuilder process = new ProcessBuilder("sh", BootstrapGenerator.SCRIPT_FILE);
+        process.directory(directory);
+        process.environment().put("BEAST", java + " -Djava.library.path=" + System.getProperty("java.library.path") +
+                " -cp " + classPath + " dr.app.beast.BeastMain");
+        process.environment().put("JOBS", "3");
+        process.environment().put("THREADS", "1");
+        process.redirectErrorStream(true);
+        Process running = process.start();
+        String output = new String(readAll(running.getInputStream()));
+        assertEquals(output, 0, running.waitFor());
+        assertTrue(output, output.contains("Bootstrap intervals written"));
+
+        List<String[]> parameters = rows(directory, "dengue.params.tsv");
+        List<String> header = Arrays.asList(parameters.get(0));
+        int intervals = 0;
+        for (String[] row : parameters.subList(1, parameters.size())) {
+            if (row[header.indexOf("ci_method")].equals("bootstrap_percentile")) {
+                double lower = Double.parseDouble(row[header.indexOf("lower")]);
+                double upper = Double.parseDouble(row[header.indexOf("upper")]);
+                assertTrue(row[0], lower <= upper);
+                assertTrue(row[0], Double.parseDouble(row[header.indexOf("se")]) >= 0.0);
+                intervals++;
+            }
+        }
+        assertTrue(intervals > 0);
+
+        List<String[]> dates = rows(directory, "dengue.dates.tsv");
+        String[] root = null;
+        for (String[] row : dates.subList(1, dates.size())) {
+            if (root == null || row[1].length() > root[1].length()) {
+                root = row;
+            }
+        }
+        assertEquals("bootstrap_percentile", root[7]);
+        assertTrue(Double.parseDouble(root[5]) < Double.parseDouble(root[6]));
+        assertEquals("bootstrap_percentile", rows(directory, "dengue.rates.tsv").get(1)[7]);
+
+        java.io.FileReader reader = new java.io.FileReader(new File(directory, "dengue.timetree.nex"));
+        Tree tree = new dr.evolution.io.NexusImporter(reader).importNextTree();
+        reader.close();
+        Object[] interval = (Object[]) tree.getNodeAttribute(tree.getRoot(), "date_CI");
+        assertEquals(Double.parseDouble(root[5]), ((Number) interval[0]).doubleValue(), 1E-9);
+        assertNotNull(tree.getNodeAttribute(tree.getRoot(), "height_CI"));
+        assertNotNull(tree.getNodeAttribute(tree.getExternalNode(0), "rate_CI"));
+        assertNotNull(tree.getAttribute("lnP"));
+        assertTrue(new String(bytes(directory, "dengue.summary.txt")).contains("Bootstrap: 4 replicates"));
+        for (File file : directory.listFiles()) {
+            file.deleteOnExit();
+        }
+    }
+
+    public void testPercentile() {
+        double[] sorted = {1.0, 2.0, 3.0, 4.0, 5.0};
+        assertEquals(1.0, dr.evomodel.tree.BootstrapSummary.percentile(sorted, 0.0), 0.0);
+        assertEquals(3.0, dr.evomodel.tree.BootstrapSummary.percentile(sorted, 0.5), 0.0);
+        assertEquals(1.1, dr.evomodel.tree.BootstrapSummary.percentile(sorted, 0.025), 1E-12);
+        assertEquals(4.9, dr.evomodel.tree.BootstrapSummary.percentile(sorted, 0.975), 1E-12);
+    }
+
+    private static List<String[]> rows(File directory, String name) throws Exception {
+        List<String[]> rows = new java.util.ArrayList<String[]>();
+        for (String line : Files.readAllLines(new File(directory, name).toPath())) {
+            rows.add(line.split("\t", -1));
+        }
+        return rows;
     }
 
     private static byte[] readAll(java.io.InputStream stream) throws Exception {

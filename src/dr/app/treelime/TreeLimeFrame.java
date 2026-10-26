@@ -668,13 +668,15 @@ public class TreeLimeFrame extends DocumentFrame {
                     "Cannot write the bootstrap replicates", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        JOptionPane.showMessageDialog(this, "<html>Wrote " + replicates + " replicate files to " + directory +
-                        ".<br>Run them with " + BootstrapGenerator.SCRIPT_FILE + ", " +
+        JOptionPane.showMessageDialog(this, "<html>Wrote " + replicates + " replicate files and the original " +
+                        "analysis (" + options.fileNameStem + ".xml) to " + directory + ".<br>" +
+                        BootstrapGenerator.SCRIPT_FILE + " runs them all, " +
                         options.maximizationOptions.getBootstrapJobs() + " at a time" +
                         (options.maximizationOptions.bootstrapThreads > 0 ? ", " +
                                 options.maximizationOptions.bootstrapThreads + " threads each" : "") +
-                        " (JOBS=n, THREADS=n change them); " + BootstrapGenerator.COUNTS_FILE +
-                        " records the draws.<br>Each replicate keeps the original starting tree (fixed topology).</html>",
+                        " (JOBS=n, THREADS=n change them),<br>then writes 95% bootstrap intervals into the original's " +
+                        "tables and time tree.<br>" + BootstrapGenerator.COUNTS_FILE + " records the draws; each " +
+                        "replicate keeps the original starting tree (fixed topology).</html>",
                 "Bootstrap replicates", JOptionPane.INFORMATION_MESSAGE);
         return true;
     }

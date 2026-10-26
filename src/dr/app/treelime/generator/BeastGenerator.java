@@ -1002,13 +1002,7 @@ public class BeastGenerator extends Generator {
         // the clock of each tree; a tree with several clocks has no single rate per branch
         Map<PartitionTreeModel, PartitionClockModel> treeClocks = new LinkedHashMap<PartitionTreeModel, PartitionClockModel>();
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            List<PartitionClockModel> clocks = new ArrayList<PartitionClockModel>();
-            for (PartitionClockModel clock : options.getPartitionClockModels()) {
-                if (clock.getPartitionTreeModel() == tree) {
-                    clocks.add(clock);
-                }
-            }
-            treeClocks.put(tree, clocks.size() == 1 ? clocks.get(0) : null);
+            treeClocks.put(tree, singleClock(options, tree));
         }
 
         writer.writeComment("The trees at the optimum, logged once by timeTreeExport");
@@ -1078,6 +1072,38 @@ public class BeastGenerator extends Generator {
     }
 
     /**
+     * @return the tree's clock, or null when several clocks share the tree (no single rate per branch)
+     */
+    public static PartitionClockModel singleClock(TreeLimeOptions options, PartitionTreeModel tree) {
+        PartitionClockModel single = null;
+        for (PartitionClockModel clock : options.getPartitionClockModels()) {
+            if (clock.getPartitionTreeModel() == tree) {
+                if (single != null) {
+                    return null;
+                }
+                single = clock;
+            }
+        }
+        return single;
+    }
+
+    /**
+     * @return the file the time tree at the optimum is logged to
+     */
+    public static String timeTreeFile(TreeLimeOptions options, PartitionTreeModel tree) {
+        return options.fileNameStem + "." + tree.getPrefix() + "timetree.nex";
+    }
+
+    /**
+     * @param suffix e.g. ".dates.tsv"
+     * @return the file of a tree's table, as timeTreeExport names it (with the tree's id when there are several)
+     */
+    public static String treeTableFile(TreeLimeOptions options, PartitionTreeModel tree, String suffix) {
+        return options.fileNameStem + (options.getPartitionTreeModels().size() > 1 ?
+                "." + tree.getPrefix() + DefaultTreeModel.TREE_MODEL : "") + suffix;
+    }
+
+    /**
      * A tree logger for the tree at the optimum: annotated with the clock's rates and, as the tree's comment, the
      * maximized log density (lnP).
      *
@@ -1091,8 +1117,8 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<Integer>(TreeLoggerParser.LOG_EVERY, 1));
         attributes.add(new Attribute.Default<Boolean>(TreeLoggerParser.NEXUS_FORMAT, true));
         attributes.add(new Attribute.Default<Boolean>(TreeLoggerParser.SORT_TRANSLATION_TABLE, true));
-        attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." +
-                tree.getPrefix() + (substitutions ? "subst.nex" : "timetree.nex")));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, substitutions ?
+                options.fileNameStem + "." + tree.getPrefix() + "subst.nex" : timeTreeFile(options, tree)));
         if (substitutions) {
             attributes.add(new Attribute.Default<String>(TreeLoggerParser.BRANCH_LENGTHS, TreeLoggerParser.SUBSTITUTIONS));
         }

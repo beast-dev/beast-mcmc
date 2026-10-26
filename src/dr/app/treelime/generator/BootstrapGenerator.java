@@ -27,6 +27,7 @@
 
 package dr.app.treelime.generator;
 
+import dr.app.beauti.util.XMLWriter;
 import dr.app.treelime.components.ComponentFactory;
 import dr.app.treelime.options.AbstractPartitionData;
 import dr.app.treelime.options.BootstrapReplicate;
@@ -39,6 +40,8 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SiteResampler;
 import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
+import dr.evomodelxml.tree.BootstrapSummaryParser;
+import dr.util.Attribute;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -64,6 +67,7 @@ public class BootstrapGenerator extends Generator {
     public static final String VERSION = "TreeLime bootstrap 1";
     public static final String COUNTS_FILE = "bootstrap.counts.tsv";
     public static final String SCRIPT_FILE = "run_replicates.sh";
+    public static final String SUMMARY_FILE = "bootstrap.summary.xml";
 
     private final ComponentFactory[] components;
 
@@ -302,7 +306,8 @@ public class BootstrapGenerator extends Generator {
     }
 
     /**
-     * Writes replicates 1 to B, the counts file and the run script.
+     * Writes replicates 1 to B, the original analysis (its maximum-likelihood or MAP estimates, which the replicates'
+     * intervals go with), the counts file, the summary XML and the run script.
      */
     public void generate(File directory, int replicates, long masterSeed) throws Exception {
         if (replicates < 1) {
@@ -349,7 +354,48 @@ public class BootstrapGenerator extends Generator {
         } finally {
             counts.close();
         }
+        new BeastGenerator(options, components).generateXML(new File(directory, getOriginalFile()));
+        writeSummaryXML(directory);
         writeScript(directory, replicates);
+    }
+
+    /**
+     * @return the original analysis's XML, which the run script runs with the replicates
+     */
+    public String getOriginalFile() {
+        return options.fileNameStem + ".xml";
+    }
+
+    // the summary of the replicates into the original analysis's tables and time tree, run after them
+    private void writeSummaryXML(File directory) throws IOException {
+        XMLWriter writer = new XMLWriter(new java.io.BufferedWriter(new FileWriter(new File(directory, SUMMARY_FILE))));
+        writer.writeText("<?xml version=\"1.0\" standalone=\"yes\"?>");
+        writer.writeComment("Percentile intervals from the bootstrap replicates of " + options.fileNameStem +
+                ", written into its tables and time tree");
+        writer.writeOpenTag("beast");
+        String stem = options.fileNameStem;
+        writer.writeOpenTag(BootstrapSummaryParser.BOOTSTRAP_SUMMARY, new Attribute[]{
+                new Attribute.Default<Double>(BootstrapSummaryParser.LEVEL, 0.95),
+                new Attribute.Default<String>(BootstrapSummaryParser.PARAMETERS, stem + ".params.tsv"),
+                new Attribute.Default<String>(BootstrapSummaryParser.BOOTSTRAP_PARAMETERS, getBootstrapParametersFile()),
+                new Attribute.Default<String>(BootstrapSummaryParser.SUMMARY, stem + ".summary.txt")});
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            List<Attribute> attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.TIME_TREE,
+                    BeastGenerator.timeTreeFile(options, tree)));
+            attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.BOOTSTRAP_TREES,
+                    getBootstrapTreesFile(tree)));
+            attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.DATES,
+                    BeastGenerator.treeTableFile(options, tree, ".dates.tsv")));
+            if (BeastGenerator.singleClock(options, tree) != null) {
+                attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.RATES,
+                        BeastGenerator.treeTableFile(options, tree, ".rates.tsv")));
+            }
+            writer.writeTag(BootstrapSummaryParser.TREE_FILES, attributes.toArray(new Attribute[0]), true);
+        }
+        writer.writeCloseTag(BootstrapSummaryParser.BOOTSTRAP_SUMMARY);
+        writer.writeCloseTag("beast");
+        writer.close();
     }
 
     /**
@@ -400,6 +446,15 @@ public class BootstrapGenerator extends Generator {
         out.println("    awk -F'\\t' -v b=\"$b\" 'BEGIN { printf \"%s\", b } NR > 1 { printf \"\\t%s\", $2 } " +
                 "END { print \"\" }' \"$f\" >> \"" + table + "\"");
         out.println("done");
+        out.println();
+        out.println("# Percentile intervals from the replicates, into the original analysis's tables and time tree");
+        out.println("if [ -f \"" + options.fileNameStem + ".params.tsv\" ] && [ -f \"" + table + "\" ]; then");
+        out.println("    $BEAST -overwrite " + SUMMARY_FILE + " > bootstrap.summary.log 2>&1 && " +
+                "echo \"Bootstrap intervals written into " + options.fileNameStem + ".*\" || " +
+                "echo \"the bootstrap summary failed: see bootstrap.summary.log\"");
+        out.println("else");
+        out.println("    echo \"no bootstrap summary: the original analysis or every replicate failed\"");
+        out.println("fi");
     }
 
     private void writeScript(File directory, int replicates) throws IOException {
@@ -425,10 +480,14 @@ public class BootstrapGenerator extends Generator {
             out.println("THREAD_OPTIONS=\"\"");
             out.println("if [ \"$THREADS\" -gt 0 ]; then THREAD_OPTIONS=\"-threads $THREADS -beagle_threads $THREADS\"; fi");
             out.println("export BEAST THREAD_OPTIONS");
-            out.println("# each replicate in its own BEAST, JOBS at a time; the gathering below waits for all of them");
-            out.println("seq 1 " + replicates + " | xargs -n 1 -P \"$JOBS\" sh -c " +
-                    "'$BEAST $THREAD_OPTIONS -overwrite -seed \"$1\" \"rep$1.xml\" > \"rep$1.log\" 2>&1 || " +
-                    "echo \"replicate $1 failed: see rep$1.log\"' replicate");
+            out.println("# the original analysis (0) and each replicate in its own BEAST, JOBS at a time; the gathering " +
+                    "and summary below wait for all of them");
+            out.println("export ORIGINAL=\"" + getOriginalFile() + "\"");
+            out.println("{ echo 0; seq 1 " + replicates + "; } | xargs -n 1 -P \"$JOBS\" sh -c " +
+                    "'if [ \"$1\" = 0 ]; then xml=\"$ORIGINAL\"; log=\"${ORIGINAL%.xml}.log\"; seed=1; " +
+                    "else xml=\"rep$1.xml\"; log=\"rep$1.log\"; seed=\"$1\"; fi; " +
+                    "$BEAST $THREAD_OPTIONS -overwrite -seed \"$seed\" \"$xml\" > \"$log\" 2>&1 || " +
+                    "echo \"$xml failed: see $log\"' replicate");
             writeCollection(out, replicates);
         } finally {
             out.close();

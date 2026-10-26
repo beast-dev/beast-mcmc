@@ -386,6 +386,8 @@
             <classpath>
                 <path refid="classpath"/>
                 <path location="${build}"/>
+                <!-- resources the classes load, e.g. BeastParser's parser lists (beast.jar packs them from here) -->
+                <path location="${src}"/>
             </classpath>
             <jvmarg value="-Djava.library.path=${java.library.path}"/>
             <formatter type="xml"/>

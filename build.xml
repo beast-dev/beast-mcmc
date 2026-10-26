@@ -143,8 +143,13 @@
         <echo message="Successfully compiled."/>
     </target>
 
-    <!-- make the beast.jar and beauti.jar -->
-    <target name="dist" depends="compile-all" description="create BEAST + BEAUTI jar">
+    <!-- TreeLime.app is built on macOS only -->
+    <condition property="isMac">
+        <os family="mac"/>
+    </condition>
+
+    <!-- make the beast.jar, beauti.jar and treelime.jar (and TreeLime.app on macOS) -->
+    <target name="dist" depends="compile-all" description="create the BEAST, BEAUti and TreeLime jars (and TreeLime.app on macOS)">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}"/>
 
@@ -315,6 +320,16 @@
                 <include name="dr/app/gui/**/*.png"/>
             </fileset>
         </jar>
+
+        <!-- TreeLime: a launcher for the TreeLime classes in beast.jar, which must sit next to it -->
+        <jar jarfile="${dist}/treelime.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="${main_class_TREELIME}"/>
+                <attribute name="Class-Path" value="beast.jar"/>
+            </manifest>
+        </jar>
+        <antcall target="treelime_app"/>
     </target>
 
     <!-- used to copy the compiled trace.jar into place in the Tracer lib folder -->
@@ -344,8 +359,11 @@
         </java>
     </target>
 
+    <!-- dist builds TreeLime.app on macOS; this name is kept for the habit -->
+    <target name="mac_treelime" depends="dist" description="build a double-clickable TreeLime.app in the dist folder"/>
+
     <!-- a double-clickable TreeLime.app in ${dist}, for this Mac (not signed; the mac target builds the release one) -->
-    <target name="mac_treelime" depends="dist" description="build a double-clickable TreeLime.app in the dist folder">
+    <target name="treelime_app" if="isMac">
         <delete dir="${dist}/${TreeLime_name}.app"/>
         <taskdef name="jarbundler" classname="com.ultramixer.jarbundler.JarBundler" classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
         <jarbundler dir="${dist}"

@@ -93,8 +93,10 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertTrue(run.parameter("kappa").getParameterValue(0) != run.startValue("kappa"));
         assertGradientChecked(run);
 
-        // the all-numeric run reaches the same optimum; it holds the node heights fixed, so hold them here too
+        // the all-numeric run reaches the same optimum; it holds the node heights and the frequencies fixed, so hold
+        // them here too
         options.maximizationOptions.excluded.add("treeModel.rootHeight");
+        options.maximizationOptions.excluded.add("frequencies");
         run = run(TreeLimeHarness.generate(options));
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         options.maximizationOptions.setGradientMode(MaximizationOptions.GradientMode.NUMERIC);
@@ -168,6 +170,62 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertGradientChecked(run);
+    }
+
+    // estimated nucleotide frequencies are optimized on the simplex: stick-breaking transform, analytic gradient
+    // (SubstitutionModelGradient behind branchSubstitutionParameterGradient), for HKY, TN93 and GTR, MAP and ML
+    public void testFrequenciesOnTheSimplex() throws Exception {
+        for (dr.evomodel.substmodel.nucleotide.NucModelType type : new dr.evomodel.substmodel.nucleotide.NucModelType[]{
+                dr.evomodel.substmodel.nucleotide.NucModelType.HKY, dr.evomodel.substmodel.nucleotide.NucModelType.TN93,
+                dr.evomodel.substmodel.nucleotide.NucModelType.GTR}) {
+            for (MaximizationOptions.Objective objective : new MaximizationOptions.Objective[]{
+                    MaximizationOptions.Objective.MAP, MaximizationOptions.Objective.ML}) {
+                TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+                if (options == null) {
+                    return;
+                }
+                for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+                    model.setNucSubstitutionModel(type);
+                }
+                options.maximizationOptions.objective = objective;
+                String xml = TreeLimeHarness.generate(quiet(options));
+                String label = type + " " + objective;
+                assertTrue(label, between(xml, "<multivariateCompoundTransform>", "</multivariateCompoundTransform>")
+                        .contains("<UnitSimplexTransform dimension=\"4\"/>"));
+                assertTrue(label, xml.contains("<branchSubstitutionParameterGradient id=\"gradient.frequencies\" homogeneous=\"true\">"));
+
+                Run run = run(xml);
+                assertEquals(label, MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+                assertTrue(label, run.end > run.start);
+                Parameter frequencies = run.parameter("frequencies");
+                double sum = 0;
+                boolean moved = false;
+                for (int i = 0; i < frequencies.getDimension(); i++) {
+                    sum += frequencies.getParameterValue(i);
+                    moved |= Math.abs(frequencies.getParameterValue(i) - 0.25) > 1E-3;
+                }
+                assertEquals(label, 1.0, sum, 1E-12);
+                assertTrue(label + ": the frequencies moved", moved);
+                assertGradientChecked(run);
+            }
+        }
+
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        dr.app.treelime.options.Parameter frequencies = null;
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getBaseName().equals("frequencies")) {
+                frequencies = parameter;
+            }
+        }
+        assertNotNull(frequencies);
+        assertEquals(MaximizationOptions.Treatment.FREQUENCIES, options.maximizationOptions.classify(frequencies, false));
+        // the all-numeric mode cannot keep them on the simplex
+        options.maximizationOptions.setGradientMode(MaximizationOptions.GradientMode.NUMERIC);
+        assertEquals(MaximizationOptions.Treatment.SIMPLEX_NUMERIC, options.maximizationOptions.classify(frequencies, false));
+        options.maximizationOptions.setGradientMode(MaximizationOptions.GradientMode.ANALYTIC_WHERE_AVAILABLE);
+        // a prior that is not flat on the simplex has no gradient term here
+        frequencies.priorType = dr.app.treelime.types.PriorType.LOGNORMAL_PRIOR;
+        assertEquals(MaximizationOptions.Treatment.SIMPLEX, options.maximizationOptions.classify(frequencies, false));
     }
 
     // a tree's node heights, the root included, are one row named nodeHeights; deselecting it holds them all fixed,
@@ -290,6 +348,7 @@ public class TreeLimeMaximizationTest extends TestCase {
         options.maximizationOptions.excluded.add("kappa");
         options.maximizationOptions.excluded.add("constant.popSize");
         options.maximizationOptions.excluded.add("treeModel.rootHeight");
+        options.maximizationOptions.excluded.add("frequencies");
         try {
             TreeLimeHarness.generate(quiet(options));
             fail("expected a generator exception");

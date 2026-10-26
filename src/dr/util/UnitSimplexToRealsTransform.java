@@ -208,7 +208,11 @@ public class UnitSimplexToRealsTransform extends Transform.MultivariateTransform
         return Math.log(x / (1.0 - x));
     }
 
+    // stable for large |y|: exp(y) / (1 + exp(y)) is NaN once exp(y) overflows
     private static double logitInverse(double y) {
+        if (y >= 0) {
+            return 1.0 / (1.0 + Math.exp(-y));
+        }
         double expY = Math.exp(y);
         return expY / (1.0 + expY);
     }

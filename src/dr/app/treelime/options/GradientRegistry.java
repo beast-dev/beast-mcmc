@@ -90,7 +90,7 @@ public final class GradientRegistry {
             return LikelihoodTerm.NONE;
         }
         if (owner instanceof PartitionSubstitutionModel) {
-            if (SUBSTITUTION_PARAMETERS.contains(name)) {
+            if (SUBSTITUTION_PARAMETERS.contains(name) || MaximizationOptions.isOptimizableFrequencies(parameter)) {
                 return LikelihoodTerm.SUBSTITUTION;
             }
             if (SITE_RATE_PARAMETERS.contains(name)) {

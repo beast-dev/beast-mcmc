@@ -172,12 +172,14 @@ public class MaximizationOptions implements Serializable {
         LOGIT("logit", null),
         NONE("none", null),
         NODE_HEIGHTS("node-height ratios (all internal nodes)", null),
+        FREQUENCIES("stick-breaking simplex", null),
         FIXED_BY_PRIOR(null, "fixed in the Priors tab"),
         EXCLUDED(null, "not selected"),
         STATISTIC(null, "a statistic, not a parameter"),
         DISCRETE(null, "discrete"),
         NODE_HEIGHT(null, "needs the analytic gradient"),
         SIMPLEX(null, "a simplex (not supported yet)"),
+        SIMPLEX_NUMERIC(null, "needs the analytic gradient"),
         LINKED(null, "linked parameters are not optimized yet"),
         UNSUPPORTED(null, "no suitable transform");
 
@@ -269,7 +271,17 @@ public class MaximizationOptions implements Serializable {
             return Treatment.NODE_HEIGHTS;
         }
         if (parameter.isMaintainedSum) {
-            return Treatment.SIMPLEX;
+            // nucleotide frequencies with an analytic gradient: optimized on the simplex by stick-breaking
+            if (!isOptimizableFrequencies(parameter)) {
+                return Treatment.SIMPLEX;
+            }
+            if (!isAnalytic()) {
+                return Treatment.SIMPLEX_NUMERIC;
+            }
+            if (!ignoreSelection && isExcluded(parameter)) {
+                return Treatment.EXCLUDED;
+            }
+            return Treatment.FREQUENCIES;
         }
         if (parameter.isLinked) {
             return Treatment.LINKED;
@@ -290,16 +302,56 @@ public class MaximizationOptions implements Serializable {
     }
 
     /**
+     * Estimated nucleotide frequencies of an HKY, TN93 or GTR model have an analytic gradient
+     * (branchSubstitutionParameterGradient, SubstitutionModelGradient). Their prior must be flat on the simplex, as
+     * the uniform Dirichlet and uniform(0, 1) priors TreeLime writes are, because it has no gradient term: a
+     * coordinate-wise finite difference would leave the simplex, where the Dirichlet density is zero.
+     */
+    public static boolean isOptimizableFrequencies(Parameter parameter) {
+        if (!parameter.getBaseName().equals("frequencies") || !(parameter.getOptions() instanceof PartitionSubstitutionModel)) {
+            return false;
+        }
+        PartitionSubstitutionModel model = (PartitionSubstitutionModel) parameter.getOptions();
+        if (model.getDataType().getType() != dr.evolution.datatype.DataType.NUCLEOTIDES) {
+            return false;
+        }
+        switch (model.getNucSubstitutionModel()) {
+            case HKY:
+            case TN93:
+            case GTR:
+                break;
+            default:
+                return false;
+        }
+        return parameter.priorType == dr.app.treelime.types.PriorType.DIRICHLET_PRIOR ||
+                parameter.priorType == dr.app.treelime.types.PriorType.UNIFORM_PRIOR;
+    }
+
+    /**
      * @return the parameters to optimize, grouped by transform in the order log, logit, none (the order the generator
      * writes them)
      */
     public List<Parameter> selectOptimized(List<Parameter> parameters) {
+        // frequencies, like node heights, are blocks of their own (selectFrequencies)
         List<Parameter> selected = new ArrayList<Parameter>();
         for (Treatment treatment : new Treatment[]{Treatment.LOG, Treatment.LOGIT, Treatment.NONE}) {
             for (Parameter parameter : parameters) {
                 if (classify(parameter, false) == treatment) {
                     selected.add(parameter);
                 }
+            }
+        }
+        return selected;
+    }
+
+    /**
+     * @return the frequency parameters optimized on the simplex
+     */
+    public List<Parameter> selectFrequencies(List<Parameter> parameters) {
+        List<Parameter> selected = new ArrayList<Parameter>();
+        for (Parameter parameter : parameters) {
+            if (classify(parameter, false) == Treatment.FREQUENCIES) {
+                selected.add(parameter);
             }
         }
         return selected;

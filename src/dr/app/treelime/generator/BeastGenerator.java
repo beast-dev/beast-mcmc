@@ -855,7 +855,18 @@ public class BeastGenerator extends Generator {
             }
         }
 
-        if (parameters.isEmpty() && heightPlans.isEmpty()) {
+        // estimated nucleotide frequencies: blocks of their own on the simplex, with the analytic likelihood term only
+        // (their prior is flat on the simplex); not under the prior-only objective, which does not depend on them
+        List<Parameter> frequencies = new ArrayList<Parameter>();
+        if (maximization.isAnalytic() && objective != MaximizationOptions.Objective.PRIOR) {
+            for (Parameter parameter : maximization.selectFrequencies(options.selectParameters())) {
+                if (likelihoodTerm(parameter).isAnalytic()) {
+                    frequencies.add(parameter);
+                }
+            }
+        }
+
+        if (parameters.isEmpty() && frequencies.isEmpty() && heightPlans.isEmpty()) {
             throw new GeneratorException("No parameter is selected for optimization in the Maximization tab.");
         }
 
@@ -867,7 +878,9 @@ public class BeastGenerator extends Generator {
         }
         writer.writeComment("Maximize the " + objective.getDensityId() + " density by L-BFGS, with " +
                         (maximization.isAnalytic() ? "analytic tree-likelihood gradients for " + analyticCount + " of " +
-                                parameters.size() + " parameters" : "a numeric gradient"),
+                                parameters.size() + " parameters" : "a numeric gradient") +
+                                (frequencies.isEmpty() ? "" : "; " + frequencies.size() +
+                                        " set(s) of frequencies on the simplex, with analytic gradients"),
                 heightPlans.isEmpty() ? "The tree topology and node heights are fixed" :
                         "The tree topology is fixed; the internal node heights of " + heightPlans.size() +
                                 " tree(s) are optimized as ratios on the real line");
@@ -886,7 +899,7 @@ public class BeastGenerator extends Generator {
         }
 
         if (maximization.isAnalytic()) {
-            writeGradientBlocks(parameters, terms, heightPlans, objective, writer);
+            writeGradientBlocks(parameters, terms, frequencies, heightPlans, objective, writer);
         }
 
         List<Attribute> attributes = new ArrayList<Attribute>();
@@ -924,17 +937,24 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag("densityWrtParameter");
         }
 
-        // the transforms in the order of the gradient blocks: the other parameters, then each tree's node heights
-        if (!heightPlans.isEmpty()) {
+        // the transforms in the order of the gradient blocks: the other parameters, the frequencies (stick-breaking),
+        // then each tree's node heights
+        boolean multivariate = !heightPlans.isEmpty() || !frequencies.isEmpty();
+        if (multivariate) {
             writer.writeOpenTag("multivariateCompoundTransform");
         }
         if (!parameters.isEmpty()) {
             writeCompoundTransform(parameters, writer);
         }
+        for (Parameter parameter : frequencies) {
+            writer.writeTag(UNIT_SIMPLEX_TRANSFORM, new Attribute.Default<Integer>("dimension",
+                    parameter.getOptions() instanceof PartitionSubstitutionModel ?
+                            ((PartitionSubstitutionModel) parameter.getOptions()).getDataType().getStateCount() : 4), true);
+        }
         for (PartitionTreeModel tree : heightPlans.keySet()) {
             writer.writeIDref("nodeHeightTransform", tree.getPrefix() + NODE_HEIGHT_TRANSFORM);
         }
-        if (!heightPlans.isEmpty()) {
+        if (multivariate) {
             writer.writeCloseTag("multivariateCompoundTransform");
         }
 
@@ -994,6 +1014,7 @@ public class BeastGenerator extends Generator {
     }
 
     private void writeGradientBlocks(List<Parameter> parameters, Map<Parameter, GradientRegistry.LikelihoodTerm> terms,
+                                     List<Parameter> frequencies,
                                      Map<PartitionTreeModel, GradientRegistry.NodeHeightPlan> heightPlans,
                                      MaximizationOptions.Objective objective, XMLWriter writer) {
         writer.writeComment("Gradient blocks, one per optimized parameter, in the order of " + OPTIMIZED_PARAMETERS);
@@ -1004,15 +1025,8 @@ public class BeastGenerator extends Generator {
                     term != GradientRegistry.LikelihoodTerm.NONE;
             boolean priorTerm = objective != MaximizationOptions.Objective.ML;
 
-            List<String> treeLikelihoods = new ArrayList<String>();
-            if (likelihoodTerm && term.isAnalytic()) {
-                for (List<PartitionData> partitions : options.multiPartitionLists) {
-                    if (GradientRegistry.usesOwner(options, partitions, parameter)) {
-                        treeLikelihoods.add(partitions.get(0).getPartitionTreeModel().getPrefix() +
-                                partitions.get(0).getPartitionClockModel().getPrefix() + "treeLikelihood");
-                    }
-                }
-            }
+            List<String> treeLikelihoods = likelihoodTerm && term.isAnalytic() ? treeLikelihoodsOf(parameter) :
+                    new ArrayList<String>();
             int members = (priorTerm ? 1 : 0) + (likelihoodTerm ? Math.max(1, treeLikelihoods.size()) : 0);
 
             String id = "gradient." + parameter.getName();
@@ -1043,6 +1057,27 @@ public class BeastGenerator extends Generator {
         }
         writer.writeText("");
 
+        // frequencies: the analytic likelihood term only (SubstitutionModelGradient behind
+        // branchSubstitutionParameterGradient), summed over the tree likelihoods that use the model
+        for (Parameter parameter : frequencies) {
+            String id = "gradient." + parameter.getName();
+            List<String> treeLikelihoods = treeLikelihoodsOf(parameter);
+            boolean joint = treeLikelihoods.size() > 1;
+            if (joint) {
+                writer.writeOpenTag("jointGradient", new Attribute.Default<String>(XMLParser.ID, id));
+            }
+            String tag = null;
+            for (String treeLikelihood : treeLikelihoods) {
+                tag = writeLikelihoodGradient(joint ? null : id, GradientRegistry.LikelihoodTerm.SUBSTITUTION,
+                        treeLikelihood, parameter, writer);
+            }
+            if (joint) {
+                writer.writeCloseTag("jointGradient");
+                tag = "jointGradient";
+            }
+            tags.put(parameter, tag);
+        }
+
         List<String> heightTags = new ArrayList<String>();
         for (Map.Entry<PartitionTreeModel, GradientRegistry.NodeHeightPlan> entry : heightPlans.entrySet()) {
             heightTags.add(writeNodeHeightBlock(entry.getKey(), entry.getValue(), objective, writer));
@@ -1052,12 +1087,27 @@ public class BeastGenerator extends Generator {
         for (Parameter parameter : parameters) {
             writer.writeIDref(tags.get(parameter), "gradient." + parameter.getName());
         }
+        for (Parameter parameter : frequencies) {
+            writer.writeIDref(tags.get(parameter), "gradient." + parameter.getName());
+        }
         int index = 0;
         for (PartitionTreeModel tree : heightPlans.keySet()) {
             writer.writeIDref(heightTags.get(index++), "gradient." + tree.getPrefix() + NODE_HEIGHTS);
         }
         writer.writeCloseTag("compoundGradient");
         writer.writeText("");
+    }
+
+    // the tree likelihoods whose partitions use the parameter's model
+    private List<String> treeLikelihoodsOf(Parameter parameter) {
+        List<String> treeLikelihoods = new ArrayList<String>();
+        for (List<PartitionData> partitions : options.multiPartitionLists) {
+            if (GradientRegistry.usesOwner(options, partitions, parameter)) {
+                treeLikelihoods.add(partitions.get(0).getPartitionTreeModel().getPrefix() +
+                        partitions.get(0).getPartitionClockModel().getPrefix() + "treeLikelihood");
+            }
+        }
+        return treeLikelihoods;
     }
 
     // returns the tag written
@@ -1213,6 +1263,7 @@ public class BeastGenerator extends Generator {
     public static final String NODE_HEIGHTS = "nodeHeights";
     public static final String NODE_HEIGHT_TRANSFORM = "nodeHeightTransform";
     public static final String MAXIMIZER_GRADIENT = "maximizerGradient";
+    private static final String UNIT_SIMPLEX_TRANSFORM = "UnitSimplexTransform";
     public static final String MAXIMIZER = "maximizer";
     public static final String OPTIMIZED_PARAMETERS = "optimizedParameters";
 

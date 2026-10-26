@@ -46,6 +46,7 @@ import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.stats.InformationCriteria;
 import dr.util.Identifiable;
 
 import java.io.File;
@@ -92,15 +93,22 @@ public class TimeTreeExporter {
     }
 
     /**
-     * Parameters the maximizer did not move, and why.
+     * Parameters the maximizer did not move, and why: the user's choice, or a limitation (canOptimize false: they could
+     * not be optimized yet, so the estimates are not a full MLE or MAP).
      */
     public static final class FixedParameters {
         final String reason;
         final List<Parameter> parameters;
+        final boolean canOptimize;
 
         public FixedParameters(String reason, List<Parameter> parameters) {
+            this(reason, parameters, true);
+        }
+
+        public FixedParameters(String reason, List<Parameter> parameters, boolean canOptimize) {
             this.reason = reason;
             this.parameters = parameters;
+            this.canOptimize = canOptimize;
         }
     }
 
@@ -111,6 +119,7 @@ public class TimeTreeExporter {
     private final Likelihood prior;
     private final List<FixedParameters> fixed;
     private final List<TreeLogger> treeLoggers;
+    private final String notIdentified;
 
     /**
      * @param stem        the tables and the run record are this path plus a suffix (.dates.tsv, .summary.txt, ...)
@@ -118,10 +127,12 @@ public class TimeTreeExporter {
      * @param maximizer   null when nothing was maximized
      * @param likelihood  the tree likelihoods, or null
      * @param prior       the priors, or null
+     * @param notIdentified why a maximum-likelihood fit is not identified (no information criteria), or null
      */
     public TimeTreeExporter(File stem, List<ExportedTree> trees, List<TreeLogger> treeLoggers,
                             MaximizerWrtParameter maximizer, Likelihood likelihood, Likelihood prior,
-                            List<FixedParameters> fixed) {
+                            List<FixedParameters> fixed, String notIdentified) {
+        this.notIdentified = notIdentified;
         this.stem = stem;
         this.trees = trees;
         this.treeLoggers = treeLoggers;
@@ -567,6 +578,37 @@ public class TimeTreeExporter {
         writer.println("n (weighted sites in the likelihood): " + (Double.isNaN(sites) ? NA : formatCount(sites)));
         writer.println();
 
+        Fit fit = getFit();
+        if (fit.reason != null) {
+            writer.println("Information criteria: not reported: " + fit.reason + ".");
+        } else {
+            writer.println("Information criteria (maximum likelihood; lower is better):");
+            writer.println("  AIC  = " + fit.aic);
+            writer.println("  AICc = " + (Double.isNaN(fit.aicc) ? "undefined (n <= k + 1)" : Double.toString(fit.aicc)));
+            writer.println("  BIC  = " + fit.bic);
+            if (held > 0) {
+                writer.println("  k includes " + held + " coordinate(s) held at a bound: the penalty assumes an " +
+                        "interior optimum");
+            }
+            writer.println("  k counts the internal node heights and the clock, not 2n - 3 branch lengths: compare " +
+                    "these criteria between TreeLime fits of the same data.");
+        }
+        List<String> limited = new ArrayList<String>();
+        for (FixedParameters group : fixed) {
+            if (!group.canOptimize) {
+                for (Parameter parameter : group.parameters) {
+                    limited.add(parameter.getId());
+                }
+            }
+        }
+        if (!limited.isEmpty()) {
+            writer.println("Not a full " + ("ML".equals(objectiveName()) ? "MLE" : "optimum") + ": " +
+                    String.join(", ", limited) + " " + (limited.size() > 1 ? "are" : "is") +
+                    " held only because TreeLime cannot optimize " + (limited.size() > 1 ? "them" : "it") +
+                    " yet; k counts " + (limited.size() > 1 ? "them" : "it") + " as fixed.");
+        }
+        writer.println();
+
         List<String> warnings = new ArrayList<String>();
         if (maximizer != null) {
             for (MaximizerWrtParameter.Held hold : maximizer.getHeld()) {
@@ -595,12 +637,63 @@ public class TimeTreeExporter {
                 for (Parameter parameter : group.parameters) {
                     sb.append(sb.length() > 0 ? ", " : "").append(parameter.getId());
                 }
-                writer.println("  " + group.reason + ": " + sb);
+                writer.println("  " + group.reason + (group.canOptimize ? "" : " (cannot be optimized yet)") + ": " + sb);
             }
         }
         writer.println();
         writer.println(STATEMENT);
         writer.close();
+    }
+
+    /**
+     * The information criteria of a maximum-likelihood fit, or why there are none.
+     */
+    public static final class Fit {
+        public final int k;
+        public final double n;
+        public final double logLikelihood;
+        public final double aic;
+        public final double aicc; // NaN when n <= k + 1
+        public final double bic;
+        public final String reason; // why they are not reported, or null
+
+        Fit(int k, double n, double logLikelihood, String reason) {
+            this.k = k;
+            this.n = n;
+            this.logLikelihood = logLikelihood;
+            this.reason = reason;
+            boolean reported = reason == null;
+            this.aic = reported ? InformationCriteria.aic(logLikelihood, k) : Double.NaN;
+            this.aicc = reported ? InformationCriteria.aicc(logLikelihood, k, n) : Double.NaN;
+            this.bic = reported ? InformationCriteria.bic(logLikelihood, k, n) : Double.NaN;
+        }
+    }
+
+    /**
+     * k is the number of free coordinates the maximizer moved (node heights included; held ones counted, the
+     * simplex's dependent one not), n the number of sites behind the likelihood. Only a maximum-likelihood fit that is
+     * identified has information criteria.
+     */
+    public Fit getFit() {
+        if (maximizer == null || likelihood == null) {
+            return new Fit(0, Double.NaN, Double.NaN, "nothing was maximized");
+        }
+        int k = maximizer.getFreeCoordinateCount();
+        double n = 0.0;
+        for (PartitionTerm term : getPartitionTerms()) {
+            n += term.sites;
+        }
+        double logL = likelihood.getLogLikelihood();
+        String reason = null;
+        if (!"ML".equals(objectiveName())) {
+            reason = "they are defined for a maximum-likelihood fit, and this objective includes the priors; refit " +
+                    "with the maximum-likelihood objective";
+        } else if (notIdentified != null) {
+            reason = "the fit is not identified: " + notIdentified;
+        } else if (Double.isNaN(n)) {
+            reason = "the number of sites is unknown";
+        }
+        return new Fit(k, n, logL, reason);
     }
 
     private static String formatCount(double count) {

@@ -84,6 +84,10 @@ public class TreeLimeTimeTreeExportTest extends TestCase {
         Export export = run(quiet(options));
 
         assertEquals("MAP", export.exporter.objectiveName());
+        // information criteria belong to maximum likelihood
+        assertNotNull(export.exporter.getFit().reason);
+        assertTrue(export.summary.contains("Information criteria: not reported: they are defined for a " +
+                "maximum-likelihood fit"));
         assertEquals(-export.maximizer.getMinimumValue(), export.logL + export.logPrior, 1E-8);
         assertTrue(export.summary.contains("Objective: MAP"));
         assertTrue(export.summary.contains(TimeTreeExporter.STATEMENT));
@@ -178,6 +182,85 @@ public class TreeLimeTimeTreeExportTest extends TestCase {
         assertEquals(TimeTreeExporter.NA, last[3]);
         // the clock rate is fixed without tip dates
         assertTrue(export.summary.contains("fixed in the Priors tab: clock.rate"));
+
+        // the information criteria: k free coordinates (node heights included), n sites
+        TimeTreeExporter.Fit fit = export.exporter.getFit();
+        assertNull(fit.reason);
+        assertEquals(export.maximizer.getFreeCoordinateCount(), fit.k);
+        assertEquals(terms.get(0).sites + terms.get(1).sites, fit.n, 0.0);
+        assertEquals(-2 * export.logL + 2 * fit.k, fit.aic, 1E-8);
+        assertEquals(fit.aic + 2.0 * fit.k * (fit.k + 1) / (fit.n - fit.k - 1), fit.aicc, 1E-8);
+        assertEquals(-2 * export.logL + fit.k * Math.log(fit.n), fit.bic, 1E-8);
+        assertTrue(export.summary.contains("  AIC  = " + fit.aic));
+        assertTrue(export.summary.contains("  BIC  = " + fit.bic));
+        assertFalse(export.summary.contains("Not a full MLE"));
+    }
+
+    // without tip dates, an estimated clock rate and the node heights are confounded under ML: no criteria
+    public void testNotIdentifiedWithoutTipDates() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        options.maximizationOptions.objective = MaximizationOptions.Objective.ML;
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getName().equals("clock.rate")) {
+                parameter.priorType = dr.app.treelime.types.PriorType.LOGNORMAL_PRIOR;
+                parameter.setPriorEdited(true); // as the Priors tab does: no longer fixed for want of tip dates
+            }
+        }
+        Export export = run(quiet(options));
+        TimeTreeExporter.Fit fit = export.exporter.getFit();
+        assertNotNull(fit.reason);
+        assertTrue(fit.reason, fit.reason.contains("only through their products"));
+        assertTrue(export.summary.contains("Information criteria: not reported: the fit is not identified"));
+    }
+
+    // node heights held only because numeric mode has no node-height gradient: flagged, not counted in k
+    public void testNotAFullMle() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        options.maximizationOptions.objective = MaximizationOptions.Objective.ML;
+        options.maximizationOptions.setGradientMode(MaximizationOptions.GradientMode.NUMERIC);
+        Export export = run(quiet(options));
+        assertNull(export.exporter.getFit().reason);
+        // numeric mode has no gradient for the node heights or the frequencies on the simplex
+        assertTrue(export.summary, export.summary.contains("Not a full MLE: frequencies, " +
+                "treeModel.allInternalNodeHeights are held only because TreeLime cannot optimize them yet"));
+        // under ML the tree prior's parameters are not optimized in numeric mode either: only kappa
+        assertEquals(1, export.exporter.getFit().k);
+        assertTrue(export.summary.contains("(cannot be optimized yet)"));
+    }
+
+    // a coordinate held at its lower bound is counted in k, with a note
+    public void testHeldAtBoundNote() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        options.maximizationOptions.objective = MaximizationOptions.Objective.ML;
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getName().equals("kappa")) {
+                // far above the MLE: the first step goes below it
+                options.maximizationOptions.setLowerBound(parameter, 1000.0);
+            }
+        }
+        Export export = run(quiet(options));
+        assertEquals(1, export.maximizer.getHeld().size());
+        assertTrue(export.summary.contains("k includes 1 coordinate(s) held at a bound"));
+    }
+
+    public void testInformationCriteria() {
+        // logL = -100, k = 5, n = 50
+        assertEquals(210.0, dr.stats.InformationCriteria.aic(-100.0, 5), 1E-12);
+        assertEquals(210.0 + 60.0 / 44.0, dr.stats.InformationCriteria.aicc(-100.0, 5, 50), 1E-12);
+        assertEquals(200.0 + 5 * Math.log(50), dr.stats.InformationCriteria.bic(-100.0, 5, 50), 1E-12);
+        assertTrue(Double.isNaN(dr.stats.InformationCriteria.aicc(-100.0, 5, 6)));
+        // Skyline.AICC is on the log-likelihood scale: -AICc / 2
+        assertEquals(-dr.stats.InformationCriteria.aicc(-100.0, 5, 50) / 2,
+                dr.evolution.coalescent.Skyline.AICC(-100.0, 5, 50), 1E-12);
     }
 
     // -------------------------------------------------------------------------------------------------------------

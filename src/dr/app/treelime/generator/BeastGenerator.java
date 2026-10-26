@@ -829,16 +829,16 @@ public class BeastGenerator extends Generator {
             for (Parameter parameter : parameters) {
                 terms.put(parameter, likelihoodTerm(parameter));
             }
-            if (objective == MaximizationOptions.Objective.ML) {
-                // the likelihood is flat in these: they are identified only by their priors
-                List<Parameter> identified = new ArrayList<Parameter>();
-                for (Parameter parameter : parameters) {
-                    if (terms.get(parameter) != GradientRegistry.LikelihoodTerm.NONE) {
-                        identified.add(parameter);
-                    }
+        }
+        if (objective == MaximizationOptions.Objective.ML) {
+            // the likelihood is flat in these, in either gradient mode: they are identified only by their priors
+            List<Parameter> identified = new ArrayList<Parameter>();
+            for (Parameter parameter : parameters) {
+                if (GradientRegistry.likelihoodTerm(options, parameter) != GradientRegistry.LikelihoodTerm.NONE) {
+                    identified.add(parameter);
                 }
-                parameters = identified;
             }
+            parameters = identified;
         }
 
         // trees whose internal node heights are optimized, each a block of its own
@@ -985,7 +985,7 @@ public class BeastGenerator extends Generator {
 
         List<Parameter> optimized = new ArrayList<Parameter>(parameters);
         optimized.addAll(frequencies);
-        writeTimeTreeExport(optimized, writer);
+        writeTimeTreeExport(optimized, heightPlans.keySet(), writer);
     }
 
     /**
@@ -995,8 +995,10 @@ public class BeastGenerator extends Generator {
      * .summary.txt).
      *
      * @param optimized the parameters the maximizer moves, node heights aside
+     * @param heightTrees the trees whose node heights the maximizer moves
      */
-    private void writeTimeTreeExport(List<Parameter> optimized, XMLWriter writer) {
+    private void writeTimeTreeExport(List<Parameter> optimized, java.util.Set<PartitionTreeModel> heightTrees,
+                                     XMLWriter writer) {
         MaximizationOptions maximization = options.maximizationOptions;
 
         // the clock of each tree; a tree with several clocks has no single rate per branch
@@ -1017,9 +1019,14 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
         writer.writeComment("Log the trees; the dates and rates, the parameters and a record of the run");
-        writer.writeOpenTag(TimeTreeExportParser.TIME_TREE_EXPORT, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, TIME_TREE_EXPORT),
-                new Attribute.Default<String>(TimeTreeExportParser.FILE_NAME_STEM, options.fileNameStem)});
+        List<Attribute> exportAttributes = new ArrayList<Attribute>();
+        exportAttributes.add(new Attribute.Default<String>(XMLParser.ID, TIME_TREE_EXPORT));
+        exportAttributes.add(new Attribute.Default<String>(TimeTreeExportParser.FILE_NAME_STEM, options.fileNameStem));
+        String notIdentified = notIdentified(optimized, heightTrees);
+        if (notIdentified != null) {
+            exportAttributes.add(new Attribute.Default<String>(TimeTreeExportParser.NOT_IDENTIFIED, notIdentified));
+        }
+        writer.writeOpenTag(TimeTreeExportParser.TIME_TREE_EXPORT, exportAttributes);
         for (String treeLog : treeLogs) {
             writer.writeIDref(TreeLoggerParser.LOG_TREE, treeLog);
         }
@@ -1047,28 +1054,111 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag(TimeTreeExportParser.TIME_TREE);
         }
 
-        // the parameters the maximizer does not move, by reason; node heights are reported with the trees
-        Map<String, List<Parameter>> fixed = new LinkedHashMap<String, List<Parameter>>();
+        // the parameters the maximizer does not move, by reason, and whether that is the user's choice or a limitation
+        // of TreeLime (then the estimates are not a full MLE or MAP)
+        Map<String, List<String>> fixed = new LinkedHashMap<String, List<String>>();
+        Map<String, Boolean> userChoice = new LinkedHashMap<String, Boolean>();
         for (Parameter parameter : options.selectParameters()) {
             if (parameter.isStatistic || parameter.isDiscrete || parameter.isNodeHeight || optimized.contains(parameter)) {
                 continue;
             }
             MaximizationOptions.Treatment treatment = maximization.classify(parameter, false);
-            String reason = treatment.isOptimized() ? "not identified by the objective" : treatment.getReason();
-            if (!fixed.containsKey(reason)) {
-                fixed.put(reason, new ArrayList<Parameter>());
+            String reason;
+            boolean chosen;
+            if (treatment == MaximizationOptions.Treatment.FREQUENCIES &&
+                    maximization.objective != MaximizationOptions.Objective.PRIOR) {
+                reason = "no analytic likelihood gradient";
+                chosen = false;
+            } else if (treatment.isOptimized()) {
+                // under ML, parameters only the priors depend on
+                reason = "not identified by the objective";
+                chosen = true;
+            } else {
+                reason = treatment.getReason();
+                chosen = treatment == MaximizationOptions.Treatment.FIXED_BY_PRIOR ||
+                        treatment == MaximizationOptions.Treatment.EXCLUDED;
             }
-            fixed.get(reason).add(parameter);
+            addFixed(fixed, userChoice, reason, chosen, parameter.getName());
         }
-        for (Map.Entry<String, List<Parameter>> group : fixed.entrySet()) {
-            writer.writeOpenTag(TimeTreeExportParser.NOT_OPTIMIZED,
-                    new Attribute.Default<String>(TimeTreeExportParser.REASON, group.getKey()));
-            for (Parameter parameter : group.getValue()) {
-                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        // node heights not optimized: deselected, or held because TreeLime has no gradient for them yet
+        for (Parameter parameter : options.selectParameters()) {
+            if (!parameter.isNodeHeight || parameter.isStatistic) {
+                continue;
+            }
+            PartitionOptions owner = GradientRegistry.findOwner(options, parameter);
+            if (!(owner instanceof PartitionTreeModel) || heightTrees.contains(owner)) {
+                continue;
+            }
+            PartitionTreeModel tree = (PartitionTreeModel) owner;
+            MaximizationOptions.Treatment treatment = maximization.classify(parameter, false);
+            String reason;
+            boolean chosen;
+            if (treatment == MaximizationOptions.Treatment.NODE_HEIGHTS) {
+                GradientRegistry.NodeHeightPlan plan = GradientRegistry.nodeHeightPlan(options, tree);
+                reason = "node heights: " + (plan.fixedReason != null ? plan.fixedReason : "not optimized");
+                chosen = false;
+            } else {
+                reason = "node heights: " + treatment.getReason();
+                chosen = treatment == MaximizationOptions.Treatment.FIXED_BY_PRIOR ||
+                        treatment == MaximizationOptions.Treatment.EXCLUDED;
+            }
+            addFixed(fixed, userChoice, reason, chosen, tree.getPrefix() + DefaultTreeModel.TREE_MODEL +
+                    ".allInternalNodeHeights");
+        }
+        for (Map.Entry<String, List<String>> group : fixed.entrySet()) {
+            List<Attribute> attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute.Default<String>(TimeTreeExportParser.REASON, group.getKey()));
+            if (!userChoice.get(group.getKey())) {
+                attributes.add(new Attribute.Default<Boolean>(TimeTreeExportParser.CAN_OPTIMIZE, false));
+            }
+            writer.writeOpenTag(TimeTreeExportParser.NOT_OPTIMIZED, attributes);
+            for (String id : group.getValue()) {
+                writer.writeIDref(ParameterParser.PARAMETER, id);
             }
             writer.writeCloseTag(TimeTreeExportParser.NOT_OPTIMIZED);
         }
         writer.writeCloseTag(TimeTreeExportParser.TIME_TREE_EXPORT);
+    }
+
+    private static void addFixed(Map<String, List<String>> fixed, Map<String, Boolean> userChoice, String reason,
+                                 boolean chosen, String id) {
+        if (!fixed.containsKey(reason)) {
+            fixed.put(reason, new ArrayList<String>());
+            userChoice.put(reason, chosen);
+        }
+        fixed.get(reason).add(id);
+    }
+
+    /**
+     * Under maximum likelihood with contemporaneous tips, the likelihood depends on rates and times only through their
+     * products: a tree whose node heights and clock rate (or all its branch rates) are both optimized has no MLE of
+     * either, and information criteria would count parameters the data cannot determine. Calibrations do not help,
+     * being priors.
+     *
+     * @return why the fit is not identified, or null
+     */
+    private String notIdentified(List<Parameter> optimized, java.util.Set<PartitionTreeModel> heightTrees) {
+        if (options.maximizationOptions.objective != MaximizationOptions.Objective.ML ||
+                (options.useTipDates && options.maximumTipHeight > 0.0)) {
+            return null;
+        }
+        for (PartitionTreeModel tree : heightTrees) {
+            for (PartitionClockModel clock : options.getPartitionClockModels()) {
+                if (clock.getPartitionTreeModel() != tree) {
+                    continue;
+                }
+                for (Parameter parameter : optimized) {
+                    if (GradientRegistry.findOwner(options, parameter) == clock &&
+                            (parameter == clock.getClockRateParameter() ||
+                                    parameter.getBaseName().equals(ClockType.HMC_CLOCK_BRANCH_RATES))) {
+                        return "without tip dates, the likelihood depends on the rates of " + clock.getName() +
+                                " and the node heights only through their products, and both are optimized: fix " +
+                                "the clock rate, or the node heights, or add tip dates";
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**

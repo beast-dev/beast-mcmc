@@ -75,6 +75,8 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
     public static final String TIME_TREE = "timeTree";
     public static final String NOT_OPTIMIZED = "notOptimized";
     public static final String REASON = "reason";
+    public static final String CAN_OPTIMIZE = "canOptimize";
+    public static final String NOT_IDENTIFIED = "notIdentified";
 
     public String getParserName() {
         return TIME_TREE_EXPORT;
@@ -112,7 +114,8 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
                 for (int j = 0; j < child.getChildCount(); ++j) {
                     parameters.add((Parameter) child.getChild(j));
                 }
-                fixed.add(new TimeTreeExporter.FixedParameters(child.getStringAttribute(REASON), parameters));
+                fixed.add(new TimeTreeExporter.FixedParameters(child.getStringAttribute(REASON), parameters,
+                        child.getAttribute(CAN_OPTIMIZE, true)));
             }
         }
 
@@ -123,7 +126,8 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
             }
         }
 
-        TimeTreeExporter exporter = new TimeTreeExporter(stem, trees, treeLoggers, maximizer, likelihood, prior, fixed);
+        TimeTreeExporter exporter = new TimeTreeExporter(stem, trees, treeLoggers, maximizer, likelihood, prior, fixed,
+                xo.hasAttribute(NOT_IDENTIFIED) ? xo.getStringAttribute(NOT_IDENTIFIED) : null);
 
         boolean overwrite = xo.getAttribute(LoggerParser.ALLOW_OVERWRITE_LOG, false);
         if (System.getProperty("log.allow.overwrite") != null) {
@@ -167,6 +171,8 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(FILE_NAME_STEM),
             AttributeRule.newBooleanRule(LoggerParser.ALLOW_OVERWRITE_LOG, true),
+            AttributeRule.newStringRule(NOT_IDENTIFIED, true, "Why the maximum-likelihood fit is not identified: " +
+                    "the information criteria are not reported"),
             new ElementRule(TreeLogger.class, 0, Integer.MAX_VALUE),
             new ElementRule(MaximizerWrtParameter.class, true),
             new ElementRule(TREE_LIKELIHOODS, new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}, true),
@@ -178,6 +184,8 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
             }, 1, Integer.MAX_VALUE),
             new ElementRule(NOT_OPTIMIZED, new XMLSyntaxRule[]{
                     AttributeRule.newStringRule(REASON),
+                    AttributeRule.newBooleanRule(CAN_OPTIMIZE, true, "false when the parameters are held only " +
+                            "because they cannot be optimized yet: the estimates are then not a full MLE"),
                     new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
             }, 0, Integer.MAX_VALUE),
     };

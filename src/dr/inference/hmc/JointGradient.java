@@ -117,6 +117,17 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         return likelihood;
     }
 
+    @Override
+    public double getSimplexSum() {
+        double sum = derivativeList.get(0).getSimplexSum();
+        for (GradientWrtParameterProvider provider : derivativeList) {
+            if (Double.compare(provider.getSimplexSum(), sum) != 0) {
+                return Double.NaN;
+            }
+        }
+        return sum;
+    }
+
     public List<GradientWrtParameterProvider> getDerivativeList() {
         return derivativeList;
     }
@@ -129,6 +140,11 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
     @Override
     public int getDimension(DerivativeOrder order) {
         return order.getDerivativeDimension(dimension);
+    }
+
+    @Override
+    public GradientType getGradientType() {
+        return GradientType.combine(derivativeList);
     }
 
     @Override
@@ -255,6 +271,16 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
 
     private static final boolean DEBUG = false;
     private static final boolean DEBUG_KILL = false;
+
+    // a member whose likelihood is only smooth on coarse steps sets the step for the whole check
+    @Override
+    public double getNumericGradientStepSize() {
+        double step = derivativeList.get(0).getNumericGradientStepSize();
+        for (GradientWrtParameterProvider provider : derivativeList) {
+            step = Math.max(step, provider.getNumericGradientStepSize());
+        }
+        return step;
+    }
 
     @Override
     public String getReport() {

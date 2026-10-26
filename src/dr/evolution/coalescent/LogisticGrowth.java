@@ -167,6 +167,70 @@ public class LogisticGrowth extends ExponentialGrowth {
 
         return result;
     }
+    @Override
+    public double getIntensitySecondDerivative(double finishTime) {
+        checkNoLowLimit();
+        return getShape() * getGrowthRate() * Math.exp(getGrowthRate() * finishTime) / ((1 + getShape()) * getN0());
+    }
+
+    @Override
+    public double getLogDemographicSecondDerivative(double finishTime) {
+        checkNoLowLimit();
+        final double r = getGrowthRate();
+        final double c = getShape();
+        final double expOfMRT = Math.exp(-r * finishTime);
+        return -c * r * r * expOfMRT / ((expOfMRT + c) * (expOfMRT + c));
+    }
+
+    // I(t) = [t + c (e^{rt} - 1) / r] / (N0 (1 + c))
+    @Override
+    public double getIntensityArgumentGradient(int n, double t) {
+        checkArgument(n, 3);
+        checkNoLowLimit();
+        final double nZero = getN0();
+        final double r = getGrowthRate();
+        final double c = getShape();
+        final double rt = r * t;
+        switch (n) {
+            case 0:
+                return -getIntensity(t) / nZero;
+            case 1: {
+                // d/dr of (e^{rt} - 1) / r, by its Taylor series when rt is small to avoid cancellation
+                final double dExpOverR = Math.abs(rt) < 1E-4 ? t * t * (0.5 + rt / 3.0 + rt * rt / 8.0)
+                        : t * Math.exp(rt) / r - Math.expm1(rt) / (r * r);
+                return c * dExpOverR / ((1 + c) * nZero);
+            }
+            default: {
+                final double expOverR = Math.abs(rt) < 1E-4 ? t * (1.0 + rt / 2.0 + rt * rt / 6.0)
+                        : Math.expm1(rt) / r;
+                return expOverR / ((1 + c) * nZero) - getIntensity(t) / (1 + c);
+            }
+        }
+    }
+
+    // log N(t) = log N0 + log(1 + c) - log(1 + c e^{rt})
+    @Override
+    public double getLogDemographicArgumentGradient(int n, double t) {
+        checkArgument(n, 3);
+        checkNoLowLimit();
+        final double c = getShape();
+        final double expOfMRT = Math.exp(-getGrowthRate() * t);
+        switch (n) {
+            case 0:
+                return 1.0 / getN0();
+            case 1:
+                return -c * t / (expOfMRT + c);
+            default:
+                return 1.0 / (1 + c) - 1.0 / (expOfMRT + c);
+        }
+    }
+
+    private void checkNoLowLimit() {
+        if (lowLimit != 0) {
+            throw new UnsupportedOperationException("Derivatives assume no lower limit on the population size");
+        }
+    }
+
     /**
      * Returns value of demographic intensity function at time t
      * (= integral 1/N(x) dx from 0 to t).

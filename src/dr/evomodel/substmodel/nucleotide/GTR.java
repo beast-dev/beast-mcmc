@@ -28,9 +28,13 @@
 package dr.evomodel.substmodel.nucleotide;
 
 import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
@@ -47,7 +51,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class GTR extends BaseSubstitutionModel implements Citable {
+public class GTR extends BaseSubstitutionModel implements Citable, DifferentiableSubstitutionModel {
 
     public static final String A_TO_C = "AC";
     public static final String A_TO_G = "AG";
@@ -181,6 +185,51 @@ public class GTR extends BaseSubstitutionModel implements Citable {
         } else {
             System.arraycopy(this.ratesParameter.getParameterValues(), 0, rates, 0, rates.length);
         }
+    }
+
+    // **************************************************************
+    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies and relative rates)
+    // **************************************************************
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        if (parameter == getFrequencyModel().getFrequencyParameter()) {
+            return DifferentiableSubstitutionModelUtil.frequencyFactory(this, parameter, dim);
+        }
+        if (parameter == ratesParameter) {
+            return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, dim);
+        }
+        // AC, AG, AT, CG, CT, GT, in the order of setupRelativeRates
+        final Variable<?>[] variables = {rateACVariable, rateAGVariable, rateATVariable,
+                rateCGVariable, rateCTVariable, rateGTVariable};
+        for (int m = 0; m < variables.length; ++m) {
+            if (variables[m] != null && variables[m] == parameter) {
+                return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, m);
+            }
+        }
+        throw new IllegalArgumentException("GTR has no differential with respect to " + parameter.getId());
+    }
+
+    // The three methods below are only reached for enum-style differentials, which factory() never returns
+
+    @Override
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        throw new UnsupportedOperationException("GTR uses the generic frequency and rate differentials");
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        throw new UnsupportedOperationException("GTR uses the generic frequency and rate differentials");
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
+        throw new UnsupportedOperationException("GTR uses the generic frequency and rate differentials");
     }
 
     // **************************************************************

@@ -27,14 +27,21 @@
 
 package dr.inference.hmc;
 
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.GradientProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
+import dr.math.SimplexTangent;
+import dr.math.distributions.DirichletDistribution;
+import dr.util.Attribute;
 import dr.xml.Reportable;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -50,6 +57,51 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
     int getDimension();
 
     double[] getGradientLogDensity();
+
+    /**
+     * @return S if the parameter is constrained to the simplex {x > 0, sum x = S}, otherwise NaN.
+     * Gradient reports of simplex providers compare only the tangent part g - (x.g) 1 / S.
+     */
+    default double getSimplexSum() {
+        return Double.NaN;
+    }
+
+    /**
+     * @return how the gradient is computed: analytically, by finite differences, or a mix of blocks of both kinds
+     */
+    default GradientType getGradientType() {
+        return GradientType.ANALYTIC;
+    }
+
+    enum GradientType {
+        ANALYTIC("analytic"),
+        NUMERICAL("numerical"),
+        MIXED("mixed");
+
+        private final String name;
+
+        GradientType(String name) {
+            this.name = name;
+        }
+
+        public String toString() { return name; }
+
+        /**
+         * @return the type of a gradient stacked or summed from these blocks
+         */
+        public static GradientType combine(List<GradientWrtParameterProvider> blocks) {
+            GradientType type = null;
+            for (GradientWrtParameterProvider block : blocks) {
+                GradientType blockType = block.getGradientType();
+                if (type == null) {
+                    type = blockType;
+                } else if (type != blockType) {
+                    return MIXED;
+                }
+            }
+            return type == null ? ANALYTIC : type;
+        }
+    }
 
     class Negative implements GradientWrtParameterProvider {
 
@@ -72,6 +124,11 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
         @Override
         public int getDimension() {
             return provider.getDimension();
+        }
+
+        @Override
+        public GradientType getGradientType() {
+            return provider.getGradientType();
         }
 
         @Override
@@ -115,7 +172,29 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
 
         @Override
         public double[] getGradientLogDensity() {
-            return provider.getGradientLogDensity(parameter.getParameterValues());
+            double[] x = parameter.getParameterValues();
+            if (likelihood instanceof DistributionLikelihood) {
+                // the likelihood evaluates log f((x - offset) / scale) - log scale
+                final double offset = ((DistributionLikelihood) likelihood).getOffset();
+                final double scale = ((DistributionLikelihood) likelihood).getScale();
+                if (offset != 0.0 || scale != 1.0) {
+                    for (int i = 0; i < x.length; ++i) {
+                        x[i] = (x[i] - offset) / scale;
+                    }
+                    double[] gradient = provider.getGradientLogDensity(x);
+                    for (int i = 0; i < gradient.length; ++i) {
+                        gradient[i] /= scale;
+                    }
+                    return gradient;
+                }
+            }
+            return provider.getGradientLogDensity(x);
+        }
+
+        @Override
+        public double getSimplexSum() {
+            return provider instanceof DirichletDistribution ?
+                    ((DirichletDistribution) provider).getSumsTo() : Double.NaN;
         }
 
         @Override
@@ -139,6 +218,14 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
     }
 
     class MismatchException extends Exception {
+
+        public MismatchException() {
+            super();
+        }
+
+        public MismatchException(String message) {
+            super(message);
+        }
     }
 
     class CheckGradientNumerically {
@@ -153,7 +240,7 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
         private final double smallThreshold;
         private final double numericStepSize;
 
-        CheckGradientNumerically(GradientWrtParameterProvider provider,
+        public CheckGradientNumerically(GradientWrtParameterProvider provider,
                                  double lowerBound, double upperBound,
                                  Double nullableTolerance,
                                  Double nullableSmallNumberThreshold) {
@@ -214,12 +301,125 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
             return testGradient;
         }
 
+        /**
+         * Central differences along e_k - x / S, which keep sum x = S, so a Dirichlet on x stays finite.
+         * The parameter is restored with one event afterwards.
+         */
+        public double[] getTangentNumerical(double simplexSum) throws MismatchException {
+
+            final double[] x = parameter.getParameterValues();
+            final int dim = x.length;
+
+            double sum = 0.0;
+            for (double v : x) {
+                sum += v;
+            }
+            if (Math.abs(sum - simplexSum) > SIMPLEX_PRECONDITION * simplexSum) {
+                throw new MismatchException("off-simplex: parameter " + parameter.getParameterName()
+                        + " sums to " + sum + ", not " + simplexSum);
+            }
+
+            final double[] tangent = new double[dim];
+            final double[] point = new double[dim];
+            for (int k = 0; k < dim; ++k) {
+                for (int i = 0; i < dim; ++i) {
+                    point[i] = x[i] + TANGENT_STEP * ((i == k ? 1.0 : 0.0) - x[i] / simplexSum);
+                }
+                final double plus = numeric.evaluate(point);
+                for (int i = 0; i < dim; ++i) {
+                    point[i] = x[i] - TANGENT_STEP * ((i == k ? 1.0 : 0.0) - x[i] / simplexSum);
+                }
+                final double minus = numeric.evaluate(point);
+                tangent[k] = (plus - minus) / (2 * TANGENT_STEP);
+            }
+
+            setParameter(x);
+            return tangent;
+        }
+
         public String getReport() throws MismatchException {
 
             double[] analytic = provider.getGradientLogDensity();
+
+            final double simplexSum = provider.getSimplexSum();
+            if (!Double.isNaN(simplexSum)) {
+                return getSimplexReport(analytic, simplexSum);
+            }
+
             double[] numeric = getNumericalGradient();
 
             return makeReport("Gradient\n", analytic, numeric, checkValues, tolerance, smallThreshold);
+        }
+
+        private String getSimplexReport(double[] analytic, double simplexSum) throws MismatchException {
+
+            final double[] numericTangent = getTangentNumerical(simplexSum);
+            final double[] analyticTangent = SimplexTangent.project(analytic, parameter.getParameterValues(), simplexSum);
+
+            StringBuilder sb = new StringBuilder("Gradient (simplex, sum = " + simplexSum + ")\n");
+            sb.append("analytic (tangent): ").append(new dr.math.matrixAlgebra.Vector(analyticTangent)).append("\n");
+            sb.append("numeric (tangent): ").append(new dr.math.matrixAlgebra.Vector(numericTangent)).append("\n");
+            sb.append("analytic (raw, extension-dependent, unchecked): ")
+                    .append(new dr.math.matrixAlgebra.Vector(analytic)).append("\n");
+            if (hasDirichletOn(provider.getLikelihood(), parameter)) {
+                sb.append("numeric (raw): skipped (Dirichlet off-simplex)\n");
+            } else {
+                sb.append("numeric (raw, extension-dependent, unchecked): ")
+                        .append(new dr.math.matrixAlgebra.Vector(getNumericalGradient())).append("\n");
+            }
+
+            if (checkValues) {
+                String failure = checkLengthAndFinite(analyticTangent, numericTangent);
+                for (int i = 0; failure == null && i < analyticTangent.length; ++i) {
+                    final double a = analyticTangent[i];
+                    final double n = numericTangent[i];
+                    if (Math.abs(a - n) > tolerance * Math.max(1.0, Math.max(Math.abs(a), Math.abs(n)))) {
+                        failure = "Tangent difference @ " + (i + 1) + ": " + a + " " + n;
+                    }
+                }
+                if (failure != null) {
+                    sb.append("\n").append(failure).append("\n");
+                    Logger.getLogger("dr.inference.hmc").info(sb.toString());
+                    throw new MismatchException(failure);
+                }
+            }
+
+            return sb.toString();
+        }
+
+        private static final double TANGENT_STEP = 1E-6;
+        private static final double SIMPLEX_PRECONDITION = 1E-10;
+
+        private static boolean hasDirichletOn(Likelihood likelihood, Parameter parameter) {
+            if (likelihood instanceof MultivariateDistributionLikelihood) {
+                MultivariateDistributionLikelihood mdl = (MultivariateDistributionLikelihood) likelihood;
+                if (mdl.getDistribution() instanceof DirichletDistribution) {
+                    for (Attribute<double[]> data : mdl.getDataList()) {
+                        if (data == parameter) {
+                            return true;
+                        }
+                    }
+                }
+            } else if (likelihood instanceof CompoundLikelihood) {
+                for (Likelihood child : ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                    if (hasDirichletOn(child, parameter)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static String checkLengthAndFinite(double[] analytic, double[] numeric) {
+            if (analytic.length != numeric.length) {
+                return "Length mismatch: analytic " + analytic.length + ", numeric " + numeric.length;
+            }
+            for (int i = 0; i < analytic.length; ++i) {
+                if (!Double.isFinite(analytic[i]) || !Double.isFinite(numeric[i])) {
+                    return "Non-finite entry @ " + (i + 1) + ": " + analytic[i] + " " + numeric[i];
+                }
+            }
+            return null;
         }
     }
 
@@ -237,6 +437,12 @@ public interface GradientWrtParameterProvider extends NumericGradientStepSizePro
         sb.append("\n");
 
         if (checkValues) {
+            String failure = CheckGradientNumerically.checkLengthAndFinite(analytic, numeric);
+            if (failure != null) {
+                sb.append("\n").append(failure).append("\n");
+                Logger.getLogger("dr.inference.hmc").info(sb.toString());
+                throw new MismatchException(failure);
+            }
             for (int i = 0; i < analytic.length; ++i) {
                 double relativeDifference = 2 * (analytic[i] - numeric[i]) / (analytic[i] + numeric[i]);
                 boolean testFailed = Math.abs(relativeDifference) > tolerance &&

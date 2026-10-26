@@ -175,6 +175,113 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel
         }
     }
 
+    // Gradients of the whole tree log-likelihood (logTreeProbability plus logNodeProbability over the internal nodes,
+    // as in calculateTreeLogLikelihood(tree)) wrt the three parameters, for speciationLikelihoodGradient's
+    // wrtParameter="birthRate", "deathRate" and "samplingProbability". Here the birth rate is the parameter r =
+    // lambda - mu (lambda for the Yule model) and the death rate is the relative death rate a = mu / lambda.
+
+    private static final int R = 0;
+    private static final int A = 1;
+    private static final int RHO = 2;
+
+    @Override
+    public Parameter getBirthRateParameter() {
+        return birthDiffRateParameter;
+    }
+
+    @Override
+    public Parameter getDeathRateParameter() {
+        if (relativeDeathRateParameter == null) {
+            throw new IllegalArgumentException(getModelName() + " has no relative death rate (Yule model)");
+        }
+        return relativeDeathRateParameter;
+    }
+
+    @Override
+    public Parameter getSamplingProbabilityParameter() {
+        if (sampleProbability == null) {
+            throw new IllegalArgumentException(getModelName() + " has no sampling probability");
+        }
+        return sampleProbability;
+    }
+
+    @Override
+    public double[] getBirthRateGradient(Tree tree, NodeRef node) {
+        return new double[]{getLogLikelihoodGradient(tree)[R]};
+    }
+
+    @Override
+    public double[] getDeathRateGradient(Tree tree, NodeRef node) {
+        getDeathRateParameter();
+        return new double[]{getLogLikelihoodGradient(tree)[A]};
+    }
+
+    @Override
+    public double[] getSamplingProbabilityGradient(Tree tree, NodeRef node) {
+        getSamplingProbabilityParameter();
+        return new double[]{getLogLikelihoodGradient(tree)[RHO]};
+    }
+
+    /**
+     * @return d log L / d (r, a, rho), differentiating logTreeProbability and logNodeProbability term by term
+     */
+    private double[] getLogLikelihoodGradient(Tree tree) {
+        final double r = getR();
+        final double a = getA();
+        final double rho = getRho();
+        final int taxonCount = tree.getExternalNodeCount();
+        final double[] gradient = new double[3];
+
+        if (!conditionalOnRoot) {
+            // logTreeProbability: (n - 1) log(r rho) + n log(1 - a)
+            gradient[R] = (taxonCount - 1) / r;
+            gradient[A] = -taxonCount / (1 - a);
+            gradient[RHO] = (taxonCount - 1) / rho;
+
+            // logNodeProbability: -2 z - r x, and -r x - z more at the root, with z = log(rho + (1 - rho - a) e^{-r x})
+            for (int j = 0; j < tree.getInternalNodeCount(); j++) {
+                final NodeRef internal = tree.getInternalNode(j);
+                final double x = tree.getNodeHeight(internal);
+                final double e = Math.exp(-r * x);
+                final double d = rho + ((1 - rho) - a) * e;
+                final double dzdr = -x * ((1 - rho) - a) * e / d;
+                final double dzda = -e / d;
+                final double dzdrho = (1 - e) / d;
+                final double weight = tree.getRoot() == internal ? 3.0 : 2.0; // the root has one more -z
+                gradient[R] -= weight * dzdr + (tree.getRoot() == internal ? 2.0 : 1.0) * x;
+                gradient[A] -= weight * dzda;
+                gradient[RHO] -= weight * dzdrho;
+            }
+        } else {
+            // logTreeProbability is a constant; non-root nodes give -2 z - r x with z = log(1 - a e^{-r x})
+            for (int j = 0; j < tree.getInternalNodeCount(); j++) {
+                final NodeRef internal = tree.getInternalNode(j);
+                final double x = tree.getNodeHeight(internal);
+                if (tree.getRoot() != internal) {
+                    final double e = Math.exp(-r * x);
+                    final double d = 1 - a * e;
+                    gradient[R] -= 2 * (a * x * e / d) + x;
+                    gradient[A] -= 2 * (-e / d);
+                } else {
+                    // (n - 2) log(r ca (1 + ca / (e^{r x} - 1))), ca = 1 - a
+                    final double ca = 1 - a;
+                    final double emrh = Math.exp(r * x);
+                    if (emrh != 1.0) {
+                        final double q = emrh - 1.0;
+                        final double f = 1 + ca / q;
+                        gradient[R] += (taxonCount - 2) * (1 / r - ca * emrh * x / (q * q) / f);
+                        gradient[A] += (taxonCount - 2) * (-1 / ca - 1 / q / f);
+                    } else { // (n - 2) log(ca (r + ca / x))
+                        final double s = r + ca / x;
+                        gradient[R] += (taxonCount - 2) / s;
+                        gradient[A] += (taxonCount - 2) * (-1 / ca - 1 / x / s);
+                    }
+                }
+            }
+        }
+        return gradient;
+    }
+
     @Override
     public boolean isYule() {
         // Yule only

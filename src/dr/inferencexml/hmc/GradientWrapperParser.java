@@ -27,12 +27,15 @@
 
 package dr.inferencexml.hmc;
 
+import dr.evomodel.tree.TMRCAStatistic;
+import dr.evomodelxml.tree.SampledTipHeights;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.EmpiricalDistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.model.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.util.Attribute;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -49,6 +52,16 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        Object gradient = parseGradient(xo);
+        if (gradient instanceof GradientWrtParameterProvider
+                && SampledTipHeights.containsSampledTipHeight(((GradientWrtParameterProvider) gradient).getParameter(),
+                getStore())) {
+            throw new XMLParseException(SampledTipHeights.GRADIENT_NOT_IMPLEMENTED);
+        }
+        return gradient;
+    }
+
+    private Object parseGradient(XMLObject xo) throws XMLParseException {
 
         Object obj = xo.getChild(0);
 
@@ -87,6 +100,12 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
             return new GradientWrtParameterProvider.ParameterWrapper((GradientProvider)obj, parameter, (Likelihood)obj);
         } else {
             DistributionLikelihood dl = (DistributionLikelihood) obj;
+            for (Attribute<double[]> data : dl.getDataList()) {
+                if (data instanceof TMRCAStatistic) {
+                    throw new XMLParseException("Gradients of tMRCA calibration priors (on " + data.getAttributeName()
+                            + ") are not yet implemented");
+                }
+            }
             if (!(dl.getDistribution() instanceof GradientProvider)) {
                 throw new XMLParseException("Not a gradient provider");
             }

@@ -34,6 +34,7 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.LocalClockModelParser;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -102,6 +103,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
         for (int i : tips) {
             localTipClocks.put(i, clock);
         }
+        clockOrder.add(clock);
         addVariable(rateParameter);
     }
 
@@ -111,6 +113,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
         for (int i : tips) {
             localTipClocks.put(i, clock);
         }
+        clockOrder.add(clock);
         addModel(branchRates);
     }
 
@@ -119,6 +122,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
         BitSet tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, stemParameter, stemAsTime, excludeClade);
         localCladeClocks.put(tipBitSet, clock);
+        clockOrder.add(clock);
         addVariable(rateParameter);
         if (stemParameter != null) {
             addVariable(stemParameter);
@@ -130,6 +134,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
         BitSet tipBitSet = TreeUtils.getTipsBitSetForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(branchRates, isRelativeRate, tips, stemParameter, stemAsTime, excludeClade);
         localCladeClocks.put(tipBitSet, clock);
+        clockOrder.add(clock);
         addModel(branchRates);
         if (stemParameter != null) {
             addVariable(stemParameter);
@@ -143,6 +148,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
 
         List<Integer> tipList = new ArrayList<Integer>(TreeUtils.getTipsForTaxa(treeModel, taxonList));
         trunkClock = new LocalClock(rateParameter, indexParameter, isRelativeRate, tipList, ClockType.TRUNK);
+        clockOrder.add(trunkClock);
         addVariable(rateParameter);
         if (indexParameter != null) {
             addVariable(indexParameter);
@@ -177,6 +183,7 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
 
         List<Integer> tipList = new ArrayList<Integer>(TreeUtils.getTipsForTaxa(treeModel, taxonList));
         trunkClock = new LocalClock(branchRates, indexParameter, isRelativeRate, tipList, ClockType.TRUNK);
+        clockOrder.add(trunkClock);
         addModel(branchRates);
         if (indexParameter != null) {
             addVariable(indexParameter);
@@ -393,24 +400,47 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
         }
     }
 
+    // DifferentiableBranchRates: the gradient is wrt the global rate (if a parameter) and the rate parameter of each
+    // local clock, stacked in that order; stems and the trunk index are held fixed
+
     @Override
     public double getBranchRateDifferential(Tree tree, NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
+        return 1.0; // the per-branch gradient is wrt the branch rate itself; updateGradientLogDensity chains it
     }
 
     @Override
     public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
+        return 0.0;
     }
 
     @Override
     public Parameter getRateParameter() {
-        throw new RuntimeException("Not yet implemented!");
+        if (rateParameters == null) {
+            List<Parameter> parameters = new ArrayList<Parameter>();
+            if (globalRateParameter == null) {
+                throw new UnsupportedOperationException("Local clock gradients need a global rate parameter, " +
+                        "not a branch rate model");
+            }
+            parameters.add(globalRateParameter);
+            for (LocalClock clock : clockOrder) {
+                if (clock.rateParameter == null) {
+                    throw new UnsupportedOperationException("Local clock gradients need rate parameters, " +
+                            "not branch rate models");
+                }
+                if (!parameters.contains(clock.rateParameter)) {
+                    parameters.add(clock.rateParameter);
+                }
+            }
+            rateParameters = parameters;
+            compoundRateParameter = new CompoundParameter("localClockRates",
+                    parameters.toArray(new Parameter[0]));
+        }
+        return compoundRateParameter;
     }
 
     @Override
     public int getParameterIndexFromNode(NodeRef node) {
-        throw new RuntimeException("Not yet implemented!");
+        throw new UnsupportedOperationException("A local clock rate is shared by many branches");
     }
 
     @Override
@@ -418,15 +448,80 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable,
         throw new RuntimeException("Not yet implemented!");
     }
 
+    /**
+     * @param gradient d log L / d rate_e, indexed by branch (node number with the root skipped)
+     * @return d log L / d theta for theta in getRateParameter()
+     */
     @Override
     public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
-        throw new RuntimeException("Not yet implemented!");
+        getRateParameter();
+        setupNodeClocks(treeModel);
+        double[] result = new double[rateParameters.size()];
+        int v = 0;
+        for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+            final NodeRef node = treeModel.getNode(i);
+            if (!treeModel.isRoot(node)) {
+                addBranchRateDerivatives(treeModel, node, gradient[v], result);
+                v++;
+            }
+        }
+        return result;
     }
 
     @Override
     public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value, int from, int to) {
         throw new RuntimeException("Not yet implemented!");
     }
+
+    /*
+     * Adds weight * d rate / d theta to result, following getBranchRate:
+     * rate = s * R + (1 - s) * P, with R the clock's rate (relative: g * r, else r), P the parent-side rate and s the
+     * stem proportion (1 off the switching branch).
+     */
+    private void addBranchRateDerivatives(Tree tree, NodeRef node, double weight, double[] result) {
+        final int global = 0;
+        final double g = globalRateParameter.getParameterValue(0);
+
+        final LocalClock localClock = nodeClockMap.get(node);
+        if (localClock == null) {
+            result[global] += weight;
+            return;
+        }
+        final LocalClock parentClock = nodeClockMap.get(tree.getParent(node));
+        final int local = rateParameters.indexOf(localClock.rateParameter);
+        final double r = localClock.rateParameter.getParameterValue(0);
+
+        double stemProportion = 1.0;
+        // the parent-side rate as getBranchRate computes it (it reads the local clock's rate)
+        double dParentRateDg = 1.0;
+        double dParentRateDr = 0.0;
+        if (localClock != parentClock) {
+            if (parentClock != null) {
+                if (parentClock.isRelativeRate()) {
+                    dParentRateDg = r;
+                    dParentRateDr = g;
+                } else {
+                    dParentRateDg = 0.0;
+                    dParentRateDr = 1.0;
+                }
+            }
+            if (localClock.stemAsTime) {
+                stemProportion = localClock.getStemValue() / tree.getBranchLength(node);
+            } else {
+                stemProportion = localClock.getStemValue();
+            }
+        }
+
+        final double dRateDg = localClock.isRelativeRate() ? r : 0.0;
+        final double dRateDr = localClock.isRelativeRate() ? g : 1.0;
+
+        result[global] += weight * (stemProportion * dRateDg + (1.0 - stemProportion) * dParentRateDg);
+        result[local] += weight * (stemProportion * dRateDr + (1.0 - stemProportion) * dParentRateDr);
+    }
+
+    private final List<LocalClock> clockOrder = new ArrayList<LocalClock>();
+    private List<Parameter> rateParameters = null;
+    private CompoundParameter compoundRateParameter = null;
 
     enum ClockType {
         CLADE,

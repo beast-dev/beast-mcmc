@@ -1,0 +1,596 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Analytic frequency gradient for HKY+F (plan 5, FQ6). Literals from the b1 oracle:              -->
+<!-- 5 taxa, 44 sites, HKY kappa=2.5, pi=(0.1,0.2,0.3,0.4), strict clock 1.0; without rate         -->
+<!-- heterogeneity and with a 4-category discrete Gamma (alpha=0.5).                                -->
+<!-- Every scaling scheme, both backends and the spectral representation must agree.              -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/>
+    <taxon id="B"/>
+    <taxon id="C"/>
+    <taxon id="D"/>
+    <taxon id="E"/>
+  </taxa>
+  <alignment id="alignment" dataType="nucleotide">
+    <sequence><taxon idref="A"/>AAAAAACCCCGGGGGTTTTTTTAACAAAGTTACGARACCCGGTA</sequence>
+    <sequence><taxon idref="B"/>AAAAAACCCCGGGGGTTTTTTTAACGGCGTTATATAACCCGGCC</sequence>
+    <sequence><taxon idref="C"/>AAAAAACCCCGGGGGTTTTTTTGGTAAGGCCACGAA-CCCAATC</sequence>
+    <sequence><taxon idref="D"/>AAAAAACCCCGGGGGTTTTTTTGGTAATATTATATGGCCCGGCC</sequence>
+    <sequence><taxon idref="E"/>AAAAAACCCCGGGGGTTTTTTTGGTAAAATTGCGAGGTTTGGCA</sequence>
+  </alignment>
+  <patterns id="patterns" from="1">
+    <alignment idref="alignment"/>
+  </patterns>
+  <newick id="startingTree">
+    ((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);
+  </newick>
+  <treeModel id="treeModel">
+    <tree idref="startingTree"/>
+    <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+  <strictClockBranchRates id="branchRates">
+    <rate><parameter id="clock.rate" value="1.0" lower="0.0"/></rate>
+  </strictClockBranchRates>
+  <hkyModel id="hky">
+    <frequencies>
+      <frequencyModel id="freqModel" dataType="nucleotide">
+        <frequencies><parameter id="frequencies" value="0.1 0.2 0.3 0.4"/></frequencies>
+      </frequencyModel>
+    </frequencies>
+    <kappa><parameter id="kappa" value="2.5" lower="0.0"/></kappa>
+  </hkyModel>
+  <siteModel id="siteModel">
+    <substitutionModel><hkyModel idref="hky"/></substitutionModel>
+  </siteModel>
+  <siteModel id="siteModel.gamma4">
+    <substitutionModel><hkyModel idref="hky"/></substitutionModel>
+    <gammaShape gammaCategories="4"><parameter id="alpha" value="0.5" lower="0.0"/></gammaShape>
+  </siteModel>
+
+  <treeDataLikelihood id="likelihood.never" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" scalingScheme="never" delayScaling="false">
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (never)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.never"/></likelihood>
+    </actual>
+    <expected>-199.92530790255657</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.never.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.never"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.never.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.never.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (never, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.never.adjoint"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (never, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.never.adjoint"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (never, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.never.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (never, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.never.adjoint"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.never.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.never"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.never.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.never.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (never, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.never.perDimension"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (never, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.never.perDimension"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (never, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.never.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (never, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.never.perDimension"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <treeDataLikelihood id="likelihood.always" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" scalingScheme="always" delayScaling="false">
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (always)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.always"/></likelihood>
+    </actual>
+    <expected>-199.92530790255657</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.always.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.always"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.always.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.always.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (always, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.always.adjoint"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (always, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.always.adjoint"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (always, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.always.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (always, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.always.adjoint"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.always.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.always"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.always.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.always.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (always, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.always.perDimension"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (always, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.always.perDimension"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (always, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.always.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (always, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.always.perDimension"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <treeDataLikelihood id="likelihood.dynamic" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" scalingScheme="dynamic" delayScaling="false">
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (dynamic)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.dynamic"/></likelihood>
+    </actual>
+    <expected>-199.92530790255657</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.dynamic.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.dynamic"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.dynamic.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.dynamic.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (dynamic, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.dynamic.adjoint"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (dynamic, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.dynamic.adjoint"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (dynamic, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.dynamic.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (dynamic, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.dynamic.adjoint"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.dynamic.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.dynamic"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.dynamic.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.dynamic.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (dynamic, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.dynamic.perDimension"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (dynamic, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.dynamic.perDimension"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (dynamic, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.dynamic.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (dynamic, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.dynamic.perDimension"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <treeDataLikelihood id="likelihood.default" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" >
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (default)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.default"/></likelihood>
+    </actual>
+    <expected>-199.92530790255657</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.default.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.default"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.default.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.default.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (default, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.default.adjoint"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (default, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.default.adjoint"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (default, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.default.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (default, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.default.adjoint"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.default.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.default"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.default.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.default.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (default, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.default.perDimension"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (default, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.default.perDimension"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (default, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.default.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (default, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.default.perDimension"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <treeDataLikelihood id="likelihood.never.spectral" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" useSpectralRepresentation="true" scalingScheme="never" delayScaling="false">
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (never.spectral)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.never.spectral"/></likelihood>
+    </actual>
+    <expected>-199.92530790255657</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.never.spectral.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.never.spectral"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.never.spectral.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.never.spectral.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (never.spectral, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.never.spectral.adjoint"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (never.spectral, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.never.spectral.adjoint"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (never.spectral, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.never.spectral.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (never.spectral, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.never.spectral.adjoint"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.never.spectral.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.never.spectral"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.never.spectral.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.never.spectral.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (never.spectral, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.never.spectral.perDimension"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (never.spectral, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.never.spectral.perDimension"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (never.spectral, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.never.spectral.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (never.spectral, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.never.spectral.perDimension"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <treeDataLikelihood id="likelihood.always.spectral" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" useSpectralRepresentation="true" scalingScheme="always" delayScaling="false">
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (always.spectral)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.always.spectral"/></likelihood>
+    </actual>
+    <expected>-199.92530790255657</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.always.spectral.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.always.spectral"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.always.spectral.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.always.spectral.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (always.spectral, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.always.spectral.adjoint"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (always.spectral, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.always.spectral.adjoint"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (always.spectral, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.always.spectral.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (always.spectral, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.always.spectral.adjoint"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.always.spectral.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.always.spectral"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.always.spectral.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.always.spectral.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (always.spectral, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.always.spectral.perDimension"/></actual>
+    <expected>235.22167008314318 84.85238629502152 35.127571038937155 33.032983209138834</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (always.spectral, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.always.spectral.perDimension"/></actual>
+    <expected>102.7505173452081 35.31888747569713 -0.16840513201008855 7.38950293149526</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (always.spectral, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.always.spectral.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (always.spectral, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.always.spectral.perDimension"/></actual>
+    <expected>170.97756122 20.6082774324 -29.1165378237 -31.2111256535</expected>
+  </assertEqual>
+  <treeDataLikelihood id="likelihood.never.gamma4" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" scalingScheme="never" delayScaling="false">
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel.gamma4"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (never.gamma4)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.never.gamma4"/></likelihood>
+    </actual>
+    <expected>-195.67140160238029</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.never.gamma4.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.never.gamma4"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.never.gamma4.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.never.gamma4.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (never.gamma4, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.never.gamma4.adjoint"/></actual>
+    <expected>209.49044382424393 59.60081659045633 26.154964286906672 16.20375178298842</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (never.gamma4, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.never.gamma4.adjoint"/></actual>
+    <expected>82.46924922670318 12.806483489409679 -10.13483261362958 -11.426435341700875</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (never.gamma4, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.never.gamma4.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (never.gamma4, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.never.gamma4.adjoint"/></actual>
+    <expected>162.2932461244609 12.4036188906733 -21.04223341287636 -30.993445916794613</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.never.gamma4.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.never.gamma4"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.never.gamma4.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.never.gamma4.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (never.gamma4, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.never.gamma4.perDimension"/></actual>
+    <expected>209.49044382424393 59.60081659045633 26.154964286906672 16.20375178298842</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (never.gamma4, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.never.gamma4.perDimension"/></actual>
+    <expected>82.46924922670318 12.806483489409679 -10.13483261362958 -11.426435341700875</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (never.gamma4, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.never.gamma4.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (never.gamma4, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.never.gamma4.perDimension"/></actual>
+    <expected>162.2932461244609 12.4036188906733 -21.04223341287636 -30.993445916794613</expected>
+  </assertEqual>
+  <treeDataLikelihood id="likelihood.always.gamma4" useAmbiguities="true" usePreOrder="true"
+                      branchInfinitesimalDerivative="true" scalingScheme="always" delayScaling="false">
+    <patterns idref="patterns"/>
+    <treeModel idref="treeModel"/>
+    <siteModel idref="siteModel.gamma4"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+  <assertEqual tolerance="1E-12" verbose="true">
+    <message>log likelihood (always.gamma4)</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="likelihood.always.gamma4"/></likelihood>
+    </actual>
+    <expected>-195.67140160238029</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.always.gamma4.adjoint" homogeneous="true" backend="adjoint">
+    <treeDataLikelihood idref="likelihood.always.gamma4"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.always.gamma4.adjoint">
+    <report><branchSubstitutionParameterGradient idref="pi.always.gamma4.adjoint"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (always.gamma4, adjoint)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.always.gamma4.adjoint"/></actual>
+    <expected>209.49044382424393 59.60081659045633 26.154964286906672 16.20375178298842</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (always.gamma4, adjoint)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.always.gamma4.adjoint"/></actual>
+    <expected>82.46924922670318 12.806483489409679 -10.13483261362958 -11.426435341700875</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (always.gamma4, adjoint)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.always.gamma4.adjoint"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (always.gamma4, adjoint)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.always.gamma4.adjoint"/></actual>
+    <expected>162.2932461244609 12.4036188906733 -21.04223341287636 -30.993445916794613</expected>
+  </assertEqual>
+  <branchSubstitutionParameterGradient id="pi.always.gamma4.perDimension" homogeneous="true" backend="perDimension">
+    <treeDataLikelihood idref="likelihood.always.gamma4"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+  <cachedReport id="report.pi.always.gamma4.perDimension">
+    <report><branchSubstitutionParameterGradient idref="pi.always.gamma4.perDimension"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>raw gradient (always.gamma4, perDimension)</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.pi.always.gamma4.perDimension"/></actual>
+    <expected>209.49044382424393 59.60081659045633 26.154964286906672 16.20375178298842</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>branch term (always.gamma4, perDimension)</message>
+    <actual regex="branch: (.*?)\n"><cachedReport idref="report.pi.always.gamma4.perDimension"/></actual>
+    <expected>82.46924922670318 12.806483489409679 -10.13483261362958 -11.426435341700875</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>pi.root equals the site count (always.gamma4, perDimension)</message>
+    <actual regex="pi.root: (.*?)\n"><cachedReport idref="report.pi.always.gamma4.perDimension"/></actual>
+    <expected>44</expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-8" verbose="true" charactersToStrip="\[\],">
+    <message>tangent gradient (always.gamma4, perDimension)</message>
+    <actual regex="analytic \(tangent\): (.*?)\n"><cachedReport idref="report.pi.always.gamma4.perDimension"/></actual>
+    <expected>162.2932461244609 12.4036188906733 -21.04223341287636 -30.993445916794613</expected>
+  </assertEqual>
+</beast>

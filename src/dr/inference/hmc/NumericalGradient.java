@@ -51,6 +51,11 @@ import dr.inference.model.Parameter;
     }
 
     @Override
+    public GradientType getGradientType() {
+        return GradientType.NUMERICAL;
+    }
+
+    @Override
     public int getDimension() {
         return parameter.getDimension();
     }

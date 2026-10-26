@@ -44,7 +44,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class LogisticGrowthModel extends DemographicModel implements Citable {
+public class LogisticGrowthModel extends DemographicModel implements Citable, DifferentiableDemographicModel {
 
     //
     // Public stuff
@@ -105,6 +105,47 @@ public class LogisticGrowthModel extends DemographicModel implements Citable {
         logisticGrowth.setTime50(shapeParameter.getParameterValue(0) - getTimeOffset());
 
         return logisticGrowth;
+    }
+
+    @Override
+    public boolean isDifferentiableWrtParameter(Parameter parameter) {
+        return parameter == N0Parameter || parameter == growthRateParameter || parameter == shapeParameter;
+    }
+
+    // arguments of LogisticGrowth: N0, r, c, with c = 1 / (e^{r tau} - 2) and tau = t50 - time offset
+    @Override
+    public double[] getArgumentDerivatives(Parameter parameter) {
+        if (!isDifferentiableWrtParameter(parameter)) {
+            throw new IllegalArgumentException("Not a parameter of " + getId() + ": " + parameter.getId());
+        }
+        getDemographicFunction();
+        final double r = logisticGrowth.getGrowthRate();
+        final double c = logisticGrowth.getShape();
+        final double tau = shapeParameter.getParameterValue(0) - getTimeOffset();
+        final double ertau = Math.exp(r * tau);
+
+        double[] derivatives = new double[3];
+        if (parameter == N0Parameter) {
+            derivatives[0] += 1.0;
+        }
+        if (parameter == growthRateParameter) {
+            final double dr = getGrowthRateDerivative();
+            derivatives[1] += dr;
+            derivatives[2] += -c * c * tau * ertau * dr;
+        }
+        if (parameter == shapeParameter) {
+            derivatives[2] += -c * c * r * ertau;
+        }
+        return derivatives;
+    }
+
+    // d r / d parameter, where the parameter is either the growth rate or the doubling time ln 2 / r
+    private double getGrowthRateDerivative() {
+        if (usingGrowthRate) {
+            return 1.0;
+        }
+        final double doublingTime = growthRateParameter.getParameterValue(0);
+        return -Math.log(2) / (doublingTime * doublingTime);
     }
 
     //

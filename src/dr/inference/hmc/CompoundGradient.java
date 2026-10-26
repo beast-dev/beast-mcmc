@@ -131,6 +131,11 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
     }
 
     @Override
+    public GradientType getGradientType() {
+        return GradientType.combine(derivativeList);
+    }
+
+    @Override
     public int getDimension() {
         return dimension;
     }

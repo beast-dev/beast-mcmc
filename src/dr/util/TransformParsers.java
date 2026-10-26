@@ -27,6 +27,7 @@
 
 package dr.util;
 
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inferencexml.model.MaskingParser;
 import dr.xml.*;
@@ -49,8 +50,50 @@ public class TransformParsers {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-            return new Transform.Collection(xo.getAllChildren(Transform.ParsedTransform.class),
-                    parameter);
+            List<Transform.ParsedTransform> segments = xo.getAllChildren(Transform.ParsedTransform.class);
+            for (Transform.ParsedTransform segment : segments) {
+                if (segment.parameters != null) {
+                    locateSegment(segment, parameter);
+                }
+            }
+            return new Transform.Collection(segments, parameter);
+        }
+
+        /**
+         * A segment given by its parameters, <transform type="log"><parameter idref="kappa"/></transform>, covers
+         * where those parameters sit, one after another, in the compound parameter, so the XML needs no dimensions.
+         */
+        private void locateSegment(Transform.ParsedTransform segment, Parameter parameter) throws XMLParseException {
+            if (!(parameter instanceof CompoundParameter)) {
+                throw new XMLParseException("A <transform> with parameters needs a <compoundParameter> to place them in");
+            }
+            CompoundParameter compound = (CompoundParameter) parameter;
+            int start = -1;
+            int end = -1;
+            for (Parameter member : segment.parameters) {
+                int offset = 0;
+                int found = -1;
+                for (int i = 0; i < compound.getParameterCount(); ++i) {
+                    if (compound.getParameter(i) == member) {
+                        found = offset;
+                        break;
+                    }
+                    offset += compound.getParameter(i).getDimension();
+                }
+                if (found < 0) {
+                    throw new XMLParseException("Parameter " + member.getId() + " is not in compound parameter " +
+                            compound.getId());
+                }
+                if (start < 0) {
+                    start = found;
+                } else if (found != end) {
+                    throw new XMLParseException("The parameters of a <transform> must be adjacent, in order, in " +
+                            "compound parameter " + compound.getId());
+                }
+                end = found + member.getDimension();
+            }
+            segment.start = start;
+            segment.end = end;
         }
 
         @Override
@@ -277,6 +320,18 @@ public class TransformParsers {
                  throw new XMLParseException("Unrecognized transform type, " + name);
              }
 
+             if (xo.hasAttribute(LOWER) || xo.hasAttribute(UPPER)) {
+                 if (!(thisTransform instanceof Transform.LogitTransform)) {
+                     throw new XMLParseException("Only the logit transform takes 'lower' and 'upper' bounds");
+                 }
+                 final double lower = xo.getAttribute(LOWER, 0.0);
+                 final double upper = xo.getAttribute(UPPER, 1.0);
+                 if (!(lower < upper) || Double.isInfinite(lower) || Double.isInfinite(upper)) {
+                     throw new XMLParseException("A logit transform needs finite bounds with lower < upper");
+                 }
+                 thisTransform = new Transform.ScaledLogitTransform(upper, lower);
+             }
+
              if (xo.getAttribute(INVERSE, false)) {
                  if (thisTransform instanceof Transform.UnivariableTransform) {
                      thisTransform = new Transform.Inverse((Transform.UnivariableTransform)thisTransform);
@@ -328,6 +383,8 @@ public class TransformParsers {
                      AttributeRule.newDoubleRule(SUM, true),
                      AttributeRule.newBooleanRule(INVERSE, true),
                      AttributeRule.newIntegerRule(DIM, true),
+                     AttributeRule.newDoubleRule(LOWER, true),
+                     AttributeRule.newDoubleRule(UPPER, true),
                      new ElementRule(Transform.ParsedTransform.class, 0, 1),
                      new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)
              };
@@ -359,5 +416,7 @@ public class TransformParsers {
     private static final String INNER = "inner";
     private static final String COMPOUND = "compoundTransform";
     private static final String DIM = "dim";
+    private static final String LOWER = "lower";
+    private static final String UPPER = "upper";
     private static final String COMPOUND_MULTIVARIATE = "multivariateCompoundTransform";
 }

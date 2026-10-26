@@ -72,8 +72,8 @@ public class BayesianBridgeDistributionModelParser extends AbstractXMLObjectPars
             } else if (localScale.getDimension() != dim) {
                 throw new XMLParseException("Invalid dimensions");
             }
-        } else {
-            dim = xo.getAttribute(DIMENSION, 1);
+        } else if (dim < 0) {
+            dim = 1;
         }
 
         XMLObject exponentXo = xo.getChild(EXPONENT);

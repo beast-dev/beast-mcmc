@@ -1,0 +1,613 @@
+/*
+ * MCMCPanel.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.app.treelime.mcmcpanel;
+
+
+import dr.app.treelime.TreeLimeFrame;
+import dr.app.treelime.TreeLimePanel;
+import dr.app.treelime.components.marginalLikelihoodEstimation.MLEDialog;
+import dr.app.treelime.components.marginalLikelihoodEstimation.MLEGSSDialog;
+import dr.app.treelime.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
+import dr.app.treelime.options.AbstractPartitionData;
+import dr.app.treelime.options.TreeLimeOptions;
+import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.util.PanelUtils;
+import dr.app.gui.components.WholeNumberField;
+import dr.app.util.OSType;
+import jam.panels.OptionsPanel;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.List;
+
+/**
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ */
+public class MCMCPanel extends TreeLimePanel {
+
+    private static final long serialVersionUID = -3710586474593827540L;
+    private static final Insets FIELD_INSETS = new Insets(3,6,3,6);
+    private static final int MAX_FILENAME_SHOWN = 48;
+
+    WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
+    WholeNumberField echoEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+    WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+    WholeNumberField checkpointEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+
+    JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
+    JComboBox performMLECombo = new JComboBox(new String[] {"None", "path sampling/stepping-stone sampling", "generalized stepping-stone sampling"});
+    //    JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
+    JButton buttonMLE = new JButton("Settings");
+    //    JCheckBox performMLEGSS = new JCheckBox("Perform marginal likelihood estimation (MLE) using generalized stepping-stone sampling");
+    //  JButton buttonMLEGSS = new JButton("Settings");
+
+    public static final String DEFAULT_FILE_NAME_STEM = "untitled";
+    JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
+
+    private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
+
+    JTextArea logFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".log");
+    JTextArea treeFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".trees");
+    JTextArea checkpointFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".chkpt");
+//    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
+
+//    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
+//    JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
+
+    JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
+    JTextArea substTreeFileNameField = new JTextArea("untitled(subst).trees");
+
+    JCheckBox operatorAnalysisCheck = new JCheckBox("Create operator analysis file:");
+    JTextArea operatorAnalysisFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".ops");
+
+    TreeLimeFrame frame = null;
+    private final OptionsPanel optionsPanel;
+    private TreeLimeOptions options;
+
+    private MLEDialog mleDialog = null;
+    private MLEGSSDialog mleGssDialog = null;
+    private MarginalLikelihoodEstimationOptions mleOptions = new MarginalLikelihoodEstimationOptions();
+
+    public MCMCPanel(TreeLimeFrame parent) {
+        setLayout(new BorderLayout());
+
+        // Mac OS X components have more spacing round them already
+        optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
+
+        this.frame = parent;
+
+        setOpaque(false);
+        optionsPanel.setOpaque(false);
+
+        chainLengthField.setValue(100000);
+        chainLengthField.setColumns(10);
+        chainLengthField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("Length of chain:", chainLengthField);
+        chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.chainLength = chainLengthField.getValue();
+                frame.setDirty();
+            }
+        });
+
+        optionsPanel.addSeparator();
+
+        echoEveryField.setValue(1000);
+        echoEveryField.setColumns(10);
+        echoEveryField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("Echo state to screen every:", echoEveryField);
+        echoEveryField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.echoEvery = echoEveryField.getValue();
+                frame.setDirty();
+            }
+        });
+
+        logEveryField.setValue(100);
+        logEveryField.setColumns(10);
+        logEveryField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("Log parameters every:", logEveryField);
+        logEveryField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.logEvery = logEveryField.getValue();
+                frame.setDirty();
+            }
+        });
+
+        checkpointEveryField.setValue(1000000);
+        checkpointEveryField.setColumns(10);
+        checkpointEveryField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("Checkpoint every:", checkpointEveryField);
+        checkpointEveryField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.checkpointEvery = checkpointEveryField.getValue();
+                frame.setDirty();
+            }
+        });
+
+        optionsPanel.addSeparator();
+
+        fileNameStemField.setColumns(32);
+        fileNameStemField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("File name stem:", fileNameStemField);
+        fileNameStemField.setEditable(true);
+        fileNameStemField.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                options.fileNameStem = fileNameStemField.getText();
+                updateOtherFileNames(options);
+                frame.setDirty();
+            }
+        });
+
+        optionsPanel.addComponent(addTxt);
+        addTxt.setSelected(OSType.isWindows());
+        addTxt.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                setOptions(options);
+                frame.setDirty();
+            }
+        });
+
+        optionsPanel.addSeparator();
+
+        logFileNameField.setColumns(32);
+        logFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
+        logFileNameField.setEditable(false);
+
+        treeFileNameField.setColumns(32);
+        treeFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
+        treeFileNameField.setEditable(false);
+
+        checkpointFileNameField.setColumns(32);
+        checkpointFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
+        optionsPanel.addComponentWithLabel("Checkpoint file name:", checkpointFileNameField);
+        checkpointFileNameField.setEditable(false);
+        checkpointFileNameField.setToolTipText("<html>Checkpointing enables continuing your BEAST analysis should<br>" +
+                "the ESS values prove insufficient upon inspecting the log file(s).</html>");
+
+        optionsPanel.addComponent(substTreeLogCheck);
+        substTreeLogCheck.setOpaque(false);
+        substTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                options.substTreeLog = substTreeLogCheck.isSelected();
+                updateTreeFileNameList();
+                substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
+                if (substTreeLogCheck.isSelected()) {
+                    substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
+                } else {
+                    substTreeFileNameField.setText("");
+                }
+
+                frame.setDirty();
+            }
+        });
+
+        substTreeFileNameField.setColumns(32);
+        substTreeFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
+        substTreeFileNameField.setEditable(false);
+        substTreeFileNameField.setEnabled(false);
+        optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
+
+        optionsPanel.addComponent(operatorAnalysisCheck);
+        operatorAnalysisCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                options.operatorAnalysis = operatorAnalysisCheck.isSelected();
+
+                updateOtherFileNames(options);
+
+                frame.setDirty();
+            }
+        });
+
+        operatorAnalysisFileNameField.setColumns(32);
+        operatorAnalysisFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
+        operatorAnalysisFileNameField.setEditable(false);
+        operatorAnalysisFileNameField.setEnabled(false);
+        optionsPanel.addComponentWithLabel("Operator analysis file name:", operatorAnalysisFileNameField);
+
+        optionsPanel.addSeparator();
+
+        optionsPanel.addComponent(samplePriorCheckBox);
+        samplePriorCheckBox.setOpaque(false);
+        samplePriorCheckBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+                frame.setDirty();
+            }
+        });
+
+        optionsPanel.addSeparator();
+
+        JTextArea mleInfo = new JTextArea("Select the option below to perform marginal likelihood " +
+                "estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS) " +
+                "or generalized stepping-stone sampling (GSS) which performs an additional " +
+                "analysis after the standard MCMC chain has finished.");
+        mleInfo.setColumns(50);
+        PanelUtils.setupComponent(mleInfo);
+        optionsPanel.addSpanningComponent(mleInfo);
+
+        //add PS/SS button
+        optionsPanel.addComponentWithLabel("Marginal likelihood estimation (MLE):", performMLECombo);
+
+        optionsPanel.addComponent(buttonMLE);
+        buttonMLE.setEnabled(false);
+        performMLECombo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (performMLECombo.getSelectedIndex() == 1) {
+                    mleOptions.performMLE = true;
+                    mleOptions.performMLEGSS = false;
+                    options.logCoalescentEventsStatistic = false;
+                    buttonMLE.setEnabled(true);
+                    updateMLEFileNameStem();
+                } else if (performMLECombo.getSelectedIndex() == 2) {
+                    // Generalized stepping-stone sampling
+                    /*for (AbstractPartitionData partition : options.getDataPartitions()) {
+                        if (partition.getDataType().getType() != DataType.NUCLEOTIDES) {
+                            JOptionPane.showMessageDialog(frame,
+                                    "Generalized stepping-stone sampling is not currently\n" +
+                                            "compatible with substitution models other than those\n" +
+                                            "for nucleotide data. \n\n" +
+                                            "Use path sampling/stepping-stone sampling instead",
+                                    "Warning",
+                                    JOptionPane.WARNING_MESSAGE);
+
+                            performMLECombo.setSelectedIndex(1);
+                            return;
+
+                        }
+                    }*/
+                    mleOptions.performMLE = false;
+                    mleOptions.performMLEGSS = true;
+                    //set to true because product of exponentials is the default option
+                    options.logCoalescentEventsStatistic = true;
+                    buttonMLE.setEnabled(true);
+                    updateMLEFileNameStem();
+                } else {
+                    mleOptions.performMLE = false;
+                    mleOptions.performMLEGSS = false;
+                    mleOptions.printOperatorAnalysis = false;
+                    options.logCoalescentEventsStatistic = false;
+                    buttonMLE.setEnabled(false);
+                }
+            }
+        });
+        buttonMLE.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateMLEFileNameStem();
+
+                int result = -1;
+
+                if (performMLECombo.getSelectedIndex() == 1) {
+                    result  = mleDialog.showDialog();
+                } else if (performMLECombo.getSelectedIndex() == 2) {
+                    result = mleGssDialog.showDialog();
+                }
+
+                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                }
+
+            }
+        });
+
+//        JTextArea mleGssInfo = new JTextArea("Select the option below to perform marginal likelihood " +
+//                "estimation (MLE) using generalized stepping-stone sampling (GSS) which " +
+//                "performs an additional analysis after the standard MCMC chain has finished.");
+//        mleGssInfo.setColumns(50);
+//        PanelUtils.setupComponent(mleGssInfo);
+//        optionsPanel.addSpanningComponent(mleGssInfo);
+
+//        //add GSS button
+//        optionsPanel.addComponent(performMLEGSS);
+//        //will be false by default
+//        //options.performMLE = false; ??
+//        optionsPanel.addComponent(buttonMLEGSS);
+//        buttonMLEGSS.setEnabled(false);
+//        performMLEGSS.addActionListener(new java.awt.event.ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                if (performMLEGSS.isSelected()) {
+//                    mleOptions.performMLEGSS = true;
+//                    //set to true because product of exponentials is the default option
+//                    options.logCoalescentEventsStatistic = true;
+//                    buttonMLEGSS.setEnabled(true);
+//                    buttonMLE.setEnabled(false);
+//                    performMLE.setEnabled(false);
+//                    updateMLEFileNameStem();
+//                } else {
+//                    mleOptions.performMLEGSS = false;
+//                    mleOptions.printOperatorAnalysis = false;
+//                    options.logCoalescentEventsStatistic = false;
+//                    buttonMLE.setEnabled(false);
+//                    performMLE.setEnabled(true);
+//                    buttonMLEGSS.setEnabled(false);
+//                }
+//            }
+//        });
+//        buttonMLEGSS.addActionListener(new java.awt.event.ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                updateMLEFileNameStem();
+//
+//                int result = mleGssDialog.showDialog();
+//
+//                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+//                    return;
+//                }
+//
+//            }
+//        });
+
+//        logFileNameField.addKeyListener(listener);
+//        treeFileNameField.addKeyListener(listener);
+        //mapTreeFileNameField.addKeyListener(listener);
+//        substTreeFileNameField.addKeyListener(listener);
+
+//        optionsPanel.setPreferredSize(new java.awt.Dimension(500, 600));
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panel.add(optionsPanel, BorderLayout.CENTER);
+        panel.setOpaque(false);
+
+        JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setOpaque(false);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setOpaque(false);
+
+        add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private void updateTreeFileNameList() {
+        options.treeFileName.clear();
+        options.substTreeFileName.clear();
+        String treeFileName;
+
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            if (options.substTreeLog) {
+                treeFileName = getTreeFileName(tree.getPrefix() + "(time).");
+            } else {
+                treeFileName = getTreeFileName(tree.getPrefix());
+            }
+            if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
+            options.treeFileName.add(treeFileName);
+
+            if (options.substTreeLog) {
+                treeFileName = getTreeFileName(tree.getPrefix() + "(subst).");
+                if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
+                options.substTreeFileName.add(treeFileName);
+            }
+        }
+    }
+
+    private String getTreeFileName(String treeName) {
+        return options.fileNameStem + "." + treeName + "trees";
+    }
+
+    private String displayTreeList(List<String> treeList) {
+        if (treeList.size() > 1) {
+            return getTreeFileName("[tree name].");
+        } else {
+            return getTreeFileName("");
+        }
+    }
+
+    public void setOptions(TreeLimeOptions options) {
+        this.options = options;
+
+        /*System.err.println("mleOptions: " + mleOptions);
+        System.err.println("options.pathSteps: " + mleOptions.pathSteps);
+        System.err.println("options.mleChainLength: " + mleOptions.mleChainLength);
+        System.err.println("options.mleLogEvery: " + mleOptions.mleLogEvery);*/
+
+        // get the MLE options
+        mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+        /*if (mleOptions == null) {
+            mleOptions = new MarginalLikelihoodEstimationOptions();
+        }*/
+
+        /*System.err.println("mleOptions: " + mleOptions);
+        System.err.println("options.pathSteps: " + mleOptions.pathSteps);
+        System.err.println("options.mleChainLength: " + mleOptions.mleChainLength);
+        System.err.println("options.mleLogEvery: " + mleOptions.mleLogEvery);*/
+
+        if (mleDialog != null) {
+            //mleDialog.setOptions(mleOptions);
+        }
+        if (mleGssDialog != null) {
+            //mleGssDialog.setOptions(mleOptions);
+        }
+
+        chainLengthField.setValue(options.chainLength);
+        echoEveryField.setValue(options.echoEvery);
+        logEveryField.setValue(options.logEvery);
+        checkpointEveryField.setValue(options.checkpointEvery);
+
+        if (options.fileNameStem != null) {
+            fileNameStemField.setText(options.fileNameStem);
+        } else {
+            fileNameStemField.setText(DEFAULT_FILE_NAME_STEM);
+            fileNameStemField.setEnabled(false);
+        }
+
+        operatorAnalysisCheck.setSelected(options.operatorAnalysis);
+
+        updateOtherFileNames(options);
+
+        samplePriorCheckBox.setVisible(true);
+        samplePriorCheckBox.setSelected(options.samplePriorOnly);
+
+        optionsPanel.validate();
+        optionsPanel.repaint();
+    }
+
+    private void updateOtherFileNames(TreeLimeOptions options) {
+        if (options.fileNameStem != null) {
+//            fileNameStemField.setText(options.fileNameStem);
+
+            options.logFileName = options.fileNameStem + ".log";
+            if (addTxt.isSelected()) options.logFileName = options.logFileName + ".txt";
+            logFileNameField.setText(truncate(options.logFileName));
+
+//            if (options.mapTreeFileName == null) {
+//			    mapTreeFileNameField.setText(options.fileNameStem + ".MAP.tree");
+//            } else {
+//                mapTreeFileNameField.setText(options.mapTreeFileName);
+//            }
+
+            updateTreeFileNameList();
+            treeFileNameField.setText(truncate(displayTreeList(options.treeFileName)));
+
+            options.checkpointFileName = options.fileNameStem + ".chkpt";
+            checkpointFileNameField.setText(truncate(options.checkpointFileName));
+
+            if (options.substTreeLog) {
+                substTreeFileNameField.setText(truncate(displayTreeList(options.substTreeFileName)));
+            } else {
+                substTreeFileNameField.setText("");
+            }
+
+            options.operatorAnalysisFileName = options.fileNameStem + ".ops";
+            if (addTxt.isSelected()) {
+                options.operatorAnalysisFileName = options.operatorAnalysisFileName + ".txt";
+            }
+            operatorAnalysisFileNameField.setEnabled(options.operatorAnalysis);
+            if (options.operatorAnalysis) {
+                operatorAnalysisFileNameField.setText(truncate(options.operatorAnalysisFileName));
+            } else {
+                operatorAnalysisFileNameField.setText("");
+            }
+
+//            mapTreeLogCheck.setEnabled(true);
+//            mapTreeLogCheck.setSelected(options.mapTreeLog);
+//            mapTreeFileNameField.setEnabled(options.mapTreeLog);
+
+            substTreeLogCheck.setEnabled(true);
+            substTreeLogCheck.setSelected(options.substTreeLog);
+
+            updateMLEFileNameStem();
+        } else {
+//            fileNameStemField.setText(fileNameStem);
+//            fileNameStemField.setEnabled(false);
+            logFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".log");
+            treeFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".trees");
+            checkpointFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".chkpt");
+//            mapTreeLogCheck.setEnabled(false);
+//            mapTreeFileNameField.setEnabled(false);
+//            mapTreeFileNameField.setText("untitled");
+            substTreeLogCheck.setSelected(false);
+            substTreeFileNameField.setEnabled(false);
+            substTreeFileNameField.setText("");
+            operatorAnalysisCheck.setSelected(false);
+            operatorAnalysisFileNameField.setText("");
+        }
+    }
+
+    private static String truncate(String text) {
+        if (text.length() > MAX_FILENAME_SHOWN) {
+            text = "..." + text.substring(text.length() - MAX_FILENAME_SHOWN, text.length());
+        }
+        return text;
+    }
+
+    private void updateMLEFileNameStem() {
+        if (mleDialog == null) {
+            mleDialog = new MLEDialog(frame, mleOptions);
+        }
+        if (mleGssDialog == null) {
+            mleGssDialog = new MLEGSSDialog(frame, mleOptions, options);
+        }
+        mleDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
+        mleGssDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
+    }
+
+    public void getOptions(TreeLimeOptions options) {
+        options.fileNameStem = fileNameStemField.getText();
+        options.logFileName = logFileNameField.getText();
+        options.checkpointFileName = checkpointFileNameField.getText();
+
+//        options.mapTreeLog = mapTreeLogCheck.isSelected();
+//        options.mapTreeFileName = mapTreeFileNameField.getText();
+
+        options.substTreeLog = substTreeLogCheck.isSelected();
+        updateTreeFileNameList();
+
+        options.operatorAnalysis = operatorAnalysisCheck.isSelected();
+        options.operatorAnalysisFileName = operatorAnalysisFileNameField.getText();
+
+        options.samplePriorOnly = samplePriorCheckBox.isSelected();
+
+        if (mleDialog != null) {
+            //mleDialog.getOptions(mleOptions);
+        }
+
+        if (mleGssDialog != null) {
+            //mleGssDialog.getOptions(mleOptions);
+        }
+
+    }
+
+    public JComponent getExportableComponent() {
+        return optionsPanel;
+    }
+
+}

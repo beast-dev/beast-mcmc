@@ -56,6 +56,10 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     private boolean ratiosKnown = false;
     protected boolean epochKnown = false;
+    // the epochs fit the stored tree after a restore only if they were known at the store and not rebuilt since,
+    // e.g. for a proposed tip height (tip-date sampling) or topology that is then rejected
+    private boolean storedEpochKnown = false;
+    private boolean epochsRebuiltSinceStore = false;
 //    protected boolean heightsKnown = true;
 
     public NodeHeightToRatiosTransformDelegate(TreeModel treeModel,
@@ -84,7 +88,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     @Override
     public void modelRestored(Model model) {
-        epochKnown = true;
+        epochKnown = storedEpochKnown && !epochsRebuiltSinceStore;
         ratiosKnown = true;
     }
 
@@ -92,6 +96,8 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     public void storeState() {
         ratios.storeParameterValues();
+        storedEpochKnown = epochKnown;
+        epochsRebuiltSinceStore = false;
     }
 
     @Override
@@ -103,6 +109,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 //        assert(heightsKnown);
         nodeEpochMap.clear();
         epochs.clear();
+        epochsRebuiltSinceStore = true;
 
         postOrderTraversal.updateAllNodes();
         postOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();

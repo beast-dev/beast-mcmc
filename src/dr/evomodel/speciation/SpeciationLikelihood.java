@@ -164,6 +164,21 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Rep
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
 
+    /**
+     * @return true if the log-likelihood is the model's plain sum over the whole tree (no excluded taxa, no
+     * calibration correction), which is what the models' parameter gradients differentiate
+     */
+    boolean isWholeTreeLikelihood() {
+        return exclude == null && calibration == null;
+    }
+
+    /**
+     * @return true if the likelihood carries the calibration correction for tMRCA priors
+     */
+    public boolean hasCalibration() {
+        return calibration != null;
+    }
+
     // Super-clean interface (just one intrusive function) and a better place, since `Likelihood`s have gradients (`Model`s do not).
     public SpeciationModelGradientProvider getGradientProvider() {
         if (gradientProvider == null) {

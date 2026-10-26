@@ -27,13 +27,18 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodelxml.tree.SampledTipHeights;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.NumericGradientStepSizeProvider;
+import dr.inference.hmc.NumericalGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.*;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Marc A. Suchard
@@ -44,10 +49,23 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "maximizeWrtParameter";
     private static final String DENSITY = "densityWrtParameter";
+    private static final String OBJECTIVE = "objective";
     private static final String N_ITERATIONS = "nIterations";
     private static final String INITIAL_GUESS = "startAtCurrentState";
     private static final String PRINT_SCREEN = "printToScreen";
     private static final String INCLUDE_JACOBIAN = "includeJacobian";
+    private static final String MAX_RUN_TIME = "maxRunTime";
+    private static final String MAXIMIZE_ON_PARSE = "maximizeOnParse";
+    private static final String MAX_EVALUATIONS = "maxEvaluations";
+    private static final String REL_TOL = "relTol";
+    private static final String STALL_WINDOW = "stallWindow";
+    private static final String CHECK_GRADIENT_EVERY = "checkGradientEvery";
+    private static final String LINE_SEARCH_RESTARTS = "lineSearchRestarts";
+    private static final String EPSILON = "epsilon";
+    private static final String PAST = "past";
+    private static final String DELTA = "delta";
+    private static final String HOLD_AT_LOWER_BOUND = "holdAtLowerBound";
+    private static final String VALUE = "value";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -65,23 +83,105 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
 
         if (gradient != null) {
             parameter = gradient.getParameter();
-            likelihood = gradient.getLikelihood();
+            // the density to maximize; without <objective>, the union of the gradient's terms
+            likelihood = xo.hasChildNamed(OBJECTIVE) ?
+                    (Likelihood) xo.getChild(OBJECTIVE).getChild(Likelihood.class) : gradient.getLikelihood();
         } else {
+            if (xo.hasChildNamed(OBJECTIVE)) {
+                throw new XMLParseException("<" + OBJECTIVE + "> goes with a gradient; <" + DENSITY +
+                        "> already names the density");
+            }
             XMLObject cxo = xo.getChild(DENSITY);
             parameter = (Parameter) cxo.getChild(Parameter.class);
             likelihood = (Likelihood) cxo.getChild(Likelihood.class);
+        }
+
+        if (gradient != null && !(gradient instanceof NumericalGradient)
+                && SampledTipHeights.containsSampledTipHeight(parameter, getStore())) {
+            throw new XMLParseException(SampledTipHeights.GRADIENT_NOT_IMPLEMENTED);
         }
 
         Transform transform = (Transform) xo.getChild(Transform.class);
 
         final double numericGradientStepSize = NumericGradientStepSizeProvider.parseStepSizeRatio(xo);
 
-        MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform,
-                new MaximizerWrtParameter.Settings(nIterations, numericGradientStepSize, initialGuess, printScreen, includeJacobian));
-        maximizer.maximize();
+        double maxRunTime = xo.hasAttribute(MAX_RUN_TIME) ? parseRunTime(xo.getStringAttribute(MAX_RUN_TIME)) : 0.0;
+        long maxEvaluations = xo.getLongIntegerAttribute(MAX_EVALUATIONS, 0);
+        double relTol = xo.getAttribute(REL_TOL, 0.0);
+        int stallWindow = xo.getAttribute(STALL_WINDOW, 0);
+        int checkGradientEvery = xo.getAttribute(CHECK_GRADIENT_EVERY, 0);
+        int lineSearchRestarts = xo.getAttribute(LINE_SEARCH_RESTARTS, 0);
+        if (maxEvaluations < 0 || relTol < 0 || stallWindow < 0 || checkGradientEvery < 0 || lineSearchRestarts < 0) {
+            throw new XMLParseException(MAX_EVALUATIONS + ", " + REL_TOL + ", " + STALL_WINDOW + ", " +
+                    CHECK_GRADIENT_EVERY + " and " + LINE_SEARCH_RESTARTS + " must not be negative");
+        }
+
+        Double epsilon = xo.hasAttribute(EPSILON) ? xo.getDoubleAttribute(EPSILON) : null;
+        Integer past = xo.hasAttribute(PAST) ? xo.getIntegerAttribute(PAST) : null;
+        Double delta = xo.hasAttribute(DELTA) ? xo.getDoubleAttribute(DELTA) : null;
+        // lbfgs4j's own checks (LBFGSERR_INVALID_EPSILON, _TESTPERIOD, _DELTA), made at parse time
+        if ((epsilon != null && epsilon < 0) || (past != null && past < 0) || (delta != null && delta < 0)) {
+            throw new XMLParseException(EPSILON + ", " + PAST + " and " + DELTA + " must not be negative");
+        }
+
+        MaximizerWrtParameter.Settings settings =
+                new MaximizerWrtParameter.Settings(nIterations, numericGradientStepSize, initialGuess, printScreen, includeJacobian)
+                        .setBudgets(maxRunTime, maxEvaluations, relTol, stallWindow)
+                        .setCheckGradientEvery(checkGradientEvery)
+                        .setLineSearchRestarts(lineSearchRestarts)
+                        .setConvergence(epsilon, past, delta);
+
+        for (XMLObject cxo : xo.getAllChildren(HOLD_AT_LOWER_BOUND)) {
+            settings.addLowerBoundHold((Parameter) cxo.getChild(Parameter.class), cxo.getDoubleAttribute(VALUE));
+        }
+
+        MaximizerWrtParameter maximizer;
+        try {
+            maximizer = new MaximizerWrtParameter(likelihood, parameter, gradient, transform, settings);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
+        // false: parse only, and let a <maximizerWrtParameterOperator> (or the caller) run it later
+        if (xo.getAttribute(MAXIMIZE_ON_PARSE, true)) {
+            maximizer.maximize();
+        }
 
         return maximizer;
     }
+
+    /**
+     * A duration in seconds, from a number with an optional unit: ms, s (the default), min (or m), h or d; for example
+     * "90", "90s", "1.5min", "2 h".
+     */
+    public static double parseRunTime(String value) throws XMLParseException {
+        Matcher matcher = RUN_TIME.matcher(value.trim());
+        if (!matcher.matches()) {
+            throw new XMLParseException(MAX_RUN_TIME + "=\"" + value + "\" is not a duration; use a number with an " +
+                    "optional unit, ms, s, min, h or d, for example \"30min\"");
+        }
+        final double amount;
+        try {
+            amount = Double.parseDouble(matcher.group(1));
+        } catch (NumberFormatException e) {
+            throw new XMLParseException(MAX_RUN_TIME + "=\"" + value + "\": " + matcher.group(1) + " is not a number");
+        }
+        if (amount < 0) {
+            throw new XMLParseException(MAX_RUN_TIME + " must not be negative");
+        }
+        final String unit = matcher.group(2).toLowerCase();
+        switch (unit) {
+            case "ms": return amount / 1000.0;
+            case "": case "s": case "sec": case "secs": case "second": case "seconds": return amount;
+            case "m": case "min": case "mins": case "minute": case "minutes": return amount * 60.0;
+            case "h": case "hr": case "hrs": case "hour": case "hours": return amount * 3600.0;
+            case "d": case "day": case "days": return amount * 86400.0;
+            default:
+                throw new XMLParseException(MAX_RUN_TIME + "=\"" + value + "\": unknown unit \"" + matcher.group(2) +
+                        "\"; use ms, s, min, h or d");
+        }
+    }
+
+    private static final Pattern RUN_TIME = Pattern.compile("([0-9.eE+-]+)\\s*([a-zA-Z]*)");
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -112,10 +212,32 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
                                     new ElementRule(Parameter.class),
                             })
             ),
-            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
+            // any multivariable transform, including <nodeHeightTransform> and <multivariateCompoundTransform>
+            new ElementRule(Transform.MultivariableTransform.class, true),
+            // with a gradient: the density whose value is maximized, e.g. the joint while the gradient blocks
+            // differentiate its terms (a nested <compoundGradient> would otherwise count shared terms twice)
+            new ElementRule(OBJECTIVE, new XMLSyntaxRule[]{new ElementRule(Likelihood.class)}, true),
             AttributeRule.newDoubleRule(N_ITERATIONS, true),
             AttributeRule.newBooleanRule(INITIAL_GUESS, true),
             AttributeRule.newBooleanRule(PRINT_SCREEN, true),
             AttributeRule.newBooleanRule(INCLUDE_JACOBIAN, true),
+            AttributeRule.newBooleanRule(MAXIMIZE_ON_PARSE, true, "maximize while parsing (default true); false leaves it to a maximizerWrtParameterOperator"),
+            new StringAttributeRule(NumericGradientStepSizeProvider.NUMERIC_STEP_SIZE,
+                    "a step-size ratio, or tiny, small, medium or large", true),
+            new StringAttributeRule(MAX_RUN_TIME, "stop after this much wall-clock time: a number with an optional unit, " +
+                    "ms, s, min, h or d (default unit s; default 0: no limit)", true),
+            AttributeRule.newLongIntegerRule(MAX_EVALUATIONS, true, "stop after this many objective evaluations (default 0: no limit)"),
+            AttributeRule.newDoubleRule(REL_TOL, true, "the relative improvement below which stallWindow iterations count as a stall"),
+            AttributeRule.newIntegerRule(STALL_WINDOW, true, "stop when the objective has improved by at most relTol over this many iterations (default 0: off)"),
+            AttributeRule.newIntegerRule(CHECK_GRADIENT_EVERY, true, "check the gradient against finite differences every this many evaluations (default 0: never)"),
+            AttributeRule.newIntegerRule(LINE_SEARCH_RESTARTS, true, "after a failed line search, restart from the best point up to this many times (default 0)"),
+            AttributeRule.newDoubleRule(EPSILON, true, "lbfgs4j's gradient-norm convergence tolerance"),
+            AttributeRule.newIntegerRule(PAST, true, "lbfgs4j's delta-test period in iterations (0: off)"),
+            AttributeRule.newDoubleRule(DELTA, true, "lbfgs4j's relative-decrease convergence tolerance"),
+            // e.g. a gamma shape whose optimum lies at 0: hold it at the bound once a step goes below it
+            new ElementRule(HOLD_AT_LOWER_BOUND, new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule(VALUE, false, "the lower bound"),
+                    new ElementRule(Parameter.class, "a parameter that is part of the maximized parameter"),
+            }, "hold the parameter's elements at the lower bound once an iterate goes below it", 0, Integer.MAX_VALUE),
     };
 }

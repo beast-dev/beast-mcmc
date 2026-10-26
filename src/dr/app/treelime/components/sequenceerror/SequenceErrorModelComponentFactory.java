@@ -1,0 +1,58 @@
+/*
+ * SequenceErrorModelComponentFactory.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.app.treelime.components.sequenceerror;
+
+import dr.app.treelime.components.ComponentFactory;
+import dr.app.treelime.generator.ComponentGenerator;
+import dr.app.treelime.options.ComponentOptions;
+import dr.app.treelime.options.TreeLimeOptions;
+
+/**
+ * @author Andrew Rambaut
+ */
+public class SequenceErrorModelComponentFactory implements ComponentFactory {
+
+    private SequenceErrorModelComponentFactory() {
+        // singleton pattern - private constructor
+    }
+
+    @Override
+    public Class getOptionsClass() {
+        return SequenceErrorModelComponentOptions.class;
+    }
+
+    public ComponentGenerator createGenerator(final TreeLimeOptions beautiOptions) {
+        return new SequenceErrorModelComponentGenerator(beautiOptions);
+    }
+
+    public ComponentOptions createOptions(final TreeLimeOptions beautiOptions) {
+        return new SequenceErrorModelComponentOptions();
+    }
+
+    public static ComponentFactory INSTANCE = new SequenceErrorModelComponentFactory();
+}

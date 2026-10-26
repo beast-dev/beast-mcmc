@@ -56,6 +56,9 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
     private static final boolean DO_IT_RIGHT = false;
 
+    public static final String TMRCA_CALIBRATION_NOT_IMPLEMENTED =
+            "Gradients with tMRCA calibration priors (and their calibration correction) are not yet implemented";
+
     public SpeciationLikelihoodGradient(SpeciationLikelihood likelihood,
                                         TreeModel tree,
                                         WrtParameter wrtParameter) {
@@ -64,6 +67,13 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
         this.tree = tree;
         this.wrtParameter = wrtParameter;
         this.provider = likelihood.getGradientProvider();
+        if (likelihood.hasCalibration()) {
+            throw new UnsupportedOperationException(TMRCA_CALIBRATION_NOT_IMPLEMENTED);
+        }
+        if (wrtParameter != WrtParameter.NODE_HEIGHT && !likelihood.isWholeTreeLikelihood()) {
+            throw new IllegalArgumentException("Gradients wrt " + wrtParameter.name + " do not include excluded taxa"
+                    + " or calibration corrections, which " + likelihood.getId() + " has");
+        }
         this.parameter = wrtParameter.getParameter(provider, tree);
     }
 

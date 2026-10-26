@@ -566,8 +566,112 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return lambdaParameter;
     }
 
+    public Tree getTree() {
+        return tree;
+    }
+
     public SymmTridiagMatrix getWeightMatrix() {
         return weightMatrix.copy();
+    }
+
+    // **************************************************************
+    // Gradients of the Skyride log density (coalescent + GMRF field), with lambda held fixed
+    // **************************************************************
+
+    /*
+     * log L = sum_i [-gamma_i - s_i exp(-gamma_i)] + (n - 1)/2 log(tau) - gamma' Q gamma / 2 + const, where
+     * gamma' Q gamma = tau [(1 - lambda) sum_i gamma_i^2 + lambda sum_i a_i (gamma_i - gamma_{i+1})^2] and the
+     * smoothing weights are a_i = 1, or 2 R / (c_i + c_{i+1}) with time-aware smoothing (R: the root height if
+     * rescaling, else 1; c_i: the coalescent interval lengths).
+     */
+
+    public double[] getGradientWrtLogPopulationSize() {
+        makeIntervalsKnown();
+        final double[] gamma = popSizeParameter.getParameterValues();
+        final DenseVector qGamma = new DenseVector(fieldLength);
+        getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0))
+                .mult(new DenseVector(gamma), qGamma);
+        double[] gradient = new double[fieldLength];
+        for (int i = 0; i < fieldLength; i++) {
+            gradient[i] = -1.0 + sufficientStatistics[i] * Math.exp(-gamma[i]) - qGamma.get(i);
+        }
+        return gradient;
+    }
+
+    public double[] getDiagonalHessianWrtLogPopulationSize() {
+        makeIntervalsKnown();
+        final double[] gamma = popSizeParameter.getParameterValues();
+        final SymmTridiagMatrix q = getScaledWeightMatrix(precisionParameter.getParameterValue(0),
+                lambdaParameter.getParameterValue(0));
+        double[] hessian = new double[fieldLength];
+        for (int i = 0; i < fieldLength; i++) {
+            hessian[i] = -sufficientStatistics[i] * Math.exp(-gamma[i]) - q.get(i, i);
+        }
+        return hessian;
+    }
+
+    public double[] getGradientWrtPrecision() {
+        makeIntervalsKnown();
+        final double precision = precisionParameter.getParameterValue(0);
+        final DenseVector gamma = new DenseVector(popSizeParameter.getParameterValues());
+        final DenseVector qGamma = new DenseVector(fieldLength);
+        getScaledWeightMatrix(1.0, lambdaParameter.getParameterValue(0)).mult(gamma, qGamma);
+        return new double[]{0.5 * (fieldLength - 1) / precision - 0.5 * gamma.dot(qGamma)};
+    }
+
+    public double[] getDiagonalHessianWrtPrecision() {
+        final double precision = precisionParameter.getParameterValue(0);
+        return new double[]{-0.5 * (fieldLength - 1) / (precision * precision)};
+    }
+
+    /**
+     * @return d log L / d h_(j) for the coalescent times h_(0) < ... < h_(n-1) in height order (the last is the
+     * root); with time-aware smoothing this includes the field's dependence on the interval lengths and root height
+     */
+    public double[] getGradientWrtSortedCoalescentHeights() {
+        makeIntervalsKnown();
+        final double[] gamma = popSizeParameter.getParameterValues();
+        double[] gradient = new double[fieldLength];
+
+        // coalescent part: moving coalescent time j lengthens the last piece of interval j and shortens the first
+        // piece of interval j + 1
+        int index = 0;
+        for (int i = 0; i < getIntervalCount(); i++) {
+            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+                double weight = -Math.exp(-gamma[index]) * getLineageCount(i) * (getLineageCount(i) - 1);
+                if (index < fieldLength - 1 && i < getIntervalCount() - 1) {
+                    weight += Math.exp(-gamma[index + 1]) * getLineageCount(i + 1) * (getLineageCount(i + 1) - 1);
+                }
+                gradient[index] = weight / 2.0;
+                index++;
+            }
+        }
+
+        if (timeAwareSmoothing) {
+            final double scaledLambda = precisionParameter.getParameterValue(0) * lambdaParameter.getParameterValue(0);
+            final double scalar = getFieldScalar();
+            // d log L / d c_j through a_{j-1} and a_j, with d a_i / d c = -a_i / (c_i + c_{i+1})
+            double[] intervalGradient = new double[fieldLength];
+            double smoothingTerm = 0.0;
+            for (int i = 0; i < fieldLength - 1; i++) {
+                final double width = coalescentIntervals[i] + coalescentIntervals[i + 1];
+                final double a = 2.0 * scalar / width;
+                final double d = gamma[i] - gamma[i + 1];
+                final double term = 0.5 * scaledLambda * d * d * a / width;
+                intervalGradient[i] += term;
+                intervalGradient[i + 1] += term;
+                smoothingTerm -= 0.5 * scaledLambda * a * d * d;
+            }
+            // c_j = h_(j) - h_(j-1)
+            for (int j = 0; j < fieldLength; j++) {
+                gradient[j] += intervalGradient[j] - (j + 1 < fieldLength ? intervalGradient[j + 1] : 0.0);
+            }
+            // a_i is proportional to the root height when rescaling by it
+            if (rescaleByRootHeight) {
+                gradient[fieldLength - 1] += smoothingTerm / scalar;
+            }
+        }
+        return gradient;
     }
 
     public Parameter getBetaParameter() {

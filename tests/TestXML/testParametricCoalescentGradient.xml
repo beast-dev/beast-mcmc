@@ -1,0 +1,239 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Coalescent gradients wrt node heights and demographic parameters under the constant, exponential (growth rate -->
+<!-- and doubling time), logistic and expansion models, as BEAUti writes them. The coalescent likelihoods use      -->
+<!-- <populationTree>, i.e. BEAUti's default tree intervals with no node-to-interval mapping. Each report also      -->
+<!-- checks the analytic gradient against finite differences.                                                    -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/><taxon id="B"/><taxon id="C"/><taxon id="D"/><taxon id="E"/>
+  </taxa>
+  <newick id="startingTree">((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);</newick>
+  <treeModel id="treeModel">
+    <tree idref="startingTree"/>
+    <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+
+  <constantSize id="constant" units="years">
+    <populationSize><parameter id="constant.popSize" value="0.7" lower="0.0"/></populationSize>
+  </constantSize>
+  <coalescentLikelihood id="coalescent.constant">
+    <model><constantSize idref="constant"/></model>
+    <populationTree><treeModel idref="treeModel"/></populationTree>
+  </coalescentLikelihood>
+  <coalescentGradient id="gradient.constant.nodeHeights">
+    <coalescentLikelihood idref="coalescent.constant"/><treeModel idref="treeModel"/>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.constant.popSize">
+    <coalescentLikelihood idref="coalescent.constant"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="constant.popSize"/></wrt>
+  </coalescentGradient>
+
+  <exponentialGrowth id="exponential" units="years">
+    <populationSize><parameter id="exponential.popSize" value="0.4" lower="0.0"/></populationSize>
+    <growthRate><parameter id="exponential.growthRate" value="-0.3"/></growthRate>
+  </exponentialGrowth>
+  <coalescentLikelihood id="coalescent.exponential">
+    <model><exponentialGrowth idref="exponential"/></model>
+    <populationTree><treeModel idref="treeModel"/></populationTree>
+  </coalescentLikelihood>
+  <coalescentGradient id="gradient.exponential.nodeHeights">
+    <coalescentLikelihood idref="coalescent.exponential"/><treeModel idref="treeModel"/>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.exponential.popSize">
+    <coalescentLikelihood idref="coalescent.exponential"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="exponential.popSize"/></wrt>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.exponential.growthRate">
+    <coalescentLikelihood idref="coalescent.exponential"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="exponential.growthRate"/></wrt>
+  </coalescentGradient>
+
+  <exponentialGrowth id="exponentialDoubling" units="years">
+    <populationSize><parameter id="exponentialDoubling.popSize" value="0.4" lower="0.0"/></populationSize>
+    <doublingTime><parameter id="exponentialDoubling.doublingTime" value="0.6" lower="0.0"/></doublingTime>
+  </exponentialGrowth>
+  <coalescentLikelihood id="coalescent.exponentialDoubling">
+    <model><exponentialGrowth idref="exponentialDoubling"/></model>
+    <populationTree><treeModel idref="treeModel"/></populationTree>
+  </coalescentLikelihood>
+  <coalescentGradient id="gradient.exponentialDoubling.nodeHeights">
+    <coalescentLikelihood idref="coalescent.exponentialDoubling"/><treeModel idref="treeModel"/>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.exponentialDoubling.doublingTime">
+    <coalescentLikelihood idref="coalescent.exponentialDoubling"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="exponentialDoubling.doublingTime"/></wrt>
+  </coalescentGradient>
+
+  <logisticGrowth id="logistic" units="years">
+    <populationSize><parameter id="logistic.popSize" value="0.5" lower="0.0"/></populationSize>
+    <growthRate><parameter id="logistic.growthRate" value="2.0" lower="0.0"/></growthRate>
+    <t50><parameter id="logistic.t50" value="0.6" lower="0.0"/></t50>
+  </logisticGrowth>
+  <coalescentLikelihood id="coalescent.logistic">
+    <model><logisticGrowth idref="logistic"/></model>
+    <populationTree><treeModel idref="treeModel"/></populationTree>
+  </coalescentLikelihood>
+  <coalescentGradient id="gradient.logistic.nodeHeights">
+    <coalescentLikelihood idref="coalescent.logistic"/><treeModel idref="treeModel"/>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.logistic.popSize">
+    <coalescentLikelihood idref="coalescent.logistic"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="logistic.popSize"/></wrt>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.logistic.growthRate">
+    <coalescentLikelihood idref="coalescent.logistic"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="logistic.growthRate"/></wrt>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.logistic.t50">
+    <coalescentLikelihood idref="coalescent.logistic"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="logistic.t50"/></wrt>
+  </coalescentGradient>
+
+  <expansion id="expansion" units="years">
+    <populationSize><parameter id="expansion.popSize" value="0.6" lower="0.0"/></populationSize>
+    <growthRate><parameter id="expansion.growthRate" value="3.0" lower="0.0"/></growthRate>
+    <ancestralPopulationProportion><parameter id="expansion.ancestralProportion" value="0.3" lower="0.0" upper="1.0"/></ancestralPopulationProportion>
+  </expansion>
+  <coalescentLikelihood id="coalescent.expansion">
+    <model><expansion idref="expansion"/></model>
+    <populationTree><treeModel idref="treeModel"/></populationTree>
+  </coalescentLikelihood>
+  <coalescentGradient id="gradient.expansion.nodeHeights">
+    <coalescentLikelihood idref="coalescent.expansion"/><treeModel idref="treeModel"/>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.expansion.popSize">
+    <coalescentLikelihood idref="coalescent.expansion"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="expansion.popSize"/></wrt>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.expansion.growthRate">
+    <coalescentLikelihood idref="coalescent.expansion"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="expansion.growthRate"/></wrt>
+  </coalescentGradient>
+  <coalescentGradient id="gradient.expansion.ancestralProportion">
+    <coalescentLikelihood idref="coalescent.expansion"/><treeModel idref="treeModel"/>
+    <wrt><parameter idref="expansion.ancestralProportion"/></wrt>
+  </coalescentGradient>
+
+  <cachedReport id="report.gradient.constant.nodeHeights">
+    <report><coalescentGradient idref="gradient.constant.nodeHeights"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (constant node heights)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.constant.nodeHeights"/></actual>
+    <expected>-4.285714285714286 -5.714285714285714 -2.857142857142857 -1.4285714285714286</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.constant.popSize">
+    <report><coalescentGradient idref="gradient.constant.popSize"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (constant.popSize)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.constant.popSize"/></actual>
+    <expected>-2.5102040816326525</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.exponential.nodeHeights">
+    <report><coalescentGradient idref="gradient.exponential.nodeHeights"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (exponential node heights)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.exponential.nodeHeights"/></actual>
+    <expected>-7.534802201123422 -10.092189645694596 -4.938717431642764 -2.4974349138639576</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.exponential.popSize">
+    <report><coalescentGradient idref="gradient.exponential.popSize"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (exponential.popSize)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.exponential.popSize"/></actual>
+    <expected>-0.5262016027061762</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.exponential.growthRate">
+    <report><coalescentGradient idref="gradient.exponential.growthRate"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (exponential.growthRate)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.exponential.growthRate"/></actual>
+    <expected>0.4322885042936512</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.exponentialDoubling.nodeHeights">
+    <report><coalescentGradient idref="gradient.exponentialDoubling.nodeHeights"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (exponentialDoubling node heights)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.exponentialDoubling.nodeHeights"/></actual>
+    <expected>-7.45999236154452 -9.687023402080941 -5.518953969916929 -2.953206271995709</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.exponentialDoubling.doublingTime">
+    <report><coalescentGradient idref="gradient.exponentialDoubling.doublingTime"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (exponentialDoubling.doublingTime)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.exponentialDoubling.doublingTime"/></actual>
+    <expected>-0.5217689676799283</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.logistic.nodeHeights">
+    <report><coalescentGradient idref="gradient.logistic.nodeHeights"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (logistic node heights)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.logistic.nodeHeights"/></actual>
+    <expected>-5.720328990045689 -7.586910921985451 -4.007744090986424 -1.891895719740475</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.logistic.popSize">
+    <report><coalescentGradient idref="gradient.logistic.popSize"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (logistic.popSize)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.logistic.popSize"/></actual>
+    <expected>-0.9136217762716654</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.logistic.growthRate">
+    <report><coalescentGradient idref="gradient.logistic.growthRate"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (logistic.growthRate)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.logistic.growthRate"/></actual>
+    <expected>-0.046194975866497456</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.logistic.t50">
+    <report><coalescentGradient idref="gradient.logistic.t50"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (logistic.t50)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.logistic.t50"/></actual>
+    <expected>-1.004341063362813</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.expansion.nodeHeights">
+    <report><coalescentGradient idref="gradient.expansion.nodeHeights"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (expansion node heights)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.expansion.nodeHeights"/></actual>
+    <expected>-4.483763136333335 -5.723297670829321 -3.7125808580177364 -2.209500944839246</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.expansion.popSize">
+    <report><coalescentGradient idref="gradient.expansion.popSize"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (expansion.popSize)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.expansion.popSize"/></actual>
+    <expected>-1.117878590180662</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.expansion.growthRate">
+    <report><coalescentGradient idref="gradient.expansion.growthRate"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (expansion.growthRate)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.expansion.growthRate"/></actual>
+    <expected>0.17078660392941328</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.expansion.ancestralProportion">
+    <report><coalescentGradient idref="gradient.expansion.ancestralProportion"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>analytic gradient (expansion.ancestralProportion)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.expansion.ancestralProportion"/></actual>
+    <expected>-1.3825443920327072</expected>
+  </assertEqual>
+</beast>

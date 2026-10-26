@@ -27,6 +27,8 @@
 
 package dr.evomodel.tree;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -285,6 +287,79 @@ public class CTMCScalePrior extends AbstractModelLikelihood
             gradLogLike[i] = -shape / ab - totalTreeTime;
         }
         return gradLogLike;
+    }
+
+    /**
+     * @return d log L / d h_v for the internal nodes v of tree, indexed by node number - external node count. The
+     * prior depends on the heights only through the tree length T = proportion * mean over trees of sum_e t_e, and
+     * d t_e / d h_v is +1 when v is the parent of e and -1 when v is its child.
+     */
+    public double[] getGradientLogDensityWrtNodeHeights(TreeModel tree) {
+        if (!treeModels.contains(tree)) {
+            throw new IllegalArgumentException("Tree " + tree.getId() + " is not part of " + getId());
+        }
+        final double dLogLikelihood = getGradientLogDensityWrtTreeLength() * proportion / treeModels.size();
+        final boolean[] counted = getCountedBranches(tree);
+
+        final int externalCount = tree.getExternalNodeCount();
+        double[] gradient = new double[tree.getInternalNodeCount()];
+        for (int i = 0; i < gradient.length; ++i) {
+            final NodeRef node = tree.getNode(externalCount + i);
+            int dTreeLength = counted[node.getNumber()] ? -1 : 0;
+            for (int c = 0; c < tree.getChildCount(node); ++c) {
+                if (counted[tree.getChild(node, c).getNumber()]) {
+                    dTreeLength++;
+                }
+            }
+            gradient[i] = dLogLikelihood * dTreeLength;
+        }
+        return gradient;
+    }
+
+    // d log L / d T, where T = getTreeLength()
+    private double getGradientLogDensityWrtTreeLength() {
+        final double treeLength = getTreeLength();
+        double gradient = 0.0;
+        if (trial) {
+            final double lambda2 = -secondLargestEigenvalue();
+            for (int i = 0; i < ctmcScale.getDimension(); ++i) {
+                gradient += -shape / treeLength - ctmcScale.getParameterValue(i) * lambda2;
+            }
+            return gradient;
+        }
+
+        // the scaled time S is proportional to T, or to 1 / T when reciprocal
+        final double scaledTime = scaledTotalTreeTime();
+        for (int i = 0; i < ctmcScale.getDimension(); ++i) {
+            gradient += shape / scaledTime - ctmcScale.getParameterValue(i);
+        }
+        return gradient * (reciprocal ? -scaledTime : scaledTime) / treeLength;
+    }
+
+    // whether the branch above each node counts towards the tree length, as in TreeUtils.getTreeLength/getSubTreeLength
+    private boolean[] getCountedBranches(Tree tree) {
+        boolean[] counted = new boolean[tree.getNodeCount()];
+        if (taxa == null) {
+            Arrays.fill(counted, true);
+            counted[tree.getRoot().getNumber()] = false;
+        } else {
+            countSubTreeBranches(tree, tree.getRoot(), counted);
+        }
+        return counted;
+    }
+
+    private int countSubTreeBranches(Tree tree, NodeRef node, boolean[] counted) {
+        if (tree.isExternal(node)) {
+            final boolean included = taxa.contains(tree.getNodeTaxon(node));
+            counted[node.getNumber()] = included;
+            return included ? 1 : 0;
+        }
+        int count = 0;
+        for (int i = 0; i < tree.getChildCount(node); ++i) {
+            count += countSubTreeBranches(tree, tree.getChild(node, i), counted);
+        }
+        counted[node.getNumber()] = count > 0 && count < taxa.size() && !tree.isRoot(node);
+        return count > 0 && count < taxa.size() ? count : 0;
     }
 
     @Override

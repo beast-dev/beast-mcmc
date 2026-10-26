@@ -28,10 +28,14 @@
 package dr.evomodel.substmodel.nucleotide;
 
 import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -44,7 +48,7 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  */
-public class TN93 extends BaseSubstitutionModel implements Citable {
+public class TN93 extends BaseSubstitutionModel implements Citable, DifferentiableSubstitutionModel {
 
     private Parameter kappaParameter1 = null;
     private Parameter kappaParameter2 = null;
@@ -85,6 +89,46 @@ public class TN93 extends BaseSubstitutionModel implements Citable {
         rates[3] = 1.0;
         rates[4] = kappa2;
         rates[5] = 1.0;
+    }
+
+    // **************************************************************
+    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies and relative rates)
+    // **************************************************************
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        if (parameter == getFrequencyModel().getFrequencyParameter()) {
+            return DifferentiableSubstitutionModelUtil.frequencyFactory(this, parameter, dim);
+        }
+        if (parameter == kappaParameter1) {
+            return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, 1); // A<->G
+        }
+        if (parameter == kappaParameter2) {
+            return DifferentiableSubstitutionModelUtil.rateFactory(this, parameter, dim, 4); // C<->T
+        }
+        throw new IllegalArgumentException("TN93 has no differential with respect to " + parameter.getId());
+    }
+
+    // The three methods below are only reached for enum-style differentials, which factory() never returns
+
+    @Override
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        throw new UnsupportedOperationException("TN93 uses the generic frequency and rate differentials");
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        throw new UnsupportedOperationException("TN93 uses the generic frequency and rate differentials");
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
+        throw new UnsupportedOperationException("TN93 uses the generic frequency and rate differentials");
     }
 
     public synchronized EigenDecomposition getEigenDecomposition() {

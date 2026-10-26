@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
@@ -36,7 +37,11 @@ import dr.math.MultivariateFunction;
 import dr.math.NumericalDerivative;
 import dr.xml.Reportable;
 
+import java.util.Arrays;
+
 /**
+ * Gradients of the GMRF Skyride (coalescent + field) wrt its log population sizes, precision and node heights.
+ *
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
@@ -45,25 +50,46 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
     private final OldGMRFSkyrideLikelihood skyrideLikelihood;
     private final WrtParameter wrtParameter;
     private final Parameter parameter;
-    private final OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping;
+    private final Tree tree;
     private final NodeHeightTransform nodeHeightTransform;
+    private final double tolerance;
 
     public GMRFSkyrideGradient(OldGMRFSkyrideLikelihood gmrfSkyrideLikelihood,
                                WrtParameter wrtParameter,
                                TreeModel tree,
                                NodeHeightTransform nodeHeightTransform) {
-
-        this.skyrideLikelihood = gmrfSkyrideLikelihood;
-        this.intervalNodeMapping = skyrideLikelihood.getIntervalNodeMapping();
-        this.wrtParameter = wrtParameter;
-        this.nodeHeightTransform = nodeHeightTransform;
-        if (nodeHeightTransform == null) {
-            this.parameter = new NodeHeightProxyParameter("internalNodeHeights", tree, true);
-        } else {
-            this.parameter = nodeHeightTransform.getParameter();
-        }
+        this(gmrfSkyrideLikelihood, wrtParameter, tree, nodeHeightTransform, 1E-4);
     }
 
+    public GMRFSkyrideGradient(OldGMRFSkyrideLikelihood gmrfSkyrideLikelihood,
+                               WrtParameter wrtParameter,
+                               TreeModel tree,
+                               NodeHeightTransform nodeHeightTransform,
+                               double tolerance) {
+        if (gmrfSkyrideLikelihood instanceof GMRFMultilocusSkyrideLikelihood) {
+            throw new IllegalArgumentException("These gradients are for the Skyride; for a Skygrid use " +
+                    "wrtParameter=\"logPopulationSizes\", \"precision\" or \"nodeHeight\" (GMRFGradient)");
+        }
+        this.skyrideLikelihood = gmrfSkyrideLikelihood;
+        this.wrtParameter = wrtParameter;
+        this.tree = tree != null ? tree : gmrfSkyrideLikelihood.getTree();
+        this.nodeHeightTransform = nodeHeightTransform;
+        this.tolerance = tolerance;
+        switch (wrtParameter) {
+            case LOG_POPULATION_SIZES:
+                this.parameter = skyrideLikelihood.getPopSizeParameter();
+                break;
+            case PRECISION:
+                this.parameter = skyrideLikelihood.getPrecisionParameter();
+                break;
+            default:
+                if (nodeHeightTransform == null) {
+                    this.parameter = new NodeHeightProxyParameter("internalNodeHeights", (TreeModel) this.tree, true);
+                } else {
+                    this.parameter = nodeHeightTransform.getParameter();
+                }
+        }
+    }
 
     @Override
     public Likelihood getLikelihood() {
@@ -82,7 +108,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
     @Override
     public double[] getGradientLogDensity() {
-        return wrtParameter.getGradientLogDensity(skyrideLikelihood, intervalNodeMapping);
+        return wrtParameter.getGradientLogDensity(skyrideLikelihood, tree);
     }
 
     private MultivariateFunction numeric1 = new MultivariateFunction() {
@@ -120,12 +146,13 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
     @Override
     public String getReport() {
+        if (nodeHeightTransform == null) {
+            return GradientWrtParameterProvider.getReportAndCheckForError(this,
+                    wrtParameter.getParameterLowerBound(), Double.POSITIVE_INFINITY, tolerance);
+        }
+
         double[] savedValues = getParameter().getParameterValues();
         double[] testGradient = NumericalDerivative.gradient(numeric1, getParameter().getParameterValues());
-        for (int i = 0; i < savedValues.length; ++i) {
-            getParameter().setParameterValue(i, savedValues[i]);
-        }
-        double[] testDiagonalHessian = NumericalDerivative.diagonalHessian(numeric1, getParameter().getParameterValues());
         for (int i = 0; i < savedValues.length; ++i) {
             getParameter().setParameterValue(i, savedValues[i]);
         }
@@ -135,18 +162,12 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
         sb.append("\n");
         sb.append("numeric: ").append(new dr.math.matrixAlgebra.Vector(testGradient));
         sb.append("\n");
-
-        sb.append("analytic diagonal Hessian: ").append(new dr.math.matrixAlgebra.Vector(getDiagonalHessianLogDensity()));
-        sb.append("\n");
-        sb.append("numeric diagonal Hessian: ").append(new dr.math.matrixAlgebra.Vector(testDiagonalHessian));
-        sb.append("\n");
-
         return sb.toString();
     }
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        return new double[getDimension()];
+        return wrtParameter.getDiagonalHessianLogDensity(skyrideLikelihood, getDimension());
     }
 
     @Override
@@ -156,15 +177,44 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
     public enum WrtParameter {
 
+        LOG_POPULATION_SIZES {
+            @Override
+            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, Tree tree) {
+                return skyrideLikelihood.getGradientWrtLogPopulationSize();
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, int dimension) {
+                return skyrideLikelihood.getDiagonalHessianWrtLogPopulationSize();
+            }
+
+            @Override
+            double getParameterLowerBound() {
+                return Double.NEGATIVE_INFINITY;
+            }
+        },
+
+        PRECISION {
+            @Override
+            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, Tree tree) {
+                return skyrideLikelihood.getGradientWrtPrecision();
+            }
+
+            @Override
+            double[] getDiagonalHessianLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, int dimension) {
+                return skyrideLikelihood.getDiagonalHessianWrtPrecision();
+            }
+        },
+
         COALESCENT_INTERVAL {
             @Override
-            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood,
-                                           OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping) {
-                double[] unSortedNodeHeightGradient = super.getGradientLogDensityWrtUnsortedNodeHeight(skyrideLikelihood);
-                double[] intervalGradient = new double[unSortedNodeHeightGradient.length];
+            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, Tree tree) {
+                // h_(k) = c_0 + ... + c_k, so d / d c_j = sum_{k >= j} d / d h_(k)
+                double[] heightGradient = skyrideLikelihood.getGradientWrtSortedCoalescentHeights();
+                double[] intervalGradient = new double[heightGradient.length];
                 double accumulatedGradient = 0.0;
-                for (int i = unSortedNodeHeightGradient.length - 1; i > -1; i--) {
-                    accumulatedGradient += unSortedNodeHeightGradient[i];
+                for (int i = heightGradient.length - 1; i > -1; i--) {
+                    accumulatedGradient += heightGradient[i];
                     intervalGradient[i] = accumulatedGradient;
                 }
                 return intervalGradient;
@@ -178,10 +228,8 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
         NODE_HEIGHTS {
             @Override
-            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood,
-                                           OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping) {
-                double[] unSortedNodeHeightGradient = getGradientLogDensityWrtUnsortedNodeHeight(skyrideLikelihood);
-                return intervalNodeMapping.sortByNodeNumbers(unSortedNodeHeightGradient);
+            double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, Tree tree) {
+                return mapToNodes(skyrideLikelihood.getGradientWrtSortedCoalescentHeights(), tree);
             }
 
             @Override
@@ -190,27 +238,50 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
             }
         };
 
-        abstract double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood,
-                                                OldAbstractCoalescentLikelihood.IntervalNodeMapping intervalNodeMapping);
+        abstract double[] getGradientLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, Tree tree);
 
-        abstract void update(NodeHeightTransform nodeHeightTransform, double[] values);
+        double[] getDiagonalHessianLogDensity(OldGMRFSkyrideLikelihood skyrideLikelihood, int dimension) {
+            return new double[dimension];
+        }
 
-        double[] getGradientLogDensityWrtUnsortedNodeHeight(OldGMRFSkyrideLikelihood skyrideLikelihood) {
-            double[] unSortedNodeHeightGradient = new double[skyrideLikelihood.getCoalescentIntervalDimension()];
-            double[] gamma = skyrideLikelihood.getPopSizeParameter().getParameterValues();
+        double getParameterLowerBound() {
+            return 0.0;
+        }
 
-            int index = 0;
-            for (int i = 0; i < skyrideLikelihood.getIntervalCount(); i++) {
-                if (skyrideLikelihood.getIntervalType(i) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
-                    double weight = -Math.exp(-gamma[index]) * skyrideLikelihood.getLineageCount(i) * (skyrideLikelihood.getLineageCount(i) - 1);
-                    if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1 && i < skyrideLikelihood.getIntervalCount() - 1) {
-                        weight -= -Math.exp(-gamma[index + 1]) * skyrideLikelihood.getLineageCount(i + 1) * (skyrideLikelihood.getLineageCount(i + 1) - 1);
-                    }
-                    unSortedNodeHeightGradient[index] = weight / 2.0;
-                    index++;
-                }
+        void update(NodeHeightTransform nodeHeightTransform, double[] values) {
+            throw new IllegalArgumentException("No node-height transform for " + name());
+        }
+
+        /*
+         * The j-th internal node in height order is the j-th coalescent time. Nodes at the same height share the
+         * derivative of moving them together equally.
+         */
+        static double[] mapToNodes(double[] sortedGradient, Tree tree) {
+            final int internalCount = tree.getInternalNodeCount();
+            final int externalCount = tree.getExternalNodeCount();
+            Integer[] order = new Integer[internalCount];
+            for (int i = 0; i < internalCount; i++) {
+                order[i] = externalCount + i;
             }
-            return unSortedNodeHeightGradient;
+            Arrays.sort(order, (a, b) -> Double.compare(tree.getNodeHeight(tree.getNode(a)),
+                    tree.getNodeHeight(tree.getNode(b))));
+
+            double[] gradient = new double[internalCount];
+            int i = 0;
+            while (i < internalCount) {
+                final double height = tree.getNodeHeight(tree.getNode(order[i]));
+                int j = i;
+                double sum = 0.0;
+                while (j < internalCount && tree.getNodeHeight(tree.getNode(order[j])) == height) {
+                    sum += sortedGradient[j];
+                    j++;
+                }
+                for (int k = i; k < j; k++) {
+                    gradient[order[k] - externalCount] = sum / (j - i);
+                }
+                i = j;
+            }
+            return gradient;
         }
     }
 }

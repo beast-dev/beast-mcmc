@@ -46,6 +46,9 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
     private static final String COALESCENT_INTERVAL = "coalescentInterval";
     private static final String NODE_HEIGHTS = "nodeHeights";
+    private static final String NODE_HEIGHT = "nodeHeight";
+    private static final String LOG_POPULATION_SIZES = "logPopulationSizes";
+    private static final String PRECISION = "precision";
 
     private static final String IGNORE_WARNING = "ignoreWarning";
 
@@ -64,31 +67,38 @@ public class GMRFSkyrideGradientParser extends AbstractXMLObjectParser {
 
         boolean ignoreWarning = xo.getAttribute(IGNORE_WARNING, false);
 
-        GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
-        if (type != null) {
-            if (!ignoreWarning) {
-                type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
+        if (skyrideLikelihood instanceof GMRFMultilocusSkyrideLikelihood) {
+            GMRFGradient.WrtParameter type = GMRFGradient.WrtParameter.factory(wrtParameterCase);
+            if (type != null) {
+                if (!ignoreWarning) {
+                    type.getWarning((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood);
+                }
+                return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type, tolerance);
             }
-            return new GMRFGradient((GMRFMultilocusSkyrideLikelihood) skyrideLikelihood, type, tolerance);
         }
-
-        // Old behaviour
 
         GMRFSkyrideGradient.WrtParameter wrtParameter = setupWrtParameter(wrtParameterCase);
 
         NodeHeightTransform nodeHeightTransform = (NodeHeightTransform) xo.getChild(NodeHeightTransform.class);
 
-        return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, tree, nodeHeightTransform);
+        try {
+            return new GMRFSkyrideGradient(skyrideLikelihood, wrtParameter, tree, nodeHeightTransform, tolerance);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
     }
 
-    private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) {
+    private GMRFSkyrideGradient.WrtParameter setupWrtParameter(String wrtParameterCase) throws XMLParseException {
         if (wrtParameterCase.equalsIgnoreCase(COALESCENT_INTERVAL)) {
             return GMRFSkyrideGradient.WrtParameter.COALESCENT_INTERVAL;
-        } else if (wrtParameterCase.equalsIgnoreCase(NODE_HEIGHTS)) {
+        } else if (wrtParameterCase.equalsIgnoreCase(NODE_HEIGHTS) || wrtParameterCase.equalsIgnoreCase(NODE_HEIGHT)) {
             return GMRFSkyrideGradient.WrtParameter.NODE_HEIGHTS;
-        }
-        else {
-            throw new RuntimeException("Not yet implemented!");
+        } else if (wrtParameterCase.equalsIgnoreCase(LOG_POPULATION_SIZES)) {
+            return GMRFSkyrideGradient.WrtParameter.LOG_POPULATION_SIZES;
+        } else if (wrtParameterCase.equalsIgnoreCase(PRECISION)) {
+            return GMRFSkyrideGradient.WrtParameter.PRECISION;
+        } else {
+            throw new XMLParseException("Unknown or unsupported wrtParameter for this likelihood: " + wrtParameterCase);
         }
     }
 

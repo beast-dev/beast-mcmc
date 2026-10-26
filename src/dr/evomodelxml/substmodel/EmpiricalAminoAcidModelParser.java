@@ -49,7 +49,7 @@ public class EmpiricalAminoAcidModelParser extends AbstractXMLObjectParser {
 
         FrequencyModel freqModel = null;
 
-        if (xo.hasAttribute(FREQUENCIES)) {
+        if (xo.hasChildNamed(FREQUENCIES)) {
             XMLObject cxo = xo.getChild(FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
         }

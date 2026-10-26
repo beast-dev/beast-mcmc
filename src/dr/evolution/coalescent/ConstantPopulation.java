@@ -76,6 +76,36 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 		return 1.0/getN0();
 	}
 
+	public double getIntensitySecondDerivative(double finishTime) {
+		return 0.0;
+	}
+
+	public double getLogDemographicGradient(double finishTime) {
+		return 0.0;
+	}
+
+	public double getLogDemographicSecondDerivative(double finishTime) {
+		return 0.0;
+	}
+
+	@Override
+	public double getIntensityArgumentGradient(int n, double t) {
+		checkArgument(n, 1);
+		return -t / (getN0() * getN0());
+	}
+
+	@Override
+	public double getLogDemographicArgumentGradient(int n, double t) {
+		checkArgument(n, 1);
+		return 1.0 / getN0();
+	}
+
+	static void checkArgument(int n, int argumentCount) {
+		if (n < 0 || n >= argumentCount) {
+			throw new IllegalArgumentException("Argument " + n + " does not exist");
+		}
+	}
+
 	@Override
 	public double getIntegral(double start, double finish) {
 		return (finish - start) / getN0();

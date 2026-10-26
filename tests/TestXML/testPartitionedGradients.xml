@@ -1,0 +1,128 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Gradients across partitions, laid out as BEAUti writes codon positions: one treeDataLikelihood with three      -->
+<!-- partitions (codon positions of the b1 alignment: 15, 15, 14 sites), which parses to one tree data likelihood   -->
+<!-- per partition. HKY (kappa, frequencies) and the gamma shape are linked; each partition has its own relative     -->
+<!-- rate nu with weight 44 / sites, collected in allNus, which sums to one. Every report also checks the analytic  -->
+<!-- gradient against finite differences of the summed log likelihood.                                              -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/>
+    <taxon id="B"/>
+    <taxon id="C"/>
+    <taxon id="D"/>
+    <taxon id="E"/>
+  </taxa>
+  <alignment id="alignment" dataType="nucleotide">
+    <sequence><taxon idref="A"/>AAAAAACCCCGGGGGTTTTTTTAACAAAGTTACGARACCCGGTA</sequence>
+    <sequence><taxon idref="B"/>AAAAAACCCCGGGGGTTTTTTTAACGGCGTTATATAACCCGGCC</sequence>
+    <sequence><taxon idref="C"/>AAAAAACCCCGGGGGTTTTTTTGGTAAGGCCACGAA-CCCAATC</sequence>
+    <sequence><taxon idref="D"/>AAAAAACCCCGGGGGTTTTTTTGGTAATATTATATGGCCCGGCC</sequence>
+    <sequence><taxon idref="E"/>AAAAAACCCCGGGGGTTTTTTTGGTAAAATTGCGAGGTTTGGCA</sequence>
+  </alignment>
+  <patterns id="CP1.patterns" from="1" every="3" strip="false"><alignment idref="alignment"/></patterns>
+  <patterns id="CP2.patterns" from="2" every="3" strip="false"><alignment idref="alignment"/></patterns>
+  <patterns id="CP3.patterns" from="3" every="3" strip="false"><alignment idref="alignment"/></patterns>
+  <newick id="startingTree">
+    ((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);
+  </newick>
+  <treeModel id="treeModel">
+    <tree idref="startingTree"/>
+    <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+  <strictClockBranchRates id="branchRates">
+    <rate><parameter id="clock.rate" value="1.0" lower="0.0"/></rate>
+  </strictClockBranchRates>
+  <hkyModel id="hky">
+    <frequencies><frequencyModel dataType="nucleotide"><frequencies><parameter id="frequencies" value="0.1 0.2 0.3 0.4"/></frequencies></frequencyModel></frequencies>
+    <kappa><parameter id="kappa" value="2.5"/></kappa>
+  </hkyModel>
+
+  <siteModel id="CP1.siteModel">
+    <substitutionModel><hkyModel idref="hky"/></substitutionModel>
+    <relativeRate weight="2.933333333333333"><parameter id="CP1.nu" value="0.2" lower="0.0" upper="1.0"/></relativeRate>
+    <gammaShape gammaCategories="4"><parameter id="alpha" value="0.5" lower="0.0"/></gammaShape>
+  </siteModel>
+  <siteModel id="CP2.siteModel">
+    <substitutionModel><hkyModel idref="hky"/></substitutionModel>
+    <relativeRate weight="2.933333333333333"><parameter id="CP2.nu" value="0.3" lower="0.0" upper="1.0"/></relativeRate>
+    <gammaShape gammaCategories="4"><parameter idref="alpha"/></gammaShape>
+  </siteModel>
+  <siteModel id="CP3.siteModel">
+    <substitutionModel><hkyModel idref="hky"/></substitutionModel>
+    <relativeRate weight="3.142857142857143"><parameter id="CP3.nu" value="0.5" lower="0.0" upper="1.0"/></relativeRate>
+    <gammaShape gammaCategories="4"><parameter idref="alpha"/></gammaShape>
+  </siteModel>
+
+  <compoundParameter id="allNus">
+    <parameter idref="CP1.nu"/>
+    <parameter idref="CP2.nu"/>
+    <parameter idref="CP3.nu"/>
+  </compoundParameter>
+
+  <treeDataLikelihood id="treeLikelihood" usePreOrder="true" branchInfinitesimalDerivative="true">
+    <partition><patterns idref="CP1.patterns"/><siteModel idref="CP1.siteModel"/></partition>
+    <partition><patterns idref="CP2.patterns"/><siteModel idref="CP2.siteModel"/></partition>
+    <partition><patterns idref="CP3.patterns"/><siteModel idref="CP3.siteModel"/></partition>
+    <treeModel idref="treeModel"/>
+    <strictClockBranchRates idref="branchRates"/>
+  </treeDataLikelihood>
+
+  <siteRateModelGradient id="gradient.allNus" simplexSum="1.0" gradientCheckTolerance="1E-6">
+    <treeDataLikelihood idref="treeLikelihood"/>
+    <parameter idref="allNus"/>
+  </siteRateModelGradient>
+  <siteRateModelGradient id="gradient.alpha">
+    <treeDataLikelihood idref="treeLikelihood"/>
+    <parameter idref="alpha"/>
+  </siteRateModelGradient>
+  <branchSubstitutionParameterGradient id="gradient.kappa" homogeneous="true">
+    <treeDataLikelihood idref="treeLikelihood"/>
+    <parameter idref="kappa"/>
+  </branchSubstitutionParameterGradient>
+  <branchSubstitutionParameterGradient id="gradient.frequencies" homogeneous="true">
+    <treeDataLikelihood idref="treeLikelihood"/>
+    <parameter idref="frequencies"/>
+  </branchSubstitutionParameterGradient>
+
+  <assertEqual tolerance="1E-10" verbose="true">
+    <message>log likelihood, summed over the three partitions</message>
+    <actual regex="likelihood:\s+(.*)\n">
+      <likelihood><treeDataLikelihood idref="treeLikelihood"/></likelihood>
+    </actual>
+    <expected>-197.00029668458427</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.allNus">
+    <report><siteRateModelGradient idref="gradient.allNus"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>allNus, one block per partition</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.gradient.allNus"/></actual>
+    <expected>10.06620995674468 -3.3297494912765013 -5.582392679242879</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.alpha">
+    <report><siteRateModelGradient idref="gradient.alpha"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>alpha, linked across partitions</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.alpha"/></actual>
+    <expected>1.7003485912309304</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.kappa">
+    <report><branchSubstitutionParameterGradient idref="gradient.kappa"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>kappa, linked across partitions</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.gradient.kappa"/></actual>
+    <expected>3.257218986586883</expected>
+  </assertEqual>
+  <cachedReport id="report.gradient.frequencies">
+    <report><branchSubstitutionParameterGradient idref="gradient.frequencies"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>frequencies, linked across partitions</message>
+    <actual regex="analytic \(raw, extension-dependent, unchecked\): (.*?)\n"><cachedReport idref="report.gradient.frequencies"/></actual>
+    <expected>205.34743652166182 57.458045214747614 25.114568118694997 15.54039016232811</expected>
+  </assertEqual>
+</beast>

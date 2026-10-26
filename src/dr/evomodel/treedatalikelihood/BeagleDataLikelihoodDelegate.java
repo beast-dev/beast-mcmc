@@ -1336,6 +1336,45 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         }
     }
 
+    /**
+     * d log L / d w_c = sum_s w_s L_{s,c} / L_s for each rate category c, holding the category rates fixed, where
+     * L_{s,c} = pi' root_{c,s} and L_s = sum_c w_c L_{s,c}. Rescaling cancels within each site. Call after the
+     * likelihood is up to date.
+     */
+    public void getCategoryWeightDerivatives(int rootNodeNumber, double[] out) {
+
+        final double[] partials = new double[categoryCount * patternCount * stateCount];
+        getPartials(rootNodeNumber, partials);
+
+        final double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+        final double[] categoryWeights = siteRateModel.getCategoryProportions();
+        final double[] categoryLikelihoods = new double[categoryCount];
+
+        Arrays.fill(out, 0.0);
+        for (int s = 0; s < patternCount; s++) {
+            if (patternWeights[s] <= 0.0) {
+                continue;
+            }
+            double likelihood = 0.0;
+            for (int c = 0; c < categoryCount; c++) {
+                final int offset = (c * patternCount + s) * stateCount;
+                double categoryLikelihood = 0.0;
+                for (int k = 0; k < stateCount; k++) {
+                    categoryLikelihood += frequencies[k] * partials[offset + k];
+                }
+                categoryLikelihoods[c] = categoryLikelihood;
+                likelihood += categoryWeights[c] * categoryLikelihood;
+            }
+            if (!(likelihood > 0.0) || Double.isInfinite(likelihood)) {
+                Arrays.fill(out, Double.NaN);
+                return;
+            }
+            for (int c = 0; c < categoryCount; c++) {
+                out[c] += patternWeights[s] * categoryLikelihoods[c] / likelihood;
+            }
+        }
+    }
+
     private void setPartials(int number, double[] partials) {
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }

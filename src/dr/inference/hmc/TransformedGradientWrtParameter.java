@@ -72,6 +72,11 @@ public class TransformedGradientWrtParameter implements GradientWrtParameterProv
     }
 
     @Override
+    public GradientType getGradientType() {
+        return gradient.getGradientType();
+    }
+
+    @Override
     public int getDimension() {
         return parameter.getUntransformedParameter().getDimension();
     }

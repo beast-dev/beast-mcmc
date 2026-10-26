@@ -1,0 +1,66 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Gradient of the fixed local clock (as BEAUti writes it: absolute clade rates with includeStem) wrt the global -->
+<!-- rate and the clade rates, stacked in that order. The report compares the analytic gradient with numeric.   -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="A"/><taxon id="B"/><taxon id="C"/><taxon id="D"/><taxon id="E"/>
+  </taxa>
+  <taxa id="clade1"><taxon idref="C"/><taxon idref="D"/><taxon idref="E"/></taxa>
+  <taxa id="clade2"><taxon idref="A"/><taxon idref="B"/></taxa>
+  <taxa id="clade3"><taxon idref="D"/><taxon idref="E"/></taxa>
+  <alignment id="alignment" dataType="nucleotide">
+    <sequence><taxon idref="A"/>ACGTACGTTACGATCGATCGTAGCTAGCTAGCATCG</sequence>
+    <sequence><taxon idref="B"/>ACGTACGTAACGATCGTTCGTAGCTAGCTAGCATCA</sequence>
+    <sequence><taxon idref="C"/>ACGAACGTTACGTTCGATCGTAGGTAGCTAGGATCG</sequence>
+    <sequence><taxon idref="D"/>TCGTACGATACGATCGATCCTAGCTAGCAAGCATCG</sequence>
+    <sequence><taxon idref="E"/>TCGTACGATACGATCGATCCTAGCTTGCAAGCATGG</sequence>
+  </alignment>
+  <patterns id="patterns" from="1" strip="false"><alignment idref="alignment"/></patterns>
+  <newick id="startingTree">((A:0.12,B:0.12):0.31,(C:0.25,(D:0.07,E:0.07):0.18):0.18);</newick>
+  <treeModel id="treeModel">
+    <tree idref="startingTree"/>
+    <rootHeight><parameter id="treeModel.rootHeight"/></rootHeight>
+    <nodeHeights internalNodes="true"><parameter id="treeModel.internalNodeHeights"/></nodeHeights>
+    <nodeHeights internalNodes="true" rootNode="true"><parameter id="treeModel.allInternalNodeHeights"/></nodeHeights>
+  </treeModel>
+
+  <localClockModel id="branchRates">
+    <treeModel idref="treeModel"/>
+    <rate><parameter id="clock.rate" value="0.7" lower="0.0"/></rate>
+    <clade includeStem="false"><parameter id="clade1.rate" value="1.6" lower="0.0"/><taxa idref="clade1"/></clade>
+    <clade includeStem="true"><parameter id="clade2.rate" value="0.4" lower="0.0"/><taxa idref="clade2"/></clade>
+    <clade includeStem="true" relative="true"><parameter id="clade3.rate" value="2.0" lower="0.0"/><taxa idref="clade3"/></clade>
+  </localClockModel>
+
+  <HKYModel id="hky">
+    <frequencies><frequencyModel dataType="nucleotide">
+      <frequencies><parameter id="frequencies" value="0.1 0.2 0.3 0.4"/></frequencies>
+    </frequencyModel></frequencies>
+    <kappa><parameter id="kappa" value="2.0" lower="0.0"/></kappa>
+  </HKYModel>
+  <siteModel id="siteModel"><substitutionModel><HKYModel idref="hky"/></substitutionModel></siteModel>
+
+  <treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true">
+    <partition><patterns idref="patterns"/><siteModel idref="siteModel"/></partition>
+    <treeModel idref="treeModel"/>
+    <localClockModel idref="branchRates"/>
+  </treeDataLikelihood>
+
+  <branchRateGradient id="gradient.localClock" traitName="Sequence">
+    <treeDataLikelihood idref="treeLikelihood"/>
+  </branchRateGradient>
+
+  <cachedReport id="report.localClock">
+    <report><branchRateGradient idref="gradient.localClock"/></report>
+  </cachedReport>
+  <assertEqual tolerance="1E-6" verbose="true" charactersToStrip="\[\],">
+    <message>local clock gradient, analytic against numeric</message>
+    <actual regex="analytic:(.*?)\n"><cachedReport idref="report.localClock"/></actual>
+    <expected regex="numeric :(.*?)\n"><cachedReport idref="report.localClock"/></expected>
+  </assertEqual>
+  <assertEqual tolerance="1E-10" verbose="true" charactersToStrip="\[\],">
+    <message>local clock gradient (clock.rate, clade1.rate, clade2.rate, clade3.rate)</message>
+    <actual regex="analytic: (.*?)\n"><cachedReport idref="report.localClock"/></actual>
+    <expected>-19.199097590015516 -4.779193631968545 -10.76092204170486 -4.846249748794328</expected>
+  </assertEqual>
+</beast>

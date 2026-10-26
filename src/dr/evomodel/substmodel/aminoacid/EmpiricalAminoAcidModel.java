@@ -28,17 +28,21 @@
 package dr.evomodel.substmodel.aminoacid;
 
 import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModel;
+import dr.evomodel.substmodel.DifferentiableSubstitutionModelUtil;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evolution.datatype.AminoAcids;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.WrappedMatrix;
 
 /**
  * @author Marc A. Suchard
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class EmpiricalAminoAcidModel extends BaseSubstitutionModel {
+public class EmpiricalAminoAcidModel extends BaseSubstitutionModel implements DifferentiableSubstitutionModel {
 
     public EmpiricalAminoAcidModel(EmpiricalRateMatrix rateMatrix, FrequencyModel freqModel) {
 
@@ -67,6 +71,37 @@ public class EmpiricalAminoAcidModel extends BaseSubstitutionModel {
     }
 
     public EmpiricalRateMatrix getEmpiricalRateMatrix() { return rateMatrix; }
+
+    // **************************************************************
+    // DifferentiableSubstitutionModel IMPLEMENTATION (frequencies only)
+    // **************************************************************
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        return DifferentiableSubstitutionModelUtil.frequencyOnlyFactory(this, parameter, dim);
+    }
+
+    // The three methods below are only reached for non-frequency differentials, which factory() never returns
+
+    @Override
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+        throw new UnsupportedOperationException("EmpiricalAminoAcidModel is differentiable only with respect to its frequencies");
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        throw new UnsupportedOperationException("EmpiricalAminoAcidModel is differentiable only with respect to its frequencies");
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrt, double[][] differentialMassMatrix, double[] frequencies) {
+        throw new UnsupportedOperationException("EmpiricalAminoAcidModel is differentiable only with respect to its frequencies");
+    }
 
     private EmpiricalRateMatrix rateMatrix;
 }

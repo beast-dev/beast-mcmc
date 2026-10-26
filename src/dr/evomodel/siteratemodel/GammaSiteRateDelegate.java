@@ -31,12 +31,14 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.*;
 import dr.math.GeneralisedGaussLaguerreQuadrature;
 import dr.math.distributions.GammaDistribution;
+import dr.math.distributions.GammaQuantileDerivative;
 import dr.math.functionEval.GammaFunction;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -109,6 +111,76 @@ public class GammaSiteRateDelegate extends AbstractModel implements SiteRateDele
             categoryRates[0] = 1.0;
             categoryProportions[0] = 1.0;
         }
+    }
+
+    /**
+     * Derivatives of the category rates and proportions that getCategories produces, with respect to the gamma shape
+     * (wrtShape) or the proportion of invariant sites, including normalize() over all categories (the invariant one
+     * included). Pass NaN for an absent shape or proportion; mu is not applied.
+     */
+    public static void getCategoryDifferentials(double alpha, double pInv, int categoryCount, boolean wrtShape,
+                                                double[] dRates, double[] dProportions) {
+        Arrays.fill(dRates, 0.0);
+        Arrays.fill(dProportions, 0.0);
+        final boolean hasShape = !Double.isNaN(alpha);
+        final boolean hasInvariant = !Double.isNaN(pInv);
+        final int offset = hasInvariant ? 1 : 0;
+
+        if (wrtShape) {
+            if (!hasShape) {
+                throw new IllegalArgumentException("No gamma shape in this site-rate model");
+            }
+            // r_c = n q_c / sum q (normalize divides by the mean over all n categories); proportions do not move
+            final int gammaCatCount = categoryCount - offset;
+            final double[] q = new double[gammaCatCount];
+            final double[] dq = new double[gammaCatCount];
+            double sum = 0.0;
+            double dSum = 0.0;
+            for (int i = 0; i < gammaCatCount; i++) {
+                final double u = (2.0 * i + 1.0) / (2.0 * gammaCatCount);
+                q[i] = GammaDistribution.quantile(u, alpha, 1.0 / alpha);
+                dq[i] = GammaQuantileDerivative.meanOneQuantileDerivative(u, alpha);
+                sum += q[i];
+                dSum += dq[i];
+            }
+            for (int i = 0; i < gammaCatCount; i++) {
+                dRates[i + offset] = categoryCount * (dq[i] * sum - q[i] * dSum) / (sum * sum);
+            }
+        } else {
+            if (!hasInvariant) {
+                throw new IllegalArgumentException("No proportion of invariant sites in this site-rate model");
+            }
+            if (hasShape) {
+                // proportions (p, 1, ..., 1) / (p + K); the rates do not depend on p
+                final double gammaCatCount = categoryCount - 1;
+                final double denominator = pInv + gammaCatCount;
+                dProportions[0] = gammaCatCount / (denominator * denominator);
+                for (int c = 1; c < categoryCount; c++) {
+                    dProportions[c] = -1.0 / (denominator * denominator);
+                }
+            } else {
+                // proportions (p, 1 - p), rates (0, 2)
+                dProportions[0] = 1.0;
+                dProportions[1] = -1.0;
+            }
+        }
+    }
+
+    public boolean isDifferentiableWrtParameter(Parameter parameter) {
+        return parameter != null && (parameter == shapeParameter || parameter == invarParameter);
+    }
+
+    public boolean isShape(Parameter parameter) {
+        return parameter != null && parameter == shapeParameter;
+    }
+
+    public void getCategoryDifferentials(Parameter parameter, double[] dRates, double[] dProportions) {
+        if (!isDifferentiableWrtParameter(parameter)) {
+            throw new IllegalArgumentException(parameter.getId() + " is not a parameter of this site-rate model");
+        }
+        getCategoryDifferentials(shapeParameter == null ? Double.NaN : shapeParameter.getParameterValue(0),
+                invarParameter == null ? Double.NaN : invarParameter.getParameterValue(0),
+                categoryCount, parameter == shapeParameter, dRates, dProportions);
     }
 
     // *****************************************************************

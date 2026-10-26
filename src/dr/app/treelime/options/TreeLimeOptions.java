@@ -1215,6 +1215,8 @@ public class TreeLimeOptions extends ModelOptions {
 
     // MCMC options
     public MaximizationOptions maximizationOptions = new MaximizationOptions();
+    // the bootstrap replicate being written (S3g), or null: the partitions' patterns then read its resampled data
+    public transient BootstrapReplicate bootstrapReplicate = null;
 
     public int chainLength = 10000000;
     public int logEvery = 1000;

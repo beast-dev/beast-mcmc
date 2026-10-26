@@ -51,6 +51,7 @@ import dr.app.treelime.datapanel.DataPanel;
 import dr.app.treelime.generator.BeastGenerator;
 import dr.app.treelime.generator.Generator;
 import dr.app.treelime.maximizationpanel.MaximizationPanel;
+import dr.app.treelime.generator.BootstrapGenerator;
 import dr.app.treelime.options.MaximizationWarnings;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreePrior;
@@ -629,6 +630,49 @@ public class TreeLimeFrame extends DocumentFrame {
         String tw = TextUtil.wrapText(options.statusMessage(), statusLabel, width);
 //        System.out.println(this.getWidth() + "   " + tw);
         statusLabel.setText(tw);
+    }
+
+    /**
+     * Writes bootstrap replicate files (plan 8 S3g) into a folder the user chooses: one TreeLime XML per replicate,
+     * the counts that rebuild them, a run script and, optionally, a multi-PHYLIP file.
+     */
+    public final boolean doGenerateBootstrap(int replicates, long seed, boolean writePhylip) {
+        try {
+            generator.checkOptions();
+        } catch (Generator.GeneratorException ge) {
+            JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid TreeLime setting : ",
+                    JOptionPane.ERROR_MESSAGE);
+            if (ge.getSwitchToPanel() != null) {
+                switchToPanel(ge.getSwitchToPanel());
+            }
+            return false;
+        }
+
+        JFileChooser chooser = new JFileChooser(Utils.getCWD());
+        chooser.setDialogTitle("Folder for the bootstrap replicate files");
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return false;
+        }
+        File directory = chooser.getSelectedFile();
+        try {
+            getAllOptions();
+            new BootstrapGenerator(options, components).generate(directory, replicates, seed, writePhylip);
+        } catch (Generator.GeneratorException ge) {
+            JOptionPane.showMessageDialog(this, ge.getMessage(), "Cannot write the bootstrap replicates",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            JOptionPane.showMessageDialog(this, "Cannot write the bootstrap replicates: " + e.getMessage(),
+                    "Cannot write the bootstrap replicates", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        JOptionPane.showMessageDialog(this, "<html>Wrote " + replicates + " replicate files to " + directory +
+                        ".<br>Run them with " + BootstrapGenerator.SCRIPT_FILE + "; " + BootstrapGenerator.COUNTS_FILE +
+                        " records the draws.<br>Each replicate keeps the original starting tree (fixed topology).</html>",
+                "Bootstrap replicates", JOptionPane.INFORMATION_MESSAGE);
+        return true;
     }
 
     public final boolean doGenerate() {

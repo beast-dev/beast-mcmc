@@ -132,6 +132,15 @@ public class PatternListGenerator extends Generator {
         int from = partition.getFromSite();
         int to = partition.getToSite();
         int partEvery = partition.getEvery();
+        double[] counts = partition.getConstantSiteCounts();
+        if (options.bootstrapReplicate != null && options.bootstrapReplicate.getAlignment(partition) != null) {
+            // a bootstrap replicate: the partition's resampled columns, whole (codon positions keep their slots)
+            alignment = options.bootstrapReplicate.getAlignment(partition);
+            from = 1;
+            to = -1;
+            partEvery = 1;
+            counts = options.bootstrapReplicate.getConstantSiteCounts(partition);
+        }
         if (partEvery > 1 && every > 1) throw new IllegalArgumentException();
 
         if (from < 1) from = 1;
@@ -171,7 +180,6 @@ public class PatternListGenerator extends Generator {
         // generate <patterns>
         writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
         writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
-        double[] counts = partition.getConstantSiteCounts();
         if (counts != null) {
             // a SNP alignment padded with the constant columns left out of it (IQ-TREE -fconst): the counts become
             // weights of the constant patterns, so the likelihood and every gradient are those of the full alignment

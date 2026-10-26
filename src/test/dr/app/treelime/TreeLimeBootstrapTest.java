@@ -1,0 +1,324 @@
+/*
+ * TreeLimeBootstrapTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package test.dr.app.treelime;
+
+import dr.app.beast.BeastParser;
+import dr.app.beast.BeastVersion;
+import dr.app.treelime.generator.BootstrapGenerator;
+import dr.app.treelime.options.PartitionData;
+import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.options.TreeLimeOptions;
+import dr.app.treelime.types.StartingTreeType;
+import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.SiteResampler;
+import dr.evolution.tree.Tree;
+import dr.xml.XMLObject;
+import junit.framework.TestCase;
+
+import java.io.File;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+/**
+ * Bootstrap replicate files (plan 8 S3g): seeded and reproducible, columns resampled within each model partition,
+ * the identity replicate gives the original likelihood, the replicate's pattern weights are its counts, and the
+ * multi-PHYLIP replicate is the same data as the replicate's XML.
+ */
+public class TreeLimeBootstrapTest extends TestCase {
+
+    private static final String DATA = "examples/Data/Dengue4.env.nex";
+
+    public TreeLimeBootstrapTest(String name) {
+        super(name);
+    }
+
+    public void testSeededFilesAreIdentical() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null) {
+            return;
+        }
+        File first = directory();
+        File second = directory();
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        generator.generate(first, 3, 42, true);
+        generator.generate(second, 3, 42, true);
+        for (String name : new String[]{"rep1.xml", "rep2.xml", "rep3.xml", BootstrapGenerator.COUNTS_FILE,
+                BootstrapGenerator.PHYLIP_FILE, BootstrapGenerator.SCRIPT_FILE}) {
+            assertTrue(name, Arrays.equals(bytes(first, name), bytes(second, name)));
+        }
+        assertTrue(new File(first, BootstrapGenerator.SCRIPT_FILE).canExecute());
+
+        // one replicate on its own is the same file
+        File single = directory();
+        generator.writeReplicate(single, 2, 42);
+        assertTrue(Arrays.equals(bytes(first, "rep2.xml"), bytes(single, "rep2.xml")));
+        // another seed gives other data
+        File other = directory();
+        generator.writeReplicate(other, 2, 43);
+        assertFalse(Arrays.equals(bytes(first, "rep2.xml"), bytes(other, "rep2.xml")));
+
+        String counts = new String(bytes(first, BootstrapGenerator.COUNTS_FILE));
+        assertTrue(counts.contains("master_seed=42"));
+        assertEquals("one row per replicate and partition", 3, countRows(counts));
+        String xml = new String(bytes(first, "rep1.xml"));
+        assertTrue(xml.contains("<alignment id=\"bootstrap.alignment\""));
+        assertTrue(xml.contains("<alignment idref=\"bootstrap.alignment\"/>"));
+        assertTrue(xml.contains("rep1.max.txt"));
+    }
+
+    public void testCountsSumAndMoments() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null) {
+            return;
+        }
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        for (int b = 1; b <= 5; b++) {
+            for (BootstrapGenerator.PartitionDraw draw : generator.draw(b, 7)) {
+                int sum = 0;
+                for (int count : draw.siteCounts) {
+                    sum += count;
+                }
+                assertEquals(BootstrapGenerator.sites(draw.partition).length, sum);
+            }
+        }
+
+        // every column is drawn once on average, with variance 1 - 1/n
+        final int n = 20;
+        final int draws = 20000;
+        double[] sum = new double[n];
+        double[] sumOfSquares = new double[n];
+        for (int r = 0; r < draws; r++) {
+            int[] counts = SiteResampler.resample(n, new Random(SiteResampler.replicateSeed(11, r)));
+            for (int i = 0; i < n; i++) {
+                sum[i] += counts[i];
+                sumOfSquares[i] += counts[i] * counts[i];
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            double mean = sum[i] / draws;
+            double variance = sumOfSquares[i] / draws - mean * mean;
+            assertEquals("mean of column " + i, 1.0, mean, 0.03);
+            assertEquals("variance of column " + i, 1.0 - 1.0 / n, variance, 0.06);
+        }
+    }
+
+    public void testIdentityReplicateIsTheOriginal() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null) {
+            return;
+        }
+        double original = logL(TreeLimeHarness.generate(options));
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        File directory = directory();
+        generator.writeReplicate(directory, 1, generator.identity());
+        double identity = logL(new String(bytes(directory, "rep1.xml")));
+        assertEquals(original, identity, 1E-10 * Math.abs(original));
+    }
+
+    public void testPatternWeightsAreTheCounts() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null) {
+            return;
+        }
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        List<BootstrapGenerator.PartitionDraw> draws = generator.draw(4, 99);
+        File directory = directory();
+        generator.writeReplicate(directory, 4, draws);
+        PatternList patterns = (PatternList) parse(new String(bytes(directory, "rep4.xml"))).get("patterns")
+                .getNativeObject();
+
+        // the weight of each pattern implied by the counts of the original columns
+        BootstrapGenerator.PartitionDraw draw = draws.get(0);
+        Alignment alignment = draw.partition.getAlignment();
+        int[] sites = BootstrapGenerator.sites(draw.partition);
+        Map<String, Double> expected = new HashMap<String, Double>();
+        for (int i = 0; i < sites.length; i++) {
+            if (draw.siteCounts[i] > 0) {
+                expected.merge(Arrays.toString(alignment.getSitePattern(sites[i])), (double) draw.siteCounts[i], Double::sum);
+            }
+        }
+        Map<String, Double> actual = new HashMap<String, Double>();
+        for (int p = 0; p < patterns.getPatternCount(); p++) {
+            actual.merge(Arrays.toString(patterns.getPattern(p)), patterns.getPatternWeight(p), Double::sum);
+        }
+        assertEquals(expected, actual);
+    }
+
+    // a column drawn for codon position k always fills a position-k slot; under 112 positions 1 and 2 are pooled
+    public void testCodonPositionsKeepTheirStructure() throws Exception {
+        for (String pattern : new String[]{"123", "112"}) {
+            TreeLimeOptions options = options();
+            if (options == null) {
+                return;
+            }
+            PartitionData partition = (PartitionData) options.dataPartitions.get(0);
+            partition.getPartitionSubstitutionModel().setCodonHeteroPattern(pattern);
+            BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+            Alignment original = partition.getAlignment();
+            int[] sites = BootstrapGenerator.sites(partition);
+            for (int b = 1; b <= 3; b++) {
+                BootstrapGenerator.PartitionDraw draw = generator.draw(b, 5).get(0);
+                Alignment replicate = BootstrapGenerator.replicateAlignment(draw);
+                assertEquals(sites.length, replicate.getSiteCount());
+                for (int slot = 0; slot < replicate.getSiteCount(); slot++) {
+                    int[] column = replicate.getSitePattern(slot);
+                    boolean found = false;
+                    for (int i = 0; i < sites.length && !found; i++) {
+                        found = sameGroup(pattern, i % 3, slot % 3) && draw.siteCounts[i] > 0 &&
+                                Arrays.equals(column, original.getSitePattern(sites[i]));
+                    }
+                    assertTrue(pattern + ": slot " + slot + " has a column from another codon position", found);
+                }
+            }
+            // and the XML still reads the positions as before
+            String xml = new String(bytes(writeOne(generator, 1, 5), "rep1.xml"));
+            assertTrue(xml.contains("every=\"3\""));
+            parse(xml);
+        }
+    }
+
+    // replicate b in the multi-PHYLIP file is the replicate's data: with padded constant sites written out as
+    // columns, it gives the same likelihood as the replicate's XML, which pads them as counts
+    public void testPhylipIsTheReplicate() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null) {
+            return;
+        }
+        PartitionData partition = (PartitionData) options.dataPartitions.get(0);
+        partition.setConstantSiteCounts(new double[]{30, 20, 25, 15});
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        File directory = directory();
+        generator.generate(directory, 2, 21, true);
+        String xml = new String(bytes(directory, "rep2.xml"));
+        assertTrue(xml.contains("<constantPatterns>"));
+
+        // replicate 2 from the PHYLIP file, as a FASTA alignment of its own
+        String[] blocks = new String(bytes(directory, BootstrapGenerator.PHYLIP_FILE)).trim().split("\n\n");
+        assertEquals(2, blocks.length);
+        String[] lines = blocks[1].split("\n");
+        StringBuilder fasta = new StringBuilder();
+        for (int i = 1; i < lines.length; i++) {
+            String[] fields = lines[i].split(" ");
+            fasta.append('>').append(fields[0]).append('\n').append(fields[1]).append('\n');
+        }
+        File fastaFile = new File(directory, "rep2.fasta");
+        Files.write(fastaFile.toPath(), fasta.toString().getBytes());
+        TreeLimeOptions phylip = TreeLimeHarness.importData(fastaFile.getPath());
+        TreeLimeHarness.setTipDatesFromNames(phylip);
+        Tree start = (Tree) parse(xml).get("startingTree").getNativeObject();
+        for (PartitionTreeModel tree : phylip.getPartitionTreeModels()) {
+            tree.setStartingTreeType(StartingTreeType.USER);
+            tree.setUserStartingTree(start);
+        }
+        phylip.maximizationOptions.printToScreen = false;
+        double fromPhylip = logL(TreeLimeHarness.generate(phylip));
+        double fromXml = logL(xml);
+        assertEquals(fromXml, fromPhylip, 1E-8 * Math.abs(fromXml));
+    }
+
+    public void testPriorOnlyIsRefused() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null) {
+            return;
+        }
+        options.samplePriorOnly = true;
+        try {
+            new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS).generate(directory(), 2, 1, false);
+            fail("expected a refusal");
+        } catch (dr.app.treelime.generator.Generator.GeneratorException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("prior only"));
+        }
+    }
+
+    private static boolean sameGroup(String pattern, int a, int b) {
+        if (pattern.equals("112")) {
+            return (a == 2) == (b == 2);
+        }
+        return a == b;
+    }
+
+    private static int countRows(String counts) {
+        int rows = 0;
+        for (String line : counts.split("\n")) {
+            if (!line.startsWith("#") && !line.startsWith("replicate")) {
+                rows++;
+            }
+        }
+        return rows;
+    }
+
+    private static File writeOne(BootstrapGenerator generator, int replicate, long seed) throws Exception {
+        File directory = directory();
+        generator.writeReplicate(directory, replicate, seed);
+        return directory;
+    }
+
+    private static TreeLimeOptions options() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(DATA);
+        if (options == null) {
+            return null;
+        }
+        TreeLimeHarness.setTipDatesFromNames(options);
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            tree.setStartingTreeType(StartingTreeType.UPGMA);
+        }
+        options.fileNameStem = "dengue";
+        options.maximizationOptions.printToScreen = false;
+        options.selectParameters();
+        options.selectOperators();
+        return options;
+    }
+
+    private static File directory() throws Exception {
+        File directory = Files.createTempDirectory("treelimeBootstrap").toFile();
+        directory.deleteOnExit();
+        return directory;
+    }
+
+    private static byte[] bytes(File directory, String name) throws Exception {
+        return Files.readAllBytes(new File(directory, name).toPath());
+    }
+
+    private static Map<String, XMLObject> parse(String xml) throws Exception {
+        xml = xml.replace("<maximizeWrtParameter id=\"maximizer\"",
+                "<maximizeWrtParameter id=\"maximizer\" maximizeOnParse=\"false\"");
+        xml = xml.substring(0, xml.indexOf("<!-- The optimum")) + "</beast>\n";
+        BeastParser parser = new BeastParser(new String[]{}, null, false, false, false, new BeastVersion());
+        return parser.parse(new StringReader(xml), false);
+    }
+
+    private static double logL(String xml) throws Exception {
+        return ((dr.inference.model.Likelihood) parse(xml).get("likelihood").getNativeObject()).getLogLikelihood();
+    }
+}

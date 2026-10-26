@@ -412,6 +412,17 @@ public class BeastGenerator extends Generator {
             }
             if (alignments.size() > 0) {
                 alignmentGenerator.writeAlignments(alignments, writer);
+                // a bootstrap replicate: each partition's resampled columns; the originals above still give the
+                // starting tree, so the topology is the original fit's
+                if (options.bootstrapReplicate != null) {
+                    for (AbstractPartitionData partition : options.dataPartitions) {
+                        Alignment replicate = partition instanceof PartitionData ?
+                                options.bootstrapReplicate.getAlignment((PartitionData) partition) : null;
+                        if (replicate != null) {
+                            alignmentGenerator.writeBootstrapAlignment(replicate, writer);
+                        }
+                    }
+                }
                 generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
             }
         } catch (Exception e) {

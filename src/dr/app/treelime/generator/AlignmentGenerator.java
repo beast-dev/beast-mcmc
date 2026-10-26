@@ -84,6 +84,15 @@ public class AlignmentGenerator extends Generator {
     }
 
     /**
+     * Writes a bootstrap replicate's resampled alignment (its id already set), next to the original alignments.
+     */
+    public void writeBootstrapAlignment(Alignment alignment, XMLWriter writer) {
+        writer.writeComment("A bootstrap replicate: this partition's columns resampled with replacement");
+        writeAlignment(alignment, writer);
+        writer.writeText("");
+    }
+
+    /**
      * Generate an alignment block from these beast options
      *
      * @param alignment the alignment to write

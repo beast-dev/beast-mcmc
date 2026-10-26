@@ -73,6 +73,9 @@ public class MaximizationPanel extends TreeLimePanel {
     private final JCheckBox printToScreenCheck = new JCheckBox("Print each iteration to the screen");
     private final JTextField reportFileField = new JTextField(32);
     private final JLabel statusLabel = new JLabel();
+    private final WholeNumberField replicatesField = new WholeNumberField(1, 100000);
+    private final WholeNumberField seedField = new WholeNumberField(0, Integer.MAX_VALUE);
+    private final JCheckBox phylipCheck = new JCheckBox("Also a multi-PHYLIP file, for IQ-TREE or RAxML-NG");
 
     private final ParameterTableModel tableModel = new ParameterTableModel();
     private final OptionsPanel optionsPanel;
@@ -176,6 +179,53 @@ public class MaximizationPanel extends TreeLimePanel {
             maximization().reportFileName = name.isEmpty() ? null : name;
         });
 
+        optionsPanel.addSeparator();
+
+        // bootstrap replicate files (plan 8 S3g): the maximization of each replicate runs in BEAST, like the original
+        replicatesField.setColumns(6);
+        replicatesField.setBorder(new EmptyBorder(FIELD_INSETS));
+        replicatesField.setToolTipText("<html>Nonparametric bootstrap: each replicate resamples the columns of every " +
+                "partition with replacement<br>and keeps the original starting tree (a fixed-topology bootstrap).</html>");
+        seedField.setColumns(8);
+        seedField.setBorder(new EmptyBorder(FIELD_INSETS));
+        seedField.setToolTipText("The same seed always writes the same replicates.");
+        JButton bootstrapButton = new JButton("Generate replicate files...");
+        bootstrapButton.setToolTipText("<html>Writes one TreeLime XML per replicate, the counts that rebuild them " +
+                "and a script that runs them in BEAST.</html>");
+        bootstrapButton.addActionListener(e -> {
+            Integer replicates = replicatesField.getValue();
+            Integer seed = seedField.getValue();
+            if (replicates != null && seed != null) {
+                frame.doGenerateBootstrap(replicates, seed, phylipCheck.isSelected());
+            }
+        });
+        JPanel bootstrapPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        bootstrapPanel.setOpaque(false);
+        bootstrapPanel.add(replicatesField);
+        bootstrapPanel.add(new JLabel("seed:"));
+        bootstrapPanel.add(seedField);
+        bootstrapPanel.add(bootstrapButton);
+        optionsPanel.addComponentWithLabel("Bootstrap replicates:", bootstrapPanel);
+        optionsPanel.addComponent(phylipCheck);
+        onEdit(replicatesField, () -> {
+            Integer value = replicatesField.getValue();
+            if (value != null && value >= 1) {
+                maximization().bootstrapReplicates = value;
+            }
+        });
+        onEdit(seedField, () -> {
+            Integer value = seedField.getValue();
+            if (value != null) {
+                maximization().bootstrapSeed = value;
+            }
+        });
+        phylipCheck.addActionListener(e -> {
+            if (!settingOptions) {
+                maximization().bootstrapPhylip = phylipCheck.isSelected();
+                frame.setDirty();
+            }
+        });
+
         JTable table = new JTable(tableModel) {
             // the reasons a parameter is held fixed and the gradient descriptions can be longer than their columns
             public String getToolTipText(java.awt.event.MouseEvent event) {
@@ -258,6 +308,10 @@ public class MaximizationPanel extends TreeLimePanel {
         stepSizeCombo.setEnabled(!maximization.isAnalytic());
         printToScreenCheck.setSelected(maximization.printToScreen);
         reportFileField.setText(maximization.getReportFileName(options.fileNameStem));
+        // files saved before these settings existed have zeros
+        replicatesField.setValue(maximization.bootstrapReplicates >= 1 ? maximization.bootstrapReplicates : 100);
+        seedField.setValue((int) Math.max(0, Math.min(Integer.MAX_VALUE, maximization.bootstrapSeed)));
+        phylipCheck.setSelected(maximization.bootstrapReplicates < 1 || maximization.bootstrapPhylip);
         settingOptions = false;
 
         tableModel.setParameters(options.selectParameters());

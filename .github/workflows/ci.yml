@@ -192,3 +192,10 @@ jobs:
             - name: Run JUnit tests
               run: |
                   ant -Djava.library.path=${BEAGLE_LIB} junit
+            # the console shows only which tests failed; the reports hold the messages, stack traces and output
+            - name: Upload JUnit reports
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: junit-reports
+                  path: build/junitreport

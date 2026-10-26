@@ -53,8 +53,7 @@ import java.util.Random;
  * the columns of every partition with replacement, within each model partition (codon positions 1+2 pooled, or 1, 2
  * and 3 separately; padded constant sites included), and is written as an ordinary TreeLime XML whose partitions read
  * the resampled data. The starting tree still comes from the original data, so every replicate keeps the original
- * topology: a fixed-topology bootstrap. A counts file rebuilds any replicate; an optional multi-PHYLIP file holds the
- * same replicates for IQ-TREE or RAxML-NG.
+ * topology: a fixed-topology bootstrap. A counts file rebuilds any replicate.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -63,7 +62,6 @@ public class BootstrapGenerator extends Generator {
 
     public static final String VERSION = "TreeLime bootstrap 1";
     public static final String COUNTS_FILE = "bootstrap.counts.tsv";
-    public static final String PHYLIP_FILE = "bootstrap.phy";
     public static final String SCRIPT_FILE = "run_replicates.sh";
 
     private final ComponentFactory[] components;
@@ -303,9 +301,9 @@ public class BootstrapGenerator extends Generator {
     }
 
     /**
-     * Writes replicates 1 to B, the counts file, the run script and, optionally, the multi-PHYLIP file.
+     * Writes replicates 1 to B, the counts file and the run script.
      */
-    public void generate(File directory, int replicates, long masterSeed, boolean writePhylip) throws Exception {
+    public void generate(File directory, int replicates, long masterSeed) throws Exception {
         if (replicates < 1) {
             throw new GeneratorException("Choose at least one bootstrap replicate.");
         }
@@ -316,7 +314,6 @@ public class BootstrapGenerator extends Generator {
         }
 
         PrintWriter counts = new PrintWriter(new FileWriter(new File(directory, COUNTS_FILE)));
-        PrintWriter phylip = writePhylip ? new PrintWriter(new FileWriter(new File(directory, PHYLIP_FILE))) : null;
         try {
             counts.println("# " + VERSION + ": how often each column of each partition was drawn");
             counts.println("# master_seed=" + masterSeed + "\treplicates=" + replicates + "\tstem=" + options.fileNameStem);
@@ -347,53 +344,11 @@ public class BootstrapGenerator extends Generator {
                     }
                     counts.println(row);
                 }
-                if (phylip != null) {
-                    writePhylip(draws, phylip);
-                }
             }
         } finally {
             counts.close();
-            if (phylip != null) {
-                phylip.close();
-            }
         }
         writeScript(directory, replicates);
-    }
-
-    /**
-     * One replicate as relaxed PHYLIP: the partitions' resampled columns concatenated, padded constant sites written
-     * out as columns.
-     */
-    static void writePhylip(List<PartitionDraw> draws, PrintWriter out) {
-        Alignment first = draws.get(0).partition.getAlignment();
-        List<StringBuilder> sequences = new ArrayList<StringBuilder>();
-        for (int t = 0; t < first.getSequenceCount(); t++) {
-            sequences.add(new StringBuilder());
-        }
-        for (PartitionDraw draw : draws) {
-            Alignment alignment = replicateAlignment(draw);
-            for (int t = 0; t < first.getSequenceCount(); t++) {
-                int index = alignment.getTaxonIndex(first.getTaxonId(t));
-                if (index < 0) {
-                    throw new IllegalArgumentException("Taxon " + first.getTaxonId(t) + " is not in partition " +
-                            draw.partition.getName() + ": the partitions cannot be concatenated");
-                }
-                sequences.get(t).append(alignment.getAlignedSequenceString(index));
-                if (draw.constantCounts != null) {
-                    for (int state = 0; state < draw.constantCounts.length; state++) {
-                        char code = alignment.getDataType().getChar(state);
-                        for (int k = 0; k < (long) draw.constantCounts[state]; k++) {
-                            sequences.get(t).append(code);
-                        }
-                    }
-                }
-            }
-        }
-        out.println(first.getSequenceCount() + " " + sequences.get(0).length());
-        for (int t = 0; t < first.getSequenceCount(); t++) {
-            out.println(first.getTaxonId(t) + " " + sequences.get(t));
-        }
-        out.println();
     }
 
     private void writeScript(File directory, int replicates) throws IOException {

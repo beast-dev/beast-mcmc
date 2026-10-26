@@ -634,9 +634,9 @@ public class TreeLimeFrame extends DocumentFrame {
 
     /**
      * Writes bootstrap replicate files (plan 8 S3g) into a folder the user chooses: one TreeLime XML per replicate,
-     * the counts that rebuild them, a run script and, optionally, a multi-PHYLIP file.
+     * the counts that rebuild them and a run script.
      */
-    public final boolean doGenerateBootstrap(int replicates, long seed, boolean writePhylip) {
+    public final boolean doGenerateBootstrap(int replicates, long seed) {
         try {
             generator.checkOptions();
         } catch (Generator.GeneratorException ge) {
@@ -657,7 +657,7 @@ public class TreeLimeFrame extends DocumentFrame {
         File directory = chooser.getSelectedFile();
         try {
             getAllOptions();
-            new BootstrapGenerator(options, components).generate(directory, replicates, seed, writePhylip);
+            new BootstrapGenerator(options, components).generate(directory, replicates, seed);
         } catch (Generator.GeneratorException ge) {
             JOptionPane.showMessageDialog(this, ge.getMessage(), "Cannot write the bootstrap replicates",
                     JOptionPane.ERROR_MESSAGE);

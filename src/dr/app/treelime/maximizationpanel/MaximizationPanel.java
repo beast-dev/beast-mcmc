@@ -75,7 +75,6 @@ public class MaximizationPanel extends TreeLimePanel {
     private final JLabel statusLabel = new JLabel();
     private final WholeNumberField replicatesField = new WholeNumberField(1, 100000);
     private final WholeNumberField seedField = new WholeNumberField(0, Integer.MAX_VALUE);
-    private final JCheckBox phylipCheck = new JCheckBox("Also a multi-PHYLIP file, for IQ-TREE or RAxML-NG");
 
     private final ParameterTableModel tableModel = new ParameterTableModel();
     private final OptionsPanel optionsPanel;
@@ -196,7 +195,7 @@ public class MaximizationPanel extends TreeLimePanel {
             Integer replicates = replicatesField.getValue();
             Integer seed = seedField.getValue();
             if (replicates != null && seed != null) {
-                frame.doGenerateBootstrap(replicates, seed, phylipCheck.isSelected());
+                frame.doGenerateBootstrap(replicates, seed);
             }
         });
         JPanel bootstrapPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
@@ -206,7 +205,6 @@ public class MaximizationPanel extends TreeLimePanel {
         bootstrapPanel.add(seedField);
         bootstrapPanel.add(bootstrapButton);
         optionsPanel.addComponentWithLabel("Bootstrap replicates:", bootstrapPanel);
-        optionsPanel.addComponent(phylipCheck);
         onEdit(replicatesField, () -> {
             Integer value = replicatesField.getValue();
             if (value != null && value >= 1) {
@@ -217,12 +215,6 @@ public class MaximizationPanel extends TreeLimePanel {
             Integer value = seedField.getValue();
             if (value != null) {
                 maximization().bootstrapSeed = value;
-            }
-        });
-        phylipCheck.addActionListener(e -> {
-            if (!settingOptions) {
-                maximization().bootstrapPhylip = phylipCheck.isSelected();
-                frame.setDirty();
             }
         });
 
@@ -311,7 +303,6 @@ public class MaximizationPanel extends TreeLimePanel {
         // files saved before these settings existed have zeros
         replicatesField.setValue(maximization.bootstrapReplicates >= 1 ? maximization.bootstrapReplicates : 100);
         seedField.setValue((int) Math.max(0, Math.min(Integer.MAX_VALUE, maximization.bootstrapSeed)));
-        phylipCheck.setSelected(maximization.bootstrapReplicates < 1 || maximization.bootstrapPhylip);
         settingOptions = false;
 
         tableModel.setParameters(options.selectParameters());

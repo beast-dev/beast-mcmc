@@ -52,8 +52,8 @@ import java.util.Random;
 
 /**
  * Bootstrap replicate files (plan 8 S3g): seeded and reproducible, columns resampled within each model partition,
- * the identity replicate gives the original likelihood, the replicate's pattern weights are its counts, and the
- * multi-PHYLIP replicate is the same data as the replicate's XML.
+ * the identity replicate gives the original likelihood, the replicate's pattern weights are its counts, and a padded
+ * replicate's redrawn constant-site counts are the constant columns it drew.
  */
 public class TreeLimeBootstrapTest extends TestCase {
 
@@ -71,10 +71,10 @@ public class TreeLimeBootstrapTest extends TestCase {
         File first = directory();
         File second = directory();
         BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
-        generator.generate(first, 3, 42, true);
-        generator.generate(second, 3, 42, true);
+        generator.generate(first, 3, 42);
+        generator.generate(second, 3, 42);
         for (String name : new String[]{"rep1.xml", "rep2.xml", "rep3.xml", BootstrapGenerator.COUNTS_FILE,
-                BootstrapGenerator.PHYLIP_FILE, BootstrapGenerator.SCRIPT_FILE}) {
+                BootstrapGenerator.SCRIPT_FILE}) {
             assertTrue(name, Arrays.equals(bytes(first, name), bytes(second, name)));
         }
         assertTrue(new File(first, BootstrapGenerator.SCRIPT_FILE).canExecute());
@@ -208,9 +208,9 @@ public class TreeLimeBootstrapTest extends TestCase {
         }
     }
 
-    // replicate b in the multi-PHYLIP file is the replicate's data: with padded constant sites written out as
-    // columns, it gives the same likelihood as the replicate's XML, which pads them as counts
-    public void testPhylipIsTheReplicate() throws Exception {
+    // a padded partition's constant sites are drawn with its columns: the replicate's XML, which pads the redrawn
+    // constant-site counts, gives the likelihood of its drawn columns with those constant sites written out
+    public void testPaddedReplicateIsItsDraw() throws Exception {
         TreeLimeOptions options = options();
         if (options == null) {
             return;
@@ -219,32 +219,46 @@ public class TreeLimeBootstrapTest extends TestCase {
         partition.setConstantSiteCounts(new double[]{30, 20, 25, 15});
         BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
         File directory = directory();
-        generator.generate(directory, 2, 21, true);
+        generator.generate(directory, 2, 21);
         String xml = new String(bytes(directory, "rep2.xml"));
         assertTrue(xml.contains("<constantPatterns>"));
 
-        // replicate 2 from the PHYLIP file, as a FASTA alignment of its own
-        String[] blocks = new String(bytes(directory, BootstrapGenerator.PHYLIP_FILE)).trim().split("\n\n");
-        assertEquals(2, blocks.length);
-        String[] lines = blocks[1].split("\n");
+        // replicate 2's draw with its constant sites written out as columns, as a FASTA alignment of its own
+        BootstrapGenerator.PartitionDraw draw = generator.draw(2, 21).get(0);
+        double drawn = 0;
+        for (double count : draw.constantCounts) {
+            drawn += count;
+        }
+        int columns = 0;
+        for (int count : draw.siteCounts) {
+            columns += count;
+        }
+        assertEquals("columns and constant sites drawn", BootstrapGenerator.sites(partition).length + 90,
+                columns + (int) drawn);
+        Alignment replicate = BootstrapGenerator.replicateAlignment(draw);
         StringBuilder fasta = new StringBuilder();
-        for (int i = 1; i < lines.length; i++) {
-            String[] fields = lines[i].split(" ");
-            fasta.append('>').append(fields[0]).append('\n').append(fields[1]).append('\n');
+        for (int t = 0; t < replicate.getSequenceCount(); t++) {
+            fasta.append('>').append(replicate.getTaxonId(t)).append('\n').append(replicate.getAlignedSequenceString(t));
+            for (int state = 0; state < draw.constantCounts.length; state++) {
+                for (int k = 0; k < (int) draw.constantCounts[state]; k++) {
+                    fasta.append(replicate.getDataType().getChar(state));
+                }
+            }
+            fasta.append('\n');
         }
         File fastaFile = new File(directory, "rep2.fasta");
         Files.write(fastaFile.toPath(), fasta.toString().getBytes());
-        TreeLimeOptions phylip = TreeLimeHarness.importData(fastaFile.getPath());
-        TreeLimeHarness.setTipDatesFromNames(phylip);
+        TreeLimeOptions written = TreeLimeHarness.importData(fastaFile.getPath());
+        TreeLimeHarness.setTipDatesFromNames(written);
         Tree start = (Tree) parse(xml).get("startingTree").getNativeObject();
-        for (PartitionTreeModel tree : phylip.getPartitionTreeModels()) {
+        for (PartitionTreeModel tree : written.getPartitionTreeModels()) {
             tree.setStartingTreeType(StartingTreeType.USER);
             tree.setUserStartingTree(start);
         }
-        phylip.maximizationOptions.printToScreen = false;
-        double fromPhylip = logL(TreeLimeHarness.generate(phylip));
+        written.maximizationOptions.printToScreen = false;
+        double fromColumns = logL(TreeLimeHarness.generate(written));
         double fromXml = logL(xml);
-        assertEquals(fromXml, fromPhylip, 1E-8 * Math.abs(fromXml));
+        assertEquals(fromXml, fromColumns, 1E-8 * Math.abs(fromXml));
     }
 
     public void testPriorOnlyIsRefused() throws Exception {
@@ -254,7 +268,7 @@ public class TreeLimeBootstrapTest extends TestCase {
         }
         options.samplePriorOnly = true;
         try {
-            new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS).generate(directory(), 2, 1, false);
+            new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS).generate(directory(), 2, 1);
             fail("expected a refusal");
         } catch (dr.app.treelime.generator.Generator.GeneratorException e) {
             assertTrue(e.getMessage(), e.getMessage().contains("prior only"));

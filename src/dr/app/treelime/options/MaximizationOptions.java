@@ -113,7 +113,6 @@ public class MaximizationOptions implements Serializable {
     // bootstrap replicate files (plan 8 S3g); 0 in files saved before the setting existed
     public int bootstrapReplicates = 100;
     public long bootstrapSeed = 1;
-    public boolean bootstrapPhylip = true;
     // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
     private Map<String, Double> lowerBounds = new HashMap<String, Double>();
 

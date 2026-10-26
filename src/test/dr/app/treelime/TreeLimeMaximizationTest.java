@@ -138,9 +138,8 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertFalse(TreeLimeHarness.generate(options).contains("<holdAtLowerBound"));
     }
 
-    // a fixed local clock on a monophyletic taxon set: the UPGMA start keeps the clade (plain UPGMA splits this
-    // pair), and the clade rate gets the clock's analytic branch-rate gradient, masked to its own coordinate
-    public void testFixedLocalClockOnAMonophyleticSet() throws Exception {
+    // a monophyletic taxon set that plain UPGMA splits: the UPGMA start is built with the set as a constraint
+    public void testMonophyleticSetInTheStartingTree() throws Exception {
         TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
         if (options == null) {
             return;
@@ -152,15 +151,8 @@ public class TreeLimeMaximizationTest extends TestCase {
         options.taxonSetsMono.put(clade, true);
         options.taxonSetsIncludeStem.put(clade, false);
         options.taxonSetsTreeModel.put(clade, options.getPartitionTreeModels().get(0));
-        for (PartitionClockModel clock : options.getPartitionClockModels()) {
-            clock.setClockType(ClockType.FIXED_LOCAL_CLOCK);
-        }
         String xml = TreeLimeHarness.generate(quiet(options));
         assertTrue(between(xml, "<upgmaTree>", "</upgmaTree>").contains("<constraint>"));
-        String block = between(xml, "<jointGradient id=\"gradient.clade.rate\">", "</jointGradient>");
-        assertTrue(block.contains("<maskedGradient>"));
-        assertTrue(block.contains("<parameter value=\"0 1\"/>"));
-        assertTrue(block.contains("<branchRateGradient traitName=\"Sequence\">"));
 
         java.util.Set<String> pair = new java.util.HashSet<String>(java.util.Arrays.asList(
                 clade.getTaxon(0).getId(), clade.getTaxon(1).getId()));
@@ -176,6 +168,28 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertGradientChecked(run);
+    }
+
+    // the fixed and random local clocks are not offered; a file that still has one is refused at Generate
+    public void testLocalClocksAreRefused() throws Exception {
+        for (ClockType type : new ClockType[]{ClockType.FIXED_LOCAL_CLOCK, ClockType.RANDOM_LOCAL_CLOCK}) {
+            TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+            if (options == null) {
+                return;
+            }
+            assertFalse(type.isMaximizable());
+            for (PartitionClockModel clock : options.getPartitionClockModels()) {
+                clock.setClockType(type);
+            }
+            try {
+                new dr.app.treelime.generator.BeastGenerator(options, TreeLimeHarness.COMPONENTS).checkOptions();
+                fail("expected the " + type + " to be refused");
+            } catch (dr.app.treelime.generator.Generator.GeneratorException e) {
+                assertTrue(e.getMessage(), e.getMessage().contains("shrinkage local clock"));
+                assertEquals(dr.app.treelime.TreeLimeFrame.CLOCK_MODELS, e.getSwitchToPanel());
+            }
+        }
+        assertTrue(ClockType.SHRINKAGE_LOCAL_CLOCK.isMaximizable());
     }
 
     // Generate refuses a run time BEAST could not parse, and points at the Maximization tab

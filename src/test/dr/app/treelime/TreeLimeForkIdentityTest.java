@@ -95,12 +95,13 @@ public class TreeLimeForkIdentityTest extends TestCase {
                 new Step("treePriors", "setNodeHeightPrior", "GMRF_SKYRIDE"));
     }
 
-    public void testTipDatesExponentialGrowthRandomLocalClock() throws Exception {
-        assertSameXML("examples/Data/Dengue4.env.nex", "<date value=\"1982", "<randomLocalClockModel",
+    // not the fixed or random local clock, which TreeLime does not offer
+    public void testTipDatesExponentialGrowthShrinkageLocalClock() throws Exception {
+        assertSameXML("examples/Data/Dengue4.env.nex", "<date value=\"1982", "The shrinkage local clock",
                 "<exponentialGrowth",
                 new Step(TIP_DATES),
                 new Step("substitutionModels", "setGammaHetero", true),
-                new Step("clocks", "setClockType", "RANDOM_LOCAL_CLOCK"),
+                new Step("clocks", "setClockType", "SHRINKAGE_LOCAL_CLOCK"),
                 new Step("treePriors", "setNodeHeightPrior", "EXPONENTIAL"));
     }
 

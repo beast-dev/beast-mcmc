@@ -79,6 +79,9 @@ public class PartitionClockModelPanel extends OptionsPanel {
         this.model = partitionModel;
 
         for (ClockType clockType : EnumSet.range(ClockType.STRICT_CLOCK, ClockType.MIXED_EFFECTS_CLOCK)) {
+            if (!clockType.isMaximizable()) {
+                continue;
+            }
             clockTypeCombo.addItem(clockType);
             /*if (clockType == ClockType.STRICT_CLOCK || clockType == ClockType.HMC_CLOCK) {
                 clockTypeCombo.addItem(new JSeparator(JSeparator.HORIZONTAL));

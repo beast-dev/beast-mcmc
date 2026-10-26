@@ -31,7 +31,6 @@ import dr.app.treelime.components.tipdatesampling.TipDateSamplingComponentOption
 import dr.app.treelime.types.ClockType;
 import dr.app.treelime.types.PriorType;
 import dr.app.treelime.types.TipDateSamplingType;
-import dr.evolution.util.Taxa;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,51 +100,11 @@ public final class GradientRegistry {
         if (owner instanceof PartitionClockModel) {
             ClockType clockType = ((PartitionClockModel) owner).getClockType();
             if ((clockType == ClockType.STRICT_CLOCK && name.equals("clock.rate")) ||
-                    (clockType == ClockType.HMC_CLOCK && name.equals(ClockType.HMC_CLOCK_BRANCH_RATES)) ||
-                    localClockIndex(options, (PartitionClockModel) owner, parameter) >= 0) {
+                    (clockType == ClockType.HMC_CLOCK && name.equals(ClockType.HMC_CLOCK_BRANCH_RATES))) {
                 return LikelihoodTerm.BRANCH_RATE;
             }
         }
         return LikelihoodTerm.NUMERIC;
-    }
-
-    /**
-     * The fixed local clock's branch-rate gradient is taken with respect to all its rates at once, stacked as the
-     * clock writes them: the global rate, then one rate per monophyletic taxon set, in taxon-set order.
-     *
-     * @return the parameter's position in that stack, or -1 when it is not a rate of a fixed local clock
-     */
-    public static int localClockIndex(TreeLimeOptions options, PartitionClockModel clock, Parameter parameter) {
-        if (clock.getClockType() != ClockType.FIXED_LOCAL_CLOCK) {
-            return -1;
-        }
-        if (parameter == clock.getClockRateParameter()) {
-            return 0;
-        }
-        int index = 1;
-        for (Taxa taxonSet : options.taxonSets) {
-            if (options.taxonSetsMono.get(taxonSet)) {
-                if (clock.hasParameter(taxonSet.getId() + ".rate") &&
-                        clock.getParameter(taxonSet.getId() + ".rate") == parameter) {
-                    return index;
-                }
-                index++;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * @return the number of rates of a fixed local clock: the global rate and one per monophyletic taxon set
-     */
-    public static int localClockDimension(TreeLimeOptions options) {
-        int dimension = 1;
-        for (Taxa taxonSet : options.taxonSets) {
-            if (options.taxonSetsMono.get(taxonSet)) {
-                dimension++;
-            }
-        }
-        return dimension;
     }
 
     /**

@@ -283,6 +283,13 @@ public class BeastGenerator extends Generator {
         }
 
         // outside the try above, which would drop the panel to switch to
+        for (PartitionClockModel clock : options.getPartitionClockModels()) {
+            if (!clock.getClockType().isMaximizable()) {
+                throw new GeneratorException("TreeLime does not support the " + clock.getClockType().toString().toLowerCase() +
+                        " (clock model " + clock.getName() + "). Use the shrinkage local clock for local rate shifts.",
+                        TreeLimeFrame.CLOCK_MODELS);
+            }
+        }
         String maxRunTime = options.maximizationOptions.maxRunTime;
         if (!maxRunTime.isEmpty()) {
             try {
@@ -1058,30 +1065,10 @@ public class BeastGenerator extends Generator {
                 writer.writeCloseTag("siteRateModelGradient");
                 return "siteRateModelGradient";
             case BRANCH_RATE:
-                // a fixed local clock differentiates all its rates at once: keep this parameter's coordinate
-                PartitionOptions owner = GradientRegistry.findOwner(options, parameter);
-                int localIndex = owner instanceof PartitionClockModel ?
-                        GradientRegistry.localClockIndex(options, (PartitionClockModel) owner, parameter) : -1;
-                if (localIndex >= 0) {
-                    writer.writeOpenTag("maskedGradient", attributes);
-                    StringBuilder mask = new StringBuilder();
-                    for (int i = 0; i < GradientRegistry.localClockDimension(options); i++) {
-                        mask.append(i > 0 ? " " : "").append(i == localIndex ? "1" : "0");
-                    }
-                    writer.writeOpenTag("mask");
-                    writer.writeTag(ParameterParser.PARAMETER,
-                            new Attribute.Default<String>(ParameterParser.VALUE, mask.toString()), true);
-                    writer.writeCloseTag("mask");
-                    attributes = new ArrayList<Attribute>();
-                }
                 attributes.add(new Attribute.Default<String>("traitName", "Sequence"));
                 writer.writeOpenTag("branchRateGradient", attributes);
                 writer.writeIDref("treeDataLikelihood", treeLikelihood);
                 writer.writeCloseTag("branchRateGradient");
-                if (localIndex >= 0) {
-                    writer.writeCloseTag("maskedGradient");
-                    return "maskedGradient";
-                }
                 return "branchRateGradient";
             default:
                 throw new IllegalArgumentException("Not an analytic term: " + term);

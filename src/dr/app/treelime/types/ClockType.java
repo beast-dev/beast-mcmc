@@ -50,6 +50,15 @@ public enum ClockType {
         return displayName;
     }
 
+    /**
+     * @return false for the local clocks, which TreeLime does not offer: the fixed local clock's rates need a
+     * per-clade gradient bookkeeping and the random local clock has discrete indicators. The shrinkage local clock
+     * covers local rate shifts with continuous parameters.
+     */
+    public boolean isMaximizable() {
+        return this != RANDOM_LOCAL_CLOCK && this != FIXED_LOCAL_CLOCK;
+    }
+
     private final String displayName;
 
     //maintain unique parameter IDs to enable correct prior and transition kernel retrieval

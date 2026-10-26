@@ -44,6 +44,9 @@ import java.util.Set;
  * far, so that parsers can refuse analytic gradients with respect to them: the tree likelihood and tree prior terms in
  * the tip heights are not differentiated yet. The trees are looked up in the parser's store, so the tree models need
  * no bookkeeping of their own.
+ *
+ * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public final class SampledTipHeights {
 

@@ -28,18 +28,18 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import com.github.lbfgs4j.liblbfgs.Function;
-import dr.inference.hmc.HessianWrtParameterProvider;
-import dr.inference.model.Likelihood;
-import dr.inference.operators.hmc.NumericalHessianFromGradient;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.Matrix;
 import dr.util.Timer;
-import dr.util.Transform;
 import dr.xml.Reportable;
 
-import java.util.Arrays;
+import java.util.List;
 
 /**
+ * A Gaussian approximation of the maximizer's objective at its optimum, in the coordinates it optimizes (y): the mode,
+ * the covariance A^-1 and, when the maximizer includes the Jacobian, the Laplace log evidence. The curvature and the
+ * evidence come from LaplaceEvidence (plan 8 X3), which corrects the earlier Hessian taken in the untransformed
+ * parameter and the sign of the log determinant.
+ *
  * @author Andy Magee
  */
 
@@ -49,9 +49,7 @@ public class LaplaceApproximation implements Reportable {
     private final boolean diagonal;
     private final boolean estimateKL;
     private final boolean computeML;
-    private double[] sdVector;
-    private double[][] covarianceMatrix;
-    private double[][] precisionMatrix;
+    private LaplaceEvidence laplace;
     private double time = 0.0;
     private double KL = Double.NaN;
     private double ML = Double.NaN;
@@ -65,69 +63,85 @@ public class LaplaceApproximation implements Reportable {
 
     public void approximate() {
         Timer timer = new Timer();
-        double[] mu = maximizer.getMinimumPoint(false);
-        HessianWrtParameterProvider hessian = new NumericalHessianFromGradient(maximizer.getGradient());
-
         timer.start();
-        precisionMatrix = hessian.getHessianLogDensity();
-        for (int i = 0; i < mu.length; i++) {
-            for (int j = 0; j < mu.length; j++) {
-                precisionMatrix[i][j] = -precisionMatrix[i][j];
-            }
-        }
+        laplace = new LaplaceEvidence(maximizer);
         timer.stop();
         time += timer.toSeconds();
-        covarianceMatrix = (new Matrix(precisionMatrix).inverse()).toComponents();
 
-
-        if ( diagonal ) {
-            sdVector = new double[mu.length];
-            for (int i = 0; i < mu.length; i++) {
-                sdVector[i] = Math.sqrt(covarianceMatrix[i][i]);
-            }
-        }
-
-        MultivariateNormalDistribution distribution = new MultivariateNormalDistribution(mu, precisionMatrix);
-        Function function = maximizer.getFunction();
         if ( estimateKL ) {
+            // KL(approximation || objective), up to the objective's normalizing constant, over the free coordinates
+            int[] coordinates = laplace.getCoordinates();
+            double[] mode = laplace.getMode();
+            double[] mean = new double[coordinates.length];
+            for (int i = 0; i < coordinates.length; i++) {
+                mean[i] = mode[coordinates[i]];
+            }
+            MultivariateNormalDistribution distribution = new MultivariateNormalDistribution(mean, laplace.getPrecision());
+            Function function = maximizer.getFunction();
             int nSamples = 1000;
             KL = 0.0;
             for (int i = 0; i < nSamples; i++) {
-                double[] x = distribution.nextMultivariateNormal();
-                double lnPosterior = -function.valueAt(x);
-                KL += distribution.logPdf(x) - lnPosterior;
+                double[] draw = distribution.nextMultivariateNormal();
+                double[] y = mode.clone();
+                for (int j = 0; j < coordinates.length; j++) {
+                    y[coordinates[j]] = draw[j];
+                }
+                double lnPosterior = -function.valueAt(y);
+                KL += distribution.logPdf(draw) - lnPosterior;
             }
             KL /= nSamples;
+            function.valueAt(mode);
         }
 
         if ( computeML ) {
-            double logDet = distribution.getLogDet();
-            // Kass and Raftery, eqn 4
-            ML = mu.length/2.0 * Math.log(2.0 * Math.PI) + 0.5 * logDet - function.valueAt(mu);
+            ML = laplace.getLogEvidence();
         }
+    }
 
+    /**
+     * @return the Laplace log evidence (computeML), or NaN
+     */
+    public double getLogMarginalLikelihood() {
+        return ML;
+    }
+
+    public LaplaceEvidence getLaplaceEvidence() {
+        return laplace;
     }
 
     @Override
     public String getReport() {
         StringBuilder sb = new StringBuilder();
 
-        if ( !maximizer.wasExecuted() ) {
+        if ( !maximizer.wasExecuted() || laplace == null ) {
             sb.append("Not yet executed.");
         } else {
-            sb.append("NB: Laplace approximation is taken in transformed space.\n");
-            sb.append("Mean vector: ").append(new dr.math.matrixAlgebra.Vector(maximizer.getMinimumPoint(false))).append("\n");
-            if ( diagonal ) {
-                sb.append("Stdev vector: ").append(new dr.math.matrixAlgebra.Vector(sdVector)).append("\n");
-            } else {
-                sb.append("Covariance matrix: ").append(new dr.math.matrixAlgebra.Matrix(covarianceMatrix));
+            sb.append("Laplace approximation in the maximizer's transformed coordinates (y): the mode and the ")
+                    .append(diagonal ? "standard deviations" : "covariance").append(" are of y, not of the parameter.\n");
+            int[] coordinates = laplace.getCoordinates();
+            double[] mode = laplace.getMode();
+            double[][] covariance = laplace.getCovariance();
+            List<MaximizerWrtParameter.Coordinate> optimum = maximizer.getOptimum();
+            if (coordinates.length < mode.length) {
+                sb.append("Coordinates held at a bound or dependent (the simplex's last) are left out, and the ")
+                        .append("approximation is conditional on them.\n");
             }
-//            if (estimateKL) {
-//                sb.append("KL(approximation||posterior) = ").append(KL).append("\n");
-//            }
-//            if (computeML) {
-//                sb.append("log(marginal likelihood) = ").append(ML).append("\n");
-//            }
+            for (int i = 0; i < coordinates.length; i++) {
+                sb.append(optimum.get(coordinates[i]).name).append(": y = ").append(mode[coordinates[i]]);
+                if ( diagonal ) {
+                    sb.append(", sd(y) = ").append(Math.sqrt(covariance[i][i]));
+                }
+                sb.append("\n");
+            }
+            if ( !diagonal ) {
+                sb.append("Covariance matrix of y: ").append(new dr.math.matrixAlgebra.Matrix(covariance)).append("\n");
+            }
+            if (estimateKL) {
+                sb.append("KL(approximation||objective), up to its normalizing constant = ").append(KL).append("\n");
+            }
+            if (computeML) {
+                sb.append("log(marginal likelihood), Laplace = ").append(ML).append("\n");
+            }
             sb.append("Time to compute Hessian: ").append(time).append("s\n");
         }
 

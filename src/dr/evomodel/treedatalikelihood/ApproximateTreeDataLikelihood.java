@@ -27,24 +27,17 @@
 
 package dr.evomodel.treedatalikelihood;
 
-import dr.evolution.tree.Tree;
+import dr.evomodel.treedatalikelihood.discrete.LaplaceEvidence;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
-import dr.inference.hmc.GradientWrtParameterProvider;
-import dr.inference.hmc.HessianWrtParameterProvider;
-import dr.inference.hmc.JointGradient;
 import dr.inference.model.*;
-import dr.inference.operators.hmc.NumericalHessianFromGradient;
-import dr.math.MultivariateFunction;
-import dr.math.matrixAlgebra.WrappedVector;
-import dr.util.Transform;
 import dr.xml.*;
-import dr.math.NumericalDerivative;
-
-import java.util.List;
-
-import static dr.math.matrixAlgebra.ReadableVector.Utils.setParameter;
 
 /**
+ * The Laplace approximation of the log evidence of the maximizer's objective, re-maximized whenever the model
+ * changes. The approximation is LaplaceEvidence's (plan 8 X3): at the mode of the transformed density, with the
+ * Cholesky log determinant of its negative Hessian in the transformed coordinates; it replaces the earlier diagonal
+ * determinant, whose sign, like that of the log-Jacobian, was wrong.
+ *
  * @author Alexander Fisher
  */
 
@@ -52,9 +45,7 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
     private double marginalLikelihood;
     private MaximizerWrtParameter maximizer;
     private Parameter parameter;
-    private Likelihood likelihood;
     private boolean likelihoodKnown = false;
-    private final HessianWrtParameterProvider hessianWrtParameterProvider;
 
 
     // begin parser stuff
@@ -64,87 +55,25 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
     public ApproximateTreeDataLikelihood(MaximizerWrtParameter maximizer) {
         super(APPROXIMATE_LIKELIHOOD);
 
-        this.maximizer = maximizer;
-        this.likelihood = maximizer.getLikelihood();
-        final GradientWrtParameterProvider gradient = maximizer.getGradient();
-        this.parameter = gradient.getParameter();
-        this.marginalLikelihoodConst = (parameter.getDimension() / 2.) * Math.log(2 * Math.PI);
-        // todo: get Numerical Hessian.
-        if (maximizer.getTransform() != null) {
-            this.hessianWrtParameterProvider = constructHessian();
-        } else if (isGradientProvidingHessian(gradient)) {
-            this.hessianWrtParameterProvider = (HessianWrtParameterProvider) gradient;
-        } else {
-            this.hessianWrtParameterProvider = new NumericalHessianFromGradient(gradient);
+        if (maximizer.getTransform() != null && !maximizer.includesJacobian()) {
+            throw new IllegalArgumentException("The Laplace approximation needs the mode of the transformed density: " +
+                    "give the maximizer includeJacobian=\"true\"");
         }
+        this.maximizer = maximizer;
+        this.parameter = maximizer.getGradient().getParameter();
         updateParameterMAP();
         updateMarginalLikelihood();
         addVariable(parameter);
-        addModel(maximizer.getLikelihood().getModel());
-    }
-
-    private boolean isGradientProvidingHessian(GradientWrtParameterProvider gradient) {
-        boolean isHessianProvider = false;
-        if (gradient instanceof HessianWrtParameterProvider) {
-            if (gradient instanceof JointGradient) {
-                JointGradient jointGradient = (JointGradient) gradient;
-                boolean isNotHessianProvider = false;
-                for (GradientWrtParameterProvider gradientWrtParameterProvider : jointGradient.getDerivativeList()) {
-                    if (!(gradientWrtParameterProvider instanceof HessianWrtParameterProvider)) {
-                        isNotHessianProvider = true;
-                    }
-                }
-                isHessianProvider = !isNotHessianProvider;
-            } else {
-                isHessianProvider = true;
-            }
+        if (maximizer.getLikelihood().getModel() != null) {
+            // a density of the parameter alone (a distributionLikelihood) has no model
+            addModel(maximizer.getLikelihood().getModel());
         }
-        return isHessianProvider;
-    }
-
-    private HessianWrtParameterProvider constructHessian() {
-        GradientWrtParameterProvider gradientWrtParameterProvider = new GradientWrtParameterProvider() {
-
-            private TransformedMultivariateParameter transformedParameter = new TransformedMultivariateParameter(parameter, (Transform.MultivariableTransform) maximizer.getTransform());
-
-            @Override
-            public Likelihood getLikelihood() {
-                throw new RuntimeException("should not be called");
-            }
-
-            @Override
-            public Parameter getParameter() {
-                return transformedParameter;
-            }
-
-            @Override
-            public int getDimension() {
-                return transformedParameter.getDimension();
-            }
-
-            @Override
-            public double[] getGradientLogDensity() {
-                double[] untransformedGradient = maximizer.getGradient().getGradientLogDensity();
-                return maximizer.getTransform().updateGradientLogDensity(untransformedGradient, parameter.getParameterValues(), 0, parameter.getDimension());
-            }
-        };
-
-        return new NumericalHessianFromGradient(gradientWrtParameterProvider);
     }
 
     private void updateMarginalLikelihood() {
-        double[] diagonalHessian = hessianWrtParameterProvider.getDiagonalHessianLogDensity();
-        double logDiagonalDeterminant = 0;
-        for (int i = 0; i < parameter.getDimension(); i++) {
-            logDiagonalDeterminant += Math.log(Math.abs(diagonalHessian[i]));
-        }
-        // 2pi^{+k/2} * det(Sigma)^{+1/2} * likelihood(map) * prior(map)
-        this.marginalLikelihood = marginalLikelihoodConst + 0.5 * logDiagonalDeterminant + likelihood.getLogLikelihood()
-         + (maximizer.getTransform() == null ? 0 : maximizer.getTransform().logJacobian(parameter.getParameterValues(), 0, parameter.getDimension()));
+        this.marginalLikelihood = new LaplaceEvidence(maximizer).getLogEvidence();
         likelihoodKnown = true;
     }
-
-    private final double marginalLikelihoodConst;
 
     private void updateParameterMAP() {
         maximizer.maximize();
@@ -166,7 +95,11 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
             MaximizerWrtParameter maximizer =
                     (MaximizerWrtParameter) xo.getChild(MaximizerWrtParameter.class);
 
-            return new ApproximateTreeDataLikelihood(maximizer);
+            try {
+                return new ApproximateTreeDataLikelihood(maximizer);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                throw new XMLParseException(e.getMessage());
+            }
         }
 
         //************************************************************************

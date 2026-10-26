@@ -43,8 +43,8 @@ public class LaplaceApproximationParser extends AbstractXMLObjectParser {
 
     private static final String NAME = "laplaceApproximation";
     private static final String DIAGONAL = "reportDiagonal";
-//    private static final String ML = "reportMarginalLikelihood";
-//    private static final String KL = "estimateKL";
+    private static final String ML = "reportMarginalLikelihood";
+    private static final String KL = "estimateKL";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -52,12 +52,20 @@ public class LaplaceApproximationParser extends AbstractXMLObjectParser {
         MaximizerWrtParameter maximizer = (MaximizerWrtParameter) xo.getChild(MaximizerWrtParameter.class);
 
         boolean diagonal = xo.getAttribute(DIAGONAL, true);
-//        boolean kl = xo.getAttribute(KL, false);
-//        boolean ml = xo.getAttribute(ML, false);
+        boolean kl = xo.getAttribute(KL, false);
+        boolean ml = xo.getAttribute(ML, false);
+        if (ml && maximizer.getTransform() != null && !maximizer.includesJacobian()) {
+            throw new XMLParseException(ML + " needs the mode of the transformed density: give the maximizer " +
+                    "includeJacobian=\"true\"");
+        }
 
-        LaplaceApproximation laplace = new LaplaceApproximation(maximizer, diagonal, false, false);
+        LaplaceApproximation laplace = new LaplaceApproximation(maximizer, diagonal, kl, ml);
 
-        laplace.approximate();
+        try {
+            laplace.approximate();
+        } catch (IllegalStateException e) {
+            throw new XMLParseException(NAME + ": " + e.getMessage());
+        }
 
         return laplace;
     }
@@ -84,8 +92,8 @@ public class LaplaceApproximationParser extends AbstractXMLObjectParser {
 
     private static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(MaximizerWrtParameter.class, false),
-            AttributeRule.newBooleanRule(DIAGONAL, true, "Should we report only the diagonal of the covariance matrix?")
-//            AttributeRule.newBooleanRule(KL, true, "Should the (variational-inference-style wrong-way) KL(aproximation||posterior) be estimated? Requires sampling from approximation."),
-//            AttributeRule.newBooleanRule(ML, true, "Should the (log) Marginal Likelihood (using the Laplace approximation) be reported?")
+            AttributeRule.newBooleanRule(DIAGONAL, true, "Should we report only the diagonal of the covariance matrix?"),
+            AttributeRule.newBooleanRule(KL, true, "Should the (variational-inference-style wrong-way) KL(aproximation||posterior) be estimated? Requires sampling from approximation."),
+            AttributeRule.newBooleanRule(ML, true, "Should the (log) Marginal Likelihood (using the Laplace approximation) be reported? Needs a maximizer with includeJacobian=\"true\".")
     };
 }

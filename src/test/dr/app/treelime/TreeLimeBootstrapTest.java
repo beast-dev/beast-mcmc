@@ -375,14 +375,12 @@ public class TreeLimeBootstrapTest extends TestCase {
         generator.generate(directory, 4, 42);
 
         String java = new File(new File(System.getProperty("java.home"), "bin"), "java").getPath();
-        // the script runs in the replicates' folder: an absolute class path
-        StringBuilder classPath = new StringBuilder();
-        for (String entry : System.getProperty("java.class.path").split(File.pathSeparator)) {
-            classPath.append(classPath.length() > 0 ? File.pathSeparator : "").append(new File(entry).getAbsolutePath());
-        }
+        // the script runs in the replicates' folder: absolute class and library paths (CI's BEAGLE path is relative)
+        String classPath = absolute(System.getProperty("java.class.path"));
+        String libraryPath = absolute(System.getProperty("java.library.path"));
         ProcessBuilder process = new ProcessBuilder("sh", BootstrapGenerator.SCRIPT_FILE);
         process.directory(directory);
-        process.environment().put("BEAST", java + " -Djava.library.path=" + System.getProperty("java.library.path") +
+        process.environment().put("BEAST", java + " -Djava.library.path=" + libraryPath +
                 " -cp " + classPath + " dr.app.beast.BeastMain");
         process.environment().put("JOBS", "3");
         process.environment().put("THREADS", "1");
@@ -435,6 +433,16 @@ public class TreeLimeBootstrapTest extends TestCase {
         for (File file : directory.listFiles()) {
             file.deleteOnExit();
         }
+    }
+
+    private static String absolute(String path) {
+        StringBuilder absolute = new StringBuilder();
+        for (String entry : path.split(File.pathSeparator)) {
+            if (!entry.isEmpty()) {
+                absolute.append(absolute.length() > 0 ? File.pathSeparator : "").append(new File(entry).getAbsolutePath());
+            }
+        }
+        return absolute.toString();
     }
 
     public void testPercentile() {

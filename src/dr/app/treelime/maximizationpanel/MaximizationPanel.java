@@ -175,10 +175,24 @@ public class MaximizationPanel extends TreeLimePanel {
             maximization().reportFileName = name.isEmpty() ? null : name;
         });
 
-        JTable table = new JTable(tableModel);
+        JTable table = new JTable(tableModel) {
+            // the reasons a parameter is held fixed and the gradient descriptions can be longer than their columns
+            public String getToolTipText(java.awt.event.MouseEvent event) {
+                int row = rowAtPoint(event.getPoint());
+                int column = columnAtPoint(event.getPoint());
+                if (row < 0 || column <= 0) {
+                    return null;
+                }
+                Object value = getValueAt(row, column);
+                return value == null || value.toString().isEmpty() ? null : value.toString();
+            }
+        };
+        int[] widths = {60, 150, 200, 260, 90, 330};
+        for (int column = 0; column < widths.length; column++) {
+            table.getColumnModel().getColumn(column).setPreferredWidth(widths[column]);
+        }
         table.getColumnModel().getColumn(0).setMaxWidth(70);
-        table.getColumnModel().getColumn(3).setMaxWidth(90);
-        table.getColumnModel().getColumn(4).setMaxWidth(90);
+        table.getColumnModel().getColumn(4).setMinWidth(90);
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setOpaque(false);
 
@@ -261,19 +275,25 @@ public class MaximizationPanel extends TreeLimePanel {
         MaximizationOptions maximization = maximization();
         int optimized = 0;
         int numeric = 0;
+        int trees = 0;
         for (Parameter parameter : tableModel.parameters) {
             Treatment treatment = maximization.classify(parameter, false);
-            if (treatment.isOptimized()) {
+            if (treatment == Treatment.NODE_HEIGHTS) {
+                trees++;
+            } else if (treatment.isOptimized()) {
                 optimized++;
-                if (treatment != Treatment.NODE_HEIGHTS && likelihoodGradient(parameter) == LikelihoodTerm.NUMERIC) {
+                if (likelihoodGradient(parameter) == LikelihoodTerm.NUMERIC) {
                     numeric++;
                 }
             }
         }
         String status = !maximization.isAnalytic() ?
-                optimized + " parameters optimized, all with numeric gradients (2 evaluations per dimension and step)." :
-                optimized + " parameters optimized: " + (optimized - numeric) + " with analytic or no tree-likelihood " +
-                        "gradients, " + numeric + " by finite differences of the tree likelihoods.";
+                count(optimized, "parameter") + " optimized, all with numeric gradients (2 evaluations per " +
+                        "dimension and step); node heights fixed." :
+                count(optimized, "parameter") + (trees > 0 ? " and the node heights of " + count(trees, "tree") : "") +
+                        " optimized: " + (optimized - numeric) + " parameters with analytic or no tree-likelihood " +
+                        "gradients, " + numeric + " by finite differences of the tree likelihoods" +
+                        (trees > 0 ? "; node heights analytic." : ".");
         if (!maximization.maxRunTime.isEmpty()) {
             try {
                 MaximizeWrtParameterParser.parseRunTime(maximization.maxRunTime);
@@ -282,6 +302,10 @@ public class MaximizationPanel extends TreeLimePanel {
             }
         }
         statusLabel.setText(status);
+    }
+
+    private static String count(int n, String noun) {
+        return n + " " + noun + (n == 1 ? "" : "s");
     }
 
     @Override

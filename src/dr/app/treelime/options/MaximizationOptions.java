@@ -168,13 +168,13 @@ public class MaximizationOptions implements Serializable {
         LOG("log", null),
         LOGIT("logit", null),
         NONE("none", null),
-        NODE_HEIGHTS("node-height ratios: the root and every internal node", null),
+        NODE_HEIGHTS("node-height ratios (all internal nodes)", null),
         FIXED_BY_PRIOR(null, "fixed in the Priors tab"),
         EXCLUDED(null, "not selected"),
         STATISTIC(null, "a statistic, not a parameter"),
         DISCRETE(null, "discrete"),
-        NODE_HEIGHT(null, "node heights need the analytic gradient mode"),
-        SIMPLEX(null, "sums to a constant: needs a simplex transform, not available yet"),
+        NODE_HEIGHT(null, "needs the analytic gradient"),
+        SIMPLEX(null, "a simplex (not supported yet)"),
         LINKED(null, "linked parameters are not optimized yet"),
         UNSUPPORTED(null, "no suitable transform");
 

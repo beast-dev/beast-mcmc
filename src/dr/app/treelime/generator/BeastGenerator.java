@@ -54,6 +54,8 @@ import dr.inferencexml.model.CompoundParameterParser;
 import dr.inference.model.ParameterParser;
 import dr.util.TransformParsers;
 import dr.xml.Report;
+import dr.xml.XMLParseException;
+import dr.evomodelxml.continuous.hmc.MaximizeWrtParameterParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
 import dr.util.Pair;
@@ -280,7 +282,15 @@ public class BeastGenerator extends Generator {
             throw new GeneratorException(e.getMessage());
         }
 
-
+        // outside the try above, which would drop the panel to switch to
+        String maxRunTime = options.maximizationOptions.maxRunTime;
+        if (!maxRunTime.isEmpty()) {
+            try {
+                MaximizeWrtParameterParser.parseRunTime(maxRunTime);
+            } catch (XMLParseException e) {
+                throw new GeneratorException("Maximum run time: " + e.getMessage(), TreeLimeFrame.MAXIMIZATION);
+            }
+        }
     }
     public boolean checkUserTreeIsBifurcating(){
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {

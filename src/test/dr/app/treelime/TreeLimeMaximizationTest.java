@@ -131,6 +131,27 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertFalse(TreeLimeHarness.generate(options).contains("<holdAtLowerBound"));
     }
 
+    // Generate refuses a run time BEAST could not parse, and points at the Maximization tab
+    public void testInvalidRunTimeIsRefused() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        options.maximizationOptions.maxRunTime = "5 lightyears";
+        dr.app.treelime.generator.BeastGenerator generator =
+                new dr.app.treelime.generator.BeastGenerator(options, TreeLimeHarness.COMPONENTS);
+        try {
+            generator.checkOptions();
+            fail("expected the run time to be refused");
+        } catch (dr.app.treelime.generator.Generator.GeneratorException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("lightyears"));
+            assertEquals(dr.app.treelime.TreeLimeFrame.MAXIMIZATION, e.getSwitchToPanel());
+        }
+        options.maximizationOptions.maxRunTime = "30min";
+        generator.checkOptions();
+        assertTrue(TreeLimeHarness.generate(options).contains("maxRunTime=\"30min\""));
+    }
+
     public void testMaximumLikelihood() throws Exception {
         TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
         if (options == null) {

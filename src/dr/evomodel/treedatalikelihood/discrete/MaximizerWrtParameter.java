@@ -103,6 +103,7 @@ public class MaximizerWrtParameter implements Reportable {
 
     // coordinates held at a lower bound (holdAtLowerBound) in the latest run, by index; null when none is set
     private boolean[] heldCoordinates = null;
+    private double[] heldValues = null; // the bound of each held element, set exactly
     private double[] cachedUnmaskedGradient = null;
     private double[] holdPoint = null;
     private int holds = 0;
@@ -467,6 +468,7 @@ public class MaximizerWrtParameter implements Reportable {
         lastFiniteValue = 0.0;
         lastEvaluationNonFinite = false;
         heldCoordinates = settings.lowerBoundHolds.isEmpty() ? null : new boolean[dim];
+        heldValues = settings.lowerBoundHolds.isEmpty() ? null : new double[dim];
         holdPoint = null;
         holds = 0;
         if (heldCoordinates != null) {
@@ -571,11 +573,7 @@ public class MaximizerWrtParameter implements Reportable {
         cachedPoint = null;
         executed = true;
 
-        if (transform != null) {
-            setParameter(new WrappedVector.Raw(transform.inverse(minimumPoint, 0, minimumPoint.length)), parameter);
-        } else {
-            setParameter(new WrappedVector.Raw(minimumPoint), parameter);
-        }
+        setParameter(new WrappedVector.Raw(modelValues(minimumPoint)), parameter);
 
         final boolean failed = reason == Reason.LINE_SEARCH_FAILURE || reason == Reason.NON_FINITE
                 || reason == Reason.ERROR;
@@ -657,6 +655,7 @@ public class MaximizerWrtParameter implements Reportable {
         }
         for (int index : newlyHeld) {
             heldCoordinates[index] = true;
+            heldValues[index] = values[index];
         }
         return result;
     }
@@ -807,8 +806,21 @@ public class MaximizerWrtParameter implements Reportable {
 
     private void setPoint(double[] point) {
         parameterPoint = point.clone();
-        double[] argument = transform != null ? transform.inverse(point, 0, point.length) : point;
-        setParameter(new WrappedVector.Raw(argument), parameter);
+        setParameter(new WrappedVector.Raw(modelValues(point)), parameter);
+    }
+
+    // the parameter's values at the transformed point, with held elements exactly at their bounds: the transform's
+    // round trip can be one ulp off (e.g. exp(log(0.05)) on some JVMs)
+    private double[] modelValues(double[] point) {
+        final double[] values = transform != null ? transform.inverse(point, 0, point.length) : point.clone();
+        if (heldCoordinates != null) {
+            for (int i = 0; i < values.length; ++i) {
+                if (heldCoordinates[i]) {
+                    values[i] = heldValues[i];
+                }
+            }
+        }
+        return values;
     }
 
     /**

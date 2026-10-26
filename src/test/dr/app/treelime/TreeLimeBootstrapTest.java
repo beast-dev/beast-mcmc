@@ -382,6 +382,10 @@ public class TreeLimeBootstrapTest extends TestCase {
         process.directory(directory);
         process.environment().put("BEAST", java + " -Djava.library.path=" + libraryPath +
                 " -cp " + classPath + " dr.app.beast.BeastMain");
+        // BEAGLE's JNI library finds libhmsbeagle through LD_LIBRARY_PATH on Linux, also relative on CI
+        String loaderPath = System.getenv("LD_LIBRARY_PATH");
+        process.environment().put("LD_LIBRARY_PATH", libraryPath +
+                (loaderPath != null && !loaderPath.isEmpty() ? File.pathSeparator + absolute(loaderPath) : ""));
         process.environment().put("JOBS", "3");
         process.environment().put("THREADS", "1");
         process.redirectErrorStream(true);

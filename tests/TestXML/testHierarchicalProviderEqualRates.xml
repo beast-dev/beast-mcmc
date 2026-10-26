@@ -1,0 +1,237 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Equal-rates rate provider of the hierarchical substitution model (F81 on nucleotides, the binary model)
+     through the hierarchical BEAGLE representation against the dense models. -->
+<beast>
+    <taxa id="taxa">
+        <taxon id="human"/>
+        <taxon id="chimp"/>
+        <taxon id="gorilla"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="human"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="chimp"/>
+            AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAATCCCCTTATTTCTACTA
+            GGACTATAAGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="gorilla"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGAGGTTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATTGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTGTCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTCACATCCTTCCCGTACTAAGAAATT
+            TAGGTTAAACATAGACCAAGAGCCTTCAAAGCCCTTAGTAAGTTA-CAACACTTAATTTCTGTAAGGACTGC
+        </sequence>
+    </alignment>
+
+    <patterns id="patterns" from="1" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        ((human:0.1,chimp:0.1):0.1,gorilla:0.2);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <alignment id="binary.alignment" dataType="binary">
+        <sequence>
+            <taxon idref="human"/>
+            0110100111010001101100101110010110010111011000110100
+        </sequence>
+        <sequence>
+            <taxon idref="chimp"/>
+            0110100101010001101110101110010010010111011001110100
+        </sequence>
+        <sequence>
+            <taxon idref="gorilla"/>
+            0100100111011001101100101010010110110111001000110110
+        </sequence>
+    </alignment>
+
+    <patterns id="binary.patterns" from="1" strip="false">
+        <alignment idref="binary.alignment"/>
+    </patterns>
+
+    <!-- F81: equalRates against an HKYModel with kappa fixed at 1, sharing the frequency model -->
+    <frequencyModel id="frequencies" dataType="nucleotide">
+        <frequencies>
+            <parameter id="frequencies.parameter" value="0.1 0.2 0.3 0.4"/>
+        </frequencies>
+    </frequencyModel>
+
+    <HKYModel id="f81">
+        <frequencies>
+            <frequencyModel idref="frequencies"/>
+        </frequencies>
+        <kappa>
+            <parameter id="kappa" value="1.0" lower="0.0"/>
+        </kappa>
+    </HKYModel>
+
+    <hierarchicalSubstitutionModel id="hrate.f81">
+        <frequencies>
+            <frequencyModel idref="frequencies"/>
+        </frequencies>
+        <equalRates/>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="f81.siteModel">
+        <substitutionModel>
+            <HKYModel idref="f81"/>
+        </substitutionModel>
+    </siteModel>
+
+    <siteModel id="hrate.f81.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.f81"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="f81.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="f81.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="hierarchical.f81.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.f81.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <!-- the binary model: equalRates, and ratesFrom the existing binarySubstitutionModel -->
+    <binarySubstitutionModel id="binary">
+        <frequencies>
+            <frequencyModel id="binary.frequencies" dataType="binary">
+                <frequencies>
+                    <parameter id="binary.frequencies.parameter" value="0.3 0.7"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+    </binarySubstitutionModel>
+
+    <hierarchicalSubstitutionModel id="hrate.binary">
+        <frequencies>
+            <frequencyModel idref="binary.frequencies"/>
+        </frequencies>
+        <equalRates/>
+    </hierarchicalSubstitutionModel>
+
+    <hierarchicalSubstitutionModel id="hrate.binary.from">
+        <ratesFrom>
+            <binarySubstitutionModel idref="binary"/>
+        </ratesFrom>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="binary.siteModel">
+        <substitutionModel>
+            <binarySubstitutionModel idref="binary"/>
+        </substitutionModel>
+    </siteModel>
+
+    <siteModel id="hrate.binary.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.binary"/>
+        </substitutionModel>
+    </siteModel>
+
+    <siteModel id="hrate.binary.from.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.binary.from"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="binary.likelihood">
+        <patterns idref="binary.patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="binary.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="hierarchical.binary.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="binary.patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.binary.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <treeDataLikelihood id="hierarchical.binary.from.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="binary.patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.binary.from.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <report>
+        <treeDataLikelihood idref="f81.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.f81.likelihood"/>
+        <treeDataLikelihood idref="binary.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.binary.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.binary.from.likelihood"/>
+    </report>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            F81 (equalRates): hierarchical BEAGLE representation against HKY with kappa 1
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.f81.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="f81.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            Binary model (equalRates): hierarchical BEAGLE representation against binarySubstitutionModel
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.binary.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="binary.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-8" toleranceType="relative" verbose="true">
+        <message>
+            Binary model (ratesFrom binarySubstitutionModel): hierarchical BEAGLE representation against binarySubstitutionModel
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.binary.from.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="binary.likelihood"/>
+        </expected>
+    </assertEqual>
+
+</beast>

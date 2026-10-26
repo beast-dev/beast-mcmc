@@ -52,7 +52,7 @@ import java.util.List;
 public abstract class AbstractHierarchicalRateProvider extends AbstractModel
         implements HierarchicalSubstitutionModel.HierarchicalRateProvider {
 
-    public static final String NUCLEOTIDE_NEWICK = "((A:1,G:1):1,(C:1,T:1):1);";
+    private static final String NUCLEOTIDE_NEWICK = "((A:1,G:1):1,(C:1,T:1):1);";
 
     protected final TreeModel tree;
     protected final FrequencyModel frequency;
@@ -129,6 +129,7 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
         this.lambda = new double[nodeCount];
 
         addModel(frequency);
+        addModel(tree);
     }
 
     public static TreeModel characterTree(String newick) {
@@ -139,6 +140,32 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
             throw new IllegalArgumentException("cannot read the character tree " + newick + ": " + e.getMessage());
         }
         return new DefaultTreeModel("characterTree", imported, true, true);
+    }
+
+    /**
+     * The default character tree of a data type: ((A,G),(C,T)) for nucleotides, a balanced pairing of the state
+     * codes, by recursive halving of the code list, otherwise.
+     */
+    public static TreeModel defaultCharacterTree(DataType dataType) {
+        if (dataType instanceof dr.evolution.datatype.Nucleotides) {
+            return characterTree(NUCLEOTIDE_NEWICK);
+        }
+        final int stateCount = dataType.getStateCount();
+        final String[] labels = new String[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            final String code = dataType.getCode(i);
+            labels[i] = code.matches("[A-Za-z0-9_.\\-]+") ? code : "'" + code + "'";
+        }
+        return characterTree(balanced(labels, 0, stateCount) + ";");
+    }
+
+    private static String balanced(String[] labels, int from, int to) {
+        if (to - from == 1) {
+            return labels[from] + ":1";
+        }
+        final int middle = from + (to - from + 1) / 2;
+        return "(" + balanced(labels, from, middle) + "," + balanced(labels, middle, to) + ")"
+                + (from == 0 && to == labels.length ? "" : ":1");
     }
 
     /**
@@ -270,8 +297,20 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
         return out;
     }
 
+    /**
+     * The clade structure is read once from the character tree, so its topology must not change; a change of the
+     * node heights is harmless (the model reads only the topology). Only the Default provider supports a
+     * changing topology.
+     */
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == tree) {
+            if (HierarchicalSubstitutionModel.changesTopology(object)) {
+                throw new IllegalStateException("the topology of the character tree " + tree.getId()
+                        + " cannot change with " + getModelName() + "; a changing character tree needs ratesParameter");
+            }
+            return;
+        }
         known = false;
         fireModelChanged();
     }

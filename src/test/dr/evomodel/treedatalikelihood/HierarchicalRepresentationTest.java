@@ -41,6 +41,8 @@ import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.AbstractHierarchicalRateProvider;
+import dr.evomodel.substmodel.EqualRatesProvider;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.RelativeRatesProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -357,5 +359,114 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
         pi.setParameterValue(1, 0.3);
         pi.setParameterValue(2, 0.2);
         assertFalse("pi_AG 0.3 puts sigma(AG) below 0", model.isValidGenerator());
+    }
+
+    public void testLikelihoodJC69EqualRates() throws Exception {
+        if (skip("testLikelihoodJC69EqualRates")) {
+            return;
+        }
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE,
+                new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25}));
+        HKY hky = new HKY(new Parameter.Default(HKYParser.KAPPA, 1.0), frequencies);
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                new EqualRatesProvider(AbstractHierarchicalRateProvider.defaultCharacterTree(Nucleotides.INSTANCE),
+                        frequencies, true));
+        double hierarchical = likelihood(model, new GammaSiteRateModel("gamma"), true).getLogLikelihood();
+        double reference = likelihood(hky, new GammaSiteRateModel("gamma"), false).getLogLikelihood();
+        assertEquals("JC69 published", format.format(-1992.20564), format.format(hierarchical));
+        assertEquals("JC69 vs HKY kappa 1", reference, hierarchical, 1e-10 * Math.abs(reference));
+    }
+
+    private void checkBundlesThroughBeagle(String what, HierarchicalSubstitutionModel model) {
+        final int n = model.getDataType().getStateCount();
+        final double[] categoryRates = {0.3, 1.0, 2.7};
+        final int C = categoryRates.length;
+        Beagle beagle = BeagleFactory.loadBeagleInstance(3, 5, 0, n, 10, 1, 1, C, 0, null,
+                BeagleFlag.PRECISION_DOUBLE.getMask(),
+                BeagleFlag.HIERARCHICAL_REPRESENTATION.getMask() | BeagleFlag.PRECISION_DOUBLE.getMask());
+        InstanceDetails details = beagle.getDetails();
+        assertTrue(what + " hierarchical instance", details != null &&
+                (details.getFlags() & BeagleFlag.HIERARCHICAL_REPRESENTATION.getMask()) != 0);
+        beagle.setStateFrequencies(0, model.getFrequencyModel().getFrequencies());
+        double[] bundle = new double[model.getBundleLength(C)];
+        double[] fromBeagle = new double[C * n * n];
+        double[] fromJava = new double[n * n];
+        for (double t : new double[]{0.0, 0.05, 0.37, 1.9}) {
+            model.fillBundle(t, categoryRates, bundle);
+            beagle.setTransitionMatrix(0, bundle, 0.0);
+            beagle.getTransitionMatrix(0, fromBeagle);
+            for (int l = 0; l < C; l++) {
+                model.getTransitionProbabilities(t * categoryRates[l], fromJava);
+                for (int k = 0; k < n * n; k++) {
+                    assertEquals(what + " t=" + t + " category " + l + " entry " + k,
+                            fromJava[k], fromBeagle[l * n * n + k], 1e-14);
+                }
+            }
+        }
+    }
+
+    public void testEqualRatesBundlesThroughBeagle() throws Exception {
+        if (skip("testEqualRatesBundlesThroughBeagle")) {
+            return;
+        }
+        FrequencyModel binary = new FrequencyModel(dr.evolution.datatype.TwoStates.INSTANCE,
+                new Parameter.Default(new double[]{0.3, 0.7}));
+        checkBundlesThroughBeagle("two states", new HierarchicalSubstitutionModel("hierarchical",
+                new EqualRatesProvider(AbstractHierarchicalRateProvider.defaultCharacterTree(binary.getDataType()),
+                        binary, true)));
+
+        dr.evolution.datatype.DataType seven = new dr.evolution.datatype.GeneralDataType(
+                new String[]{"a", "b", "c", "d", "e", "f", "g"});
+        FrequencyModel sevenFrequencies = new FrequencyModel(seven,
+                new Parameter.Default(new double[]{0.05, 0.1, 0.12, 0.13, 0.15, 0.2, 0.25}));
+        checkBundlesThroughBeagle("seven states", new HierarchicalSubstitutionModel("hierarchical",
+                new EqualRatesProvider(AbstractHierarchicalRateProvider.defaultCharacterTree(seven), sevenFrequencies, true)));
+    }
+
+    public void testDefaultTopologyChangeThroughBeagle() throws Exception {
+        if (skip("testDefaultTopologyChangeThroughBeagle")) {
+            return;
+        }
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE,
+                new Parameter.Default(alignment.getStateFrequencies()));
+        TreeModel characterTree = new DefaultTreeModel("characterTree",
+                new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null));
+        double[] values = {0.6, 2.1, 0.9};
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(values.clone()),
+                        characterTree, frequencies, false));
+        TreeDataLikelihood hierarchical = likelihood(model, new GammaSiteRateModel("gamma"), true);
+        TreeDataLikelihood eigen = likelihood(model, new GammaSiteRateModel("gamma"), false);
+        final double first = hierarchical.getLogLikelihood();
+        assertEquals(eigen.getLogLikelihood(), first, 1e-10 * Math.abs(first));
+
+        hierarchical.storeModelState();
+        eigen.storeModelState();
+        dr.evolution.tree.NodeRef g = null, c = null;
+        for (int i = 0; i < characterTree.getExternalNodeCount(); i++) {
+            if (characterTree.getTaxonId(i).equals("G")) g = characterTree.getExternalNode(i);
+            if (characterTree.getTaxonId(i).equals("C")) c = characterTree.getExternalNode(i);
+        }
+        dr.evolution.tree.NodeRef pg = characterTree.getParent(g), pc = characterTree.getParent(c);
+        characterTree.beginTreeEdit();
+        characterTree.removeChild(pg, g);
+        characterTree.removeChild(pc, c);
+        characterTree.addChild(pg, c);
+        characterTree.addChild(pc, g);
+        characterTree.endTreeEdit();
+
+        HierarchicalSubstitutionModel fresh = new HierarchicalSubstitutionModel("fresh",
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(values.clone()),
+                        characterTree, frequencies, false));
+        final double expected = likelihood(fresh, new GammaSiteRateModel("gamma"), false).getLogLikelihood();
+        final double moved = hierarchical.getLogLikelihood();
+        assertTrue("the topology change matters", Math.abs(moved - first) > 1e-3);
+        assertEquals("hierarchical path after the change", expected, moved, 1e-10 * Math.abs(expected));
+        assertEquals("eigen path after the change", expected, eigen.getLogLikelihood(), 1e-10 * Math.abs(expected));
+
+        hierarchical.restoreModelState();
+        eigen.restoreModelState();
+        assertEquals("hierarchical path restored", first, hierarchical.getLogLikelihood(), 0.0);
+        assertEquals("eigen path restored", first, eigen.getLogLikelihood(), 1e-10 * Math.abs(first));
     }
 }

@@ -105,6 +105,8 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         parser.addXMLObjectParser(new FrequencyModelParser());
         parser.addXMLObjectParser(new HKYParser());
         parser.addXMLObjectParser(new TN93Parser());
+        parser.addXMLObjectParser(new dr.evomodelxml.substmodel.BinarySubstitutionModelParser());
+        parser.addXMLObjectParser(new dr.evomodelxml.substmodel.GeneralSubstitutionModelParser());
         parser.addXMLObjectParser(new HierarchicalSubstitutionModelParser());
         return parser.parse(new StringReader("<?xml version=\"1.0\" standalone=\"yes\"?>\n<beast>\n" + body + "</beast>\n"), false);
     }
@@ -311,5 +313,70 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
 
         message = parseFailure(hrate("", ""));
         assertTrue(message, message.contains("frequencies is required unless ratesFrom gives the model"));
+    }
+
+    private static double maxPDiff(dr.evomodel.substmodel.SubstitutionModel a, dr.evomodel.substmodel.SubstitutionModel b) {
+        final int n = a.getDataType().getStateCount();
+        double[] pa = new double[n * n], pb = new double[n * n];
+        double d = 0.0;
+        for (double t : new double[]{0.0, 0.05, 0.37, 1.9}) {
+            a.getTransitionProbabilities(t, pa);
+            b.getTransitionProbabilities(t, pb);
+            for (int i = 0; i < n * n; i++)
+                d = Math.max(d, Math.abs(pa[i] - pb[i]));
+        }
+        return d;
+    }
+
+    public void testEqualRatesNucleotides() throws Exception {
+        Map<String, XMLObject> store = parse(
+                "  <HKYModel id=\"f81\">\n" +
+                "    <frequencies><frequencyModel id=\"f\" dataType=\"nucleotide\"><frequencies><parameter value=\"0.1 0.2 0.3 0.4\"/></frequencies></frequencyModel></frequencies>\n" +
+                "    <kappa><parameter value=\"1.0\"/></kappa>\n" +
+                "  </HKYModel>\n" +
+                hrate("", "    <frequencies><frequencyModel idref=\"f\"/></frequencies>\n    <equalRates/>\n"));
+        HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+        assertTrue(model.getRateProvider() instanceof dr.evomodel.substmodel.EqualRatesProvider);
+        assertEquals(0.0, maxPDiff(model, (HKY) store.get("f81").getNativeObject()), 1e-13);
+        assertEquals(1.0 / (1.0 - 0.3), model.getBeagleModelLambdas()[3], 1e-14);
+    }
+
+    private static final String BINARY =
+            "  <binarySubstitutionModel id=\"bin\">\n" +
+            "    <frequencies><frequencyModel id=\"bf\" dataType=\"binary\"><frequencies><parameter value=\"0.3 0.7\"/></frequencies></frequencyModel></frequencies>\n" +
+            "  </binarySubstitutionModel>\n";
+
+    public void testEqualRatesBinary() throws Exception {
+        Map<String, XMLObject> store = parse(BINARY
+                + hrate("", "    <frequencies><frequencyModel idref=\"bf\"/></frequencies>\n    <equalRates/>\n")
+                .replace("id=\"hrate\"", "id=\"hrate.equal\"")
+                + hrate("", "    <ratesFrom><binarySubstitutionModel idref=\"bin\"/></ratesFrom>\n")
+                .replace("id=\"hrate\"", "id=\"hrate.from\""));
+        dr.evomodel.substmodel.SubstitutionModel bin = (dr.evomodel.substmodel.SubstitutionModel) store.get("bin").getNativeObject();
+        for (String id : new String[]{"hrate.equal", "hrate.from"}) {
+            HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get(id).getNativeObject();
+            assertEquals(id, 2, model.getDataType().getStateCount());
+            assertEquals(id, 0.0, maxPDiff(model, bin), 1e-13);
+            assertEquals(id, 1.0 / (2 * 0.3 * 0.7), model.getBeagleModelLambdas()[1], 1e-13);
+        }
+    }
+
+    public void testEqualRatesNotNormalised() throws Exception {
+        Map<String, XMLObject> store = parse(hrate("", FREQUENCIES + "    <equalRates normalised=\"false\"/>\n"));
+        HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+        assertEquals(1.0, model.getBeagleModelLambdas()[3], 0.0);
+    }
+
+    public void testEqualRatesErrors() throws Exception {
+        String message = parseFailure(hrate("", FREQUENCIES + "    <equalRates/>\n    <kappa><parameter value=\"2.0\"/></kappa>\n"));
+        assertTrue(message, message.contains("give at most one of") && message.contains("equalRates"));
+
+        message = parseFailure(
+                "  <generalSubstitutionModel id=\"gsm\">\n" +
+                "    <frequencies><frequencyModel id=\"gf\" dataType=\"nucleotide\"><frequencies><parameter value=\"0.1 0.2 0.3 0.4\"/></frequencies></frequencyModel></frequencies>\n" +
+                "    <rates><parameter value=\"1 1 1 1 1 2\"/></rates>\n" +
+                "  </generalSubstitutionModel>\n" +
+                hrate("", "    <ratesFrom><generalSubstitutionModel idref=\"gsm\"/></ratesFrom>\n"));
+        assertTrue(message, message.contains("does not have equal rates"));
     }
 }

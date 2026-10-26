@@ -454,4 +454,135 @@ public class HierarchicalSubstitutionModelTest extends TestCase {
         assertTrue("valid " + valid + " with negative rates " + validWithNegative + " invalid " + invalid,
                 validWithNegative > 100 && invalid > 100);
     }
+
+    private static dr.evolution.tree.NodeRef tip(TreeModel tree, String taxon) {
+        for (int i = 0; i < tree.getExternalNodeCount(); i++)
+            if (tree.getTaxonId(i).equals(taxon))
+                return tree.getExternalNode(i);
+        throw new IllegalArgumentException(taxon);
+    }
+
+    private static void swapTips(TreeModel tree, String a, String b) {
+        dr.evolution.tree.NodeRef na = tip(tree, a), nb = tip(tree, b);
+        dr.evolution.tree.NodeRef pa = tree.getParent(na), pb = tree.getParent(nb);
+        tree.beginTreeEdit();
+        tree.removeChild(pa, na);
+        tree.removeChild(pb, nb);
+        tree.addChild(pa, nb);
+        tree.addChild(pb, na);
+        tree.endTreeEdit();
+    }
+
+    private static double maxModelDiff(HierarchicalSubstitutionModel a, HierarchicalSubstitutionModel b) {
+        double d = 0.0;
+        double[] x = new double[S * S], y = new double[S * S];
+        a.getInfinitesimalMatrix(x);
+        b.getInfinitesimalMatrix(y);
+        for (int i = 0; i < x.length; i++)
+            d = Math.max(d, Math.abs(x[i] - y[i]));
+        for (double t : new double[]{0.05, 0.8}) {
+            a.getTransitionProbabilities(t, x);
+            b.getTransitionProbabilities(t, y);
+            for (int i = 0; i < x.length; i++)
+                d = Math.max(d, Math.abs(x[i] - y[i]));
+        }
+        double[] la = a.getBeagleModelLambdas(), lb = b.getBeagleModelLambdas();
+        double[] ta = a.getBeagleModelTriples(), tb = b.getBeagleModelTriples();
+        for (int i = 0; i < la.length; i++)
+            d = Math.max(d, Math.abs(la[i] - lb[i]));
+        for (int i = 0; i < 3 * (S - 1); i++)
+            d = Math.max(d, Math.abs(ta[i] - tb[i]));
+        return d;
+    }
+
+    public void testDefaultFollowsTopologyChanges() throws Exception {
+        double[] pi = {0.1, 0.2, 0.3, 0.4};
+        TreeModel tree = new DefaultTreeModel("characterTree", new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null));
+        Parameter frequencies = new Parameter.Default(pi);
+        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, frequencies);
+        double[] values = {0.7, 1.3, 0.9};
+        for (boolean normalised : new boolean[]{false, true}) {
+            Parameter rates = new Parameter.Default(values.clone());
+            HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                    new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, tree, f, normalised));
+            double[] before = new double[S * S];
+            model.getTransitionProbabilities(0.3, before);
+            double[] lowerBefore = {rates.getBounds().getLowerLimit(0), rates.getBounds().getLowerLimit(1),
+                    rates.getBounds().getLowerLimit(2)};
+
+            model.storeModelState();
+            swapTips(tree, "G", "C");
+            HierarchicalSubstitutionModel fresh = new HierarchicalSubstitutionModel("fresh",
+                    new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(values.clone()),
+                            tree, f, normalised));
+            assertEquals("rebuilt after the topology change", 0.0, maxModelDiff(model, fresh), 1e-15);
+            assertTrue("the topology change matters", Math.abs(rates.getParameterValue(0) - 0.7) == 0.0
+                    && maxModelDiff(model, fresh) == 0.0);
+            double[] after = new double[S * S];
+            model.getTransitionProbabilities(0.3, after);
+            assertTrue("P changed with the topology", maxAbsDiff(before, after) > 1e-3);
+
+            model.restoreModelState();
+            double[] restored = new double[S * S];
+            model.getTransitionProbabilities(0.3, restored);
+            assertTrue("restored", java.util.Arrays.equals(before, restored));
+            for (int i = 0; i < 3; i++)
+                assertEquals("bounds restored", lowerBefore[i], rates.getBounds().getLowerLimit(i), 0.0);
+        }
+    }
+
+    public void testParametricProvidersRefuseTopologyChanges() throws Exception {
+        double[] pi = {0.1, 0.2, 0.3, 0.4};
+        TreeModel tree = new DefaultTreeModel("characterTree", new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null));
+        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(pi));
+        Parameter kappa = new Parameter.Default(2.5);
+        dr.evomodel.substmodel.nucleotide.HKY hky = new dr.evomodel.substmodel.nucleotide.HKY(kappa, f);
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                dr.evomodel.substmodel.RelativeRatesProvider.hky(kappa, f, tree));
+        double[] before = new double[S * S], expected = new double[S * S];
+        model.getTransitionProbabilities(0.3, before);
+        tree.setNodeHeight(tree.getRoot(), 3.0);
+        double[] after = new double[S * S];
+        model.getTransitionProbabilities(0.3, after);
+        hky.getTransitionProbabilities(0.3, expected);
+        assertTrue("a height change is harmless", java.util.Arrays.equals(before, after));
+        assertEquals(0.0, maxAbsDiff(expected, after), 1e-13);
+        try {
+            swapTips(tree, "G", "C");
+            fail("the HKY provider must refuse a topology change");
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("cannot change") && e.getMessage().contains("ratesParameter"));
+        }
+    }
+
+    public void testHeightChangeIsIgnored() throws Exception {
+        TreeModel tree = new DefaultTreeModel("characterTree", new NewickImporter("((A:1,G:1):1,(C:1,T:1):1);").importTree(null));
+        FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(new double[]{0.1, 0.2, 0.3, 0.4}));
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(new double[]{0.7, 1.3, 0.9}),
+                        tree, f, false));
+        final int[] fired = {0};
+        model.addModelListener(new dr.inference.model.ModelListener() {
+            public void modelChangedEvent(dr.inference.model.Model m, Object object, int index) {
+                fired[0]++;
+            }
+
+            public void modelRestored(dr.inference.model.Model m) {
+            }
+        });
+        EigenDecomposition eigen = model.getEigenDecomposition();
+        double[] before = new double[S * S];
+        model.getTransitionProbabilities(0.3, before);
+
+        tree.setNodeHeight(tree.getRoot(), 3.0);
+        tree.setNodeHeight(tree.getInternalNode(0).equals(tree.getRoot()) ? tree.getInternalNode(1) : tree.getInternalNode(0), 0.5);
+        assertEquals("a height change fires nothing", 0, fired[0]);
+        assertSame("eigen decomposition still cached", eigen, model.getEigenDecomposition());
+        double[] after = new double[S * S];
+        model.getTransitionProbabilities(0.3, after);
+        assertTrue(java.util.Arrays.equals(before, after));
+
+        swapTips(tree, "G", "C");
+        assertTrue("a topology change fires", fired[0] > 0);
+    }
 }

@@ -29,7 +29,9 @@ package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.substmodel.AbstractHierarchicalRateProvider;
+import dr.evomodel.substmodel.EqualRatesProvider;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.RelativeRatesProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -62,6 +64,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     public static final String KAPPA2 = "kappa2";
     public static final String CHARACTER_TREE_NEWICK = "characterTreeNewick";
     public static final String RATES_FROM = "ratesFrom";
+    public static final String EQUAL_RATES = "equalRates";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -81,27 +84,32 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
         }
 
         List<String> selectors = new ArrayList<String>();
-        for (String name : new String[]{RATES_PARAMETER, KAPPA, KAPPA1, RATES_FROM}) {
+        for (String name : new String[]{RATES_PARAMETER, KAPPA, KAPPA1, EQUAL_RATES, RATES_FROM}) {
             if (xo.hasChildNamed(name)) {
                 selectors.add(name.equals(KAPPA1) ? "kappa1 and kappa2" : name);
             }
         }
         if (selectors.size() > 1) {
             throw new XMLParseException("hierarchicalSubstitutionModel: give at most one of ratesParameter, kappa, "
-                    + "kappa1 and kappa2, ratesFrom; found " + selectors);
+                    + "kappa1 and kappa2, equalRates, ratesFrom; found " + selectors);
         }
         if (xo.hasChildNamed(KAPPA1) != xo.hasChildNamed(KAPPA2)) {
             throw new XMLParseException("hierarchicalSubstitutionModel: kappa1 and kappa2 must be given together");
         }
         final String selector = selectors.isEmpty() ? null : selectors.get(0);
+        final boolean borrowedEqualRates = borrowed instanceof GeneralSubstitutionModel;
         final boolean nucleotideForm = KAPPA.equals(selector) || "kappa1 and kappa2".equals(selector)
-                || RATES_FROM.equals(selector);
+                || (RATES_FROM.equals(selector) && !borrowedEqualRates);
+        final boolean anyDataTypeForm = EQUAL_RATES.equals(selector) || borrowedEqualRates;
 
         try {
-            TreeModel tree = characterTree(xo, freqModel, selector, nucleotideForm);
+            TreeModel tree = characterTree(xo, freqModel, selector, nucleotideForm, anyDataTypeForm);
             HierarchicalSubstitutionModel.HierarchicalRateProvider provider;
             String form;
-            if (borrowed != null) {
+            if (borrowedEqualRates) {
+                provider = EqualRatesProvider.of((GeneralSubstitutionModel) borrowed, tree);
+                form = "ratesFrom " + borrowed.getModelName() + " (equal rates)";
+            } else if (borrowed != null) {
                 provider = RelativeRatesProvider.of(borrowed, tree);
                 form = "ratesFrom " + (borrowed instanceof HKY ? "HKY (kappa)" : "TN93 (kappa1, kappa2)");
             } else if (KAPPA.equals(selector)) {
@@ -111,6 +119,10 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
                 provider = RelativeRatesProvider.tn93((Parameter) xo.getElementFirstChild(KAPPA1),
                         (Parameter) xo.getElementFirstChild(KAPPA2), freqModel, tree);
                 form = "TN93 (kappa1, kappa2)";
+            } else if (EQUAL_RATES.equals(selector)) {
+                boolean normalised = xo.getChild(EQUAL_RATES).getAttribute(NORMALISED, true);
+                provider = new EqualRatesProvider(tree, freqModel, normalised);
+                form = normalised ? "equal rates" : "equal rates, not normalised";
             } else if (RATES_PARAMETER.equals(selector)) {
                 XMLObject cxo = xo.getChild(RATES_PARAMETER);
                 boolean normalised = cxo.getAttribute(NORMALISED, false);
@@ -134,7 +146,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     }
 
     private static TreeModel characterTree(XMLObject xo, FrequencyModel freqModel, String selector,
-                                           boolean nucleotideForm) throws XMLParseException {
+                                           boolean nucleotideForm, boolean anyDataTypeForm) throws XMLParseException {
         final boolean hasTree = xo.hasChildNamed(CHARACTER_TREE);
         final boolean hasNewick = xo.hasAttribute(CHARACTER_TREE_NEWICK);
         if (hasTree && hasNewick) {
@@ -151,7 +163,10 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
                 throw new XMLParseException("hierarchicalSubstitutionModel: " + selector + " needs a nucleotide frequency model; found "
                         + freqModel.getDataType().getDescription());
             }
-            return AbstractHierarchicalRateProvider.characterTree(AbstractHierarchicalRateProvider.NUCLEOTIDE_NEWICK);
+            return AbstractHierarchicalRateProvider.defaultCharacterTree(freqModel.getDataType());
+        }
+        if (anyDataTypeForm) {
+            return AbstractHierarchicalRateProvider.defaultCharacterTree(freqModel.getDataType());
         }
         throw new XMLParseException("hierarchicalSubstitutionModel: characterTree is required with " + (selector == null ? "no rate selector" : selector)
                 + " on data type " + freqModel.getDataType().getDescription());
@@ -203,6 +218,8 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
                     new XMLSyntaxRule[]{
                             AttributeRule.newBooleanRule(NORMALISED, true),
                             new ElementRule(Parameter.class)}, true),
+            new ElementRule(EQUAL_RATES,
+                    new XMLSyntaxRule[]{AttributeRule.newBooleanRule(NORMALISED, true)}, true),
             new ElementRule(KAPPA,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(KAPPA1,

@@ -30,6 +30,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.*;
@@ -69,10 +70,13 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private final int[] nodeOfState;
     private final List<Integer>[] descendantTips;
 
-    private final List<Integer> postOrderTraversal;
-    private final List<Integer> preOrderTraversal;
+    // The structure of the character tree, rebuilt after a change of its topology (Default provider only; the
+    // parametric providers refuse such a change).
+    private List<Integer> postOrderTraversal;
+    private List<Integer> preOrderTraversal;
 
-    private final boolean binary;
+    private boolean binary;
+    private boolean structureKnown = false;
     private final int[] bundleNumber;
     private final int[] internalNodeOfBundleRank;
 
@@ -106,11 +110,6 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                     + dataType.getStateCount() + " states");
         }
 
-        this.postOrderTraversal = getPostOrderTraversalOrder(tree);
-        List<Integer> reversedOrder = new ArrayList<>(postOrderTraversal);
-        Collections.reverse(reversedOrder);
-        this.preOrderTraversal = reversedOrder;
-
         this.probNoEventsOnBranch = new double[tree.getInternalNodeCount()];
         this.probNoEventsFromRoot = new double[tree.getNodeCount()];
         this.H = new double[tree.getNodeCount()];
@@ -132,30 +131,12 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         }
 
         this.descendantTips = new List[tree.getNodeCount()];
-        getMRCAs();
-
-        boolean allBinary = true;
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            if (tree.getChildCount(tree.getInternalNode(i)) != 2) {
-                allBinary = false;
-            }
-        }
-        this.binary = allBinary;
-
         this.bundleNumber = new int[tree.getNodeCount()];
         this.internalNodeOfBundleRank = new int[tree.getInternalNodeCount()];
-        int rank = 0;
-        for (int nodeNumber : postOrderTraversal) {
-            if (nodeNumber < externalNodeCount) {
-                bundleNumber[nodeNumber] = stateOfNode[nodeNumber];
-            } else {
-                bundleNumber[nodeNumber] = stateCount + rank;
-                internalNodeOfBundleRank[rank] = nodeNumber;
-                rank++;
-            }
-        }
+        buildStructure();
 
         addModel(tree);
+        tree.addModelRestoreListener(this);
         hierarchicalRates.addToModelListener(this);
         addModel(frequency);
     }
@@ -173,11 +154,60 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         return frequency;
     }
 
+    private void buildStructure() {
+        postOrderTraversal = getPostOrderTraversalOrder(tree);
+        List<Integer> reversedOrder = new ArrayList<>(postOrderTraversal);
+        Collections.reverse(reversedOrder);
+        preOrderTraversal = reversedOrder;
+
+        getMRCAs();
+
+        boolean allBinary = true;
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            if (tree.getChildCount(tree.getInternalNode(i)) != 2) {
+                allBinary = false;
+            }
+        }
+        binary = allBinary;
+
+        int rank = 0;
+        for (int nodeNumber : postOrderTraversal) {
+            if (nodeNumber < externalNodeCount) {
+                bundleNumber[nodeNumber] = stateOfNode[nodeNumber];
+            } else {
+                bundleNumber[nodeNumber] = stateCount + rank;
+                internalNodeOfBundleRank[rank] = nodeNumber;
+                rank++;
+            }
+        }
+        structureKnown = true;
+    }
+
+    private void ensureStructure() {
+        if (!structureKnown) {
+            buildStructure();
+        }
+    }
+
+    /**
+     * True for an event of the character tree that changes its topology: a tree edit is reported as a
+     * TreeChangedEvent without a node parameter. A change of a node height or another node parameter (reported
+     * as a parameter event and as the parameter itself) does not change anything the model reads.
+     */
+    public static boolean changesTopology(Object event) {
+        if (event instanceof TreeChangedEvent) {
+            final TreeChangedEvent treeEvent = (TreeChangedEvent) event;
+            return !(treeEvent.isNodeParameterChanged() || treeEvent.isHeightChanged());
+        }
+        return false;
+    }
+
     public HierarchicalRateProvider getRateProvider() {
         return hierarchicalRates;
     }
 
     private void computePi() {
+        ensureStructure();
         for (int i = 0; i < postOrderTraversal.size(); i++) {
             NodeRef node = tree.getNode(postOrderTraversal.get(i));
             if (tree.isExternal(node)) {
@@ -230,6 +260,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
     @Override
     public void getTransitionProbabilities(double distance, double[] matrix) {
+        ensureStructure();
         getCachedValues(distance);
 
         for (int i = 0; i < preOrderTraversal.size(); i++) {
@@ -300,6 +331,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     }
 
     public boolean isBinary() {
+        ensureStructure();
         return binary;
     }
 
@@ -316,6 +348,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     }
 
     public void getBundleHeader(double[] out) {
+        ensureStructure();
         if (!binary) {
             throw new IllegalStateException("The hierarchical BEAGLE representation needs a binary character tree");
         }
@@ -338,6 +371,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     }
 
     public void fillBundleBlock(double distance, double[] out, int offset) {
+        ensureStructure();
         getCachedValues(distance);
         final int internalCount = stateCount - 1;
         for (int rank = 0; rank < internalCount; rank++) {
@@ -563,6 +597,12 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == tree) {
+            if (!changesTopology(object)) {
+                return;
+            }
+            structureKnown = false;
+        }
         eigenDecompositionKnown = false;
         beagleModelKnown = false;
         fireModelChanged();
@@ -577,6 +617,13 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     protected void restoreState() {
         eigenDecompositionKnown = false;
         beagleModelKnown = false;
+    }
+
+    @Override
+    public void modelRestored(Model model) {
+        if (model == tree) {
+            structureKnown = false;
+        }
     }
 
     @Override
@@ -607,7 +654,11 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             private final Parameter rateParameter;
             private final FrequencyModel frequency;
             private final boolean normalised;
+            private final int tips;
+            private final int[] parentRate;
+            private final int[][] childRates;
             private final int[][] cladeStates;
+            private boolean structureKnown = false;
             private final double[] lastRates;
             private final double[] lastFrequencies;
             private double normalization = Double.NaN;
@@ -624,9 +675,6 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 if (normalised && frequency == null) {
                     throw new IllegalArgumentException("a normalised ratesParameter needs the FrequencyModel");
                 }
-                rateParameter.addBounds(frequency == null
-                        ? new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, rateParameter.getDimension())
-                        : new GeneratorBounds(rateParameter, treeModel, frequency));
                 this.hierarchicalPoissonRates = new TreeParameterModel(treeModel,
                         new CompoundParameter("Default.Poisson.rates", new Parameter[]{
                                 new Parameter.Default(treeModel.getExternalNodeCount(), 1.0),
@@ -635,25 +683,71 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 this.rateParameter = rateParameter;
                 this.frequency = frequency;
                 this.normalised = normalised;
-                if (normalised) {
-                    final int tips = treeModel.getExternalNodeCount();
-                    final DataType dataType = frequency.getDataType();
-                    this.cladeStates = new int[treeModel.getInternalNodeCount()][];
-                    for (int i = 0; i < cladeStates.length; i++) {
-                        List<Integer> states = new ArrayList<>();
-                        collectStates(treeModel, treeModel.getNode(tips + i), dataType, states);
-                        cladeStates[i] = new int[states.size()];
-                        for (int k = 0; k < states.size(); k++) {
-                            cladeStates[i][k] = states.get(k);
+                this.tips = treeModel.getExternalNodeCount();
+                final int internal = treeModel.getInternalNodeCount();
+                if (frequency != null) {
+                    this.parentRate = new int[internal];
+                    this.childRates = new int[internal][];
+                    this.cladeStates = new int[internal][];
+                    this.lastRates = new double[internal];
+                    this.lastFrequencies = new double[frequency.getDataType().getStateCount()];
+                    final ModelListener listener = new ModelListener() {
+                        public void modelChangedEvent(Model model, Object object, int index) {
+                            if (changesTopology(object)) {
+                                structureKnown = false;
+                            }
                         }
-                    }
-                    this.lastRates = new double[rateParameter.getDimension()];
-                    this.lastFrequencies = new double[dataType.getStateCount()];
+
+                        public void modelRestored(Model model) {
+                            structureKnown = false;
+                        }
+                    };
+                    treeModel.addModelListener(listener);
+                    treeModel.addModelRestoreListener(listener);
                 } else {
+                    this.parentRate = null;
+                    this.childRates = null;
                     this.cladeStates = null;
                     this.lastRates = null;
                     this.lastFrequencies = null;
                 }
+                rateParameter.addBounds(frequency == null
+                        ? new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, rateParameter.getDimension())
+                        : new GeneratorBounds());
+            }
+
+            /**
+             * Parents, internal children and clade states of the internal nodes, by rate index; rebuilt after a
+             * change of the character tree's topology (the rates stay attached to the node numbers).
+             */
+            private void ensureStructure() {
+                if (structureKnown) {
+                    return;
+                }
+                for (int i = 0; i < parentRate.length; i++) {
+                    final NodeRef node = tree.getNode(tips + i);
+                    final NodeRef parent = tree.getParent(node);
+                    parentRate[i] = parent == null ? -1 : parent.getNumber() - tips;
+                    final List<Integer> children = new ArrayList<>();
+                    for (int c = 0; c < tree.getChildCount(node); c++) {
+                        final NodeRef child = tree.getChild(node, c);
+                        if (!tree.isExternal(child)) {
+                            children.add(child.getNumber() - tips);
+                        }
+                    }
+                    childRates[i] = new int[children.size()];
+                    for (int c = 0; c < children.size(); c++) {
+                        childRates[i][c] = children.get(c);
+                    }
+                    final List<Integer> states = new ArrayList<>();
+                    collectStates(tree, node, frequency.getDataType(), states);
+                    cladeStates[i] = new int[states.size()];
+                    for (int k = 0; k < states.size(); k++) {
+                        cladeStates[i][k] = states.get(k);
+                    }
+                }
+                structureKnown = true;
+                normalization = Double.NaN;
             }
 
             /**
@@ -661,49 +755,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
              * fixed, lambda_m must keep sigma(n) >= 0 at m and at every internal node n below m, which gives
              * lambda_m >= -pi_m (sigma(parent(m)) + min(0, min_n sum_{k on the path from n up to a child of m}
              * lambda_k / pi_k)). All rates within their limits is exactly the valid-generator cone, which
-             * contains negative rates (HKY with kappa < 1). Frequency moves are not covered by these limits;
-             * the likelihood rejects a model that leaves the cone.
+             * contains negative rates (HKY with kappa < 1). Frequency moves are not covered by these limits.
              */
-            static final class GeneratorBounds implements Bounds<Double> {
-
-                private final Parameter rates;
-                private final FrequencyModel frequency;
-                private final int tips;
-                private final int[] parentRate;
-                private final int[][] childRates;
-                private final int[][] cladeStates;
-
-                GeneratorBounds(Parameter rates, TreeModel tree, FrequencyModel frequency) {
-                    this.rates = rates;
-                    this.frequency = frequency;
-                    this.tips = tree.getExternalNodeCount();
-                    final int internal = tree.getInternalNodeCount();
-                    this.parentRate = new int[internal];
-                    this.childRates = new int[internal][];
-                    this.cladeStates = new int[internal][];
-                    for (int i = 0; i < internal; i++) {
-                        final NodeRef node = tree.getNode(tips + i);
-                        final NodeRef parent = tree.getParent(node);
-                        parentRate[i] = parent == null ? -1 : parent.getNumber() - tips;
-                        final List<Integer> children = new ArrayList<>();
-                        for (int c = 0; c < tree.getChildCount(node); c++) {
-                            final NodeRef child = tree.getChild(node, c);
-                            if (!tree.isExternal(child)) {
-                                children.add(child.getNumber() - tips);
-                            }
-                        }
-                        childRates[i] = new int[children.size()];
-                        for (int c = 0; c < children.size(); c++) {
-                            childRates[i][c] = children.get(c);
-                        }
-                        final List<Integer> states = new ArrayList<>();
-                        collectStates(tree, node, frequency.getDataType(), states);
-                        cladeStates[i] = new int[states.size()];
-                        for (int k = 0; k < states.size(); k++) {
-                            cladeStates[i][k] = states.get(k);
-                        }
-                    }
-                }
+            private final class GeneratorBounds implements Bounds<Double> {
 
                 private double cladeFrequency(int i) {
                     double sum = 0.0;
@@ -714,7 +768,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 }
 
                 private double term(int i) {
-                    return rates.getParameterValue(i) / cladeFrequency(i);
+                    return rateParameter.getParameterValue(i) / cladeFrequency(i);
                 }
 
                 private double minimumBelow(int i, double above) {
@@ -733,6 +787,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
                 @Override
                 public Double getLowerLimit(int dimension) {
+                    ensureStructure();
                     double sigmaParent = 0.0;
                     for (int k = parentRate[dimension]; k >= 0; k = parentRate[k]) {
                         sigmaParent += term(k);
@@ -743,7 +798,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
                 @Override
                 public int getBoundsDimension() {
-                    return rates.getDimension();
+                    return rateParameter.getDimension();
                 }
             }
 
@@ -765,6 +820,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 if (!normalised) {
                     return 1.0;
                 }
+                ensureStructure();
                 boolean changed = Double.isNaN(normalization);
                 for (int i = 0; i < lastRates.length; i++) {
                     final double rate = rateParameter.getParameterValue(i);

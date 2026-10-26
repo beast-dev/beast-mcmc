@@ -31,6 +31,8 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.TwoStates;
 import dr.evomodel.substmodel.AbstractHierarchicalRateProvider;
 import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.EqualRatesProvider;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.RelativeRatesProvider;
@@ -262,7 +264,7 @@ public class HierarchicalProviderTest extends TestCase {
 
         try {
             RelativeRatesProvider.gtr(new Parameter.Default(new double[]{1.0, 2.0, 1.1, 1.0, 2.0, 1.0}), f,
-                    AbstractHierarchicalRateProvider.characterTree(AbstractHierarchicalRateProvider.NUCLEOTIDE_NEWICK), 1e-10);
+                    AbstractHierarchicalRateProvider.defaultCharacterTree(Nucleotides.INSTANCE), 1e-10);
             fail("untied rates must be refused");
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage(), e.getMessage().contains("not tree-structured") && e.getMessage().contains("ACGT"));
@@ -311,8 +313,7 @@ public class HierarchicalProviderTest extends TestCase {
         Parameter pi = new Parameter.Default(FREQUENCIES[0]);
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, pi);
         HKY hky = new HKY(new Parameter.Default(2.5), f);
-        RelativeRatesProvider provider = RelativeRatesProvider.of(hky, AbstractHierarchicalRateProvider.characterTree(
-                AbstractHierarchicalRateProvider.NUCLEOTIDE_NEWICK));
+        RelativeRatesProvider provider = RelativeRatesProvider.of(hky, AbstractHierarchicalRateProvider.defaultCharacterTree(Nucleotides.INSTANCE));
         HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hrate", provider);
         assertSame(f, model.getFrequencyModel());
         assertEquals(0.5825242718446603, provider.getLambda("AG"), 1e-15);
@@ -346,10 +347,10 @@ public class HierarchicalProviderTest extends TestCase {
 
         try {
             RelativeRatesProvider.of(new GTR(new Parameter.Default(6, 1.0), f),
-                    AbstractHierarchicalRateProvider.characterTree(AbstractHierarchicalRateProvider.NUCLEOTIDE_NEWICK));
+                    AbstractHierarchicalRateProvider.defaultCharacterTree(Nucleotides.INSTANCE));
             fail("GTR is not supported yet");
         } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage(), e.getMessage().contains("supports HKYModel and TN93Model"));
+            assertTrue(e.getMessage(), e.getMessage().contains("supports HKYModel, TN93Model"));
         }
         try {
             RelativeRatesProvider.of(hky, AbstractHierarchicalRateProvider.characterTree("((A:1,C:1):1,(G:1,T:1):1);"));
@@ -357,5 +358,155 @@ public class HierarchicalProviderTest extends TestCase {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage(), e.getMessage().contains("must have the clades {A,G} and {C,T}"));
         }
+    }
+
+    private static double[] ramp(int n, double step) {
+        double[] pi = new double[n];
+        double total = 0.0;
+        for (int i = 0; i < n; i++)
+            total += pi[i] = 1.0 + step * i;
+        for (int i = 0; i < n; i++)
+            pi[i] /= total;
+        return pi;
+    }
+
+    private static GeneralSubstitutionModel equalRatesModel(dr.evolution.datatype.DataType type, FrequencyModel f) {
+        final int n = type.getStateCount();
+        if (n == 2) {
+            return new GeneralSubstitutionModel("binary", type, f, new Parameter.Default(0), 0);
+        }
+        return new GeneralSubstitutionModel("equal", type, f, new Parameter.Default(n * (n - 1) / 2, 1.0), -1);
+    }
+
+    private static void checkEqualRates(String what, HierarchicalSubstitutionModel model, double[] pi, boolean normalised) {
+        final int n = pi.length;
+        double sumSquares = 0.0;
+        for (double p : pi)
+            sumSquares += p * p;
+        double[] lambdas = model.getBeagleModelLambdas();
+        assertEquals(what, 65536.0 + n - 1, lambdas[0]);
+        int zeros = 0;
+        for (int r = 1; r < n; r++) {
+            if (lambdas[r] == 0.0)
+                zeros++;
+            else
+                assertEquals(what + " root", normalised ? 1.0 / (1.0 - sumSquares) : 1.0, lambdas[r], 1e-14);
+        }
+        assertEquals(what + " zero clade rates", n - 2, zeros);
+        double[] bundle = new double[model.getBundleLength(1)];
+        model.getBundleHeader(bundle);
+        model.fillBundleBlock(0.3, bundle, model.getBundleHeaderLength());
+        int zeroH = 0;
+        for (int m = 0; m < n - 1; m++)
+            if (bundle[model.getBundleHeaderLength() + m] == 0.0)
+                zeroH++;
+        assertEquals(what + " H = 0 below the root", n - 2, zeroH);
+    }
+
+    public void testEqualRatesNucleotides() {
+        for (double[] pi : FREQUENCIES) {
+            for (String newick : new String[]{null, "(((A:1,C:1):1,G:1):1,T:1);"}) {
+                FrequencyModel f = frequencies(pi);
+                HKY hky = new HKY(new Parameter.Default(1.0), f);
+                TreeModel tree = newick == null ? AbstractHierarchicalRateProvider.defaultCharacterTree(Nucleotides.INSTANCE)
+                        : AbstractHierarchicalRateProvider.characterTree(newick);
+                HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hrate",
+                        new EqualRatesProvider(tree, f, true));
+                assertEquals(newick, 0.0, maxDiff(model, hky), 1e-13);
+                checkEqualRates("nucleotides " + newick, model, pi, true);
+            }
+        }
+        HierarchicalSubstitutionModel jc = new HierarchicalSubstitutionModel("hrate",
+                new EqualRatesProvider(AbstractHierarchicalRateProvider.defaultCharacterTree(Nucleotides.INSTANCE),
+                        frequencies(FREQUENCIES[1]), true));
+        assertEquals(4.0 / 3.0, jc.getBeagleModelLambdas()[3], 1e-15);
+    }
+
+    public void testEqualRatesOtherDataTypes() {
+        String[] codes = {"a", "b", "c", "d", "e", "f", "g"};
+        dr.evolution.datatype.DataType[] types = {TwoStates.INSTANCE, new dr.evolution.datatype.GeneralDataType(codes),
+                dr.evolution.datatype.AminoAcids.INSTANCE};
+        for (dr.evolution.datatype.DataType type : types) {
+            final int n = type.getStateCount();
+            for (double step : new double[]{0.0, 0.37}) {
+                double[] pi = ramp(n, step);
+                Parameter piParameter = new Parameter.Default(pi);
+                FrequencyModel f = new FrequencyModel(type, piParameter);
+                GeneralSubstitutionModel dense = equalRatesModel(type, f);
+                TreeModel tree = AbstractHierarchicalRateProvider.defaultCharacterTree(type);
+                assertEquals(n, tree.getExternalNodeCount());
+                HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hrate",
+                        new EqualRatesProvider(tree, f, true));
+                assertTrue(model.isBinary());
+                assertEquals(type.getDescription(), 0.0, maxDiff(model, dense), 1e-13);
+                checkEqualRates(type.getDescription(), model, pi, true);
+
+                HierarchicalSubstitutionModel borrowed = new HierarchicalSubstitutionModel("hrate",
+                        EqualRatesProvider.of(dense, tree));
+                assertEquals(type.getDescription() + " ratesFrom", 0.0, maxDiff(borrowed, dense), 1e-13);
+                piParameter.setParameterValue(0, piParameter.getParameterValue(0) + 0.01);
+                piParameter.setParameterValue(n - 1, piParameter.getParameterValue(n - 1) - 0.01);
+                assertEquals(type.getDescription() + " frequency change", 0.0, maxDiff(model, dense), 1e-13);
+                assertEquals(type.getDescription() + " frequency change, ratesFrom", 0.0, maxDiff(borrowed, dense), 1e-13);
+            }
+        }
+
+        dr.evolution.datatype.DataType seven = new dr.evolution.datatype.GeneralDataType(codes);
+        double[] pi = ramp(7, 0.2);
+        FrequencyModel f = new FrequencyModel(seven, new Parameter.Default(pi));
+        GeneralSubstitutionModel unnormalised = equalRatesModel(seven, f);
+        unnormalised.setNormalization(false);
+        TreeModel caterpillar = AbstractHierarchicalRateProvider.characterTree("((((((a:1,b:1):1,c:1):1,d:1):1,e:1):1,f:1):1,g:1);");
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hrate", new EqualRatesProvider(caterpillar, f, false));
+        assertEquals("unnormalised, caterpillar", 0.0, maxDiff(model, unnormalised), 1e-13);
+        checkEqualRates("unnormalised", model, pi, false);
+        assertEquals("ratesFrom an unnormalised model", 0.0, maxDiff(new HierarchicalSubstitutionModel("hrate",
+                EqualRatesProvider.of(unnormalised, caterpillar)), unnormalised), 1e-13);
+    }
+
+    public void testEqualRatesFromRejectsUnequalRates() {
+        dr.evolution.datatype.DataType seven = new dr.evolution.datatype.GeneralDataType(
+                new String[]{"a", "b", "c", "d", "e", "f", "g"});
+        FrequencyModel f = new FrequencyModel(seven, new Parameter.Default(ramp(7, 0.1)));
+        Parameter rates = new Parameter.Default(21, 1.0);
+        GeneralSubstitutionModel dense = new GeneralSubstitutionModel("equal", seven, f, rates, -1);
+        EqualRatesProvider provider = EqualRatesProvider.of(dense, AbstractHierarchicalRateProvider.defaultCharacterTree(seven));
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hrate", provider);
+        model.getBeagleModelLambdas();
+        rates.setParameterValue(4, 1.5);
+        try {
+            model.getBeagleModelLambdas();
+            fail("unequal rates must be refused");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("does not have equal rates"));
+        }
+        rates.setParameterValue(4, 1.0);
+        try {
+            EqualRatesProvider.of(new GeneralSubstitutionModel("unequal", seven, f, new Parameter.Default(21, 2.0) {{
+                setParameterValue(0, 0.5);
+            }}, -1), AbstractHierarchicalRateProvider.defaultCharacterTree(seven));
+            fail("unequal rates must be refused at construction");
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("does not have equal rates"));
+        }
+    }
+
+    public void testDefaultCharacterTrees() {
+        TreeModel amino = AbstractHierarchicalRateProvider.defaultCharacterTree(dr.evolution.datatype.AminoAcids.INSTANCE);
+        assertEquals(20, amino.getExternalNodeCount());
+        assertEquals(19, amino.getInternalNodeCount());
+        int depth = 0;
+        for (int i = 0; i < amino.getExternalNodeCount(); i++) {
+            int d = 0;
+            for (dr.evolution.tree.NodeRef node = amino.getExternalNode(i); !amino.isRoot(node); node = amino.getParent(node))
+                d++;
+            depth = Math.max(depth, d);
+        }
+        assertEquals(5, depth);
+        TreeModel binary = AbstractHierarchicalRateProvider.defaultCharacterTree(TwoStates.INSTANCE);
+        assertEquals(2, binary.getExternalNodeCount());
+        TreeModel nucleotides = AbstractHierarchicalRateProvider.defaultCharacterTree(Nucleotides.INSTANCE);
+        RelativeRatesProvider hky = RelativeRatesProvider.hky(new Parameter.Default(2.0), frequencies(FREQUENCIES[0]), nucleotides);
+        assertEquals(3, hky.getCladeNames().length);
     }
 }

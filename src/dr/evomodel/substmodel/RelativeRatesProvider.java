@@ -109,7 +109,7 @@ public class RelativeRatesProvider extends AbstractHierarchicalRateProvider {
     }
 
     public static RelativeRatesProvider hky(Parameter kappa, FrequencyModel frequency) {
-        return hky(kappa, frequency, characterTree(NUCLEOTIDE_NEWICK));
+        return hky(kappa, frequency, defaultCharacterTree(frequency.getDataType()));
     }
 
     public static RelativeRatesProvider hky(final Parameter kappa, FrequencyModel frequency, TreeModel tree) {
@@ -131,7 +131,7 @@ public class RelativeRatesProvider extends AbstractHierarchicalRateProvider {
     }
 
     public static RelativeRatesProvider tn93(Parameter kappa1, Parameter kappa2, FrequencyModel frequency) {
-        return tn93(kappa1, kappa2, frequency, characterTree(NUCLEOTIDE_NEWICK));
+        return tn93(kappa1, kappa2, frequency, defaultCharacterTree(frequency.getDataType()));
     }
 
     public static RelativeRatesProvider tn93(final Parameter kappa1, final Parameter kappa2, FrequencyModel frequency,
@@ -210,7 +210,8 @@ public class RelativeRatesProvider extends AbstractHierarchicalRateProvider {
                 }
             };
         } else {
-            throw new IllegalArgumentException("ratesFrom supports HKYModel and TN93Model; found "
+            throw new IllegalArgumentException("ratesFrom supports HKYModel, TN93Model and an equal-rates "
+                    + "generalSubstitutionModel or binarySubstitutionModel; found "
                     + dense.getModelName());
         }
         checkNucleotides(frequency, "ratesFrom models");

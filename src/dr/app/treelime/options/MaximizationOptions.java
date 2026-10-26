@@ -182,7 +182,8 @@ public class MaximizationOptions implements Serializable {
         LOGIT("logit", null),
         NONE("none", null),
         NODE_HEIGHTS("node-height ratios (all internal nodes)", null),
-        FREQUENCIES("stick-breaking simplex", null),
+        // the stick-breaking map of the simplex to the reals; the name BEAST reports (params.tsv) and parses
+        FREQUENCIES("UnitSimplexTransform", null),
         FIXED_BY_PRIOR(null, "fixed in the Priors tab"),
         EXCLUDED(null, "not selected"),
         STATISTIC(null, "a statistic, not a parameter"),

@@ -1042,11 +1042,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         long timerStart = COUNT_CALCULATIONS ? System.nanoTime() : 0;
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
-            if (!evolutionaryProcessDelegate.canUpdateSubstitutionModels()) {
-                // The model cannot be represented (a negative clade rate in the hierarchical representation),
-                // so reject the move; the flag stays set and the restored model is uploaded next time.
-                return Double.NEGATIVE_INFINITY;
-            }
             evolutionaryProcessDelegate.updateSubstitutionModels(beagle, flip);
 
             // we are currently assuming a no-category model...

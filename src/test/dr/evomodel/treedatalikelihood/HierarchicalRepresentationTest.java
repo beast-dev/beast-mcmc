@@ -328,8 +328,8 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
         assertEquals("kappa 0.5, negative clade rates, eigen path", reference, eigen, 1e-10 * Math.abs(reference));
     }
 
-    public void testEigenPathRejectsFrequenciesOutsideTheCone() throws Exception {
-        if (skip("testEigenPathRejectsFrequenciesOutsideTheCone")) {
+    public void testNegativeRateInsideTheConeOnBothPaths() throws Exception {
+        if (skip("testNegativeRateInsideTheConeOnBothPaths")) {
             return;
         }
         Parameter pi = new Parameter.Default(new double[]{0.1, 0.2, 0.3, 0.4});
@@ -354,13 +354,8 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage(), e.getMessage().contains("the generator is valid"));
         }
-
-        eigen.storeModelState();
         pi.setParameterValue(1, 0.3);
         pi.setParameterValue(2, 0.2);
         assertFalse("pi_AG 0.3 puts sigma(AG) below 0", model.isValidGenerator());
-        assertEquals(Double.NEGATIVE_INFINITY, eigen.getLogLikelihood());
-        eigen.restoreModelState();
-        assertEquals("restored", first, eigen.getLogLikelihood(), 0.0);
     }
 }

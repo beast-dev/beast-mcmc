@@ -33,7 +33,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
-import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.util.Timer;
 
@@ -151,17 +150,6 @@ public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, S
         this.settings = settings;
 
     }// END: Constructor
-
-    @Override
-    public boolean canUpdateSubstitutionModels() {
-        for (SubstitutionModel model : substitutionModelList) {
-            if (model instanceof HierarchicalSubstitutionModel
-                    && !((HierarchicalSubstitutionModel) model).isValidGenerator()) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     @Override
     public boolean canReturnComplexDiagonalization() {

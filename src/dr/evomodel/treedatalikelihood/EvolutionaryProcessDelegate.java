@@ -41,10 +41,6 @@ public interface EvolutionaryProcessDelegate {
 
     boolean canReturnComplexDiagonalization();
 
-    default boolean canUpdateSubstitutionModels() {
-        return true;
-    }
-
     int getEigenBufferCount();
 
     int getMatrixBufferCount();

@@ -52,6 +52,7 @@ public final class GradientRegistry {
         SUBSTITUTION("analytic", "<branchSubstitutionParameterGradient>"),
         SITE_RATE("analytic", "<siteRateModelGradient>"),
         BRANCH_RATE("analytic", "<branchRateGradient>"),
+        LOCATION_SCALE("analytic", "<locationScaleGradient>"),
         NUMERIC("numeric", "finite differences of the tree likelihoods");
 
         private final String kind;
@@ -102,6 +103,11 @@ public final class GradientRegistry {
             if ((clockType == ClockType.STRICT_CLOCK && name.equals("clock.rate")) ||
                     (clockType == ClockType.HMC_CLOCK && name.equals(ClockType.HMC_CLOCK_BRANCH_RATES))) {
                 return LikelihoodTerm.BRANCH_RATE;
+            }
+            // the HMC relaxed clock's location (rate) and scale (arbitraryBranchRates)
+            if (clockType == ClockType.HMC_CLOCK &&
+                    (name.equals(ClockType.HMC_CLOCK_LOCATION) || name.equals(ClockType.HMCLN_SCALE))) {
+                return LikelihoodTerm.LOCATION_SCALE;
             }
         }
         return LikelihoodTerm.NUMERIC;

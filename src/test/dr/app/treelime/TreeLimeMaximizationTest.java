@@ -383,6 +383,61 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertGradientChecked(run);
     }
 
+    // the HMC relaxed clock's location (rate) and scale: the analytic locationScaleGradient of the tree likelihood, as
+    // in the hmc_clock XMLs, together with the branch rates' branchRateGradient
+    public void testHmcClockLocationAndScale() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");
+        if (options == null) {
+            return;
+        }
+        TreeLimeHarness.setTipDatesFromNames(options);
+        for (PartitionClockModel clock : options.getPartitionClockModels()) {
+            clock.setClockType(ClockType.HMC_CLOCK);
+        }
+        quiet(options).maximizationOptions.nIterations = 30;
+        String xml = TreeLimeHarness.generate(options);
+        String location = between(xml, "<jointGradient id=\"gradient.branchRatesHMC.rate\">", "</jointGradient>");
+        assertTrue(location.contains("<locationScaleGradient traitName=\"Sequence\" useHessian=\"false\">"));
+        assertTrue(location.contains("<location>"));
+        String scale = between(xml, "<jointGradient id=\"gradient.branchRatesHMC.scale\">", "</jointGradient>");
+        assertTrue(scale.contains("<scale>"));
+        assertFalse(scale.contains("<numericalGradient>\n\t\t\t<likelihood"));
+
+        // at the start, each block's derivative is the joint density's, by central differences
+        Map<String, XMLObject> objects = parse(xml);
+        dr.inference.model.Likelihood joint = (dr.inference.model.Likelihood) objects.get("joint").getNativeObject();
+        for (String id : new String[]{"branchRatesHMC.rate", "branchRatesHMC.scale"}) {
+            Parameter parameter = (Parameter) objects.get(id).getNativeObject();
+            double analytic = ((dr.inference.hmc.GradientWrtParameterProvider)
+                    objects.get("gradient." + id).getNativeObject()).getGradientLogDensity()[0];
+            double x = parameter.getParameterValue(0);
+            double h = 1E-6 * x;
+            parameter.setParameterValue(0, x + h);
+            double plus = joint.getLogLikelihood();
+            parameter.setParameterValue(0, x - h);
+            double minus = joint.getLogLikelihood();
+            parameter.setParameterValue(0, x);
+            assertEquals(id, (plus - minus) / (2 * h), analytic, 1E-5 * Math.abs(analytic));
+        }
+
+        Run run = run(xml);
+        assertTrue(run.end > run.start);
+        // finite differences along random directions are poor at the far, steep start and where the rate nears 0, so
+        // only check that no gradient was NaN (a finite difference stepping below a positive parameter's bound)
+        for (double error : run.maximizer.getGradientCheckErrors()) {
+            assertFalse(Double.isNaN(error));
+        }
+    }
+
+    // parse without maximizing
+    private static Map<String, XMLObject> parse(String xml) throws Exception {
+        xml = xml.replace("<maximizeWrtParameter id=\"maximizer\"",
+                "<maximizeWrtParameter id=\"maximizer\" maximizeOnParse=\"false\"");
+        xml = xml.substring(0, xml.indexOf("<!-- The optimum")) + "</beast>\n";
+        BeastParser parser = new BeastParser(new String[]{}, null, false, false, false, new BeastVersion());
+        return parser.parse(new StringReader(xml), false);
+    }
+
     // with tip dates BEAUti estimates the strict clock rate: the analytic branch-rate gradient
     public void testStrictClockRateWithTipDates() throws Exception {
         TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");

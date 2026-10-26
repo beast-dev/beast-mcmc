@@ -1278,6 +1278,18 @@ public class BeastGenerator extends Generator {
                 writer.writeIDref("treeDataLikelihood", treeLikelihood);
                 writer.writeCloseTag("branchRateGradient");
                 return "branchRateGradient";
+            case LOCATION_SCALE:
+                // as the hmc_clock XMLs differentiate arbitraryBranchRates' location and scale
+                attributes.add(new Attribute.Default<String>("traitName", "Sequence"));
+                attributes.add(new Attribute.Default<Boolean>("useHessian", false));
+                writer.writeOpenTag("locationScaleGradient", attributes);
+                writer.writeIDref("treeDataLikelihood", treeLikelihood);
+                String role = parameter.getBaseName().equals(ClockType.HMCLN_SCALE) ? "scale" : "location";
+                writer.writeOpenTag(role);
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                writer.writeCloseTag(role);
+                writer.writeCloseTag("locationScaleGradient");
+                return "locationScaleGradient";
             default:
                 throw new IllegalArgumentException("Not an analytic term: " + term);
         }

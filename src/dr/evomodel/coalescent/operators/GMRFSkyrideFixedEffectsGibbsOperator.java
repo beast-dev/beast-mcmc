@@ -119,7 +119,7 @@ public class GMRFSkyrideFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
     //MCMCOperator INTERFACE
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return GMRFSkyrideFixedEffectsGibbsOperatorParser.GMRF_GIBBS_OPERATOR;
     }
 

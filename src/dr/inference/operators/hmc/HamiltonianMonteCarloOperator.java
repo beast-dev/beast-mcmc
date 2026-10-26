@@ -122,7 +122,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "VanillaHMC(" + parameter.getParameterName() + ")";
     }
 

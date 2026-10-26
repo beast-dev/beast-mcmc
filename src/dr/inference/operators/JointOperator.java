@@ -136,7 +136,7 @@ public class JointOperator extends AbstractAdaptableOperator {
         return "Joint." + operatorList.get(i).getOperatorName();
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
 //        StringBuffer sb = new StringBuffer("Joint(\n");
 //        for(SimpleMCMCOperator operation : operatorList)
 //            sb.append("\t"+operation.getOperatorName()+"\n");

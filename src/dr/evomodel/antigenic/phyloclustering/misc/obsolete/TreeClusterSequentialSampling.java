@@ -1332,7 +1332,7 @@ public class TreeClusterSequentialSampling extends SimpleMCMCOperator implements
 
               
             //MCMCOperator INTERFACE
-            public final String getOperatorName() {
+            protected final String getBaseOperatorName() {
                 return TREE_CLUSTERSEQUENTIAL_OPERATOR;
             }
 

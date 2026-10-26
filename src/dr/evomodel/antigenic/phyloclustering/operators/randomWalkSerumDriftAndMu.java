@@ -123,7 +123,7 @@ public class randomWalkSerumDriftAndMu extends SimpleMCMCOperator  {
 
              
             //MCMCOperator INTERFACE
-            public final String getOperatorName() {
+            protected final String getBaseOperatorName() {
                 return SERUMDRIFT_AND_MU_OPERATOR;
             }
 

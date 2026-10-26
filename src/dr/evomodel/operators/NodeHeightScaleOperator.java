@@ -170,7 +170,7 @@ public class NodeHeightScaleOperator extends AbstractAdaptableOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "nodeHeightScale";
     }
 

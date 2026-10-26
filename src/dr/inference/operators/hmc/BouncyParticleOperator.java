@@ -59,7 +59,7 @@ public class BouncyParticleOperator extends AbstractParticleOperator implements 
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Bouncy particle operator";
     }
 

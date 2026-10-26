@@ -82,7 +82,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME;
     }
 

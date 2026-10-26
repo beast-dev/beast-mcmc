@@ -1512,7 +1512,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 
     //MCMCOperator INTERFACE
     // This is the only part where GPSBUOperateroParser is used
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return GaussianProcessSkytrackBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 

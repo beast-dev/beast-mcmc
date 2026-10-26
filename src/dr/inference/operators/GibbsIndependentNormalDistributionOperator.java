@@ -99,7 +99,7 @@ public class GibbsIndependentNormalDistributionOperator extends SimpleMCMCOperat
 		return "";
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return "GibbsIndependentNormalDistribution(" + variable.getVariableName() + ")";
 	}
 	

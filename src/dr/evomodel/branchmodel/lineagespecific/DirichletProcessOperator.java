@@ -316,7 +316,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	}// END: exponentiate
 
 	@Override
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return DirichletProcessOperatorParser.DIRICHLET_PROCESS_OPERATOR;
 	}
 

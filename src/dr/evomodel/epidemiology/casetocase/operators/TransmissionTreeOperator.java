@@ -235,7 +235,7 @@ public class TransmissionTreeOperator extends AbstractAdaptableOperator {
         return "";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TRANSMISSION_TREE_OPERATOR;
     }
 

@@ -63,7 +63,7 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
       * @see dr.inference.operators.SimpleOperator#getOperatorName()
       */
     @Override
-    public abstract String getOperatorName();
+    protected abstract String getBaseOperatorName();
 
     public final double operate() {
         return operate(null);

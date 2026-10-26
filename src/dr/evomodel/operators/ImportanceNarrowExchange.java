@@ -303,7 +303,7 @@ public class ImportanceNarrowExchange extends AbstractTreeOperator implements Tr
      */
     @Override
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return  "Importance Narrow Exchange" + "(" + tree.getId() + ")";
     }
 

@@ -57,7 +57,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
-    public String getOperatorName(){
+    protected String getBaseOperatorName(){
         return INFECTION_BRANCH_MOVEMENT_OPERATOR;
     }
 

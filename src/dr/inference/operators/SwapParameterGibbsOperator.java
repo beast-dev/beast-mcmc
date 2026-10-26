@@ -44,7 +44,7 @@ public class SwapParameterGibbsOperator extends SwapParameterOperator implements
         return 1;
     }
 
-    public String getOperatorName() {
-        return "GIBBS." + super.getOperatorName();
+    protected String getBaseOperatorName() {
+        return "GIBBS." + super.getBaseOperatorName();
     }
 }

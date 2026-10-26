@@ -52,7 +52,7 @@ public class GaussianTreeTraitGibbsOperator extends SimpleMCMCOperator implement
 
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TRAIT_GIBBS;
     }
 

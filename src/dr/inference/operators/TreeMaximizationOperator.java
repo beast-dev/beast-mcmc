@@ -53,7 +53,7 @@ public class TreeMaximizationOperator extends SimpleMCMCOperator {
 
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         if (getCount() < maxSteps) {
             return TreeMaximizationOperatorParser.NAME + "(" + treeOperator.getOperatorName() + ")";
         } else {

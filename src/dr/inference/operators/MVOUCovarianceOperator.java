@@ -156,7 +156,7 @@ public class MVOUCovarianceOperator extends AbstractAdaptableOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return MVOUCovarianceOperatorParser.MVOU_OPERATOR + "(" +
                 varMatrix.getId() + ")";
     }

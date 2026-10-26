@@ -112,7 +112,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
         throw new RuntimeException("Couldn't find valid narrow move on this tree!!");
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Narrow Exchange RLC";
     }
 

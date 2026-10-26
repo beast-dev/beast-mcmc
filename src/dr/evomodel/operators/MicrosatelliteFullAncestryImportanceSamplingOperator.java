@@ -120,7 +120,7 @@ public class MicrosatelliteFullAncestryImportanceSamplingOperator extends Simple
     public String getPerformanceSuggestion(){
         return "None";
     }
-    public String getOperatorName(){
+    protected String getBaseOperatorName(){
         return MSAT_FULL_ANCESTRY_IMPORTANCE_SAMPLING_OPERATOR;
     }
     public int getStepCount(){

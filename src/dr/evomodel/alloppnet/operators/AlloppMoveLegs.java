@@ -58,7 +58,7 @@ public class AlloppMoveLegs extends SimpleMCMCOperator {
 	}
 
 	@Override
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return AlloppMoveLegsParser.MOVE_LEGS + "(" + apspnet.getId() +
 		"," + apsp.getId() + ")";
 	}

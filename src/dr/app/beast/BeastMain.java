@@ -393,7 +393,7 @@ public class BeastMain {
 
                         new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for all adaptive operators, overriding any set in the XML (default 0.234)"),
-                        new Arguments.StringOption("operator_weights", null, "KEY=FACTOR,...", "Multiply operator weights; KEY is an operator name (e.g. subtreeLeap or scale(clock.rate)) or * for the rest, a FACTOR of 0 removes the operator"),
+                        new Arguments.StringOption("operator_weights", null, "KEY=FACTOR,...", "Multiply operator weights; KEY is an operator id, name or type (e.g. stl1, scale(clock.rate) or subtreeLeap) or * for the rest, a FACTOR of 0 removes the operator"),
 
                         new Arguments.StringOption("pattern_compression", "pc", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
                                 false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),

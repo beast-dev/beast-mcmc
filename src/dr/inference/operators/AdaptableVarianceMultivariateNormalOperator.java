@@ -562,7 +562,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptab
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         String output = "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
         if (PRINT_FULL_MATRIX) {
             output += "\nMeans:\n";

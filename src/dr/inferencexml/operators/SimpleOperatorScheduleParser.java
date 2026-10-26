@@ -30,6 +30,7 @@ package dr.inferencexml.operators;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.SimpleOperatorSchedule;
+import dr.util.Identifiable;
 import dr.xml.*;
 
 import java.util.LinkedHashMap;
@@ -50,9 +51,10 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
 
     /**
      * System property (set by the -operator_weights command line option) holding a comma separated
-     * list of key=factor pairs that multiply the XML weights. A key matches an operator's full name
-     * (e.g. "scale(clock.rate)") or the part before the first '(' (e.g. "subtreeLeap"); "*" matches
-     * any operator not otherwise matched. A factor of 0 removes the operator from the schedule.
+     * list of key=factor pairs that multiply the XML weights. A key matches, in this order, an operator's
+     * full name (e.g. "stl1:subtreeLeap(treeModel)"), its XML id ("stl1"), its name without the id
+     * ("subtreeLeap(treeModel)") or that name up to the first '(' ("subtreeLeap"); "*" matches any operator
+     * not otherwise matched. A factor of 0 removes the operator from the schedule.
      */
     public static final String OPERATOR_WEIGHTS_PROPERTY = "mcmc.operator_weights";
 
@@ -128,10 +130,18 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
      */
     private static boolean applyWeightFactor(MCMCOperator operator, Map<String, Double> factors) {
         String name = operator.getOperatorName();
-        int bracket = name.indexOf('(');
-        String prefix = (bracket > 0 ? name.substring(0, bracket) : name).trim();
+        String id = operator instanceof Identifiable ? ((Identifiable) operator).getId() : null;
+        String baseName = id != null && name.startsWith(id + ":") ? name.substring(id.length() + 1) : name;
+        int bracket = baseName.indexOf('(');
+        String prefix = (bracket > 0 ? baseName.substring(0, bracket) : baseName).trim();
 
         Double factor = factors.get(name);
+        if (factor == null && id != null) {
+            factor = factors.get(id);
+        }
+        if (factor == null) {
+            factor = factors.get(baseName);
+        }
         if (factor == null) {
             factor = factors.get(prefix);
         }

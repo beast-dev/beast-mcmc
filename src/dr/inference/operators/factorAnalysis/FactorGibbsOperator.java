@@ -130,7 +130,7 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return FACTOR_GIBBS_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

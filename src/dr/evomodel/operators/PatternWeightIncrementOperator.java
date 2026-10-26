@@ -100,7 +100,7 @@ public class PatternWeightIncrementOperator extends SimpleMCMCOperator implement
         super.reject();
     }
     
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return PATTERN_WEIGHT_INCREMENT_OPERATOR;
     }
 

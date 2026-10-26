@@ -83,7 +83,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME;
     }
 

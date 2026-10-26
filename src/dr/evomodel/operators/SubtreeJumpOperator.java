@@ -301,7 +301,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Constra
 
 
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";
     }
 }

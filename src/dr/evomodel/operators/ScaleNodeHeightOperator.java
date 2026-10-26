@@ -149,7 +149,7 @@ public class ScaleNodeHeightOperator extends AbstractAdaptableTreeOperator {
         return "scaleFactor";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         switch (operatorType) {
             case SCALEROOT:
                 return "scale(" + tree.getId() + " root height)";

@@ -467,7 +467,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         }
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Gibbs Subtree Exchange";
     }
 

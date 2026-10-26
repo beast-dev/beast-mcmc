@@ -131,7 +131,7 @@ public class FNPR extends AbstractTreeOperator {
     * @see dr.inference.operators.SimpleMCMCOperator#getOperatorName()
     */
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return FNPRParser.FNPR;
     }
 

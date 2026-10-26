@@ -133,7 +133,7 @@ public class muPrecisionInactiveMuOperator extends AbstractAdaptableOperator {
 
     public final static String CLASSNAME = "muPrecisionInactiveMuOperator";
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return CLASSNAME;
     }
 

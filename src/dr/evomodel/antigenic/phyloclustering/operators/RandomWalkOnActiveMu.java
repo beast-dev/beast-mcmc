@@ -141,7 +141,7 @@ public class RandomWalkOnActiveMu extends AbstractAdaptableOperator {
 
     public final static String RANDOMWALKACTIVEMU = "randomWalkOnActiveMu";
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return RANDOMWALKACTIVEMU;
     }
 

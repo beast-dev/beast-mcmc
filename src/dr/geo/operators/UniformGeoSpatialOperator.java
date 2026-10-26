@@ -94,7 +94,7 @@ public class UniformGeoSpatialOperator extends SimpleMCMCOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "uniformGeoSpatial(" + parameter.getParameterName() + ")";
     }
 

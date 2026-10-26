@@ -142,7 +142,7 @@ public class Mu1ScaleActiveScaledMu1IntactOperator extends AbstractAdaptableOper
     
     public final static String MU1SCALEACTIVEACTIVEMU1INTACTOPERATOR = "Mu1ScaleActiveScaledMu1IntactOperator";
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return MU1SCALEACTIVEACTIVEMU1INTACTOPERATOR;
     }
 

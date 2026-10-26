@@ -119,7 +119,7 @@ public class MicrosatelliteSingleAncestralStateGibbsOperator extends SimpleMCMCO
     public String getPerformanceSuggestion(){
         return "None";
     }
-    public String getOperatorName(){
+    protected String getBaseOperatorName(){
         return MSAT_SINGLE_ANCESTAL_STATE_GIBBS_OPERATOR;
     }
     public int getStepCount(){

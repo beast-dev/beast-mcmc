@@ -45,7 +45,7 @@ public class MicrosatelliteModelSelectOperator extends SimpleMCMCOperator {
         setWeight(weight);
     }
 
-    public String getOperatorName(){
+    protected String getBaseOperatorName(){
         return "msatModelSelectOperator("+parameter.getParameterName()+")";
     }
 

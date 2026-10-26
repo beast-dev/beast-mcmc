@@ -106,7 +106,7 @@ public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOp
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "FactorRJMCMCOperator";
     }
 

@@ -194,7 +194,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME;
     }
 

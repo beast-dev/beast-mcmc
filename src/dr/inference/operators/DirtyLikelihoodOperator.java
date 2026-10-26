@@ -44,7 +44,7 @@ public class DirtyLikelihoodOperator extends SimpleMCMCOperator implements Gibbs
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return DirtyLikelihoodOperatorParser.TOUCH_OPERATOR;
     }
 

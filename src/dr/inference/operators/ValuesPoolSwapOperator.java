@@ -44,7 +44,7 @@ public class ValuesPoolSwapOperator extends SimpleMCMCOperator {
         this.pool = pool;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return ValuesPoolSwapOperatorParser.VALUESPOOL_OPERATOR + "(" + pool.getModelName() + ")";
     }
 

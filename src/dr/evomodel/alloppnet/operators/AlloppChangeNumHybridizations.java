@@ -64,7 +64,7 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return AlloppChangeNumHybridizationsParser.CHANGE_NUM_HYBRIDIZATIONS + "(" + apspnet.getId() +
                 "," + apsp.getId() + ")";
     }

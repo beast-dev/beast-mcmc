@@ -1521,7 +1521,7 @@ public class ARGAddRemoveEventOperator extends AbstractAdaptableOperator {
 //		return mode;
 //	}
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return ARG_EVENT_OPERATOR;
     }
 

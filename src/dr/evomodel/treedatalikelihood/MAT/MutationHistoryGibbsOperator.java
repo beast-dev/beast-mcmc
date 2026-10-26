@@ -85,7 +85,7 @@ public class MutationHistoryGibbsOperator extends SimpleMCMCOperator implements 
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME + "(" + tree.getId() + ")";
     }
 }

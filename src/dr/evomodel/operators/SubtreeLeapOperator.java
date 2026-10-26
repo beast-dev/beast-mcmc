@@ -413,7 +413,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         return "size";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         if (tips == null) {
             return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
         } else {

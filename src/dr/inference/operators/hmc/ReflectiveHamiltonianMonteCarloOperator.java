@@ -92,7 +92,7 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "ReflectiveHMC(" + parameter.getParameterName() + ")";
     }
 

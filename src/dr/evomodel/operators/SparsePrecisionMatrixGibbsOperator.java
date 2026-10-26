@@ -677,7 +677,7 @@ System.out.println("------------------------------------------------------------
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return VARIANCE_OPERATOR;
     }
 

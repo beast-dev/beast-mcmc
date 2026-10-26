@@ -342,7 +342,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "loadingsGibbsTruncatedOperator";  //To change body of implemented methods use File | Settings | File Templates.
     }
 

@@ -113,7 +113,7 @@ public class ModeFindOperator extends AbstractAdaptableOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return OPERATOR;
     }
 

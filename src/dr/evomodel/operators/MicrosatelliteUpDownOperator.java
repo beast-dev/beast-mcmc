@@ -99,7 +99,7 @@ public class MicrosatelliteUpDownOperator extends AbstractAdaptableOperator {
         return "scaleFactor";
     }
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         String name = "";
         if( upParameter != null ) {
             name = "up:";

@@ -41,7 +41,7 @@ public class LoadingsSparsityOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "LoadingsSparsityOperator";
     }
 

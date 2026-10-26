@@ -65,7 +65,7 @@ public class SiteRateCategoryGibbsOperator extends SimpleMCMCOperator implements
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME + "(" + delegate.getTree().getId() + ")";
     }
 }

@@ -102,7 +102,7 @@ public class GibbsIndependentJointNormalGammaOperator extends SimpleMCMCOperator
 		return "";
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return "GibbsIndependentJointNormalGamma(" + mean.getVariableName() + "," + precision.getVariableName() + ")";
 	}
 	

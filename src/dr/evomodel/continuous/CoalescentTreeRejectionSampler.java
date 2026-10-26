@@ -79,7 +79,7 @@ public class CoalescentTreeRejectionSampler extends SimpleMCMCOperator implement
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "CoalescentTreeRejectionSampler";
     }
 

@@ -71,7 +71,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return AlloppNetworkNodeSlideParser.NETWORK_NODE_REHEIGHT + "(" + apspnet.getId() +
                 "," + apsp.getId() + ")";
     }

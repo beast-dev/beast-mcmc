@@ -106,7 +106,7 @@ public class UniformNodeHeightOperator extends AbstractTreeOperator {
         return 0.0;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "uniform(" + tree.getId() + " internal nodes)";
     }
 }

@@ -308,11 +308,13 @@ public class TreeLimeBootstrapTest extends TestCase {
         }
         File directory = directory();
         options.maximizationOptions.setBootstrapJobs(3);
+        options.maximizationOptions.bootstrapThreads = 2;
         BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
         generator.generate(directory, 3, 42);
         String script = new String(bytes(directory, BootstrapGenerator.SCRIPT_FILE));
         assertTrue(script.contains("JOBS=\"${JOBS:-3}\""));
         assertTrue(script.contains("xargs -n 1 -P \"$JOBS\""));
+        assertTrue(script.contains("THREADS=\"${THREADS:-2}\""));
         for (int b : new int[]{1, 3}) { // replicate 2 failed
             write(directory, "dengue.rep" + b + ".params.tsv", "name\tvalue\ttransformed\n" +
                     "kappa\t" + (10 + b) + "\t0\nclock.rate\t0.00" + b + "\t0\n");
@@ -334,8 +336,9 @@ public class TreeLimeBootstrapTest extends TestCase {
         assertTrue(output, output.contains("replicate 2 failed: see rep2.log"));
         List<String> calls = Files.readAllLines(new File(directory, "calls.txt").toPath());
         java.util.Collections.sort(calls);
-        assertEquals(Arrays.asList("-overwrite -seed 1 rep1.xml", "-overwrite -seed 2 rep2.xml",
-                "-overwrite -seed 3 rep3.xml"), calls);
+        assertEquals(Arrays.asList("-threads 2 -beagle_threads 2 -overwrite -seed 1 rep1.xml",
+                "-threads 2 -beagle_threads 2 -overwrite -seed 2 rep2.xml",
+                "-threads 2 -beagle_threads 2 -overwrite -seed 3 rep3.xml"), calls);
 
         List<String> table = Files.readAllLines(new File(directory, generator.getBootstrapParametersFile()).toPath());
         assertEquals(Arrays.asList("replicate\tkappa\tclock.rate", "1\t11\t0.001", "3\t13\t0.003"), table);

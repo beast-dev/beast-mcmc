@@ -115,6 +115,8 @@ public class MaximizationOptions implements Serializable {
     public long bootstrapSeed = 1;
     // replicates the run script runs at once (JOBS); 0 in files saved before the setting existed
     private int bootstrapJobs = 1;
+    // threads each replicate's BEAST may use (-threads and -beagle_threads); 0 lets BEAST decide
+    public int bootstrapThreads = 0;
     // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
     private Map<String, Double> lowerBounds = new HashMap<String, Double>();
 

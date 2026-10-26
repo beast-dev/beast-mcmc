@@ -408,21 +408,26 @@ public class BootstrapGenerator extends Generator {
         try {
             out.println("#!/bin/sh");
             int jobs = options.maximizationOptions.getBootstrapJobs();
+            int threads = Math.max(0, options.maximizationOptions.bootstrapThreads);
             out.println("# Runs the " + replicates + " bootstrap replicates of " + options.fileNameStem +
                     " with BEAST, " + jobs + " at a time, then gathers their time trees in " +
                     options.fileNameStem + ".bootstrap.*trees and their estimates in " + getBootstrapParametersFile() + ".");
             out.println("# Fixed-topology bootstrap: every replicate keeps the original starting tree.");
-            out.println("# Set BEAST to the BEAST command if it is not 'beast', and JOBS to the number of replicates");
-            out.println("# to run at once; each BEAST also uses several threads, which parallel runs share, e.g.");
-            out.println("#   BEAST=\"java -Djava.library.path=/usr/local/lib -jar /path/to/beast.jar -threads 1\" " +
-                    "JOBS=8 sh " + SCRIPT_FILE);
+            out.println("# BEAST: the BEAST command if it is not 'beast'; JOBS: the replicates run at once;");
+            out.println("# THREADS: the threads each run may use (-threads and -beagle_threads; 0 lets BEAST decide).");
+            out.println("# JOBS x THREADS should not exceed the machine's threads, e.g. on 16 threads:");
+            out.println("#   BEAST=\"java -Djava.library.path=/usr/local/lib -jar /path/to/beast.jar\" " +
+                    "JOBS=4 THREADS=4 sh " + SCRIPT_FILE);
             out.println("cd \"$(dirname \"$0\")\" || exit 1");
             out.println("BEAST=\"${BEAST:-beast}\"");
             out.println("JOBS=\"${JOBS:-" + jobs + "}\"");
-            out.println("export BEAST");
+            out.println("THREADS=\"${THREADS:-" + threads + "}\"");
+            out.println("THREAD_OPTIONS=\"\"");
+            out.println("if [ \"$THREADS\" -gt 0 ]; then THREAD_OPTIONS=\"-threads $THREADS -beagle_threads $THREADS\"; fi");
+            out.println("export BEAST THREAD_OPTIONS");
             out.println("# each replicate in its own BEAST, JOBS at a time; the gathering below waits for all of them");
             out.println("seq 1 " + replicates + " | xargs -n 1 -P \"$JOBS\" sh -c " +
-                    "'$BEAST -overwrite -seed \"$1\" \"rep$1.xml\" > \"rep$1.log\" 2>&1 || " +
+                    "'$BEAST $THREAD_OPTIONS -overwrite -seed \"$1\" \"rep$1.xml\" > \"rep$1.log\" 2>&1 || " +
                     "echo \"replicate $1 failed: see rep$1.log\"' replicate");
             writeCollection(out, replicates);
         } finally {

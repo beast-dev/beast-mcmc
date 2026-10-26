@@ -76,6 +76,8 @@ public class MaximizationPanel extends TreeLimePanel {
     private final WholeNumberField replicatesField = new WholeNumberField(1, 100000);
     private final WholeNumberField seedField = new WholeNumberField(0, Integer.MAX_VALUE);
     private final WholeNumberField jobsField = new WholeNumberField(1, 1024);
+    private final WholeNumberField threadsField = new WholeNumberField(0, 1024);
+    private final JLabel cpuLabel = new JLabel();
 
     private final ParameterTableModel tableModel = new ParameterTableModel();
     private final OptionsPanel optionsPanel;
@@ -192,8 +194,11 @@ public class MaximizationPanel extends TreeLimePanel {
         jobsField.setColumns(3);
         jobsField.setBorder(new EmptyBorder(FIELD_INSETS));
         jobsField.setToolTipText("<html>How many replicates the run script runs at once, each in its own BEAST " +
-                "(JOBS=n overrides it).<br>Each BEAST also uses several threads: with many parallel runs, consider " +
-                "BEAST=\"beast -threads 1 -beagle_threads 1\".</html>");
+                "(JOBS=n overrides it).</html>");
+        threadsField.setColumns(3);
+        threadsField.setBorder(new EmptyBorder(FIELD_INSETS));
+        threadsField.setToolTipText("<html>The threads each replicate's BEAST may use (-threads and -beagle_threads; " +
+                "THREADS=n overrides it).<br>0 lets BEAST decide, which suits one run at a time.</html>");
         JButton bootstrapButton = new JButton("Generate replicate files...");
         bootstrapButton.setToolTipText("<html>Writes one TreeLime XML per replicate, the counts that rebuild them " +
                 "and a script that runs them in BEAST.</html>");
@@ -209,10 +214,15 @@ public class MaximizationPanel extends TreeLimePanel {
         bootstrapPanel.add(replicatesField);
         bootstrapPanel.add(new JLabel("seed:"));
         bootstrapPanel.add(seedField);
-        bootstrapPanel.add(new JLabel("parallel runs:"));
-        bootstrapPanel.add(jobsField);
         bootstrapPanel.add(bootstrapButton);
         optionsPanel.addComponentWithLabel("Bootstrap replicates:", bootstrapPanel);
+        JPanel runsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        runsPanel.setOpaque(false);
+        runsPanel.add(jobsField);
+        runsPanel.add(new JLabel("threads per run:"));
+        runsPanel.add(threadsField);
+        runsPanel.add(cpuLabel);
+        optionsPanel.addComponentWithLabel("Replicates run at once:", runsPanel);
         onEdit(replicatesField, () -> {
             Integer value = replicatesField.getValue();
             if (value != null && value >= 1) {
@@ -224,6 +234,14 @@ public class MaximizationPanel extends TreeLimePanel {
             if (value != null && value >= 1) {
                 maximization().setBootstrapJobs(value);
             }
+            updateCpuLabel();
+        });
+        onEdit(threadsField, () -> {
+            Integer value = threadsField.getValue();
+            if (value != null && value >= 0) {
+                maximization().bootstrapThreads = value;
+            }
+            updateCpuLabel();
         });
         onEdit(seedField, () -> {
             Integer value = seedField.getValue();
@@ -270,6 +288,26 @@ public class MaximizationPanel extends TreeLimePanel {
 
     private MaximizationOptions maximization() {
         return options.maximizationOptions;
+    }
+
+    // the threads this computer offers, and whether the parallel runs ask for more
+    private void updateCpuLabel() {
+        int available = Runtime.getRuntime().availableProcessors();
+        Integer jobs = jobsField.getValue();
+        Integer threads = threadsField.getValue();
+        String text = "(this computer: " + available + " threads)";
+        String tip = "<html>The threads Java reports on this computer; the run script may run elsewhere.</html>";
+        if (jobs != null && threads != null && threads > 0 && jobs * threads > available) {
+            text = "(this computer: " + available + " threads; " + jobs + " runs x " + threads + " threads = " +
+                    (jobs * threads) + ")";
+            tip = "<html>More threads than this computer has: the runs will compete for them.</html>";
+        } else if (jobs != null && threads != null && threads == 0 && jobs > 1) {
+            tip = "<html>With threads per run 0, each of the " + jobs + " runs lets BEAST decide, and together they " +
+                    "may ask for more<br>threads than this computer has: about " + Math.max(1, available / jobs) +
+                    " threads per run would share them evenly.</html>";
+        }
+        cpuLabel.setText(text);
+        cpuLabel.setToolTipText(tip);
     }
 
     // the generator also falls back to numeric when some partition is not in a tree data likelihood
@@ -319,6 +357,8 @@ public class MaximizationPanel extends TreeLimePanel {
         replicatesField.setValue(maximization.bootstrapReplicates >= 1 ? maximization.bootstrapReplicates : 100);
         seedField.setValue((int) Math.max(0, Math.min(Integer.MAX_VALUE, maximization.bootstrapSeed)));
         jobsField.setValue(maximization.getBootstrapJobs());
+        threadsField.setValue(Math.max(0, maximization.bootstrapThreads));
+        updateCpuLabel();
         settingOptions = false;
 
         tableModel.setParameters(options.selectParameters());

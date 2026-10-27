@@ -119,6 +119,8 @@ public class MaximizationOptions implements Serializable {
     public int bootstrapThreads = 0;
     // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
     private Map<String, Double> lowerBounds = new HashMap<String, Double>();
+    // the topology search (plan 7); null in files saved before the setting existed
+    private TopologySearchOptions topologySearch = new TopologySearchOptions();
 
     /**
      * The gamma shape's default: its optimum often lies at 0, where L-BFGS chases a plateau (the discrete gamma tends
@@ -162,6 +164,13 @@ public class MaximizationOptions implements Serializable {
             lowerBounds = new HashMap<String, Double>();
         }
         lowerBounds.put(parameter.getName(), bound);
+    }
+
+    public TopologySearchOptions getTopologySearch() {
+        if (topologySearch == null) {
+            topologySearch = new TopologySearchOptions();
+        }
+        return topologySearch;
     }
 
     public int getBootstrapJobs() {

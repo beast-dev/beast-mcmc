@@ -40,11 +40,12 @@ public final class SearchSettings {
     public double moveEpsilon = 0.01; // a move's gain over the incumbent to accept it
 
     // tiers (§6.1)
-    // T1 for candidates whose T0 is within this of the incumbent. On Dengue4 with the HMC relaxed clock every NNI's T0
-    // was more than 20 below the incumbent although some gained after T1, and T1 on all of them took 0.3s: so T1 on
-    // nearly every move until the tier diagnostics (plan 7 §6.2) tune it
-    public double deltaT1 = 1000.0;
-    public double deltaKeep = 100.0; // T2 rescue for candidates within this of the incumbent
+    // T1 for candidates whose T0 is within this of the incumbent, and the T2 rescue for those whose T1 is within
+    // deltaKeep. The tier diagnostics (plan 7 §6.2, TierFidelityDiagnostics) on Dengue4: the moves that gain after T2
+    // were at most 30.4 below the incumbent at T0 and 29.0 at T1 (strict clock; 4.9 and 3.6 with the HMC clock and
+    // rates kept); 50 is the plan's ceiling for an adaptive deltaKeep
+    public double deltaT1 = 50.0;
+    public double deltaKeep = 50.0;
     public int t1Sweeps = 2;
     public int t2Candidates = 3;
     public int t2Iterations = 20;
@@ -62,7 +63,10 @@ public final class SearchSettings {
     public double maxRunTime = 0.0; // seconds
     public long maxEvaluations = 0;
 
-    public BranchRateWarmStart.Mode rateWarmStart = BranchRateWarmStart.Mode.PRESERVE_SUBSTITUTIONS;
+    // rates stay with their nodes: after a MAP fit the HMC clock's scale is small, so rates rescaled to preserve
+    // substitutions cost millions in the rate prior (median T0 -7.5e6 on Dengue4), and T0 and T1 stop ranking moves
+    // (Spearman 0.65 against T2, 0.93-0.95 with rates kept; the search ends at -3928.0 instead of -3883.1)
+    public BranchRateWarmStart.Mode rateWarmStart = BranchRateWarmStart.Mode.KEEP;
     public int verifyEvery = 0;
     public long seed = -1; // < 0: leave the random number generator alone
     public boolean printToScreen = true;

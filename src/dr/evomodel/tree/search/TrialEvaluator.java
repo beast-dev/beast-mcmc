@@ -29,15 +29,22 @@ package dr.evomodel.tree.search;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.CompoundModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Scores topology moves inside TreeModel's own store window, and accepts one by replaying it (plan 7 §4.4.1):
@@ -103,12 +110,14 @@ public final class TrialEvaluator {
     private final LocalOptimizer localOptimizer;
     private final int verifyEvery;
     private final MaximizerWrtParameter.Budget t2Budget;
+    private final List<BeagleDataLikelihoodDelegate> beagles = new ArrayList<BeagleDataLikelihoodDelegate>();
 
     private long evaluations = 0;
     private long trials = 0;
     private long t1Count = 0;
     private long t2Count = 0;
     private long verifications = 0;
+    private long rescues = 0;
 
     public TrialEvaluator(TreeModel tree, Likelihood objective, MaximizerWrtParameter roundMaximizer,
                           BranchRateWarmStart warmStart, LocalOptimizer localOptimizer, int t2Iterations,
@@ -125,6 +134,48 @@ public final class TrialEvaluator {
         this.localOptimizer = localOptimizer;
         this.verifyEvery = verifyEvery;
         this.t2Budget = new MaximizerWrtParameter.Budget(t2Iterations).setQuiet(true);
+        for (Model m : models(model)) {
+            if (m instanceof TreeDataLikelihood &&
+                    ((TreeDataLikelihood) m).getDataLikelihoodDelegate() instanceof BeagleDataLikelihoodDelegate) {
+                beagles.add((BeagleDataLikelihoodDelegate) ((TreeDataLikelihood) m).getDataLikelihoodDelegate());
+            }
+        }
+    }
+
+    /**
+     * @return every model reachable from the root
+     */
+    public static Set<Model> models(Model root) {
+        Map<Model, Boolean> seen = new IdentityHashMap<Model, Boolean>();
+        List<Model> stack = new ArrayList<Model>();
+        stack.add(root);
+        while (!stack.isEmpty()) {
+            Model model = stack.remove(stack.size() - 1);
+            if (model == null || seen.containsKey(model)) {
+                continue;
+            }
+            seen.put(model, Boolean.TRUE);
+            if (model instanceof AbstractModel) {
+                AbstractModel abstractModel = (AbstractModel) model;
+                for (int i = 0; i < abstractModel.getModelCount(); ++i) {
+                    stack.add(abstractModel.getModel(i));
+                }
+            } else if (model instanceof CompoundModel) {
+                CompoundModel compound = (CompoundModel) model;
+                for (int i = 0; i < compound.getModelCount(); ++i) {
+                    stack.add(compound.getModel(i));
+                }
+            }
+        }
+        return seen.keySet();
+    }
+
+    private long underflows() {
+        long count = 0;
+        for (BeagleDataLikelihoodDelegate beagle : beagles) {
+            count += beagle.getUnderflowCount();
+        }
+        return count;
     }
 
     static void flatten(Parameter parameter, List<Parameter> leaves) {
@@ -152,6 +203,7 @@ public final class TrialEvaluator {
      */
     public Trial trial(TimeTreeMove move, double t1Threshold, boolean t2) {
         final double before = evaluate(); // TreeDataLikelihood.storeState needs a computed likelihood
+        final long underflows = underflows();
         model.storeModelState();
         final Trial trial;
         try {
@@ -182,6 +234,13 @@ public final class TrialEvaluator {
             }
         } finally {
             model.restoreModelState();
+            if (underflows() != underflows) {
+                // BEAGLE rescaled inside the window, overwriting stored partials (and, the first time, leaving no
+                // stored scale factors): recompute everything now, before the next window stores this state
+                ++rescues;
+                objective.makeDirty();
+                evaluate();
+            }
         }
         ++trials;
         if (verifyEvery > 0 && trials % verifyEvery == 0) {
@@ -276,6 +335,13 @@ public final class TrialEvaluator {
 
     public long getT2Count() {
         return t2Count;
+    }
+
+    /**
+     * @return the trials after which the state was recomputed because BEAGLE rescaled during the trial
+     */
+    public long getUnderflowRecomputes() {
+        return rescues;
     }
 
     public long getVerifications() {

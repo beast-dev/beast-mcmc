@@ -35,13 +35,13 @@ import dr.evomodel.tree.search.BranchRateWarmStart;
 import dr.evomodel.tree.search.SearchSettings;
 import dr.evomodel.tree.search.TimeTreeSearch;
 import dr.evomodel.tree.search.TopologyConstraints;
+import dr.evomodel.tree.search.TrialEvaluator;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.evomodelxml.continuous.hmc.MaximizeWrtParameterParser;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.CompoundModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -56,9 +56,7 @@ import dr.xml.XMLSyntaxRule;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -113,7 +111,7 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         checkMaximizer(ROUND_MAXIMIZER, round, objective);
         checkMaximizer(FINAL_MAXIMIZER, fin, objective);
 
-        final Set<Model> models = models(objective.getModel());
+        final Set<Model> models = TrialEvaluator.models(objective.getModel());
         for (Model model : models) {
             final String name = model.getClass().getSimpleName();
             if (name.equals("LocalClockModel") || name.equals("RandomLocalClockModel")) {
@@ -197,7 +195,7 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         settings.logFileName = xo.hasAttribute(LOG_FILE_NAME) ? xo.getStringAttribute(LOG_FILE_NAME) : null;
         try {
             settings.rateWarmStart = BranchRateWarmStart.Mode.parse(
-                    xo.getAttribute(RATE_WARM_START, BranchRateWarmStart.Mode.PRESERVE_SUBSTITUTIONS.getName()));
+                    xo.getAttribute(RATE_WARM_START, BranchRateWarmStart.Mode.KEEP.getName()));
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(e.getMessage());
         }
@@ -230,32 +228,6 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             throw new XMLParseException("The " + role + " includes the transform's Jacobian, which depends on the " +
                     "topology: use includeJacobian=\"false\"");
         }
-    }
-
-    // every model reachable from the root
-    static Set<Model> models(Model root) {
-        Map<Model, Boolean> seen = new IdentityHashMap<Model, Boolean>();
-        List<Model> stack = new ArrayList<Model>();
-        stack.add(root);
-        while (!stack.isEmpty()) {
-            Model model = stack.remove(stack.size() - 1);
-            if (model == null || seen.containsKey(model)) {
-                continue;
-            }
-            seen.put(model, Boolean.TRUE);
-            if (model instanceof AbstractModel) {
-                AbstractModel abstractModel = (AbstractModel) model;
-                for (int i = 0; i < abstractModel.getModelCount(); ++i) {
-                    stack.add(abstractModel.getModel(i));
-                }
-            } else if (model instanceof CompoundModel) {
-                CompoundModel compound = (CompoundModel) model;
-                for (int i = 0; i < compound.getModelCount(); ++i) {
-                    stack.add(compound.getModel(i));
-                }
-            }
-        }
-        return seen.keySet();
     }
 
     private static boolean isStored(Parameter parameter, Set<Model> models) {
@@ -333,15 +305,15 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             AttributeRule.newLongIntegerRule(SEED, true, "seed for the random number generator"),
             AttributeRule.newDoubleRule(EPSILON, true, "a round must gain more than this to continue (default 0.1)"),
             AttributeRule.newDoubleRule(MOVE_EPSILON, true, "a move must gain more than this (default 0.01)"),
-            AttributeRule.newDoubleRule(DELTA_T1, true, "local optimization for moves whose first score is within this of the incumbent (default 1000)"),
-            AttributeRule.newDoubleRule(DELTA_KEEP, true, "a re-fit (T2) for moves within this of the incumbent when none gains (default 100)"),
+            AttributeRule.newDoubleRule(DELTA_T1, true, "local optimization for moves whose first score is within this of the incumbent (default 50)"),
+            AttributeRule.newDoubleRule(DELTA_KEEP, true, "a re-fit (T2) for moves within this of the incumbent when none gains (default 50)"),
             AttributeRule.newIntegerRule(T1_SWEEPS, true, "sweeps of the local optimization (default 2; 0: off)"),
             AttributeRule.newIntegerRule(T2_CANDIDATES, true, "moves re-fitted when none gains (default 3)"),
             AttributeRule.newIntegerRule(T2_ITERATIONS, true, "iterations of a T2 re-fit (default 20)"),
             AttributeRule.newIntegerRule(MAX_ROUNDS, true, "at most this many rounds (default: the number of internal nodes)"),
             new StringAttributeRule(MAX_RUN_TIME, "stop after this much wall-clock time, e.g. 30min (default: no limit)", true),
             AttributeRule.newLongIntegerRule(MAX_EVALUATIONS, true, "stop after this many objective evaluations (default: no limit)"),
-            new StringAttributeRule(RATE_WARM_START, "preserveSubstitutions (default) or keep", true),
+            new StringAttributeRule(RATE_WARM_START, "keep (default: rates stay with their nodes) or preserveSubstitutions", true),
             AttributeRule.newIntegerRule(VERIFY_EVERY, true, "recompute everything after every this many trials and compare (default 0: never)"),
             AttributeRule.newBooleanRule(PRINT_SCREEN, true, "a line per round (default true)"),
             new StringAttributeRule(TREE_FILE_NAME, "the NEXUS file for the final tree", true),

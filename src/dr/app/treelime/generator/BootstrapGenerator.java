@@ -313,6 +313,11 @@ public class BootstrapGenerator extends Generator {
         if (replicates < 1) {
             throw new GeneratorException("Choose at least one bootstrap replicate.");
         }
+        if (options.maximizationOptions.getTopologySearch().isOn()) {
+            // the replicates keep the starting tree (a fixed-topology bootstrap), not the tree a search would find
+            throw new GeneratorException("The bootstrap keeps the starting tree's topology: turn the topology " +
+                    "search off (to bootstrap the searched tree, use it as the user starting tree).");
+        }
         List<PartitionData> partitions = getPartitions();
         prepare();
         if (!directory.isDirectory() && !directory.mkdirs()) {

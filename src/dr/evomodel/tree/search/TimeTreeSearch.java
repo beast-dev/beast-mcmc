@@ -448,6 +448,10 @@ public class TimeTreeSearch implements Reportable {
         sb.append("Trials: ").append(evaluator.getTrials()).append(" (T1 ").append(evaluator.getT1Count())
                 .append(", T2 ").append(evaluator.getT2Count()).append(")\n");
         sb.append("GuardReverts: ").append(guardReverts).append("\n");
+        if (evaluator.getUnderflowRecomputes() > 0) {
+            sb.append("UnderflowRecomputes: ").append(evaluator.getUnderflowRecomputes())
+                    .append(" (BEAGLE rescaled inside a trial; everything recomputed after it)\n");
+        }
         if (settings.verifyEvery > 0) {
             sb.append("Verifications: ").append(evaluator.getVerifications()).append("\n");
         }

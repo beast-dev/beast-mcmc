@@ -355,6 +355,44 @@ public class TimeTreeSearchTest extends TestCase {
         assertEquals(trees.get(0), trees.get(1));
     }
 
+    // a trial whose evaluation underflows: BEAGLE then rescales with double-buffer flipping off, overwriting the
+    // stored partials, and (the first time) stores no scale factors to restore. Without recomputing everything after
+    // such a trial, later trials were scored wrong and a replay failed (F -20317.3 against the trial's -20320.4). The
+    // data (30 taxa, 5000 JC sites) and the start (5 NNIs from the true tree) are the NniRecoveryStudy replicate
+    // that showed it
+    public void testUnderflowInsideATrial() throws Exception {
+        java.util.logging.Logger.getLogger("dr").setLevel(java.util.logging.Level.SEVERE);
+        try {
+            dr.math.MathUtils.setSeed(11011);
+            dr.evolution.util.Taxa list = new dr.evolution.util.Taxa();
+            for (int i = 0; i < 30; ++i) {
+                list.addTaxon(new dr.evolution.util.Taxon("t" + (i + 1)));
+            }
+            dr.evolution.coalescent.ConstantPopulation population =
+                    new dr.evolution.coalescent.ConstantPopulation(dr.evolution.util.Units.Type.SUBSTITUTIONS);
+            population.setN0(0.05);
+            dr.evolution.tree.Tree truth = new dr.evolution.coalescent.CoalescentSimulator().simulateTree(list, population);
+            File directory = Files.createTempDirectory("underflow").toFile();
+            File fasta = new File(directory, "data.fasta");
+            NniRecoveryStudy.writeFasta(NniRecoveryStudy.simulateJC(truth, 5000), truth, fasta);
+
+            dr.math.MathUtils.setSeed(11016);
+            TreeModel start = new dr.evomodel.tree.DefaultTreeModel("perturbed", truth);
+            for (int m = 0; m < 5; ++m) {
+                List<RootedNniMove> moves = NniNeighbourhood.enumerate(start, null);
+                moves.get(dr.math.MathUtils.nextInt(moves.size())).apply(start, null);
+            }
+            TimeTreeSearch search = NniRecoveryStudy.search(fasta, new dr.evolution.tree.FlexibleTree(start), directory,
+                    "underflow");
+            assertTrue("the data no longer underflow in a trial", search.getEvaluator().getUnderflowRecomputes() > 0);
+            assertTrue(search.getFinalValue() > search.getStartValue());
+            // the state the search ends in is what a full recomputation gives
+            search.getEvaluator().verify(search.getFinalValue());
+        } finally {
+            java.util.logging.Logger.getLogger("dr").setLevel(java.util.logging.Level.INFO);
+        }
+    }
+
     // the log and the NEXUS tree files
     public void testOutputs() throws Exception {
         File directory = Files.createTempDirectory("timeTreeSearch").toFile();

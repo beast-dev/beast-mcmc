@@ -718,7 +718,9 @@ public class TreeLimeFrame extends DocumentFrame {
         //TODO make remove this or put warnings in check above? Seems more appropriate here for now
         if(!generator.checkUserTreeIsBifurcating()){
             JOptionPane.showMessageDialog(this, "At least one  user-specified starting tree " +
-                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree.",
+                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree" +
+                        (options.maximizationOptions.getTopologySearch().isOn() ?
+                                ", which the topology search then starts from." : "."),
                         "Unresolved user-specified starting tree",
                         JOptionPane.WARNING_MESSAGE);
         }

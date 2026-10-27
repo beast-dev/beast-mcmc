@@ -1207,6 +1207,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             }
 
             everUnderflowed = true;
+            underflowCount++;
 
             logL = Double.NEGATIVE_INFINITY;
 
@@ -1597,6 +1598,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         return rescalingScheme;
     }
 
+    /**
+     * @return how many evaluations have underflowed. The retry after an underflow rescales with double-buffer flipping
+     * off, so it overwrites the partials of a stored state, and the first one leaves no stored scale factors to
+     * restore: a caller that restores across an underflow must recompute everything (makeDirty) right after
+     */
+    public long getUnderflowCount() {
+        return underflowCount;
+    }
+
     public boolean getDelayRescalingUntilUnderflow() {
         return delayRescalingUntilUnderflow;
     }
@@ -1700,6 +1710,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
     private boolean recomputeScaleFactors = false;
     private boolean everUnderflowed = false;
+    private long underflowCount = 0;
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
 

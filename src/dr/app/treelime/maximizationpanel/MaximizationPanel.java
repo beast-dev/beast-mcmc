@@ -41,6 +41,7 @@ import dr.app.treelime.options.MaximizationWarnings;
 import dr.app.treelime.options.Parameter;
 import dr.app.treelime.options.PartitionOptions;
 import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.options.TopologySearchOptions;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.util.OSType;
 import dr.evomodelxml.continuous.hmc.MaximizeWrtParameterParser;
@@ -78,6 +79,12 @@ public class MaximizationPanel extends TreeLimePanel {
     private final WholeNumberField jobsField = new WholeNumberField(1, 1024);
     private final WholeNumberField threadsField = new WholeNumberField(0, 1024);
     private final JLabel cpuLabel = new JLabel();
+    private final JComboBox<TopologySearchOptions.Mode> searchModeCombo =
+            new JComboBox<TopologySearchOptions.Mode>(TopologySearchOptions.Mode.values());
+    private final WholeNumberField searchSeedField = new WholeNumberField(0, Integer.MAX_VALUE);
+    private final JTextField searchTimeField = new JTextField(8);
+    private final JLabel searchStatusLabel = new JLabel();
+    private final JLabel tableHintLabel = new JLabel();
 
     private final ParameterTableModel tableModel = new ParameterTableModel();
     private final OptionsPanel optionsPanel;
@@ -101,6 +108,7 @@ public class MaximizationPanel extends TreeLimePanel {
         objectiveCombo.addActionListener(e -> {
             if (!settingOptions) {
                 maximization().objective = (Objective) objectiveCombo.getSelectedItem();
+                updateStatus();
                 frame.setDirty();
             }
         });
@@ -179,6 +187,47 @@ public class MaximizationPanel extends TreeLimePanel {
         onEdit(reportFileField, () -> {
             String name = reportFileField.getText().trim();
             maximization().reportFileName = name.isEmpty() ? null : name;
+        });
+
+        optionsPanel.addSeparator();
+
+        // the topology search (plan 7): off, or rooted NNIs from the starting tree, kept only when the objective rises
+        searchModeCombo.setToolTipText("<html>Off keeps the starting tree's topology. NNI tries every rooted " +
+                "nearest-neighbour interchange,<br>with the node heights and branch rates re-fitted, and keeps a " +
+                "change only when the objective rises;<br>it repeats from the improved tree until no change " +
+                "helps.</html>");
+        searchSeedField.setColumns(8);
+        searchSeedField.setBorder(new EmptyBorder(FIELD_INSETS));
+        searchSeedField.setToolTipText("The search is deterministic: the same seed and file give the same tree.");
+        searchTimeField.setBorder(new EmptyBorder(FIELD_INSETS));
+        searchTimeField.setToolTipText("<html>Stop searching after this much time, for example 30min or 2h, then " +
+                "fit the best tree found.<br>Leave empty for no limit.</html>");
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        searchPanel.setOpaque(false);
+        searchPanel.add(searchModeCombo);
+        searchPanel.add(new JLabel("seed:"));
+        searchPanel.add(searchSeedField);
+        searchPanel.add(new JLabel("maximum search time:"));
+        searchPanel.add(searchTimeField);
+        optionsPanel.addComponentWithLabel("Topology search:", searchPanel);
+        optionsPanel.addComponent(searchStatusLabel);
+        searchModeCombo.addActionListener(e -> {
+            if (!settingOptions) {
+                maximization().getTopologySearch().mode = (TopologySearchOptions.Mode) searchModeCombo.getSelectedItem();
+                updateSearchFields();
+                updateStatus();
+                frame.setDirty();
+            }
+        });
+        onEdit(searchSeedField, () -> {
+            Integer value = searchSeedField.getValue();
+            if (value != null) {
+                maximization().getTopologySearch().seed = value;
+            }
+        });
+        onEdit(searchTimeField, () -> {
+            maximization().getTopologySearch().maxSearchTime = searchTimeField.getText().trim();
+            updateStatus();
         });
 
         optionsPanel.addSeparator();
@@ -274,11 +323,7 @@ public class MaximizationPanel extends TreeLimePanel {
         JPanel tablePanel = new JPanel(new BorderLayout(0, 6));
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(new Insets(6, 12, 12, 12)));
-        tablePanel.add(new JLabel("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's " +
-                "nodeHeights row is all its internal node heights, the root included. The topology stays as in the " +
-                "starting tree. " +
-                "A parameter that goes below its lower bound is held there (blank for none).</html>"),
-                BorderLayout.NORTH);
+        tablePanel.add(tableHintLabel, BorderLayout.NORTH);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         tablePanel.add(statusLabel, BorderLayout.SOUTH);
 
@@ -288,6 +333,18 @@ public class MaximizationPanel extends TreeLimePanel {
 
     private MaximizationOptions maximization() {
         return options.maximizationOptions;
+    }
+
+    private void updateSearchFields() {
+        final boolean on = maximization().getTopologySearch().isOn();
+        searchSeedField.setEnabled(on);
+        searchTimeField.setEnabled(on);
+        tableHintLabel.setText("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's " +
+                "nodeHeights row is all its internal node heights, the root included. " +
+                (on ? "The topology search starts from the starting tree; its rounds re-fit the node heights and " +
+                        "branch rates, and this maximizer fits everything at the start, on each better tree and at " +
+                        "the end. " : "The topology stays as in the starting tree. ") +
+                "A parameter that goes below its lower bound is held there (blank for none).</html>");
     }
 
     // the threads this computer offers, and whether the parallel runs ask for more
@@ -358,6 +415,11 @@ public class MaximizationPanel extends TreeLimePanel {
         jobsField.setValue(maximization.getBootstrapJobs());
         threadsField.setValue(Math.max(0, maximization.bootstrapThreads));
         updateCpuLabel();
+        TopologySearchOptions search = maximization.getTopologySearch();
+        searchModeCombo.setSelectedItem(search.mode != null ? search.mode : TopologySearchOptions.Mode.OFF);
+        searchSeedField.setValue((int) Math.max(0, Math.min(Integer.MAX_VALUE, search.seed)));
+        searchTimeField.setText(search.maxSearchTime);
+        updateSearchFields();
         settingOptions = false;
 
         tableModel.setParameters(options.selectParameters());
@@ -407,6 +469,29 @@ public class MaximizationPanel extends TreeLimePanel {
             problems.append("<font color=\"#b35c00\">Warning: ").append(warning).append("</font><br>");
         }
         statusLabel.setText(problems.length() == 0 ? status : "<html>" + problems + status + "</html>");
+        updateSearchStatus();
+    }
+
+    private void updateSearchStatus() {
+        TopologySearchOptions search = maximization().getTopologySearch();
+        if (!search.isOn()) {
+            searchStatusLabel.setText("");
+            return;
+        }
+        String blocker = TopologySearchOptions.getBlocker(options);
+        if (blocker == null && !search.maxSearchTime.isEmpty()) {
+            try {
+                MaximizeWrtParameterParser.parseRunTime(search.maxSearchTime);
+            } catch (XMLParseException e) {
+                blocker = "maximum search time: " + e.getMessage();
+            }
+        }
+        // plain text: an html label in the options panel does not get its width
+        searchStatusLabel.setForeground(blocker != null ? Color.RED : statusLabel.getForeground());
+        searchStatusLabel.setText(blocker != null ? "The search cannot run: " + blocker + "." :
+                "The best tree goes to " + options.fileNameStem + ".search.trees, a row per round to " +
+                        options.fileNameStem + ".search.log.");
+        searchStatusLabel.setToolTipText(searchStatusLabel.getText());
     }
 
     private static String count(int n, String noun) {

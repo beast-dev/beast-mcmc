@@ -164,6 +164,52 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         }
     }
 
+    // run as BEAST runs it, the file has no runnable (the maximizer and the search run while parsing), yet the
+    // citations are logged once at the end, as an MCMC run logs them before it starts
+    public void testCitationsWithoutARunnable() throws Exception {
+        TreeLimeOptions options = search(dengue(false));
+        if (options == null) {
+            return;
+        }
+        options.maximizationOptions.printToScreen = false;
+        File directory = Files.createTempDirectory("treeLimeCitations").toFile();
+        options.fileNameStem = new File(directory, "run").getAbsolutePath();
+        String xml = generateTo(options, new File(directory, "run.xml"));
+
+        final List<String> lines = new ArrayList<String>();
+        Handler handler = new Handler() {
+            public void publish(LogRecord record) {
+                lines.add(record.getMessage());
+            }
+
+            public void flush() {
+            }
+
+            public void close() {
+            }
+        };
+        Logger citations = Logger.getLogger("dr.util.citations");
+        citations.addHandler(handler);
+        try {
+            BeastParser parser = new BeastParser(new String[]{}, null, false, false, false, new BeastVersion());
+            parser.parse(new StringReader(xml), true);
+        } finally {
+            citations.removeHandler(handler);
+        }
+        String text = String.join("\n", lines);
+        assertEquals(text, 1, count(text, "Citations for this analysis"));
+        assertTrue(text, text.contains("BEAST primary citation"));
+        assertTrue(text, text.contains("HKY nucleotide substitution model"));
+    }
+
+    private static int count(String text, String part) {
+        int n = 0;
+        for (int at = text.indexOf(part); at >= 0; at = text.indexOf(part, at + 1)) {
+            n++;
+        }
+        return n;
+    }
+
     // a tree prior on a subtree keeps the subtree a clade: it is a constraint of the search (the Trees tab offers
     // monophyletic taxon sets only, so the objective's monophyly statistic names it too)
     public void testExcludedSubtreeIsAConstraint() throws Exception {

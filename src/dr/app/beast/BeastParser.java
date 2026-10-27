@@ -208,8 +208,19 @@ public class BeastParser extends XMLParser {
         }
     }
 
+    private boolean citationsWritten = false;
+
+    // an analysis that runs while parsing (maximizer, topology search) has no runnable: write the citations now
+    @Override
+    protected void finishedRunning() {
+        if (!citationsWritten) {
+            executingRunnable();
+        }
+    }
+
     @Override
     protected void executingRunnable() {
+        citationsWritten = true;
         Logger logger = Logger.getLogger("dr.util.citations");
 
         logger.info("\nCitations for this analysis: ");

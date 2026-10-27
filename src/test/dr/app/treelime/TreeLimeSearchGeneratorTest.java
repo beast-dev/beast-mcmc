@@ -203,6 +203,9 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         // the node heights are optimized as ratios
         assertTrue(text, text.contains("Using the ratio transformation of internal node heights"));
         assertTrue(text, text.contains("Scalable Bayesian divergence time estimation with ratio transformations"));
+        // and kappa's and the frequencies' gradients
+        assertTrue(text, text.contains("Using substitution model parameter gradients"));
+        assertTrue(text, text.contains("Detecting evolutionary change-points with branch-specific substitution models"));
     }
 
     private static int count(String text, String part) {

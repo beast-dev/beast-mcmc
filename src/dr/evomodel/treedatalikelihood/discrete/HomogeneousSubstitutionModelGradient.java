@@ -45,6 +45,9 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.ModelDependency;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -60,7 +63,7 @@ import java.util.logging.Logger;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class HomogeneousSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable {
+public class HomogeneousSubstitutionModelGradient implements GradientWrtParameterProvider, Reportable, Citable {
 
     public enum Backend {
         AUTO("auto"),
@@ -383,5 +386,42 @@ public class HomogeneousSubstitutionModelGradient implements GradientWrtParamete
         sb.append(GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, tolerance));
         return sb.toString();
+    }
+
+    // the substitution-parameter gradients (this class, HomogeneousSubstitutionParameterGradient,
+    // BranchSubstitutionParameterGradient) cite one paper
+    public static final Citation.Category CITATION_CATEGORY = Citation.Category.FRAMEWORK;
+    public static final String CITATION_DESCRIPTION = "Using substitution model parameter gradients";
+    public static final Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("X", "Ji"),
+                    new Author("B", "Redelings"),
+                    new Author("S", "Su"),
+                    new Author("H", "Bao"),
+                    new Author("W-M", "Deng"),
+                    new Author("SL", "Hong"),
+                    new Author("G", "Baele"),
+                    new Author("P", "Lemey"),
+                    new Author("MA", "Suchard"),
+            },
+            "Detecting evolutionary change-points with branch-specific substitution models and shrinkage priors",
+            2025,
+            "arXiv",
+            "2507.08386",
+            "10.48550/arXiv.2507.08386");
+
+    @Override
+    public Citation.Category getCategory() {
+        return CITATION_CATEGORY;
+    }
+
+    @Override
+    public String getDescription() {
+        return CITATION_DESCRIPTION;
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return java.util.Collections.singletonList(CITATION);
     }
 }

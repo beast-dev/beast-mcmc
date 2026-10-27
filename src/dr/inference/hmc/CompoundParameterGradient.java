@@ -44,7 +44,7 @@ import java.util.List;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class CompoundParameterGradient implements GradientWrtParameterProvider, Reportable {
+public class CompoundParameterGradient implements GradientWrtParameterProvider, Reportable, dr.util.Citable {
 
     private final CompoundParameter parameter;
     private final List<GradientWrtParameterProvider> blocks;
@@ -135,5 +135,21 @@ public class CompoundParameterGradient implements GradientWrtParameterProvider, 
         return "compoundParameterGradient." + parameter.getId() + "\n"
                 + GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, tolerance);
+    }
+
+    // the citation its parts share, if they share one (a gradient summed over partitions, say)
+    @Override
+    public dr.util.Citation.Category getCategory() {
+        return dr.util.Citable.Utils.common(blocks).getCategory();
+    }
+
+    @Override
+    public String getDescription() {
+        return dr.util.Citable.Utils.common(blocks).getDescription();
+    }
+
+    @Override
+    public List<dr.util.Citation> getCitations() {
+        return dr.util.Citable.Utils.common(blocks).getCitations();
     }
 }

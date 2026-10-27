@@ -110,6 +110,14 @@ public class MaximizerWrtParameter implements Reportable {
     private double[] holdPoint = null;
     private int holds = 0;
 
+    // the latest run's start, and its best accepted point over the whole call (holds reset L-BFGS's own)
+    private Settings active;
+    private boolean quiet = false;
+    private double startValue = Double.NaN;
+    private double callBestValue = Double.NaN;
+    private double[] callBestPoint = null;
+    private boolean endedAtBest = false;
+
     private double lastFiniteValue = 0.0;
     private boolean lastEvaluationNonFinite = false;
     private static final double NON_FINITE_PENALTY = 1E10;
@@ -202,6 +210,58 @@ public class MaximizerWrtParameter implements Reportable {
             this.delta = delta;
             return this;
         }
+
+        // these settings with a run's own budget in place of the parsed one
+        Settings withBudget(Budget budget) {
+            Settings copy = new Settings(budget.maxIterations, stepSize, startAtCurrentState,
+                    printToScreen && !budget.quiet, includeJacobian);
+            copy.setBudgets(budget.maxRunTime, budget.maxEvaluations, budget.relTol, budget.stallWindow);
+            copy.checkGradientEvery = checkGradientEvery;
+            copy.lineSearchRestarts = lineSearchRestarts;
+            copy.setConvergence(epsilon, past, delta);
+            copy.lowerBoundHolds.addAll(lowerBoundHolds);
+            return copy;
+        }
+    }
+
+    /**
+     * The stopping rules of one call to {@link #maximize(Budget)}, in place of the parsed nIterations, maxRunTime,
+     * maxEvaluations, relTol and stallWindow; the other settings stay as parsed. For callers that run the same
+     * maximizer many times with different budgets, such as a topology search's short and full re-fits.
+     */
+    public static final class Budget {
+        final int maxIterations;
+        double maxRunTime = 0.0;
+        long maxEvaluations = 0;
+        double relTol = 0.0;
+        int stallWindow = 0;
+        boolean quiet = false;
+
+        /**
+         * @param maxIterations L-BFGS iterations (0: no limit)
+         */
+        public Budget(int maxIterations) {
+            this.maxIterations = maxIterations;
+        }
+
+        /**
+         * As {@link Settings#setBudgets}: seconds, evaluations (0: no limit), and the stall rule (stallWindow 0: off).
+         */
+        public Budget setLimits(double maxRunTime, long maxEvaluations, double relTol, int stallWindow) {
+            this.maxRunTime = maxRunTime;
+            this.maxEvaluations = maxEvaluations;
+            this.relTol = relTol;
+            this.stallWindow = stallWindow;
+            return this;
+        }
+
+        /**
+         * Print nothing: no progress, no warnings, no stop messages.
+         */
+        public Budget setQuiet(boolean quiet) {
+            this.quiet = quiet;
+            return this;
+        }
     }
 
     private static final class LowerBoundHold {
@@ -277,6 +337,7 @@ public class MaximizerWrtParameter implements Reportable {
 
         this.function = constructFunction();
         this.settings = settings;
+        this.active = settings;
 
         for (LowerBoundHold hold : settings.lowerBoundHolds) {
             hold.offset = locate(this.parameter, hold.parameter);
@@ -402,6 +463,29 @@ public class MaximizerWrtParameter implements Reportable {
      */
     public double getMinimumValue() {
         return minimumValue;
+    }
+
+    /**
+     * @return the objective at the latest run's starting point (after any hold at the start)
+     */
+    public double getStartValue() {
+        return startValue;
+    }
+
+    /**
+     * @return the lowest objective the latest run accepted, at its start or at an iterate with every element at or
+     * above its lower-bound hold, across holds and restarts; the run ends there or lower (getMinimumValue)
+     */
+    public double getBestValue() {
+        return callBestValue;
+    }
+
+    /**
+     * @return whether the latest run ended on its best accepted point instead of where L-BFGS stopped, because a hold
+     * (or a non-finite stop) left it higher
+     */
+    public boolean endedAtBestPoint() {
+        return endedAtBest;
     }
 
     public boolean includesJacobian() {
@@ -569,6 +653,25 @@ public class MaximizerWrtParameter implements Reportable {
     }
 
     public void maximize() {
+        maximize(null);
+    }
+
+    /**
+     * Maximize with this call's own budget (null: the parsed settings).
+     */
+    public void maximize(Budget budget) {
+        final Settings settings = budget == null ? this.settings : this.settings.withBudget(budget);
+        active = settings;
+        quiet = budget != null && budget.quiet;
+        try {
+            run(settings);
+        } finally {
+            active = this.settings;
+            quiet = false;
+        }
+    }
+
+    private void run(final Settings settings) {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();
 
@@ -603,7 +706,7 @@ public class MaximizerWrtParameter implements Reportable {
         if (settings.printToScreen) {
             LOGGER.info(getBanner());
         }
-        if (firstRun) {
+        if (firstRun && !quiet) {
             for (String warning : getWarnings()) {
                 LOGGER.info("WARNING: maximizeWrtParameter: " + warning);
             }
@@ -624,6 +727,10 @@ public class MaximizerWrtParameter implements Reportable {
         useCache = true;
         lastFiniteValue = 0.0;
         lastEvaluationNonFinite = false;
+        startValue = Double.NaN;
+        callBestValue = Double.NaN;
+        callBestPoint = null;
+        endedAtBest = false;
         heldCoordinates = settings.lowerBoundHolds.isEmpty() ? null : new boolean[dim];
         heldValues = settings.lowerBoundHolds.isEmpty() ? null : new double[dim];
         holdPoint = null;
@@ -662,7 +769,11 @@ public class MaximizerWrtParameter implements Reportable {
                 System.out.printf("\tevaluations = %d, seconds = %.3f\n\n", valueCalls, elapsedSeconds());
             }
             stopRequest = checkBudgets(fx, iterations);
-            if (stopRequest == null && heldCoordinates != null && belowBound(point)) {
+            final boolean below = heldCoordinates != null && belowBound(point);
+            if (!below && !lastEvaluationNonFinite) {
+                recordBest(point, fx);
+            }
+            if (stopRequest == null && below) {
                 holdPoint = point.clone();
             }
             return stopRequest == null && holdPoint == null ? ReturnValue.LBFGS_SUCCESS : ReturnValue.LBFGS_STOP;
@@ -733,6 +844,18 @@ public class MaximizerWrtParameter implements Reportable {
 
         minimumPoint = x;
         minimumValue = function.valueAt(minimumPoint);
+        if (callBestPoint != null &&
+                minimumValue > callBestValue + 1E-8 * Math.max(1.0, Math.abs(callBestValue))) {
+            // a hold moved the point up to a bound, and the budget ran out before L-BFGS got back below the best
+            // point accepted earlier in this call (or a non-finite stop ended higher): end at that point instead,
+            // releasing the elements held after it
+            minimumPoint = callBestPoint.clone();
+            releaseHoldsAbove(minimumPoint);
+            minimumValue = function.valueAt(minimumPoint);
+            endedAtBest = true;
+        }
+        assert !(minimumValue > callBestValue + 1E-8 * Math.max(1.0, Math.abs(callBestValue))) :
+                "the run ended above its best accepted point";
         minimumGradient = function.gradientAt(minimumPoint).clone();
         heldGradient = cachedUnmaskedGradient != null ? cachedUnmaskedGradient.clone() : minimumGradient;
         likelihoodRecomputes = getLikelihoodCalculationCount() - recomputesAtStart;
@@ -744,15 +867,35 @@ public class MaximizerWrtParameter implements Reportable {
 
         final boolean failed = reason == Reason.LINE_SEARCH_FAILURE || reason == Reason.NON_FINITE
                 || reason == Reason.ERROR;
-        if (settings.printToScreen || (failed && firstRun)) {
+        if (settings.printToScreen || (failed && firstRun && !quiet)) {
             LOGGER.info("maximizeWrtParameter " + parameterName() + " stopped: " + reason + " (" + status +
                     ") after " + iterations + " iterations, " + valueCalls + " evaluations, " +
                     String.format("%.3f", seconds) + "s; -log density = " + minimumValue);
         }
         for (Held held : getHeld()) {
-            if (settings.printToScreen || held.gradient > 0) {
+            if (settings.printToScreen || (held.gradient > 0 && !quiet)) {
                 LOGGER.info((held.gradient > 0 ? "WARNING: " : "") + "maximizeWrtParameter: held at the lower bound: "
                         + held);
+            }
+        }
+    }
+
+    private void recordBest(double[] point, double value) {
+        if (Double.isFinite(value) && !(value >= callBestValue)) {
+            callBestValue = value;
+            callBestPoint = point.clone();
+        }
+    }
+
+    // un-hold the elements that lie above their bounds at the point: they were held after it was accepted
+    private void releaseHoldsAbove(double[] point) {
+        if (heldCoordinates == null) {
+            return;
+        }
+        final double[] values = untransformed(point);
+        for (int i = 0; i < values.length; ++i) {
+            if (heldCoordinates[i] && values[i] > heldValues[i] + 1E-12 * Math.max(1.0, Math.abs(heldValues[i]))) {
+                heldCoordinates[i] = false;
             }
         }
     }
@@ -831,11 +974,11 @@ public class MaximizerWrtParameter implements Reportable {
         StringBuilder sb = new StringBuilder("Maximizing wrt ").append(parameterName())
                 .append(" (dim ").append(function.getDimension())
                 .append(", ").append(gradient.getGradientType()).append(" gradient")
-                .append(", nIterations = ").append(settings.numberIterations > 0 ? settings.numberIterations : "unlimited");
-        if (settings.maxRunTime > 0) sb.append(", maxRunTime = ").append(settings.maxRunTime).append("s");
-        if (settings.maxEvaluations > 0) sb.append(", maxEvaluations = ").append(settings.maxEvaluations);
-        if (settings.stallWindow > 0) {
-            sb.append(", stall: relTol = ").append(settings.relTol).append(" over ").append(settings.stallWindow);
+                .append(", nIterations = ").append(active.numberIterations > 0 ? active.numberIterations : "unlimited");
+        if (active.maxRunTime > 0) sb.append(", maxRunTime = ").append(active.maxRunTime).append("s");
+        if (active.maxEvaluations > 0) sb.append(", maxEvaluations = ").append(active.maxEvaluations);
+        if (active.stallWindow > 0) {
+            sb.append(", stall: relTol = ").append(active.relTol).append(" over ").append(active.stallWindow);
         }
         return sb.append(")").toString();
     }
@@ -864,18 +1007,18 @@ public class MaximizerWrtParameter implements Reportable {
     }
 
     private Reason checkBudgets(double fx, int k) {
-        if (settings.maxRunTime > 0 && elapsedSeconds() >= settings.maxRunTime) {
+        if (active.maxRunTime > 0 && elapsedSeconds() >= active.maxRunTime) {
             return Reason.MAX_RUN_TIME;
         }
-        if (settings.maxEvaluations > 0 && valueCalls >= settings.maxEvaluations) {
+        if (active.maxEvaluations > 0 && valueCalls >= active.maxEvaluations) {
             return Reason.MAX_EVALUATIONS;
         }
         if (stallHistory != null) {
-            final int window = settings.stallWindow;
+            final int window = active.stallWindow;
             stallHistory[k % (window + 1)] = fx;
             if (k > window) {
                 final double before = stallHistory[(k - window) % (window + 1)];
-                if (before - fx <= settings.relTol * Math.max(1.0, Math.abs(fx))) {
+                if (before - fx <= active.relTol * Math.max(1.0, Math.abs(fx))) {
                     return Reason.STALL;
                 }
             }
@@ -941,6 +1084,9 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("\n");
             sb.append("Iterations: ").append(iterations).append("\n");
             sb.append("Restarts: ").append(restarts).append("\n");
+            if (endedAtBest) {
+                sb.append("EndedAtBestPoint: true (a hold left the last point above the best one accepted earlier)\n");
+            }
             if (!settings.lowerBoundHolds.isEmpty()) {
                 sb.append("Holds: ").append(holds).append("\n");
                 for (Held held : getHeld()) {
@@ -1082,6 +1228,14 @@ public class MaximizerWrtParameter implements Reportable {
         cachedPointApplied = finitePoint;
         cachedValue = value;
         cachedGradient = result;
+
+        if (useCache && Double.isNaN(startValue)) {
+            // L-BFGS evaluates the starting point first
+            startValue = value;
+            if (!lastEvaluationNonFinite) {
+                recordBest(point, value);
+            }
+        }
 
         if (settings.checkGradientEvery > 0 && Double.isFinite(value)
                 && gradientCalls % settings.checkGradientEvery == 0) {

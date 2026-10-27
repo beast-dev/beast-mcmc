@@ -89,7 +89,9 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     public void modelRestored(Model model) {
         epochKnown = storedEpochKnown && !epochsRebuiltSinceStore;
-        ratiosKnown = true;
+        // the stored ratios match the stored heights only if they were up to date at the store; node-height events
+        // leave them stale until the next read, so recompute them then
+        ratiosKnown = false;
     }
 
 
@@ -202,6 +204,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     @Override
     public double[] setMaskByRatio(double threshold) {
+        updateRatios();
         double[] maskByRatio = new double[ratios.getDimension()];
         for (int i = 0; i < ratios.getDimension(); i++) {
             if (ratios.getParameterValue(i) > threshold && ratios.getParameterValue(i) < 1.0 - threshold) {

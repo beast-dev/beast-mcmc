@@ -64,6 +64,18 @@ public class TopologySearchOptions implements Serializable {
     public Mode mode = Mode.OFF;
     public long seed = 1;
     public String maxSearchTime = ""; // a duration with an optional unit, "" for none
+    // perturbed hill-climbs in a row without a new best before stopping; 0: no perturbation (0 in older files)
+    public int nStop = 0;
+    // independent starts written by "Generate starts..." (separate BEAST runs); 0 in older files
+    private int starts = 4;
+
+    public int getStarts() {
+        return starts >= 2 ? starts : 4;
+    }
+
+    public void setStarts(int starts) {
+        this.starts = starts;
+    }
 
     public boolean isOn() {
         return mode != null && mode != Mode.OFF;

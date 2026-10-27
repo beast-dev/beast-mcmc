@@ -63,7 +63,7 @@ import java.util.Map;
  * the gold standard's own error. Then the search runs from UPGMA and from random starting trees, and fails only when
  * it ends below the global optimum by more than that error.
  * <p>
- * Usage: NniExhaustiveStudy taxa sites theta heightStarts randomStarts seed (-Dmode=NNI_SPR for SPR too, or -Dmoves=nni,swap and the like); run from the repository root with BEAGLE
+ * Usage: NniExhaustiveStudy taxa sites theta heightStarts randomStarts seed (-Dmode=NNI_SPR for SPR too, or -Dmoves=nni,swap and the like; -Dattrs adds search attributes); run from the repository root with BEAGLE
  * on java.library.path. JC69 sequences, contemporaneous tips, the default TreeLime model. Not a unit test.
  */
 public class NniExhaustiveStudy {
@@ -238,7 +238,8 @@ public class NniExhaustiveStudy {
         options.fileNameStem = new File(directory, name).getAbsolutePath();
         String xml = TreeLimeSearchGeneratorTest.generateTo(options, new File(directory, name + ".xml"));
         xml = xml.replace("<timeTreeSearch id=\"treeSearch\"", "<timeTreeSearch id=\"treeSearch\" searchOnParse=\"false\"" +
-                (System.getProperty("moves") != null ? " moves=\"" + System.getProperty("moves") + "\"" : ""));
+                (System.getProperty("moves") != null ? " moves=\"" + System.getProperty("moves") + "\"" : "") +
+                " " + System.getProperty("attrs", ""));
         xml = xml.replace("<maximizeWrtParameter id=\"maximizer\" nIterations",
                 "<maximizeWrtParameter id=\"maximizer\" maximizeOnParse=\"false\" nIterations");
         xml = xml.substring(0, xml.indexOf("<!-- The optimum")) + "</beast>\n";

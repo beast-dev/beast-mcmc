@@ -83,6 +83,8 @@ public class MaximizationPanel extends TreeLimePanel {
             new JComboBox<TopologySearchOptions.Mode>(TopologySearchOptions.Mode.values());
     private final WholeNumberField searchSeedField = new WholeNumberField(0, Integer.MAX_VALUE);
     private final JTextField searchTimeField = new JTextField(8);
+    private final WholeNumberField nStopField = new WholeNumberField(0, 10000);
+    private final WholeNumberField startsField = new WholeNumberField(2, 1000);
     private final JLabel searchStatusLabel = new JLabel();
     private final JLabel tableHintLabel = new JLabel();
 
@@ -211,7 +213,45 @@ public class MaximizationPanel extends TreeLimePanel {
         searchPanel.add(new JLabel("maximum search time:"));
         searchPanel.add(searchTimeField);
         optionsPanel.addComponentWithLabel("Topology search:", searchPanel);
+        nStopField.setColumns(5);
+        nStopField.setBorder(new EmptyBorder(FIELD_INSETS));
+        nStopField.setToolTipText("<html>After the first hill-climb, perturb one of the best trees with BEAST's " +
+                "topology operators (NNI, wide exchange,<br>subtree leap, Wilson-Balding) and climb again, until this " +
+                "many climbs in a row find no better tree.<br>0 for a single climb. Each perturbation costs about " +
+                "one climb.</html>");
+        startsField.setColumns(4);
+        startsField.setBorder(new EmptyBorder(FIELD_INSETS));
+        startsField.setToolTipText("<html>Independent starts, each its own BEAST run: the first from the starting " +
+                "tree, the others from random trees.<br>A script runs them (as many at once as the bootstrap's " +
+                "parallel runs) and keeps the best.</html>");
+        JButton startsButton = new JButton("Generate start files...");
+        startsButton.addActionListener(e -> {
+            Integer starts = startsField.getValue();
+            if (starts != null && starts >= 2) {
+                frame.doGenerateStarts(starts);
+            }
+        });
+        JPanel escapePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        escapePanel.setOpaque(false);
+        escapePanel.add(new JLabel("perturb until"));
+        escapePanel.add(nStopField);
+        escapePanel.add(new JLabel("climbs in a row fail;  independent starts:"));
+        escapePanel.add(startsField);
+        escapePanel.add(startsButton);
+        optionsPanel.addComponentWithLabel("Escaping local optima:", escapePanel);
         optionsPanel.addComponent(searchStatusLabel);
+        onEdit(nStopField, () -> {
+            Integer value = nStopField.getValue();
+            if (value != null && value >= 0) {
+                maximization().getTopologySearch().nStop = value;
+            }
+        });
+        onEdit(startsField, () -> {
+            Integer value = startsField.getValue();
+            if (value != null && value >= 2) {
+                maximization().getTopologySearch().setStarts(value);
+            }
+        });
         searchModeCombo.addActionListener(e -> {
             if (!settingOptions) {
                 maximization().getTopologySearch().mode = (TopologySearchOptions.Mode) searchModeCombo.getSelectedItem();
@@ -340,6 +380,8 @@ public class MaximizationPanel extends TreeLimePanel {
         final boolean on = maximization().getTopologySearch().isOn();
         searchSeedField.setEnabled(on);
         searchTimeField.setEnabled(on);
+        nStopField.setEnabled(on);
+        startsField.setEnabled(on);
         tableHintLabel.setText("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's " +
                 "nodeHeights row is all its internal node heights, the root included. " +
                 (on ? "The topology search starts from the starting tree; its rounds re-fit the node heights and " +
@@ -420,6 +462,8 @@ public class MaximizationPanel extends TreeLimePanel {
         searchModeCombo.setSelectedItem(search.mode != null ? search.mode : TopologySearchOptions.Mode.OFF);
         searchSeedField.setValue((int) Math.max(0, Math.min(Integer.MAX_VALUE, search.seed)));
         searchTimeField.setText(search.maxSearchTime);
+        nStopField.setValue(Math.max(0, search.nStop));
+        startsField.setValue(search.getStarts());
         updateSearchFields();
         settingOptions = false;
 

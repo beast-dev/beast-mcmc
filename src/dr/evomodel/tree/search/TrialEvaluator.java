@@ -261,6 +261,44 @@ public final class TrialEvaluator {
     }
 
     /**
+     * An edit kept only if it says so and leaves a finite objective (perturbation by BEAST's operators).
+     */
+    public interface Edit {
+        /**
+         * Changes the tree (in its own edit transactions).
+         *
+         * @return false to reject the edit outright
+         */
+        boolean apply();
+    }
+
+    /**
+     * Applies an edit inside a store window and keeps it if it succeeds and the objective stays finite, else restores
+     * the state as it was (recomputing everything if BEAGLE rescaled meanwhile).
+     *
+     * @return whether the edit was kept
+     */
+    public boolean tryEdit(Edit edit) {
+        evaluate();
+        final long underflows = underflows();
+        model.storeModelState();
+        boolean kept = false;
+        try {
+            if (edit.apply()) {
+                final double f = evaluate();
+                kept = f > Double.NEGATIVE_INFINITY && !Double.isNaN(f);
+            }
+        } finally {
+            if (kept) {
+                model.acceptModelState();
+            } else {
+                restore(underflows);
+            }
+        }
+        return kept;
+    }
+
+    /**
      * Accepts a scored move: applies it again with the recorded heights and parameters, checks that F is the
      * recorded one, and keeps the state.
      *

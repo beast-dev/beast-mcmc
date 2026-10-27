@@ -96,6 +96,12 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         spr.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.NNI_SPR;
         assertGolden("nni_spr_hmc_dated.xml", spr);
         assertTrue(generate(spr).contains("<timeTreeSearch id=\"treeSearch\" seed=\"1\" moves=\"nni,spr\""));
+        // perturbation: nStop and the candidate trees' file, only when on
+        assertFalse(generate(spr).contains("nStop="));
+        spr.maximizationOptions.getTopologySearch().nStop = 20;
+        String perturbed = generate(spr);
+        assertTrue(perturbed.contains("nStop=\"20\" candidatesFileName=\"golden.candidates.trees\""));
+        TreeLimeHarness.assertIdsResolve(perturbed);
         String xml = generate(hmc);
         TreeLimeHarness.assertIdsResolve(xml);
         assertTrue(xml.contains("<maximizeWrtParameter id=\"maximizer\" maximizeOnParse=\"false\""));

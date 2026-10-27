@@ -1096,6 +1096,12 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<Boolean>("printToScreen", maximization.printToScreen));
         attributes.add(new Attribute.Default<String>("treeFileName", options.fileNameStem + ".search.trees"));
         attributes.add(new Attribute.Default<String>("logFileName", options.fileNameStem + ".search.log"));
+        if (search.nStop > 0) {
+            // perturb the best trees by BEAST's topology operators and climb again until nStop climbs bring nothing
+            attributes.add(new Attribute.Default<Integer>("nStop", search.nStop));
+            attributes.add(new Attribute.Default<String>("candidatesFileName",
+                    options.fileNameStem + ".candidates.trees"));
+        }
         writer.writeOpenTag(TimeTreeSearchParser.NAME, attributes);
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
         writer.writeOpenTag("objective");

@@ -79,6 +79,16 @@ public final class SearchSettings {
     public boolean swap = false;
     public int swapMaxDistance = 4; // the farthest apart the two parents may be, in nodes (GibbsSubtreeSwap's 4)
 
+    // perturbation and the candidate set (§7.2, §7.4, M5)
+    public int nStop = 0; // stop after this many perturbed hill-climbs in a row without a new best; 0: no perturbation
+    public double perturbStrength = 0.3; // operator moves per perturbation: max(1, floor(strength (n - 2)))
+    public String perturbOperators = "nni,wide,leap,wb"; // BEAST operators drawn from, by doOperation
+    public double leapSize = 0.1; // SubtreeLeap's distance scale, relative to the root height
+    public int candidateSetSize = 20;
+    public int parentPool = 5; // perturb a tree drawn uniformly from this many best candidates
+    public boolean nniDelta = true; // at the end, F minus the best NNI alternative at each node
+    public String candidatesFileName = null;
+
     // budgets (§6.4); 0: no limit
     public int maxRounds = 0; // 0: the number of internal nodes
     public double maxRunTime = 0.0; // seconds
@@ -104,6 +114,8 @@ public final class SearchSettings {
                 ", rateWarmStart = " + rateWarmStart.getName() + ", maxRounds = " +
                 (maxRounds > 0 ? maxRounds : "n - 1") + ", maxRunTime = " + (maxRunTime > 0 ? maxRunTime + "s" : "none") +
                 ", maxEvaluations = " + (maxEvaluations > 0 ? maxEvaluations : "none") +
-                ", verifyEvery = " + verifyEvery;
+                ", verifyEvery = " + verifyEvery +
+                (nStop > 0 ? ", nStop = " + nStop + ", perturbStrength = " + perturbStrength + ", perturbOperators = " +
+                        perturbOperators + ", candidateSetSize = " + candidateSetSize + ", parentPool = " + parentPool : "");
     }
 }

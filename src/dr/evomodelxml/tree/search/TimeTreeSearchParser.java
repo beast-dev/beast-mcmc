@@ -97,6 +97,14 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
     private static final String SPR_RADIUS = "sprRadius";
     private static final String SUBTREE_CUTOFF = "subtreeCutoff";
     private static final String SWAP_MAX_DISTANCE = "swapMaxDistance";
+    private static final String N_STOP = "nStop";
+    private static final String PERTURB_STRENGTH = "perturbStrength";
+    private static final String PERTURB_OPERATORS = "perturbOperators";
+    private static final String LEAP_SIZE = "leapSize";
+    private static final String CANDIDATE_SET_SIZE = "candidateSetSize";
+    private static final String PARENT_POOL = "parentPool";
+    private static final String NNI_DELTA = "nniDelta";
+    private static final String CANDIDATES_FILE_NAME = "candidatesFileName";
     private static final String MAX_ROUNDS = "maxRounds";
     private static final String MAX_RUN_TIME = "maxRunTime";
     private static final String MAX_EVALUATIONS = "maxEvaluations";
@@ -208,6 +216,15 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         settings.spr = moves.contains("spr");
         settings.swap = moves.contains("swap");
         settings.swapMaxDistance = xo.getAttribute(SWAP_MAX_DISTANCE, settings.swapMaxDistance);
+        settings.nStop = xo.getAttribute(N_STOP, settings.nStop);
+        settings.perturbStrength = xo.getAttribute(PERTURB_STRENGTH, settings.perturbStrength);
+        settings.perturbOperators = xo.getAttribute(PERTURB_OPERATORS, settings.perturbOperators);
+        settings.leapSize = xo.getAttribute(LEAP_SIZE, settings.leapSize);
+        settings.candidateSetSize = xo.getAttribute(CANDIDATE_SET_SIZE, settings.candidateSetSize);
+        settings.parentPool = xo.getAttribute(PARENT_POOL, settings.parentPool);
+        settings.nniDelta = xo.getAttribute(NNI_DELTA, settings.nniDelta);
+        settings.candidatesFileName = xo.hasAttribute(CANDIDATES_FILE_NAME) ?
+                xo.getStringAttribute(CANDIDATES_FILE_NAME) : null;
         settings.sprMaxRadius = xo.getAttribute(SPR_MAX_RADIUS, settings.sprMaxRadius);
         settings.sprRadius = xo.getAttribute(SPR_RADIUS, settings.sprRadius);
         settings.subtreeCutoff = xo.getAttribute(SUBTREE_CUTOFF, settings.subtreeCutoff);
@@ -234,11 +251,18 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
                 settings.t1Sweeps < 0 || settings.t2Candidates < 0 || settings.t2Iterations < 0 ||
                 settings.maxRounds < 0 || settings.maxEvaluations < 0 || settings.verifyEvery < 0 ||
                 settings.toplistSize < 0 || settings.sprMaxRadius < 0 || settings.sprRadius < 0 ||
-                settings.subtreeCutoff < 0 || settings.swapMaxDistance < 0 || settings.secondChanceWindow < 0 || settings.secondChanceIterations < 0) {
+                settings.subtreeCutoff < 0 || settings.swapMaxDistance < 0 || settings.nStop < 0 ||
+                settings.perturbStrength < 0 || settings.leapSize <= 0 || settings.candidateSetSize < 1 ||
+                settings.parentPool < 1 || settings.secondChanceWindow < 0 || settings.secondChanceIterations < 0) {
             throw new XMLParseException("The search's thresholds, counts and budgets must not be negative");
         }
 
-        TimeTreeSearch search = new TimeTreeSearch(tree, objective, round, fin, rates, constraints, settings);
+        TimeTreeSearch search;
+        try {
+            search = new TimeTreeSearch(tree, objective, round, fin, rates, constraints, settings);
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
         if (xo.getAttribute(SEARCH_ON_PARSE, true)) {
             search.run();
         }
@@ -345,6 +369,14 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(SECOND_CHANCE_WINDOW, true, "a re-fitted move this close below the incumbent gets a longer re-fit (default 2)"),
             AttributeRule.newIntegerRule(SECOND_CHANCE_ITERATIONS, true, "iterations of that longer re-fit (default 80; 0: off)"),
             new StringAttributeRule(MOVES, "nni (default), nni,spr, nni,swap or nni,spr,swap: clamped-height SPR rounds, then subtree swaps (wide exchanges), when no NNI gains", true),
+            AttributeRule.newIntegerRule(N_STOP, true, "perturb and hill-climb again until this many climbs in a row bring no new best (default 0: no perturbation)"),
+            AttributeRule.newDoubleRule(PERTURB_STRENGTH, true, "operator moves per perturbation, times (taxa - 2) (default 0.3)"),
+            new StringAttributeRule(PERTURB_OPERATORS, "the BEAST operators perturbation draws from: nni, narrow, wide, leap, wb (default nni,wide,leap,wb)", true),
+            AttributeRule.newDoubleRule(LEAP_SIZE, true, "subtree leap's distance scale, relative to the root height (default 0.1)"),
+            AttributeRule.newIntegerRule(CANDIDATE_SET_SIZE, true, "the best distinct trees kept (default 20)"),
+            AttributeRule.newIntegerRule(PARENT_POOL, true, "perturb one of this many best trees (default 5)"),
+            AttributeRule.newBooleanRule(NNI_DELTA, true, "at the end, F minus the best NNI alternative at each node (default true)"),
+            new StringAttributeRule(CANDIDATES_FILE_NAME, "the NEXUS file for the candidate trees", true),
             AttributeRule.newIntegerRule(SWAP_MAX_DISTANCE, true, "the farthest apart the parents of swapped subtrees may be, in nodes (default 4)"),
             AttributeRule.newIntegerRule(SPR_MAX_RADIUS, true, "the farthest SPR regraft, in branches (default 10)"),
             AttributeRule.newIntegerRule(SPR_RADIUS, true, "the fast SPR rounds' radius (default 0: found by trying 5, 10, ...)"),

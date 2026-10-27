@@ -73,6 +73,7 @@ public class TimeTreeSearch implements Reportable {
     public enum StopReason {
         CONVERGED("converged: no NNI gains"),
         MAX_ROUNDS("maxRounds"),
+        N_STOP("nStop: no new best in nStop perturbed hill-climbs"),
         MAX_RUN_TIME("maxRunTime"),
         MAX_EVALUATIONS("maxEvaluations"),
         ERROR("error");
@@ -112,6 +113,13 @@ public class TimeTreeSearch implements Reportable {
     private int rootScans = 0;
     private int rootMoves = 0;
     private int[] lastApplied = null; // the nodes of the last round's moves, for speedNNI
+    private TreeStateSnapshot bestState = null;
+    private final CandidateSet candidates;
+    private final OperatorPerturbation perturbation; // null when nStop is 0
+    private int climb = 0; // the hill-climb in progress: 0 from the starting tree, k after the k-th perturbation
+    private int perturbations = 0;
+    private double[] nniDelta = null;
+    private int nniDeltaNegative = 0;
     private int sprRounds = 0;
     private int swapRounds = 0;
     private int swapAccepted = 0;
@@ -156,6 +164,9 @@ public class TimeTreeSearch implements Reportable {
             snapshotParameters.add(finalMaximizer.getParameter());
         }
         this.log = new SearchLog(tree, this.rates, objective);
+        this.candidates = new CandidateSet(settings.candidateSetSize);
+        this.perturbation = settings.nStop > 0 ? new OperatorPerturbation(tree, evaluator, constraints,
+                settings.perturbOperators, settings.leapSize) : null;
     }
 
     public void run() {
@@ -179,7 +190,11 @@ public class TimeTreeSearch implements Reportable {
             throw new IllegalStateException("The starting tree breaks a topology constraint");
         }
 
-        TreeStateSnapshot best = null;
+        bestState = null;
+        candidates.clear();
+        climb = 0;
+        perturbations = 0;
+        log.setClimb(0);
         try {
             fStart = evaluator.evaluate();
             log.row(0, "start", 0, 0, 0, 0, fStart, fStart, fStart, null, Double.NaN, Double.NaN, Double.NaN,
@@ -189,73 +204,57 @@ public class TimeTreeSearch implements Reportable {
             double f = refit(finalMaximizer, startBudget(), "t3b", 0, fStart);
             fRefitted = f;
             fBest = f;
-            best = snapshot();
+            bestState = snapshot();
 
-            final int maxRounds = settings.maxRounds > 0 ? settings.maxRounds : tree.getInternalNodeCount();
-            stopReason = StopReason.MAX_ROUNDS;
-            lastApplied = null;
-            boolean beyondNniNext = false; // the NNI rounds have converged: SPR and swaps next
-            for (int round = 1; round <= maxRounds; ++round) {
-                StopReason budget = checkBudgets();
-                if (budget != null) {
-                    stopReason = budget;
-                    break;
-                }
-                rounds = round;
-                final double before = f;
-                // NNIs until they stop gaining, then SPR, then subtree swaps, then NNIs again from the full tree
-                boolean beyondNni = beyondNniNext;
-                int applied = beyondNniNext ? 0 : nniRound(round);
-                if (applied == 0 && settings.spr && checkBudgets() == null) {
-                    applied = sprPhase(round);
-                    lastApplied = null;
-                    beyondNni = true;
-                }
-                if (applied == 0 && settings.swap && checkBudgets() == null) {
-                    applied = swapRound(round);
-                    lastApplied = null;
-                    beyondNni = true;
-                }
-                beyondNniNext = false;
-                if (applied == 0) {
-                    stopReason = checkBudgets() != null ? checkBudgets() : StopReason.CONVERGED;
-                    break;
-                }
-                accepted += applied;
-                f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
-                // a new best re-fits everything, then looks at the root positions nearby (§6.3)
-                while (f > fBest + settings.modelEpsilon) {
-                    f = refit(finalMaximizer, bestBudget(), "t3b", round, f);
-                    if (f > fBest) {
-                        fBest = f;
-                        best = snapshot();
-                    }
-                    if (!settings.rootScan || checkBudgets() != null || !rootScan(round)) {
+            stopReason = hillClimb(f);
+            addCandidate();
+
+            // the perturbation phase (§7.2): a perturbed copy of a good tree, re-fitted and hill-climbed, until nStop
+            // climbs in a row bring no new best
+            if (perturbation != null && stopReason == StopReason.CONVERGED) {
+                final int moves = Math.max(1, (int) Math.floor(settings.perturbStrength *
+                        (tree.getExternalNodeCount() - 2)));
+                int unsuccessful = 0;
+                while (unsuccessful < settings.nStop) {
+                    final StopReason budget = checkBudgets();
+                    if (budget != null) {
+                        stopReason = budget;
                         break;
                     }
-                    accepted++;
-                    f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
-                }
-                if (f > fBest) {
-                    fBest = f;
-                    best = snapshot();
-                }
-                if (f - before < settings.epsilon) {
-                    if ((settings.spr || settings.swap) && !beyondNni && checkBudgets() == null) {
-                        beyondNniNext = true; // the NNIs gain too little to go on: the wider moves before stopping
-                        continue;
+                    climb++;
+                    log.setClimb(climb);
+                    final double before = fBest;
+                    final CandidateSet.Candidate parent = candidates.drawParent(settings.parentPool);
+                    parent.getSnapshot().restore();
+                    final double fParent = evaluator.evaluate();
+                    final int kept = perturbation.perturb(moves);
+                    perturbations++;
+                    final double fPerturbed = evaluator.evaluate();
+                    log.row(rounds, "perturb", kept, 0, 0, kept, fParent, fPerturbed, fBest, null, Double.NaN,
+                            Double.NaN, Double.NaN, startTree, seconds(), evaluations(), "parent climb " +
+                                    parent.climb + ", " + moves + " moves", guardReverts);
+                    say("perturbation " + climb + ": F = " + format(fParent) + " -> " + format(fPerturbed) + ", " +
+                            kept + " operator moves");
+                    final double fitted = refit(roundMaximizer, t3aBudget(), "t3a", rounds, fPerturbed);
+                    final StopReason climbed = hillClimb(fitted);
+                    addCandidate();
+                    if (climbed != StopReason.CONVERGED && climbed != StopReason.MAX_ROUNDS) {
+                        stopReason = climbed;
+                        break;
                     }
-                    stopReason = StopReason.CONVERGED;
-                    break;
+                    unsuccessful = fBest > before + settings.epsilon ? 0 : unsuccessful + 1;
+                    if (unsuccessful >= settings.nStop) {
+                        stopReason = StopReason.N_STOP;
+                    }
                 }
             }
 
-            finish(best);
+            finish(bestState);
         } catch (RuntimeException e) {
             stopReason = StopReason.ERROR;
-            if (best != null) {
+            if (bestState != null) {
                 try {
-                    best.restore();
+                    bestState.restore();
                 } catch (RuntimeException ignored) {
                     // report the original error
                 }
@@ -266,6 +265,82 @@ public class TimeTreeSearch implements Reportable {
         }
     }
 
+    /**
+     * The hill-climb from the current state (§7.3): NNI rounds until they stop gaining, then SPR and subtree swaps
+     * when on, then NNIs again; each change re-fits heights and rates (T3a), and a new global best re-fits everything
+     * (T3b) and scans the root positions nearby.
+     *
+     * @param f the objective at the current state
+     * @return CONVERGED, MAX_ROUNDS (this climb's), or the budget that ran out
+     */
+    private StopReason hillClimb(double f) {
+        final int maxRounds = settings.maxRounds > 0 ? settings.maxRounds : tree.getInternalNodeCount();
+        lastApplied = null;
+        boolean beyondNniNext = false; // the NNI rounds have converged: SPR and swaps next
+        for (int r = 1; r <= maxRounds; ++r) {
+            StopReason budget = checkBudgets();
+            if (budget != null) {
+                return budget;
+            }
+            final int round = ++rounds;
+            final double before = f;
+            // NNIs until they stop gaining, then SPR, then subtree swaps, then NNIs again from the full tree
+            boolean beyondNni = beyondNniNext;
+            int applied = beyondNniNext ? 0 : nniRound(round);
+            if (applied == 0 && settings.spr && checkBudgets() == null) {
+                applied = sprPhase(round);
+                lastApplied = null;
+                beyondNni = true;
+            }
+            if (applied == 0 && settings.swap && checkBudgets() == null) {
+                applied = swapRound(round);
+                lastApplied = null;
+                beyondNni = true;
+            }
+            beyondNniNext = false;
+            if (applied == 0) {
+                return checkBudgets() != null ? checkBudgets() : StopReason.CONVERGED;
+            }
+            accepted += applied;
+            f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
+            // a new best re-fits everything, then looks at the root positions nearby (§6.3)
+            while (f > fBest + settings.modelEpsilon) {
+                f = refit(finalMaximizer, bestBudget(), "t3b", round, f);
+                if (f > fBest) {
+                    fBest = f;
+                    bestState = snapshot();
+                }
+                if (!settings.rootScan || checkBudgets() != null || !rootScan(round)) {
+                    break;
+                }
+                accepted++;
+                f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
+            }
+            if (f > fBest) {
+                fBest = f;
+                bestState = snapshot();
+            }
+            if (f - before < settings.epsilon) {
+                if ((settings.spr || settings.swap) && !beyondNni && checkBudgets() == null) {
+                    beyondNniNext = true; // the NNIs gain too little to go on: the wider moves before stopping
+                    continue;
+                }
+                return StopReason.CONVERGED;
+            }
+        }
+        return StopReason.MAX_ROUNDS;
+    }
+
+    // the current tree into the candidate set
+    private void addCandidate() {
+        final double f = evaluator.evaluate();
+        if (f > fBest) {
+            fBest = f;
+            bestState = snapshot();
+        }
+        candidates.add(TopologyHash.of(tree), f, new FlexibleTree(tree), snapshot(), climb);
+    }
+
     private void finish(TreeStateSnapshot best) {
         if (evaluator.evaluate() < fBest) {
             best.restore();
@@ -274,6 +349,7 @@ public class TimeTreeSearch implements Reportable {
         fFinal = refit(finalMaximizer, null, "t3b_final", rounds, evaluator.evaluate());
         fBest = Math.max(fBest, fFinal);
         bestTree = new FlexibleTree(tree);
+        nniDelta = settings.nniDelta ? nniDelta() : null;
         seconds = seconds();
         say("stopped (" + stopReason + ") after " + rounds + " rounds: F = " + format(fFinal) + " (" +
                 format(fFinal - fStart) + " over the start), " + accepted + " moves accepted, " +
@@ -283,11 +359,57 @@ public class TimeTreeSearch implements Reportable {
                 log.writeLog(new File(settings.logFileName));
             }
             if (settings.treeFileName != null) {
-                log.writeTree(new File(settings.treeFileName), fFinal, stopReason.toString());
+                log.writeTree(new File(settings.treeFileName), fFinal, stopReason.toString(), nniDelta);
+            }
+            if (settings.candidatesFileName != null) {
+                log.writeCandidates(new File(settings.candidatesFileName), candidates, bestTree);
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not write the search output: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Local support at the end (§12): at each internal node but the root, F minus the best of its two NNI alternatives,
+     * each re-fitted locally (T1), the better also with all heights and rates (T2). An aLRT-like gap; negative when
+     * an alternative scores higher, which the search should have taken (counted, and reported).
+     *
+     * @return by node number, NaN where no alternative is allowed
+     */
+    private double[] nniDelta() {
+        final long started = System.nanoTime();
+        final double f = evaluator.evaluate();
+        final double[] delta = new double[tree.getNodeCount()];
+        java.util.Arrays.fill(delta, Double.NaN);
+        nniDeltaNegative = 0;
+        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+            final NodeRef node = tree.getInternalNode(i);
+            if (tree.isRoot(node)) {
+                continue;
+            }
+            final BitSet only = new BitSet(tree.getNodeCount());
+            only.set(node.getNumber());
+            TrialEvaluator.Trial better = null;
+            for (RootedNniMove move : NniNeighbourhood.enumerate(tree, constraints, only)) {
+                TrialEvaluator.Trial trial = evaluator.trial(move, Double.NEGATIVE_INFINITY, false);
+                if (better == null || trial.best > better.best) {
+                    better = trial;
+                }
+            }
+            if (better == null) {
+                continue;
+            }
+            final TrialEvaluator.Trial refitted = evaluator.trial(better.move, Double.NEGATIVE_INFINITY, true);
+            delta[node.getNumber()] = f - Math.max(better.best, refitted.best);
+            if (delta[node.getNumber()] < -settings.moveEpsilon) {
+                nniDeltaNegative++;
+            }
+        }
+        trialSeconds += (System.nanoTime() - started) / 1E9;
+        if (nniDeltaNegative > 0) {
+            say("nniDelta: " + nniDeltaNegative + " node(s) have an NNI alternative scoring higher than the best tree");
+        }
+        return delta;
     }
 
     /**
@@ -849,6 +971,21 @@ public class TimeTreeSearch implements Reportable {
         return secondChances;
     }
 
+    public int getPerturbations() {
+        return perturbations;
+    }
+
+    public CandidateSet getCandidates() {
+        return candidates;
+    }
+
+    /**
+     * @return by node number, the final F minus the best NNI alternative at the node (NaN for none), or null
+     */
+    public double[] getNniDelta() {
+        return nniDelta;
+    }
+
     public int getSprRounds() {
         return sprRounds;
     }
@@ -919,6 +1056,23 @@ public class TimeTreeSearch implements Reportable {
         sb.append("Trials: ").append(evaluator.getTrials()).append(" (T1 ").append(evaluator.getT1Count())
                 .append(", T2 ").append(evaluator.getT2Count()).append(")\n");
         sb.append("SecondChances: ").append(secondChances).append("\n");
+        if (perturbation != null) {
+            sb.append("Perturbations: ").append(perturbations).append(" (operators ")
+                    .append(perturbation.getOperatorNames()).append(", ").append(perturbation.getKept())
+                    .append(" of ").append(perturbation.getDraws()).append(" draws kept)\n");
+            sb.append("Candidates: ").append(candidates.size()).append(", best from climb ")
+                    .append(candidates.size() > 0 ? candidates.getCandidates().get(0).climb : 0).append("\n");
+        }
+        if (nniDelta != null) {
+            double min = Double.POSITIVE_INFINITY;
+            for (double d : nniDelta) {
+                if (!Double.isNaN(d)) {
+                    min = Math.min(min, d);
+                }
+            }
+            sb.append("NniDelta: smallest ").append(min).append(nniDeltaNegative > 0 ? " (" + nniDeltaNegative +
+                    " negative: an NNI scores higher)" : "").append("\n");
+        }
         if (settings.swap) {
             sb.append("SwapRounds: ").append(swapRounds).append(" (moves accepted ").append(swapAccepted).append(")\n");
         }

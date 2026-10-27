@@ -79,6 +79,13 @@ public final class SearchSettings {
     public boolean swap = false;
     public int swapMaxDistance = 4; // the farthest apart the two parents may be, in nodes (GibbsSubtreeSwap's 4)
 
+    // root-changing SPR (§5.4, M6), after SPR and swaps: a subtree above the root, or a root child with the root
+    public boolean rootMoves = false;
+    public int rootMaxDepth = 3; // prune at the root: the deepest target below the new root, in branches
+
+    // the start (§7.1, M6): false starts from the tree as it is; true from the NJ tree, rooted and dated
+    public boolean njStart = false;
+
     // perturbation and the candidate set (§7.2, §7.4, M5)
     public int nStop = 0; // stop after this many perturbed hill-climbs in a row without a new best; 0: no perturbation
     public double perturbStrength = 0.3; // operator moves per perturbation: max(1, floor(strength (n - 2)))
@@ -108,13 +115,13 @@ public final class SearchSettings {
         return "epsilon = " + epsilon + ", moveEpsilon = " + moveEpsilon + ", deltaT1 = " + deltaT1 +
                 ", deltaKeep = " + deltaKeep + ", t2Candidates = " + t2Candidates + ", t1Sweeps = " + t1Sweeps +
                 ", speedNni = " + speedNni + ", batch = " + batch + ", toplistSize = " + toplistSize +
-                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan + ", moves = nni" + (spr ? ",spr" : "") + (swap ? ",swap" : "") +
+                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan + ", moves = nni" + (spr ? ",spr" : "") + (swap ? ",swap" : "") + (rootMoves ? ",root" : "") +
                 (spr ? ", sprMaxRadius = " + sprMaxRadius + ", sprRadius = " + (sprRadius > 0 ? sprRadius : "auto") +
                         ", subtreeCutoff = " + subtreeCutoff : "") +
                 ", rateWarmStart = " + rateWarmStart.getName() + ", maxRounds = " +
                 (maxRounds > 0 ? maxRounds : "n - 1") + ", maxRunTime = " + (maxRunTime > 0 ? maxRunTime + "s" : "none") +
                 ", maxEvaluations = " + (maxEvaluations > 0 ? maxEvaluations : "none") +
-                ", verifyEvery = " + verifyEvery +
+                ", verifyEvery = " + verifyEvery + (njStart ? ", startingTree = nj" : "") +
                 (nStop > 0 ? ", nStop = " + nStop + ", perturbStrength = " + perturbStrength + ", perturbOperators = " +
                         perturbOperators + ", candidateSetSize = " + candidateSetSize + ", parentPool = " + parentPool : "");
     }

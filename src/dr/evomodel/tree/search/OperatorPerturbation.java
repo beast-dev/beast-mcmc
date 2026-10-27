@@ -43,8 +43,9 @@ import java.util.List;
  * Perturbation of the search (plan 7 §5.9, §7.2) by BEAST's own topology operators, called through their doOperation as
  * MCMC would and with the Hastings ratio ignored: rooted NNI with a uniform height (NNI), wide exchange
  * (ExchangeOperator), subtree leap (SubtreeLeapOperator) and Wilson-Balding (WilsonBalding). Each draw is kept only if
- * the operator does not reject it, the root keeps its node (the search's snapshots are number-keyed until M6), the
- * constraints hold and the objective stays finite; otherwise it is undone and another drawn. A perturbed tree is
+ * the operator does not reject it, the constraints hold and the objective stays finite; otherwise it is undone and
+ * another drawn. A draw may give the root another node (subtree leap above the root): snapshots taken before it
+ * restore by clade. A perturbed tree is
  * always hill-climbed and compared with the best, never accepted on its own.
  *
  * @author Xiang Ji
@@ -119,13 +120,11 @@ public final class OperatorPerturbation {
         for (int m = 0; m < moves; ++m) {
             for (int attempt = 0; attempt < MAX_DRAWS_PER_MOVE; ++attempt) {
                 final SimpleMCMCOperator operator = operators.get(MathUtils.nextInt(operators.size()));
-                final int root = tree.getRoot().getNumber();
                 draws++;
                 final boolean ok = evaluator.tryEdit(new TrialEvaluator.Edit() {
                     public boolean apply() {
                         final double logHastings = operator.doOperation();
-                        return logHastings > Double.NEGATIVE_INFINITY && tree.getRoot().getNumber() == root
-                                && constraints.areSatisfied(tree);
+                        return logHastings > Double.NEGATIVE_INFINITY && constraints.areSatisfied(tree);
                     }
                 });
                 if (ok) {

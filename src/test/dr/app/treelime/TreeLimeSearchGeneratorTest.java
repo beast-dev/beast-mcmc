@@ -95,7 +95,7 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         TreeLimeOptions spr = search(dengue(true));
         spr.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.NNI_SPR;
         assertGolden("nni_spr_hmc_dated.xml", spr);
-        assertTrue(generate(spr).contains("<timeTreeSearch id=\"treeSearch\" seed=\"1\" moves=\"nni,spr\""));
+        assertTrue(generate(spr).contains("<timeTreeSearch id=\"treeSearch\" seed=\"1\" moves=\"nni,spr,root\""));
         // perturbation: nStop and the candidate trees' file, only when on
         assertFalse(generate(spr).contains("nStop="));
         spr.maximizationOptions.getTopologySearch().nStop = 20;

@@ -249,6 +249,46 @@ public final class TopologyConstraints {
         return false;
     }
 
+    /**
+     * The root-move rule. Above the root: the clades from Q up to the root (included) lose subtree(i), P's old clade
+     * goes and P's new one is all tips. At the root: the clades from k up to C (included) gain subtree(i), and the old
+     * root's clade, all tips, becomes subtree(i) plus subtree(j). The move breaks a constraint iff it is one of these
+     * clades before and none of them after.
+     */
+    public boolean violates(Tree tree, RootChangingSprMove move, BitSet[] clades) {
+        if (tips.isEmpty()) {
+            return false;
+        }
+        final BitSet subtree = clades[move.getI()];
+        final List<BitSet> before = new ArrayList<BitSet>();
+        final List<BitSet> after = new ArrayList<BitSet>();
+        if (move.getKind() == RootChangingSprMove.Kind.ABOVE_ROOT) {
+            before.add(clades[move.getP()]);
+            for (NodeRef x = tree.getNode(move.getQ()); x != null; x = tree.getParent(x)) {
+                before.add(clades[x.getNumber()]);
+                BitSet lost = (BitSet) clades[x.getNumber()].clone();
+                lost.andNot(subtree);
+                after.add(lost);
+            }
+        } else {
+            for (NodeRef x = tree.getNode(move.getK()); x.getNumber() != move.getP(); x = tree.getParent(x)) {
+                before.add(clades[x.getNumber()]);
+                BitSet gained = (BitSet) clades[x.getNumber()].clone();
+                gained.or(subtree);
+                after.add(gained);
+            }
+            BitSet pAfter = (BitSet) clades[move.getJ()].clone();
+            pAfter.or(subtree);
+            after.add(pAfter);
+        }
+        for (BitSet clade : before) {
+            if (tips.contains(clade) && !after.contains(clade)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static BitSet swapped(BitSet clade, BitSet out, BitSet in) {
         BitSet result = (BitSet) clade.clone();
         result.andNot(out);

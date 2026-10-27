@@ -1088,7 +1088,8 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<String>(XMLParser.ID, TREE_SEARCH));
         attributes.add(new Attribute.Default<Long>("seed", search.seed));
         if (search.mode == TopologySearchOptions.Mode.NNI_SPR) {
-            attributes.add(new Attribute.Default<String>("moves", "nni,spr"));
+            // SPR includes the moves that give the root another node (plan 7 M6)
+            attributes.add(new Attribute.Default<String>("moves", "nni,spr,root"));
         }
         if (!search.maxSearchTime.isEmpty()) {
             attributes.add(new Attribute.Default<String>("maxRunTime", search.maxSearchTime));

@@ -497,7 +497,7 @@
 
 	<!-- Search the topology by rooted NNIs and SPRs from the starting tree; a move is kept only when the joint density rises-->
 	<!-- The best tree: golden.search.trees; one row per round: golden.search.log-->
-	<timeTreeSearch id="treeSearch" seed="1" moves="nni,spr" printToScreen="true" treeFileName="golden.search.trees" logFileName="golden.search.log">
+	<timeTreeSearch id="treeSearch" seed="1" moves="nni,spr,root" printToScreen="true" treeFileName="golden.search.trees" logFileName="golden.search.log">
 		<treeModel idref="treeModel"/>
 		<objective>
 			<joint idref="joint"/>

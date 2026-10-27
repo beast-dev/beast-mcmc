@@ -72,7 +72,7 @@ public class TimeTreeSearchPerturbationTest extends TestCase {
         super(name);
     }
 
-    // each operator alone keeps a valid time tree with the same root, keeps a constrained clade, and is kept at least
+    // each operator alone keeps a valid time tree, keeps a constrained clade, and is kept at least
     // sometimes; the objective stays finite
     public void testOperators() throws Exception {
         for (String operator : new String[]{"nni", "narrow", "wide", "leap", "wb"}) {
@@ -86,11 +86,9 @@ public class TimeTreeSearchPerturbationTest extends TestCase {
             MathUtils.setSeed(3);
             OperatorPerturbation perturbation = new OperatorPerturbation(tree, search(objects).getEvaluator(),
                     constraints, operator, 0.1);
-            final int root = tree.getRoot().getNumber();
             final String before = TreeUtils.uniqueNewick(tree, tree.getRoot());
             int kept = perturbation.perturb(10);
             assertTrue(operator, kept > 0);
-            assertEquals(operator, root, tree.getRoot().getNumber());
             assertTrue(operator, constraints.areSatisfied(tree));
             assertTrue(operator, joint.getLogLikelihood() > Double.NEGATIVE_INFINITY);
             for (int n = 0; n < tree.getNodeCount(); ++n) {
@@ -109,7 +107,7 @@ public class TimeTreeSearchPerturbationTest extends TestCase {
     }
 
     // the search with perturbation: the best F never decreases, it stops on nStop, the candidate set is sorted and
-    // distinct and its best is the final tree's topology, the root never moves, and the same seed gives the same log
+    // distinct and its best is the final tree's topology, and the same seed gives the same log
     public void testPerturbedSearch() throws Exception {
         File directory = Files.createTempDirectory("perturbation").toFile();
         File candidatesFile = new File(directory, "run.candidates.trees");
@@ -123,12 +121,10 @@ public class TimeTreeSearchPerturbationTest extends TestCase {
                 return;
             }
             TreeModel tree = tree(objects);
-            final int root = tree.getRoot().getNumber();
             TimeTreeSearch search = search(objects);
             search.run();
             assertEquals(TimeTreeSearch.StopReason.N_STOP, search.getStopReason());
             assertTrue(search.getPerturbations() >= 4);
-            assertEquals(root, tree.getRoot().getNumber());
 
             double best = Double.NEGATIVE_INFINITY;
             boolean perturbRow = false;

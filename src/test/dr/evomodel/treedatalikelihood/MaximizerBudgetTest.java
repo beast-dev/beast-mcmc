@@ -134,6 +134,25 @@ public class MaximizerBudgetTest extends TestCase {
         assertFalse(maximizer.endedAtBestPoint());
     }
 
+    // a value at the edge of its transform's domain, here 0 under a log transform, is -Infinity in the transformed
+    // coordinates; L-BFGS took a start with an infinite coordinate as already minimized, so no other coordinate moved
+    // either. Started just inside, the edge coordinate stays where its gradient vanishes and the others converge
+    public void testStartAtTheEdgeOfTheTransform() {
+        Parameter y = new Parameter.Default("y", new double[]{0.0, 3.0});
+        dr.math.distributions.NormalDistribution normal = new dr.math.distributions.NormalDistribution(1.0, 1.0);
+        dr.inference.distribution.DistributionLikelihood likelihood =
+                new dr.inference.distribution.DistributionLikelihood(normal);
+        likelihood.addData(y);
+        MaximizerWrtParameter maximizer = new MaximizerWrtParameter(likelihood, y,
+                new GradientWrtParameterProvider.ParameterWrapper(normal, y, likelihood),
+                new dr.util.Transform.Array(dr.util.Transform.LOG, 2, null),
+                new MaximizerWrtParameter.Settings(0, 1E-6, true, false, false).setConvergence(1E-8, null, null));
+        maximizer.maximize();
+        assertTrue(maximizer.getIterations() > 0);
+        assertEquals(1.0, y.getParameterValue(1), 1E-4);
+        assertTrue(y.getParameterValue(0) < 1E-6);
+    }
+
     // -------------------------------------------------------------------------------------------------------------
 
     private static double objective(double a, double b) {

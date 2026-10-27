@@ -121,6 +121,7 @@ public class MaximizerWrtParameter implements Reportable {
     private double lastFiniteValue = 0.0;
     private boolean lastEvaluationNonFinite = false;
     private static final double NON_FINITE_PENALTY = 1E10;
+    private static final double EDGE = 30.0; // logit 30: a ratio of 1 - 1E-13; log -30: a value of 1E-13
 
     private static final Logger LOGGER = Logger.getLogger("dr.evomodel");
 
@@ -696,6 +697,16 @@ public class MaximizerWrtParameter implements Reportable {
 
             if (transform != null) {
                 x = transform.transform(x, 0, x.length);
+                // a value at the edge of its transform's domain (a node-height ratio of exactly 1 after an earlier
+                // run, a log-scale value of 0) is infinite here, and L-BFGS takes a start with |x| infinite as
+                // already minimized: start just inside instead
+                for (int i = 0; i < x.length; ++i) {
+                    if (x[i] == Double.POSITIVE_INFINITY) {
+                        x[i] = EDGE;
+                    } else if (x[i] == Double.NEGATIVE_INFINITY) {
+                        x[i] = -EDGE;
+                    }
+                }
             }
         } else {
             x = new double[dim];

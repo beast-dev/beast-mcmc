@@ -42,6 +42,10 @@ import dr.math.UnivariateMinimum;
  * from three evaluations (step 1E-3), clamped to 2 units; when the curvature is not positive or the step does not
  * improve, Brent's method on [y - 2, y + 2] takes over. Bounds are recomputed before each coordinate, as the
  * neighbours' heights change them. The objective never decreases: each coordinate ends at the best point evaluated.
+ * <p>
+ * A height at an end of its interval (a zero-length branch: a ratio of 1, an infinite logit) is searched by Brent's
+ * method over the whole interval, logit [-7, 7] (ratios 0.001 to 0.999). From the end itself no step could move it,
+ * so an NNI across a zero-length branch, which leaves F exactly unchanged at T0, could never gain at T1 either.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -59,6 +63,8 @@ public final class LocalOptimizer {
     private static final double MAX_NEWTON = 2.0;
     private static final double BRENT_RANGE = 2.0;
     private static final int BRENT_EVALUATIONS = 12;
+    private static final double EDGE = 7.0; // the farthest start in logit coordinates: a ratio of 0.999
+    private static final double ROOT_EDGE = 1E-3; // the closest start of the root to its oldest child, relative
 
     private final TreeModel tree;
     private final ArbitraryBranchRates rates; // null: heights only
@@ -92,7 +98,17 @@ public final class LocalOptimizer {
     private abstract class Coordinate {
         abstract double get();
 
+        // where the search along the coordinate starts, given its current value
+        double start(double y) {
+            return y;
+        }
+
         abstract void set(double y);
+
+        // whether the coordinate's start is clamped to [-EDGE, EDGE], its whole useful range
+        boolean isBounded() {
+            return false;
+        }
 
         // the model value itself (a height or a raw rate), set back exactly
         abstract double getValue();
@@ -122,6 +138,17 @@ public final class LocalOptimizer {
             }
             final double x = (h - lower) / (upper - lower);
             return Math.log(x / (1.0 - x));
+        }
+
+        double start(double y) {
+            if (upper == Double.POSITIVE_INFINITY) {
+                return Math.max(y, Math.log(ROOT_EDGE * Math.abs(tree.getNodeHeight(node))));
+            }
+            return Math.max(-EDGE, Math.min(EDGE, y));
+        }
+
+        boolean isBounded() {
+            return upper != Double.POSITIVE_INFINITY;
         }
 
         void set(double y) {
@@ -168,7 +195,8 @@ public final class LocalOptimizer {
 
     // minimize -F along one coordinate; returns F at the best point evaluated, where the coordinate is left
     private double optimize(final Objective objective, final double value, final Coordinate coordinate) {
-        final double y0 = coordinate.get();
+        final double current = coordinate.get();
+        final double y0 = coordinate.start(current);
         if (!Double.isFinite(y0)) {
             return value;
         }
@@ -196,7 +224,19 @@ public final class LocalOptimizer {
             }
         };
 
-        final double f0 = -value;
+        if (y0 != current && coordinate.isBounded()) {
+            // at an end of the interval nothing local is known: Brent over the whole interval (best still holds the
+            // current point)
+            UnivariateMinimum brent = new UnivariateMinimum();
+            brent.maxFun = 2 * BRENT_EVALUATIONS;
+            brent.optimize(0.0, f, 1E-3, -EDGE, EDGE);
+            if (coordinate.getValue() != best[0]) {
+                coordinate.setValue(best[0]);
+            }
+            return objective.value();
+        }
+        // from just inside the interval when the root is on its oldest child (best still holds the current point)
+        final double f0 = y0 == current ? -value : f.evaluate(y0);
         final double plus = f.evaluate(y0 + STEP);
         final double minus = f.evaluate(y0 - STEP);
         final double gradient = (plus - minus) / (2 * STEP);

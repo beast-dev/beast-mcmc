@@ -31,6 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -53,10 +54,19 @@ public final class NniNeighbourhood {
      * @return the moves, in priority order, leaving out those the constraints forbid
      */
     public static List<RootedNniMove> enumerate(final TreeModel tree, TopologyConstraints constraints) {
+        return enumerate(tree, constraints, null);
+    }
+
+    /**
+     * @param window the numbers of the nodes P may be (null: every non-root internal node)
+     * @return the moves at those nodes, in priority order, leaving out those the constraints forbid
+     */
+    public static List<RootedNniMove> enumerate(final TreeModel tree, TopologyConstraints constraints,
+                                                BitSet window) {
         List<NodeRef> nodes = new ArrayList<NodeRef>();
         for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
             NodeRef node = tree.getInternalNode(i);
-            if (!tree.isRoot(node)) {
+            if (!tree.isRoot(node) && (window == null || window.get(node.getNumber()))) {
                 nodes.add(node);
             }
         }
@@ -85,5 +95,75 @@ public final class NniNeighbourhood {
             }
         }
         return moves;
+    }
+
+    /**
+     * The root moves of plan 7 §5.2: every root-child NNI (radius 1), each followed by the root-child NNIs at the
+     * child it brought up to the root (radius 2). Every NNI at a child of the root keeps the unrooted topology and
+     * moves the root by one edge, and the chained ones reach each edge two away exactly once.
+     */
+    public static List<TimeTreeMove> rootMoves(TreeModel tree, TopologyConstraints constraints) {
+        final NodeRef root = tree.getRoot();
+        List<TimeTreeMove> first = new ArrayList<TimeTreeMove>();
+        List<TimeTreeMove> second = new ArrayList<TimeTreeMove>();
+        for (int k = 0; k < 2; ++k) {
+            final NodeRef p = tree.getChild(root, k);
+            if (tree.isExternal(p)) {
+                continue;
+            }
+            final NodeRef u = tree.getChild(root, 1 - k);
+            for (int c = 0; c < 2; ++c) {
+                final NodeRef a = tree.getChild(p, c);
+                RootedNniMove move = new RootedNniMove(p.getNumber(), root.getNumber(), a.getNumber(),
+                        u.getNumber());
+                if (constraints != null && constraints.violates(tree, move)) {
+                    continue;
+                }
+                first.add(move);
+                // a is now a child of the root and P its sibling: a's NNIs move the root on, away from P
+                if (!tree.isExternal(a) && (constraints == null || !constraints.isConstrained(tree, a.getNumber()))) {
+                    for (int d = 0; d < 2; ++d) {
+                        second.add(new ChainedMove(move, new RootedNniMove(a.getNumber(), root.getNumber(),
+                                tree.getChild(a, d).getNumber(), p.getNumber())));
+                    }
+                }
+            }
+        }
+        first.addAll(second);
+        return first;
+    }
+
+    /**
+     * @return the numbers of the nodes at most radius edges from any of the given nodes
+     */
+    public static BitSet within(TreeModel tree, int[] nodes, int radius) {
+        BitSet reached = new BitSet(tree.getNodeCount());
+        List<NodeRef> frontier = new ArrayList<NodeRef>();
+        for (int number : nodes) {
+            if (!reached.get(number)) {
+                reached.set(number);
+                frontier.add(tree.getNode(number));
+            }
+        }
+        for (int step = 0; step < radius; ++step) {
+            List<NodeRef> next = new ArrayList<NodeRef>();
+            for (NodeRef node : frontier) {
+                List<NodeRef> adjacent = new ArrayList<NodeRef>();
+                if (!tree.isRoot(node)) {
+                    adjacent.add(tree.getParent(node));
+                }
+                for (int c = 0; c < tree.getChildCount(node); ++c) {
+                    adjacent.add(tree.getChild(node, c));
+                }
+                for (NodeRef other : adjacent) {
+                    if (!reached.get(other.getNumber())) {
+                        reached.set(other.getNumber());
+                        next.add(other);
+                    }
+                }
+            }
+            frontier = next;
+        }
+        return reached;
     }
 }

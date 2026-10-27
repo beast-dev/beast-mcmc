@@ -100,6 +100,7 @@ public class NniExhaustiveStudy {
         String bestTopology = null;
         double bestSpread = 0.0;
         double maxSpread = 0.0;
+        java.util.Map<String, Double> gold = new java.util.HashMap<String, Double>();
         for (String topology : topologies) {
             double[] f = fit(fasta, topology, directory, heightStarts);
             double max = Double.NEGATIVE_INFINITY, min = Double.POSITIVE_INFINITY;
@@ -108,6 +109,8 @@ public class NniExhaustiveStudy {
                 min = Math.min(min, x);
             }
             maxSpread = Math.max(maxSpread, max - min);
+            Tree t = tree(topology);
+            gold.put(dr.evolution.tree.TreeUtils.uniqueNewick(t, t.getRoot()), max);
             if (max > best) {
                 secondBest = best;
                 best = max;
@@ -145,6 +148,16 @@ public class NniExhaustiveStudy {
                     failed ? " FAILED" : "", SplitDistance.rooted(bestTree, startTree),
                     SplitDistance.rooted(bestTree, new FlexibleTree(search.getTree())), search.getAcceptedMoves(),
                     zeroBranches(search.getTree()));
+            if (failed) {
+                TreeModel found = search.getTree();
+                System.out.printf("    F* of the topology it ended on: %.4f%n",
+                        gold.get(dr.evolution.tree.TreeUtils.uniqueNewick(found, found.getRoot())));
+                for (String row : search.getLog().getRows()) {
+                    String[] fields = row.split("\t", -1);
+                    System.out.println("    " + fields[1] + " " + fields[2] + " nT0 " + fields[3] + " F " + fields[7] +
+                            " -> " + fields[8] + " " + fields[17]);
+                }
+            }
         }
         System.out.println(failures == 0 ? "all starts reached the global optimum" :
                 failures + " of " + (randomStarts + 1) + " starts ended below the global optimum");

@@ -73,6 +73,43 @@ public final class RootedNniMove implements TimeTreeMove {
         return u;
     }
 
+    /**
+     * @return b, P's child other than a, before the move
+     */
+    public int getB(TreeModel tree) {
+        return other(tree).getNumber();
+    }
+
+    /**
+     * @return the quartet's five nodes before the move: P, G, a, b and U
+     */
+    public int[] quartet(TreeModel tree) {
+        return new int[]{p, g, a, getB(tree), u};
+    }
+
+    /**
+     * @return what a scored move's value depends on besides its own nodes, before the move: b and G's parent (-1 at
+     * the root). A move kept from an earlier round is re-scored only while these are unchanged
+     */
+    public int[] neighbourhood(TreeModel tree) {
+        final NodeRef nodeG = tree.getNode(g);
+        return new int[]{getB(tree), tree.isRoot(nodeG) ? -1 : tree.getParent(nodeG).getNumber()};
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof RootedNniMove)) {
+            return false;
+        }
+        RootedNniMove m = (RootedNniMove) o;
+        return p == m.p && g == m.g && a == m.a && u == m.u;
+    }
+
+    @Override
+    public int hashCode() {
+        return ((p * 31 + g) * 31 + a) * 31 + u;
+    }
+
     @Override
     public boolean isValid(TreeModel tree) {
         final NodeRef nodeP = tree.getNode(p);

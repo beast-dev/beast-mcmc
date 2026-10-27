@@ -355,42 +355,88 @@ public class TimeTreeSearchTest extends TestCase {
         assertEquals(trees.get(0), trees.get(1));
     }
 
-    // a trial whose evaluation underflows: BEAGLE then rescales with double-buffer flipping off, overwriting the
-    // stored partials, and (the first time) stores no scale factors to restore. Without recomputing everything after
-    // such a trial, later trials were scored wrong and a replay failed (F -20317.3 against the trial's -20320.4). The
-    // data (30 taxa, 5000 JC sites) and the start (5 NNIs from the true tree) are the NniRecoveryStudy replicate
-    // that showed it
+    // a trial during which BEAGLE underflows: its retry rescales with double-buffer flipping off, overwriting the
+    // stored partials, and (the first time) stores no scale factors to restore, so the state restored after the trial
+    // must be recomputed in full. Found by NniRecoveryStudy (a replay gave -20317.3 against the trial's -20320.4);
+    // later changes to the search no longer reach an underflow inside a trial in its replicates (its underflows
+    // column), and none could be built by hand on the example data, so this checks the wiring: a move that counts an
+    // underflow, as the delegate does, makes the evaluator recompute everything after the trial
     public void testUnderflowInsideATrial() throws Exception {
-        java.util.logging.Logger.getLogger("dr").setLevel(java.util.logging.Level.SEVERE);
-        try {
-            dr.math.MathUtils.setSeed(11011);
-            dr.evolution.util.Taxa list = new dr.evolution.util.Taxa();
-            for (int i = 0; i < 30; ++i) {
-                list.addTaxon(new dr.evolution.util.Taxon("t" + (i + 1)));
-            }
-            dr.evolution.coalescent.ConstantPopulation population =
-                    new dr.evolution.coalescent.ConstantPopulation(dr.evolution.util.Units.Type.SUBSTITUTIONS);
-            population.setN0(0.05);
-            dr.evolution.tree.Tree truth = new dr.evolution.coalescent.CoalescentSimulator().simulateTree(list, population);
-            File directory = Files.createTempDirectory("underflow").toFile();
-            File fasta = new File(directory, "data.fasta");
-            NniRecoveryStudy.writeFasta(NniRecoveryStudy.simulateJC(truth, 5000), truth, fasta);
-
-            dr.math.MathUtils.setSeed(11016);
-            TreeModel start = new dr.evomodel.tree.DefaultTreeModel("perturbed", truth);
-            for (int m = 0; m < 5; ++m) {
-                List<RootedNniMove> moves = NniNeighbourhood.enumerate(start, null);
-                moves.get(dr.math.MathUtils.nextInt(moves.size())).apply(start, null);
-            }
-            TimeTreeSearch search = NniRecoveryStudy.search(fasta, new dr.evolution.tree.FlexibleTree(start), directory,
-                    "underflow");
-            assertTrue("the data no longer underflow in a trial", search.getEvaluator().getUnderflowRecomputes() > 0);
-            assertTrue(search.getFinalValue() > search.getStartValue());
-            // the state the search ends in is what a full recomputation gives
-            search.getEvaluator().verify(search.getFinalValue());
-        } finally {
-            java.util.logging.Logger.getLogger("dr").setLevel(java.util.logging.Level.INFO);
+        Map<String, XMLObject> objects = parse(new Setup().xml());
+        if (objects == null) {
+            return;
         }
+        final TreeModel tree = tree(objects);
+        final Likelihood joint = joint(objects);
+        final TrialEvaluator evaluator = search(objects).getEvaluator();
+        final dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate beagle = beagle(joint.getModel());
+        assertNotNull(beagle);
+        final java.lang.reflect.Field count =
+                dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.class.getDeclaredField("underflowCount");
+        count.setAccessible(true);
+
+        final RootedNniMove nni = NniNeighbourhood.enumerate(tree, null).get(0);
+        dr.evomodel.tree.search.TimeTreeMove underflowing = new dr.evomodel.tree.search.TimeTreeMove() {
+            public boolean isValid(TreeModel t) {
+                return nni.isValid(t);
+            }
+
+            public void apply(TreeModel t, BranchRateWarmStart warmStart) {
+                nni.apply(t, warmStart);
+                try {
+                    count.setLong(beagle, count.getLong(beagle) + 1);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            public void applyTopology(TreeModel t) {
+                nni.applyTopology(t);
+            }
+
+            public boolean needsRepair(TreeModel t) {
+                return nni.needsRepair(t);
+            }
+
+            public int[] localHeights(TreeModel t) {
+                return nni.localHeights(t);
+            }
+
+            public int[] localRates(TreeModel t) {
+                return nni.localRates(t);
+            }
+
+            public int[] touchedNodes() {
+                return nni.touchedNodes();
+            }
+
+            public String describe() {
+                return nni.describe() + " (underflowing)";
+            }
+        };
+
+        final double before = evaluator.evaluate();
+        evaluator.trial(nni, Double.POSITIVE_INFINITY, false);
+        assertEquals(0, evaluator.getUnderflowRecomputes());
+        final long evaluations = evaluator.getEvaluations();
+        evaluator.trial(underflowing, Double.POSITIVE_INFINITY, false);
+        assertEquals(1, evaluator.getUnderflowRecomputes());
+        // the recomputation is one evaluation more than a plain trial's (before, T0)
+        assertEquals(evaluations + 3, evaluator.getEvaluations());
+        assertEquals(before, evaluator.evaluate(), 1E-8 * Math.abs(before));
+        evaluator.verify(before);
+    }
+
+    private static dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate beagle(Model root) {
+        for (Model model : TrialEvaluator.models(root)) {
+            if (model instanceof dr.evomodel.treedatalikelihood.TreeDataLikelihood) {
+                Object delegate = ((dr.evomodel.treedatalikelihood.TreeDataLikelihood) model).getDataLikelihoodDelegate();
+                if (delegate instanceof dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate) {
+                    return (dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate) delegate;
+                }
+            }
+        }
+        return null;
     }
 
     // the log and the NEXUS tree files

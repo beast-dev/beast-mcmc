@@ -85,7 +85,7 @@ public class NniRecoveryStudy {
         int[] asGood = new int[kMax + 1];
         double[] startRf = new double[kMax + 1];
         double[] finalRf = new double[kMax + 1];
-        System.out.println("rep\tk\trf_start\trf_final\trf_final_unrooted\tF_truth_start\tF_final\tseconds");
+        System.out.println("rep\tk\trf_start\trf_final\trf_final_unrooted\tF_truth_start\tF_final\tseconds\tunderflows");
         for (int rep = firstRep; rep < replicates; ++rep) {
             // the search reseeds MathUtils (its seed attribute), so each replicate draws from its own seed
             MathUtils.setSeed(seed + 1000L * rep);
@@ -118,8 +118,9 @@ public class NniRecoveryStudy {
                 asGood[k] += search.getFinalValue() >= fTruth - 0.01 ? 1 : 0;
                 startRf[k] += rf0;
                 finalRf[k] += rf;
-                System.out.printf("%d\t%d\t%d\t%d\t%d\t%.3f\t%.3f\t%.1f%n", rep, k, rf0, rf,
-                        SplitDistance.unrooted(truth, found), fTruth, search.getFinalValue(), (System.nanoTime() - t) / 1E9);
+                System.out.printf("%d\t%d\t%d\t%d\t%d\t%.3f\t%.3f\t%.1f\t%d%n", rep, k, rf0, rf,
+                        SplitDistance.unrooted(truth, found), fTruth, search.getFinalValue(), (System.nanoTime() - t) / 1E9,
+                        search.getEvaluator().getUnderflowRecomputes());
             }
         }
         System.out.println();
@@ -135,6 +136,20 @@ public class NniRecoveryStudy {
 
     // the search from the given starting tree, through TreeLime's generator
     static TimeTreeSearch search(File fasta, Tree start, File directory, String name) throws Exception {
+        return search(fasta, start, directory, name, searchAttributes);
+    }
+
+    static TimeTreeSearch search(File fasta, Tree start, File directory, String name, String searchAttributes)
+            throws Exception {
+        TimeTreeSearch search = (TimeTreeSearch) parse(fasta, start, directory, name, searchAttributes)
+                .get("treeSearch").getNativeObject();
+        search.run();
+        return search;
+    }
+
+    // the TreeLime XML with the search, parsed without running it or the maximizer
+    static Map<String, XMLObject> parse(File fasta, Tree start, File directory, String name, String searchAttributes)
+            throws Exception {
         TreeLimeOptions options = TreeLimeHarness.importData(fasta.getPath());
         options.maximizationOptions.printToScreen = false;
         options.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.NNI;
@@ -144,11 +159,8 @@ public class NniRecoveryStudy {
         String xml = TreeLimeSearchGeneratorTest.generateTo(options, new File(directory, name + ".xml"));
         xml = xml.replace("<timeTreeSearch id=\"treeSearch\"", "<timeTreeSearch id=\"treeSearch\" searchOnParse=\"false\" " + searchAttributes);
         xml = xml.substring(0, xml.indexOf("<!-- The optimum")) + "</beast>\n";
-        Map<String, XMLObject> objects = new BeastParser(new String[]{}, null, false, false, false,
-                new BeastVersion()).parse(new StringReader(xml), false);
-        TimeTreeSearch search = (TimeTreeSearch) objects.get("treeSearch").getNativeObject();
-        search.run();
-        return search;
+        return new BeastParser(new String[]{}, null, false, false, false, new BeastVersion())
+                .parse(new StringReader(xml), false);
     }
 
     // Jukes-Cantor states down the tree, one site at a time

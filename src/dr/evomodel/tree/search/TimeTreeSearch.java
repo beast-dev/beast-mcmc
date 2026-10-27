@@ -41,9 +41,12 @@ import dr.xml.Reportable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -52,12 +55,14 @@ import java.util.logging.Logger;
  * topology is a lower bound on that topology's optimum, so accepting on it never lowers F; every optimizer call is
  * also guarded, and reverted if it ends lower.
  * <p>
- * This is the first version (M1a): a hill-climb by rooted NNIs with height repair. Each round scores every NNI
- * that keeps the constraints (T0: one evaluation after the move and the rate warm start; T1: the move's heights and
- * rates optimized locally when T0 is close), accepts the best one by replay, and re-fits the heights and rates (T3a,
- * the round maximizer). When no move gains, the top candidates get a short re-fit of all heights and rates (T2) as a
- * second look. A new best re-fits everything (T3b, the final maximizer). At the end the best state is restored and
- * re-fitted with the final maximizer's own settings.
+ * The search is a hill-climb by rooted NNIs with height repair. Each round scores the NNIs that keep the
+ * constraints (T0: one evaluation after the move; T1: the move's heights and rates optimized locally when T0 is
+ * close), only those near the last change when speedNNI is on (and all of them before stopping). It applies every
+ * gaining move that does not touch another's neighbourhood at once, falling back to the best single move if that
+ * batch ends lower, then re-fits the heights and rates (T3a, the round maximizer). When no move gains, the closest
+ * candidates get a short re-fit of all heights and rates (T2), and near-ties a longer one. A new best re-fits
+ * everything (T3b, the final maximizer) and tries the root positions one and two edges away. At the end the best
+ * state is restored and re-fitted with the final maximizer's own settings.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -102,6 +107,10 @@ public class TimeTreeSearch implements Reportable {
     private int rounds = 0;
     private int accepted = 0;
     private int guardReverts = 0;
+    private int secondChances = 0;
+    private int rootScans = 0;
+    private int rootMoves = 0;
+    private int[] lastApplied = null; // the nodes of the last round's moves, for speedNNI
     private long maximizerEvaluations = 0;
     private double fStart = Double.NaN;
     private double fRefitted = Double.NaN;
@@ -152,6 +161,7 @@ public class TimeTreeSearch implements Reportable {
         rounds = 0;
         accepted = 0;
         guardReverts = 0;
+        secondChances = rootScans = rootMoves = 0;
         maximizerEvaluations = 0;
         trialSeconds = t3aSeconds = t3bSeconds = 0.0;
         log.clear();
@@ -176,6 +186,7 @@ public class TimeTreeSearch implements Reportable {
 
             final int maxRounds = settings.maxRounds > 0 ? settings.maxRounds : tree.getInternalNodeCount();
             stopReason = StopReason.MAX_ROUNDS;
+            lastApplied = null;
             for (int round = 1; round <= maxRounds; ++round) {
                 StopReason budget = checkBudgets();
                 if (budget != null) {
@@ -184,15 +195,25 @@ public class TimeTreeSearch implements Reportable {
                 }
                 rounds = round;
                 final double before = f;
-                final boolean changed = nniRound(round);
-                if (!changed) {
+                final int applied = nniRound(round);
+                if (applied == 0) {
                     stopReason = checkBudgets() != null ? checkBudgets() : StopReason.CONVERGED;
                     break;
                 }
-                accepted++;
+                accepted += applied;
                 f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
-                if (f > fBest + settings.modelEpsilon) {
+                // a new best re-fits everything, then looks at the root positions nearby (§6.3)
+                while (f > fBest + settings.modelEpsilon) {
                     f = refit(finalMaximizer, bestBudget(), "t3b", round, f);
+                    if (f > fBest) {
+                        fBest = f;
+                        best = snapshot();
+                    }
+                    if (!settings.rootScan || checkBudgets() != null || !rootScan(round)) {
+                        break;
+                    }
+                    accepted++;
+                    f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
                 }
                 if (f > fBest) {
                     fBest = f;
@@ -245,70 +266,259 @@ public class TimeTreeSearch implements Reportable {
     }
 
     /**
-     * One round: score every allowed NNI, accept the best if it gains, else give the closest candidates a T2 look.
+     * One round (§7.3): score the allowed NNIs, near the last change only when speedNNI is on (and all of them before
+     * giving up); apply every non-conflicting gaining move at once, falling back to the best single one if the batch
+     * ends lower; when none gains, give the closest candidates a T2 look, and the near-ties a longer one.
      *
-     * @return whether a move was accepted
+     * @return the number of moves applied
      */
-    private boolean nniRound(int round) {
+    private int nniRound(int round) {
         final long started = System.nanoTime();
         final double fInc = evaluator.evaluate();
+        final TrialEvaluator.Theta base = evaluator.capture();
         final long t1Before = evaluator.getT1Count();
         final long t2Before = evaluator.getT2Count();
-        final List<RootedNniMove> moves = NniNeighbourhood.enumerate(tree, constraints);
 
+        final BitSet window = settings.speedNni && lastApplied != null
+                ? NniNeighbourhood.within(tree, lastApplied, settings.speedNniRadius) : null;
+        List<TrialEvaluator.Trial> trials = scan(NniNeighbourhood.enumerate(tree, constraints, window), fInc);
+        String scope = window != null ? "local" : "full";
+        if (window != null && gaining(trials, fInc).isEmpty() && checkBudgets() == null) {
+            // nothing gains near the last change: the rest of the tree before stopping
+            Set<RootedNniMove> scored = new HashSet<RootedNniMove>();
+            for (TrialEvaluator.Trial trial : trials) {
+                scored.add((RootedNniMove) trial.move);
+            }
+            List<RootedNniMove> rest = new ArrayList<RootedNniMove>();
+            for (RootedNniMove move : NniNeighbourhood.enumerate(tree, constraints)) {
+                if (!scored.contains(move)) {
+                    rest.add(move);
+                }
+            }
+            trials.addAll(scan(rest, fInc));
+            scope = "local+full";
+        }
+        final int nT0 = trials.size();
+
+        final List<TrialEvaluator.Trial> positive = gaining(trials, fInc);
+        List<TrialEvaluator.Trial> applied = new ArrayList<TrialEvaluator.Trial>();
+        String note = scope;
+        double f = fInc;
+        if (positive.isEmpty()) {
+            TrialEvaluator.Trial winner = checkBudgets() == null ? rescue(trials, fInc) : null;
+            if (winner != null) {
+                f = evaluator.accept(winner);
+                applied.add(winner);
+                note += winner.f2 == winner.best ? ",t2" : "";
+            }
+        } else {
+            final TrialEvaluator.Trial single = positive.get(0);
+            final List<TrialEvaluator.Trial> batch = settings.batch ? nonConflicting(positive) : null;
+            if (batch == null || batch.size() == 1) {
+                f = evaluator.accept(single);
+                applied.add(single);
+            } else {
+                final TreeStateSnapshot before = snapshot();
+                f = evaluator.acceptBatch(batch, base);
+                if (!Double.isNaN(f)) {
+                    f = refit(roundMaximizer, evaluator.getT2Budget(), "t2_batch", round, f);
+                }
+                if (Double.isNaN(f) || f < single.best - settings.batchTolerance) {
+                    before.restore();
+                    f = evaluator.accept(single);
+                    applied.add(single);
+                    note += ",batch " + batch.size() + " fell back";
+                } else {
+                    applied.addAll(batch);
+                    note += ",batch " + batch.size();
+                }
+            }
+        }
+
+        if (applied.isEmpty()) {
+            lastApplied = null;
+        } else {
+            List<Integer> touched = new ArrayList<Integer>();
+            for (TrialEvaluator.Trial trial : applied) {
+                for (int node : trial.move.touchedNodes()) {
+                    touched.add(node);
+                }
+            }
+            lastApplied = new int[touched.size()];
+            for (int k = 0; k < lastApplied.length; ++k) {
+                lastApplied[k] = touched.get(k);
+            }
+        }
+
+        final int nT1 = (int) (evaluator.getT1Count() - t1Before);
+        final int nT2 = (int) (evaluator.getT2Count() - t2Before);
+        trialSeconds += (System.nanoTime() - started) / 1E9;
+        final TrialEvaluator.Trial first = applied.isEmpty() ? null : applied.get(0);
+        log.row(round, "nni", nT0, nT1, nT2, applied.size(), fInc, f, Math.max(fBest, f), describe(applied),
+                first != null ? first.f0 - fInc : Double.NaN,
+                first != null ? first.f1 - fInc : Double.NaN,
+                first != null ? first.f2 - fInc : Double.NaN,
+                startTree, seconds(), evaluations(), note, guardReverts);
+        say("round " + round + " NNI: F = " + format(f) + " (" + format(f - fInc) + ") " +
+                (applied.isEmpty() ? "no move gains" : applied.size() + " move(s): " + describe(applied)) + ", " +
+                nT0 + " moves (" + note + "), " + nT1 + " T1, " + nT2 + " T2, " + String.format("%.1fs", seconds()));
+        return applied.size();
+    }
+
+    private List<TrialEvaluator.Trial> scan(List<? extends TimeTreeMove> moves, double fInc) {
         List<TrialEvaluator.Trial> trials = new ArrayList<TrialEvaluator.Trial>();
-        for (RootedNniMove move : moves) {
+        for (TimeTreeMove move : moves) {
             if (checkBudgets() != null) {
                 break;
             }
             trials.add(evaluator.trial(move, fInc - settings.deltaT1, false));
         }
-        TrialEvaluator.Trial winner = null;
+        return trials;
+    }
+
+    // the trials that gain more than moveEpsilon, best first (ties keep the enumeration order)
+    private List<TrialEvaluator.Trial> gaining(List<TrialEvaluator.Trial> trials, double fInc) {
+        List<TrialEvaluator.Trial> positive = new ArrayList<TrialEvaluator.Trial>();
         for (TrialEvaluator.Trial trial : trials) {
-            if (trial.best > fInc + settings.moveEpsilon && (winner == null || trial.best > winner.best)) {
-                winner = trial;
+            if (trial.best > fInc + settings.moveEpsilon) {
+                positive.add(trial);
             }
         }
+        sortByValue(positive);
+        return positive;
+    }
 
-        if (winner == null && checkBudgets() == null) {
-            // a second look at the closest candidates with all heights and rates re-fitted (T2)
-            List<TrialEvaluator.Trial> close = new ArrayList<TrialEvaluator.Trial>();
-            for (TrialEvaluator.Trial trial : trials) {
-                if (trial.best > fInc - settings.deltaKeep) {
-                    close.add(trial);
-                }
+    private static void sortByValue(List<TrialEvaluator.Trial> trials) {
+        Collections.sort(trials, new Comparator<TrialEvaluator.Trial>() {
+            public int compare(TrialEvaluator.Trial x, TrialEvaluator.Trial y) {
+                return Double.compare(y.best, x.best);
             }
-            Collections.sort(close, new Comparator<TrialEvaluator.Trial>() {
-                public int compare(TrialEvaluator.Trial x, TrialEvaluator.Trial y) {
-                    return Double.compare(y.best, x.best); // stable: ties keep the enumeration order
+        });
+    }
+
+    /**
+     * A greedy batch, best first: a move joins when no node of its quartet is within one edge of a quartet already in
+     * the batch. Their local blocks are then disjoint, so their changes can be applied together.
+     */
+    private List<TrialEvaluator.Trial> nonConflicting(List<TrialEvaluator.Trial> positive) {
+        List<TrialEvaluator.Trial> batch = new ArrayList<TrialEvaluator.Trial>();
+        BitSet taken = new BitSet(tree.getNodeCount());
+        for (TrialEvaluator.Trial trial : positive) {
+            final int[] quartet = ((RootedNniMove) trial.move).quartet(tree);
+            boolean conflict = false;
+            for (int node : quartet) {
+                conflict |= taken.get(node);
+            }
+            if (!conflict) {
+                batch.add(trial);
+                taken.or(NniNeighbourhood.within(tree, quartet, 1));
+            }
+        }
+        return batch;
+    }
+
+    /**
+     * The T2 rescue when no move gains: the closest toplistSize candidates within deltaKeep are kept, the best
+     * t2Candidates of them re-scored with all heights and rates re-fitted, and those that end within
+     * secondChanceWindow below the incumbent re-scored again with a longer T2.
+     *
+     * @return the best candidate that gains, or null
+     */
+    private TrialEvaluator.Trial rescue(List<TrialEvaluator.Trial> trials, double fInc) {
+        List<TrialEvaluator.Trial> toplist = new ArrayList<TrialEvaluator.Trial>();
+        for (TrialEvaluator.Trial trial : trials) {
+            if (trial.best > fInc - settings.deltaKeep) {
+                toplist.add(trial);
+            }
+        }
+        sortByValue(toplist);
+        if (toplist.size() > settings.toplistSize) {
+            toplist = new ArrayList<TrialEvaluator.Trial>(toplist.subList(0, settings.toplistSize));
+        }
+
+        TrialEvaluator.Trial winner = null;
+        List<TrialEvaluator.Trial> nearTies = new ArrayList<TrialEvaluator.Trial>();
+        for (int k = 0; k < Math.min(settings.t2Candidates, toplist.size()) && checkBudgets() == null; ++k) {
+            TrialEvaluator.Trial trial = evaluator.trial(toplist.get(k).move, Double.NEGATIVE_INFINITY, true);
+            if (trial.best > fInc + settings.moveEpsilon) {
+                if (winner == null || trial.best > winner.best) {
+                    winner = trial;
                 }
-            });
-            for (int k = 0; k < Math.min(settings.t2Candidates, close.size()); ++k) {
-                TrialEvaluator.Trial trial = evaluator.trial(close.get(k).move, Double.NEGATIVE_INFINITY, true);
+            } else if (trial.best > fInc - settings.secondChanceWindow) {
+                nearTies.add(trial);
+            }
+        }
+        if (winner == null && settings.secondChanceIterations > 0) {
+            final MaximizerWrtParameter.Budget longer =
+                    new MaximizerWrtParameter.Budget(settings.secondChanceIterations).setQuiet(true);
+            for (TrialEvaluator.Trial nearTie : nearTies) {
+                if (checkBudgets() != null) {
+                    break;
+                }
+                secondChances++;
+                TrialEvaluator.Trial trial = evaluator.trial(nearTie.move, Double.NEGATIVE_INFINITY, longer);
                 if (trial.best > fInc + settings.moveEpsilon && (winner == null || trial.best > winner.best)) {
                     winner = trial;
                 }
             }
         }
+        return winner;
+    }
 
-        final int nT0 = trials.size();
-        final int nT1 = (int) (evaluator.getT1Count() - t1Before);
-        final int nT2 = (int) (evaluator.getT2Count() - t2Before);
+    /**
+     * The root scan of §5.2, after a new best: every root position one or two edges away (root-child NNIs, alone and
+     * chained), each with T0 and T1 on its block, and T2 on the best of them if none gains yet.
+     *
+     * @return whether the root moved
+     */
+    private boolean rootScan(int round) {
+        final long started = System.nanoTime();
+        final double fInc = evaluator.evaluate();
+        final long t1Before = evaluator.getT1Count();
+        final long t2Before = evaluator.getT2Count();
+        final List<TrialEvaluator.Trial> trials = scan(NniNeighbourhood.rootMoves(tree, constraints), fInc);
+        rootScans++;
+
+        TrialEvaluator.Trial winner = null;
+        for (TrialEvaluator.Trial trial : trials) {
+            if (winner == null || trial.best > winner.best) {
+                winner = trial;
+            }
+        }
+        if (winner != null && !(winner.best > fInc + settings.moveEpsilon) && checkBudgets() == null) {
+            winner = evaluator.trial(winner.move, Double.NEGATIVE_INFINITY, true);
+        }
+        if (winner != null && !(winner.best > fInc + settings.moveEpsilon)) {
+            winner = null;
+        }
         double f = fInc;
         if (winner != null) {
             f = evaluator.accept(winner);
+            lastApplied = winner.move.touchedNodes();
+            rootMoves++;
         }
         trialSeconds += (System.nanoTime() - started) / 1E9;
-        log.row(round, "nni", nT0, nT1, nT2, winner != null ? 1 : 0, fInc, f, Math.max(fBest, f),
+        log.row(round, "root", trials.size(), (int) (evaluator.getT1Count() - t1Before),
+                (int) (evaluator.getT2Count() - t2Before), winner != null ? 1 : 0, fInc, f, Math.max(fBest, f),
                 winner != null ? winner.move.describe() : null,
                 winner != null ? winner.f0 - fInc : Double.NaN,
                 winner != null ? winner.f1 - fInc : Double.NaN,
                 winner != null ? winner.f2 - fInc : Double.NaN,
                 startTree, seconds(), evaluations(), "", guardReverts);
-        say("round " + round + " NNI: F = " + format(f) + " (" + format(f - fInc) + ") " +
-                (winner != null ? winner.move.describe() : "no move gains") + ", " + nT0 + " moves, " + nT1 +
-                " T1, " + nT2 + " T2, " + String.format("%.1fs", seconds()));
+        say("round " + round + " root scan: F = " + format(f) + " (" + format(f - fInc) + ") " +
+                (winner != null ? winner.move.describe() : "the root stays") + ", " + trials.size() + " positions");
         return winner != null;
+    }
+
+    private static String describe(List<TrialEvaluator.Trial> applied) {
+        if (applied.isEmpty()) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (TrialEvaluator.Trial trial : applied) {
+            sb.append(sb.length() > 0 ? "; " : "").append(trial.move.describe());
+        }
+        return sb.toString();
     }
 
     // a maximizer call, reverted if it ends below where it started
@@ -330,9 +540,9 @@ public class TimeTreeSearch implements Reportable {
         final double elapsed = (System.nanoTime() - started) / 1E9;
         if (phase.startsWith("t3a")) {
             t3aSeconds += elapsed;
-        } else {
+        } else if (phase.startsWith("t3b")) {
             t3bSeconds += elapsed;
-        }
+        } // a batch's T2 is inside its round's trial time
         log.row(round, phase, 0, 0, 0, 0, before, f, Double.isNaN(fBest) ? f : Math.max(fBest, f), null, Double.NaN,
                 Double.NaN, Double.NaN, startTree, seconds(), evaluations(), String.valueOf(maximizer.getReason()), guardReverts);
         return f;
@@ -403,6 +613,18 @@ public class TimeTreeSearch implements Reportable {
         return accepted;
     }
 
+    public int getSecondChances() {
+        return secondChances;
+    }
+
+    public int getRootScans() {
+        return rootScans;
+    }
+
+    public int getRootMoves() {
+        return rootMoves;
+    }
+
     public int getGuardReverts() {
         return guardReverts;
     }
@@ -447,6 +669,8 @@ public class TimeTreeSearch implements Reportable {
         sb.append("AcceptedMoves: ").append(accepted).append("\n");
         sb.append("Trials: ").append(evaluator.getTrials()).append(" (T1 ").append(evaluator.getT1Count())
                 .append(", T2 ").append(evaluator.getT2Count()).append(")\n");
+        sb.append("SecondChances: ").append(secondChances).append("\n");
+        sb.append("RootScans: ").append(rootScans).append(" (root moved ").append(rootMoves).append(")\n");
         sb.append("GuardReverts: ").append(guardReverts).append("\n");
         if (evaluator.getUnderflowRecomputes() > 0) {
             sb.append("UnderflowRecomputes: ").append(evaluator.getUnderflowRecomputes())

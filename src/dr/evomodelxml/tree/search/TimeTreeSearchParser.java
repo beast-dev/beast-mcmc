@@ -86,6 +86,12 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
     private static final String T1_SWEEPS = "t1Sweeps";
     private static final String T2_CANDIDATES = "t2Candidates";
     private static final String T2_ITERATIONS = "t2Iterations";
+    private static final String SPEED_NNI = "speedNNI";
+    private static final String BATCH = "batch";
+    private static final String TOPLIST_SIZE = "toplistSize";
+    private static final String SECOND_CHANCE_WINDOW = "secondChanceWindow";
+    private static final String SECOND_CHANCE_ITERATIONS = "secondChanceIterations";
+    private static final String ROOT_SCAN = "rootScan";
     private static final String MAX_ROUNDS = "maxRounds";
     private static final String MAX_RUN_TIME = "maxRunTime";
     private static final String MAX_EVALUATIONS = "maxEvaluations";
@@ -184,6 +190,12 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         settings.t1Sweeps = xo.getAttribute(T1_SWEEPS, settings.t1Sweeps);
         settings.t2Candidates = xo.getAttribute(T2_CANDIDATES, settings.t2Candidates);
         settings.t2Iterations = xo.getAttribute(T2_ITERATIONS, settings.t2Iterations);
+        settings.speedNni = xo.getAttribute(SPEED_NNI, settings.speedNni);
+        settings.batch = xo.getAttribute(BATCH, settings.batch);
+        settings.toplistSize = xo.getAttribute(TOPLIST_SIZE, settings.toplistSize);
+        settings.secondChanceWindow = xo.getAttribute(SECOND_CHANCE_WINDOW, settings.secondChanceWindow);
+        settings.secondChanceIterations = xo.getAttribute(SECOND_CHANCE_ITERATIONS, settings.secondChanceIterations);
+        settings.rootScan = xo.getAttribute(ROOT_SCAN, settings.rootScan);
         settings.maxRounds = xo.getAttribute(MAX_ROUNDS, 0);
         settings.maxRunTime = xo.hasAttribute(MAX_RUN_TIME) ?
                 MaximizeWrtParameterParser.parseRunTime(xo.getStringAttribute(MAX_RUN_TIME)) : 0.0;
@@ -205,7 +217,8 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         }
         if (settings.epsilon < 0 || settings.moveEpsilon < 0 || settings.deltaT1 < 0 || settings.deltaKeep < 0 ||
                 settings.t1Sweeps < 0 || settings.t2Candidates < 0 || settings.t2Iterations < 0 ||
-                settings.maxRounds < 0 || settings.maxEvaluations < 0 || settings.verifyEvery < 0) {
+                settings.maxRounds < 0 || settings.maxEvaluations < 0 || settings.verifyEvery < 0 ||
+                settings.toplistSize < 0 || settings.secondChanceWindow < 0 || settings.secondChanceIterations < 0) {
             throw new XMLParseException("The search's thresholds, counts and budgets must not be negative");
         }
 
@@ -310,6 +323,12 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(T1_SWEEPS, true, "sweeps of the local optimization (default 2; 0: off)"),
             AttributeRule.newIntegerRule(T2_CANDIDATES, true, "moves re-fitted when none gains (default 3)"),
             AttributeRule.newIntegerRule(T2_ITERATIONS, true, "iterations of a T2 re-fit (default 20)"),
+            AttributeRule.newBooleanRule(SPEED_NNI, true, "after a change, score the NNIs near it first (default true)"),
+            AttributeRule.newBooleanRule(BATCH, true, "apply all non-conflicting gaining NNIs at once (default true)"),
+            AttributeRule.newIntegerRule(TOPLIST_SIZE, true, "the closest moves kept for the re-fit when none gains (default 20)"),
+            AttributeRule.newDoubleRule(SECOND_CHANCE_WINDOW, true, "a re-fitted move this close below the incumbent gets a longer re-fit (default 2)"),
+            AttributeRule.newIntegerRule(SECOND_CHANCE_ITERATIONS, true, "iterations of that longer re-fit (default 80; 0: off)"),
+            AttributeRule.newBooleanRule(ROOT_SCAN, true, "after a new best, try the root positions one and two edges away (default true)"),
             AttributeRule.newIntegerRule(MAX_ROUNDS, true, "at most this many rounds (default: the number of internal nodes)"),
             new StringAttributeRule(MAX_RUN_TIME, "stop after this much wall-clock time, e.g. 30min (default: no limit)", true),
             AttributeRule.newLongIntegerRule(MAX_EVALUATIONS, true, "stop after this many objective evaluations (default: no limit)"),

@@ -88,7 +88,7 @@ public final class TrialEvaluator {
     }
 
     // the values the trials change: internal heights by node number, and the round parameters' values
-    static final class Theta {
+    public static final class Theta {
         final double[] heights;
         final double[][] values;
 
@@ -170,6 +170,17 @@ public final class TrialEvaluator {
         return seen.keySet();
     }
 
+    // back to the stored state. If BEAGLE rescaled inside the window it overwrote stored partials (and, the first
+    // time, left no stored scale factors), so everything is recomputed now, before the next window stores this state
+    private void restore(long underflowsBefore) {
+        model.restoreModelState();
+        if (underflows() != underflowsBefore) {
+            ++rescues;
+            objective.makeDirty();
+            evaluate();
+        }
+    }
+
     private long underflows() {
         long count = 0;
         for (BeagleDataLikelihoodDelegate beagle : beagles) {
@@ -202,6 +213,13 @@ public final class TrialEvaluator {
      * tree and every parameter are back as they were afterwards.
      */
     public Trial trial(TimeTreeMove move, double t1Threshold, boolean t2) {
+        return trial(move, t1Threshold, t2 ? t2Budget : null);
+    }
+
+    /**
+     * Scores a move as above, with T2 for the given budget (null: no T2).
+     */
+    public Trial trial(TimeTreeMove move, double t1Threshold, MaximizerWrtParameter.Budget t2Budget) {
         final double before = evaluate(); // TreeDataLikelihood.storeState needs a computed likelihood
         final long underflows = underflows();
         model.storeModelState();
@@ -222,7 +240,7 @@ public final class TrialEvaluator {
                     trial.theta = capture();
                 }
             }
-            if (t2 && roundMaximizer != null) {
+            if (t2Budget != null && roundMaximizer != null) {
                 ++t2Count;
                 // from the T1 point as it is in the tree, with a cold L-BFGS memory
                 roundMaximizer.maximize(t2Budget);
@@ -233,14 +251,7 @@ public final class TrialEvaluator {
                 }
             }
         } finally {
-            model.restoreModelState();
-            if (underflows() != underflows) {
-                // BEAGLE rescaled inside the window, overwriting stored partials (and, the first time, leaving no
-                // stored scale factors): recompute everything now, before the next window stores this state
-                ++rescues;
-                objective.makeDirty();
-                evaluate();
-            }
+            restore(underflows);
         }
         ++trials;
         if (verifyEvery > 0 && trials % verifyEvery == 0) {
@@ -258,6 +269,7 @@ public final class TrialEvaluator {
      */
     public double accept(Trial trial) {
         evaluate();
+        final long underflows = underflows();
         model.storeModelState();
         tree.beginTreeEdit();
         trial.move.applyTopology(tree);
@@ -266,12 +278,75 @@ public final class TrialEvaluator {
         setValues(trial.theta.values);
         final double f = evaluate();
         if (!(Math.abs(f - trial.best) <= REPLAY_TOLERANCE * Math.max(1.0, Math.abs(trial.best)))) {
-            model.restoreModelState();
+            restore(underflows);
             throw new IllegalStateException("Replaying " + trial.move.describe() + " gives F = " + f +
                     ", not the trial's " + trial.best);
         }
         model.acceptModelState();
         return f;
+    }
+
+    /**
+     * Accepts several scored moves at once (plan 7 §7.3 batch). The moves must not touch each other's quartets: each
+     * one changed only its own local heights and rates from the base state, so their changes, applied together on
+     * the base state, do not overlap.
+     *
+     * @param base the state every trial started from
+     * @return F after the batch, or NaN (with the state as it was) when the merged heights are not a valid time tree
+     */
+    public double acceptBatch(List<Trial> batch, Theta base) {
+        final double[] heights = base.heights.clone();
+        final double[][] values = new double[base.values.length][];
+        for (int p = 0; p < values.length; ++p) {
+            values[p] = base.values[p].clone();
+        }
+        for (Trial trial : batch) {
+            for (int i = 0; i < heights.length; ++i) {
+                if (!Double.isNaN(heights[i]) && trial.theta.heights[i] != base.heights[i]) {
+                    heights[i] = trial.theta.heights[i];
+                }
+            }
+            for (int p = 0; p < values.length; ++p) {
+                for (int i = 0; i < values[p].length; ++i) {
+                    if (trial.theta.values[p][i] != base.values[p][i]) {
+                        values[p][i] = trial.theta.values[p][i];
+                    }
+                }
+            }
+        }
+
+        evaluate();
+        final long underflows = underflows();
+        model.storeModelState();
+        tree.beginTreeEdit();
+        for (Trial trial : batch) {
+            if (!trial.move.isValid(tree)) {
+                tree.endTreeEdit();
+                restore(underflows);
+                throw new IllegalStateException("The batch's moves overlap at " + trial.move.describe());
+            }
+            trial.move.applyTopology(tree);
+        }
+        setHeights(heights);
+        tree.endTreeEdit();
+        setValues(values);
+        final double f = isTimeTree() ? evaluate() : Double.NaN;
+        if (Double.isNaN(f) || Double.isInfinite(f)) {
+            restore(underflows);
+            return Double.NaN;
+        }
+        model.acceptModelState();
+        return f;
+    }
+
+    private boolean isTimeTree() {
+        for (int i = 0; i < tree.getNodeCount(); ++i) {
+            final NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node) && !(tree.getNodeHeight(node) < tree.getNodeHeight(tree.getParent(node)))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -287,7 +362,10 @@ public final class TrialEvaluator {
         }
     }
 
-    Theta capture() {
+    /**
+     * @return the current heights and round-parameter values
+     */
+    public Theta capture() {
         final double[] heights = new double[tree.getNodeCount()];
         for (int i = 0; i < heights.length; ++i) {
             final NodeRef node = tree.getNode(i);
@@ -319,6 +397,10 @@ public final class TrialEvaluator {
                 }
             }
         }
+    }
+
+    public MaximizerWrtParameter.Budget getT2Budget() {
+        return t2Budget;
     }
 
     public long getEvaluations() {

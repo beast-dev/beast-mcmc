@@ -154,6 +154,13 @@ public final class TopologyConstraints {
     }
 
     /**
+     * @return whether the node's clade is a constraint (a move that removes it breaks the constraint)
+     */
+    public boolean isConstrained(Tree tree, int node) {
+        return !tips.isEmpty() && tips.contains(clade(tree, tree.getNode(node)));
+    }
+
+    /**
      * @return whether every constraint is a clade of the tree
      */
     public boolean areSatisfied(Tree tree) {

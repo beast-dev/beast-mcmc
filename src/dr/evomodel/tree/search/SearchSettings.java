@@ -58,6 +58,16 @@ public final class SearchSettings {
     public double t3bBestRelTol = 1E-7;
     public double modelEpsilon = 0.1; // a new best by more than this re-fits everything (T3b)
 
+    // the NNI tier set (§7.3, M1b)
+    public boolean speedNni = true; // after a change, score only the NNIs near it; a full scan before stopping
+    public int speedNniRadius = 2; // in edges from the nodes of the moves just applied
+    public boolean batch = true; // apply every non-conflicting gaining NNI at once
+    public double batchTolerance = 1E-3; // fall back to the best single move if the batch ends lower by this
+    public int toplistSize = 20; // the closest candidates of a round, kept for the T2 rescue
+    public double secondChanceWindow = 2.0; // a T2 candidate this close below the incumbent gets a longer T2
+    public int secondChanceIterations = 80;
+    public boolean rootScan = true; // after a new best, the root positions one and two edges away
+
     // budgets (§6.4); 0: no limit
     public int maxRounds = 0; // 0: the number of internal nodes
     public double maxRunTime = 0.0; // seconds
@@ -76,6 +86,8 @@ public final class SearchSettings {
     public String describe() {
         return "epsilon = " + epsilon + ", moveEpsilon = " + moveEpsilon + ", deltaT1 = " + deltaT1 +
                 ", deltaKeep = " + deltaKeep + ", t2Candidates = " + t2Candidates + ", t1Sweeps = " + t1Sweeps +
+                ", speedNni = " + speedNni + ", batch = " + batch + ", toplistSize = " + toplistSize +
+                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan +
                 ", rateWarmStart = " + rateWarmStart.getName() + ", maxRounds = " +
                 (maxRounds > 0 ? maxRounds : "n - 1") + ", maxRunTime = " + (maxRunTime > 0 ? maxRunTime + "s" : "none") +
                 ", maxEvaluations = " + (maxEvaluations > 0 ? maxEvaluations : "none") +

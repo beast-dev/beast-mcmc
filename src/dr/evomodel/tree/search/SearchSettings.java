@@ -75,6 +75,10 @@ public final class SearchSettings {
     public double subtreeCutoff = 1.0; // the scan's cutoff is this times the mean drop of the round before
     public int sprFastToplistSize = 60; // the fast rounds' toplist (thorough rounds use toplistSize)
 
+    // subtree swaps (BEAST's wide exchange), after SPR
+    public boolean swap = false;
+    public int swapMaxDistance = 4; // the farthest apart the two parents may be, in nodes (GibbsSubtreeSwap's 4)
+
     // budgets (§6.4); 0: no limit
     public int maxRounds = 0; // 0: the number of internal nodes
     public double maxRunTime = 0.0; // seconds
@@ -94,7 +98,7 @@ public final class SearchSettings {
         return "epsilon = " + epsilon + ", moveEpsilon = " + moveEpsilon + ", deltaT1 = " + deltaT1 +
                 ", deltaKeep = " + deltaKeep + ", t2Candidates = " + t2Candidates + ", t1Sweeps = " + t1Sweeps +
                 ", speedNni = " + speedNni + ", batch = " + batch + ", toplistSize = " + toplistSize +
-                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan + ", moves = " + (spr ? "nni,spr" : "nni") +
+                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan + ", moves = nni" + (spr ? ",spr" : "") + (swap ? ",swap" : "") +
                 (spr ? ", sprMaxRadius = " + sprMaxRadius + ", sprRadius = " + (sprRadius > 0 ? sprRadius : "auto") +
                         ", subtreeCutoff = " + subtreeCutoff : "") +
                 ", rateWarmStart = " + rateWarmStart.getName() + ", maxRounds = " +

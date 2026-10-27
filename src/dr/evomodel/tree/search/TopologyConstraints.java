@@ -211,6 +211,52 @@ public final class TopologyConstraints {
     }
 
     /**
+     * The swap rule: with L the lowest common ancestor of iP and jP, the clades on the path from iP up to L lose
+     * subtree(i) and gain subtree(j), those from jP up to L the reverse (L excluded), and no other clade changes. The
+     * swap breaks a constraint iff it is one of these clades before and none of them after.
+     */
+    public boolean violates(Tree tree, SubtreeSwapMove move, BitSet[] clades) {
+        if (tips.isEmpty()) {
+            return false;
+        }
+        final NodeRef iP = tree.getNode(move.getIP());
+        final NodeRef jP = tree.getNode(move.getJP());
+        final BitSet subtreeI = clades[move.getI()];
+        final BitSet subtreeJ = clades[move.getJ()];
+        final BitSet aboveI = new BitSet(tree.getNodeCount());
+        for (NodeRef x = iP; x != null; x = tree.getParent(x)) {
+            aboveI.set(x.getNumber());
+        }
+        NodeRef lca = jP;
+        while (!aboveI.get(lca.getNumber())) {
+            lca = tree.getParent(lca);
+        }
+        final List<BitSet> before = new ArrayList<BitSet>();
+        final List<BitSet> after = new ArrayList<BitSet>();
+        for (NodeRef x = iP; x != lca; x = tree.getParent(x)) {
+            before.add(clades[x.getNumber()]);
+            after.add(swapped(clades[x.getNumber()], subtreeI, subtreeJ));
+        }
+        for (NodeRef x = jP; x != lca; x = tree.getParent(x)) {
+            before.add(clades[x.getNumber()]);
+            after.add(swapped(clades[x.getNumber()], subtreeJ, subtreeI));
+        }
+        for (BitSet clade : before) {
+            if (tips.contains(clade) && !after.contains(clade)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static BitSet swapped(BitSet clade, BitSet out, BitSet in) {
+        BitSet result = (BitSet) clade.clone();
+        result.andNot(out);
+        result.or(in);
+        return result;
+    }
+
+    /**
      * @return the tip numbers below every node, by node number
      */
     public static BitSet[] clades(Tree tree) {

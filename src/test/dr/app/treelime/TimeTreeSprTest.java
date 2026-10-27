@@ -261,6 +261,114 @@ public class TimeTreeSprTest extends TestCase {
         assertEquals(trees.get(0), trees.get(1));
     }
 
+    // subtree swaps (wide exchanges): the window holds exactly the non-nested pairs with different parents, each
+    // younger than the other's parent, whose parents are 2 to 4 nodes apart; every swap keeps all heights and gives a
+    // valid time tree; and the clade rule agrees with the monophyly statistic (V8 for swaps)
+    public void testSwaps() throws Exception {
+        for (int[] clade : new int[][]{null, {1, 2, 3}, {0, 1, 2, 3, 4, 5, 6, 7}}) {
+            Setup setup = new Setup();
+            if (clade != null) {
+                setup.clade(clade);
+            }
+            Map<String, XMLObject> objects = parse(setup.xml());
+            if (objects == null) {
+                return;
+            }
+            TreeModel tree = tree(objects);
+            Likelihood joint = joint(objects);
+            Model model = joint.getModel();
+            TopologyConstraints constraints = new TopologyConstraints(tree, joint, null);
+            BitSet[] clades = TopologyConstraints.clades(tree);
+            List<dr.evomodel.tree.search.SubtreeSwapMove> all =
+                    dr.evomodel.tree.search.SubtreeSwapMove.enumerate(tree, 2, 4, null);
+            List<dr.evomodel.tree.search.SubtreeSwapMove> allowed =
+                    dr.evomodel.tree.search.SubtreeSwapMove.enumerate(tree, 2, 4, constraints);
+
+            // the window by brute force: pairs with parents 2 to 4 branches apart (path length through the LCA)
+            int expected = 0;
+            for (int a = 0; a < tree.getNodeCount(); ++a) {
+                for (int b = a + 1; b < tree.getNodeCount(); ++b) {
+                    NodeRef na = tree.getNode(a), nb = tree.getNode(b);
+                    if (tree.isRoot(na) || tree.isRoot(nb)) {
+                        continue;
+                    }
+                    NodeRef pa = tree.getParent(na), pb = tree.getParent(nb);
+                    boolean nested = clades[a].intersects(clades[b]);
+                    if (pa == pb || nested || pa == nb || pb == na
+                            || !(tree.getNodeHeight(nb) < tree.getNodeHeight(pa))
+                            || !(tree.getNodeHeight(na) < tree.getNodeHeight(pb))) {
+                        continue;
+                    }
+                    int d = path(tree, pa, pb);
+                    expected += d >= 2 && d <= 4 ? 1 : 0;
+                }
+            }
+            assertEquals(expected, all.size());
+
+            double[] heights = new double[tree.getNodeCount()];
+            for (int n = 0; n < heights.length; ++n) {
+                heights[n] = tree.getNodeHeight(tree.getNode(n));
+            }
+            int refused = 0;
+            for (dr.evomodel.tree.search.SubtreeSwapMove move : all) {
+                boolean violates = constraints.violates(tree, move, clades);
+                joint.getLogLikelihood();
+                model.storeModelState();
+                move.apply(tree, null);
+                for (int n = 0; n < heights.length; ++n) {
+                    assertEquals(heights[n], tree.getNodeHeight(tree.getNode(n)), 0.0);
+                    NodeRef node = tree.getNode(n);
+                    if (!tree.isRoot(node)) {
+                        assertTrue(tree.getNodeHeight(node) < tree.getNodeHeight(tree.getParent(node)));
+                    }
+                }
+                assertEquals(move.describe(), violates, joint.getLogLikelihood() == Double.NEGATIVE_INFINITY);
+                model.restoreModelState();
+                assertEquals(!violates, allowed.contains(move));
+                refused += violates ? 1 : 0;
+            }
+            assertEquals(clade != null, refused > 0);
+        }
+    }
+
+    // a search with subtree swaps under the HMC clock (a swap next to the root has no rate for the root's branch):
+    // F never decreases, swap rounds run, and it ends converged
+    public void testSwapSearch() throws Exception {
+        Map<String, XMLObject> objects = parse(new Setup().relaxed(true).search("moves=\"nni,swap\"").xml());
+        if (objects == null) {
+            return;
+        }
+        TimeTreeSearchTest.perturb(tree(objects), 4);
+        dr.evomodel.tree.search.TimeTreeSearch search = TimeTreeSearchTest.search(objects);
+        search.run();
+        double previous = Double.NEGATIVE_INFINITY;
+        for (String row : search.getLog().getRows()) {
+            String[] fields = row.split("\t", -1);
+            double after = Double.parseDouble(fields[8]);
+            assertTrue(row, after >= Double.parseDouble(fields[7]) - 1E-6 * Math.abs(after));
+            assertTrue(row, after >= previous - 1E-6 * Math.abs(after));
+            previous = after;
+        }
+        assertTrue(search.getSwapRounds() > 0);
+        assertTrue(search.getReport().contains("SwapRounds: "));
+        assertEquals(dr.evomodel.tree.search.TimeTreeSearch.StopReason.CONVERGED, search.getStopReason());
+    }
+
+    // branches on the path between two nodes, by their ancestors
+    private static int path(TreeModel tree, NodeRef a, NodeRef b) {
+        List<NodeRef> up = new ArrayList<NodeRef>();
+        for (NodeRef x = a; x != null; x = tree.getParent(x)) {
+            up.add(x);
+        }
+        int steps = 0;
+        NodeRef y = b;
+        while (!up.contains(y)) {
+            y = tree.getParent(y);
+            steps++;
+        }
+        return steps + up.indexOf(y);
+    }
+
     private static int indexOf(BitSet[] clades, BitSet bits) {
         for (int n = 0; n < clades.length; ++n) {
             if (clades[n] == bits) {

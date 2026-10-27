@@ -113,6 +113,8 @@ public class TimeTreeSearch implements Reportable {
     private int rootMoves = 0;
     private int[] lastApplied = null; // the nodes of the last round's moves, for speedNNI
     private int sprRounds = 0;
+    private int swapRounds = 0;
+    private int swapAccepted = 0;
     private int sprAccepted = 0;
     private double sprCutoff = -1.0; // the SPR scan's cutoff below the incumbent; < 0 before the first round
     private long maximizerEvaluations = 0;
@@ -165,7 +167,7 @@ public class TimeTreeSearch implements Reportable {
         rounds = 0;
         accepted = 0;
         guardReverts = 0;
-        secondChances = rootScans = rootMoves = sprRounds = sprAccepted = 0;
+        secondChances = rootScans = rootMoves = sprRounds = sprAccepted = swapRounds = swapAccepted = 0;
         sprCutoff = -1.0;
         maximizerEvaluations = 0;
         trialSeconds = t3aSeconds = t3bSeconds = 0.0;
@@ -192,7 +194,7 @@ public class TimeTreeSearch implements Reportable {
             final int maxRounds = settings.maxRounds > 0 ? settings.maxRounds : tree.getInternalNodeCount();
             stopReason = StopReason.MAX_ROUNDS;
             lastApplied = null;
-            boolean sprNext = false; // the NNI rounds have converged: SPR next
+            boolean beyondNniNext = false; // the NNI rounds have converged: SPR and swaps next
             for (int round = 1; round <= maxRounds; ++round) {
                 StopReason budget = checkBudgets();
                 if (budget != null) {
@@ -201,15 +203,20 @@ public class TimeTreeSearch implements Reportable {
                 }
                 rounds = round;
                 final double before = f;
-                // NNIs until they stop gaining, then SPR, then NNIs again from the full tree
-                boolean viaSpr = sprNext;
-                int applied = sprNext ? 0 : nniRound(round);
+                // NNIs until they stop gaining, then SPR, then subtree swaps, then NNIs again from the full tree
+                boolean beyondNni = beyondNniNext;
+                int applied = beyondNniNext ? 0 : nniRound(round);
                 if (applied == 0 && settings.spr && checkBudgets() == null) {
                     applied = sprPhase(round);
                     lastApplied = null;
-                    viaSpr = true;
+                    beyondNni = true;
                 }
-                sprNext = false;
+                if (applied == 0 && settings.swap && checkBudgets() == null) {
+                    applied = swapRound(round);
+                    lastApplied = null;
+                    beyondNni = true;
+                }
+                beyondNniNext = false;
                 if (applied == 0) {
                     stopReason = checkBudgets() != null ? checkBudgets() : StopReason.CONVERGED;
                     break;
@@ -234,8 +241,8 @@ public class TimeTreeSearch implements Reportable {
                     best = snapshot();
                 }
                 if (f - before < settings.epsilon) {
-                    if (settings.spr && !viaSpr && checkBudgets() == null) {
-                        sprNext = true; // the NNIs gain too little to go on: SPR before stopping
+                    if ((settings.spr || settings.swap) && !beyondNni && checkBudgets() == null) {
+                        beyondNniNext = true; // the NNIs gain too little to go on: the wider moves before stopping
                         continue;
                     }
                     stopReason = StopReason.CONVERGED;
@@ -682,6 +689,55 @@ public class TimeTreeSearch implements Reportable {
         return f - fStart;
     }
 
+    /**
+     * One round of subtree swaps (BEAST's wide exchange) whose parents are 2 to swapMaxDistance nodes apart: T0 and T1
+     * on every one, the best accepted if it gains, else T2 on the closest t2Candidates within deltaKeep.
+     *
+     * @return the number of moves applied (0 or 1)
+     */
+    private int swapRound(int round) {
+        final long started = System.nanoTime();
+        final double fInc = evaluator.evaluate();
+        final long t1Before = evaluator.getT1Count();
+        final long t2Before = evaluator.getT2Count();
+        final List<TrialEvaluator.Trial> trials = scan(SubtreeSwapMove.enumerate(tree, 2, settings.swapMaxDistance,
+                constraints), fInc);
+        swapRounds++;
+        final List<TrialEvaluator.Trial> positive = gaining(trials, fInc);
+        TrialEvaluator.Trial winner = positive.isEmpty() ? null : positive.get(0);
+        if (winner == null && checkBudgets() == null) {
+            List<TrialEvaluator.Trial> close = new ArrayList<TrialEvaluator.Trial>();
+            for (TrialEvaluator.Trial trial : trials) {
+                if (trial.best > fInc - settings.deltaKeep) {
+                    close.add(trial);
+                }
+            }
+            sortByValue(close);
+            for (int k = 0; k < Math.min(settings.t2Candidates, close.size()) && checkBudgets() == null; ++k) {
+                TrialEvaluator.Trial trial = evaluator.trial(close.get(k).move, Double.NEGATIVE_INFINITY, true);
+                if (trial.best > fInc + settings.moveEpsilon && (winner == null || trial.best > winner.best)) {
+                    winner = trial;
+                }
+            }
+        }
+        double f = fInc;
+        if (winner != null) {
+            f = evaluator.accept(winner);
+            swapAccepted++;
+        }
+        trialSeconds += (System.nanoTime() - started) / 1E9;
+        log.row(round, "swap", trials.size(), (int) (evaluator.getT1Count() - t1Before),
+                (int) (evaluator.getT2Count() - t2Before), winner != null ? 1 : 0, fInc, f, Math.max(fBest, f),
+                winner != null ? winner.move.describe() : null,
+                winner != null ? winner.f0 - fInc : Double.NaN,
+                winner != null ? winner.f1 - fInc : Double.NaN,
+                winner != null ? winner.f2 - fInc : Double.NaN,
+                startTree, seconds(), evaluations(), "d 2-" + settings.swapMaxDistance, guardReverts);
+        say("round " + round + " swaps: F = " + format(f) + " (" + format(f - fInc) + ") " +
+                (winner != null ? winner.move.describe() : "no swap gains") + ", " + trials.size() + " swaps");
+        return winner != null ? 1 : 0;
+    }
+
     private boolean violates(ClampedSprMove move) {
         return constraints.size() > 0 && constraints.violates(tree, move, TopologyConstraints.clades(tree));
     }
@@ -797,6 +853,14 @@ public class TimeTreeSearch implements Reportable {
         return sprRounds;
     }
 
+    public int getSwapRounds() {
+        return swapRounds;
+    }
+
+    public int getSwapAcceptedMoves() {
+        return swapAccepted;
+    }
+
     public int getSprAcceptedMoves() {
         return sprAccepted;
     }
@@ -843,8 +907,8 @@ public class TimeTreeSearch implements Reportable {
 
     @Override
     public String getReport() {
-        StringBuilder sb = new StringBuilder("Topology search (rooted NNI" + (settings.spr ? " and SPR" : "") +
-                " hill-climb)\n");
+        StringBuilder sb = new StringBuilder("Topology search (rooted NNI" + (settings.spr ? ", SPR" : "") +
+                (settings.swap ? ", subtree swap" : "") + " hill-climb)\n");
         if (!executed) {
             return sb.append("Not yet executed.\n").toString();
         }
@@ -855,6 +919,9 @@ public class TimeTreeSearch implements Reportable {
         sb.append("Trials: ").append(evaluator.getTrials()).append(" (T1 ").append(evaluator.getT1Count())
                 .append(", T2 ").append(evaluator.getT2Count()).append(")\n");
         sb.append("SecondChances: ").append(secondChances).append("\n");
+        if (settings.swap) {
+            sb.append("SwapRounds: ").append(swapRounds).append(" (moves accepted ").append(swapAccepted).append(")\n");
+        }
         if (settings.spr) {
             sb.append("SprRounds: ").append(sprRounds).append(" (moves accepted ").append(sprAccepted).append(")\n");
         }

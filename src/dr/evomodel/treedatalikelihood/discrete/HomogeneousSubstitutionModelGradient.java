@@ -399,16 +399,20 @@ public class HomogeneousSubstitutionModelGradient implements GradientWrtParamete
                     new Author("S", "Su"),
                     new Author("H", "Bao"),
                     new Author("W-M", "Deng"),
+                    new Author("F", "Monti"),
                     new Author("SL", "Hong"),
                     new Author("G", "Baele"),
                     new Author("P", "Lemey"),
                     new Author("MA", "Suchard"),
             },
             "Detecting evolutionary change-points with branch-specific substitution models and shrinkage priors",
-            2025,
-            "arXiv",
-            "2507.08386",
-            "10.48550/arXiv.2507.08386");
+            2026,
+            "Systematic Biology",
+            -1,
+            -1,
+            -1,
+            "10.48550/arXiv.2507.08386", // the preprint's until the journal's is assigned
+            Citation.Status.IN_PRESS);
 
     @Override
     public Citation.Category getCategory() {

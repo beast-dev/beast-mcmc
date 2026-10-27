@@ -34,8 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The Maximization tab's topology search (plan 7): off, or a hill-climb by rooted NNIs from the starting tree that
- * accepts a change of topology only when the objective rises. Its round re-fits move the node heights and the branch
+ * The Maximization tab's topology search (plan 7): off, or a hill-climb from the starting tree by rooted NNIs, or by
+ * NNIs and clamped-height SPRs, that accepts a change of topology only when the objective rises. Its round re-fits move the node heights and the branch
  * rates; everything else is re-fitted by the maximizer at the start, on a new best and at the end.
  *
  * @author Xiang Ji
@@ -47,7 +47,8 @@ public class TopologySearchOptions implements Serializable {
 
     public enum Mode {
         OFF("Off: keep the starting tree's topology"),
-        NNI("NNI hill-climb from the starting tree");
+        NNI("NNI hill-climb from the starting tree"),
+        NNI_SPR("NNI and SPR hill-climb from the starting tree");
 
         private final String label;
 

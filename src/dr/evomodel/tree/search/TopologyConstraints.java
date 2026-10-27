@@ -154,6 +154,85 @@ public final class TopologyConstraints {
     }
 
     /**
+     * The SPR rule (plan 7 §5.7, corrected): with L the lowest common ancestor of P and pj in the tree before the move,
+     * the clades on the path from Q up to L lose the subtree, those on the path from pj up to L gain it (L excluded on
+     * both), P's becomes the subtree plus j's clade after the move, and no other clade changes. The move breaks a
+     * constraint iff it is one of these clades before the move and none of them after: when j is Q, for instance, Q
+     * loses the subtree but P's new clade is Q's old one.
+     *
+     * @param clades the clades of the tree as it is, by node number (clades(tree))
+     */
+    public boolean violates(Tree tree, ClampedSprMove move, BitSet[] clades) {
+        if (tips.isEmpty()) {
+            return false;
+        }
+        final NodeRef p = tree.getNode(move.getP());
+        final NodeRef pj = tree.getNode(move.getPj());
+        final BitSet subtree = clades[move.getI()];
+        final BitSet aboveP = new BitSet(tree.getNodeCount());
+        for (NodeRef x = p; x != null; x = tree.getParent(x)) {
+            aboveP.set(x.getNumber());
+        }
+        NodeRef lca = pj;
+        while (!aboveP.get(lca.getNumber())) {
+            lca = tree.getParent(lca);
+        }
+
+        final List<BitSet> before = new ArrayList<BitSet>();
+        final List<BitSet> after = new ArrayList<BitSet>();
+        BitSet jAfter = clades[move.getJ()];
+        before.add(clades[p.getNumber()]);
+        // (L is P itself when j is below C: then no clade above P changes)
+        for (NodeRef x = tree.getParent(p); lca != p && x != lca; x = tree.getParent(x)) {
+            before.add(clades[x.getNumber()]);
+            BitSet lost = (BitSet) clades[x.getNumber()].clone();
+            lost.andNot(subtree);
+            after.add(lost);
+            if (x.getNumber() == move.getJ()) {
+                jAfter = lost;
+            }
+        }
+        for (NodeRef x = pj; x != lca; x = tree.getParent(x)) {
+            before.add(clades[x.getNumber()]);
+            BitSet gained = (BitSet) clades[x.getNumber()].clone();
+            gained.or(subtree);
+            after.add(gained);
+        }
+        BitSet pAfter = (BitSet) jAfter.clone();
+        pAfter.or(subtree);
+        after.add(pAfter);
+
+        for (BitSet clade : before) {
+            if (tips.contains(clade) && !after.contains(clade)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return the tip numbers below every node, by node number
+     */
+    public static BitSet[] clades(Tree tree) {
+        BitSet[] clades = new BitSet[tree.getNodeCount()];
+        fill(tree, tree.getRoot(), clades);
+        return clades;
+    }
+
+    private static BitSet fill(Tree tree, NodeRef node, BitSet[] clades) {
+        BitSet bits = new BitSet(tree.getExternalNodeCount());
+        if (tree.isExternal(node)) {
+            bits.set(node.getNumber());
+        } else {
+            for (int c = 0; c < tree.getChildCount(node); ++c) {
+                bits.or(fill(tree, tree.getChild(node, c), clades));
+            }
+        }
+        clades[node.getNumber()] = bits;
+        return bits;
+    }
+
+    /**
      * @return whether the node's clade is a constraint (a move that removes it breaks the constraint)
      */
     public boolean isConstrained(Tree tree, int node) {

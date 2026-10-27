@@ -157,6 +157,35 @@ public class WilsonBalding extends AbstractTreeOperator implements Constrainable
 
         tree.beginTreeEdit();
 
+        pruneAndRegraft(tree, i, j);
+
+        tree.setNodeHeight(iP, newAge);
+
+        tree.endTreeEdit();
+
+        // AR - I don't believe this check is needed and in tests it never fails...
+//        try {
+//            tree.checkTreeIsValid();
+//        } catch( MutableTree.InvalidTreeException ite ) {
+//            throw new RuntimeException(ite.toString());
+////            throw new OperatorFailedException(ite.toString());
+//        }
+
+
+        return Math.log(q);
+    }
+
+    /**
+     * Prunes the sub-tree below i, with its parent iP, and regrafts it on the branch above j (iP becomes j's parent),
+     * inside the caller's edit transaction; iP keeps its height, which the caller sets. Used by the operator and by the
+     * topology search's clamped-height SPR.
+     */
+    public static void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef j) {
+        final NodeRef iP = tree.getParent(i);
+        final NodeRef CiP = tree.getChild(iP, 0) == i ? tree.getChild(iP, 1) : tree.getChild(iP, 0);
+        final NodeRef PiP = tree.getParent(iP);
+        final NodeRef k = tree.getParent(j);
+
         if (j == tree.getRoot()) {
 
             // 1. remove edges <iP, CiP>
@@ -194,21 +223,6 @@ public class WilsonBalding extends AbstractTreeOperator implements Constrainable
             tree.addChild(k, iP);
             tree.addChild(PiP, CiP);
         }
-
-        tree.setNodeHeight(iP, newAge);
-
-        tree.endTreeEdit();
-
-        // AR - I don't believe this check is needed and in tests it never fails...
-//        try {
-//            tree.checkTreeIsValid();
-//        } catch( MutableTree.InvalidTreeException ite ) {
-//            throw new RuntimeException(ite.toString());
-////            throw new OperatorFailedException(ite.toString());
-//        }
-
-
-        return Math.log(q);
     }
 
     public double getMinimumAcceptanceLevel() {

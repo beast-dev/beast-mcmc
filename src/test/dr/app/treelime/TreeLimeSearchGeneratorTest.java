@@ -92,6 +92,10 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         }
         assertGolden("nni_strict_dated.xml", strict);
         assertGolden("nni_hmc_dated.xml", hmc);
+        TreeLimeOptions spr = search(dengue(true));
+        spr.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.NNI_SPR;
+        assertGolden("nni_spr_hmc_dated.xml", spr);
+        assertTrue(generate(spr).contains("<timeTreeSearch id=\"treeSearch\" seed=\"1\" moves=\"nni,spr\""));
         String xml = generate(hmc);
         TreeLimeHarness.assertIdsResolve(xml);
         assertTrue(xml.contains("<maximizeWrtParameter id=\"maximizer\" maximizeOnParse=\"false\""));

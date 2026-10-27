@@ -68,6 +68,13 @@ public final class SearchSettings {
     public int secondChanceIterations = 80;
     public boolean rootScan = true; // after a new best, the root positions one and two edges away
 
+    // SPR (§5.3, §7.3, M4)
+    public boolean spr = false; // when no NNI gains, clamped-height SPR rounds
+    public int sprMaxRadius = 10; // the largest distance of a regraft from the pruned subtree's old place
+    public int sprRadius = 0; // the fast rounds' radius; 0: found by trying 5, 10, ...
+    public double subtreeCutoff = 1.0; // the scan's cutoff is this times the mean drop of the round before
+    public int sprFastToplistSize = 60; // the fast rounds' toplist (thorough rounds use toplistSize)
+
     // budgets (§6.4); 0: no limit
     public int maxRounds = 0; // 0: the number of internal nodes
     public double maxRunTime = 0.0; // seconds
@@ -87,7 +94,9 @@ public final class SearchSettings {
         return "epsilon = " + epsilon + ", moveEpsilon = " + moveEpsilon + ", deltaT1 = " + deltaT1 +
                 ", deltaKeep = " + deltaKeep + ", t2Candidates = " + t2Candidates + ", t1Sweeps = " + t1Sweeps +
                 ", speedNni = " + speedNni + ", batch = " + batch + ", toplistSize = " + toplistSize +
-                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan +
+                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan + ", moves = " + (spr ? "nni,spr" : "nni") +
+                (spr ? ", sprMaxRadius = " + sprMaxRadius + ", sprRadius = " + (sprRadius > 0 ? sprRadius : "auto") +
+                        ", subtreeCutoff = " + subtreeCutoff : "") +
                 ", rateWarmStart = " + rateWarmStart.getName() + ", maxRounds = " +
                 (maxRounds > 0 ? maxRounds : "n - 1") + ", maxRunTime = " + (maxRunTime > 0 ? maxRunTime + "s" : "none") +
                 ", maxEvaluations = " + (maxEvaluations > 0 ? maxEvaluations : "none") +

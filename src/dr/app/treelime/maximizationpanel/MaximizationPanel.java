@@ -195,7 +195,8 @@ public class MaximizationPanel extends TreeLimePanel {
         searchModeCombo.setToolTipText("<html>Off keeps the starting tree's topology. NNI tries every rooted " +
                 "nearest-neighbour interchange,<br>with the node heights and branch rates re-fitted, and keeps a " +
                 "change only when the objective rises;<br>it repeats from the improved tree until no change " +
-                "helps.</html>");
+                "helps. NNI and SPR also moves subtrees up to 10 branches away<br>when no interchange helps " +
+                "(slower, and escapes more local optima).</html>");
         searchSeedField.setColumns(8);
         searchSeedField.setBorder(new EmptyBorder(FIELD_INSETS));
         searchSeedField.setToolTipText("The search is deterministic: the same seed and file give the same tree.");

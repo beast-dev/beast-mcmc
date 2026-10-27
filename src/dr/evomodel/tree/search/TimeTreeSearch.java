@@ -28,6 +28,7 @@
 package dr.evomodel.tree.search;
 
 import dr.evolution.tree.FlexibleTree;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.treemetrics.SplitDistance;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
@@ -111,6 +112,9 @@ public class TimeTreeSearch implements Reportable {
     private int rootScans = 0;
     private int rootMoves = 0;
     private int[] lastApplied = null; // the nodes of the last round's moves, for speedNNI
+    private int sprRounds = 0;
+    private int sprAccepted = 0;
+    private double sprCutoff = -1.0; // the SPR scan's cutoff below the incumbent; < 0 before the first round
     private long maximizerEvaluations = 0;
     private double fStart = Double.NaN;
     private double fRefitted = Double.NaN;
@@ -161,7 +165,8 @@ public class TimeTreeSearch implements Reportable {
         rounds = 0;
         accepted = 0;
         guardReverts = 0;
-        secondChances = rootScans = rootMoves = 0;
+        secondChances = rootScans = rootMoves = sprRounds = sprAccepted = 0;
+        sprCutoff = -1.0;
         maximizerEvaluations = 0;
         trialSeconds = t3aSeconds = t3bSeconds = 0.0;
         log.clear();
@@ -187,6 +192,7 @@ public class TimeTreeSearch implements Reportable {
             final int maxRounds = settings.maxRounds > 0 ? settings.maxRounds : tree.getInternalNodeCount();
             stopReason = StopReason.MAX_ROUNDS;
             lastApplied = null;
+            boolean sprNext = false; // the NNI rounds have converged: SPR next
             for (int round = 1; round <= maxRounds; ++round) {
                 StopReason budget = checkBudgets();
                 if (budget != null) {
@@ -195,7 +201,15 @@ public class TimeTreeSearch implements Reportable {
                 }
                 rounds = round;
                 final double before = f;
-                final int applied = nniRound(round);
+                // NNIs until they stop gaining, then SPR, then NNIs again from the full tree
+                boolean viaSpr = sprNext;
+                int applied = sprNext ? 0 : nniRound(round);
+                if (applied == 0 && settings.spr && checkBudgets() == null) {
+                    applied = sprPhase(round);
+                    lastApplied = null;
+                    viaSpr = true;
+                }
+                sprNext = false;
                 if (applied == 0) {
                     stopReason = checkBudgets() != null ? checkBudgets() : StopReason.CONVERGED;
                     break;
@@ -220,6 +234,10 @@ public class TimeTreeSearch implements Reportable {
                     best = snapshot();
                 }
                 if (f - before < settings.epsilon) {
+                    if (settings.spr && !viaSpr && checkBudgets() == null) {
+                        sprNext = true; // the NNIs gain too little to go on: SPR before stopping
+                        continue;
+                    }
                     stopReason = StopReason.CONVERGED;
                     break;
                 }
@@ -510,6 +528,164 @@ public class TimeTreeSearch implements Reportable {
         return winner != null;
     }
 
+    /**
+     * The SPR phase (plan 7 §7.3, after RAxML-NG): fast rounds within a radius found by trying 5, 10, ... until the
+     * gain stops, repeated while they gain more than 1; then thorough rounds over windows of radii [1, 5], [6, 10],
+     * ..., back to [1, 5] after a gain.
+     *
+     * @return the number of moves accepted
+     */
+    private int sprPhase(int round) {
+        final int maxRadius = Math.min(settings.sprMaxRadius, tree.getExternalNodeCount() - 3);
+        if (maxRadius < 1) {
+            return 0;
+        }
+        final int acceptedBefore = sprAccepted;
+        if (sprCutoff < 0) {
+            sprCutoff = Math.abs(evaluator.evaluate()) / 1000.0;
+        }
+        int radius = settings.sprRadius > 0 ? Math.min(settings.sprRadius, maxRadius) : 0;
+        if (radius == 0) {
+            // auto-detect: widen while widening still gains
+            radius = Math.min(5, maxRadius);
+            while (checkBudgets() == null) {
+                double gain = sprRound(round, 1, radius, false);
+                if (gain < settings.epsilon || radius >= maxRadius) {
+                    break;
+                }
+                radius = Math.min(radius + 5, maxRadius);
+            }
+        }
+        while (checkBudgets() == null && sprRound(round, 1, radius, false) > 1.0) {
+            // fast rounds while they gain
+        }
+        int rMin = 1;
+        while (rMin <= maxRadius && checkBudgets() == null) {
+            final int rMax = Math.min(rMin + 4, maxRadius);
+            final double gain = sprRound(round, rMin, rMax, true);
+            rMin = gain > settings.epsilon ? 1 : rMax + 1;
+        }
+        return sprAccepted - acceptedBefore;
+    }
+
+    /**
+     * One SPR round over the radii [rMin, rMax]. Each prunable subtree, in priority order, gets its targets scored
+     * breadth-first at T0, a target's neighbours visited only while its score is within the cutoff of the incumbent;
+     * in thorough rounds the best few also get T1. The best target is accepted at once if it gains (greedy, first
+     * improvement), else kept on a toplist if within deltaKeep. At the end the toplist's moves still valid are
+     * re-scored at T1, the best t2Candidates of them at T2, and the best accepted if it gains; the cutoff becomes
+     * subtreeCutoff times the mean drop seen, and a round with moves ends with T3a.
+     *
+     * @return F after the round minus F before it
+     */
+    private double sprRound(int round, int rMin, int rMax, boolean thorough) {
+        final long started = System.nanoTime();
+        final double fStart = evaluator.evaluate();
+        final long t1Before = evaluator.getT1Count();
+        final long t2Before = evaluator.getT2Count();
+        final int toplistSize = thorough ? settings.toplistSize : settings.sprFastToplistSize;
+        final List<TrialEvaluator.Trial> toplist = new ArrayList<TrialEvaluator.Trial>();
+        final double[] drops = new double[2]; // sum and count of T0 drops below the incumbent
+        final int[] scored = new int[1];
+        int moves = 0;
+        double fInc = fStart;
+        sprRounds++;
+
+        for (int i : SprNeighbourhood.pruneOrder(tree)) {
+            if (checkBudgets() != null) {
+                break;
+            }
+            final NodeRef node = tree.getNode(i);
+            if (tree.isRoot(node) || tree.isRoot(tree.getParent(node))) {
+                continue; // an accepted move has moved it next to the root
+            }
+            final double incumbent = fInc;
+            final List<TrialEvaluator.Trial> trials = new ArrayList<TrialEvaluator.Trial>();
+            SprNeighbourhood.search(tree, i, rMin, rMax, constraints, new SprNeighbourhood.Visitor() {
+                public double visit(ClampedSprMove move, int distance) {
+                    TrialEvaluator.Trial trial = evaluator.trial(move, Double.POSITIVE_INFINITY, false);
+                    trials.add(trial);
+                    scored[0]++;
+                    if (trial.f0 < incumbent && trial.f0 > Double.NEGATIVE_INFINITY) {
+                        drops[0] += incumbent - trial.f0;
+                        drops[1]++;
+                    }
+                    return trial.f0;
+                }
+            }, incumbent - sprCutoff);
+            if (trials.isEmpty()) {
+                continue;
+            }
+            sortByValue(trials);
+            TrialEvaluator.Trial best = trials.get(0);
+            if (thorough) {
+                // T1 on the best target and up to three more within deltaT1 of it
+                for (int k = 0; k < Math.min(4, trials.size()) && trials.get(k).f0 > best.f0 - settings.deltaT1; ++k) {
+                    TrialEvaluator.Trial refined = evaluator.trial(trials.get(k).move, Double.NEGATIVE_INFINITY, false);
+                    if (k == 0 || refined.best > best.best) {
+                        best = refined;
+                    }
+                }
+            }
+            if (best.best > fInc + settings.moveEpsilon) {
+                fInc = evaluator.accept(best);
+                moves++;
+            } else if (best.best > fInc - settings.deltaKeep) {
+                toplist.add(best);
+                sortByValue(toplist);
+                if (toplist.size() > toplistSize) {
+                    toplist.remove(toplist.size() - 1);
+                }
+            }
+        }
+
+        // the toplist: T1 on the moves still valid, T2 on the best of them
+        if (checkBudgets() == null) {
+            final List<TrialEvaluator.Trial> refined = new ArrayList<TrialEvaluator.Trial>();
+            for (TrialEvaluator.Trial kept : toplist) {
+                if (kept.move.isValid(tree) && ((ClampedSprMove) kept.move).isFeasible(tree)
+                        && !violates((ClampedSprMove) kept.move) && checkBudgets() == null) {
+                    refined.add(evaluator.trial(kept.move, Double.NEGATIVE_INFINITY, false));
+                }
+            }
+            sortByValue(refined);
+            TrialEvaluator.Trial winner = null;
+            for (int k = 0; k < Math.min(settings.t2Candidates, refined.size()) && checkBudgets() == null; ++k) {
+                TrialEvaluator.Trial trial = evaluator.trial(refined.get(k).move, Double.NEGATIVE_INFINITY, true);
+                if (trial.best > fInc + settings.moveEpsilon && (winner == null || trial.best > winner.best)) {
+                    winner = trial;
+                }
+            }
+            if (winner != null) {
+                fInc = evaluator.accept(winner);
+                moves++;
+            }
+        }
+
+        if (drops[1] > 0) {
+            sprCutoff = Math.max(1.0, settings.subtreeCutoff * drops[0] / drops[1]);
+        }
+        sprAccepted += moves;
+        trialSeconds += (System.nanoTime() - started) / 1E9;
+        final String phase = thorough ? "spr_slow" : "spr_fast";
+        log.row(round, phase, scored[0], (int) (evaluator.getT1Count() - t1Before),
+                (int) (evaluator.getT2Count() - t2Before), moves, fStart, fInc, Math.max(fBest, fInc), null,
+                Double.NaN, Double.NaN, Double.NaN, startTree, seconds(), evaluations(),
+                "r " + rMin + "-" + rMax + ", cutoff " + String.format("%.2f", sprCutoff), guardReverts);
+        say("round " + round + " SPR " + (thorough ? "slow" : "fast") + " r=" + rMin + "-" + rMax + ": F = " +
+                format(fInc) + " (" + format(fInc - fStart) + "), " + moves + " moves, " + scored[0] + " targets, " +
+                String.format("%.1fs", seconds()));
+        double f = fInc;
+        if (moves > 0) {
+            f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
+        }
+        return f - fStart;
+    }
+
+    private boolean violates(ClampedSprMove move) {
+        return constraints.size() > 0 && constraints.violates(tree, move, TopologyConstraints.clades(tree));
+    }
+
     private static String describe(List<TrialEvaluator.Trial> applied) {
         if (applied.isEmpty()) {
             return null;
@@ -617,6 +793,14 @@ public class TimeTreeSearch implements Reportable {
         return secondChances;
     }
 
+    public int getSprRounds() {
+        return sprRounds;
+    }
+
+    public int getSprAcceptedMoves() {
+        return sprAccepted;
+    }
+
     public int getRootScans() {
         return rootScans;
     }
@@ -659,7 +843,8 @@ public class TimeTreeSearch implements Reportable {
 
     @Override
     public String getReport() {
-        StringBuilder sb = new StringBuilder("Topology search (rooted NNI hill-climb)\n");
+        StringBuilder sb = new StringBuilder("Topology search (rooted NNI" + (settings.spr ? " and SPR" : "") +
+                " hill-climb)\n");
         if (!executed) {
             return sb.append("Not yet executed.\n").toString();
         }
@@ -670,6 +855,9 @@ public class TimeTreeSearch implements Reportable {
         sb.append("Trials: ").append(evaluator.getTrials()).append(" (T1 ").append(evaluator.getT1Count())
                 .append(", T2 ").append(evaluator.getT2Count()).append(")\n");
         sb.append("SecondChances: ").append(secondChances).append("\n");
+        if (settings.spr) {
+            sb.append("SprRounds: ").append(sprRounds).append(" (moves accepted ").append(sprAccepted).append(")\n");
+        }
         sb.append("RootScans: ").append(rootScans).append(" (root moved ").append(rootMoves).append(")\n");
         sb.append("GuardReverts: ").append(guardReverts).append("\n");
         if (evaluator.getUnderflowRecomputes() > 0) {

@@ -63,7 +63,7 @@ import java.util.Map;
  * the gold standard's own error. Then the search runs from UPGMA and from random starting trees, and fails only when
  * it ends below the global optimum by more than that error.
  * <p>
- * Usage: NniExhaustiveStudy taxa sites theta heightStarts randomStarts seed; run from the repository root with BEAGLE
+ * Usage: NniExhaustiveStudy taxa sites theta heightStarts randomStarts seed (-Dmode=NNI_SPR for SPR too); run from the repository root with BEAGLE
  * on java.library.path. JC69 sequences, contemporaneous tips, the default TreeLime model. Not a unit test.
  */
 public class NniExhaustiveStudy {
@@ -131,7 +131,8 @@ public class NniExhaustiveStudy {
         for (int start = 0; start <= randomStarts; ++start) {
             TreeLimeOptions options = TreeLimeHarness.importData(fasta.getPath());
             options.maximizationOptions.printToScreen = false;
-            options.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.NNI;
+            options.maximizationOptions.getTopologySearch().mode =
+                    TopologySearchOptions.Mode.valueOf(System.getProperty("mode", "NNI"));
             options.getPartitionTreeModels().get(0).setStartingTreeType(start == 0 ? StartingTreeType.UPGMA :
                     StartingTreeType.RANDOM);
             MathUtils.setSeed(seed + start);

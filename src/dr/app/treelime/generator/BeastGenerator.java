@@ -1079,13 +1079,17 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag("maximizeWrtParameter");
         writer.writeText("");
 
-        writer.writeComment("Search the topology by rooted NNIs from the starting tree; a move is kept only when the " +
-                        density + " density rises",
+        writer.writeComment("Search the topology by rooted NNIs" +
+                        (search.mode == TopologySearchOptions.Mode.NNI_SPR ? " and SPRs" : "") +
+                        " from the starting tree; a move is kept only when the " + density + " density rises",
                 "The best tree: " + options.fileNameStem + ".search.trees; one row per round: " +
                         options.fileNameStem + ".search.log");
         List<Attribute> attributes = new ArrayList<Attribute>();
         attributes.add(new Attribute.Default<String>(XMLParser.ID, TREE_SEARCH));
         attributes.add(new Attribute.Default<Long>("seed", search.seed));
+        if (search.mode == TopologySearchOptions.Mode.NNI_SPR) {
+            attributes.add(new Attribute.Default<String>("moves", "nni,spr"));
+        }
         if (!search.maxSearchTime.isEmpty()) {
             attributes.add(new Attribute.Default<String>("maxRunTime", search.maxSearchTime));
         }

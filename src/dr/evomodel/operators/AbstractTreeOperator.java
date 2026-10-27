@@ -67,13 +67,20 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 	                             NodeRef iP, NodeRef jP) {
 
 	    tree.beginTreeEdit();
-	    tree.removeChild(iP, i);
-	    tree.removeChild(jP, j);
-	    tree.addChild(jP, i);
-	    tree.addChild(iP, j);
-
+	    exchange(tree, i, j, iP, jP);
         tree.endTreeEdit();
 	}
+
+    /**
+     * Exchanges the sub-trees whose roots are i and j (with parents iP and jP), inside the caller's edit transaction,
+     * so that height changes can join the same transaction (the topology search's NNI with height repair).
+     */
+    public static void exchange(TreeModel tree, NodeRef i, NodeRef j, NodeRef iP, NodeRef jP) {
+        tree.removeChild(iP, i);
+        tree.removeChild(jP, j);
+        tree.addChild(jP, i);
+        tree.addChild(iP, j);
+    }
 
 	public void reset() {
         super.reset();

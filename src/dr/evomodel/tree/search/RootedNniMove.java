@@ -28,6 +28,7 @@
 package dr.evomodel.tree.search;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 
 /**
@@ -191,7 +192,9 @@ public final class RootedNniMove implements TimeTreeMove {
 
     @Override
     public void applyTopology(TreeModel tree) {
-        TreeEdits.exchange(tree, tree.getNode(a), tree.getNode(u));
+        final NodeRef nodeA = tree.getNode(a);
+        final NodeRef nodeU = tree.getNode(u);
+        AbstractTreeOperator.exchange(tree, nodeA, nodeU, tree.getParent(nodeA), tree.getParent(nodeU));
     }
 
     // b: P's child other than a, before the move

@@ -165,7 +165,7 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
     }
 
     // run as BEAST runs it, the file has no runnable (the maximizer and the search run while parsing), yet the
-    // citations are logged once at the end, as an MCMC run logs them before it starts
+    // citations are logged once at the end, as an MCMC run logs them before it starts, the ratio transform's included
     public void testCitationsWithoutARunnable() throws Exception {
         TreeLimeOptions options = search(dengue(false));
         if (options == null) {
@@ -200,6 +200,9 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         assertEquals(text, 1, count(text, "Citations for this analysis"));
         assertTrue(text, text.contains("BEAST primary citation"));
         assertTrue(text, text.contains("HKY nucleotide substitution model"));
+        // the node heights are optimized as ratios
+        assertTrue(text, text.contains("Using the ratio transformation of internal node heights"));
+        assertTrue(text, text.contains("Scalable Bayesian divergence time estimation with ratio transformations"));
     }
 
     private static int count(String text, String part) {

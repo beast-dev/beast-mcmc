@@ -84,23 +84,26 @@ public final class DefaultMutationStore implements MutationStore {
     // the nodes whose states or branch events have changed since the log was last cleared
     private final IndexSet changedNodes;
 
-    // journal
-    private final int[] savedParents;
+    // The journal: the first change to a node after commit() keeps what it replaces, so that revert() can
+    // put it back. Per node (each with a flag saying whether it is in the journal): the parent, the states
+    // with their version and composition, the Fitch sets and the branch events; then the root, the
+    // categories and the stale flag.
+    private final IndexSet journaledNodes;   // the nodes with anything in the journal
     private final boolean[] parentDirty;
-    private int savedRoot;
-    private boolean rootSaved = false;
+    private final int[] savedParents;
+    private final boolean[] statesDirty;
     private final byte[][] savedStates;
     private final long[] savedStateVersions;
     private final double[][] savedCompositions;
-    private byte[] savedCategories;
-    private final long[][] savedFitchSets;
-    private boolean savedFitchSetsStale;
-    private boolean fitchSetsStaleChanged = false;
-    private final BranchMutations[] savedMutations;
-    private final boolean[] statesDirty;
     private final boolean[] fitchSetsDirty;
+    private final long[][] savedFitchSets;
     private final boolean[] branchDirty;
-    private final IndexSet journaledNodes;
+    private final BranchMutations[] savedMutations;
+    private boolean rootSaved = false;
+    private int savedRoot;
+    private byte[] savedCategories;          // null unless a category has changed since the last commit
+    private boolean fitchSetsStaleChanged = false;
+    private boolean savedFitchSetsStale;
 
     /**
      * @param patternWeights the weight of each pattern (for the compositions; may be longer than patternCount)
@@ -397,6 +400,14 @@ public final class DefaultMutationStore implements MutationStore {
         }
     }
 
+    private void journalBranch(int nodeNumber) {
+        if (!branchDirty[nodeNumber]) {
+            journaledNodes.add(nodeNumber);
+            savedMutations[nodeNumber] = mutations[nodeNumber];
+            branchDirty[nodeNumber] = true;
+        }
+    }
+
     /**
      * @return a number that changes whenever the node's states may have changed
      */
@@ -463,11 +474,7 @@ public final class DefaultMutationStore implements MutationStore {
      * of the node and its current parent.
      */
     public void updateBranch(int nodeNumber) {
-        if (!branchDirty[nodeNumber]) {
-            journaledNodes.add(nodeNumber);
-            savedMutations[nodeNumber] = mutations[nodeNumber];
-            branchDirty[nodeNumber] = true;
-        }
+        journalBranch(nodeNumber);
         changedNodes.add(nodeNumber);
 
         int parent = parents[nodeNumber];
@@ -557,11 +564,7 @@ public final class DefaultMutationStore implements MutationStore {
         if (sites.length == 0) {
             return;
         }
-        if (!branchDirty[nodeNumber]) {
-            journaledNodes.add(nodeNumber);
-            savedMutations[nodeNumber] = mutations[nodeNumber];
-            branchDirty[nodeNumber] = true;
-        }
+        journalBranch(nodeNumber);
         changedNodes.add(nodeNumber);
         int parent = parents[nodeNumber];
         if (parent < 0) {
@@ -579,11 +582,15 @@ public final class DefaultMutationStore implements MutationStore {
         final int[] subPatterns = scratchPatterns;
         final byte[] subFrom = scratchFrom;
         final byte[] subTo = scratchTo;
+        final int oldSubstitutionCount = old.getSubstitutionCount();
+        final int oldSize = old.size();
         int subCount = 0;
         int ambEnd = patternCount;
+
+        // substitutions: before each kept one, the new ones at the sites below its pattern
         int j = 0;
-        for (int k = 0; k <= old.getSubstitutionCount(); k++) {
-            int next = k < old.getSubstitutionCount() ? old.getPattern(k) : Integer.MAX_VALUE;
+        for (int k = 0; k <= oldSubstitutionCount; k++) {
+            int next = k < oldSubstitutionCount ? old.getPattern(k) : Integer.MAX_VALUE;
             for (; j < sites.length && sites[j] < next; j++) {
                 int p = sites[j];
                 if (parentStates[p] >= 0 && childStates[p] >= 0 && childStates[p] != parentStates[p]) {
@@ -592,15 +599,17 @@ public final class DefaultMutationStore implements MutationStore {
                     subTo[subCount++] = childStates[p];
                 }
             }
-            if (k < old.getSubstitutionCount() && !changed.contains(next)) {
+            if (k < oldSubstitutionCount && !changed.contains(next)) {
                 subPatterns[subCount] = next;
                 subFrom[subCount] = (byte) old.getFromState(k);
                 subTo[subCount++] = (byte) old.getToState(k);
             }
         }
+
+        // ambiguities likewise, from the back of the work arrays (so in reverse pattern order)
         j = 0;
-        for (int k = old.getSubstitutionCount(); k <= old.size(); k++) {
-            int next = k < old.size() ? old.getPattern(k) : Integer.MAX_VALUE;
+        for (int k = oldSubstitutionCount; k <= oldSize; k++) {
+            int next = k < oldSize ? old.getPattern(k) : Integer.MAX_VALUE;
             for (; j < sites.length && sites[j] < next; j++) {
                 int p = sites[j];
                 if (parentStates[p] >= 0 && childStates[p] < 0) {
@@ -609,7 +618,7 @@ public final class DefaultMutationStore implements MutationStore {
                     subFrom[ambEnd] = parentStates[p];
                 }
             }
-            if (k < old.size() && !changed.contains(next)) {
+            if (k < oldSize && !changed.contains(next)) {
                 ambEnd--;
                 subPatterns[ambEnd] = next;
                 subFrom[ambEnd] = (byte) old.getFromState(k);
@@ -623,11 +632,7 @@ public final class DefaultMutationStore implements MutationStore {
      * explicit histories).
      */
     public void setBranchMutations(int nodeNumber, BranchMutations branchMutations) {
-        if (!branchDirty[nodeNumber]) {
-            journaledNodes.add(nodeNumber);
-            savedMutations[nodeNumber] = mutations[nodeNumber];
-            branchDirty[nodeNumber] = true;
-        }
+        journalBranch(nodeNumber);
         changedNodes.add(nodeNumber);
         mutations[nodeNumber] = branchMutations;
     }

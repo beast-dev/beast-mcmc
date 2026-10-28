@@ -43,6 +43,14 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
     protected double[] infinitesimalMatrix;
     protected double[] exitRates;
 
+    // for sampling paths by uniformization: the rate mu (the largest exit rate) and the transition matrix
+    // U = I + Q / mu of the uniformized chain, for the current rates; and work arrays
+    private double uniformizationRate;
+    private final double[] uniformizedMatrix;
+    private double[] jumpRow;
+    private double[] nextJumpRow;
+    private final double[] stateWeights;
+
     // cache of transition probability matrices (and their logs) by distance, for the current rates: an
     // open-addressing table, emptied when the rates change or it is half full
     // (large enough for a distance per branch for each of several site rate categories)
@@ -55,6 +63,10 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
 
     protected AbstractBranchHistoryModel(int stateCount) {
         this.stateCount = stateCount;
+        this.uniformizedMatrix = new double[stateCount * stateCount];
+        this.jumpRow = new double[stateCount];
+        this.nextJumpRow = new double[stateCount];
+        this.stateWeights = new double[stateCount];
     }
 
     @Override
@@ -63,6 +75,18 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
         this.infinitesimalMatrix = infinitesimalMatrix.clone();
         this.exitRates = exitRates.clone();
         clearTransitionProbabilityCache();
+
+        double mu = 0.0;
+        for (int s = 0; s < stateCount; s++) {
+            mu = Math.max(mu, exitRates[s]);
+        }
+        uniformizationRate = mu;
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                uniformizedMatrix[i * stateCount + j] =
+                        i == j ? 1.0 - exitRates[i] / mu : infinitesimalMatrix[i * stateCount + j] / mu;
+            }
+        }
     }
 
     private void clearTransitionProbabilityCache() {
@@ -248,43 +272,8 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
      */
     protected int samplePath(int a, int b, double length, double nu, int[][] states, double[][] times) {
         final double distance = nu * length;
-        final double pab = getTransitionProbabilities(distance)[a * stateCount + b];
-        double mu = 0.0;
-        for (int s = 0; s < stateCount; s++) {
-            mu = Math.max(mu, exitRates[s]);
-        }
-        // uniformized transition matrix U = I + Q / mu
-        final double[] u = new double[stateCount * stateCount];
-        for (int i = 0; i < stateCount; i++) {
-            for (int j = 0; j < stateCount; j++) {
-                u[i * stateCount + j] = (i == j ? 1.0 - exitRates[i] / mu : infinitesimalMatrix[i * stateCount + j] / mu);
-            }
-        }
-
-        // number of (real and virtual) jumps: P(n) proportional to Poisson(n; mu d) (U^n)_ab
-        double target = MathUtils.nextDouble() * pab;
-        double poisson = Math.exp(-mu * distance);
-        double[] row = new double[stateCount];
-        row[a] = 1.0;
-        double cumulative = 0.0;
-        int n = 0;
-        while (true) {
-            cumulative += poisson * row[b];
-            if (cumulative >= target || n > 10000) {
-                break;
-            }
-            double[] next = new double[stateCount];
-            for (int i = 0; i < stateCount; i++) {
-                if (row[i] != 0.0) {
-                    for (int j = 0; j < stateCount; j++) {
-                        next[j] += row[i] * u[i * stateCount + j];
-                    }
-                }
-            }
-            row = next;
-            n++;
-            poisson *= mu * distance / n;
-        }
+        final double[] u = uniformizedMatrix;
+        final int n = drawJumpCount(a, b, distance);
 
         // columns (U^m)_.b for m = 0..n, to draw the intermediate states
         double[][] toEnd = new double[n + 1][stateCount];
@@ -304,18 +293,20 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
         }
         Arrays.sort(jumpTimes);
 
+        // the state after each jump, given the state before it and that the path ends in b: real jumps
+        // (to a different state) go in the path, virtual ones do not
         if (states[0] == null || states[0].length < n + 1) {
             states[0] = new int[n + 1];
         }
         if (times[0] == null || times[0].length < n + 1) {
             times[0] = new double[n + 1];
         }
+        final double[] weights = stateWeights;
         int k = 0;
         int current = a;
         states[0][0] = a;
         for (int i = 1; i <= n; i++) {
             double total = 0.0;
-            double[] weights = new double[stateCount];
             for (int x = 0; x < stateCount; x++) {
                 weights[x] = u[current * stateCount + x] * toEnd[n - i][x];
                 total += weights[x];
@@ -340,5 +331,43 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
             throw new IllegalStateException("Path sampler failed to reach the end state");
         }
         return k;
+    }
+
+    /**
+     * @return the number of jumps (real and virtual) of the uniformized chain over the distance, given that
+     * it goes from a to b: P(n) is proportional to Poisson(n; mu d) (U^n)_ab
+     */
+    private int drawJumpCount(int a, int b, double distance) {
+        final double mu = uniformizationRate;
+        final double[] u = uniformizedMatrix;
+        final double pab = getTransitionProbabilities(distance)[a * stateCount + b];
+        final double target = MathUtils.nextDouble() * pab;
+        double poisson = Math.exp(-mu * distance);
+        double[] row = jumpRow;      // (U^n)_a.
+        double[] next = nextJumpRow;
+        Arrays.fill(row, 0.0);
+        row[a] = 1.0;
+        double cumulative = 0.0;
+        int n = 0;
+        while (true) {
+            cumulative += poisson * row[b];
+            if (cumulative >= target || n > 10000) {
+                break;
+            }
+            Arrays.fill(next, 0.0);
+            for (int i = 0; i < stateCount; i++) {
+                if (row[i] != 0.0) {
+                    for (int j = 0; j < stateCount; j++) {
+                        next[j] += row[i] * u[i * stateCount + j];
+                    }
+                }
+            }
+            double[] swap = row;
+            row = next;
+            next = swap;
+            n++;
+            poisson *= mu * distance / n;
+        }
+        return n;
     }
 }

@@ -48,6 +48,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -256,8 +257,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.branchTermStateVersions = new long[nodeCount];
         this.branchTermMutations = new BranchMutations[nodeCount];
         this.branchTermModelVersions = new long[nodeCount];
-        java.util.Arrays.fill(exitRateModelVersions, -1);
-        java.util.Arrays.fill(branchTermModelVersions, -1);
+        Arrays.fill(exitRateModelVersions, -1);
+        Arrays.fill(branchTermModelVersions, -1);
         this.nodeDirty = new boolean[nodeCount];
         this.dirtyNodes = new int[nodeCount];
         this.recomputedSinceStore = new boolean[nodeCount];
@@ -297,7 +298,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             this.unchangedTerms = new double[nodeCount][categoryCount * stateCount];
             this.unchangedTermLengths = new double[nodeCount];
             this.unchangedTermModelVersions = new long[nodeCount];
-            java.util.Arrays.fill(unchangedTermModelVersions, -1);
+            Arrays.fill(unchangedTermModelVersions, -1);
             this.unchangedTermIncluded = new boolean[nodeCount];
             this.unchangedTotals = new double[categoryCount * stateCount];
             Logger.getLogger("dr.evomodel").info("  MAT site rate categories: " + categoryCount +
@@ -490,8 +491,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         if (allNodesDirty) {
             if (categoryCount > 1) {
                 // the totals are rebuilt from the terms (which also stops rounding errors accumulating)
-                java.util.Arrays.fill(unchangedTotals, 0.0);
-                java.util.Arrays.fill(unchangedTermIncluded, false);
+                Arrays.fill(unchangedTotals, 0.0);
+                Arrays.fill(unchangedTermIncluded, false);
                 unchangedExcludedNode = -1;
             }
             for (int n = 0; n < tree.getNodeCount(); n++) {
@@ -783,7 +784,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             double length = getBranchLength(tree.getNode(n));
             byte[] states = mutationStore.getStates(n);
             BranchMutations mutations = mutationStore.getBranchMutations(n);
-            java.util.Arrays.fill(eventStart, -1);
+            Arrays.fill(eventStart, -1);
             int k = 0;
             while (k < mutations.getSubstitutionCount()) {
                 int end = mutations.getSiteEnd(k);
@@ -905,20 +906,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         final double[][] below = new double[nodeCount][width];     // D_s(n; r_c), summed below each node
         final double[] lengths = new double[nodeCount];
 
-        // post-order (children before parents)
-        final int[] order = new int[nodeCount];
-        final int[] stack = new int[nodeCount];
-        int sp = 0;
-        int k = nodeCount;
-        stack[sp++] = tree.getRoot().getNumber();
-        while (sp > 0) {
-            int n = stack[--sp];
-            order[--k] = n;
-            NodeRef node = tree.getNode(n);
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                stack[sp++] = tree.getChild(node, i).getNumber();
-            }
-        }
+        final int[] order = MATInitializer.getPostOrder(tree);
         final int rootNumber = tree.getRoot().getNumber();
         for (int n : order) {
             NodeRef node = tree.getNode(n);
@@ -1042,19 +1030,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             return 0.0;
         }
         return (tree.getNodeHeight(parent) - tree.getNodeHeight(node)) * branchRateModel.getBranchRate(tree, node);
-    }
-
-    /**
-     * @return log(expm1(x) / x), i.e. log of (1/R) int_0^R exp(x s / R) ds, stable for all x
-     */
-    static double logExpm1OverX(double x) {
-        if (Math.abs(x) < 1E-8) {
-            return 0.5 * x;
-        }
-        if (x > 30.0) {
-            return x - Math.log(x) + Math.log1p(-Math.exp(-x));
-        }
-        return Math.log(Math.expm1(x) / x);
     }
 
     @Override

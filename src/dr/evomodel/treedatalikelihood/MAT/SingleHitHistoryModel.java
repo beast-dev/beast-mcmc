@@ -60,7 +60,7 @@ public class SingleHitHistoryModel extends AbstractBranchHistoryModel {
 
     private double substitutionLogDensity(int a, int b, double length, double nu) {
         return Math.log(nu * infinitesimalMatrix[a * stateCount + b] * length) - nu * exitRates[b] * length
-                + MATDataLikelihoodDelegate.logExpm1OverX(nu * (exitRates[b] - exitRates[a]) * length);
+                + logExpm1OverX(nu * (exitRates[b] - exitRates[a]) * length);
     }
 
     @Override

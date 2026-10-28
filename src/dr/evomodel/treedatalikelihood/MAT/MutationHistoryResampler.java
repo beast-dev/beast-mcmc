@@ -1303,9 +1303,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     /**
-     * As {@link #sampleBlock(int[], boolean, byte[])} but only for the given sites (all sites if null),
-     * optionally recording each site's log probability, and then, if a sparse pass is given, for the
-     * sites it handles (those with no events, or only ambiguities, around the block).
+     * As {@link #sampleBlock(int[], boolean)} but only for the given sites (all sites if null), with the
+     * patterns that have no substitutions around the block (see {@link #getPatternClasses}) handled by a
+     * fast exact path, optionally recording each site's log probability, and then, if a sparse pass is
+     * given, for the sites it handles (those with no events, or only ambiguities, around the block).
      */
     private double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses,
                                int[] sites, double[] siteLogProbabilities, SparsePass pass) {

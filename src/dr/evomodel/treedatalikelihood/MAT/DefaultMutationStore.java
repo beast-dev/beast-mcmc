@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.MAT;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 /**
  * A mutable mutation annotated tree with store/restore support.
@@ -113,13 +114,13 @@ public final class DefaultMutationStore implements MutationStore {
         this.nodeCount = parents.length;
         this.patternCount = patternCount;
         this.stateCount = stateCount;
-        this.patternWeights = java.util.Arrays.copyOf(patternWeights, patternCount);
+        this.patternWeights = Arrays.copyOf(patternWeights, patternCount);
         this.parents = parents.clone();
         this.root = findRoot(parents);
         this.states = new byte[nodeCount][patternCount];
         this.fitchSets = new long[nodeCount][]; // allocated when parsimony first sets them
         this.mutations = new BranchMutations[nodeCount];
-        java.util.Arrays.fill(mutations, BranchMutations.EMPTY);
+        Arrays.fill(mutations, BranchMutations.EMPTY);
         this.stateVersions = new long[nodeCount];
         this.compositions = new double[nodeCount][];
         this.changeLogged = new boolean[nodeCount];
@@ -698,7 +699,7 @@ public final class DefaultMutationStore implements MutationStore {
         fitchSetsStaleChanged = false;
         if (fitchSetsStale && !fitchSetsReleased) {
             // parsimony will recompute them all before use
-            java.util.Arrays.fill(fitchSets, null);
+            Arrays.fill(fitchSets, null);
             fitchSetsReleased = true;
         }
     }
@@ -734,7 +735,7 @@ public final class DefaultMutationStore implements MutationStore {
         }
         if (savedCategories != null) {
             categories = savedCategories;
-            java.util.Arrays.fill(categoryCompositions, null);
+            Arrays.fill(categoryCompositions, null);
         }
         if (rootSaved) {
             root = savedRoot;

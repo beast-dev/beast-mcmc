@@ -67,8 +67,8 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
 
     private void clearTransitionProbabilityCache() {
         if (cachedCount > 0) {
-            java.util.Arrays.fill(cachedTransitionProbabilities, null);
-            java.util.Arrays.fill(cachedLogTransitionProbabilities, null);
+            Arrays.fill(cachedTransitionProbabilities, null);
+            Arrays.fill(cachedLogTransitionProbabilities, null);
             cachedCount = 0;
         }
     }
@@ -128,6 +128,19 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
         return slot;
     }
 
+    /**
+     * @return log(expm1(x) / x), i.e. log of (1/R) int_0^R exp(x s / R) ds, stable for all x
+     */
+    protected static double logExpm1OverX(double x) {
+        if (Math.abs(x) < 1E-8) {
+            return 0.5 * x;
+        }
+        if (x > 30.0) {
+            return x - Math.log(x) + Math.log1p(-Math.exp(-x));
+        }
+        return Math.log(Math.expm1(x) / x);
+    }
+
     // --------------------------------------------------------------------------------------------
     // Hit paths
     // --------------------------------------------------------------------------------------------
@@ -143,7 +156,7 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
             return -c[0] * length;
         }
         if (k == 1) {
-            return -c[1] * length + Math.log(length) + MATDataLikelihoodDelegate.logExpm1OverX((c[1] - c[0]) * length);
+            return -c[1] * length + Math.log(length) + logExpm1OverX((c[1] - c[0]) * length);
         }
         // Van Loan: the (0, k) element of exp(A) for the bidiagonal A with A_ii = -c_i L and A_i,i+1 = L,
         // shifted by the smallest rate so the exponential stays well scaled

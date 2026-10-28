@@ -294,12 +294,4 @@ public class MATInitializer {
         }
         return parents;
     }
-
-    public PatternList getPatternList() {
-        return patternList;
-    }
-
-    public Tree getTree() {
-        return tree;
-    }
 }

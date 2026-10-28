@@ -104,6 +104,12 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
 
         try {
             TreeModel tree = characterTree(xo, freqModel, selector, nucleotideForm, anyDataTypeForm);
+            final String givenLengths = AbstractHierarchicalRateProvider.setUnitBranchLengths(tree);
+            if (givenLengths != null) {
+                Logger.getLogger("dr.evomodel").info("WARNING: hierarchical substitution model"
+                        + (xo.hasId() ? " '" + xo.getId() + "'" : "") + ": the branch lengths of the character tree are ignored; "
+                        + givenLengths + " was converted to " + dr.evolution.tree.TreeUtils.newick(tree) + " (all branch lengths 1)");
+            }
             HierarchicalSubstitutionModel.HierarchicalRateProvider provider;
             String form;
             if (borrowedEqualRates) {

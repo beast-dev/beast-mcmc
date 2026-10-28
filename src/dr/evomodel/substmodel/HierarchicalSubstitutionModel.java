@@ -30,6 +30,9 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -48,9 +51,10 @@ import java.util.List;
  * @author Sangchul Choi
  * @author Xiang Ji
  */
-public class HierarchicalSubstitutionModel extends AbstractModel implements SubstitutionModel {
+public class HierarchicalSubstitutionModel extends AbstractModel implements SubstitutionModel, TreeTraitProvider {
 
     public static final int BUNDLE_VERSION = 1;
+    public static final String RATE_TRAIT = "rate";
     private static final int BUNDLE_VERSION_SHIFT = 65536;
 
     private final HierarchicalRateProvider hierarchicalRates;
@@ -91,6 +95,21 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private double[] beagleModelLambdas;
     private double[] beagleModelUnused;
     private boolean beagleModelKnown = false;
+
+    // Logs the rate of each internal node of the character tree, as branch rates are logged on the time tree.
+    private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper(RATE_TRAIT, new TreeTrait.D() {
+        public String getTraitName() {
+            return RATE_TRAIT;
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public Double getTrait(Tree characterTree, NodeRef node) {
+            return characterTree.isExternal(node) ? null : hierarchicalRates.getRate(tree, node.getNumber());
+        }
+    });
 
     public HierarchicalSubstitutionModel(String name, HierarchicalRateProvider hierarchicalRateProvider,
                                          FrequencyModel frequency) {
@@ -636,6 +655,16 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         eigenDecompositionKnown = false;
         beagleModelKnown = false;
         fireModelChanged();
+    }
+
+    @Override
+    public TreeTrait[] getTreeTraits() {
+        return treeTraits.getTreeTraits();
+    }
+
+    @Override
+    public TreeTrait getTreeTrait(String key) {
+        return treeTraits.getTreeTrait(key);
     }
 
     public interface HierarchicalRateProvider {

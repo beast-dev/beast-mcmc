@@ -31,6 +31,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
@@ -140,6 +141,46 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
             throw new IllegalArgumentException("cannot read the character tree " + newick + ": " + e.getMessage());
         }
         return new DefaultTreeModel("characterTree", imported, true, true);
+    }
+
+    /**
+     * Sets every branch of the character tree to length 1: the model reads only its topology. Tips end up at
+     * different heights when the tree is not balanced. Returns the tree as given, in Newick, when it carried branch
+     * lengths other than 1 (a tree with no lengths, all 0, counts as carrying none), and null otherwise.
+     */
+    public static String setUnitBranchLengths(TreeModel tree) {
+        boolean given = false;
+        boolean allOnes = true;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            final NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                final double length = tree.getBranchLength(node);
+                given |= length != 0.0;
+                allOnes &= length == 1.0;
+            }
+        }
+        if (allOnes) {
+            return null;
+        }
+        final String before = TreeUtils.newick(tree);
+        final int[] depth = new int[tree.getNodeCount()];
+        final int maxDepth = depths(tree, tree.getRoot(), 0, depth);
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            tree.setNodeHeightQuietly(tree.getNode(i), maxDepth - depth[i]);
+        }
+        if (tree.isVariable()) {
+            tree.pushTreeChangedEvent();
+        }
+        return given ? before : null;
+    }
+
+    private static int depths(TreeModel tree, NodeRef node, int d, int[] depth) {
+        depth[node.getNumber()] = d;
+        int max = d;
+        for (int c = 0; c < tree.getChildCount(node); c++) {
+            max = Math.max(max, depths(tree, tree.getChild(node, c), d + 1, depth));
+        }
+        return max;
     }
 
     /**

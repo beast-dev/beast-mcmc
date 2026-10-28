@@ -46,7 +46,12 @@ import dr.xml.XMLParser;
 import junit.framework.TestCase;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * Parser round trip and error paths of hierarchicalSubstitutionModel.
@@ -378,5 +383,72 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
                 "  </generalSubstitutionModel>\n" +
                 hrate("", "    <ratesFrom><generalSubstitutionModel idref=\"gsm\"/></ratesFrom>\n"));
         assertTrue(message, message.contains("does not have equal rates"));
+    }
+
+    private static List<String> warnings(String body, Map<String, XMLObject>[] store) throws Exception {
+        final List<String> messages = new ArrayList<String>();
+        Handler handler = new Handler() {
+            public void publish(LogRecord record) {
+                if (record.getMessage().startsWith("WARNING")) {
+                    messages.add(record.getMessage());
+                }
+            }
+
+            public void flush() {
+            }
+
+            public void close() {
+            }
+        };
+        Logger logger = Logger.getLogger("dr.evomodel");
+        logger.addHandler(handler);
+        try {
+            store[0] = parse(body);
+        } finally {
+            logger.removeHandler(handler);
+        }
+        return messages;
+    }
+
+    private static void assertUnitBranches(dr.evomodel.tree.TreeModel tree) {
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            if (!tree.isRoot(tree.getNode(i))) {
+                assertEquals(1.0, tree.getBranchLength(tree.getNode(i)), 0.0);
+            }
+        }
+    }
+
+    private static dr.evomodel.tree.TreeModel characterTreeOf(Map<String, XMLObject> store) throws Exception {
+        return ((HierarchicalSubstitutionModel) store.get("hrate").getNativeObject()).getRateProvider().getTreeModel();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testBranchLengthsSetToOne() throws Exception {
+        Map<String, XMLObject>[] store = new Map[1];
+        List<String> messages = warnings(hrate(" characterTreeNewick=\"((A:0.5,G:0.5):2,(C:1,T:1):1.5);\"", FREQUENCIES + RATES), store);
+        assertEquals(messages.toString(), 1, messages.size());
+        assertTrue(messages.get(0), messages.get(0).contains("branch lengths of the character tree are ignored")
+                && messages.get(0).contains("((A:0.5,G:0.5):2.0,(C:1.0,T:1.0):1.5)")
+                && messages.get(0).contains("((A:1.0,G:1.0):1.0,(C:1.0,T:1.0):1.0)"));
+        assertUnitBranches(characterTreeOf(store[0]));
+
+        messages = warnings(hrate(" characterTreeNewick=\"(((A,G),C),T);\"", FREQUENCIES + RATES), store);
+        assertTrue(messages.toString(), messages.isEmpty());
+        assertUnitBranches(characterTreeOf(store[0]));
+        assertEquals(3.0, characterTreeOf(store[0]).getNodeHeight(characterTreeOf(store[0]).getRoot()), 0.0);
+
+        messages = warnings(TAXA_AND_TREE + model(CHARACTER_TREE, RATES), store);
+        assertTrue(messages.toString(), messages.isEmpty());
+        assertUnitBranches(characterTreeOf(store[0]));
+
+        messages = warnings(TAXA_AND_TREE.replace("((A:1,G:1):1,(C:1,T:1):1);", "((A:3,G:3):1,(C:2,T:2):2);")
+                + model(CHARACTER_TREE, RATES), store);
+        assertEquals(messages.toString(), 1, messages.size());
+        assertUnitBranches(characterTreeOf(store[0]));
+
+        messages = warnings(TAXA_AND_TREE.replace("((A:1,G:1):1,(C:1,T:1):1);", "((A,G),(C,T));")
+                + model(CHARACTER_TREE, RATES), store);
+        assertTrue(messages.toString(), messages.isEmpty());
+        assertUnitBranches(characterTreeOf(store[0]));
     }
 }

@@ -129,15 +129,11 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     // The branch terms are only recomputed for nodes whose states, branch events or branch length may
     // have changed: the store logs the first two, events from the tree the third.
-    private final boolean[] nodeDirty;
-    private final int[] dirtyNodes;
-    private int dirtyNodeCount = 0;
+    private final IndexSet dirtyNodes;
     private boolean allNodesDirty = true;
     private long termsModelVersion = -1;
     // nodes whose terms were recomputed since storeState (the tree restores their lengths silently)
-    private final boolean[] recomputedSinceStore;
-    private final int[] recomputedNodes;
-    private int recomputedCount = 0;
+    private final IndexSet recomputedNodes;
     // whether the topology may have changed since the MAT was last checked against it
     private boolean treeChangedSinceCheck = true;
 
@@ -259,10 +255,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.branchTermModelVersions = new long[nodeCount];
         Arrays.fill(exitRateModelVersions, -1);
         Arrays.fill(branchTermModelVersions, -1);
-        this.nodeDirty = new boolean[nodeCount];
-        this.dirtyNodes = new int[nodeCount];
-        this.recomputedSinceStore = new boolean[nodeCount];
-        this.recomputedNodes = new int[nodeCount];
+        this.dirtyNodes = new IndexSet(nodeCount);
+        this.recomputedNodes = new IndexSet(nodeCount);
         this.infinitesimalMatrix = new double[stateCount * stateCount];
         this.exitRates = new double[stateCount];
 
@@ -483,7 +477,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             termsModelVersion = modelVersion;
         }
         for (int i = 0; i < mutationStore.getChangedNodeCount(); i++) {
-            markDirty(mutationStore.getChangedNode(i));
+            dirtyNodes.add(mutationStore.getChangedNode(i));
         }
         mutationStore.clearChangeLog();
 
@@ -499,19 +493,17 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 if (n != rootNumber) {
                     updateBranchTerm(n);
                 }
-                nodeDirty[n] = false;
             }
             allNodesDirty = false;
         } else {
-            for (int i = 0; i < dirtyNodeCount; i++) {
-                int n = dirtyNodes[i];
+            for (int i = 0; i < dirtyNodes.size(); i++) {
+                int n = dirtyNodes.get(i);
                 if (n != rootNumber) {
                     updateBranchTerm(n);
                 }
-                nodeDirty[n] = false;
             }
         }
-        dirtyNodeCount = 0;
+        dirtyNodes.clear();
 
         double total = getRootTerm(rootNumber);
         for (int n = 0; n < branchTerms.length; n++) {
@@ -525,13 +517,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
         logLikelihood = total;
         siteLogLikelihoodsKnown = false;
-    }
-
-    private void markDirty(int n) {
-        if (!nodeDirty[n]) {
-            nodeDirty[n] = true;
-            dirtyNodes[dirtyNodeCount++] = n;
-        }
     }
 
     /**
@@ -562,10 +547,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             branchTermMutations[n] = mutations;
             branchTermModelVersions[n] = modelVersion;
         }
-        if (!recomputedSinceStore[n]) {
-            recomputedSinceStore[n] = true;
-            recomputedNodes[recomputedCount++] = n;
-        }
+        recomputedNodes.add(n);
     }
 
     /**
@@ -1049,10 +1031,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     @Override
     public void storeState() {
-        for (int i = 0; i < recomputedCount; i++) {
-            recomputedSinceStore[recomputedNodes[i]] = false;
-        }
-        recomputedCount = 0;
+        recomputedNodes.clear();
         mutationStore.commit();
         storedLogLikelihood = logLikelihood;
         modelChangedSinceStore = false;
@@ -1061,12 +1040,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     @Override
     public void restoreState() {
         // the terms recomputed since the store may have used the rejected branch lengths
-        for (int i = 0; i < recomputedCount; i++) {
-            int n = recomputedNodes[i];
-            recomputedSinceStore[n] = false;
-            markDirty(n);
+        for (int i = 0; i < recomputedNodes.size(); i++) {
+            dirtyNodes.add(recomputedNodes.get(i));
         }
-        recomputedCount = 0;
+        recomputedNodes.clear();
         mutationStore.revert();
         logLikelihood = storedLogLikelihood;
         siteLogLikelihoodsKnown = false;
@@ -1094,9 +1071,9 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 }
                 if (event.isNodeChanged() && event.getNode() != null) {
                     NodeRef node = event.getNode();
-                    markDirty(node.getNumber());
+                    dirtyNodes.add(node.getNumber());
                     for (int i = 0; i < tree.getChildCount(node); i++) {
-                        markDirty(tree.getChild(node, i).getNumber());
+                        dirtyNodes.add(tree.getChild(node, i).getNumber());
                     }
                 } else {
                     allNodesDirty = true;

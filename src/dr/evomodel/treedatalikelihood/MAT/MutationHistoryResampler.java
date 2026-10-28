@@ -124,9 +124,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private int stamp = 0;
     private final double[] oldSiteLogProbabilities;
     private final double[] newSiteLogProbabilities;
-    private final boolean[] resampledSites;
-    private final int[] changedSiteStamps;
-    private int changedSiteStamp = 0;
+    private final IndexSet changedSites;     // the sites at which the current move changed any state
+    private final IndexSet passChangedSites; // those changed by the current sparse pass (see SparsePass)
     private long[] siteBits;
     private int[] oldMarks;
     private int[] newMarks;
@@ -170,8 +169,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         this.siteStamps = new int[patternCount];
         this.oldSiteLogProbabilities = new double[patternCount];
         this.newSiteLogProbabilities = new double[patternCount];
-        this.resampledSites = new boolean[patternCount];
-        this.changedSiteStamps = new int[patternCount];
+        this.changedSites = new IndexSet(patternCount);
+        this.passChangedSites = new IndexSet(patternCount);
 
         double[] weights = delegate.getPatternWeights();
         Map<Double, Integer> classes = new HashMap<Double, Integer>();
@@ -357,32 +356,27 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         final DefaultMutationStore store = delegate.getMutableMutationStore();
 
         final int[] resampled;
-        IntBuffer otherChanges = null;
         if (sparse) {
             final PathPass pass = makePathPass(blockNodes, getOutsideChild(blockNodes));
             sampleBlock(blockNodes, true, siteClasses, pass.substitutionSites, null, pass);
             resampled = pass.substitutionSites;
-            otherChanges = pass.changedSites;
+            changedSites.addAll(pass.otherChangedSites);
         } else {
             resampled = getVariableSites(blockNodes);
             sampleBlock(blockNodes, true, siteClasses, resampled, null, null);
         }
+        changedSites.addAll(resampled, resampled.length);
         delegate.setHistoryResampled();
         store.setFitchSetsStale(true);
 
-        final IntBuffer changed = new IntBuffer();
-        addFlagged(changed, resampled, resampled.length);
-        if (otherChanges != null) {
-            addFlagged(changed, otherChanges.values, otherChanges.count);
-        }
-        final int[] changedSites = sortSites(changed.values, changed.count);
+        final int[] sortedChanges = sortSites(changedSites);
         if (historyModel.hasExplicitHistories()) {
             // draw the hits of the resampled sites on every branch touching the block, given their end states
             List<Integer> branches = new ArrayList<Integer>();
             for (int n : getIncidentBranches(blockNodes)) {
                 branches.add(n);
             }
-            sampleHistories(branches, changedSites);
+            sampleHistories(branches, sortedChanges);
         } else {
             // the branches above the block's nodes and below them (the parents are unchanged)
             final int touchedStamp = nextNodeStamp();
@@ -391,12 +385,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 addWithChildren(touched, n, touchedStamp);
             }
             for (int i = 0; i < touched.count; i++) {
-                store.updateBranchSites(touched.values[i], resampledSites, changedSites);
+                store.updateBranchSites(touched.values[i], changedSites, sortedChanges);
             }
         }
-        for (int p : changedSites) {
-            resampledSites[p] = false;
-        }
+        changedSites.clear();
         candidateSites = null;
         delegate.fireHistoryChanged();
     }
@@ -435,9 +427,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         // every candidate is resampled (the others are handled together when sampling sparsely)
         final int[] resampled = oldPass != null ? oldPass.substitutionSites : candidateSites;
-        for (int p : resampled) {
-            resampledSites[p] = true;
-        }
+        changedSites.addAll(resampled, resampled.length);
 
         double logProposalOfOldStates = oldPass != null ?
                 oldPass.uniformLogProbability + oldPass.ambiguityLogProbability : 0.0;
@@ -452,15 +442,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         lastChangedUniformCount = newPass == null ? 0 : newPass.changedUniformCount;
         delegate.setHistoryResampled();
 
-        int[] changed = resampled;
-        if (newPass != null && newPass.changedSites.count > 0) {
+        if (newPass != null) {
             // the other sites whose block states changed also need their branches updated
-            changed = Arrays.copyOf(resampled, resampled.length + newPass.changedSites.count);
-            int k = resampled.length;
-            for (int i = 0; i < newPass.changedSites.count; i++) {
-                changed[k++] = newPass.changedSites.values[i];
-                resampledSites[newPass.changedSites.values[i]] = true;
-            }
+            changedSites.addAll(newPass.otherChangedSites);
         }
 
         // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
@@ -473,35 +457,31 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 branches.add(n);
             }
             double logProposalOfNewHistories = sampleHistories(branches, resampled);
-            for (int p : resampled) {
-                resampledSites[p] = false;
-            }
+            changedSites.clear();
             candidateSites = null;
             delegate.markTopologySynchronised();
             return logProposalOfOldStates - logProposalOfNewStates + logProposalOfOldHistories - logProposalOfNewHistories;
         }
 
         // branches whose parent changed are recomputed in full; the others around the block changed only at the resampled sites
-        changed = sortSites(changed, changed.length);
+        final int[] sortedChanges = sortSites(changedSites);
         Set<Integer> fullUpdates = new HashSet<Integer>(reparented);
         for (int n : fullUpdates) {
             store.updateBranch(n);
         }
         for (int n : currentBlock) {
             if (!fullUpdates.contains(n)) {
-                store.updateBranchSites(n, resampledSites, changed);
+                store.updateBranchSites(n, changedSites, sortedChanges);
             }
             NodeRef node = tree.getNode(n);
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 int c = tree.getChild(node, i).getNumber();
                 if (!fullUpdates.contains(c) && !contains(currentBlock, c)) {
-                    store.updateBranchSites(c, resampledSites, changed);
+                    store.updateBranchSites(c, changedSites, sortedChanges);
                 }
             }
         }
-        for (int p : changed) {
-            resampledSites[p] = false;
-        }
+        changedSites.clear();
         candidateSites = null;
         delegate.markTopologySynchronised();
 
@@ -829,12 +809,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         store.setFitchSetsStale(true);
 
         // the sites at which any state changed
-        final IntBuffer changed = new IntBuffer();
-        addFlagged(changed, substitutionSites, substitutionSites.length);
-        addFlagged(changed, pass.changedSites.values, pass.changedSites.count);
-        addFlagged(changed, move.oldHotSites, move.oldHotSites.length);
-        addFlagged(changed, newHotSites, newHotSites.length);
-        final int[] changedSites = sortSites(changed.values, changed.count);
+        changedSites.addAll(substitutionSites, substitutionSites.length);
+        changedSites.addAll(pass.otherChangedSites);
+        changedSites.addAll(move.oldHotSites, move.oldHotSites.length);
+        changedSites.addAll(newHotSites, newHotSites.length);
+        final int[] sortedChanges = sortSites(changedSites);
 
         // the branches whose parent changed are recomputed in full; those whose ends changed only at the
         // changed sites are updated there
@@ -854,11 +833,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             addWithChildren(touched, n, touchedStamp);
         }
         for (int i = 0; i < touched.count; i++) {
-            store.updateBranchSites(touched.values[i], resampledSites, changedSites);
+            store.updateBranchSites(touched.values[i], changedSites, sortedChanges);
         }
-        for (int site : changedSites) {
-            resampledSites[site] = false;
-        }
+        changedSites.clear();
         delegate.markTopologySynchronised();
 
         return move.logProposalOfOldStates - logProposalOfNewStates;
@@ -949,15 +926,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return sites.toArray();
     }
 
-    private void addFlagged(IntBuffer buffer, int[] sites, int count) {
-        for (int i = 0; i < count; i++) {
-            if (!resampledSites[sites[i]]) {
-                resampledSites[sites[i]] = true;
-                buffer.add(sites[i]);
-            }
-        }
-    }
-
     private void addWithChildren(IntBuffer nodes, int n, int markStamp) {
         addUnmarked(nodes, n, markStamp);
         NodeRef node = tree.getNode(n);
@@ -1033,17 +1001,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         sampleBlock(internal, true);
         if (historyModel.hasExplicitHistories()) {
             int[] sites = getVariableSites(internal);
-            for (int p : sites) {
-                resampledSites[p] = true;
-            }
+            changedSites.addAll(sites, sites.length);
             List<Integer> branches = new ArrayList<Integer>();
             for (int n : getNonRootNodes()) {
                 branches.add(n);
             }
             sampleHistories(branches, sites);
-            for (int p : sites) {
-                resampledSites[p] = false;
-            }
+            changedSites.clear();
         } else {
             store.updateAllBranches();
         }
@@ -1131,8 +1095,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     /**
-     * Draws the hits of the sites flagged in resampledSites (listed in sites) on the branches above the
-     * given nodes, given their end states, keeping the events of the other sites.
+     * Draws the hits of the sites in changedSites (listed in pattern order in sites) on the branches above
+     * the given nodes, given their end states, keeping the events of the other sites.
      *
      * @return the log probability of the drawn hits
      */
@@ -1151,7 +1115,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             int k = 0;
             while (k < old.getSubstitutionCount()) {
                 int siteEnd = old.getSiteEnd(k);
-                if (!resampledSites[old.getPattern(k)]) {
+                if (!changedSites.contains(old.getPattern(k))) {
                     for (int i = k; i < siteEnd; i++) {
                         builder.addSubstitution(old.getPattern(i), old.getFromState(i), old.getToState(i),
                                 old.hasTimes() ? old.getTime(i) : (i - k + 1.0) / (siteEnd - k + 1.0));
@@ -1160,7 +1124,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 k = siteEnd;
             }
             for (int i = old.getSubstitutionCount(); i < old.size(); i++) {
-                if (!resampledSites[old.getPattern(i)]) {
+                if (!changedSites.contains(old.getPattern(i))) {
                     builder.addAmbiguity(old.getPattern(i), old.getFromState(i));
                 }
             }
@@ -1267,6 +1231,23 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         for (int i = 0; i < count; i++) {
             siteBits[sites[i] >> 6] |= 1L << (sites[i] & 63);
         }
+        return takeSortedSites(count);
+    }
+
+    private int[] sortSites(IndexSet sites) {
+        if (siteBits == null) {
+            siteBits = new long[(patternCount + 63) / 64];
+        }
+        for (int i = 0; i < sites.size(); i++) {
+            siteBits[sites.get(i) >> 6] |= 1L << (sites.get(i) & 63);
+        }
+        return takeSortedSites(sites.size());
+    }
+
+    /**
+     * @return the sites set in siteBits (which it clears), in pattern order
+     */
+    private int[] takeSortedSites(int count) {
         int[] sorted = new int[count];
         int k = 0;
         for (int word = 0; word < siteBits.length; word++) {
@@ -1699,7 +1680,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         double ambiguityLogProbability;
         double uniformLogProbability;
         // the sites, other than those handled individually, whose block states changed (when drawing)
-        final IntBuffer changedSites = new IntBuffer();
+        final IndexSet otherChangedSites = passChangedSites;
         int changedUniformCount;
 
         SparsePass(int referenceNode, int[] uniformCounts) {
@@ -1720,16 +1701,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         abstract double sampleAmbiguitySites(Block block);
 
         void run(Block block) {
-            changedSiteStamp++;
+            otherChangedSites.clear();
             ambiguityLogProbability = sampleAmbiguitySites(block);
             uniformLogProbability = sampleUniformSites(block);
-        }
-
-        void addChangedSite(int p) {
-            if (changedSiteStamps[p] != changedSiteStamp) {
-                changedSiteStamps[p] = changedSiteStamp;
-                changedSites.add(p);
-            }
         }
 
         /**
@@ -1783,7 +1757,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     logProbability += sampleChangedUniformPattern(block, uniform[j], p);
                     changedCounts[j]++;
                     changedUniformCount++;
-                    addChangedSite(p);
+                    otherChangedSites.add(p);
                 }
             }
             for (int i = 0; i < classCount; i++) {
@@ -1996,7 +1970,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                         }
                         int p = group.sites.values[(int) index];
                         logProbability += sampleChangedUniformPattern(block, uniform, p);
-                        addChangedSite(p);
+                        otherChangedSites.add(p);
                         changedCount++;
                     }
                 }
@@ -2023,7 +1997,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 }
             }
             if (changed) {
-                addChangedSite(p);
+                otherChangedSites.add(p);
             }
         }
     }
@@ -2241,14 +2215,14 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                                 for (int p = position; p < Math.min(runStart, end); p++) {
                                     if (!isExcluded(p)) {
                                         block.setState(0, p, -1);
-                                        addChangedSite(p);
+                                        otherChangedSites.add(p);
                                     }
                                 }
                             } else {
                                 for (int p = Math.max(runStart, position); p < runEnd; p++) {
                                     if (!isExcluded(p)) {
                                         block.setState(0, p, neighbourStates[first][p]);
-                                        addChangedSite(p);
+                                        otherChangedSites.add(p);
                                     }
                                 }
                             }
@@ -2302,7 +2276,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                         }
                         int p = locate(group, (int) index);
                         logProbability += sampleChangedUniformPattern(block, uniform, p);
-                        addChangedSite(p);
+                        otherChangedSites.add(p);
                         changedCount++;
                     }
                 }

@@ -82,9 +82,7 @@ public final class DefaultMutationStore implements MutationStore {
     private byte[] scratchTo;
 
     // the nodes whose states or branch events have changed since the log was last cleared
-    private final boolean[] changeLogged;
-    private final int[] changeLog;
-    private int changeLogCount = 0;
+    private final IndexSet changedNodes;
 
     // journal
     private final int[] savedParents;
@@ -102,9 +100,7 @@ public final class DefaultMutationStore implements MutationStore {
     private final boolean[] statesDirty;
     private final boolean[] fitchSetsDirty;
     private final boolean[] branchDirty;
-    private final int[] dirtyNodes;
-    private int dirtyNodeCount = 0;
-    private final boolean[] nodeInJournal;
+    private final IndexSet journaledNodes;
 
     /**
      * @param patternWeights the weight of each pattern (for the compositions; may be longer than patternCount)
@@ -123,8 +119,7 @@ public final class DefaultMutationStore implements MutationStore {
         Arrays.fill(mutations, BranchMutations.EMPTY);
         this.stateVersions = new long[nodeCount];
         this.compositions = new double[nodeCount][];
-        this.changeLogged = new boolean[nodeCount];
-        this.changeLog = new int[nodeCount];
+        this.changedNodes = new IndexSet(nodeCount);
 
         this.savedStates = new byte[nodeCount][];
         this.savedStateVersions = new long[nodeCount];
@@ -134,10 +129,9 @@ public final class DefaultMutationStore implements MutationStore {
         this.statesDirty = new boolean[nodeCount];
         this.fitchSetsDirty = new boolean[nodeCount];
         this.branchDirty = new boolean[nodeCount];
-        this.nodeInJournal = new boolean[nodeCount];
+        this.journaledNodes = new IndexSet(nodeCount);
         this.savedParents = new int[nodeCount];
         this.parentDirty = new boolean[nodeCount];
-        this.dirtyNodes = new int[nodeCount];
     }
 
     private static int findRoot(int[] parents) {
@@ -203,7 +197,7 @@ public final class DefaultMutationStore implements MutationStore {
             rootSaved = true;
         }
         if (!parentDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             savedParents[nodeNumber] = parents[nodeNumber];
             parentDirty[nodeNumber] = true;
         }
@@ -239,7 +233,7 @@ public final class DefaultMutationStore implements MutationStore {
         if (categories != null) {
             categoryCompositions[nodeNumber] = null;
         }
-        logChange(nodeNumber);
+        changedNodes.add(nodeNumber);
         return states[nodeNumber];
     }
 
@@ -285,7 +279,7 @@ public final class DefaultMutationStore implements MutationStore {
             }
         }
         stateVersions[nodeNumber] = ++lastStateVersion;
-        logChange(nodeNumber);
+        changedNodes.add(nodeNumber);
     }
 
     /**
@@ -391,7 +385,7 @@ public final class DefaultMutationStore implements MutationStore {
 
     private void journalStates(int nodeNumber) {
         if (!statesDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             savedStates[nodeNumber] = states[nodeNumber];
             states[nodeNumber] = states[nodeNumber].clone();
             savedStateVersions[nodeNumber] = stateVersions[nodeNumber];
@@ -431,7 +425,7 @@ public final class DefaultMutationStore implements MutationStore {
 
     public long[] getWritableFitchSets(int nodeNumber) {
         if (!fitchSetsDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             long[] sets = fitchSets[nodeNumber];
             savedFitchSets[nodeNumber] = sets;
             fitchSets[nodeNumber] = sets == null ? new long[patternCount] : sets.clone();
@@ -470,11 +464,11 @@ public final class DefaultMutationStore implements MutationStore {
      */
     public void updateBranch(int nodeNumber) {
         if (!branchDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             savedMutations[nodeNumber] = mutations[nodeNumber];
             branchDirty[nodeNumber] = true;
         }
-        logChange(nodeNumber);
+        changedNodes.add(nodeNumber);
 
         int parent = parents[nodeNumber];
         if (parent < 0) {
@@ -556,19 +550,19 @@ public final class DefaultMutationStore implements MutationStore {
      * Updates the events on the branch above the node when its states, or its parent's, have changed only
      * at the given sites (and the parent is unchanged): events at other sites are kept.
      *
-     * @param changed flags the sites in `sites`
+     * @param changed the set of the sites in `sites`
      * @param sites   the sites, in pattern order (the events of every branch are kept in pattern order)
      */
-    public void updateBranchSites(int nodeNumber, boolean[] changed, int[] sites) {
+    public void updateBranchSites(int nodeNumber, IndexSet changed, int[] sites) {
         if (sites.length == 0) {
             return;
         }
         if (!branchDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             savedMutations[nodeNumber] = mutations[nodeNumber];
             branchDirty[nodeNumber] = true;
         }
-        logChange(nodeNumber);
+        changedNodes.add(nodeNumber);
         int parent = parents[nodeNumber];
         if (parent < 0) {
             mutations[nodeNumber] = BranchMutations.EMPTY;
@@ -598,7 +592,7 @@ public final class DefaultMutationStore implements MutationStore {
                     subTo[subCount++] = childStates[p];
                 }
             }
-            if (k < old.getSubstitutionCount() && !changed[next]) {
+            if (k < old.getSubstitutionCount() && !changed.contains(next)) {
                 subPatterns[subCount] = next;
                 subFrom[subCount] = (byte) old.getFromState(k);
                 subTo[subCount++] = (byte) old.getToState(k);
@@ -615,7 +609,7 @@ public final class DefaultMutationStore implements MutationStore {
                     subFrom[ambEnd] = parentStates[p];
                 }
             }
-            if (k < old.size() && !changed[next]) {
+            if (k < old.size() && !changed.contains(next)) {
                 ambEnd--;
                 subPatterns[ambEnd] = next;
                 subFrom[ambEnd] = (byte) old.getFromState(k);
@@ -630,11 +624,11 @@ public final class DefaultMutationStore implements MutationStore {
      */
     public void setBranchMutations(int nodeNumber, BranchMutations branchMutations) {
         if (!branchDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             savedMutations[nodeNumber] = mutations[nodeNumber];
             branchDirty[nodeNumber] = true;
         }
-        logChange(nodeNumber);
+        changedNodes.add(nodeNumber);
         mutations[nodeNumber] = branchMutations;
     }
 
@@ -644,45 +638,28 @@ public final class DefaultMutationStore implements MutationStore {
         }
     }
 
-    private void logChange(int nodeNumber) {
-        if (!changeLogged[nodeNumber]) {
-            changeLogged[nodeNumber] = true;
-            changeLog[changeLogCount++] = nodeNumber;
-        }
-    }
-
     /**
      * @return the number of nodes whose states or branch events have changed (including by revert)
      * since {@link #clearChangeLog}
      */
     public int getChangedNodeCount() {
-        return changeLogCount;
+        return changedNodes.size();
     }
 
     public int getChangedNode(int i) {
-        return changeLog[i];
+        return changedNodes.get(i);
     }
 
     public void clearChangeLog() {
-        for (int i = 0; i < changeLogCount; i++) {
-            changeLogged[changeLog[i]] = false;
-        }
-        changeLogCount = 0;
-    }
-
-    private void journal(int nodeNumber) {
-        if (!nodeInJournal[nodeNumber]) {
-            nodeInJournal[nodeNumber] = true;
-            dirtyNodes[dirtyNodeCount++] = nodeNumber;
-        }
+        changedNodes.clear();
     }
 
     /**
      * Accepts all changes since the last commit.
      */
     public void commit() {
-        for (int i = 0; i < dirtyNodeCount; i++) {
-            int n = dirtyNodes[i];
+        for (int i = 0; i < journaledNodes.size(); i++) {
+            int n = journaledNodes.get(i);
             savedStates[n] = null;
             savedCompositions[n] = null;
             savedFitchSets[n] = null;
@@ -691,9 +668,8 @@ public final class DefaultMutationStore implements MutationStore {
             fitchSetsDirty[n] = false;
             branchDirty[n] = false;
             parentDirty[n] = false;
-            nodeInJournal[n] = false;
         }
-        dirtyNodeCount = 0;
+        journaledNodes.clear();
         rootSaved = false;
         savedCategories = null;
         fitchSetsStaleChanged = false;
@@ -708,10 +684,10 @@ public final class DefaultMutationStore implements MutationStore {
      * Discards all changes since the last commit.
      */
     public void revert() {
-        for (int i = 0; i < dirtyNodeCount; i++) {
-            int n = dirtyNodes[i];
+        for (int i = 0; i < journaledNodes.size(); i++) {
+            int n = journaledNodes.get(i);
             if (statesDirty[n] || branchDirty[n]) {
-                logChange(n);
+                changedNodes.add(n);
             }
             if (statesDirty[n]) {
                 // the states are as they were at the saved version, so caches keyed by it are valid again

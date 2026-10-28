@@ -104,9 +104,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private boolean hasGibbsOperator = false;
     private boolean gibbsWarningGiven = false;
 
-    // patterns grouped by weight, so conditionals can be looked up by [state][weight class]
-    private final int[] weightClass;
-    private final double[] classWeights;
     // the sites' rate classes: their site rate categories (0 with a single category), or none (-1) with
     // per-site rates; sparse passes count and group sites by (rate class, state)
     private final int rateClassCount;
@@ -131,7 +128,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private final int[] siteStamps;    // candidate sites of the current path move are stamped with stamp
     private int stamp = 0;
     private final double[] oldSiteLogProbabilities;
-    private final double[] newSiteLogProbabilities;
     private final IndexSet changedSites;     // the sites at which the current move changed any state
     private final IndexSet passChangedSites; // those changed by the current sparse pass (see SparsePass)
     private final long[] siteBits;     // work bits of sortSites
@@ -176,7 +172,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         this.siteClasses = new byte[patternCount];
         this.siteStamps = new int[patternCount];
         this.oldSiteLogProbabilities = new double[patternCount];
-        this.newSiteLogProbabilities = new double[patternCount];
         this.changedSites = new IndexSet(patternCount);
         this.passChangedSites = new IndexSet(patternCount);
         this.siteBits = new long[(patternCount + 63) / 64];
@@ -186,8 +181,9 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         this.patternWeights = delegate.getPatternWeights();
         final double[] weights = patternWeights;
+        // patterns grouped by weight, so that the block sampler can look conditionals up by weight class
         Map<Double, Integer> classes = new HashMap<Double, Integer>();
-        this.weightClass = new int[patternCount];
+        final int[] weightClass = new int[patternCount];
         for (int p = 0; p < patternCount; p++) {
             Integer c = classes.get(weights[p]);
             if (c == null) {
@@ -196,7 +192,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
             weightClass[p] = c;
         }
-        this.classWeights = new double[classes.size()];
+        final double[] classWeights = new double[classes.size()];
         for (Map.Entry<Double, Integer> e : classes.entrySet()) {
             classWeights[e.getValue()] = e.getKey();
         }
@@ -436,8 +432,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         final PathPass newPass = oldPass == null ? null :
                 new PathPass(oldPass.referenceNode, oldPass.uniformCounts, oldPass.substitutionSites,
                         oldPass.ambiguitySites, oldPass.candidateStamp);
-        double logProposalOfNewStates = sampleBlock(currentBlock, true, siteClasses, resampled,
-                newSiteLogProbabilities, newPass);
+        double logProposalOfNewStates = sampleBlock(currentBlock, true, siteClasses, resampled, null, newPass);
         lastChangedUniformCount = newPass == null ? 0 : newPass.changedUniformCount;
         delegate.setHistoryResampled();
 

@@ -63,6 +63,7 @@ import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
+import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.FileDrop;
 import dr.app.util.OSType;
 import dr.app.util.Utils;
@@ -70,7 +71,6 @@ import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
-import jam.util.IconUtils;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
@@ -130,7 +130,7 @@ public class BeautiFrame extends DocumentFrame {
     private Map<String, FileDialog> fileDialogs = new HashMap<String, FileDialog>();
     private Map<String, JFileChooser> fileChoosers = new HashMap<String, JFileChooser>();
 
-    final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
+    final Icon gearIcon = VectorIcons.gear(14);
 
     public BeautiFrame(String title) {
         super();

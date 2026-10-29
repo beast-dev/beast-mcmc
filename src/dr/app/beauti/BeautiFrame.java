@@ -304,6 +304,8 @@ public class BeautiFrame extends DocumentFrame {
 
         if (OSType.isMac()) {
             setMinimumSize(new java.awt.Dimension(640, 480));
+            // the title bar in the window's colour, continuous with the tabs below it (Java 12 and later)
+            getRootPane().putClientProperty("apple.awt.transparentTitleBar", Boolean.TRUE);
         }
 
         setAllOptions();

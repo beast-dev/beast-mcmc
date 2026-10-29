@@ -578,6 +578,39 @@ public class SubstitutionModelGenerator extends Generator {
     }
 
     /**
+     * Writes an idref to the partition model's substitution model (for the MAT likelihood, which takes the
+     * model directly; the model is not partitioned into codon positions).
+     */
+    public static void writeSubstitutionModelRef(PartitionSubstitutionModel model, XMLWriter writer) {
+        String prefix = model.getPrefix();
+        switch (model.getDataType().getType()) {
+            case DataType.NUCLEOTIDES:
+                switch (model.getNucSubstitutionModel()) {
+                    case JC:
+                        writer.writeIDref(NucModelType.HKY.getXMLName(), prefix + "jc");
+                        break;
+                    case HKY:
+                        writer.writeIDref(NucModelType.HKY.getXMLName(), prefix + "hky");
+                        break;
+                    case GTR:
+                        writer.writeIDref(GTRParser.GTR_MODEL, prefix + "gtr");
+                        break;
+                    case TN93:
+                        writer.writeIDref(NucModelType.TN93.getXMLName(), prefix + "tn93");
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown substitution model.");
+                }
+                break;
+            case DataType.AMINO_ACIDS:
+                writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
+                break;
+            default:
+                throw new IllegalArgumentException("The MAT likelihood supports nucleotide and amino acid data only.");
+        }
+    }
+
+    /**
      * Write the nucleotide site model XML block.
      *
      * @param num    the model number

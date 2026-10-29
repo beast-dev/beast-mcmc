@@ -136,6 +136,11 @@ public class PartitionTreeModel extends PartitionOptions {
             weight = Math.max(weight / 10, 3);
             createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
                     OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
+
+            // for the MAT likelihood engine: about 10% of the subtree moves' weight (see MutationHistoryGibbsOperator)
+            createOperator("mutationHistoryGibbs", "Mutation history",
+                    "Resamples the mutation history of a random node and up to two of its ancestors (MAT likelihood)",
+                    null, OperatorType.MUTATION_HISTORY_GIBBS, -1.0, weight);
         } else {
             double weight = Math.max(options.taxonList.getTaxonCount(), 30);
             createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
@@ -144,6 +149,11 @@ public class PartitionTreeModel extends PartitionOptions {
             weight = Math.max(weight / 10, 3);
             createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
                     OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
+
+            // for the MAT likelihood engine: about 10% of the subtree moves' weight (see MutationHistoryGibbsOperator)
+            createOperator("mutationHistoryGibbs", "Mutation history",
+                    "Resamples the mutation history of a random node and up to two of its ancestors (MAT likelihood)",
+                    null, OperatorType.MUTATION_HISTORY_GIBBS, -1.0, weight);
         }
 
         createOperator("empiricalTreeSwap", "Tree", "Sets the current tree from the empirical set", "tree",
@@ -182,25 +192,35 @@ public class PartitionTreeModel extends PartitionOptions {
             operators.add(getOperator("empiricalTreeSwap"));
         } else {
             if (treePartitionData == null) {
-                Operator subtreeSlideOp = getOperator("subtreeSlide");
-                if (!subtreeSlideOp.isTuningEdited()) {
-                    double tuning = 1.0;
-                    if (!Double.isNaN(getInitialRootHeight()) && !Double.isInfinite(getInitialRootHeight())) {
-                        tuning = getInitialRootHeight() / 10.0;
-                    }
-                    subtreeSlideOp.setTuning(tuning);
-                }
+                // The MAT likelihood resamples the mutation history along with the subtree-leap and
+                // fixed-height SPR moves; the classic topology operators cannot, so they are left out, and the
+                // history also mixes through its own Gibbs operator.
+                final boolean mat = options.isMAT();
 
-                operators.add(subtreeSlideOp);
-                operators.add(getOperator("narrowExchange"));
-                operators.add(getOperator("wideExchange"));
-                operators.add(getOperator("wilsonBalding"));
+                if (!mat) {
+                    Operator subtreeSlideOp = getOperator("subtreeSlide");
+                    if (!subtreeSlideOp.isTuningEdited()) {
+                        double tuning = 1.0;
+                        if (!Double.isNaN(getInitialRootHeight()) && !Double.isInfinite(getInitialRootHeight())) {
+                            tuning = getInitialRootHeight() / 10.0;
+                        }
+                        subtreeSlideOp.setTuning(tuning);
+                    }
+
+                    operators.add(subtreeSlideOp);
+                    operators.add(getOperator("narrowExchange"));
+                    operators.add(getOperator("wideExchange"));
+                    operators.add(getOperator("wilsonBalding"));
+                }
 
                 operators.add(getOperator("treeModel.rootHeight"));
                 operators.add(getOperator("uniformHeights"));
 
                 operators.add(getOperator("subtreeLeap"));
                 operators.add(getOperator("FHSPR"));
+                if (mat) {
+                    operators.add(getOperator("mutationHistoryGibbs"));
+                }
 
                 if (options.operatorSetType != OperatorSetType.CUSTOM) {
                     // do nothing
@@ -214,7 +234,9 @@ public class PartitionTreeModel extends PartitionOptions {
                         if (options.operatorSetType == OperatorSetType.DEFAULT) {
                             newTreeOperatorsInUse = true;    // default is now the new tree operators
                         } else if (options.operatorSetType == OperatorSetType.CLASSIC) {
-                            defaultInUse = true;
+                            // (the MAT has no classic operators: the generator refuses the combination)
+                            defaultInUse = !mat;
+                            newTreeOperatorsInUse = mat;
                             branchesInUse = true;
                         } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
                             branchesInUse = true;
@@ -237,10 +259,16 @@ public class PartitionTreeModel extends PartitionOptions {
 
                     getOperator("subtreeLeap").setUsed(newTreeOperatorsInUse);
                     getOperator("FHSPR").setUsed(newTreeOperatorsInUse);
+                    // the history must mix even when the tree is fixed
+                    getOperator("mutationHistoryGibbs").setUsed(mat);
                 }
             } else {
                 getOperator("subtreeLeap").setUsed(true);
                 getOperator("FHSPR").setUsed(true);
+                if (options.isMAT()) {
+                    operators.add(getOperator("mutationHistoryGibbs"));
+                    getOperator("mutationHistoryGibbs").setUsed(true);
+                }
             }
         }
         return operators;

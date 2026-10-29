@@ -405,6 +405,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             createZeroOneParameterUniformPrior("nu", "relative rate parameter", 1.0, true);
             createNonNegativeParameterInfinitePrior("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         }
+
+        // for the MAT likelihood engine with gamma rate heterogeneity: about 1% of the subtree moves' weight
+        // (see SiteRateCategoryGibbsOperator); it has no parameter, and the generator finds the partition
+        // through the partition options
+        double categoryWeight = Math.max(options.taxonList.getTaxonCount(), 30) / 100.0;
+        operators.put("siteRateCategoryGibbs", new Operator.Builder("Site rate categories",
+                "Resamples the site rate category of every variable site (MAT likelihood)", null,
+                OperatorType.SITE_RATE_CATEGORY_GIBBS, -1.0, categoryWeight).partitionOptions(this).build());
     }
 
     ////////////////////////////////////////////////////////////////
@@ -854,6 +862,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
                 }
             }
+        }
+
+        if (options.isMAT() && isGammaHetero() &&
+                (dataType == DataType.NUCLEOTIDES || dataType == DataType.AMINO_ACIDS)) {
+            // the MAT likelihood samples each variable site's rate category (it has no parameter)
+            Operator op = getOperator("siteRateCategoryGibbs");
+            if (options.operatorSetType != OperatorSetType.CUSTOM) {
+                op.setUsed(true);
+            }
+            ops.add(op);
         }
 
         operators.addAll(ops);

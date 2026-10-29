@@ -29,6 +29,9 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.types.ClockType;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.treedatalikelihood.MAT.MATDataLikelihoodParser;
+import dr.evomodelxml.treedatalikelihood.MAT.MATStatisticParser;
+import dr.evomodelxml.treedatalikelihood.MAT.MutationHistoryResamplerParser;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
@@ -57,6 +60,66 @@ public class TreeLikelihoodGenerator extends Generator {
 
     public TreeLikelihoodGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
+    }
+
+    // the ids (after the tree model's prefix) of the MAT likelihood's history resampler and its statistic
+    public static final String MAT_RESAMPLER = "matResampler";
+    public static final String MAT_STATISTIC = "mat";
+
+    /**
+     * Writes the MAT (mutation-annotated tree) likelihood of the single partition of a tree, with the
+     * resampler that draws its mutation history along with the subtree moves and the statistic counting its
+     * mutations. The MAT takes one pattern list and the substitution model directly (no codon positions).
+     */
+    private void writeMATDataLikelihood(List<PartitionData> partitions, XMLWriter writer) {
+        if (partitions.size() != 1 || partitions.get(0).getPartitionSubstitutionModel().getCodonHeteroPattern() != null) {
+            throw new IllegalArgumentException("The MAT likelihood takes one data partition per tree, without codon positions");
+        }
+        PartitionData partition = partitions.get(0);
+        PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+        PartitionClockModel clockModel = partition.getPartitionClockModel();
+
+        String idString = getTreeDataLikelihoodId(treeModel, clockModel);
+
+        writer.writeComment("Mutation-annotated tree (MAT) likelihood for tree given sequence data");
+        writer.writeOpenTag(MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, idString)});
+        writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + SitePatternsParser.PATTERNS);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
+        SubstitutionModelGenerator.writeSubstitutionModelRef(substModel, writer);
+        writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+        writer.writeCloseTag(MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD);
+
+        writer.writeComment("Resamples the mutation history along with the subtree moves");
+        writer.writeOpenTag(MutationHistoryResamplerParser.MUTATION_HISTORY_RESAMPLER,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treeModel.getPrefix() + MAT_RESAMPLER)});
+        writer.writeIDref(MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD, idString);
+        writer.writeCloseTag(MutationHistoryResamplerParser.MUTATION_HISTORY_RESAMPLER);
+
+        writer.writeComment("Number of mutations and ambiguities in the MAT");
+        String statistic = treeModel.getPrefix() + MAT_STATISTIC;
+        writer.writeOpenTag(MATStatisticParser.MAT_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, statistic),
+                        new Attribute.Default<String>("name", statistic)
+                });
+        writer.writeIDref(MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD, idString);
+        writer.writeCloseTag(MATStatisticParser.MAT_STATISTIC);
+    }
+
+    /**
+     * Writes idrefs to the MAT likelihoods' mutation statistics (nothing with the BEAGLE engine).
+     */
+    public void writeMATStatisticReferences(XMLWriter writer) {
+        if (!options.isMAT()) {
+            return;
+        }
+        for (List<PartitionData> partitions : options.multiPartitionLists) {
+            PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
+            writer.writeIDref(MATStatisticParser.MAT_STATISTIC, treeModel.getPrefix() + MAT_STATISTIC);
+        }
     }
 
     public void writeAllTreeLikelihoods(XMLWriter writer) throws GeneratorException {
@@ -90,6 +153,10 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     public void writeTreeDataLikelihood(List<PartitionData> partitions, XMLWriter writer) {
+        if (options.isMAT()) {
+            writeMATDataLikelihood(partitions, writer);
+            return;
+        }
 
         PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
@@ -280,7 +347,8 @@ public class TreeLikelihoodGenerator extends Generator {
             PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
             PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, getTreeDataLikelihoodId(treeModel, clockModel));
+            writer.writeIDref(options.isMAT() ? MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD : TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD,
+                    getTreeDataLikelihoodId(treeModel, clockModel));
         }
 
         for (AbstractPartitionData partition : options.otherPartitions) {

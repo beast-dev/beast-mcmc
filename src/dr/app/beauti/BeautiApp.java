@@ -175,9 +175,6 @@ public class BeautiApp extends MultiDocApplication {
             // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             System.setProperty("apple.awt.application.name", "BEAUti");
-
-            UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-            UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
         }
 
         try {
@@ -208,8 +205,7 @@ public class BeautiApp extends MultiDocApplication {
             final String versionString = VERSION.getVersionString();
 
             String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
-                    "font-weight: 100;" +
+                    "<div style=\"font-family:sans-serif; " +
                     "background-color: " + backgroundColor + "; color: " + foregroundColor + ";" +
                     "\">" +
                     "<center>" +

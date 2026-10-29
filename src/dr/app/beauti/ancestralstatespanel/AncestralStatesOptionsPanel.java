@@ -293,8 +293,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
         if (mat) {
             addSpanningComponent(new JLabel("<html>These options are not available with the MAT likelihood engine<br>" +
-                    "(see the Sites panel): it samples the mutation history itself, but cannot<br>" +
-                    "reconstruct ancestral states, count state changes or model sequence error.<html>"));
+                    "(see the Sites panel).<html>"));
         }
 
         if (ancestralReconstructionAvailable) {

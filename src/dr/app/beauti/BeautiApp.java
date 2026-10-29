@@ -30,6 +30,7 @@ package dr.app.beauti;
 import dr.app.beast.BeastMain;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
 import dr.app.util.OSType;
 import dr.util.Version;
 import jam.framework.*;
@@ -171,13 +172,9 @@ public class BeautiApp extends MultiDocApplication {
             // Explicitly turn on font antialiasing.
             System.setProperty("swing.aatext", "true");
 
-            System.setProperty("apple.awt.graphics.UseQuartz", "true");
-            System.setProperty("apple.awt.antialiasing", "true");
-            System.setProperty("apple.awt.rendering", "VALUE_RENDER_QUALITY");
-
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.draggableWindowBackground", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.application.name", "BEAUti");
 
             UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
             UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
@@ -235,6 +232,10 @@ public class BeautiApp extends MultiDocApplication {
                 }
             });
             app.initialize();
+            if (OSType.isMac()) {
+                // the application menu, Dock icon and file opening (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(app, IconUtils.getIcon(BeautiApp.class, "images/beauti.png"));
+            }
 
             if (inputFileName != null) {
                 app.doOpen(inputFileName);

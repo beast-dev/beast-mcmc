@@ -103,14 +103,42 @@ public final class MacDesktopIntegration {
             Application.getMenuBarFactory().populateMenuBar(menuBar, null);
             Desktop.class.getMethod("setDefaultMenuBar", JMenuBar.class).invoke(desktop, menuBar);
 
-            if (dockIcon instanceof ImageIcon) {
-                Class<?> taskbarClass = Class.forName("java.awt.Taskbar");
-                Object taskbar = taskbarClass.getMethod("getTaskbar").invoke(null);
-                taskbarClass.getMethod("setIconImage", Image.class).invoke(taskbar, ((ImageIcon) dockIcon).getImage());
-            }
+            setDockIcon(dockIcon);
         } catch (Exception e) {
             // (ReflectiveOperationException on Java 8; UnsupportedOperationException where a feature is missing)
             System.err.println("The macOS application menu could not be set up: " + e);
+        }
+    }
+
+    /**
+     * Registers only an About handler and the Dock icon: for a program that shows a dialog without a jam
+     * Application (such as BEAST's options dialog).
+     *
+     * @param about    shows the about box
+     * @param dockIcon the image for the Dock (an ImageIcon), or null to leave the Dock icon alone
+     */
+    public static void registerAbout(final Runnable about, Icon dockIcon) {
+        try {
+            if (!Desktop.isDesktopSupported()) {
+                return;
+            }
+            setHandler(Desktop.getDesktop(), "setAboutHandler", "java.awt.desktop.AboutHandler", new InvocationHandler() {
+                public Object invoke(Object proxy, Method method, Object[] args) {
+                    about.run();
+                    return null;
+                }
+            });
+            setDockIcon(dockIcon);
+        } catch (Exception e) {
+            System.err.println("The macOS application menu could not be set up: " + e);
+        }
+    }
+
+    private static void setDockIcon(Icon dockIcon) throws Exception {
+        if (dockIcon instanceof ImageIcon) {
+            Class<?> taskbarClass = Class.forName("java.awt.Taskbar");
+            Object taskbar = taskbarClass.getMethod("getTaskbar").invoke(null);
+            taskbarClass.getMethod("setIconImage", Image.class).invoke(taskbar, ((ImageIcon) dockIcon).getImage());
         }
     }
 

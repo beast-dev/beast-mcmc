@@ -269,7 +269,33 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
         }
 
+        // The MAT likelihood engine samples the mutation history itself, but has no ancestral state,
+        // state-change count or sequence error model output: switch these off and explain.
+        final int dataType = partition.getDataType().getType();
+        final boolean mat = options.isMAT() &&
+                (dataType == DataType.NUCLEOTIDES || dataType == DataType.AMINO_ACIDS);
+        if (mat) {
+            ancestralReconstructionCheck.setSelected(false);
+            mrcaReconstructionCheck.setSelected(false);
+            countingCheck.setSelected(false);
+            dNdSRobustCountingCheck.setSelected(false);
+            completeHistoryLoggingCheck.setSelected(false);
+            errorModelCombo.setSelectedItem(SequenceErrorType.NO_ERROR);
+            ancestralStatesComponent.setReconstructAtNodes(partition, false);
+            ancestralStatesComponent.setReconstructAtMRCA(partition, false);
+            ancestralStatesComponent.setCountingStates(partition, false);
+            ancestralStatesComponent.setDNdSRobustCounting(partition, false);
+            ancestralStatesComponent.setCompleteHistoryLogging(partition, false);
+            sequenceErrorComponent.setSequenceErrorType(partition, SequenceErrorType.NO_ERROR);
+        }
+
         removeAll();
+
+        if (mat) {
+            addSpanningComponent(new JLabel("<html>These options are not available with the MAT likelihood engine<br>" +
+                    "(see the Sites panel): it samples the mutation history itself, but cannot<br>" +
+                    "reconstruct ancestral states, count state changes or model sequence error.<html>"));
+        }
 
         if (ancestralReconstructionAvailable) {
             if (partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 2) {
@@ -294,7 +320,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             panel.add(mrcaReconstructionCombo);
             addComponent(panel);
 
-            boolean enabled = true;
+            boolean enabled = !mat;
 
             if (partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 2) {
                 // mergedPatterns for codon positions 1&2 will always be compressed...
@@ -327,7 +353,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
             addComponent(countingCheck);
 
-            boolean enableSimpleCounting = true;
+            boolean enableSimpleCounting = !mat;
 
             // TODO Simple counting is currently not available for codon partitioned models due to BEAUti limitation
             if (ancestralStatesComponent.dNdSRobustCountingAvailable(partition) || partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 2) {
@@ -359,7 +385,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 PanelUtils.setupComponent(dNnSText);
                 addComponent(dNnSText);
 
-                boolean enableRC = ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
+                boolean enableRC = !mat && ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
                 // && !ancestralStatesComponent.isCountingStates(partition);
                 dNdSRobustCountingCheck.setEnabled(enableRC);
 
@@ -373,7 +399,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             }
 
             addComponent(completeHistoryLoggingCheck);
-            completeHistoryLoggingCheck.setEnabled(countingCheck.isSelected() || dNdSRobustCountingCheck.isSelected());
+            completeHistoryLoggingCheck.setEnabled(!mat && (countingCheck.isSelected() || dNdSRobustCountingCheck.isSelected()));
 
         }
 
@@ -385,7 +411,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             addSpanningComponent(label3);
             JLabel label4 = addComponentWithLabel("Error Model:", errorModelCombo);
 
-            boolean enabled = (partition.getPartitionSubstitutionModel().getCodonPartitionCount() != 2);
+            boolean enabled = !mat && (partition.getPartitionSubstitutionModel().getCodonPartitionCount() != 2);
 
             label3.setEnabled(enabled);
             label4.setEnabled(enabled);

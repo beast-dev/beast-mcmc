@@ -35,6 +35,7 @@ import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
+import dr.app.beauti.types.LikelihoodEngineType;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
 import dr.evolution.alignment.Alignment;
@@ -1258,6 +1259,20 @@ public class BeautiOptions extends ModelOptions {
     public boolean useClassicOperatorsAndPriors = false;
 
     public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
+
+    // the engine computing the sequence likelihoods (null in files saved before it could be chosen)
+    public LikelihoodEngineType likelihoodEngineType = LikelihoodEngineType.BEAGLE;
+
+    public LikelihoodEngineType getLikelihoodEngineType() {
+        return likelihoodEngineType == null ? LikelihoodEngineType.BEAGLE : likelihoodEngineType;
+    }
+
+    /**
+     * @return true if the sequence likelihoods use the MAT (mutation-annotated tree) engine
+     */
+    public boolean isMAT() {
+        return likelihoodEngineType == LikelihoodEngineType.MAT;
+    }
 
     //map that indicate for each partition whether a coalescent model is required
     //if not, a backward-in-time model has already been specified for that partition

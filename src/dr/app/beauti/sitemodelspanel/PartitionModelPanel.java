@@ -79,8 +79,13 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType
             .values());
 
-    private JComboBox heteroCombo = new JComboBox(new String[]{"None",
-            "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
+    // the site heterogeneity choices, indexed by (gamma ? 1 : 0) + (invariant ? 2 : 0); the MAT likelihood
+    // has no invariant sites
+    private static final String[] HETERO_CHOICES = {"None",
+            "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"};
+    private static final String[] HETERO_CHOICES_MAT = {HETERO_CHOICES[0], HETERO_CHOICES[1]};
+
+    private JComboBox heteroCombo = new JComboBox(HETERO_CHOICES);
 
     private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
             "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
@@ -660,15 +665,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 throw new IllegalArgumentException("Unknown data type");
         }
 
-        if (model.isGammaHetero() && !model.isInvarHetero()) {
-            heteroCombo.setSelectedIndex(1);
-        } else if (!model.isGammaHetero() && model.isInvarHetero()) {
-            heteroCombo.setSelectedIndex(2);
-        } else if (model.isGammaHetero() && model.isInvarHetero()) {
-            heteroCombo.setSelectedIndex(3);
-        } else {
-            heteroCombo.setSelectedIndex(0);
-        }
+        updateEngineState();
 
         gammaCatCombo.setSelectedIndex(model.getRateCategories() - 4);
 
@@ -685,6 +682,35 @@ public class PartitionModelPanel extends OptionsPanel {
         freqsUnlinkCheck.setSelected(model.isUnlinkedFrequencyModel());
 
         dolloCheck.setSelected(model.isDolloModel());
+    }
+
+    /**
+     * Selects the site heterogeneity model and enables only the options the likelihood engine supports:
+     * the MAT likelihood (see {@link BeautiOptions#isMAT()}) has no invariant sites and takes one pattern
+     * list per tree, so no codon partitioning. It applies to sequence data only.
+     */
+    private void updateEngineState() {
+        int dataType = model.getDataType().getType();
+        boolean mat = model.getOptions().isMAT() &&
+                (dataType == DataType.NUCLEOTIDES || dataType == DataType.AMINO_ACIDS);
+
+        if (mat && model.isInvarHetero()) {
+            model.setInvarHetero(false);
+        }
+        if (mat && model.getCodonHeteroPattern() != null) {
+            model.setCodonHeteroPattern(null);
+        }
+        String hetero = HETERO_CHOICES[(model.isGammaHetero() ? 1 : 0) + (model.isInvarHetero() ? 2 : 0)];
+        String[] choices = mat ? HETERO_CHOICES_MAT : HETERO_CHOICES;
+        if (heteroCombo.getItemCount() != choices.length) {
+            // (selecting an item below keeps the model in step with the combo)
+            heteroCombo.setModel(new DefaultComboBoxModel(choices));
+        }
+        heteroCombo.setSelectedItem(hetero);
+
+        codingCombo.setEnabled(!mat);
+        setYang96Button.setEnabled(!mat);
+        setSRD06Button.setEnabled(!mat);
     }
 
     /**

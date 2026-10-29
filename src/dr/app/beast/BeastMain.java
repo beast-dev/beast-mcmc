@@ -32,6 +32,8 @@ import beagle.BeagleInfo;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
+import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
@@ -842,11 +844,12 @@ public class BeastMain {
         String nameString = "BEAST X v" + version.getVersion();
 
         if (window) {
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.application.name", "BEAST");
 
-            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+            javax.swing.Icon fullIcon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(fullIcon, 128, 128);
 
             String titleString = "<html>" +
                     "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
@@ -865,6 +868,10 @@ public class BeastMain {
 
             consoleApp = new BeastConsoleApp(nameString, titleString, aboutString,  icon);
             consoleApp.initialize();
+            if (OSType.isMac()) {
+                // the application menu and Dock icon (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(consoleApp, fullIcon);
+            }
 
         }
 

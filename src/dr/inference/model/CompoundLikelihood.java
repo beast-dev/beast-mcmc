@@ -27,7 +27,7 @@
 
 package dr.inference.model;
 
-import dr.util.BenchmarkTimer;
+import dr.inference.markovchain.ChainProfile;
 import dr.util.Keywordable;
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
@@ -44,13 +44,6 @@ import java.util.concurrent.*;
 public class CompoundLikelihood implements Likelihood, Profileable, Reportable, Keywordable {
 
     public final static boolean UNROLL_COMPOUND = true;
-
-    public final static boolean BENCHMARK_TIME = false;
-    public BenchmarkTimer timer = new BenchmarkTimer();
-
-    public final static boolean EVALUATION_TIMERS = true;
-    public final long[] evaluationTimes;
-    public final int[] evaluationCounts;
 
     public CompoundLikelihood(int threads, Collection<Likelihood> likelihoods) {
 
@@ -80,14 +73,6 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
             // don't use a threadpool (i.e., compute serially)
             pool = null;
         }
-
-        if (EVALUATION_TIMERS) {
-            evaluationTimes = new long[this.likelihoods.size()];
-            evaluationCounts = new int[this.likelihoods.size()];
-        } else {
-            evaluationTimes = null;
-            evaluationCounts = null;
-        }
     }
 
     public CompoundLikelihood(Collection<Likelihood> likelihoods) {
@@ -100,24 +85,7 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
             addLikelihood(l, i, false);
             i++;
         }
-
-        if (EVALUATION_TIMERS) {
-            evaluationTimes = new long[this.likelihoods.size()];
-            evaluationCounts = new int[this.likelihoods.size()];
-        } else {
-            evaluationTimes = null;
-            evaluationCounts = null;
-        }
     }
-
-//    public CompoundLikelihood(BeagleBranchLikelihoods bbl) {
-//
-//        pool = null;
-//        threadCount = 0;
-//        evaluationTimes = null;
-//        evaluationCounts = null;
-//        
-//    }
 
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
@@ -196,9 +164,6 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 //    static int DEBUG = 0;
 
     public double getLogLikelihood() {
-        if(BENCHMARK_TIME) {
-            timer.startTimer(getId());
-        }
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
 
         if( logLikelihood == Double.NEGATIVE_INFINITY ) {
@@ -234,38 +199,19 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
         if (DEBUG_PARALLEL_EVALUATION) {
             System.err.println("");
         }
-        if(BENCHMARK_TIME) {
-            timer.stopTimer(getId());
-        }
         return logLikelihood;
     }
 
     private double evaluateLikelihoods(ArrayList<Likelihood> likelihoods) {
         double logLikelihood = 0.0;
-        int i = 0;
         for (Likelihood likelihood : likelihoods) {
-            if (EVALUATION_TIMERS) {
-                // this code is only compiled if EVALUATION_TIMERS is true
-                long time = System.nanoTime();
-                double l = likelihood.getLogLikelihood();
-                evaluationTimes[i] += System.nanoTime() - time;
-                evaluationCounts[i] ++;
-
-                if( l == Double.NEGATIVE_INFINITY )
-                    return Double.NEGATIVE_INFINITY;
-
-                logLikelihood += l;
-
-                i++;
-            } else {
-                final double l = likelihood.getLogLikelihood();
-                // if the likelihood is zero then short cut the rest of the likelihoods
-                // This means that expensive likelihoods such as TreeLikelihoods should
-                // be put after cheap ones such as BooleanLikelihoods
-                if( l == Double.NEGATIVE_INFINITY )
-                    return Double.NEGATIVE_INFINITY;
-                logLikelihood += l;
-            }
+            final double l = ChainProfile.LIKELIHOODS ? ChainProfile.evaluate(likelihood) : likelihood.getLogLikelihood();
+            // if the likelihood is zero then short cut the rest of the likelihoods
+            // This means that expensive likelihoods such as TreeLikelihoods should
+            // be put after cheap ones such as BooleanLikelihoods
+            if( l == Double.NEGATIVE_INFINITY )
+                return Double.NEGATIVE_INFINITY;
+            logLikelihood += l;
         }
 
         return logLikelihood;
@@ -370,21 +316,6 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
         return threadCount;
     }
 
-    public long[] getEvaluationTimes() {
-        return evaluationTimes;
-    }
-
-    public int[] getEvaluationCounts() {
-        return evaluationCounts;
-    }
-
-    public void resetEvaluationTimes() {
-        for (int i = 0; i < evaluationTimes.length; i++) {
-            evaluationTimes[i] = 0;
-            evaluationCounts[i] = 0;
-        }
-    }
-    
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
@@ -455,65 +386,50 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
     public String getReport(int indent) {
         String message = "\n";
-        if(BENCHMARK_TIME) {
-            message += "Wall-clock time: (CompoundLikelihood)" + timer.toString();
-        }
-        if (EVALUATION_TIMERS) {
-            boolean first = true;
+        boolean first = true;
 
-            final NumberFormatter nf = new NumberFormatter(6);
+        double logLikelihood = this.getLogLikelihood();
 
-            double logLikelihood = this.getLogLikelihood();
+        for( Likelihood lik : likelihoods ) {
 
-            int index = 0;
-            for( Likelihood lik : likelihoods ) {
+            if( !first ) {
+                message += ", ";
+            } else {
+                first = false;
+            }
 
-                if( !first ) {
-                    message += ", ";
-                } else {
-                    first = false;
+            if (indent >= 0) {
+                message += "\n";
+                for (int i = 0; i < indent; i++) {
+                    message += " ";
                 }
+            }
+            message += lik.prettyName() + "=";
 
-                if (indent >= 0) {
-                    message += "\n";
-                    for (int i = 0; i < indent; i++) {
-                        message += " ";
-                    }
-                }
-                message += lik.prettyName() + "=";
+            if( lik instanceof CompoundLikelihood ) {
+                final String d = ((CompoundLikelihood) lik).getReport(indent < 0 ? -1 : indent + 2);
+                if( d != null && d.length() > 0 ) {
+                    message += "(" + d;
 
-                if( lik instanceof CompoundLikelihood ) {
-                    final String d = ((CompoundLikelihood) lik).getReport(indent < 0 ? -1 : indent + 2);
-                    if( d != null && d.length() > 0 ) {
-                        message += "(" + d;
-
-                        if (indent >= 0) {
-                            message += "\n";
-                            for (int i = 0; i < indent; i++) {
-                                message += " ";
-                            }
+                    if (indent >= 0) {
+                        message += "\n";
+                        for (int i = 0; i < indent; i++) {
+                            message += " ";
                         }
-                        message += ")";
                     }
-                } else {
-                    double secs = (double)evaluationTimes[index] / 1.0E9;
-                    message += evaluationCounts[index] + " evaluations in " +
-                            nf.format(secs) + " secs (" +
-                            nf.format(secs / evaluationCounts[index]) + " secs/eval)";
+                    message += ")";
                 }
-                index++;
+            } else {
+                message += lik.getLogLikelihood();
             }
-            message += "\n\n";
-            for (int i = 0; i < indent; i++) {
-                message += " ";
-            }
-            message += this.getId() + " log-likelihood = " + logLikelihood;
-
-            if (indent == 0) message += "\n\n";
-
-        } else {
-            message += "No evaluation timer report available";
         }
+        message += "\n\n";
+        for (int i = 0; i < indent; i++) {
+            message += " ";
+        }
+        message += this.getId() + " log-likelihood = " + logLikelihood;
+
+        if (indent == 0) message += "\n\n";
 
         if (indent == 0) {
             message += "\n";
@@ -568,14 +484,7 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
             if (DEBUG_PARALLEL_EVALUATION) {
                 System.err.print("Invoking thread #" + index + " for " + likelihood.getId() + ": ");
             }
-            if (EVALUATION_TIMERS) {
-                long time = System.nanoTime();
-                double logL = likelihood.getLogLikelihood();
-                evaluationTimes[index] += System.nanoTime() - time;
-                evaluationCounts[index] ++;
-                return logL;
-            }
-            return likelihood.getLogLikelihood();
+            return ChainProfile.LIKELIHOODS ? ChainProfile.evaluate(likelihood) : likelihood.getLogLikelihood();
         }
 
         private final Likelihood likelihood;

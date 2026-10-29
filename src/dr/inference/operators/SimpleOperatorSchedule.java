@@ -188,7 +188,6 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			MCMCOperator op = getOperator(i);
 			columnList.add(new OperatorAcceptanceColumn(op.getOperatorName(), op));
 			columnList.add(new OperatorTimeColumn(op.getOperatorName() + "_time", op));
-			columnList.add(new OperatorCalculationColumn(op.getOperatorName() + "_calcs", op));
 			if (op instanceof AdaptableMCMCOperator) {
 				columnList.add(new OperatorSizeColumn(op.getOperatorName() + "_size", (AdaptableMCMCOperator)op));
 			}
@@ -236,16 +235,4 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		}
 	}
 
-	private class OperatorCalculationColumn extends NumberColumn {
-		private final MCMCOperator op;
-
-		public OperatorCalculationColumn(String label, MCMCOperator op) {
-			super(label);
-			this.op = op;
-		}
-
-		public double getDoubleValue() {
-			return op.getTotalCalculationCount();
-		}
-	}
 }

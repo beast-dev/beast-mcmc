@@ -79,8 +79,8 @@ public class PanelUtils {
 //			comp.putClientProperty("JButton.buttonType", "roundRect");
 		}
 		if (comp instanceof JComboBox) {
-			comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
-			// comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+			// (left as Aqua's pop-up style, the native control for choosing a value; the pull-down style,
+			// JComboBox.isPopDown, is for menus of actions)
 			ComboBoxRenderer renderer= new ComboBoxRenderer();
 			((JComboBox)comp).setRenderer(renderer);
 		}

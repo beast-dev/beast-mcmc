@@ -240,14 +240,13 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetEditingPanel.setOpaque(false);
         taxonSetEditingPanel.setLayout(new GridBagLayout());
 
+        // (Aqua draws these as small round search fields; other look and feels ignore the properties)
         excludedTaxaSearchField.setColumns(12);
-//        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
-        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
-        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        excludedTaxaSearchField.putClientProperty("JComponent.sizeVariant", "small");
         includedTaxaSearchField.setColumns(12);
-//        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
-        includedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
-        includedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        includedTaxaSearchField.putClientProperty("JComponent.sizeVariant", "small");
 
         GridBagConstraints c = new GridBagConstraints();
 

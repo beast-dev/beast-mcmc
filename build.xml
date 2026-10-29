@@ -93,6 +93,9 @@
     </target>
 
     <target name="version" description="write version.txt resource from version and extra_release_tag properties">
+        <!-- the release workflow passes these with -D; a local build gets a development version -->
+        <property name="version" value="10.x.x"/>
+        <property name="extra_release_tag" value=""/>
         <echo file="${src}/version.txt">File created by build process. Do not edit by hand
 ${version}
 ${extra_release_tag}</echo>

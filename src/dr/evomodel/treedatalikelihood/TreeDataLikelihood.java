@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  */
 
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements
-        ProcessAlongTree, TreeTraitProvider, Citable, Profileable, Reportable {
+        ProcessAlongTree, TreeTraitProvider, Citable, Profileable, Reportable, HastingsRatioContributor {
 
     private static final boolean COUNT_TOTAL_OPERATIONS = true;
     private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
@@ -173,6 +173,18 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             }
             return 0.0;
         }
+    }
+
+    /**
+     * The log Hastings ratio of any proposal the delegate made while being evaluated (e.g. resampling
+     * latent state after a topology change), taken once per step by the Markov chain.
+     */
+    @Override
+    public double takeLogHastingsRatio() {
+        if (likelihoodDelegate instanceof HastingsRatioContributor) {
+            return ((HastingsRatioContributor) likelihoodDelegate).takeLogHastingsRatio();
+        }
+        return 0.0;
     }
 
     public void calculatePostOrderStatistics() {

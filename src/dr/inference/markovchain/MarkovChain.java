@@ -34,6 +34,7 @@ import dr.inference.operators.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -77,6 +78,9 @@ public final class MarkovChain implements Serializable {
     // the time of the phases of each step per operator, when -Dmcmc.profile=true
     private final StepProfile stepProfile = new StepProfile();
 
+    // likelihood components that make proposals of their own while evaluated (see HastingsRatioContributor)
+    private final List<HastingsRatioContributor> hastingsRatioContributors = new ArrayList<HastingsRatioContributor>();
+
 
     public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
@@ -97,6 +101,22 @@ public final class MarkovChain implements Serializable {
 
         Likelihood.CONNECTED_LIKELIHOOD_SET.add(likelihood);
         Likelihood.CONNECTED_LIKELIHOOD_SET.addAll(likelihood.getLikelihoodSet());
+
+        // every component of the posterior (getLikelihoodSet is not recursive for every likelihood)
+        final Set<Likelihood> components = new java.util.LinkedHashSet<Likelihood>();
+        final java.util.Deque<Likelihood> pending = new java.util.ArrayDeque<Likelihood>();
+        pending.add(likelihood);
+        while (!pending.isEmpty()) {
+            Likelihood l = pending.pop();
+            if (components.add(l)) {
+                pending.addAll(l.getLikelihoodSet());
+            }
+        }
+        for (Likelihood l : components) {
+            if (l instanceof HastingsRatioContributor) {
+                hastingsRatioContributors.add((HastingsRatioContributor) l);
+            }
+        }
 
         for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
             if (!Likelihood.CONNECTED_LIKELIHOOD_SET.contains(l)) {
@@ -282,6 +302,11 @@ public final class MarkovChain implements Serializable {
                     phaseStart = stepProfile.add(mcmcOperator, StepProfile.Phase.EVALUATE, phaseStart);
                 }
 
+                // proposals made by likelihood components during the evaluation (e.g. latent state
+                // resampled after a topology change) contribute to the Hastings ratio of the step
+                for (HastingsRatioContributor contributor : hastingsRatioContributors) {
+                    hastingsRatio += contributor.takeLogHastingsRatio();
+                }
 
                 if (PROFILE) {
                     long duration = System.nanoTime() - elapsedTime;

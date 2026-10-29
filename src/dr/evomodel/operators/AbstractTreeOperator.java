@@ -44,29 +44,6 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator implements
     private final static int WINDOW_SIZE = 1000;
     private final Deque<Integer> topologyChanged = new ArrayDeque<>();
     private final Deque<Double> delta = new ArrayDeque<>();
-    private SubtreeMoveHook subtreeMoveHook = null;
-
-    /**
-     * Attach a hook that proposes changes to tree-associated state jointly with subtree moves.
-     * Only operators that call {@link #beforeSubtreeMove} and {@link #afterSubtreeMove} use it.
-     */
-    public void setSubtreeMoveHook(SubtreeMoveHook subtreeMoveHook) {
-        this.subtreeMoveHook = subtreeMoveHook;
-    }
-
-    protected void beforeSubtreeMove(NodeRef node, NodeRef sibling, NodeRef destination) {
-        if (subtreeMoveHook != null) {
-            subtreeMoveHook.beforeSubtreeMove(node, sibling, destination);
-        }
-    }
-
-    /**
-     * @return the log Hastings ratio of the hook's proposal (0 if there is no hook)
-     */
-    protected double afterSubtreeMove() {
-        return subtreeMoveHook == null ? 0.0 : subtreeMoveHook.afterSubtreeMove();
-    }
-
     /* exchange sub-trees whose root are i and j */
     protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
                                  NodeRef iP, NodeRef jP) {

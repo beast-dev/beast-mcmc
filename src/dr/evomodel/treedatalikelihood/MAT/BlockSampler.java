@@ -26,7 +26,6 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.math.MathUtils;
 
@@ -77,11 +76,11 @@ final class BlockSampler {
     }
 
     /**
-     * @return the block of the given nodes in the current tree, with the store's states of its nodes (for
+     * @return the block of the given nodes in the view's topology, with the store's states of its nodes (for
      * writing if sampling); its nodes are marked in inBlock until it is released
      */
-    Block newBlock(int[] blockNodes, boolean sample) {
-        return new Block(blockNodes, sample);
+    Block newBlock(int[] blockNodes, boolean sample, TopologyView view) {
+        return new Block(blockNodes, sample, view);
     }
 
     /**
@@ -196,7 +195,7 @@ final class BlockSampler {
         final boolean sample;
         final int[] nodes;          // in post-order, the top last
         final int topIndex;
-        final NodeRef topParent;
+        final int topParent; // -1 if the top node is the root
         final int[][] children;     // the children of each block node
         final int[][] childBranch;  // the index of the branch above each child
         final int[] index;          // node number -> block index (only read for block nodes)
@@ -222,12 +221,12 @@ final class BlockSampler {
         private final UniformConditional[][] uniformByClass;
         private final byte[] boundary; // work array of keyFor
 
-        Block(int[] blockNodes, boolean sample) {
+        Block(int[] blockNodes, boolean sample, TopologyView view) {
             this.sample = sample;
-            this.nodes = getBlockPostOrder(blockNodes);
+            this.nodes = getBlockPostOrder(blockNodes, view);
             final int blockSize = nodes.length;
             this.topIndex = blockSize - 1;
-            this.topParent = tree.getParent(tree.getNode(nodes[topIndex]));
+            this.topParent = view.getParent(nodes[topIndex]);
             for (int n : nodes) {
                 inBlock[n] = true;
             }
@@ -239,20 +238,19 @@ final class BlockSampler {
             }
             int branchTotal = 1;
             for (int i = 0; i < blockSize; i++) {
-                branchTotal += tree.getChildCount(tree.getNode(nodes[i]));
+                branchTotal += view.getChildCount(nodes[i]);
             }
             this.branchLengths = new double[branchTotal];
             int branchCounter = 0;
             this.childBranch = new int[blockSize][];
             for (int i = 0; i < blockSize; i++) {
-                NodeRef node = tree.getNode(nodes[i]);
-                children[i] = new int[tree.getChildCount(node)];
+                children[i] = new int[view.getChildCount(nodes[i])];
                 childBranch[i] = new int[children[i].length];
                 for (int j = 0; j < children[i].length; j++) {
-                    NodeRef child = tree.getChild(node, j);
-                    children[i][j] = child.getNumber();
+                    int child = view.getChild(nodes[i], j);
+                    children[i][j] = child;
                     childBranch[i][j] = branchCounter;
-                    branchLengths[branchCounter++] = delegate.getBranchLength(child);
+                    branchLengths[branchCounter++] = view.getBranchLength(child);
                 }
             }
             this.parentIndex = new int[blockSize];
@@ -265,9 +263,9 @@ final class BlockSampler {
                 }
             }
             this.topBranch = branchCounter;
-            branchLengths[branchCounter] = delegate.getBranchLength(tree.getNode(nodes[topIndex]));
+            branchLengths[branchCounter] = view.getBranchLength(nodes[topIndex]);
 
-            int neighbourCount = topParent == null ? 0 : 1;
+            int neighbourCount = topParent < 0 ? 0 : 1;
             for (int i = 0; i < blockSize; i++) {
                 for (int c : children[i]) {
                     if (!inBlock[c]) {
@@ -277,8 +275,8 @@ final class BlockSampler {
             }
             this.neighbours = new int[neighbourCount];
             int k = 0;
-            if (topParent != null) {
-                neighbours[k++] = topParent.getNumber();
+            if (topParent >= 0) {
+                neighbours[k++] = topParent;
             }
             for (int i = 0; i < blockSize; i++) {
                 for (int c : children[i]) {
@@ -287,7 +285,7 @@ final class BlockSampler {
                     }
                 }
             }
-            this.boundary = new byte[topParent == null ? neighbourCount + 1 : neighbourCount];
+            this.boundary = new byte[topParent < 0 ? neighbourCount + 1 : neighbourCount];
 
             double[] frequencies = delegate.getRootFrequencyModel().getFrequencies();
             this.logFrequencies = new double[stateCount];
@@ -312,7 +310,7 @@ final class BlockSampler {
          */
         ConditionalKey keyFor(int p, double w, double nu) {
             int k = 0;
-            if (topParent == null) {
+            if (topParent < 0) {
                 boundary[k++] = -2;
             }
             for (int n : neighbours) {
@@ -439,16 +437,16 @@ final class BlockSampler {
     }
 
     /**
-     * @return the block's nodes in post-order of the current tree, starting from its unique top node
+     * @return the block's nodes in post-order of the view's topology, starting from its unique top node
      */
-    private int[] getBlockPostOrder(int[] blockNodes) {
+    private int[] getBlockPostOrder(int[] blockNodes, TopologyView view) {
         for (int n : blockNodes) {
             inBlock[n] = true;
         }
         int top = -1;
         for (int n : blockNodes) {
-            NodeRef parent = tree.getParent(tree.getNode(n));
-            if (parent == null || !inBlock[parent.getNumber()]) {
+            int parent = view.getParent(n);
+            if (parent < 0 || !inBlock[parent]) {
                 if (top != -1) {
                     clearBlock(blockNodes);
                     throw new IllegalStateException("Resampling block is not connected");
@@ -465,9 +463,8 @@ final class BlockSampler {
         while (sp > 0) {
             int n = stack[--sp];
             order[--k] = n;
-            NodeRef node = tree.getNode(n);
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                int c = tree.getChild(node, i).getNumber();
+            for (int i = 0; i < view.getChildCount(n); i++) {
+                int c = view.getChild(n, i);
                 if (inBlock[c]) {
                     stack[sp++] = c;
                 }
@@ -562,8 +559,8 @@ final class BlockSampler {
             int topIndex = blockSize - 1;
             if (present[topIndex]) {
                 int parentState = -1;
-                if (block.topParent != null) {
-                    parentState = stateOf(block.topParent.getNumber(), p);
+                if (block.topParent >= 0) {
+                    parentState = stateOf(block.topParent, p);
                     if (parentState < 0) {
                         throw new IllegalStateException("Parent of the resampling block is ambiguous where the block is not");
                     }

@@ -1,7 +1,7 @@
 /*
- * SubtreeMoveHook.java
+ * TopologyView.java
  *
- * Copyright © 2026 the BEAST Development Team
+ * Copyright © 2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,31 +22,28 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
-package dr.evomodel.operators;
-
-import dr.evolution.tree.NodeRef;
+package dr.evomodel.treedatalikelihood.MAT;
 
 /**
- * Lets a subtree prune-and-regraft operator propose changes to state attached to the tree
- * (e.g. ancestral states) jointly with its topology change.
- *
- * The subtree below {@code node} is pruned from beside {@code sibling} (its parent node goes with it)
- * and regrafted on the branch above {@code destination}.
+ * A read-only topology by node number, with the length (in expected substitutions) of the branch above
+ * each node: either the tree as it is, or the tree as it was before a subtree move (so that the states
+ * under the old topology can be scored after the tree has changed).
  */
-public interface SubtreeMoveHook {
+interface TopologyView {
 
-    /**
-     * Called before the tree is edited, while it still has its original topology and heights.
-     */
-    void beforeSubtreeMove(NodeRef node, NodeRef sibling, NodeRef destination);
+    /** @return the node's parent, or -1 for the root */
+    int getParent(int node);
 
-    /**
-     * Called after the tree has been edited.
-     *
-     * @return the log Hastings ratio contributed by the hook's own proposal
-     */
-    double afterSubtreeMove();
+    int getChildCount(int node);
+
+    int getChild(int node, int i);
+
+    boolean isExternal(int node);
+
+    int getRoot();
+
+    /** @return the length of the branch above the node in expected substitutions (0 for the root) */
+    double getBranchLength(int node);
 }

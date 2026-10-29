@@ -365,9 +365,6 @@ public class MATBranchHistoryModelTest extends TraceCorrelationAssert {
                     AdaptationMode.ADAPTATION_OFF, 0.234));
             operators.add(new SubtreeJumpOperator(treeModel, 1.0, 1.0, 0.234, true, AdaptationMode.ADAPTATION_OFF));
             operators.add(new FixedHeightSubtreePruneRegraftOperator(treeModel, 1.0));
-            for (AbstractTreeOperator operator : operators) {
-                operator.setSubtreeMoveHook(resampler);
-            }
 
             likelihood.getLogLikelihood();
             for (int iteration = 0; iteration < 100; iteration++) {

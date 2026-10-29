@@ -250,6 +250,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         assertTrue(block.length >= 2);
 
         // draw a fresh set of states so that we are not just testing the parsimony reconstruction
+        likelihood.getLogLikelihood();
         likelihood.storeModelState();
         resampler.sampleBlock(block, true);
         updateBranches(store, block);
@@ -336,9 +337,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 AdaptationMode.ADAPTATION_OFF, 0.234));
         operators.add(new SubtreeJumpOperator(treeModel, 1.0, 1.0, 0.234, true, AdaptationMode.ADAPTATION_OFF));
         operators.add(new FixedHeightSubtreePruneRegraftOperator(treeModel, 1.0));
-        for (AbstractTreeOperator operator : operators) {
-            operator.setSubtreeMoveHook(resampler);
-        }
 
         likelihood.getLogLikelihood();
         for (int iteration = 0; iteration < 300; iteration++) {
@@ -350,6 +348,9 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             assertFalse(Double.isNaN(logHR));
             double logL = likelihood.getLogLikelihood();
             assertEquals(directLogLikelihood(), logL, 1E-6);
+            double logRatio = likelihood.takeLogHastingsRatio();
+            assertFalse("the resampling's Hastings ratio", Double.isNaN(logRatio) || Double.isInfinite(logRatio));
+            assertEquals("taken once per step", 0.0, likelihood.takeLogHastingsRatio(), 0.0);
 
             if (MathUtils.nextBoolean()) {
                 likelihood.restoreModelState();
@@ -363,13 +364,150 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     /**
+     * The likelihood finds the subtree move from the changed topology alone. A change of topology can be
+     * described as two different moves (when the parent is regrafted above its own parent, or below its
+     * sibling); the description, and so the states resampled, must be the same for a move and its
+     * reverse. Checked over random moves including those shapes and moves at the root.
+     */
+    public void testLazyMoveDescriptionIsReversible() {
+        MathUtils.setSeed(42);
+        new MutationHistoryResampler(delegate);
+        likelihood.getLogLikelihood();
+        int moves = 0;
+        int ambiguousShapes = 0;
+        int rootMoves = 0;
+        for (int iteration = 0; iteration < 5000 && moves < 300; iteration++) {
+            NodeRef x = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            NodeRef destination = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            if (treeModel.isRoot(x) || isAncestorOrSelf(x, destination)) {
+                continue;
+            }
+            NodeRef parent = treeModel.getParent(x);
+            NodeRef sibling = otherChild(parent, x);
+            if (destination == parent || destination == sibling) {
+                continue;
+            }
+            NodeRef destinationParent = treeModel.getParent(destination);
+            double top = destinationParent == null ? Double.POSITIVE_INFINITY : treeModel.getNodeHeight(destinationParent);
+            double bottom = Math.max(treeModel.getNodeHeight(x), treeModel.getNodeHeight(destination));
+            if (top <= bottom) {
+                continue;
+            }
+            double newHeight = destinationParent == null ? bottom + 1.0 + MathUtils.nextDouble() :
+                    bottom + MathUtils.nextDouble() * (top - bottom);
+            boolean ambiguous = destination == treeModel.getParent(parent) || destinationParent == sibling;
+            boolean atRoot = treeModel.isRoot(parent) || destinationParent == null;
+
+            final int xNumber = x.getNumber();
+            final int siblingNumber = sibling.getNumber();
+            final int destinationNumber = destination.getNumber();
+            final double oldHeight = treeModel.getNodeHeight(parent);
+
+            likelihood.storeModelState();
+            subtreePruneRegraft(x, destination, newHeight);
+            likelihood.getLogLikelihood();
+            assertLikelihoodIsDirect("move " + moves);
+            double forwardRatio = likelihood.takeLogHastingsRatio();
+            assertFalse(Double.isNaN(forwardRatio) || Double.isInfinite(forwardRatio));
+            int[] forward = delegate.getLastSubtreeMove();
+            int forwardParent = treeModel.getParent(treeModel.getNode(forward[0])).getNumber();
+            likelihood.acceptModelState();
+
+            likelihood.storeModelState();
+            subtreePruneRegraft(treeModel.getNode(xNumber), treeModel.getNode(siblingNumber), oldHeight);
+            likelihood.getLogLikelihood();
+            assertLikelihoodIsDirect("reverse of move " + moves);
+            int[] reverse = delegate.getLastSubtreeMove();
+            int reverseParent = treeModel.getParent(treeModel.getNode(reverse[0])).getNumber();
+            assertEquals("the same parent moves in a move and its reverse (move " + moves + ")", forwardParent, reverseParent);
+            assertEquals("the reverse moves the parent back from beside D", forward[2], reverse[1]);
+            assertEquals("the reverse regrafts above S", forward[1], reverse[2]);
+            likelihood.acceptModelState();
+
+            moves++;
+            if (ambiguous) {
+                ambiguousShapes++;
+            }
+            if (atRoot) {
+                rootMoves++;
+            }
+        }
+        assertEquals(300, moves);
+        assertTrue("moves with two descriptions: " + ambiguousShapes, ambiguousShapes > 10);
+        assertTrue("moves at the root: " + rootMoves, rootMoves > 10);
+        assertEquals(0, delegate.getRebuildCount());
+    }
+
+    /**
+     * A change of topology that is not a single subtree move (a swap of two subtrees) is refused in a
+     * step when a resampler is attached; outside a step the MAT is rebuilt by parsimony.
+     */
+    public void testUnsupportedTopologyChangeIsRefused() {
+        new MutationHistoryResampler(delegate);
+        likelihood.getLogLikelihood();
+        NodeRef i = findTip("human");
+        NodeRef j = findTip("orangutan");
+        NodeRef iP = treeModel.getParent(i);
+        NodeRef jP = treeModel.getParent(j);
+        assertTrue(iP != jP && treeModel.getParent(iP) != jP && treeModel.getParent(jP) != iP);
+
+        likelihood.storeModelState();
+        swap(i, j);
+        try {
+            likelihood.getLogLikelihood();
+            fail("a swap of two subtrees was accepted as a subtree move");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage(), expected.getMessage().contains("subtree prune-and-regraft"));
+        }
+        likelihood.restoreModelState();
+        double logL = likelihood.getLogLikelihood();
+        assertEquals(directLogLikelihood(), logL, 1E-6);
+        assertEquals(0, delegate.getRebuildCount());
+
+        // outside a step (e.g. a tree loaded from a checkpoint) parsimony brings the MAT up to date
+        swap(treeModel.getNode(i.getNumber()), treeModel.getNode(j.getNumber()));
+        logL = likelihood.getLogLikelihood();
+        assertEquals(directLogLikelihood(), logL, 1E-6);
+        assertEquals(1, delegate.getRebuildCount());
+    }
+
+    /**
+     * A move that changes only a height resamples nothing and contributes nothing to the Hastings ratio,
+     * and the heights the likelihood keeps for the old topology follow accepted and rejected changes.
+     */
+    public void testHeightOnlyMoveContributesNothing() {
+        new MutationHistoryResampler(delegate);
+        likelihood.getLogLikelihood();
+        for (int iteration = 0; iteration < 50; iteration++) {
+            NodeRef node = treeModel.getInternalNode(MathUtils.nextInt(treeModel.getInternalNodeCount()));
+            double lower = Math.max(treeModel.getNodeHeight(treeModel.getChild(node, 0)), treeModel.getNodeHeight(treeModel.getChild(node, 1)));
+            double upper = treeModel.isRoot(node) ? lower + 1.0 : treeModel.getNodeHeight(treeModel.getParent(node));
+            likelihood.storeModelState();
+            int[][] statesBefore = snapshotStates();
+            treeModel.setNodeHeight(node, lower + MathUtils.nextDouble() * (upper - lower));
+            double logL = likelihood.getLogLikelihood();
+            assertEquals(directLogLikelihood(), logL, 1E-6);
+            assertEquals(0.0, likelihood.takeLogHastingsRatio(), 0.0);
+            assertTrue("no state changes", java.util.Arrays.deepEquals(statesBefore, snapshotStates()));
+            if (MathUtils.nextBoolean()) {
+                likelihood.acceptModelState();
+            } else {
+                likelihood.restoreModelState();
+            }
+        }
+        // (with assertions on, the next store checks the kept heights against the tree)
+        likelihood.storeModelState();
+        likelihood.acceptModelState();
+    }
+
+    /**
      * After resampling moves the Fitch sets are stale; a topology change by an operator without the
      * resampler must then rebuild the MAT exactly as parsimony from scratch would.
      */
     public void testParsimonyAfterResamplingMatchesRebuild() {
         SubtreeLeapOperator resampling = new SubtreeLeapOperator(treeModel, 1.0, 0.05,
                 SubtreeLeapOperator.DistanceKernelType.NORMAL, AdaptationMode.ADAPTATION_OFF, 0.234);
-        resampling.setSubtreeMoveHook(new MutationHistoryResampler(delegate));
+        new MutationHistoryResampler(delegate);
         SubtreeJumpOperator plain = new SubtreeJumpOperator(treeModel, 1.0, 1.0, 0.234, true, AdaptationMode.ADAPTATION_OFF);
 
         likelihood.getLogLikelihood();
@@ -381,6 +519,8 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         }
         assertEquals(0, delegate.getRebuildCount());
 
+        // without the resampler the next topology change is followed by parsimony
+        delegate.setResampler(null);
         likelihood.storeModelState();
         plain.doOperation();
         double logL = likelihood.getLogLikelihood();
@@ -431,9 +571,9 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             int[] block = resampler.getBlock(parent, sibling, destination);
             double denseOld = resampler.sampleBlock(block, false);
 
-            resampler.beforeSubtreeMove(x, sibling, destination);
             regraft(x, destination, regraftHeight(destination, treeModel.getNodeHeight(x)));
-            double logRatio = resampler.afterSubtreeMove();
+            likelihood.getLogLikelihood();
+            double logRatio = likelihood.takeLogHastingsRatio();
 
             double denseNew = resampler.sampleBlock(block, false);
             assertEquals("move " + moves, denseOld - denseNew, logRatio, 1E-8);
@@ -513,9 +653,8 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
 
         // the exact probability that each such site's block states change, under the new topology
         likelihood.storeModelState();
-        resampler.beforeSubtreeMove(x, sibling, destination);
         regraft(x, destination, height);
-        resampler.afterSubtreeMove();
+        likelihood.getLogLikelihood();
         double[] probabilityChanged = new double[patterns.getPatternCount()];
         boolean[][] free = new boolean[patterns.getPatternCount()][];
         double expectedChanges = 0.0;
@@ -569,9 +708,8 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             sibling = treeModel.getNode(siblingNumber);
             destination = treeModel.getNode(destinationNumber);
             likelihood.storeModelState();
-            resampler.beforeSubtreeMove(x, sibling, destination);
             regraft(x, destination, height);
-            resampler.afterSubtreeMove();
+            likelihood.getLogLikelihood();
             for (int p : uniformSites) {
                 for (int i = 0; i < block.length; i++) {
                     int state = store.getState(block[i], p);
@@ -721,6 +859,12 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                     treeModel.getNodeHeight(treeModel.getParent(destination)) <= treeModel.getNodeHeight(x)) {
                 continue;
             }
+            if (destination == treeModel.getParent(parent) || treeModel.getParent(destination) == sibling) {
+                // (a move onto the parent's own branch, or onto a branch below the sibling, is also a move of
+                // another subtree with a different block: the likelihood resamples the one with the smaller
+                // moved parent, which this enumeration does not follow)
+                continue;
+            }
 
             sweepCategories();
             likelihood.getLogLikelihood();
@@ -743,9 +887,9 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 logQOld += logConditional(site, block, oldPresence, oldStates, oldParents);
             }
 
-            resampler.beforeSubtreeMove(x, sibling, destination);
             regraft(x, destination, regraftHeight(destination, treeModel.getNodeHeight(x)));
-            double logRatio = resampler.afterSubtreeMove();
+            likelihood.getLogLikelihood();
+            double logRatio = likelihood.takeLogHastingsRatio();
 
             assertTrue(java.util.Arrays.equals(newParents, currentParents()));
             int[][] newStates = snapshotStates();
@@ -836,9 +980,8 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             likelihood.getLogLikelihood();
             likelihood.storeModelState();
             x = treeModel.getNode(xNumber);
-            resampler.beforeSubtreeMove(x, treeModel.getNode(siblingNumber), treeModel.getNode(destinationNumber));
             regraft(x, treeModel.getNode(destinationNumber), height);
-            resampler.afterSubtreeMove();
+            likelihood.getLogLikelihood();
             int[][] states = snapshotStates();
             for (int site : sites) {
                 int[] block = present(localBlock(p, site, oldPresence, newPresence), newPresence, site);
@@ -914,9 +1057,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 AdaptationMode.ADAPTATION_OFF, 0.234));
         operators.add(new SubtreeJumpOperator(treeModel, 1.0, 1.0, 0.234, true, AdaptationMode.ADAPTATION_OFF));
         operators.add(new FixedHeightSubtreePruneRegraftOperator(treeModel, 1.0));
-        for (AbstractTreeOperator operator : operators) {
-            operator.setSubtreeMoveHook(resampler);
-        }
 
         likelihood.getLogLikelihood();
         for (int iteration = 0; iteration < 600; iteration++) {
@@ -1056,7 +1196,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, true);
         SubtreeLeapOperator leap = new SubtreeLeapOperator(treeModel, 1.0, 0.05,
                 SubtreeLeapOperator.DistanceKernelType.NORMAL, AdaptationMode.ADAPTATION_OFF, 0.234);
-        leap.setSubtreeMoveHook(resampler);
         MutationHistoryGibbsOperator gibbs = new MutationHistoryGibbsOperator(resampler, 3, 1.0);
 
         likelihood.getLogLikelihood();
@@ -1502,6 +1641,50 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     /**
      * Prunes x and its parent and regrafts them on the branch above the destination at the given height.
      */
+    /**
+     * Moves the subtree below x, with its parent, to the branch above destination (the root's branch if
+     * destination is the root) at the given height, as the subtree operators do.
+     */
+    private void subtreePruneRegraft(NodeRef x, NodeRef destination, double height) {
+        NodeRef parent = treeModel.getParent(x);
+        NodeRef sibling = otherChild(parent, x);
+        NodeRef grandParent = treeModel.getParent(parent);
+        NodeRef destinationParent = treeModel.getParent(destination);
+        treeModel.beginTreeEdit();
+        if (grandParent == null) {
+            treeModel.removeChild(parent, sibling);
+            treeModel.setRoot(sibling);
+        } else {
+            treeModel.removeChild(parent, sibling);
+            treeModel.removeChild(grandParent, parent);
+            treeModel.addChild(grandParent, sibling);
+        }
+        if (destinationParent == null) {
+            treeModel.addChild(parent, destination);
+            treeModel.setRoot(parent);
+        } else {
+            treeModel.removeChild(destinationParent, destination);
+            treeModel.addChild(parent, destination);
+            treeModel.addChild(destinationParent, parent);
+        }
+        treeModel.setNodeHeight(parent, height);
+        treeModel.endTreeEdit();
+    }
+
+    /**
+     * Exchanges two subtrees (neither an ancestor of the other, with parents that can hold either).
+     */
+    private void swap(NodeRef i, NodeRef j) {
+        NodeRef iP = treeModel.getParent(i);
+        NodeRef jP = treeModel.getParent(j);
+        treeModel.beginTreeEdit();
+        treeModel.removeChild(iP, i);
+        treeModel.removeChild(jP, j);
+        treeModel.addChild(iP, j);
+        treeModel.addChild(jP, i);
+        treeModel.endTreeEdit();
+    }
+
     private void regraft(NodeRef x, NodeRef destination, double height) {
         NodeRef parent = treeModel.getParent(x);
         NodeRef sibling = otherChild(parent, x);

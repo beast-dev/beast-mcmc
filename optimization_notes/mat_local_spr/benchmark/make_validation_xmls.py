@@ -97,7 +97,9 @@ def main():
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     sources = {'baseline': args.name + '-min.xml', 'mat-local': args.name + '-mat.xml',
-               'mat-local-gibbs': args.name + '-mat.xml'}
+               'mat-local-gibbs': args.name + '-mat.xml',
+               # the same as mat-local-gibbs, named for runs made since the resampler moved into the likelihood
+               'mat-lazy-gibbs': args.name + '-mat.xml'}
     for method, source in sources.items():
         if method not in args.methods.split(','):
             continue

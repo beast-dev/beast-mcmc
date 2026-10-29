@@ -230,10 +230,6 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         // if j == parent or jParent == parent the subtree is not actually moving but the height will change
         final boolean topologyChanged = !(j == parent || jParent == parent);
 
-        if (topologyChanged) {
-            beforeSubtreeMove(node, sibling, j);
-        }
-
         tree.beginTreeEdit();
 
         if (topologyChanged) {
@@ -290,9 +286,6 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         // hastings ratio = reverse Prob / forward Prob
         logq = Math.log(reverseProbability) - Math.log(forwardProbability);
 
-        if (topologyChanged) {
-            logq += afterSubtreeMove();
-        }
         return logq;
     }
 

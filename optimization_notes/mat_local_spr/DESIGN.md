@@ -2,6 +2,13 @@
 
 Branch: `operator_experiment`. Status: design, for agreement before implementation.
 
+> **Status note (October 2026):** the `SubtreeMoveHook` described below has since been removed. The
+> resampler is now attached to the `matDataLikelihood` (one per likelihood), which finds the subtree move
+> from the changed topology when it is next evaluated, scores the old states under the old topology through
+> a `TopologyView` of the tree before the move, draws the new ones, and reports the log Hastings ratio to
+> the Markov chain through `HastingsRatioContributor`. Every single-SPR operator works without a hook; the
+> block logic below is unchanged.
+
 The target is speed (effective samples per hour) on sparse mutation trees of 1,000 to 10,000 tips.
 
 ## Why

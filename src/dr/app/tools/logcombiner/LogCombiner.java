@@ -30,6 +30,8 @@ package dr.app.tools.logcombiner;
 import dr.app.beast.BeastVersion;
 import dr.app.tools.NexusExporter;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
+import dr.app.util.OSType;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
@@ -664,9 +666,9 @@ public class LogCombiner {
         boolean useScale = false;
 
         if (args.length == 0) {
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.application.name", "LogCombiner");
 
             java.net.URL url = LogCombiner.class.getResource("/images/utility.png");
             javax.swing.Icon icon = null;
@@ -689,6 +691,10 @@ public class LogCombiner {
                     "</center></html>";
 
             ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);
+            if (OSType.isMac()) {
+                // the application menu and Dock icon (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(consoleApp, icon);
+            }
 
             printTitle();
 

@@ -31,6 +31,8 @@ import dr.app.tools.BaseTreeTool;
 import dr.app.tools.NexusExporter;
 import dr.app.tools.logcombiner.LogCombiner;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
+import dr.app.util.OSType;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
@@ -924,9 +926,9 @@ public class TreeAnnotator extends BaseTreeTool {
 //        boolean computeESS = false;
 
         if (args.length == 0) {
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.application.name", "TreeAnnotator");
 
             java.net.URL url = LogCombiner.class.getResource("/images/utility.png");
             Icon icon = null;
@@ -948,7 +950,11 @@ public class TreeAnnotator extends BaseTreeTool {
                     "<a href=\"http://beast.community\">http://beast.community</a></p>" +
                     "</center></html>";
 
-            new ConsoleApplication(nameString, aboutString, icon, true);
+            ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);
+            if (OSType.isMac()) {
+                // the application menu and Dock icon (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(consoleApp, icon);
+            }
 
             // The ConsoleApplication will have overridden System.out so set progressStream
             // to capture the output to the window:

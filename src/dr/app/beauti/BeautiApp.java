@@ -186,12 +186,15 @@ public class BeautiApp extends MultiDocApplication {
         try {
 
             if (!lafLoaded) {
+                // the system look and feel, unless -Dswing.defaultlaf=<class> names another (e.g. Metal when
+                // the system one misbehaves on a new OS or JDK)
+                final String lookAndFeel = System.getProperty("swing.defaultlaf",
+                        UIManager.getSystemLookAndFeelClassName());
                 try {
-                    // set the System Look and Feel in the UIManager
                     javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
                         public void run() {
                             try {
-                                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                                UIManager.setLookAndFeel(lookAndFeel);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }

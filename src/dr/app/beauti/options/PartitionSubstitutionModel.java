@@ -77,6 +77,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private final TraitData traitData;
 
     private boolean activateBSSVS = false;
+    private boolean useGaoPriors = false;
     public boolean useAmbiguitiesTreeLikelihood = false;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
@@ -145,6 +146,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         traitData = source.traitData;
 
         activateBSSVS = source.activateBSSVS;
+        useGaoPriors = source.useGaoPriors;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
@@ -1045,6 +1047,34 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.activateBSSVS = activateBSSVS;
     }
 
+    /**
+     * Whether to use the diffuse prior specification of Gao et al. (2023) for this discrete trait
+     * diffusion model: a hierarchical exponential prior on the overall rate scalar, and a Poisson
+     * prior on the number of non-zero rates centred on half of them. Both recommendations are made
+     * for the forward-in-time CTMC, so the option does not apply to the backward-in-time model.
+     * Under the GLM only the rate scalar is affected, since the number of non-zero rates is not
+     * sampled there; that falls out of BSSVS being unavailable for the GLM.
+     */
+    public boolean isUseGaoPriors() {
+        return discreteSubstModelType == DiscreteSubstModelType.FIT && useGaoPriors;
+    }
+
+    public void setUseGaoPriors(boolean useGaoPriors) {
+        if (this.useGaoPriors == useGaoPriors) {
+            return;
+        }
+        this.useGaoPriors = useGaoPriors;
+
+        // discard any hand-edited values so the newly selected specification takes effect
+        String nonZeroRates = getName() + ".nonZeroRates";
+        if (options.parameterExists(nonZeroRates)) {
+            options.getParameter(nonZeroRates).setPriorEdited(false);
+        }
+        for (AbstractPartitionData partition : options.getDataPartitions(this)) {
+            partition.getPartitionClockModel().getParameter("clock.rate").setPriorEdited(false);
+        }
+    }
+
     public FrequencyPolicyType getFrequencyPolicy() {
         return frequencyPolicy;
     }
@@ -1212,6 +1242,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         continuousSubstModelType = source.continuousSubstModelType;
 
         activateBSSVS = source.activateBSSVS;
+        useGaoPriors = source.useGaoPriors;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;

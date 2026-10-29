@@ -33,7 +33,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
-import dr.inference.markovchain.StepProfile;
+import dr.inference.markovchain.ChainProfile;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -286,11 +286,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 }
             }
 
-            if (StepProfile.ENABLED) {
-                System.out.println(mc.getStepProfile().report());
-                for (String report : StepProfile.getReports()) {
-                    System.out.println(report);
-                }
+            if (ChainProfile.ENABLED) {
+                System.out.println(mc.getProfile().report());
             }
 
             // How should premature finish be flagged?

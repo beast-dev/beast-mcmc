@@ -79,9 +79,10 @@ public class ParameterPriorGenerator extends Generator {
         //HMC relaxed clock
         for (int i = 0; i < totalModels; i++) {
             String prefix = partitionClockModels.get(i).getPrefix();
-            mapParameterToPrior.put(ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
-            mapParameterToPrior.put(ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
-            mapParameterToPrior.put(ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            // keyed by the full parameter name so each clock model gets its own priors
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
         }
         //mixed effects clock
         //always write distribution likelihoods for rate, scale and intercept
@@ -362,7 +363,7 @@ public class ParameterPriorGenerator extends Generator {
                         writer.writeIDref("taxa", parameter.getTaxonSet().getId());
                     } else {
                         writer.writeOpenTag("taxa");
-                        writer.writeIDref("taxa", "taxa");
+                        writer.writeIDref("taxa", treeModel.getTaxaId());
                         writer.writeOpenTag("exclude");
                         for (Taxa taxonSet : options.taxonSets) {
                             if (options.taxonSetsMono.get(taxonSet)) {
@@ -377,6 +378,12 @@ public class ParameterPriorGenerator extends Generator {
 
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
+                break;
+            case HIERARCHICAL_EXPONENTIAL_PRIOR:
+                // the exponential density is defined alongside the trait model because its mean is
+                // an estimated parameter; the prior on that mean is written from the mean parameter
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
+                        ((PartitionClockModel) parameter.getOptions()).getPrefix() + PartitionClockModel.CLOCK_RATE_EXP);
                 break;
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:

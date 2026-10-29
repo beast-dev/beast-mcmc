@@ -26,15 +26,16 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
-import dr.inference.markovchain.StepProfile;
+import dr.inference.markovchain.ChainProfile;
 
 import java.util.function.Supplier;
 
 /**
  * Wall-clock time of the phases of the MAT's work (the resampler's moves, the store's scans and the
  * likelihood's evaluation) and counts of what they handle, summed over the run. Enabled with
- * -Dmat.profile=true; otherwise {@link #start} and {@link #stop} cost nothing. The report is printed with
- * the {@link StepProfile} (if that is enabled too) at the end of the chain. Phases nest: the description
+ * the {@code mat} aspect of the {@link ChainProfile} (-Dmcmc.profile=mat, or steps,mat for the per-step
+ * figures); otherwise {@link #start} and {@link #stop} cost nothing. The report is printed with the chain's
+ * profile at the end of the chain. Phases nest: the description
  * of each says which phase it is part of, so that times can be subtracted.
  *
  * The timings are static: with several MAT likelihoods in one run they are summed.
@@ -43,7 +44,7 @@ import java.util.function.Supplier;
  */
 public final class MATProfile {
 
-    public static final boolean ENABLED = Boolean.getBoolean("mat.profile");
+    public static final boolean ENABLED = ChainProfile.isEnabled("mat");
 
     public enum Phase {
         // a subtree move with the local block
@@ -122,7 +123,7 @@ public final class MATProfile {
     private static final long[] calls = new long[Phase.values().length];
     private static final long[] counts = new long[Counter.values().length];
 
-    // the same, attributed to the operator whose step was in progress (see StepProfile.getCurrentOperatorName)
+    // the same, attributed to the operator whose step was in progress (see ChainProfile.getCurrentOperatorName)
     private static final String NO_OPERATOR = "(no operator)";
     private static final java.util.Map<String, long[][]> byOperator = new java.util.LinkedHashMap<String, long[][]>();
     private static String lastOperator = null;
@@ -130,13 +131,13 @@ public final class MATProfile {
 
     static {
         if (ENABLED) {
-            StepProfile.addReporter(new Supplier<String>() {
+            ChainProfile.addReporter(new Supplier<String>() {
                 @Override
                 public String get() {
                     return report();
                 }
             });
-            StepProfile.addResetHook(new Runnable() {
+            ChainProfile.addResetHook(new Runnable() {
                 @Override
                 public void run() {
                     reset();
@@ -149,7 +150,7 @@ public final class MATProfile {
      * @return the {nanos, calls, counts} arrays of the operator whose step is in progress
      */
     private static long[][] operatorTimes() {
-        String operator = StepProfile.getCurrentOperatorName();
+        String operator = ChainProfile.getCurrentOperatorName();
         if (operator == null) {
             operator = NO_OPERATOR;
         }
@@ -225,7 +226,7 @@ public final class MATProfile {
         }
         for (java.util.Map.Entry<String, long[][]> entry : byOperator.entrySet()) {
             final String operator = entry.getKey();
-            final long steps = StepProfile.getSteps(operator);
+            final long steps = ChainProfile.getSteps(operator);
             final long[] opNanos = entry.getValue()[0];
             final long[] opCalls = entry.getValue()[1];
             final long[] opCounts = entry.getValue()[2];

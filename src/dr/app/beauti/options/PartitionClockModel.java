@@ -45,6 +45,13 @@ import static dr.app.beauti.options.BeautiOptions.DEFAULT_QUANTILE_RELAXED_CLOCK
 public class PartitionClockModel extends PartitionOptions {
     private static final long serialVersionUID = -6904595851602060488L;
 
+    /**
+     * The distributionLikelihood holding the exponential prior on the clock rate, and the
+     * hyperparameter giving its mean, when the hierarchical exponential prior is in use.
+     */
+    public static final String CLOCK_RATE_EXP = "clock.rate.exp";
+    public static final String CLOCK_RATE_EXP_MEAN = CLOCK_RATE_EXP + ".mean";
+
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean continuousQuantile = DEFAULT_QUANTILE_RELAXED_CLOCK; // a switch at the top of BeautiOptions
@@ -94,6 +101,13 @@ public class PartitionClockModel extends PartitionOptions {
                 .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                 .isCMTCRate(true).isNonNegative(true).partitionOptions(this)
                 .isAdaptiveMultivariateCompatible(true).build(parameters);
+
+        // hyperparameter for the hierarchical exponential prior of Gao et al. (2023) on the clock
+        // rate; the gamma hyperprior has shape = rate = 0.5, which BEAST parameterises as scale = 2
+        new Parameter.Builder(CLOCK_RATE_EXP_MEAN, "mean of the exponential prior on the overall rate scalar")
+                .prior(PriorType.GAMMA_PRIOR).initial(1.0)
+                .shape(0.5).scale(2.0).offset(0.0)
+                .isNonNegative(true).partitionOptions(this).build(parameters);
 
         new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
                 prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
@@ -209,6 +223,7 @@ public class PartitionClockModel extends PartitionOptions {
                 .isAdaptiveMultivariateCompatible(false).build(parameters);
 
         createScaleOperator("clock.rate", demoTuning, rateWeights);
+        createScaleOperator(CLOCK_RATE_EXP_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
@@ -310,6 +325,9 @@ public class PartitionClockModel extends PartitionOptions {
             switch (clockType) {
                 case STRICT_CLOCK:
                     params.add(getClockRateParameter());
+                    if (usesHierarchicalExponentialClockRate()) {
+                        params.add(getParameter(CLOCK_RATE_EXP_MEAN));
+                    }
                     break;
 
                 case SHRINKAGE_LOCAL_CLOCK:
@@ -433,6 +451,32 @@ public class PartitionClockModel extends PartitionOptions {
         return getClockRateParameter(clockType, clockDistributionType);
     }
 
+    /**
+     * Whether the overall rate scalar carries the hierarchical exponential prior of Gao et al.
+     * (2023), in which case the mean of that exponential is estimated as a hyperparameter.
+     */
+    public boolean usesHierarchicalExponentialClockRate() {
+        return clockType == ClockType.STRICT_CLOCK &&
+                getClockRateParameter().priorType == PriorType.HIERARCHICAL_EXPONENTIAL_PRIOR;
+    }
+
+    /**
+     * Whether a discrete trait partition using this clock model has asked for the prior
+     * specification of Gao et al. (2023).
+     */
+    private boolean usesGaoPriorSpecification() {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(this)) {
+            if (partitionData.getDataType().getType() != DataType.GENERAL) {
+                continue;
+            }
+            PartitionSubstitutionModel substModel = partitionData.getPartitionSubstitutionModel();
+            if (substModel != null && substModel.isUseGaoPriors()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Parameter getClockRateParameter(ClockType clockType, ClockDistributionType clockDistributionType) {
         Parameter rateParam = null;
         switch (clockType) {
@@ -497,7 +541,9 @@ public class PartitionClockModel extends PartitionOptions {
         }
 
         if (!rateParam.isPriorEdited()) {
-            if (options.treeModelOptions.isNodeCalibrated(partition.treeModel) < 0
+            if (clockType == ClockType.STRICT_CLOCK && usesGaoPriorSpecification()) {
+                rateParam.priorType = PriorType.HIERARCHICAL_EXPONENTIAL_PRIOR;
+            } else if (options.treeModelOptions.isNodeCalibrated(partition.treeModel) < 0
                     && !options.useTipDates) {
                 rateParam.setFixed(true);
             } else {
@@ -562,6 +608,9 @@ public class PartitionClockModel extends PartitionOptions {
                 switch (clockType) {
                     case STRICT_CLOCK:
                         ops.add(rateOperator);
+                        if (usesHierarchicalExponentialClockRate()) {
+                            ops.add(getOperator(CLOCK_RATE_EXP_MEAN));
+                        }
                         addUpDownOperator(ops, rateOperator);
                         break;
 

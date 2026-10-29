@@ -103,15 +103,24 @@ public abstract class AbstractParticleOperator extends SimpleMCMCOperator implem
 
     private double[] setParameterSign(GradientWrtParameterProvider gradientProvider) {
 
-        double[] startingValue = gradientProvider.getParameter().getParameterValues();
-        double[] sign = new double[startingValue.length];
+        Parameter parameter = gradientProvider.getParameter();
+        double[] sign = new double[parameter.getDimension()];
 
-        for (int i = 0; i < startingValue.length; i++) {
+        // The sign is the side of zero that the latent variable is constrained to, and the bounds
+        // already state it: an observed 1 gives [0, +inf) and an observed 0 gives (-inf, 0]. Taking
+        // the sign from the bounds rather than from the starting value leaves a variable that
+        // starts exactly on its boundary well defined, which is a legal state -- the bound is
+        // inclusive and checkParameterBounds accepts it. Unbounded dimensions are missing data and
+        // are zeroed out by observedDataMask, so their sign is never used.
+        for (int i = 0; i < sign.length; i++) {
 
-            if (startingValue[i] == 0 && (mask == null || mask.getParameterValue(i) == 1)) {
-                throw new RuntimeException("Must start from either positive or negative value!");
+            if (parameter.getBounds().getLowerLimit(i) == 0.0) {
+                sign[i] = 1;
+            } else if (parameter.getBounds().getUpperLimit(i) == 0.0) {
+                sign[i] = -1;
+            } else {
+                sign[i] = 1;
             }
-            sign[i] = startingValue[i] > 0 ? 1 : -1;
         }
         return sign;
     }

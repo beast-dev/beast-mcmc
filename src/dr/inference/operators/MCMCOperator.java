@@ -136,17 +136,6 @@ public interface MCMCOperator extends Serializable {
     long getTotalEvaluationTime();
 
     /**
-     * get the average number of granular calculations per operation
-     * What this actually is will depend on the likelihood calculator.
-     * @return
-     */
-    double getMeanCalculationCount();
-
-    void addCalculationCount(long count);
-
-    long getTotalCalculationCount();
-
-    /**
      * Get to total average acceptance probability
      * @return
      */

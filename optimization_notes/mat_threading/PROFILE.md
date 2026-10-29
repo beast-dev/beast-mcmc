@@ -8,13 +8,19 @@ plan that led here; its ceiling is estimated below.
 
 ## Instrumentation (kept, gated, no cost when off)
 
-- `-Dmcmc.profile=true`: `StepProfile` splits every step by operator into store, propose, evaluate,
-  accept/restore and adapt (wall clock, `MarkovChain`), reported after the operator analysis, for the chain
-  after the adaptation delay. The operator analysis' `Time(s)`/`Time/Op(us)` columns (whole step, always on)
-  come from `operator_study`'s `813361a15`.
-- `-Dmat.profile=true`: `MATProfile` times the MAT's phases (the resampler's moves, the store's scans, the
-  likelihood's evaluation, parsimony, the category Gibbs draw) and counts what they handle, in total and per
-  step of the operator in progress; reset with the step profile so the two cover the same steps.
+- `-Dmcmc.profile=<aspects>` selects what `ChainProfile` records (comma-separated; `all` for everything),
+  reported after the operator analysis for the chain after the adaptation delay:
+  - `steps`: every step split by operator into store, propose, evaluate, accept/restore and adapt (wall
+    clock, `MarkovChain`). The operator analysis' `Time(s)`/`Time/Op(us)` columns (whole step, always on)
+    come from `operator_study`'s `813361a15`.
+  - `likelihoods`: every evaluation of every likelihood component (timed in `CompoundLikelihood` and for
+    the posterior itself), with the calculation counts of `Profileable` likelihoods, in total and per
+    operator.
+  - `mat`: `MATProfile` times the MAT's phases (the resampler's moves, the store's scans, the likelihood's
+    evaluation, parsimony, the category Gibbs draw) and counts what they handle, in total and per step of
+    the operator in progress; reset with the chain's profile so they cover the same steps.
+  The runs below used `-Dmcmc.profile=true -Dmat.profile=true`, the flags of the time; they are now
+  `-Dmcmc.profile=steps,mat`.
 - Overhead with both on: within noise (-3% to +2% of minutes per million states on four runs).
 - `run_profile.sh`, `run_study.sh`, `make_profile_xmls.py` (variants of the benchmark MAT XMLs with the local or
   path block), `simulate_alignment.py` (alignments simulated on big-3's coalescent tree), `summarise.py`

@@ -81,14 +81,21 @@ public class TreeLikelihoodGenerator extends Generator {
         }
     }
 
+    /**
+     * The id of the TreeDataLikelihood for the partitions sharing this tree and clock model.
+     * Use this wherever the likelihood is referenced (e.g., by gradients) so the ids stay in sync.
+     */
+    public static String getTreeDataLikelihoodId(PartitionTreeModel treeModel, PartitionClockModel clockModel) {
+        return treeModel.getPrefix() + clockModel.getPrefix() + "treeLikelihood";
+    }
+
     public void writeTreeDataLikelihood(List<PartitionData> partitions, XMLWriter writer) {
 
         PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
         PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-        String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
-        String idString = prefix + "treeLikelihood";
+        String idString = getTreeDataLikelihoodId(treeModel, clockModel);
 
         Attribute[] attributes = new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, idString),
@@ -273,10 +280,7 @@ public class TreeLikelihoodGenerator extends Generator {
             PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
             PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-            String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
-            String idString = prefix + "treeLikelihood";
-
-            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, idString);
+            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, getTreeDataLikelihoodId(treeModel, clockModel));
         }
 
         for (AbstractPartitionData partition : options.otherPartitions) {

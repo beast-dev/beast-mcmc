@@ -110,11 +110,7 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 String simulatorId = prefix + STARTING_TREE;
 
-                String taxaId = TaxaParser.TAXA;
-                AbstractPartitionData partition = options.getDataPartitions(model).get(0);
-                if (!options.hasIdenticalTaxa()) {
-                    taxaId = partition.getPartitionTreeModel().getPrefix() + TaxaParser.TAXA;
-                }
+                String taxaId = model.getTaxaId();
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
                 if (options.taxonSets != null && options.taxonSets.size() > 0) {
@@ -250,7 +246,7 @@ public class InitialTreeGenerator extends Generator {
 
         for (Taxa taxa2 : options.taxonSets) {
             boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
-            boolean isMono = options.taxonSetsMono.get(taxa2) != null;
+            boolean isMono = Boolean.TRUE.equals(options.taxonSetsMono.get(taxa2));
             boolean hasHeight = options.taxonSetsHeights.get(taxa2) != null;
             boolean isSubset = taxa.containsAll(taxa2);
             if (sameTree && (isMono || hasHeight) && taxa2 != taxa && isSubset) {

@@ -112,7 +112,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         lastDeviation = 0.0;
         sumDeviation = 0.0;
         sumEvaluationTime = 0;
-        sumCalculationCount = 0;
 
         windowAcceptance.clear();
     }
@@ -211,21 +210,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         sumEvaluationTime += time;
     }
 
-    @Override
-    public double getMeanCalculationCount() {
-        return (double) sumCalculationCount / (double) (acceptCount + rejectCount);
-    }
-
-    @Override
-    public void addCalculationCount(long count) {
-        sumCalculationCount += count;
-    }
-
-    @Override
-    public long getTotalCalculationCount() {
-        return sumCalculationCount;
-    }
-
     /**
      * Called by operate(), does the actual operation.
      *
@@ -247,7 +231,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private boolean operateAllowed = true;
 
     private long sumEvaluationTime = 0;
-    private long sumCalculationCount = 0;
 
     private final Deque<Integer> windowAcceptance = new ArrayDeque<>();
 }

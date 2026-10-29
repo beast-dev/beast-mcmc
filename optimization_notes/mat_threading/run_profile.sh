@@ -8,7 +8,7 @@
 #
 # BEAST_CP: the classpath of the BEAST build (default: build/dist/beast.jar of this repository plus lib/*; make it with ant dist)
 # JAVA_OPTS: extra JVM options (default: -Xmx8g)
-# PROFILE: 1 (default) for -Dmcmc.profile=true -Dmat.profile=true, 0 for a run without the timers
+# PROFILE: 1 (default) for -Dmcmc.profile=steps,mat, 0 for a run without the timers
 set -u
 XML_DIR=$(cd "$1" && pwd)
 RUN_DIR=$2
@@ -32,7 +32,7 @@ for name in $NAMES; do
     cp "$XML_DIR/$name.xml" "$dir/"
     opts="$JAVA_OPTS"
     if [ "$PROFILE" = 1 ]; then
-        opts="$opts -Dmcmc.profile=true -Dmat.profile=true"
+        opts="$opts -Dmcmc.profile=steps,mat"
     fi
     if [ "$JFR" = 1 ]; then
         opts="$opts -XX:StartFlightRecording=filename=$dir/run.jfr,settings=profile"

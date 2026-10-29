@@ -27,6 +27,9 @@
 
 package dr.app.util;
 
+import jam.html.SimpleLinkListener;
+import jam.util.IconUtils;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -35,9 +38,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * An about box that needs no jam Application behind it (jam's AboutBox does): the icon, a title and the
- * credits, closed by a click or Escape. For programs that show a dialog before, or without, an application
- * window, such as BEAST's options dialog.
+ * An about box laid out like jam's AboutBox (the icon beside the title, the credits below) but needing no
+ * jam Application behind it, closed by a click or Escape. For programs that show a dialog before, or
+ * without, an application window, such as BEAST's options dialog.
  *
  * @author Andrew Rambaut
  */
@@ -46,9 +49,9 @@ public class SimpleAboutDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     /**
-     * @param title      the title (may be HTML)
+     * @param title      the title, as plain text
      * @param about      the credits (may be HTML)
-     * @param icon       the application's icon, or null
+     * @param icon       the application's icon (shown at 96 pixels), or null
      * @param background the box's colour, or null for the default
      * @param foreground the text colour, or null for the default
      */
@@ -58,22 +61,31 @@ public class SimpleAboutDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(false);
 
-        JPanel panel = new JPanel(new BorderLayout(0, 12));
-        panel.setBorder(BorderFactory.createEmptyBorder(24, 32, 24, 32));
+        JPanel panel = new JPanel(new BorderLayout(0, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         if (background != null) {
             panel.setBackground(background);
         }
 
-        JPanel top = new JPanel(new BorderLayout(0, 8));
-        top.setOpaque(false);
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(32.0f).deriveFont(Font.PLAIN));
         if (icon != null) {
-            JLabel iconLabel = new JLabel(icon);
-            iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            top.add(iconLabel, BorderLayout.NORTH);
+            titleLabel.setIcon(IconUtils.resize(icon, 96, 96));
         }
-        top.add(label(title, foreground), BorderLayout.CENTER);
-        panel.add(top, BorderLayout.NORTH);
-        panel.add(label(about, foreground), BorderLayout.CENTER);
+        if (foreground != null) {
+            titleLabel.setForeground(foreground);
+        }
+        panel.add(titleLabel, BorderLayout.NORTH);
+
+        JEditorPane aboutPane = about.startsWith("<html>") ? new JEditorPane("text/html", about) : new JEditorPane("text/plain", about);
+        aboutPane.setOpaque(false);
+        aboutPane.setEditable(false);
+        aboutPane.setFont(aboutPane.getFont().deriveFont(11.0f));
+        if (foreground != null) {
+            aboutPane.setForeground(foreground);
+        }
+        aboutPane.addHyperlinkListener(new SimpleLinkListener());
+        panel.add(aboutPane, BorderLayout.CENTER);
 
         MouseAdapter closer = new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -81,6 +93,7 @@ public class SimpleAboutDialog extends JDialog {
             }
         };
         panel.addMouseListener(closer);
+        aboutPane.addMouseListener(closer);
         getRootPane().registerKeyboardAction(new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 dispose();
@@ -98,14 +111,5 @@ public class SimpleAboutDialog extends JDialog {
         if (visible) {
             toFront();
         }
-    }
-
-    private static JLabel label(String text, Color foreground) {
-        JLabel label = new JLabel(text);
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        if (foreground != null) {
-            label.setForeground(foreground);
-        }
-        return label;
     }
 }

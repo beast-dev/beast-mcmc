@@ -1,5 +1,8 @@
 package test.dr.evomodel.treedatalikelihood.action;
 
+import beagle.Beagle;
+import beagle.BeagleFactory;
+import beagle.BeagleFlag;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
@@ -37,6 +40,26 @@ public class ActionRestoreTest extends TraceCorrelationAssert {
         treeModel = createPrimateTreeModel();
     }
 
+    // Whether the BEAGLE library supports action-based likelihoods (release builds without them have no
+    // setSparseMatrix( ), so the call throws UnsatisfiedLinkError).
+    private static boolean actionAvailable() {
+        try {
+            Beagle beagle = BeagleFactory.loadBeagleInstance(2, 3, 0, 4, 1, 1, 2, 1, 0, null,
+                    BeagleFlag.PRECISION_DOUBLE.getMask() | BeagleFlag.BEAGLE_FLAG_COMPUTATION_ACTION.getMask(), 0);
+            if (beagle == null) {
+                return false;
+            }
+            try {
+                beagle.setSparseMatrix(0, new int[]{0, 1, 2, 3}, new int[]{0, 1, 2, 3}, new double[]{0, 0, 0, 0}, 4);
+            } finally {
+                beagle.finalize();
+            }
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
     private TreeDataLikelihood createLikelihood(Parameter kappa, Parameter clockRate) {
         FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(alignment.getStateFrequencies()));
         HKY hky = new HKY(kappa, frequencies);
@@ -50,6 +73,11 @@ public class ActionRestoreTest extends TraceCorrelationAssert {
     }
 
     public void testRejectedSubstitutionMoveIsRestored() {
+        if (!actionAvailable()) {
+            System.out.println("ActionRestoreTest skipped: the BEAGLE library does not support action-based likelihoods");
+            return;
+        }
+
         Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 2.0);
         Parameter clockRate = new Parameter.Default(1.0);
         TreeDataLikelihood likelihood = createLikelihood(kappa, clockRate);

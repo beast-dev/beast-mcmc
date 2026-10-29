@@ -786,6 +786,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             evolutionaryProcessDelegate.updateSubstitutionModels(beagle, flip);
+            substitutionModelUpdatedSinceStore = true;
 
             // we are currently assuming a no-category model...
         }
@@ -1045,6 +1046,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         // turn on double buffering flipping (may have been turned off to enable a rescale)
         flip = true;
 
+        substitutionModelUpdatedSinceStore = false;
+
         isRestored = false;
     }
 
@@ -1058,6 +1061,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
         partialBufferHelper.restoreState();
         if (evolutionaryProcessDelegate instanceof ActionSubstitutionModelDelegate) {
+            // The action delegate overwrites the rate matrices in BEAGLE in place (no double buffering), so if the
+            // rejected proposal sent new ones, send the restored ones back.  The substitution models have already
+            // been restored (they are sub-models), and this must happen now rather than at the next likelihood
+            // evaluation: a gradient (pre-order traversal) can follow a restore without one.
+            if (substitutionModelUpdatedSinceStore) {
+                evolutionaryProcessDelegate.updateSubstitutionModels(beagle, false);
+                substitutionModelUpdatedSinceStore = false;
+            }
             ((ActionSubstitutionModelDelegate) evolutionaryProcessDelegate).restoreState(beagle);
         } else {
             evolutionaryProcessDelegate.restoreState();
@@ -1294,6 +1305,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
      * Flag to specify that the substitution model has changed
      */
     private boolean updateSubstitutionModel;
+    // Whether the substitution models were sent to BEAGLE since the last storeState( ) (see restoreState( ))
+    private boolean substitutionModelUpdatedSinceStore = false;
 
     /**
      * Flag to specify that the site model has changed

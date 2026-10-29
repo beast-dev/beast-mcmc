@@ -73,6 +73,16 @@ public interface ActionEnabledSubstitution extends SubstitutionModel {
             this.Q = new double[stateCount * stateCount];
             processSubstitutionModel();
             addModel(substitutionModel);
+            // This wrapper is not a sub-model of the likelihood, so its restoreState( ) is never called; listen for
+            // the wrapped model's restore instead, or the entries of a rejected proposal stay cached.
+            if (substitutionModel instanceof AbstractModel) {
+                ((AbstractModel) substitutionModel).addModelRestoreListener(this);
+            }
+        }
+
+        @Override
+        public void modelRestored(Model model) {
+            substitutionModelKnown = false;
         }
 
         private void processSubstitutionModel() {

@@ -74,6 +74,9 @@ public final class MarkovChain implements Serializable {
 
     private double evaluationTestThreshold = EVALUATION_TEST_THRESHOLD;
 
+    // the time of the phases of each step per operator, when -Dmcmc.profile=true
+    private final StepProfile stepProfile = new StepProfile();
+
 
     public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
@@ -168,6 +171,7 @@ public final class MarkovChain implements Serializable {
 
         pleaseStop = false;
         isStopped = false;
+        stepProfile.reset();
 
         //int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
@@ -196,6 +200,9 @@ public final class MarkovChain implements Serializable {
 
             // wall-clock time of the whole step (propose, evaluate, accept/restore, adapt)
             final long stepStartTime = System.nanoTime();
+            if (StepProfile.ENABLED) {
+                stepProfile.startStep(mcmcOperator);
+            }
 
             double oldScore = currentScore;
             if (usingFullEvaluation) {
@@ -208,6 +215,10 @@ public final class MarkovChain implements Serializable {
             // The current model is stored here in case the proposal fails
             if (currentModel != null) {
                 currentModel.storeModelState();
+            }
+            long phaseStart = stepStartTime;
+            if (StepProfile.ENABLED) {
+                phaseStart = stepProfile.add(mcmcOperator, StepProfile.Phase.STORE, phaseStart);
             }
 
             // assert Profiler.stopProfile("Store");
@@ -230,6 +241,9 @@ public final class MarkovChain implements Serializable {
                 hastingsRatio = ((GeneralOperator) mcmcOperator).operate(likelihood);
             } else {
                 hastingsRatio = mcmcOperator.operate();
+            }
+            if (StepProfile.ENABLED) {
+                phaseStart = stepProfile.add(mcmcOperator, StepProfile.Phase.PROPOSE, phaseStart);
             }
 
             // assert Profiler.stopProfile("Operate");
@@ -264,6 +278,10 @@ public final class MarkovChain implements Serializable {
 
                 // The new model is evaluated
                 score = evaluate(likelihood);
+                if (StepProfile.ENABLED) {
+                    phaseStart = stepProfile.add(mcmcOperator, StepProfile.Phase.EVALUATE, phaseStart);
+                }
+
 
                 if (PROFILE) {
                     long duration = System.nanoTime() - elapsedTime;
@@ -444,8 +462,15 @@ public final class MarkovChain implements Serializable {
             // assert Profiler.stopProfile("Restore");
 
 
+            if (StepProfile.ENABLED) {
+                phaseStart = stepProfile.add(mcmcOperator, StepProfile.Phase.ACCEPT_RESTORE, phaseStart);
+            }
+
             if (isAdapting(mcmcOperator)) {
                 adaptAcceptanceProbability((AdaptableMCMCOperator) mcmcOperator, logr[0]);
+            }
+            if (StepProfile.ENABLED) {
+                stepProfile.add(mcmcOperator, StepProfile.Phase.ADAPT, phaseStart);
             }
 
             if (usingFullEvaluation) {
@@ -476,6 +501,10 @@ public final class MarkovChain implements Serializable {
         currentLength = currentState;
 
         return currentLength;
+    }
+
+    public StepProfile getStepProfile() {
+        return stepProfile;
     }
 
     public void terminateChain() {

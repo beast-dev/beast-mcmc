@@ -91,6 +91,7 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
 
     private void clearTransitionProbabilityCache() {
         if (cachedCount > 0) {
+            MATProfile.count(MATProfile.Counter.TRANSITION_CACHE_CLEARS, 1);
             Arrays.fill(cachedTransitionProbabilities, null);
             Arrays.fill(cachedLogTransitionProbabilities, null);
             cachedCount = 0;
@@ -139,6 +140,7 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
             clearTransitionProbabilityCache();
             slot = (int) (h >>> CACHE_HASH_SHIFT) & mask;
         }
+        MATProfile.count(MATProfile.Counter.TRANSITION_CACHE_MISSES, 1);
         double[] p = new double[stateCount * stateCount];
         substitutionModel.getTransitionProbabilities(distance, p);
         double[] logP = new double[p.length];

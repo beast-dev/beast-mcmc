@@ -343,6 +343,16 @@ public final class DefaultMutationStore implements MutationStore {
      * to date (in O(nodes)).
      */
     public void setCategory(int pattern, int category) {
+        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, categories[pattern] == category ? 0 : 1);
+        final long profileStart = MATProfile.start();
+        try {
+            setCategoryImpl(pattern, category);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_SET_CATEGORY, profileStart);
+        }
+    }
+
+    private void setCategoryImpl(int pattern, int category) {
         final int old = categories[pattern];
         if (old == category) {
             return;
@@ -388,6 +398,7 @@ public final class DefaultMutationStore implements MutationStore {
 
     private void journalStates(int nodeNumber) {
         if (!statesDirty[nodeNumber]) {
+            final long profileStart = MATProfile.start();
             journaledNodes.add(nodeNumber);
             savedStates[nodeNumber] = states[nodeNumber];
             states[nodeNumber] = states[nodeNumber].clone();
@@ -397,6 +408,8 @@ public final class DefaultMutationStore implements MutationStore {
                 compositions[nodeNumber] = compositions[nodeNumber].clone();
             }
             statesDirty[nodeNumber] = true;
+            MATProfile.stop(MATProfile.Phase.STORE_JOURNAL_CLONE, profileStart);
+            MATProfile.count(MATProfile.Counter.JOURNAL_CLONE_BYTES, patternCount);
         }
     }
 
@@ -436,12 +449,14 @@ public final class DefaultMutationStore implements MutationStore {
 
     public long[] getWritableFitchSets(int nodeNumber) {
         if (!fitchSetsDirty[nodeNumber]) {
+            final long profileStart = MATProfile.start();
             journaledNodes.add(nodeNumber);
             long[] sets = fitchSets[nodeNumber];
             savedFitchSets[nodeNumber] = sets;
             fitchSets[nodeNumber] = sets == null ? new long[patternCount] : sets.clone();
             fitchSetsDirty[nodeNumber] = true;
             fitchSetsReleased = false;
+            MATProfile.stop(MATProfile.Phase.STORE_FITCH_CLONE, profileStart);
         }
         return fitchSets[nodeNumber];
     }
@@ -474,6 +489,16 @@ public final class DefaultMutationStore implements MutationStore {
      * of the node and its current parent.
      */
     public void updateBranch(int nodeNumber) {
+        MATProfile.count(MATProfile.Counter.BRANCH_SCAN_PATTERNS, parents[nodeNumber] < 0 ? 0 : patternCount);
+        final long profileStart = MATProfile.start();
+        try {
+            updateBranchImpl(nodeNumber);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_UPDATE_BRANCH, profileStart);
+        }
+    }
+
+    private void updateBranchImpl(int nodeNumber) {
         journalBranch(nodeNumber);
         changedNodes.add(nodeNumber);
 
@@ -561,6 +586,16 @@ public final class DefaultMutationStore implements MutationStore {
      * @param sites   the sites, in pattern order (the events of every branch are kept in pattern order)
      */
     public void updateBranchSites(int nodeNumber, IndexSet changed, int[] sites) {
+        MATProfile.count(MATProfile.Counter.BRANCH_SITE_UPDATES, sites.length);
+        final long profileStart = MATProfile.start();
+        try {
+            updateBranchSitesImpl(nodeNumber, changed, sites);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_UPDATE_BRANCH_SITES, profileStart);
+        }
+    }
+
+    private void updateBranchSitesImpl(int nodeNumber, IndexSet changed, int[] sites) {
         if (sites.length == 0) {
             return;
         }
@@ -663,6 +698,15 @@ public final class DefaultMutationStore implements MutationStore {
      * Accepts all changes since the last commit.
      */
     public void commit() {
+        final long profileStart = MATProfile.start();
+        try {
+            commitImpl();
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_COMMIT, profileStart);
+        }
+    }
+
+    private void commitImpl() {
         for (int i = 0; i < journaledNodes.size(); i++) {
             int n = journaledNodes.get(i);
             savedStates[n] = null;
@@ -689,6 +733,15 @@ public final class DefaultMutationStore implements MutationStore {
      * Discards all changes since the last commit.
      */
     public void revert() {
+        final long profileStart = MATProfile.start();
+        try {
+            revertImpl();
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_REVERT, profileStart);
+        }
+    }
+
+    private void revertImpl() {
         for (int i = 0; i < journaledNodes.size(); i++) {
             int n = journaledNodes.get(i);
             if (statesDirty[n] || branchDirty[n]) {

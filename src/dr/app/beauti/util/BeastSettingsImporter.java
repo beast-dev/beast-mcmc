@@ -228,40 +228,96 @@ public class BeastSettingsImporter {
             written.add((Element) child);
         }
 
+        if (linesUp(expected, written)) {
+            int tunings = 0;
+            for (int i = 0; i < expected.size(); i++) {
+                if (takeOperatorSettings(expected.get(i), written.get(i))) {
+                    tunings++;
+                }
+            }
+            report.recovered("the weights of " + expected.size() + " operators and the tuning of " + tunings);
+        } else {
+            takeOperatorSettingsByParameter(expected, written);
+        }
+    }
+
+    /**
+     * @return true if the operators in the file are the ones this analysis has, in the same order, so that
+     * each can be read straight across. A weight put on the wrong operator would be worse than none at all.
+     */
+    private boolean linesUp(List<Operator> expected, List<Element> written) {
         if (written.size() < expected.size()) {
-            report.notRecovered("the operator weights and tunings (the file has fewer operators than this " +
-                    "analysis needs)");
-            return;
+            return false;
         }
         for (int i = 0; i < expected.size(); i++) {
-            Operator operator = expected.get(i);
-            Parameter parameter = operator.getParameter1();
-            // some operators act on a tree rather than on a parameter the file names, and there is nothing
-            // to check them against
-            boolean named = parameter != null && elementById(parameter.getName()) != null;
-            if (named && !refersTo(written.get(i), parameter.getName())) {
-                report.notRecovered("the operator weights and tunings (the operators in the file are not " +
-                        "the ones this analysis has)");
-                return;
+            String name = checkableParameterOf(expected.get(i));
+            if (name != null && !refersTo(written.get(i), name)) {
+                return false;
             }
         }
+        return true;
+    }
 
-        int tunings = 0;
-        for (int i = 0; i < expected.size(); i++) {
-            Operator operator = expected.get(i);
-            Element element = written.get(i);
-
-            Double weight = doubleAttribute(element, OPERATOR_WEIGHT);
-            if (weight != null) {
-                operator.setWeight(weight);
+    /**
+     * A file BEAUti did not write will have its own operators in its own order. Each of this analysis's
+     * operators is then matched by the parameter it acts on, and only where that names exactly one of the
+     * operators in the file, so that an ambiguous match is left alone rather than guessed at.
+     */
+    private void takeOperatorSettingsByParameter(List<Operator> expected, List<Element> written) {
+        int taken = 0;
+        for (Operator operator : expected) {
+            String name = checkableParameterOf(operator);
+            if (name == null) {
+                continue;
             }
-            Double tuning = tuningOf(element);
-            if (tuning != null && operator.isTunable()) {
-                operator.setTuning(tuning);
-                tunings++;
+            Element only = null;
+            for (Element element : written) {
+                if (refersTo(element, name)) {
+                    if (only != null) {
+                        only = null;
+                        break;
+                    }
+                    only = element;
+                }
+            }
+            if (only != null) {
+                takeOperatorSettings(operator, only);
+                taken++;
             }
         }
-        report.recovered("the weights of " + expected.size() + " operators and the tuning of " + tunings);
+        if (taken > 0) {
+            report.recovered("the weights and tunings of " + taken + " operators");
+        }
+        report.notRecovered("the weights and tunings of " + (expected.size() - taken) + " operators, whose " +
+                "counterparts in the file could not be told apart");
+    }
+
+    /**
+     * @return the parameter this operator acts on, if the file names it, or null for the operators that act
+     * on a tree and have no parameter to be known by
+     */
+    private String checkableParameterOf(Operator operator) {
+        Parameter parameter = operator.getParameter1();
+        if (parameter == null || elementById(parameter.getName()) == null) {
+            return null;
+        }
+        return parameter.getName();
+    }
+
+    /**
+     * @return true if the operator had a tuning to take
+     */
+    private boolean takeOperatorSettings(Operator operator, Element element) {
+        Double weight = doubleAttribute(element, OPERATOR_WEIGHT);
+        if (weight != null) {
+            operator.setWeight(weight);
+        }
+        Double tuning = tuningOf(element);
+        if (tuning != null && operator.isTunable()) {
+            operator.setTuning(tuning);
+            return true;
+        }
+        return false;
     }
 
     /**

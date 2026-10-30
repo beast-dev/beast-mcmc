@@ -30,6 +30,7 @@ package test.dr.app.beauti;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.BeautiImporter;
 import dr.app.beauti.util.ImportReport;
@@ -411,6 +412,32 @@ public class BeautiXmlRoundTripTest {
             }
         }
         return false;
+    }
+
+    /**
+     * One of the benchmark files, written by hand years before the current BEAUti, to check that a file it
+     * did not write still gives up most of its settings and says what it could not.
+     */
+    @Test
+    public void aHandWrittenBenchmarkFileGivesUpWhatItCan() throws Exception {
+        File file = new File("examples/Benchmarks/benchmark1.xml");
+        Assert.assertTrue("the benchmark file should be in the repository", file.exists());
+
+        BeautiOptions options = BeautiOptions.newInstance(BeautiHeadlessHarness.COMPONENTS);
+        BeautiImporter importer = new BeautiImporter(null, options);
+        importer.importFromFile(file);
+
+        Assert.assertEquals("the sequences should be read", 1, options.dataPartitions.size());
+        Assert.assertEquals("the taxa should be read", 1441, options.taxonList.getTaxonCount());
+        Assert.assertEquals("the operator set", OperatorSetType.CLASSIC, options.operatorSetType);
+        Assert.assertTrue("the older parameterisation", options.useClassicOperatorsAndPriors);
+        Assert.assertEquals("the chain length", 100000, options.chainLength);
+
+        ImportReport report = importer.getReport();
+        Assert.assertTrue("the operators it could not tell apart should be reported",
+                containing(report.getNotRecovered(), "could not be told apart"));
+        Assert.assertTrue("the operators it could match should be taken",
+                containing(report.getRecovered(), "weights and tunings"));
     }
 
     /**

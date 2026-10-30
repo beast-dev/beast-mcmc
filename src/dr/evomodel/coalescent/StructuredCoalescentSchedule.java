@@ -53,7 +53,8 @@ public final class StructuredCoalescentSchedule {
         if (nodeCount <= 0) {
             throw new IllegalArgumentException("nodeCount must be positive");
         }
-        if (initialTime < 0.0 || !Double.isFinite(initialTime)) {
+        // Negative heights are allowed: BASTA travel-history pseudo-tips can lie below height zero
+        if (!Double.isFinite(initialTime)) {
             throw new IllegalArgumentException("invalid initial time: " + initialTime);
         }
         validateNode(initialSampleNode, nodeCount, "initial sample");
@@ -139,12 +140,15 @@ public final class StructuredCoalescentSchedule {
             }
         }
 
-        if (intervalCount == 0 || types[intervalCount - 1] != COALESCENT) {
+        // Validate the active lineages first, so that stale intervals surface as an InactiveLineageException
+        StructuredCoalescentSchedule schedule = new StructuredCoalescentSchedule(tree.getNodeHeight(initialSample),
+                initialSample.getNumber(), nodeCount, lengths, types, samples, child1, child2, parents);
+
+        if (types[intervalCount - 1] != COALESCENT) {
             throw new IllegalArgumentException("Last structured-coalescent event must be a coalescence");
         }
 
-        return new StructuredCoalescentSchedule(tree.getNodeHeight(initialSample), initialSample.getNumber(),
-                nodeCount, lengths, types, samples, child1, child2, parents);
+        return schedule;
     }
 
     private static int[] filledNodes(int length) {

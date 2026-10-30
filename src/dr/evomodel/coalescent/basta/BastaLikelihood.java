@@ -138,8 +138,18 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
         this.likelihoodDelegate.setPopulationSizeModel(populationSizeModel);
 
+        // Ancestral-trait (travel history) trees place ancestors on zero-length intervals by construction
         treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, 
                 numberSubIntervals, !isAncestralTraitTree);
+
+        if (likelihoodDelegate instanceof AdjointGenericBastaLikelihoodDelegate) {
+            int[] consts = ((AdjointGenericBastaLikelihoodDelegate) likelihoodDelegate)
+                    .getBeagleSlabConstants();
+            if (consts != null && consts.length >= 2) {
+                treeTraversalDelegate.setSlabConstants(consts[0], consts[1]);
+            }
+            treeTraversalDelegate.setSlabMetadataRecording(true);
+        }
 
         // Initialize ancestral state reconstruction settings
         this.useMAP = useMAP;
@@ -399,6 +409,18 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
     // acceptState() is inherited unchanged from AbstractStructuredCoalescentLikelihood (was already a no-op here).
 
+    public long computeTreeStructureSignature() {
+        long h = 1125899906842597L;
+        final int nodeCount = tree.getNodeCount();
+        for (int i = 0; i < nodeCount; ++i) {
+            final NodeRef node = tree.getNode(i);
+            h = 31L * h + Double.doubleToLongBits(tree.getNodeHeight(node));
+            final NodeRef parent = tree.getParent(node);
+            h = 31L * h + (parent == null ? -1L : parent.getNumber());
+        }
+        return h;
+    }
+
     @Override
     protected double calculateLogLikelihood() {
 
@@ -409,7 +431,15 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
         if (!treeIntervalsKnown) {
             // update operations on tree
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            try {
+                treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            } catch (CoalescentIntervalTraversal.DegenerateIntervalException e) {
+                treeIntervalsKnown = false;
+                return Double.NEGATIVE_INFINITY;
+            } catch (CoalescentIntervalTraversal.ActiveSetException e) {
+                treeIntervalsKnown = false;
+                return Double.NEGATIVE_INFINITY;
+            }
         }
 
         final List<BranchIntervalOperation> branchOperations =
@@ -444,16 +474,15 @@ public class BastaLikelihood extends AbstractStructuredCoalescentLikelihood impl
 
     public double[] getGradientLogDensity(StructuredCoalescentLikelihoodGradient wrt) {
 
+        calculateLogLikelihood(); // TODO Only execute if necessary
+
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
         final List<TransitionMatrixOperation> matrixOperations =
-                transitionMatricesKnown ? NO_OPT :
                         treeTraversalDelegate.getMatrixOperations();
         final List<Integer> intervalStarts = treeTraversalDelegate.getIntervalStarts();
 
         final NodeRef root = tree.getRoot();
-
-        calculateLogLikelihood(); // TODO Only execute if necessary
 
         double[] gradient = likelihoodDelegate.calculateGradient(branchOperations, matrixOperations, intervalStarts,
                 root.getNumber(), wrt, this);

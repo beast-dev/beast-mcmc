@@ -249,6 +249,10 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
         abstract protected void allocateGradientMemory();
 
+        protected boolean requiresGradientTransitionMatrices() {
+            return !transpose;
+        }
+
         abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
                                                                 List<BranchIntervalOperation> branchIntervalOperations,
                                                                 List<TransitionMatrixOperation> matrixOperations,
@@ -326,7 +330,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             allocateGradientMemory();
 
-            if (!transpose && wrt.requiresTransitionMatrices()) {
+            if (requiresGradientTransitionMatrices() && wrt.requiresTransitionMatrices()) {
                 computeTransitionProbabilityOperations(matrixOperations, Mode.GRADIENT);
             }
 

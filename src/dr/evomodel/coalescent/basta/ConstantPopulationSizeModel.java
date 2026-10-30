@@ -16,8 +16,8 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
         this.populationSizeParameter = populationSizeParameter;
         addVariable(populationSizeParameter);
         
-        if (populationSizeParameter.getDimension() != stateCount) {
-            throw new IllegalArgumentException("Population size parameter dimension must equal state count");
+        if (populationSizeParameter.getDimension() != stateCount && populationSizeParameter.getDimension() != 1) {
+            throw new IllegalArgumentException("Population size parameter dimension must equal state count or 1");
         }
     }
     
@@ -44,6 +44,7 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
         
         int numIntervals = intervalStarts.size() - 1;
         int storageSize = stateCount + numIntervals * stateCount;
+        boolean shared = populationSizeParameter.getDimension() == 1;
 
         double[] sizes = new double[storageSize];
         double[] integrals = new double[storageSize];
@@ -54,7 +55,7 @@ public class ConstantPopulationSizeModel extends AbstractPopulationSizeModel {
             double length = intervalLengths[interval];
             
             for (int k = 0; k < stateCount; ++k) {
-                double popSize = populationSizeParameter.getParameterValue(k);
+                double popSize = populationSizeParameter.getParameterValue(shared ? 0 : k);
                 sizes[offset + k] = popSize;
                 integrals[offset + k] = length / popSize;
             }

@@ -88,6 +88,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     private static final boolean USE_DELEGATE = true;
     private static final boolean USE_BEAGLE = true;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
+    public static final String GRADIENT_IMPLEMENTATION = "gradientImplementation";
     private static final boolean TRANSPOSE = true;
 
     // MASCOT-only surface.
@@ -202,6 +203,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         setPopSizeDimensionNames(popSizes, generalSubstitutionModel.getDataType(), stateCount);
 
         int threads = xo.getAttribute(THREADS, 1);
+        String gradientImplementationName = xo.hasAttribute(GRADIENT_IMPLEMENTATION) ?
+                xo.getStringAttribute(GRADIENT_IMPLEMENTATION) : null;
 
         String name = xo.getId();
 
@@ -216,7 +219,20 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 } else {
                     if (USE_DELEGATE) {
                         final BastaLikelihoodDelegate delegate;
-                        if (USE_BEAGLE) {
+                        boolean useAdjoint = "adjoint".equalsIgnoreCase(gradientImplementationName);
+
+                        if (gradientImplementationName != null &&
+                                !useAdjoint &&
+                                !"legacy".equalsIgnoreCase(gradientImplementationName)) {
+                            throw new XMLParseException("Unknown BASTA gradient implementation: " +
+                                    gradientImplementationName + ". Use 'adjoint' or 'legacy'.");
+                        }
+
+                        if (useAdjoint) {
+                            delegate = new AdjointGenericBastaLikelihoodDelegate(name, treeModel,
+                                    generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE,
+                                    USE_BEAGLE);
+                        } else if (USE_BEAGLE) {
                             delegate = new BeagleBastaLikelihoodDelegate(name, treeModel,
                                     generalSubstitutionModel.getDataType().getStateCount(), TRANSPOSE);
                         } else {
@@ -298,14 +314,17 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                         } else if (gridPoints != null || popSizes.getDimension() == stateCount) {
                             populationSizeModel = constantOrGridPiecewisePopulationSizeModel(
                                     popSizes, gridPoints, stateCount);
+                        } else if (popSizes.getDimension() == 1) {
+                            // one population size shared by all demes (BASTA only; MASCOT requires stateCount)
+                            populationSizeModel = new ConstantPopulationSizeModel("constant", popSizes, stateCount, -1);
                         } else if (popSizes.getDimension() % stateCount == 0 && popSizes.getDimension() > stateCount) {
                             populationSizeModel = new PiecewiseConstantPopulationSizeModel(
                                 "piecewiseConstant", popSizes, stateCount, -1);
                         } else {
                             throw new XMLParseException(
                                 "Unable to auto-detect population model. Parameter dimension " + popSizes.getDimension() +
-                                " should be " + stateCount + " (constant) or a multiple of " + stateCount +
-                                " (piecewise constant).");
+                                " should be 1 (shared constant), " + stateCount + " (constant) or a multiple of " +
+                                stateCount + " (piecewise constant).");
                         }
 
                         BastaLikelihood likelihood = new BastaLikelihood(name, treeModel, patternList, generalSubstitutionModel,
@@ -509,6 +528,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             // BASTA-only attributes.
             AttributeRule.newIntegerRule(SUB_INTERVALS, true),
             AttributeRule.newIntegerRule(THREADS, true),
+            AttributeRule.newStringRule(GRADIENT_IMPLEMENTATION, true),
             AttributeRule.newBooleanRule(MAP_RECONSTRUCTION, true),
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             // MASCOT-only attributes. Declared optional here (rather than

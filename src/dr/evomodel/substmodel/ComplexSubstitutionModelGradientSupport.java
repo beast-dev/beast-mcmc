@@ -16,8 +16,9 @@ import dr.inference.model.Parameter;
  * things from the model before they can map an internal rate-matrix gradient
  * back to an XML-facing {@link Parameter}: it must be a {@link
  * ComplexSubstitutionModel} (rate-ordering assumption), it must not be
- * normalized (the normalization derivative isn't implemented on either side),
- * and it must expose a {@link GeneralSubstitutionModel#getRatesParameter()}.
+ * normalized unless the caller implements the normalization derivative (BASTA
+ * does, MASCOT does not), and it must expose a {@link
+ * GeneralSubstitutionModel#getRatesParameter()}.
  */
 public final class ComplexSubstitutionModelGradientSupport {
 
@@ -29,10 +30,18 @@ public final class ComplexSubstitutionModelGradientSupport {
      * a human-readable reason it is not, prefixed by {@code context}.
      */
     public static String getCompatibilityError(SubstitutionModel model, String context) {
+        return getCompatibilityError(model, context, false);
+    }
+
+    /**
+     * @param normalizationSupported whether the caller's gradient accounts for a normalized rate matrix
+     */
+    public static String getCompatibilityError(SubstitutionModel model, String context,
+                                               boolean normalizationSupported) {
         if (!(model instanceof ComplexSubstitutionModel)) {
             return context + " currently requires ComplexSubstitutionModel-compatible rate ordering";
         }
-        if (((ComplexSubstitutionModel) model).getNormalization()) {
+        if (!normalizationSupported && ((ComplexSubstitutionModel) model).getNormalization()) {
             return context + " requires normalized=\"false\" until the normalization derivative is implemented";
         }
         if (getRatesParameter(model) == null) {

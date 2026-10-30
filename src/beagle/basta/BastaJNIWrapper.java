@@ -103,5 +103,28 @@ public class BastaJNIWrapper {
 
     public native int updateTransitionMatricesGrad(int instance, int[] transitionMatrixIndices, double[] branchLengths, int count);
 
-    public native int accumulateBastaPartialsGrad(int instance, int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
+    public native int accumulateBastaPartialsGrad(int instance,
+                                                  int[] operations, int operationCount,
+                                                  int[] intervalStarts, int intervalCount,
+                                                  double[] intervalLengths,
+                                                  int populationSizeIndex,
+                                                  int coalescentProbabilityIndex,
+                                                  int eigenIndex,
+                                                  int partialAdjointBufferBase,
+                                                  int matrixAdjointBufferBase,
+                                                  double[] popSizeGradOut,
+                                                  double[] result);
+
+    public native int allocateCoalescentGradBuffers(int instance, int partialsCount);
+
+    public native int accumulateEigenBasisGradient(int instance,
+                                                    int eigenIndex,
+                                                    int matrixAdjointBufferBase,
+                                                    double[] branchLengths, int matrixCount,
+                                                    int hasComplexEigenvalues, double[] outRateGradient);
+
+
+    public native int uploadBastaSlabMetadata(int instance, int[] packed, int packedLen);
+
+    public native int getBastaSlabConstants(int instance, int[] out);
 }

@@ -17,6 +17,18 @@ import java.util.Arrays;
  */
 public final class StructuredCoalescentActiveLineages {
 
+    /**
+     * A coalescent event uses a lineage that is not active, e.g. when the tree intervals are stale.
+     */
+    public static final class InactiveLineageException extends IllegalArgumentException {
+        public final int node;
+
+        InactiveLineageException(String message, int node) {
+            super(message);
+            this.node = node;
+        }
+    }
+
     private final int nodeCount;
     private final int[] activeNodes;
     private final int[] activeIndexByNode;
@@ -85,8 +97,8 @@ public final class StructuredCoalescentActiveLineages {
             throw new IllegalArgumentException("coalescent children must be distinct");
         }
         if (activeIndexByNode[leftChild] < 0 || activeIndexByNode[rightChild] < 0) {
-            throw new IllegalArgumentException("coalescent event uses inactive children: " +
-                    leftChild + ", " + rightChild);
+            throw new InactiveLineageException("coalescent event uses inactive children: " +
+                    leftChild + ", " + rightChild, activeIndexByNode[leftChild] < 0 ? leftChild : rightChild);
         }
         if (activeIndexByNode[parent] >= 0) {
             throw new IllegalArgumentException("coalescent parent is already active: " + parent);

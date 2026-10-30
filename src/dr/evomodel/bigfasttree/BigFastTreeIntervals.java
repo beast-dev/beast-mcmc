@@ -72,7 +72,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     }
 
     public BigFastTreeIntervals(MutableTreeModel tree) {
-        this("bigFastIntervals",tree);
+        this("bigFastIntervals", tree);
     }
 
     public BigFastTreeIntervals(String name, MutableTreeModel tree) {
@@ -98,6 +98,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     public void makeDirty() {
         dirty = true;
         intervalsKnown=false;
+        updatedNodes.clear();
     }
 
     @Override
@@ -347,7 +348,6 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                     nodes[idx++] = tree.getInternalNode(i);
                 }
             }
-
             Arrays.parallelSort(nodes, (a, b) -> {
                 if (tree.getNodeHeight(a) == tree.getNodeHeight(b)) return Boolean.compare(tree.isRoot(a), tree.isRoot(b));
                 else
@@ -360,7 +360,8 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
             if (!tree.isExternal(nodes[0])) {
                 throw new IllegalArgumentException("The first event is not a sample event");
             }
-            events.setEvent(lastTime, IntervalType.SAMPLE, nodes[0].getNumber(), 0,-1, 0);
+            events.setEvent(lastTime, IntervalType.SAMPLE, nodes[0].getNumber(), -1, 0, 0);
+            events.setNodeOrder(nodes[0].getNumber(), 0);
 
             int lineages = 1;
             for (int i = 1; i < nodes.length; i++) {
@@ -416,6 +417,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == tree) {
+            if (!(tree instanceof TreeModel)) {
+                makeDirty();
+                fireModelChanged(object);
+                return;
+            }
             if (object instanceof TreeChangedEvent) {
                 TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
                 if (treeChangedEvent.isNodeChanged()) {
@@ -424,7 +430,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
                     // rate changes.
                     if (treeChangedEvent.isHeightChanged()) {
                         NodeRef node = ((TreeChangedEvent) object).getNode();
-                        updatedNodes.add(node.getNumber());
+                        if (updatedNodes.size() >= tree.getNodeCount()) {
+                            makeDirty();
+                        } else {
+                            updatedNodes.add(node.getNumber());
+                        }
                         intervalsKnown = false;
                         onlyUpdateTimes = false;
                     }
@@ -456,12 +466,13 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     @Override
     protected void storeState() {
-        storedUpdatedNodes = new ArrayList<>();
+        storedUpdatedNodes.clear();
         storedUpdatedNodes.addAll(updatedNodes);
 //        Collections.copy(storedUpdatedNodes, updatedNodes);
         storedIntervalsKnown = intervalsKnown;
         storedEvents.copyEvents(events);
         storedOnlyUpdateTimes = onlyUpdateTimes;
+        storedDirty = dirty;
     }
 
     @Override
@@ -474,6 +485,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         intervalsKnown = storedIntervalsKnown;
 
         onlyUpdateTimes = storedOnlyUpdateTimes;
+        dirty = storedDirty;
 
     }
 
@@ -740,6 +752,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     private final Tree tree;
     protected boolean dirty;
+    private boolean storedDirty;
     private int intervalCount = 0;
 
 

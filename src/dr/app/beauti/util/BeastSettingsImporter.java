@@ -32,7 +32,23 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.types.ClockDistributionType;
+import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FrequencyPolicyType;
+import dr.app.beauti.types.TreePriorParameterizationType;
+import dr.app.beauti.types.TreePriorType;
+import dr.evomodelxml.branchratemodel.ContinuousBranchRatesParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.LocalClockModelParser;
+import dr.evomodelxml.branchratemodel.MixtureModelBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
+import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
+import dr.inference.distribution.GammaDistributionModel;
+import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -106,7 +122,172 @@ public class BeastSettingsImporter {
         importPartitions();
         importLinkage();
         importSubstitutionModels();
+        importClockModels();
+        importTreePriors();
+        importTipDates();
         importMCMCSettings();
+    }
+
+    // ---- the clock models -------------------------------------------------------------------------
+
+    /**
+     * Reads the kind of molecular clock each clock model uses from the branch rates model named after it.
+     */
+    private void importClockModels() {
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            Element branchRates = elementById(model.getPrefix() + BRANCH_RATES);
+            if (branchRates == null) {
+                report.notRecovered("the clock model of '" + model.getName() + "'");
+                continue;
+            }
+            importClockModel(model, branchRates);
+        }
+    }
+
+    private void importClockModel(PartitionClockModel model, Element branchRates) {
+        String name = branchRates.getName();
+
+        if (name.equalsIgnoreCase(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES)) {
+            setClockType(model, ClockType.STRICT_CLOCK);
+        } else if (name.equalsIgnoreCase(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES)
+                || name.equalsIgnoreCase(ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES)) {
+            model.setContinuousQuantile(name.equalsIgnoreCase(ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES));
+            setClockType(model, ClockType.UNCORRELATED);
+            importClockDistribution(model, branchRates);
+        } else if (name.equalsIgnoreCase(MixtureModelBranchRatesParser.MIXTURE_MODEL_BRANCH_RATES)) {
+            model.setPerformModelAveraging(true);
+            setClockType(model, ClockType.UNCORRELATED);
+        } else if (name.equalsIgnoreCase(RandomLocalClockModelParser.LOCAL_BRANCH_RATES)) {
+            setClockType(model, ClockType.RANDOM_LOCAL_CLOCK);
+        } else if (name.equalsIgnoreCase(LocalClockModelParser.LOCAL_CLOCK_MODEL)) {
+            setClockType(model, ClockType.FIXED_LOCAL_CLOCK);
+        } else {
+            report.notRecovered("the clock model of '" + model.getName() + "', which the file gives as " + name);
+        }
+    }
+
+    /**
+     * The distribution the branch rates are drawn from is the one child of the branch rates model that is
+     * a distribution.
+     */
+    private void importClockDistribution(PartitionClockModel model, Element branchRates) {
+        Element distribution = firstChild(branchRates, DiscretizedBranchRatesParser.DISTRIBUTION);
+        if (distribution == null) {
+            return;
+        }
+        for (Object child : distribution.getChildren()) {
+            String name = ((Element) child).getName();
+            if (name.equalsIgnoreCase(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL)) {
+                model.setClockDistributionType(ClockDistributionType.LOGNORMAL);
+                return;
+            } else if (name.equalsIgnoreCase(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL)) {
+                model.setClockDistributionType(ClockDistributionType.GAMMA);
+                return;
+            } else if (name.toLowerCase().startsWith("exponentialdistribution")) {
+                model.setClockDistributionType(ClockDistributionType.EXPONENTIAL);
+                return;
+            }
+        }
+    }
+
+    private void setClockType(PartitionClockModel model, ClockType type) {
+        model.setClockType(type);
+        report.recovered("the clock model of '" + model.getName() + "', " + type);
+    }
+
+    // ---- the tree priors --------------------------------------------------------------------------
+
+    /**
+     * Reads the tree prior, which is named after the prior it belongs to. The demographic model written to
+     * seed the starting tree is named differently, so it is not mistaken for the prior itself.
+     */
+    private void importTreePriors() {
+        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+            String prefix = prior.getPrefix();
+            if (setTreePriorIfPresent(prior, prefix + "constant", TreePriorType.CONSTANT)
+                    || setTreePriorIfPresent(prior, prefix + "exponential", TreePriorType.EXPONENTIAL)
+                    || setTreePriorIfPresent(prior, prefix + "logistic", TreePriorType.LOGISTIC)
+                    || setTreePriorIfPresent(prior, prefix + "expansion", TreePriorType.EXPANSION)
+                    || setTreePriorIfPresent(prior, prefix + "yule", TreePriorType.YULE)
+                    || setTreePriorIfPresent(prior, prefix + "birthDeath", TreePriorType.BIRTH_DEATH)
+                    || setTreePriorIfPresent(prior, prefix + "bdss", TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)
+                    || setTreePriorIfPresent(prior, prefix + "skyride", TreePriorType.GMRF_SKYRIDE)
+                    || setTreePriorIfPresent(prior, prefix + "skygrid", TreePriorType.SKYGRID)) {
+                continue;
+            }
+            report.notRecovered("the tree prior of '" + prior.getName() + "'");
+        }
+    }
+
+    /**
+     * @return true if the file has this model, in which case the prior is set from it
+     */
+    private boolean setTreePriorIfPresent(PartitionTreePrior prior, String id, TreePriorType type) {
+        Element element = elementById(id);
+        if (element == null) {
+            return false;
+        }
+
+        TreePriorType actualType = type;
+        if (type == TreePriorType.BIRTH_DEATH
+                && firstChild(element, Gernhard08BirthDeathModelParser.SAMPLE_PROB) != null) {
+            actualType = TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING;
+        }
+        prior.setNodeHeightPrior(actualType);
+        report.recovered("the tree prior of '" + prior.getName() + "', " + actualType);
+
+        if (type == TreePriorType.EXPONENTIAL || type == TreePriorType.LOGISTIC || type == TreePriorType.EXPANSION) {
+            boolean doublingTime = firstChild(element, ExponentialGrowthModelParser.DOUBLING_TIME) != null;
+            prior.setParameterization(doublingTime
+                    ? TreePriorParameterizationType.DOUBLING_TIME : TreePriorParameterizationType.GROWTH_RATE);
+        }
+        if (type == TreePriorType.SKYGRID) {
+            importSkygrid(prior, element);
+        }
+        return true;
+    }
+
+    /**
+     * The number of grid points is the dimension of the population sizes, and the cut-off is the time the
+     * grid spans.
+     */
+    private void importSkygrid(PartitionTreePrior prior, Element skygrid) {
+        Element populationSizes = firstChild(skygrid, GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
+        Integer count = populationSizes == null ? null
+                : integerAttribute(firstChild(populationSizes, ParameterParser.PARAMETER), "dimension");
+        if (count != null) {
+            prior.setSkyGridCount(count);
+        }
+
+        Element cutOff = firstChild(skygrid, GMRFSkyrideLikelihoodParser.CUT_OFF);
+        Double interval = cutOff == null ? null
+                : doubleAttribute(firstChild(cutOff, ParameterParser.PARAMETER), "value");
+        if (interval != null) {
+            prior.setSkyGridInterval(interval);
+        }
+    }
+
+    // ---- the dates on the tips --------------------------------------------------------------------
+
+    /**
+     * The dates themselves come in with the taxa. Whether the tips are calibrated with them is shown by
+     * the statistic for the age of the root, which is only written for a tree whose tips are dated.
+     */
+    private void importTipDates() {
+        if (!options.useTipDates) {
+            return;
+        }
+        options.calculateTipHeights();
+
+        boolean anyCalibrated = false;
+        for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+            boolean calibrated = elementById(treeModel.getPrefix() + "age(root)") != null;
+            treeModel.setTipCalibrations(calibrated);
+            anyCalibrated = anyCalibrated || calibrated;
+        }
+        if (anyCalibrated) {
+            report.recovered("the dates of the tips");
+        }
     }
 
     // ---- the substitution and site models ---------------------------------------------------------

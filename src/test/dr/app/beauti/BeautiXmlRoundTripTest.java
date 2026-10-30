@@ -102,6 +102,36 @@ public class BeautiXmlRoundTripTest {
     }
 
     @Test
+    public void apes_hky_codon123_gamma_strict_yule() throws Exception {
+        roundTrip("apes_hky_codon123_gamma_strict_yule");
+    }
+
+    @Test
+    public void apes_hky_strict_yule() throws Exception {
+        roundTrip("apes_hky_strict_yule");
+    }
+
+    @Test
+    public void apes_hky_strict_birthdeath() throws Exception {
+        roundTrip("apes_hky_strict_birthdeath");
+    }
+
+    @Test
+    public void apes_hky_strict_exponential() throws Exception {
+        roundTrip("apes_hky_strict_exponential");
+    }
+
+    @Test
+    public void apes_hky_ucld_constant() throws Exception {
+        roundTrip("apes_hky_ucld_constant");
+    }
+
+    @Test
+    public void apes_hky_uced_constant() throws Exception {
+        roundTrip("apes_hky_uced_constant");
+    }
+
+    @Test
     public void primates2_linked_hky_strict_constant() throws Exception {
         roundTrip("primates2_linked_hky_strict_constant");
     }
@@ -112,8 +142,23 @@ public class BeautiXmlRoundTripTest {
     }
 
     @Test
+    public void primates2_unlinked_codon112_ucld_yule() throws Exception {
+        roundTrip("primates2_unlinked_codon112_ucld_yule");
+    }
+
+    @Test
     public void h1n1_hky_gamma_strict_constant() throws Exception {
         roundTrip("h1n1_hky_gamma_strict_constant");
+    }
+
+    @Test
+    public void h1n1_hky_gamma_strict_constant_tipdates() throws Exception {
+        roundTrip("h1n1_hky_gamma_strict_constant_tipdates");
+    }
+
+    @Test
+    public void h1n1_hky_gamma_ucld_skygrid_tipdates() throws Exception {
+        roundTrip("h1n1_hky_gamma_ucld_skygrid_tipdates");
     }
 
     @Test
@@ -122,8 +167,58 @@ public class BeautiXmlRoundTripTest {
     }
 
     @Test
+    public void dengue4_hky_gamma_strict_constant_tipdates() throws Exception {
+        roundTrip("dengue4_hky_gamma_strict_constant_tipdates");
+    }
+
+    @Test
+    public void dengue4_gtr_gamma_ucld_exponential_tipdates() throws Exception {
+        roundTrip("dengue4_gtr_gamma_ucld_exponential_tipdates");
+    }
+
+    @Test
+    public void dengue4_hky_gamma_uced_skyride_tipdates() throws Exception {
+        roundTrip("dengue4_hky_gamma_uced_skyride_tipdates");
+    }
+
+    @Test
+    public void dengue4_hky_gamma_strict_skygrid_tipdates() throws Exception {
+        roundTrip("dengue4_hky_gamma_strict_skygrid_tipdates");
+    }
+
+    @Test
+    public void yfv_hky_gamma_strict_constant_tipdates() throws Exception {
+        roundTrip("yfv_hky_gamma_strict_constant_tipdates");
+    }
+
+    @Test
+    public void yfv_hky_gamma_ucld_skygrid_tipdates() throws Exception {
+        roundTrip("yfv_hky_gamma_ucld_skygrid_tipdates");
+    }
+
+    @Test
+    public void yfv_hky_gamma_invar_strict_yule() throws Exception {
+        roundTrip("yfv_hky_gamma_invar_strict_yule");
+    }
+
+    @Test
+    public void carnivores_hky_gamma_strict_yule() throws Exception {
+        roundTrip("carnivores_hky_gamma_strict_yule");
+    }
+
+    @Test
+    public void carnivores_gtr_codon123_ucld_birthdeath() throws Exception {
+        roundTrip("carnivores_gtr_codon123_ucld_birthdeath");
+    }
+
+    @Test
     public void dengue4aa_jtt_strict_constant() throws Exception {
         roundTrip("dengue4aa_jtt_strict_constant");
+    }
+
+    @Test
+    public void dengue4aa_blosum62_gamma_ucld_yule() throws Exception {
+        roundTrip("dengue4aa_blosum62_gamma_ucld_yule");
     }
 
     // ---- the MCMC settings, and the rule about a document that is not empty -----------------------

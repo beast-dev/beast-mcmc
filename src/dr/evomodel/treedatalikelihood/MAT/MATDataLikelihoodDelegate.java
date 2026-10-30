@@ -121,6 +121,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     // the rates, for the model version they were last read at (see ensureRates)
     private long cachedModelVersion = -1;
     private final double[] infinitesimalMatrix;
+    private final double[] newInfinitesimalMatrix;
+    // changes only when the rate matrix or the category rates change (not, e.g., the categories themselves)
+    private long ratesVersion = 0;
+    private boolean ratesKnown = false;
     private final double[] exitRates;           // q_a = sum over b != a of Q_ab
     private final double[] patternRates;        // nu_p
     private final double[] patternWeightRates;  // w_p nu_p
@@ -279,6 +283,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         }
         this.currentView = new TreeView();
         this.infinitesimalMatrix = new double[stateCount * stateCount];
+        this.newInfinitesimalMatrix = new double[stateCount * stateCount];
         this.exitRates = new double[stateCount];
 
         this.historyModel = historyModel == null ? new SingleHitHistoryModel(stateCount) : historyModel;
@@ -712,18 +717,28 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     private void ensureRatesImpl() {
         if (cachedModelVersion != modelVersion) {
-            substitutionModel.getInfinitesimalMatrix(infinitesimalMatrix);
-            for (int a = 0; a < stateCount; a++) {
-                double q = 0.0;
-                for (int b = 0; b < stateCount; b++) {
-                    if (b != a) {
-                        q += infinitesimalMatrix[a * stateCount + b];
+            substitutionModel.getInfinitesimalMatrix(newInfinitesimalMatrix);
+            // (the history model's caches stay valid if the rate matrix is unchanged)
+            final boolean matrixChanged = !ratesKnown || !java.util.Arrays.equals(newInfinitesimalMatrix, infinitesimalMatrix);
+            if (matrixChanged) {
+                System.arraycopy(newInfinitesimalMatrix, 0, infinitesimalMatrix, 0, infinitesimalMatrix.length);
+                for (int a = 0; a < stateCount; a++) {
+                    double q = 0.0;
+                    for (int b = 0; b < stateCount; b++) {
+                        if (b != a) {
+                            q += infinitesimalMatrix[a * stateCount + b];
+                        }
                     }
+                    exitRates[a] = q;
                 }
-                exitRates[a] = q;
+                historyModel.setRates(substitutionModel, infinitesimalMatrix, exitRates);
+                ratesVersion++;
+                ratesKnown = true;
             }
             if (categories != null) {
-                categories.updateRates();
+                if (categories.updateRates()) {
+                    ratesVersion++;
+                }
                 for (int p = 0; p < patternCount; p++) {
                     patternRates[p] = categories.getPatternRate(p);
                     patternWeightRates[p] = patternWeights[p] * patternRates[p];
@@ -736,7 +751,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                     patternWeightRates[p] = patternWeights[p] * patternRates[p];
                 }
             }
-            historyModel.setRates(substitutionModel, infinitesimalMatrix, exitRates);
             cachedModelVersion = modelVersion;
         }
     }
@@ -783,7 +797,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             }
         }
         if (categories != null) {
-            total += categories.getConstantTerm(rootNumber, modelVersion) + categories.getPriorTerm(modelVersion);
+            total += categories.getConstantTerm(rootNumber, ratesVersion) + categories.getPriorTerm(modelVersion);
         }
         MATProfile.stop(MATProfile.Phase.LIK_SUM, profileStart);
 
@@ -800,7 +814,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         BranchMutations mutations = mutationStore.getBranchMutations(n);
         long stateVersion = mutationStore.getStateVersion(n);
         if (categories != null) {
-            categories.updateUnchangedTerm(n, length, modelVersion);
+            categories.updateUnchangedTerm(n, length, ratesVersion);
         }
         if (branchTermModelVersions[n] != modelVersion || branchTermLengths[n] != length ||
                 branchTermStateVersions[n] != stateVersion || branchTermMutations[n] != mutations) {
@@ -808,7 +822,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 double[] categoryComposition = historyModel.needsComposition() ?
                         mutationStore.getCategoryComposition(n) : null;
                 branchTerms[n] = historyModel.getCategoryBranchLogLikelihood(mutations, length, exitRate,
-                        categoryComposition, categories.getRates(), patternWeights, patternRates);
+                        categoryComposition, categories.getRates(), categories.getUnchangedTerms(n),
+                        patternWeights, patternRates);
             } else {
                 double[] composition = historyModel.needsComposition() ? mutationStore.getComposition(n) : null;
                 branchTerms[n] = historyModel.getBranchLogLikelihood(mutations, length, exitRate, composition,

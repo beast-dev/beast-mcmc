@@ -101,29 +101,45 @@ public class IntegratedHitsHistoryModel extends AbstractBranchHistoryModel {
     @Override
     public double getCategoryBranchLogLikelihood(BranchMutations mutations, double length, double exitRateSum,
                                                  double[] categoryComposition, double[] categoryRates,
-                                                 double[] patternWeights, double[] patternRates) {
+                                                 double[] unchangedTerms, double[] patternWeights,
+                                                 double[] patternRates) {
+        // the unchanged sites: the diagonals log P_aa(r_c t)
         double term = 0.0;
-        for (int c = 0; c < categoryRates.length; c++) {
-            double[] logP = null;
-            for (int a = 0; a < stateCount; a++) {
-                double count = categoryComposition[c * stateCount + a];
-                if (count > 0.0) {
-                    if (logP == null) {
-                        logP = getLogTransitionProbabilities(categoryRates[c] * length);
-                    }
-                    term += count * logP[a * stateCount + a];
-                }
+        for (int i = 0; i < categoryComposition.length; i++) {
+            if (categoryComposition[i] > 0.0) {
+                term += categoryComposition[i] * unchangedTerms[i];
             }
         }
+        final boolean direct = hasDirectTransitionProbabilities();
         for (int k = 0; k < mutations.getSubstitutionCount(); k++) {
             int p = mutations.getPattern(k);
             int a = mutations.getFromState(k);
             int b = mutations.getToState(k);
-            double[] logP = getLogTransitionProbabilities(patternRates[p] * length);
+            double distance = patternRates[p] * length;
             // the composition counted the site as staying in state b
-            term += patternWeights[p] * (logP[a * stateCount + b] - logP[b * stateCount + b]);
+            if (direct) {
+                term += patternWeights[p] * (getLogTransitionProbability(distance, a, b) -
+                        getLogTransitionProbability(distance, b, b));
+            } else {
+                double[] logP = getLogTransitionProbabilities(distance);
+                term += patternWeights[p] * (logP[a * stateCount + b] - logP[b * stateCount + b]);
+            }
         }
         return term;
+    }
+
+    @Override
+    public void getUnchangedSiteLogLikelihoods(double length, double nu, double[] out, int offset) {
+        if (hasDirectTransitionProbabilities()) {
+            // only the diagonal (with the cache's values)
+            getLogTransitionDiagonal(nu * length, out, offset);
+            return;
+        }
+        // one transition matrix for all the states
+        double[] logP = getLogTransitionProbabilities(nu * length);
+        for (int a = 0; a < stateCount; a++) {
+            out[offset + a] = logP[a * stateCount + a];
+        }
     }
 
     @Override

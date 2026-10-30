@@ -135,12 +135,20 @@ final class SiteRateCategories {
 
     /**
      * Reads the categories' rates and proportions from the site rate model.
+     *
+     * @return true if any category's rate changed
      */
-    void updateRates() {
+    boolean updateRates() {
+        boolean changed = false;
         for (int c = 0; c < categoryCount; c++) {
-            rates[c] = siteRateModel.getRateForCategory(c);
+            double rate = siteRateModel.getRateForCategory(c);
+            if (rate != rates[c]) {
+                rates[c] = rate;
+                changed = true;
+            }
             logProportions[c] = Math.log(siteRateModel.getProportionForCategory(c));
         }
+        return changed;
     }
 
     /**
@@ -181,10 +189,13 @@ final class SiteRateCategories {
     /**
      * Brings the node's unchanged-site terms (for the branch above it) up to date, and includes them in the
      * totals.
+     *
+     * @param ratesVersion changes whenever the rate matrix or the categories' rates change (the terms do not
+     *                     depend on the states or the categories)
      */
-    void updateUnchangedTerm(int n, double length, long modelVersion) {
+    void updateUnchangedTerm(int n, double length, long ratesVersion) {
         final double[] terms = unchangedTerms[n];
-        final boolean stale = unchangedTermModelVersions[n] != modelVersion || unchangedTermLengths[n] != length;
+        final boolean stale = unchangedTermModelVersions[n] != ratesVersion || unchangedTermLengths[n] != length;
         if (unchangedTermIncluded[n] && !stale) {
             return;
         }
@@ -195,12 +206,10 @@ final class SiteRateCategories {
         }
         if (stale) {
             for (int c = 0; c < categoryCount; c++) {
-                for (int a = 0; a < stateCount; a++) {
-                    terms[c * stateCount + a] = historyModel.getUnchangedSiteLogLikelihood(a, length, rates[c]);
-                }
+                historyModel.getUnchangedSiteLogLikelihoods(length, rates[c], terms, c * stateCount);
             }
             unchangedTermLengths[n] = length;
-            unchangedTermModelVersions[n] = modelVersion;
+            unchangedTermModelVersions[n] = ratesVersion;
         }
         for (int i = 0; i < terms.length; i++) {
             unchangedTotals[i] += terms[i];
@@ -209,15 +218,22 @@ final class SiteRateCategories {
     }
 
     /**
+     * @return the node's unchanged-site terms, [category * stateCount + state] (after {@link #updateUnchangedTerm})
+     */
+    double[] getUnchangedTerms(int n) {
+        return unchangedTerms[n];
+    }
+
+    /**
      * @return the log likelihood of the constant patterns, summed over the site rate categories: each has no
      * events, so in category c and state a it is the sum of the unchanged-site terms over the branches
      */
-    double getConstantTerm(int rootNumber, long modelVersion) {
+    double getConstantTerm(int rootNumber, long ratesVersion) {
         // the totals cover every branch: the root's (former) branch is taken out, and a former root's put back
         if (unchangedExcludedNode >= 0 && unchangedExcludedNode != rootNumber) {
             int n = unchangedExcludedNode;
             unchangedExcludedNode = -1;
-            updateUnchangedTerm(n, delegate.getBranchLength(tree.getNode(n)), modelVersion);
+            updateUnchangedTerm(n, delegate.getBranchLength(tree.getNode(n)), ratesVersion);
         }
         if (unchangedTermIncluded[rootNumber]) {
             final double[] terms = unchangedTerms[rootNumber];
@@ -289,10 +305,12 @@ final class SiteRateCategories {
         for (int n = 0; n < tree.getNodeCount(); n++) {
             if (n != rootNumber) {
                 double length = delegate.getBranchLength(tree.getNode(n));
+                double[] terms = new double[categoryCount * stateCount];
                 for (int c = 0; c < categoryCount; c++) {
-                    for (int a = 0; a < stateCount; a++) {
-                        totals[c * stateCount + a] += historyModel.getUnchangedSiteLogLikelihood(a, length, rates[c]);
-                    }
+                    historyModel.getUnchangedSiteLogLikelihoods(length, rates[c], terms, c * stateCount);
+                }
+                for (int i = 0; i < terms.length; i++) {
+                    totals[i] += terms[i];
                 }
             }
         }
@@ -336,10 +354,7 @@ final class SiteRateCategories {
             if (n != rootNumber) {
                 lengths[n] = delegate.getBranchLength(node);
                 for (int c = 0; c < categoryCount; c++) {
-                    for (int a = 0; a < stateCount; a++) {
-                        unchanged[n][c * stateCount + a] =
-                                historyModel.getUnchangedSiteLogLikelihood(a, lengths[n], rates[c]);
-                    }
+                    historyModel.getUnchangedSiteLogLikelihoods(lengths[n], rates[c], unchanged[n], c * stateCount);
                 }
             }
         }

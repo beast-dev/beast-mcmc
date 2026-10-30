@@ -846,9 +846,9 @@ public class OperatorsGenerator extends Generator {
                             } else if (parameter.isMaintainedSum) {
                                 constrainedList.add(parameter);
                             } else {
-                                System.out.println("Parameter " + parameter + " should likely be equipped with a Dirichlet prior.");
-                                System.out.println("Use of a Dirichlet prior for frequencies is set to: " + options.useNewFrequenciesPrior());
-                                throw new UnsupportedOperationException("Parameter " + parameter.getName() + " with unidentified transformation.");
+                                throw new UnsupportedOperationException("Parameter " + parameter.getName() +
+                                        " has no transformation for the adaptive multivariate operator" +
+                                        " (it may need a Dirichlet prior).");
                             }
                         }
                     }
@@ -881,7 +881,8 @@ public class OperatorsGenerator extends Generator {
                 }
 
             } catch (UnsupportedOperationException unSup) {
-                System.out.println(unSup);
+                // the adaptive multivariate operator is left out for these parameters
+                unSup.printStackTrace(System.err);
             }
 
         } else {
@@ -931,7 +932,6 @@ public class OperatorsGenerator extends Generator {
                                     new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
                             }, true);
                             startTransform += parameter.getDimensionWeight();
-                            System.out.println(parameter + ": " + parameter.getDimensionWeight());
 
                         } else { // -Inf to Inf
                             writer.writeTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName()),
@@ -939,7 +939,6 @@ public class OperatorsGenerator extends Generator {
                                     new Attribute.Default<Integer>(TransformParsers.END, startTransform + parameter.getDimensionWeight()),
                             }, true);
                             startTransform += parameter.getDimensionWeight();
-                            System.out.println(parameter + ": " + parameter.getDimensionWeight());
                         }
                     }
                 }

@@ -306,10 +306,8 @@ public abstract class ModelOptions implements Serializable {
     public Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
         if (parameter == null) {
-            for (String key : parameters.keySet()) {
-                System.err.println(key);
-            }
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown; known parameters: "
+                    + parameters.keySet());
         }
         return parameter;
     }
@@ -322,10 +320,12 @@ public abstract class ModelOptions implements Serializable {
     public Parameter getStatistic(TaxonList taxonList) {
         Parameter parameter = statistics.get(taxonList);
         if (parameter == null) {
+            List<String> known = new ArrayList<String>();
             for (TaxonList key : statistics.keySet()) {
-                System.err.println("Taxon list: " + key.getId());
+                known.add(key.getId());
             }
-            throw new IllegalArgumentException("Statistic for taxon list, " + taxonList.getId() + ", is unknown");
+            throw new IllegalArgumentException("Statistic for taxon list, " + taxonList.getId() +
+                    ", is unknown; known taxon lists: " + known);
         }
         return parameter;
     }

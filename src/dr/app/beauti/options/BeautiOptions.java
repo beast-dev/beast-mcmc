@@ -289,8 +289,6 @@ public class BeautiOptions extends ModelOptions {
             for (Taxa taxa : taxonSets) {
                 params.add(updateTMRCAStatistic(taxa));
             }
-        } else {
-            System.err.println("TaxonSets are null");
         }
     }
 

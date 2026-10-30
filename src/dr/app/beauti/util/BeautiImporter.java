@@ -67,11 +67,23 @@ public class BeautiImporter {
     private final BeautiOptions options;
     private final BeautiFrame frame;
 
+    /**
+     * What the import made of the file; only a BEAST XML file says anything here at present.
+     */
+    private final ImportReport report = new ImportReport();
+
     private PartitionNameDialog partitionNameDialog = null;
 
     public BeautiImporter(BeautiFrame frame, BeautiOptions options) {
         this.frame = frame;
         this.options = options;
+    }
+
+    /**
+     * @return what this import made of the file: the settings it read and the ones it could not
+     */
+    public ImportReport getReport() {
+        return report;
     }
 
     public void importFromFile(File file) throws IOException, ImportException, JDOMException {
@@ -132,6 +144,10 @@ public class BeautiImporter {
 
             BeastImporter importer = new BeastImporter(reader);
 
+            // the settings of the analysis are only taken from a file imported into an empty document;
+            // with data already loaded they would replace what the user has set up
+            boolean emptyDocument = options.dataPartitions.isEmpty();
+
             List<TaxonList> taxonLists = new ArrayList<TaxonList>();
             List<Alignment> alignments = new ArrayList<Alignment>();
 
@@ -171,6 +187,13 @@ public class BeautiImporter {
                 options.updateTMRCAStatistic(taxonSet); // force the creation of a tmrca statistic
             }
             Collections.sort(options.taxonSets);
+
+            if (emptyDocument) {
+                new BeastSettingsImporter(importer.getRootElement(), options, report).importSettings();
+            } else {
+                report.notRecovered("the settings in " + file.getName() + " (its sequences were added to " +
+                        "the partitions already loaded; import it on its own to read its settings)");
+            }
 
             reader.close();
         } catch (JDOMException e) {

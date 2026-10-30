@@ -212,18 +212,58 @@ public final class BeautiHeadlessHarness {
      * @return the XML with its version-bearing lines normalised
      */
     public static String generate(String caseName, BeautiOptions options) throws Exception {
+        File file = generateToFile(caseName, options);
+        try {
+            return normalise(read(file));
+        } finally {
+            file.delete();
+        }
+    }
+
+    /**
+     * Generates the BEAST XML into a temporary file, which the caller deletes, for a test that reads it
+     * back in.
+     */
+    public static File generateToFile(String caseName, BeautiOptions options) throws Exception {
         // (the importer replaces the stem with the data file's name, so set it afterwards)
         options.fileNameStem = caseName;
         options.updateFileNames(false);
+        return writeXML(caseName, options);
+    }
 
+    /**
+     * Generates the BEAST XML of options as they stand, without setting the file names, so that a test can
+     * see whether an import recovered them.
+     *
+     * @return the XML with its version-bearing lines and its sequences normalised
+     */
+    public static String regenerate(String caseName, BeautiOptions options) throws Exception {
+        File file = writeXML(caseName, options);
+        try {
+            return normalise(read(file));
+        } finally {
+            file.delete();
+        }
+    }
+
+    private static File writeXML(String caseName, BeautiOptions options) throws Exception {
         BeastGenerator generator = new BeastGenerator(options, COMPONENTS);
         generator.checkOptions();
 
         File file = File.createTempFile(caseName, ".xml");
         file.deleteOnExit();
         generator.generateXML(file);
-        String xml = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        file.delete();
+        return file;
+    }
+
+    public static String read(File file) throws IOException {
+        return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * @return the XML prepared for comparison, as {@link #generate} returns it
+     */
+    public static String normalised(String xml) {
         return normalise(xml);
     }
 
@@ -258,6 +298,26 @@ public final class BeautiHeadlessHarness {
     /**
      * Compares the XML with the case's stored snapshot (or, in update mode, replaces it).
      */
+    /**
+     * Compares two pieces of XML, saying where they first differ and leaving both where they can be diffed.
+     *
+     * @param caseName names the files written on a failure
+     */
+    public static void assertSameXML(String caseName, String expected, String actual) throws IOException {
+        if (expected.equals(actual)) {
+            return;
+        }
+        File expectedFile = new File(ACTUAL_DIR, caseName + ".expected.xml");
+        File actualFile = new File(ACTUAL_DIR, caseName + ".actual.xml");
+        if (ACTUAL_DIR.isDirectory() || ACTUAL_DIR.mkdirs()) {
+            Files.write(expectedFile.toPath(), expected.getBytes(StandardCharsets.UTF_8));
+            Files.write(actualFile.toPath(), actual.getBytes(StandardCharsets.UTF_8));
+        }
+        Assert.fail("The XML of '" + caseName + "' did not survive a round trip; it first differs at line " +
+                firstDifference(expected, actual) + "\n  diff " +
+                relative(expectedFile) + " " + relative(actualFile));
+    }
+
     public static void assertSnapshot(String caseName, String actual) throws IOException {
         File expectedFile = new File(SNAPSHOT_DIR, caseName + ".xml");
 

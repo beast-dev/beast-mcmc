@@ -83,6 +83,13 @@ public class BeastImporter {
         origin = cal.getTime();
     }
 
+    /**
+     * @return the root of the parsed document, for reading more of the file than the taxa and alignments
+     */
+    public Element getRootElement() {
+        return root;
+    }
+
     public void importBEAST(List<TaxonList> taxonLists, List<Alignment> alignments) throws Importer.ImportException {
 
         TaxonList taxa = null;

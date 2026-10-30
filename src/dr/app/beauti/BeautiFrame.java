@@ -61,6 +61,7 @@ import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BeautiImporter;
+import dr.app.beauti.util.ImportReport;
 import dr.app.beauti.util.TextUtil;
 import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.FileDrop;
@@ -508,6 +509,7 @@ public class BeautiFrame extends DocumentFrame {
                     beautiImporter.importFromFile(file);
 
                     setDirty();
+                    reportImport(file, beautiImporter.getReport());
 //                    } catch (FileNotFoundException fnfe) {
 //                        JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
 //                                "Unable to open file", JOptionPane.ERROR_MESSAGE);
@@ -550,6 +552,18 @@ public class BeautiFrame extends DocumentFrame {
 
         setAllOptions();
 
+    }
+
+    /**
+     * Tells the user which settings an import read from a file and which it could not, when there is
+     * anything to say.
+     */
+    private void reportImport(File file, ImportReport report) {
+        if (report.isComplete()) {
+            return;
+        }
+        JOptionPane.showMessageDialog(this, report.toHTML(),
+                "Imported " + file.getName(), JOptionPane.INFORMATION_MESSAGE);
     }
 
     public final boolean doImportTraits() {

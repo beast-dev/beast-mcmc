@@ -26,6 +26,8 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
+import java.util.Arrays;
+
 /**
  * The events on one branch, held in primitive arrays: the substitutions first, then the
  * ambiguities (sites becoming ambiguous, with a to-state of -1). Instances are immutable, so a
@@ -156,11 +158,11 @@ public final class BranchMutations {
         public void addSubstitution(int pattern, int from, int to, double time) {
             if (subCount == subPatterns.length) {
                 int n = 2 * subCount;
-                subPatterns = java.util.Arrays.copyOf(subPatterns, n);
-                subFrom = java.util.Arrays.copyOf(subFrom, n);
-                subTo = java.util.Arrays.copyOf(subTo, n);
+                subPatterns = Arrays.copyOf(subPatterns, n);
+                subFrom = Arrays.copyOf(subFrom, n);
+                subTo = Arrays.copyOf(subTo, n);
                 if (timed) {
-                    subTimes = java.util.Arrays.copyOf(subTimes, n);
+                    subTimes = Arrays.copyOf(subTimes, n);
                 }
             }
             subPatterns[subCount] = pattern;
@@ -174,8 +176,8 @@ public final class BranchMutations {
 
         public void addAmbiguity(int pattern, int from) {
             if (ambCount == ambPatterns.length) {
-                ambPatterns = java.util.Arrays.copyOf(ambPatterns, 2 * ambCount);
-                ambFrom = java.util.Arrays.copyOf(ambFrom, 2 * ambCount);
+                ambPatterns = Arrays.copyOf(ambPatterns, 2 * ambCount);
+                ambFrom = Arrays.copyOf(ambFrom, 2 * ambCount);
             }
             ambPatterns[ambCount] = pattern;
             ambFrom[ambCount++] = (byte) from;
@@ -197,8 +199,8 @@ public final class BranchMutations {
             System.arraycopy(subTo, 0, to, 0, subCount);
             System.arraycopy(ambPatterns, 0, patterns, subCount, ambCount);
             System.arraycopy(ambFrom, 0, from, subCount, ambCount);
-            java.util.Arrays.fill(to, subCount, size, (byte) -1);
-            double[] times = timed ? java.util.Arrays.copyOf(subTimes, size) : null;
+            Arrays.fill(to, subCount, size, (byte) -1);
+            double[] times = timed ? Arrays.copyOf(subTimes, size) : null;
             return new BranchMutations(patterns, from, to, subCount, times);
         }
 
@@ -217,7 +219,7 @@ public final class BranchMutations {
             for (int i = 0; i < count; i++) {
                 keys[i] = ((long) patterns[i] << 32) | i;
             }
-            java.util.Arrays.sort(keys);
+            Arrays.sort(keys);
             int[] newPatterns = new int[count];
             byte[] newFrom = new byte[count];
             byte[] newTo = to == null ? null : new byte[count];

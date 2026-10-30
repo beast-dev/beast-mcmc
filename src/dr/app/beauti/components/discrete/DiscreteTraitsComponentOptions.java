@@ -35,7 +35,6 @@ import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
 import dr.inference.operators.RateBitExchangeOperator;
 
 import java.util.List;
-import java.util.Set;
 
 import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
 
@@ -107,6 +106,79 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
         }
     }
 
+    /**
+     * The number of instantaneous rate parameters in the trait substitution model.
+     */
+    public static int getRateCount(PartitionSubstitutionModel substitutionModel) {
+        int K = substitutionModel.getDiscreteStateSet().size();
+        switch (substitutionModel.getDiscreteSubstType()) {
+            case SYM_SUBST:
+                return K * (K - 1) / 2;
+            case ASYM_SUBST:
+                return K * (K - 1);
+            default:
+                throw new IllegalArgumentException("unknown discrete substitution type");
+        }
+    }
+
+    /**
+     * The default truncated Poisson prior on the number of non-zero rates: the smallest number of
+     * rates that keeps the CTMC irreducible, plus a mean of log(2) so that half the prior mass
+     * sits on that minimum.
+     */
+    public static void setDefaultNonZeroRatesPrior(PartitionSubstitutionModel substitutionModel, Parameter nonZeroRates) {
+        int K = substitutionModel.getDiscreteStateSet().size();
+        switch (substitutionModel.getDiscreteSubstType()) {
+            case SYM_SUBST:
+                nonZeroRates.mean = Math.log(2); // mean = 0.693 and offset = K-1
+                nonZeroRates.offset = K - 1;
+                break;
+            case ASYM_SUBST:
+                nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
+                nonZeroRates.offset = 0.0;
+                break;
+            default:
+                throw new IllegalArgumentException("unknown discrete substitution type");
+        }
+    }
+
+    /**
+     * Whether the prior of Gao et al. (2023) on the number of non-zero rates can be expressed for
+     * this model. The symmetric model keeps an offset of K-1 so that the CTMC stays irreducible,
+     * and that minimum is a fraction 2/K of the K(K-1)/2 rates, so an expectation of half the
+     * rates only lies above the minimum for more than four states. At four states the minimum is
+     * exactly half the rates and the expectation could only be met by a point mass; at three it
+     * cannot be met at all.
+     */
+    public static boolean isGaoNonZeroRatesPriorApplicable(PartitionSubstitutionModel substitutionModel) {
+        return substitutionModel.getDiscreteSubstType() != DiscreteSubstModelStructureType.SYM_SUBST
+                || substitutionModel.getDiscreteStateSet().size() > 4;
+    }
+
+    /**
+     * The diffuse Poisson prior on the number of non-zero rates recommended by Gao et al. (2023),
+     * which puts the expected number at half of the rates rather than at the fewest that keep the
+     * CTMC irreducible. The symmetric model retains the offset of K-1, so its Poisson mean is what
+     * is left of that expectation once the offset is taken off.
+     */
+    public static void setGaoNonZeroRatesPrior(PartitionSubstitutionModel substitutionModel, Parameter nonZeroRates) {
+        int K = substitutionModel.getDiscreteStateSet().size();
+        double halfTheRates = getRateCount(substitutionModel) / 2.0;
+
+        switch (substitutionModel.getDiscreteSubstType()) {
+            case SYM_SUBST:
+                nonZeroRates.offset = K - 1;
+                nonZeroRates.mean = halfTheRates - (K - 1);
+                break;
+            case ASYM_SUBST:
+                nonZeroRates.offset = 0.0;
+                nonZeroRates.mean = halfTheRates;
+                break;
+            default:
+                throw new IllegalArgumentException("unknown discrete substitution type");
+        }
+    }
+
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
         for (PartitionSubstitutionModel substitutionModel : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             String prefix = substitutionModel.getName() + ".";
@@ -115,18 +187,17 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.getParameter(prefix + "indicators");
                 Parameter nonZeroRates = modelOptions.getParameter(prefix + "nonZeroRates");
 
-                Set<String> states = substitutionModel.getDiscreteStateSet();
-                int K = states.size();
-                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
-                    nonZeroRates.mean = Math.log(2); // mean = 0.693 and offset = K-1
-                    nonZeroRates.offset = K - 1;
-                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.ASYM_SUBST) {
-                    nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
-                    nonZeroRates.offset = 0.0;
-                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
+                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
                     throw new IllegalArgumentException("GLM substitution type can't be used by rate-level BSSVS");
-                } else {
-                    throw new IllegalArgumentException("unknown discrete substitution type");
+                }
+
+                // only impose the default if the user hasn't specified their own prior in the priors panel
+                if (!nonZeroRates.isPriorEdited()) {
+                    if (substitutionModel.isUseGaoPriors() && isGaoNonZeroRatesPriorApplicable(substitutionModel)) {
+                        setGaoNonZeroRatesPrior(substitutionModel, nonZeroRates);
+                    } else {
+                        setDefaultNonZeroRatesPrior(substitutionModel, nonZeroRates);
+                    }
                 }
 
                 params.add(nonZeroRates);

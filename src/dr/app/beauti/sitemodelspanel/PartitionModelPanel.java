@@ -37,6 +37,7 @@ import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelStructureType;
+import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
@@ -78,8 +79,13 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType
             .values());
 
-    private JComboBox heteroCombo = new JComboBox(new String[]{"None",
-            "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"});
+    // the site heterogeneity choices, indexed by (gamma ? 1 : 0) + (invariant ? 2 : 0); the MAT likelihood
+    // has no invariant sites
+    private static final String[] HETERO_CHOICES = {"None",
+            "Gamma (equal weights)", "Invariant Sites", "Gamma (equal weights) + Invariant Sites"};
+    private static final String[] HETERO_CHOICES_MAT = {HETERO_CHOICES[0], HETERO_CHOICES[1]};
+
+    private JComboBox heteroCombo = new JComboBox(HETERO_CHOICES);
 
     private JComboBox gammaCatCombo = new JComboBox(new String[]{"4", "5",
             "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"});
@@ -108,6 +114,7 @@ public class PartitionModelPanel extends OptionsPanel {
             DiscreteSubstModelType.values());
 
     private JPanel fitPanel = new JPanel();
+    private JTextArea fitTextArea;
     private JPanel bitPanel = new JPanel();
 
     //combo box to select approach for BASTA
@@ -123,6 +130,9 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox activateBSSVS = new JCheckBox(
             // "Activate BSSVS"
             "Infer social network with BSSVS");
+    private JCheckBox useGaoPriors = new JCheckBox(
+            "Use Gao et al. prior specification");
+    private JLabel gaoPriorNote = new JLabel();
     private JButton setupGLMButton;
     private GLMSettingsDialog glmSettingsDialog = null;
 
@@ -358,6 +368,7 @@ public class PartitionModelPanel extends OptionsPanel {
                         .getSelectedItem());
                 activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST);
                 setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST);
+                updateGaoPriorNote();
             }
         });
 
@@ -383,10 +394,8 @@ public class PartitionModelPanel extends OptionsPanel {
                 BorderFactory.createEmptyBorder(5,5,5,5)));
         fitPanel.setOpaque(false);
         fitPanel.setLayout(new BoxLayout(fitPanel, BoxLayout.PAGE_AXIS));
-        String fitText = "P. Lemey, A. Rambaut, A.J. Drummond, M.A. Suchard (2009)" +
-                "\nBayesian phylogeography finds its roots." +
-                "\nPLOS Computational Biology 5(9): e1000520.";
-        JTextArea fitTextArea = new JTextArea(fitText);
+        fitTextArea = new JTextArea();
+        updateFitCitation();
         fitTextArea.setEditable(false);
         fitTextArea.setEnabled(false);
         fitTextArea.setBackground(Color.lightGray);
@@ -539,12 +548,32 @@ public class PartitionModelPanel extends OptionsPanel {
         activateBSSVS.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setActivateBSSVS(activateBSSVS.isSelected());
+                updateGaoPriorNote();
             }
         });
         activateBSSVS
                 .setToolTipText("<html>Activates Bayesian stochastic search variable selection on the rates as described in<br>"
                         + "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
         activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST);
+
+        PanelUtils.setupComponent(useGaoPriors);
+        useGaoPriors.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setUseGaoPriors(useGaoPriors.isSelected());
+                updateGaoPriorNote();
+                updateFitCitation();
+                setupPanel();
+            }
+        });
+        useGaoPriors
+                .setToolTipText("<html>Replaces the default priors with the more diffuse specification of<br>"
+                        + "Gao, May, Rannala &amp; Moore (2023) <i>PNAS</i> <b>120</b>: e2213913120:<br>"
+                        + "an exponential prior with an estimated mean on the overall rate scalar,<br>"
+                        + "and, under BSSVS, a Poisson prior on the number of non-zero rates<br>"
+                        + "centred on half of them rather than on the fewest possible.<br>"
+                        + "Under the GLM only the rate scalar is affected, as the number of<br>"
+                        + "non-zero rates is not sampled. Both remain editable in the priors panel.</html>");
+        gaoPriorNote.setFont(gaoPriorNote.getFont().deriveFont(11.0f));
 
         setupGLMButton = new JButton("Setup GLM");
         setupGLMButton.addActionListener(new ActionListener() {
@@ -604,6 +633,9 @@ public class PartitionModelPanel extends OptionsPanel {
                         .getDiscreteSubstType());
                 activateBSSVS.setSelected(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST ?
                         model.isActivateBSSVS() : false);
+                useGaoPriors.setSelected(model.isUseGaoPriors());
+                updateGaoPriorNote();
+                updateFitCitation();
                 break;
 
             case DataType.CONTINUOUS:
@@ -633,15 +665,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 throw new IllegalArgumentException("Unknown data type");
         }
 
-        if (model.isGammaHetero() && !model.isInvarHetero()) {
-            heteroCombo.setSelectedIndex(1);
-        } else if (!model.isGammaHetero() && model.isInvarHetero()) {
-            heteroCombo.setSelectedIndex(2);
-        } else if (model.isGammaHetero() && model.isInvarHetero()) {
-            heteroCombo.setSelectedIndex(3);
-        } else {
-            heteroCombo.setSelectedIndex(0);
-        }
+        updateEngineState();
 
         gammaCatCombo.setSelectedIndex(model.getRateCategories() - 4);
 
@@ -658,6 +682,35 @@ public class PartitionModelPanel extends OptionsPanel {
         freqsUnlinkCheck.setSelected(model.isUnlinkedFrequencyModel());
 
         dolloCheck.setSelected(model.isDolloModel());
+    }
+
+    /**
+     * Selects the site heterogeneity model and enables only the options the likelihood engine supports:
+     * the MAT likelihood (see {@link BeautiOptions#isMAT()}) has no invariant sites and takes one pattern
+     * list per tree, so no codon partitioning. It applies to sequence data only.
+     */
+    private void updateEngineState() {
+        int dataType = model.getDataType().getType();
+        boolean mat = model.getOptions().isMAT() &&
+                (dataType == DataType.NUCLEOTIDES || dataType == DataType.AMINO_ACIDS);
+
+        if (mat && model.isInvarHetero()) {
+            model.setInvarHetero(false);
+        }
+        if (mat && model.getCodonHeteroPattern() != null) {
+            model.setCodonHeteroPattern(null);
+        }
+        String hetero = HETERO_CHOICES[(model.isGammaHetero() ? 1 : 0) + (model.isInvarHetero() ? 2 : 0)];
+        String[] choices = mat ? HETERO_CHOICES_MAT : HETERO_CHOICES;
+        if (heteroCombo.getItemCount() != choices.length) {
+            // (selecting an item below keeps the model in step with the combo)
+            heteroCombo.setModel(new DefaultComboBoxModel(choices));
+        }
+        heteroCombo.setSelectedItem(hetero);
+
+        codingCombo.setEnabled(!mat);
+        setYang96Button.setEnabled(!mat);
+        setSRD06Button.setEnabled(!mat);
     }
 
     /**
@@ -706,6 +759,50 @@ public class PartitionModelPanel extends OptionsPanel {
      * Lays out the appropriate components in the panel for this partition
      * model.
      */
+    /**
+     * The forward-in-time CTMC citation, with the prior specification added when it is selected.
+     */
+    private void updateFitCitation() {
+        String fitText = "P. Lemey, A. Rambaut, A.J. Drummond, M.A. Suchard (2009)" +
+                "\nBayesian phylogeography finds its roots." +
+                "\nPLOS Computational Biology 5(9): e1000520.";
+        if (useGaoPriors.isSelected()) {
+            fitText += "\n";
+            fitText += "J. Gao, M.R. May, B. Rannala, B.R. Moore (2023)" +
+                    "\nModel misspecification misleads inference of the" +
+                    "\nspatial dynamics of disease outbreaks." +
+                    "\nPNAS 120(11): e2213913120.";
+        }
+        fitTextArea.setText(fitText);
+    }
+
+    /**
+     * Explains the one case the Gao et al. specification cannot cover: a symmetric model with so
+     * few states that the minimum number of rates already accounts for half of them.
+     */
+    private void updateGaoPriorNote() {
+        if (!useGaoPriors.isSelected() || !activateBSSVS.isSelected()
+                || DiscreteTraitsComponentOptions.isGaoNonZeroRatesPriorApplicable(model)) {
+            gaoPriorNote.setText("");
+            return;
+        }
+
+        int stateCount = model.getDiscreteStateSet().size();
+        if (stateCount < 2) {
+            // the trait has no states yet, so there is nothing meaningful to say
+            gaoPriorNote.setText("");
+            return;
+        }
+
+        gaoPriorNote.setText("<html>The symmetric model over " + stateCount + " states needs at least "
+                + (stateCount - 1) + " of its<br>"
+                + (stateCount * (stateCount - 1) / 2) + " rates to remain irreducible, which is already half of them<br>"
+                + "or more, so there is no more diffuse Poisson prior to place on<br>"
+                + "the number of non-zero rates. That prior is left at the BEAST<br>"
+                + "default; the overall rate scalar still uses the Gao et al. prior.<br>"
+                + "Both can be edited in the priors panel.</html>");
+    }
+
     private void setupPanel() {
 
         switch (model.getDataType().getType()) {
@@ -789,7 +886,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponent(activateBSSVS);
                 addComponent(setupGLMButton);
                 if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-                    addComponentWithLabel("Citation:", fitPanel);
+                    addSeparator();
+                    addComponent(useGaoPriors);
+                    addComponent(gaoPriorNote);
+                    addComponentWithLabel(useGaoPriors.isSelected() ? "Citations:" : "Citation:", fitPanel);
                 } else {
                     addComponentWithLabel("Citations:", bitPanel);
                 }

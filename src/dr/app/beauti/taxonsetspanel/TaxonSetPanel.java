@@ -27,13 +27,13 @@
 
 package dr.app.beauti.taxonsetspanel;
 
-import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.table.DateCellEditor;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -42,7 +42,6 @@ import dr.util.DataTable;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
-import jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -222,13 +221,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         includedTaxonSetsComboBox.setOpaque(false);
         panel2.add(includedTaxonSetsComboBox);
 
-        Icon includeIcon = null, excludeIcon = null;
-        try {
-            includeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/include.png"));
-            excludeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/exclude.png"));
-        } catch (Exception e) {
-            // do nothing
-        }
+        Icon includeIcon = VectorIcons.circleArrow(12, new Color(0x4B, 0xA3, 0x4B), true);
+        Icon excludeIcon = VectorIcons.circleArrow(12, new Color(0xD0, 0x40, 0x40), false);
 
         JPanel buttonPanel = createAddRemoveButtonPanel(includeTaxonAction, includeIcon, "Include selected "
                         + TAXA.toLowerCase() + " in the " + TAXON.toLowerCase(),
@@ -240,14 +234,13 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetEditingPanel.setOpaque(false);
         taxonSetEditingPanel.setLayout(new GridBagLayout());
 
+        // (Aqua draws these as small round search fields; other look and feels ignore the properties)
         excludedTaxaSearchField.setColumns(12);
-//        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
-        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
-        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        excludedTaxaSearchField.putClientProperty("JComponent.sizeVariant", "small");
         includedTaxaSearchField.setColumns(12);
-//        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
-        includedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
-        includedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        includedTaxaSearchField.putClientProperty("JComponent.sizeVariant", "small");
 
         GridBagConstraints c = new GridBagConstraints();
 

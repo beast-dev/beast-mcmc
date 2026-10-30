@@ -73,6 +73,10 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
                 // the local block where the model allows it (it is faster and mixes as well), else the path block
                 local = MutationHistoryResampler.supportsLocalBlock(delegate);
             }
+            if (delegate.getResampler() != null) {
+                throw new XMLParseException("The MAT likelihood already has a mutation history resampler: " + xo.getId() +
+                        " would be a second one (one resampler, attached to the likelihood, serves every subtree move)");
+            }
             MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, local);
             Logger.getLogger("dr.evomodel").info("  Mutation history resampler " + xo.getId() + ": the " +
                     (local ? LOCAL_BLOCK : PATH_BLOCK) + " block");

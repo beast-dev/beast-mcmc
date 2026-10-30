@@ -79,6 +79,13 @@ public class BeastVersion implements Version, Citable {
                         .lines().collect(Collectors.toList());
                 String version  = lines.size() > 1 ? lines.get(1).trim() : "10.x.x";
                 String extraTag = lines.size() > 2 ? lines.get(2).trim() : "";
+                // (a build without the version properties leaves ant's placeholders in the file)
+                if (version.startsWith("${")) {
+                    version = "10.x.x";
+                }
+                if (extraTag.startsWith("${")) {
+                    extraTag = "";
+                }
                 return new String[]{version, extraTag};
             }
         } catch (IOException e) { /* fall through */ }

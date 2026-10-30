@@ -27,7 +27,6 @@
 
 package dr.inference.model;
 
-import dr.inference.parallel.MPIServices;
 import dr.xml.Reportable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -204,24 +203,6 @@ public interface Parameter extends Statistic, Variable<Double> {
         protected Abstract(final String name) {
             super(name);
             FULL_PARAMETER_SET.add(this);
-        }
-
-        // **************************************************************
-        // MPI IMPLEMENTATION
-        // **************************************************************
-
-
-        void sendState(int toRank) {
-            double[] value = getParameterValues();
-            MPIServices.sendDoubleArray(value, toRank);
-        }
-
-        void receiveState(int fromRank) {
-            final int length = getDimension();
-            double[] values = MPIServices.receiveDoubleArray(fromRank, length);
-            for (int i = 0; i < length; i++)
-                setParameterValueQuietly(i, values[i]);
-            this.fireParameterChangedEvent();
         }
 
         public int getDimension() {

@@ -237,6 +237,7 @@ public class LogGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
+        treeLikelihoodGenerator.writeMATStatisticReferences(writer);
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
         clockModelGenerator.writeClockLikelihoodReferences(writer);
 
@@ -343,6 +344,7 @@ public class LogGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
+        treeLikelihoodGenerator.writeMATStatisticReferences(writer);
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
         clockModelGenerator.writeClockLikelihoodReferences(writer);
 

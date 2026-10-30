@@ -32,6 +32,8 @@ import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
+import java.util.Arrays;
+
 /**
  * A Gibbs update of a MAT's mutational history, without changing the tree: the states of a random internal
  * node and of up to size - 1 of its ancestors are drawn from their full conditional given all the other
@@ -81,7 +83,7 @@ public class MutationHistoryGibbsOperator extends SimpleMCMCOperator implements 
         for (NodeRef n = node; n != null && count < size; n = tree.getParent(n)) {
             block[count++] = n.getNumber();
         }
-        return count == size ? block : java.util.Arrays.copyOf(block, count);
+        return count == size ? block : Arrays.copyOf(block, count);
     }
 
     @Override

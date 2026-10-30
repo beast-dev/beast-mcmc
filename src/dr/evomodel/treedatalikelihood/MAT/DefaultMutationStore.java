@@ -28,6 +28,7 @@ package dr.evomodel.treedatalikelihood.MAT;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 /**
  * A mutable mutation annotated tree with store/restore support.
@@ -81,31 +82,30 @@ public final class DefaultMutationStore implements MutationStore {
     private byte[] scratchTo;
 
     // the nodes whose states or branch events have changed since the log was last cleared
-    private final boolean[] changeLogged;
-    private final int[] changeLog;
-    private int changeLogCount = 0;
+    private final IndexSet changedNodes;
 
-    // journal
-    private final int[] savedParents;
+    // The journal: the first change to a node after commit() keeps what it replaces, so that revert() can
+    // put it back. Per node (each with a flag saying whether it is in the journal): the parent, the states
+    // with their version and composition, the Fitch sets and the branch events; then the root, the
+    // categories and the stale flag.
+    private final IndexSet journaledNodes;   // the nodes with anything in the journal
     private final boolean[] parentDirty;
-    private int savedRoot;
-    private boolean rootSaved = false;
+    private final int[] savedParents;
+    private final boolean[] statesDirty;
     private final byte[][] savedStates;
     private final long[] savedStateVersions;
     private final double[][] savedCompositions;
-    private byte[] savedCategories;
+    private final boolean[] fitchSetsDirty;
+    private final long[][] savedFitchSets;
+    private final boolean[] branchDirty;
+    private final BranchMutations[] savedMutations;
+    private boolean rootSaved = false;
+    private int savedRoot;
+    private byte[] savedCategories;          // null unless a category has changed since the last commit
     private double[][] savedCategoryCompositions;
     private boolean[] categoryCompositionDirty;
-    private final long[][] savedFitchSets;
-    private boolean savedFitchSetsStale;
     private boolean fitchSetsStaleChanged = false;
-    private final BranchMutations[] savedMutations;
-    private final boolean[] statesDirty;
-    private final boolean[] fitchSetsDirty;
-    private final boolean[] branchDirty;
-    private final int[] dirtyNodes;
-    private int dirtyNodeCount = 0;
-    private final boolean[] nodeInJournal;
+    private boolean savedFitchSetsStale;
 
     /**
      * @param patternWeights the weight of each pattern (for the compositions; may be longer than patternCount)
@@ -115,17 +115,16 @@ public final class DefaultMutationStore implements MutationStore {
         this.nodeCount = parents.length;
         this.patternCount = patternCount;
         this.stateCount = stateCount;
-        this.patternWeights = java.util.Arrays.copyOf(patternWeights, patternCount);
+        this.patternWeights = Arrays.copyOf(patternWeights, patternCount);
         this.parents = parents.clone();
         this.root = findRoot(parents);
         this.states = new byte[nodeCount][patternCount];
         this.fitchSets = new long[nodeCount][]; // allocated when parsimony first sets them
         this.mutations = new BranchMutations[nodeCount];
-        java.util.Arrays.fill(mutations, BranchMutations.EMPTY);
+        Arrays.fill(mutations, BranchMutations.EMPTY);
         this.stateVersions = new long[nodeCount];
         this.compositions = new double[nodeCount][];
-        this.changeLogged = new boolean[nodeCount];
-        this.changeLog = new int[nodeCount];
+        this.changedNodes = new IndexSet(nodeCount);
 
         this.savedStates = new byte[nodeCount][];
         this.savedStateVersions = new long[nodeCount];
@@ -135,10 +134,9 @@ public final class DefaultMutationStore implements MutationStore {
         this.statesDirty = new boolean[nodeCount];
         this.fitchSetsDirty = new boolean[nodeCount];
         this.branchDirty = new boolean[nodeCount];
-        this.nodeInJournal = new boolean[nodeCount];
+        this.journaledNodes = new IndexSet(nodeCount);
         this.savedParents = new int[nodeCount];
         this.parentDirty = new boolean[nodeCount];
-        this.dirtyNodes = new int[nodeCount];
     }
 
     private static int findRoot(int[] parents) {
@@ -204,7 +202,7 @@ public final class DefaultMutationStore implements MutationStore {
             rootSaved = true;
         }
         if (!parentDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             savedParents[nodeNumber] = parents[nodeNumber];
             parentDirty[nodeNumber] = true;
         }
@@ -241,7 +239,7 @@ public final class DefaultMutationStore implements MutationStore {
             journalCategoryComposition(nodeNumber);
             categoryCompositions[nodeNumber] = null;
         }
-        logChange(nodeNumber);
+        changedNodes.add(nodeNumber);
         return states[nodeNumber];
     }
 
@@ -287,7 +285,7 @@ public final class DefaultMutationStore implements MutationStore {
             }
         }
         stateVersions[nodeNumber] = ++lastStateVersion;
-        logChange(nodeNumber);
+        changedNodes.add(nodeNumber);
     }
 
     /**
@@ -350,6 +348,16 @@ public final class DefaultMutationStore implements MutationStore {
      * to date (in O(nodes)).
      */
     public void setCategory(int pattern, int category) {
+        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, categories[pattern] == category ? 0 : 1);
+        final long profileStart = MATProfile.start();
+        try {
+            setCategoryImpl(pattern, category);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_SET_CATEGORY, profileStart);
+        }
+    }
+
+    private void setCategoryImpl(int pattern, int category) {
         final int old = categories[pattern];
         if (old == category) {
             return;
@@ -381,6 +389,13 @@ public final class DefaultMutationStore implements MutationStore {
      * many categories at once: {@link #setCategory} updates every node for each pattern.
      */
     public void replaceCategories(byte[] patternCategories, double[][] nodeCategoryCompositions) {
+        int changes = 0;
+        for (int p = 0; p < patternCount; p++) {
+            if (patternCategories[p] != categories[p]) {
+                changes++;
+            }
+        }
+        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, changes);
         if (savedCategories == null) {
             savedCategories = categories;
         }
@@ -397,7 +412,7 @@ public final class DefaultMutationStore implements MutationStore {
      */
     public double[] getCategoryComposition(int nodeNumber) {
         double[] categoryComposition = categoryCompositions[nodeNumber];
-        assert categoryComposition == null || java.util.Arrays.equals(categoryComposition, countCategoryComposition(nodeNumber)) :
+        assert categoryComposition == null || Arrays.equals(categoryComposition, countCategoryComposition(nodeNumber)) :
                 "category composition of node " + nodeNumber;
         if (categoryComposition == null) {
             if (statesDirty[nodeNumber] || savedCategories != null) {
@@ -429,7 +444,7 @@ public final class DefaultMutationStore implements MutationStore {
 
     private void journalCategoryComposition(int nodeNumber) {
         if (!categoryCompositionDirty[nodeNumber]) {
-            journal(nodeNumber);
+            journaledNodes.add(nodeNumber);
             savedCategoryCompositions[nodeNumber] = categoryCompositions[nodeNumber];
             if (categoryCompositions[nodeNumber] != null) {
                 categoryCompositions[nodeNumber] = categoryCompositions[nodeNumber].clone();
@@ -440,7 +455,8 @@ public final class DefaultMutationStore implements MutationStore {
 
     private void journalStates(int nodeNumber) {
         if (!statesDirty[nodeNumber]) {
-            journal(nodeNumber);
+            final long profileStart = MATProfile.start();
+            journaledNodes.add(nodeNumber);
             savedStates[nodeNumber] = states[nodeNumber];
             states[nodeNumber] = states[nodeNumber].clone();
             savedStateVersions[nodeNumber] = stateVersions[nodeNumber];
@@ -449,6 +465,16 @@ public final class DefaultMutationStore implements MutationStore {
                 compositions[nodeNumber] = compositions[nodeNumber].clone();
             }
             statesDirty[nodeNumber] = true;
+            MATProfile.stop(MATProfile.Phase.STORE_JOURNAL_CLONE, profileStart);
+            MATProfile.count(MATProfile.Counter.JOURNAL_CLONE_BYTES, patternCount);
+        }
+    }
+
+    private void journalBranch(int nodeNumber) {
+        if (!branchDirty[nodeNumber]) {
+            journaledNodes.add(nodeNumber);
+            savedMutations[nodeNumber] = mutations[nodeNumber];
+            branchDirty[nodeNumber] = true;
         }
     }
 
@@ -480,12 +506,14 @@ public final class DefaultMutationStore implements MutationStore {
 
     public long[] getWritableFitchSets(int nodeNumber) {
         if (!fitchSetsDirty[nodeNumber]) {
-            journal(nodeNumber);
+            final long profileStart = MATProfile.start();
+            journaledNodes.add(nodeNumber);
             long[] sets = fitchSets[nodeNumber];
             savedFitchSets[nodeNumber] = sets;
             fitchSets[nodeNumber] = sets == null ? new long[patternCount] : sets.clone();
             fitchSetsDirty[nodeNumber] = true;
             fitchSetsReleased = false;
+            MATProfile.stop(MATProfile.Phase.STORE_FITCH_CLONE, profileStart);
         }
         return fitchSets[nodeNumber];
     }
@@ -518,12 +546,18 @@ public final class DefaultMutationStore implements MutationStore {
      * of the node and its current parent.
      */
     public void updateBranch(int nodeNumber) {
-        if (!branchDirty[nodeNumber]) {
-            journal(nodeNumber);
-            savedMutations[nodeNumber] = mutations[nodeNumber];
-            branchDirty[nodeNumber] = true;
+        MATProfile.count(MATProfile.Counter.BRANCH_SCAN_PATTERNS, parents[nodeNumber] < 0 ? 0 : patternCount);
+        final long profileStart = MATProfile.start();
+        try {
+            updateBranchImpl(nodeNumber);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_UPDATE_BRANCH, profileStart);
         }
-        logChange(nodeNumber);
+    }
+
+    private void updateBranchImpl(int nodeNumber) {
+        journalBranch(nodeNumber);
+        changedNodes.add(nodeNumber);
 
         int parent = parents[nodeNumber];
         if (parent < 0) {
@@ -605,19 +639,25 @@ public final class DefaultMutationStore implements MutationStore {
      * Updates the events on the branch above the node when its states, or its parent's, have changed only
      * at the given sites (and the parent is unchanged): events at other sites are kept.
      *
-     * @param changed flags the sites in `sites`
+     * @param changed the set of the sites in `sites`
      * @param sites   the sites, in pattern order (the events of every branch are kept in pattern order)
      */
-    public void updateBranchSites(int nodeNumber, boolean[] changed, int[] sites) {
+    public void updateBranchSites(int nodeNumber, IndexSet changed, int[] sites) {
+        MATProfile.count(MATProfile.Counter.BRANCH_SITE_UPDATES, sites.length);
+        final long profileStart = MATProfile.start();
+        try {
+            updateBranchSitesImpl(nodeNumber, changed, sites);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_UPDATE_BRANCH_SITES, profileStart);
+        }
+    }
+
+    private void updateBranchSitesImpl(int nodeNumber, IndexSet changed, int[] sites) {
         if (sites.length == 0) {
             return;
         }
-        if (!branchDirty[nodeNumber]) {
-            journal(nodeNumber);
-            savedMutations[nodeNumber] = mutations[nodeNumber];
-            branchDirty[nodeNumber] = true;
-        }
-        logChange(nodeNumber);
+        journalBranch(nodeNumber);
+        changedNodes.add(nodeNumber);
         int parent = parents[nodeNumber];
         if (parent < 0) {
             mutations[nodeNumber] = BranchMutations.EMPTY;
@@ -634,11 +674,15 @@ public final class DefaultMutationStore implements MutationStore {
         final int[] subPatterns = scratchPatterns;
         final byte[] subFrom = scratchFrom;
         final byte[] subTo = scratchTo;
+        final int oldSubstitutionCount = old.getSubstitutionCount();
+        final int oldSize = old.size();
         int subCount = 0;
         int ambEnd = patternCount;
+
+        // substitutions: before each kept one, the new ones at the sites below its pattern
         int j = 0;
-        for (int k = 0; k <= old.getSubstitutionCount(); k++) {
-            int next = k < old.getSubstitutionCount() ? old.getPattern(k) : Integer.MAX_VALUE;
+        for (int k = 0; k <= oldSubstitutionCount; k++) {
+            int next = k < oldSubstitutionCount ? old.getPattern(k) : Integer.MAX_VALUE;
             for (; j < sites.length && sites[j] < next; j++) {
                 int p = sites[j];
                 if (parentStates[p] >= 0 && childStates[p] >= 0 && childStates[p] != parentStates[p]) {
@@ -647,15 +691,17 @@ public final class DefaultMutationStore implements MutationStore {
                     subTo[subCount++] = childStates[p];
                 }
             }
-            if (k < old.getSubstitutionCount() && !changed[next]) {
+            if (k < oldSubstitutionCount && !changed.contains(next)) {
                 subPatterns[subCount] = next;
                 subFrom[subCount] = (byte) old.getFromState(k);
                 subTo[subCount++] = (byte) old.getToState(k);
             }
         }
+
+        // ambiguities likewise, from the back of the work arrays (so in reverse pattern order)
         j = 0;
-        for (int k = old.getSubstitutionCount(); k <= old.size(); k++) {
-            int next = k < old.size() ? old.getPattern(k) : Integer.MAX_VALUE;
+        for (int k = oldSubstitutionCount; k <= oldSize; k++) {
+            int next = k < oldSize ? old.getPattern(k) : Integer.MAX_VALUE;
             for (; j < sites.length && sites[j] < next; j++) {
                 int p = sites[j];
                 if (parentStates[p] >= 0 && childStates[p] < 0) {
@@ -664,7 +710,7 @@ public final class DefaultMutationStore implements MutationStore {
                     subFrom[ambEnd] = parentStates[p];
                 }
             }
-            if (k < old.size() && !changed[next]) {
+            if (k < oldSize && !changed.contains(next)) {
                 ambEnd--;
                 subPatterns[ambEnd] = next;
                 subFrom[ambEnd] = (byte) old.getFromState(k);
@@ -678,12 +724,8 @@ public final class DefaultMutationStore implements MutationStore {
      * explicit histories).
      */
     public void setBranchMutations(int nodeNumber, BranchMutations branchMutations) {
-        if (!branchDirty[nodeNumber]) {
-            journal(nodeNumber);
-            savedMutations[nodeNumber] = mutations[nodeNumber];
-            branchDirty[nodeNumber] = true;
-        }
-        logChange(nodeNumber);
+        journalBranch(nodeNumber);
+        changedNodes.add(nodeNumber);
         mutations[nodeNumber] = branchMutations;
     }
 
@@ -693,45 +735,37 @@ public final class DefaultMutationStore implements MutationStore {
         }
     }
 
-    private void logChange(int nodeNumber) {
-        if (!changeLogged[nodeNumber]) {
-            changeLogged[nodeNumber] = true;
-            changeLog[changeLogCount++] = nodeNumber;
-        }
-    }
-
     /**
      * @return the number of nodes whose states or branch events have changed (including by revert)
      * since {@link #clearChangeLog}
      */
     public int getChangedNodeCount() {
-        return changeLogCount;
+        return changedNodes.size();
     }
 
     public int getChangedNode(int i) {
-        return changeLog[i];
+        return changedNodes.get(i);
     }
 
     public void clearChangeLog() {
-        for (int i = 0; i < changeLogCount; i++) {
-            changeLogged[changeLog[i]] = false;
-        }
-        changeLogCount = 0;
-    }
-
-    private void journal(int nodeNumber) {
-        if (!nodeInJournal[nodeNumber]) {
-            nodeInJournal[nodeNumber] = true;
-            dirtyNodes[dirtyNodeCount++] = nodeNumber;
-        }
+        changedNodes.clear();
     }
 
     /**
      * Accepts all changes since the last commit.
      */
     public void commit() {
-        for (int i = 0; i < dirtyNodeCount; i++) {
-            int n = dirtyNodes[i];
+        final long profileStart = MATProfile.start();
+        try {
+            commitImpl();
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_COMMIT, profileStart);
+        }
+    }
+
+    private void commitImpl() {
+        for (int i = 0; i < journaledNodes.size(); i++) {
+            int n = journaledNodes.get(i);
             savedStates[n] = null;
             savedCompositions[n] = null;
             savedFitchSets[n] = null;
@@ -744,15 +778,14 @@ public final class DefaultMutationStore implements MutationStore {
                 savedCategoryCompositions[n] = null;
                 categoryCompositionDirty[n] = false;
             }
-            nodeInJournal[n] = false;
         }
-        dirtyNodeCount = 0;
+        journaledNodes.clear();
         rootSaved = false;
         savedCategories = null;
         fitchSetsStaleChanged = false;
         if (fitchSetsStale && !fitchSetsReleased) {
             // parsimony will recompute them all before use
-            java.util.Arrays.fill(fitchSets, null);
+            Arrays.fill(fitchSets, null);
             fitchSetsReleased = true;
         }
     }
@@ -761,10 +794,19 @@ public final class DefaultMutationStore implements MutationStore {
      * Discards all changes since the last commit.
      */
     public void revert() {
-        for (int i = 0; i < dirtyNodeCount; i++) {
-            int n = dirtyNodes[i];
+        final long profileStart = MATProfile.start();
+        try {
+            revertImpl();
+        } finally {
+            MATProfile.stop(MATProfile.Phase.STORE_REVERT, profileStart);
+        }
+    }
+
+    private void revertImpl() {
+        for (int i = 0; i < journaledNodes.size(); i++) {
+            int n = journaledNodes.get(i);
             if (statesDirty[n] || branchDirty[n]) {
-                logChange(n);
+                changedNodes.add(n);
             }
             if (statesDirty[n]) {
                 // the states are as they were at the saved version, so caches keyed by it are valid again

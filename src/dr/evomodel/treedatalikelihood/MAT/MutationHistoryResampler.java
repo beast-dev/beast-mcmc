@@ -28,7 +28,6 @@ package dr.evomodel.treedatalikelihood.MAT;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.operators.SubtreeMoveHook;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
@@ -40,9 +39,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import dr.evomodel.treedatalikelihood.MAT.BlockSampler.Block;
+import dr.evomodel.treedatalikelihood.MAT.BlockSampler.Conditional;
+import dr.evomodel.treedatalikelihood.MAT.BlockSampler.UniformConditional;
+
 /**
- * Resamples the ancestral states of a MAT jointly with a subtree prune-and-regraft move, as a
- * {@link SubtreeMoveHook} attached to the operator.
+ * Resamples the ancestral states of a MAT jointly with a subtree prune-and-regraft move, when the MAT
+ * likelihood is evaluated after the move (see {@link MATDataLikelihoodDelegate#setResampler}): the old
+ * states are scored under the old topology (a {@link TopologyView} of the tree before the move) and the
+ * new states drawn under the new one.
  *
  * With mutation times integrated out (or, for explicit hits, drawn separately; see below), a mutational
  * history is the state of every pattern at every internal node. When the subtree below X ({@code node})
@@ -80,7 +85,7 @@ import java.util.logging.Logger;
  * branch touching the block are drawn given its end states, and the probabilities of the old and new hits
  * enter the Hastings ratio.
  */
-public class MutationHistoryResampler implements SubtreeMoveHook {
+public class MutationHistoryResampler {
 
     /** Pattern classes relative to a block's neighbourhood (see {@link #getPatternClasses}) */
     public static final byte HAS_SUBSTITUTIONS = 0;
@@ -89,33 +94,28 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     public static final byte CONSTANT = 3;
 
     private final MATDataLikelihoodDelegate delegate;
+    private final DefaultMutationStore store;
     private final BranchHistoryModel historyModel;
     private final Tree tree;
     private final int stateCount;
     private final int patternCount;
+    private final double[] patternWeights;
     private final boolean localBlock;
     // the local block alone barely mixes the history away from the moves: it needs a MutationHistoryGibbsOperator
     private boolean hasGibbsOperator = false;
     private boolean gibbsWarningGiven = false;
 
-    // patterns grouped by weight, so conditionals can be looked up by [state][weight class]
-    private final int[] weightClass;
-    private final double[] classWeights;
     // the sites' rate classes: their site rate categories (0 with a single category), or none (-1) with
     // per-site rates; sparse passes count and group sites by (rate class, state)
     private final int rateClassCount;
     private final int[] variableSites;
+    // scores and draws the states of a block, site by site
+    private final BlockSampler blocks;
     // sites are handled sparsely (see SparsePass) without per-site rates, explicit hits or unequal weights
     private final boolean sparse;
 
-    // the current path move (between beforeSubtreeMove and afterSubtreeMove)
-    private int[] block = null;
-    private int[] movedNodes = null;   // the nodes whose parents a subtree move changes
+    // the candidate sites of the current path move or Gibbs update (set by makePathPass)
     private int[] candidateSites = null;
-    private PathPass oldPathPass = null;
-    private double logProposalOfOldHistories;
-    // the current local move
-    private LocalMove localMove = null;
     private int lastChangedUniformCount = 0;
 
     // per-site work arrays
@@ -123,30 +123,24 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     private final int[] siteStamps;    // candidate sites of the current path move are stamped with stamp
     private int stamp = 0;
     private final double[] oldSiteLogProbabilities;
-    private final double[] newSiteLogProbabilities;
-    private final boolean[] resampledSites;
-    private final int[] changedSiteStamps;
-    private int changedSiteStamp = 0;
-    private long[] siteBits;
-    private int[] oldMarks;
-    private int[] newMarks;
-    private int[] hotMarks;
+    private final IndexSet changedSites;     // the sites at which the current move changed any state
+    private final IndexSet passChangedSites; // those changed by the current sparse pass (see SparsePass)
+    private final long[] siteBits;     // work bits of sortSites
+    private final int[] oldMarks;      // the sites of a local move's old and new passes, and its hot sites,
+    private final int[] newMarks;      // are marked with localStamp
+    private final int[] hotMarks;
     private int localStamp = 0;
 
     // per-node work arrays and caches
-    private final boolean[] inBlock;
-    private int[] nodeBlockIndex;
-    private int[] nodeMarks;           // a node is marked if its entry equals nodeStamp
+    private final int[] nodeMarks;     // a node is marked if its entry equals nodeStamp
     private int nodeStamp = 0;
-    private int[][] ambiguousRuns;
-    private long[] ambiguousRunsVersion;
+    private final int[][] ambiguousRuns;
+    private final long[] ambiguousRunsVersion;
     // the summed weights of the constant patterns in each state (which every node has), and the weight of
     // every variable pattern (when sites are handled sparsely)
     private final double[] constantComposition;
     private final double variableWeight;
     private final long[] constantBits; // the constant patterns, as a bit set
-
-    private int chosenState;           // left by choose
 
     /**
      * A resampler with the path block (the XML parser uses the local block by default where it can).
@@ -161,21 +155,30 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      */
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, boolean localBlock) {
         this.delegate = delegate;
+        this.store = delegate.getMutableMutationStore();
         this.historyModel = delegate.getHistoryModel();
         this.tree = delegate.getTree();
         this.stateCount = delegate.getPatternList().getDataType().getStateCount();
         this.patternCount = delegate.getPatternList().getPatternCount();
-        this.inBlock = new boolean[tree.getNodeCount()];
+        final int nodeCount = tree.getNodeCount();
+        this.nodeMarks = new int[nodeCount];
+        this.ambiguousRuns = new int[nodeCount][];
+        this.ambiguousRunsVersion = new long[nodeCount];
         this.siteClasses = new byte[patternCount];
         this.siteStamps = new int[patternCount];
         this.oldSiteLogProbabilities = new double[patternCount];
-        this.newSiteLogProbabilities = new double[patternCount];
-        this.resampledSites = new boolean[patternCount];
-        this.changedSiteStamps = new int[patternCount];
+        this.changedSites = new IndexSet(patternCount);
+        this.passChangedSites = new IndexSet(patternCount);
+        this.siteBits = new long[(patternCount + 63) / 64];
+        this.oldMarks = new int[patternCount];
+        this.newMarks = new int[patternCount];
+        this.hotMarks = new int[patternCount];
 
-        double[] weights = delegate.getPatternWeights();
+        this.patternWeights = delegate.getPatternWeights();
+        final double[] weights = patternWeights;
+        // patterns grouped by weight, so that the block sampler can look conditionals up by weight class
         Map<Double, Integer> classes = new HashMap<Double, Integer>();
-        this.weightClass = new int[patternCount];
+        final int[] weightClass = new int[patternCount];
         for (int p = 0; p < patternCount; p++) {
             Integer c = classes.get(weights[p]);
             if (c == null) {
@@ -184,7 +187,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
             weightClass[p] = c;
         }
-        this.classWeights = new double[classes.size()];
+        final double[] classWeights = new double[classes.size()];
         for (Map.Entry<Double, Integer> e : classes.entrySet()) {
             classWeights[e.getValue()] = e.getKey();
         }
@@ -206,6 +209,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         }
         this.variableWeight = variableCount > 0 ? weights[variableSites[0]] : 1.0;
         this.rateClassCount = delegate.getCategoryCount();
+        this.blocks = new BlockSampler(delegate, weightClass, classWeights,
+                variableCount > 0 ? weightClass[variableSites[0]] : 0, rateClassCount);
         this.constantBits = new long[(patternCount + 63) >>> 6];
         for (int p = 0; p < patternCount; p++) {
             if (delegate.isConstantPattern(p)) {
@@ -217,6 +222,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             throw new IllegalArgumentException("The local block needs a branch history model without explicit " +
                     "hits, no per-site rate parameter (site rate categories are supported) and equal pattern weights");
         }
+        delegate.setResampler(this);
+    }
+
+    public boolean isLocalBlock() {
+        return localBlock;
     }
 
     /**
@@ -252,8 +262,16 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         hasGibbsOperator = true;
     }
 
-    @Override
-    public void beforeSubtreeMove(NodeRef node, NodeRef sibling, NodeRef destination) {
+    /**
+     * Resamples the states changed by a subtree move that has already been made to the tree: the subtree
+     * below x, with its parent P, was pruned from beside its sibling s and regrafted on the branch above d.
+     *
+     * @param oldView the topology (and branch lengths) before the move
+     * @param newView the topology after it (the tree as it is)
+     * @return the log Hastings ratio of the states' proposal: the log probability of the old states under
+     * the old topology minus that of the new states under the new one
+     */
+    double resampleMove(int x, int s, int d, TopologyView oldView, TopologyView newView) {
         if (localBlock) {
             if (!hasGibbsOperator && !gibbsWarningGiven) {
                 // the local block resamples a node's states only when a move regrafts next to it, so excess
@@ -266,15 +284,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                         "operators (with a weight of about 10% of the subtree moves' weight).");
                 gibbsWarningGiven = true;
             }
-            beforeLocalMove(node, sibling, destination);
+            return afterLocalMove(beforeLocalMove(x, s, d, oldView, newView), newView);
         } else {
-            beforePathMove(node, sibling, destination);
+            return afterPathMove(beforePathMove(x, s, d, oldView), newView);
         }
-    }
-
-    @Override
-    public double afterSubtreeMove() {
-        return localBlock ? afterLocalMove() : afterPathMove();
     }
 
     /**
@@ -288,23 +301,58 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     // The path block
     // ---------------------------------------------------------------------------------------------
 
-    private void beforePathMove(NodeRef node, NodeRef sibling, NodeRef destination) {
-        delegate.updateMAT();
-        delegate.ensureRates();
-        movedNodes = new int[]{sibling.getNumber(), tree.getParent(node).getNumber(), destination.getNumber()};
-        block = getBlock(tree.getParent(node), sibling, destination);
-        if (sparse) {
-            oldPathPass = makePathPass(block, node.getNumber());
-            sampleBlock(block, false, siteClasses, oldPathPass.substitutionSites, oldSiteLogProbabilities, oldPathPass);
-        } else {
-            candidateSites = getVariableSites(block);
-            oldPathPass = null;
-            sampleBlock(block, false, siteClasses, candidateSites, oldSiteLogProbabilities, null);
+    /**
+     * What a path move carries from the old phase (the old states scored under the old topology) to the
+     * new (the new states drawn under the new one).
+     */
+    private static final class PathMove {
+        int[] movedNodes;              // S, P and D: the nodes whose parents the move may change
+        int[] block;                   // P and the internal nodes on the old S-D path
+        PathPass oldPass;              // the sparse pass of the old phase, or null
+        int[] candidateSites;
+        double logProposalOfOldHistories;
+    }
+
+    private PathMove beforePathMove(int x, int s, int d, TopologyView oldView) {
+        MATProfile.count(MATProfile.Counter.PATH_MOVES, 1);
+        final long profileStart = MATProfile.start();
+        try {
+            return beforePathMoveImpl(x, s, d, oldView);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.PATH_BEFORE, profileStart);
         }
+    }
+
+    private PathMove beforePathMoveImpl(int x, int s, int d, TopologyView oldView) {
+        delegate.ensureRates();
+        final PathMove move = new PathMove();
+        final int p = oldView.getParent(x);
+        move.movedNodes = new int[]{s, p, d};
+        long profileStart = MATProfile.start();
+        move.block = getBlock(p, s, d, oldView);
+        if (sparse) {
+            move.oldPass = makePathPass(move.block, x, oldView);
+            MATProfile.stop(MATProfile.Phase.PATH_CANDIDATES, profileStart);
+            profileStart = MATProfile.start();
+            sampleBlock(move.block, false, siteClasses, move.oldPass.substitutionSites, oldSiteLogProbabilities,
+                    move.oldPass, oldView);
+        } else {
+            candidateSites = getVariableSites(move.block, oldView);
+            move.oldPass = null;
+            MATProfile.stop(MATProfile.Phase.PATH_CANDIDATES, profileStart);
+            profileStart = MATProfile.start();
+            sampleBlock(move.block, false, siteClasses, candidateSites, oldSiteLogProbabilities, null, oldView);
+        }
+        move.candidateSites = candidateSites;
+        MATProfile.stop(MATProfile.Phase.PATH_SCORE_OLD, profileStart);
+        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, candidateSites.length);
         if (historyModel.hasExplicitHistories()) {
             // every candidate is resampled, so score all their hits around the block
-            logProposalOfOldHistories = scoreHistories(getIncidentBranches(block), candidateSites);
+            profileStart = MATProfile.start();
+            move.logProposalOfOldHistories = scoreHistories(getIncidentBranches(move.block, oldView), candidateSites, oldView);
+            MATProfile.stop(MATProfile.Phase.PATH_HISTORIES, profileStart);
         }
+        return move;
     }
 
     /**
@@ -314,9 +362,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @param referenceNode a neighbour of the block whose states do not change (the uniform sites' states are
      *                      read there)
      */
-    private PathPass makePathPass(int[] blockNodes, int referenceNode) {
-        candidateSites = getCandidateSites(blockNodes);
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
+    private PathPass makePathPass(int[] blockNodes, int referenceNode, TopologyView view) {
+        candidateSites = getCandidateSites(blockNodes, view);
         final int[] uniformCounts = getStateCounts(referenceNode);
         int substitutionCount = 0;
         int ambiguityCount = 0;
@@ -352,50 +399,45 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * {@link MutationHistoryGibbsOperator}). The draw is that of the path block's new states.
      */
     public void resampleInPlace(int[] blockNodes) {
+        MATProfile.count(MATProfile.Counter.GIBBS_UPDATES, 1);
+        final long profileStart = MATProfile.start();
+        try {
+            resampleInPlaceImpl(blockNodes);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.GIBBS, profileStart);
+        }
+    }
+
+    private void resampleInPlaceImpl(int[] blockNodes) {
         delegate.updateMAT();
         delegate.ensureRates();
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final TopologyView view = delegate.currentView();
 
         final int[] resampled;
-        IntBuffer otherChanges = null;
         if (sparse) {
-            final PathPass pass = makePathPass(blockNodes, getOutsideChild(blockNodes));
-            sampleBlock(blockNodes, true, siteClasses, pass.substitutionSites, null, pass);
+            final PathPass pass = makePathPass(blockNodes, getOutsideChild(blockNodes, view), view);
+            sampleBlock(blockNodes, true, siteClasses, pass.substitutionSites, null, pass, view);
             resampled = pass.substitutionSites;
-            otherChanges = pass.changedSites;
+            changedSites.addAll(pass.otherChangedSites);
         } else {
-            resampled = getVariableSites(blockNodes);
-            sampleBlock(blockNodes, true, siteClasses, resampled, null, null);
+            resampled = getVariableSites(blockNodes, view);
+            sampleBlock(blockNodes, true, siteClasses, resampled, null, null, view);
         }
+        changedSites.addAll(resampled, resampled.length);
         delegate.setHistoryResampled();
         store.setFitchSetsStale(true);
 
-        final IntBuffer changed = new IntBuffer();
-        addFlagged(changed, resampled, resampled.length);
-        if (otherChanges != null) {
-            addFlagged(changed, otherChanges.values, otherChanges.count);
-        }
-        final int[] changedSites = sortSites(changed.values, changed.count);
         if (historyModel.hasExplicitHistories()) {
             // draw the hits of the resampled sites on every branch touching the block, given their end states
             List<Integer> branches = new ArrayList<Integer>();
-            for (int n : getIncidentBranches(blockNodes)) {
+            for (int n : getIncidentBranches(blockNodes, view)) {
                 branches.add(n);
             }
-            sampleHistories(branches, changedSites);
+            sampleHistories(branches, sortSites(changedSites), view);
+            changedSites.clear();
         } else {
-            // the branches above the block's nodes and below them (the parents are unchanged)
-            final int touchedStamp = nextNodeStamp();
-            final IntBuffer touched = new IntBuffer();
-            for (int n : blockNodes) {
-                addWithChildren(touched, n, touchedStamp);
-            }
-            for (int i = 0; i < touched.count; i++) {
-                store.updateBranchSites(touched.values[i], resampledSites, changedSites);
-            }
-        }
-        for (int p : changedSites) {
-            resampledSites[p] = false;
+            // (no parent has changed)
+            updateBranchesAroundBlock(blockNodes, null, view);
         }
         candidateSites = null;
         delegate.fireHistoryChanged();
@@ -404,11 +446,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     /**
      * @return a child of one of the block's nodes that is not in the block
      */
-    private int getOutsideChild(int[] blockNodes) {
+    private int getOutsideChild(int[] blockNodes, TopologyView view) {
         for (int n : blockNodes) {
-            NodeRef node = tree.getNode(n);
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                int c = tree.getChild(node, i).getNumber();
+            for (int i = 0; i < view.getChildCount(n); i++) {
+                int c = view.getChild(n, i);
                 if (!contains(blockNodes, c)) {
                     return c;
                 }
@@ -417,27 +458,23 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         throw new IllegalArgumentException("The block has no children outside it");
     }
 
-    private double afterPathMove() {
-        if (block == null) {
-            throw new IllegalStateException("afterSubtreeMove called without beforeSubtreeMove");
+    private double afterPathMove(PathMove move, TopologyView newView) {
+        final long profileStart = MATProfile.start();
+        try {
+            return afterPathMoveImpl(move, newView);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.PATH_AFTER, profileStart);
         }
-        final int[] currentBlock = block;
-        final PathPass oldPass = oldPathPass;
-        block = null;
-        oldPathPass = null;
+    }
 
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final List<Integer> reparented = new ArrayList<Integer>();
-        IntBuffer synced = syncParents(movedNodes);
-        for (int i = 0; i < synced.count; i++) {
-            reparented.add(synced.values[i]);
-        }
+    private double afterPathMoveImpl(PathMove move, TopologyView newView) {
+        final int[] currentBlock = move.block;
+        final PathPass oldPass = move.oldPass;
+        final IntBuffer reparented = syncParents(move.movedNodes, newView);
 
         // every candidate is resampled (the others are handled together when sampling sparsely)
-        final int[] resampled = oldPass != null ? oldPass.substitutionSites : candidateSites;
-        for (int p : resampled) {
-            resampledSites[p] = true;
-        }
+        final int[] resampled = oldPass != null ? oldPass.substitutionSites : move.candidateSites;
+        changedSites.addAll(resampled, resampled.length);
 
         double logProposalOfOldStates = oldPass != null ?
                 oldPass.uniformLogProbability + oldPass.ambiguityLogProbability : 0.0;
@@ -447,20 +484,15 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         final PathPass newPass = oldPass == null ? null :
                 new PathPass(oldPass.referenceNode, oldPass.uniformCounts, oldPass.substitutionSites,
                         oldPass.ambiguitySites, oldPass.candidateStamp);
-        double logProposalOfNewStates = sampleBlock(currentBlock, true, siteClasses, resampled,
-                newSiteLogProbabilities, newPass);
+        long profileStart = MATProfile.start();
+        double logProposalOfNewStates = sampleBlock(currentBlock, true, siteClasses, resampled, null, newPass, newView);
+        MATProfile.stop(MATProfile.Phase.PATH_SAMPLE_NEW, profileStart);
         lastChangedUniformCount = newPass == null ? 0 : newPass.changedUniformCount;
         delegate.setHistoryResampled();
 
-        int[] changed = resampled;
-        if (newPass != null && newPass.changedSites.count > 0) {
+        if (newPass != null) {
             // the other sites whose block states changed also need their branches updated
-            changed = Arrays.copyOf(resampled, resampled.length + newPass.changedSites.count);
-            int k = resampled.length;
-            for (int i = 0; i < newPass.changedSites.count; i++) {
-                changed[k++] = newPass.changedSites.values[i];
-                resampledSites[newPass.changedSites.values[i]] = true;
-            }
+            changedSites.addAll(newPass.otherChangedSites);
         }
 
         // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
@@ -468,70 +500,98 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         if (historyModel.hasExplicitHistories()) {
             // draw the hits of the resampled sites on every branch touching the block, given their end states
-            Set<Integer> branches = new HashSet<Integer>(reparented);
-            for (int n : getIncidentBranches(currentBlock)) {
+            Set<Integer> branches = new HashSet<Integer>();
+            for (int i = 0; i < reparented.count; i++) {
+                branches.add(reparented.values[i]);
+            }
+            for (int n : getIncidentBranches(currentBlock, newView)) {
                 branches.add(n);
             }
-            double logProposalOfNewHistories = sampleHistories(branches, resampled);
-            for (int p : resampled) {
-                resampledSites[p] = false;
-            }
+            profileStart = MATProfile.start();
+            MATProfile.count(MATProfile.Counter.CHANGED_SITES, changedSites.size());
+            double logProposalOfNewHistories = sampleHistories(branches, resampled, newView);
+            MATProfile.stop(MATProfile.Phase.PATH_HISTORIES, profileStart);
+            changedSites.clear();
             candidateSites = null;
-            delegate.markTopologySynchronised();
-            return logProposalOfOldStates - logProposalOfNewStates + logProposalOfOldHistories - logProposalOfNewHistories;
+            return logProposalOfOldStates - logProposalOfNewStates + move.logProposalOfOldHistories - logProposalOfNewHistories;
         }
 
-        // branches whose parent changed are recomputed in full; the others around the block changed only at the resampled sites
-        changed = sortSites(changed, changed.length);
-        Set<Integer> fullUpdates = new HashSet<Integer>(reparented);
-        for (int n : fullUpdates) {
-            store.updateBranch(n);
-        }
-        for (int n : currentBlock) {
-            if (!fullUpdates.contains(n)) {
-                store.updateBranchSites(n, resampledSites, changed);
-            }
-            NodeRef node = tree.getNode(n);
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                int c = tree.getChild(node, i).getNumber();
-                if (!fullUpdates.contains(c) && !contains(currentBlock, c)) {
-                    store.updateBranchSites(c, resampledSites, changed);
-                }
-            }
-        }
-        for (int p : changed) {
-            resampledSites[p] = false;
-        }
+        updateBranchesAroundBlock(currentBlock, reparented, newView);
         candidateSites = null;
-        delegate.markTopologySynchronised();
 
         return logProposalOfOldStates - logProposalOfNewStates;
     }
 
     /**
-     * @return the regrafted parent plus the internal nodes on the path between a and b
+     * Recomputes the events of the branches around a block whose states have changed at changedSites (which
+     * is then emptied): in full for the nodes whose parent changed, and at the changed sites only for the
+     * block's other nodes and their children.
+     *
+     * @param reparented the nodes whose parent changed, or null
+     */
+    private void updateBranchesAroundBlock(int[] blockNodes, IntBuffer reparented, TopologyView view) {
+        MATProfile.count(MATProfile.Counter.CHANGED_SITES, changedSites.size());
+        final long profileStart = MATProfile.start();
+        try {
+            updateBranchesAroundBlockImpl(blockNodes, reparented, view);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.BRANCHES, profileStart);
+        }
+    }
+
+    private void updateBranchesAroundBlockImpl(int[] blockNodes, IntBuffer reparented, TopologyView view) {
+        final int[] sortedChanges = sortSites(changedSites);
+        final int touchedStamp = nextNodeStamp();
+        if (reparented != null) {
+            for (int i = 0; i < reparented.count; i++) {
+                int n = reparented.values[i];
+                nodeMarks[n] = touchedStamp;
+                store.updateBranch(n);
+            }
+        }
+        final IntBuffer touched = new IntBuffer();
+        for (int n : blockNodes) {
+            addWithChildren(touched, n, touchedStamp, view);
+        }
+        for (int i = 0; i < touched.count; i++) {
+            store.updateBranchSites(touched.values[i], changedSites, sortedChanges);
+        }
+        changedSites.clear();
+    }
+
+    /**
+     * @return the regrafted parent plus the internal nodes on the path between a and b, in the order of the
+     * set (which fixes the order in which the candidate sites are found, and so drawn)
+     */
+    /**
+     * @return the path block of a move of the subtree below the child of parent that is not a (a is its
+     * sibling) to the branch above b, in the current tree
      */
     public int[] getBlock(NodeRef parent, NodeRef a, NodeRef b) {
-        Set<NodeRef> ancestorsOfA = new HashSet<NodeRef>();
-        for (NodeRef n = a; n != null; n = tree.getParent(n)) {
+        return getBlock(parent.getNumber(), a.getNumber(), b.getNumber(), delegate.currentView());
+    }
+
+    int[] getBlock(int parent, int a, int b, TopologyView view) {
+        Set<Integer> ancestorsOfA = new HashSet<Integer>();
+        for (int n = a; n >= 0; n = view.getParent(n)) {
             ancestorsOfA.add(n);
         }
-        List<NodeRef> path = new ArrayList<NodeRef>();
-        NodeRef mrca = b;
+        List<Integer> path = new ArrayList<Integer>();
+        int mrca = b;
         while (!ancestorsOfA.contains(mrca)) {
             path.add(mrca);
-            mrca = tree.getParent(mrca);
+            mrca = view.getParent(mrca);
         }
-        for (NodeRef n = a; n != mrca; n = tree.getParent(n)) {
+        for (int n = a; n != mrca; n = view.getParent(n)) {
             path.add(n);
         }
         path.add(mrca);
 
         Set<Integer> nodes = new HashSet<Integer>();
-        nodes.add(parent.getNumber());
-        for (NodeRef n : path) {
-            if (!tree.isExternal(n)) {
-                nodes.add(n.getNumber());
+        nodes.add(parent);
+        for (int n : path) {
+            if (!view.isExternal(n)) {
+                nodes.add(n);
             }
         }
         int[] result = new int[nodes.size()];
@@ -547,15 +607,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * neighbourhood (the branches above the block nodes and their children), with their classes set in
      * siteClasses and stamped in siteStamps. Every other site has the same state throughout the neighbourhood.
      */
-    int[] getCandidateSites(int[] blockNodes) {
-        MutationStore store = delegate.getMutationStore();
+    int[] getCandidateSites(int[] blockNodes, TopologyView view) {
         stamp++;
         int[] sites = new int[16];
         int count = 0;
         for (int n : blockNodes) {
-            NodeRef node = tree.getNode(n);
-            for (int i = -1; i < tree.getChildCount(node); i++) {
-                BranchMutations mutations = store.getBranchMutations(i < 0 ? n : tree.getChild(node, i).getNumber());
+            for (int i = -1; i < view.getChildCount(n); i++) {
+                BranchMutations mutations = store.getBranchMutations(i < 0 ? n : view.getChild(n, i));
                 for (int k = 0; k < mutations.size(); k++) {
                     int p = mutations.getPattern(k);
                     if (siteStamps[p] != stamp) {
@@ -577,8 +635,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     /**
      * @return every non-constant site, with its class around the block set in siteClasses
      */
-    private int[] getVariableSites(int[] blockNodes) {
-        byte[] classes = getPatternClasses(blockNodes);
+    private int[] getVariableSites(int[] blockNodes, TopologyView view) {
+        byte[] classes = getPatternClasses(blockNodes, view);
         int[] sites = new int[patternCount];
         int count = 0;
         for (int p = 0; p < patternCount; p++) {
@@ -601,16 +659,18 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @return for each pattern HAS_SUBSTITUTIONS, NO_EVENTS, AMBIGUITIES_ONLY or CONSTANT
      */
     public byte[] getPatternClasses(int[] blockNodes) {
-        MutationStore store = delegate.getMutationStore();
+        return getPatternClasses(blockNodes, delegate.currentView());
+    }
+
+    byte[] getPatternClasses(int[] blockNodes, TopologyView view) {
         byte[] classes = new byte[patternCount];
         for (int p = 0; p < patternCount; p++) {
             classes[p] = delegate.isConstantPattern(p) ? CONSTANT : NO_EVENTS;
         }
         for (int n : blockNodes) {
             classify(store.getBranchMutations(n), classes);
-            NodeRef node = tree.getNode(n);
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                classify(store.getBranchMutations(tree.getChild(node, i).getNumber()), classes);
+            for (int i = 0; i < view.getChildCount(n); i++) {
+                classify(store.getBranchMutations(view.getChild(n, i)), classes);
             }
         }
         return classes;
@@ -660,11 +720,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * (see optimization_notes/mat_local_spr/DESIGN.md).
      */
     private static final class LocalMove {
-        int x;
-        int p;
-        int s;
-        int d;
-        int newParent;                 // -1 if P becomes the root
+        int node;                      // X
+        int parent;                    // P
+        int sibling;                   // S
+        int destination;               // D
+        int newParent;                 // N: -1 if P becomes the root
         int[] presentX;                // runs of patterns at which X has data
         int[] oldChain;                // G and the ancestors above it, as far as any site's old chain reaches
         int[][] oldChainLevels;        // [i]: runs of patterns at which the old chain reaches oldChain[i]
@@ -674,58 +734,32 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         double logProposalOfOldStates;
     }
 
-    private void beforeLocalMove(NodeRef node, NodeRef sibling, NodeRef destination) {
-        delegate.updateMAT();
-        delegate.ensureRates();
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
-        if (oldMarks == null) {
-            oldMarks = new int[patternCount];
-            newMarks = new int[patternCount];
-            hotMarks = new int[patternCount];
+    private LocalMove beforeLocalMove(int x, int s, int d, TopologyView oldView, TopologyView newView) {
+        MATProfile.count(MATProfile.Counter.LOCAL_MOVES, 1);
+        final long profileStart = MATProfile.start();
+        try {
+            return beforeLocalMoveImpl(x, s, d, oldView, newView);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.LOCAL_BEFORE, profileStart);
         }
+    }
+
+    private LocalMove beforeLocalMoveImpl(int x, int s, int d, TopologyView oldView, TopologyView newView) {
+        delegate.ensureRates();
         localStamp++;
         final int markStamp = localStamp;
 
         final LocalMove move = new LocalMove();
-        final NodeRef pNode = tree.getParent(node);
-        final NodeRef gNode = tree.getParent(pNode);
-        final NodeRef dParent = tree.getParent(destination);
-        // P's new parent: D's parent, unless D is S (which then stays below G)
-        final NodeRef newParentNode = dParent != null && dParent.getNumber() == pNode.getNumber() ? gNode : dParent;
-        move.x = node.getNumber();
-        move.p = pNode.getNumber();
-        move.s = sibling.getNumber();
-        move.d = destination.getNumber();
-        move.newParent = newParentNode == null ? -1 : newParentNode.getNumber();
-        move.presentX = SiteRuns.complement(getAmbiguousRuns(move.x), patternCount);
-
-        // The old chain: G and each ancestor above it lose their states where X was their only data, up to
-        // the first node that is above X's new position too.
-        final int newAncestorStamp = nextNodeStamp();
-        for (NodeRef n = newParentNode; n != null; n = tree.getParent(n)) {
-            nodeMarks[n.getNumber()] = newAncestorStamp;
-        }
-        final IntBuffer chain = new IntBuffer();
-        final List<int[]> levels = new ArrayList<int[]>();
-        int[] hot = SiteRuns.intersect(move.presentX, getAmbiguousRuns(move.s));
-        int previous = move.p;
-        for (NodeRef n = gNode; n != null && hot.length > 0 && nodeMarks[n.getNumber()] != newAncestorStamp; n = tree.getParent(n)) {
-            for (int i = 0; i < tree.getChildCount(n); i++) {
-                int c = tree.getChild(n, i).getNumber();
-                if (c != previous) {
-                    hot = SiteRuns.intersect(hot, getAmbiguousRuns(c));
-                }
-            }
-            if (hot.length == 0) {
-                break;
-            }
-            chain.add(n.getNumber());
-            levels.add(hot);
-            previous = n.getNumber();
-        }
-        move.oldChain = chain.toArray();
-        move.oldChainLevels = levels.toArray(new int[levels.size()][]);
-        move.oldHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
+        final int p = oldView.getParent(x);
+        final int g = oldView.getParent(p);
+        move.node = x;
+        move.parent = p;
+        move.sibling = s;
+        move.destination = d;
+        move.newParent = newView.getParent(p);
+        long profileStart = MATProfile.start();
+        move.presentX = SiteRuns.complement(getAmbiguousRuns(move.node), patternCount);
+        findOldChain(move, g, move.newParent, oldView);
         for (int site : move.oldHotSites) {
             hotMarks[site] = markStamp;
         }
@@ -733,54 +767,104 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         // The old pass: P with neighbours G, S and X.
         // (the sites at which a neighbour is ambiguous are found from their runs when P is scored or drawn)
         final IntBuffer oldSubstitutions = new IntBuffer();
-        collectSubstitutionSites(store, gNode == null ? new int[]{move.x, move.s} : new int[]{move.x, move.s, move.p},
-                oldMarks, markStamp, oldSubstitutions);
+        collectSubstitutionSites(g < 0 ? new int[]{move.node, move.sibling} :
+                new int[]{move.node, move.sibling, move.parent}, oldMarks, markStamp, oldSubstitutions);
         final int[] oldSubstitutionSites = oldSubstitutions.toArray();
-        final int[] oldUniformCounts = getUniformCounts(move.x, oldSubstitutionSites, move.oldHotSites, oldMarks, markStamp);
+        final int[] oldUniformCounts = getUniformCounts(move.node, oldSubstitutionSites, move.oldHotSites, oldMarks, markStamp);
 
         // The new pass: P with neighbours N, D and X. P's state there is affected by the substitutions
         // between X and N (in the old topology, where they are on the path between them) and between D and
         // N, and by the runs of ambiguous patterns of X, D and N (after the old chain loses its states, since
         // D may be in it).
-        final NodeRef anchor = newParentNode != null ? newParentNode : destination;
-        final int xAncestorStamp = nextNodeStamp();
-        for (NodeRef n = node; n != null; n = tree.getParent(n)) {
-            nodeMarks[n.getNumber()] = xAncestorStamp;
-        }
-        final IntBuffer pathBranches = new IntBuffer();
-        NodeRef mrca = anchor;
-        while (nodeMarks[mrca.getNumber()] != xAncestorStamp) {
-            pathBranches.add(mrca.getNumber());
-            mrca = tree.getParent(mrca);
-        }
-        for (NodeRef n = node; n.getNumber() != mrca.getNumber(); n = tree.getParent(n)) {
-            pathBranches.add(n.getNumber());
-        }
-        if (newParentNode != null) {
-            pathBranches.add(move.d);
+        final int anchor = move.newParent >= 0 ? move.newParent : d;
+        final IntBuffer pathBranches = getBranchesBetween(x, anchor, oldView);
+        if (move.newParent >= 0) {
+            pathBranches.add(move.destination);
         }
         final IntBuffer newSubstitutions = new IntBuffer();
-        collectSubstitutionSites(store, pathBranches.toArray(), newMarks, markStamp, newSubstitutions);
+        collectSubstitutionSites(pathBranches.toArray(), newMarks, markStamp, newSubstitutions);
         move.newSubstitutionSites = newSubstitutions.toArray();
         move.newStamp = markStamp;
+        MATProfile.stop(MATProfile.Phase.LOCAL_CHAINS, profileStart);
+        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, oldSubstitutionSites.length + move.oldHotSites.length);
+        MATProfile.count(MATProfile.Counter.HOT_SITES, move.oldHotSites.length);
 
         // score P's current states (and the old chain's) under the old topology
-        final LocalPass pass = new LocalPass(move.x, oldUniformCounts, oldSubstitutionSites, move.oldHotSites);
+        profileStart = MATProfile.start();
+        final LocalPass pass = new LocalPass(move.node, oldUniformCounts, oldSubstitutionSites, move.oldHotSites);
         final int[] substitutionSites = withoutMarked(oldSubstitutionSites, hotMarks, markStamp);
-        double logProbability = sampleBlock(new int[]{move.p}, false, null, substitutionSites, null, pass);
-        logProbability += sampleChains(move.p, move.oldChain, move.oldChainLevels, false);
+        double logProbability = sampleBlock(new int[]{move.parent}, false, null, substitutionSites, null, pass, oldView);
+        logProbability += sampleChains(move.parent, move.oldChain, move.oldChainLevels, false, oldView);
+        MATProfile.stop(MATProfile.Phase.LOCAL_SCORE_OLD, profileStart);
         move.logProposalOfOldStates = logProbability;
-        localMove = move;
+        return move;
     }
 
-    private double afterLocalMove() {
-        final LocalMove move = localMove;
-        if (move == null) {
-            throw new IllegalStateException("afterSubtreeMove called without beforeSubtreeMove");
+    /**
+     * Finds the old chain: G and each ancestor above it lose their states where X was their only data, up to
+     * the first node that is above X's new position too.
+     */
+    private void findOldChain(LocalMove move, int g, int newParent, TopologyView oldView) {
+        final int newAncestorStamp = nextNodeStamp();
+        for (int n = newParent; n >= 0; n = oldView.getParent(n)) {
+            nodeMarks[n] = newAncestorStamp;
         }
-        localMove = null;
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
-        final IntBuffer reparented = syncParents(new int[]{move.s, move.p, move.d});
+        final IntBuffer chain = new IntBuffer();
+        final List<int[]> levels = new ArrayList<int[]>();
+        int[] hot = SiteRuns.intersect(move.presentX, getAmbiguousRuns(move.sibling));
+        int previous = move.parent;
+        for (int n = g; n >= 0 && hot.length > 0 && nodeMarks[n] != newAncestorStamp; n = oldView.getParent(n)) {
+            for (int i = 0; i < oldView.getChildCount(n); i++) {
+                int c = oldView.getChild(n, i);
+                if (c != previous) {
+                    hot = SiteRuns.intersect(hot, getAmbiguousRuns(c));
+                }
+            }
+            if (hot.length == 0) {
+                break;
+            }
+            chain.add(n);
+            levels.add(hot);
+            previous = n;
+        }
+        move.oldChain = chain.toArray();
+        move.oldChainLevels = levels.toArray(new int[levels.size()][]);
+        move.oldHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
+    }
+
+    /**
+     * @return the nodes whose branches lie on the path between two nodes: those from b up to (not including)
+     * the first ancestor of a, then those from a up to it
+     */
+    private IntBuffer getBranchesBetween(int a, int b, TopologyView view) {
+        final int ancestorStamp = nextNodeStamp();
+        for (int n = a; n >= 0; n = view.getParent(n)) {
+            nodeMarks[n] = ancestorStamp;
+        }
+        final IntBuffer branches = new IntBuffer();
+        int mrca = b;
+        while (nodeMarks[mrca] != ancestorStamp) {
+            branches.add(mrca);
+            mrca = view.getParent(mrca);
+        }
+        for (int n = a; n != mrca; n = view.getParent(n)) {
+            branches.add(n);
+        }
+        return branches;
+    }
+
+    private double afterLocalMove(LocalMove move, TopologyView newView) {
+        final long profileStart = MATProfile.start();
+        try {
+            return afterLocalMoveImpl(move, newView);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.LOCAL_AFTER, profileStart);
+        }
+    }
+
+    private double afterLocalMoveImpl(LocalMove move, TopologyView newView) {
+        long profileStart = MATProfile.start();
+        final IntBuffer reparented = syncParents(new int[]{move.sibling, move.parent, move.destination}, newView);
 
         // The new chain: N, and each ancestor above it that had no data, gain states where X has data
         // (read before the old chain loses its states, so as states before the move).
@@ -788,15 +872,15 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         final List<int[]> levels = new ArrayList<int[]>();
         if (move.newParent >= 0) {
             int[] hot = SiteRuns.intersect(move.presentX, getAmbiguousRuns(move.newParent));
-            NodeRef n = tree.getNode(move.newParent);
+            int n = move.newParent;
             while (hot.length > 0) {
-                chain.add(n.getNumber());
+                chain.add(n);
                 levels.add(hot);
-                NodeRef parent = tree.getParent(n);
-                if (parent == null) {
+                int parent = newView.getParent(n);
+                if (parent < 0) {
                     break;
                 }
-                hot = SiteRuns.intersect(hot, getAmbiguousRuns(parent.getNumber()));
+                hot = SiteRuns.intersect(hot, getAmbiguousRuns(parent));
                 n = parent;
             }
         }
@@ -816,50 +900,35 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
         }
 
+        MATProfile.stop(MATProfile.Phase.LOCAL_NEW_CHAIN, profileStart);
+        MATProfile.count(MATProfile.Counter.HOT_SITES, newHotSites.length);
+
         // draw P's states (and the new chain's) under the new topology
-        final LocalPass pass = new LocalPass(move.x,
-                getUniformCounts(move.x, move.newSubstitutionSites, newHotSites, newMarks, move.newStamp),
+        profileStart = MATProfile.start();
+        final LocalPass pass = new LocalPass(move.node,
+                getUniformCounts(move.node, move.newSubstitutionSites, newHotSites, newMarks, move.newStamp),
                 move.newSubstitutionSites, newHotSites);
         final int[] substitutionSites = withoutMarked(move.newSubstitutionSites, hotMarks, newHotStamp);
-        double logProposalOfNewStates = sampleBlock(new int[]{move.p}, true, null, substitutionSites, null, pass);
-        logProposalOfNewStates += sampleChains(move.p, newChain, newChainLevels, true);
+        double logProposalOfNewStates = sampleBlock(new int[]{move.parent}, true, null, substitutionSites, null, pass, newView);
+        logProposalOfNewStates += sampleChains(move.parent, newChain, newChainLevels, true, newView);
+        MATProfile.stop(MATProfile.Phase.LOCAL_SAMPLE_NEW, profileStart);
         lastChangedUniformCount = pass.changedUniformCount;
         delegate.setHistoryResampled();
         // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
         store.setFitchSetsStale(true);
 
         // the sites at which any state changed
-        final IntBuffer changed = new IntBuffer();
-        addFlagged(changed, substitutionSites, substitutionSites.length);
-        addFlagged(changed, pass.changedSites.values, pass.changedSites.count);
-        addFlagged(changed, move.oldHotSites, move.oldHotSites.length);
-        addFlagged(changed, newHotSites, newHotSites.length);
-        final int[] changedSites = sortSites(changed.values, changed.count);
+        changedSites.addAll(substitutionSites, substitutionSites.length);
+        changedSites.addAll(pass.otherChangedSites);
+        changedSites.addAll(move.oldHotSites, move.oldHotSites.length);
+        changedSites.addAll(newHotSites, newHotSites.length);
 
-        // the branches whose parent changed are recomputed in full; those whose ends changed only at the
-        // changed sites are updated there
-        final int touchedStamp = nextNodeStamp();
-        for (int i = 0; i < reparented.count; i++) {
-            store.updateBranch(reparented.values[i]);
-            nodeMarks[reparented.values[i]] = touchedStamp;
-        }
-        // the other branches below the nodes whose states changed (and above them)
-        final IntBuffer touched = new IntBuffer();
-        addUnmarked(touched, move.x, touchedStamp);
-        addWithChildren(touched, move.p, touchedStamp);
-        for (int n : move.oldChain) {
-            addWithChildren(touched, n, touchedStamp);
-        }
-        for (int n : newChain) {
-            addWithChildren(touched, n, touchedStamp);
-        }
-        for (int i = 0; i < touched.count; i++) {
-            store.updateBranchSites(touched.values[i], resampledSites, changedSites);
-        }
-        for (int site : changedSites) {
-            resampledSites[site] = false;
-        }
-        delegate.markTopologySynchronised();
+        // the nodes whose states changed: P (whose children now include X) and the chains
+        final int[] changedNodes = new int[1 + move.oldChain.length + newChain.length];
+        changedNodes[0] = move.parent;
+        System.arraycopy(move.oldChain, 0, changedNodes, 1, move.oldChain.length);
+        System.arraycopy(newChain, 0, changedNodes, 1 + move.oldChain.length, newChain.length);
+        updateBranchesAroundBlock(changedNodes, reparented, newView);
 
         return move.logProposalOfOldStates - logProposalOfNewStates;
     }
@@ -868,7 +937,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * Scores or draws the states of the chains {P, chain[0], ..., chain[k]} at the sites where the chain
      * has length k + 1 (levels[i] are the runs of patterns at which it reaches chain[i]).
      */
-    private double sampleChains(int p, int[] chain, int[][] levels, boolean sample) {
+    private double sampleChains(int p, int[] chain, int[][] levels, boolean sample, TopologyView view) {
         double logProbability = 0.0;
         for (int k = 0; k < chain.length; k++) {
             int[] exact = k + 1 < chain.length ? SiteRuns.subtract(levels[k], levels[k + 1], patternCount) : levels[k];
@@ -879,7 +948,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             int[] chainBlock = new int[k + 2];
             chainBlock[0] = p;
             System.arraycopy(chain, 0, chainBlock, 1, k + 1);
-            logProbability += sampleBlock(chainBlock, sample, null, sites, null, null);
+            logProbability += sampleBlock(chainBlock, sample, null, sites, null, null, view);
         }
         return logProbability;
     }
@@ -887,8 +956,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     /**
      * Adds the variable sites with a substitution on the branches above the given nodes (and not yet marked).
      */
-    private void collectSubstitutionSites(DefaultMutationStore store, int[] branches, int[] marks, int markStamp,
-                                          IntBuffer out) {
+    private void collectSubstitutionSites(int[] branches, int[] marks, int markStamp, IntBuffer out) {
         for (int n : branches) {
             BranchMutations mutations = store.getBranchMutations(n);
             for (int k = 0; k < mutations.getSubstitutionCount(); k++) {
@@ -906,7 +974,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * and the hot sites (the sites at which a neighbour of P is ambiguous are excluded when they are swept)
      */
     private int[] getUniformCounts(int x, int[] substitutions, int[] hot, int[] marks, int markStamp) {
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
         final int[] counts = getStateCounts(x);
         for (int site : substitutions) {
             int a = store.getState(x, site);
@@ -949,20 +1016,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         return sites.toArray();
     }
 
-    private void addFlagged(IntBuffer buffer, int[] sites, int count) {
-        for (int i = 0; i < count; i++) {
-            if (!resampledSites[sites[i]]) {
-                resampledSites[sites[i]] = true;
-                buffer.add(sites[i]);
-            }
-        }
-    }
-
-    private void addWithChildren(IntBuffer nodes, int n, int markStamp) {
+    private void addWithChildren(IntBuffer nodes, int n, int markStamp, TopologyView view) {
         addUnmarked(nodes, n, markStamp);
-        NodeRef node = tree.getNode(n);
-        for (int i = 0; i < tree.getChildCount(node); i++) {
-            addUnmarked(nodes, tree.getChild(node, i).getNumber(), markStamp);
+        for (int i = 0; i < view.getChildCount(n); i++) {
+            addUnmarked(nodes, view.getChild(n, i), markStamp);
         }
     }
 
@@ -974,9 +1031,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     private int nextNodeStamp() {
-        if (nodeMarks == null) {
-            nodeMarks = new int[tree.getNodeCount()];
-        }
         return ++nodeStamp;
     }
 
@@ -985,12 +1039,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      *
      * @return the nodes whose parent changed
      */
-    private IntBuffer syncParents(int[] nodes) {
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
+    private IntBuffer syncParents(int[] nodes, TopologyView newView) {
         final IntBuffer reparented = new IntBuffer();
         for (int n : nodes) {
-            NodeRef parent = tree.getParent(tree.getNode(n));
-            int parentNumber = parent == null ? -1 : parent.getNumber();
+            int parentNumber = newView.getParent(n);
             if (store.getParent(n) != parentNumber) {
                 store.setParent(n, parentNumber);
                 reparented.add(n);
@@ -1014,9 +1066,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     public double getLogFullConditional() {
         delegate.updateMAT();
         delegate.ensureRates();
+        final TopologyView view = delegate.currentView();
         double logProbability = sampleBlock(getInternalNodes(), false);
         if (historyModel.hasExplicitHistories()) {
-            logProbability += scoreHistories(getNonRootNodes(), getVariableSites(getInternalNodes()));
+            logProbability += scoreHistories(getNonRootNodes(), getVariableSites(getInternalNodes(), view), view);
         }
         return logProbability;
     }
@@ -1028,22 +1081,18 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     public void resampleAll() {
         delegate.updateMAT();
         delegate.ensureRates();
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
+        final TopologyView view = delegate.currentView();
         int[] internal = getInternalNodes();
         sampleBlock(internal, true);
         if (historyModel.hasExplicitHistories()) {
-            int[] sites = getVariableSites(internal);
-            for (int p : sites) {
-                resampledSites[p] = true;
-            }
+            int[] sites = getVariableSites(internal, view);
+            changedSites.addAll(sites, sites.length);
             List<Integer> branches = new ArrayList<Integer>();
             for (int n : getNonRootNodes()) {
                 branches.add(n);
             }
-            sampleHistories(branches, sites);
-            for (int p : sites) {
-                resampledSites[p] = false;
-            }
+            sampleHistories(branches, sites, view);
+            changedSites.clear();
         } else {
             store.updateAllBranches();
         }
@@ -1073,15 +1122,14 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @return the nodes whose branches touch the block in the current topology: the block nodes (other
      * than the root) and their children
      */
-    private int[] getIncidentBranches(int[] blockNodes) {
+    private int[] getIncidentBranches(int[] blockNodes, TopologyView view) {
         Set<Integer> branches = new HashSet<Integer>();
         for (int n : blockNodes) {
-            NodeRef node = tree.getNode(n);
-            if (!tree.isRoot(node)) {
+            if (view.getParent(n) >= 0) {
                 branches.add(n);
             }
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                branches.add(tree.getChild(node, i).getNumber());
+            for (int i = 0; i < view.getChildCount(n); i++) {
+                branches.add(view.getChild(n, i));
             }
         }
         int[] result = new int[branches.size()];
@@ -1096,15 +1144,14 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @return the log probability of the current hits of the given sites on the branches above the given
      * nodes, given their end states
      */
-    private double scoreHistories(int[] branches, int[] sites) {
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
+    private double scoreHistories(int[] branches, int[] sites, TopologyView view) {
         final double[] rates = delegate.getPatternRates();
         final int[] start = new int[patternCount];
         final int[] end = new int[patternCount];
         double logProbability = 0.0;
         for (int n : branches) {
             int parent = store.getParent(n);
-            double length = delegate.getBranchLength(tree.getNode(n));
+            double length = view.getBranchLength(n);
             BranchMutations mutations = store.getBranchMutations(n);
             for (int p : sites) {
                 start[p] = -1;
@@ -1131,13 +1178,12 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     /**
-     * Draws the hits of the sites flagged in resampledSites (listed in sites) on the branches above the
-     * given nodes, given their end states, keeping the events of the other sites.
+     * Draws the hits of the sites in changedSites (listed in pattern order in sites) on the branches above
+     * the given nodes, given their end states, keeping the events of the other sites.
      *
      * @return the log probability of the drawn hits
      */
-    private double sampleHistories(Iterable<Integer> branches, int[] sites) {
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
+    private double sampleHistories(Iterable<Integer> branches, int[] sites, TopologyView view) {
         final double[] rates = delegate.getPatternRates();
         double logProbability = 0.0;
         for (int n : branches) {
@@ -1145,13 +1191,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             if (parent < 0) {
                 continue;
             }
-            double length = delegate.getBranchLength(tree.getNode(n));
+            double length = view.getBranchLength(n);
             BranchMutations old = store.getBranchMutations(n);
             BranchMutations.Builder builder = new BranchMutations.Builder(true);
             int k = 0;
             while (k < old.getSubstitutionCount()) {
                 int siteEnd = old.getSiteEnd(k);
-                if (!resampledSites[old.getPattern(k)]) {
+                if (!changedSites.contains(old.getPattern(k))) {
                     for (int i = k; i < siteEnd; i++) {
                         builder.addSubstitution(old.getPattern(i), old.getFromState(i), old.getToState(i),
                                 old.hasTimes() ? old.getTime(i) : (i - k + 1.0) / (siteEnd - k + 1.0));
@@ -1160,7 +1206,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 k = siteEnd;
             }
             for (int i = old.getSubstitutionCount(); i < old.size(); i++) {
-                if (!resampledSites[old.getPattern(i)]) {
+                if (!changedSites.contains(old.getPattern(i))) {
                     builder.addAmbiguity(old.getPattern(i), old.getFromState(i));
                 }
             }
@@ -1188,15 +1234,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @return the runs of patterns at which the node is ambiguous (cached for the node's current states)
      */
     private int[] getAmbiguousRuns(int n) {
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
-        if (ambiguousRuns == null) {
-            ambiguousRuns = new int[tree.getNodeCount()][];
-            ambiguousRunsVersion = new long[tree.getNodeCount()];
-        }
         long version = store.getStateVersion(n);
         if (ambiguousRuns[n] == null || ambiguousRunsVersion[n] != version) {
+            final long profileStart = MATProfile.start();
             ambiguousRuns[n] = SiteRuns.ambiguous(store.getStates(n), patternCount);
             ambiguousRunsVersion[n] = version;
+            MATProfile.stop(MATProfile.Phase.LOCAL_RUNS, profileStart);
+            MATProfile.count(MATProfile.Counter.RUNS_RECOMPUTED, 1);
         }
         return ambiguousRuns[n];
     }
@@ -1207,7 +1251,6 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * have their state at every node
      */
     private int[] getStateCounts(int n) {
-        final DefaultMutationStore store = delegate.getMutableMutationStore();
         final int[] counts = new int[rateClassCount * stateCount];
         if (rateClassCount > 1) {
             // [category * stateCount + state], from the node's category composition (variable patterns only)
@@ -1227,7 +1270,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
     private int[] countStates(int n) {
         final int[] counts = new int[rateClassCount * stateCount];
-        final byte[] states = delegate.getMutableMutationStore().getStates(n);
+        final byte[] states = store.getStates(n);
         for (int p : variableSites) {
             if (states[p] >= 0) {
                 counts[countIndex(p, states[p])]++;
@@ -1240,33 +1283,30 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @return the index of a site in state a in the counts of the sparse passes: (rate class, state)
      */
     private int countIndex(int p, int a) {
-        return rateClassCount > 1 ? delegate.getMutableMutationStore().getCategory(p) * stateCount + a : a;
-    }
-
-    /**
-     * @return the rate class of a pattern: its site rate category, or -1 with per-site rates
-     */
-    private int rateClassOf(int p) {
-        return delegate.hasSiteRates() ? -1 : delegate.getMutableMutationStore().getCategory(p);
-    }
-
-    /**
-     * @return the rate of a rate class
-     */
-    private double rateOfClass(int rateClass) {
-        return rateClassCount > 1 ? delegate.getCategoryRates()[rateClass] : delegate.getSiteRateScale();
+        return rateClassCount > 1 ? store.getCategory(p) * stateCount + a : a;
     }
 
     /**
      * @return the given sites in pattern order (each site at most once)
      */
     private int[] sortSites(int[] sites, int count) {
-        if (siteBits == null) {
-            siteBits = new long[(patternCount + 63) / 64];
-        }
         for (int i = 0; i < count; i++) {
             siteBits[sites[i] >> 6] |= 1L << (sites[i] & 63);
         }
+        return takeSortedSites(count);
+    }
+
+    private int[] sortSites(IndexSet sites) {
+        for (int i = 0; i < sites.size(); i++) {
+            siteBits[sites.get(i) >> 6] |= 1L << (sites.get(i) & 63);
+        }
+        return takeSortedSites(sites.size());
+    }
+
+    /**
+     * @return the sites set in siteBits (which it clears), in pattern order
+     */
+    private int[] takeSortedSites(int count) {
         int[] sorted = new int[count];
         int k = 0;
         for (int word = 0; word < siteBits.length; word++) {
@@ -1281,7 +1321,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
     }
 
     // ---------------------------------------------------------------------------------------------
-    // Blocks
+    // Blocks (see BlockSampler)
     // ---------------------------------------------------------------------------------------------
 
     /**
@@ -1291,7 +1331,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * @return the log probability of the drawn (or existing) states under that distribution
      */
     public double sampleBlock(int[] blockNodes, boolean sample) {
-        return sampleBlock(blockNodes, sample, null, null, null, null);
+        return sampleBlock(blockNodes, sample, null, null, null, null, delegate.currentView());
     }
 
     /**
@@ -1299,388 +1339,40 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * block (see {@link #getPatternClasses}) handled by a fast exact path.
      */
     public double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses) {
-        return sampleBlock(blockNodes, sample, patternClasses, null, null, null);
+        return sampleBlock(blockNodes, sample, patternClasses, null, null, null, delegate.currentView());
     }
 
     /**
-     * As {@link #sampleBlock(int[], boolean, byte[])} but only for the given sites (all sites if null),
-     * optionally recording each site's log probability, and then, if a sparse pass is given, for the
-     * sites it handles (those with no events, or only ambiguities, around the block).
+     * As {@link #sampleBlock(int[], boolean)} but only for the given sites (all sites if null), with the
+     * patterns that have no substitutions around the block (see {@link #getPatternClasses}) handled by a
+     * fast exact path, optionally recording each site's log probability, and then, if a sparse pass is
+     * given, for the sites it handles (those with no events, or only ambiguities, around the block).
      */
     private double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses,
-                               int[] sites, double[] siteLogProbabilities, SparsePass pass) {
+                               int[] sites, double[] siteLogProbabilities, SparsePass pass, TopologyView view) {
         delegate.ensureRates();
-        final Block block = new Block(blockNodes, sample);
-        final DefaultMutationStore store = block.store;
-        final int blockSize = block.nodes.length;
-        final int topIndex = block.topIndex;
-        final NodeRef topParent = block.topParent;
-        final int[][] children = block.children;
-        final int[] parentIndex = block.parentIndex;
-        final byte[][] blockStates = block.states;
-        final double[] patternWeights = delegate.getPatternWeights();
-
-        // The full conditional of a pattern's block states depends only on its weight, its rate and the
-        // states adjacent to the block, so it is computed once for each distinct combination of these.
-        // Draws are still made independently for each pattern.
-        final Map<ConditionalKey, Conditional> cache = new HashMap<ConditionalKey, Conditional>();
-        final Map<ConditionalKey, UniformConditional> uniformCache = new HashMap<ConditionalKey, UniformConditional>();
-        // without per-site rates, conditionals for patterns with no events depend only on (state, weight, rate class)
-        final UniformConditional[][] uniformByClass = delegate.hasSiteRates() ? null :
-                new UniformConditional[stateCount][classWeights.length * rateClassCount];
-        int boundaryCount = 1;
-        for (int i = 0; i < blockSize; i++) {
-            for (int c : children[i]) {
-                if (!inBlock[c]) {
-                    boundaryCount++;
-                }
-            }
-        }
-        final byte[] boundary = new byte[boundaryCount];
-
+        final Block block = blocks.newBlock(blockNodes, sample, view);
         double logProbability = 0.0;
-
         final int siteCount = sites == null ? patternCount : sites.length;
-        int lastSite = -1;
-        double lastLogProbability = 0.0;
         for (int siteIndex = 0; siteIndex < siteCount; siteIndex++) {
             final int p = sites == null ? siteIndex : sites[siteIndex];
+            // constant sites are assumed to have no mutations: their states are never changed
+            final double before = logProbability;
+            if (!delegate.isConstantPattern(p)) {
+                logProbability = blocks.sampleSite(block, p, patternClasses == null ? HAS_SUBSTITUTIONS : patternClasses[p],
+                        logProbability);
+            }
             if (siteLogProbabilities != null) {
-                if (lastSite >= 0) {
-                    siteLogProbabilities[lastSite] = logProbability - lastLogProbability;
-                }
-                lastSite = p;
-                lastLogProbability = logProbability;
-            }
-            final double w = patternWeights[p];
-            final double nu = delegate.getPatternRate(p);
-
-            if (delegate.isConstantPattern(p)) {
-                // constant sites are assumed to have no mutations: their states are never changed
-                continue;
-            }
-            final byte patternClass = patternClasses == null ? HAS_SUBSTITUTIONS : patternClasses[p];
-            if (patternClass == NO_EVENTS) {
-                // every node in and around the block has this state (states are not yet overwritten)
-                int a = blockStates[0][p];
-                if (a < 0) {
-                    continue;
-                }
-                UniformConditional uniform;
-                if (uniformByClass != null) {
-                    final int c = weightClass[p] * rateClassCount + rateClassOf(p);
-                    uniform = uniformByClass[a][c];
-                    if (uniform == null) {
-                        uniform = new UniformConditional(new Conditional(block, p, w, nu), a);
-                        uniformByClass[a][c] = uniform;
-                    }
-                } else {
-                    ConditionalKey key = new ConditionalKey(new byte[]{(byte) a}, w, nu);
-                    uniform = uniformCache.get(key);
-                    if (uniform == null) {
-                        uniform = new UniformConditional(new Conditional(block, p, w, nu), a);
-                        uniformCache.put(key, uniform);
-                    }
-                }
-                if (!sample || MathUtils.nextDouble() < uniform.probabilityUnchanged) {
-                    logProbability += uniform.logProbabilityUnchanged;
-                } else {
-                    logProbability += sampleChangedUniformPattern(block, uniform, p);
-                }
-                continue;
-            }
-
-            int k = 0;
-            boundary[k++] = topParent == null ? -2 : (byte) store.getState(topParent.getNumber(), p);
-            for (int i = 0; i < blockSize; i++) {
-                for (int c : children[i]) {
-                    if (!inBlock[c]) {
-                        boundary[k++] = (byte) store.getState(c, p);
-                    }
-                }
-            }
-            ConditionalKey key = new ConditionalKey(boundary.clone(), w, nu);
-            Conditional conditional = cache.get(key);
-            if (conditional == null) {
-                conditional = new Conditional(block, p, w, nu);
-                cache.put(key, conditional);
-            }
-
-            if (patternClass == AMBIGUITIES_ONLY) {
-                // every unambiguous node in and around the block has the same state, before and after the move
-                int a = -1;
-                for (byte b : boundary) {
-                    a = Math.max(a, b);
-                }
-                for (int i = 0; i < blockSize; i++) {
-                    a = Math.max(a, blockStates[i][p]);
-                }
-                if (a < 0 || !conditional.present[topIndex]) {
-                    if (sample) {
-                        for (int i = 0; i < blockSize; i++) {
-                            block.setState(i, p, -1);
-                        }
-                    }
-                    continue;
-                }
-                UniformConditional uniform = uniformCache.get(key);
-                if (uniform == null) {
-                    uniform = new UniformConditional(conditional, a);
-                    uniformCache.put(key, uniform);
-                }
-                if (!sample) {
-                    logProbability += uniform.logProbabilityUnchanged;
-                    continue;
-                }
-                // the unchanged configuration: unambiguous nodes take a (which they may not have had before the move)
-                for (int i = 0; i < blockSize; i++) {
-                    block.setState(i, p, (byte) (conditional.present[i] ? a : -1));
-                }
-                if (MathUtils.nextDouble() < uniform.probabilityUnchanged) {
-                    logProbability += uniform.logProbabilityUnchanged;
-                } else {
-                    logProbability += sampleChangedUniformPattern(block, uniform, p);
-                }
-                continue;
-            }
-
-            if (!conditional.present[topIndex]) {
-                if (sample) {
-                    for (int i = 0; i < blockSize; i++) {
-                        block.setState(i, p, -1);
-                    }
-                }
-                continue;
-            }
-            logProbability += choose(conditional.topLogP(), conditional.topP(), sample, blockStates[topIndex][p]);
-            if (sample) {
-                block.setState(topIndex, p, (byte) chosenState);
-            }
-            // pre-order: each child given its (already chosen) parent
-            for (int i = topIndex - 1; i >= 0; i--) {
-                if (!conditional.present[i]) {
-                    if (sample) {
-                        block.setState(i, p, -1);
-                    }
-                    continue;
-                }
-                int s = blockStates[parentIndex[i]][p];
-                logProbability += choose(conditional.logRow(i, s), conditional.row(i, s), sample, blockStates[i][p]);
-                if (sample) {
-                    block.setState(i, p, (byte) chosenState);
-                }
+                siteLogProbabilities[p] = logProbability - before;
             }
         }
-
-        if (siteLogProbabilities != null && lastSite >= 0) {
-            siteLogProbabilities[lastSite] = logProbability - lastLogProbability;
-        }
-
         if (pass != null) {
             pass.run(block);
             logProbability += pass.ambiguityLogProbability;
             logProbability += pass.uniformLogProbability;
         }
-
         block.release();
         return logProbability;
-    }
-
-    /**
-     * One call of sampleBlock: the block's nodes and branches in the current tree, the log branch densities
-     * (for the rate of the patterns being handled), and the block's states, which are only changed through
-     * {@link #setState} so that the store's node summaries stay up to date. The block's nodes are marked in
-     * inBlock until {@link #release}.
-     */
-    private final class Block {
-        final boolean sample;
-        final DefaultMutationStore store;
-        final int[] nodes;          // in post-order, the top last
-        final int topIndex;
-        final NodeRef topParent;
-        final int[][] children;     // the children of each block node
-        final int[][] childBranch;  // the index of the branch above each child
-        final int[] index;          // node number -> block index (only read for block nodes)
-        final int[] parentIndex;
-        final int topBranch;        // the index of the branch above the top node
-        final double[] branchLengths;
-        final double[][] logF;      // the log branch densities, for the rate logFRate (with per-site rates)
-        double logFRate = Double.NaN;
-        final double[][][] classLogF;          // the log branch densities of each rate class
-        final double[][][][] linearMatrices;   // [weight class][rate class]
-        final double[] logFrequencies;
-        final byte[][] states;
-
-        Block(int[] blockNodes, boolean sample) {
-            this.sample = sample;
-            this.store = delegate.getMutableMutationStore();
-            this.nodes = getBlockPostOrder(blockNodes);
-            final int blockSize = nodes.length;
-            this.topIndex = blockSize - 1;
-            this.topParent = tree.getParent(tree.getNode(nodes[topIndex]));
-            for (int n : nodes) {
-                inBlock[n] = true;
-            }
-
-            this.children = new int[blockSize][];
-            if (nodeBlockIndex == null) {
-                nodeBlockIndex = new int[tree.getNodeCount()];
-            }
-            this.index = nodeBlockIndex;
-            for (int i = 0; i < blockSize; i++) {
-                index[nodes[i]] = i;
-            }
-            int branchTotal = 1;
-            for (int i = 0; i < blockSize; i++) {
-                branchTotal += tree.getChildCount(tree.getNode(nodes[i]));
-            }
-            this.branchLengths = new double[branchTotal];
-            int branchCounter = 0;
-            this.childBranch = new int[blockSize][];
-            for (int i = 0; i < blockSize; i++) {
-                NodeRef node = tree.getNode(nodes[i]);
-                children[i] = new int[tree.getChildCount(node)];
-                childBranch[i] = new int[children[i].length];
-                for (int j = 0; j < children[i].length; j++) {
-                    NodeRef child = tree.getChild(node, j);
-                    children[i][j] = child.getNumber();
-                    childBranch[i][j] = branchCounter;
-                    branchLengths[branchCounter++] = delegate.getBranchLength(child);
-                }
-            }
-            this.parentIndex = new int[blockSize];
-            parentIndex[topIndex] = -1;
-            for (int i = 0; i < blockSize; i++) {
-                for (int c : children[i]) {
-                    if (inBlock[c]) {
-                        parentIndex[index[c]] = i;
-                    }
-                }
-            }
-            this.topBranch = branchCounter;
-            branchLengths[branchCounter] = delegate.getBranchLength(tree.getNode(nodes[topIndex]));
-
-            double[] frequencies = delegate.getRootFrequencyModel().getFrequencies();
-            this.logFrequencies = new double[stateCount];
-            for (int a = 0; a < stateCount; a++) {
-                logFrequencies[a] = Math.log(frequencies[a]);
-            }
-            this.logF = new double[branchTotal][stateCount * stateCount];
-            this.classLogF = new double[rateClassCount][][];
-            this.linearMatrices = new double[classWeights.length][rateClassCount][][];
-
-            this.states = new byte[blockSize][];
-            for (int i = 0; i < blockSize; i++) {
-                states[i] = sample ? store.getStatesForUpdate(nodes[i]) : store.getStates(nodes[i]);
-            }
-        }
-
-        /**
-         * @return the log branch densities for a rate class (or, for rate class -1, the given rate)
-         */
-        double[][] getLogF(int rateClass, double nu) {
-            if (rateClass < 0) {
-                if (nu != logFRate) {
-                    for (int e = 0; e < logF.length; e++) {
-                        historyModel.getLogTransitionDensities(branchLengths[e], nu, logF[e]);
-                    }
-                    logFRate = nu;
-                }
-                return logF;
-            }
-            double[][] f = classLogF[rateClass];
-            if (f == null) {
-                double rate = rateOfClass(rateClass);
-                f = new double[logF.length][stateCount * stateCount];
-                for (int e = 0; e < f.length; e++) {
-                    historyModel.getLogTransitionDensities(branchLengths[e], rate, f[e]);
-                }
-                classLogF[rateClass] = f;
-            }
-            return f;
-        }
-
-        /**
-         * @return exp(w logF) for every branch, for the weight class's w and the rate class
-         */
-        double[][] getLinearMatrices(int weightClassIndex, int rateClass) {
-            double[][] matrices = linearMatrices[weightClassIndex][rateClass];
-            if (matrices == null) {
-                double w = classWeights[weightClassIndex];
-                double[][] f = getLogF(rateClass, rateOfClass(rateClass));
-                matrices = new double[f.length][stateCount * stateCount];
-                for (int e = 0; e < f.length; e++) {
-                    for (int j = 0; j < stateCount * stateCount; j++) {
-                        matrices[e][j] = Math.exp(w * f[e][j]);
-                    }
-                }
-                linearMatrices[weightClassIndex][rateClass] = matrices;
-            }
-            return matrices;
-        }
-
-        /**
-         * Sets the state of block node i at a pattern, through the store.
-         */
-        void setState(int i, int p, int state) {
-            if (states[i][p] != state) {
-                store.setState(nodes[i], p, state);
-            }
-        }
-
-        void release() {
-            for (int n : nodes) {
-                inBlock[n] = false;
-            }
-        }
-    }
-
-    /**
-     * @return the block's nodes in post-order of the current tree, starting from its unique top node
-     */
-    private int[] getBlockPostOrder(int[] blockNodes) {
-        for (int n : blockNodes) {
-            inBlock[n] = true;
-        }
-        int top = -1;
-        for (int n : blockNodes) {
-            NodeRef parent = tree.getParent(tree.getNode(n));
-            if (parent == null || !inBlock[parent.getNumber()]) {
-                if (top != -1) {
-                    clearBlock(blockNodes);
-                    throw new IllegalStateException("Resampling block is not connected");
-                }
-                top = n;
-            }
-        }
-        // pre-order by DFS restricted to the block, then reverse
-        int[] order = new int[blockNodes.length];
-        int[] stack = new int[blockNodes.length];
-        int sp = 0;
-        int k = blockNodes.length;
-        stack[sp++] = top;
-        while (sp > 0) {
-            int n = stack[--sp];
-            order[--k] = n;
-            NodeRef node = tree.getNode(n);
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                int c = tree.getChild(node, i).getNumber();
-                if (inBlock[c]) {
-                    stack[sp++] = c;
-                }
-            }
-        }
-        clearBlock(blockNodes);
-        if (k != 0) {
-            throw new IllegalStateException("Resampling block is not connected");
-        }
-        return order;
-    }
-
-    private void clearBlock(int[] blockNodes) {
-        for (int n : blockNodes) {
-            inBlock[n] = false;
-        }
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -1698,7 +1390,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         double ambiguityLogProbability;
         double uniformLogProbability;
         // the sites, other than those handled individually, whose block states changed (when drawing)
-        final IntBuffer changedSites = new IntBuffer();
+        final IndexSet otherChangedSites = passChangedSites;
         int changedUniformCount;
 
         SparsePass(int referenceNode, int[] uniformCounts) {
@@ -1719,16 +1411,36 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         abstract double sampleAmbiguitySites(Block block);
 
         void run(Block block) {
-            changedSiteStamp++;
+            otherChangedSites.clear();
             ambiguityLogProbability = sampleAmbiguitySites(block);
             uniformLogProbability = sampleUniformSites(block);
         }
 
-        void addChangedSite(int p) {
-            if (changedSiteStamps[p] != changedSiteStamp) {
-                changedSiteStamps[p] = changedSiteStamp;
-                changedSites.add(p);
+        /**
+         * Draws which sites of a group change, by thinning (every site in the group has the same probability
+         * of changing), draws the new states of those, and scores the rest as unchanged.
+         *
+         * @param sites the group's sites by index, in pattern order (asked for in increasing order)
+         * @return logProbability plus the log probability of the group's drawn states
+         */
+        double sampleGroup(Block block, UniformConditional uniform, int count, SiteLocator sites, double logProbability) {
+            final double probabilityChanged = uniform.totalChangeMass;
+            int changedCount = 0;
+            if (probabilityChanged > 0.0) {
+                final double logSkip = Math.log1p(-probabilityChanged);
+                long index = -1;
+                while (true) {
+                    index = nextThinned(index, logSkip);
+                    if (index >= count) {
+                        break;
+                    }
+                    int p = sites.siteAt((int) index);
+                    logProbability += blocks.sampleChangedUniformPattern(block, uniform, p);
+                    otherChangedSites.add(p);
+                    changedCount++;
+                }
             }
+            return logProbability + (count - changedCount) * uniform.logProbabilityUnchanged;
         }
 
         /**
@@ -1739,7 +1451,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
          * @return the log probability of their (drawn or existing) block states under the full conditional
          */
         private double sampleUniformSites(Block block) {
-            final double w = delegate.getPatternWeights()[variableSites[0]];
+            final double w = variableWeight;
             // by (rate class, state)
             final int classCount = uniformCounts.length;
             final UniformConditional[] uniform = new UniformConditional[classCount];
@@ -1749,7 +1461,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 if (uniformCounts[i] > 0) {
                     int rateClass = i / stateCount;
                     int a = i % stateCount;
-                    uniform[i] = new UniformConditional(new Conditional(block, a, w, rateOfClass(rateClass), rateClass), a);
+                    uniform[i] = new UniformConditional(blocks.uniformStateConditional(block, a, w, blocks.rateOfClass(rateClass), rateClass), a);
                     probabilityChanged[i] = uniform[i].totalChangeMass;
                     maxProbabilityChanged = Math.max(maxProbabilityChanged, probabilityChanged[i]);
                 }
@@ -1771,7 +1483,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                         // a site with events: handled individually or in groups
                         continue;
                     }
-                    int a = block.store.getState(referenceNode, p);
+                    int a = store.getState(referenceNode, p);
                     if (a < 0) {
                         continue;
                     }
@@ -1779,10 +1491,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     if (MathUtils.nextDouble() * maxProbabilityChanged >= probabilityChanged[j]) {
                         continue;
                     }
-                    logProbability += sampleChangedUniformPattern(block, uniform[j], p);
+                    logProbability += blocks.sampleChangedUniformPattern(block, uniform[j], p);
                     changedCounts[j]++;
                     changedUniformCount++;
-                    addChangedSite(p);
+                    otherChangedSites.add(p);
                 }
             }
             for (int i = 0; i < classCount; i++) {
@@ -1792,6 +1504,13 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             }
             return logProbability;
         }
+    }
+
+    /**
+     * The sites of a group, by index in pattern order.
+     */
+    private interface SiteLocator {
+        int siteAt(int index);
     }
 
     /**
@@ -1862,31 +1581,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             if (ambiguitySites.length == 0) {
                 return 0.0;
             }
-            final DefaultMutationStore store = block.store;
             final int blockSize = block.nodes.length;
             final byte[][] blockStates = block.states;
-
-            // the block's neighbours, in the order the conditionals use them
-            int neighbourCount = block.topParent == null ? 0 : 1;
-            for (int i = 0; i < blockSize; i++) {
-                for (int c : block.children[i]) {
-                    if (!inBlock[c]) {
-                        neighbourCount++;
-                    }
-                }
-            }
-            final int[] neighbours = new int[neighbourCount];
-            int k = 0;
-            if (block.topParent != null) {
-                neighbours[k++] = block.topParent.getNumber();
-            }
-            for (int i = 0; i < blockSize; i++) {
-                for (int c : block.children[i]) {
-                    if (!inBlock[c]) {
-                        neighbours[k++] = c;
-                    }
-                }
-            }
+            final int[] neighbours = block.neighbours;
+            final int neighbourCount = neighbours.length;
             final byte[][] neighbourStates = new byte[neighbourCount][];
             for (int j = 0; j < neighbourCount; j++) {
                 neighbourStates[j] = store.getStates(neighbours[j]);
@@ -1961,10 +1659,10 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 current.sites.add(p);
             }
 
-            final double w = delegate.getPatternWeights()[variableSites[0]];
+            final double w = variableWeight;
             for (AmbiguityGroup group : groups.values()) {
                 final int count = group.sites.count;
-                final Conditional conditional = new Conditional(block, group.representative, w,
+                final Conditional conditional = blocks.siteConditional(block, group.representative, w,
                         delegate.getPatternRate(group.representative));
                 if (!conditional.present[block.topIndex]) {
                     // no data below the block
@@ -1982,24 +1680,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 for (int i = 0; i < count; i++) {
                     setAll(block, group.sites.values[i], group.state, conditional.present);
                 }
-                // the sites that change, by thinning (here every site in the group has the same probability)
-                final double probabilityChanged = uniform.totalChangeMass;
-                int changedCount = 0;
-                if (probabilityChanged > 0.0) {
-                    final double logSkip = Math.log1p(-probabilityChanged);
-                    long index = -1;
-                    while (true) {
-                        index = nextThinned(index, logSkip);
-                        if (index >= count) {
-                            break;
-                        }
-                        int p = group.sites.values[(int) index];
-                        logProbability += sampleChangedUniformPattern(block, uniform, p);
-                        addChangedSite(p);
-                        changedCount++;
-                    }
-                }
-                logProbability += (count - changedCount) * uniform.logProbabilityUnchanged;
+                logProbability = sampleGroup(block, uniform, count, group, logProbability);
             }
             return logProbability;
         }
@@ -2022,7 +1703,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 }
             }
             if (changed) {
-                addChangedSite(p);
+                otherChangedSites.add(p);
             }
         }
     }
@@ -2031,7 +1712,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
      * The ambiguity-only sites of a path move that share a state and a pattern of ambiguous neighbours (and
      * so a conditional).
      */
-    private static final class AmbiguityGroup {
+    private static final class AmbiguityGroup implements SiteLocator {
         final int state;
         final int representative;
         final IntBuffer sites = new IntBuffer();
@@ -2039,6 +1720,11 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
         AmbiguityGroup(int state, int representative) {
             this.state = state;
             this.representative = representative;
+        }
+
+        @Override
+        public int siteAt(int index) {
+            return sites.values[index];
         }
     }
 
@@ -2111,7 +1797,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
          */
         private void countStates(byte[] states, int start, int end, int[] counts) {
             if (rateClassCount > 1) {
-                final byte[] categories = delegate.getMutableMutationStore().getCategories();
+                final byte[] categories = store.getCategories();
                 for (int p = start; p < end; p++) {
                     if (!isExcluded(p)) {
                         counts[categories[p] * stateCount + states[p]]++;
@@ -2139,24 +1825,16 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
 
         @Override
         double sampleAmbiguitySites(Block block) {
-            final DefaultMutationStore store = block.store;
-            final int[] children = block.children[0];
-
-            // P's neighbours, in the order of the path pass
-            final int neighbourCount = children.length + (block.topParent == null ? 0 : 1);
-            final int[] neighbours = new int[neighbourCount];
-            int k = 0;
-            if (block.topParent != null) {
-                neighbours[k++] = block.topParent.getNumber();
-            }
+            // P's neighbours: its parent (if any), then its children
+            final int[] neighbours = block.neighbours;
+            final int neighbourCount = neighbours.length;
             int childBits = 0;
             int xBit = 0;
-            for (int c : children) {
+            for (int k = block.topParent < 0 ? 0 : 1; k < neighbourCount; k++) {
                 childBits |= 1 << k;
-                if (c == referenceNode) {
+                if (neighbours[k] == referenceNode) {
                     xBit = 1 << k;
                 }
-                neighbours[k++] = c;
             }
             neighbourStates = new byte[neighbourCount][];
             for (int j = 0; j < neighbourCount; j++) {
@@ -2240,14 +1918,14 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                                 for (int p = position; p < Math.min(runStart, end); p++) {
                                     if (!isExcluded(p)) {
                                         block.setState(0, p, -1);
-                                        addChangedSite(p);
+                                        otherChangedSites.add(p);
                                     }
                                 }
                             } else {
                                 for (int p = Math.max(runStart, position); p < runEnd; p++) {
                                     if (!isExcluded(p)) {
                                         block.setState(0, p, neighbourStates[first][p]);
-                                        addChangedSite(p);
+                                        otherChangedSites.add(p);
                                     }
                                 }
                             }
@@ -2267,7 +1945,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 start = end;
             }
 
-            final double w = delegate.getPatternWeights()[variableSites[0]];
+            final double w = variableWeight;
             double logProbability = 0.0;
             for (Map.Entry<AmbiguityKey, LocalAmbiguityGroup> entry : groups.entrySet()) {
                 final LocalAmbiguityGroup group = entry.getValue();
@@ -2276,7 +1954,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                 if ((groupMask & xBit) != 0) {
                     uniformCounts[group.rateClass * stateCount + group.state] -= group.count;
                 }
-                final Conditional conditional = new Conditional(block, group.representative, w,
+                final Conditional conditional = blocks.siteConditional(block, group.representative, w,
                         delegate.getPatternRate(group.representative));
                 if (!conditional.present[0]) {
                     // no data below P: its states were cleared above
@@ -2287,25 +1965,8 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
                     logProbability += group.count * uniform.logProbabilityUnchanged;
                     continue;
                 }
-                // the sites that change, by thinning (every site in the group has the same probability)
-                final double probabilityChanged = uniform.totalChangeMass;
-                int changedCount = 0;
-                if (probabilityChanged > 0.0) {
-                    final double logSkip = Math.log1p(-probabilityChanged);
-                    long index = -1;
-                    group.resetCursor();
-                    while (true) {
-                        index = nextThinned(index, logSkip);
-                        if (index >= group.count) {
-                            break;
-                        }
-                        int p = locate(group, (int) index);
-                        logProbability += sampleChangedUniformPattern(block, uniform, p);
-                        addChangedSite(p);
-                        changedCount++;
-                    }
-                }
-                logProbability += (group.count - changedCount) * uniform.logProbabilityUnchanged;
+                group.resetCursor();
+                logProbability = sampleGroup(block, uniform, group.count, index -> locate(group, index), logProbability);
             }
             return logProbability;
         }
@@ -2316,7 +1977,7 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
          */
         private int locate(LocalAmbiguityGroup group, int index) {
             final byte[] states = neighbourStates[group.firstPresent];
-            final byte[] categories = delegate.getMutableMutationStore().getCategories();
+            final byte[] categories = store.getCategories();
             while (true) {
                 int segmentStart = group.segments.values[2 * group.cursorSegment];
                 int segmentEnd = group.segments.values[2 * group.cursorSegment + 1];
@@ -2371,552 +2032,5 @@ public class MutationHistoryResampler implements SubtreeMoveHook {
             cursorSite = 0;
             cursorIndex = 0;
         }
-    }
-
-    // ---------------------------------------------------------------------------------------------
-    // Conditionals
-    // ---------------------------------------------------------------------------------------------
-
-    /**
-     * The full conditional distribution of a block's states for one pattern, factorised as the
-     * distribution of the top node and of each other node given its parent. The upward (filtering)
-     * pass is done on construction; the distribution of a node given its parent's state is computed
-     * when first needed.
-     * <p>
-     * Without per-site rates the filtering is done in linear space and the distributions are
-     * normalised in linear space; their logarithms are only taken when asked for.
-     */
-    private final class Conditional {
-        final Block block;
-        final double w;
-        final double nu;
-        private final int rateClass;
-        // if not negative, the state of every node around the block (for sites with no events there)
-        private final int uniformState;
-        final boolean[] present;
-        private double[][] partials;    // density of everything below block node i given its state, scaled (linear filtering)
-        private double[][] logPartials; // log density of everything below block node i given its state (log filtering)
-        private double[][] linearMatrices;
-        final int[] branchOf;           // the branch above each block node
-        private double[] topLogP;
-        private double[] topP;
-        private final double[][][] logRows;
-        private final double[][][] rows;
-
-        Conditional(Block block, int p, double w, double nu) {
-            this(block, p, -1, w, nu, rateClassOf(p));
-        }
-
-        /**
-         * The conditional for a site of the rate class with state a at every node around the block.
-         */
-        Conditional(Block block, int a, double w, double nu, int rateClass) {
-            this(block, -1, a, w, nu, rateClass);
-        }
-
-        private Conditional(Block block, int p, int uniformState, double w, double nu, int rateClass) {
-            final int[][] children = block.children;
-            final int blockSize = children.length;
-            this.block = block;
-            this.w = w;
-            this.nu = nu;
-            this.uniformState = uniformState;
-            this.present = new boolean[blockSize];
-            this.branchOf = new int[blockSize];
-            this.logRows = new double[blockSize][][];
-            this.rows = new double[blockSize][][];
-            for (int i = 0; i < blockSize; i++) {
-                for (int j = 0; j < children[i].length; j++) {
-                    int c = children[i][j];
-                    if (inBlock[c]) {
-                        branchOf[block.index[c]] = block.childBranch[i][j];
-                    }
-                }
-            }
-            branchOf[blockSize - 1] = block.topBranch;
-
-            this.rateClass = rateClass;
-            // (with per-site rates, rate class -1, there are too many rates for linear matrices)
-            if (rateClass < 0 || !filterLinear(p, rateClass)) {
-                partials = null;
-                filterLog(p);
-            }
-
-            int topIndex = blockSize - 1;
-            if (present[topIndex]) {
-                int parentState = -1;
-                if (block.topParent != null) {
-                    parentState = stateOf(block.topParent.getNumber(), p);
-                    if (parentState < 0) {
-                        throw new IllegalStateException("Parent of the resampling block is ambiguous where the block is not");
-                    }
-                }
-                if (partials != null) {
-                    double[] weights = new double[stateCount];
-                    double[] partial = partials[topIndex];
-                    if (parentState < 0) {
-                        for (int s = 0; s < stateCount; s++) {
-                            weights[s] = partial[s] * Math.exp(w * block.logFrequencies[s]);
-                        }
-                    } else {
-                        double[] matrix = linearMatrices[block.topBranch];
-                        for (int s = 0; s < stateCount; s++) {
-                            weights[s] = partial[s] * matrix[parentState * stateCount + s];
-                        }
-                    }
-                    topP = normaliseLinear(weights);
-                } else {
-                    double[] logWeights = new double[stateCount];
-                    if (parentState < 0) {
-                        for (int s = 0; s < stateCount; s++) {
-                            logWeights[s] = logPartials[topIndex][s] + w * block.logFrequencies[s];
-                        }
-                    } else {
-                        double[] f = logF()[block.topBranch];
-                        for (int s = 0; s < stateCount; s++) {
-                            logWeights[s] = logPartials[topIndex][s] + w * f[parentState * stateCount + s];
-                        }
-                    }
-                    topLogP = normaliseLog(logWeights);
-                    topP = exp(topLogP);
-                }
-            }
-        }
-
-        /**
-         * @return the log branch densities at its rate (with per-site rates the block keeps those of one rate
-         * at a time, so they are brought back to this one)
-         */
-        private double[][] logF() {
-            return block.getLogF(rateClass, nu);
-        }
-
-        private int stateOf(int node, int p) {
-            return uniformState >= 0 ? uniformState : block.store.getState(node, p);
-        }
-
-        /**
-         * Filtering in linear space with exp(w logF) matrices (no exponentials or logarithms per pattern).
-         *
-         * @return false if the partials underflow, in which case filterLog must be used
-         */
-        private boolean filterLinear(int p, int rateClass) {
-            final double[][] m = block.getLinearMatrices(p >= 0 ? weightClass[p] : weightClass[variableSites[0]], rateClass);
-            final int[][] children = block.children;
-            final int[][] childBranch = block.childBranch;
-            final int[] index = block.index;
-            final boolean[] inBlock = MutationHistoryResampler.this.inBlock;
-            final int blockSize = children.length;
-            partials = new double[blockSize][stateCount];
-            linearMatrices = m;
-            for (int i = 0; i < blockSize; i++) {
-                double[] partial = partials[i];
-                Arrays.fill(partial, 1.0);
-                for (int j = 0; j < children[i].length; j++) {
-                    int c = children[i][j];
-                    double[] matrix = m[childBranch[i][j]];
-                    if (inBlock[c]) {
-                        int ci = index[c];
-                        if (present[ci]) {
-                            present[i] = true;
-                            double[] childPartial = partials[ci];
-                            for (int s = 0; s < stateCount; s++) {
-                                double sum = 0.0;
-                                for (int t = 0; t < stateCount; t++) {
-                                    sum += matrix[s * stateCount + t] * childPartial[t];
-                                }
-                                partial[s] *= sum;
-                            }
-                        }
-                    } else {
-                        int t = stateOf(c, p);
-                        if (t >= 0) {
-                            present[i] = true;
-                            for (int s = 0; s < stateCount; s++) {
-                                partial[s] *= matrix[s * stateCount + t];
-                            }
-                        }
-                    }
-                }
-                if (present[i]) {
-                    double max = 0.0;
-                    for (int s = 0; s < stateCount; s++) {
-                        max = Math.max(max, partial[s]);
-                    }
-                    if (!(max > 0.0) || Double.isInfinite(max)) {
-                        Arrays.fill(present, false);
-                        return false;
-                    }
-                    double scale = 1.0 / max;
-                    for (int s = 0; s < stateCount; s++) {
-                        partial[s] *= scale;
-                    }
-                }
-            }
-            return true;
-        }
-
-        /**
-         * Filtering in log space (used with per-site rates or if linear filtering underflows).
-         */
-        private void filterLog(int p) {
-            final int[][] children = block.children;
-            final int[][] childBranch = block.childBranch;
-            final int[] index = block.index;
-            final double[][] logF = logF();
-            final boolean[] inBlock = MutationHistoryResampler.this.inBlock;
-            final int blockSize = children.length;
-            final double[] terms = new double[stateCount];
-            logPartials = new double[blockSize][stateCount];
-            for (int i = 0; i < blockSize; i++) {
-                double[] partial = logPartials[i];
-                for (int j = 0; j < children[i].length; j++) {
-                    int c = children[i][j];
-                    double[] f = logF[childBranch[i][j]];
-                    if (inBlock[c]) {
-                        int ci = index[c];
-                        if (present[ci]) {
-                            present[i] = true;
-                            for (int s = 0; s < stateCount; s++) {
-                                for (int t = 0; t < stateCount; t++) {
-                                    terms[t] = w * f[s * stateCount + t] + logPartials[ci][t];
-                                }
-                                partial[s] += logSumExp(terms);
-                            }
-                        }
-                    } else {
-                        int t = stateOf(c, p);
-                        if (t >= 0) {
-                            present[i] = true;
-                            for (int s = 0; s < stateCount; s++) {
-                                partial[s] += w * f[s * stateCount + t];
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /**
-         * @return the distribution of (non-top) block node i given its parent has state s
-         */
-        double[] row(int i, int s) {
-            if (rows[i] == null) {
-                rows[i] = new double[stateCount][];
-                logRows[i] = new double[stateCount][];
-            }
-            if (rows[i][s] == null) {
-                if (partials != null) {
-                    double[] matrix = linearMatrices[branchOf[i]];
-                    double[] partial = partials[i];
-                    double[] weights = new double[stateCount];
-                    for (int t = 0; t < stateCount; t++) {
-                        weights[t] = matrix[s * stateCount + t] * partial[t];
-                    }
-                    rows[i][s] = normaliseLinear(weights);
-                } else {
-                    double[] f = logF()[branchOf[i]];
-                    double[] terms = new double[stateCount];
-                    for (int t = 0; t < stateCount; t++) {
-                        terms[t] = w * f[s * stateCount + t] + logPartials[i][t];
-                    }
-                    logRows[i][s] = normaliseLog(terms);
-                    rows[i][s] = exp(logRows[i][s]);
-                }
-            }
-            return rows[i][s];
-        }
-
-        /**
-         * @return the log distribution of (non-top) block node i given its parent has state s
-         */
-        double[] logRow(int i, int s) {
-            double[] row = row(i, s);
-            if (logRows[i][s] == null) {
-                logRows[i][s] = log(row);
-            }
-            return logRows[i][s];
-        }
-
-        double[] topP() {
-            return topP;
-        }
-
-        double[] topLogP() {
-            if (topLogP == null) {
-                topLogP = log(topP);
-            }
-            return topLogP;
-        }
-
-        double[] logRowOrTop(int i, int s) {
-            return i == present.length - 1 ? topLogP() : logRow(i, s);
-        }
-
-        double[] rowOrTop(int i, int s) {
-            return i == present.length - 1 ? topP : row(i, s);
-        }
-    }
-
-    /**
-     * For a pattern whose unambiguous nodes all have state a throughout the block's neighbourhood: the
-     * probability that the block's unambiguous nodes all keep a, and for each node (in pre-order) the
-     * probability that it is the first to differ from a. Computed in linear space with one logarithm.
-     */
-    private static final class UniformConditional {
-        final Conditional conditional;
-        final int state;
-        final double logProbabilityUnchanged;
-        final double probabilityUnchanged;
-        final double[] firstChangeMass; // probability that this pre-order position is the first to differ from a
-        final double totalChangeMass;   // the probability that any node differs from a
-
-        UniformConditional(Conditional conditional, int a) {
-            this.conditional = conditional;
-            this.state = a;
-            int blockSize = conditional.present.length;
-            firstChangeMass = new double[blockSize];
-            double product = 1.0;
-            double total = 0.0;
-            for (int position = 0; position < blockSize; position++) {
-                int i = blockSize - 1 - position;
-                if (!conditional.present[i]) {
-                    // ambiguous nodes have no state to change
-                    continue;
-                }
-                double[] row = conditional.rowOrTop(i, a);
-                double changed = 0.0;
-                for (int t = 0; t < row.length; t++) {
-                    if (t != a) {
-                        changed += row[t];
-                    }
-                }
-                firstChangeMass[position] = product * changed;
-                total += firstChangeMass[position];
-                product *= row[a];
-            }
-            probabilityUnchanged = product;
-            totalChangeMass = total;
-            if (total < 0.5) {
-                // more accurate than log(product) when changes are rare (the usual case)
-                logProbabilityUnchanged = Math.log1p(-total);
-            } else if (product > 1E-250 || Double.isNaN(product)) {
-                logProbabilityUnchanged = Math.log(product);
-            } else {
-                // the product may have underflowed: sum the logarithms
-                double logProduct = 0.0;
-                for (int position = 0; position < blockSize; position++) {
-                    int i = blockSize - 1 - position;
-                    if (conditional.present[i]) {
-                        logProduct += conditional.logRowOrTop(i, a)[a];
-                    }
-                }
-                logProbabilityUnchanged = logProduct;
-            }
-        }
-    }
-
-    /**
-     * Draws the block's states for a uniform pattern conditional on at least one of them differing
-     * from the surrounding state: picks the first node (in pre-order) to differ, draws its new state,
-     * then draws the nodes after it from their usual conditionals. The block's states must already be
-     * in the unchanged configuration.
-     *
-     * @return the log probability of the drawn states under the full conditional
-     */
-    private double sampleChangedUniformPattern(Block block, UniformConditional uniform, int p) {
-        final Conditional conditional = uniform.conditional;
-        final int blockSize = conditional.present.length;
-        final int a = uniform.state;
-
-        double target = MathUtils.nextDouble() * uniform.totalChangeMass;
-        int first = -1;
-        for (int position = 0; position < blockSize; position++) {
-            if (uniform.firstChangeMass[position] > 0.0) {
-                first = position;
-                if (target < uniform.firstChangeMass[position]) {
-                    break;
-                }
-                target -= uniform.firstChangeMass[position];
-            }
-        }
-        if (first < 0) {
-            return Double.NEGATIVE_INFINITY;
-        }
-
-        // the nodes before the first to change keep a
-        double logProbability = 0.0;
-        for (int position = 0; position < first; position++) {
-            int j = blockSize - 1 - position;
-            if (conditional.present[j]) {
-                logProbability += conditional.logRowOrTop(j, a)[a];
-            }
-        }
-
-        // the first node to change: a state other than a, in proportion to its conditional
-        int i = blockSize - 1 - first;
-        double[] logRow = conditional.logRowOrTop(i, a);
-        double[] row = conditional.rowOrTop(i, a);
-        double changed = 0.0;
-        for (int t = 0; t < stateCount; t++) {
-            if (t != a) {
-                changed += row[t];
-            }
-        }
-        double u = MathUtils.nextDouble() * changed;
-        int newState = -1;
-        for (int t = 0; t < stateCount; t++) {
-            if (t != a && row[t] > 0.0) {
-                newState = t;
-                if (u < row[t]) {
-                    break;
-                }
-                u -= row[t];
-            }
-        }
-        if (newState < 0) {
-            return Double.NEGATIVE_INFINITY;
-        }
-        block.setState(i, p, (byte) newState);
-        logProbability += logRow[newState];
-
-        // later nodes in pre-order (whose parents are all already drawn) from their usual conditionals
-        for (int position = first + 1; position < blockSize; position++) {
-            int j = blockSize - 1 - position;
-            if (!conditional.present[j]) {
-                continue;
-            }
-            int parentState = block.states[block.parentIndex[j]][p];
-            logProbability += choose(conditional.logRow(j, parentState), conditional.row(j, parentState), true, -1);
-            block.setState(j, p, (byte) chosenState);
-        }
-        return logProbability;
-    }
-
-    private static final class ConditionalKey {
-        final byte[] boundary;
-        final double weight;
-        final double rate;
-        final int hash;
-
-        ConditionalKey(byte[] boundary, double weight, double rate) {
-            this.boundary = boundary;
-            this.weight = weight;
-            this.rate = rate;
-            this.hash = 31 * (31 * Arrays.hashCode(boundary) + Double.hashCode(weight)) + Double.hashCode(rate);
-        }
-
-        @Override
-        public int hashCode() {
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof ConditionalKey)) {
-                return false;
-            }
-            ConditionalKey other = (ConditionalKey) o;
-            return weight == other.weight && rate == other.rate && Arrays.equals(boundary, other.boundary);
-        }
-    }
-
-    /**
-     * Draws a state from a normalised distribution or, if not sampling, scores the existing state.
-     *
-     * @return the log probability of the chosen state, which is left in chosenState
-     */
-    private double choose(double[] logP, double[] p, boolean sample, int state) {
-        if (!sample) {
-            if (state < 0) {
-                throw new IllegalStateException("MAT has an ambiguous state at a node that has data below it");
-            }
-            chosenState = state;
-            return Double.isNaN(logP[state]) ? Double.NEGATIVE_INFINITY : logP[state];
-        }
-        if (Double.isNaN(logP[0])) {
-            // the conditional has no mass: the proposal is impossible
-            chosenState = 0;
-            return Double.NEGATIVE_INFINITY;
-        }
-        double u = MathUtils.nextDouble();
-        double cumulative = 0.0;
-        for (int s = 0; s < p.length; s++) {
-            cumulative += p[s];
-            if (u < cumulative) {
-                chosenState = s;
-                return logP[s];
-            }
-        }
-        // rounding: take the last state with non-zero probability
-        for (int s = p.length - 1; s >= 0; s--) {
-            if (p[s] > 0.0) {
-                chosenState = s;
-                return logP[s];
-            }
-        }
-        chosenState = 0;
-        return Double.NEGATIVE_INFINITY;
-    }
-
-    private static double[] normaliseLog(double[] logWeights) {
-        double total = logSumExp(logWeights);
-        double[] result = new double[logWeights.length];
-        for (int s = 0; s < logWeights.length; s++) {
-            result[s] = logWeights[s] - total;
-        }
-        return result;
-    }
-
-    /**
-     * Normalises in place; with no mass the result is NaN throughout (as normaliseLog gives).
-     */
-    private static double[] normaliseLinear(double[] weights) {
-        double total = 0.0;
-        for (double weight : weights) {
-            total += weight;
-        }
-        if (!(total > 0.0)) {
-            Arrays.fill(weights, Double.NaN);
-            return weights;
-        }
-        double scale = 1.0 / total;
-        for (int s = 0; s < weights.length; s++) {
-            weights[s] *= scale;
-        }
-        return weights;
-    }
-
-    private static double[] exp(double[] logP) {
-        double[] p = new double[logP.length];
-        for (int s = 0; s < logP.length; s++) {
-            p[s] = Math.exp(logP[s]);
-        }
-        return p;
-    }
-
-    private static double[] log(double[] p) {
-        double[] logP = new double[p.length];
-        for (int s = 0; s < p.length; s++) {
-            logP[s] = Math.log(p[s]);
-        }
-        return logP;
-    }
-
-    private static double logSumExp(double[] x) {
-        double max = Double.NEGATIVE_INFINITY;
-        for (double v : x) {
-            if (v > max) {
-                max = v;
-            }
-        }
-        if (max == Double.NEGATIVE_INFINITY) {
-            return max;
-        }
-        double sum = 0.0;
-        for (double v : x) {
-            sum += Math.exp(v - max);
-        }
-        return max + Math.log(sum);
     }
 }

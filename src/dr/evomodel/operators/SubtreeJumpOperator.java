@@ -139,8 +139,6 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Constra
         // higher i is than node j.
         double delta = TreeUtils.getPathLength(tree, i, j) - (tree.getNodeHeight(i) - tree.getNodeHeight(j));
 
-        beforeSubtreeMove(i, CiP, j);
-
         tree.beginTreeEdit();
 
         // remove the parent of i by connecting its sibling to its grandparent.
@@ -169,8 +167,6 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Constra
             // hastings ratio = reverse Prob / forward Prob
             logq = Math.log(reverseProbability) - Math.log(forwardProbability);
         }
-
-        logq += afterSubtreeMove();
 
         setTopologyChanged(true, delta);
 

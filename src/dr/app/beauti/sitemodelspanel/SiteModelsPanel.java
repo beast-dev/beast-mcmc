@@ -32,6 +32,7 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.types.LikelihoodEngineType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
@@ -48,6 +49,8 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 import java.util.logging.Logger;
@@ -79,6 +82,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     boolean settingOptions = false;
 
     CloneModelsAction cloneModelsAction = new CloneModelsAction();
+
+    private final JComboBox engineCombo = new JComboBox(LikelihoodEngineType.values());
 
     public SiteModelsPanel(final BeautiFrame frame, Action removeModelAction) {
 
@@ -154,9 +159,37 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
 
+        JToolBar toolBar1 = new JToolBar();
+        toolBar1.setFloatable(false);
+        toolBar1.setOpaque(false);
+        toolBar1.setBorder(BorderFactory.createEmptyBorder(0, 0, 6, 0));
+        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        toolBar1.add(new JLabel("Likelihood engine: "));
+        PanelUtils.setupComponent(engineCombo);
+        engineCombo.setToolTipText("<html>Select how the likelihood of the sequence data given the tree is computed:<br>" +
+                "<b>BEAGLE</b>: Felsenstein's pruning algorithm, with the ancestral states summed out.<br>" +
+                "<b>MAT</b>: a mutation-annotated tree, with the mutational history sampled explicitly;<br>" +
+                "fast for large alignments with few mutations. One data partition per tree,<br>" +
+                "no codon partitioning and no invariant sites.</html>");
+        engineCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                if (settingOptions || ev.getStateChange() != ItemEvent.SELECTED) {
+                    return;
+                }
+                options.likelihoodEngineType = (LikelihoodEngineType) engineCombo.getSelectedItem();
+                // the model panels enable only the options the engine supports
+                for (PartitionModelPanel panel : modelPanels.values()) {
+                    panel.setOptions();
+                }
+                fireModelsChanged();
+            }
+        });
+        toolBar1.add(engineCombo);
+
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
+        add(toolBar1, BorderLayout.NORTH);
         add(splitPane, BorderLayout.CENTER);
     }
 
@@ -186,6 +219,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         resetPanel();
 
         settingOptions = true;
+
+        engineCombo.setSelectedItem(options.getLikelihoodEngineType());
 
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();

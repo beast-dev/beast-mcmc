@@ -97,6 +97,16 @@ public class MATInitializer {
      * @return the number of nodes whose states changed
      */
     public int update(DefaultMutationStore store) {
+        MATProfile.count(store.isFitchSetsStale() ? MATProfile.Counter.PARSIMONY_FULL : MATProfile.Counter.PARSIMONY_INCREMENTAL, 1);
+        final long profileStart = MATProfile.start();
+        try {
+            return updateImpl(store);
+        } finally {
+            MATProfile.stop(MATProfile.Phase.PARSIMONY, profileStart);
+        }
+    }
+
+    private int updateImpl(DefaultMutationStore store) {
         final int nodeCount = tree.getNodeCount();
         // stale Fitch sets (the topology was changed without parsimony) force a full reconstruction
         final boolean full = store.isFitchSetsStale();
@@ -293,13 +303,5 @@ public class MATInitializer {
             parents[n] = parent == null ? -1 : parent.getNumber();
         }
         return parents;
-    }
-
-    public PatternList getPatternList() {
-        return patternList;
-    }
-
-    public Tree getTree() {
-        return tree;
     }
 }

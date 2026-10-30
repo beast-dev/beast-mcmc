@@ -73,7 +73,9 @@ public enum OperatorType {
     RELAXED_CLOCK_HMC_RATE_OPERATOR("relaxedClockHMCRateOperator"),
     RELAXED_CLOCK_HMC_SCALE_OPERATOR("relaxedClockHMCScaleOperator"),
     SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
-    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator");
+    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator"),
+    MUTATION_HISTORY_GIBBS("mutationHistoryGibbs"),
+    SITE_RATE_CATEGORY_GIBBS("siteRateCategoryGibbs");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

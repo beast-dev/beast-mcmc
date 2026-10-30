@@ -47,6 +47,10 @@ import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;
 import dr.evomodelxml.continuous.hmc.LocationScaleGradientParser;
 import dr.evomodelxml.operators.*;
+import dr.evomodelxml.treedatalikelihood.MAT.MATDataLikelihoodParser;
+import dr.evomodelxml.treedatalikelihood.MAT.MutationHistoryGibbsOperatorParser;
+import dr.evomodelxml.treedatalikelihood.MAT.MutationHistoryResamplerParser;
+import dr.evomodelxml.treedatalikelihood.MAT.SiteRateCategoryGibbsOperatorParser;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.ParameterParser;
@@ -208,6 +212,12 @@ public class OperatorsGenerator extends Generator {
                 break;
             case FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT:
                 writeFHSPROperator(operator, prefix, writer);
+                break;
+            case MUTATION_HISTORY_GIBBS:
+                writeMutationHistoryGibbsOperator(operator, prefix, writer);
+                break;
+            case SITE_RATE_CATEGORY_GIBBS:
+                writeSiteRateCategoryGibbsOperator(operator, writer);
                 break;
             case EMPIRICAL_TREE_SWAP:
                 writeEmpiricalTreeSwapOperator(operator, prefix, writer);
@@ -566,6 +576,19 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(HamiltonianMonteCarloOperatorParser.HMC_OPERATOR);
     }
 
+    /**
+     * The id of the TreeDataLikelihood for the clock model with this prefix (clock operators carry the
+     * clock model's prefix but not the model itself).
+     */
+    private String getTreeDataLikelihoodId(String clockPrefix) {
+        for (PartitionClockModel clockModel : options.getPartitionClockModels()) {
+            if (clockModel.getPrefix().equals(clockPrefix)) {
+                return TreeLikelihoodGenerator.getTreeDataLikelihoodId(clockModel.getPartitionTreeModel(), clockModel);
+            }
+        }
+        throw new IllegalArgumentException("No clock model found with prefix '" + clockPrefix + "'");
+    }
+
     private void writeRelaxedClockHMCRateOperator(Operator operator, String prefix, XMLWriter writer) {
         int nSteps = 4;
         double stepSize = 1E-2;
@@ -593,7 +616,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(HessianWrapperParser.NAME);
 
         writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
-        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, getTreeDataLikelihoodId(prefix));
         writer.writeCloseTag(BranchRateGradientParser.NAME);
 
         writer.writeCloseTag(JointGradientParser.JOINT_GRADIENT);
@@ -671,7 +694,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeComment("gradient of likelihood wrt subst branch rates");
         writer.writeOpenTag(BranchRateGradientParser.NAME, new Attribute.Default<>("traitName", "Sequence"));
-        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, prefix + "treeLikelihood");
+        writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, getTreeDataLikelihoodId(prefix));
         writer.writeCloseTag(BranchRateGradientParser.NAME);
 
         writer.writeIDref(AutoCorrelatedGradientWrtIncrementsParser.GRADIENT, prefix + "incrementGradient");
@@ -734,6 +757,39 @@ public class OperatorsGenerator extends Generator {
         );
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
         writer.writeCloseTag(FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT);
+    }
+
+    /**
+     * The MAT likelihood's Gibbs update of the mutation history of a random node and up to two ancestors
+     * (see TreeLikelihoodGenerator.writeMATDataLikelihood for the resampler it refers to).
+     */
+    private void writeMutationHistoryGibbsOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(MutationHistoryGibbsOperatorParser.MUTATION_HISTORY_GIBBS_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight()),
+                        new Attribute.Default<Integer>(MutationHistoryGibbsOperatorParser.SIZE, 3)
+                }
+        );
+        writer.writeIDref(MutationHistoryResamplerParser.MUTATION_HISTORY_RESAMPLER,
+                treeModelPrefix + TreeLikelihoodGenerator.MAT_RESAMPLER);
+        writer.writeCloseTag(MutationHistoryGibbsOperatorParser.MUTATION_HISTORY_GIBBS_OPERATOR);
+    }
+
+    /**
+     * The MAT likelihood's Gibbs update of every variable site's rate category. The operator belongs to a
+     * substitution model; the likelihood is that of the model's partition.
+     */
+    private void writeSiteRateCategoryGibbsOperator(Operator operator, XMLWriter writer) {
+        PartitionSubstitutionModel model = (PartitionSubstitutionModel) operator.getOptions();
+        AbstractPartitionData partition = options.getDataPartitions(model).get(0);
+        writer.writeOpenTag(SiteRateCategoryGibbsOperatorParser.SITE_RATE_CATEGORY_GIBBS_OPERATOR,
+                new Attribute[]{
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD, TreeLikelihoodGenerator.getTreeDataLikelihoodId(
+                partition.getPartitionTreeModel(), partition.getPartitionClockModel()));
+        writer.writeCloseTag(SiteRateCategoryGibbsOperatorParser.SITE_RATE_CATEGORY_GIBBS_OPERATOR);
     }
 
     private void writeEmpiricalTreeSwapOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {

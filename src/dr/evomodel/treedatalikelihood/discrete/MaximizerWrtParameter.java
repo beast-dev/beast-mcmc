@@ -100,6 +100,7 @@ public class MaximizerWrtParameter implements Reportable {
     private double worstGradientCheckError = Double.NaN;
     private int restarts = 0;
     private boolean convergedToPrecision = false; // CONVERGED after a line search failure no restart could improve on
+    private double stalledGradientNorm = Double.NaN; // no restart could improve on the failure, at this gradient norm
     private double valueAtLastRestart = Double.POSITIVE_INFINITY;
     private final List<Double> gradientCheckErrors = new ArrayList<Double>();
 
@@ -122,6 +123,9 @@ public class MaximizerWrtParameter implements Reportable {
     private boolean lastEvaluationNonFinite = false;
     private static final double NON_FINITE_PENALTY = 1E10;
     private static final double EDGE = 30.0; // logit 30: a ratio of 1 - 1E-13; log -30: a value of 1E-13
+    // the largest gradient norm, relative to max(1, |x|), at which a line search failure no restart improves on counts
+    // as a minimum to numerical precision
+    private static final double PRECISION_GRADIENT_TOLERANCE = 1E-2;
 
     private static final Logger LOGGER = Logger.getLogger("dr.evomodel");
 
@@ -182,7 +186,8 @@ public class MaximizerWrtParameter implements Reportable {
         /**
          * After a failed line search, restart L-BFGS from the best point so far with a cleared memory, up to this
          * many times, while each restart makes progress (0: stop at the failure). With delta set (setConvergence), a
-         * restart that finds no decrease at all ends the run as converged, to numerical precision.
+         * restart that finds no decrease at all ends the run: as converged, to numerical precision, when
+         * the gradient there is small, and as a line search failure (stalled) otherwise.
          */
         public Settings setLineSearchRestarts(int lineSearchRestarts) {
             this.lineSearchRestarts = lineSearchRestarts;
@@ -837,14 +842,21 @@ public class MaximizerWrtParameter implements Reportable {
                 continue;
             }
             convergedToPrecision = false;
+            stalledGradientNorm = Double.NaN;
             if (reason == Reason.LINE_SEARCH_FAILURE && restarts > 0 && !(bestValue[0] < valueAtLastRestart) &&
                     settings.delta != null) {
                 // a restart from the best point with a cleared memory found no decrease at all: the objective has
-                // stopped improving, the past/delta stopping rule's condition, so the best point is a minimum to
-                // numerical precision
-                reason = Reason.CONVERGED;
-                convergedToPrecision = true;
+                // stopped improving, the past/delta stopping rule's condition. The best point is a minimum to
+                // numerical precision only if its gradient is small too; a large one means the line search, not the
+                // objective, stopped (on Dengue from the UPGMA tree: relative gradient norm 141, rate 7E-8)
                 x = bestPoint[0].clone();
+                final double gradientNorm = norm(function.gradientAt(x));
+                if (gradientNorm / Math.max(1.0, norm(x)) <= PRECISION_GRADIENT_TOLERANCE) {
+                    reason = Reason.CONVERGED;
+                    convergedToPrecision = true;
+                } else {
+                    stalledGradientNorm = gradientNorm;
+                }
             }
             break;
         }
@@ -1091,6 +1103,9 @@ public class MaximizerWrtParameter implements Reportable {
             if (convergedToPrecision) {
                 sb.append(" (to numerical precision: a restart from the best point after a failed line search found " +
                         "no decrease)");
+            } else if (!Double.isNaN(stalledGradientNorm)) {
+                sb.append(" (stalled: a restart from the best point found no decrease, but the gradient norm there " +
+                        "is ").append(stalledGradientNorm).append(", so it is not a stationary point)");
             }
             sb.append("\n");
             sb.append("Iterations: ").append(iterations).append("\n");

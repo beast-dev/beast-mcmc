@@ -47,7 +47,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     public static final String DEFAULT_ANCESTRAL_STATE_TAG_NAME = "mascot.stateSensitivity";
 
     public static final String DEFAULT_MODE_STATE_TAG_NAME = "mascot.state";
-    /** auto (default): native when beagle-lib's MASCOT library loads; true: native or fail; false: Java. */
+    /**
+     * auto: native when beagle-lib's MASCOT library loads; true: native or fail; false: Java. When set, it overrides the
+     * {@link Implementation} of every MASCOT likelihood in the run.
+     */
     public static final String NATIVE_PROPERTY = "mascot.native";
     /** fma (default) or strict, for the native kernels. */
     public static final String FP_PROPERTY = "mascot.fp";
@@ -63,6 +66,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private final PatternList tipPatterns;
     private final MascotDynamics dynamics;
     private final MascotStepRule stepRule;
+    private final Implementation implementation;
     private final double maxStep;
     private final double mappingMaxStep;
     private final boolean checkProbabilities;
@@ -168,6 +172,27 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                             boolean checkProbabilities,
                             String ancestralStateTagName,
                             String modeStateTagName) {
+        this(name, treeModel, tipPatterns, migrationRates, migrationModels, branchRateModel, populationSizeModel,
+                stateCount, epochTimes, stepRule, mappingMaxStep, checkProbabilities, ancestralStateTagName,
+                modeStateTagName, Implementation.AUTO);
+    }
+
+    /** @param implementation which delegate evaluates the likelihood; {@value #NATIVE_PROPERTY}, when set, overrides it */
+    public MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            Parameter migrationRates,
+                            SubstitutionModel[] migrationModels,
+                            BranchRateModel branchRateModel,
+                            AbstractPopulationSizeModel populationSizeModel,
+                            int stateCount,
+                            Parameter epochTimes,
+                            MascotStepRule stepRule,
+                            double mappingMaxStep,
+                            boolean checkProbabilities,
+                            String ancestralStateTagName,
+                            String modeStateTagName,
+                            Implementation implementation) {
         super(name == null ? MASCOT_LIKELIHOOD : name, treeModel, tipPatterns, stateCount, branchRateModel,
                 migrationModels, populationSizeModel, tipPatterns.getDataType(), modeStateTagName);
         this.treeModel = treeModel;
@@ -176,6 +201,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                 new MascotDynamics(stateCount, migrationRates, populationSizeModel, epochTimes) :
                 new MascotDynamics(stateCount, migrationModels, populationSizeModel, epochTimes);
         this.stepRule = stepRule;
+        this.implementation = implementation;
         this.maxStep = stepRule.getMaxStep();
         this.mappingMaxStep = mappingMaxStep;
         this.checkProbabilities = checkProbabilities;
@@ -588,6 +614,35 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         return stepRule;
     }
 
+    public Implementation getImplementation() {
+        return implementation;
+    }
+
+    /** Which delegate evaluates the likelihood (XML implementation="auto|native|java"). */
+    public enum Implementation {
+        /** native when beagle-lib's MASCOT library loads (API 1.3), else Java */
+        AUTO("auto"),
+        /** native, or fail if the library is unavailable */
+        NATIVE("true"),
+        /** the Java delegate */
+        JAVA("false");
+
+        final String nativeMode;  // the equivalent NATIVE_PROPERTY value
+
+        Implementation(String nativeMode) {
+            this.nativeMode = nativeMode;
+        }
+
+        public static Implementation parse(String name) {
+            for (Implementation i : values()) {
+                if (i.name().equalsIgnoreCase(name)) {
+                    return i;
+                }
+            }
+            throw new IllegalArgumentException("implementation must be auto, native or java, not " + name);
+        }
+    }
+
     @Override
     protected void makeDirtyInternal() {
         preparedInputKnown = false;
@@ -684,7 +739,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private boolean useNativeDelegate() {
         if (!nativeDecided) {
             nativeDecided = true;
-            String mode = System.getProperty(NATIVE_PROPERTY, "auto");
+            String property = System.getProperty(NATIVE_PROPERTY);
+            String mode = property != null ? property : implementation.nativeMode;
+            String source = property != null ? NATIVE_PROPERTY + "=" + property
+                    : "implementation=\"" + implementation.name().toLowerCase() + "\"";
             String fp = System.getProperty(FP_PROPERTY, "fma");
             String incremental = System.getProperty(INCREMENTAL_PROPERTY, "true");
             if (!mode.equals("auto") && !mode.equals("true") && !mode.equals("false")) {
@@ -697,7 +755,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                 throw new IllegalArgumentException(INCREMENTAL_PROPERTY + " must be true or false, not " + incremental);
             }
             Logger logger = Logger.getLogger("dr.evomodel");
-            String reason = mode.equals("false") ? NATIVE_PROPERTY + "=false" : MascotJNIWrapper.getUnavailableReason();
+            String reason = mode.equals("false") ? source : MascotJNIWrapper.getUnavailableReason();
             if (reason == null && !MascotJNIWrapper.supportsStepBudget()) {
                 reason = "the native library predates API 1.3 (the step budget)";
             }
@@ -710,7 +768,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                         getId(), d[0], d[1].equals("0") ? "" : " (SIMD width " + d[1] + ")", d[2], d[3],
                         dynamics.getStateCount(), restart ? ", incremental restart" : ""));
             } else if (mode.equals("true")) {
-                throw new IllegalStateException(NATIVE_PROPERTY + "=true, but " + reason);
+                throw new IllegalStateException(source + ", but " + reason);
             } else {
                 logger.info("MASCOT likelihood '" + getId() + "' runs in Java: " + reason);
             }

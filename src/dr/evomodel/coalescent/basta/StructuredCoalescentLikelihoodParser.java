@@ -100,6 +100,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String MIN_STEP = "minStep";
     public static final String MAX_STEPS_PER_INTERVAL = "maxStepsPerInterval";
     public static final String STEP_BUDGET = "stepBudget";
+    public static final String IMPLEMENTATION = "implementation";
     public static final String CHECK_PROBABILITIES = "checkProbabilities";
     public static final String MIGRATION_MODEL = "migrationModel";
     public static final String MODE_STATE_TAG_NAME = "modeStateTagName";
@@ -407,9 +408,17 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
         AbstractPopulationSizeModel populationSizeModel =
                 constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
+        // auto (default): beagle-lib's native kernel when it loads, else Java; native: native or fail; java: Java.
+        // -Dmascot.native=auto|true|false, when set, overrides it.
+        MascotLikelihood.Implementation implementation;
+        try {
+            implementation = MascotLikelihood.Implementation.parse(xo.getAttribute(IMPLEMENTATION, "auto"));
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
         MascotLikelihood likelihood = new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates,
                 migrationModels, branchRateModel, populationSizeModel, stateCount, gridPoints, stepRule,
-                mappingMaxStep, checkProbabilities, tagName, modeStateTagName);
+                mappingMaxStep, checkProbabilities, tagName, modeStateTagName, implementation);
 
         if (xo.hasChildNamed(COUNTS) || xo.hasChildNamed(REWARDS)) {
             throw new XMLParseException("For " + STRUCTURED_COALESCENT + " type=\"" + MASCOT_TYPE + "\", place <" +
@@ -552,6 +561,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newDoubleRule(MIN_STEP, true),
             AttributeRule.newIntegerRule(MAX_STEPS_PER_INTERVAL, true),
             AttributeRule.newIntegerRule(STEP_BUDGET, true),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
             AttributeRule.newBooleanRule(CHECK_PROBABILITIES, true),
             AttributeRule.newStringRule(MODE_STATE_TAG_NAME, true),
             // Shared by both types.

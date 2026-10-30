@@ -678,7 +678,7 @@ public class BEAUTiImporter {
         }
 
         for (Taxon taxon : taxonList) {
-            if (taxon.getDate() != null) {
+            if (taxon.getDate() != null && !isPlaceholderDate(taxon.getDate())) {
                 options.useTipDates = true;
             }
             for (Iterator<String> it = taxon.getAttributeNames(); it.hasNext(); ) {
@@ -783,7 +783,9 @@ public class BEAUTiImporter {
                     "Please edit the taxon name(s) before reloading the data file.");
         }
 
-        // make sure they all have dates...
+        // Give the taxa without one a date of zero, so that the Tip Dates panel can edit them (its table
+        // leaves a taxon with no date alone). See isPlaceholderDate: such a date does not mean the data
+        // are dated.
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             if (taxonList.getTaxonAttribute(i, "date") == null) {
                 Date origin = new Date(0);
@@ -792,6 +794,15 @@ public class BEAUTiImporter {
                 taxonList.getTaxon(i).setAttribute("date", date);
             }
         }
+    }
+
+    /**
+     * @return true if this is the zero date given to a taxon whose data file had none, rather than a date
+     * the user has provided. A later import of, say, a traits file would otherwise take these for real
+     * dates and turn on tip dates for the whole analysis.
+     */
+    private static boolean isPlaceholderDate(dr.evolution.util.Date date) {
+        return date.getTimeValue() == 0.0 && !date.isBackwards() && date.getUncertainty() == 0.0;
     }
 
     private void addTaxonSets(TaxonList taxonList, List<NexusApplicationImporter.TaxSet> taxSets) throws ImportException {

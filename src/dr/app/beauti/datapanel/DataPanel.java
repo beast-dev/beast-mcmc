@@ -97,9 +97,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
 //    ShowAction showAction = new ShowAction();
 
-    LinkSubstitutionModelDialog selectModelDialog = null;
-    LinkClockModelDialog selectClockDialog = null;
-    LinkTreeModelDialog selectTreeDialog = null;
+    LinkModelDialog<PartitionSubstitutionModel> selectModelDialog = null;
+    LinkModelDialog<PartitionClockModel> selectClockDialog = null;
+    LinkModelDialog<PartitionTreeModel> selectTreeDialog = null;
 
     CreateTraitPartitionDialog selectTraitDialog = null;
     CreateTreePartitionDialog createTreeDialog = null;
@@ -697,7 +697,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionSubstitutionModels(selectedPartitionData).toArray();
 
         if (selectModelDialog == null) {
-            selectModelDialog = new LinkSubstitutionModelDialog(frame);
+            selectModelDialog = new LinkModelDialog<PartitionSubstitutionModel>(frame,
+                    "Partition Model:", "Rename substitution model partition to:",
+                    "Create New Model");
         }
 
         int result = selectModelDialog.showDialog(modelArray);
@@ -763,7 +765,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] modelArray = options.getPartitionClockModels(selectedPartitionData).toArray();
 
         if (selectClockDialog == null) {
-            selectClockDialog = new LinkClockModelDialog(frame);
+            selectClockDialog = new LinkModelDialog<PartitionClockModel>(frame,
+                    "Partition clock model:", "Rename clock model partition to:",
+                    "Create New Partition Clock Model");
         }
 
         int result = selectClockDialog.showDialog(modelArray);
@@ -867,12 +871,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
         Object[] treeArray = options.getPartitionTreeModels(selectedPartitionData).toArray();
 
         if (selectTreeDialog == null) {
-            selectTreeDialog = new LinkTreeModelDialog(frame);
+            selectTreeDialog = new LinkModelDialog<PartitionTreeModel>(frame,
+                    "Partition tree:", "Rename partition tree model to:",
+                    "Link Partition Tree Model");
         }
 
         int result = selectTreeDialog.showDialog(treeArray);
         if (result != JOptionPane.CANCEL_OPTION) {
-            PartitionTreeModel treeModel = selectTreeDialog.getTree();
+            PartitionTreeModel treeModel = selectTreeDialog.getModel();
             if (selectTreeDialog.getMakeCopy()) {
                 treeModel.setName(selectTreeDialog.getName());
             }

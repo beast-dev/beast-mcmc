@@ -25,10 +25,8 @@
  *
  */
 
-package dr.app.beauti.sitemodelspanel;
+package dr.app.beauti.util;
 
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.util.PanelUtils;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -36,32 +34,37 @@ import javax.swing.border.EmptyBorder;
 import java.util.List;
 
 /**
+ * Asks which of the selected models the others should take their settings from.
+ *
+ * @param <T> the kind of model being cloned
  * @author Andrew Rambaut
  */
-public class CloneModelDialog {
+public class CloneModelDialog<T> {
 
-    private JFrame frame;
+    private final JFrame frame;
+    private final JComboBox sourceModelCombo;
+    private final OptionsPanel optionPanel;
 
-    JComboBox sourceModelCombo;
-
-    OptionsPanel optionPanel;
-
-    public CloneModelDialog(JFrame frame) {
+    /**
+     * @param modelDescription what the models are, for the wording (e.g. "substitution model")
+     */
+    public CloneModelDialog(JFrame frame, String modelDescription) {
         this.frame = frame;
+
+        String question = "<html>Select the " + modelDescription + " to act as a source<br>" +
+                "to copy to the other selected models.</html>";
 
         sourceModelCombo = new JComboBox();
         PanelUtils.setupComponent(sourceModelCombo);
-        sourceModelCombo
-                .setToolTipText("<html>Select the substitution model to act as a source<br>to copy to the other selected models.</html>");
+        sourceModelCombo.setToolTipText(question);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addSpanningComponent(new JLabel("<html>Select the substitution model to act as a source<br>to copy to the other selected models.</html>"));
+        optionPanel.addSpanningComponent(new JLabel(question));
         optionPanel.addComponentWithLabel("Source Model:", sourceModelCombo);
-
-
     }
 
-    public int showDialog(List<PartitionSubstitutionModel> sourceModels) {
+    @SuppressWarnings("unchecked")
+    public int showDialog(List<? extends T> sourceModels) {
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -72,7 +75,7 @@ public class CloneModelDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         sourceModelCombo.removeAllItems();
-        for (PartitionSubstitutionModel model : sourceModels) {
+        for (T model : sourceModels) {
             sourceModelCombo.addItem(model);
         }
 
@@ -93,8 +96,8 @@ public class CloneModelDialog {
         return result;
     }
 
-    public PartitionSubstitutionModel getSourceModel() {
-        return (PartitionSubstitutionModel)sourceModelCombo.getSelectedItem();
+    @SuppressWarnings("unchecked")
+    public T getSourceModel() {
+        return (T) sourceModelCombo.getSelectedItem();
     }
-
 }

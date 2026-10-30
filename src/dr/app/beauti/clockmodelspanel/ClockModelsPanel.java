@@ -30,6 +30,7 @@ package dr.app.beauti.clockmodelspanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.*;
+import dr.app.beauti.util.CloneModelDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.TableEditorStopper;
@@ -78,7 +79,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
-    private CloneModelDialog cloneModelDialog = null;
+    private CloneModelDialog<PartitionClockModel> cloneModelDialog = null;
 
     CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
@@ -311,7 +312,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     private void cloneModelSettings() {
         if (cloneModelDialog == null) {
-            cloneModelDialog = new CloneModelDialog(frame);
+            cloneModelDialog = new CloneModelDialog<PartitionClockModel>(frame, "clock model");
         }
 
 

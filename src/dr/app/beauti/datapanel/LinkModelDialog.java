@@ -1,5 +1,5 @@
 /*
- * LinkTreeModelDialog.java
+ * LinkModelDialog.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -27,55 +27,63 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionTreeModel;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
+ * Asks which model the selected partitions should share, and whether to rename it.
+ *
+ * @param <T> the kind of model being shared
  * @author Andrew Rambaut
+ * @author Walter Xie
  */
-public class LinkTreeModelDialog {
+public class LinkModelDialog<T> {
 
-    private JFrame frame;
+    private final JFrame frame;
+    private final String title;
 
-    JComboBox treeCombo;
-    JCheckBox copyCheck;
-    JTextField nameField;
+    private final JComboBox modelCombo;
+    private final JCheckBox copyCheck;
+    private final JTextField nameField;
+    private final OptionsPanel optionPanel;
 
-    OptionsPanel optionPanel;
-
-    public LinkTreeModelDialog(JFrame frame) {
+    /**
+     * @param label    names the list of models (e.g. "Partition clock model:")
+     * @param renaming names the rename option (e.g. "Rename clock model partition to:")
+     * @param title    the dialog's title
+     */
+    public LinkModelDialog(JFrame frame, String label, String renaming, String title) {
         this.frame = frame;
+        this.title = title;
 
-        treeCombo = new JComboBox();
+        modelCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Rename partition tree model to:");
+        copyCheck = new JCheckBox(renaming);
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition tree:", treeCombo);
+        optionPanel.addComponentWithLabel(label, modelCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
-        copyCheck.addItemListener(
-                new ItemListener() {
-                    public void itemStateChanged(ItemEvent ev) {
-                        nameField.setEnabled(copyCheck.isSelected());
-                    }
-                }
-        );
-
+        copyCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                nameField.setEnabled(copyCheck.isSelected());
+            }
+        });
     }
 
-    public int showDialog(Object[] trees) {
+    @SuppressWarnings("unchecked")
+    public int showDialog(Object[] models) {
 
-        treeCombo.removeAllItems();
-        for (Object tree : trees) {
-            treeCombo.addItem(tree);
+        modelCombo.removeAllItems();
+        for (Object model : models) {
+            modelCombo.addItem(model);
         }
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
@@ -86,7 +94,7 @@ public class LinkTreeModelDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Link Partition Tree Model");
+        final JDialog dialog = optionPane.createDialog(frame, title);
         dialog.pack();
 
         dialog.setVisible(true);
@@ -103,8 +111,9 @@ public class LinkTreeModelDialog {
         return result;
     }
 
-    public PartitionTreeModel getTree() {
-        return (PartitionTreeModel) treeCombo.getSelectedItem();
+    @SuppressWarnings("unchecked")
+    public T getModel() {
+        return (T) modelCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {
@@ -114,5 +123,4 @@ public class LinkTreeModelDialog {
     public String getName() {
         return nameField.getText();
     }
-
 }

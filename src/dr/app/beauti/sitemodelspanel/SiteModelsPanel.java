@@ -32,6 +32,7 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.util.CloneModelDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
@@ -72,7 +73,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     private PartitionSubstitutionModel currentModel = null;
     private Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
     private TitledBorder modelBorder;
-    private CloneModelDialog cloneModelDialog = null;
+    private CloneModelDialog<PartitionSubstitutionModel> cloneModelDialog = null;
 
     private final BeautiFrame frame;
     //    CreateModelDialog createModelDialog = null;
@@ -301,7 +302,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private void cloneModelSettings() {
         if (cloneModelDialog == null) {
-            cloneModelDialog = new CloneModelDialog(frame);
+            cloneModelDialog = new CloneModelDialog<PartitionSubstitutionModel>(frame, "substitution model");
         }
 
         Set<DataType> dataTypes = new HashSet<DataType>();

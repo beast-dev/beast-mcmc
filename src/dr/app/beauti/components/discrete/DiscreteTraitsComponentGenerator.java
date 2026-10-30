@@ -39,9 +39,13 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.GeneralDataType;
 import dr.inference.distribution.BinomialLikelihood;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.DesignMatrix;
 import dr.inference.operators.MultivariateNormalOperator;
 import dr.inferencexml.distribution.BinomialLikelihoodParser;
+import dr.inferencexml.distribution.DistributionLikelihoodParser;
+import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.GeneralizedLinearModelParser;
 import dr.inferencexml.model.DuplicatedParameterParser;
 import dr.oldevomodel.sitemodel.SiteModel;
@@ -63,6 +67,7 @@ import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
@@ -151,6 +156,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 break;
 
             case AFTER_TREE_LIKELIHOOD:
+                writeHierarchicalClockRatePriors(writer);
                 writeDiscreteTraitsModels(writer);
                 writeTreeLikelihoods(writer, comp);
                 break;
@@ -288,6 +294,51 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
+    /**
+     * The clock models of the discrete trait partitions, in the order the partitions are defined.
+     */
+    private Set<PartitionClockModel> getDiscreteTraitClockModels() {
+        Set<PartitionClockModel> clockModels = new LinkedHashSet<PartitionClockModel>();
+        for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
+            clockModels.add(partition.getPartitionClockModel());
+        }
+        return clockModels;
+    }
+
+    /**
+     * The exponential prior on the overall rate scalar whose mean is itself estimated, giving the
+     * K-distribution prior of Gao et al. (2023). The mean parameter is declared here; its gamma
+     * hyperprior, its operator and its log entry all follow from it being a regular parameter.
+     */
+    private void writeHierarchicalClockRatePriors(XMLWriter writer) {
+        for (PartitionClockModel clockModel : getDiscreteTraitClockModels()) {
+            if (!clockModel.usesHierarchicalExponentialClockRate()) {
+                continue;
+            }
+
+            String prefix = clockModel.getPrefix();
+            Parameter mean = clockModel.getParameter(PartitionClockModel.CLOCK_RATE_EXP_MEAN);
+
+            writer.writeComment("exponential prior with an estimated mean on the overall rate scalar");
+
+            writer.writeOpenTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, prefix + PartitionClockModel.CLOCK_RATE_EXP)});
+
+            writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
+            writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+            writeParameter(DistributionModelParser.MEAN, mean.getName(), 1,
+                    mean.getInitial(), 0.0, Double.NaN, writer);
+            writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+            writer.writeCloseTag(DistributionLikelihoodParser.DISTRIBUTION);
+
+            writer.writeOpenTag(DistributionLikelihoodParser.DATA);
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "clock.rate");
+            writer.writeCloseTag(DistributionLikelihoodParser.DATA);
+
+            writer.writeCloseTag(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD);
+        }
+    }
+
     private void writeDiscreteTraitsSubstitutionModel(PartitionSubstitutionModel model, XMLWriter writer) {
 
         int stateCount = options.getStatesForDiscreteModel(model).size();
@@ -379,6 +430,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeCloseTag(ROOT_FREQUENCIES);
 
             writer.writeOpenTag(GeneralizedLinearModelParser.GLM_LIKELIHOOD, new Attribute[] {
+                    new Attribute.Default<String>(XMLParser.ID, prefix + GeneralizedLinearModelParser.GLM_LIKELIHOOD),
                     new Attribute.Default<String>("family", "logLinear"),
                     new Attribute.Default<String>("checkIdentifiability", "true")
             });
@@ -525,11 +577,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             prefix = BACKWARD + "." + prefix;
         }
         if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
-            writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+            writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
+                    new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
-            writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-            writeParameter("rateCopyNumber",2, writer);
-            writer.writeCloseTag(DuplicatedParameterParser.COPIES);
+//            writer.writeOpenTag(DuplicatedParameterParser.COPIES);
+////            writeParameter("rateCopyNumber",2, writer);
+//            writeParameter("", 2, writer);
+//            writer.writeCloseTag(DuplicatedParameterParser.COPIES);
             writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
         } else {
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
@@ -540,11 +594,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
             if (model.getDiscreteSubstType() == DiscreteSubstModelStructureType.SYM_SUBST) {
-                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
+                writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
+                        new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
                 writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
-                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-                writeParameter("indicatorCopyNumber",2, writer);
-                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
+//                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
+////                writeParameter("indicatorCopyNumber",2, writer);
+//                writeParameter("", 2, writer);
+//                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
                 writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {
                 //asymmetric

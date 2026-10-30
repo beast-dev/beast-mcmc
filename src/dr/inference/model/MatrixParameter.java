@@ -27,6 +27,7 @@
 
 package dr.inference.model;
 
+import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.StringTokenizer;
@@ -517,12 +518,84 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
 //        throw new RuntimeException("Not implemented yet!");
 //    }
 
+    private enum Initializer {
+        ZERO("zero") {
+            @Override
+            public void initializeQuietly(MatrixParameter matrixParameter) {
+                for (int i = 0; i < matrixParameter.getColumnDimension(); i++) {
+                    for (int j = 0; j < matrixParameter.getRowDimension(); j++) {
+                        matrixParameter.setParameterValueQuietly(j, i, 0.0);
+                    }
+                }
+            }
+        },
+        IDENTITY("identity") {
+            @Override
+            public void initializeQuietly(MatrixParameter matrixParameter) throws XMLParseException {
+                if (matrixParameter.getRowDimension() != matrixParameter.getColumnDimension()) {
+                    throw new XMLParseException("Identity matrices must be square");
+                }
+
+                for (int i = 0; i < matrixParameter.getColumnDimension(); i++) {
+                    for (int j = 0; j < matrixParameter.getRowDimension(); j++) {
+                        matrixParameter.setParameterValueQuietly(j, i, i == j ? 1.0 : 0.0);
+                    }
+                }
+            }
+        },
+        RANDOM("randomGaussian") {
+            @Override
+            public void initializeQuietly(MatrixParameter matrixParameter) {
+                for (int i = 0; i < matrixParameter.getColumnDimension(); i++) {
+                    for (int j = 0; j < matrixParameter.getRowDimension(); j++) {
+                        matrixParameter.setParameterValueQuietly(j, i, MathUtils.nextGaussian());
+                    }
+                }
+            }
+        },
+        RANDOM_SPHERE("randomNormOne") {
+            @Override
+            public void initializeQuietly(MatrixParameter matrixParameter) throws XMLParseException {
+                RANDOM.initializeQuietly(matrixParameter);
+                double sumSquares = 0;
+
+                for (int i = 0; i < matrixParameter.getDimension(); i++) {
+                    double value = matrixParameter.getParameterValue(i);
+                    sumSquares += value * value;
+                }
+
+                double norm = Math.sqrt(sumSquares);
+
+                for (int i = 0; i < matrixParameter.getDimension(); i++) {
+                    matrixParameter.setParameterValueQuietly(i, matrixParameter.getParameterValue(i) / norm);
+                }
+
+            }
+        };
+
+        private final String name;
+        Initializer(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        protected abstract void initializeQuietly(MatrixParameter matrixParameter) throws XMLParseException;
+        public void initialize(MatrixParameter matrixParameter) throws XMLParseException {
+            initializeQuietly(matrixParameter);
+            matrixParameter.fireParameterChangedEvent();
+        }
+    }
+
     public static final String ROW_DIMENSION = "rows";
     public static final String COLUMN_DIMENSION = "columns";
     public static final String TRANSPOSE = "transpose";
     public static final String EIGEN = "isEigenVectors";
     public static final String AS_COMPOUND = "asCompoundParameter";
     public static final String BEHAVIOR = "test";
+    public static final String INITIALIZE = "initialize";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -577,6 +650,27 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
                 }
             }
 
+            if (xo.hasAttribute(INITIALIZE)) {
+                if (xo.getChildCount() > 0) {
+                    throw new XMLParseException("Cannot initialize with '" + INITIALIZE + "' attribute and include parameters");
+                }
+                if (!(xo.hasAttribute(ROW_DIMENSION) && xo.hasAttribute(COLUMN_DIMENSION))) {
+                    throw new XMLParseException("Must specify row and column dimensions to initialize matrix");
+                }
+                String initialize = xo.getStringAttribute(INITIALIZE);
+                boolean recognizedInitializer = false;
+                for (Initializer initializer: Initializer.values()) {
+                    if (initializer.getName().equalsIgnoreCase(initialize)) {
+                        initializer.initialize(matrixParameter);
+                        recognizedInitializer = true;
+                        break;
+                    }
+                }
+                if (!recognizedInitializer) {
+                    throw new XMLParseException("Unrecognized '" + INITIALIZE + "' attribute: '" + initialize + "'");
+                }
+            }
+
             int dim = 0;
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Parameter parameter = (Parameter) xo.getChild(i);
@@ -610,6 +704,7 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
                 AttributeRule.newBooleanRule(EIGEN, true),
                 AttributeRule.newBooleanRule(AS_COMPOUND, true),
                 AttributeRule.newBooleanRule(BEHAVIOR, true),
+                AttributeRule.newStringRule(INITIALIZE, true)
         };
 
         public Class getReturnType() {

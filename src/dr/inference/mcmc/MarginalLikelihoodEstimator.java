@@ -133,7 +133,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
             }
 
             if (SHOW_OPERATOR_ANALYSIS) {
-            	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
+            	OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false, false);
             }
             ((CombinedOperatorSchedule) schedule).reset();
         }
@@ -417,7 +417,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
         @Override
         public void finished(long chainLength, MarkovChain markovChain) {
             currentState = chainLength;
-            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false);
+            OperatorAnalysisPrinter.showOperatorAnalysis(System.out, schedule, false, false);
 //            logger.log(currentState);
             for (MCLogger logger : loggers) {
                 logger.stopLogging();

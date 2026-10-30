@@ -30,6 +30,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.*;
 import dr.evolution.tree.Tree;
+import dr.evoxml.TaxaParser;
 
 import java.util.List;
 
@@ -338,6 +339,17 @@ public class PartitionTreeModel extends PartitionOptions {
             prefix += getName() + ".";
         }
         return prefix;
+    }
+
+    /**
+     * The id of the taxa element holding the taxa of this tree. This is the complete taxon list
+     * unless the data partitions have different taxa, in which case each tree gets its own.
+     */
+    public String getTaxaId() {
+        if (options.hasIdenticalTaxa()) {
+            return TaxaParser.TAXA;
+        }
+        return getPrefix() + TaxaParser.TAXA;
     }
 
     public int getDimension() { // n-1

@@ -63,7 +63,8 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
     private final static String REDUCTION_FACTOR = "checkStepSizeReductionFactor";
     private final static String TARGET_ACCEPTANCE_PROBABILITY = "targetAcceptanceProbability";
     private final static String INSTABILITY_HANDLER = "instabilityHandler";
-    private final static String MASK = "mask";
+    public final static String MASK = "mask";
+    //these are in the Skygrid+HMC XML files but were not (yet) defined here
 
     @Override
     public String getParserName() {

@@ -1,7 +1,7 @@
 /*
  * HIPSTRTreeBuilder.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,7 +22,6 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
 package dr.app.tools.treeannotator;
@@ -172,7 +171,7 @@ public class HIPSTRTreeBuilder {
                 }
 
                 cladeScore = cladeScore + bestSubtreeScore;
-            } else {
+            } else if (clade.getSize() == 2) {
                 // two tips so there will only be one pair and their sum log cred will be 0.0
                 assert clade.getSubClades().size() == 1;
                 Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
@@ -184,6 +183,8 @@ public class HIPSTRTreeBuilder {
                     clade.bestLeft = subClade.second;
                 }
                 cladeScore += 2 * Math.log(1.0);  // yes, I know this is zero - just spelling out why
+            } else {
+                assert clade.getSize() == 1;
             }
             clade.bestSubTreeScore = cladeScore;
 

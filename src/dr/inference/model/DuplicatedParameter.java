@@ -33,9 +33,13 @@ package dr.inference.model;
 public class DuplicatedParameter extends Parameter.Abstract implements VariableListener {
 
     public DuplicatedParameter(Parameter parameter) {
+        this(parameter, 1);
+    }
+
+    public DuplicatedParameter(Parameter parameter, int copies) {
         this.parameter = parameter;
         parameter.addVariableListener(this);
-        copies = 1;
+        this.copies = copies;
         originalBounds = parameter.getBounds();
         bounds = originalBounds;
     }

@@ -93,6 +93,9 @@
     </target>
 
     <target name="version" description="write version.txt resource from version and extra_release_tag properties">
+        <!-- the release workflow passes these with -D; a local build gets a development version -->
+        <property name="version" value="10.x.x"/>
+        <property name="extra_release_tag" value=""/>
         <echo file="${src}/version.txt">File created by build process. Do not edit by hand
 ${version}
 ${extra_release_tag}</echo>
@@ -135,6 +138,7 @@ ${extra_release_tag}</echo>
             <include name="dr/inference/**"/>
             <include name="dr/inferencexml/**"/>
             <include name="dr/math/**"/>
+            <include name="dr/mathxml/**"/>
             <include name="dr/matrix/**"/>
             <include name="dr/stats/**"/>
             <include name="dr/util/**"/>
@@ -186,6 +190,7 @@ ${extra_release_tag}</echo>
                 <include name="dr/inference/**/*.class"/>
                 <include name="dr/inferencexml/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
+                <include name="dr/mathxml/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/util/**/*.class"/>

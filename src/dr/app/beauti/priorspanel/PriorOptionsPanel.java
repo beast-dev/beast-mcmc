@@ -810,6 +810,64 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
     };
 
+    static final PriorOptionsPanel POISSON = new PriorOptionsPanel(false) {
+
+        void setup() {
+            addField("Mean", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
+            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
+        }
+
+        public Distribution getDistribution() {
+            // the Poisson prior is not plottable so no distribution is needed for the chart
+            return null;
+        }
+
+        public void setArguments(Parameter parameter) {
+            getField(0).setValue(parameter.mean != 0.0 ? parameter.mean : 1.0);
+            getField(1).setValue(parameter.offset);
+
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
+        }
+
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null || getValue(1) == null) {
+                return false;
+            }
+            parameter.mean = getValue(0);
+            parameter.offset = getValue(1);
+            return true;
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
+    };
+
+    static final PriorOptionsPanel HIERARCHICAL_EXPONENTIAL = new PriorOptionsPanel(false) {
+
+        void setup() {
+        }
+
+        public Distribution getDistribution() {
+            // the mean of the exponential is itself estimated so there is no fixed density to plot
+            return null;
+        }
+
+        public void setArguments(Parameter parameter) {
+        }
+
+        public boolean getArguments(Parameter parameter) {
+            return true;
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
+    };
+
     static final PriorOptionsPanel CTMC_RATE_REFERENCE = new PriorOptionsPanel(false) {
 
         void setup() {

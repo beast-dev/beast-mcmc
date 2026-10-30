@@ -28,18 +28,19 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.hmc.GeodesicHamiltonianMonteCarloOperator;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
-import dr.inference.operators.hmc.MassPreconditionScheduler;
-import dr.inference.operators.hmc.MassPreconditioner;
+import dr.inference.operators.hmc.*;
+import dr.math.geodesics.Sphere;
+import dr.math.geodesics.StiefelManifold;
 import dr.util.Transform;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 
 /**
  * @author Gabriel Hassler
@@ -48,31 +49,98 @@ import java.util.ArrayList;
 
 public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
     public final static String OPERATOR_NAME = "geodesicHamiltonianMonteCarloOperator";
-    public final static String ORTHOGONALITY_STRUCTURE = "orthogonalityStructure";
-    public final static String ROWS = "rows";
+
+    // deprecated pre-ManifoldProvider syntax, kept only for backwards compatibility
+    private final static String ORTHOGONALITY_STRUCTURE = "orthogonalityStructure";
+    private final static String ROWS = "rows";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         GeodesicHamiltonianMonteCarloOperator hmc = (GeodesicHamiltonianMonteCarloOperator) super.parseXMLObject(xo);
-        if (xo.hasChildNamed(ORTHOGONALITY_STRUCTURE)) {
-            XMLObject cxo = xo.getChild(ORTHOGONALITY_STRUCTURE);
-            ArrayList<ArrayList<Integer>> orthogonalityStructure = new ArrayList<>();
-            for (int i = 0; i < cxo.getChildCount(); i++) {
-                XMLObject group = (XMLObject) cxo.getChild(i);
-                int[] rows = group.getIntegerArrayAttribute(ROWS);
-                ArrayList<Integer> rowList = new ArrayList<>();
 
-                for (int j = 0; j < rows.length; j++) {
-                    rowList.add(rows[j] - 1);
-                }
-
-                orthogonalityStructure.add(rowList);
-            }
-
-            hmc.setOrthogonalityStructure(orthogonalityStructure);
+        ManifoldProvider provider = (ManifoldProvider) xo.getChild(ManifoldProvider.class);
+        if (provider == null) {
+            provider = parseDeprecatedManifoldProvider(xo, hmc);
         }
 
+        hmc.addManifolds(provider);
+
         return hmc;
+    }
+
+    private static class DeprecatedBlock {
+        final List<Integer> columns;
+        final boolean stiefel;
+
+        DeprecatedBlock(List<Integer> columns, boolean stiefel) {
+            this.columns = columns;
+            this.stiefel = stiefel;
+        }
+    }
+
+
+    private ManifoldProvider parseDeprecatedManifoldProvider(XMLObject xo, GeodesicHamiltonianMonteCarloOperator hmc)
+            throws XMLParseException {
+
+        System.err.println("WARNING: <" + OPERATOR_NAME + "> with no <manifoldProvider> (and/or using the legacy " +
+                "<" + ORTHOGONALITY_STRUCTURE + "> element) is DEPRECATED. Please migrate to the " +
+                "<manifoldProvider>/<blockManifoldProvider> syntax.");
+
+        MatrixParameterInterface matrix = (MatrixParameterInterface) hmc.getParameter();
+        int rowDim = matrix.getRowDimension();
+        int colDim = matrix.getColumnDimension();
+
+        ArrayList<DeprecatedBlock> blockSpecs = new ArrayList<>();
+
+        if (xo.hasChildNamed(ORTHOGONALITY_STRUCTURE)) {
+            XMLObject cxo = xo.getChild(ORTHOGONALITY_STRUCTURE);
+            boolean[] used = new boolean[colDim];
+            for (int i = 0; i < cxo.getChildCount(); i++) {
+                XMLObject group = (XMLObject) cxo.getChild(i);
+                int[] cols = group.getIntegerArrayAttribute(ROWS);
+                ArrayList<Integer> colList = new ArrayList<>();
+                for (int col : cols) {
+                    colList.add(col - 1);
+                    used[col - 1] = true;
+                }
+                Collections.sort(colList);
+                blockSpecs.add(new DeprecatedBlock(colList, true));
+            }
+
+            for (int col = 0; col < colDim; col++) {
+                if (!used[col]) {
+                    blockSpecs.add(new DeprecatedBlock(Collections.singletonList(col), false));
+                }
+            }
+        } else {
+            ArrayList<Integer> allColumns = new ArrayList<>();
+            for (int col = 0; col < colDim; col++) allColumns.add(col);
+            blockSpecs.add(new DeprecatedBlock(allColumns, true));
+        }
+
+        blockSpecs.sort((a, b) -> a.columns.get(0) - b.columns.get(0));
+
+        ArrayList<ManifoldProvider> blocks = new ArrayList<>();
+        int expectedColumn = 0;
+        for (DeprecatedBlock block : blockSpecs) {
+            for (int col : block.columns) {
+                if (col != expectedColumn) {
+                    throw new XMLParseException("Deprecated <" + ORTHOGONALITY_STRUCTURE + "> column groups must " +
+                            "partition the matrix columns into contiguous, ascending ranges; found column " +
+                            (col + 1) + " out of order. Please migrate to the explicit " +
+                            "<manifoldProvider>/<blockManifoldProvider> syntax instead.");
+                }
+                expectedColumn++;
+            }
+            if (block.stiefel) {
+                StiefelManifold manifold = new StiefelManifold(rowDim, block.columns.size());
+                blocks.add(new ManifoldProvider.BasicManifoldProvider(manifold, rowDim * block.columns.size(), null));
+            } else {
+                blocks.add(new ManifoldProvider.BasicManifoldProvider(new Sphere(1.0), rowDim, null));
+            }
+        }
+
+        return blocks.size() == 1 ? blocks.get(0) : new ManifoldProvider.BlockManifoldProvider(blocks);
     }
 
     @Override
@@ -82,13 +150,20 @@ public class GeodesicHamiltonianMonteCarloOperatorParser extends HamiltonianMont
                                                     MassPreconditioner preconditioner, MassPreconditionScheduler.Type schedulerType) {
         return new GeodesicHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioner);
+                runtimeOptions, preconditioner, null);
     }
+
+    private static final XMLSyntaxRule[] newRules = {
+            new ElementRule(ManifoldProvider.class, 0, 1) // optional for backwards compatibility; see parseDeprecatedManifoldProvider
+    };
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return rules;
-    } //TODO: add orthogonality structure rules
+        XMLSyntaxRule[] geodesicRules = new XMLSyntaxRule[rules.length + newRules.length];
+        System.arraycopy(rules, 0, geodesicRules, 0, rules.length);
+        System.arraycopy(newRules, 0, geodesicRules, rules.length, newRules.length);
+        return geodesicRules;
+    }
 
 
     @Override

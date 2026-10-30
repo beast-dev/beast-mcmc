@@ -32,6 +32,8 @@ import beagle.BeagleInfo;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
+import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
@@ -40,6 +42,7 @@ import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
 import dr.util.*;
 import dr.xml.XMLParser;
+import dr.app.util.SimpleAboutDialog;
 import jam.util.IconUtils;
 
 import javax.swing.*;
@@ -841,30 +844,35 @@ public class BeastMain {
         // don't include the pre-release commit in the window title bar
         String nameString = "BEAST X v" + version.getVersion();
 
-        if (window) {
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+        if (window || options) {
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.application.name", "BEAST");
+        }
 
-            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+        // the about box, laid out as BEAUti's: the icon beside the title, then this below
+        final String aboutTitle = "BEAST X";
+        final String aboutString = "<html>" +
+                "<div style=\"font-family:sans-serif; " +
+                "background-color: " + BeastConsoleApp.backgroundColor + "; color: " + BeastConsoleApp.foregroundColor + ";" +
+                "\">" +
+                "<center>" +
+                "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                "<hr><div style=\"font-size:11;\">" +
+                version.getHTMLCredits() +
+                "</div></center></div></html>";
 
-            String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST X</p>" +
-                    "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
-                    "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
-                    "</div></html>";
+        if (window) {
+            javax.swing.Icon fullIcon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(fullIcon, 128, 128);
 
-            String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
-                    "font-weight: 100;" +
-                    "background: #35484F; color: #CBB944\">" +
-                    "<center>" +
-                    version.getHTMLCredits() +
-                    "</div></center></div></html>";
-
-            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString,  icon);
+            consoleApp = new BeastConsoleApp(nameString, aboutTitle, aboutString,  icon);
             consoleApp.initialize();
+            if (OSType.isMac()) {
+                // the application menu and Dock icon (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(consoleApp, fullIcon);
+            }
 
         }
 
@@ -882,7 +890,18 @@ public class BeastMain {
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
                     version.getBuildString() + "</a></div>" +
                     "</div></html>";
-            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+            final javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+
+            if (OSType.isMac() && !window) {
+                // About and the Dock icon for the dialog alone (with a window the console application has them)
+                final javax.swing.Icon fullIcon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+                MacDesktopIntegration.registerAbout(new Runnable() {
+                    public void run() {
+                        new SimpleAboutDialog(aboutTitle, aboutString, fullIcon, Color.decode(BeastConsoleApp.backgroundColor),
+                                Color.decode(BeastConsoleApp.foregroundColor)).setVisible(true);
+                    }
+                }, fullIcon);
+            }
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 

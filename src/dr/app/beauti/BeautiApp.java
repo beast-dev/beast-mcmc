@@ -30,6 +30,7 @@ package dr.app.beauti;
 import dr.app.beast.BeastMain;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
 import dr.app.util.OSType;
 import dr.util.Version;
 import jam.framework.*;
@@ -171,27 +172,23 @@ public class BeautiApp extends MultiDocApplication {
             // Explicitly turn on font antialiasing.
             System.setProperty("swing.aatext", "true");
 
-            System.setProperty("apple.awt.graphics.UseQuartz", "true");
-            System.setProperty("apple.awt.antialiasing", "true");
-            System.setProperty("apple.awt.rendering", "VALUE_RENDER_QUALITY");
-
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.draggableWindowBackground", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
-
-            UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-            UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+            System.setProperty("apple.awt.application.name", "BEAUti");
         }
 
         try {
 
             if (!lafLoaded) {
+                // the system look and feel, unless -Dswing.defaultlaf=<class> names another (e.g. Metal when
+                // the system one misbehaves on a new OS or JDK)
+                final String lookAndFeel = System.getProperty("swing.defaultlaf",
+                        UIManager.getSystemLookAndFeelClassName());
                 try {
-                    // set the System Look and Feel in the UIManager
                     javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
                         public void run() {
                             try {
-                                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                                UIManager.setLookAndFeel(lookAndFeel);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -208,8 +205,7 @@ public class BeautiApp extends MultiDocApplication {
             final String versionString = VERSION.getVersionString();
 
             String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
-                    "font-weight: 100;" +
+                    "<div style=\"font-family:sans-serif; " +
                     "background-color: " + backgroundColor + "; color: " + foregroundColor + ";" +
                     "\">" +
                     "<center>" +
@@ -232,6 +228,10 @@ public class BeautiApp extends MultiDocApplication {
                 }
             });
             app.initialize();
+            if (OSType.isMac()) {
+                // the application menu, Dock icon and file opening (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(app, IconUtils.getIcon(BeautiApp.class, "images/beauti.png"));
+            }
 
             if (inputFileName != null) {
                 app.doOpen(inputFileName);

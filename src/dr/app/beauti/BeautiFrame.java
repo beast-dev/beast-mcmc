@@ -738,9 +738,16 @@ public class BeautiFrame extends DocumentFrame {
                 importDialog = new FileDialog(this, title, FileDialog.LOAD);
                 fileDialogs.put(title, importDialog);
             }
+            // the native dialog otherwise returns only the first of the files chosen
+            importDialog.setMultipleMode(multipleSelection);
 
             importDialog.setVisible(true);
-            if (importDialog.getFile() != null) {
+            if (multipleSelection) {
+                File[] files = importDialog.getFiles();
+                if (files != null && files.length > 0) {
+                    return files;
+                }
+            } else if (importDialog.getFile() != null) {
                 return new File[]{new File(importDialog.getDirectory(), importDialog.getFile())};
             }
         } else {

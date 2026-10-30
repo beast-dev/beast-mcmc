@@ -124,6 +124,9 @@ public class DefaultPriorTableDialog {
         dialog.setResizable(true);
         dialog.setVisible(true);
 
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
+
         return optionPane.getValue() != null && optionPane.getValue().equals("Continue");
     }
 }

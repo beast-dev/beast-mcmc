@@ -465,6 +465,9 @@ public class PartitionModelPanel extends OptionsPanel {
                     dialog.pack();
                     dialog.setVisible(true);
 
+                    // the dialog is modal, so it has been closed by the time this returns
+                    dialog.dispose();
+
                     Integer value = (Integer) optionPane.getValue();
                     if (value == JOptionPane.CANCEL_OPTION) {
                         modelExtensionCombo.setSelectedIndex(0);

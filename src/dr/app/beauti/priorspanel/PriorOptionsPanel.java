@@ -194,6 +194,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         listeners.add(listener);
     }
 
+    void removeListener(Listener listener) {
+        listeners.remove(listener);
+    }
+
     void removeAllListeners() {
         listeners.clear();
     }

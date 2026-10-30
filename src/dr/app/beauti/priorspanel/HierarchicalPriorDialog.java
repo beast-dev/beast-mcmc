@@ -230,23 +230,26 @@ public class HierarchicalPriorDialog {
 
         final JDialog dialog = optionPane.createDialog(frame, "Phylogenetic Hierarchical Model Setup");
 
-        priorCombo.addItemListener(new ItemListener() {
+        // these listeners hold this dialog, so they are taken off again when it closes (below)
+        ItemListener priorListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setupComponents();
                 dialog.validate();
                 dialog.repaint();
                 dialog.pack();
             }
-        });
+        };
+        priorCombo.addItemListener(priorListener);
 
+        PriorOptionsPanel.Listener optionsListener = new PriorOptionsPanel.Listener() {
+            public void optionsPanelChanged() {
+                setupChart();
+                dialog.validate();
+                dialog.repaint();
+            }
+        };
         for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
-            optionsPanel.addListener(new PriorOptionsPanel.Listener() {
-                public void optionsPanelChanged() {
-                    setupChart();
-                    dialog.validate();
-                    dialog.repaint();
-                }
-            });
+            optionsPanel.addListener(optionsListener);
         }
 
         dialog.pack();
@@ -268,6 +271,12 @@ public class HierarchicalPriorDialog {
 
         dialog.setResizable(true);
         dialog.setVisible(true);
+
+        priorCombo.removeItemListener(priorListener);
+        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            optionsPanel.removeListener(optionsListener);
+        }
+        dialog.dispose();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();

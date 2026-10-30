@@ -45,6 +45,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -201,8 +203,8 @@ public class MCMCPanel extends BeautiPanel {
 
         optionsPanel.addComponent(addTxtExtension);
         addTxtExtension.setSelected(OSType.isWindows());
-        addTxtExtension.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
+        addTxtExtension.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
                 setOptions(options);
                 frame.setDirty();
             }
@@ -271,8 +273,8 @@ public class MCMCPanel extends BeautiPanel {
 
         optionsPanel.addComponent(samplePriorCheckBox);
         samplePriorCheckBox.setOpaque(false);
-        samplePriorCheckBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
+        samplePriorCheckBox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
                 frame.setDirty();
             }
         });

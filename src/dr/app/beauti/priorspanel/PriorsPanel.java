@@ -662,8 +662,11 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (result == JOptionPane.OK_OPTION) {
             // Only do this if OK button is pressed (not cancel):
 
-            // If this was part of a linked parameter, remove it from that...
-            removeFromJointPrior(parameter);
+            // If this was part of a linked parameter or a hierarchical model, take it out of that first;
+            // the user can still decline, which leaves the prior as it was.
+            if (!removeFromJointPrior(parameter)) {
+                return;
+            }
 
             // move to individual Dialog, otherwise it will change if Cancel
             priorDialog.getArguments(parameter);
@@ -692,27 +695,30 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    private void removeFromJointPrior(Parameter parameter) {
+    /**
+     * Takes the parameter out of any linked parameter and of any hierarchical model it belongs to, asking
+     * the user before the latter.
+     *
+     * @return false if the user declined, in which case nothing has been changed
+     */
+    private boolean removeFromJointPrior(Parameter parameter) {
+        // the hierarchical model is the one the user is asked about, so deal with it first
+        HierarchicalModelComponentOptions hmco = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+        if (hmco.isHierarchicalParameter(parameter)) {
+            if (hmco.removeParameter(this, parameter, true) == JOptionPane.NO_OPTION) {
+                return false;
+            }
+        }
+
         LinkedParameterComponentOptions comp = (LinkedParameterComponentOptions)
                 options.getComponentOptions(LinkedParameterComponentOptions.class);
-
         LinkedParameter linkedParameter = comp.getLinkedParameter(parameter);
         if (linkedParameter != null) {
             comp.removeDependentParameter(parameter);
         }
 
-        // Possibly remove parameter from its HPM
-        HierarchicalModelComponentOptions hmco = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
-        if (hmco.isHierarchicalParameter(parameter)) {
-            if (hmco.removeParameter(this, parameter, true) == JOptionPane.NO_OPTION) {
-                // Bail out
-                System.err.println("Bailing out of modification");
-                return;
-            }
-            System.err.println("Parameter removed from an HPM");
-        }
-
+        return true;
     }
 
     public void getOptions(BeautiOptions options) {

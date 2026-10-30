@@ -32,7 +32,15 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.types.FrequencyPolicyType;
+import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
+import dr.evomodelxml.substmodel.FrequencyModelParser;
+import dr.evomodelxml.substmodel.GTRParser;
+import dr.inference.model.ParameterParser;
+import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
@@ -97,7 +105,196 @@ public class BeastSettingsImporter {
     public void importSettings() {
         importPartitions();
         importLinkage();
+        importSubstitutionModels();
         importMCMCSettings();
+    }
+
+    // ---- the substitution and site models ---------------------------------------------------------
+
+    /**
+     * Reads each substitution model and the site heterogeneity that goes with it. The site model of a
+     * partition is named by the same convention BEAUti writes it with, so the model's own prefix finds it.
+     */
+    private void importSubstitutionModels() {
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            int positions = model.getCodonPartitionCount();
+            boolean found = false;
+            for (int num = 1; num <= positions; num++) {
+                Element siteModel = elementById(model.getPrefix(num) + SiteModelParser.SITE_MODEL);
+                if (siteModel == null) {
+                    continue;
+                }
+                found = true;
+                if (num == 1) {
+                    importSubstitutionModel(model, siteModel);
+                    importSiteHeterogeneity(model, siteModel);
+                }
+            }
+            if (!found) {
+                report.notRecovered("the substitution model of '" + model.getName() + "'");
+            }
+        }
+    }
+
+    /**
+     * Reads which model of sequence evolution this is, and how its base frequencies are set.
+     */
+    private void importSubstitutionModel(PartitionSubstitutionModel model, Element siteModel) {
+        Element substitutionModel = firstChild(siteModel, SiteModelParser.SUBSTITUTION_MODEL);
+        if (substitutionModel == null) {
+            report.notRecovered("the substitution model of '" + model.getName() + "'");
+            return;
+        }
+
+        Element referenced = null;
+        String id = null;
+        for (Object child : substitutionModel.getChildren()) {
+            Element element = (Element) child;
+            id = element.getAttributeValue(XMLParser.IDREF);
+            referenced = id == null ? element : elementById(id);
+            break;
+        }
+        if (referenced == null) {
+            report.notRecovered("the substitution model of '" + model.getName() + "'");
+            return;
+        }
+
+        String name = referenced.getName();
+        if (name.equalsIgnoreCase(NucModelType.HKY.getXMLName())) {
+            // JC is written as an HKY model whose kappa is fixed at one; only the id says which it is
+            boolean isJC = id != null && id.endsWith("jc");
+            setNucleotideModel(model, isJC ? NucModelType.JC : NucModelType.HKY);
+        } else if (name.equalsIgnoreCase(NucModelType.TN93.getXMLName())) {
+            setNucleotideModel(model, NucModelType.TN93);
+        } else if (name.equalsIgnoreCase(GTRParser.GTR_MODEL)) {
+            setNucleotideModel(model, NucModelType.GTR);
+        } else if (name.equalsIgnoreCase(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL)) {
+            setAminoAcidModel(model, referenced.getAttributeValue("type"));
+        } else {
+            report.notRecovered("the substitution model of '" + model.getName() + "', which the file gives as " + name);
+            return;
+        }
+
+        importFrequencyPolicy(model, referenced);
+    }
+
+    private void setNucleotideModel(PartitionSubstitutionModel model, NucModelType type) {
+        model.setNucSubstitutionModel(type);
+        report.recovered("the substitution model of '" + model.getName() + "', " + type);
+    }
+
+    private void setAminoAcidModel(PartitionSubstitutionModel model, String type) {
+        if (type == null) {
+            report.notRecovered("which amino acid model '" + model.getName() + "' uses");
+            return;
+        }
+        for (AminoAcidModelType candidate : AminoAcidModelType.values()) {
+            if (candidate.getXMLName().equalsIgnoreCase(type)) {
+                model.setAaSubstitutionModel(candidate);
+                report.recovered("the substitution model of '" + model.getName() + "', " + candidate);
+                return;
+            }
+        }
+        report.notRecovered("the amino acid model '" + type + "' of '" + model.getName() + "', which BEAUti does not offer");
+    }
+
+    /**
+     * Empirical frequencies are shown by the alignment being referred to inside the frequency model.
+     * Estimated and all-equal frequencies are written identically; the difference is that estimated ones
+     * are sampled, so they have an operator.
+     */
+    private void importFrequencyPolicy(PartitionSubstitutionModel model, Element substitutionModel) {
+        Element frequencies = firstChild(substitutionModel, FrequencyModelParser.FREQUENCIES);
+        Element frequencyModel = frequencies == null ? null : firstChild(frequencies, FrequencyModelParser.FREQUENCY_MODEL);
+        if (frequencyModel == null) {
+            return;
+        }
+
+        if (firstChild(frequencyModel, AlignmentParser.ALIGNMENT) != null
+                || firstChild(frequencyModel, SitePatternsParser.PATTERNS) != null) {
+            model.setFrequencyPolicy(FrequencyPolicyType.EMPIRICAL);
+            report.recovered("empirical base frequencies for '" + model.getName() + "'");
+            return;
+        }
+
+        String frequenciesId = parameterIdIn(frequencyModel);
+        if (frequenciesId != null && !hasOperatorOn(frequenciesId)) {
+            model.setFrequencyPolicy(FrequencyPolicyType.ALLEQUAL);
+            report.recovered("fixed, equal base frequencies for '" + model.getName() + "'");
+        } else {
+            model.setFrequencyPolicy(FrequencyPolicyType.ESTIMATED);
+        }
+    }
+
+    /**
+     * Reads the gamma categories and the proportion of invariant sites.
+     */
+    private void importSiteHeterogeneity(PartitionSubstitutionModel model, Element siteModel) {
+        Element gammaShape = firstChild(siteModel, SiteModelParser.GAMMA_SHAPE);
+        model.setGammaHetero(gammaShape != null);
+        if (gammaShape != null) {
+            Integer categories = integerAttribute(gammaShape, SiteModelParser.GAMMA_CATEGORIES);
+            if (categories != null) {
+                model.setRateCategories(categories);
+            }
+            model.setGammaHeteroEqualWeights("equal".equalsIgnoreCase(
+                    gammaShape.getAttributeValue(SiteModelParser.DISCRETIZATION)));
+            report.recovered("gamma rate heterogeneity for '" + model.getName() + "', " +
+                    model.getRateCategories() + " categories");
+        }
+
+        boolean invariant = firstChild(siteModel, SiteModelParser.PROPORTION_INVARIANT) != null;
+        model.setInvarHetero(invariant);
+        if (invariant) {
+            report.recovered("invariant sites for '" + model.getName() + "'");
+        }
+    }
+
+    /**
+     * @return the id of the first parameter defined anywhere under this element
+     */
+    private String parameterIdIn(Element element) {
+        if (element.getName().equalsIgnoreCase(ParameterParser.PARAMETER)) {
+            String id = element.getAttributeValue(XMLParser.ID);
+            if (id != null) {
+                return id;
+            }
+        }
+        for (Object child : element.getChildren()) {
+            String id = parameterIdIn((Element) child);
+            if (id != null) {
+                return id;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return true if any operator in the file acts on the parameter of this id
+     */
+    private boolean hasOperatorOn(String parameterId) {
+        Element operators = firstElement(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE);
+        if (operators == null) {
+            return false;
+        }
+        for (Object child : operators.getChildren()) {
+            if (refersTo((Element) child, parameterId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean refersTo(Element element, String id) {
+        if (id.equals(element.getAttributeValue(XMLParser.IDREF))) {
+            return true;
+        }
+        for (Object child : element.getChildren()) {
+            if (refersTo((Element) child, id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ---- the partitions: their names and how the sites are divided among them ---------------------

@@ -72,8 +72,28 @@ public class BeautiXmlRoundTripTest {
     // ---- cases that survive a round trip in full --------------------------------------------------
 
     @Test
+    public void apes_jc_strict_constant() throws Exception {
+        roundTrip("apes_jc_strict_constant");
+    }
+
+    @Test
     public void apes_hky_strict_constant() throws Exception {
         roundTrip("apes_hky_strict_constant");
+    }
+
+    @Test
+    public void apes_hky_gamma_strict_constant() throws Exception {
+        roundTrip("apes_hky_gamma_strict_constant");
+    }
+
+    @Test
+    public void apes_hky_gamma_invar_strict_constant() throws Exception {
+        roundTrip("apes_hky_gamma_invar_strict_constant");
+    }
+
+    @Test
+    public void apes_gtr_gamma_strict_constant() throws Exception {
+        roundTrip("apes_gtr_gamma_strict_constant");
     }
 
     @Test
@@ -84,6 +104,26 @@ public class BeautiXmlRoundTripTest {
     @Test
     public void primates2_linked_hky_strict_constant() throws Exception {
         roundTrip("primates2_linked_hky_strict_constant");
+    }
+
+    @Test
+    public void primates2_unlinked_gtr_hky_strict_constant() throws Exception {
+        roundTrip("primates2_unlinked_gtr_hky_strict_constant");
+    }
+
+    @Test
+    public void h1n1_hky_gamma_strict_constant() throws Exception {
+        roundTrip("h1n1_hky_gamma_strict_constant");
+    }
+
+    @Test
+    public void dengue4_hky_gamma_strict_constant() throws Exception {
+        roundTrip("dengue4_hky_gamma_strict_constant");
+    }
+
+    @Test
+    public void dengue4aa_jtt_strict_constant() throws Exception {
+        roundTrip("dengue4aa_jtt_strict_constant");
     }
 
     // ---- the MCMC settings, and the rule about a document that is not empty -----------------------

@@ -10,6 +10,7 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.io.NewickImporter;
 import dr.evomodel.coalescent.basta.ConstantPopulationSizeModel;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
 import dr.evomodel.coalescent.mascot.MascotLikelihood;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -17,6 +18,8 @@ import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.hmc.CompactGradient;
+import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 
@@ -80,6 +83,27 @@ public class MascotGradientTest extends TestCase {
         assertEquals(0.0, migrationGradient[1], 0.0);
         assertEquals(0.0, migrationGradient[3], 0.0);
         assertGradientsMatch(likelihood, rates, popSizes, 1.0e-5);
+    }
+
+    /** One Ne shared by all demes through a DuplicatedParameter: its gradient is the sum over the copies. */
+    public void testCompactedDuplicatedPopSizeGradientMatchesFiniteDifferences() throws Exception {
+        GeneralDataType dataType = dataType(3);
+        Parameter popSize = new Parameter.Default("popSizes", 0.2);
+        popSize.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        DuplicatedParameter popSizes = new DuplicatedParameter(popSize);
+        popSizes.addDuplicationParameter(new Parameter.Default(3.0));
+        MascotLikelihood likelihood = highPressure(dataType,
+                new Parameter.Default("location.rates", HIGH_PRESSURE_RATES), popSizes, 0.01);
+
+        CompactGradient gradient = new CompactGradient(new StructuredCoalescentLikelihoodGradient(likelihood, null,
+                StructuredCoalescentLikelihoodGradient.WrtParameter.POPULATION_SIZE));
+        double[] perCopy = likelihood.getPopSizeGradientLogDensity();
+        double[] compacted = gradient.getGradientLogDensity();
+
+        assertEquals(3, perCopy.length);
+        assertEquals(1, compacted.length);
+        assertEquals(perCopy[0] + perCopy[1] + perCopy[2], compacted[0], 0.0);
+        assertMatchesFiniteDifferences("popSize", compacted, likelihood, popSize, 1.0e-5);
     }
 
     public void testHighPressureLogLikelihoodAndScores() throws Exception {

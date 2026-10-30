@@ -28,12 +28,15 @@
 package dr.inference.hmc;
 
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.DuplicatedParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Marc A. Suchard
@@ -138,15 +141,21 @@ public class CompactGradient implements HessianWrtParameterProvider, Reportable 
         }
     }
 
-    private List<Parameter> unroll(CompoundParameter source) {
+    private List<Parameter> unroll(Parameter source) {
         List<Parameter> unrolled = new ArrayList<>();
-        for (int i = 0; i < source.getParameterCount(); ++i) {
-            Parameter p = source.getParameter(i);
-            if (p instanceof CompoundParameter) {
-                unrolled.addAll(unroll((CompoundParameter) p));
-            } else {
-                unrolled.add(p);
+        if (source instanceof CompoundParameter) {
+            CompoundParameter compound = (CompoundParameter) source;
+            for (int i = 0; i < compound.getParameterCount(); ++i) {
+                unrolled.addAll(unroll(compound.getParameter(i)));
             }
+        } else if (source instanceof DuplicatedParameter) {
+            // dimension i of a DuplicatedParameter is dimension i % d of its underlying parameter
+            DuplicatedParameter duplicated = (DuplicatedParameter) source;
+            for (int i = 0; i < duplicated.getCopies(); ++i) {
+                unrolled.addAll(unroll(duplicated.getUnderlyingParameter()));
+            }
+        } else {
+            unrolled.add(source);
         }
         return unrolled;
     }
@@ -155,31 +164,27 @@ public class CompactGradient implements HessianWrtParameterProvider, Reportable 
 
         ParameterMap map = new ParameterMap(sourceParameter.getDimension());
 
-        if (source instanceof CompoundParameter) {
-            List<Parameter> cp = unroll((CompoundParameter) source);
+        if (source instanceof CompoundParameter || source instanceof DuplicatedParameter) {
+            List<Parameter> cp = unroll(source);
 
+            // offsets index the compacted parameter, which holds each unique parameter once
+            Map<Parameter, Integer> offsets = new IdentityHashMap<>();
             int current = 0;
-            for (int i = 0; i < cp.size(); ++i) {
-                Parameter p = cp.get(i);
-
-                int past = 0;
-                boolean found = false;
-                for (int j = 0; j < i && !found; ++j) {
-                    Parameter q = cp.get(j);
-                    if (p == q) {
-                        map(p, current, past, null, map.map);
-                        found = true;
-                    }
-                    past += q.getDimension();
-                }
-                if (!found) {
-                    map(p, current, current, map.parameter, map.map);
+            int compacted = 0;
+            for (Parameter p : cp) {
+                Integer offset = offsets.get(p);
+                if (offset == null) {
+                    offsets.put(p, compacted);
+                    map(p, current, compacted, map.parameter, map.map);
+                    compacted += p.getDimension();
+                } else {
+                    map(p, current, offset, null, map.map);
                 }
 
                 current += p.getDimension();
             }
         } else {
-            throw new IllegalArgumentException("Can only compact compound gradients");
+            throw new IllegalArgumentException("Can only compact compound or duplicated gradients");
         }
 
         return map;

@@ -27,6 +27,7 @@
 
 package dr.evomodel.bigfasttree;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.tree.TreeModel;
 
 /**
@@ -43,6 +44,11 @@ public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
     }
 
     public BestSignalsFromBigFastTreeIntervals(String name, TreeModel tree) {
+        super(name, tree);
+        originalEvents = new Events(tree.getNodeCount());
+    }
+
+    public BestSignalsFromBigFastTreeIntervals(String name, MutableTreeModel tree) {
         super(name, tree);
         originalEvents = new Events(tree.getNodeCount());
     }

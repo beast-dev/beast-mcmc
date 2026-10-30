@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent.basta;
 
 import dr.evolution.coalescent.IntervalType;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
@@ -180,7 +181,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         }
 
         public int getMaxNumberOfCoalescentIntervals(Tree tree) {
-            BigFastTreeIntervals intervals = new BigFastTreeIntervals((TreeModel) tree); // TODO fix BFTI to take a Tree
+            BigFastTreeIntervals intervals = new BigFastTreeIntervals((MutableTreeModel) tree); // TODO fix BFTI to take a Tree
             int zeroLengthSampling = 0;
             for (int i = 0; i < intervals.getIntervalCount(); ++i) {
                 if (intervals.getIntervalType(i) == IntervalType.SAMPLE && intervals.getIntervalTime(i) == 0.0) {
@@ -238,6 +239,10 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         }
 
         abstract protected void allocateGradientMemory();
+
+        protected boolean requiresGradientTransitionMatrices() {
+            return !transpose;
+        }
 
         abstract protected void computeBranchIntervalOperations(List<Integer> intervalStarts,
                                                                 List<BranchIntervalOperation> branchIntervalOperations,
@@ -316,7 +321,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
 
             allocateGradientMemory();
 
-            if (!transpose && wrt.requiresTransitionMatrices()) {
+            if (requiresGradientTransitionMatrices() && wrt.requiresTransitionMatrices()) {
                 computeTransitionProbabilityOperations(matrixOperations, Mode.GRADIENT);
             }
 

@@ -86,6 +86,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     protected boolean likelihoodKnown;
 
     private boolean populationSizesKnown;
+
     private boolean treeIntervalsKnown;
     private boolean transitionMatricesKnown;
 
@@ -174,14 +175,29 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         this.stateCount = substitutionModel.getDataType().getStateCount();
 
+
         if (tree instanceof TreeModel) {
             treeIntervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) treeModel);
+            addModel(treeIntervals);
+        } else if (tree instanceof MutableTreeModel) {
+            treeIntervals = new BestSignalsFromBigFastTreeIntervals("intervals", (MutableTreeModel) treeModel);
             addModel(treeIntervals);
         } else {
             throw new RuntimeException("Not yet implemented");
         }
 
-        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel, numberSubIntervals);
+        // Ancestral-trait (travel history) trees place ancestors on zero-length intervals by construction
+        treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel,
+                numberSubIntervals, tree instanceof TreeModel);
+
+        if (likelihoodDelegate instanceof AdjointGenericBastaLikelihoodDelegate) {
+            int[] consts = ((AdjointGenericBastaLikelihoodDelegate) likelihoodDelegate)
+                    .getBeagleSlabConstants();
+            if (consts != null && consts.length >= 2) {
+                treeTraversalDelegate.setSlabConstants(consts[0], consts[1]);
+            }
+            treeTraversalDelegate.setSlabMetadataRecording(true);
+        }
 
         // Initialize ancestral state reconstruction settings
         this.dataType = dataType;
@@ -476,6 +492,19 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     @Override
     protected void acceptState() { } // nothing to do
 
+    public long computeTreeStructureSignature() {
+        long h = 1125899906842597L;
+        final int nodeCount = tree.getNodeCount();
+        for (int i = 0; i < nodeCount; ++i) {
+            final NodeRef node = tree.getNode(i);
+            h = 31L * h + Double.doubleToLongBits(tree.getNodeHeight(node));
+            final NodeRef parent = tree.getParent(node);
+            h = 31L * h + (parent == null ? -1L : parent.getNumber());
+        }
+        return h;
+    }
+
+
     private double calculateLogLikelihood() {
 
         if (!transitionMatricesKnown) {
@@ -485,7 +514,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         if (!populationSizesKnown) {
             // update population sizes
-            likelihoodDelegate.updatePopulationSizes(0, popSizeParameter.getParameterValues(), false); // TODO do conditionally and double-buffer
+            likelihoodDelegate.updatePopulationSizes(0, getExpandedPopSizes(), false); // TODO do conditionally and double-buffer
         }
 
         if (this.growthRateParameter != null) {
@@ -494,7 +523,15 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
         if (!treeIntervalsKnown) {
             // update operations on tree
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            try {
+                treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+            } catch (CoalescentIntervalTraversal.DegenerateIntervalException e) {
+                treeIntervalsKnown = false;
+                return Double.NEGATIVE_INFINITY;
+            } catch (CoalescentIntervalTraversal.ActiveSetException e) {
+                treeIntervalsKnown = false;
+                return Double.NEGATIVE_INFINITY;
+            }
         }
 
         final List<BranchIntervalOperation> branchOperations =
@@ -530,16 +567,15 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
     public double[] getGradientLogDensity(StructuredCoalescentLikelihoodGradient wrt) {
 
+        calculateLogLikelihood(); // TODO Only execute if necessary
+
         final List<BranchIntervalOperation> branchOperations =
                 treeTraversalDelegate.getBranchIntervalOperations();
         final List<TransitionMatrixOperation> matrixOperations =
-                transitionMatricesKnown ? NO_OPT :
                         treeTraversalDelegate.getMatrixOperations();
         final List<Integer> intervalStarts = treeTraversalDelegate.getIntervalStarts();
 
         final NodeRef root = tree.getRoot();
-
-        calculateLogLikelihood(); // TODO Only execute if necessary
 
         double[] gradient = likelihoodDelegate.calculateGradient(branchOperations, matrixOperations, intervalStarts,
                 root.getNumber(), wrt, this);
@@ -1229,4 +1265,12 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private long totalLikelihoodTime = 0;
 
     public Parameter getPopSizes() {return popSizeParameter;}
+    private double[] getExpandedPopSizes() {
+        double[] vals = popSizeParameter.getParameterValues();
+        if (vals.length == stateCount) return vals;
+        double single = vals[0];
+        double[] expanded = new double[stateCount];
+        Arrays.fill(expanded, single);
+        return expanded;
+    }
 }

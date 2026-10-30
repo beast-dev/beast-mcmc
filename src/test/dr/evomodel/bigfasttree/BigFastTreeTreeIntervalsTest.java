@@ -316,6 +316,81 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         assertTrue(pass);
     }
 
+    /**
+     * More height changes than nodes (which forces a full rebuild), accepted without evaluating the intervals,
+     * followed by an evaluated and rejected proposal. The restored intervals must still be rebuilt.
+     */
+    public void testRestoreAfterManyUnevaluatedHeightChanges() throws Exception {
+        DefaultTreeModel tree = new DefaultTreeModel(new NewickImporter(
+                "(((((((t0:1.0,t1:1.0):1.0,t2:2.0):1.0,t3:3.0):1.0,t4:4.0):1.0,t5:5.0):1.0,t6:6.0):1.0,t7:7.0);")
+                .importTree(null));
+        BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
+        MathUtils.setSeed(11);
+
+        bigFastTreeIntervals.storeModelState();
+        for (int i = 0; i < tree.getNodeCount() + 3; i++) {
+            NodeRef node = tree.getInternalNode(MathUtils.nextInt(tree.getInternalNodeCount()));
+            double lower = Math.max(tree.getNodeHeight(tree.getChild(node, 0)), tree.getNodeHeight(tree.getChild(node, 1)));
+            double upper = tree.isRoot(node) ? lower + 1.0 : tree.getNodeHeight(tree.getParent(node));
+            tree.setNodeHeight(node, lower + MathUtils.nextDouble() * (upper - lower));
+        }
+        bigFastTreeIntervals.acceptModelState();
+
+        bigFastTreeIntervals.storeModelState();
+        tree.setNodeHeight(tree.getRoot(), tree.getNodeHeight(tree.getRoot()) + 0.5);
+        bigFastTreeIntervals.calculateIntervals();
+        bigFastTreeIntervals.restoreModelState();
+
+        assertSameIntervals(tree, bigFastTreeIntervals);
+    }
+
+    /**
+     * Tip-height changes that reorder the youngest sample, both after the constructor's full rebuild and after
+     * a later one.
+     */
+    public void testTipHeightChangesAfterFullRebuild() throws Exception {
+        DefaultTreeModel tree = new DefaultTreeModel(new NewickImporter("((A:1.0,B:0.9):0.5,C:1.3);").importTree(null));
+        BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
+        NodeRef a = null, b = null, c = null;
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef tip = tree.getExternalNode(i);
+            String id = tree.getNodeTaxon(tip).getId();
+            if (id.equals("A")) a = tip;
+            if (id.equals("B")) b = tip;
+            if (id.equals("C")) c = tip;
+        }
+
+        for (int rebuild = 0; rebuild < 2; rebuild++) {
+            tree.setNodeHeight(a, 0.0);
+            tree.setNodeHeight(b, 0.1);
+            tree.setNodeHeight(c, 0.2);
+            if (rebuild > 0) {
+                bigFastTreeIntervals.makeDirty();
+            }
+            assertSameIntervals(tree, bigFastTreeIntervals);
+
+            tree.setNodeHeight(a, 0.15);
+            assertSameIntervals(tree, bigFastTreeIntervals);
+
+            tree.setNodeHeight(b, 0.18);
+            assertSameIntervals(tree, bigFastTreeIntervals);
+
+            tree.setNodeHeight(c, 0.05);
+            assertSameIntervals(tree, bigFastTreeIntervals);
+        }
+    }
+
+    private static void assertSameIntervals(DefaultTreeModel tree, BigFastTreeIntervals bigFastTreeIntervals)
+            throws TreeUtils.MissingTaxonException {
+        IntervalList expected = new TreeIntervals(tree, null, null);
+        bigFastTreeIntervals.calculateIntervals();
+        assertEquals(expected.getIntervalCount(), bigFastTreeIntervals.getIntervalCount());
+        for (int i = 0; i < expected.getIntervalCount(); i++) {
+            assertEquals("interval " + i, expected.getInterval(i), bigFastTreeIntervals.getInterval(i), 1E-12);
+            assertEquals("lineage count " + i, expected.getLineageCount(i), bigFastTreeIntervals.getLineageCount(i));
+        }
+    }
+
 
     private TreeModel tree;
 }

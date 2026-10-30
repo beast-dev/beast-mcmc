@@ -168,6 +168,10 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      * ConstantPopulation and ExponentialGrowth.
      */
 
+    public Parameter getRatesParameter() {
+        return ratesParameter;
+    }
+
     protected Parameter ratesParameter = null;
     private boolean doNormalization = true;
 }

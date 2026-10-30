@@ -116,6 +116,16 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
                                                    Mode mode, BastaLikelihood likelihood) {
 
         Arrays.fill(storage.coalescent, 0.0);
+        if (mode == Mode.GRADIENT && gradientStorage != null) {
+            for (int a = 0; a < stateCount; ++a) {
+                for (int b = 0; b < stateCount; ++b) {
+                    Arrays.fill(gradientStorage.partials[a][b], 0.0);
+                    Arrays.fill(gradientStorage.coalescent[a][b], 0.0);
+                }
+                Arrays.fill(gradientStorage.partialsGradPopSize[a], 0.0);
+                Arrays.fill(gradientStorage.coalescentGradPopSize[a], 0.0);
+            }
+        }
         vectorizeBranchIntervalOperations(branchIntervalOperations);
         updateStorage(maxOutputBuffer, maxNumCoalescentIntervals, likelihood);
         intervalEnd = 0;
@@ -271,7 +281,16 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
     class MigrationRateGradientDispatch implements Dispatch {
 
         @Override
-        public void clearStorage() { }
+        public void clearStorage() {
+            for (int a = 0; a < stateCount; ++a) {
+                for (int b = 0; b < stateCount; ++b) {
+                    Arrays.fill(gradientStorage.e[a][b], 0);
+                    Arrays.fill(gradientStorage.f[a][b], 0);
+                    Arrays.fill(gradientStorage.g[a][b], 0);
+                    Arrays.fill(gradientStorage.h[a][b], 0);
+                }
+            }
+        }
 
         @Override
         public void reduceWithinInterval(BranchIntervalOperation operation) {
@@ -294,10 +313,18 @@ public class GenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abst
 
         @Override
         public void clearStorage() {
-            Arrays.stream(gradientStorage.eGradPopSize).forEach(a -> Arrays.fill(a, 0));
-            Arrays.stream(gradientStorage.fGradPopSize).forEach(a -> Arrays.fill(a, 0));
-            Arrays.stream(gradientStorage.gGradPopSize).forEach(a -> Arrays.fill(a, 0));
-            Arrays.stream(gradientStorage.hGradPopSize).forEach(a -> Arrays.fill(a, 0));
+            for (int a = 0; a < stateCount; ++a) {
+                for (int b = 0; b < stateCount; ++b) {
+                    Arrays.fill(gradientStorage.e[a][b], 0);
+                    Arrays.fill(gradientStorage.f[a][b], 0);
+                    Arrays.fill(gradientStorage.g[a][b], 0);
+                    Arrays.fill(gradientStorage.h[a][b], 0);
+                }
+                Arrays.fill(gradientStorage.eGradPopSize[a], 0);
+                Arrays.fill(gradientStorage.fGradPopSize[a], 0);
+                Arrays.fill(gradientStorage.gGradPopSize[a], 0);
+                Arrays.fill(gradientStorage.hGradPopSize[a], 0);
+            }
         }
 
         @Override

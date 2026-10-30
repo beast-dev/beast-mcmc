@@ -73,13 +73,11 @@ public class HierarchicalPriorDialog {
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
 
-//    private final SpecialNumberPanel specialNumberPanel;
 
     private JTextField nameField;
     private JPanel panel;
 
-    //    private final SpecialNumberPanel specialNumberPanel;
-    private JChart[] chart;
+        private JChart[] chart;
     private JPanel[] quantilePanel;
     private JTextArea[] quantileText;
 
@@ -128,7 +126,6 @@ public class HierarchicalPriorDialog {
             quantilePanel[i].add(quantileText[i]);
         }
 
-//        specialNumberPanel = new SpecialNumberPanel(this);
 //        specialNumberPanel.setEnabled(false);
     }
 

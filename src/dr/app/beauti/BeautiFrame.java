@@ -426,27 +426,6 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public void doApplyTemplate() {
-        FileDialog dialog = new FileDialog(this,
-                "Apply Template",
-                FileDialog.LOAD);
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-            try {
-                readFromFile(file);
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open template file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read template file: " + ioe.getMessage(),
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
     protected boolean readFromFile(File file) throws IOException {
         BeautiOptions loaded;
         ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)));

@@ -27,7 +27,6 @@
 
 package dr.inference.model;
 
-import dr.inference.parallel.MPISerializable;
 import dr.util.Keywordable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -41,7 +40,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public abstract class AbstractModel implements Model, ModelListener, VariableListener, StatisticList, MPISerializable, Keywordable {
+public abstract class AbstractModel implements Model, ModelListener, VariableListener, StatisticList, Keywordable {
 
     /**
      * @param name Model Name
@@ -151,51 +150,6 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
 
     public final Variable getVariable(int i) {
         return variables.get(i);
-    }
-
-    // **************************************************************
-    // MPI IMPLEMENTATION
-    // **************************************************************
-
-
-    public void sendState(int toRank) {
-
-        // Iterate through child models
-        for (Model model : models) {
-            ((AbstractModel) model).sendState(toRank);
-        }
-        // Send current model parameters
-        for (Variable variable : variables) {
-            if (variable instanceof Parameter.Abstract) ((Parameter.Abstract) variable).sendState(toRank);
-        }
-    }
-
-
-    public void sendStateNoParameters(int toRank) {
-
-        // Iterate through child models
-        for (Model model : models) {
-            ((AbstractModel) model).sendState(toRank);
-        }
-    }
-
-    public void receiveStateNoParameters(int fromRank) {
-        for (Model model : models) {
-            ((AbstractModel) model).receiveState(fromRank);
-        }
-    }
-
-    public void receiveState(int fromRank) {
-        for (Model model : models) {
-            ((AbstractModel) model).receiveState(fromRank);
-        }
-        // Send current model parameters
-        for (Variable variable : variables) {
-            if (variable instanceof Parameter.Abstract)
-                ((Parameter.Abstract) variable).receiveState(fromRank);
-        }
-
-
     }
 
     // **************************************************************

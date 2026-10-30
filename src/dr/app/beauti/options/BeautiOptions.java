@@ -154,12 +154,6 @@ public class BeautiOptions extends ModelOptions {
 
         dataPartitions.clear();
         traits.clear();
-        // partitionModels.clear();
-        // partitionTreeModels.clear();
-        // partitionTreePriors.clear();
-        // partitionClockTreeLinks.clear();
-        // activedSameTreePrior = null;
-        // shareSameTreePrior = true;
         userTrees.clear();
 
         // rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
@@ -400,10 +394,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectParameters(parameters);
         }
 
-//        for (TraitData trait : getTraitsList()) { // all traits including locations
-//            if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
-//        	   trait.gets.selectParameters(parameters);
-//        }
 
         selectComponentParameters(this, parameters);
 
@@ -445,10 +435,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectOperators(ops);
         }
 
-//        for (TraitData trait : getTraitsList()) { // all traits including locations
-//        	if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
-//                trait.getTraitData().selectOperators(ops);
-//        }
 
         selectComponentOperators(this, ops);
 
@@ -693,13 +679,6 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionSubstitutionModels(dataPartitions);
     }
 
-//    public List<PartitionSubstitutionModel> getPartitionTraitsSubstitutionModels() {
-//        return getPartitionSubstitutionModels(getTraitsList());
-//    }
-//
-//    public List<PartitionSubstitutionModel> getPartitionNonTraitsSubstitutionModels() {
-//        return getPartitionSubstitutionModels(getNonTraitsDataList());
-//    }
 
 
     // ++++++++++++++ Partition Clock Model ++++++++++++++
@@ -744,14 +723,7 @@ public class BeautiOptions extends ModelOptions {
     // ++++++++++++++ Partition Tree Model ++++++++++++++
 //    public void addPartitionTreeModel(PartitionTreeModel tree) {
 //
-//        if (!partitionTreeModels.contains(tree)) {
-//            partitionTreeModels.add(tree);
-//        }
-//    }
 
-//    public List<PartitionTreeModel> getPartitionTreeModels() {
-//        return partitionTreeModels;
-//    }
 
     private final Map<List<? extends AbstractPartitionData>, List<PartitionTreeModel>> ptmlCache = new HashMap<List<? extends AbstractPartitionData>, List<PartitionTreeModel>>();
 
@@ -778,9 +750,6 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionTreeModels(dataPartitions);
     }
 
-//    public List<PartitionTreeModel> getNonTraitPartitionTreeModels() {
-//        return getPartitionTreeModels(getNonTraitsDataList());
-//    }
 
 
     // ++++++++++++++ Partition Tree Prior ++++++++++++++
@@ -933,40 +902,6 @@ public class BeautiOptions extends ModelOptions {
 
     // +++++++++++++ Traits +++++++++++++
 
-//    public List<PartitionData> getNonTraitsDataList() {
-//        List<PartitionData> nonTraitsData = new ArrayList<PartitionData>();
-//        for (PartitionData partition : dataPartitions) {
-//            if (partition.getTraitType() == null) {
-//                nonTraitsData.add(partition);
-//            }
-//        }
-//        return nonTraitsData;
-//    }
-//
-//    public List<TraitData> getTraitsList() {
-//        List<TraitData> traits = new ArrayList<TraitData>();
-//        for (PartitionData partition : dataPartitions) {
-//            if (partition.getTraitType() != null) {
-//                traits.add((TraitData) partition);
-//            }
-//        }
-//        return traits;
-//    }
-//
-//    public List<TraitData> getDiscreteIntegerTraits() {
-//        List<TraitData> traits = new ArrayList<TraitData>();
-//        for (PartitionData partition : dataPartitions) {
-//            if (partition.getTraitType() != null && partition.getTraitType() != TraitData.TraitType.CONTINUOUS) {
-//                traits.add((TraitData) partition);
-//            }
-//        }
-//        return traits;
-//    }
-//
-//    public boolean hasDiscreteIntegerTraitsExcludeSpecies() { // exclude species at moment
-//        return getDiscreteIntegerTraits().size() > 1
-//                || (getDiscreteIntegerTraits().size() > 0 && (!traitExists(TraitData.TRAIT_SPECIES)));
-//    }
 
     public int getIndexOfTrait(String traitName) {
         int i = 0;
@@ -1122,16 +1057,6 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
-//    public boolean hasAlignmentPartition() {
-//        for (AbstractPartitionData partition : dataPartitions) {
-//            if (partition instanceof PartitionData) {
-//                if (((PartitionData) partition).getAlignment() != null) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
 
 
     public boolean hasDiscreteTrait() {
@@ -1230,9 +1155,6 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-            // if (hasPhylogeographic()) {
-            //      message += ";    Phylogeographic Analysis";
-            // }
 
             // message += "; " + clockModelOptions.statusMessageClockModel();
 

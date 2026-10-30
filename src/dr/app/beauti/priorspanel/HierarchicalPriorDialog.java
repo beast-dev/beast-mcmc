@@ -166,9 +166,6 @@ public class HierarchicalPriorDialog {
 //            System.err.println("Model name exists");
             return false;
 
-//            if (option == JOptionPane.NO_OPTION) {
-//                return false;
-//            }
         }
 
         return true;
@@ -281,9 +278,6 @@ public class HierarchicalPriorDialog {
             result = value;
         }
 
-//        if (result == JOptionPane.OK_OPTION) {
-//            getArguments();
-//        }
 
         return result;
     }
@@ -376,13 +370,6 @@ public class HierarchicalPriorDialog {
         mainPanel.repaint();
     }
 
-//    public void setSelectedField(RealNumberField selectedField) {
-//        this.selectedField = selectedField;
-//    }
-//
-//    public RealNumberField getSelectedField() {
-//        return selectedField;
-//    }
 
     NumberFormatter formatter = new NumberFormatter(4);
 

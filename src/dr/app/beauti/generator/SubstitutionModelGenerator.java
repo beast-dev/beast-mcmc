@@ -405,10 +405,6 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             List<AbstractPartitionData> partitions = options.getDataPartitions(model);
             Alignment alignment = ((PartitionData) partitions.get(0)).getAlignment();
-//            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
-//            for (int i = 1; i < partitions.size(); i++) {
-//                patterns.addPatterns(partitions.get(i).getAlignment());
-//            }
             double[] frequencies = alignment.getStateFrequencies();
             writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
@@ -459,10 +455,6 @@ public class SubstitutionModelGenerator extends Generator {
 // single partition use clock.rate, no "mu"; multi-partition use "allmus"
 //                if (codonPartitionCount > 1) {
 //
-//                    for (int i = 1; i <= codonPartitionCount; i++) {
-//                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
-//                    }
-//                }
                 switch (model.getNucSubstitutionModel()) {
                     case HKY:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {

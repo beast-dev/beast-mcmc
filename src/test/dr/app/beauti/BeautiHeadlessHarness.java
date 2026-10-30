@@ -42,7 +42,7 @@ import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.util.BEAUTiImporter;
+import dr.app.beauti.util.BeautiImporter;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import org.junit.Assert;
@@ -153,7 +153,7 @@ public final class BeautiHeadlessHarness {
      */
     public static BeautiOptions load(String path) throws Exception {
         BeautiOptions options = BeautiOptions.newInstance(COMPONENTS);
-        new BEAUTiImporter(null, options).importFromFile(new File(ROOT, path));
+        new BeautiImporter(null, options).importFromFile(new File(ROOT, path));
         return options;
     }
 

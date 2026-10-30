@@ -164,9 +164,6 @@ public class NexusApplicationImporter extends NexusImporter {
 
             // This was to remove spaces within each partition definition. But that means
             // we can't read multiple definitions separated by spaces.
-//            while (getLastDelimiter() != ';' && getLastDelimiter() != ',') {
-//                token += readToken(";,");
-//            }
 
             String[] parts = token.split("-");
 //            System.out.print(token + " ");

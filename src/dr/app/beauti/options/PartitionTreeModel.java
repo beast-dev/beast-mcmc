@@ -323,9 +323,6 @@ public class PartitionTreeModel extends PartitionOptions {
 //        return getAvgRootAndRate()[0];
     }
 
-//    public void setInitialRootHeight(double initialRootHeight) {
-//        this.initialRootHeight = initialRootHeight;
-//    }
 
 //    private void calculateInitialRootHeightPerTree() {
 //		initialRootHeight = options.clockModelOptions

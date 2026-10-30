@@ -133,9 +133,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 } else {
                     setForeground(parameter.isLinked ? Color.GRAY : SystemColor.controlText);
                 }
-//                if (parameter.isLinked) {
-//                    setFont(getFont().deriveFont(Font.ITALIC));
-//                }
                 return this;
             }
         };
@@ -194,18 +191,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         messageLabel.setText(getMessage());
 
-//        Action classicPriorsAction = new AbstractAction("Use classic priors/operators") {
-//            public void actionPerformed(ActionEvent actionEvent) {
-//                options.useClassicOperatorsAndPriors = classicPriorsCheck.isSelected();
-//                priorTableModel.fireTableDataChanged();
-//                frame.setAllOptions();
-//            }
-//        };
-//
-//        classicPriorsCheck = new JCheckBox(classicPriorsAction);
-//        classicPriorsCheck.setVisible(true);
-//        classicPriorsCheck.setEnabled(true);
-//        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8 style) prior and operator combinations.</html>");
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));

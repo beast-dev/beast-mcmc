@@ -268,9 +268,6 @@ public class MLEGSSDialog {
         });
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
 
-        //parameterWorkingPrior.addItem("Normal KDE");
-        //parameterWorkingPrior.addItem("Gamma KDE");
-        //labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
 
         stepDistribution.addItem("Beta");
         labelStepDistribution = optionsPanel.addComponentWithLabel("Stepping stone distribution:", stepDistribution);

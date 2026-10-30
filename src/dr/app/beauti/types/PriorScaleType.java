@@ -49,13 +49,6 @@ public enum PriorScaleType {
     GAMMA_STAR_BEAST;
 
 
-//    PriorScaleType(String name) {
-//        this.name = name;
-//    }
-//
-//    public String toString() {
-//        return name;
-//    }
 //
 //    private final String name;
 

@@ -330,9 +330,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         //Set<PartitionTreeModel> models = treeModelPanels.keySet();
         //
-        //for (PartitionTreeModel model : models) {
-        //  treeModelPanels.get(model).getOptions(options);
-        //}
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
@@ -477,20 +474,5 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     }
 
-//    Action addTreeAction = new AbstractAction("+") {
-//        public void actionPerformed(ActionEvent ae) {
-//        	createTree();
-//        }
-//    };
 
-//    public class CreateTreeAction extends AbstractAction {
-//        public CreateTreeAction() {
-//            super("Create Tree");
-//            setToolTipText("Create a NJ or UPGMA tree using a data partition");
-//        }
-//
-//        public void actionPerformed(ActionEvent ae) {
-//            createTree();
-//        }
-//    }
 }

@@ -201,13 +201,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             parent.fireTreePriorsChanged();
         });
 
-//        PanelUtils.setupComponent(skyGridPointsCombo);
-//        skyGridPointsCombo.addItemListener(new ItemListener() {
-//            public void itemStateChanged(ItemEvent itemEvent) {
-//                partitionTreePrior.setSkyGridCount((Integer) skyGridPointsCombo.getSelectedItem());
-//                parent.fireTreePriorsChanged();
-//            }
-//        });
         PanelUtils.setupComponent(skyGridPointsField);
         skyGridPointsField.setToolTipText("<html>" +
                 "This sets number of population size parameters for<br>" +
@@ -337,9 +330,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 break;
 
 //            case SKYLINE:
-//                groupCountField.setColumns(6);
-//                addComponentWithLabel("Number of groups:", groupCountField);
-//                addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
 //
 //                citation = //citationCoalescent + "\n" +
 //                        "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
@@ -534,14 +524,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         }
 //        partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
 
-//        if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYLINE) {
-//            Integer groupCount = groupCountField.getValue();
-//            if (groupCount != null) {
-//                partitionTreePrior.setSkylineGroupCount(groupCount);
-//            } else {
-//                partitionTreePrior.setSkylineGroupCount(5);
-//            }
-//        } else
         if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID ||
                 partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC) {
             Double interval = skyGridInterval.getValue();
@@ -552,12 +534,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
             partitionTreePrior.setSkyGridCount(skyGridPointsField.getValue());
         } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH) {
-//            Double samplingProportion = samplingProportionField.getValue();
-//            if (samplingProportion != null) {
-//                partitionTreePrior.birthDeathSamplingProportion = samplingProportion;
-//            } else {
-//                partitionTreePrior.birthDeathSamplingProportion = 1.0;
-//            }
         }
 
     }
@@ -587,9 +563,6 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         }
 
         // would be much better to disable these rather than removing them
-//        if (isMultiLocus) {
-//            treePriorCombo.removeItem(TreePriorType.SKYLINE);
-//        }
 
         if (isTipCalibrated) {
             // remove models that require contemporaneous tips...

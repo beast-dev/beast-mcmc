@@ -163,16 +163,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 ancestralStatesPanel.fireModelChanged();
 
                 // The following is only necessary is simpleCounting XOR robustCounting
-//                if (itemEvent.getItem() == countingCheck) {
-//                    boolean enableRC = !countingCheck.isSelected() && ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
-//                    dNdSRobustCountingCheck.setEnabled(enableRC);
-//                    dNnSText.setEnabled(enableRC);
-//                }
 //
-//                if (itemEvent.getItem() == dNdSRobustCountingCheck) {
-//                    boolean enableSimpleCounting = !dNdSRobustCountingCheck.isSelected();
-//                    countingCheck.setEnabled(enableSimpleCounting);
-//                }
                 completeHistoryLoggingCheck.setEnabled(countingCheck.isSelected() || dNdSRobustCountingCheck.isSelected());
             }
         };

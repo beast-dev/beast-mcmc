@@ -589,10 +589,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
                     new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
-//            writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-////            writeParameter("rateCopyNumber",2, writer);
-//            writeParameter("", 2, writer);
-//            writer.writeCloseTag(DuplicatedParameterParser.COPIES);
             writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
         } else {
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
@@ -606,10 +602,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
                         new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
                 writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
-//                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-////                writeParameter("indicatorCopyNumber",2, writer);
-//                writeParameter("", 2, writer);
-//                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
                 writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {
                 //asymmetric

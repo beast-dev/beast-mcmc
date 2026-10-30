@@ -604,9 +604,6 @@ public class Parameter implements Serializable {
     }
 
     public int[] getParameterDimensionWeights() {
-        // if (getOptions() != null && getOptions() instanceof PartitionSubstitutionModel) {
-        //      return ((PartitionSubstitutionModel)getOptions()).getPartitionCodonWeights();
-        // }
         if (getSubParameters().size() > 0) {
             int[] weights = new int[getSubParameters().size()];
             for (int i = 0; i < weights.length; i++) {

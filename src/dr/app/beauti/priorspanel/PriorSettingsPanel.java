@@ -86,9 +86,6 @@ public class PriorSettingsPanel extends JPanel {
         optionsPanels.put(PriorType.CTMC_RATE_REFERENCE_PRIOR, PriorOptionsPanel.CTMC_RATE_REFERENCE);
         optionsPanels.put(PriorType.HIERARCHICAL_EXPONENTIAL_PRIOR, PriorOptionsPanel.HIERARCHICAL_EXPONENTIAL);
         optionsPanels.put(PriorType.ONE_OVER_X_PRIOR, PriorOptionsPanel.ONE_OVER_X);
-//        optionsPanels.put(PriorType.NORMAL_HPM_PRIOR, new NormalHPMOptionsPanel());
-//        optionsPanels.put(PriorType.LOGNORMAL_HPM_PRIOR, new LognormalHPMOptionsPanel());
-//        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
         chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
                 new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA));
@@ -189,15 +186,6 @@ public class PriorSettingsPanel extends JPanel {
     }
 
     public void getArguments(Parameter parameter) {
-//        if (parameter.isNodeHeight || parameter.isStatistic) {
-//            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-//            if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
-//                parameter.initial = Double.NaN;
-//                return;
-//            }
-//        } else {
-//            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-//        }
 //
 //        if (!parameter.isStatistic && initialField.getValue() != null) parameter.initial = initialField.getValue();
 //

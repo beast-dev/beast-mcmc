@@ -395,10 +395,6 @@ public class BeautiFrame extends DocumentFrame {
     public void doDelete() {
         if (tabbedPane.getSelectedComponent() == dataPanel) {
             dataPanel.removeSelection();
-//        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
-//            modelsPanel.delete();
-//        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
-//        	treesPanel.delete();
         } else {
             throw new RuntimeException("Delete should only be accessible from the Data and Models panels");
         }

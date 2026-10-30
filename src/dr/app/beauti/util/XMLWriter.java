@@ -186,15 +186,6 @@ public class XMLWriter extends java.io.PrintWriter {
         // wrapping lines at a fixed length can only do bad things...
 //        int subLength = 2000;
 //
-//        for (int l = 0; l < string.length(); l += subLength) {
-//            int e = l + subLength;
-//            if (e > string.length()) e = string.length();
-//            for (int i = 0; i < level; i++) {
-//                write('\t');
-//            }
-//            println(string.substring(l, e));
-//            flush();
-//        }
 
     }
 

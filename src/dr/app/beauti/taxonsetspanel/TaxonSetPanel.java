@@ -366,15 +366,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(panel3, BorderLayout.CENTER);
 
-//		taxonSetsTable.addMouseListener(new MouseAdapter() {
-//			public void mouseClicked(MouseEvent e) {
-//				if (e.getClickCount() == 2) {
-//					JTable target = (JTable)e.getSource();
-//					int row = target.getSelectedRow();
-//					taxonSetsTableDoubleClicked(row);
-//				}
-//			}
-//		});
 
         includedTaxaSearchField.getDocument().addDocumentListener(new DocumentListener() {
                                                                       public void changedUpdate(DocumentEvent e) {
@@ -628,9 +619,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-//		options.datesUnits = unitsCombo.getSelectedIndex();
-//		options.datesDirection = directionCombo.getSelectedIndex();
-//		options.translation = translationCombo.getSelectedIndex();
     }
 
     public JComponent getExportableComponent() {
@@ -661,9 +649,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 //
 //		setCurrentTaxonSet(currentTaxonSet);
 //
-//		int sel = taxonSets.indexOf(currentTaxonSet);
-//		taxonSetsTable.setRowSelectionInterval(sel, sel);
-//	}
 
     Action addTaxonSetAction = new AbstractAction("+") {
 

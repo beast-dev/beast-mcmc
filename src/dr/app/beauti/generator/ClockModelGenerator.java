@@ -415,10 +415,6 @@ public class ClockModelGenerator extends Generator {
 
 //                writer.writeComment("log branch rates for tree");
 //                writer.writeOpenTag(TransformedTreeTraitParser.NAME,
-//                        new Attribute.Default<>(XMLParser.ID, prefix  + "logBranchRates"));
-//                writer.writeTag("signTransform", true);
-//                writer.writeIDref(ArbitraryBranchRatesParser.RATES, prefix  + "branchRates");
-//                writer.writeCloseTag(TransformedTreeTraitParser.NAME);
 
                 break;
 
@@ -438,9 +434,6 @@ public class ClockModelGenerator extends Generator {
 
 //                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
 //                        Parameter parameter = tree.getParameter(DefaultTreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
-//                        parameter.isFixed = true;
-//                        parameter.initial = model.getRate();
-//                    }
 
                 writer.writeOpenTag(RateEvolutionLikelihood.RATES,
                         new Attribute[]{
@@ -962,9 +955,6 @@ public class ClockModelGenerator extends Generator {
 
             case MIXED_EFFECTS_CLOCK:
                 //always write distribution likelihoods for rate, scale and intercept
-                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.RATES_PRIOR);
-                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.SCALE_PRIOR);
-                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.INTERCEPT_PRIOR);
                 //check for coefficients
                 /*String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
                 int number = 1;

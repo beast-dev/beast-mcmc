@@ -134,12 +134,4 @@ public class GuessTraitDialog {
         }
     }
 
-//    private void setTrait(String selectedTrait, TraitGuesser.TraitType selectedTraitType) {
-//        guesser.setTraitName(selectedTrait);
-//        if (selectedTrait.equalsIgnoreCase(TraitGuesser.Traits.TRAIT_SPECIES.toString())) {
-//            guesser.setTraitType(TraitGuesser.TraitType.DISCRETE);
-//        } else {
-//            guesser.setTraitType(selectedTraitType);
-//        }
-//    }
 }

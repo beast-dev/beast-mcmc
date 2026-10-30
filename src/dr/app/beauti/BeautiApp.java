@@ -94,9 +94,6 @@ public class BeautiApp extends MultiDocApplication {
 //     *
 //     * @return the action
 //     */
-//    public Action getOpenAction() {
-//        throw new UnsupportedOperationException("getOpenAction is not supported");
-//    }
 
     private static boolean lafLoaded = false;
 
@@ -150,15 +147,6 @@ public class BeautiApp extends MultiDocApplication {
 
 //        if (args2.length > 1) {
 //
-//            if (args.length != 3) {
-//                printTitle();
-//                printUsage(arguments);
-//                System.exit(1);
-//            }
-//
-//            String inputFileName = args[0];
-//            String templateFileName = args[1];
-//            String outputFileName = args[2];
 //
 //            new CommandLineBeauti(inputFileName, templateFileName, outputFileName);
 //

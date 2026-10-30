@@ -119,7 +119,6 @@ public class TraitGuesser implements Serializable {
                 }
 
             } catch (GuessTraitException gfe) {
-                //
             }
 
             taxa.getTaxon(i).setAttribute(traitData.getName(), value);

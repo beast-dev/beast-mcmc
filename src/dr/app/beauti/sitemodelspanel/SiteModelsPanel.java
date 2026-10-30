@@ -111,9 +111,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(addModelAction);
-//        actionPanel1.setRemoveAction(removeModelAction);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -167,10 +164,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             modelPanelParent.removeAll();
             modelBorder.setTitle("Substitution Model");
 
-//            if (currentDiscreteTraitOption != null) {
-//                this.remove(d_splitPane);
-//                currentDiscreteTraitOption = null;
-//            }
             return;
         }
     }

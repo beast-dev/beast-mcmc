@@ -37,9 +37,6 @@ import dr.util.Attribute;
 
 public class GeneratorHelper {
 
-//    public static String extensionModelName(ContinuousModelExtensionType extensionType, String modelName) {
-//        String extendedName;
-//        switch (extensionType) {
 //            case RESIDUAL:
 //                extendedName = "residualModel";
 //                break;
@@ -56,13 +53,7 @@ public class GeneratorHelper {
 //        return modelName + "." + extendedName;
 //    }
 
-//    public static String extensionPrecisionName(String modelName) {
-//        return modelName + ".extensionPrecision";
-//    }
 
-//    public static String extensionPrecisionPriorName(String modelName) {
-//        return modelName + ".extensionPrecisionPrior";
-//    }
 
     public static void writeParameter(XMLWriter writer, String id, double[] values) {
 

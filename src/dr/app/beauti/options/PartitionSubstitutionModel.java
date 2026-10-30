@@ -213,11 +213,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             createParameterLognormalPrior("CP3.kappa2", "TN93 2nd transition-transversion parameter for codon position 3",
                     PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
 
-//        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP1+2.frequencies", "GTR base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
             // create the relative rate parameters for the GTR rate matrix
 
@@ -488,9 +483,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.AMINO_ACIDS:
-//                if (includeRelativeRates) {
-//                    params.add(getParameter("mu"));
-//                }
                 break;
 
             case DataType.TWO_STATES:
@@ -509,9 +501,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     default:
                         throw new IllegalArgumentException("Unknown binary substitution model");
                 }
-//                if (includeRelativeRates) {
-//                    params.add(getParameter("mu"));
-//                }
 
                 // only AMINO_ACIDS not addFrequency
                 addFrequencyParams(params, includeRelativeRates);

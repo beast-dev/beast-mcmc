@@ -82,17 +82,4 @@ public class HierarchicalPhylogeneticModel implements Serializable {
 //        // Do nothing because Gibbs operator format do not fit into the current Operator implementation
 //    }
 //
-//    public void removeParameter(Parameter parameter) {
-//        if (argumentParameterList.contains(parameter)) {
-//            argumentParameterList.remove(parameter);
-//        }
-//    }
-//
-//    public void generateDistribution(final XMLWriter writer) {
-//        System.err.println("Generating distribution for " + getName());
-//    }
-//
-//    public void generatePriors(final XMLWriter writer) {
-//        System.err.println("Generating priors for " + getName());
-//    }
 }

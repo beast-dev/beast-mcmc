@@ -170,57 +170,14 @@ public class GLMSettingsPanel extends JPanel {
         this.trait = trait;
 //        this.parameter = parameter;
 //
-//        priorCombo = new JComboBox();
-//        for (PriorType priorType : PriorType.getPriorTypes(parameter)) {
-//            priorCombo.addItem(priorType);
-//        }
-//
-//        if (parameter.priorType != null) {
-//            priorCombo.setSelectedItem(parameter.priorType);
-//        }
 //
 //        setupComponents(); // setArguments here
 //
-//
-//        priorCombo.addItemListener(new ItemListener() {
-//            public void itemStateChanged(ItemEvent e) {
-//                setupComponents();
-//                dialog.pack();
-//                dialog.repaint();
-//            }
-//        });
-//
-//        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
-//            optionsPanel.removeAllListeners();
-//            optionsPanel.addListener(new PriorOptionsPanel.Listener() {
-//                public void optionsPanelChanged() {
-//                    setupChart();
-//                    dialog.pack();
-//                    dialog.repaint();
-//                }
-//            });
-//        }
     }
 
     public void firePredictorsChanged() {
-//        if (currentTrait != null) {
-////        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-////            frame.setupStarBEAST();
 ////        } else
-//            if (currentTrait != null && currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
-//                frame.updateDiscreteTraitAnalysis();
-//            }
 //
-////            if (selRow > 0) {
-////                predictorsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
-////            } else if (selRow == 0 && options.traitsOptions.traits.size() > 0) { // options.traitsOptions.traits.size() after remove
-////                predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
-////            }
-//
-//            traitsTableModel.fireTableDataChanged();
-//            options.updatePartitionAllLinks();
-//            frame.setDirty();
-//        }
         predictorsTableModel.fireTableDataChanged();
     }
 

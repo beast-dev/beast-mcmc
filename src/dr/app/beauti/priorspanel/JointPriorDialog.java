@@ -94,9 +94,6 @@ public class JointPriorDialog implements AbstractPriorDialog {
         nameField.setColumns(30);
 
         parametersTableModel = new ParametersTableModel();
-//        TableSorter sorter = new TableSorter(traitsTableModel);
-//        traitsTable = new JTable(sorter);
-//        sorter.setTableHeader(traitsTable.getTableHeader());
         parametersTable = new JTable(parametersTableModel);
 
         parametersTable.getTableHeader().setReorderingAllowed(false);

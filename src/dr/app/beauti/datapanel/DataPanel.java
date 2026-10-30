@@ -197,11 +197,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         toolBar1.addSeparator();
 
-//        button = new JButton(compressPatternsAction);
-//        //button.setEnabled(false);
-//        compressPatternsAction.setEnabled(false);
-//        PanelUtils.setupComponent(button);
-//        toolBar1.add(button);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -486,24 +481,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
 //        if (selectedTraits.size() > 1 && !selectTraitDialog.getForceIndependent()) {
 //            // a set of traits have been passed to the function
-//            int result;
-//            if (alreadySelected && selectTraitDialog.getMakeCopy()) { //selectTraitDialog should not allow an empty name
-//                name = selectTraitDialog.getName();
-//            } else {
-//                result = selectTraitDialog.showDialog(selectedTraits, partitionName, this, false);
-//                name = selectTraitDialog.getName();
 //
-//                if (result == JOptionPane.CANCEL_OPTION) {
-//                    return false;
-//                }
-//            }
-//
-//        } else {
-//            name = selectedTraits.get(0).getName();
-//            if (selectTraitDialog.getMakeCopy()) {
-//                name = selectTraitDialog.getName();
-//            }
-//        }
 
         int minRow = -1;
         int maxRow;
@@ -638,39 +616,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
 //        SwingWorker task = new SwingWorker() {
 //            @Override
-//            protected Object doInBackground() throws Exception {
-////                for (int row : selRows) {
-////                    PartitionData partition = (PartitionData)options.dataPartitions.get(row);
-////                    partition.compressPatterns();
-////                }
-//                Random random = new Random();
-//                int progress = 0;
 //                //Initialize progress property.
 //                setProgress(0);
 //                while (progress < 100) {
 //                    //Sleep for up to one second.
-//                    try {
-//                        Thread.sleep(random.nextInt(1000));
-//                    } catch (InterruptedException ignore) {}
 //                    //Make random progress.
-//                    progress += random.nextInt(10);
-//                    setProgress(Math.min(progress, 100));
-//                }
-//                return null;
-//            }
 //
 //            @Override
-//            protected void done() {
-//                setCursor(null);
-//            }
 //
 //        };
 
 //        ProgressMonitor progressMonitor = new ProgressMonitor(frame,
 //                "Running a Long Task",
-//                "", 0, 100);
-//        int progress = task.getProgress();
-//        String message = String.format("Completed %d%%.\n", progress);
 //        progressMonitor.setNote(message);
 //        progressMonitor.setProgress(progress);
 //        taskOutput.append(message);
@@ -678,17 +635,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         //task.addPropertyChangeListener(this);
 //        task.execute();
 
-//        if (progressMonitor.isCanceled() || task.isDone()) {
-//            progressMonitor.close();
-//            Toolkit.getDefaultToolkit().beep();
-//            if (progressMonitor.isCanceled()) {
-//                task.cancel(true);
-////                taskOutput.append("Task canceled.\n");
-//            } else {
-////                taskOutput.append("Task completed.\n");
-//            }
-////            startButton.setEnabled(true);
-//        }
 //
 //        compressPatternsAction.setEnabled(true);
 
@@ -1226,36 +1172,5 @@ public class DataPanel extends BeautiPanel implements Exportable {
         frame.tabbedPane.setSelectedComponent(this);
     }
 
-//    public class ShowAction extends AbstractAction {
-//        public ShowAction() {
-//            super("Show");
-//            setToolTipText("Display the selected alignments");
-//        }
-//
-//        public void actionPerformed(ActionEvent ae) {
-//            showAlignment();
-//        }
-//    }
 
-//    public class UnlinkAllAction extends AbstractAction {
-//        public UnlinkAllAction() {
-//            super("Unlink All");
-//            setToolTipText("Use this tool to use a different substitution model, different clock model and different tree for each selected data partition");
-//        }
-//
-//        public void actionPerformed(ActionEvent ae) {
-//            unlinkAll();
-//        }
-//    }
-//
-//    public class LinkAllAction extends AbstractAction {
-//        public LinkAllAction() {
-//            super("Link All");
-//            setToolTipText("Use this tool to set all the selected partitions to the same substitution, clock model and tree");
-//        }
-//
-//        public void actionPerformed(ActionEvent ae) {
-//            linkAll();
-//        }
-//    }
 }

@@ -69,9 +69,6 @@ public class AlignmentGenerator extends Generator {
             if (alignments.size() > 1) {
                 //if (!options.allowDifferentTaxa) {
                 alignment.setId(AlignmentParser.ALIGNMENT + index);
-                //} else { // e.g. alignment_gene1
-                // alignment.setId("alignment_" + mulitTaxaTagName + index);
-                //}
             } else {
                 alignment.setId(AlignmentParser.ALIGNMENT);
             }

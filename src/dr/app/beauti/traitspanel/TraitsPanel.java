@@ -104,9 +104,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         this.dataPanel = dataPanel;
 
         traitsTableModel = new TraitsTableModel();
-//        TableSorter sorter = new TableSorter(traitsTableModel);
-//        predictorsTable = new JTable(sorter);
-//        sorter.setTableHeader(predictorsTable.getTableHeader());
         traitsTable = new JTable(traitsTableModel);
 
         traitsTable.getTableHeader().setReorderingAllowed(false);
@@ -154,11 +151,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
-//        dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-//            public void valueChanged(ListSelectionEvent evt) {
-//                traitSelectionChanged();
-//            }
-//        });
 
         JScrollPane scrollPane2 = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -198,10 +190,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         toolBar1.add(button);
 
         // Don't see the need for a clear values button
-//        button = new JButton(new ClearTraitAction());
-//        PanelUtils.setupComponent(button);
-//        button.setToolTipText(CLEAR_TRAIT_VALUES_TOOLTIP);
-//        toolBar1.add(button);
         button = new JButton(createTraitPartitionAction);
         PanelUtils.setupComponent(button);
         button.setToolTipText(CREATE_TRAIT_PARTITIONS_TOOLTIP);
@@ -252,15 +240,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //        int selRow = predictorsTable.getSelectedRow();
 //        traitsTableModel.fireTableDataChanged();
 //
-//        if (selRow < 0) {
-//            selRow = 0;
-//        }
-//        predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
 
-//        if (selectedTrait == null) {
-//            predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
-//        }
 
         traitsTableModel.fireTableDataChanged();
         dataTableModel.fireTableDataChanged();
@@ -270,12 +251,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-//        int selRow = predictorsTable.getSelectedRow();
-//        if (selRow >= 0 && options.traitsOptions.selecetedTraits.size() > 0) {
-//            selectedTrait = options.traitsOptions.selecetedTraits.get(selRow);
-//        }
-//        options.datesUnits = unitsCombo.getSelectedIndex();
-//        options.datesDirection = directionCombo.getSelectedIndex();
     }
 
     public JComponent getExportableComponent() {
@@ -284,18 +259,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public void fireTraitsChanged() {
         if (currentTrait != null) {
-//        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-//            frame.setupStarBEAST();
-//        } else
             if (currentTrait != null && currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
                 frame.updateDiscreteTraitAnalysis();
             }
 
-//            if (selRow > 0) {
-//                predictorsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
-//            } else if (selRow == 0 && options.traitsOptions.traits.size() > 0) { // options.traitsOptions.traits.size() after remove
-//                predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
-//            }
 
             traitsTableModel.fireTableDataChanged();
 //            options.updatePartitionAllLinks();
@@ -309,9 +276,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             currentTrait = options.traits.get(selRow);
 //            predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             removeTraitAction.setEnabled(true);
-//        } else {
-//            currentTrait = null;
-//            removeTraitAction.setEnabled(false);
         }
 
         if (options.traits.size() <= 0) {
@@ -708,10 +672,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public void setValueAt(Object aValue, int row, int col) {
             if (col == 1) {
-//                Location location = options.taxonList.getTaxon(row).getLocation();
-//                if (location != null) {
-//                    options.taxonList.getTaxon(row).setLocation(location);
-//                }
                 if (currentTrait != null) {
                     options.taxonList.getTaxon(row).setAttribute(currentTrait.getName(), aValue);
                 }

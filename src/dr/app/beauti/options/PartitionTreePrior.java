@@ -270,10 +270,6 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
         //createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
         createOperator("expansion.ancestralProportion", OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
-//        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
-//        createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
-//        createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
-//        createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
 //
 //        // hack pass distribution in name
 //        createOperatorUsing2Parameters("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
@@ -360,11 +356,6 @@ public class PartitionTreePrior extends PartitionOptions {
                 params.add(getParameter("expansion.doublingTime"));
             }
             params.add(getParameter("expansion.ancestralProportion"));
-//        } else if (nodeHeightPrior == TreePriorType.SKYLINE) {
-//            params.add(getParameter("skyline.popSize"));
-//        } else if (nodeHeightPrior == TreePriorType.EXTENDED_SKYLINE) {
-//            params.add(getParameter("demographic.populationSizeChanges"));
-//            params.add(getParameter("demographic.populationMean"));
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             // params.add(getParameter("skyride.popSize")); // force user to use GMRF prior, not allowed to change
             params.add(getParameter("skyride.precision"));
@@ -395,11 +386,6 @@ public class PartitionTreePrior extends PartitionOptions {
 //            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                    + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
 
-//        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.ORIGIN));
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.R0));
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.RECOVERY_RATE));
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
 
         }
 
@@ -445,9 +431,6 @@ public class PartitionTreePrior extends PartitionOptions {
                 ops.add(getOperator("expansion.doublingTime"));
             }
             ops.add(getOperator("expansion.ancestralProportion"));
-//        } else if (nodeHeightPrior == TreePriorType.SKYLINE) {
-//            ops.add(getOperator("skyline.popSize"));
-//            ops.add(getOperator("skyline.groupSize"));
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             ops.add(getOperator("gmrfGibbsOperator"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
@@ -478,13 +461,6 @@ public class PartitionTreePrior extends PartitionOptions {
 //                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                + BirthDeathSerialSamplingModelParser.R));
 //                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-//                + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE));
-//            }
-//        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.ORIGIN));
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.R0));
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.RECOVERY_RATE));
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
         }
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {

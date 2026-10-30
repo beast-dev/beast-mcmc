@@ -196,9 +196,6 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                                                      AbstractPartitionData partition,
                                                      boolean isCompleteHistoryLogging) {
 
-//        if (DEBUG) {
-//            System.err.println("DEBUG: Writing RC for " + partition.getName());
-//        }
 
         writer.writeComment("Robust counting for: " + partition.getName());
 

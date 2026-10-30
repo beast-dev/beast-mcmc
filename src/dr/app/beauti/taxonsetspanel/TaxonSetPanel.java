@@ -33,6 +33,7 @@ import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.table.TableEditorStopper;
 import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.table.DateCellEditor;
 import dr.evolution.util.Taxa;
@@ -571,6 +572,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 taxonSetsTableSelectionChanged();
             }
         });
+        // a name being typed is taken when the table loses the focus (e.g. to the Generate button)
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxonSetsTable);
+
         taxonSetsTable.doLayout();
     }
 

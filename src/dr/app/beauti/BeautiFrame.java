@@ -667,11 +667,14 @@ public class BeautiFrame extends DocumentFrame {
 
     public final boolean doGenerate() {
 
+        // take whatever the current panel is editing before checking it
+        getAllOptions();
+
         try {
             generator.checkOptions();
         } catch (Generator.GeneratorException ge) {
             ge.printStackTrace(System.err);
-            JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid BEAUti setting : ",
+            JOptionPane.showMessageDialog(this, describe(ge), "Invalid BEAUti setting",
                     JOptionPane.ERROR_MESSAGE);
             if (ge.getSwitchToPanel() != null) {
                 switchToPanel(ge.getSwitchToPanel());
@@ -706,12 +709,12 @@ public class BeautiFrame extends DocumentFrame {
                 return false;
             } catch (Generator.GeneratorException e) {
                 e.printStackTrace(System.err);
-                JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
+                JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because:\n" + describe(e),
                         "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
                 return false;
             } catch (Exception e) {
                 e.printStackTrace(System.err);
-                JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
+                JOptionPane.showMessageDialog(this, "Unable to generate file: " + describe(e),
                         "Unable to generate file", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
@@ -721,6 +724,14 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         return false;
+    }
+
+    /**
+     * @return the exception's message, or its class name when it has none (rather than "null")
+     */
+    private static String describe(Throwable e) {
+        String message = e.getMessage();
+        return message != null && !message.trim().isEmpty() ? message : e.getClass().getName();
     }
 
     /**

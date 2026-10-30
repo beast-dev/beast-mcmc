@@ -32,6 +32,7 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.types.OperatorSetType;
+import dr.app.gui.table.TableEditorStopper;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.RealNumberCellEditor;
 import jam.framework.Exportable;
@@ -81,6 +82,9 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
         operatorTableModel = new OperatorTableModel();
         operatorTable = new JTable(operatorTableModel);
+
+        // a tuning or weight being typed is taken when the table loses the focus (e.g. to the Generate button)
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(operatorTable);
 
         operatorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         operatorTable.getTableHeader().setReorderingAllowed(false);

@@ -91,7 +91,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean unlinkedHeterogeneityModel = true;
     private boolean unlinkedFrequencyModel = true;
 
-    private boolean dolloModel = false;
 
     private boolean isLatitudeLongitude = false;
     private boolean isIndependent = false;
@@ -159,8 +158,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
-
-        dolloModel = source.dolloModel;
 
         initModelParametersAndOpererators();
     }
@@ -519,7 +516,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             case DataType.COVARION:
                 switch (binarySubstitutionModel) {
                     case BIN_SIMPLE:
-                    case BIN_DOLLO:
                         break;
 
                     case BIN_COVARION:
@@ -775,7 +771,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             case DataType.COVARION:
                 switch (binarySubstitutionModel) {
                     case BIN_SIMPLE:
-                    case BIN_DOLLO:
                         break;
 
                     case BIN_COVARION:
@@ -1158,14 +1153,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.unlinkedFrequencyModel = unlinkedFrequencyModel;
     }
 
-    public boolean isDolloModel() {
-        return dolloModel;
-    }
-
-    public void setDolloModel(boolean dolloModel) {
-        this.dolloModel = dolloModel;
-    }
-
     public boolean isUseAmbiguitiesTreeLikelihood() {
         return useAmbiguitiesTreeLikelihood;
     }
@@ -1255,8 +1242,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
-
-        dolloModel = source.dolloModel;
     }
 
     @Override

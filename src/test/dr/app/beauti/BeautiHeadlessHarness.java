@@ -31,7 +31,6 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentFactory;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentFactory;
-import dr.app.beauti.components.dollo.DolloComponentFactory;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
 import dr.app.beauti.components.linkedparameters.LinkedParameterComponentFactory;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
@@ -86,7 +85,6 @@ public final class BeautiHeadlessHarness {
             AncestralStatesComponentFactory.INSTANCE,
             ContinuousComponentFactory.INSTANCE,
             DiscreteTraitsComponentFactory.INSTANCE,
-            DolloComponentFactory.INSTANCE,
             LinkedParameterComponentFactory.INSTANCE,
             HierarchicalModelComponentFactory.INSTANCE,
             MarginalLikelihoodEstimationComponentFactory.INSTANCE,

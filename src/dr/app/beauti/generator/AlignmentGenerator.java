@@ -28,7 +28,6 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
@@ -154,9 +153,6 @@ public class AlignmentGenerator extends Generator {
                 if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
                         == BinaryModelType.BIN_COVARION) {
                     description = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion"
-                } else if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
-                        == BinaryModelType.BIN_DOLLO) {
-                    description = null;
                 }
                 break;
         }
@@ -165,14 +161,6 @@ public class AlignmentGenerator extends Generator {
     }
 
     private String getAlignmentDataTypeIdref(Alignment alignment) {
-        String description = alignment.getDataType().getDescription();
-        switch (alignment.getDataType().getType()) {
-            case DataType.TWO_STATES:
-                if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
-                        == BinaryModelType.BIN_DOLLO) {
-                    description = DolloComponentOptions.DATA_NAME;
-                }
-        }
-        return description;
+        return alignment.getDataType().getDescription();
     }
 }

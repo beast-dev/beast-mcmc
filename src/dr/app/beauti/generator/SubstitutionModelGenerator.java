@@ -137,8 +137,6 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.COVARION:
 
                 switch (model.getBinarySubstitutionModel()) {
-                    case BIN_DOLLO:
-                        return;
                     case BIN_SIMPLE:
                         writeBinarySimpleModel(writer, model);
                         break;
@@ -530,7 +528,6 @@ public class SubstitutionModelGenerator extends Generator {
                 String prefix = model.getPrefix();
                 switch (model.getBinarySubstitutionModel()) {
                     case BIN_SIMPLE:
-                    case BIN_DOLLO:
                         break;
                     case BIN_COVARION:
                         writeParameterRef(prefix + "bcov.alpha", writer);
@@ -728,8 +725,6 @@ public class SubstitutionModelGenerator extends Generator {
             case BIN_COVARION:
                 writer.writeIDref(BinaryCovarionModelParser.COVARION_MODEL, prefix + "bcov");
                 break;
-            case BIN_DOLLO:
-                break; // Handled by component
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");
         }

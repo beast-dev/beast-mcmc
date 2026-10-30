@@ -266,12 +266,33 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            //++++++++++++++++ Clock Model ++++++++++++++++++
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                if (model.getClockType() == ClockType.HMC_CLOCK &&
+                        model.getClockDistributionType() != ClockDistributionType.LOGNORMAL) {
+                    throw new GeneratorException("The HMC relaxed clock of " + model.getName() +
+                            " is only available with a lognormal distribution.", BeautiFrame.CLOCK_MODELS);
+                }
+            }
+
+            //++++++++++++++++ Priors ++++++++++++++++++
+            for (Parameter param : options.selectParameters()) {
+                if (param.priorType == PriorType.UNIFORM_PRIOR && param.isPriorImproper()) {
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\na uniform prior cannot have an infinite bound." +
+                            "\nGive it bounds, or choose the improper uniform prior.", BeautiFrame.PRIORS);
+                }
+            }
+
             checkComponentOptions();
 
             // add other tests and warnings here
             // Speciation model with dated tips
             // Sampling rates without dated tips or priors on rate or nodes
 
+        } catch (GeneratorException ge) {
+            // thrown by a check above, with the panel the user should be taken to
+            throw ge;
         } catch (Exception e) {
             // catch any other exceptions here and rethrow to generate messages
             throw new GeneratorException(e.getMessage());

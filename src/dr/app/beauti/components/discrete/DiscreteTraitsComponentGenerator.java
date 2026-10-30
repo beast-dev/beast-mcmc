@@ -37,6 +37,9 @@ import dr.app.beauti.generator.ClockModelGenerator;
 import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+
 import dr.evolution.datatype.GeneralDataType;
 import dr.inference.distribution.BinomialLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
@@ -88,6 +91,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     @Override
     public void checkOptions() throws GeneratorException {
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            if (model.isActivateBSSVS() && model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
+                throw new GeneratorException("BSSVS cannot be used with the GLM substitution model of " +
+                        model.getName() + ".", BeautiFrame.SITE_MODELS);
+            }
+        }
         super.checkOptions();
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {

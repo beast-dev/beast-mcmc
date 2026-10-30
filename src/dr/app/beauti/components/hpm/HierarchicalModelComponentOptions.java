@@ -41,6 +41,9 @@ import java.util.List;
  */
 public class HierarchicalModelComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 8813437700244230279L;
     public HierarchicalModelComponentOptions(final BeautiOptions options) {
         this.options = options;
         hpmList = new ArrayList<HierarchicalPhylogeneticModel>();

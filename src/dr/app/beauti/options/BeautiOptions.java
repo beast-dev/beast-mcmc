@@ -30,6 +30,9 @@ package dr.app.beauti.options;
 import java.util.*;
 
 import dr.app.beauti.components.ComponentFactory;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
@@ -140,10 +143,14 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsTreeModel.clear();
 
         // meanDistance = 1.0;
+        useTipDates = false;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
         maximumTipHeight = 0.0;
         translation = 0;
+        originDate = null;
+        dateGuesser = new DateGuesser();
+        taxonSetsHeights.clear();
 
         dataPartitions.clear();
         traits.clear();
@@ -159,7 +166,17 @@ public class BeautiOptions extends ModelOptions {
         // meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
-        units = Units.Type.SUBSTITUTIONS;
+        units = Units.Type.YEARS;
+
+        multiPartitionLists.clear();
+        otherPartitions.clear();
+        needCoalescentModel.clear();
+        operatorSetType = OperatorSetType.DEFAULT;
+        useClassicOperatorsAndPriors = false;
+        logCoalescentEventsStatistic = false;
+        generateDemographicLogFile = false;
+        demographicModelName = null;
+        demographicLogFileName = null;
 
         // Operator schedule options
         optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
@@ -1367,5 +1384,49 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public boolean logCoalescentEventsStatistic = false;
+
+    /**
+     * Restores the fields that a file saved by an earlier version of BEAUti does not carry. A field added
+     * after that file was written arrives as null (or as 0 or false, for a primitive: use
+     * {@link ObjectInputStream#readFields()} here instead if some later field needs a non-zero default).
+     */
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+
+        if (taxonSets == null) taxonSets = new ArrayList<Taxa>();
+        if (taxonSetsMono == null) taxonSetsMono = new HashMap<Taxa, Boolean>();
+        if (taxonSetsHeights == null) taxonSetsHeights = new HashMap<Taxa, Double>();
+        if (taxonSetsIncludeStem == null) taxonSetsIncludeStem = new HashMap<Taxa, Boolean>();
+        if (taxonSetsTreeModel == null) taxonSetsTreeModel = new HashMap<Taxa, PartitionTreeModel>();
+        if (dateGuesser == null) dateGuesser = new DateGuesser();
+        if (dataPartitions == null) dataPartitions = new ArrayList<AbstractPartitionData>();
+        if (traits == null) traits = new ArrayList<TraitData>();
+        if (multiPartitionLists == null) multiPartitionLists = new ArrayList<List<PartitionData>>();
+        if (otherPartitions == null) otherPartitions = new ArrayList<AbstractPartitionData>();
+        if (userTrees == null) userTrees = new HashMap<String, TreeHolder>();
+        if (treeFileName == null) treeFileName = new ArrayList<String>();
+        if (substTreeFileName == null) substTreeFileName = new ArrayList<String>();
+        if (needCoalescentModel == null) needCoalescentModel = new HashMap<String, Boolean>();
+
+        if (datesUnits == null) datesUnits = DateUnitsType.YEARS;
+        if (datesDirection == null) datesDirection = DateUnitsType.FORWARDS;
+        if (units == null) units = Units.Type.YEARS;
+        if (optimizationTransform == null) optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
+        if (operatorSetType == null) operatorSetType = OperatorSetType.DEFAULT;
+        if (fileNameStem == null) fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
+
+        if (globalModelOptions == null) globalModelOptions = new GlobalModelOptions(this);
+        if (clockModelOptions == null) clockModelOptions = new ClockModelOptions(this);
+        if (treeModelOptions == null) treeModelOptions = new TreeModelOptions(this);
+
+        // the tree models of an older file have no entry, and the tree prior panel reads it as a boolean
+        for (PartitionTreeModel treeModel : getPartitionTreeModels()) {
+            if (!needCoalescentModel.containsKey(treeModel.getName())) {
+                needCoalescentModel.put(treeModel.getName(), true);
+            }
+        }
+
+        clearDataPartitionCaches();
+    }
 
 }

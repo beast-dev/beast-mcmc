@@ -83,6 +83,9 @@ import java.awt.*;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.io.*;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -447,31 +450,34 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean readFromFile(File file) throws IOException {
-        FileInputStream fileIn =
-                new FileInputStream(file);
+        BeautiOptions loaded;
+        ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)));
         try {
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            options = (BeautiOptions) in.readObject();
-            in.close();
-        } catch (IOException ioe) {
+            loaded = (BeautiOptions) in.readObject();
+        } catch (ClassNotFoundException | ClassCastException | StreamCorruptedException |
+                 OptionalDataException | InvalidClassException e) {
+            // (a file that is not a BEAUti document, or one from an incompatible version)
+            e.printStackTrace(System.err);
             JOptionPane.showMessageDialog(this,
-                    "Unable to read BEAUti file. BEAUti can only read files\n" +
-                            "created by 'Saving' within BEAUti. It cannot read BEAST\n" +
-                            "XML files. To read data within BEAST XML files, use\n" +
-                            "the 'Import' option.",
+                    "Unable to read BEAUti file. BEAUti can only read files created by\n" +
+                            "'Saving' within BEAUti, and from a compatible version. It cannot\n" +
+                            "read BEAST XML files; use the 'Import' option for those.\n\n" + e,
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
-        } catch (ClassNotFoundException cnfe) {
-            JOptionPane.showMessageDialog(this, "Unable to read BEAUti file: " + cnfe.getMessage(),
-                    "Unable to read file",
-                    JOptionPane.ERROR_MESSAGE);
-            cnfe.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            // returning false leaves this document as it was
             return false;
+        } finally {
+            in.close();
         }
-        fileIn.close();
 
+        options = loaded;
+        BeautiOptions.setInstance(options);
         options.registerComponents(components);
         generator = new BeastGenerator(options, components);
+
+        // the panels are still showing the document this window had before
+        setAllOptions();
+        setStatusMessage();
 
         return true;
     }
@@ -481,13 +487,31 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean writeToFile(File file) throws IOException {
-        OutputStream fileOut = new FileOutputStream(file);
-        ObjectOutputStream out =
-                new ObjectOutputStream(fileOut);
-        out.writeObject(options);
-        out.close();
-        fileOut.close();
-        return true;
+        // take anything being edited in the current panel first
+        getAllOptions();
+
+        // write to a temporary file and move it into place, so that a failure cannot destroy the old file
+        File directory = file.getAbsoluteFile().getParentFile();
+        File temporaryFile = File.createTempFile(file.getName(), ".tmp", directory);
+        try {
+            ObjectOutputStream out =
+                    new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(temporaryFile)));
+            try {
+                out.writeObject(options);
+            } finally {
+                out.close();
+            }
+            try {
+                Files.move(temporaryFile.toPath(), file.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporaryFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            return true;
+        } finally {
+            // (does nothing once the move has succeeded)
+            temporaryFile.delete();
+        }
     }
 
     public final void doImport() {

@@ -38,6 +38,9 @@ import java.util.List;
  */
 public class HierarchicalPhylogeneticModel implements Serializable {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 4363103224767258098L;
     final private String name;
     final private List<Parameter> argumentParameterList;
     final private List<Parameter> conditionalParameterList;

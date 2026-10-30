@@ -44,6 +44,9 @@ import java.util.List;
  */
 public abstract class AbstractPartitionData implements Serializable {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 5904121432221533689L;
     protected String fileName;
     protected String name;
     protected List<TraitData> traits;

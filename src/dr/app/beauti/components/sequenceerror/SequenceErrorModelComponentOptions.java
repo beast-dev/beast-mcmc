@@ -40,6 +40,9 @@ import java.util.Map;
  * @author Andrew Rambaut
  */
 public class SequenceErrorModelComponentOptions implements ComponentOptions {
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 5918795072548586097L;
     static public final String ERROR_MODEL = "errorModel";
     static public final String AGE_RATE = "ageRelatedErrorRate";
     static public final String BASE_RATE = "baseErrorRate";

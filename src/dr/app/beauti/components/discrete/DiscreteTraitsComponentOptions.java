@@ -44,6 +44,9 @@ import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.
  */
 public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = -6306584169039060167L;
     private final BeautiOptions options;
 
     public DiscreteTraitsComponentOptions(final BeautiOptions options) {

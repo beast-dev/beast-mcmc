@@ -38,6 +38,9 @@ import java.util.List;
 
 public class DolloComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 5698525004940073214L;
     public static final String DEATH_RATE = "death.rate";
     public static final String DATA_NAME = "binaryDolloDataType";
     public static final String MODEL_NAME = "binaryDolloSubstModel";

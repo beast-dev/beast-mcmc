@@ -203,7 +203,8 @@ public final class MascotDynamics {
         }
         for (int epoch = 0; epoch < migrationModels.length; epoch++) {
             String error = ComplexSubstitutionModelGradientSupport.getCompatibilityError(
-                    migrationModels[epoch], "mascotGradient part=\"migration\" with epoch " + epoch + "'s migrationModel");
+                    migrationModels[epoch], "mascotGradient part=\"migration\" with epoch " + epoch + "'s migrationModel",
+                    true);
             if (error != null) {
                 return error;
             }
@@ -319,18 +320,19 @@ public final class MascotDynamics {
             SubstitutionModel model = migrationModels[epoch];
             Parameter epochRatesParameter = ComplexSubstitutionModelGradientSupport.getRatesParameter(model);
             int epochGradientOffset = epoch * parametersPerEpoch;
+            Normalization normalization = normalization(model, combinedGradient, epochGradientOffset);
             int parameterIndex = 0;
             for (int source = 0; source < stateCount; source++) {
                 for (int sink = source + 1; sink < stateCount; sink++) {
-                    destination[resultOffset + parameterIndex] = gradientWrtModelRate(
-                            combinedGradient, epochGradientOffset, model, epochRatesParameter, parameterIndex, source, sink);
+                    destination[resultOffset + parameterIndex] = gradientWrtModelRate(combinedGradient,
+                            epochGradientOffset, model, epochRatesParameter, parameterIndex, source, sink, normalization);
                     parameterIndex++;
                 }
             }
             for (int sink = 0; sink < stateCount; sink++) {
                 for (int source = sink + 1; source < stateCount; source++) {
-                    destination[resultOffset + parameterIndex] = gradientWrtModelRate(
-                            combinedGradient, epochGradientOffset, model, epochRatesParameter, parameterIndex, source, sink);
+                    destination[resultOffset + parameterIndex] = gradientWrtModelRate(combinedGradient,
+                            epochGradientOffset, model, epochRatesParameter, parameterIndex, source, sink, normalization);
                     parameterIndex++;
                 }
             }
@@ -338,8 +340,45 @@ public final class MascotDynamics {
         }
     }
 
+    /**
+     * A normalized model's matrix is N = Q / s with s = sum_i pi_i sum_{j != i} Q_ij and pi from its frequency model.
+     * For the rate r behind Q_ij = c r, dN_ab/dr = c (delta_ab,ij - pi_i N_ab) / s, so the chain rule needs s and
+     * dot = sum_{a != b} g_ab N_ab, where g is the gradient wrt the entries of N.
+     */
+    private static final class Normalization {
+        final double constant;
+        final double dot;
+
+        Normalization(double constant, double dot) {
+            this.constant = constant;
+            this.dot = dot;
+        }
+    }
+
+    /** @return null for an unnormalized model. */
+    private Normalization normalization(SubstitutionModel model, double[] combinedGradient, int epochGradientOffset) {
+        ComplexSubstitutionModel complexModel = (ComplexSubstitutionModel) model;
+        if (!complexModel.getNormalization()) {
+            return null;
+        }
+        double constant = complexModel.setupMatrix();
+        migrationModelMatrix = ensure(migrationModelMatrix, stateCount * stateCount);
+        model.getInfinitesimalMatrix(migrationModelMatrix);
+        double dot = 0.0;
+        for (int source = 0; source < stateCount; source++) {
+            for (int sink = 0; sink < stateCount; sink++) {
+                if (source != sink) {
+                    dot += combinedGradient[epochGradientOffset + rowMajorMigrationIndex(source, sink)] *
+                            migrationModelMatrix[source * stateCount + sink];
+                }
+            }
+        }
+        return new Normalization(constant, dot);
+    }
+
     private double gradientWrtModelRate(double[] combinedGradient, int epochGradientOffset, SubstitutionModel model,
-                                        Parameter ratesParameter, int parameterIndex, int source, int sink) {
+                                        Parameter ratesParameter, int parameterIndex, int source, int sink,
+                                        Normalization normalization) {
         double rawRate = ratesParameter.getParameterValue(parameterIndex);
         if (!(rawRate > 0.0) || !Double.isFinite(rawRate)) {
             throw new IllegalStateException("migrationModel rates parameter has a non-positive or non-finite " +
@@ -353,7 +392,12 @@ public final class MascotDynamics {
             // BSSVS models use rate * indicator, so a rate whose indicator is off does not enter the likelihood
             scale *= ((BayesianStochasticSearchVariableSelection) model).getIndicators().getParameterValue(parameterIndex);
         }
-        return combinedGradient[epochGradientOffset + rowMajorMigrationIndex(source, sink)] * scale;
+        double gradient = combinedGradient[epochGradientOffset + rowMajorMigrationIndex(source, sink)];
+        if (normalization == null) {
+            return gradient * scale;
+        }
+        double sourceFrequency = model.getFrequencyModel().getFrequency(source);
+        return (gradient - sourceFrequency * normalization.dot) * scale / normalization.constant;
     }
 
     private int rowMajorMigrationIndex(int source, int sink) {

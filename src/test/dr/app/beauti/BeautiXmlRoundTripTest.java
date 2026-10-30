@@ -69,7 +69,24 @@ public class BeautiXmlRoundTripTest {
         }
     }
 
-    // ---- the MCMC settings, which stage 1 of the importer recovers --------------------------------
+    // ---- cases that survive a round trip in full --------------------------------------------------
+
+    @Test
+    public void apes_hky_strict_constant() throws Exception {
+        roundTrip("apes_hky_strict_constant");
+    }
+
+    @Test
+    public void apes_hky_codon112_strict_constant() throws Exception {
+        roundTrip("apes_hky_codon112_strict_constant");
+    }
+
+    @Test
+    public void primates2_linked_hky_strict_constant() throws Exception {
+        roundTrip("primates2_linked_hky_strict_constant");
+    }
+
+    // ---- the MCMC settings, and the rule about a document that is not empty -----------------------
 
     /**
      * The chain length, the log intervals and the file names should come back whatever the models are.

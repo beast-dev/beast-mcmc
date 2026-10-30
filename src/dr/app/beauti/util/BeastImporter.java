@@ -174,6 +174,12 @@ public class BeastImporter {
     private Alignment readAlignment(Element e, TaxonList taxa) throws Importer.ImportException {
         SimpleAlignment alignment = new SimpleAlignment();
 
+        // the id names the partition this alignment belongs to, and ties it to the rest of the file
+        String id = e.getAttributeValue(XMLParser.ID);
+        if (id != null) {
+            alignment.setId(id);
+        }
+
         List children = e.getChildren();
         for(Object aChildren : children) {
             Element child = (Element) aChildren;

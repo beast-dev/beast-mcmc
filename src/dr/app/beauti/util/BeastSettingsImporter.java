@@ -57,6 +57,16 @@ import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
 import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.substmodel.GTRParser;
 import dr.inference.model.ParameterParser;
+import dr.app.beauti.options.Operator;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.PriorType;
+import dr.inferencexml.operators.DeltaExchangeOperatorParser;
+import dr.evomodelxml.tree.CTMCScalePriorParser;
+import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
+import dr.inferencexml.distribution.PriorParsers;
+import dr.inferencexml.model.CompoundLikelihoodParser;
+import dr.inferencexml.model.OneOnXPriorParser;
+import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.inference.model.StatisticParser;
 import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.evomodelxml.operators.ExchangeOperatorParser;
@@ -101,6 +111,10 @@ public class BeastSettingsImporter {
      * The codon position prefix BEAUti gives the merged first and second positions.
      */
     private static final String CODON_1_AND_2 = "CP1+2.";
+    private static final String PRIOR_BLOCK = "prior";
+    private static final String OPERATOR_WEIGHT = "weight";
+    private static final String OPERATOR_WINDOW_SIZE = "windowSize";
+    private static final String OPERATOR_SIZE = "size";
 
     /**
      * Every clock model's id ends with this, whatever kind of clock it is.
@@ -135,6 +149,8 @@ public class BeastSettingsImporter {
         importTipDates();
         importParameterisation();
         importOperatorSettings();
+        importParameterValues();
+        importPriors();
         importMCMCSettings();
     }
 
@@ -189,6 +205,298 @@ public class BeastSettingsImporter {
         }
         options.operatorSetType = operatorSetType;
         report.recovered("the operators, " + operatorSetType);
+
+        importOperatorWeightsAndTunings(operators);
+    }
+
+    /**
+     * The operators are written in the order BEAUti lists them, leaving out the ones with no weight, so
+     * they line up with that list one for one. Each is checked against the parameter it acts on before its
+     * weight and tuning are taken, and a schedule that does not line up is left alone and reported: a
+     * weight put on the wrong operator would be worse than none at all.
+     */
+    private void importOperatorWeightsAndTunings(Element operators) {
+        List<Operator> expected = new ArrayList<Operator>();
+        for (Operator operator : options.selectOperators()) {
+            if (operator.getWeight() > 0.0 && operator.isUsed()) {
+                expected.add(operator);
+            }
+        }
+
+        List<Element> written = new ArrayList<Element>();
+        for (Object child : operators.getChildren()) {
+            written.add((Element) child);
+        }
+
+        if (written.size() < expected.size()) {
+            report.notRecovered("the operator weights and tunings (the file has fewer operators than this " +
+                    "analysis needs)");
+            return;
+        }
+        for (int i = 0; i < expected.size(); i++) {
+            Operator operator = expected.get(i);
+            Parameter parameter = operator.getParameter1();
+            // some operators act on a tree rather than on a parameter the file names, and there is nothing
+            // to check them against
+            boolean named = parameter != null && elementById(parameter.getName()) != null;
+            if (named && !refersTo(written.get(i), parameter.getName())) {
+                report.notRecovered("the operator weights and tunings (the operators in the file are not " +
+                        "the ones this analysis has)");
+                return;
+            }
+        }
+
+        int tunings = 0;
+        for (int i = 0; i < expected.size(); i++) {
+            Operator operator = expected.get(i);
+            Element element = written.get(i);
+
+            Double weight = doubleAttribute(element, OPERATOR_WEIGHT);
+            if (weight != null) {
+                operator.setWeight(weight);
+            }
+            Double tuning = tuningOf(element);
+            if (tuning != null && operator.isTunable()) {
+                operator.setTuning(tuning);
+                tunings++;
+            }
+        }
+        report.recovered("the weights of " + expected.size() + " operators and the tuning of " + tunings);
+    }
+
+    /**
+     * @return the operator's tuning, whichever of the names the operators give it by, or null if this is
+     * one of the operators that has nothing to tune
+     */
+    private static Double tuningOf(Element operator) {
+        for (String name : new String[]{ScaleOperatorParser.SCALE_FACTOR, OPERATOR_WINDOW_SIZE,
+                DeltaExchangeOperatorParser.DELTA, OPERATOR_SIZE}) {
+            Double tuning = doubleAttribute(operator, name);
+            if (tuning != null) {
+                return tuning;
+            }
+        }
+        return null;
+    }
+
+    // ---- the values the parameters start at -------------------------------------------------------
+
+    /**
+     * Each parameter is written with the value it starts the chain at, under the parameter's own name, so
+     * a value that differs from the one BEAUti would pick is a value the user set.
+     */
+    private void importParameterValues() {
+        int values = 0;
+        for (Parameter parameter : options.selectParameters()) {
+            Element element = elementById(parameter.getName());
+            if (element == null || !element.getName().equalsIgnoreCase(ParameterParser.PARAMETER)) {
+                continue;
+            }
+            Double value = firstValueOf(element);
+            if (value == null) {
+                continue;
+            }
+            parameter.setInitial(value);
+            parameter.setInitialSet(true);
+            values++;
+        }
+        if (values > 0) {
+            report.recovered("the starting values of " + values + " parameters");
+        }
+    }
+
+    /**
+     * A parameter of more than one dimension is written as a list of values, of which BEAUti only keeps
+     * one; the first stands for all of them.
+     */
+    private static Double firstValueOf(Element parameter) {
+        String value = parameter.getAttributeValue(ParameterParser.VALUE);
+        if (value == null) {
+            return null;
+        }
+        String[] parts = value.trim().split("\\s+");
+        try {
+            return Double.valueOf(parts[0]);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    // ---- the priors -------------------------------------------------------------------------------
+
+    /**
+     * The prior block holds one element per parameter that has a prior on it, naming the parameter inside
+     * it. A parameter with no element there has no prior of its own and is left as it is.
+     */
+    private void importPriors() {
+        Element priors = elementById(PRIOR_BLOCK);
+        if (priors == null || !priors.getName().equalsIgnoreCase(CompoundLikelihoodParser.PRIOR)) {
+            report.notRecovered("the priors (the file has no prior block)");
+            return;
+        }
+
+        Map<String, Parameter> byName = new HashMap<String, Parameter>();
+        for (Parameter parameter : options.selectParameters()) {
+            byName.put(parameter.getName(), parameter);
+        }
+
+        int taken = 0;
+        for (Object child : priors.getChildren()) {
+            if (importPrior((Element) child, byName)) {
+                taken++;
+            }
+        }
+        if (taken > 0) {
+            report.recovered("the priors on " + taken + " parameters");
+        }
+    }
+
+    /**
+     * Reads one prior, unwrapping the truncation and the caching that may stand around it.
+     *
+     * @return true if it named a parameter of this analysis and was understood
+     */
+    private boolean importPrior(Element element, Map<String, Parameter> byName) {
+        if (element.getAttributeValue(XMLParser.IDREF) != null) {
+            // a prior written with the model it belongs to, and only referred to here
+            return false;
+        }
+        if (element.getName().equalsIgnoreCase(CachedDistributionLikelihoodParser.CACHED_PRIOR)) {
+            for (Object child : element.getChildren()) {
+                if (importPrior((Element) child, byName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        boolean truncated = element.getName().equalsIgnoreCase(PriorParsers.TRUNCATED);
+        Double truncationLower = null;
+        Double truncationUpper = null;
+        Element distribution = element;
+        if (truncated) {
+            truncationLower = doubleAttribute(element, PriorParsers.LOWER);
+            truncationUpper = doubleAttribute(element, PriorParsers.UPPER);
+            distribution = null;
+            for (Object child : element.getChildren()) {
+                distribution = (Element) child;
+                break;
+            }
+            if (distribution == null) {
+                return false;
+            }
+        }
+
+        Parameter parameter = parameterOf(distribution, byName);
+        if (parameter == null) {
+            return false;
+        }
+
+        if (!setPrior(parameter, distribution)) {
+            report.notRecovered("the prior on '" + parameter.getName() + "', which the file gives as " +
+                    distribution.getName());
+            return false;
+        }
+
+        parameter.isTruncated = truncated;
+        if (truncated) {
+            parameter.truncationLower = truncationLower == null ? Double.NEGATIVE_INFINITY : truncationLower;
+            parameter.truncationUpper = truncationUpper == null ? Double.POSITIVE_INFINITY : truncationUpper;
+        }
+        parameter.setPriorEdited(true);
+        return true;
+    }
+
+    /**
+     * @return the parameter or statistic this prior is on, or null if it is one this analysis does not have
+     */
+    private Parameter parameterOf(Element distribution, Map<String, Parameter> byName) {
+        for (Object child : distribution.getChildren()) {
+            Element element = (Element) child;
+            String idref = element.getAttributeValue(XMLParser.IDREF);
+            if (idref != null && byName.containsKey(idref)) {
+                return byName.get(idref);
+            }
+            Parameter nested = parameterOf(element, byName);
+            if (nested != null) {
+                return nested;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sets the kind of prior and the numbers that go with it from the element that carries them.
+     *
+     * @return false if this is a kind of prior BEAUti does not offer
+     */
+    private boolean setPrior(Parameter parameter, Element distribution) {
+        String name = distribution.getName();
+
+        if (name.equalsIgnoreCase(PriorParsers.UNIFORM_PRIOR)) {
+            parameter.priorType = PriorType.UNIFORM_PRIOR;
+            parameter.uniformLower = valueOr(distribution, PriorParsers.LOWER, parameter.uniformLower);
+            parameter.uniformUpper = valueOr(distribution, PriorParsers.UPPER, parameter.uniformUpper);
+        } else if (name.equalsIgnoreCase(PriorParsers.DISCRETE_UNIFORM_PRIOR)) {
+            parameter.priorType = PriorType.DISCRETE_UNIFORM_PRIOR;
+            parameter.uniformLower = valueOr(distribution, PriorParsers.LOWER, parameter.uniformLower);
+            parameter.uniformUpper = valueOr(distribution, PriorParsers.UPPER, parameter.uniformUpper);
+        } else if (name.equalsIgnoreCase(PriorParsers.EXPONENTIAL_PRIOR)) {
+            parameter.priorType = PriorType.EXPONENTIAL_PRIOR;
+            parameter.mean = valueOr(distribution, PriorParsers.MEAN, parameter.mean);
+            parameter.offset = valueOr(distribution, PriorParsers.OFFSET, parameter.offset);
+        } else if (name.equalsIgnoreCase(PriorParsers.LAPLACE_PRIOR)) {
+            parameter.priorType = PriorType.LAPLACE_PRIOR;
+            parameter.mean = valueOr(distribution, PriorParsers.MEAN, parameter.mean);
+            parameter.scale = valueOr(distribution, PriorParsers.SCALE, parameter.scale);
+        } else if (name.equalsIgnoreCase(PriorParsers.NORMAL_PRIOR)) {
+            parameter.priorType = PriorType.NORMAL_PRIOR;
+            parameter.mean = valueOr(distribution, PriorParsers.MEAN, parameter.mean);
+            parameter.stdev = valueOr(distribution, PriorParsers.STDEV, parameter.stdev);
+        } else if (name.equalsIgnoreCase(PriorParsers.LOG_NORMAL_PRIOR)) {
+            parameter.priorType = PriorType.LOGNORMAL_PRIOR;
+            // written as the mean and standard deviation of the distribution itself, or, when it is not in
+            // real space, as those of the normal distribution underneath it
+            boolean realSpace = distribution.getAttributeValue(PriorParsers.MEAN) != null;
+            parameter.setMeanInRealSpace(realSpace);
+            parameter.mean = valueOr(distribution, realSpace ? PriorParsers.MEAN : PriorParsers.MU, parameter.mean);
+            parameter.stdev = valueOr(distribution, realSpace ? PriorParsers.STDEV : PriorParsers.SIGMA, parameter.stdev);
+            parameter.offset = valueOr(distribution, PriorParsers.OFFSET, parameter.offset);
+        } else if (name.equalsIgnoreCase(PriorParsers.GAMMA_PRIOR)) {
+            parameter.priorType = PriorType.GAMMA_PRIOR;
+            parameter.shape = valueOr(distribution, PriorParsers.SHAPE, parameter.shape);
+            parameter.scale = valueOr(distribution, PriorParsers.SCALE, parameter.scale);
+            parameter.offset = valueOr(distribution, PriorParsers.OFFSET, parameter.offset);
+        } else if (name.equalsIgnoreCase(PriorParsers.INVGAMMA_PRIOR)
+                || name.equalsIgnoreCase(PriorParsers.INVGAMMA_PRIOR_CORRECT)) {
+            parameter.priorType = PriorType.INVERSE_GAMMA_PRIOR;
+            parameter.shape = valueOr(distribution, PriorParsers.SHAPE, parameter.shape);
+            parameter.scale = valueOr(distribution, PriorParsers.SCALE, parameter.scale);
+            parameter.offset = valueOr(distribution, PriorParsers.OFFSET, parameter.offset);
+        } else if (name.equalsIgnoreCase(PriorParsers.BETA_PRIOR)) {
+            parameter.priorType = PriorType.BETA_PRIOR;
+            parameter.shape = valueOr(distribution, PriorParsers.SHAPE, parameter.shape);
+            parameter.shapeB = valueOr(distribution, PriorParsers.SHAPEB, parameter.shapeB);
+            parameter.offset = valueOr(distribution, PriorParsers.OFFSET, parameter.offset);
+        } else if (name.equalsIgnoreCase(PriorParsers.POISSON_PRIOR)) {
+            parameter.priorType = PriorType.POISSON_PRIOR;
+            parameter.mean = valueOr(distribution, PriorParsers.MEAN, parameter.mean);
+            parameter.offset = valueOr(distribution, PriorParsers.OFFSET, parameter.offset);
+        } else if (name.equalsIgnoreCase(OneOnXPriorParser.ONE_ONE_X_PRIOR)) {
+            parameter.priorType = PriorType.ONE_OVER_X_PRIOR;
+        } else if (name.equalsIgnoreCase(PriorParsers.DIRICHLET_PRIOR)) {
+            parameter.priorType = PriorType.DIRICHLET_PRIOR;
+        } else if (name.equalsIgnoreCase(CTMCScalePriorParser.MODEL_NAME)) {
+            parameter.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    private static double valueOr(Element element, String name, double fallback) {
+        Double value = doubleAttribute(element, name);
+        return value == null ? fallback : value;
     }
 
     private static boolean hasOperator(Element operators, String... names) {

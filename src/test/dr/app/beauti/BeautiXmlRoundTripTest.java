@@ -28,6 +28,9 @@
 package test.dr.app.beauti;
 
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Operator;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.BeautiImporter;
 import dr.app.beauti.util.ImportReport;
 import org.junit.Assert;
@@ -273,6 +276,84 @@ public class BeautiXmlRoundTripTest {
         } finally {
             file.delete();
         }
+    }
+
+    /**
+     * Settings the user changed by hand, which no default would reproduce: a prior of another kind with its
+     * own numbers and a truncation, a starting value, and the weight and tuning of two operators.
+     */
+    @Test
+    public void editedPriorsValuesAndOperatorsSurviveARoundTrip() throws Exception {
+        BeautiOptions original = BeautiHeadlessHarness.getCase("apes_hky_strict_constant").build();
+
+        Parameter kappa = parameter(original, "kappa");
+        kappa.priorType = PriorType.NORMAL_PRIOR;
+        kappa.mean = 5.0;
+        kappa.stdev = 2.5;
+        kappa.isTruncated = true;
+        kappa.truncationLower = 0.1;
+        kappa.truncationUpper = 100.0;
+        kappa.setPriorEdited(true);
+
+        Parameter popSize = parameter(original, "constant.popSize");
+        popSize.setInitial(17.5);
+        popSize.setInitialSet(true);
+
+        operator(original, "kappa").setWeight(7.0);
+        operator(original, "kappa").setTuning(0.33);
+        operator(original, "frequencies").setWeight(11.0);
+        operator(original, "frequencies").setTuning(0.07);
+
+        File file = BeautiHeadlessHarness.generateToFile("round_trip_edited", original);
+        try {
+            String before = BeautiHeadlessHarness.normalised(BeautiHeadlessHarness.read(file));
+
+            BeautiOptions reopened = BeautiOptions.newInstance(BeautiHeadlessHarness.COMPONENTS);
+            new BeautiImporter(null, reopened).importFromFile(file);
+
+            Parameter read = parameter(reopened, "kappa");
+            Assert.assertEquals("the kind of prior", PriorType.NORMAL_PRIOR, read.priorType);
+            Assert.assertEquals("the mean of the prior", 5.0, read.mean, 1e-12);
+            Assert.assertEquals("the standard deviation of the prior", 2.5, read.stdev, 1e-12);
+            Assert.assertTrue("the prior should still be truncated", read.isTruncated);
+            Assert.assertEquals("the lower truncation", 0.1, read.truncationLower, 1e-12);
+            Assert.assertEquals("the upper truncation", 100.0, read.truncationUpper, 1e-12);
+
+            Assert.assertEquals("the starting value", 17.5,
+                    parameter(reopened, "constant.popSize").getInitial(), 1e-12);
+
+            Assert.assertEquals("the weight of the kappa operator", 7.0,
+                    operator(reopened, "kappa").getWeight(), 1e-12);
+            Assert.assertEquals("the tuning of the kappa operator", 0.33,
+                    operator(reopened, "kappa").getTuning(), 1e-12);
+            Assert.assertEquals("the weight of the frequencies operator", 11.0,
+                    operator(reopened, "frequencies").getWeight(), 1e-12);
+            Assert.assertEquals("the tuning of the frequencies operator", 0.07,
+                    operator(reopened, "frequencies").getTuning(), 1e-12);
+
+            String after = BeautiHeadlessHarness.regenerate("round_trip_edited", reopened);
+            BeautiHeadlessHarness.assertSameXML("round_trip_edited", before, after);
+        } finally {
+            file.delete();
+        }
+    }
+
+    private static Parameter parameter(BeautiOptions options, String name) {
+        for (Parameter parameter : options.selectParameters()) {
+            if (parameter.getName().equals(name)) {
+                return parameter;
+            }
+        }
+        throw new IllegalArgumentException("no parameter called " + name);
+    }
+
+    private static Operator operator(BeautiOptions options, String name) {
+        for (Operator operator : options.selectOperators()) {
+            if (operator.getName().equals(name) && operator.isUsed()) {
+                return operator;
+            }
+        }
+        throw new IllegalArgumentException("no operator called " + name);
     }
 
     /**

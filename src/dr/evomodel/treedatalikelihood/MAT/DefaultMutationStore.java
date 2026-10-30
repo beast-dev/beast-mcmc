@@ -52,9 +52,9 @@ import java.util.Arrays;
  * them back.
  *
  * With discrete site rate categories ({@link #setCategories}), each variable pattern also has a category,
- * which is part of the sampled state (journaled), and each node a category composition: the summed weights
- * of its variable patterns in each (category, state), kept up to date as states and categories change and
- * recomputed after a revert.
+ * which is part of the sampled state, and each node a category composition: the summed weights of its
+ * variable patterns in each (category, state), kept up to date as states and categories change. Both are
+ * journaled.
  */
 public final class DefaultMutationStore implements MutationStore {
 
@@ -102,6 +102,8 @@ public final class DefaultMutationStore implements MutationStore {
     private boolean rootSaved = false;
     private int savedRoot;
     private byte[] savedCategories;          // null unless a category has changed since the last commit
+    private double[][] savedCategoryCompositions;
+    private boolean[] categoryCompositionDirty;
     private boolean fitchSetsStaleChanged = false;
     private boolean savedFitchSetsStale;
 
@@ -234,6 +236,7 @@ public final class DefaultMutationStore implements MutationStore {
         stateVersions[nodeNumber] = ++lastStateVersion;
         compositions[nodeNumber] = null;
         if (categories != null) {
+            journalCategoryComposition(nodeNumber);
             categoryCompositions[nodeNumber] = null;
         }
         changedNodes.add(nodeNumber);
@@ -270,7 +273,7 @@ public final class DefaultMutationStore implements MutationStore {
             }
         }
         if (categories != null && categories[pattern] >= 0 && categoryCompositions[nodeNumber] != null) {
-            // (not journaled: revert discards the category compositions of the nodes whose states changed)
+            journalCategoryComposition(nodeNumber);
             double[] categoryComposition = categoryCompositions[nodeNumber];
             int offset = categories[pattern] * stateCount;
             double weight = patternWeights[pattern];
@@ -314,6 +317,8 @@ public final class DefaultMutationStore implements MutationStore {
         this.categoryCount = categoryCount;
         this.categories = patternCategories.clone();
         this.categoryCompositions = new double[nodeCount][];
+        this.savedCategoryCompositions = new double[nodeCount][];
+        this.categoryCompositionDirty = new boolean[nodeCount];
         this.savedCategories = null;
     }
 
@@ -369,6 +374,7 @@ public final class DefaultMutationStore implements MutationStore {
             if (categoryCompositions[n] != null) {
                 int state = states[n][pattern];
                 if (state >= 0) {
+                    journalCategoryComposition(n);
                     double[] categoryComposition = categoryCompositions[n];
                     categoryComposition[old * stateCount + state] -= weight;
                     categoryComposition[category * stateCount + state] += weight;
@@ -378,12 +384,41 @@ public final class DefaultMutationStore implements MutationStore {
     }
 
     /**
+     * Replaces the site rate categories of all patterns (journaled), with the nodes' category compositions
+     * for them, which the caller has computed (null entries are computed when next asked for). For changing
+     * many categories at once: {@link #setCategory} updates every node for each pattern.
+     */
+    public void replaceCategories(byte[] patternCategories, double[][] nodeCategoryCompositions) {
+        int changes = 0;
+        for (int p = 0; p < patternCount; p++) {
+            if (patternCategories[p] != categories[p]) {
+                changes++;
+            }
+        }
+        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, changes);
+        if (savedCategories == null) {
+            savedCategories = categories;
+        }
+        categories = patternCategories.clone();
+        for (int n = 0; n < nodeCount; n++) {
+            journalCategoryComposition(n);
+            categoryCompositions[n] = nodeCategoryCompositions[n];
+        }
+    }
+
+    /**
      * @return the summed weights of the node's variable patterns in each category and state, indexed by
      * category * stateCount + state; callers must not modify it
      */
     public double[] getCategoryComposition(int nodeNumber) {
         double[] categoryComposition = categoryCompositions[nodeNumber];
+        assert categoryComposition == null || Arrays.equals(categoryComposition, countCategoryComposition(nodeNumber)) :
+                "category composition of node " + nodeNumber;
         if (categoryComposition == null) {
+            if (statesDirty[nodeNumber] || savedCategories != null) {
+                // computed from states or categories changed since the commit: revert must discard it
+                journalCategoryComposition(nodeNumber);
+            }
             categoryComposition = new double[categoryCount * stateCount];
             byte[] nodeStates = states[nodeNumber];
             for (int p = 0; p < patternCount; p++) {
@@ -394,6 +429,28 @@ public final class DefaultMutationStore implements MutationStore {
             categoryCompositions[nodeNumber] = categoryComposition;
         }
         return categoryComposition;
+    }
+
+    private double[] countCategoryComposition(int nodeNumber) {
+        double[] counts = new double[categoryCount * stateCount];
+        byte[] nodeStates = states[nodeNumber];
+        for (int p = 0; p < patternCount; p++) {
+            if (nodeStates[p] >= 0 && categories[p] >= 0) {
+                counts[categories[p] * stateCount + nodeStates[p]] += patternWeights[p];
+            }
+        }
+        return counts;
+    }
+
+    private void journalCategoryComposition(int nodeNumber) {
+        if (!categoryCompositionDirty[nodeNumber]) {
+            journaledNodes.add(nodeNumber);
+            savedCategoryCompositions[nodeNumber] = categoryCompositions[nodeNumber];
+            if (categoryCompositions[nodeNumber] != null) {
+                categoryCompositions[nodeNumber] = categoryCompositions[nodeNumber].clone();
+            }
+            categoryCompositionDirty[nodeNumber] = true;
+        }
     }
 
     private void journalStates(int nodeNumber) {
@@ -717,6 +774,10 @@ public final class DefaultMutationStore implements MutationStore {
             fitchSetsDirty[n] = false;
             branchDirty[n] = false;
             parentDirty[n] = false;
+            if (categories != null) {
+                savedCategoryCompositions[n] = null;
+                categoryCompositionDirty[n] = false;
+            }
         }
         journaledNodes.clear();
         rootSaved = false;
@@ -762,14 +823,12 @@ public final class DefaultMutationStore implements MutationStore {
             if (parentDirty[n]) {
                 parents[n] = savedParents[n];
             }
-            if (categories != null && statesDirty[n]) {
-                // (category compositions are not journaled: recomputed from the restored states when next asked for)
-                categoryCompositions[n] = null;
+            if (categories != null && categoryCompositionDirty[n]) {
+                categoryCompositions[n] = savedCategoryCompositions[n];
             }
         }
         if (savedCategories != null) {
             categories = savedCategories;
-            Arrays.fill(categoryCompositions, null);
         }
         if (rootSaved) {
             root = savedRoot;

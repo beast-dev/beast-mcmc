@@ -401,6 +401,7 @@ final class SiteRateCategories {
         }
 
         final double[] weights = new double[categoryCount];
+        final byte[] categories = store.getCategories().clone();
         for (int p = 0; p < patternCount; p++) {
             if (delegate.isConstantPattern(p)) {
                 continue;
@@ -424,7 +425,40 @@ final class SiteRateCategories {
                     break;
                 }
             }
-            store.setCategory(p, chosen);
+            categories[p] = (byte) chosen;
         }
+
+        // the nodes' category compositions for the new categories, all at once: the root's from its states,
+        // each other node's from its parent's and the events on its branch (in pre-order)
+        final double[][] compositions = new double[nodeCount][];
+        compositions[rootNumber] = new double[width];
+        for (int p = 0; p < patternCount; p++) {
+            if (!delegate.isConstantPattern(p) && rootStates[p] >= 0) {
+                compositions[rootNumber][categories[p] * stateCount + rootStates[p]] += patternWeights[p];
+            }
+        }
+        for (int j = nodeCount - 1; j >= 0; j--) {
+            final int n = order[j];
+            if (n == rootNumber) {
+                continue;
+            }
+            final double[] composition = compositions[store.getParent(n)].clone();
+            final BranchMutations mutations = store.getBranchMutations(n);
+            int i = 0;
+            while (i < mutations.getSubstitutionCount()) {
+                final int end = mutations.getSiteEnd(i);
+                final int p = mutations.getPattern(i);
+                final int offset = categories[p] * stateCount;
+                composition[offset + mutations.getFromState(i)] -= patternWeights[p];
+                composition[offset + mutations.getToState(end - 1)] += patternWeights[p];
+                i = end;
+            }
+            for (; i < mutations.size(); i++) {
+                final int p = mutations.getPattern(i);
+                composition[categories[p] * stateCount + mutations.getFromState(i)] -= patternWeights[p];
+            }
+            compositions[n] = composition;
+        }
+        store.replaceCategories(categories, compositions);
     }
 }

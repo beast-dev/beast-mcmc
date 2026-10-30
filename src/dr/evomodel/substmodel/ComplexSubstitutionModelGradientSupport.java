@@ -17,8 +17,8 @@ import dr.inference.model.Parameter;
  * back to an XML-facing {@link Parameter}: it must be a {@link
  * ComplexSubstitutionModel} (rate-ordering assumption), it must not be
  * normalized unless the caller implements the normalization derivative (BASTA
- * does, MASCOT does not), and it must expose a {@link
- * GeneralSubstitutionModel#getRatesParameter()}.
+ * and MASCOT do, for models normalized with their frequency model), and it must
+ * expose a {@link GeneralSubstitutionModel#getRatesParameter()}.
  */
 public final class ComplexSubstitutionModelGradientSupport {
 
@@ -34,20 +34,51 @@ public final class ComplexSubstitutionModelGradientSupport {
     }
 
     /**
-     * @param normalizationSupported whether the caller's gradient accounts for a normalized rate matrix
+     * @param normalizationSupported whether the caller applies the derivative of
+     *                               the normalization constant, which it can only
+     *                               do for {@link #normalizesWithFrequencyModel} models
+     * @return {@code null} if {@code model} is gradient-compatible, otherwise
+     * a human-readable reason it is not, prefixed by {@code context}.
      */
     public static String getCompatibilityError(SubstitutionModel model, String context,
                                                boolean normalizationSupported) {
         if (!(model instanceof ComplexSubstitutionModel)) {
             return context + " currently requires ComplexSubstitutionModel-compatible rate ordering";
         }
-        if (!normalizationSupported && ((ComplexSubstitutionModel) model).getNormalization()) {
-            return context + " requires normalized=\"false\" until the normalization derivative is implemented";
+        if (((ComplexSubstitutionModel) model).getNormalization()) {
+            if (!normalizationSupported) {
+                return context + " requires normalized=\"false\" until the normalization derivative is implemented";
+            }
+            if (!normalizesWithFrequencyModel(model)) {
+                return context + " requires normalized=\"false\" for " + namedClass(model).getSimpleName() +
+                        ", whose normalization is not supported by the gradient";
+            }
         }
         if (getRatesParameter(model) == null) {
             return context + ": model does not expose a rates parameter";
         }
         return null;
+    }
+
+    /**
+     * @return whether Q is rate * (frequency or 1) * (indicator or 1) per entry and is
+     * normalized by sum_i pi_i (-Q_ii) with pi from the frequency model, so that the
+     * normalization constant is linear in the rates. Subclasses that change the
+     * frequencies used (e.g. the stationary distribution of Q) or the rate
+     * parameterization are excluded. Anonymous subclasses, such as the XML
+     * parser's, which only choose the eigen system, count as their superclass.
+     */
+    public static boolean normalizesWithFrequencyModel(SubstitutionModel model) {
+        Class<?> type = namedClass(model);
+        return type == ComplexSubstitutionModel.class || type == SVSComplexSubstitutionModel.class;
+    }
+
+    private static Class<?> namedClass(SubstitutionModel model) {
+        Class<?> type = model.getClass();
+        while (type.isAnonymousClass()) {
+            type = type.getSuperclass();
+        }
+        return type;
     }
 
     /**

@@ -37,4 +37,8 @@ public final class MascotPreparedInput {
         tipData.validateCompatibleWith(schedule);
         return new MascotPreparedInput(schedule, tipData);
     }
+
+    public StructuredCoalescentSchedule getSchedule() {
+        return schedule;
+    }
 }

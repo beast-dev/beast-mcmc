@@ -49,8 +49,15 @@ public interface MascotLikelihoodDelegate {
         }
     }
 
-    final class NumericalException extends RuntimeException {
+    class NumericalException extends RuntimeException {
         public NumericalException(String message) {
+            super(message);
+        }
+    }
+
+    /** A pass would exceed its step budget (MascotStepRule); the likelihood there is -infinity, as for any numerical failure. */
+    final class StepBudgetException extends NumericalException {
+        public StepBudgetException(String message) {
             super(message);
         }
     }

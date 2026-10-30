@@ -148,6 +148,7 @@ ${extra_release_tag}</echo>
             <include name="test/dr/**"/>
             <!-- compile BASTA factory classes -->
             <include name="beagle/basta/*.class"/>
+            <include name="beagle/mascot/*.class"/>
         </javac>
         <echo message="Successfully compiled."/>
     </target>
@@ -165,6 +166,7 @@ ${extra_release_tag}</echo>
             </manifest>
             <fileset dir="${build}">
                 <include name="beagle/basta/*.class"/>
+                <include name="beagle/mascot/*.class"/>
                 <include name="dr/app/beast/**/*.class"/>
                 <!--<include name="dr/app/beastdev/**/*.class"/>-->
                 <include name="dr/app/beauti/**/*.class"/>

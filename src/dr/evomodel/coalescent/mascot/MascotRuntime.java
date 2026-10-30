@@ -180,4 +180,50 @@ final class MascotRuntime {
             this.inversePopulation = new double[stateCount];
         }
     }
+
+    /**
+     * Fills an epoch's migration matrix (diagonal = -row sum) and inverse population sizes from theta. The native
+     * kernel receives these arrays as they are, so its inputs are bit-identical to the Java reference's.
+     */
+    static void updateEpochRates(double[] theta, int epoch, int stateCount, EpochRates rates) {
+        int migrationParametersPerEpoch = stateCount * (stateCount - 1);
+        int thetaOffset = epoch * (migrationParametersPerEpoch + stateCount);
+        int index = 0;
+        for (int source = 0; source < stateCount; source++) {
+            double rowSum = 0.0;
+            int row = source * stateCount;
+            for (int sink = 0; sink < stateCount; sink++) {
+                if (source == sink) {
+                    continue;
+                }
+                double rate = theta[thetaOffset + index];
+                // Zero rates are valid (e.g. inactive BSSVS indicators);
+                // only negative or non-finite rates break the equations.
+                if (!(rate >= 0.0) || !Double.isFinite(rate)) {
+                    throw new MascotLikelihoodDelegate.NumericalException("invalid migration rate for epoch " + epoch +
+                            ", source " + source + ", sink " + sink + ": " + rate);
+                }
+                rates.migrationRates[index] = rate;
+                rates.migrationMatrix[row + sink] = rate;
+                rowSum += rate;
+                if (!Double.isFinite(rowSum)) {
+                    throw new MascotLikelihoodDelegate.NumericalException("invalid migration row sum for epoch " + epoch +
+                            ", source " + source + ": " + rowSum);
+                }
+                index++;
+            }
+            rates.migrationMatrix[row + source] = -rowSum;
+        }
+
+        int etaOffset = thetaOffset + migrationParametersPerEpoch;
+        for (int state = 0; state < stateCount; state++) {
+            double logPopulation = theta[etaOffset + state];
+            double inversePopulation = Math.exp(-logPopulation);
+            if (!Double.isFinite(logPopulation) || !Double.isFinite(inversePopulation)) {
+                throw new MascotLikelihoodDelegate.NumericalException("invalid log population size for epoch " + epoch +
+                        ", state " + state + ": " + logPopulation);
+            }
+            rates.inversePopulation[state] = inversePopulation;
+        }
+    }
 }

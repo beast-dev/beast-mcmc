@@ -13,6 +13,8 @@ import dr.evomodel.coalescent.basta.ConstantPopulationSizeModel;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
 import dr.evomodel.coalescent.mascot.MascotLikelihood;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
+import dr.evomodel.substmodel.ComplexSubstitutionModelAtStationarity;
+import dr.evomodel.substmodel.ComplexSubstitutionModelGradientSupport;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -75,6 +77,68 @@ public class MascotGradientTest extends TestCase {
         SVSComplexSubstitutionModel migrationModel =
                 new SVSComplexSubstitutionModel("location.model", dataType, frequencies, rates, indicators);
         migrationModel.setNormalization(false);
+        migrationModel.setScaleRatesByFrequencies(true);
+        MascotLikelihood likelihood = mascot(HIGH_PRESSURE_TREE, new int[]{0, 1, 2, 0, 1, 2}, dataType, null,
+                migrationModel, popSizes, 0.01);
+
+        double[] migrationGradient = likelihood.getMigrationGradientLogDensity();
+        assertEquals(0.0, migrationGradient[1], 0.0);
+        assertEquals(0.0, migrationGradient[3], 0.0);
+        assertGradientsMatch(likelihood, rates, popSizes, 1.0e-5);
+    }
+
+    /**
+     * A normalized model divides Q by s = sum_i pi_i sum_{j != i} Q_ij, so every rate also acts through s. Unequal
+     * frequencies make pi_i matter, with and without frequency scaling of the rates.
+     */
+    public void testNormalizedGradientsMatchFiniteDifferences() throws Exception {
+        for (boolean scaleByFrequencies : new boolean[]{false, true}) {
+            GeneralDataType dataType = dataType(3);
+            Parameter rates = new Parameter.Default("location.rates", HIGH_PRESSURE_RATES);
+            Parameter popSizes = new Parameter.Default("popSizes", HIGH_PRESSURE_POP_SIZES);
+            FrequencyModel frequencies = new FrequencyModel(dataType, new double[]{0.2, 0.3, 0.5});
+            ComplexSubstitutionModel migrationModel =
+                    new ComplexSubstitutionModel("location.model", dataType, frequencies, rates);
+            migrationModel.setNormalization(true);
+            migrationModel.setScaleRatesByFrequencies(scaleByFrequencies);
+            assertNull(ComplexSubstitutionModelGradientSupport.getCompatibilityError(migrationModel, "MASCOT", true));
+            assertNotNull(ComplexSubstitutionModelGradientSupport.getCompatibilityError(migrationModel, "BASTA"));
+            MascotLikelihood likelihood = mascot(HIGH_PRESSURE_TREE, new int[]{0, 1, 2, 0, 1, 2}, dataType, null,
+                    migrationModel, popSizes, 0.01);
+
+            assertGradientsMatch(likelihood, rates, popSizes, 1.0e-5);
+        }
+    }
+
+    /**
+     * The XML parser builds anonymous subclasses that only choose the eigen system; those are supported. A model that
+     * normalizes with Q's own stationary distribution is not, because its pi depends on the rates.
+     */
+    public void testNormalizationSupportCoversParserModelsOnly() {
+        GeneralDataType dataType = dataType(3);
+        Parameter rates = new Parameter.Default("location.rates", HIGH_PRESSURE_RATES);
+        FrequencyModel frequencies = new FrequencyModel(dataType, new double[]{0.2, 0.3, 0.5});
+        ComplexSubstitutionModel parserLike = new ComplexSubstitutionModel("parserLike", dataType, frequencies, rates) {
+        };
+        parserLike.setNormalization(true);
+        assertNull(ComplexSubstitutionModelGradientSupport.getCompatibilityError(parserLike, "MASCOT", true));
+
+        ComplexSubstitutionModelAtStationarity stationary =
+                new ComplexSubstitutionModelAtStationarity("stationary", dataType, rates);
+        stationary.setNormalization(true);
+        assertNotNull(ComplexSubstitutionModelGradientSupport.getCompatibilityError(stationary, "MASCOT", true));
+    }
+
+    /** Normalization with BSSVS: an inactive rate enters neither Q nor s, so its gradient is still exactly 0. */
+    public void testNormalizedBssvsGradientsMatchFiniteDifferences() throws Exception {
+        GeneralDataType dataType = dataType(3);
+        Parameter rates = new Parameter.Default("location.rates", HIGH_PRESSURE_RATES);
+        Parameter indicators = new Parameter.Default("location.indicators", new double[]{1.0, 0.0, 1.0, 0.0, 1.0, 1.0});
+        Parameter popSizes = new Parameter.Default("popSizes", HIGH_PRESSURE_POP_SIZES);
+        FrequencyModel frequencies = new FrequencyModel(dataType, new double[]{0.2, 0.3, 0.5});
+        SVSComplexSubstitutionModel migrationModel =
+                new SVSComplexSubstitutionModel("location.model", dataType, frequencies, rates, indicators);
+        migrationModel.setNormalization(true);
         migrationModel.setScaleRatesByFrequencies(true);
         MascotLikelihood likelihood = mascot(HIGH_PRESSURE_TREE, new int[]{0, 1, 2, 0, 1, 2}, dataType, null,
                 migrationModel, popSizes, 0.01);

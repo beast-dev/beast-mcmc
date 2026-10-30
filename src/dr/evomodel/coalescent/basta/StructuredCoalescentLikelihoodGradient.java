@@ -182,6 +182,14 @@ public class StructuredCoalescentLikelihoodGradient implements
                         ++k;
                     }
                 }
+
+                if (substitutionModel instanceof BayesianStochasticSearchVariableSelection) {
+                    // BSSVS models use rate * indicator, so a rate whose indicator is off does not enter the likelihood
+                    Parameter indicators = ((BayesianStochasticSearchVariableSelection) substitutionModel).getIndicators();
+                    for (int r = 0; r < chainedGradient.length; ++r) {
+                        chainedGradient[r] *= indicators.getParameterValue(r);
+                    }
+                }
                 return chainedGradient;
             }
 

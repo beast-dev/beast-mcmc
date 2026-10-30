@@ -95,17 +95,9 @@ public class XMLWriter extends java.io.PrintWriter {
     }
 
     public void writeTag(String tagname, Attribute[] attributes, boolean close) {
-        StringBuffer buffer = new StringBuffer("<");
+        StringBuilder buffer = new StringBuilder("<");
         buffer.append(tagname);
-        for (Attribute attribute : attributes) {
-            if (attribute != null) {
-                buffer.append(' ');
-                buffer.append(attribute.getAttributeName());
-                buffer.append("=\"");
-                buffer.append(attribute.getAttributeValue());
-                buffer.append("\"");
-            }
-        }
+        writeAttributes(buffer, attributes);
         if (close) {
             buffer.append("/");
         }
@@ -117,20 +109,12 @@ public class XMLWriter extends java.io.PrintWriter {
     }
 
     public void writeTag(String tagname, Attribute[] attributes, String content, boolean close) {
-        StringBuffer buffer = new StringBuffer("<");
+        StringBuilder buffer = new StringBuilder("<");
         buffer.append(tagname);
-        for (Attribute attribute : attributes) {
-            if (attribute != null) {
-                buffer.append(' ');
-                buffer.append(attribute.getAttributeName());
-                buffer.append("=\"");
-                buffer.append(attribute.getAttributeValue());
-                buffer.append("\"");
-            }
-        }
+        writeAttributes(buffer, attributes);
         if (content != null) {
             buffer.append(">");
-            buffer.append(content);
+            buffer.append(escape(content));
             if (close) {
                 buffer.append("</");
                 buffer.append(tagname);
@@ -144,6 +128,43 @@ public class XMLWriter extends java.io.PrintWriter {
         if (!close) {
             increaseLevel();
         }
+    }
+
+    private static void writeAttributes(StringBuilder buffer, Attribute[] attributes) {
+        for (Attribute attribute : attributes) {
+            if (attribute != null) {
+                buffer.append(' ');
+                buffer.append(attribute.getAttributeName());
+                buffer.append("=\"");
+                buffer.append(escape(String.valueOf(attribute.getAttributeValue())));
+                buffer.append("\"");
+            }
+        }
+    }
+
+    /**
+     * Escapes the characters that cannot appear as they are in an attribute value or in text, so that a
+     * name the user has given (a partition, a model, a taxon set or a trait) cannot produce a file that
+     * BEAST is unable to read.
+     */
+    private static String escape(String text) {
+        if (text.indexOf('&') < 0 && text.indexOf('<') < 0 && text.indexOf('>') < 0
+                && text.indexOf('"') < 0 && text.indexOf('\'') < 0) {
+            return text;
+        }
+        StringBuilder escaped = new StringBuilder(text.length() + 16);
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            switch (c) {
+                case '&': escaped.append("&amp;"); break;
+                case '<': escaped.append("&lt;"); break;
+                case '>': escaped.append("&gt;"); break;
+                case '"': escaped.append("&quot;"); break;
+                case '\'': escaped.append("&apos;"); break;
+                default: escaped.append(c);
+            }
+        }
+        return escaped.toString();
     }
 
     public void writeCloseTag(String tagname) {

@@ -197,7 +197,7 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
         }
 
         for (int epoch = 0; epoch < epochCount; epoch++) {
-            updateEpochRates(theta, epoch, epochRates[epoch]);
+            MascotRuntime.updateEpochRates(theta, epoch, stateCount, epochRates[epoch]);
         }
 
         MascotRuntime.ActiveState state = activeState;
@@ -230,7 +230,7 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
         validateInputs(prepared, theta, branchRates);
         activeMapper = null;
         for (int epoch = 0; epoch < epochCount; epoch++) {
-            updateEpochRates(theta, epoch, epochRates[epoch]);
+            MascotRuntime.updateEpochRates(theta, epoch, stateCount, epochRates[epoch]);
         }
         MascotAdjointTape.Store operations =
                 adjointEvaluator.resetTape(prepared.schedule.getIntervalCount() * 2 + epochCount + 1);
@@ -283,51 +283,6 @@ public final class GenericMascotLikelihoodDelegate implements MascotLikelihoodDe
         if (branchRates != null && branchRates.length <= prepared.maxLineageId) {
             throw new IllegalArgumentException("branchRates dimension " + branchRates.length +
                     " does not cover the maximum lineage id " + prepared.maxLineageId);
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Epoch rate cache
-    // ------------------------------------------------------------------
-
-    private void updateEpochRates(double[] theta, int epoch, MascotRuntime.EpochRates rates) {
-        int thetaOffset = epoch * parametersPerEpoch;
-        int index = 0;
-        for (int source = 0; source < stateCount; source++) {
-            double rowSum = 0.0;
-            int row = source * stateCount;
-            for (int sink = 0; sink < stateCount; sink++) {
-                if (source == sink) {
-                    continue;
-                }
-                double rate = theta[thetaOffset + index];
-                // Zero rates are valid (e.g. inactive BSSVS indicators);
-                // only negative or non-finite rates break the equations.
-                if (!(rate >= 0.0) || !Double.isFinite(rate)) {
-                    throw new MascotLikelihoodDelegate.NumericalException("invalid migration rate for epoch " + epoch +
-                            ", source " + source + ", sink " + sink + ": " + rate);
-                }
-                rates.migrationRates[index] = rate;
-                rates.migrationMatrix[row + sink] = rate;
-                rowSum += rate;
-                if (!Double.isFinite(rowSum)) {
-                    throw new MascotLikelihoodDelegate.NumericalException("invalid migration row sum for epoch " + epoch +
-                            ", source " + source + ": " + rowSum);
-                }
-                index++;
-            }
-            rates.migrationMatrix[row + source] = -rowSum;
-        }
-
-        int etaOffset = thetaOffset + migrationParametersPerEpoch;
-        for (int state = 0; state < stateCount; state++) {
-            double logPopulation = theta[etaOffset + state];
-            double inversePopulation = Math.exp(-logPopulation);
-            if (!Double.isFinite(logPopulation) || !Double.isFinite(inversePopulation)) {
-                throw new MascotLikelihoodDelegate.NumericalException("invalid log population size for epoch " + epoch +
-                        ", state " + state + ": " + logPopulation);
-            }
-            rates.inversePopulation[state] = inversePopulation;
         }
     }
 

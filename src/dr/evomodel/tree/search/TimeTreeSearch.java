@@ -37,6 +37,8 @@ import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
 
 import java.io.File;
@@ -68,7 +70,7 @@ import java.util.logging.Logger;
  * @author Xiang Ji
  * @author Marc A. Suchard
  */
-public class TimeTreeSearch implements Reportable {
+public class TimeTreeSearch implements Reportable, Citable {
 
     public enum StopReason {
         CONVERGED("converged: no NNI gains"),
@@ -192,8 +194,8 @@ public class TimeTreeSearch implements Reportable {
         if (!constraints.areSatisfied(tree)) {
             throw new IllegalStateException("The starting tree breaks a topology constraint");
         }
-        if (settings.njStart) {
-            njStart();
+        if (settings.njStart && !settings.currentStart) {
+            njStart(true);
         }
 
         bestState = null;
@@ -206,18 +208,40 @@ public class TimeTreeSearch implements Reportable {
             log.row(0, "start", 0, 0, 0, 0, fStart, fStart, fStart, null, Double.NaN, Double.NaN, Double.NaN,
                     startTree, seconds(), evaluations(), "", guardReverts);
             say("start: F = " + format(fStart));
+            // the second start begins from the parameters as they were, like a first one: after the first climb's
+            // fit (a small clock scale, say) the NJ tree's rates can make F -Infinity and the re-fit stall far below
+            final TreeStateSnapshot initialState = settings.njStart && settings.currentStart ? snapshot() : null;
 
             double f = refit(finalMaximizer, startBudget(), "t3b", 0, fStart);
             fRefitted = f;
             fBest = f;
             bestState = snapshot();
 
-            stopReason = hillClimb(f);
+            stopReason = hillClimb(f, true);
             addCandidate();
+
+            // the second start (§7.1): the NJ tree, fitted and climbed like the first; the perturbations then draw
+            // from the best trees of both
+            if (settings.njStart && settings.currentStart && checkBudgets() == null &&
+                    (stopReason == StopReason.CONVERGED || stopReason == StopReason.MAX_ROUNDS)) {
+                climb++;
+                log.setClimb(climb);
+                initialState.restore();
+                if (njStart(false)) {
+                    final double fNj = evaluator.evaluate();
+                    log.row(rounds, "start", 0, 0, 0, 0, fNj, fNj, fBest, null, Double.NaN, Double.NaN, Double.NaN,
+                            startTree, seconds(), evaluations(), "nj", guardReverts);
+                    stopReason = hillClimb(refit(finalMaximizer, startBudget(), "t3b", rounds, fNj), true);
+                    addCandidate();
+                } else {
+                    bestState.restore();
+                }
+            }
 
             // the perturbation phase (§7.2): a perturbed copy of a good tree, re-fitted and hill-climbed, until nStop
             // climbs in a row bring no new best
-            if (perturbation != null && stopReason == StopReason.CONVERGED) {
+            if (perturbation != null &&
+                    (stopReason == StopReason.CONVERGED || stopReason == StopReason.MAX_ROUNDS)) {
                 final int moves = Math.max(1, (int) Math.floor(settings.perturbStrength *
                         (tree.getExternalNodeCount() - 2)));
                 int unsuccessful = 0;
@@ -242,7 +266,7 @@ public class TimeTreeSearch implements Reportable {
                     say("perturbation " + climb + ": F = " + format(fParent) + " -> " + format(fPerturbed) + ", " +
                             kept + " operator moves");
                     final double fitted = refit(roundMaximizer, t3aBudget(), "t3a", rounds, fPerturbed);
-                    final StopReason climbed = hillClimb(fitted);
+                    final StopReason climbed = hillClimb(fitted, false);
                     addCandidate();
                     if (climbed != StopReason.CONVERGED && climbed != StopReason.MAX_ROUNDS) {
                         stopReason = climbed;
@@ -273,14 +297,17 @@ public class TimeTreeSearch implements Reportable {
 
     /**
      * The hill-climb from the current state (§7.3): NNI rounds until they stop gaining, then SPR and subtree swaps
-     * when on, then NNIs again; each change re-fits heights and rates (T3a), and a new global best re-fits everything
-     * (T3b) and scans the root positions nearby.
+     * when on, then NNIs again; each change re-fits heights and rates (T3a), and a new best re-fits everything (T3b)
+     * and scans the root positions nearby.
      *
-     * @param f the objective at the current state
+     * @param f     the objective at the current state
+     * @param start a start's climb, whose own best triggers the T3b re-fits, so that a second start below the
+     *              incumbent climbs as it would alone; otherwise (a perturbed tree) only a new global best does
      * @return CONVERGED, MAX_ROUNDS (this climb's), or the budget that ran out
      */
-    private StopReason hillClimb(double f) {
+    private StopReason hillClimb(double f, boolean start) {
         final int maxRounds = settings.maxRounds > 0 ? settings.maxRounds : tree.getInternalNodeCount();
+        double fClimb = f; // this climb's best
         lastApplied = null;
         boolean beyondNniNext = false; // the NNI rounds have converged: SPR and swaps next
         for (int r = 1; r <= maxRounds; ++r) {
@@ -315,8 +342,9 @@ public class TimeTreeSearch implements Reportable {
             accepted += applied;
             f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
             // a new best re-fits everything, then looks at the root positions nearby (§6.3)
-            while (f > fBest + settings.modelEpsilon) {
+            while (f > (start ? fClimb : fBest) + settings.modelEpsilon) {
                 f = refit(finalMaximizer, bestBudget(), "t3b", round, f);
+                fClimb = Math.max(fClimb, f);
                 if (f > fBest) {
                     fBest = f;
                     bestState = snapshot();
@@ -327,6 +355,7 @@ public class TimeTreeSearch implements Reportable {
                 accepted++;
                 f = refit(roundMaximizer, t3aBudget(), "t3a", round, evaluator.evaluate());
             }
+            fClimb = Math.max(fClimb, f);
             if (f > fBest) {
                 fBest = f;
                 bestState = snapshot();
@@ -342,23 +371,32 @@ public class TimeTreeSearch implements Reportable {
         return StopReason.MAX_ROUNDS;
     }
 
-    // the NJ tree of the alignment, rooted and dated (§7.1), in place of the tree as it is
-    private void njStart() {
+    /**
+     * The NJ tree of the alignment, rooted and dated (§7.1), in place of the tree as it is.
+     *
+     * @param first the search's first start, which the log's distances are to; otherwise the second start
+     * @return whether the tree is now the NJ tree
+     */
+    private boolean njStart(boolean first) {
+        final String fallback = first ? "; starting from the tree as it is" : "; no second start";
         final dr.evolution.alignment.PatternList patterns = TimeTreeInitializer.patterns(tree, objective);
         if (patterns == null) {
-            say("NJ start: no BEAGLE tree likelihood on the tree; starting from the tree as it is");
-            return;
+            say("NJ start: no BEAGLE tree likelihood on the tree" + fallback);
+            return false;
         }
         final TimeTreeInitializer initializer = new TimeTreeInitializer(tree, rates);
         final double before = evaluator.evaluate();
         if (initializer.adopt(patterns, constraints)) {
-            startTree = new FlexibleTree(tree);
+            if (first) {
+                startTree = new FlexibleTree(tree);
+            }
             say("NJ start (" + (initializer.isDated() ? "rooted by root-to-tip regression" : "minimum-variance root") +
                     ", rate " + String.format("%.4g", initializer.getRate()) + "): F = " + format(before) + " -> " +
                     format(evaluator.evaluate()));
-        } else {
-            say("NJ start: the NJ tree breaks a topology constraint; starting from the tree as it is");
+            return true;
         }
+        say("NJ start: the NJ tree breaks a topology constraint" + fallback);
+        return false;
     }
 
     // the current tree into the candidate set
@@ -1086,6 +1124,27 @@ public class TimeTreeSearch implements Reportable {
 
     public double getFinalValue() {
         return fFinal;
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Starting the topology search from the neighbour-joining tree";
+    }
+
+    // cited only when a start is the NJ tree
+    @Override
+    public List<Citation> getCitations() {
+        return settings.njStart ? Collections.singletonList(TimeTreeInitializer.NJ_CITATION) :
+                Collections.<Citation>emptyList();
+    }
+
+    public SearchSettings getSettings() {
+        return settings;
     }
 
     public TrialEvaluator getEvaluator() {

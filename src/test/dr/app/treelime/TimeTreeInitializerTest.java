@@ -193,6 +193,33 @@ public class TimeTreeInitializerTest extends TestCase {
         assertTrue(search.getReport().contains("startingTree = nj"));
     }
 
+    // a climb from the tree as it is, then one from the NJ tree: at least as good as either climb alone (the NJ climb
+    // starts from the parameters as they were, not the first climb's fit, and re-fits on its own gains)
+    public void testSearchFromBothStarts() throws Exception {
+        Map<String, XMLObject> objects = parse(new Setup().relaxed(true).search("moves=\"nni,spr,root\"").xml());
+        if (objects == null) {
+            return;
+        }
+        TimeTreeSearch current = TimeTreeSearchTest.search(objects);
+        current.run();
+        final double fCurrent = current.getBestValue();
+
+        objects = parse(new Setup().relaxed(true).search("startingTree=\"nj\" moves=\"nni,spr,root\"").xml());
+        TimeTreeSearch nj = TimeTreeSearchTest.search(objects);
+        nj.run();
+        final double fNj = nj.getBestValue();
+
+        objects = parse(new Setup().relaxed(true).search("startingTree=\"both\" moves=\"nni,spr,root\"").xml());
+        TimeTreeSearch both = TimeTreeSearchTest.search(objects);
+        both.run();
+        assertTrue(both.getStopReason() == TimeTreeSearch.StopReason.CONVERGED ||
+                both.getStopReason() == TimeTreeSearch.StopReason.MAX_ROUNDS);
+        assertTrue(both.getReport().contains("startingTree = both"));
+        assertTrue(both.getBestValue() >= fCurrent - 1E-6 * Math.abs(fCurrent));
+        assertTrue(both.getBestValue() + " vs NJ alone " + fNj, both.getBestValue() >= fNj - 1E-6 * Math.abs(fNj));
+        assertTrue(both.getFinalValue() >= both.getBestValue() - 1E-6 * Math.abs(fCurrent));
+    }
+
     // -------------------------------------------------------------------------------------------------------------
 
     private static void perturb(TreeModel tree) {

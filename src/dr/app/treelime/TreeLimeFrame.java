@@ -444,6 +444,8 @@ public class TreeLimeFrame extends DocumentFrame {
         try {
             ObjectInputStream in = new ObjectInputStream(fileIn);
             options = (TreeLimeOptions) in.readObject();
+            // the GUI no longer offers the topology search (the XML still does): files saved with it on load with it off
+            options.maximizationOptions.getTopologySearch().mode = dr.app.treelime.options.TopologySearchOptions.Mode.OFF;
             in.close();
         } catch (IOException ioe) {
             JOptionPane.showMessageDialog(this,

@@ -92,6 +92,16 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         }
         assertGolden("nni_strict_dated.xml", strict);
         assertGolden("nni_hmc_dated.xml", hmc);
+        // Thorough: the preset, with the candidate trees' file; nStop only when set
+        TreeLimeOptions thorough = search(dengue(true));
+        thorough.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.THOROUGH;
+        String best = generate(thorough);
+        assertTrue(best.contains("<timeTreeSearch id=\"treeSearch\" seed=\"1\" preset=\"thorough\""));
+        assertTrue(best.contains("candidatesFileName=\"golden.candidates.trees\""));
+        assertFalse(best.contains("nStop="));
+        TreeLimeHarness.assertIdsResolve(best);
+        thorough.maximizationOptions.getTopologySearch().nStop = 100;
+        assertTrue(generate(thorough).contains("nStop=\"100\""));
         TreeLimeOptions spr = search(dengue(true));
         spr.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.NNI_SPR;
         assertGolden("nni_spr_hmc_dated.xml", spr);
@@ -175,7 +185,31 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         File directory = Files.createTempDirectory("treeLimeCitations").toFile();
         options.fileNameStem = new File(directory, "run").getAbsolutePath();
         String xml = generateTo(options, new File(directory, "run.xml"));
+        String text = citations(xml);
+        assertEquals(text, 1, count(text, "Citations for this analysis"));
+        assertTrue(text, text.contains("BEAST primary citation"));
+        assertTrue(text, text.contains("HKY nucleotide substitution model"));
+        // the node heights are optimized as ratios
+        assertTrue(text, text.contains("Using the ratio transformation of internal node heights"));
+        assertTrue(text, text.contains("Scalable Bayesian divergence time estimation with ratio transformations"));
+        // and kappa's and the frequencies' gradients
+        assertTrue(text, text.contains("Using substitution model parameter gradients"));
+        assertTrue(text, text.contains("Detecting evolutionary change-points with branch-specific substitution models"));
+        // the default search starts from the starting tree: no NJ citation
+        assertFalse(text, text.contains("neighbor-joining method"));
 
+        // Thorough starts from the NJ tree, which cites Saitou and Nei (1987); parse only, without the search
+        options.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.THOROUGH;
+        xml = generateTo(options, new File(directory, "thorough.xml"));
+        xml = xml.substring(0, xml.indexOf("<!-- The optimum")).replace("<timeTreeSearch id=\"treeSearch\"",
+                "<timeTreeSearch id=\"treeSearch\" searchOnParse=\"false\"") + "</beast>\n";
+        text = citations(xml);
+        assertTrue(text, text.contains("Starting the topology search from the neighbour-joining tree"));
+        assertTrue(text, text.contains("The neighbor-joining method: a new method for reconstructing phylogenetic trees"));
+    }
+
+    // the citation log of a BEAST parse and run of the file
+    private static String citations(String xml) throws Exception {
         final List<String> lines = new ArrayList<String>();
         Handler handler = new Handler() {
             public void publish(LogRecord record) {
@@ -196,16 +230,7 @@ public class TreeLimeSearchGeneratorTest extends TestCase {
         } finally {
             citations.removeHandler(handler);
         }
-        String text = String.join("\n", lines);
-        assertEquals(text, 1, count(text, "Citations for this analysis"));
-        assertTrue(text, text.contains("BEAST primary citation"));
-        assertTrue(text, text.contains("HKY nucleotide substitution model"));
-        // the node heights are optimized as ratios
-        assertTrue(text, text.contains("Using the ratio transformation of internal node heights"));
-        assertTrue(text, text.contains("Scalable Bayesian divergence time estimation with ratio transformations"));
-        // and kappa's and the frequencies' gradients
-        assertTrue(text, text.contains("Using substitution model parameter gradients"));
-        assertTrue(text, text.contains("Detecting evolutionary change-points with branch-specific substitution models"));
+        return String.join("\n", lines);
     }
 
     private static int count(String text, String part) {

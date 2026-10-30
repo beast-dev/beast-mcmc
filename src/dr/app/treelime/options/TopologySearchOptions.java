@@ -35,7 +35,8 @@ import java.util.List;
 
 /**
  * The Maximization tab's topology search (plan 7): off, or a hill-climb from the starting tree by rooted NNIs, or by
- * NNIs and clamped-height SPRs, that accepts a change of topology only when the objective rises. Its round re-fits move the node heights and the branch
+ * NNIs and clamped-height SPRs, or the Thorough preset (plan 7 M7, the most reliable at reaching the highest objective),
+ * that accepts a change of topology only when the objective rises. Its round re-fits move the node heights and the branch
  * rates; everything else is re-fitted by the maximizer at the start, on a new best and at the end.
  *
  * @author Xiang Ji
@@ -46,7 +47,9 @@ public class TopologySearchOptions implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum Mode {
+        // in the combo's order; files store the names
         OFF("Off: keep the starting tree's topology"),
+        THOROUGH("Thorough: NNI, SPR and swaps from the NJ tree, then perturbations (best tree)"),
         NNI("NNI hill-climb from the starting tree"),
         NNI_SPR("NNI and SPR hill-climb from the starting tree");
 
@@ -64,7 +67,8 @@ public class TopologySearchOptions implements Serializable {
     public Mode mode = Mode.OFF;
     public long seed = 1;
     public String maxSearchTime = ""; // a duration with an optional unit, "" for none
-    // perturbed hill-climbs in a row without a new best before stopping; 0: no perturbation (0 in older files)
+    // perturbed hill-climbs in a row without a new best before stopping; 0: none, or the Thorough preset's 50 (0 in
+    // older files)
     public int nStop = 0;
     // independent starts written by "Generate starts..." (separate BEAST runs); 0 in older files
     private int starts = 4;

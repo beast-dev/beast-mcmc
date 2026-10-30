@@ -491,6 +491,31 @@ public class TimeTreeSearchTest extends TestCase {
         assertRefused(xml.replace("  <jointGradient idref=\"gradient.nodeHeights\"/>\n", ""), "node heights");
     }
 
+    // the presets set the defaults of the other attributes, which override them; an unknown one is refused
+    public void testPresets() throws Exception {
+        String[][] expected = {
+                {"fast", "moves = nni,", null},
+                {"standard", "moves = nni,spr,root,", "startingTree = nj"},
+                {"thorough", "moves = nni,spr,swap,root,", "startingTree = nj, nStop = 50,"}};
+        for (String[] preset : expected) {
+            Map<String, XMLObject> objects = parse(new Setup().search("preset=\"" + preset[0] + "\"").xml());
+            if (objects == null) {
+                return;
+            }
+            String report = search(objects).getSettings().describe();
+            assertTrue(report, report.contains(preset[1]));
+            assertEquals(report, preset[2] != null, report.contains("startingTree ="));
+            if (preset[2] != null) {
+                assertTrue(report, report.contains(preset[2]));
+            }
+        }
+        String report = search(parse(new Setup().search("preset=\"thorough\" nStop=\"7\" startingTree=\"current\"")
+                .xml())).getSettings().describe();
+        assertTrue(report, report.contains("moves = nni,spr,swap,root,") && report.contains("nStop = 7,") &&
+                !report.contains("startingTree ="));
+        assertRefused(new Setup().search("preset=\"best\"").xml(), "fast, standard or thorough");
+    }
+
     // -------------------------------------------------------------------------------------------------------------
 
     private static void assertRefused(String xml, String message) {

@@ -83,7 +83,9 @@ public final class SearchSettings {
     public boolean rootMoves = false;
     public int rootMaxDepth = 3; // prune at the root: the deepest target below the new root, in branches
 
-    // the start (§7.1, M6): false starts from the tree as it is; true from the NJ tree, rooted and dated
+    // the starts (§7.1, M6, M7): the tree as it is, the NJ tree (rooted and dated), or both, the NJ climb after the
+    // first; the NJ tree is the better start (plan 7 §13.2), and both adds nothing that perturbations from it miss
+    public boolean currentStart = true;
     public boolean njStart = false;
 
     // perturbation and the candidate set (§7.2, §7.4, M5)
@@ -111,17 +113,56 @@ public final class SearchSettings {
     public String treeFileName = null;
     public String logFileName = null;
 
+    /**
+     * The presets (plan 7 §7.6, M7), from the validation study (§13.2): on 53 simulated data sets a climb from the
+     * UPGMA tree ended more than 0.5 below the best known F on 16, one from the NJ tree on 2; perturbations from the
+     * UPGMA climb, whatever their settings, still missed it on 10-14%, perturbations from the NJ climb on none. Both
+     * starts with perturbations also missed it on none of 53, but under a time budget the UPGMA climb's time is lost
+     * (Dengue: 1785 below perturbations from the NJ climb alone).
+     *
+     * @param name fast (NNIs from the tree as it is), standard (NNIs, SPRs and root moves from the NJ tree) or
+     *             thorough (also subtree swaps, then perturbations until 50 in a row bring nothing)
+     * @return the settings, or null for an unknown name
+     */
+    public static SearchSettings preset(String name) {
+        SearchSettings settings = new SearchSettings();
+        if (name.equals("fast")) {
+            return settings;
+        }
+        settings.spr = true;
+        settings.rootMoves = true;
+        settings.currentStart = false;
+        settings.njStart = true;
+        if (name.equals("standard")) {
+            return settings;
+        }
+        if (name.equals("thorough")) {
+            settings.swap = true;
+            settings.nStop = 50;
+            return settings;
+        }
+        return null;
+    }
+
+    public String moves() {
+        return "nni" + (spr ? ",spr" : "") + (swap ? ",swap" : "") + (rootMoves ? ",root" : "");
+    }
+
+    public String startingTree() {
+        return njStart ? (currentStart ? "both" : "nj") : "current";
+    }
+
     public String describe() {
         return "epsilon = " + epsilon + ", moveEpsilon = " + moveEpsilon + ", deltaT1 = " + deltaT1 +
                 ", deltaKeep = " + deltaKeep + ", t2Candidates = " + t2Candidates + ", t1Sweeps = " + t1Sweeps +
                 ", speedNni = " + speedNni + ", batch = " + batch + ", toplistSize = " + toplistSize +
-                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan + ", moves = nni" + (spr ? ",spr" : "") + (swap ? ",swap" : "") + (rootMoves ? ",root" : "") +
+                ", secondChanceWindow = " + secondChanceWindow + ", rootScan = " + rootScan + ", moves = " + moves() +
                 (spr ? ", sprMaxRadius = " + sprMaxRadius + ", sprRadius = " + (sprRadius > 0 ? sprRadius : "auto") +
                         ", subtreeCutoff = " + subtreeCutoff : "") +
                 ", rateWarmStart = " + rateWarmStart.getName() + ", maxRounds = " +
                 (maxRounds > 0 ? maxRounds : "n - 1") + ", maxRunTime = " + (maxRunTime > 0 ? maxRunTime + "s" : "none") +
                 ", maxEvaluations = " + (maxEvaluations > 0 ? maxEvaluations : "none") +
-                ", verifyEvery = " + verifyEvery + (njStart ? ", startingTree = nj" : "") +
+                ", verifyEvery = " + verifyEvery + (njStart ? ", startingTree = " + startingTree() : "") +
                 (nStop > 0 ? ", nStop = " + nStop + ", perturbStrength = " + perturbStrength + ", perturbOperators = " +
                         perturbOperators + ", candidateSetSize = " + candidateSetSize + ", parentPool = " + parentPool : "");
     }

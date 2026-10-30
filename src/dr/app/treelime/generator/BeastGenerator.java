@@ -1079,15 +1079,21 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag("maximizeWrtParameter");
         writer.writeText("");
 
-        writer.writeComment("Search the topology by rooted NNIs" +
+        final boolean thorough = search.mode == TopologySearchOptions.Mode.THOROUGH;
+        writer.writeComment("Search the topology by rooted NNIs" + (thorough ? ", SPRs, subtree swaps and root moves" +
+                        " from the starting tree and the NJ tree, then by perturbations of the best trees" :
                         (search.mode == TopologySearchOptions.Mode.NNI_SPR ? " and SPRs" : "") +
-                        " from the starting tree; a move is kept only when the " + density + " density rises",
+                                " from the starting tree") + "; a move is kept only when the " + density +
+                        " density rises",
                 "The best tree: " + options.fileNameStem + ".search.trees; one row per round: " +
                         options.fileNameStem + ".search.log");
         List<Attribute> attributes = new ArrayList<Attribute>();
         attributes.add(new Attribute.Default<String>(XMLParser.ID, TREE_SEARCH));
         attributes.add(new Attribute.Default<Long>("seed", search.seed));
-        if (search.mode == TopologySearchOptions.Mode.NNI_SPR) {
+        if (thorough) {
+            // the preset that reached the highest objective most reliably in the validation study (plan 7 M7)
+            attributes.add(new Attribute.Default<String>("preset", "thorough"));
+        } else if (search.mode == TopologySearchOptions.Mode.NNI_SPR) {
             // SPR includes the moves that give the root another node (plan 7 M6)
             attributes.add(new Attribute.Default<String>("moves", "nni,spr,root"));
         }
@@ -1097,9 +1103,12 @@ public class BeastGenerator extends Generator {
         attributes.add(new Attribute.Default<Boolean>("printToScreen", maximization.printToScreen));
         attributes.add(new Attribute.Default<String>("treeFileName", options.fileNameStem + ".search.trees"));
         attributes.add(new Attribute.Default<String>("logFileName", options.fileNameStem + ".search.log"));
-        if (search.nStop > 0) {
-            // perturb the best trees by BEAST's topology operators and climb again until nStop climbs bring nothing
-            attributes.add(new Attribute.Default<Integer>("nStop", search.nStop));
+        if (search.nStop > 0 || thorough) {
+            // perturb the best trees by BEAST's topology operators and climb again until nStop climbs bring nothing;
+            // 0 with Thorough is the preset's
+            if (search.nStop > 0) {
+                attributes.add(new Attribute.Default<Integer>("nStop", search.nStop));
+            }
             attributes.add(new Attribute.Default<String>("candidatesFileName",
                     options.fileNameStem + ".candidates.trees"));
         }

@@ -41,6 +41,8 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.util.Author;
+import dr.util.Citation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,6 +70,20 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 public final class TimeTreeInitializer {
+
+    // the NJ start's tree
+    public static final Citation NJ_CITATION = new Citation(
+            new Author[]{
+                    new Author("N", "Saitou"),
+                    new Author("M", "Nei"),
+            },
+            "The neighbor-joining method: a new method for reconstructing phylogenetic trees",
+            1987,
+            "Molecular Biology and Evolution",
+            4,
+            406,
+            425,
+            "10.1093/oxfordjournals.molbev.a040454");
 
     private static final double RATE_RANGE = 100.0;
 

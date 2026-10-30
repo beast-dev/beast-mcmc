@@ -92,6 +92,7 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
     private static final String SECOND_CHANCE_WINDOW = "secondChanceWindow";
     private static final String SECOND_CHANCE_ITERATIONS = "secondChanceIterations";
     private static final String ROOT_SCAN = "rootScan";
+    private static final String PRESET = "preset";
     private static final String MOVES = "moves";
     private static final String SPR_MAX_RADIUS = "sprMaxRadius";
     private static final String SPR_RADIUS = "sprRadius";
@@ -197,7 +198,13 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             throw new XMLParseException(e.getMessage());
         }
 
-        SearchSettings settings = new SearchSettings();
+        // a preset's values are the defaults of the attributes below
+        SearchSettings settings = xo.hasAttribute(PRESET) ?
+                SearchSettings.preset(xo.getStringAttribute(PRESET)) : new SearchSettings();
+        if (settings == null) {
+            throw new XMLParseException(PRESET + " is fast, standard or thorough, not " +
+                    xo.getStringAttribute(PRESET));
+        }
         settings.epsilon = xo.getAttribute(EPSILON, settings.epsilon);
         settings.moveEpsilon = xo.getAttribute(MOVE_EPSILON, settings.moveEpsilon);
         settings.deltaT1 = xo.getAttribute(DELTA_T1, settings.deltaT1);
@@ -211,7 +218,7 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         settings.secondChanceWindow = xo.getAttribute(SECOND_CHANCE_WINDOW, settings.secondChanceWindow);
         settings.secondChanceIterations = xo.getAttribute(SECOND_CHANCE_ITERATIONS, settings.secondChanceIterations);
         settings.rootScan = xo.getAttribute(ROOT_SCAN, settings.rootScan);
-        final String moves = xo.getAttribute(MOVES, "nni").replace(" ", "");
+        final String moves = xo.getAttribute(MOVES, settings.moves()).replace(" ", "");
         if (!moves.matches("nni(,spr)?(,swap)?(,root)?")) {
             throw new XMLParseException(MOVES + " is nni, optionally followed by ,spr, ,swap and ,root, not " + moves);
         }
@@ -219,11 +226,12 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         settings.swap = moves.contains("swap");
         settings.rootMoves = moves.contains("root");
         settings.rootMaxDepth = xo.getAttribute(ROOT_MAX_DEPTH, settings.rootMaxDepth);
-        final String start = xo.getAttribute(STARTING_TREE, "current");
-        if (!start.equals("current") && !start.equals("nj")) {
-            throw new XMLParseException(STARTING_TREE + " is current or nj, not " + start);
+        final String start = xo.getAttribute(STARTING_TREE, settings.startingTree());
+        if (!start.equals("current") && !start.equals("nj") && !start.equals("both")) {
+            throw new XMLParseException(STARTING_TREE + " is current, nj or both, not " + start);
         }
-        settings.njStart = start.equals("nj");
+        settings.currentStart = !start.equals("nj");
+        settings.njStart = !start.equals("current");
         settings.swapMaxDistance = xo.getAttribute(SWAP_MAX_DISTANCE, settings.swapMaxDistance);
         settings.nStop = xo.getAttribute(N_STOP, settings.nStop);
         settings.perturbStrength = xo.getAttribute(PERTURB_STRENGTH, settings.perturbStrength);
@@ -377,7 +385,8 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(TOPLIST_SIZE, true, "the closest moves kept for the re-fit when none gains (default 20)"),
             AttributeRule.newDoubleRule(SECOND_CHANCE_WINDOW, true, "a re-fitted move this close below the incumbent gets a longer re-fit (default 2)"),
             AttributeRule.newIntegerRule(SECOND_CHANCE_ITERATIONS, true, "iterations of that longer re-fit (default 80; 0: off)"),
-            new StringAttributeRule(MOVES, "nni (default), optionally followed by ,spr, ,swap and ,root (in that order): clamped-height SPR rounds, subtree swaps (wide exchanges), then root-changing SPR, when no NNI gains", true),
+            new StringAttributeRule(PRESET, "fast: moves nni from the current tree; standard: moves nni,spr,root from the nj tree; thorough: moves nni,spr,swap,root from the nj tree with nStop 50. The other attributes override the preset's values", true),
+            new StringAttributeRule(MOVES, "nni (default, or the preset's), optionally followed by ,spr, ,swap and ,root (in that order): clamped-height SPR rounds, subtree swaps (wide exchanges), then root-changing SPR, when no NNI gains", true),
             AttributeRule.newIntegerRule(N_STOP, true, "perturb and hill-climb again until this many climbs in a row bring no new best (default 0: no perturbation)"),
             AttributeRule.newDoubleRule(PERTURB_STRENGTH, true, "operator moves per perturbation, times (taxa - 2) (default 0.3)"),
             new StringAttributeRule(PERTURB_OPERATORS, "the BEAST operators perturbation draws from: nni, narrow, wide, leap, wb (default nni,wide,leap,wb)", true),
@@ -386,7 +395,7 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(PARENT_POOL, true, "perturb one of this many best trees (default 5)"),
             AttributeRule.newBooleanRule(NNI_DELTA, true, "at the end, F minus the best NNI alternative at each node (default true)"),
             new StringAttributeRule(CANDIDATES_FILE_NAME, "the NEXUS file for the candidate trees", true),
-            new StringAttributeRule(STARTING_TREE, "current (default): the tree as it is; nj: the neighbour-joining tree of the alignment, rooted by root-to-tip regression on the dates and dated", true),
+            new StringAttributeRule(STARTING_TREE, "current (default, or the preset's): the tree as it is; nj: the neighbour-joining tree of the alignment, rooted by root-to-tip regression on the dates and dated; both: a climb from each, the NJ one second", true),
             AttributeRule.newIntegerRule(ROOT_MAX_DEPTH, true, "root-changing SPR: the deepest new place of the old root below the new one, in branches (default 3)"),
             AttributeRule.newIntegerRule(SWAP_MAX_DISTANCE, true, "the farthest apart the parents of swapped subtrees may be, in nodes (default 4)"),
             AttributeRule.newIntegerRule(SPR_MAX_RADIUS, true, "the farthest SPR regraft, in branches (default 10)"),

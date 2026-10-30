@@ -131,7 +131,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 //        for (TreeAsDataType treeAsDataType : TreeAsDataType.values()) {
 //            treeAsDataModelCombo.addItem(treeAsDataType);
 //        }
-        treeAsDataModelCombo.addItem(TreeAsDataType.EMPRICAL_TREES);
+        treeAsDataModelCombo.addItem(TreeAsDataType.EMPIRICAL_TREES);
         PanelUtils.setupComponent(treeAsDataModelCombo);
         treeAsDataModelCombo.addItemListener(ev -> {
             this.partitionTreeModel.setTreeAsDataType((TreeAsDataType)treeAsDataModelCombo.getSelectedItem());
@@ -267,7 +267,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             empiricalFilenameField.setEditable(true);
 
             switch ((TreeAsDataType)treeAsDataModelCombo.getSelectedItem()) {
-                case EMPRICAL_TREES:
+                case EMPIRICAL_TREES:
                     addSpanningComponent(empiricalTreePanel);
                     break;
                 case THORNEY_BEAST:

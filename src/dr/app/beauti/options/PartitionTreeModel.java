@@ -48,7 +48,7 @@ public class PartitionTreeModel extends PartitionOptions {
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
 
-    private TreeAsDataType treeAsDataType = TreeAsDataType.EMPRICAL_TREES;
+    private TreeAsDataType treeAsDataType = TreeAsDataType.EMPIRICAL_TREES;
 
     private boolean isUsingExternalEmpiricalTreeFile = false;
     private String empiricalTreesFilename = null;
@@ -65,7 +65,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
         treePartitionData = null;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public TreePartitionData getTreePartitionData() {
@@ -76,7 +76,7 @@ public class PartitionTreeModel extends PartitionOptions {
         super(options, treePartitionData.getName());
 
         this.treePartitionData = treePartitionData;
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -98,10 +98,10 @@ public class PartitionTreeModel extends PartitionOptions {
         isNewick = source.isNewick;
 //        initialRootHeight = source.initialRootHeight;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
@@ -281,7 +281,7 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public boolean isUsingEmpiricalTrees() {
-        return treePartitionData != null && treeAsDataType == TreeAsDataType.EMPRICAL_TREES;
+        return treePartitionData != null && treeAsDataType == TreeAsDataType.EMPIRICAL_TREES;
     }
 
     public void setUsingExternalEmpiricalTreeFile(boolean isUsingExternalEmpiricalTreeFile) {

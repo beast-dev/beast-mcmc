@@ -275,7 +275,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void updateLinkTreePriorEnablility() {
+    public void updateLinkTreePriorEnability() {
         boolean selected = options.getPartitionTreeModels().size() > 1;
         linkTreePriorCheck.setEnabled(selected);
     }
@@ -287,7 +287,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        updateLinkTreePriorEnablility();
+        updateLinkTreePriorEnability();
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {

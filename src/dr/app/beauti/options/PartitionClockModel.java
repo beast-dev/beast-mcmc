@@ -70,7 +70,7 @@ public class PartitionClockModel extends PartitionOptions {
         this.partition = partition;
         this.treeModel = treeModel;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -91,10 +91,10 @@ public class PartitionClockModel extends PartitionOptions {
         this.partition = source.partition;
         this.treeModel = source.treeModel;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
         double rate = options.useTipDates ? 0.001 : 1.0;
 
         new Parameter.Builder("clock.rate", "substitution rate")

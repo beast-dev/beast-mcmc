@@ -118,7 +118,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
 
         dataType = partition.getDataType().getType();
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -140,7 +140,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         copySettingsFrom(source);
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
@@ -152,7 +152,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         dataType = DataType.NUCLEOTIDES;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public TraitData getTraitData() {
@@ -161,7 +161,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     // only init in PartitionSubstitutionModel
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
         double substWeights = 1.0;
         if (dataType == DataType.NUCLEOTIDES || dataType == DataType.AMINO_ACIDS) {
             //Substitution model parameters

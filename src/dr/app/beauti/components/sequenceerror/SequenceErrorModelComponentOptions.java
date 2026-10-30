@@ -50,7 +50,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
     static public final String AGE_RATE_PARAMETER = ERROR_MODEL + "." + AGE_RATE;
     static public final String BASE_RATE_PARAMETER = ERROR_MODEL + "." + BASE_RATE;
 
-    static public final String HYPERMUTION_RATE_PARAMETER = "hypermutation.rate";
+    static public final String HYPERMUTATION_RATE_PARAMETER = "hypermutation.rate";
     static public final String HYPERMUTANT_INDICATOR_PARAMETER = "hypermutant.indicator";
     static public final String HYPERMUTANT_COUNT_STATISTIC = "hypermutation.count";
 
@@ -64,7 +64,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
                     PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8);
             modelOptions.createZeroOneParameterUniformPrior(prefix + BASE_RATE_PARAMETER,"base sequence error rate", 1.0E-8);
 
-            modelOptions.createZeroOneParameterUniformPrior(prefix + HYPERMUTION_RATE_PARAMETER,"APOBEC editing rate per context", 1.0E-8);
+            modelOptions.createZeroOneParameterUniformPrior(prefix + HYPERMUTATION_RATE_PARAMETER,"APOBEC editing rate per context", 1.0E-8);
             modelOptions.createParameter(prefix + HYPERMUTANT_INDICATOR_PARAMETER, "indicator parameter reflecting which sequences are hypermutated", 0.0);
 
             modelOptions.createDiscreteStatistic(prefix + HYPERMUTANT_COUNT_STATISTIC, "count of the number of hypermutated sequences");
@@ -72,7 +72,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
             modelOptions.createScaleOperator(prefix + AGE_RATE_PARAMETER, modelOptions.demoTuning, 3.0);
             modelOptions.createOperator(prefix + BASE_RATE_PARAMETER, OperatorType.RANDOM_WALK_REFLECTING, 0.05, 3.0);
 
-            modelOptions.createOperator(prefix + HYPERMUTION_RATE_PARAMETER, OperatorType.RANDOM_WALK_REFLECTING, 0.05, 3.0);
+            modelOptions.createOperator(prefix + HYPERMUTATION_RATE_PARAMETER, OperatorType.RANDOM_WALK_REFLECTING, 0.05, 3.0);
             modelOptions.createOperator(prefix + HYPERMUTANT_INDICATOR_PARAMETER, OperatorType.BITFLIP, -1.0, 10);
         }
     }
@@ -81,7 +81,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
         for (AbstractPartitionData partition : sequenceErrorTypeMap.keySet()) {
             String prefix = partition.getPrefix();//partition.getName() + ".";
             if (isHypermutation(partition)) {
-                params.add(modelOptions.getParameter(prefix + HYPERMUTION_RATE_PARAMETER));
+                params.add(modelOptions.getParameter(prefix + HYPERMUTATION_RATE_PARAMETER));
                 params.add(modelOptions.getParameter(prefix + HYPERMUTANT_INDICATOR_PARAMETER));
                 params.add(modelOptions.getParameter(prefix + HYPERMUTANT_COUNT_STATISTIC));
             }
@@ -102,7 +102,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
         for (AbstractPartitionData partition : sequenceErrorTypeMap.keySet()) {
             String prefix = partition.getPrefix();//partition.getName() + ".";
             if (isHypermutation(partition)) {
-                ops.add(modelOptions.getOperator(prefix + HYPERMUTION_RATE_PARAMETER));
+                ops.add(modelOptions.getOperator(prefix + HYPERMUTATION_RATE_PARAMETER));
                 ops.add(modelOptions.getOperator(prefix + HYPERMUTANT_INDICATOR_PARAMETER));
             }
             if (hasAgeDependentRate(partition)) {

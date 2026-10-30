@@ -1,5 +1,5 @@
 /*
- * BEAUTiImporter.java
+ * BeautiImporter.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -59,7 +59,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class BEAUTiImporter {
+public class BeautiImporter {
 
     private static final long MAX_FILE_SIZE = 1024 * 1024 * 128; // 0.1GB
     private final String DEFAULT_NAME = "default";
@@ -69,7 +69,7 @@ public class BEAUTiImporter {
 
     private PartitionNameDialog partitionNameDialog = null;
 
-    public BEAUTiImporter(BeautiFrame frame, BeautiOptions options) {
+    public BeautiImporter(BeautiFrame frame, BeautiOptions options) {
         this.frame = frame;
         this.options = options;
     }

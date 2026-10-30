@@ -153,7 +153,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
 
                 writer.writeIDref(HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT, prefix + "hypermutants");
 
-                writeParameter(HypermutantErrorModel.HYPERMUTATION_RATE, prefix + SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER, 1, writer);
+                writeParameter(HypermutantErrorModel.HYPERMUTATION_RATE, prefix + SequenceErrorModelComponentOptions.HYPERMUTATION_RATE_PARAMETER, 1, writer);
                 writeParameter(HypermutantErrorModel.HYPERMUTATION_INDICATORS, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER, 1, writer);
 
                 writer.writeCloseTag(HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL);
@@ -195,7 +195,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
             SequenceErrorType errorType = component.getSequenceErrorType(partition);
             if (errorType != SequenceErrorType.NO_ERROR) {
                 if (component.isHypermutation(partition)) {
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.HYPERMUTATION_RATE_PARAMETER);
                     writer.writeIDref(StatisticParser.STATISTIC, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_COUNT_STATISTIC);
                     writer.writeOpenTag(StatisticParser.STATISTIC,
                             new Attribute.Default<String>("name", "isHypermutated"));

@@ -62,7 +62,7 @@ public abstract class ModelOptions implements Serializable {
 
     //+++++++++++++++++++ Abstract Methods ++++++++++++++++++++++++++++++++
 
-    public abstract void initModelParametersAndOpererators();
+    public abstract void initModelParametersAndOperators();
 
     public abstract List<Parameter> selectParameters(List<Parameter> params);
 

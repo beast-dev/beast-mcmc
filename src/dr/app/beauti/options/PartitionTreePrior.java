@@ -69,7 +69,7 @@ public class PartitionTreePrior extends PartitionOptions {
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -99,7 +99,7 @@ public class PartitionTreePrior extends PartitionOptions {
         this.calibCorrectionType = source.calibCorrectionType;
         this.fixedTree = source.fixedTree;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public void alternatePopulationSizePriors() {
@@ -123,7 +123,7 @@ public class PartitionTreePrior extends PartitionOptions {
     }
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
         if (options.useGammaPriorPopSize()) {
             createParameterGammaPrior("constant.popSize", "coalescent population size parameter",

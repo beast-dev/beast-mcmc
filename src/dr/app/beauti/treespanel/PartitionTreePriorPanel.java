@@ -301,7 +301,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
         if (!treesPanel.linkTreePriorCheck.isEnabled()) {
-            treesPanel.updateLinkTreePriorEnablility();
+            treesPanel.updateLinkTreePriorEnability();
         }
 
         TreePriorType type = (TreePriorType) treePriorCombo.getSelectedItem();

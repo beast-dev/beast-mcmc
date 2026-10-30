@@ -60,7 +60,7 @@ import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
-import dr.app.beauti.util.BEAUTiImporter;
+import dr.app.beauti.util.BeautiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.FileDrop;
@@ -508,7 +508,7 @@ public class BeautiFrame extends DocumentFrame {
                         "Invalid file name", JOptionPane.ERROR_MESSAGE);
             } else {
                 try {
-                    BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                    BeautiImporter beautiImporter = new BeautiImporter(this, options);
                     beautiImporter.importFromFile(file);
 
                     setDirty();
@@ -562,7 +562,7 @@ public class BeautiFrame extends DocumentFrame {
 
         if (files != null && files.length != 0) {
             try {
-                BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                BeautiImporter beautiImporter = new BeautiImporter(this, options);
                 if (options.taxonList == null) {
                     beautiImporter.importTaxaFromTraits(files[0]);
                     setDirty();

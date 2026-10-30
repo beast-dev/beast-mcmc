@@ -31,7 +31,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Predictor;
 import dr.app.beauti.options.TraitData;
-import dr.app.beauti.util.BEAUTiImporter;
+import dr.app.beauti.util.BeautiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
@@ -234,7 +234,7 @@ public class GLMSettingsPanel extends JPanel {
 
         if (files != null && files.length != 0) {
             try {
-                BEAUTiImporter beautiImporter = new BEAUTiImporter(frame, options);
+                BeautiImporter beautiImporter = new BeautiImporter(frame, options);
                 beautiImporter.importPredictors(files[0], trait);
             } catch (FileNotFoundException fnfe) {
                 JOptionPane.showMessageDialog(this, "Unable to open file: File not found",

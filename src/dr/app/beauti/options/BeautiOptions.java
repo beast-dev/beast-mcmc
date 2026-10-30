@@ -328,7 +328,7 @@ public class BeautiOptions extends ModelOptions {
     }
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
     }
 

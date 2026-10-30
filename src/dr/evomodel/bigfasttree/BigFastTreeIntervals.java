@@ -360,7 +360,8 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
             if (!tree.isExternal(nodes[0])) {
                 throw new IllegalArgumentException("The first event is not a sample event");
             }
-            events.setEvent(lastTime, IntervalType.SAMPLE, nodes[0].getNumber(), 0,-1, 0);
+            events.setEvent(lastTime, IntervalType.SAMPLE, nodes[0].getNumber(), -1, 0, 0);
+            events.setNodeOrder(nodes[0].getNumber(), 0);
 
             int lineages = 1;
             for (int i = 1; i < nodes.length; i++) {
@@ -471,6 +472,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         storedIntervalsKnown = intervalsKnown;
         storedEvents.copyEvents(events);
         storedOnlyUpdateTimes = onlyUpdateTimes;
+        storedDirty = dirty;
     }
 
     @Override
@@ -483,6 +485,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         intervalsKnown = storedIntervalsKnown;
 
         onlyUpdateTimes = storedOnlyUpdateTimes;
+        dirty = storedDirty;
 
     }
 
@@ -749,6 +752,7 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
 
     private final Tree tree;
     protected boolean dirty;
+    private boolean storedDirty;
     private int intervalCount = 0;
 
 

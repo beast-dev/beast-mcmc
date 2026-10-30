@@ -116,16 +116,13 @@ public class BEAUTiImporter {
     }
 
     public String findFirstLine(File file) throws IOException {
-        Reader reader = new FileReader(file);
-
-        BufferedReader bufferedReader = new BufferedReader(reader);
-        String line = bufferedReader.readLine();
-        while (line != null && line.isEmpty()) {
-            line = bufferedReader.readLine();
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
+            String line = bufferedReader.readLine();
+            while (line != null && line.isEmpty()) {
+                line = bufferedReader.readLine();
+            }
+            return line;
         }
-
-        bufferedReader.close();
-        return line;
     }
 
     // xml
@@ -358,7 +355,10 @@ public class BEAUTiImporter {
         }
         Taxa taxa = options.taxonList;
 
-        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+        DataTable<String[]> dataTable;
+        try (FileReader reader = new FileReader(file)) {
+            dataTable = DataTable.Text.parse(reader);
+        }
 
         String[] traitNames = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
@@ -434,7 +434,10 @@ public class BEAUTiImporter {
 
     public void importTaxaFromTraits(final File file) throws ImportException, IOException {
 
-        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+        DataTable<String[]> dataTable;
+        try (FileReader reader = new FileReader(file)) {
+            dataTable = DataTable.Text.parse(reader);
+        }
 
         String[] taxonNames = dataTable.getRowLabels();
 
@@ -452,9 +455,10 @@ public class BEAUTiImporter {
     }
 
     public void importNewickFile(final File file) throws ImportException, IOException {
-        FileReader reader = new FileReader(file);
-        NewickImporter importer = new NewickImporter(reader);
-        int treeCount = importer.countTrees();
+        int treeCount;
+        try (FileReader reader = new FileReader(file)) {
+            treeCount = new NewickImporter(reader).countTrees();
+        }
 
         boolean importAllTrees = true;
         if (treeCount > 10) {
@@ -470,13 +474,14 @@ public class BEAUTiImporter {
         }
 
         // reset file after counting trees
-        importer = new NewickImporter(new FileReader(file));
-
         List<Tree> trees;
-        if (importAllTrees) {
-            trees = importer.importTrees(options.taxonList);
-        } else {
-            trees = Collections.singletonList(importer.importTree(options.taxonList));
+        try (FileReader reader = new FileReader(file)) {
+            NewickImporter importer = new NewickImporter(reader);
+            if (importAllTrees) {
+                trees = importer.importTrees(options.taxonList);
+            } else {
+                trees = Collections.singletonList(importer.importTree(options.taxonList));
+            }
         }
         setData(file.getName(), trees.get(0), null, null, null, null, null, trees, treeCount, true);
     }
@@ -495,7 +500,10 @@ public class BEAUTiImporter {
         }
         boolean isCSV = extension.toUpperCase().equals("CSV");
 
-        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file), isCSV);
+        DataTable<String[]> dataTable;
+        try (FileReader tableReader = new FileReader(file)) {
+            dataTable = DataTable.Text.parse(tableReader, isCSV);
+        }
 
         String[] stateNamesCol = dataTable.getColumnLabels();
         String[] stateNamesRow = dataTable.getRowLabels();

@@ -708,6 +708,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 Taxa taxa = options.taxonSets.remove(row);
                 options.taxonSetsMono.remove(taxa);
                 options.taxonSetsIncludeStem.remove(taxa);
+                // these two were left behind, so the removed set still had a tree and a height
+                options.taxonSetsTreeModel.remove(taxa);
+                options.taxonSetsHeights.remove(taxa);
             }
             taxonSetChanged();
 

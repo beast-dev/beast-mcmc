@@ -415,6 +415,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
 
+        // a taxon set whose tree has gone with its last partition would otherwise still name it
+        List<PartitionTreeModel> treeModels = options.getPartitionTreeModels();
+        for (Taxa taxa : new ArrayList<Taxa>(options.taxonSetsTreeModel.keySet())) {
+            if (!treeModels.contains(options.taxonSetsTreeModel.get(taxa))) {
+                options.taxonSetsTreeModel.put(taxa, treeModels.isEmpty() ? null : treeModels.get(0));
+            }
+        }
+
         if (options.dataPartitions.size() == 0) {
             // all data partitions removed so reset the taxa
             options.reset();
@@ -987,9 +995,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
             switch (col) {
                 case NAME_COLUMN:
                     String name = ((String) aValue).trim();
-                    if (options.hasPartitionData(name)) {
-                        JOptionPane.showMessageDialog(frame, "Duplicate partition name.",
-                                "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+                    // (a partition does not clash with itself, so the name can be left as it is)
+                    if (!name.equalsIgnoreCase(partition.getName()) && options.hasPartitionData(name)) {
+                        JOptionPane.showMessageDialog(frame, "There is already a partition called '" + name + "'.",
+                                "Duplicate partition name", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     if (name.length() > 0) {
@@ -1158,7 +1167,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createPartitionFromTraits(null, null, DataPanel.this);
+            // the placeholder partition that stands for the traits is only taken away once a partition has
+            // been made from them; removing it after a cancel would, if it were the only one, reset
+            // everything that had been imported
+            if (!createPartitionFromTraits(null, null, DataPanel.this)) {
+                return;
+            }
 
             for (AbstractPartitionData partition : options.dataPartitions) {
 
@@ -1174,10 +1188,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             }
 
-
             selectDataPanel();
-            //TODO: fix error when deleting partition
-
         }
 
 

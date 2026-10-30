@@ -340,6 +340,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 }
             }
 
+            // the panel on the right is still showing the settings the model had
+            selectionChanged();
+            fireModelsChanged();
             repaint();
 
         }

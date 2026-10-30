@@ -131,33 +131,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         super(options, name);
 
-        nucSubstitutionModel = source.nucSubstitutionModel;
-        aaSubstitutionModel = source.aaSubstitutionModel;
-        binarySubstitutionModel = source.binarySubstitutionModel;
-        discreteSubstType = source.discreteSubstType;
-        continuousSubstModelType = source.continuousSubstModelType;
-        continuousExtensionType = source.continuousExtensionType;
-
         continuousTraitCount = source.continuousTraitCount;
         extendedTraitCount = source.extendedTraitCount;
         dataType = source.dataType;
 
         traitData = source.traitData;
+        partition = source.partition;
 
-        activateBSSVS = source.activateBSSVS;
-        useGaoPriors = source.useGaoPriors;
-        useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
-
-        frequencyPolicy = source.frequencyPolicy;
-        freeRatesHetero = source.freeRatesHetero;
-        gammaHetero = source.gammaHetero;
-        rateCategories = source.rateCategories;
-        equalWeights = source.equalWeights;
-        invarHetero = source.invarHetero;
-        codonHeteroPattern = source.codonHeteroPattern;
-        unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
-        unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
-        unlinkedFrequencyModel = source.unlinkedFrequencyModel;
+        copySettingsFrom(source);
 
         initModelParametersAndOpererators();
     }
@@ -1222,11 +1203,24 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public void copyFrom(PartitionSubstitutionModel source) {
+        copySettingsFrom(source);
+    }
+
+    /**
+     * Copies every model choice, which is what both the copy constructor (unlinking a partition) and
+     * copyFrom (cloning the settings of one model onto another) need; the data the model describes, and
+     * the partition it belongs to, are not settings and are not copied here.
+     */
+    private void copySettingsFrom(PartitionSubstitutionModel source) {
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
+        discreteSubstModelType = source.discreteSubstModelType;
         discreteSubstType = source.discreteSubstType;
+        bastaModelType = source.bastaModelType;
+        sharedCoalescentModel = source.sharedCoalescentModel;
         continuousSubstModelType = source.continuousSubstModelType;
+        continuousExtensionType = source.continuousExtensionType;
 
         activateBSSVS = source.activateBSSVS;
         useGaoPriors = source.useGaoPriors;
@@ -1242,6 +1236,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
+
+        isLatitudeLongitude = source.isLatitudeLongitude;
+        isIndependent = source.isIndependent;
+        jitterWindow = source.jitterWindow;
     }
 
     @Override

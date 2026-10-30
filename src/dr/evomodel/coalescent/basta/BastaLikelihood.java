@@ -186,8 +186,9 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
             throw new RuntimeException("Not yet implemented");
         }
 
+        // Ancestral-trait (travel history) trees place ancestors on zero-length intervals by construction
         treeTraversalDelegate = new CoalescentIntervalTraversal(treeModel, treeIntervals, branchRateModel,
-                numberSubIntervals, true);
+                numberSubIntervals, tree instanceof TreeModel);
 
         if (likelihoodDelegate instanceof AdjointGenericBastaLikelihoodDelegate) {
             int[] consts = ((AdjointGenericBastaLikelihoodDelegate) likelihoodDelegate)

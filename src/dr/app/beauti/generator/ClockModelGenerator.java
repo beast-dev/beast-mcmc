@@ -1130,7 +1130,7 @@ public class ClockModelGenerator extends Generator {
                             writer.writeIDref(PARAMETER, prefix + ClockType.UCGD_SHAPE);
                             break;
                         case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not supported yet");
 //                        break;
                         case EXPONENTIAL:
                             writer.writeIDref(PARAMETER, prefix + ClockType.UCED_MEAN);

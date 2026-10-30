@@ -402,7 +402,7 @@ public class BeautiFrame extends DocumentFrame {
 //        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
 //        	treesPanel.delete();
         } else {
-            throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
+            throw new RuntimeException("Delete should only be accessible from the Data and Models panels");
         }
 
         setStatusMessage();

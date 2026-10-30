@@ -84,7 +84,7 @@ public class SubstitutionModelGenerator extends Generator {
                                 writeGTRModel(i, writer, model);
                                 break;
                             default:
-                                throw new IllegalArgumentException("unknown substition model type");
+                                throw new IllegalArgumentException("unknown substitution model type");
                         }
                     }
                 } else {

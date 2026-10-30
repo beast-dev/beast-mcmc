@@ -223,7 +223,7 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         useAmbiguitiesTreeLikelihoodCheck
-                .setToolTipText("<html>Detemine useAmbiguities in &lt treeLikelihood &gt .</html>");
+                .setToolTipText("<html>Use the ambiguous states in the tree likelihood of this model.</html>");
 
         PanelUtils.setupComponent(frequencyCombo);
         frequencyCombo.addItemListener(new ItemListener() {

@@ -800,7 +800,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (selectedPartitionData.size() > 1) {
             if (!options.hasIdenticalTaxa(selectedPartitionData)) {
                 String errMsg = "To share a clock model, partitions need to have identical taxa.";
-                JOptionPane.showMessageDialog(this, errMsg, "Unsuppoted Configuration", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, errMsg, "Unsupported Configuration", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -881,7 +881,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (selectedPartitionData.size() > 1) {
             if (!options.hasIdenticalTaxa(selectedPartitionData)) {
                 String errMsg = "To share a tree, partitions need to have identical taxa.";
-                JOptionPane.showMessageDialog(this, errMsg, "Unsuppoted Configuration", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, errMsg, "Unsupported Configuration", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }

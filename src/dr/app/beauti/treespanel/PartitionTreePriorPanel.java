@@ -78,7 +78,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private final RealNumberField serialIntervalMean = new RealNumberField(0.0, Double.MAX_VALUE);
     private final RealNumberField serialIntervalStdev = new RealNumberField(0.0, Double.MAX_VALUE);
     JLabel siMeanLabel, siStdevLabel;
-    private final JCheckBox subtreePriorCheckBox = new JCheckBox("Use seperate prior for subtree");
+    private final JCheckBox subtreePriorCheckBox = new JCheckBox("Use separate prior for subtree");
     private final JComboBox subtreeTaxonSetCombo = new JComboBox();
     private final JLabel subtreeTaxonSetComboLabel = new JLabel("Taxon set to define subtree:");
     private final JComboBox subtreePriorCombo = new JComboBox();
@@ -125,7 +125,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         parameterizationCombo.setToolTipText("<html>" +
                 "Select the parameterization of growth rate to use for<br>" +
                 "the parametric coalescent model. This does not affect<br>" +
-                "nature of the model but may assist with mixing.<html>");
+                "nature of the model but may assist with mixing.</html>");
         parameterizationCombo.addItemListener(ev -> {
             PartitionTreePriorPanel.this.partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
             parent.fireTreePriorsChanged();
@@ -135,7 +135,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(doublingTimeCheckBox);
         doublingTimeCheckBox.setToolTipText("<html>" +
                 "This will log the doubling time (in days) for the current<br/>" +
-                "exponential growth rate.<html>");
+                "exponential growth rate.</html>");
         doublingTimeCheckBox.addItemListener(ev -> {
                     PartitionTreePriorPanel.this.partitionTreePrior.setDoublingTimeLogging(doublingTimeCheckBox.isSelected());
                     parent.fireTreePriorsChanged();
@@ -145,7 +145,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(growthRateCheckBox);
         growthRateCheckBox.setToolTipText("<html>" +
                 "This will log the growth rate (/year) for the current<br/>" +
-                "doubling time.<html>");
+                "doubling time.</html>");
         growthRateCheckBox.addItemListener(ev -> {
                     PartitionTreePriorPanel.this.partitionTreePrior.setGrowthRateLogging(growthRateCheckBox.isSelected());
                     parent.fireTreePriorsChanged();
@@ -158,7 +158,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "growth rate using the Grassly and Fraser modification of<br/>" +
                 "Wallinga and Lipsitch (2007, Proc Roy Soc B, 274:599–604)<br/><br/>" +
                 "A mean and standard deviation of the gamma-distributed serial<br/>" +
-                "interval must be provided.<html>");
+                "interval must be provided.</html>");
 
         r0CheckBox.addItemListener(ev -> {
                     boolean selected = r0CheckBox.isSelected();
@@ -189,7 +189,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "This sets the time interval over which the change-points<br>" +
                 "of the Skygrid are placed. It is measured relative to the<br>" +
                 "most recent tip and should be commensurate with the predicted<br>" +
-                "age of the tree.<html>");
+                "age of the tree.</html>");
         skyGridInterval.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
             }
@@ -213,7 +213,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "This sets number of population size parameters for<br>" +
                 "the Skygrid. This determines the number of transition-points<br>" +
                 "at which the population size changes. The last one spans to<br>" +
-                "infinite time.<html>");
+                "infinite time.</html>");
         skyGridPointsField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent ev) {
             }
@@ -233,7 +233,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "for a specific subset of the tree as defined by a<br>" +
                 "taxon set. This should be specified as monophyletic.<br>" +
                 "<br>" +
-                "The rest of the tree will be have the prior defined above.<html>");
+                "The rest of the tree will be have the prior defined above.</html>");
         subtreePriorCheckBox.addItemListener(ev -> {
                     boolean selected = subtreePriorCheckBox.isSelected();
                     subtreeTaxonSetCombo.setEnabled(selected);

@@ -154,8 +154,8 @@ public class InitialTreeGenerator extends Generator {
                         }
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
-                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
-                        + "which may be 1 of many aligments using this tree.");
+                writer.writeComment("To generate the UPGMA starting tree, only the first alignment is used, "
+                        + "which may be one of several alignments using this tree.");
                 writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);

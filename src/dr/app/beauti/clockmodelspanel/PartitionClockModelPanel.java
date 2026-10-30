@@ -124,7 +124,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
         continuousQuantileCheck.setToolTipText("<html>" +
                 "Select this option to use the continuous quantile form of the relaxed<br>" +
                 "clock model described by Li & Drummond (2012) MBE 29:751-61 instead of<br>" +
-                "the discretized categorical form.<html>");
+                "the discretized categorical form.</html>");
         continuousQuantileCheck.setSelected(model.isContinuousQuantile());
         continuousQuantileCheck.addItemListener(
                 new ItemListener() {
@@ -153,7 +153,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(new JLabel(
                         "<html>" +
                                 "Using the uncorrelated relaxed clock model of Drummond, Ho, Phillips & <br>" +
-                                "Rambaut (2006) PLoS Biology 4, e88.<html>"));
+                                "Rambaut (2006) PLoS Biology 4, e88.</html>"));
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 addComponent(continuousQuantileCheck);
                 break;
@@ -162,7 +162,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(new JLabel(
                         "<html>" +
                                 "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
-                                "Nishimura, Baele, Rambaut, Lemey & Suchard (2020) Mol Biol Evol 37, 3047–3060.<html>"));
+                                "Nishimura, Baele, Rambaut, Lemey & Suchard (2020) Mol Biol Evol 37, 3047–3060.</html>"));
                 addComponentWithLabel("Relaxed Distribution:", clockHMCDistributionCombo);
                 break;
 

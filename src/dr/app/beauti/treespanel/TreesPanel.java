@@ -465,10 +465,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                     aHasFocus,
                     aRow, aColumn);
 
-            if (!isUsed(aRow))
-                renderer.setForeground(Color.gray);
-            else
-                renderer.setForeground(Color.black);
+            // an unused row is greyed; the rest take the table's colours, so that a selected row is
+            // still readable (and so that a dark appearance works)
+            if (!isUsed(aRow)) {
+                renderer.setForeground(UIManager.getColor("Label.disabledForeground"));
+            } else {
+                renderer.setForeground(aIsSelected ? aTable.getSelectionForeground() : aTable.getForeground());
+            }
             return this;
         }
 

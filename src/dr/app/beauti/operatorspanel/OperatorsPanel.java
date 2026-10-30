@@ -322,10 +322,12 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
                     aRow, aColumn);
 
             Operator op = operators.get(aRow);
+            // an operator that is not in use is greyed; the rest take the table's colours, so that a
+            // selected row is still readable (and so that a dark appearance works)
             if (!op.isUsed() && aColumn > 0) {
-                renderer.setForeground(Color.gray);
+                renderer.setForeground(UIManager.getColor("Label.disabledForeground"));
             } else {
-                renderer.setForeground(Color.black);
+                renderer.setForeground(aIsSelected ? aTable.getSelectionForeground() : aTable.getForeground());
             }
             if (op.isParameterFixed()) {
                 setToolTipText(

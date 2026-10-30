@@ -60,6 +60,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private final TreeModel treeModel;
     private final PatternList tipPatterns;
     private final MascotDynamics dynamics;
+    private final MascotStepRule stepRule;
     private final double maxStep;
     private final double mappingMaxStep;
     private final boolean checkProbabilities;
@@ -142,6 +143,29 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                             boolean checkProbabilities,
                             String ancestralStateTagName,
                             String modeStateTagName) {
+        this(name, treeModel, tipPatterns, migrationRates, migrationModels, branchRateModel, populationSizeModel,
+                stateCount, epochTimes, MascotStepRule.fixed(maxStep), mappingMaxStep, checkProbabilities,
+                ancestralStateTagName, modeStateTagName);
+    }
+
+    /**
+     * @param stepRule       the RK4 step count per integration segment of the likelihood (fixed or adaptive)
+     * @param mappingMaxStep the fixed RK4 step bound of the forward pass that stochastic mapping draws from
+     */
+    public MascotLikelihood(String name,
+                            TreeModel treeModel,
+                            PatternList tipPatterns,
+                            Parameter migrationRates,
+                            SubstitutionModel[] migrationModels,
+                            BranchRateModel branchRateModel,
+                            AbstractPopulationSizeModel populationSizeModel,
+                            int stateCount,
+                            Parameter epochTimes,
+                            MascotStepRule stepRule,
+                            double mappingMaxStep,
+                            boolean checkProbabilities,
+                            String ancestralStateTagName,
+                            String modeStateTagName) {
         super(name == null ? MASCOT_LIKELIHOOD : name, treeModel, tipPatterns, stateCount, branchRateModel,
                 migrationModels, populationSizeModel, tipPatterns.getDataType(), modeStateTagName);
         this.treeModel = treeModel;
@@ -149,7 +173,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         this.dynamics = migrationRates != null ?
                 new MascotDynamics(stateCount, migrationRates, populationSizeModel, epochTimes) :
                 new MascotDynamics(stateCount, migrationModels, populationSizeModel, epochTimes);
-        this.maxStep = maxStep;
+        this.stepRule = stepRule;
+        this.maxStep = stepRule.getMaxStep();
         this.mappingMaxStep = mappingMaxStep;
         this.checkProbabilities = checkProbabilities;
         this.ancestralStateTagName = ancestralStateTagName;
@@ -509,8 +534,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             NodeRef node = treeModel.getNode(i);
             nodeHeights[node.getNumber()] = treeModel.getNodeHeight(node);
         }
-        // the native delegate maps in Java at mappingMaxStep itself; a Java likelihood needs a second delegate for it
-        stochasticMapDelegate = likelihoodDelegate instanceof NativeMascotLikelihoodDelegate || mappingMaxStep == maxStep
+        // mapping integrates on a fixed mappingMaxStep grid: the native delegate does so in Java itself, and a Java
+        // likelihood reuses its own delegate only when that is the same grid
+        boolean sameGrid = stepRule.getKind() == MascotStepRule.Kind.FIXED && mappingMaxStep == maxStep;
+        stochasticMapDelegate = likelihoodDelegate instanceof NativeMascotLikelihoodDelegate || sameGrid
                 ? likelihoodDelegate
                 : new GenericMascotLikelihoodDelegate(dynamics.getStateCount(), dynamics.getBoundaries(), mappingMaxStep);
         double mappedLogLikelihood;
@@ -522,7 +549,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                     "values: " + e.getMessage(), e);
         }
         // only comparable when mapping integrates on the likelihood's step grid
-        if (mappingMaxStep == maxStep && !warnedStochasticMapLogLikelihood &&
+        if (sameGrid && !warnedStochasticMapLogLikelihood &&
                 Math.abs(mappedLogLikelihood - logLikelihood) > 1.0e-9 * Math.max(1.0, Math.abs(logLikelihood))) {
             Logger.getLogger("dr.evomodel").warning("MASCOT stochastic map was conditioned on a forward pass with " +
                     "log likelihood " + mappedLogLikelihood + ", but the cached value is " + logLikelihood);
@@ -553,6 +580,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
 
     public double getMaxStep() {
         return maxStep;
+    }
+
+    public MascotStepRule getStepRule() {
+        return stepRule;
     }
 
     @Override
@@ -634,9 +665,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     private void ensureLikelihoodDelegate() {
         if (!likelihoodDelegateKnown) {
             likelihoodDelegate = useNativeDelegate()
-                    ? new NativeMascotLikelihoodDelegate(nativeInstance, dynamics.getBoundaries(), maxStep,
+                    ? new NativeMascotLikelihoodDelegate(nativeInstance, dynamics.getBoundaries(), stepRule,
                     mappingMaxStep)
-                    : new GenericMascotLikelihoodDelegate(dynamics.getStateCount(), dynamics.getBoundaries(), maxStep);
+                    : new GenericMascotLikelihoodDelegate(dynamics.getStateCount(), dynamics.getBoundaries(), stepRule);
             likelihoodDelegateKnown = true;
         }
     }
@@ -655,6 +686,10 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             }
             Logger logger = Logger.getLogger("dr.evomodel");
             String reason = mode.equals("false") ? NATIVE_PROPERTY + "=false" : MascotJNIWrapper.getUnavailableReason();
+            if (reason == null && stepRule.getKind() == MascotStepRule.Kind.ADAPTIVE &&
+                    !MascotJNIWrapper.supportsAdaptiveSteps()) {
+                reason = "the native library predates adaptive step counts (API 1.1)";
+            }
             if (reason == null) {
                 nativeInstance = new NativeMascotLikelihoodDelegate.Instance(dynamics.getStateCount(),
                         preparedInput.maxLineageId + 1, dynamics.getEpochCount(), fp.equals("strict"));

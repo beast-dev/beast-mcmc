@@ -17,6 +17,7 @@ import dr.evomodel.coalescent.mascot.StochasticMapSampler;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -66,7 +67,7 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
 
     private static NativeMascotLikelihoodDelegate nativeDelegate(MascotGoldenCorpus.Case c, boolean strict) {
         return NativeMascotLikelihoodDelegate.create(c.stateCount, c.getPreparedInput().getSchedule().nodeCount,
-                c.boundaries, c.maxStep, strict);
+                c.boundaries, c.stepRule, strict);
     }
 
     private static int coalescences(MascotGoldenCorpus.Case c) {
@@ -118,8 +119,11 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
             return;
         }
         for (MascotGoldenCorpus.Case c : MascotGoldenCorpus.generatedCases()) {
-            Outputs java = evaluate(new GenericMascotLikelihoodDelegate(c.stateCount, c.boundaries, c.maxStep), c);
-            Outputs strict = evaluate(nativeDelegate(c, true), c);
+            GenericMascotLikelihoodDelegate javaDelegate =
+                    new GenericMascotLikelihoodDelegate(c.stateCount, c.boundaries, c.stepRule);
+            NativeMascotLikelihoodDelegate strictDelegate = nativeDelegate(c, true);
+            Outputs java = evaluate(javaDelegate, c);
+            Outputs strict = evaluate(strictDelegate, c);
             assertEquals(c.name + ": numerical failure", java.numerical, strict.numerical);
             if (java.numerical) {
                 continue;
@@ -129,6 +133,8 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
             assertBitwise(c.name + ": theta gradient", java.gradient, strict.gradient);
             assertBitwise(c.name + ": clock gradient", java.clock, strict.clock);
             assertBitwise(c.name + ": ancestral scores", java.ancestral, strict.ancestral);
+            assertTrue(c.name + ": step counts", Arrays.equals(javaDelegate.getLastStepCounts(),
+                    strictDelegate.getLastStepCounts()));
         }
     }
 
@@ -137,8 +143,9 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
             return;
         }
         for (MascotGoldenCorpus.Case c : MascotGoldenCorpus.generatedCases()) {
-            Outputs java = evaluate(new GenericMascotLikelihoodDelegate(c.stateCount, c.boundaries, c.maxStep), c);
-            Outputs fma = evaluate(nativeDelegate(c, false), c);
+            Outputs java = evaluate(new GenericMascotLikelihoodDelegate(c.stateCount, c.boundaries, c.stepRule), c);
+            NativeMascotLikelihoodDelegate fmaDelegate = nativeDelegate(c, false);
+            Outputs fma = evaluate(fmaDelegate, c);
             assertEquals(c.name + ": numerical failure", java.numerical, fma.numerical);
             if (java.numerical) {
                 continue;

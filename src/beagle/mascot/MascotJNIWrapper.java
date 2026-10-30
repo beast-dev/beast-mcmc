@@ -76,6 +76,15 @@ public final class MascotJNIWrapper {
         return null;
     }
 
+    /** @return whether the loaded library implements adaptive step counts (API 1.1); false if it is unavailable */
+    public static boolean supportsAdaptiveSteps() {
+        if (LOAD_FAILURE != null) {
+            return false;
+        }
+        int[] version = new int[2];
+        return getApiVersion(version) == OK && version[0] == API_VERSION_MAJOR && version[1] >= 1;
+    }
+
     public static native int getApiVersion(int[] majorMinor);
 
     /** @return an instance id >= 0, or a negative status */
@@ -105,4 +114,7 @@ public final class MascotJNIWrapper {
                                       int outputs,
                                       double[] logLikelihood, double[] thetaGradient, double[] clockGradient,
                                       double[] ancestralStateScores);
+
+    /** Tests only: the step count of each integration segment of the last evaluation; count[0] is set. */
+    public static native int getLastStepCounts(int instance, int[] steps, int[] count);
 }

@@ -27,13 +27,14 @@ import java.util.Random;
  */
 public final class MascotGoldenCorpus {
 
-    public static final String FORMAT = "mascot-golden 1";
+    public static final String FORMAT = "mascot-golden 2";
 
     /** One case: the inputs of an evaluation. */
     public static final class Case {
         public final String name;
         public final int stateCount;
         public final double maxStep;
+        public final MascotStepRule stepRule;
         public final double[] boundaries;
         public final double[] theta;
         public final double[] branchRates;
@@ -44,10 +45,27 @@ public final class MascotGoldenCorpus {
             this.name = name;
             this.stateCount = stateCount;
             this.maxStep = maxStep;
+            this.stepRule = MascotStepRule.fixed(maxStep);
             this.boundaries = boundaries;
             this.theta = theta;
             this.branchRates = branchRates;
             this.prepared = prepared;
+        }
+
+        private Case(Case c, String name, MascotStepRule stepRule) {
+            this.name = name;
+            this.stateCount = c.stateCount;
+            this.maxStep = stepRule.getMaxStep();
+            this.stepRule = stepRule;
+            this.boundaries = c.boundaries;
+            this.theta = c.theta;
+            this.branchRates = c.branchRates;
+            this.prepared = c.prepared;
+        }
+
+        /** The same inputs under another step rule. */
+        public Case withStepRule(String name, MascotStepRule stepRule) {
+            return new Case(this, name, stepRule);
         }
 
         public MascotPreparedInput getPreparedInput() {
@@ -104,6 +122,22 @@ public final class MascotGoldenCorpus {
             }
         }
         cases.add(coalescentRateErrorCase());
+
+        // the adaptive step rule (R3): uncapped, capped, and with each guard
+        List<Case> adaptive = new ArrayList<>();
+        for (Case c : cases) {
+            String n = c.name;
+            if (n.equals("sweepK3") || n.equals("sweepK5") || n.equals("sweepK8") || n.equals("sweepK17") ||
+                    n.equals("sweepK33")) {
+                adaptive.add(c.withStepRule("adaptive" + n, MascotStepRule.adaptive(0.1, 0.25, 0.0, 0)));
+            } else if (n.startsWith("smallN20") || n.startsWith("smallN40")) {
+                adaptive.add(c.withStepRule("adaptive" + n, MascotStepRule.adaptive(0.0, 0.25, 0.0, 0)));
+            } else if (n.startsWith("smallN80K5") || n.startsWith("smallN80K7")) {
+                adaptive.add(c.withStepRule("adaptiveMinStep" + n, MascotStepRule.adaptive(0.0, 0.25, 0.05, 0)));
+                adaptive.add(c.withStepRule("adaptiveMaxSteps" + n, MascotStepRule.adaptive(0.0, 0.25, 0.0, 4)));
+            }
+        }
+        cases.addAll(adaptive);
         return cases;
     }
 
@@ -275,10 +309,13 @@ public final class MascotGoldenCorpus {
         }
 
         MascotLikelihoodDelegate.Result result = null;
+        int[] stepCounts = null;
         if (status.equals("ok")) {
             try {
-                result = new GenericMascotLikelihoodDelegate(stateCount, c.boundaries, c.maxStep)
-                        .evaluate(c.prepared, c.theta, c.branchRates, true, true, false, false);
+                GenericMascotLikelihoodDelegate delegate =
+                        new GenericMascotLikelihoodDelegate(stateCount, c.boundaries, c.stepRule);
+                result = delegate.evaluate(c.prepared, c.theta, c.branchRates, true, true, false, false);
+                stepCounts = delegate.getLastStepCounts();
             } catch (MascotLikelihoodDelegate.NumericalException ex) {
                 status = "numerical";
             }
@@ -290,6 +327,9 @@ public final class MascotGoldenCorpus {
             w.println("dims " + stateCount + " " + lineageCount + " " + s.getIntervalCount() + " " +
                     s.initialSampleNode + " " + epochCount);
             w.println("maxStep " + hex(c.maxStep));
+            w.println("stepRule " + (c.stepRule.getKind() == MascotStepRule.Kind.ADAPTIVE ? "adaptive" : "fixed") + " " +
+                    hex(c.stepRule.getTau()) + " " + hex(c.stepRule.getMinStep()) + " " +
+                    c.stepRule.getMaxStepsPerSegment());
             w.println("initialTime " + hex(s.initialTime));
             w.println("boundaries " + hex(c.boundaries));
             w.println("migration " + hex(migration));
@@ -318,6 +358,11 @@ public final class MascotGoldenCorpus {
                 w.println("thetaGradient " + hex(result.gradient));
                 w.println("clockGradient " + (result.clockGradient == null ? "none" : hex(result.clockGradient)));
                 w.println("ancestralScores " + hex(result.ancestralStateScores));
+                StringBuilder counts = new StringBuilder("stepCounts");
+                for (int n : stepCounts) {
+                    counts.append(' ').append(n);
+                }
+                w.println(counts);
             }
             w.println("end");
         }

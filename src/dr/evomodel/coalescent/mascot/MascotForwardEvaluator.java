@@ -16,16 +16,18 @@ import java.util.Arrays;
 final class MascotForwardEvaluator {
 
     private final int stateCount;
-    private final double maxStep;
+    private final MascotStepRule stepRule;
     private final double[] boundaries;
     private final int epochCount;
     private final ForwardVisitor forwardVisitor = new ForwardVisitor();
     private StructuredCoalescentActiveLineages biologicalActiveLineages;
     private int epochCursor;
+    private int[] stepCounts = new int[16];
+    private int segmentCount;
 
-    MascotForwardEvaluator(int stateCount, double maxStep, double[] boundaries, int epochCount) {
+    MascotForwardEvaluator(int stateCount, MascotStepRule stepRule, double[] boundaries, int epochCount) {
         this.stateCount = stateCount;
-        this.maxStep = maxStep;
+        this.stepRule = stepRule;
         this.boundaries = boundaries;
         this.epochCount = epochCount;
     }
@@ -40,6 +42,7 @@ final class MascotForwardEvaluator {
         }
         Arrays.fill(workspace.coalescentTimes, 0, prepared.nodeCount, Double.NaN);
         epochCursor = 0;
+        segmentCount = 0;
         ensureBiologicalActiveLineages(prepared.nodeCount);
         forwardVisitor.reset(state, epochRates, workspace, prepared, branchRates, checkProbabilities,
                 operations, nodeLogWeights);
@@ -48,6 +51,11 @@ final class MascotForwardEvaluator {
         } finally {
             forwardVisitor.clear();
         }
+    }
+
+    /** The step count of each integration segment of the last forward pass, in order. */
+    int[] getLastStepCounts() {
+        return Arrays.copyOf(stepCounts, segmentCount);
     }
 
     private void ensureBiologicalActiveLineages(int nodeCount) {
@@ -63,18 +71,7 @@ final class MascotForwardEvaluator {
             throw new IllegalArgumentException("empty integration segment");
         }
 
-        int steps = Math.max(1, (int) Math.ceil((end - start) / maxStep));
-        double h = (end - start) / steps;
         int activeCount = state.activeCount;
-        int dim = activeCount * stateCount + 1;
-
-        workspace.integrationState = MascotRuntime.ensure(workspace.integrationState, dim);
-        double[] y = workspace.integrationState;
-        packStateInto(state, y);
-
-        workspace.integrationOut = MascotRuntime.ensure(workspace.integrationOut, dim);
-        double[] yOut = workspace.integrationOut;
-
         double[] activeClockRates = null;
         if (branchRates != null) {
             workspace.activeClockRates = MascotRuntime.ensure(workspace.activeClockRates, activeCount);
@@ -83,6 +80,25 @@ final class MascotForwardEvaluator {
                 activeClockRates[i] = branchRates[state.activeIds[i]];
             }
         }
+
+        double lambda = stepRule.kind == MascotStepRule.Kind.ADAPTIVE
+                ? MascotStepRule.stiffness(state.probabilities, activeCount, stateCount, rates.migrationMatrix,
+                rates.inversePopulation, activeClockRates)
+                : 0.0;
+        int steps = stepRule.steps(end - start, lambda);
+        if (segmentCount == stepCounts.length) {
+            stepCounts = Arrays.copyOf(stepCounts, 2 * segmentCount);
+        }
+        stepCounts[segmentCount++] = steps;
+        double h = (end - start) / steps;
+        int dim = activeCount * stateCount + 1;
+
+        workspace.integrationState = MascotRuntime.ensure(workspace.integrationState, dim);
+        double[] y = workspace.integrationState;
+        packStateInto(state, y);
+
+        workspace.integrationOut = MascotRuntime.ensure(workspace.integrationOut, dim);
+        double[] yOut = workspace.integrationOut;
 
         if (operations == null) {
             for (int i = 0; i < steps; i++) {

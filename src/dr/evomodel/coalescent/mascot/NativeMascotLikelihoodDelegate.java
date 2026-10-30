@@ -77,27 +77,29 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
 
     private final Instance instance;
     private final double[] boundaries;
-    private final double maxStep;
+    private final MascotStepRule stepRule;
     private final double mappingMaxStep;
     private final int parameterCount;
     private final MascotRuntime.EpochRates rates;
     private final double[] migration;
     private final double[] inversePopulation;
     private final double[] logLikelihood = new double[1];
+    private int lastSegmentBound;
     private GenericMascotLikelihoodDelegate mappingDelegate;
 
-    NativeMascotLikelihoodDelegate(Instance instance, double[] boundaries, double maxStep, double mappingMaxStep) {
+    NativeMascotLikelihoodDelegate(Instance instance, double[] boundaries, MascotStepRule stepRule,
+                                   double mappingMaxStep) {
         if (boundaries.length - 1 != instance.epochCount) {
             throw new IllegalArgumentException("boundaries define " + (boundaries.length - 1) + " epochs, but the " +
                     "native instance holds " + instance.epochCount);
         }
-        if (maxStep <= 0.0 || !Double.isFinite(maxStep)) {
-            throw new IllegalArgumentException("maxStep must be positive and finite");
+        if (stepRule == null) {
+            throw new IllegalArgumentException("stepRule must not be null");
         }
         int k = instance.stateCount;
         this.instance = instance;
         this.boundaries = boundaries.clone();
-        this.maxStep = maxStep;
+        this.stepRule = stepRule;
         this.mappingMaxStep = mappingMaxStep;
         this.parameterCount = instance.epochCount * (k * (k - 1) + k);
         this.rates = new MascotRuntime.EpochRates(k);
@@ -159,8 +161,22 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
      */
     public static NativeMascotLikelihoodDelegate create(int stateCount, int lineageCount, double[] boundaries,
                                                         double maxStep, boolean strict) {
+        return create(stateCount, lineageCount, boundaries, MascotStepRule.fixed(maxStep), strict);
+    }
+
+    public static NativeMascotLikelihoodDelegate create(int stateCount, int lineageCount, double[] boundaries,
+                                                        MascotStepRule stepRule, boolean strict) {
         return new NativeMascotLikelihoodDelegate(new Instance(stateCount, lineageCount, boundaries.length - 1, strict),
-                boundaries, maxStep, maxStep);
+                boundaries, stepRule, stepRule.getMaxStep() > 0.0 ? stepRule.getMaxStep() : 0.01);
+    }
+
+    /** The RK4 step count of each integration segment of the last evaluation, in order (for tests). */
+    public int[] getLastStepCounts() {
+        int[] counts = new int[lastSegmentBound];
+        int[] count = new int[1];
+        int status = MascotJNIWrapper.getLastStepCounts(instance.id, counts, count);
+        check(status);
+        return java.util.Arrays.copyOf(counts, count[0]);
     }
 
     /** "kernel simdWidth fpMode isa", e.g. "A 0 fma neon". */
@@ -190,10 +206,14 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
         }
         instance.setTips(prepared.tipData);
         StructuredCoalescentSchedule s = prepared.schedule;
+        // each interval splits into at most one segment per epoch it crosses
+        lastSegmentBound = s.getIntervalCount() + instance.epochCount;
         int status = MascotJNIWrapper.evaluate(instance.id, s.getIntervalCount(), s.initialTime,
                 s.initialSampleNode, s.intervalLengths, s.eventTypes, s.sampleNodes, s.coalescentChild1,
                 s.coalescentChild2, s.coalescentParent, instance.epochCount, boundaries, migration, inversePopulation,
-                branchRates, MascotJNIWrapper.STEPS_FIXED, maxStep, 0.0, 0.0, 0, checkProbabilities, -1, -1, outputs,
+                branchRates, stepRule.getKind() == MascotStepRule.Kind.ADAPTIVE ? MascotJNIWrapper.STEPS_ADAPTIVE
+                        : MascotJNIWrapper.STEPS_FIXED, stepRule.getMaxStep(), stepRule.getTau(), stepRule.getMinStep(),
+                stepRule.getMaxStepsPerSegment(), checkProbabilities, -1, -1, outputs,
                 logLikelihood, gradientOut, clockGradientOut, ancestralStateScoresOut);
         check(status);
     }

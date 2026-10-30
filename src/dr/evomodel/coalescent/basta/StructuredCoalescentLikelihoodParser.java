@@ -34,6 +34,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.AbstractStructuredCoalescentLikelihood;
 import dr.evomodel.coalescent.EpochBoundaries;
 import dr.evomodel.coalescent.mascot.MascotLikelihood;
+import dr.evomodel.coalescent.mascot.MascotStepRule;
 import dr.evomodel.coalescent.mascot.StochasticMapSampler;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -94,6 +95,10 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String STATE_COUNT = "stateCount";
     public static final String MAX_STEP = "maxStep";
     public static final String MAPPING_MAX_STEP = "mappingMaxStep";
+    public static final String STEP_RULE = "stepRule";
+    public static final String TAU = "tau";
+    public static final String MIN_STEP = "minStep";
+    public static final String MAX_STEPS_PER_INTERVAL = "maxStepsPerInterval";
     public static final String CHECK_PROBABILITIES = "checkProbabilities";
     public static final String MIGRATION_MODEL = "migrationModel";
     public static final String MODE_STATE_TAG_NAME = "modeStateTagName";
@@ -373,6 +378,21 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         int stateCount = xo.getIntegerAttribute(STATE_COUNT);
         double maxStep = xo.getDoubleAttribute(MAX_STEP);
+        if (!(maxStep > 0.0) || Double.isInfinite(maxStep)) {
+            throw new XMLParseException(MAX_STEP + " must be positive and finite");
+        }
+        // fixed: steps of at most maxStep; adaptive: as many steps as the stiffness of each segment needs (tau per
+        // step), never longer than maxStep
+        String stepRuleName = xo.getAttribute(STEP_RULE, "fixed");
+        MascotStepRule stepRule;
+        if (stepRuleName.equalsIgnoreCase("fixed")) {
+            stepRule = MascotStepRule.fixed(maxStep);
+        } else if (stepRuleName.equalsIgnoreCase("adaptive")) {
+            stepRule = MascotStepRule.adaptive(maxStep, xo.getAttribute(TAU, MascotStepRule.DEFAULT_TAU),
+                    xo.getAttribute(MIN_STEP, 0.0), xo.getAttribute(MAX_STEPS_PER_INTERVAL, 0));
+        } else {
+            throw new XMLParseException(STEP_RULE + " must be fixed or adaptive, not " + stepRuleName);
+        }
         // stochastic mapping draws from a Java forward pass on this step grid (default: the likelihood's)
         double mappingMaxStep = xo.getAttribute(MAPPING_MAX_STEP, maxStep);
         if (!(mappingMaxStep > 0.0) || Double.isInfinite(mappingMaxStep)) {
@@ -386,7 +406,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
                 constantOrGridPiecewisePopulationSizeModel(popSizes, gridPoints, stateCount);
 
         MascotLikelihood likelihood = new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates,
-                migrationModels, branchRateModel, populationSizeModel, stateCount, gridPoints, maxStep,
+                migrationModels, branchRateModel, populationSizeModel, stateCount, gridPoints, stepRule,
                 mappingMaxStep, checkProbabilities, tagName, modeStateTagName);
 
         if (xo.hasChildNamed(COUNTS) || xo.hasChildNamed(REWARDS)) {
@@ -525,6 +545,10 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newIntegerRule(STATE_COUNT, true),
             AttributeRule.newDoubleRule(MAX_STEP, true),
             AttributeRule.newDoubleRule(MAPPING_MAX_STEP, true),
+            AttributeRule.newStringRule(STEP_RULE, true),
+            AttributeRule.newDoubleRule(TAU, true),
+            AttributeRule.newDoubleRule(MIN_STEP, true),
+            AttributeRule.newIntegerRule(MAX_STEPS_PER_INTERVAL, true),
             AttributeRule.newBooleanRule(CHECK_PROBABILITIES, true),
             AttributeRule.newStringRule(MODE_STATE_TAG_NAME, true),
             // Shared by both types.

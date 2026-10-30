@@ -50,11 +50,7 @@ public abstract class AbstractAdaptableOperator extends SimpleMCMCOperator imple
 
     public AbstractAdaptableOperator(AdaptationMode mode, double targetAcceptanceProbability) {
         this.mode = mode;
-        if (System.getProperty("mcmc.adaptation_target") != null) {
-            this.targetAcceptanceProbability = Double.parseDouble(System.getProperty("mcmc.adaptation_target"));
-        } else {
-            this.targetAcceptanceProbability = targetAcceptanceProbability;
-        }
+        this.targetAcceptanceProbability = targetAcceptanceProbability;
     }
 
     @Override

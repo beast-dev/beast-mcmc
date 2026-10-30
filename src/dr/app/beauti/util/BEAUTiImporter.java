@@ -86,7 +86,11 @@ public class BEAUTiImporter {
         }
 
         try {
-            String line = findFirstLine(file).trim();
+            String firstLine = findFirstLine(file);
+            if (firstLine == null) {
+                throw new ImportException("The file " + file.getName() + " is empty.");
+            }
+            String line = firstLine.trim();
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
@@ -136,6 +140,12 @@ public class BEAUTiImporter {
 
             importer.importBEAST(taxonLists, alignments);
 
+            if (taxonLists.isEmpty()) {
+                throw new ImportException("The BEAST file " + file.getName() + " contains no taxa.");
+            }
+            if (alignments.isEmpty()) {
+                throw new ImportException("The BEAST file " + file.getName() + " contains no alignments.");
+            }
             TaxonList taxa = taxonLists.get(0);
 
             int count = 1;
@@ -886,12 +896,13 @@ public class BEAUTiImporter {
     }
 
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
-        partition.setPartitionSubstitutionModel(psm);
-
-        if (psm.getDataType().getType() != partition.getDataType().getType())
+        if (psm.getDataType().getType() != partition.getDataType().getType()) {
             throw new IllegalArgumentException("Partition " + partition.getName()
                     + "\ncannot assign to Substitution Model\n" + psm.getName()
                     + "\nwith different data type.");
+        }
+
+        partition.setPartitionSubstitutionModel(psm);
     }
 
     private void addTraits(List<TraitData> traits) {

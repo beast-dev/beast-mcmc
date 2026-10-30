@@ -559,6 +559,12 @@ public class BeautiFrame extends DocumentFrame {
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     jde.printStackTrace();
+                } catch (RuntimeException re) {
+                    // anything else the import throws would otherwise reach the event thread unreported
+                    re.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error importing file:\n    " + describe(re),
+                            "Error reading file",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -597,6 +603,13 @@ public class BeautiFrame extends DocumentFrame {
                 return false;
             } catch (ImportException ex) {
                 ex.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Error parsing the traits file:\n    " + describe(ex),
+                        "Error reading file", JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (RuntimeException re) {
+                re.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Error importing the traits file:\n    " + describe(re),
+                        "Error reading file", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         } else {

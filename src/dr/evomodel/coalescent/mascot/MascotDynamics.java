@@ -13,6 +13,7 @@ import dr.evomodel.coalescent.basta.IntervalSpecificPopulationSizeModel;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.ComplexSubstitutionModelGradientSupport;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 
@@ -347,6 +348,10 @@ public final class MascotDynamics {
         double scale = 1.0;
         if (((ComplexSubstitutionModel) model).getScaleRatesByFrequencies()) {
             scale = model.getFrequencyModel().getFrequency(sink);
+        }
+        if (model instanceof BayesianStochasticSearchVariableSelection) {
+            // BSSVS models use rate * indicator, so a rate whose indicator is off does not enter the likelihood
+            scale *= ((BayesianStochasticSearchVariableSelection) model).getIndicators().getParameterValue(parameterIndex);
         }
         return combinedGradient[epochGradientOffset + rowMajorMigrationIndex(source, sink)] * scale;
     }

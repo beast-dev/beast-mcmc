@@ -13,6 +13,7 @@ import dr.evomodel.coalescent.basta.ConstantPopulationSizeModel;
 import dr.evomodel.coalescent.mascot.MascotLikelihood;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
@@ -55,6 +56,29 @@ public class MascotGradientTest extends TestCase {
         Parameter popSizes = new Parameter.Default("popSizes", HIGH_PRESSURE_POP_SIZES);
         MascotLikelihood likelihood = highPressure(dataType, rates, popSizes, 0.01);
 
+        assertGradientsMatch(likelihood, rates, popSizes, 1.0e-5);
+    }
+
+    /**
+     * A rate whose BSSVS indicator is 0 does not enter the likelihood, so its gradient must be exactly 0. Index 3
+     * (1 to 0) is where the rates-parameter order and the row-major migration order differ.
+     */
+    public void testBssvsGradientsMatchFiniteDifferences() throws Exception {
+        GeneralDataType dataType = dataType(3);
+        Parameter rates = new Parameter.Default("location.rates", HIGH_PRESSURE_RATES);
+        Parameter indicators = new Parameter.Default("location.indicators", new double[]{1.0, 0.0, 1.0, 0.0, 1.0, 1.0});
+        Parameter popSizes = new Parameter.Default("popSizes", HIGH_PRESSURE_POP_SIZES);
+        FrequencyModel frequencies = new FrequencyModel(dataType, new double[]{0.2, 0.3, 0.5});
+        SVSComplexSubstitutionModel migrationModel =
+                new SVSComplexSubstitutionModel("location.model", dataType, frequencies, rates, indicators);
+        migrationModel.setNormalization(false);
+        migrationModel.setScaleRatesByFrequencies(true);
+        MascotLikelihood likelihood = mascot(HIGH_PRESSURE_TREE, new int[]{0, 1, 2, 0, 1, 2}, dataType, null,
+                migrationModel, popSizes, 0.01);
+
+        double[] migrationGradient = likelihood.getMigrationGradientLogDensity();
+        assertEquals(0.0, migrationGradient[1], 0.0);
+        assertEquals(0.0, migrationGradient[3], 0.0);
         assertGradientsMatch(likelihood, rates, popSizes, 1.0e-5);
     }
 
@@ -101,6 +125,10 @@ public class MascotGradientTest extends TestCase {
             parameter.setParameterValue(i, x);
 
             double numeric = (up - down) / (xUp - xDown);
+            if (numeric == 0.0) {
+                assertEquals(label + "[" + i + "]", 0.0, analytic[i], 0.0);
+                continue;
+            }
             double relativeError = Math.abs(analytic[i] - numeric) / Math.abs(numeric);
             assertTrue(label + "[" + i + "]: analytic " + analytic[i] + ", numeric " + numeric +
                     ", relative error " + relativeError, relativeError < tolerance);

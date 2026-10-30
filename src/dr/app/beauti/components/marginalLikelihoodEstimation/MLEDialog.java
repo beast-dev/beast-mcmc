@@ -89,7 +89,7 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.pathSteps = pathStepsField.getValue();
+                options.pathSteps = pathStepsField.getValue(options.pathSteps);
             }
         });
 
@@ -105,7 +105,7 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleChainLength = chainLengthField.getValue();
+                options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
             }
         });
 
@@ -123,7 +123,7 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleLogEvery = logEveryField.getValue();
+                options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
             }
         });
 
@@ -279,9 +279,9 @@ public class MLEDialog {
     public void getOptions(MarginalLikelihoodEstimationOptions options) {
         //this.options = options;
 
-        options.pathSteps = pathStepsField.getValue();
-        options.mleChainLength = chainLengthField.getValue();
-        options.mleLogEvery = logEveryField.getValue();
+        options.pathSteps = pathStepsField.getValue(options.pathSteps);
+        options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
+        options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
 
         options.printOperatorAnalysis = operatorAnalysis.isSelected();
 

@@ -343,8 +343,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         if (dist != null && isTruncatable && isBounded) {
             if (isTruncatedCheck.isSelected()) {
-                lower = lowerField.getValue();
-                upper = upperField.getValue();
+                // (an empty or unparseable field leaves the bound as it was)
+                if (lowerField.getValue() != null) lower = lowerField.getValue();
+                if (upperField.getValue() != null) upper = upperField.getValue();
             }
             dist = new TruncatedDistribution(dist, lower, upper);
         }
@@ -383,8 +384,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();
         if (parameter.isTruncated) {
-            parameter.truncationLower = lowerField.getValue();
-            parameter.truncationUpper = upperField.getValue();
+            if (lowerField.getValue() != null) parameter.truncationLower = lowerField.getValue();
+            if (upperField.getValue() != null) parameter.truncationUpper = upperField.getValue();
         }
 
         getArguments(parameter);

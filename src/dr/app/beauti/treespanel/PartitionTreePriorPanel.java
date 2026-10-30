@@ -108,10 +108,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
         treePriorCombo.addItemListener(ev -> {
 
-            if (treePriorCombo.getSelectedItem() != null) {
+            Object selected = treePriorCombo.getSelectedItem();
+            if (selected != null && !(selected instanceof TreePriorType)) {
+                // the combo also holds separators, which are not a choice: put the selection back
+                treePriorCombo.setSelectedItem(partitionTreePrior.getNodeHeightPrior());
+            } else if (selected != null) {
                 setupPanel();
 
-                PartitionTreePriorPanel.this.partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
+                PartitionTreePriorPanel.this.partitionTreePrior.setNodeHeightPrior((TreePriorType) selected);
                 parent.fireTreePriorsChanged();
             }
         });

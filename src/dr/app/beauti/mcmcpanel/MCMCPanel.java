@@ -121,7 +121,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.chainLength = chainLengthField.getValue();
+                options.chainLength = chainLengthField.getValue(options.chainLength);
                 frame.setDirty();
             }
         });
@@ -140,7 +140,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.echoEvery = echoEveryField.getValue();
+                options.echoEvery = echoEveryField.getValue(options.echoEvery);
                 frame.setDirty();
             }
         });
@@ -157,7 +157,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.logEvery = logEveryField.getValue();
+                options.logEvery = logEveryField.getValue(options.logEvery);
                 frame.setDirty();
             }
         });
@@ -174,7 +174,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.checkpointEvery = checkpointEveryField.getValue();
+                options.checkpointEvery = checkpointEveryField.getValue(options.checkpointEvery);
                 frame.setDirty();
             }
         });

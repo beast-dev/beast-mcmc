@@ -49,6 +49,10 @@ public final class MascotGoldenCorpus {
             this.branchRates = branchRates;
             this.prepared = prepared;
         }
+
+        public MascotPreparedInput getPreparedInput() {
+            return prepared;
+        }
     }
 
     private MascotGoldenCorpus() {

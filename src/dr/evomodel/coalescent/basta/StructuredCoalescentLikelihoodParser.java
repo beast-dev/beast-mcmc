@@ -93,6 +93,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     // MASCOT-only surface.
     public static final String STATE_COUNT = "stateCount";
     public static final String MAX_STEP = "maxStep";
+    public static final String MAPPING_MAX_STEP = "mappingMaxStep";
     public static final String CHECK_PROBABILITIES = "checkProbabilities";
     public static final String MIGRATION_MODEL = "migrationModel";
     public static final String MODE_STATE_TAG_NAME = "modeStateTagName";
@@ -372,6 +373,11 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         int stateCount = xo.getIntegerAttribute(STATE_COUNT);
         double maxStep = xo.getDoubleAttribute(MAX_STEP);
+        // stochastic mapping draws from a Java forward pass on this step grid (default: the likelihood's)
+        double mappingMaxStep = xo.getAttribute(MAPPING_MAX_STEP, maxStep);
+        if (!(mappingMaxStep > 0.0) || Double.isInfinite(mappingMaxStep)) {
+            throw new XMLParseException(MAPPING_MAX_STEP + " must be positive and finite");
+        }
         boolean checkProbabilities = xo.getAttribute(CHECK_PROBABILITIES, false);
         String tagName = xo.getAttribute(RECONSTRUCTION_TAG_NAME, MascotLikelihood.DEFAULT_ANCESTRAL_STATE_TAG_NAME);
         String modeStateTagName = xo.getAttribute(MODE_STATE_TAG_NAME, MascotLikelihood.DEFAULT_MODE_STATE_TAG_NAME);
@@ -381,7 +387,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
 
         MascotLikelihood likelihood = new MascotLikelihood(xo.getId(), treeModel, tipPatterns, migrationRates,
                 migrationModels, branchRateModel, populationSizeModel, stateCount, gridPoints, maxStep,
-                checkProbabilities, tagName, modeStateTagName);
+                mappingMaxStep, checkProbabilities, tagName, modeStateTagName);
 
         if (xo.hasChildNamed(COUNTS) || xo.hasChildNamed(REWARDS)) {
             throw new XMLParseException("For " + STRUCTURED_COALESCENT + " type=\"" + MASCOT_TYPE + "\", place <" +
@@ -518,6 +524,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             // already uses below.
             AttributeRule.newIntegerRule(STATE_COUNT, true),
             AttributeRule.newDoubleRule(MAX_STEP, true),
+            AttributeRule.newDoubleRule(MAPPING_MAX_STEP, true),
             AttributeRule.newBooleanRule(CHECK_PROBABILITIES, true),
             AttributeRule.newStringRule(MODE_STATE_TAG_NAME, true),
             // Shared by both types.

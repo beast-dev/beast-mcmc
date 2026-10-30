@@ -36,6 +36,7 @@ import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FrequencyPolicyType;
+import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.evomodelxml.branchratemodel.ContinuousBranchRatesParser;
@@ -56,6 +57,13 @@ import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
 import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.substmodel.GTRParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.StatisticParser;
+import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
+import dr.evomodelxml.operators.ExchangeOperatorParser;
+import dr.evomodelxml.operators.FixedHeightSubtreePruneRegraftOperatorParser;
+import dr.evomodelxml.operators.SubtreeLeapOperatorParser;
+import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
+import dr.evomodelxml.operators.WilsonBaldingParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
@@ -125,7 +133,104 @@ public class BeastSettingsImporter {
         importClockModels();
         importTreePriors();
         importTipDates();
+        importParameterisation();
+        importOperatorSettings();
         importMCMCSettings();
+    }
+
+    // ---- the parameterisation BEAUti used when it wrote the file ----------------------------------
+
+    /**
+     * BEAUti can write an analysis in its current form or in the older one it used to, which changes how
+     * relative rates, the GTR model and some priors are expressed. The statistic for the relative rate is
+     * written only by the current form, so its absence says the file is in the older one.
+     */
+    private void importParameterisation() {
+        boolean classic = true;
+        for (Element statistic : allElements(StatisticParser.STATISTIC)) {
+            if ("mu".equals(statistic.getAttributeValue(StatisticParser.NAME))) {
+                classic = false;
+                break;
+            }
+        }
+        options.useClassicOperatorsAndPriors = classic;
+        if (classic) {
+            report.recovered("the older parameterisation of the relative rates and priors");
+        }
+    }
+
+    // ---- the operators ----------------------------------------------------------------------------
+
+    /**
+     * Only the operators that are in use are written, so which ones are there says which of BEAUti's sets
+     * of operators the analysis uses. A set that matches none of them is a mix of the user's own.
+     */
+    private void importOperatorSettings() {
+        Element operators = firstElement(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE);
+        if (operators == null) {
+            report.notRecovered("the operators (the file has no " + SimpleOperatorScheduleParser.OPERATOR_SCHEDULE + ")");
+            return;
+        }
+
+        OperatorSetType operatorSetType;
+        if (hasOperator(operators, AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR)) {
+            operatorSetType = OperatorSetType.ADAPTIVE_MULTIVARIATE;
+        } else if (hasOperator(operators, SubtreeSlideOperatorParser.SUBTREE_SLIDE,
+                ExchangeOperatorParser.NARROW_EXCHANGE, ExchangeOperatorParser.WIDE_EXCHANGE,
+                WilsonBaldingParser.WILSON_BALDING)) {
+            operatorSetType = OperatorSetType.CLASSIC;
+        } else if (hasOperator(operators, SubtreeLeapOperatorParser.SUBTREE_LEAP,
+                FixedHeightSubtreePruneRegraftOperatorParser.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT)) {
+            operatorSetType = OperatorSetType.DEFAULT;
+        } else if (actsOnNodeHeights(operators)) {
+            operatorSetType = OperatorSetType.FIXED_TREE_TOPOLOGY;
+        } else {
+            operatorSetType = OperatorSetType.FIXED_TREE;
+        }
+        options.operatorSetType = operatorSetType;
+        report.recovered("the operators, " + operatorSetType);
+    }
+
+    private static boolean hasOperator(Element operators, String... names) {
+        for (Object child : operators.getChildren()) {
+            String name = ((Element) child).getName();
+            for (String candidate : names) {
+                if (name.equalsIgnoreCase(candidate)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return true if any operator moves the heights of the nodes of a tree, which is what is left when
+     * the topology is held fixed
+     */
+    private boolean actsOnNodeHeights(Element operators) {
+        for (Object child : operators.getChildren()) {
+            Element operator = (Element) child;
+            for (String suffix : new String[]{"treeModel.rootHeight", "treeModel.internalNodeHeights",
+                    "treeModel.allInternalNodeHeights"}) {
+                if (refersToIdEndingWith(operator, suffix)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean refersToIdEndingWith(Element element, String suffix) {
+        String idref = element.getAttributeValue(XMLParser.IDREF);
+        if (idref != null && idref.endsWith(suffix)) {
+            return true;
+        }
+        for (Object child : element.getChildren()) {
+            if (refersToIdEndingWith((Element) child, suffix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ---- the clock models -------------------------------------------------------------------------

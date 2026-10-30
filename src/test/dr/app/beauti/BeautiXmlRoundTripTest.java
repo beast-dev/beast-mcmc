@@ -29,18 +29,19 @@ package test.dr.app.beauti;
 
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.BeautiImporter;
+import dr.app.beauti.util.ImportReport;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileWriter;
 
 /**
  * Checks how much of an analysis survives being written out as a BEAST XML and read back in: each case is
  * generated, imported into empty options, and generated again, and the two files are compared. Any
  * difference is a setting the import did not recover, and the failure names the line it first shows up on.
  * <p>
- * Cases are listed here as they begin to round-trip; the ones not yet listed are waiting on later stages of
- * the importer.
+ * Every one of the harness's cases is listed here: all of them come back unchanged.
  *
  * @author Andrew Rambaut
  */
@@ -69,7 +70,7 @@ public class BeautiXmlRoundTripTest {
         }
     }
 
-    // ---- cases that survive a round trip in full --------------------------------------------------
+    // ---- every case the harness builds --------------------------------------------------
 
     @Test
     public void apes_jc_strict_constant() throws Exception {
@@ -94,6 +95,11 @@ public class BeautiXmlRoundTripTest {
     @Test
     public void apes_gtr_gamma_strict_constant() throws Exception {
         roundTrip("apes_gtr_gamma_strict_constant");
+    }
+
+    @Test
+    public void apes_gtr_gamma_strict_constant_classic_priors() throws Exception {
+        roundTrip("apes_gtr_gamma_strict_constant_classic_priors");
     }
 
     @Test
@@ -129,6 +135,16 @@ public class BeautiXmlRoundTripTest {
     @Test
     public void apes_hky_uced_constant() throws Exception {
         roundTrip("apes_hky_uced_constant");
+    }
+
+    @Test
+    public void apes_hky_strict_constant_classic_operators() throws Exception {
+        roundTrip("apes_hky_strict_constant_classic_operators");
+    }
+
+    @Test
+    public void apes_hky_strict_constant_fixed_topology() throws Exception {
+        roundTrip("apes_hky_strict_constant_fixed_topology");
     }
 
     @Test
@@ -184,6 +200,11 @@ public class BeautiXmlRoundTripTest {
     @Test
     public void dengue4_hky_gamma_strict_skygrid_tipdates() throws Exception {
         roundTrip("dengue4_hky_gamma_strict_skygrid_tipdates");
+    }
+
+    @Test
+    public void dengue4_hky_gamma_strict_constant_tipdates_classic() throws Exception {
+        roundTrip("dengue4_hky_gamma_strict_constant_tipdates_classic");
     }
 
     @Test
@@ -252,6 +273,63 @@ public class BeautiXmlRoundTripTest {
         } finally {
             file.delete();
         }
+    }
+
+    /**
+     * A file BEAUti did not write, carrying a model it cannot represent, must still import its data and say
+     * plainly which settings it could not take.
+     */
+    @Test
+    public void anUnrecognisedModelIsReportedRatherThanFailing() throws Exception {
+        File file = File.createTempFile("round_trip_foreign", ".xml");
+        FileWriter writer = new FileWriter(file);
+        writer.write("<?xml version='1.0'?>\n" +
+                "<beast>\n" +
+                "  <taxa id='taxa'>\n" +
+                "    <taxon id='A'/><taxon id='B'/><taxon id='C'/><taxon id='D'/>\n" +
+                "  </taxa>\n" +
+                "  <alignment id='alignment' dataType='nucleotide'>\n" +
+                "    <sequence><taxon idref='A'/>ACGTACGTAC</sequence>\n" +
+                "    <sequence><taxon idref='B'/>ACGTACGTAG</sequence>\n" +
+                "    <sequence><taxon idref='C'/>ACGTACGTAT</sequence>\n" +
+                "    <sequence><taxon idref='D'/>ACGTACGTAA</sequence>\n" +
+                "  </alignment>\n" +
+                "  <patterns id='patterns' from='1'>\n" +
+                "    <alignment idref='alignment'/>\n" +
+                "  </patterns>\n" +
+                "  <covarionHKYModel id='covarion'/>\n" +
+                "  <siteModel id='siteModel'>\n" +
+                "    <substitutionModel><covarionHKYModel idref='covarion'/></substitutionModel>\n" +
+                "  </siteModel>\n" +
+                "</beast>\n");
+        writer.close();
+
+        try {
+            BeautiOptions options = BeautiOptions.newInstance(BeautiHeadlessHarness.COMPONENTS);
+            BeautiImporter importer = new BeautiImporter(null, options);
+            importer.importFromFile(file);
+
+            Assert.assertEquals("the sequences should still be read", 1, options.dataPartitions.size());
+            Assert.assertEquals("the taxa should still be read", 4, options.taxonList.getTaxonCount());
+
+            ImportReport report = importer.getReport();
+            Assert.assertFalse("the import should not claim to be complete", report.isComplete());
+            Assert.assertTrue("the unrecognised model should be named",
+                    containing(report.getNotRecovered(), "covarionHKYModel"));
+            Assert.assertTrue("the missing MCMC settings should be named",
+                    containing(report.getNotRecovered(), "MCMC"));
+        } finally {
+            file.delete();
+        }
+    }
+
+    private static boolean containing(java.util.List<String> lines, String text) {
+        for (String line : lines) {
+            if (line.contains(text)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

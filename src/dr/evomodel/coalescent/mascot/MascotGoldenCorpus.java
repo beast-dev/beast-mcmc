@@ -27,7 +27,7 @@ import java.util.Random;
  */
 public final class MascotGoldenCorpus {
 
-    public static final String FORMAT = "mascot-golden 2";
+    public static final String FORMAT = "mascot-golden 3";
 
     /** One case: the inputs of an evaluation. */
     public static final class Case {
@@ -137,8 +137,55 @@ public final class MascotGoldenCorpus {
                 adaptive.add(c.withStepRule("adaptiveMaxSteps" + n, MascotStepRule.adaptive(0.0, 0.25, 0.0, 4)));
             }
         }
+        // the step budget at its edge, on a stiff case (log Ne - 3) under BEAST's benchmark rule (cap 0.1): the
+        // smallest budget its pass fits, and one less, which trips it near the end of the pass
+        for (Case c : cases) {
+            if (c.name.equals("smallN80K7v27")) {
+                MascotStepRule rule = MascotStepRule.adaptive(0.1, 0.25, 0.0, 0, 1);
+                int edge = smallestStepBudget(c.withStepRule("budgetProbe", rule));
+                adaptive.add(c.withStepRule("budgetEdgeN80K7",
+                        MascotStepRule.adaptive(0.1, 0.25, 0.0, 0, edge)));
+                adaptive.add(c.withStepRule("budgetTripN80K7",
+                        MascotStepRule.adaptive(0.1, 0.25, 0.0, 0, edge - 1)));
+            }
+        }
         cases.addAll(adaptive);
         return cases;
+    }
+
+    /** The smallest step budget the forward pass of an ADAPTIVE case (maxStep &gt; 0) fits. */
+    static int smallestStepBudget(Case c) {
+        int lo = 1;
+        int hi = 1;
+        while (!fitsStepBudget(c, hi)) {
+            if (hi >= (1 << 29)) {
+                throw new IllegalStateException(c.name + " fits no step budget");
+            }
+            lo = hi + 1;
+            hi *= 2;
+        }
+        while (lo < hi) {
+            int mid = (lo + hi) >>> 1;
+            if (fitsStepBudget(c, mid)) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        return lo;
+    }
+
+    private static boolean fitsStepBudget(Case c, int stepBudget) {
+        MascotStepRule r = c.stepRule;
+        MascotStepRule rule = MascotStepRule.adaptive(r.getMaxStep(), r.getTau(), r.getMinStep(),
+                r.getMaxStepsPerSegment(), stepBudget);
+        try {
+            new GenericMascotLikelihoodDelegate(c.stateCount, c.boundaries, rule).calculateLikelihood(c.prepared,
+                    c.theta, c.branchRates, false);
+            return true;
+        } catch (MascotLikelihoodDelegate.StepBudgetException e) {
+            return false;
+        }
     }
 
     static Case randomCase(String name, long seed, int tipCount, int stateCount, int epochCount, double maxStep,
@@ -316,6 +363,8 @@ public final class MascotGoldenCorpus {
                         new GenericMascotLikelihoodDelegate(stateCount, c.boundaries, c.stepRule);
                 result = delegate.evaluate(c.prepared, c.theta, c.branchRates, true, true, false, false);
                 stepCounts = delegate.getLastStepCounts();
+            } catch (MascotLikelihoodDelegate.StepBudgetException ex) {
+                status = "stepBudget";
             } catch (MascotLikelihoodDelegate.NumericalException ex) {
                 status = "numerical";
             }
@@ -329,7 +378,7 @@ public final class MascotGoldenCorpus {
             w.println("maxStep " + hex(c.maxStep));
             w.println("stepRule " + (c.stepRule.getKind() == MascotStepRule.Kind.ADAPTIVE ? "adaptive" : "fixed") + " " +
                     hex(c.stepRule.getTau()) + " " + hex(c.stepRule.getMinStep()) + " " +
-                    c.stepRule.getMaxStepsPerSegment());
+                    c.stepRule.getMaxStepsPerSegment() + " " + c.stepRule.getStepBudget());
             w.println("initialTime " + hex(s.initialTime));
             w.println("boundaries " + hex(c.boundaries));
             w.println("migration " + hex(migration));

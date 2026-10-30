@@ -9,6 +9,7 @@ package test.dr.evomodel.coalescent.mascot;
 import dr.evomodel.coalescent.StructuredCoalescentSchedule;
 import dr.evomodel.coalescent.mascot.GenericMascotLikelihoodDelegate;
 import dr.evomodel.coalescent.mascot.MascotGoldenCorpus;
+import dr.evomodel.coalescent.mascot.MascotLikelihoodDelegate;
 import dr.evomodel.coalescent.mascot.MascotStepRule;
 import junit.framework.TestCase;
 
@@ -169,5 +170,50 @@ public class MascotStepRuleTest extends TestCase {
             assertTrue(c.name + ": only " + checked + " of " + c.theta.length + " entries checked",
                     checked >= c.theta.length / 2);
         }
+    }
+
+    /**
+     * The step budget: the edge case fits its budget and one less trips it, in the forward and the gradient pass alike;
+     * it does not apply without maxStep or under FIXED; the budget bounds the pass's steps.
+     */
+    public void testStepBudget() {
+        List<MascotGoldenCorpus.Case> pair = cases("budgetEdgeN80K7", "budgetTripN80K7");
+        assertEquals(2, pair.size());
+        MascotGoldenCorpus.Case edge = pair.get(0).name.equals("budgetEdgeN80K7") ? pair.get(0) : pair.get(1);
+        MascotGoldenCorpus.Case trip = edge == pair.get(0) ? pair.get(1) : pair.get(0);
+        int budget = edge.stepRule.getStepBudget();
+        assertTrue("the edge budget is above 1", budget >= 2);
+        assertEquals(budget - 1, trip.stepRule.getStepBudget());
+
+        double[] gradient = new double[edge.theta.length];
+        assertTrue(Double.isFinite(logL(edge, edge.stepRule, edge.theta, null)));
+        assertTrue(Double.isFinite(logL(edge, edge.stepRule, edge.theta, gradient)));
+        for (boolean withGradient : new boolean[]{false, true}) {
+            try {
+                logL(trip, trip.stepRule, trip.theta, withGradient ? gradient : null);
+                fail("one less than the edge budget is accepted (gradient " + withGradient + ")");
+            } catch (MascotLikelihoodDelegate.StepBudgetException expected) {
+                // expected
+            }
+        }
+
+        // the budget bounds the steps: at most budget x the reference steps of the maxStep grid
+        int[] counts = stepCounts(edge, edge.stepRule, edge.theta);
+        long steps = 0;
+        for (int n : counts) {
+            steps += n;
+        }
+        long reference = 0;
+        for (double length : segmentLengths(edge)) {
+            reference += Math.max(1, (int) Math.ceil(length / edge.stepRule.getMaxStep()));
+        }
+        assertTrue(steps + " steps against " + reference, steps <= (long) budget * reference);
+
+        // no budget without maxStep, or under FIXED
+        MascotStepRule s = trip.stepRule;
+        logL(trip, MascotStepRule.adaptive(0.0, s.getTau(), 0.0, 0, 1), trip.theta, null);
+        logL(trip, MascotStepRule.fixed(s.getMaxStep()), trip.theta, null);
+        assertFalse(MascotStepRule.fixed(0.1).hasStepBudget());
+        assertEquals(MascotStepRule.DEFAULT_STEP_BUDGET, MascotStepRule.adaptive(0.1, 0.25, 0.0, 0).getStepBudget());
     }
 }

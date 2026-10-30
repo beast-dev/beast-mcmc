@@ -259,7 +259,7 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
                 s.coalescentChild2, s.coalescentParent, instance.epochCount, boundaries, migration, inversePopulation,
                 branchRates, stepRule.getKind() == MascotStepRule.Kind.ADAPTIVE ? MascotJNIWrapper.STEPS_ADAPTIVE
                         : MascotJNIWrapper.STEPS_FIXED, stepRule.getMaxStep(), stepRule.getTau(), stepRule.getMinStep(),
-                stepRule.getMaxStepsPerSegment(), checkProbabilities,
+                stepRule.getMaxStepsPerSegment(), stepRule.getStepBudget(), checkProbabilities,
                 checkpoints ? instance.currentCheckpointSet : -1, checkpoints ? writeSet : -1, outputs,
                 logLikelihood, gradientOut, clockGradientOut, ancestralStateScoresOut);
         check(status);
@@ -276,6 +276,8 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
                 throw new NumericalException("invalid coalescent rate (native MASCOT)");
             case MascotJNIWrapper.ERROR_PROBABILITIES:
                 throw new NumericalException("invalid lineage probabilities (native MASCOT)");
+            case MascotJNIWrapper.ERROR_STEP_BUDGET:
+                throw new StepBudgetException("the pass exceeds its step budget (native MASCOT)");
             default:
                 throw new IllegalStateException("native MASCOT failed with status " + status);
         }

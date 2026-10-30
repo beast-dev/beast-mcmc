@@ -9,7 +9,7 @@ package beagle.mascot;
 import java.io.File;
 
 /**
- * The MASCOT component of beagle-lib (libhmsbeagle/mascot/mascot.h, API v1) through its JNI library
+ * The MASCOT component of beagle-lib (libhmsbeagle/mascot/mascot.h, API v1.3) through its JNI library
  * {@code hmsbeagle-jni-mascot}. The library is loaded from the directory named by the {@code mascot.library.path}
  * system property if it is set, otherwise from {@code java.library.path}. Constants mirror mascot.h.
  *
@@ -37,6 +37,7 @@ public final class MascotJNIWrapper {
     public static final int ERROR_PROBABILITIES = -3;
     public static final int ERROR_UNSUPPORTED = -4;
     public static final int ERROR_OUT_OF_MEMORY = -5;
+    public static final int ERROR_STEP_BUDGET = -6;
 
     public static final int STEPS_FIXED = 0;
     public static final int STEPS_ADAPTIVE = 1;
@@ -76,14 +77,14 @@ public final class MascotJNIWrapper {
         return null;
     }
 
-    /** @return whether the loaded library implements adaptive step counts (API 1.1); false if it is unavailable */
-    public static boolean supportsAdaptiveSteps() {
-        return supportsMinorVersion(1);
-    }
-
     /** @return whether the loaded library implements checkpoint sets (API 1.2); false if it is unavailable */
     public static boolean supportsIncrementalRestart() {
         return supportsMinorVersion(2);
+    }
+
+    /** @return whether the loaded library implements the step budget (API 1.3); false if it is unavailable */
+    public static boolean supportsStepBudget() {
+        return supportsMinorVersion(3);
     }
 
     private static boolean supportsMinorVersion(int minor) {
@@ -118,7 +119,7 @@ public final class MascotJNIWrapper {
                                       int epochCount, double[] boundaries, double[] migrationMatrices,
                                       double[] inversePopulations, double[] branchRates,
                                       int stepRuleKind, double maxStep, double tau, double hMin,
-                                      int maxStepsPerInterval,
+                                      int maxStepsPerInterval, int stepBudget,
                                       boolean checkProbabilities, int checkpointReadSet, int checkpointWriteSet,
                                       int outputs,
                                       double[] logLikelihood, double[] thetaGradient, double[] clockGradient,

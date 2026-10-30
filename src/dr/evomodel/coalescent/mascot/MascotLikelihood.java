@@ -698,9 +698,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             }
             Logger logger = Logger.getLogger("dr.evomodel");
             String reason = mode.equals("false") ? NATIVE_PROPERTY + "=false" : MascotJNIWrapper.getUnavailableReason();
-            if (reason == null && stepRule.getKind() == MascotStepRule.Kind.ADAPTIVE &&
-                    !MascotJNIWrapper.supportsAdaptiveSteps()) {
-                reason = "the native library predates adaptive step counts (API 1.1)";
+            if (reason == null && !MascotJNIWrapper.supportsStepBudget()) {
+                reason = "the native library predates API 1.3 (the step budget)";
             }
             if (reason == null) {
                 boolean restart = incremental.equals("true") && MascotJNIWrapper.supportsIncrementalRestart();
@@ -795,8 +794,11 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                     buffers.combinedGradient, buffers.clockGradient, null, checkProbabilities);
         } catch (MascotLikelihoodDelegate.NumericalException e) {
             if (failOnGradientFailure) {
-                throw new IllegalStateException("MASCOT gradient cannot be evaluated for the current " +
-                        "parameter values: " + e.getMessage(), e);
+                // ArithmeticException: an HMC trajectory treats it as numerical instability and rejects
+                ArithmeticException failure = new ArithmeticException("MASCOT gradient cannot be evaluated for the " +
+                        "current parameter values: " + e.getMessage());
+                failure.initCause(e);
+                throw failure;
             }
             cacheLogLikelihood(Double.NEGATIVE_INFINITY);
             gradientKnown = false;
@@ -804,7 +806,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
         if (!Double.isFinite(logLikelihood)) {
             if (failOnGradientFailure) {
-                throw new IllegalStateException("MASCOT gradient cannot be evaluated because the current " +
+                throw new ArithmeticException("MASCOT gradient cannot be evaluated because the current " +
                         "log likelihood is " + logLikelihood);
             }
             cacheLogLikelihood(Double.NEGATIVE_INFINITY);
@@ -889,7 +891,7 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         }
         for (int i = 0; i < gradient.length; i++) {
             if (!Double.isFinite(gradient[i])) {
-                throw new IllegalStateException("MASCOT gradient contains a non-finite entry at index " +
+                throw new ArithmeticException("MASCOT gradient contains a non-finite entry at index " +
                         i + ": " + gradient[i]);
             }
         }

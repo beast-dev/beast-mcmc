@@ -17,6 +17,11 @@ package dr.evomodel.coalescent.mascot;
  * maxStep; then at most max(1, floor(length / minStep)) if minStep &gt; 0, and at most maxStepsPerSegment if &gt; 0. The
  * last two guard against a pathological lambda and win over maxStep.</li>
  * </ul>
+ * The step budget (ADAPTIVE with maxStep &gt; 0 and stepBudget &gt; 0) bounds a whole pass: over its segments, in order,
+ * the evaluator sums the step counts and the reference counts of a FIXED maxStep grid ({@link #referenceSteps}), and
+ * fails with {@link MascotLikelihoodDelegate.StepBudgetException} before integrating a segment that takes the steps
+ * above stepBudget times the reference. So a pass never costs more than stepBudget times the FIXED maxStep pass, in time
+ * or tape memory, however stiff the parameters an HMC trajectory proposes; the likelihood there is -infinity.
  * The step count is piecewise constant in the parameters, so gradients are those of the discretized likelihood.
  *
  * @author Marc A. Suchard
@@ -26,6 +31,8 @@ public final class MascotStepRule {
     public enum Kind { FIXED, ADAPTIVE }
 
     public static final double DEFAULT_TAU = 0.25;
+    /** A pass may take at most this many times the steps of the FIXED maxStep grid (ADAPTIVE). */
+    public static final int DEFAULT_STEP_BUDGET = 100;
 
     private static final double LARGEST_STEP_COUNT = 1 << 30;
 
@@ -34,20 +41,28 @@ public final class MascotStepRule {
     final double tau;
     final double minStep;
     final int maxStepsPerSegment;
+    final int stepBudget;
 
-    private MascotStepRule(Kind kind, double maxStep, double tau, double minStep, int maxStepsPerSegment) {
+    private MascotStepRule(Kind kind, double maxStep, double tau, double minStep, int maxStepsPerSegment,
+                           int stepBudget) {
         this.kind = kind;
         this.maxStep = maxStep;
         this.tau = tau;
         this.minStep = minStep;
         this.maxStepsPerSegment = maxStepsPerSegment;
+        this.stepBudget = stepBudget;
     }
 
     public static MascotStepRule fixed(double maxStep) {
         if (!(maxStep > 0.0) || Double.isInfinite(maxStep)) {
             throw new IllegalArgumentException("maxStep must be positive and finite");
         }
-        return new MascotStepRule(Kind.FIXED, maxStep, 0.0, 0.0, 0);
+        return new MascotStepRule(Kind.FIXED, maxStep, 0.0, 0.0, 0, 0);
+    }
+
+    /** {@link #adaptive(double, double, double, int, int)} with the default step budget. */
+    public static MascotStepRule adaptive(double maxStep, double tau, double minStep, int maxStepsPerSegment) {
+        return adaptive(maxStep, tau, minStep, maxStepsPerSegment, DEFAULT_STEP_BUDGET);
     }
 
     /**
@@ -55,15 +70,18 @@ public final class MascotStepRule {
      * @param tau                target of length * lambda per step
      * @param minStep            lower bound on the step, or &lt;= 0 for none
      * @param maxStepsPerSegment upper bound on the step count, or &lt;= 0 for none
+     * @param stepBudget         a pass may take at most this many times the steps of the FIXED maxStep grid, or
+     *                           &lt;= 0 for no bound; it applies only with maxStep &gt; 0
      */
-    public static MascotStepRule adaptive(double maxStep, double tau, double minStep, int maxStepsPerSegment) {
+    public static MascotStepRule adaptive(double maxStep, double tau, double minStep, int maxStepsPerSegment,
+                                          int stepBudget) {
         if (!(tau > 0.0) || Double.isInfinite(tau)) {
             throw new IllegalArgumentException("tau must be positive and finite");
         }
         if (Double.isNaN(maxStep) || Double.isNaN(minStep)) {
             throw new IllegalArgumentException("maxStep and minStep must not be NaN");
         }
-        return new MascotStepRule(Kind.ADAPTIVE, maxStep, tau, minStep, maxStepsPerSegment);
+        return new MascotStepRule(Kind.ADAPTIVE, maxStep, tau, minStep, maxStepsPerSegment, stepBudget);
     }
 
     public Kind getKind() {
@@ -84,6 +102,20 @@ public final class MascotStepRule {
 
     public int getMaxStepsPerSegment() {
         return maxStepsPerSegment;
+    }
+
+    public int getStepBudget() {
+        return stepBudget;
+    }
+
+    /** Whether passes are held to the step budget: ADAPTIVE with maxStep &gt; 0 and stepBudget &gt; 0. */
+    public boolean hasStepBudget() {
+        return kind == Kind.ADAPTIVE && maxStep > 0.0 && stepBudget > 0;
+    }
+
+    /** The step count of the FIXED maxStep grid for a segment, the budget's reference (maxStep &gt; 0). */
+    int referenceSteps(double length) {
+        return Math.max(1, (int) Math.ceil(Math.min(length / maxStep, LARGEST_STEP_COUNT)));
     }
 
     /**

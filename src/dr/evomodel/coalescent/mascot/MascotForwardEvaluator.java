@@ -24,6 +24,8 @@ final class MascotForwardEvaluator {
     private int epochCursor;
     private int[] stepCounts = new int[16];
     private int segmentCount;
+    private long passSteps;            // the step budget's totals for the current pass (MascotStepRule)
+    private long passReferenceSteps;
 
     MascotForwardEvaluator(int stateCount, MascotStepRule stepRule, double[] boundaries, int epochCount) {
         this.stateCount = stateCount;
@@ -43,6 +45,8 @@ final class MascotForwardEvaluator {
         Arrays.fill(workspace.coalescentTimes, 0, prepared.nodeCount, Double.NaN);
         epochCursor = 0;
         segmentCount = 0;
+        passSteps = 0;
+        passReferenceSteps = 0;
         ensureBiologicalActiveLineages(prepared.nodeCount);
         forwardVisitor.reset(state, epochRates, workspace, prepared, branchRates, checkProbabilities,
                 operations, nodeLogWeights);
@@ -86,6 +90,15 @@ final class MascotForwardEvaluator {
                 rates.inversePopulation, activeClockRates)
                 : 0.0;
         int steps = stepRule.steps(end - start, lambda);
+        if (stepRule.hasStepBudget()) {
+            passSteps += steps;
+            passReferenceSteps += stepRule.referenceSteps(end - start);
+            if (passSteps > (long) stepRule.stepBudget * passReferenceSteps) {
+                throw new MascotLikelihoodDelegate.StepBudgetException("the pass needs more than " +
+                        stepRule.stepBudget + " times the RK4 steps of a maxStep grid (" + passSteps + " steps against " +
+                        passReferenceSteps + " so far)");
+            }
+        }
         if (segmentCount == stepCounts.length) {
             stepCounts = Arrays.copyOf(stepCounts, 2 * segmentCount);
         }

@@ -99,6 +99,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
     public static final String TAU = "tau";
     public static final String MIN_STEP = "minStep";
     public static final String MAX_STEPS_PER_INTERVAL = "maxStepsPerInterval";
+    public static final String STEP_BUDGET = "stepBudget";
     public static final String CHECK_PROBABILITIES = "checkProbabilities";
     public static final String MIGRATION_MODEL = "migrationModel";
     public static final String MODE_STATE_TAG_NAME = "modeStateTagName";
@@ -389,7 +390,8 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             stepRule = MascotStepRule.fixed(maxStep);
         } else if (stepRuleName.equalsIgnoreCase("adaptive")) {
             stepRule = MascotStepRule.adaptive(maxStep, xo.getAttribute(TAU, MascotStepRule.DEFAULT_TAU),
-                    xo.getAttribute(MIN_STEP, 0.0), xo.getAttribute(MAX_STEPS_PER_INTERVAL, 0));
+                    xo.getAttribute(MIN_STEP, 0.0), xo.getAttribute(MAX_STEPS_PER_INTERVAL, 0),
+                    xo.getAttribute(STEP_BUDGET, MascotStepRule.DEFAULT_STEP_BUDGET));
         } else {
             throw new XMLParseException(STEP_RULE + " must be fixed or adaptive, not " + stepRuleName);
         }
@@ -549,6 +551,7 @@ public class StructuredCoalescentLikelihoodParser extends AbstractXMLObjectParse
             AttributeRule.newDoubleRule(TAU, true),
             AttributeRule.newDoubleRule(MIN_STEP, true),
             AttributeRule.newIntegerRule(MAX_STEPS_PER_INTERVAL, true),
+            AttributeRule.newIntegerRule(STEP_BUDGET, true),
             AttributeRule.newBooleanRule(CHECK_PROBABILITIES, true),
             AttributeRule.newStringRule(MODE_STATE_TAG_NAME, true),
             // Shared by both types.

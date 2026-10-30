@@ -46,6 +46,7 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
         double[] clock;
         double[] ancestral;
         boolean numerical;
+        boolean stepBudget;
     }
 
     private static Outputs evaluate(MascotLikelihoodDelegate delegate, MascotGoldenCorpus.Case c) {
@@ -62,6 +63,7 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
                     delegate.calculateLikelihood(prepared, c.theta, c.branchRates, false), 0.0);
         } catch (MascotLikelihoodDelegate.NumericalException e) {
             o.numerical = true;
+            o.stepBudget = e instanceof MascotLikelihoodDelegate.StepBudgetException;
         }
         return o;
     }
@@ -126,6 +128,7 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
             Outputs java = evaluate(javaDelegate, c);
             Outputs strict = evaluate(strictDelegate, c);
             assertEquals(c.name + ": numerical failure", java.numerical, strict.numerical);
+            assertEquals(c.name + ": step budget failure", java.stepBudget, strict.stepBudget);
             if (java.numerical) {
                 continue;
             }
@@ -148,6 +151,7 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
             NativeMascotLikelihoodDelegate fmaDelegate = nativeDelegate(c, false);
             Outputs fma = evaluate(fmaDelegate, c);
             assertEquals(c.name + ": numerical failure", java.numerical, fma.numerical);
+            assertEquals(c.name + ": step budget failure", java.stepBudget, fma.stepBudget);
             if (java.numerical) {
                 continue;
             }

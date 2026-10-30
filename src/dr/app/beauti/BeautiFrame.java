@@ -543,9 +543,9 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         if (!options.hasIdenticalTaxa()) {
+            // partitions whose taxa differ cannot share a tree; those that still can are left linked
             setAllOptions(); // need this to refresh panels otherwise it will throw exception
-            dataPanel.selectAll();
-            dataPanel.unlinkTreeModels();
+            dataPanel.unlinkTreeModelsWithDifferentTaxa();
         }
 
         setAllOptions();

@@ -788,9 +788,33 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public void unlinkTreeModels() { // reuse previous PartitionTreePrior
-        int[] selRows = dataTable.getSelectedRows();
-        for (int row : selRows) {
-            AbstractPartitionData partition = options.dataPartitions.get(row);
+        List<AbstractPartitionData> selected = new ArrayList<AbstractPartitionData>();
+        for (int row : dataTable.getSelectedRows()) {
+            selected.add(options.dataPartitions.get(row));
+        }
+        unlinkTreeModels(selected);
+    }
+
+    /**
+     * Gives each partition that shares a tree with a partition having different taxa its own tree (and,
+     * with it, its own clock model). Partitions that legitimately share a tree are left as they are, so
+     * that importing data with different taxa does not undo the linking of everything else.
+     */
+    public void unlinkTreeModelsWithDifferentTaxa() {
+        List<AbstractPartitionData> toUnlink = new ArrayList<AbstractPartitionData>();
+        for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+            List<AbstractPartitionData> sharing = options.getDataPartitions(treeModel);
+            if (sharing.size() > 1 && !options.hasIdenticalTaxa(sharing)) {
+                toUnlink.addAll(sharing);
+            }
+        }
+        if (!toUnlink.isEmpty()) {
+            unlinkTreeModels(toUnlink);
+        }
+    }
+
+    private void unlinkTreeModels(List<AbstractPartitionData> partitions) {
+        for (AbstractPartitionData partition : partitions) {
 
             PartitionTreeModel treeModel = partition.getPartitionTreeModel();
             if (!treeModel.getName().equals(partition.getName()) && partition.getTraits() == null) {// not a trait
@@ -877,6 +901,64 @@ public class DataPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
+    /**
+     * Gives the partition this substitution model, which has to describe the same kind of data.
+     */
+    private void setSubstitutionModel(AbstractPartitionData partition, PartitionSubstitutionModel model) {
+        if (!model.getDataType().equals(partition.getDataType())) {
+            JOptionPane.showMessageDialog(this, "A substitution model can only be shared by data partitions \n" +
+                            "of the same data type (e.g., nucleotides).",
+                    "Unable to link models", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        partition.setPartitionSubstitutionModel(model);
+    }
+
+    /**
+     * Gives the partition this clock model, and with it the tree that clock model is for: a clock model
+     * describes the rates on one tree, so the data it applies to has to be on that tree. This is what
+     * linking clock models does, and the Clock column of the table has to do the same.
+     */
+    private void setClockModel(AbstractPartitionData partition, PartitionClockModel clockModel) {
+        if (!canShare(partition, options.getDataPartitions(clockModel), "clock model")) {
+            return;
+        }
+        partition.setPartitionClockModel(clockModel);
+        partition.setPartitionTreeModel(clockModel.getPartitionTreeModel());
+    }
+
+    /**
+     * Gives the partition this tree model, and points its clock model at the same tree, as linking trees
+     * does.
+     */
+    private void setTreeModel(AbstractPartitionData partition, PartitionTreeModel treeModel) {
+        if (!canShare(partition, options.getDataPartitions(treeModel), "tree")) {
+            return;
+        }
+        partition.setPartitionTreeModel(treeModel);
+
+        PartitionClockModel clockModel = partition.getPartitionClockModel();
+        if (clockModel != null) {
+            clockModel.setPartitionTreeModel(treeModel);
+        }
+    }
+
+    /**
+     * @return true if the partition can join the others in sharing something; otherwise says why not
+     */
+    private boolean canShare(AbstractPartitionData partition, List<AbstractPartitionData> others, String shared) {
+        List<AbstractPartitionData> sharing = new ArrayList<AbstractPartitionData>(others);
+        if (!sharing.contains(partition)) {
+            sharing.add(partition);
+        }
+        if (sharing.size() > 1 && !options.hasIdenticalTaxa(sharing)) {
+            JOptionPane.showMessageDialog(this, "To share a " + shared + ", partitions need to have identical taxa.",
+                    "Unsupported Configuration", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     public void unlinkAll() {
         unlinkSubstitutionModels();
         unlinkClockModels();
@@ -952,15 +1034,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     }
                     break;
                 case SUBSTITUTION_COLUMN:
-                    if (((PartitionSubstitutionModel) aValue).getDataType().equals(partition.getDataType())) {
-                        partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
-                    }
+                    setSubstitutionModel(partition, (PartitionSubstitutionModel) aValue);
                     break;
                 case CLOCK_COLUMN:
-                    partition.setPartitionClockModel((PartitionClockModel) aValue);
+                    setClockModel(partition, (PartitionClockModel) aValue);
                     break;
                 case TREE_COLUMN:
-                    partition.setPartitionTreeModel((PartitionTreeModel) aValue);
+                    setTreeModel(partition, (PartitionTreeModel) aValue);
                     break;
             }
             fireDataChanged();

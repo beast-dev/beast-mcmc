@@ -25,26 +25,48 @@ import dr.evomodel.coalescent.StructuredCoalescentTipData;
  */
 public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDelegate {
 
-    /** A native instance and its fixed dimensions; owned by one MascotLikelihood. */
+    /**
+     * A native instance and its fixed dimensions; owned by one MascotLikelihood.
+     * <p>
+     * With incremental restart (API 1.2), a likelihood-only evaluation reads the current checkpoint set and writes the
+     * one not stored, so the stored set survives a proposal and a restore resumes from it. The native side compares
+     * the inputs with those a set was written from, so a set may hold any earlier state: this only decides which set
+     * is kept.
+     */
     static final class Instance {
         final int id;
         final int stateCount;
         final int lineageCount;
         final int epochCount;
         final String details;
+        final boolean incremental;
+        private int currentCheckpointSet;
+        private int storedCheckpointSet;
         private StructuredCoalescentTipData tipsSet;
         private boolean finalized;
 
-        Instance(int stateCount, int lineageCount, int epochCount, boolean strict) {
+        Instance(int stateCount, int lineageCount, int epochCount, boolean strict, boolean incremental) {
+            if (incremental && !MascotJNIWrapper.supportsIncrementalRestart()) {
+                throw new IllegalArgumentException("the native MASCOT library predates incremental restart (API 1.2)");
+            }
             this.stateCount = stateCount;
             this.lineageCount = lineageCount;
             this.epochCount = epochCount;
+            this.incremental = incremental;
             this.id = MascotJNIWrapper.createInstance(stateCount, lineageCount, epochCount,
                     strict ? MascotJNIWrapper.FP_STRICT : MascotJNIWrapper.FP_FMA);
             if (id < 0) {
                 throw new IllegalStateException("native MASCOT instance creation failed with status " + id);
             }
             this.details = MascotJNIWrapper.getInstanceDetails(id);
+        }
+
+        void storeCheckpoints() {
+            storedCheckpointSet = currentCheckpointSet;
+        }
+
+        void restoreCheckpoints() {
+            currentCheckpointSet = storedCheckpointSet;
         }
 
         void setTips(StructuredCoalescentTipData tipData) {
@@ -166,8 +188,23 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
 
     public static NativeMascotLikelihoodDelegate create(int stateCount, int lineageCount, double[] boundaries,
                                                         MascotStepRule stepRule, boolean strict) {
-        return new NativeMascotLikelihoodDelegate(new Instance(stateCount, lineageCount, boundaries.length - 1, strict),
-                boundaries, stepRule, stepRule.getMaxStep() > 0.0 ? stepRule.getMaxStep() : 0.01);
+        return create(stateCount, lineageCount, boundaries, stepRule, strict, false);
+    }
+
+    /** @param incremental likelihood-only evaluations resume from checkpoints (API 1.2); see {@link #storeCheckpoints} */
+    public static NativeMascotLikelihoodDelegate create(int stateCount, int lineageCount, double[] boundaries,
+                                                        MascotStepRule stepRule, boolean strict, boolean incremental) {
+        return new NativeMascotLikelihoodDelegate(new Instance(stateCount, lineageCount, boundaries.length - 1, strict,
+                incremental), boundaries, stepRule, stepRule.getMaxStep() > 0.0 ? stepRule.getMaxStep() : 0.01);
+    }
+
+    /** Keeps the current checkpoint set until {@link #restoreCheckpoints}, as a likelihood's storeState. */
+    public void storeCheckpoints() {
+        instance.storeCheckpoints();
+    }
+
+    public void restoreCheckpoints() {
+        instance.restoreCheckpoints();
     }
 
     /** The RK4 step count of each integration segment of the last evaluation, in order (for tests). */
@@ -177,6 +214,13 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
         int status = MascotJNIWrapper.getLastStepCounts(instance.id, counts, count);
         check(status);
         return java.util.Arrays.copyOf(counts, count[0]);
+    }
+
+    /** The schedule interval the last likelihood-only evaluation resumed from (0: the whole pass), or -1 (for tests). */
+    public int getLastRestartInterval() {
+        int[] interval = new int[1];
+        check(MascotJNIWrapper.getLastRestartInterval(instance.id, interval));
+        return interval[0];
     }
 
     /** "kernel simdWidth fpMode isa", e.g. "A 0 fma neon". */
@@ -208,14 +252,20 @@ public final class NativeMascotLikelihoodDelegate implements MascotLikelihoodDel
         StructuredCoalescentSchedule s = prepared.schedule;
         // each interval splits into at most one segment per epoch it crosses
         lastSegmentBound = s.getIntervalCount() + instance.epochCount;
+        boolean checkpoints = instance.incremental && outputs == MascotJNIWrapper.OUT_LOGL;
+        int writeSet = 1 - instance.storedCheckpointSet;
         int status = MascotJNIWrapper.evaluate(instance.id, s.getIntervalCount(), s.initialTime,
                 s.initialSampleNode, s.intervalLengths, s.eventTypes, s.sampleNodes, s.coalescentChild1,
                 s.coalescentChild2, s.coalescentParent, instance.epochCount, boundaries, migration, inversePopulation,
                 branchRates, stepRule.getKind() == MascotStepRule.Kind.ADAPTIVE ? MascotJNIWrapper.STEPS_ADAPTIVE
                         : MascotJNIWrapper.STEPS_FIXED, stepRule.getMaxStep(), stepRule.getTau(), stepRule.getMinStep(),
-                stepRule.getMaxStepsPerSegment(), checkProbabilities, -1, -1, outputs,
+                stepRule.getMaxStepsPerSegment(), checkProbabilities,
+                checkpoints ? instance.currentCheckpointSet : -1, checkpoints ? writeSet : -1, outputs,
                 logLikelihood, gradientOut, clockGradientOut, ancestralStateScoresOut);
         check(status);
+        if (checkpoints) {
+            instance.currentCheckpointSet = writeSet;
+        }
     }
 
     private static void check(int status) {

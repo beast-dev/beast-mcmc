@@ -51,6 +51,8 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
     public static final String NATIVE_PROPERTY = "mascot.native";
     /** fma (default) or strict, for the native kernels. */
     public static final String FP_PROPERTY = "mascot.fp";
+    /** true (default): native likelihood-only evaluations resume from checkpoints after a tree change; false: never. */
+    public static final String INCREMENTAL_PROPERTY = "mascot.incremental";
 
     /** Suffixes of the stochastic-mapping traits; the same names BASTA's Markov-jump add-ons use. */
     public static final String HISTORY_SUFFIX = ".history";
@@ -631,6 +633,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         storedGradientKnown = gradientKnown;
         storedAncestralStatesKnown = ancestralStatesKnown;
         stochasticMap = null;
+        if (nativeInstance != null) {
+            nativeInstance.storeCheckpoints();
+        }
     }
 
     @Override
@@ -644,6 +649,9 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
         ancestralStatesKnown = storedAncestralStatesKnown;
         stochasticMapPrepared = false;
         stochasticMap = null;
+        if (nativeInstance != null) {
+            nativeInstance.restoreCheckpoints();
+        }
     }
 
     private DerivedBuffers currentDerived() {
@@ -678,11 +686,15 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
             nativeDecided = true;
             String mode = System.getProperty(NATIVE_PROPERTY, "auto");
             String fp = System.getProperty(FP_PROPERTY, "fma");
+            String incremental = System.getProperty(INCREMENTAL_PROPERTY, "true");
             if (!mode.equals("auto") && !mode.equals("true") && !mode.equals("false")) {
                 throw new IllegalArgumentException(NATIVE_PROPERTY + " must be auto, true or false, not " + mode);
             }
             if (!fp.equals("fma") && !fp.equals("strict")) {
                 throw new IllegalArgumentException(FP_PROPERTY + " must be fma or strict, not " + fp);
+            }
+            if (!incremental.equals("true") && !incremental.equals("false")) {
+                throw new IllegalArgumentException(INCREMENTAL_PROPERTY + " must be true or false, not " + incremental);
             }
             Logger logger = Logger.getLogger("dr.evomodel");
             String reason = mode.equals("false") ? NATIVE_PROPERTY + "=false" : MascotJNIWrapper.getUnavailableReason();
@@ -691,12 +703,13 @@ public class MascotLikelihood extends AbstractStructuredCoalescentLikelihood
                 reason = "the native library predates adaptive step counts (API 1.1)";
             }
             if (reason == null) {
+                boolean restart = incremental.equals("true") && MascotJNIWrapper.supportsIncrementalRestart();
                 nativeInstance = new NativeMascotLikelihoodDelegate.Instance(dynamics.getStateCount(),
-                        preparedInput.maxLineageId + 1, dynamics.getEpochCount(), fp.equals("strict"));
+                        preparedInput.maxLineageId + 1, dynamics.getEpochCount(), fp.equals("strict"), restart);
                 String[] d = nativeInstance.details.split(" ");
-                logger.info(String.format("MASCOT likelihood '%s' runs natively: kernel %s%s, %s, %s (K = %d)",
+                logger.info(String.format("MASCOT likelihood '%s' runs natively: kernel %s%s, %s, %s (K = %d)%s",
                         getId(), d[0], d[1].equals("0") ? "" : " (SIMD width " + d[1] + ")", d[2], d[3],
-                        dynamics.getStateCount()));
+                        dynamics.getStateCount(), restart ? ", incremental restart" : ""));
             } else if (mode.equals("true")) {
                 throw new IllegalStateException(NATIVE_PROPERTY + "=true, but " + reason);
             } else {

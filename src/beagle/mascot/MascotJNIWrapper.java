@@ -78,11 +78,20 @@ public final class MascotJNIWrapper {
 
     /** @return whether the loaded library implements adaptive step counts (API 1.1); false if it is unavailable */
     public static boolean supportsAdaptiveSteps() {
+        return supportsMinorVersion(1);
+    }
+
+    /** @return whether the loaded library implements checkpoint sets (API 1.2); false if it is unavailable */
+    public static boolean supportsIncrementalRestart() {
+        return supportsMinorVersion(2);
+    }
+
+    private static boolean supportsMinorVersion(int minor) {
         if (LOAD_FAILURE != null) {
             return false;
         }
         int[] version = new int[2];
-        return getApiVersion(version) == OK && version[0] == API_VERSION_MAJOR && version[1] >= 1;
+        return getApiVersion(version) == OK && version[0] == API_VERSION_MAJOR && version[1] >= minor;
     }
 
     public static native int getApiVersion(int[] majorMinor);
@@ -117,4 +126,10 @@ public final class MascotJNIWrapper {
 
     /** Tests only: the step count of each integration segment of the last evaluation; count[0] is set. */
     public static native int getLastStepCounts(int instance, int[] steps, int[] count);
+
+    /**
+     * Tests only (API 1.2): interval[0] is set to the schedule interval the last forward-only evaluation resumed from
+     * (0: the whole pass), or -1 when it read no checkpoint set.
+     */
+    public static native int getLastRestartInterval(int instance, int[] interval);
 }

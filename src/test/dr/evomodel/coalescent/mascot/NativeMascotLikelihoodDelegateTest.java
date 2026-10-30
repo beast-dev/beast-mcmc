@@ -19,6 +19,7 @@ import junit.framework.TestCase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -191,6 +192,79 @@ public class NativeMascotLikelihoodDelegateTest extends TestCase {
             t.join();
         }
         assertTrue("concurrent native instances reproduce their serial results", same.get());
+    }
+
+    /**
+     * Single-interval changes accepted or rejected at random, as an MCMC would: an incremental delegate reproduces a
+     * full pass bitwise and resumes at the changed interval; a rate change resumes from the start.
+     */
+    public void testIncrementalRestartMatchesFullPass() {
+        if (!nativeAvailable()) {
+            return;
+        }
+        if (!MascotJNIWrapper.supportsIncrementalRestart()) {
+            System.err.println("testIncrementalRestartMatchesFullPass skipped: the library predates API 1.2");
+            return;
+        }
+        Random random = new Random(7);
+        int tested = 0;
+        for (MascotGoldenCorpus.Case c : MascotGoldenCorpus.generatedCases()) {
+            if (!c.name.equals("sweepK5") && !c.name.equals("sweepK8") && !c.name.equals("adaptivesweepK5") &&
+                    !c.name.startsWith("smallN80K7")) {
+                continue;
+            }
+            tested++;
+            MascotPreparedInput prepared = c.getPreparedInput();
+            double[] lengths = prepared.getSchedule().intervalLengths;
+            double[] original = lengths.clone();
+            try {
+                for (boolean strict : new boolean[]{true, false}) {
+                    String label = c.name + (strict ? " strict" : " fma");
+                    NativeMascotLikelihoodDelegate full = NativeMascotLikelihoodDelegate.create(c.stateCount,
+                            prepared.getSchedule().nodeCount, c.boundaries, c.stepRule, strict, false);
+                    NativeMascotLikelihoodDelegate incremental = NativeMascotLikelihoodDelegate.create(c.stateCount,
+                            prepared.getSchedule().nodeCount, c.boundaries, c.stepRule, strict, true);
+                    double stored = incremental.calculateLikelihood(prepared, c.theta, c.branchRates, false);
+                    assertEquals(label + ": first pass", full.calculateLikelihood(prepared, c.theta, c.branchRates,
+                            false), stored, 0.0);
+                    assertEquals(label + ": first pass restart", 0, incremental.getLastRestartInterval());
+                    incremental.storeCheckpoints();
+                    for (int step = 0; step < 40; step++) {
+                        int j;
+                        do {
+                            j = random.nextInt(lengths.length);
+                        } while (lengths[j] == 0.0);
+                        double old = lengths[j];
+                        lengths[j] = old * (0.8 + 0.4 * random.nextDouble());
+                        double expected = full.calculateLikelihood(prepared, c.theta, c.branchRates, false);
+                        double actual = incremental.calculateLikelihood(prepared, c.theta, c.branchRates, false);
+                        assertEquals(label + " step " + step + ": logL", expected, actual, 0.0);
+                        assertEquals(label + " step " + step + ": restart", j, incremental.getLastRestartInterval());
+                        if (random.nextBoolean()) {
+                            incremental.storeCheckpoints();
+                            stored = actual;
+                        } else {
+                            lengths[j] = old;
+                            incremental.restoreCheckpoints();
+                            if (step % 4 == 0) {
+                                assertEquals(label + " step " + step + ": restored logL", stored,
+                                        incremental.calculateLikelihood(prepared, c.theta, c.branchRates, false), 0.0);
+                                assertEquals(label + " step " + step + ": restored restart", lengths.length,
+                                        incremental.getLastRestartInterval());
+                            }
+                        }
+                    }
+                    double[] theta = c.theta.clone();
+                    theta[theta.length - 1] += 0.01;
+                    assertEquals(label + ": rate change", full.calculateLikelihood(prepared, theta, c.branchRates,
+                            false), incremental.calculateLikelihood(prepared, theta, c.branchRates, false), 0.0);
+                    assertEquals(label + ": rate change restart", 0, incremental.getLastRestartInterval());
+                }
+            } finally {
+                System.arraycopy(original, 0, lengths, 0, lengths.length);
+            }
+        }
+        assertEquals("cases tested", 4, tested);
     }
 
     /** Stochastic mapping under the native delegate is the Java mapper at mappingMaxStep (here the same step). */

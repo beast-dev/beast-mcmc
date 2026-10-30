@@ -161,8 +161,7 @@ public class BeautiFrame extends DocumentFrame {
                 TipDateSamplingComponentFactory.INSTANCE
         };
 
-        options = BeautiOptions.getInstance();
-        options.registerComponents(components);
+        options = BeautiOptions.newInstance(components);
 
         generator = new BeastGenerator(options, components);
 

@@ -421,7 +421,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(bitPanel);
 
-        BeautiOptions.getInstance().needCoalescentModel.put(partitionModel.getName(), true);
+        partitionModel.getOptions().needCoalescentModel.put(partitionModel.getName(), true);
 
         PanelUtils.setupComponent(continuousTraitSiteModelCombo);
         continuousTraitSiteModelCombo
@@ -849,10 +849,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 //use the mapping to the partition tree and not the model name itself for the HashMap
                 String modelName = model.getPartitionData().getPartitionTreeModel().getName();
                 if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, true);
+                    model.getOptions().needCoalescentModel.put(modelName, true);
                     addComponentWithLabel("Forward-in-time Model Structure:", discreteTraitSiteModelStructureCombo);
                 } else {
-                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, false);
+                    model.getOptions().needCoalescentModel.put(modelName, false);
                     addComponentWithLabel("Backward-in-time Coalescent Model:", bitModelCombo);
                     addComponentWithLabel("Backward-in-time Model structure:", discreteTraitSiteModelStructureCombo);
                     addComponent(bitDemeSharing);

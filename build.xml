@@ -47,6 +47,9 @@
     <property name="main_class_Annotator" value="dr.app.tools.treeannotator.TreeAnnotator"/>
     <property name="main_class_LogCombiner" value="dr.app.tools.logcombiner.LogCombiner"/>
     <property name="report" value="${build}/junitreport"/>
+    <!-- BEAUti XML snapshot tests (test/dr/app/beauti): rewrite the snapshots, or run only the named case -->
+    <property name="beauti.snapshots.update" value="false"/>
+    <property name="beauti.snapshots.only" value=""/>
 
     <path id="classpath">
         <fileset dir="${lib}" includes="**/*.jar"/>
@@ -367,6 +370,9 @@ ${extra_release_tag}</echo>
                 <path location="${build}"/>
             </classpath>
             <jvmarg value="-Djava.library.path=${java.library.path}"/>
+            <jvmarg value="-Djava.awt.headless=true"/>
+            <sysproperty key="beauti.snapshots.update" value="${beauti.snapshots.update}"/>
+            <sysproperty key="beauti.snapshots.only" value="${beauti.snapshots.only}"/>
             <formatter type="xml"/>
 
             <batchtest fork="yes" todir="${report}">

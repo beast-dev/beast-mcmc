@@ -408,7 +408,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 throw new RuntimeException("No such tree prior has been specified so cannot refer to it");
         }
 
-        if (BeautiOptions.getInstance().maximumTipHeight > 0)
+        if (partitionTreePrior.getOptions().maximumTipHeight > 0)
             citation = citation
 //                    + "\n" +
 //                    "Rodrigo AG, Felsenstein J (1999) in Molecular Evolution of HIV (Crandall K), pp. 233-272 [Serially Sampled Data]."
@@ -570,7 +570,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         }
 
-        if (BeautiOptions.getInstance().needCoalescentModel.get(this.partitionTreePrior.getName())) {
+        if (partitionTreePrior.getOptions().needCoalescentModel.get(this.partitionTreePrior.getName())) {
             //if FIT model, then remove the SET_BY_BIT option / TreePriorType
             treePriorCombo.removeItem(TreePriorType.SET_BY_BIT);
             treePriorCombo.setEnabled(true);

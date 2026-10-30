@@ -60,7 +60,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = 2778103564318492601L;
 
     private BeautiFrame frame = null;
-    private BeautiOptions options = BeautiOptions.getInstance();
+    private BeautiOptions options = null;
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;

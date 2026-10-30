@@ -417,25 +417,7 @@ public class MCMCPanel extends BeautiPanel {
     }
 
     private void updateTreeFileNameList() {
-        options.treeFileName.clear();
-        options.substTreeFileName.clear();
-        String treeFileName;
-
-        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            if (options.substTreeLog) {
-                treeFileName = getTreeFileName(tree.getPrefix() + "(time).");
-            } else {
-                treeFileName = getTreeFileName(tree.getPrefix());
-            }
-            if (addTxtExtension.isSelected()) treeFileName = treeFileName + ".txt";
-            options.treeFileName.add(treeFileName);
-
-            if (options.substTreeLog) {
-                treeFileName = getTreeFileName(tree.getPrefix() + "(subst).");
-                if (addTxtExtension.isSelected()) treeFileName = treeFileName + ".txt";
-                options.substTreeFileName.add(treeFileName);
-            }
-        }
+        options.updateFileNames(addTxtExtension.isSelected());
     }
 
     private String getTreeFileName(String treeName) {
@@ -501,10 +483,8 @@ public class MCMCPanel extends BeautiPanel {
 
     private void updateOtherFileNames(BeautiOptions options) {
         if (options.fileNameStem != null) {
-//            fileNameStemField.setText(options.fileNameStem);
+            options.updateFileNames(addTxtExtension.isSelected());
 
-            options.logFileName = options.fileNameStem + ".log";
-            if (addTxtExtension.isSelected()) options.logFileName = options.logFileName + ".txt";
             logFileNameField.setText(options.logFileName);
 //            logFileNameField.setText(truncate(options.logFileName));
 //            if (options.mapTreeFileName == null) {
@@ -513,10 +493,8 @@ public class MCMCPanel extends BeautiPanel {
 //                mapTreeFileNameField.setText(options.mapTreeFileName);
 //            }
 
-            updateTreeFileNameList();
             treeFileNameField.setText(truncate(displayTreeList(options.treeFileName)));
 
-            options.checkpointFileName = options.fileNameStem + ".chkpt";
             checkpointFileNameField.setText(truncate(options.checkpointFileName));
 
             if (options.substTreeLog) {
@@ -525,10 +503,6 @@ public class MCMCPanel extends BeautiPanel {
                 substTreeFileNameField.setText("");
             }
 
-            options.operatorAnalysisFileName = options.fileNameStem + ".ops";
-            if (addTxtExtension.isSelected()) {
-                options.operatorAnalysisFileName = options.operatorAnalysisFileName + ".txt";
-            }
             operatorAnalysisFileNameField.setEnabled(options.operatorAnalysis);
             if (options.operatorAnalysis) {
                 operatorAnalysisFileNameField.setText(truncate(options.operatorAnalysisFileName));

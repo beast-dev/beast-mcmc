@@ -45,6 +45,7 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
 import dr.evoxml.util.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
@@ -78,11 +79,8 @@ public class BeautiOptions extends ModelOptions {
 
     private static final long serialVersionUID = -3676802825545741012L;
 
+    // the current options: each BeautiFrame creates its own with newInstance; getInstance is for legacy callers
     private static BeautiOptions INSTANCE;
-
-    private BeautiOptions() {
-        this(new ComponentFactory[]{});
-    }
 
     private BeautiOptions(ComponentFactory[] components) {
 
@@ -90,12 +88,29 @@ public class BeautiOptions extends ModelOptions {
         registerComponents(components);
     }
 
-    public static BeautiOptions getInstance() {
-        if(INSTANCE == null) {
-            INSTANCE = new BeautiOptions();
+    /**
+     * @return the most recently created (or opened) options
+     */
+    public static synchronized BeautiOptions getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new BeautiOptions(new ComponentFactory[]{});
         }
-
         return INSTANCE;
+    }
+
+    /**
+     * Creates a fresh, independent options object with the components installed and makes it the current one.
+     */
+    public static synchronized BeautiOptions newInstance(ComponentFactory[] components) {
+        INSTANCE = new BeautiOptions(components);
+        return INSTANCE;
+    }
+
+    /**
+     * Makes an options object (e.g. one read from a file) the current one.
+     */
+    public static synchronized void setInstance(BeautiOptions options) {
+        INSTANCE = options;
     }
 
     /**
@@ -185,6 +200,70 @@ public class BeautiOptions extends ModelOptions {
         statistics.clear();
 
         clearDataPartitionCaches();
+    }
+
+    /**
+     * Recomputes maximumTipHeight and the "_height" attribute of every dated taxon from the taxon dates (and the
+     * origin date, if any), with the most recent date at height 0.
+     *
+     * @return each taxon's height, in taxon order, or null if no taxon has a date
+     */
+    public double[] calculateTipHeights() {
+        maximumTipHeight = 0.0;
+        if (taxonList == null || taxonList.getTaxonCount() == 0) {
+            return null;
+        }
+
+        Date mostRecent = originDate;
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            Date date = taxonList.getTaxon(i).getDate();
+            if (date != null && (mostRecent == null || date.after(mostRecent))) {
+                mostRecent = date;
+            }
+        }
+        if (mostRecent == null) {
+            return null;
+        }
+
+        double[] heights = new double[taxonList.getTaxonCount()];
+        TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
+        double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            Taxon taxon = taxonList.getTaxon(i);
+            Date date = taxon.getDate();
+            if (date != null) {
+                heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
+                taxon.setAttribute("_height", heights[i]);
+                if (heights[i] > maximumTipHeight) {
+                    maximumTipHeight = heights[i];
+                }
+            }
+        }
+        return heights;
+    }
+
+    /**
+     * Derives the output file names from the file name stem: the log, the tree log(s) (one per tree model,
+     * with "(time)" and "(subst)" variants when the substitution-length trees are logged too), the checkpoint
+     * and the operator analysis.
+     *
+     * @param addTxtExtension whether to add ".txt" to the log file names
+     */
+    public void updateFileNames(boolean addTxtExtension) {
+        String extension = addTxtExtension ? ".txt" : "";
+        logFileName = fileNameStem + ".log" + extension;
+        checkpointFileName = fileNameStem + ".chkpt";
+        operatorAnalysisFileName = fileNameStem + ".ops" + extension;
+
+        treeFileName.clear();
+        substTreeFileName.clear();
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            String prefix = fileNameStem + "." + tree.getPrefix();
+            treeFileName.add(prefix + (substTreeLog ? "(time)." : "") + "trees" + extension);
+            if (substTreeLog) {
+                substTreeFileName.add(prefix + "(subst).trees" + extension);
+            }
+        }
     }
 
     public void selectTaxonSetsStatistics(List<Parameter> params) {

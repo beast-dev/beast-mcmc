@@ -77,6 +77,8 @@ import java.util.TreeSet;
  * <li>fast: NNI rounds (and root scans); standard: NNI, SPR and root-changing SPR; thorough: standard with
  * perturbation (nStop 10); standard_nj: standard from the NJ start; truth: standard from the true tree;</li>
  * <li>any label=attributes pair given in -Dvariants (semicolon-separated): the search with those attributes.</li>
+ * <li>label@r<k>: that pipeline from random starting tree k (BEAST's coalescent tree, drawn with seed k + 1) with
+ * search seed k, one start of a process-level multi-start.</li>
  * </ul>
  * One TSV row per pipeline: F, seconds, rooted and unrooted RF (normalised) to the truth, whether the root split is
  * right, the Kuhner-Felsenstein distance over the true tree length, the root-relative node-age RMSE on shared clades,
@@ -239,6 +241,14 @@ public class TopologySearchStudy {
         String attributes;
         boolean search = true;
         boolean fromTruth = false;
+        // label@r<k>: that pipeline from random starting tree k (a coalescent tree drawn with seed k), one start of a
+        // process-level multi-start (H3)
+        int randomStart = -1;
+        final int at = pipeline.indexOf("@r");
+        if (at > 0) {
+            randomStart = Integer.parseInt(pipeline.substring(at + 2));
+            pipeline = pipeline.substring(0, at);
+        }
         if (pipeline.equals("A")) {
             search = false;
             attributes = "";
@@ -269,6 +279,12 @@ public class TopologySearchStudy {
         if (fromTruth) {
             options.getPartitionTreeModels().get(0).setStartingTreeType(StartingTreeType.USER);
             options.getPartitionTreeModels().get(0).setUserStartingTree(new FlexibleTree(truth));
+        }
+        if (randomStart >= 0) {
+            options.getPartitionTreeModels().get(0).setStartingTreeType(StartingTreeType.RANDOM);
+            options.maximizationOptions.getTopologySearch().seed = randomStart;
+            MathUtils.setSeed(randomStart + 1L);
+            pipeline += "_r" + randomStart;
         }
         options.fileNameStem = new File(directory, pipeline).getAbsolutePath();
         String xml = TreeLimeSearchGeneratorTest.generateTo(options, new File(directory, pipeline + ".xml"));

@@ -45,6 +45,7 @@ import com.github.lbfgs4j.liblbfgs.Function;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Evaluate;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Param;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Progress;
+import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LineSearch;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.ReturnValue;
 import com.github.lbfgs4j.liblbfgs.MutableDouble;
 
@@ -100,6 +101,7 @@ public class MaximizerWrtParameter implements Reportable {
     private double[] stallHistory = null;
     private double worstGradientCheckError = Double.NaN;
     private int restarts = 0;
+    private int escapes = 0; // stall escapes (setStallEscapes) in the latest run
     private boolean convergedToPrecision = false; // CONVERGED after a line search failure no restart could improve on
     private double stalledGradientNorm = Double.NaN; // no restart could improve on the failure, at this gradient norm
     private double valueAtLastRestart = Double.POSITIVE_INFINITY;
@@ -127,6 +129,8 @@ public class MaximizerWrtParameter implements Reportable {
     // the largest gradient norm, relative to max(1, |x|), at which a line search failure no restart improves on counts
     // as a minimum to numerical precision
     private static final double PRECISION_GRADIENT_TOLERANCE = 1E-2;
+    // the length of a stall escape's backtracking (Armijo) phase, in iterations
+    private static final int ESCAPE_ITERATIONS = 20;
 
     private static final Logger LOGGER = Logger.getLogger("dr.evomodel");
 
@@ -144,6 +148,7 @@ public class MaximizerWrtParameter implements Reportable {
         int stallWindow = 0;
         int checkGradientEvery = 0;
         int lineSearchRestarts = 0;
+        int stallEscapes = 0;
         Double epsilon = null;
         Integer past = null;
         Double delta = null;
@@ -196,6 +201,19 @@ public class MaximizerWrtParameter implements Reportable {
         }
 
         /**
+         * When the run stalls (setLineSearchRestarts: no decrease, a large gradient), escape up to this many times
+         * (0: report the stall): from the best point, with a cleared memory, run up to ESCAPE_ITERATIONS iterations
+         * with a backtracking (Armijo) line search, which accepts any sufficient decrease, then go back to the
+         * More-Thuente line search with the restarts renewed. More-Thuente also asks for a curvature condition,
+         * which a stretch where the objective is close to linear cannot meet: on Dengue from the UPGMA tree, at a
+         * rate of 7E-8, the objective falls 6600 along a unit step of steepest descent and its line search fails.
+         */
+        public Settings setStallEscapes(int stallEscapes) {
+            this.stallEscapes = stallEscapes;
+            return this;
+        }
+
+        /**
          * Once an accepted iterate takes an element of the parameter (part of the maximized parameter) below the
          * bound, set that element to the bound and keep it there for the rest of the run: its gradient coordinate is
          * zeroed and L-BFGS restarts with a cleared memory. For a parameter whose optimum lies on its boundary, such
@@ -225,6 +243,7 @@ public class MaximizerWrtParameter implements Reportable {
             copy.setBudgets(budget.maxRunTime, budget.maxEvaluations, budget.relTol, budget.stallWindow);
             copy.checkGradientEvery = checkGradientEvery;
             copy.lineSearchRestarts = lineSearchRestarts;
+            copy.stallEscapes = stallEscapes;
             copy.setConvergence(epsilon, past, delta);
             copy.lowerBoundHolds.addAll(lowerBoundHolds);
             return copy;
@@ -417,6 +436,10 @@ public class MaximizerWrtParameter implements Reportable {
 
     public int getRestarts() {
         return restarts;
+    }
+
+    public int getEscapes() {
+        return escapes;
     }
 
     /**
@@ -799,10 +822,30 @@ public class MaximizerWrtParameter implements Reportable {
         };
 
         final MutableDouble fx = new MutableDouble();
+        final LineSearch defaultLineSearch = paramsBFGS.lineSearch;
         restarts = 0;
+        escapes = 0;
+        int restartsAtEscape = 0; // an escape renews the line search restarts
+        boolean escaping = false;
+        double valueBeforeEscape = Double.POSITIVE_INFINITY;
         while (true) {
             status = Lbfgs.lbfgs(dim, x, fx, evaluate, progress, null, paramsBFGS);
             reason = stopRequest != null ? stopRequest : reasonFor(status);
+
+            final boolean escapeRun = escaping;
+            if (escaping) {
+                // the escape's backtracking phase is over: More-Thuente again, for the rest of the iterations (0: no
+                // limit), unless the paths below end the run
+                escaping = false;
+                paramsBFGS.lineSearch = defaultLineSearch;
+                paramsBFGS.max_iterations = settings.numberIterations > 0 ? settings.numberIterations - iterations : 0;
+                if (stopRequest == null && status == ReturnValue.LBFGS_STOP) {
+                    // the past/delta test ended the phase, not convergence: where the objective is exactly linear,
+                    // backtracking leaves L-BFGS no curvature (s'y = 0), and its steps stop. A stall like any other:
+                    // go on if the phase made progress, else check the gradient
+                    reason = Reason.LINE_SEARCH_FAILURE;
+                }
+            }
 
             if (holdPoint != null) {
                 // an element went below its bound: hold it there and restart with a cleared memory
@@ -829,8 +872,25 @@ public class MaximizerWrtParameter implements Reportable {
             // a failed line search ends the run; restarting from the best point with a cleared memory (a steepest-
             // descent first step) often gets past it, as long as each restart has made progress
             final int remaining = settings.numberIterations > 0 ? settings.numberIterations - iterations : 1;
-            if (reason == Reason.LINE_SEARCH_FAILURE && restarts < settings.lineSearchRestarts && remaining > 0 &&
-                    bestValue[0] < valueAtLastRestart) {
+            if (escapeRun && bestValue[0] < valueBeforeEscape && stopRequest == null && remaining > 0 &&
+                    (reason == Reason.MAX_ITERATIONS || reason == Reason.LINE_SEARCH_FAILURE ||
+                            reason == Reason.NON_FINITE)) {
+                // the escape made progress: go on from its best point with More-Thuente and renewed restarts
+                restartsAtEscape = restarts;
+                valueAtLastRestart = Double.POSITIVE_INFINITY;
+                previousIterations[0] = iterations;
+                x = bestPoint[0].clone();
+                if (settings.numberIterations > 0) {
+                    paramsBFGS.max_iterations = remaining;
+                }
+                if (settings.printToScreen) {
+                    LOGGER.info("maximizeWrtParameter: escape " + escapes + " lowered -log density from " +
+                            valueBeforeEscape + " to " + bestValue[0] + "; back to the More-Thuente line search");
+                }
+                continue;
+            }
+            if (reason == Reason.LINE_SEARCH_FAILURE && restarts - restartsAtEscape < settings.lineSearchRestarts &&
+                    remaining > 0 && bestValue[0] < valueAtLastRestart) {
                 restarts++;
                 valueAtLastRestart = bestValue[0];
                 previousIterations[0] = iterations;
@@ -846,9 +906,11 @@ public class MaximizerWrtParameter implements Reportable {
             }
             convergedToPrecision = false;
             stalledGradientNorm = Double.NaN;
-            if (reason == Reason.LINE_SEARCH_FAILURE && restarts > 0 && !(bestValue[0] < valueAtLastRestart) &&
-                    settings.delta != null) {
-                // a restart from the best point with a cleared memory found no decrease at all: the objective has
+            final boolean noneAccepted = bestValue[0] == Double.POSITIVE_INFINITY;
+            if (reason == Reason.LINE_SEARCH_FAILURE &&
+                    (noneAccepted || restarts > 0 && !(bestValue[0] < valueAtLastRestart)) && settings.delta != null) {
+                // a restart from the best point with a cleared memory found no decrease at all, or the first line
+                // search from the start (or a hold) failed, which a restart would repeat: the objective has
                 // stopped improving, the past/delta stopping rule's condition. The best point is a minimum to
                 // numerical precision only if its gradient is small too; a large one means the line search, not the
                 // objective, stopped (on Dengue from the UPGMA tree: relative gradient norm 141, rate 7E-8)
@@ -857,6 +919,22 @@ public class MaximizerWrtParameter implements Reportable {
                 if (gradientNorm / Math.max(1.0, norm(x)) <= PRECISION_GRADIENT_TOLERANCE) {
                     reason = Reason.CONVERGED;
                     convergedToPrecision = true;
+                } else if (!escapeRun && escapes < settings.stallEscapes && remaining > 0) {
+                    // escape (setStallEscapes): a backtracking line search from the best point, which needs only
+                    // a sufficient decrease; an escape that finds none ends the run as stalled
+                    escapes++;
+                    escaping = true;
+                    valueBeforeEscape = bestValue[0];
+                    valueAtLastRestart = bestValue[0];
+                    previousIterations[0] = iterations;
+                    paramsBFGS.lineSearch = LineSearch.LBFGS_LINESEARCH_BACKTRACKING_ARMIJO;
+                    paramsBFGS.max_iterations = settings.numberIterations > 0 ?
+                            Math.min(remaining, ESCAPE_ITERATIONS) : ESCAPE_ITERATIONS;
+                    if (settings.printToScreen) {
+                        LOGGER.info("maximizeWrtParameter: stalled with gradient norm " + gradientNorm +
+                                "; escape " + escapes + " with a backtracking line search from the best point");
+                    }
+                    continue;
                 } else {
                     stalledGradientNorm = gradientNorm;
                 }
@@ -1105,15 +1183,19 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Status: ").append(status).append("\n");
             sb.append("Reason: ").append(reason);
             if (convergedToPrecision) {
-                sb.append(" (to numerical precision: a restart from the best point after a failed line search found " +
-                        "no decrease)");
+                sb.append(" (to numerical precision: no line search from the best point found a decrease, and the " +
+                        "gradient there is small)");
             } else if (!Double.isNaN(stalledGradientNorm)) {
-                sb.append(" (stalled: a restart from the best point found no decrease, but the gradient norm there " +
-                        "is ").append(stalledGradientNorm).append(", so it is not a stationary point)");
+                sb.append(" (stalled: no line search from the best point found a decrease").append(
+                        settings.stallEscapes > 0 ? ", escapes included" : "").append(", but the gradient norm there is ")
+                        .append(stalledGradientNorm).append(", so it is not a stationary point)");
             }
             sb.append("\n");
             sb.append("Iterations: ").append(iterations).append("\n");
             sb.append("Restarts: ").append(restarts).append("\n");
+            if (settings.stallEscapes > 0) {
+                sb.append("Escapes: ").append(escapes).append("\n");
+            }
             if (endedAtBest) {
                 sb.append("EndedAtBestPoint: true (a hold left the last point above the best one accepted earlier)\n");
             }

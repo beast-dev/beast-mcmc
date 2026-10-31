@@ -38,7 +38,8 @@ import junit.framework.TestCase;
 
 /**
  * A failed line search that no restart improves on counts as convergence to numerical precision only where the
- * gradient is small: a smooth optimum converges; a kink, where the gradient does not shrink, stalls.
+ * gradient is small: a smooth optimum converges; a kink, where the gradient does not shrink, stalls. A stall escape
+ * (a backtracking line search from the best point) gets past a More-Thuente failure but not past a kink.
  */
 public class MaximizerStallTest extends TestCase {
 
@@ -64,14 +65,49 @@ public class MaximizerStallTest extends TestCase {
         assertEquals(0.3, maximizer.getMinimumPoint(true)[0], 0.1);
     }
 
+    public void testKinkStallsAfterEscapes() {
+        MaximizerWrtParameter maximizer = maximizer(new Kink(0.3), 5.0, 2);
+        maximizer.maximize();
+        assertEquals(maximizer.getReport(), MaximizerWrtParameter.Reason.LINE_SEARCH_FAILURE, maximizer.getReason());
+        assertEquals(maximizer.getReport(), 2, maximizer.getEscapes());
+        assertTrue(maximizer.getReport(), maximizer.getReport().contains("stalled"));
+        assertEquals(0.3, maximizer.getMinimumPoint(true)[0], 1E-6);
+    }
+
+    // the first More-Thuente line search from a far start overshoots into the region where the density is 0, and
+    // fails: no iterate is accepted, which a restart would only repeat
+    public void testFirstLineSearchFailureStalls() {
+        MaximizerWrtParameter maximizer = maximizer(new PoissonRate(), START_LOG_RATE);
+        maximizer.maximize();
+        assertEquals(maximizer.getReport(), MaximizerWrtParameter.Reason.LINE_SEARCH_FAILURE, maximizer.getReason());
+        assertEquals(0, maximizer.getIterations());
+        assertTrue(maximizer.getReport(), maximizer.getReport().contains("stalled"));
+        assertEquals(START_LOG_RATE, maximizer.getMinimumPoint(true)[0], 0.0);
+    }
+
+    public void testEscapeReachesTheOptimum() {
+        MaximizerWrtParameter maximizer = maximizer(new PoissonRate(), START_LOG_RATE, 2);
+        maximizer.maximize();
+        assertEquals(maximizer.getReport(), MaximizerWrtParameter.Reason.CONVERGED, maximizer.getReason());
+        assertEquals(maximizer.getReport(), 1, maximizer.getEscapes());
+        assertFalse(maximizer.getReport(), maximizer.getReport().contains("stalled"));
+        assertEquals(Math.log(PoissonRate.RATE), maximizer.getMinimumPoint(true)[0], 1E-6);
+    }
+
+    private static final double START_LOG_RATE = -16.5;
+
     private static MaximizerWrtParameter maximizer(Distribution distribution, double start) {
+        return maximizer(distribution, start, 0);
+    }
+
+    private static MaximizerWrtParameter maximizer(Distribution distribution, double start, int stallEscapes) {
         Parameter x = new Parameter.Default(new double[]{start});
         DistributionLikelihood likelihood = new DistributionLikelihood(distribution);
         likelihood.addData(x);
         GradientWrtParameterProvider gradient =
                 new GradientWrtParameterProvider.ParameterWrapper((GradientProvider) distribution, x, likelihood);
         MaximizerWrtParameter.Settings settings = new MaximizerWrtParameter.Settings(1000, 1E-6, true, false, false)
-                .setConvergence(null, 10, 1E-8).setLineSearchRestarts(5);
+                .setConvergence(null, 10, 1E-8).setLineSearchRestarts(5).setStallEscapes(stallEscapes);
         return new MaximizerWrtParameter(likelihood, x, gradient, null, settings);
     }
 
@@ -114,6 +150,32 @@ public class MaximizerStallTest extends TestCase {
         public double[] getGradientLogDensity(Object x) {
             final double d = ((double[]) x)[0] - m;
             return new double[]{-d - Math.signum(d)};
+        }
+    }
+
+    // a Poisson count of N substitutions over a total time T, in x = log rate: N x - T exp(x), with its maximum at
+    // the rate N / T, close to linear far below it (as Dengue's fit at a rate of 7E-8); the density is 0 above
+    // x = -5 (a stand-in for a likelihood that is not finite)
+    private static final class PoissonRate extends NormalDistribution implements GradientProvider {
+        static final double N = 6000.0;
+        static final double RATE = 4.8E-4;
+        static final double T = N / RATE;
+
+        PoissonRate() {
+            super(0.0, 1.0);
+        }
+
+        @Override
+        public double logPdf(double x) {
+            return x > -5.0 ? Double.NEGATIVE_INFINITY : N * x - T * Math.exp(x);
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double[] getGradientLogDensity(Object x) {
+            return new double[]{N - T * Math.exp(((double[]) x)[0])};
         }
     }
 }

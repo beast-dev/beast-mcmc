@@ -132,10 +132,11 @@ with an error if you ask for both.
 The same `-seed` gives the same output for each chain, whatever the number of chain
 threads. One caveat: changing the number of threads used inside a chain's likelihood
 calculation (`-threads`, `-beagle_threads`) changes the order of floating-point sums, and
-chains then drift apart in the last digits. By default these thread counts depend on
-`-chain_threads` and on the number of processors (see below). For bit-for-bit repeatable
-runs on different machines or with different `-chain_threads`, give `-threads` and
-`-beagle_threads` explicitly.
+chains then drift apart in the last digits. By default these thread counts are set by the
+threading scheme from each chain's thread budget, which depends on `-chain_threads` and the
+number of processors (see [Threading](#threading)). For bit-for-bit repeatable runs on
+different machines or with different `-chain_threads`, give `-threads` and `-beagle_threads`
+explicitly.
 
 ---
 
@@ -277,8 +278,11 @@ The aim is to keep every core (or GPU) busy without oversubscribing it. Rules of
 beast -chains 4 -chain_threads 4 -beagle_threads 2 run.xml
 ```
 
-All four chains run at once with 2 BEAGLE threads each. Left to the defaults, each chain
-would get 16 / 4 = 4 threads, counting hyper-threads.
+All four chains run at once with 2 BEAGLE threads per instance. Left to the defaults, each
+chain would have a budget of 16 / 4 = 4 threads, counting hyper-threads: with one partition
+(`serial`), all 4 would go to BEAGLE, and with several sizeable partitions (`split`), they
+would be divided between them. Giving `-beagle_threads` yourself fixes the BEAGLE threads
+per instance; with several partitions computed in parallel that is 2 threads for each.
 
 **Workstation, 32 cores, 4 tempering sets of 4 chains (16 chains):**
 

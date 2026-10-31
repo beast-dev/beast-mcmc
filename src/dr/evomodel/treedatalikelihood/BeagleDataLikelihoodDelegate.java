@@ -1426,4 +1426,53 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     public int getTipCount() {
         return tipCount;
     }
+
+    // **************************************************************
+    // Threading (used to share a chain's processor budget between its instances)
+    // **************************************************************
+
+    /**
+     * @return the number of unique site patterns computed by this instance
+     */
+    public int getInstancePatternCount() {
+        return patternCount;
+    }
+
+    /**
+     * @return the number of states of the data computed by this instance
+     */
+    public int getInstanceStateCount() {
+        return stateCount;
+    }
+
+    /**
+     * @return true if this instance runs on a CPU (rather than a GPU or other accelerator)
+     */
+    public boolean isCPUInstance() {
+        return (instanceFlags & BeagleFlag.PROCESSOR_CPU.getMask()) != 0;
+    }
+
+    /**
+     * @return the number of CPU threads this instance has been asked to use (-1 for BEAGLE's
+     * own choice, 0 or 1 for none)
+     */
+    public int getCPUThreadCount() {
+        return threadCount;
+    }
+
+    /**
+     * Changes the number of threads used by a CPU instance. This only has an effect if the
+     * instance was created with threading on.
+     *
+     * @return true if the thread count was changed
+     */
+    public boolean setCPUThreadCount(int threadCount) {
+        if (isCPUInstance() && IS_THREAD_COUNT_COMPATIBLE() &&
+                (instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0 && threadCount > 0) {
+            beagle.setCPUThreadCount(threadCount);
+            this.threadCount = threadCount;
+            return true;
+        }
+        return false;
+    }
 }

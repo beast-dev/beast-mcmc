@@ -66,6 +66,21 @@ public class RunConfiguration {
     }
 
     /**
+     * @param scheme how each chain uses its threads (null for BEAST's usual threading with a
+     *               single chain, auto with several)
+     */
+    public void setThreadingScheme(ThreadingScheme.Type scheme) {
+        this.threadingScheme = scheme;
+    }
+
+    /**
+     * @return the threading scheme asked for, or null if none was
+     */
+    public ThreadingScheme.Type getThreadingScheme() {
+        return threadingScheme;
+    }
+
+    /**
      * @return the interval in seconds between convergence reports when there are several
      * independent chains (0 for none)
      */
@@ -142,6 +157,9 @@ public class RunConfiguration {
         if (arguments.hasOption("convergence_every")) {
             configuration.setConvergenceInterval(arguments.getIntegerOption("convergence_every"));
         }
+        if (arguments.hasOption("thread_scheme")) {
+            configuration.setThreadingScheme(ThreadingScheme.Type.parse(arguments.getStringOption("thread_scheme")));
+        }
         return configuration;
     }
 
@@ -207,4 +225,5 @@ public class RunConfiguration {
     private final MCMCMCOptions.SwapScheme swapScheme;
     private final int chainThreads;
     private int convergenceInterval = DEFAULT_CONVERGENCE_INTERVAL;
+    private ThreadingScheme.Type threadingScheme = null;
 }

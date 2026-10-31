@@ -43,8 +43,9 @@ beast -chains 2 -mc3_chains 3 -chain_threads 4 run.xml
 | `-mc3_swap n` | 100 | Attempt temperature swaps every *n* states. |
 | `-mc3_scheme name` | `original` | Swap scheme: `original`, `stochastic_single`, `stochastic_multiple`, `deterministic_single`, `deterministic_multiple` (see below). |
 | `-seed s` | clock | Seed for the whole run. Each chain's own seed is derived from it. |
-| `-threads n` | see [Threading](#threading) | Threads for each chain's likelihood calculations. |
-| `-beagle_threads n` | see [Threading](#threading) | CPU threads for each BEAGLE instance. |
+| `-thread_scheme s` | `auto` with several chains | How each chain uses its threads: `serial`, `split` or `auto` (see [Threading](#threading)). |
+| `-threads n` | set by the scheme | Threads for each chain's likelihood calculations (overrides the scheme). |
+| `-beagle_threads n` | set by the scheme | CPU threads for each BEAGLE instance (overrides the scheme). |
 
 ---
 
@@ -186,30 +187,60 @@ There are three levels of parallelism, from outermost to innermost:
    segments of 1% of the chain length, so with fewer chain threads than chains they take
    turns and progress together. Members of a tempering set synchronise at every swap
    interval. Independent sets never wait for each other.
-2. **Likelihood components** (`-threads`). A model's likelihoods and priors can be
-   evaluated in parallel by a thread pool within each chain.
+2. **Likelihood components** (`-threads`). A chain's likelihoods (one per data partition)
+   and priors can be computed in parallel by a thread pool within the chain.
 3. **BEAGLE CPU threads** (`-beagle_threads`). Each BEAGLE CPU instance splits its site
    patterns over threads. There is one instance per data partition (or one for several
    partitions with `-beagle_multipartition`). **This count is per instance, not per chain.**
 
-### Defaults
+Levels 2 and 3 multiply: a chain computing 3 partitions in parallel, each with 4 BEAGLE
+threads, keeps 12 threads busy. Busier than the processors allow, and threads that must
+finish together wait for each other, so the inner levels should not both be given the whole
+budget.
 
-The defaults depend on whether one chain or several are running.
+### Threading schemes
 
-**One chain:**
-- `-threads`: one thread per likelihood component.
-- `-beagle_threads`: one per processor, for every BEAGLE instance.
+Each chain has a **thread budget**:
+- **One chain:** the number of processors.
+- **Several chains:** the processors shared out between the chains computing at once,
+  max(1, P / `-chain_threads`), where P is the number of processors.
 
-**Several chains:** the processors are shared between the chains computing at once. With
-P processors and T = `-chain_threads`:
-- `-chain_threads`: min(P, total number of chains).
-- `-threads`: max(1, P / T). When this is 1, components are computed one after another.
-- `-beagle_threads`: max(1, P / T).
+The scheme (`-thread_scheme`) decides how the chain spends its budget on levels 2 and 3:
 
-Any option you give explicitly is used as given.
+| Scheme | Likelihood components | BEAGLE CPU threads per instance |
+|---|---|---|
+| `serial` | one after another | the whole budget |
+| `split` | in parallel (one thread per BEAGLE instance) | the budget divided between the instances |
+| `auto` | `split` or `serial`, chosen for each chain from its data | as for the scheme chosen |
+
+`auto` chooses `split` when either of these holds; otherwise it chooses `serial`:
+- the chain has at least two BEAGLE GPU instances;
+- the chain has at least two BEAGLE CPU instances that each have enough work, and a budget
+  of at least two threads.
+
+"Enough work" means at least 100,000, measured as tips × patterns × (states / 4)², so
+1000 tips and 100 nucleotide patterns is just enough. The choice is made when each chain
+starts, so it is based on the actual BEAGLE instances and where they run. The chosen scheme
+is printed, for example:
+
+```
+Threading scheme: split (auto), 9 threads per chain
+  likelihoods computed in parallel (3 threads)
+  BEAGLE: 3 CPU instances with 3 threads each, 0 GPU instances
+```
+
+**Defaults:**
+- **Several chains:** `auto`.
+- **One chain:** BEAST's usual threading (one thread per likelihood component, and one BEAGLE
+  thread per processor for every instance) unless `-thread_scheme` is given.
+
+`-threads` or `-beagle_threads`, if given, override that level and the scheme sets only the
+other.
 
 P is the number of processors Java reports, which counts hyper-threads. On a machine with
-hyper-threading, P is usually twice the number of physical cores.
+hyper-threading, P is usually twice the number of physical cores. On a machine whose cores
+differ in speed (for example Apple's performance and efficiency cores), it counts all of them;
+see [Benchmarks](#benchmarks).
 
 ### Memory
 
@@ -225,13 +256,18 @@ the same proportion if all chains are on one GPU.
 The aim is to keep every core (or GPU) busy without oversubscribing it. Rules of thumb:
 
 - **Total CPU threads.** Chains computing at once × threads per chain should be about the
-  number of physical cores. Threads per chain is roughly `-beagle_threads` × the number of
-  BEAGLE instances computing at the same time.
-- **Small data, few patterns.** Chains scale much better than threads within a chain.
-  Prefer more chains with 1–2 threads each.
-- **Large data, many patterns.** BEAGLE threading scales well, so fewer chains with more
-  threads each is fine.
-- **Hyper-threading** rarely helps the likelihood calculations. Count physical cores.
+  number of physical cores. The `serial` and `split` schemes keep each chain within its
+  budget. Setting `-threads` and `-beagle_threads` yourself can exceed it.
+- **Chains before threads.** For the same cores, several chains with a few threads each
+  compute more states in total than one chain with all the threads (2–2.4× in the
+  benchmarks). But each chain is slower and has its own burn-in, so choose the number of
+  chains you want for the analysis first, then give them the cores.
+- **Small data, few patterns.** Threads within a chain gain little and computing partitions
+  in parallel can be much slower. Use more chains with 1–2 threads each.
+- **Several large partitions.** Computing them in parallel (`split`) helps most, especially
+  with few chains.
+- **Hyper-threading** rarely helps the likelihood calculations. Count physical cores, and on
+  machines with performance and efficiency cores, count the performance cores.
 
 ### CPU only
 
@@ -260,10 +296,11 @@ beast -chains 8 -chain_threads 4 -beagle_threads 1 run.xml
 The chains take turns in segments and all advance together. Total throughput is the same as
 running them in two batches, but the convergence report compares all eight throughout.
 
-**Several partitions:** each partition is a separate BEAGLE instance, and each gets
-`-beagle_threads` threads. With 3 partitions and `-beagle_threads 4`, a chain can use 12
-threads. Reduce `-beagle_threads`, or use `-threads 1` so the partitions are computed one
-after another, to stay within the core count.
+**Several partitions:** each partition is a separate BEAGLE instance. With the `split`
+scheme (which `auto` chooses for several sizeable partitions), the chain's budget is divided
+between them and they are computed in parallel. If you set `-beagle_threads` yourself, each
+instance gets that many threads: with 3 partitions and `-beagle_threads 4`, a chain computing
+them in parallel uses 12 threads.
 
 ### GPUs
 
@@ -317,11 +354,78 @@ enough processors), even with fewer cores than chains.
 
 ### Checking the result
 
-At the start, BEAST prints which BEAGLE resource and how many CPU threads each of chain 1's
-instances is using. Look for lines like `Using BEAGLE resource 1: …` and `Using 2 threads
-for CPU.`. The setup messages of the other chains are not shown, because they would repeat
-chain 1's. The other chains follow the same rules, so their resources can be worked out from
-`-beagle_order` as described above.
+At the start, BEAST prints which BEAGLE resource each of chain 1's instances is using
+(`Using BEAGLE resource 1: …`). Then, as the first chain starts, it prints the threading
+scheme it chose, which is what the chains actually use (the BEAGLE thread counts printed
+while the model is built are replaced by the scheme's). The setup messages of the other
+chains are not shown, because they would repeat chain 1's. The other chains follow the same
+rules, so their resources can be worked out from `-beagle_order` as described above.
 
 The screen log reports the speed of chain 1 as time per million states. Compare it with a
 single-chain run to see how much running chains side by side slows each one down.
+
+---
+
+## Benchmarks
+
+The threading advice above comes from benchmarks on one machine: an Apple M5 Max with 18
+cores (6 performance and 12 efficiency cores), BEAGLE 4 on the CPU, October 2026.
+
+**Datasets.** Most results use `benchmark-big-3` from the BEAST benchmark set (899 taxa,
+18,900 sites, HKY, coalescent), split into:
+- **p1:** 1 partition;
+- **p3:** 3 partitions, one per codon position;
+- **p12:** 12 partitions, blocks of sites.
+
+Smaller datasets were also used:
+- **small:** `benchmark-small-2`, 165 taxa and 258 patterns;
+- **tall:** `benchmark-tall-1`, 1441 taxa and 593 patterns.
+
+**Measure.** Throughput is states per second, summed over the chains, with start-up time
+subtracted. Each figure is the mean of 2–3 runs; runs varied by up to about 15%.
+
+**Computing partitions in parallel.** Throughput relative to computing them one after another
+(`serial`), for the same thread budget per chain. With 1 chain the budget was the 6
+performance cores; with 4 chains it was 4 threads each.
+
+| Dataset | 1 chain: split | 1 chain: one thread per partition | 1 chain: both levels at full budget | 4 chains: split | 4 chains: both at full budget |
+|---|---|---|---|---|---|
+| big-3, 1 partition | – | – | 0.94 | – | 0.93 |
+| big-3, 3 partitions | **1.15** | 0.93 | 1.02 | 1.08 | 1.08 |
+| big-3, 12 partitions | **1.75** | 1.69 | 1.54 | **1.52** | 1.23 |
+| tall, 3 partitions | **1.22** | 1.12 | 1.19 | 0.99 | 0.86 |
+| small, 3 partitions | 0.68 | 0.69 | 0.69 | 0.51 | 0.50 |
+
+What this shows:
+- **Parallel partitions pay off only with enough data per partition.** They gained up to 75%
+  for large partitions, cost 30–50% for small ones, and were slightly slower with one
+  partition.
+- **Split is the best way to compute partitions in parallel.**
+- **Giving both levels the whole budget (the old multi-chain default) was never best.**
+
+**All 18 cores for one chain** was 14–29% slower than the 6 performance cores. BEAGLE's
+threads wait for the slower efficiency cores.
+
+**Chains versus threads.** Total throughput relative to one chain using all the threads:
+
+| Cores | big-3, 1 partition | big-3, 3 partitions |
+|---|---|---|
+| 18 | 18 chains × 1 thread: 2.1× (3 chains × 6: 1.6×) | 3 chains: 2.4× |
+| 6 performance cores | 2–3 chains: 1.3× | 3 chains: 2.0× |
+
+**The new defaults against the old.** States per second, relative to the old behaviour on
+the same runs:
+- **4 chains:** `auto` against the old default of `-threads` and `-beagle_threads` both
+  set to the per-chain budget.
+- **1 chain:** `-thread_scheme auto` against BEAST's usual threading.
+
+| Dataset | 4 chains | 1 chain |
+|---|---|---|
+| big-3, 1 partition | 1.07 | 0.93 |
+| big-3, 3 partitions | 1.11 | 1.27 |
+| big-3, 12 partitions | 1.19 | 1.03 |
+| small, 3 partitions | 1.84 | 1.35 |
+
+**Caveats.** Machines with uniform cores, more memory bandwidth or different BEAGLE builds
+may differ, so it is worth timing a short run of your own analysis. The GPU parts of the
+`auto` rule could not be tested on this machine.

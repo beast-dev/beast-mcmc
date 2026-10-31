@@ -519,6 +519,8 @@ public class BeastMain {
 
                         new Arguments.IntegerOption("chains", null, 1, Integer.MAX_VALUE, "number of independent chains to run (default 1)"),
                         new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "maximum number of chains computing at once (default: one per processor)"),
+                        new Arguments.StringOption("thread_scheme", null, new String[]{"serial", "split", "auto"}, false,
+                                "how each chain uses its threads: likelihoods one after another (serial), in parallel (split) or chosen from the data (auto, the default with several chains)"),
                         new Arguments.IntegerOption("convergence_every", null, 0, Integer.MAX_VALUE, "seconds between convergence reports for multiple chains (default 60, 0 for none)"),
 
                         new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains in each parallel tempering set (1 cold plus heated chains)"),
@@ -1044,16 +1046,28 @@ public class BeastMain {
 
         }
 
-        if (!runConfiguration.isSingleChain()) {
-            // Share the processors between the chains computing at once rather than letting
-            // every chain's likelihoods use them all (unless the thread counts were given).
-            int threadsPerChain = runConfiguration.getThreadsPerChain();
-            if (threadCount < 0) {
-                threadCount = (threadsPerChain > 1 ? threadsPerChain : 0);
+        // The threading scheme decides how each chain uses its share of the processors. It is
+        // used by default with several chains; a single chain keeps BEAST's usual threading
+        // unless a scheme is asked for.
+        ThreadingScheme.Type schemeType = runConfiguration.getThreadingScheme();
+        if (schemeType == null && !runConfiguration.isSingleChain()) {
+            schemeType = ThreadingScheme.Type.AUTO;
+        }
+        if (schemeType != null) {
+            int threadBudget = (runConfiguration.isSingleChain() ?
+                    Runtime.getRuntime().availableProcessors() : runConfiguration.getThreadsPerChain());
+            boolean fixedLikelihoodThreads = threadCount >= 0;
+            boolean fixedBeagleThreads = System.getProperty("beagle.thread.count") != null;
+            if (!fixedLikelihoodThreads) {
+                // no pools while the models are built: the scheme sets them when each chain starts
+                threadCount = 0;
             }
-            if (System.getProperty("beagle.thread.count") == null) {
-                System.setProperty("beagle.thread.count", Integer.toString(threadsPerChain));
+            if (!fixedBeagleThreads) {
+                // create the BEAGLE CPU instances with threading on so the scheme can set the count
+                System.setProperty("beagle.thread.count", Integer.toString(threadBudget));
             }
+            MCMC.setChainPreparer(new ThreadingScheme(schemeType, threadBudget,
+                    fixedLikelihoodThreads, fixedBeagleThreads));
         }
 
         if (threadCount >= 0) {

@@ -370,6 +370,36 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
         return threadCount;
     }
 
+    /**
+     * @return the number of likelihoods that can be computed in the thread pool
+     */
+    public int getParallelLikelihoodCount() {
+        return likelihoodCallers.size();
+    }
+
+    /**
+     * Replaces the thread pool used to compute the likelihoods: a pool of the given size, or
+     * none (computing the likelihoods one after another) if threads is 0. A pool can only be
+     * used if this compound was created with a thread count. Must not be called while the
+     * likelihood is being computed.
+     */
+    public void setThreadCount(int threads) {
+        if (pool != null) {
+            pool.shutdown();
+        }
+        if (threads > 0 && !likelihoodCallers.isEmpty()) {
+            threadCount = threads;
+            pool = Executors.newFixedThreadPool(threads, runnable -> {
+                Thread thread = new Thread(runnable, "likelihood-" + getId());
+                thread.setDaemon(true);
+                return thread;
+            });
+        } else {
+            threadCount = 0;
+            pool = null;
+        }
+    }
+
     public long[] getEvaluationTimes() {
         return evaluationTimes;
     }
@@ -545,9 +575,9 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
 
     private boolean used = false;
 
-    private final int threadCount;
+    private int threadCount;
 
-    private final ExecutorService pool;
+    private ExecutorService pool;
 
     private final ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
     private final CompoundModel compoundModel = new CompoundModel("compoundModel");

@@ -152,6 +152,11 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
      */
     public void start() {
 
+        ChainPreparer preparer = chainPreparer;
+        if (preparer != null) {
+            preparer.prepare(this);
+        }
+
         stopping = false;
         currentState = 0;
 
@@ -451,6 +456,23 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     public String getId() {
         return id;
     }
+
+    /**
+     * Adjusts a chain once its model has been built, just before it starts (on the thread that
+     * will run it): for example, how its likelihood calculations are threaded.
+     */
+    public interface ChainPreparer {
+        void prepare(MCMC mcmc);
+    }
+
+    /**
+     * Sets the preparer applied to every chain as it starts (null for none).
+     */
+    public static void setChainPreparer(ChainPreparer preparer) {
+        chainPreparer = preparer;
+    }
+
+    private static volatile ChainPreparer chainPreparer = null;
 
     public void setId(String id) {
         this.id = id;

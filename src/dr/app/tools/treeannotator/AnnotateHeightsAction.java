@@ -89,7 +89,10 @@ public class AnnotateHeightsAction implements CladeAction {
             return;
         }
 
-        assert heights != null && !heights.isEmpty();
+        if (heights == null || heights.isEmpty()) {
+            // clade from a user target tree that is absent from the sampled trees: keep the existing height
+            return;
+        }
 
         double[] values = heights.stream().mapToDouble(Double::doubleValue).toArray();
 

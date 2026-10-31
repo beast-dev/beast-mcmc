@@ -253,10 +253,13 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                     ops.add(modelOptions.getOperator(prefix + "rates"));
                 }
 
-                if (substitutionModel.isActivateBSSVS() && substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
-                    ops.add(modelOptions.getOperator(BACKWARD + "." + prefix + "indicators"));
-                } else {
-                    ops.add(modelOptions.getOperator(prefix + "indicators"));
+                // If "BSSVS" is not activated, there are no rate indicators to operate on.
+                if (substitutionModel.isActivateBSSVS()) {
+                    if (substitutionModel.getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                        ops.add(modelOptions.getOperator(BACKWARD + "." + prefix + "indicators"));
+                    } else {
+                        ops.add(modelOptions.getOperator(prefix + "indicators"));
+                    }
                 }
 
             }

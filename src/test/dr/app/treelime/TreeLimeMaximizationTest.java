@@ -33,6 +33,7 @@ import dr.app.treelime.options.MaximizationOptions;
 import dr.app.treelime.options.PartitionClockModel;
 import dr.app.treelime.options.PartitionSubstitutionModel;
 import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.options.TraitData;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.ClockType;
 import dr.app.treelime.types.StartingTreeType;
@@ -381,6 +382,25 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertEquals(MaximizerWrtParameter.Reason.MAX_ITERATIONS, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertGradientChecked(run);
+    }
+
+    // a trait without a data partition (taxon attributes imported with the sequences, as the real data sets' geography)
+    // has no trait likelihood, so it keeps the analytic tree-likelihood gradients; it used to make every one numeric
+    public void testUnusedTraitKeepsAnalyticGradients() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");
+        if (options == null) {
+            return;
+        }
+        for (PartitionClockModel clock : options.getPartitionClockModels()) {
+            clock.setClockType(ClockType.HMC_CLOCK);
+        }
+        options.traits.add(new TraitData(options, "geography", "", TraitData.TraitType.DISCRETE));
+        assertTrue(options.getTraitPartitions(options.traits.get(0)).isEmpty());
+        String xml = TreeLimeHarness.generate(quiet(options));
+        assertTrue(xml.contains("<attr name=\"geography\">"));
+        String location = between(xml, "<jointGradient id=\"gradient.branchRatesHMC.rate\">", "</jointGradient>");
+        assertTrue(location, location.contains("<locationScaleGradient traitName=\"Sequence\" useHessian=\"false\">"));
+        assertFalse(xml.contains("analytic tree-likelihood gradients for 0 of"));
     }
 
     // the HMC relaxed clock's location (rate) and scale: the analytic locationScaleGradient of the tree likelihood, as

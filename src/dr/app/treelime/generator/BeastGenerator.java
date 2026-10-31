@@ -1400,10 +1400,21 @@ public class BeastGenerator extends Generator {
      */
     private GradientRegistry.LikelihoodTerm likelihoodTerm(Parameter parameter) {
         GradientRegistry.LikelihoodTerm term = GradientRegistry.likelihoodTerm(options, parameter);
-        if (term.isAnalytic() && (!options.otherPartitions.isEmpty() || !options.traits.isEmpty())) {
+        if (term.isAnalytic() && (!options.otherPartitions.isEmpty() || hasTraitPartitions())) {
             return GradientRegistry.LikelihoodTerm.NUMERIC;
         }
         return term;
+    }
+
+    // a trait with a data partition has a trait likelihood; one without (taxon attributes imported with the
+    // sequences, as the geography of the real data sets' XMLs) only writes <attr> tags
+    private boolean hasTraitPartitions() {
+        for (TraitData trait : options.traits) {
+            if (!options.getTraitPartitions(trait).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void writeGradientBlocks(List<Parameter> parameters, Map<Parameter, GradientRegistry.LikelihoodTerm> terms,

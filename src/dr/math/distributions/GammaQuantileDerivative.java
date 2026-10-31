@@ -37,6 +37,10 @@ import org.apache.commons.math.special.Gamma;
  * incomplete gamma function, so dx/da = -(dP/da) / f(x) with f the gamma density. The shape derivative of P uses the
  * series P(a, x) = e^{-x} sum_n x^{a+n} / Gamma(a+n+1), differentiated term by term:
  * dP/da = e^{-x} sum_n x^{a+n} / Gamma(a+n+1) [log x - psi(a+n+1)].
+ * <p>
+ * For a large shape the series needs of the order of sqrt(a) terms and loses precision to cancellation (log x against
+ * psi, then x / a^2 against dx/da / a), so above LARGE_SHAPE the mean-one quantile's derivative comes from its
+ * Cornish-Fisher expansion instead.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -45,13 +49,29 @@ public class GammaQuantileDerivative {
 
     private static final int MAX_TERMS = 10000000;
     private static final double RELATIVE_TOLERANCE = 1E-17;
+    // the series and the expansion agree to about 1E-9 relative at 1E4; the series is off by 1E-4 at 1E7
+    private static final double LARGE_SHAPE = 1E4;
 
     /**
      * @return d q / d shape for the u-quantile q of the mean-one gamma, Gamma(shape, scale = 1 / shape)
      */
     public static double meanOneQuantileDerivative(double u, double shape) {
+        if (shape > LARGE_SHAPE) {
+            return largeShapeQuantileDerivative(u, shape);
+        }
         final double x = shape * GammaDistribution.quantile(u, shape, 1.0 / shape); // the standard gamma u-quantile
         return standardQuantileDerivative(x, shape) / shape - x / (shape * shape);
+    }
+
+    /**
+     * The mean-one gamma has skewness 2 / sqrt(a) and excess kurtosis 6 / a, so its Cornish-Fisher expansion is
+     * q = 1 + z / sqrt(a) + (z^2 - 1) / (3 a) + (z^3 - 7 z) / (36 a^{3/2}) + O(a^{-2}), z the standard normal
+     * u-quantile; differentiated term by term, with relative error O(a^{-3/2}).
+     */
+    static double largeShapeQuantileDerivative(double u, double shape) {
+        final double z = NormalDistribution.quantile(u, 0.0, 1.0);
+        return -z / (2.0 * shape * Math.sqrt(shape)) - (z * z - 1.0) / (3.0 * shape * shape)
+                - (z * z * z - 7.0 * z) / (24.0 * shape * shape * Math.sqrt(shape));
     }
 
     /**

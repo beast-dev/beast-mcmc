@@ -72,6 +72,28 @@ public class GammaQuantileDerivativeTest extends TestCase {
         }
     }
 
+    // the switch to the Cornish-Fisher expansion at a shape of 1E4: no jump in the derivative across it, and finite
+    // values (close to the leading term, -z / (2 a^{3/2})) where the series cannot converge, as at 7.16E13 in a fit
+    public void testLargeShape() throws Exception {
+        for (int categories : new int[]{4, 8}) {
+            for (int i = 0; i < categories; i++) {
+                final double u = (2.0 * i + 1.0) / (2.0 * categories);
+                final double series = GammaQuantileDerivative.meanOneQuantileDerivative(u, 1E4);
+                final double expansion = GammaQuantileDerivative.meanOneQuantileDerivative(u, 1E4 * (1.0 + 1E-12));
+                assertEquals("K=" + categories + " u=" + u, series, expansion, 1E-6 * Math.abs(series));
+            }
+        }
+        for (double a : new double[]{1E6, 7.162368965538767E13, 1E100}) {
+            for (double u : new double[]{0.125, 0.875}) {
+                final double z = dr.math.distributions.NormalDistribution.quantile(u, 0.0, 1.0);
+                final double leading = -z / (2.0 * a * Math.sqrt(a));
+                final double expansion = GammaQuantileDerivative.meanOneQuantileDerivative(u, a);
+                assertFalse(Double.isNaN(expansion));
+                assertEquals("a=" + a + " u=" + u, leading, expansion, 1E-2 * Math.abs(leading));
+            }
+        }
+    }
+
     private static double p(double a, double x) throws Exception {
         return Gamma.regularizedGammaP(a, x, 1E-16, 1000000);
     }

@@ -496,7 +496,7 @@ public class TimeTreeSearchTest extends TestCase {
         String[][] expected = {
                 {"fast", "moves = nni,", null},
                 {"standard", "moves = nni,spr,root,", "startingTree = nj"},
-                {"thorough", "moves = nni,spr,swap,root,", "startingTree = nj, nStop = 50,"}};
+                {"thorough", "moves = nni,spr,swap,root,", "startingTree = nj, nStop = 20,"}};
         for (String[] preset : expected) {
             Map<String, XMLObject> objects = parse(new Setup().search("preset=\"" + preset[0] + "\"").xml());
             if (objects == null) {

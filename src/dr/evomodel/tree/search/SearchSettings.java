@@ -118,10 +118,11 @@ public final class SearchSettings {
      * UPGMA tree ended more than 0.5 below the best known F on 16, one from the NJ tree on 2; perturbations from the
      * UPGMA climb, whatever their settings, still missed it on 10-14%, perturbations from the NJ climb on none. Both
      * starts with perturbations also missed it on none of 53, but under a time budget the UPGMA climb's time is lost
-     * (Dengue: 1785 below perturbations from the NJ climb alone).
+     * (Dengue: 1785 below perturbations from the NJ climb alone). Stopping after 20 perturbations in a row without
+     * a new best rather than 50 gave the same F on 52 of 53 (0.027 lower on the last) in 0.43 of the time.
      *
      * @param name fast (NNIs from the tree as it is), standard (NNIs, SPRs and root moves from the NJ tree) or
-     *             thorough (also subtree swaps, then perturbations until 50 in a row bring nothing)
+     *             thorough (also subtree swaps, then perturbations until 20 in a row bring nothing)
      * @return the settings, or null for an unknown name
      */
     public static SearchSettings preset(String name) {
@@ -138,7 +139,7 @@ public final class SearchSettings {
         }
         if (name.equals("thorough")) {
             settings.swap = true;
-            settings.nStop = 50;
+            settings.nStop = 20;
             return settings;
         }
         return null;

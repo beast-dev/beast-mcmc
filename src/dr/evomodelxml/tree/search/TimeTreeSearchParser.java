@@ -385,7 +385,7 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(TOPLIST_SIZE, true, "the closest moves kept for the re-fit when none gains (default 20)"),
             AttributeRule.newDoubleRule(SECOND_CHANCE_WINDOW, true, "a re-fitted move this close below the incumbent gets a longer re-fit (default 2)"),
             AttributeRule.newIntegerRule(SECOND_CHANCE_ITERATIONS, true, "iterations of that longer re-fit (default 80; 0: off)"),
-            new StringAttributeRule(PRESET, "fast: moves nni from the current tree; standard: moves nni,spr,root from the nj tree; thorough: moves nni,spr,swap,root from the nj tree with nStop 50. The other attributes override the preset's values", true),
+            new StringAttributeRule(PRESET, "fast: moves nni from the current tree; standard: moves nni,spr,root from the nj tree; thorough: moves nni,spr,swap,root from the nj tree with nStop 20. The other attributes override the preset's values", true),
             new StringAttributeRule(MOVES, "nni (default, or the preset's), optionally followed by ,spr, ,swap and ,root (in that order): clamped-height SPR rounds, subtree swaps (wide exchanges), then root-changing SPR, when no NNI gains", true),
             AttributeRule.newIntegerRule(N_STOP, true, "perturb and hill-climb again until this many climbs in a row bring no new best (default 0: no perturbation)"),
             AttributeRule.newDoubleRule(PERTURB_STRENGTH, true, "operator moves per perturbation, times (taxa - 2) (default 0.3)"),

@@ -29,11 +29,14 @@ package test.dr.evomodel.treedatalikelihood;
 
 import dr.app.beast.BeastParser;
 import dr.app.beast.BeastVersion;
+import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.xml.XMLObject;
 import junit.framework.TestCase;
 
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -111,5 +114,33 @@ public class MaximizerStrictParseTest extends TestCase {
         assertTrue(maximizer.wasExecuted());
         assertNotNull(maximizer.getReason());
         assertTrue(maximizer.getLikelihood().getLogLikelihood() >= before);
+    }
+
+    // the report and the optimum read the run's end, and leave the model as it is now: the ratio transform's inverse
+    // sets the tree's node heights, and a topology search restores other trees after a run
+    public void testReportLeavesTheModel() throws Exception {
+        BeastParser parser = new BeastParser(new String[]{}, null, false, false, true, new BeastVersion());
+        Map<String, XMLObject> objects = parser.parse(new StringReader(XML), false);
+        MaximizerWrtParameter maximizer = (MaximizerWrtParameter) objects.get("maximizer").getNativeObject();
+        TreeModel tree = (TreeModel) objects.get("treeModel").getNativeObject();
+        maximizer.maximize();
+        final double[] optimum = maximizer.getMinimumPoint(true);
+
+        // another state, as a search's restore leaves it
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getInternalNode(i);
+            tree.setNodeHeight(node, 2.0 * tree.getNodeHeight(node));
+        }
+        final double[] heights = new double[tree.getNodeCount()];
+        for (int n = 0; n < heights.length; n++) {
+            heights[n] = tree.getNodeHeight(tree.getNode(n));
+        }
+
+        maximizer.getReport();
+        maximizer.getOptimum();
+        assertTrue(Arrays.equals(optimum, maximizer.getMinimumPoint(true)));
+        for (int n = 0; n < heights.length; n++) {
+            assertEquals(heights[n], tree.getNodeHeight(tree.getNode(n)), 0.0);
+        }
     }
 }

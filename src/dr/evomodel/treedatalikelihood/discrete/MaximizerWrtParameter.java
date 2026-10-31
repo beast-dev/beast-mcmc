@@ -83,6 +83,7 @@ public class MaximizerWrtParameter implements Reportable {
     private double cachedValue = Double.NaN;
     private double[] cachedGradient = null;
     private double[] parameterPoint = null;
+    private double[] minimumValues = null; // the parameter's values at minimumPoint, as the latest run ended
     private boolean cachedPointApplied = true; // false when the point's untransformed values were not finite
 
     // the latest run of maximize()
@@ -380,7 +381,7 @@ public class MaximizerWrtParameter implements Reportable {
 
     public double[] getMinimumPoint(boolean inParameterSpace) {
         if (inParameterSpace && (transform != null)) {
-            return transform.inverse(minimumPoint, 0, minimumPoint.length);
+            return minimumValues.clone();
         } else {
             return minimumPoint;
         }
@@ -583,7 +584,9 @@ public class MaximizerWrtParameter implements Reportable {
         if (!executed) {
             return coordinates;
         }
-        final double[] values = modelValues(minimumPoint);
+        // as the run ended: a transform's inverse can write into the model (the ratio transform sets the tree's node
+        // heights), which may have moved on since (a topology search restores another tree)
+        final double[] values = minimumValues;
         final String[] transforms = new String[minimumPoint.length];
         final boolean[] free = new boolean[minimumPoint.length];
         Arrays.fill(free, true);
@@ -886,7 +889,8 @@ public class MaximizerWrtParameter implements Reportable {
         cachedPoint = null;
         executed = true;
 
-        setParameter(new WrappedVector.Raw(modelValues(minimumPoint)), parameter);
+        minimumValues = modelValues(minimumPoint);
+        setParameter(new WrappedVector.Raw(minimumValues), parameter);
 
         final boolean failed = reason == Reason.LINE_SEARCH_FAILURE || reason == Reason.NON_FINITE
                 || reason == Reason.ERROR;
@@ -1088,7 +1092,7 @@ public class MaximizerWrtParameter implements Reportable {
 
             if (transform != null) {
                 sb.append("Gradient is taken with respect to the transformed parameter values.\n");
-                sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
+                sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(minimumValues)).append("\n");
             }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(minimumGradient)).append("\n");
@@ -1200,6 +1204,10 @@ public class MaximizerWrtParameter implements Reportable {
             setPoint(point);
             argument = parameter.getParameterValues();
             logLikelihood = evaluateLogLikelihood();
+        } else if (parameterPoint != null) {
+            // the inverse has already written its non-finite values into a model it updates directly (the ratio
+            // transform sets the tree's node heights): put back the last point applied
+            setPoint(parameterPoint);
         }
 
         double value;
@@ -1229,8 +1237,9 @@ public class MaximizerWrtParameter implements Reportable {
                 if (settings.includeJacobian) {
                     result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
                 } else {
-                    // chain rule only, matching the unweighted log density
-                    result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                    // chain rule only, matching the unweighted log density, at the transformed point itself: mapping
+                    // the model values back can round a ratio to exactly 1, whose logit is +Inf and inverse NaN
+                    result = transform.updateGradientInverseUnWeightedLogDensity(result, point, 0, point.length);
                 }
             }
             result = result.clone();

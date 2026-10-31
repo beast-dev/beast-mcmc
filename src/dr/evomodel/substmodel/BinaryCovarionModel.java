@@ -29,7 +29,6 @@ package dr.evomodel.substmodel;
 
 import dr.evomodelxml.substmodel.BinaryCovarionModelParser;
 import dr.evolution.datatype.TwoStateCovarion;
-import dr.oldevomodel.substmodel.SubstitutionModelUtils;
 import dr.inference.model.Parameter;
 
 /**
@@ -65,7 +64,7 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
                                Parameter hiddenFrequencies,
                                Parameter alphaParameter,
                                Parameter switchingParameter,
-                               dr.oldevomodel.substmodel.BinaryCovarionModel.Version version) {
+                               BinaryCovarionModel.Version version) {
 
         super(BinaryCovarionModelParser.COVARION_MODEL, dataType, frequencies, hiddenFrequencies);
 
@@ -171,10 +170,95 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
         return 1.0; // Already normalized
     }
 
+    /**
+     * Normalize rate matrix to one expected substitution per unit time
+     *
+     * @param matrix the matrix to normalize to one expected substitution
+     * @param pi     the equilibrium distribution of states
+     */
+    void normalize(double[][] matrix, double[] pi) {
+
+        double subst = 0.0;
+        int dimension = pi.length;
+
+        for (int i = 0; i < dimension; i++) {
+            subst += -matrix[i][i] * pi[i];
+        }
+
+        // normalize, including switches
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                matrix[i][j] = matrix[i][j] / subst;
+            }
+        }
+
+        double switchingProportion = 0.0;
+        switchingProportion += matrix[0][2] * pi[2];
+        switchingProportion += matrix[2][0] * pi[0];
+        switchingProportion += matrix[1][3] * pi[3];
+        switchingProportion += matrix[3][1] * pi[1];
+
+        //System.out.println("switchingProportion=" + switchingProportion);
+
+        // normalize, removing switches
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                matrix[i][j] = matrix[i][j] / (1.0 - switchingProportion);
+            }
+        }
+    }
+
+    public enum Version {
+        VERSION1("1") {
+            public double getF0(double iF0) {
+                return 1.0;
+            }
+
+            public double getF1(double iF1) {
+                return 1.0;
+            }
+        },
+        VERSION2("2") {
+            public double getF0(double iF0) {
+                return iF0;
+            }
+
+            public double getF1(double iF1) {
+                return iF1;
+            }
+        };
+
+        Version(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        private final String text;
+
+        public static Version parseFromString(String text) {
+            for (Version version : Version.values()) {
+                if (version.getText().compareToIgnoreCase(text) == 0)
+                    return version;
+            }
+            throw new IllegalArgumentException("Unknown version type: " + text);
+        }
+
+        public String toString() {
+            return getText();
+        }
+
+        abstract public double getF0(double iF0);
+
+        abstract public double getF1(double iF1);
+    }
+
     private Parameter alpha;
     private Parameter switchRate;
     private Parameter frequencies;
     private Parameter hiddenFrequencies;
-    final private dr.oldevomodel.substmodel.BinaryCovarionModel.Version version;
+    final private Version version;
 
 }

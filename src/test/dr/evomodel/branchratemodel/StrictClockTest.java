@@ -29,6 +29,7 @@ package test.dr.evomodel.branchratemodel;
 
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
@@ -36,15 +37,17 @@ import dr.evomodel.coalescent.TreeIntervals;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
 import dr.evomodel.operators.WilsonBalding;
+import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
-import dr.oldevomodel.substmodel.FrequencyModel;
-import dr.oldevomodel.substmodel.HKY;
-import dr.oldevomodel.treelikelihood.TreeLikelihood;
+import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.PreOrderSettings;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
-import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
-import dr.oldevomodelxml.substmodel.HKYParser;
-import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
+import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -65,6 +68,9 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static dr.evomodelxml.substmodel.HKYParser.*;
+import static dr.evomodelxml.treelikelihood.BeagleTreeLikelihoodParser.TREE_LIKELIHOOD;
 
 /**
  * @author Walter Xie
@@ -100,22 +106,23 @@ public class StrictClockTest extends TraceCorrelationAssert {
 
         // Sub model
         Parameter freqs = new Parameter.Default(alignment.getStateFrequencies());
-        Parameter kappa = new Parameter.Default(HKYParser.KAPPA, 1.0, 0, 100.0);
+        Parameter kappa = new Parameter.Default(KAPPA, 1.0, 0, 100.0);
 
         FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
         HKY hky = new HKY(kappa, f);
 
-        //siteModel
-        GammaSiteModel siteModel = new GammaSiteModel(hky);
-        Parameter mu = new Parameter.Default(GammaSiteModelParser.MUTATION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
-        siteModel.setMutationRateParameter(mu);
+        SiteRateModel siteRateModel = new DiscretizedSiteRateModel("");
 
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
-        TreeLikelihood treeLikelihood = new TreeLikelihood(patterns, treeModel, siteModel, branchRateModel, null,
-                false, false, true, false, false);
-        treeLikelihood.setId(TreeLikelihoodParser.TREE_LIKELIHOOD);
+        TreeDataLikelihood treeLikelihood =  new TreeDataLikelihood(
+                new BeagleDataLikelihoodDelegate(treeModel, patterns,
+                        new HomogeneousBranchModel(hky), siteRateModel, true,
+                        false, PartialsRescalingScheme.DEFAULT, false, PreOrderSettings.getDefault()),
+                treeModel, null
+        );
+        treeLikelihood.setId(TREE_LIKELIHOOD);
 
         // Operators
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -228,14 +235,14 @@ public class StrictClockTest extends TraceCorrelationAssert {
         TraceCorrelation likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(CompoundLikelihoodParser.POSTERIOR));
         assertExpectation(CompoundLikelihoodParser.POSTERIOR, likelihoodStats, -3928.71);
 
-        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TreeLikelihoodParser.TREE_LIKELIHOOD));
-        assertExpectation(TreeLikelihoodParser.TREE_LIKELIHOOD, likelihoodStats, -3856.59);
+        likelihoodStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_LIKELIHOOD));
+        assertExpectation(TREE_LIKELIHOOD, likelihoodStats, -3856.59);
 
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
         assertExpectation(TREE_HEIGHT, treeHeightStats, 69.0580);
 
-        TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
-        assertExpectation(HKYParser.KAPPA, kappaStats, 18.2782);
+        TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(KAPPA));
+        assertExpectation(KAPPA, kappaStats, 18.2782);
 
         TraceCorrelation rateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(StrictClockBranchRates.RATE));
         assertExpectation(StrictClockBranchRates.RATE, rateStats, 8.04835E-4);        

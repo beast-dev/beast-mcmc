@@ -41,6 +41,9 @@ import java.util.List;
  */
 public class HierarchicalModelComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 8813437700244230279L;
     public HierarchicalModelComponentOptions(final BeautiOptions options) {
         this.options = options;
         hpmList = new ArrayList<HierarchicalPhylogeneticModel>();
@@ -52,12 +55,6 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
         // Do nothing because priors are previously defined for idref in operator schedule
-//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
-//            if (!hpm.isEmpty()) {
-//                List<Parameter> hpmParameterList = hpm.getConditionalParameterList();
-//                params.addAll(hpmParameterList);
-//            }
-//        }
     }
 
     public void selectStatistics(final ModelOptions modelOptions, final List<Parameter> stats) {
@@ -66,11 +63,6 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
         // Do nothing because Gibbs operator format do not fit into the current Operator implementation
-//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
-//            if (!hpm.isEmpty()) {
-//                hpm.selectOperators(modelOptions, ops);
-//            }
-//        }
     }
 
     public boolean modelExists(String name) {
@@ -157,21 +149,11 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         return hpmList;
     }
 
-//    public void generateDistributions(final XMLWriter writer) {
-//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
-//            hpm.generateDistribution(writer);
-//        }
-//    }
 
     final private BeautiOptions options;
     final private List<HierarchicalPhylogeneticModel> hpmList;
 
 
-//    public void generatePriors(final XMLWriter writer) {
-//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
-//            hpm.generatePriors(writer);
-//        }
-//    }
 
     public boolean isEmpty() {
         return hpmList.isEmpty();

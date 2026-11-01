@@ -300,10 +300,6 @@ public class LogGenerator extends Generator {
             writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
         }
 
-//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-//	        treePriorGenerator.setModelPrefix("");
-//        	treePriorGenerator.writeParameterLog(options.activedSameTreePrior, writer);
-//        } else { // no species
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
 //	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // priorName.treeModel
             treePriorGenerator.writeParameterLog(prior, writer);
@@ -315,10 +311,6 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
-//                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
-//                if (model.getClockType() == ClockType.UNCORRELATED) {
-//                    switch (model.getClockDistributionType()) {
 //                        case LOGNORMAL:
 //                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
 //                            break;
@@ -330,10 +322,6 @@ public class LogGenerator extends Generator {
 ////                            break;
 //                        case EXPONENTIAL:
 //                            // nothing required
-//                            break;
-//                    }
-//                }
-//            }
             clockModelGenerator.writeLog(model, writer);
         }
 

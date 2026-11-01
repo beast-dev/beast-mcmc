@@ -60,7 +60,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = 2778103564318492601L;
 
     private BeautiFrame frame = null;
-    private BeautiOptions options = BeautiOptions.getInstance();
+    private BeautiOptions options = null;
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
@@ -275,7 +275,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public void updateLinkTreePriorEnablility() {
+    public void updateLinkTreePriorEnability() {
         boolean selected = options.getPartitionTreeModels().size() > 1;
         linkTreePriorCheck.setEnabled(selected);
     }
@@ -287,7 +287,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        updateLinkTreePriorEnablility();
+        updateLinkTreePriorEnability();
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
@@ -330,9 +330,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         //Set<PartitionTreeModel> models = treeModelPanels.keySet();
         //
-        //for (PartitionTreeModel model : models) {
-        //  treeModelPanels.get(model).getOptions(options);
-        //}
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
@@ -465,29 +462,17 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                     aHasFocus,
                     aRow, aColumn);
 
-            if (!isUsed(aRow))
-                renderer.setForeground(Color.gray);
-            else
-                renderer.setForeground(Color.black);
+            // an unused row is greyed; the rest take the table's colours, so that a selected row is
+            // still readable (and so that a dark appearance works)
+            if (!isUsed(aRow)) {
+                renderer.setForeground(UIManager.getColor("Label.disabledForeground"));
+            } else {
+                renderer.setForeground(aIsSelected ? aTable.getSelectionForeground() : aTable.getForeground());
+            }
             return this;
         }
 
     }
 
-//    Action addTreeAction = new AbstractAction("+") {
-//        public void actionPerformed(ActionEvent ae) {
-//        	createTree();
-//        }
-//    };
 
-//    public class CreateTreeAction extends AbstractAction {
-//        public CreateTreeAction() {
-//            super("Create Tree");
-//            setToolTipText("Create a NJ or UPGMA tree using a data partition");
-//        }
-//
-//        public void actionPerformed(ActionEvent ae) {
-//            createTree();
-//        }
-//    }
 }

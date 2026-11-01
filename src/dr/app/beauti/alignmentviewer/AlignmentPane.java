@@ -159,17 +159,6 @@ public class AlignmentPane extends JComponent implements Scrollable {
         }
 
         int x = x1;
-//        if (columnDecorator != null) {
-//            for (int col = col1; col <= col2; col++) {
-//                Paint columnBackground = columnDecorator.getColumnBackground(col);
-//                if (columnBackground != null) {
-//                    g2.setPaint(columnBackground);
-//                    Rectangle rect = new Rectangle(x, y1, columnWidth, y2 - y1);
-//                    g2.fill(rect);
-//                }
-//                x += columnWidth;
-//            }
-//        }
 
         y = y1;
         for (int row = row1; row <= row2; row++) {

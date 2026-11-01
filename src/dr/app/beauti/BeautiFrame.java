@@ -41,7 +41,6 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentFactory;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentFactory;
-import dr.app.beauti.components.dollo.DolloComponentFactory;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
 import dr.app.beauti.components.linkedparameters.LinkedParameterComponentFactory;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
@@ -61,7 +60,7 @@ import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
-import dr.app.beauti.util.BEAUTiImporter;
+import dr.app.beauti.util.BeautiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.FileDrop;
@@ -83,6 +82,9 @@ import java.awt.*;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.io.*;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -153,7 +155,6 @@ public class BeautiFrame extends DocumentFrame {
                 ContinuousComponentFactory.INSTANCE,
                 DiscreteTraitsComponentFactory.INSTANCE,
 //                DnDsComponentFactory.INSTANCE,
-                DolloComponentFactory.INSTANCE,
                 LinkedParameterComponentFactory.INSTANCE,
                 HierarchicalModelComponentFactory.INSTANCE,
                 MarginalLikelihoodEstimationComponentFactory.INSTANCE,
@@ -161,8 +162,7 @@ public class BeautiFrame extends DocumentFrame {
                 TipDateSamplingComponentFactory.INSTANCE
         };
 
-        options = BeautiOptions.getInstance();
-        options.registerComponents(components);
+        options = BeautiOptions.newInstance(components);
 
         generator = new BeastGenerator(options, components);
 
@@ -395,12 +395,8 @@ public class BeautiFrame extends DocumentFrame {
     public void doDelete() {
         if (tabbedPane.getSelectedComponent() == dataPanel) {
             dataPanel.removeSelection();
-//        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
-//            modelsPanel.delete();
-//        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
-//        	treesPanel.delete();
         } else {
-            throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
+            throw new RuntimeException("Delete should only be accessible from the Data and Models panels");
         }
 
         setStatusMessage();
@@ -426,53 +422,35 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public void doApplyTemplate() {
-        FileDialog dialog = new FileDialog(this,
-                "Apply Template",
-                FileDialog.LOAD);
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-            try {
-                readFromFile(file);
-            } catch (FileNotFoundException fnfe) {
-                JOptionPane.showMessageDialog(this, "Unable to open template file: File not found",
-                        "Unable to open file",
-                        JOptionPane.ERROR_MESSAGE);
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Unable to read template file: " + ioe.getMessage(),
-                        "Unable to read file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
     protected boolean readFromFile(File file) throws IOException {
-        FileInputStream fileIn =
-                new FileInputStream(file);
+        BeautiOptions loaded;
+        ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)));
         try {
-            ObjectInputStream in = new ObjectInputStream(fileIn);
-            options = (BeautiOptions) in.readObject();
-            in.close();
-        } catch (IOException ioe) {
+            loaded = (BeautiOptions) in.readObject();
+        } catch (ClassNotFoundException | ClassCastException | StreamCorruptedException |
+                 OptionalDataException | InvalidClassException e) {
+            // (a file that is not a BEAUti document, or one from an incompatible version)
+            e.printStackTrace(System.err);
             JOptionPane.showMessageDialog(this,
-                    "Unable to read BEAUti file. BEAUti can only read files\n" +
-                            "created by 'Saving' within BEAUti. It cannot read BEAST\n" +
-                            "XML files. To read data within BEAST XML files, use\n" +
-                            "the 'Import' option.",
+                    "Unable to read BEAUti file. BEAUti can only read files created by\n" +
+                            "'Saving' within BEAUti, and from a compatible version. It cannot\n" +
+                            "read BEAST XML files; use the 'Import' option for those.\n\n" + e,
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
-        } catch (ClassNotFoundException cnfe) {
-            JOptionPane.showMessageDialog(this, "Unable to read BEAUti file: " + cnfe.getMessage(),
-                    "Unable to read file",
-                    JOptionPane.ERROR_MESSAGE);
-            cnfe.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            // returning false leaves this document as it was
             return false;
+        } finally {
+            in.close();
         }
-        fileIn.close();
 
+        options = loaded;
+        BeautiOptions.setInstance(options);
         options.registerComponents(components);
         generator = new BeastGenerator(options, components);
+
+        // the panels are still showing the document this window had before
+        setAllOptions();
+        setStatusMessage();
 
         return true;
     }
@@ -482,13 +460,31 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean writeToFile(File file) throws IOException {
-        OutputStream fileOut = new FileOutputStream(file);
-        ObjectOutputStream out =
-                new ObjectOutputStream(fileOut);
-        out.writeObject(options);
-        out.close();
-        fileOut.close();
-        return true;
+        // take anything being edited in the current panel first
+        getAllOptions();
+
+        // write to a temporary file and move it into place, so that a failure cannot destroy the old file
+        File directory = file.getAbsoluteFile().getParentFile();
+        File temporaryFile = File.createTempFile(file.getName(), ".tmp", directory);
+        try {
+            ObjectOutputStream out =
+                    new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(temporaryFile)));
+            try {
+                out.writeObject(options);
+            } finally {
+                out.close();
+            }
+            try {
+                Files.move(temporaryFile.toPath(), file.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporaryFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            return true;
+        } finally {
+            // (does nothing once the move has succeeded)
+            temporaryFile.delete();
+        }
     }
 
     public final void doImport() {
@@ -508,7 +504,7 @@ public class BeautiFrame extends DocumentFrame {
                         "Invalid file name", JOptionPane.ERROR_MESSAGE);
             } else {
                 try {
-                    BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                    BeautiImporter beautiImporter = new BeautiImporter(this, options);
                     beautiImporter.importFromFile(file);
 
                     setDirty();
@@ -536,14 +532,20 @@ public class BeautiFrame extends DocumentFrame {
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     jde.printStackTrace();
+                } catch (RuntimeException re) {
+                    // anything else the import throws would otherwise reach the event thread unreported
+                    re.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error importing file:\n    " + describe(re),
+                            "Error reading file",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
 
         if (!options.hasIdenticalTaxa()) {
+            // partitions whose taxa differ cannot share a tree; those that still can are left linked
             setAllOptions(); // need this to refresh panels otherwise it will throw exception
-            dataPanel.selectAll();
-            dataPanel.unlinkTreeModels();
+            dataPanel.unlinkTreeModelsWithDifferentTaxa();
         }
 
         setAllOptions();
@@ -556,7 +558,7 @@ public class BeautiFrame extends DocumentFrame {
 
         if (files != null && files.length != 0) {
             try {
-                BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                BeautiImporter beautiImporter = new BeautiImporter(this, options);
                 if (options.taxonList == null) {
                     beautiImporter.importTaxaFromTraits(files[0]);
                     setDirty();
@@ -574,6 +576,13 @@ public class BeautiFrame extends DocumentFrame {
                 return false;
             } catch (ImportException ex) {
                 ex.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Error parsing the traits file:\n    " + describe(ex),
+                        "Error reading file", JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (RuntimeException re) {
+                re.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Error importing the traits file:\n    " + describe(re),
+                        "Error reading file", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         } else {
@@ -644,11 +653,14 @@ public class BeautiFrame extends DocumentFrame {
 
     public final boolean doGenerate() {
 
+        // take whatever the current panel is editing before checking it
+        getAllOptions();
+
         try {
             generator.checkOptions();
         } catch (Generator.GeneratorException ge) {
             ge.printStackTrace(System.err);
-            JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid BEAUti setting : ",
+            JOptionPane.showMessageDialog(this, describe(ge), "Invalid BEAUti setting",
                     JOptionPane.ERROR_MESSAGE);
             if (ge.getSwitchToPanel() != null) {
                 switchToPanel(ge.getSwitchToPanel());
@@ -683,12 +695,12 @@ public class BeautiFrame extends DocumentFrame {
                 return false;
             } catch (Generator.GeneratorException e) {
                 e.printStackTrace(System.err);
-                JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
+                JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because:\n" + describe(e),
                         "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
                 return false;
             } catch (Exception e) {
                 e.printStackTrace(System.err);
-                JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
+                JOptionPane.showMessageDialog(this, "Unable to generate file: " + describe(e),
                         "Unable to generate file", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
@@ -698,6 +710,14 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         return false;
+    }
+
+    /**
+     * @return the exception's message, or its class name when it has none (rather than "null")
+     */
+    private static String describe(Throwable e) {
+        String message = e.getMessage();
+        return message != null && !message.trim().isEmpty() ? message : e.getClass().getName();
     }
 
     /**
@@ -714,9 +734,16 @@ public class BeautiFrame extends DocumentFrame {
                 importDialog = new FileDialog(this, title, FileDialog.LOAD);
                 fileDialogs.put(title, importDialog);
             }
+            // the native dialog otherwise returns only the first of the files chosen
+            importDialog.setMultipleMode(multipleSelection);
 
             importDialog.setVisible(true);
-            if (importDialog.getFile() != null) {
+            if (multipleSelection) {
+                File[] files = importDialog.getFiles();
+                if (files != null && files.length > 0) {
+                    return files;
+                }
+            } else if (importDialog.getFile() != null) {
                 return new File[]{new File(importDialog.getDirectory(), importDialog.getFile())};
             }
         } else {

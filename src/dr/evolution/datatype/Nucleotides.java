@@ -199,4 +199,11 @@ public class Nucleotides extends DataType {
 		return TYPE;
 	}
 
+	/**
+	 * @return the singleton, so that a deserialized data type is still identical (==) to it
+	 */
+	private Object readResolve() {
+		return INSTANCE;
+	}
+
 }

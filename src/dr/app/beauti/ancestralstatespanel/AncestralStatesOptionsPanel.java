@@ -163,16 +163,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 ancestralStatesPanel.fireModelChanged();
 
                 // The following is only necessary is simpleCounting XOR robustCounting
-//                if (itemEvent.getItem() == countingCheck) {
-//                    boolean enableRC = !countingCheck.isSelected() && ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
-//                    dNdSRobustCountingCheck.setEnabled(enableRC);
-//                    dNnSText.setEnabled(enableRC);
-//                }
 //
-//                if (itemEvent.getItem() == dNdSRobustCountingCheck) {
-//                    boolean enableSimpleCounting = !dNdSRobustCountingCheck.isSelected();
-//                    countingCheck.setEnabled(enableSimpleCounting);
-//                }
                 completeHistoryLoggingCheck.setEnabled(countingCheck.isSelected() || dNdSRobustCountingCheck.isSelected());
             }
         };
@@ -276,7 +267,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 // mergedPatterns for codon positions 1&2 will always be compressed...
                 // so cannot do any of this stuff. Disable it and provide an explanation.
                 addSpanningComponent(new JLabel("<html>Unable to provide these options with the 1+2,3 codon<br>" +
-                        "position model. Use a 1,2,3 codon position model instead.<br><html>"));
+                        "position model. Use a 1,2,3 codon position model instead.<br></html>"));
             }
 
 

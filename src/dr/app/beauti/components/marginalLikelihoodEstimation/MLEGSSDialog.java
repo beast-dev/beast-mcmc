@@ -99,7 +99,7 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.pathSteps = pathStepsField.getValue();
+                options.pathSteps = pathStepsField.getValue(options.pathSteps);
             }
         });
 
@@ -115,7 +115,7 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleChainLength = chainLengthField.getValue();
+                options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
             }
         });
 
@@ -133,7 +133,7 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleLogEvery = logEveryField.getValue();
+                options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
             }
         });
 
@@ -268,9 +268,6 @@ public class MLEGSSDialog {
         });
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
 
-        //parameterWorkingPrior.addItem("Normal KDE");
-        //parameterWorkingPrior.addItem("Gamma KDE");
-        //labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
 
         stepDistribution.addItem("Beta");
         labelStepDistribution = optionsPanel.addComponentWithLabel("Stepping stone distribution:", stepDistribution);
@@ -388,6 +385,9 @@ public class MLEGSSDialog {
         dialog.pack();
         dialog.setVisible(true);
 
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
+
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
         if (value != null && value != -1) {
@@ -430,9 +430,9 @@ public class MLEGSSDialog {
     }
 
     public void getOptions(MarginalLikelihoodEstimationOptions options) {
-        options.pathSteps = pathStepsField.getValue();
-        options.mleChainLength = chainLengthField.getValue();
-        options.mleLogEvery = logEveryField.getValue();
+        options.pathSteps = pathStepsField.getValue(options.pathSteps);
+        options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
+        options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
 
         options.mleFileName = logFileNameField.getText();
         options.mleResultFileName = resultFileNameField.getText();

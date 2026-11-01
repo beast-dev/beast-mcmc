@@ -37,6 +37,9 @@ import java.util.*;
  */
 public class AncestralStatesComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 527809019817481210L;
     public AncestralStatesComponentOptions() {
     }
 
@@ -131,6 +134,8 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
     }
 
     class AncestralStateOptions implements Serializable {
+
+        private static final long serialVersionUID = 1L;
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
         String mrcaTaxonSetName = null;

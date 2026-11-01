@@ -1,5 +1,5 @@
 /*
- * LinkSubstitutionModelDialog.java
+ * LinkModelDialog.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -27,50 +27,58 @@
 
 package dr.app.beauti.datapanel;
 
-import dr.app.beauti.options.PartitionSubstitutionModel;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
+ * Asks which model the selected partitions should share, and whether to rename it.
+ *
+ * @param <T> the kind of model being shared
  * @author Andrew Rambaut
- * @author Alexei Drummond
+ * @author Walter Xie
  */
-public class LinkSubstitutionModelDialog {
+public class LinkModelDialog<T> {
 
-    private JFrame frame;
+    private final JFrame frame;
+    private final String title;
 
-    JComboBox modelCombo;
-    JCheckBox copyCheck;
-    JTextField nameField;
+    private final JComboBox modelCombo;
+    private final JCheckBox copyCheck;
+    private final JTextField nameField;
+    private final OptionsPanel optionPanel;
 
-    OptionsPanel optionPanel;
-
-    public LinkSubstitutionModelDialog(JFrame frame) {
+    /**
+     * @param label    names the list of models (e.g. "Partition clock model:")
+     * @param renaming names the rename option (e.g. "Rename clock model partition to:")
+     * @param title    the dialog's title
+     */
+    public LinkModelDialog(JFrame frame, String label, String renaming, String title) {
         this.frame = frame;
+        this.title = title;
 
         modelCombo = new JComboBox();
 
-        copyCheck = new JCheckBox("Rename substitution model partition to:");
+        copyCheck = new JCheckBox(renaming);
         nameField = new JTextField();
         nameField.setColumns(20);
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition Model:", modelCombo);
+        optionPanel.addComponentWithLabel(label, modelCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
-        copyCheck.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        nameField.setEnabled(copyCheck.isSelected());
-                    }
-                }
-        );
-
+        copyCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                nameField.setEnabled(copyCheck.isSelected());
+            }
+        });
     }
 
+    @SuppressWarnings("unchecked")
     public int showDialog(Object[] models) {
 
         modelCombo.removeAllItems();
@@ -86,10 +94,13 @@ public class LinkSubstitutionModelDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Model");
+        final JDialog dialog = optionPane.createDialog(frame, title);
         dialog.pack();
 
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
@@ -100,8 +111,9 @@ public class LinkSubstitutionModelDialog {
         return result;
     }
 
-    public PartitionSubstitutionModel getModel() {
-        return (PartitionSubstitutionModel)modelCombo.getSelectedItem();
+    @SuppressWarnings("unchecked")
+    public T getModel() {
+        return (T) modelCombo.getSelectedItem();
     }
 
     public boolean getMakeCopy() {
@@ -111,5 +123,4 @@ public class LinkSubstitutionModelDialog {
     public String getName() {
         return nameField.getText();
     }
-
 }

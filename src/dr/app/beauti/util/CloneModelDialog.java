@@ -1,5 +1,5 @@
 /*
- * LinkClockModelDialog.java
+ * CloneModelDialog.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -25,59 +25,46 @@
  *
  */
 
-package dr.app.beauti.datapanel;
+package dr.app.beauti.util;
 
-import dr.app.beauti.options.PartitionClockModel;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.*;
+import java.util.List;
 
 /**
+ * Asks which of the selected models the others should take their settings from.
+ *
+ * @param <T> the kind of model being cloned
  * @author Andrew Rambaut
- * @author Walter Xie
  */
-public class LinkClockModelDialog {
+public class CloneModelDialog<T> {
 
-    private JFrame frame;
+    private final JFrame frame;
+    private final JComboBox sourceModelCombo;
+    private final OptionsPanel optionPanel;
 
-    JComboBox treeCombo;
-    JCheckBox copyCheck;
-    JTextField nameField;
-
-    OptionsPanel optionPanel;
-
-    public LinkClockModelDialog(JFrame frame) {
+    /**
+     * @param modelDescription what the models are, for the wording (e.g. "substitution model")
+     */
+    public CloneModelDialog(JFrame frame, String modelDescription) {
         this.frame = frame;
 
-        treeCombo = new JComboBox();
+        String question = "<html>Select the " + modelDescription + " to act as a source<br>" +
+                "to copy to the other selected models.</html>";
 
-        copyCheck = new JCheckBox("Rename clock model partition to:");
-        nameField = new JTextField();
-        nameField.setColumns(20);
-        nameField.setEnabled(false);
+        sourceModelCombo = new JComboBox();
+        PanelUtils.setupComponent(sourceModelCombo);
+        sourceModelCombo.setToolTipText(question);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition clock model:", treeCombo);
-        optionPanel.addComponents(copyCheck, nameField);
-
-        copyCheck.addItemListener(
-                new ItemListener() {
-                    public void itemStateChanged(ItemEvent ev) {
-                        nameField.setEnabled(copyCheck.isSelected());
-                    }
-                }
-        );
-
+        optionPanel.addSpanningComponent(new JLabel(question));
+        optionPanel.addComponentWithLabel("Source Model:", sourceModelCombo);
     }
 
-    public int showDialog(Object[] models) {
-
-        treeCombo.removeAllItems();
-        for (Object model : models) {
-            treeCombo.addItem(model);
-        }
+    @SuppressWarnings("unchecked")
+    public int showDialog(List<? extends T> sourceModels) {
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -87,10 +74,18 @@ public class LinkClockModelDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Create New Partition Clock Model");
+        sourceModelCombo.removeAllItems();
+        for (T model : sourceModels) {
+            sourceModelCombo.addItem(model);
+        }
+
+        final JDialog dialog = optionPane.createDialog(frame, "Clone model settings");
         dialog.pack();
 
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
@@ -101,16 +96,8 @@ public class LinkClockModelDialog {
         return result;
     }
 
-    public PartitionClockModel getModel() {
-        return (PartitionClockModel) treeCombo.getSelectedItem();
+    @SuppressWarnings("unchecked")
+    public T getSourceModel() {
+        return (T) sourceModelCombo.getSelectedItem();
     }
-
-    public boolean getMakeCopy() {
-        return copyCheck.isSelected();
-    }
-
-    public String getName() {
-        return nameField.getText();
-    }
-
 }

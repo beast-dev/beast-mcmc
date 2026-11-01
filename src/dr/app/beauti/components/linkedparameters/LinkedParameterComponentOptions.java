@@ -64,7 +64,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
         }
     }
 
-    public boolean nameExits(String name) {
+    public boolean nameExists(String name) {
         boolean found = false;
 
         if (options.parameterExists(name)) {

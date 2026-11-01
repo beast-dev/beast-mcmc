@@ -43,6 +43,9 @@ import java.util.Map;
 
 public class ContinuousComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = -3918393540099626177L;
     public static final boolean USE_ARBITRARY_BRANCH_RATE_MODEL = true;
 
     public final static String PRECISION_GIBBS_OPERATOR = "precisionGibbsOperator";

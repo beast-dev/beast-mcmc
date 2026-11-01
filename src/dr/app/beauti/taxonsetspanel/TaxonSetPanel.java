@@ -33,6 +33,7 @@ import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.table.TableEditorStopper;
 import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.table.DateCellEditor;
 import dr.evolution.util.Taxa;
@@ -365,15 +366,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(panel3, BorderLayout.CENTER);
 
-//		taxonSetsTable.addMouseListener(new MouseAdapter() {
-//			public void mouseClicked(MouseEvent e) {
-//				if (e.getClickCount() == 2) {
-//					JTable target = (JTable)e.getSource();
-//					int row = target.getSelectedRow();
-//					taxonSetsTableDoubleClicked(row);
-//				}
-//			}
-//		});
 
         includedTaxaSearchField.getDocument().addDocumentListener(new DocumentListener() {
                                                                       public void changedUpdate(DocumentEvent e) {
@@ -571,6 +563,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 taxonSetsTableSelectionChanged();
             }
         });
+        // a name being typed is taken when the table loses the focus (e.g. to the Generate button)
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxonSetsTable);
+
         taxonSetsTable.doLayout();
     }
 
@@ -624,9 +619,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-//		options.datesUnits = unitsCombo.getSelectedIndex();
-//		options.datesDirection = directionCombo.getSelectedIndex();
-//		options.translation = translationCombo.getSelectedIndex();
     }
 
     public JComponent getExportableComponent() {
@@ -657,9 +649,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 //
 //		setCurrentTaxonSet(currentTaxonSet);
 //
-//		int sel = taxonSets.indexOf(currentTaxonSet);
-//		taxonSetsTable.setRowSelectionInterval(sel, sel);
-//	}
 
     Action addTaxonSetAction = new AbstractAction("+") {
 
@@ -704,6 +693,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 Taxa taxa = options.taxonSets.remove(row);
                 options.taxonSetsMono.remove(taxa);
                 options.taxonSetsIncludeStem.remove(taxa);
+                // these two were left behind, so the removed set still had a tree and a height
+                options.taxonSetsTreeModel.remove(taxa);
+                options.taxonSetsHeights.remove(taxa);
             }
             taxonSetChanged();
 
@@ -841,6 +833,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             taxa.setId(name);
             options.taxonSets.add(taxa);
             options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+            options.taxonSetsMono.put(taxa, false);
+            options.taxonSetsIncludeStem.put(taxa, false);
+            options.taxonSetsHeights.put(taxa, 0.0);
         } else {
             // assume column one is the taxon labels and column two is the set names
             String[] taxonSetNames = dataTable.getColumn(0);

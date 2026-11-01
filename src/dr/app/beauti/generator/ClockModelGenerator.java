@@ -415,10 +415,6 @@ public class ClockModelGenerator extends Generator {
 
 //                writer.writeComment("log branch rates for tree");
 //                writer.writeOpenTag(TransformedTreeTraitParser.NAME,
-//                        new Attribute.Default<>(XMLParser.ID, prefix  + "logBranchRates"));
-//                writer.writeTag("signTransform", true);
-//                writer.writeIDref(ArbitraryBranchRatesParser.RATES, prefix  + "branchRates");
-//                writer.writeCloseTag(TransformedTreeTraitParser.NAME);
 
                 break;
 
@@ -438,9 +434,6 @@ public class ClockModelGenerator extends Generator {
 
 //                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
 //                        Parameter parameter = tree.getParameter(DefaultTreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
-//                        parameter.isFixed = true;
-//                        parameter.initial = model.getRate();
-//                    }
 
                 writer.writeOpenTag(RateEvolutionLikelihood.RATES,
                         new Attribute[]{
@@ -553,12 +546,12 @@ public class ClockModelGenerator extends Generator {
                 writeParameter(LocalClockModelParser.RATE, "clock.rate", clockModel, writer);
 
                 for (Taxa taxonSet : options.taxonSets) {
-                    if (options.taxonSetsMono.get(taxonSet)) {
+                    if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                         String parameterName = taxonSet.getId() + ".rate";
                         writer.writeOpenTag(
                                 LocalClockModelParser.CLADE,
                                 new Attribute[]{
-                                        new Attribute.Default<String>("includeStem", options.taxonSetsIncludeStem.get(taxonSet).toString())
+                                        new Attribute.Default<String>("includeStem", Boolean.toString(Boolean.TRUE.equals(options.taxonSetsIncludeStem.get(taxonSet))))
                                 }
                         );
                         writeParameter(parameterName, clockModel, writer);
@@ -593,7 +586,7 @@ public class ClockModelGenerator extends Generator {
                         new Attribute.Default<String>(ParameterParser.VALUE, "-0.01")}, true);
                 int parameterNumber = 1;
                 for (Taxa taxonSet : options.taxonSets) {
-                    if (options.taxonSetsMono.get(taxonSet)) {
+                    if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                         writer.writeTag(PARAMETER, new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.COEFFICIENT + parameterNumber),
                                 new Attribute.Default<String>(ParameterParser.VALUE, "0.01")}, true);
@@ -623,7 +616,7 @@ public class ClockModelGenerator extends Generator {
                     writer.writeOpenTag(BranchSpecificBranchModelParser.CLADE,
                             new Attribute[]{
                                     new Attribute.Default<String>(BranchSpecificFixedEffectsParser.CATEGORY, "" + (counter+1)),
-                                    new Attribute.Default<String>(LocalClockModelParser.INCLUDE_STEM, Boolean.toString(options.taxonSetsIncludeStem.get(taxonSet))),
+                                    new Attribute.Default<String>(LocalClockModelParser.INCLUDE_STEM, Boolean.toString(Boolean.TRUE.equals(options.taxonSetsIncludeStem.get(taxonSet)))),
                                     new Attribute.Default<String>(LocalClockModelParser.EXCLUDE_CLADE, "false")
                             }
                     );
@@ -962,9 +955,6 @@ public class ClockModelGenerator extends Generator {
 
             case MIXED_EFFECTS_CLOCK:
                 //always write distribution likelihoods for rate, scale and intercept
-                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.RATES_PRIOR);
-                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.SCALE_PRIOR);
-                //writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, BranchSpecificFixedEffects.INTERCEPT_PRIOR);
                 //check for coefficients
                 /*String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
                 int number = 1;
@@ -1098,7 +1088,7 @@ public class ClockModelGenerator extends Generator {
             case FIXED_LOCAL_CLOCK:
                 writer.writeIDref(PARAMETER, prefix + "clock.rate");
                 for (Taxa taxonSet : options.taxonSets) {
-                    if (options.taxonSetsMono.get(taxonSet)) {
+                    if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                         String parameterName = taxonSet.getId() + ".rate";
                         writer.writeIDref(PARAMETER, model.getPrefix() + parameterName);
                     }
@@ -1130,7 +1120,7 @@ public class ClockModelGenerator extends Generator {
                             writer.writeIDref(PARAMETER, prefix + ClockType.UCGD_SHAPE);
                             break;
                         case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not supported yet");
 //                        break;
                         case EXPONENTIAL:
                             writer.writeIDref(PARAMETER, prefix + ClockType.UCED_MEAN);

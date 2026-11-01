@@ -386,6 +386,58 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
     public abstract void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames);
 
     /**
+     * As adoptTreeStructure(edges, nodeHeights, childOrder, taxaNames), and also gives each internal node back the
+     * height parameter it held (see getNodeHeightParameterName), so that operators that pick node height parameters
+     * by position move the same nodes as in the chain that wrote the checkpoint
+     * @param heightParameterNames Name of the height parameter of each internal node, by node number; null keeps
+     *                             the current height parameters
+     */
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames,
+                                   String[] heightParameterNames) {
+        adoptTreeStructure(edges, nodeHeights, childOrder, taxaNames);
+    }
+
+    /**
+     * @return the name of the height parameter that a node holds, for tree models that move height parameters
+     * between internal nodes when the root changes (null otherwise). Checkpoints record it for each internal node.
+     */
+    public String getNodeHeightParameterName(NodeRef node) {
+        return null;
+    }
+
+    /**
+     * Matches checkpointed height parameter names to the internal nodes that hold those parameters now.
+     * @return for each internal node, by node number, the internal node that holds the parameter named for it;
+     * null (with a warning) if the names do not match this tree's internal node height parameters one to one
+     */
+    protected int[] findHeightParameterHolders(String[] heightParameterNames) {
+        int nodeCount = getNodeCount();
+        Map<String, Integer> holderOfName = new HashMap<String, Integer>();
+        for (int i = getExternalNodeCount(); i < nodeCount; i++) {
+            holderOfName.put(getNodeHeightParameterName(getNode(i)), i);
+        }
+
+        int[] holders = new int[nodeCount];
+        boolean[] matched = new boolean[nodeCount];
+        boolean oneToOne = heightParameterNames.length == nodeCount && holderOfName.size() == getInternalNodeCount();
+        for (int i = getExternalNodeCount(); oneToOne && i < nodeCount; i++) {
+            Integer holder = holderOfName.get(heightParameterNames[i]);
+            oneToOne = holder != null && !matched[holder];
+            if (oneToOne) {
+                holders[i] = holder;
+                matched[holder] = true;
+            }
+        }
+
+        if (!oneToOne) {
+            System.err.println("WARNING: the node height parameter names in the checkpoint do not match those of tree " +
+                    getId() + "; keeping its current height parameters");
+            return null;
+        }
+        return holders;
+    }
+
+    /**
      * Imports trait information from a file
      * @param edges Edges are provided as index: child number; parent: array entry
      * @param traitModels List of TreeParameterModel object that contain trait information

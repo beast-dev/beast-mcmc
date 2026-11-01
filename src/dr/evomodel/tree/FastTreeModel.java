@@ -703,6 +703,45 @@ public class FastTreeModel extends TreeModel {
         this.setRoot(nodes[newRootIndex]);
     }
 
+    @Override
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames,
+                                   String[] heightParameterNames) {
+        if (heightParameterNames != null) {
+            int[] holders = findHeightParameterHolders(heightParameterNames);
+            if (holders != null) {
+                adoptSlots(holders);
+            }
+        }
+        adoptTreeStructure(edges, nodeHeights, childOrder, taxaNames);
+    }
+
+    @Override
+    public String getNodeHeightParameterName(NodeRef node) {
+        return slotParameters[nodeSlot[node.getNumber()]].getParameterName();
+    }
+
+    /**
+     * Gives each internal node n the height parameter slot of internal node holders[n] (as
+     * DefaultTreeModel.adoptHeightParameters); the heights stay at the nodes.
+     */
+    private void adoptSlots(int[] holders) {
+
+        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+
+        final int rootSlot = nodeSlot[oldRoot];
+        final int[] slots = nodeSlot.clone();
+        for (int n = externalNodeCount; n < nodeCount; n++) {
+            saveNode(n);
+            nodeSlot[n] = slots[holders[n]];
+            slotNode[nodeSlot[n]] = n;
+        }
+
+        // endTreeEdit swaps the root's slot from oldRoot to the new root, so point it at the slot's new node
+        oldRoot = slotNode[rootSlot];
+
+        pushTreeChangedEvent();
+    }
+
     // *****************************************************************
     // Statistics
     // *****************************************************************

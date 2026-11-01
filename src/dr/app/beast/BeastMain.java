@@ -387,6 +387,7 @@ public class BeastMain {
                         new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "s", "Specify a random number generator seed"),
                         new Arguments.StringOption("prefix","p",  "PREFIX", "Specify a prefix for all output log filenames"),
+                        new Arguments.StringOption("output", "out", "PATH", "Specify the path where output files should be written"),
                         new Arguments.Option("overwrite", "ow", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "e", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "nt", "The maximum number of computational threads to use (default auto)"),
@@ -555,6 +556,10 @@ public class BeastMain {
 
             if (arguments.hasOption("prefix")) {
                 fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            if (arguments.hasOption("output")) {
+                System.setProperty("beast.output.dir", arguments.getStringOption("output"));
             }
 
             // ============= Evaluation approximations =============

@@ -38,6 +38,7 @@ import java.io.File;
 public class OutputFileHelper {
 
     private static File outputDirectory = null;
+    public static final String OUTPUT_DIR_PROPERTY = "beast.output.dir";
 
     /**
      * Set the output directory
@@ -49,10 +50,21 @@ public class OutputFileHelper {
 
     /**
      * Get the output directory
+     * Checks first for an explicitly set directory, then for the system property
      * @return the output directory, or null if not set
      */
     public static synchronized File getOutputDirectory() {
-        return outputDirectory;
+        if (outputDirectory != null) {
+            return outputDirectory;
+        }
+        
+        // Check for system property (set via command line --output option)
+        String outputDirProperty = System.getProperty(OUTPUT_DIR_PROPERTY);
+        if (outputDirProperty != null && !outputDirProperty.trim().isEmpty()) {
+            return new File(outputDirProperty);
+        }
+        
+        return null;
     }
 
     /**

@@ -173,6 +173,13 @@ public class GammaSiteRateModel extends AbstractModel implements DifferentiableS
                 && (parameter == shapeParameter || parameter == invarParameter || parameter == nuParameter);
     }
 
+    /**
+     * @return the gamma shape parameter, or null without gamma rate heterogeneity
+     */
+    public Parameter getShapeParameter() {
+        return shapeParameter;
+    }
+
     @Override
     public boolean hasQuantileNoise(Parameter parameter) {
         return parameter != null && parameter == shapeParameter;

@@ -274,6 +274,31 @@ public class TreeLimeTimeTreeExportTest extends TestCase {
         assertTrue(params, params.contains("\tat_upper_bound\t"));
     }
 
+    // a gamma shape at its upper bound (set below its MLE of about 0.35 here): the warning says the rate categories
+    // are nearly equal and suggests fitting without gamma rate heterogeneity
+    public void testGammaShapeAtTheUpperBound() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        options.maximizationOptions.objective = MaximizationOptions.Objective.ML;
+        for (dr.app.treelime.options.PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            model.setGammaHetero(true);
+        }
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getBaseName().equals("alpha")) {
+                parameter.setInitial(0.1);
+                options.maximizationOptions.setUpperBound(parameter, 0.2);
+            }
+        }
+        Export export = run(quiet(options));
+        assertEquals(export.maximizer.getReport(), 1, export.maximizer.getAtUpperBound().size());
+        assertTrue(export.summary, export.summary.contains("  at the upper bound: alpha = "));
+        assertTrue(export.summary, export.summary.contains("a gamma shape this large makes the 4 rate categories " +
+                "nearly equal ("));
+        assertTrue(export.summary.contains("refit without gamma rate heterogeneity (one rate category)"));
+    }
+
     public void testInformationCriteria() {
         // logL = -100, k = 5, n = 50
         assertEquals(210.0, dr.stats.InformationCriteria.aic(-100.0, 5), 1E-12);

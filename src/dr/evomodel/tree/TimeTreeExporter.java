@@ -37,6 +37,8 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
@@ -477,6 +479,57 @@ public class TimeTreeExporter {
         return new ArrayList<PartitionTerm>(byName.values());
     }
 
+    /**
+     * A gamma shape at its upper bound: the data show no rate heterogeneity across sites. A large shape makes the
+     * discrete gamma's category rates nearly equal (rate 1 +- z / sqrt(shape)), the same model as one rate category
+     * with more computation; the optimum is at +Inf.
+     */
+    static String gammaShapeAdvice(GammaSiteRateModel gamma) {
+        final double[] rates = gamma.getCategoryRates();
+        double min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < rates.length; ++i) {
+            if (gamma.getProportionForCategory(i) > 0.0 && rates[i] > 0.0) {
+                min = Math.min(min, rates[i]);
+                max = Math.max(max, rates[i]);
+            }
+        }
+        return String.format(Locale.US, "a gamma shape this large makes the %d rate categories nearly equal " +
+                "(%.4f to %.4f), effectively one rate for all sites: the data show no rate heterogeneity across " +
+                "sites; refit without gamma rate heterogeneity (one rate category)", gamma.getCategoryCount(), min,
+                max);
+    }
+
+    // the gamma shapes of the tree data likelihoods' site-rate models, by name
+    private static Map<String, GammaSiteRateModel> gammaShapes(Likelihood term) {
+        Map<String, GammaSiteRateModel> shapes = new LinkedHashMap<String, GammaSiteRateModel>();
+        addGammaShapes(term, shapes);
+        return shapes;
+    }
+
+    private static void addGammaShapes(Likelihood term, Map<String, GammaSiteRateModel> shapes) {
+        if (term instanceof CompoundLikelihood) {
+            for (Likelihood child : ((CompoundLikelihood) term).getLikelihoods()) {
+                addGammaShapes(child, shapes);
+            }
+            return;
+        }
+        if (term instanceof TreeDataLikelihood) {
+            DataLikelihoodDelegate delegate = ((TreeDataLikelihood) term).getDataLikelihoodDelegate();
+            List<SiteRateModel> models = new ArrayList<SiteRateModel>();
+            if (delegate instanceof MultiPartitionDataLikelihoodDelegate) {
+                models.addAll(((MultiPartitionDataLikelihoodDelegate) delegate).getSiteRateModels());
+            } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
+                models.add(((BeagleDataLikelihoodDelegate) delegate).getSiteRateModel());
+            }
+            for (SiteRateModel model : models) {
+                if (model instanceof GammaSiteRateModel && ((GammaSiteRateModel) model).getShapeParameter() != null) {
+                    Parameter shape = ((GammaSiteRateModel) model).getShapeParameter();
+                    shapes.put(shape.getDimensionName(0), (GammaSiteRateModel) model);
+                }
+            }
+        }
+    }
+
     private static void addPartitionTerms(Likelihood term, List<PartitionTerm> terms) {
         if (term instanceof CompoundLikelihood) {
             for (Likelihood child : ((CompoundLikelihood) term).getLikelihoods()) {
@@ -614,8 +667,14 @@ public class TimeTreeExporter {
             for (MaximizerWrtParameter.Held hold : maximizer.getHeld()) {
                 warnings.add("held at the lower bound: " + hold);
             }
+            final Map<String, GammaSiteRateModel> shapes = gammaShapes(likelihood);
             for (MaximizerWrtParameter.Coordinate coordinate : maximizer.getAtUpperBound()) {
-                warnings.add("at the upper bound: " + coordinate + "; the optimum may lie beyond it");
+                GammaSiteRateModel gamma = shapes.get(coordinate.name);
+                if (gamma != null) {
+                    warnings.add("at the upper bound: " + coordinate + ": " + gammaShapeAdvice(gamma));
+                } else {
+                    warnings.add("at the upper bound: " + coordinate + "; the optimum may lie beyond it");
+                }
             }
             if (held > 0) {
                 warnings.add("coordinates held at a bound are counted in k; information criteria and chi-squared " +

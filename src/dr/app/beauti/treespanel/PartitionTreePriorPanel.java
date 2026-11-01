@@ -83,6 +83,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private final JLabel subtreeTaxonSetComboLabel = new JLabel("Taxon set to define subtree:");
     private final JComboBox subtreePriorCombo = new JComboBox();
     private final JLabel subtreePriorComboLabel = new JLabel("Subtree prior model:");
+    private static final String NO_MONOPHYLETIC_TAXON_SETS = "No monophyletic taxon sets defined";
 
 //    private JComboBox calibrationCorrectionCombo = new JComboBox(new CalibrationPoints.CorrectionType[]
 //            {CalibrationPoints.CorrectionType.EXACT, CalibrationPoints.CorrectionType.NONE});
@@ -227,37 +228,18 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 "taxon set. This should be specified as monophyletic.<br>" +
                 "<br>" +
                 "The rest of the tree will be have the prior defined above.</html>");
-        subtreePriorCheckBox.addItemListener(ev -> {
-                    boolean selected = subtreePriorCheckBox.isSelected();
-                    subtreeTaxonSetCombo.setEnabled(selected);
-                    subtreeTaxonSetComboLabel.setEnabled(selected);
-                    subtreePriorCombo.setEnabled(selected);
-                    subtreePriorComboLabel.setEnabled(selected);
-
-                    if (selected &&
-                            subtreeTaxonSetCombo.getSelectedItem() != null &&
-                            !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined") ) {
-                        PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa)subtreeTaxonSetCombo.getSelectedItem());
-                        PartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType)subtreePriorCombo.getSelectedItem());
-                    } else {
-                        PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
-                    }
-                    parent.fireTreePriorsChanged();
-                }
-        );
-
-        subtreeTaxonSetCombo.addItem("No monophyletic taxon sets defined");
-        PanelUtils.setupComponent(subtreeTaxonSetCombo);
         ItemListener listener = ev -> {
-            if (subtreeTaxonSetCombo.getSelectedItem() != null && !subtreeTaxonSetCombo.getSelectedItem().equals("No monophyletic taxon sets defined")) {
-                PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet((Taxa) subtreeTaxonSetCombo.getSelectedItem());
-                PartitionTreePriorPanel.this.partitionTreePrior.setSubtreePrior((TreePriorType) subtreePriorCombo.getSelectedItem());
-            } else {
-                PartitionTreePriorPanel.this.partitionTreePrior.setSubtreeTaxonSet(null);
+            if (settingOptions) {
+                return;
             }
+            updateSubtreePriorControls();
             parent.fireTreePriorsChanged();
         };
 
+        subtreePriorCheckBox.addItemListener(listener);
+
+        subtreeTaxonSetCombo.addItem(NO_MONOPHYLETIC_TAXON_SETS);
+        PanelUtils.setupComponent(subtreeTaxonSetCombo);
         subtreeTaxonSetCombo.addItemListener(listener);
         subtreeTaxonSetCombo.setEnabled(false);
         subtreeTaxonSetComboLabel.setEnabled(false);
@@ -270,6 +252,30 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         subtreePriorComboLabel.setEnabled(false);
 
         setOptions();
+    }
+
+    /**
+     * Enable the subtree prior controls according to the check box and whether a monophyletic
+     * taxon set is available, and push the resulting choice into the model. A subtree prior is only
+     * generated when the check box is selected and a monophyletic taxon set is chosen, so the
+     * prior model drop down is disabled when there is no taxon set to apply it to.
+     */
+    private void updateSubtreePriorControls() {
+        boolean selected = subtreePriorCheckBox.isSelected();
+        Object taxonSetItem = subtreeTaxonSetCombo.getSelectedItem();
+        boolean hasTaxonSet = taxonSetItem instanceof Taxa;
+
+        subtreeTaxonSetCombo.setEnabled(selected);
+        subtreeTaxonSetComboLabel.setEnabled(selected);
+        subtreePriorCombo.setEnabled(selected && hasTaxonSet);
+        subtreePriorComboLabel.setEnabled(selected && hasTaxonSet);
+
+        if (selected && hasTaxonSet) {
+            partitionTreePrior.setSubtreeTaxonSet((Taxa) taxonSetItem);
+            partitionTreePrior.setSubtreePrior((TreePriorType) subtreePriorCombo.getSelectedItem());
+        } else {
+            partitionTreePrior.setSubtreeTaxonSet(null);
+        }
     }
 
     private void setupPanel() {
@@ -482,8 +488,19 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         }
         if (subtreeTaxonSetCombo.getItemCount() == 0) {
-            subtreeTaxonSetCombo.addItem("No monophyletic taxon sets defined");
+            subtreeTaxonSetCombo.addItem(NO_MONOPHYLETIC_TAXON_SETS);
         }
+
+        // restore the subtree prior settings from the model: the taxon set it refers to may
+        // have been removed or had its monophyly constraint lifted since it was chosen
+        if (partitionTreePrior.getSubtreeTaxonSet() != null) {
+            subtreePriorCheckBox.setSelected(true);
+            subtreeTaxonSetCombo.setSelectedItem(partitionTreePrior.getSubtreeTaxonSet());
+        }
+        if (partitionTreePrior.getSubtreePrior() != null) {
+            subtreePriorCombo.setSelectedItem(partitionTreePrior.getSubtreePrior());
+        }
+        updateSubtreePriorControls();
 
         setupPanel();
 

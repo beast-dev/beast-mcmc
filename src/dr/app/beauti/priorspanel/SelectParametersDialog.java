@@ -80,6 +80,9 @@ public class SelectParametersDialog {
 
         dialog.setVisible(true);
 
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
+
         Integer value = (Integer) optionPane.getValue();
         if (value != null && value != -1) {
             result = value;

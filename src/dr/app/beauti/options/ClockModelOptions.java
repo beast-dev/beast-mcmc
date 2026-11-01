@@ -53,7 +53,7 @@ public class ClockModelOptions extends ModelOptions {
     public ClockModelOptions(BeautiOptions options) {
         this.options = options;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -61,7 +61,7 @@ public class ClockModelOptions extends ModelOptions {
      */
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
     }
 

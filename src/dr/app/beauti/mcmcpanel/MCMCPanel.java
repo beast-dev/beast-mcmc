@@ -46,6 +46,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -126,7 +128,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.chainLength = chainLengthField.getValue();
+                options.chainLength = chainLengthField.getValue(options.chainLength);
                 frame.setDirty();
             }
         });
@@ -145,7 +147,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.echoEvery = echoEveryField.getValue();
+                options.echoEvery = echoEveryField.getValue(options.echoEvery);
                 frame.setDirty();
             }
         });
@@ -162,7 +164,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.logEvery = logEveryField.getValue();
+                options.logEvery = logEveryField.getValue(options.logEvery);
                 frame.setDirty();
             }
         });
@@ -179,7 +181,7 @@ public class MCMCPanel extends BeautiPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.checkpointEvery = checkpointEveryField.getValue();
+                options.checkpointEvery = checkpointEveryField.getValue(options.checkpointEvery);
                 frame.setDirty();
             }
         });
@@ -206,8 +208,8 @@ public class MCMCPanel extends BeautiPanel {
 
         optionsPanel.addComponent(addTxtExtension);
         addTxtExtension.setSelected(OSType.isWindows());
-        addTxtExtension.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
+        addTxtExtension.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
                 setOptions(options);
                 frame.setDirty();
             }
@@ -276,8 +278,8 @@ public class MCMCPanel extends BeautiPanel {
 
         optionsPanel.addComponent(samplePriorCheckBox);
         samplePriorCheckBox.setOpaque(false);
-        samplePriorCheckBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent changeEvent) {
+        samplePriorCheckBox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
                 frame.setDirty();
             }
         });
@@ -358,54 +360,19 @@ public class MCMCPanel extends BeautiPanel {
 
 //        JTextArea mleGssInfo = new JTextArea("Select the option below to perform marginal likelihood " +
 //                "estimation (MLE) using generalized stepping-stone sampling (GSS) which " +
-//                "performs an additional analysis after the standard MCMC chain has finished.");
-//        mleGssInfo.setColumns(50);
-//        PanelUtils.setupComponent(mleGssInfo);
-//        optionsPanel.addSpanningComponent(mleGssInfo);
 
 //        //add GSS button
 //        optionsPanel.addComponent(performMLEGSS);
 //        //will be false by default
 //        //options.performMLE = false; ??
-//        optionsPanel.addComponent(buttonMLEGSS);
-//        buttonMLEGSS.setEnabled(false);
-//        performMLEGSS.addActionListener(new java.awt.event.ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                if (performMLEGSS.isSelected()) {
-//                    mleOptions.performMLEGSS = true;
 //                    //set to true because product of exponentials is the default option
-//                    options.logCoalescentEventsStatistic = true;
-//                    buttonMLEGSS.setEnabled(true);
-//                    buttonMLE.setEnabled(false);
-//                    performMLE.setEnabled(false);
-//                    updateMLEFileNameStem();
-//                } else {
-//                    mleOptions.performMLEGSS = false;
-//                    mleOptions.printOperatorAnalysis = false;
-//                    options.logCoalescentEventsStatistic = false;
-//                    buttonMLE.setEnabled(false);
-//                    performMLE.setEnabled(true);
-//                    buttonMLEGSS.setEnabled(false);
-//                }
-//            }
-//        });
-//        buttonMLEGSS.addActionListener(new java.awt.event.ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                updateMLEFileNameStem();
 //
 //                int result = mleGssDialog.showDialog();
 //
-//                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-//                    return;
-//                }
 //
 //            }
 //        });
 
-//        logFileNameField.addKeyListener(listener);
-//        treeFileNameField.addKeyListener(listener);
-        //mapTreeFileNameField.addKeyListener(listener);
-//        substTreeFileNameField.addKeyListener(listener);
 
 //        optionsPanel.setPreferredSize(new java.awt.Dimension(500, 600));
 
@@ -496,25 +463,7 @@ public class MCMCPanel extends BeautiPanel {
     }
 
     private void updateTreeFileNameList() {
-        options.treeFileName.clear();
-        options.substTreeFileName.clear();
-        String treeFileName;
-
-        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-            if (options.substTreeLog) {
-                treeFileName = getTreeFileName(tree.getPrefix() + "(time).");
-            } else {
-                treeFileName = getTreeFileName(tree.getPrefix());
-            }
-            if (addTxtExtension.isSelected()) treeFileName = treeFileName + ".txt";
-            options.treeFileName.add(treeFileName);
-
-            if (options.substTreeLog) {
-                treeFileName = getTreeFileName(tree.getPrefix() + "(subst).");
-                if (addTxtExtension.isSelected()) treeFileName = treeFileName + ".txt";
-                options.substTreeFileName.add(treeFileName);
-            }
-        }
+        options.updateFileNames(addTxtExtension.isSelected());
     }
 
     private String getTreeFileName(String treeName) {
@@ -589,25 +538,14 @@ public class MCMCPanel extends BeautiPanel {
 
     private void setFileNames(BeautiOptions options) {
         if (options.fileNameStem != null) {
-//            fileNameStemField.setText(options.fileNameStem);
+            options.updateFileNames(addTxtExtension.isSelected());
 
-            options.logFileName = options.fileNameStem + ".log";
-            if (addTxtExtension.isSelected()) options.logFileName = options.logFileName + ".txt";
-            if (options.compressLog) options.logFileName = options.logFileName + FileHelpers.ZSTD_EXTENSION;
             logFileNameField.setText(options.logFileName);
             compressLogCheck.setSelected(options.compressLog);
-//            logFileNameField.setText(truncate(options.logFileName));
-//            if (options.mapTreeFileName == null) {
-//			    mapTreeFileNameField.setText(options.fileNameStem + ".MAP.tree");
-//            } else {
-//                mapTreeFileNameField.setText(options.mapTreeFileName);
-//            }
 
-            updateTreeFileNameList();
             treeFileNameField.setText(truncate(displayTreeList(options.treeFileName) + treeFileExtension()));
             compressTreeLogCheck.setSelected(options.compressTreeLog);
 
-            options.checkpointFileName = options.fileNameStem + ".chkpt";
             checkpointFileNameField.setText(truncate(options.checkpointFileName));
 
             if (options.substTreeLog) {
@@ -616,10 +554,6 @@ public class MCMCPanel extends BeautiPanel {
                 substTreeFileNameField.setText("");
             }
 
-            options.operatorAnalysisFileName = options.fileNameStem + ".ops";
-            if (addTxtExtension.isSelected()) {
-                options.operatorAnalysisFileName = options.operatorAnalysisFileName + ".txt";
-            }
             operatorAnalysisFileNameField.setEnabled(options.operatorAnalysis);
             if (options.operatorAnalysis) {
                 operatorAnalysisFileNameField.setText(truncate(options.operatorAnalysisFileName));
@@ -627,9 +561,6 @@ public class MCMCPanel extends BeautiPanel {
                 operatorAnalysisFileNameField.setText("");
             }
 
-//            mapTreeLogCheck.setEnabled(true);
-//            mapTreeLogCheck.setSelected(options.mapTreeLog);
-//            mapTreeFileNameField.setEnabled(options.mapTreeLog);
 
             substTreeLogCheck.setEnabled(true);
             substTreeLogCheck.setSelected(options.substTreeLog);
@@ -641,9 +572,6 @@ public class MCMCPanel extends BeautiPanel {
             logFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".log");
             treeFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".trees");
             checkpointFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".chkpt");
-//            mapTreeLogCheck.setEnabled(false);
-//            mapTreeFileNameField.setEnabled(false);
-//            mapTreeFileNameField.setText("untitled");
             substTreeLogCheck.setSelected(false);
             substTreeFileNameField.setEnabled(false);
             substTreeFileNameField.setText("");
@@ -673,9 +601,6 @@ public class MCMCPanel extends BeautiPanel {
     public void getOptions(BeautiOptions options) {
         // the filenames have already been generated from the file name stem, so we don't need to get them from the text fields
         // the names in these text fields may have been truncated.
-//        options.fileNameStem = fileNameStemField.getText();
-//        options.logFileName = logFileNameField.getText();
-//        options.checkpointFileName = checkpointFileNameField.getText();
 
 //        options.mapTreeLog = mapTreeLogCheck.isSelected();
 //        options.mapTreeFileName = mapTreeFileNameField.getText();

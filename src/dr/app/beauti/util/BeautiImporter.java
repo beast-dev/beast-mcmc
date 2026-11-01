@@ -1,5 +1,5 @@
 /*
- * BEAUTiImporter.java
+ * BeautiImporter.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -59,7 +59,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class BEAUTiImporter {
+public class BeautiImporter {
 
     private static final long MAX_FILE_SIZE = 1024 * 1024 * 128; // 0.1GB
     private final String DEFAULT_NAME = "default";
@@ -69,7 +69,7 @@ public class BEAUTiImporter {
 
     private PartitionNameDialog partitionNameDialog = null;
 
-    public BEAUTiImporter(BeautiFrame frame, BeautiOptions options) {
+    public BeautiImporter(BeautiFrame frame, BeautiOptions options) {
         this.frame = frame;
         this.options = options;
     }
@@ -86,7 +86,11 @@ public class BEAUTiImporter {
         }
 
         try {
-            String line = findFirstLine(file).trim();
+            String firstLine = findFirstLine(file);
+            if (firstLine == null) {
+                throw new ImportException("The file " + file.getName() + " is empty.");
+            }
+            String line = firstLine.trim();
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
@@ -112,16 +116,13 @@ public class BEAUTiImporter {
     }
 
     public String findFirstLine(File file) throws IOException {
-        Reader reader = new FileReader(file);
-
-        BufferedReader bufferedReader = new BufferedReader(reader);
-        String line = bufferedReader.readLine();
-        while (line != null && line.isEmpty()) {
-            line = bufferedReader.readLine();
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
+            String line = bufferedReader.readLine();
+            while (line != null && line.isEmpty()) {
+                line = bufferedReader.readLine();
+            }
+            return line;
         }
-
-        bufferedReader.close();
-        return line;
     }
 
     // xml
@@ -136,6 +137,12 @@ public class BEAUTiImporter {
 
             importer.importBEAST(taxonLists, alignments);
 
+            if (taxonLists.isEmpty()) {
+                throw new ImportException("The BEAST file " + file.getName() + " contains no taxa.");
+            }
+            if (alignments.isEmpty()) {
+                throw new ImportException("The BEAST file " + file.getName() + " contains no alignments.");
+            }
             TaxonList taxa = taxonLists.get(0);
 
             int count = 1;
@@ -348,7 +355,10 @@ public class BEAUTiImporter {
         }
         Taxa taxa = options.taxonList;
 
-        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+        DataTable<String[]> dataTable;
+        try (FileReader reader = new FileReader(file)) {
+            dataTable = DataTable.Text.parse(reader);
+        }
 
         String[] traitNames = dataTable.getColumnLabels();
         String[] taxonNames = dataTable.getRowLabels();
@@ -424,7 +434,10 @@ public class BEAUTiImporter {
 
     public void importTaxaFromTraits(final File file) throws ImportException, IOException {
 
-        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+        DataTable<String[]> dataTable;
+        try (FileReader reader = new FileReader(file)) {
+            dataTable = DataTable.Text.parse(reader);
+        }
 
         String[] taxonNames = dataTable.getRowLabels();
 
@@ -442,9 +455,10 @@ public class BEAUTiImporter {
     }
 
     public void importNewickFile(final File file) throws ImportException, IOException {
-        FileReader reader = new FileReader(file);
-        NewickImporter importer = new NewickImporter(reader);
-        int treeCount = importer.countTrees();
+        int treeCount;
+        try (FileReader reader = new FileReader(file)) {
+            treeCount = new NewickImporter(reader).countTrees();
+        }
 
         boolean importAllTrees = true;
         if (treeCount > 10) {
@@ -460,13 +474,14 @@ public class BEAUTiImporter {
         }
 
         // reset file after counting trees
-        importer = new NewickImporter(new FileReader(file));
-
         List<Tree> trees;
-        if (importAllTrees) {
-            trees = importer.importTrees(options.taxonList);
-        } else {
-            trees = Collections.singletonList(importer.importTree(options.taxonList));
+        try (FileReader reader = new FileReader(file)) {
+            NewickImporter importer = new NewickImporter(reader);
+            if (importAllTrees) {
+                trees = importer.importTrees(options.taxonList);
+            } else {
+                trees = Collections.singletonList(importer.importTree(options.taxonList));
+            }
         }
         setData(file.getName(), trees.get(0), null, null, null, null, null, trees, treeCount, true);
     }
@@ -485,7 +500,10 @@ public class BEAUTiImporter {
         }
         boolean isCSV = extension.toUpperCase().equals("CSV");
 
-        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file), isCSV);
+        DataTable<String[]> dataTable;
+        try (FileReader tableReader = new FileReader(file)) {
+            dataTable = DataTable.Text.parse(tableReader, isCSV);
+        }
 
         String[] stateNamesCol = dataTable.getColumnLabels();
         String[] stateNamesRow = dataTable.getRowLabels();
@@ -644,11 +662,6 @@ public class BEAUTiImporter {
 //                                "Do you want to compress the alignment into site-patterns? This will\n" +
 //                                "take some time and will preclude some analyses but will make the\n" +
 //                                "BEAST XML file size smaller and faster to load.",
-//                        "Importing long sequences", JOptionPane.YES_NO_CANCEL_OPTION);
-//                if (result == JOptionPane.CANCEL_OPTION) {
-//                    return;
-//                }
-//                compressPatterns = result == JOptionPane.YES_OPTION;
                 // for now, if the sequences are long, we just don't do a pattern compression (this just
                 // means the table doesn't show the pattern count. Future options may be to compress
                 // the data to only variable sites and a count of constant sites.
@@ -668,7 +681,7 @@ public class BEAUTiImporter {
         }
 
         for (Taxon taxon : taxonList) {
-            if (taxon.getDate() != null) {
+            if (taxon.getDate() != null && !isPlaceholderDate(taxon.getDate())) {
                 options.useTipDates = true;
             }
             for (Iterator<String> it = taxon.getAttributeNames(); it.hasNext(); ) {
@@ -759,21 +772,36 @@ public class BEAUTiImporter {
 
     private void checkTaxonList(TaxonList taxonList) throws ImportException {
 
-        // check the taxon names for invalid characters
-        boolean foundAmp = false;
+        // check the taxon names for invalid characters: '&' breaks the XML and '"' cannot be
+        // used in a quoted name (BEAST uses double quotes when writing names with spaces or quotes)
+        List<String> badNames = new ArrayList<String>();
         for (Taxon taxon : taxonList) {
             String name = taxon.getId();
-            if (name.indexOf('&') >= 0) {
-                foundAmp = true;
+            if (name.indexOf('&') >= 0 || name.indexOf('"') >= 0) {
+                badNames.add(name);
             }
         }
-        if (foundAmp) {
-            throw new ImportException("One or more taxon names include an illegal character ('&').\n" +
-                    "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
-                    "Please edit the taxon name(s) before reloading the data file.");
+        if (!badNames.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(badNames.size() == 1 ? "A taxon name includes" : badNames.size() + " taxon names include")
+                    .append(" an illegal character ('&' or '\"').\n")
+                    .append("These characters will prevent BEAST from reading the resulting XML file.\n\n")
+                    .append("Please edit the taxon name(s) before reloading the data file:\n");
+            int shown = 0;
+            for (String name : badNames) {
+                if (shown == 10) {
+                    sb.append("    ... and ").append(badNames.size() - shown).append(" more\n");
+                    break;
+                }
+                sb.append("    ").append(name).append("\n");
+                shown++;
+            }
+            throw new ImportException(sb.toString());
         }
 
-        // make sure they all have dates...
+        // Give the taxa without one a date of zero, so that the Tip Dates panel can edit them (its table
+        // leaves a taxon with no date alone). See isPlaceholderDate: such a date does not mean the data
+        // are dated.
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             if (taxonList.getTaxonAttribute(i, "date") == null) {
                 Date origin = new Date(0);
@@ -782,6 +810,15 @@ public class BEAUTiImporter {
                 taxonList.getTaxon(i).setAttribute("date", date);
             }
         }
+    }
+
+    /**
+     * @return true if this is the zero date given to a taxon whose data file had none, rather than a date
+     * the user has provided. A later import of, say, a traits file would otherwise take these for real
+     * dates and turn on tip dates for the whole analysis.
+     */
+    private static boolean isPlaceholderDate(dr.evolution.util.Date date) {
+        return date.getTimeValue() == 0.0 && !date.isBackwards() && date.getUncertainty() == 0.0;
     }
 
     private void addTaxonSets(TaxonList taxonList, List<NexusApplicationImporter.TaxSet> taxSets) throws ImportException {
@@ -886,12 +923,13 @@ public class BEAUTiImporter {
     }
 
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
-        partition.setPartitionSubstitutionModel(psm);
-
-        if (psm.getDataType().getType() != partition.getDataType().getType())
+        if (psm.getDataType().getType() != partition.getDataType().getType()) {
             throw new IllegalArgumentException("Partition " + partition.getName()
                     + "\ncannot assign to Substitution Model\n" + psm.getName()
                     + "\nwith different data type.");
+        }
+
+        partition.setPartitionSubstitutionModel(psm);
     }
 
     private void addTraits(List<TraitData> traits) {

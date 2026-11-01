@@ -40,6 +40,9 @@ import java.util.List;
  */
 public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = -77711183829717523L;
     public MarginalLikelihoodEstimationOptions() {
     }
 

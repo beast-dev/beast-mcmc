@@ -28,7 +28,7 @@
 package dr.app.tools.logcombiner;
 
 import dr.app.beast.BeastVersion;
-import dr.app.tools.NexusExporter;
+import dr.evolution.tree.TreeUtils;
 import dr.app.util.Arguments;
 import dr.app.util.MacDesktopIntegration;
 import dr.app.util.OSType;
@@ -453,11 +453,7 @@ public class LogCombiner {
         writer.println("\tDimensions ntax=" + taxonCount + ";");
         writer.println("\tTaxlabels");
         for (int i = 0; i < taxonCount; i++) {
-            String id = tree.getTaxon(i).getId();
-            if (id.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-                id = "'" + id + "'";
-            }
-            writer.println("\t\t" + id);
+            writer.println("\t\t" + TreeUtils.quoteTaxonName(tree.getTaxon(i).getId()));
         }
         writer.println("\t\t;");
         writer.println("End;");
@@ -470,12 +466,7 @@ public class LogCombiner {
             int k = i + 1;
             Taxon taxon = tree.getTaxon(i);
             taxonMap.put(taxon.getId(), k);
-            String id = taxon.getId();
-            if (id.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-                id = "'" + id + "'";
-            }
-
-            writer.println("\t\t" + k + " " + id + (k < taxonCount ? "," : ""));
+            writer.println("\t\t" + k + " " + TreeUtils.quoteTaxonName(taxon.getId()) + (k < taxonCount ? "," : ""));
         }
         writer.println("\t\t;");
     }

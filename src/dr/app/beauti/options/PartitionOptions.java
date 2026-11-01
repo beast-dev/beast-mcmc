@@ -39,6 +39,9 @@ import dr.evolution.datatype.Nucleotides;
  */
 public abstract class PartitionOptions extends ModelOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 99948194849532711L;
     private String name;
     protected final BeautiOptions options;
 

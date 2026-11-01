@@ -166,15 +166,6 @@ public class TreeModelGenerator extends Generator {
                 new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allInternalNodeHeights"), true);
         writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
-//        int randomLocalClockCount = 0;
-//        int autocorrelatedClockCount = 0;
-//        for (PartitionData pd : model.getDataPartitions()) { // only the PDs linked to this tree model
-//        	PartitionClockModel clockModel = pd.getPartitionClockModel();
-//        	switch (clockModel.getClockType()) {
-//	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
-//	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
-//        	}
-//        }
 //
 //        if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
 //        	//FAIL
@@ -185,66 +176,31 @@ public class TreeModelGenerator extends Generator {
 //    	if (autocorrelatedClockCount == 1) {
 //        if (count[0] == 1) {
 //                writer.writeOpenTag(TreeModelParser.NODE_RATES,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-//                        });
 //                writer.writeTag(ParameterParser.PARAMETER,
 //                        new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.NODE_RATES), true);
 //                writer.writeCloseTag(TreeModelParser.NODE_RATES);
 //
 //                writer.writeOpenTag(TreeModelParser.NODE_RATES,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
-//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
-//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
-//                        });
 //                writer.writeTag(ParameterParser.PARAMETER,
 //                        new Attribute.Default<String>(XMLParser.ID,
-//                                treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
-//                writer.writeCloseTag(TreeModelParser.NODE_RATES);
-////    	} else if (randomLocalClockCount == 1 ) {
-//        } else
 
         //+++++++++++++ removed because random local clock XML is changed ++++++++++++++++
 //        int[] count = validateClockTreeModelCombination(model);
 //        if (count[1] == 1) {
 //            writer.writeOpenTag(TreeModelParser.NODE_RATES,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-//                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-//                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-//                    });
 //            writer.writeTag(ParameterParser.PARAMETER,
 //                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".relativeRates"), true);
 //            writer.writeCloseTag(TreeModelParser.NODE_RATES);
 //
 //            writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-//                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-//                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-//                    });
 //            writer.writeTag(ParameterParser.PARAMETER,
-//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".changes"), true);
-//            writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
-//        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, model, writer);
 
         writer.writeCloseTag(DefaultTreeModel.TREE_MODEL);
 
         writeTreeModelStatistics(model, writer);
-//        if (autocorrelatedClockCount == 1) {
-//        if (count[0] == 1) {
-//            writer.writeText("");
 //            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
-//                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allRates")});
-//            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + TreeModelParser.NODE_RATES);
-//            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE);
-//            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
-//        }
     }
 
     void writeTreeModelStatistics(PartitionTreeModel model, XMLWriter writer) {

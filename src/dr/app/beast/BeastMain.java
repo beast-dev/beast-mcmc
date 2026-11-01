@@ -936,6 +936,10 @@ public class BeastMain {
             dialog.setAllowOverwrite(allowOverwrite);
             dialog.setSeed(seed);
 
+            if (System.getProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY) != null) {
+                dialog.setOutputDirectory(new File(System.getProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY)));
+            }
+
             //dialog.setUseBeagle(useBeagle);
 
             if (BeagleFlag.PROCESSOR_GPU.isSet(beagleFlags)) {
@@ -949,7 +953,9 @@ public class BeastMain {
             }
 
             if (!dialog.showDialog(nameString)) {
-                return;
+                // Quit was pressed or the dialog was closed: the hidden dialog windows would
+                // otherwise keep the application alive after main returns
+                System.exit(0);
             }
 
             if (dialog.allowOverwrite()) {
@@ -979,10 +985,18 @@ public class BeastMain {
             }
             System.setProperty("beagle.scaling", dialog.scalingScheme());
 
+            File outputDirectory = dialog.getOutputDirectory();
+            if (outputDirectory != null) {
+                // the dialog has already checked that the folder exists and is writable
+                System.setProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY, outputDirectory.getPath());
+            } else {
+                System.clearProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY);
+            }
+
             inputFile = dialog.getInputFile();
             if (!beagleShowInfo && inputFile == null) {
                 System.err.println("No input file specified");
-                return;
+                System.exit(1);
             }
 
         }

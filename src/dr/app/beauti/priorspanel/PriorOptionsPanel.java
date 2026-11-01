@@ -163,9 +163,6 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 if (e.getComponent() instanceof RealNumberField) {
                     String number = ((RealNumberField) e.getComponent()).getText();
                     if (!(number.equals("") || number.endsWith("e") || number.endsWith("E") || number.endsWith("-"))) {
-//                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
-//                        setupChart();
-//                        dialog.repaint();
                         for (Listener listener : listeners) {
                             listener.optionsPanelChanged();
                         }
@@ -192,6 +189,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void addListener(Listener listener) {
         listeners.add(listener);
+    }
+
+    void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
 
     void removeAllListeners() {
@@ -343,8 +344,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         if (dist != null && isTruncatable && isBounded) {
             if (isTruncatedCheck.isSelected()) {
-                lower = lowerField.getValue();
-                upper = upperField.getValue();
+                // (an empty or unparseable field leaves the bound as it was)
+                if (lowerField.getValue() != null) lower = lowerField.getValue();
+                if (upperField.getValue() != null) upper = upperField.getValue();
             }
             dist = new TruncatedDistribution(dist, lower, upper);
         }
@@ -383,8 +385,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();
         if (parameter.isTruncated) {
-            parameter.truncationLower = lowerField.getValue();
-            parameter.truncationUpper = upperField.getValue();
+            if (lowerField.getValue() != null) parameter.truncationLower = lowerField.getValue();
+            if (upperField.getValue() != null) parameter.truncationUpper = upperField.getValue();
         }
 
         getArguments(parameter);
@@ -749,24 +751,6 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 //
 //        public TruncatedNormalOptionsPanel() {
 //
-//            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//            addField("Stdev", 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
-//            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//        }
-//
-//        public Distribution getDistribution() {
-//            return new TruncatedNormalDistribution(getValue(0), getValue(1), getValue(2), getValue(3));
-//        }
-//
-//        public void setParameterPrior(Parameter parameter) {
-//            parameter.mean = getValue(0);
-//            parameter.stdev = getValue(1);
-//            parameter.isTruncated = true;
-//            parameter.truncationLower = getValue(2);
-//            parameter.truncationUpper = getValue(3);
-//        }
-//    }
 
     static final PriorOptionsPanel BETA = new PriorOptionsPanel(true) {
 

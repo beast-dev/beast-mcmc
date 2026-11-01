@@ -46,6 +46,9 @@ import java.util.Map;
  */
 public class TipDateSamplingComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 4841188731567472917L;
     private final BeautiOptions options;
 
     public TipDateSamplingComponentOptions(final BeautiOptions options) {

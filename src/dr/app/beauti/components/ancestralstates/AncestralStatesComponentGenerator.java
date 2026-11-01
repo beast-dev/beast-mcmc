@@ -41,6 +41,7 @@ import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.util.Attribute;
+import dr.util.FileHelpers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -423,6 +424,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         if (options.treeFileName.get(0).endsWith(".txt")) {
             treeLogFileName += ".txt";
+        }
+        if (options.compressTreeLog) {
+            treeLogFileName += FileHelpers.ZSTD_EXTENSION;
         }
 
         List<Attribute> attributes = new ArrayList<Attribute>();

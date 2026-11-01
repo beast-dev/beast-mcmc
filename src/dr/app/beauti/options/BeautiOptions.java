@@ -163,11 +163,13 @@ public class BeautiOptions extends ModelOptions {
 
         fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
         logFileName = null;
+        compressLog = false;
         checkpointFileName = null;
         allowOverwriteLog = false;
 //        mapTreeLog = false;
 //        mapTreeFileName = null;
         treeFileName.clear();
+        compressTreeLog = false;
         substTreeLog = false;
         substTreeFileName.clear();
         operatorAnalysis = false;
@@ -1236,6 +1238,7 @@ public class BeautiOptions extends ModelOptions {
 
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
+    public boolean compressLog = false; // adds the .zst extension to logFileName
     public String checkpointFileName = null;
 
     public boolean generateDemographicLogFile = false;
@@ -1246,6 +1249,8 @@ public class BeautiOptions extends ModelOptions {
     // public boolean mapTreeLog = false;
     // public String mapTreeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();
+    // the tree file names do not include the .zst extension; the generators add it when compressTreeLog is set
+    public boolean compressTreeLog = false;
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
     public boolean operatorAnalysis = false;

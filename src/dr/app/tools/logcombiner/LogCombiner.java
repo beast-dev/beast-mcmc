@@ -156,7 +156,7 @@ public class LogCombiner {
                                 stateStep = state;
                             }
 
-                            if (state >= burnin) {
+                            if (burnin <= 0 || state >= burnin) {
                                 if (stateStep > 0) {
                                     if (!renumberOutput) {
                                         stateCount += stateStep;
@@ -230,7 +230,7 @@ public class LogCombiner {
                                 }
 
                                 // if the columnCount is not the same then perhaps the line is corrupt so skip it.
-                                if (state >= burnin) {
+                                if (burnin <= 0 || state >= burnin) {
                                     if (stateStep > 0) {
                                         if (!renumberOutput) {
                                             stateCount += stateStep;
@@ -334,7 +334,7 @@ public class LogCombiner {
                         }
 
                         // if the columnCount is not the same then perhaps the line is corrupt so skip it.
-                        if (state >= burnin && parts.length == columnCount) {
+                        if ((burnin <= 0 || state >= burnin) && parts.length == columnCount) {
                             for (int j = 1; j < parts.length; j++) {
                                 try {
                                     if (!parts[j].startsWith("{")) {

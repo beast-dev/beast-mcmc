@@ -182,6 +182,13 @@ list of changes and bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   trees, and the stochastic Dollo model, whose likelihood took no part in the
   MCMC, has been removed.
 
+- **Hierarchical models follow the analysis.** A hierarchical phylogenetic
+  model built before the analysis was changed used to be written out over
+  parameters that were no longer in it, giving a file BEAST would not read.
+  Such a model now has those parameters dropped, and is removed altogether
+  if fewer than two are left, with the change reported before the file is
+  written.
+
 ## New features in TreeAnnotator
 
 - **Node height distributions for PearTree.** TreeAnnotator can write a

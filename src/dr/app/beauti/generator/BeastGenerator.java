@@ -31,6 +31,7 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -232,6 +233,18 @@ public class BeastGenerator extends Generator {
                         }
                     }
                 }
+            }
+
+            //++++++++++++++++ Hierarchical Models ++++++++++++++++++
+            // a hierarchical model holds its parameters directly, so one built before the analysis was
+            // changed can be left over parameters that are no longer in it; such a model would be written
+            // out referring to parameters that the file does not declare
+            HierarchicalModelComponentOptions hpmOptions = (HierarchicalModelComponentOptions)
+                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
+            String prunedHPMs = hpmOptions.pruneToActiveParameters(options.selectParameters());
+            if (prunedHPMs != null) {
+                throw new GeneratorException(prunedHPMs +
+                        "\n\nCheck the Priors panel, then generate the file again.", BeautiFrame.PRIORS);
             }
 
             //++++++++++++++++ Prior Bounds ++++++++++++++++++

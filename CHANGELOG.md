@@ -387,6 +387,17 @@ set loaded by default (`parsers=development` in `beast.properties`).
   imported tree, and a document that did open had its data types replaced by copies so
   the Partitions and Site Models panels still showed the previous document.
   ([#1283](https://github.com/beast-dev/beast-mcmc/pull/1283))
+- **Fixed hierarchical models surviving a change to the analysis** — a hierarchical
+  phylogenetic model holds its parameters directly, and changing the analysis, such as
+  partitioning into codon positions differently, does not destroy the parameters it
+  replaces, it only stops them being used. A model built beforehand was still written out,
+  so the file referred to parameters that it did not declare and BEAST stopped with
+  "Object with idref=CP1.kappa has not been previously declared". Such a model now has its
+  departed parameters dropped before the file is written, and is removed altogether if
+  fewer than two are left; a parameter still in the analysis that is left without a model
+  is given an ordinary prior, and the user is told what was dropped and taken to the Priors
+  panel. ([#1062](https://github.com/beast-dev/beast-mcmc/issues/1062))
+
 - **Fixed the fixed local clock failing to generate XML** for a taxon set imported from a
   one-column file. ([#1231](https://github.com/beast-dev/beast-mcmc/issues/1231))
 - **Fixed every taxon set being nested as a subtree of the random starting tree**, which

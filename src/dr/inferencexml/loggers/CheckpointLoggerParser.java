@@ -29,7 +29,10 @@ package dr.inferencexml.loggers;
 
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.util.FileHelpers;
+import dr.util.OutputFileHelper;
 import dr.xml.*;
+
+import java.io.File;
 
 /**
  * @author Guy Baele
@@ -47,7 +50,26 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
      * @return an object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        final String fileName = FileHelpers.getFile(xo.getStringAttribute(FILE_NAME)).getAbsolutePath();
+        String fileName = xo.getStringAttribute(FILE_NAME);
+        
+        // If the checkpoint file is a relative path, resolve it to the same directory as log files
+        File checkpointFile;
+        if (!new File(fileName).isAbsolute()) {
+            // Get the output directory (typically where log files are written)
+            File outputDir = OutputFileHelper.getOutputDirectory();
+            if (outputDir != null) {
+                // Use the output directory for the checkpoint file
+                checkpointFile = new File(outputDir, new File(fileName).getName());
+            } else {
+                // Fall back to default resolution
+                checkpointFile = FileHelpers.getFile(fileName);
+            }
+        } else {
+            // Use absolute path as-is
+            checkpointFile = new File(fileName);
+        }
+        
+        final String absolutePath = checkpointFile.getAbsolutePath();
 
         final int checkpointEvery = xo.getIntegerAttribute(CHECKPOINT_EVERY);
 
@@ -55,7 +77,7 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
 
         final boolean overwrite = xo.getBooleanAttribute(ALLOW_OVERWRITE_LOG);
 
-        return BeastCheckpointer.getInstance(fileName, checkpointEvery, checkpointFinal, overwrite);
+        return BeastCheckpointer.getInstance(absolutePath, checkpointEvery, checkpointFinal, overwrite);
     }
 
     //************************************************************************

@@ -451,7 +451,15 @@ public class XMLParser {
             }
         }
 
-        return FileHelpers.getFile(fileName, fileNamePrefix);
+        File resolvedFile = FileHelpers.getFile(fileName, fileNamePrefix);
+        
+        // Store the output directory for use by checkpoint and other output files
+        File parentDir = resolvedFile.getParentFile();
+        if (parentDir != null) {
+            OutputFileHelper.setOutputDirectory(parentDir);
+        }
+        
+        return resolvedFile;
     }
 
     /**

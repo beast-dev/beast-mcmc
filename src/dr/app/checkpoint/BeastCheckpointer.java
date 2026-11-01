@@ -364,7 +364,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                     //replace Newick format by printing general graph structure
                     //out.println(((TreeModel) model).getNewick());
 
-                    out.println("#node height taxon");
+                    //internal nodes give the name of the height parameter they hold, if the tree model moves these
+                    out.println("#node height taxon/height-parameter");
                     int nodeCount = ((TreeModel) model).getNodeCount();
                     out.println(nodeCount);
                     for (int i = 0; i < nodeCount; i++) {
@@ -374,6 +375,12 @@ public class BeastCheckpointer implements StateLoaderSaver {
                         if (((TreeModel) model).isExternal(((TreeModel) model).getNode(i))) {
                             out.print("\t");
                             out.print(((TreeModel) model).getNodeTaxon(((TreeModel) model).getNode(i)).getId());
+                        } else {
+                            String heightParameterName = ((TreeModel) model).getNodeHeightParameterName(((TreeModel) model).getNode(i));
+                            if (heightParameterName != null) {
+                                out.print("\t");
+                                out.print(heightParameterName);
+                            }
                         }
                         out.println();
                     }
@@ -737,6 +744,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
                             int nodeCount = Integer.parseInt(fields[0]);
                             double[] nodeHeights = new double[nodeCount];
                             String[] taxaNames = new String[(nodeCount + 1) / 2];
+                            String[] heightParameterNames = new String[nodeCount];
+                            boolean hasHeightParameterNames = true;
 
                             for (int i = 0; i < nodeCount; i++) {
                                 line = in.readLine();
@@ -744,7 +753,15 @@ public class BeastCheckpointer implements StateLoaderSaver {
                                 nodeHeights[i] = parser.parseDouble(fields[1]);
                                 if (i < taxaNames.length) {
                                     taxaNames[i] = fields[2];
+                                } else if (fields.length > 2) {
+                                    heightParameterNames[i] = fields[2];
+                                } else {
+                                    //older checkpoint files do not give the height parameter of internal nodes
+                                    hasHeightParameterNames = false;
                                 }
+                            }
+                            if (!hasHeightParameterNames) {
+                                heightParameterNames = null;
                             }
 
                             //on to reading edge information
@@ -800,7 +817,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
                             //adopt the loaded tree structure
                             ((TreeModel) model).beginTreeEdit();
-                            ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames);
+                            ((TreeModel) model).adoptTreeStructure(parents, nodeHeights, childOrder, taxaNames, heightParameterNames);
                             if (traitModels.size() > 0) {
                                 System.out.println("adopting " + traitModels.size() + " trait models to treeModel " + ((TreeModel) model).getId());
                                 ((TreeModel) model).adoptTraitData(parents, traitModels, traitValues, taxaNames);

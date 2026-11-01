@@ -1,9 +1,8 @@
 # BEAST X v10.6.0 Release Notes
 
-BEAST X v10.6.0 adds new substitution and coalescent models, faster MCMC on
-large trees, an output directory option, and many improvements to BEAUti,
-including the fixed local clock and new prior specifications for discrete
-trait models. A full list of changes and
+BEAST X v10.6.0 adds new substitution, clock, coalescent and trait models,
+the structured coalescent in BEAUti, faster MCMC on large trees, an output
+directory option, and many improvements to BEAUti and TreeAnnotator. A full list of changes and
 bug fixes is in [CHANGELOG.md](CHANGELOG.md).
 
 ## New models
@@ -22,11 +21,14 @@ bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   for many short trees or where the population size itself is not of
   interest.
 
-- **BASTA structured coalescent improvements.** BASTA can now provide
-  adjoint (reverse-mode) gradients of the migration rates, including through
-  BSSVS indicator variables, which allows the rates to be sampled with
-  Hamiltonian Monte Carlo. It also supports trees with travel-history
-  (ancestral trait) nodes.
+- **Structured coalescent (BASTA).** A discrete trait can now be analysed
+  with the backward-in-time structured coalescent model of De Maio et al. in
+  BEAUti, with symmetric or asymmetric migration, BSSVS, and population
+  sizes estimated for each deme or shared. In BEAST, BASTA gains ancestral
+  state reconstruction, Markov jump and reward counting, BEAGLE acceleration,
+  multi-threaded CPU evaluation, gradients of the migration rates (including
+  through BSSVS indicators) for Hamiltonian Monte Carlo, and support for
+  trees with travel-history (ancestral trait) nodes.
 
 - **Geodesic Hamiltonian Monte Carlo.** The
   `geodesicHamiltonianMonteCarloOperator` samples parameters that live on a
@@ -39,6 +41,49 @@ bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   model can be replaced with the more diffuse specification of Gao, May,
   Rannala and Moore (2023, *PNAS* 120:e2213913120), including a new
   "Exponential with estimated mean" prior on the overall rate scalar.
+
+- **FreeRate model of among-site rate variation.** Site rate heterogeneity
+  can be modelled with a set of freely estimated rate categories and weights
+  instead of a discretised gamma distribution, optionally with a proportion
+  of invariant sites, with dedicated operators and checkpointing.
+
+- **Gaussian process coalescent models.** A nonparametric coalescent model
+  in which the log population size trajectory is a Gaussian process, with a
+  choice of kernels (squared exponential, Matern, linear and neural-network
+  kernels), basis approximations for speed, multiple loci, and gradients for
+  Hamiltonian Monte Carlo on both the trajectory and the kernel
+  hyperparameters.
+
+- **New clock models.** A Gaussian process branch rate model in which rates
+  vary smoothly through time, a grid-based branch rate model with a rate
+  per time interval, log-linear and piecewise log-linear branch rate models,
+  and time-varying rates defined by B-splines, all with gradients for HMC.
+
+- **Strongly lumpable CTMC models.** Discrete trait states can be aggregated
+  into lumped states with the lumpability constraints imposed on the rate
+  matrix, with gradients for HMC and a generator that writes the lumped
+  model's XML.
+
+- **Time-varying uncertain tip states.** The probabilities of a tip's
+  character states can change through time, for sequence or trait data
+  whose observation process varies by sampling date.
+
+- **Taxon effects in continuous trait models.** A continuous trait diffusion
+  model can include taxon-specific (and signed, tree-specific) effects, with
+  a statistic for the proportion of variance they explain, and banded sparse
+  diffusion matrices allow very high-dimensional traits.
+
+- **Finite mixture parameters.** A finite mixture model assigns the elements
+  of a parameter, such as the population sizes of a skyline model, to a small
+  number of estimated clusters.
+
+- **Recombination height bound statistic.** A statistic giving the height of
+  the most recent common ancestor of one or more putative recombinants and
+  their parents, for bounding recombination times.
+
+- **New distributions and transforms.** A Cauchy distribution with gradients,
+  and location-scale, exponential, unit-simplex-to-reals and composed
+  multivariate transforms for use with transformed parameters and HMC.
 
 ## New features in BEAST
 
@@ -70,6 +115,21 @@ bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   numbered by taxon name rather than by their position in the random
   starting tree, so note that a run started with the same seed as under an
   earlier version will follow a different trajectory.
+
+- **Checkpointing improvements.** Adaptive multivariate normal operators and
+  the FreeRate model save their state in checkpoints, and runs using an
+  empirical tree distribution can be checkpointed and resumed.
+
+- **Empirical tree distributions and reference priors.** The CTMC scale
+  reference prior can be applied over several trees with a fixed proportion,
+  and empirical tree distributions work with the fast coalescent intervals.
+
+- **BEAGLE tensor cores.** The `-beagle_tensor_core` option asks BEAGLE to
+  use the tensor cores of a GPU when they are available.
+
+- **Tree move logging.** The tree operators record the size of each proposed
+  move and whether it changed the topology, which can be written to the
+  operator log alongside the acceptance statistics.
 
 - **Launch dialog.** The BEAGLE options are shown only when the BEAGLE
   library is found; otherwise the dialog explains that BEAGLE is required and
@@ -140,6 +200,16 @@ bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   posterior of 0 for those clades, keeping the target-tree height, rather
   than failing.
 
+- **Clade credibility reporting.** TreeAnnotator reports the number of
+  clades above the credibility threshold, the median clade credibility of
+  the sampled trees, and the clade credibility statistics of a user-supplied
+  target tree.
+
+- **Command line.** Every option has a short single-dash form (for example
+  `-t hipstr`, `-nh ca`), the help lists both forms, and the annotated tree
+  is written as a bare NEXUS tree by default with `-nexusHeader` adding the
+  full taxon block.
+
 ## Other improvements
 
 - **Double-quoted taxon names.** Taxon names that need quoting in tree and
@@ -159,6 +229,14 @@ bug fixes is in [CHANGELOG.md](CHANGELOG.md).
 - **Platform changes.** Stopping a run no longer relies on the removed
   `Thread.stop`, the Linux release includes the BEASTGen shell scripts, and
   the Windows launcher configuration has been updated.
+
+- **Packaging.** The macOS and Windows releases are built with `jpackage`,
+  the applications are named "BEAST X", and the macOS packages are signed
+  and notarised.
+
+- **Command line tools.** TreeStateTimeSummarizer reports more summaries of
+  the time spent in each state along a tree, and eigendecompositions can use
+  the Eigen3 or EJML libraries.
 
 - **Citations.** The HIPSTR citation has been updated to the final published
   paper.

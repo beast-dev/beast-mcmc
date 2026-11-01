@@ -147,6 +147,7 @@ public class LogCombiner {
 
             long samplesRead = 0;
             long samplesKept = 0;
+            long samplesUnparsed = 0;
 
             if (resample > 0) {
                 System.out.print(", resampling with frequency: " + resample);
@@ -383,6 +384,8 @@ public class LogCombiner {
                                     }
                                 } catch (NumberFormatException nfe) {
                                     skip = true;
+                                    samplesRead--;
+                                    samplesUnparsed++;
                                     break;
                                 }
                             }
@@ -456,7 +459,7 @@ public class LogCombiner {
 
             firstFile = false;
 
-            reportFile(inputFileNames[i], fileBurnin, samplesRead, samplesKept, resample, treeFiles);
+            reportFile(inputFileNames[i], fileBurnin, samplesRead, samplesKept, samplesUnparsed, resample, treeFiles);
         }
 
         if (treeFiles) {
@@ -569,14 +572,22 @@ public class LogCombiner {
      * Prints how many samples were read from a file and how many were written, warning when the burn-in
      * removed nothing or everything, which is usually a sign that it was given in the wrong units.
      */
-    private static void reportFile(String fileName, Burnin burnin, long samplesRead, long samplesKept, long resample, boolean treeFiles) {
+    private static void reportFile(String fileName, Burnin burnin, long samplesRead, long samplesKept, long samplesUnparsed,
+                                   long resample, boolean treeFiles) {
         String unit = treeFiles ? "trees" : "samples";
-        System.out.println("  " + samplesRead + " " + unit + " read, " + samplesKept + " written");
+        System.out.println("  " + samplesRead + " " + unit + " read, " + samplesKept + " written" +
+                (samplesUnparsed > 0 ? ", " + samplesUnparsed + " skipped" : ""));
 
-        if (samplesRead == 0) {
+        if (samplesUnparsed > 0) {
+            System.out.println("  WARNING: " + samplesUnparsed + " line(s) of '" + fileName +
+                    "' were skipped because a column could not be read as a number - the file may be truncated or" +
+                    " contain a column that is not numeric");
+        }
+
+        if (samplesRead == 0 && samplesUnparsed == 0) {
             System.out.println("  WARNING: no " + unit + " were found in '" + fileName + "'" +
                     (treeFiles ? " - the trees must be in BEAST's 'tree STATE_<n> ... = ...' format" : ""));
-        } else if (samplesKept == 0) {
+        } else if (samplesRead > 0 && samplesKept == 0) {
             System.out.println("  WARNING: the burnin removed every " + (treeFiles ? "tree" : "sample") + " in '" + fileName + "'");
         } else if (burnin.value > 0 && burnin.type == BurninType.STATES && resample < 0) {
             long removed = samplesRead - samplesKept;

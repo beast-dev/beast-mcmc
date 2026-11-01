@@ -583,10 +583,18 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         String prefix = partitionData.getName() + ".";
 
+        // The gamma (and Cauchy) RRW place the gamma on a branch scalar of the precision: the branch
+        // rates are reciprocals of these scalars, which gives a Student-t (Cauchy for half DF = 0.5)
+        // displacement. The lognormal is closed under reciprocation, so it keeps scaling the variance.
+        ContinuousSubstModelType substModelType = partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType();
+        boolean reciprocal = substModelType == ContinuousSubstModelType.CAUCHY_RRW ||
+                substModelType == ContinuousSubstModelType.GAMMA_RRW;
+
         writer.writeOpenTag("arbitraryBranchRates",
                 new Attribute[]{
                         new Attribute.Default<String>("id",
                                 prefix + "diffusion.branchRates"),
+                        new Attribute.Default<Boolean>("reciprocal", reciprocal)
                 });
 
         writer.writeIDref("treeModel", treeModelId);

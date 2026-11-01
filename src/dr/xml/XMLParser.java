@@ -423,23 +423,29 @@ public class XMLParser {
 
 
     /**
-     * Get filename and path from BEAST XML object
+     * Get an input file's name and path from a BEAST XML object.
+     * Relative names are resolved against the working directory (or the directory of the
+     * XML file for names starting with "./").
      *
      * @param xo
      * @return
      */
     private static File getFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
         String fileName = xo.getStringAttribute(attributeName);
+        return FileHelpers.getFile(fileName, getFileNamePrefix());
+    }
 
-        // Check to see if a filename prefix has been specified, check it doesn't contain directory
-        // separator characters and then prefix it.
-        final String fileNamePrefix = System.getProperty("file.name.prefix");
-        final String fileSeparator = System.getProperty("file.separator");
-        if (fileNamePrefix != null) {
-            if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
-                throw new XMLParseException("The specified file name prefix is illegal.");
-            }
-        }
+    /**
+     * Get an output file's name and path from a BEAST XML object.
+     * Relative names are placed in the output directory requested with the -output command line
+     * option when there is one; otherwise they are resolved like input files. The directory of
+     * the first output file is remembered so that checkpoint files can follow the log files.
+     *
+     * @param xo
+     * @return
+     */
+    private static File getOutputFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
+        String fileName = xo.getStringAttribute(attributeName);
 
         final String fileRankPostfix = System.getProperty("mpi.rank.postfix");
         if (fileRankPostfix != null) {
@@ -451,15 +457,30 @@ public class XMLParser {
             }
         }
 
-        File resolvedFile = FileHelpers.getFile(fileName, fileNamePrefix);
-        
-        // Store the output directory for use by checkpoint and other output files
+        File resolvedFile = OutputFileHelper.resolveOutputFile(fileName, getFileNamePrefix(),
+                OutputFileHelper.getExplicitOutputDirectory());
+
         File parentDir = resolvedFile.getParentFile();
         if (parentDir != null) {
-            OutputFileHelper.setOutputDirectory(parentDir);
+            OutputFileHelper.setDefaultOutputDirectory(parentDir);
         }
-        
+
         return resolvedFile;
+    }
+
+    /**
+     * @return the file name prefix given with the -prefix command line option, or null
+     * @throws XMLParseException if the prefix is empty or contains a directory separator
+     */
+    private static String getFileNamePrefix() throws XMLParseException {
+        final String fileNamePrefix = System.getProperty("file.name.prefix");
+        final String fileSeparator = System.getProperty("file.separator");
+        if (fileNamePrefix != null) {
+            if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
+                throw new XMLParseException("The specified file name prefix is illegal.");
+            }
+        }
+        return fileNamePrefix;
     }
 
     /**
@@ -492,7 +513,7 @@ public class XMLParser {
     }
 
     public static File getLogFile(XMLObject xo, String attributeName) throws XMLParseException {
-        final File logFile = getFileHandle(xo, attributeName);
+        final File logFile = getOutputFileHandle(xo, attributeName);
         boolean allowOverwrite = false;
 
         if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
@@ -505,7 +526,7 @@ public class XMLParser {
         }
 
         if (logFile.exists() && !allowOverwrite) {
-            throw new XMLParseException("\nThe log file " + logFile.getName() + " already exists in the working directory." +
+            throw new XMLParseException("\nThe log file " + logFile.getAbsolutePath() + " already exists." +
                     "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
                     "\nBEAST or select the option in the Run Options dialog box as appropriate.");
         }

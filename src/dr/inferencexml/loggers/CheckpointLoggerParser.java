@@ -50,25 +50,12 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
      * @return an object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        String fileName = xo.getStringAttribute(FILE_NAME);
-        
-        // If the checkpoint file is a relative path, resolve it to the same directory as log files
-        File checkpointFile;
-        if (!new File(fileName).isAbsolute()) {
-            // Get the output directory (typically where log files are written)
-            File outputDir = OutputFileHelper.getOutputDirectory();
-            if (outputDir != null) {
-                // Use the output directory for the checkpoint file
-                checkpointFile = new File(outputDir, new File(fileName).getName());
-            } else {
-                // Fall back to default resolution
-                checkpointFile = FileHelpers.getFile(fileName);
-            }
-        } else {
-            // Use absolute path as-is
-            checkpointFile = new File(fileName);
-        }
-        
+        final String fileName = xo.getStringAttribute(FILE_NAME);
+
+        // A relative checkpoint file name is placed in the output directory: the one given with
+        // the -output command line option if any, otherwise the directory of the log files.
+        final File checkpointFile = OutputFileHelper.resolveOutputFile(fileName, null,
+                OutputFileHelper.getOutputDirectory());
         final String absolutePath = checkpointFile.getAbsolutePath();
 
         final int checkpointEvery = xo.getIntegerAttribute(CHECKPOINT_EVERY);

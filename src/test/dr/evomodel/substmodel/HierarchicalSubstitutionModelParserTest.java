@@ -94,7 +94,7 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
     private static final String RATES =
             "    <ratesParameter><parameter id=\"hrate.rates\" value=\"0.5825242718446603 0.8737864077669906 0.9708737864077672\"/></ratesParameter>\n";
     private static final String SCALED_RATES =
-            "    <ratesParameter normalised=\"true\"><parameter id=\"hrate.rates\" value=\"2.155339805825243 3.2330097087378652 3.592233009708739\"/></ratesParameter>\n";
+            "    <ratesParameter><parameter id=\"hrate.rates\" value=\"2.155339805825243 3.2330097087378652 3.592233009708739\"/></ratesParameter>\n";
 
     private static String model(String tree, String rates) {
         return "  <hierarchicalSubstitutionModel id=\"hrate\">\n" + FREQUENCIES + tree + rates + "  </hierarchicalSubstitutionModel>\n";
@@ -366,10 +366,12 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         }
     }
 
-    public void testEqualRatesNotNormalised() throws Exception {
-        Map<String, XMLObject> store = parse(hrate("", FREQUENCIES + "    <equalRates normalised=\"false\"/>\n"));
-        HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
-        assertEquals(1.0, model.getBeagleModelLambdas()[3], 0.0);
+    public void testNormalisedIsNotAnOption() throws Exception {
+        for (String body : new String[]{"    <equalRates normalised=\"false\"/>\n",
+                "    <ratesParameter normalised=\"false\"><parameter value=\"1 1 1\"/></ratesParameter>\n"}) {
+            String message = parseFailure(hrate(" characterTreeNewick=\"((A,G),(C,T));\"", FREQUENCIES + body));
+            assertTrue(message, message.contains("no longer takes 'normalised'"));
+        }
     }
 
     public void testEqualRatesErrors() throws Exception {

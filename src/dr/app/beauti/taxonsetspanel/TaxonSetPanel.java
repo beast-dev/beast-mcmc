@@ -833,6 +833,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             taxa.setId(name);
             options.taxonSets.add(taxa);
             options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+            options.taxonSetsMono.put(taxa, false);
+            options.taxonSetsIncludeStem.put(taxa, false);
+            options.taxonSetsHeights.put(taxa, 0.0);
         } else {
             // assume column one is the taxon labels and column two is the set names
             String[] taxonSetNames = dataTable.getColumn(0);

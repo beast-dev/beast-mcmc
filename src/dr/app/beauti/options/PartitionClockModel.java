@@ -344,7 +344,7 @@ public class PartitionClockModel extends PartitionOptions {
                 case FIXED_LOCAL_CLOCK:
                     params.add(getClockRateParameter());
                     for (Taxa taxonSet : options.taxonSets) {
-                        if (options.taxonSetsMono.get(taxonSet)) {
+                        if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                             String parameterName = taxonSet.getId() + ".rate";
                             if (!hasParameter(parameterName)) {
                                 new Parameter.Builder(parameterName, "substitution rate")
@@ -368,7 +368,7 @@ public class PartitionClockModel extends PartitionOptions {
                     params.add(getParameter(BranchSpecificFixedEffectsParser.INTERCEPT));
                     int coeff = 1;
                     for (Taxa taxonSet : options.taxonSets) {
-                        if (options.taxonSetsMono.get(taxonSet)) {
+                        if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                             String parameterName = BranchSpecificFixedEffectsParser.COEFFICIENT + coeff;
                             if (!hasParameter(parameterName)) {
                                 new Parameter.Builder(parameterName, "fixed effect " + coeff + " (fixed prior)")
@@ -630,7 +630,7 @@ public class PartitionClockModel extends PartitionOptions {
                     case FIXED_LOCAL_CLOCK:
                         ops.add(rateOperator);
                         for (Taxa taxonSet : options.taxonSets) {
-                            if (options.taxonSetsMono.get(taxonSet)) {
+                            if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                                 ops.add(getOperator(taxonSet.getId() + ".rate"));
                             }
                         }
@@ -643,7 +643,7 @@ public class PartitionClockModel extends PartitionOptions {
                         ops.add(getOperator("RANDOMWALK_INTERCEPT_ME_CLOCK"));
                         int coeff = 1;
                         for (Taxa taxonSet : options.taxonSets) {
-                            if (options.taxonSetsMono.get(taxonSet)) {
+                            if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                                 ops.add(getOperator("RANDOMWALK_COEFFICIENT_" + coeff +  "_ME_CLOCK"));
                                 coeff++;
                             }

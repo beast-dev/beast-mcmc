@@ -366,7 +366,7 @@ public class ParameterPriorGenerator extends Generator {
                         writer.writeIDref("taxa", treeModel.getTaxaId());
                         writer.writeOpenTag("exclude");
                         for (Taxa taxonSet : options.taxonSets) {
-                            if (options.taxonSetsMono.get(taxonSet)) {
+                            if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                                 writer.writeIDref("taxa", taxonSet.getId());
                             }
                         }

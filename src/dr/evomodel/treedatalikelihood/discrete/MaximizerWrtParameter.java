@@ -570,6 +570,9 @@ public class MaximizerWrtParameter implements Reportable {
      * transform (node-height ratios, the stick-breaking simplex) it belongs to the block, not to the element of the
      * same name.
      */
+    // the share of a bounded transform's interval below its upper end that counts as at the upper bound
+    private static final double UPPER_BOUND_MARGIN = 0.01;
+
     public static final class Coordinate {
         public final String name;
         public final double value; // natural scale
@@ -578,9 +581,10 @@ public class MaximizerWrtParameter implements Reportable {
         public final boolean free; // false for the stick-breaking simplex's last coordinate, which is always 0
         public final boolean held; // at its lower bound (holdAtLowerBound)
         public final double gradient; // dlogDensity/d(transformed), before held coordinates are masked
+        public final double upperBound; // the upper end of a bounded logit transform's interval; NaN for none
 
         Coordinate(String name, double value, double transformed, String transform, boolean free, boolean held,
-                   double gradient) {
+                   double gradient, double lowerBound, double upperBound) {
             this.name = name;
             this.value = value;
             this.transformed = transformed;
@@ -588,13 +592,27 @@ public class MaximizerWrtParameter implements Reportable {
             this.free = free;
             this.held = held;
             this.gradient = gradient;
+            this.upperBound = upperBound;
+            this.atUpperBound = !Double.isNaN(upperBound) &&
+                    value >= upperBound - UPPER_BOUND_MARGIN * (upperBound - lowerBound);
         }
 
         /**
-         * @return optimized, held_at_bound or dependent
+         * At the upper bound of its transform's interval (within 1% of the interval): the optimum may lie beyond it
+         * (the gamma shape of data without rate heterogeneity, whose optimum is +Inf).
+         */
+        public final boolean atUpperBound;
+
+        /**
+         * @return optimized, held_at_bound, at_upper_bound or dependent
          */
         public String getStatus() {
-            return held ? "held_at_bound" : (free ? "optimized" : "dependent");
+            return held ? "held_at_bound" : atUpperBound ? "at_upper_bound" : (free ? "optimized" : "dependent");
+        }
+
+        @Override
+        public String toString() {
+            return name + " = " + value + (atUpperBound ? " (upper bound " + upperBound + ")" : "");
         }
     }
 
@@ -613,13 +631,30 @@ public class MaximizerWrtParameter implements Reportable {
         final String[] transforms = new String[minimumPoint.length];
         final boolean[] free = new boolean[minimumPoint.length];
         Arrays.fill(free, true);
-        describeTransform(transform, 0, minimumPoint.length, transforms, free);
+        final double[] lowers = new double[minimumPoint.length];
+        final double[] uppers = new double[minimumPoint.length];
+        Arrays.fill(lowers, Double.NaN);
+        Arrays.fill(uppers, Double.NaN);
+        describeTransform(transform, 0, minimumPoint.length, transforms, free, lowers, uppers);
         final double[] grad = heldGradient != null ? heldGradient : minimumGradient;
         for (int i = 0; i < minimumPoint.length; ++i) {
             coordinates.add(new Coordinate(parameter.getDimensionName(i), values[i], minimumPoint[i], transforms[i],
-                    free[i], heldCoordinates != null && heldCoordinates[i], -grad[i]));
+                    free[i], heldCoordinates != null && heldCoordinates[i], -grad[i], lowers[i], uppers[i]));
         }
         return coordinates;
+    }
+
+    /**
+     * @return the coordinates of the latest run's optimum at the upper bound of their transform's interval
+     */
+    public List<Coordinate> getAtUpperBound() {
+        List<Coordinate> at = new ArrayList<Coordinate>();
+        for (Coordinate coordinate : getOptimum()) {
+            if (coordinate.atUpperBound) {
+                at.add(coordinate);
+            }
+        }
+        return at;
     }
 
     /**
@@ -635,28 +670,34 @@ public class MaximizerWrtParameter implements Reportable {
         return k;
     }
 
-    // the name of the transform acting on each coordinate in [from, to)
-    private static void describeTransform(Transform transform, int from, int to, String[] names, boolean[] free) {
+    // the name of the transform acting on each coordinate in [from, to), and the interval of a bounded logit
+    private static void describeTransform(Transform transform, int from, int to, String[] names, boolean[] free,
+                                          double[] lowers, double[] uppers) {
         if (transform == null) {
             Arrays.fill(names, from, to, "none");
         } else if (transform instanceof Transform.MultivariateArray) {
             int start = from;
             for (Transform.MultivariableTransform part : ((Transform.MultivariateArray) transform).getTransforms()) {
                 int end = Math.min(to, start + part.getDimension());
-                describeTransform(part, start, end, names, free);
+                describeTransform(part, start, end, names, free, lowers, uppers);
                 start = end;
             }
         } else if (transform instanceof Transform.Collection) {
             for (Transform.ParsedTransform segment : ((Transform.Collection) transform).getSegments()) {
                 describeTransform(segment.transform, from + segment.start, Math.min(to, from + segment.end), names,
-                        free);
+                        free, lowers, uppers);
             }
         } else if (transform instanceof Transform.Array) {
             for (int i = from; i < to; ++i) {
-                describeTransform(((Transform.Array) transform).getTransform(i - from), i, i + 1, names, free);
+                describeTransform(((Transform.Array) transform).getTransform(i - from), i, i + 1, names, free,
+                        lowers, uppers);
             }
         } else {
             Arrays.fill(names, from, to, transform.getTransformName());
+            if (transform instanceof Transform.ScaledLogitTransform) {
+                Arrays.fill(lowers, from, to, ((Transform.ScaledLogitTransform) transform).getLower());
+                Arrays.fill(uppers, from, to, ((Transform.ScaledLogitTransform) transform).getUpper());
+            }
             if (transform instanceof UnitSimplexToRealsTransform && to > from) {
                 free[to - 1] = false;
             }
@@ -983,6 +1024,12 @@ public class MaximizerWrtParameter implements Reportable {
                         + held);
             }
         }
+        if (!quiet) {
+            for (Coordinate coordinate : getAtUpperBound()) {
+                LOGGER.info("WARNING: maximizeWrtParameter: at the upper bound: " + coordinate +
+                        "; the optimum may lie beyond it");
+            }
+        }
     }
 
     private void recordBest(double[] point, double value) {
@@ -1204,6 +1251,9 @@ public class MaximizerWrtParameter implements Reportable {
                 for (Held held : getHeld()) {
                     sb.append("HeldAtLowerBound: ").append(held).append("\n");
                 }
+            }
+            for (Coordinate coordinate : getAtUpperBound()) {
+                sb.append("AtUpperBound: ").append(coordinate).append("\n");
             }
             sb.append("ValueCalls: ").append(valueCalls).append("\n");
             sb.append("GradientCalls: ").append(gradientCalls).append("\n");

@@ -614,6 +614,9 @@ public class TimeTreeExporter {
             for (MaximizerWrtParameter.Held hold : maximizer.getHeld()) {
                 warnings.add("held at the lower bound: " + hold);
             }
+            for (MaximizerWrtParameter.Coordinate coordinate : maximizer.getAtUpperBound()) {
+                warnings.add("at the upper bound: " + coordinate + "; the optimum may lie beyond it");
+            }
             if (held > 0) {
                 warnings.add("coordinates held at a bound are counted in k; information criteria and chi-squared " +
                         "references assume an interior optimum");

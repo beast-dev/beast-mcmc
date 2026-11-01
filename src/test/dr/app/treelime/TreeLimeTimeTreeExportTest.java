@@ -252,6 +252,28 @@ public class TreeLimeTimeTreeExportTest extends TestCase {
         assertTrue(export.summary.contains("k includes 1 coordinate(s) held at a bound"));
     }
 
+    // a coordinate that ends at its upper bound (kappa, whose MLE is above 1, bounded at 1): a warning in the summary
+    // and the at_upper_bound status in params.tsv
+    public void testUpperBoundWarning() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData(TreeLimeHarness.TWO_PARTITIONS);
+        if (options == null) {
+            return;
+        }
+        options.maximizationOptions.objective = MaximizationOptions.Objective.ML;
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getName().equals("kappa")) {
+                parameter.setInitial(0.5);
+                options.maximizationOptions.setUpperBound(parameter, 1.0);
+            }
+        }
+        Export export = run(quiet(options));
+        assertEquals(export.maximizer.getReport(), 1, export.maximizer.getAtUpperBound().size());
+        assertTrue(export.summary, export.summary.contains("  at the upper bound: kappa = "));
+        assertTrue(export.summary.contains("(upper bound 1.0); the optimum may lie beyond it"));
+        String params = new String(Files.readAllBytes(export.file(".params.tsv").toPath()));
+        assertTrue(params, params.contains("\tat_upper_bound\t"));
+    }
+
     public void testInformationCriteria() {
         // logL = -100, k = 5, n = 50
         assertEquals(210.0, dr.stats.InformationCriteria.aic(-100.0, 5), 1E-12);

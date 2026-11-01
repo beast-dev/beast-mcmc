@@ -264,12 +264,13 @@ public class MaximizationPanel extends TreeLimePanel {
                 return value == null || value.toString().isEmpty() ? null : value.toString();
             }
         };
-        int[] widths = {60, 150, 200, 260, 90, 330};
+        int[] widths = {60, 150, 200, 260, 90, 90, 330};
         for (int column = 0; column < widths.length; column++) {
             table.getColumnModel().getColumn(column).setPreferredWidth(widths[column]);
         }
         table.getColumnModel().getColumn(0).setMaxWidth(70);
         table.getColumnModel().getColumn(4).setMinWidth(90);
+        table.getColumnModel().getColumn(5).setMinWidth(90);
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setOpaque(false);
 
@@ -426,7 +427,7 @@ public class MaximizationPanel extends TreeLimePanel {
     private class ParameterTableModel extends AbstractTableModel {
 
         private final String[] columnNames = {"Optimize", "Parameter", "Description", "Transform", "Lower bound",
-                "Likelihood gradient"};
+                "Upper bound", "Likelihood gradient"};
         private List<Parameter> parameters = new ArrayList<Parameter>();
 
         void setParameters(List<Parameter> parameters) {
@@ -462,7 +463,12 @@ public class MaximizationPanel extends TreeLimePanel {
                     return parameter.isNodeHeight && !parameter.isStatistic ?
                             "internal node heights and the root" : parameter.getDescription();
                 case 3:
-                    return treatment.isOptimized() ? treatment.getTransform() : "held fixed: " + treatment.getReason();
+                    if (!treatment.isOptimized()) {
+                        return "held fixed: " + treatment.getReason();
+                    }
+                    Double upper = maximization().getAppliedUpperBound(parameter);
+                    return upper != null ? Treatment.LOGIT.getTransform() + " of (0, " + upper + ")" :
+                            treatment.getTransform();
                 case 4:
                     if (!hasLowerBound(treatment)) {
                         return "";
@@ -470,6 +476,12 @@ public class MaximizationPanel extends TreeLimePanel {
                     Double bound = maximization().getLowerBound(parameter);
                     return bound != null ? bound.toString() : "";
                 case 5:
+                    if (treatment != Treatment.LOG) {
+                        return "";
+                    }
+                    Double upperBound = maximization().getUpperBound(parameter);
+                    return upperBound != null ? upperBound.toString() : "";
+                case 6:
                     if (!treatment.isOptimized()) {
                         return "";
                     }
@@ -490,6 +502,10 @@ public class MaximizationPanel extends TreeLimePanel {
             if (column == 4) {
                 return hasLowerBound(maximization().classify(parameters.get(row), false));
             }
+            // an upper bound turns the log transform into the logit of (0, bound)
+            if (column == 5) {
+                return maximization().classify(parameters.get(row), false) == Treatment.LOG;
+            }
             return column == 0 && maximization().classify(parameters.get(row), true).isOptimized();
         }
 
@@ -499,10 +515,19 @@ public class MaximizationPanel extends TreeLimePanel {
         }
 
         public void setValueAt(Object value, int row, int column) {
-            if (column == 4) {
+            if (column == 4 || column == 5) {
                 String text = ((String) value).trim();
                 try {
-                    maximization().setLowerBound(parameters.get(row), text.isEmpty() ? null : Double.parseDouble(text));
+                    Double bound = text.isEmpty() ? null : Double.parseDouble(text);
+                    if (column == 4) {
+                        maximization().setLowerBound(parameters.get(row), bound);
+                    } else {
+                        if (bound != null && !(bound > 0.0 && bound < Double.POSITIVE_INFINITY)) {
+                            Toolkit.getDefaultToolkit().beep();
+                            return;
+                        }
+                        maximization().setUpperBound(parameters.get(row), bound);
+                    }
                 } catch (NumberFormatException e) {
                     Toolkit.getDefaultToolkit().beep();
                     return;

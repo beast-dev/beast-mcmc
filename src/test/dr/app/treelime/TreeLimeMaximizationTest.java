@@ -127,10 +127,39 @@ public class TreeLimeMaximizationTest extends TestCase {
         // the gamma shape's default lower bound
         assertTrue(xml.contains("<holdAtLowerBound value=\"0.05\">\n\t\t\t<parameter idref=\"alpha\"/>"));
 
+        // and its default upper bound: the logit of (0, 1000) in place of the log transform
+        assertTrue(xml, xml.contains("<transform type=\"logit\" lower=\"0.0\" upper=\"1000.0\">\n" +
+                "\t\t\t\t\t<parameter idref=\"alpha\"/>"));
+
         Run run = run(xml);
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertGradientChecked(run);
+        final double shape = run.parameter("alpha").getParameterValue(0);
+        assertTrue(run.maximizer.getAtUpperBound().isEmpty());
+
+        // an upper bound below that optimum: the shape ends at it, with a warning; a start above the bound is refused
+        dr.app.treelime.options.Parameter alpha = null;
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getBaseName().equals("alpha")) {
+                alpha = parameter;
+            }
+        }
+        options.maximizationOptions.setUpperBound(alpha, shape / 2.0);
+        try {
+            TreeLimeHarness.generate(options);
+            fail("an initial value above the upper bound");
+        } catch (Exception e) {
+            assertTrue(e.toString(), String.valueOf(e.getMessage()).contains("upper bound") ||
+                    String.valueOf(e.getCause()).contains("upper bound"));
+        }
+        alpha.setInitial(shape / 4.0);
+        Run bounded = run(TreeLimeHarness.generate(options));
+        assertEquals(1, bounded.maximizer.getAtUpperBound().size());
+        assertEquals("at_upper_bound", bounded.maximizer.getAtUpperBound().get(0).getStatus());
+        assertEquals(shape / 2.0, bounded.parameter("alpha").getParameterValue(0), 0.01 * shape / 2.0);
+        assertTrue(bounded.maximizer.getReport(), bounded.maximizer.getReport().contains("AtUpperBound: alpha = "));
+        assertTrue(bounded.end < run.end);
 
         // a blank bound writes none
         for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
@@ -139,6 +168,12 @@ public class TreeLimeMaximizationTest extends TestCase {
             }
         }
         assertFalse(TreeLimeHarness.generate(options).contains("<holdAtLowerBound"));
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getBaseName().equals("alpha")) {
+                options.maximizationOptions.setUpperBound(parameter, null);
+            }
+        }
+        assertFalse(TreeLimeHarness.generate(options).contains("type=\"logit\" lower="));
     }
 
     // a monophyletic taxon set that plain UPGMA splits: the UPGMA start is built with the set as a constraint

@@ -119,6 +119,8 @@ public class MaximizationOptions implements Serializable {
     public int bootstrapThreads = 0;
     // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
     private Map<String, Double> lowerBounds = new HashMap<String, Double>();
+    // ids of parameters with an upper bound other than the default; a null value for none. Null in older files
+    private Map<String, Double> upperBounds = new HashMap<String, Double>();
     // the topology search (plan 7); null in files saved before the setting existed
     private TopologySearchOptions topologySearch = new TopologySearchOptions();
 
@@ -127,6 +129,14 @@ public class MaximizationOptions implements Serializable {
      * to a model of invariant sites); the maximizer holds it here instead.
      */
     public static final double GAMMA_SHAPE_LOWER_BOUND = 0.05;
+
+    /**
+     * The gamma shape's default upper bound: without rate heterogeneity in the data its optimum lies at +Inf, which a
+     * fit from a poor tree chases until the discrete gamma's quantiles fail (7E13 in plan 7's H3 runs). At 1000 the
+     * four category rates are within 4% of 1. The maximizer optimizes a parameter with an upper bound on the logit
+     * scale of (0, bound), which the XML states.
+     */
+    public static final double GAMMA_SHAPE_UPPER_BOUND = 1000.0;
 
     // null in files saved before the setting existed
     public GradientMode getGradientMode() {
@@ -164,6 +174,38 @@ public class MaximizationOptions implements Serializable {
             lowerBounds = new HashMap<String, Double>();
         }
         lowerBounds.put(parameter.getName(), bound);
+    }
+
+    /**
+     * @return the upper bound of a positive parameter (one with the log transform), which the maximizer then optimizes
+     * on the logit scale of (0, bound); null for none
+     */
+    public Double getUpperBound(Parameter parameter) {
+        if (upperBounds != null && upperBounds.containsKey(parameter.getName())) {
+            return upperBounds.get(parameter.getName());
+        }
+        return getDefaultUpperBound(parameter);
+    }
+
+    public static Double getDefaultUpperBound(Parameter parameter) {
+        return parameter.getBaseName().equals("alpha") ? GAMMA_SHAPE_UPPER_BOUND : null;
+    }
+
+    /**
+     * @param bound null for none
+     */
+    public void setUpperBound(Parameter parameter, Double bound) {
+        if (upperBounds == null) {
+            upperBounds = new HashMap<String, Double>();
+        }
+        upperBounds.put(parameter.getName(), bound);
+    }
+
+    /**
+     * @return the upper bound the maximizer applies: only to a parameter with the log transform, null otherwise
+     */
+    public Double getAppliedUpperBound(Parameter parameter) {
+        return classify(parameter, false) == Treatment.LOG ? getUpperBound(parameter) : null;
     }
 
     public TopologySearchOptions getTopologySearch() {

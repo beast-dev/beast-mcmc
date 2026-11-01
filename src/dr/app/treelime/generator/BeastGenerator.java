@@ -827,6 +827,14 @@ public class BeastGenerator extends Generator {
         }
 
         List<Parameter> parameters = maximization.selectOptimized(options.selectParameters());
+        for (Parameter parameter : parameters) {
+            Double upper = maximization.getAppliedUpperBound(parameter);
+            if (upper != null && !(parameter.getInitial() > 0.0 && parameter.getInitial() < upper)) {
+                throw new GeneratorException("The initial value of " + parameter.getName() + " (" +
+                        parameter.getInitial() + ") must lie between 0 and its upper bound in the Maximization tab (" +
+                        upper + ").");
+            }
+        }
         Map<Parameter, GradientRegistry.LikelihoodTerm> terms = new LinkedHashMap<Parameter, GradientRegistry.LikelihoodTerm>();
         if (maximization.isAnalytic()) {
             for (Parameter parameter : parameters) {
@@ -1380,10 +1388,25 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag("compoundTransform");
         int start = 0;
         while (start < parameters.size()) {
+            Double upper = maximization.getAppliedUpperBound(parameters.get(start));
+            int end = start;
+            if (upper != null) {
+                // a positive parameter with an upper bound (the gamma shape): the logit of (0, upper), its own element
+                writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{
+                        new Attribute.Default<String>(TransformParsers.TYPE,
+                                MaximizationOptions.Treatment.LOGIT.getTransform()),
+                        new Attribute.Default<Double>("lower", 0.0),
+                        new Attribute.Default<Double>("upper", upper)});
+                writer.writeIDref(ParameterParser.PARAMETER, parameters.get(end).getName());
+                end++;
+                writer.writeCloseTag(TransformParsers.TRANSFORM);
+                start = end;
+                continue;
+            }
             String type = maximization.classify(parameters.get(start), false).getTransform();
             writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute.Default<String>(TransformParsers.TYPE, type));
-            int end = start;
-            while (end < parameters.size() && maximization.classify(parameters.get(end), false).getTransform().equals(type)) {
+            while (end < parameters.size() && maximization.getAppliedUpperBound(parameters.get(end)) == null &&
+                    maximization.classify(parameters.get(end), false).getTransform().equals(type)) {
                 writer.writeIDref(ParameterParser.PARAMETER, parameters.get(end).getName());
                 end++;
             }

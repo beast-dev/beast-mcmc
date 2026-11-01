@@ -40,6 +40,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.util.Version;
+import dr.util.FileHelpers;
 import jam.console.ConsoleApplication;
 
 import javax.swing.*;
@@ -85,7 +86,7 @@ public class LogCombiner {
 
         System.out.println();
 
-        PrintWriter writer = new PrintWriter(new FileOutputStream(outputFileName));
+        PrintWriter writer = FileHelpers.getPrintWriter(new File(outputFileName));
 
         boolean firstFile = true;
         boolean firstTree = true;
@@ -133,7 +134,7 @@ public class LogCombiner {
             if (treeFiles) {
 
                 if (processTrees) { // then we need to read each tree and write it.
-                    TreeImporter importer = new NexusImporter(new FileReader(inputFile), stripAnnotations);
+                    TreeImporter importer = new NexusImporter(FileHelpers.getReader(inputFile), stripAnnotations);
                     try {
                         while (importer.hasTree()) {
                             Tree tree = importer.importNextTree();
@@ -201,7 +202,7 @@ public class LogCombiner {
                         return;
                     }
                 } else {
-                    BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+                    BufferedReader reader = FileHelpers.getReader(inputFile);
 
                     String line = reader.readLine();
 
@@ -285,7 +286,7 @@ public class LogCombiner {
 
 
             } else {
-                BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+                BufferedReader reader = FileHelpers.getReader(inputFile);
                 //int lineCount = 1;
                 String line = reader.readLine();
 

@@ -502,10 +502,13 @@ public class XMLParser {
             File logFile = getLogFile(xo, attributeName);
 
             try {
-                return new PrintWriter(new FileOutputStream(logFile));
+                // compressed with Zstandard if the file name ends in ".zst"
+                return FileHelpers.getPrintWriter(logFile);
             } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + logFile.getAbsolutePath() +
                         "' can not be opened for " + parserName + " element.");
+            } catch (IOException ioe) {
+                throw new XMLParseException(ioe.getMessage());
             }
 
         }

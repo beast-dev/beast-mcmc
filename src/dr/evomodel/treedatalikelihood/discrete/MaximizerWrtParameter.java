@@ -1068,13 +1068,19 @@ public class MaximizerWrtParameter implements Reportable {
         return transform != null ? transform.inverse(point, 0, point.length) : point.clone();
     }
 
+    // below the bound by more than a transform's round trip: the scaled logit maps a start at a bound of 0.05 to
+    // 0.049999999999999954, which held the gamma shape at once in every run and never let it move off
+    private static boolean below(double value, double bound) {
+        return value < bound - 1E-12 * Math.max(1.0, Math.abs(bound));
+    }
+
     // whether an element not yet held lies below its bound at the transformed point
     private boolean belowBound(double[] point) {
         final double[] values = untransformed(point);
         for (LowerBoundHold hold : settings.lowerBoundHolds) {
             for (int j = 0; j < hold.parameter.getDimension(); ++j) {
                 int index = hold.offset + j;
-                if (!heldCoordinates[index] && values[index] < hold.bound) {
+                if (!heldCoordinates[index] && below(values[index], hold.bound)) {
                     return true;
                 }
             }
@@ -1093,7 +1099,7 @@ public class MaximizerWrtParameter implements Reportable {
         for (LowerBoundHold hold : settings.lowerBoundHolds) {
             for (int j = 0; j < hold.parameter.getDimension(); ++j) {
                 int index = hold.offset + j;
-                if (!heldCoordinates[index] && values[index] < hold.bound) {
+                if (!heldCoordinates[index] && below(values[index], hold.bound)) {
                     values[index] = hold.bound;
                     newlyHeld.add(index);
                 }

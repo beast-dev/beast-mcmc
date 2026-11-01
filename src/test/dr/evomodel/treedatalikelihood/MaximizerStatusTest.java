@@ -248,6 +248,18 @@ public class MaximizerStatusTest extends TestCase {
         }
     }
 
+    // a start exactly at the bound, under the scaled logit of (0, 1000) whose round trip puts it just below: not held,
+    // so it moves up to the mode
+    public void testStartAtTheLowerBound() {
+        Parameter x = new Parameter.Default(new double[]{0.05});
+        MaximizerWrtParameter maximizer = maximizer(x, new Transform.ScaledLogitTransform(1000.0, 0.0), SCALE,
+                settings(0).addLowerBoundHold(x, 0.05));
+        maximizer.maximize();
+        assertEquals(Reason.CONVERGED, maximizer.getReason());
+        assertTrue(maximizer.getHeld().isEmpty());
+        assertEquals(MODE, x.getParameterValue(0), 1E-5);
+    }
+
     public void testWarnings() {
         Parameter x = new Parameter.Default(new double[]{0.4});
         x.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
@@ -272,6 +284,12 @@ public class MaximizerStatusTest extends TestCase {
 
     private MaximizerWrtParameter maximizer(Parameter x, boolean logTransform, double scale,
                                             MaximizerWrtParameter.Settings settings) {
+        return maximizer(x, logTransform ? new Transform.Array(Transform.LOG, x.getDimension(), null) : null, scale,
+                settings);
+    }
+
+    private MaximizerWrtParameter maximizer(Parameter x, Transform transform, double scale,
+                                            MaximizerWrtParameter.Settings settings) {
         GammaDistribution gamma = new GammaDistribution(SHAPE, scale);
         DistributionLikelihood likelihood = new DistributionLikelihood(gamma) {
             @Override
@@ -291,7 +309,6 @@ public class MaximizerStatusTest extends TestCase {
                 return wrapped.getGradientLogDensity();
             }
         };
-        Transform transform = logTransform ? new Transform.Array(Transform.LOG, x.getDimension(), null) : null;
         return new MaximizerWrtParameter(likelihood, x, gradient, transform, settings);
     }
 }

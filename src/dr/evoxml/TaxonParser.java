@@ -47,13 +47,14 @@ public class TaxonParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        if (dr.xml.XMLParser.ID.contains("\'") && dr.xml.XMLParser.ID.contains("\"")) {
-            // unable to handle taxon names that contain both single and double quotes
-            // as it won't be possible to wrap it in either.
-            throw new XMLParseException("Illegal taxon name, " + dr.xml.XMLParser.ID + ", - contains both single and double quotes");
+        String id = xo.getStringAttribute(dr.xml.XMLParser.ID);
+        if (id.indexOf('"') >= 0) {
+            // taxon names are written to tree files delimited by double quotes so
+            // a name containing one cannot be represented
+            throw new XMLParseException("Illegal taxon name, " + id + ", - contains a double quote character (\")");
         }
 
-        Taxon taxon = new Taxon(xo.getStringAttribute(dr.xml.XMLParser.ID));
+        Taxon taxon = new Taxon(id);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);

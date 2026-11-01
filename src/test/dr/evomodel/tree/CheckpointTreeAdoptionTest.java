@@ -32,6 +32,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.FastTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.Parameter;
@@ -50,21 +51,24 @@ import static org.junit.Assert.*;
  */
 public class CheckpointTreeAdoptionTest {
 
-    private static DefaultTreeModel tree(String newick) throws Exception {
-        return new DefaultTreeModel("treeModel", new NewickImporter(new StringReader(newick)).importTree(null));
+    private static TreeModel tree(String newick, boolean fast) throws Exception {
+        Tree start = new NewickImporter(new StringReader(newick)).importTree(null);
+        return fast ? new FastTreeModel("treeModel", start, false, false) : new DefaultTreeModel("treeModel", start);
     }
 
     @Test
     public void tipsAreNumberedByTaxonNameWhateverTheTopology() throws Exception {
-        DefaultTreeModel tree1 = tree("((a:1,b:1):1,(c:1,d:1):1);");
-        DefaultTreeModel tree2 = tree("((d:1,a:1):1,(b:1,c:1):1);");
-        DefaultTreeModel tree3 = tree("(d:3,(c:2,(b:1,a:1):1):1);");
+        for (boolean fast : new boolean[]{false, true}) {
+            TreeModel tree1 = tree("((a:1,b:1):1,(c:1,d:1):1);", fast);
+            TreeModel tree2 = tree("((d:1,a:1):1,(b:1,c:1):1);", fast);
+            TreeModel tree3 = tree("(d:3,(c:2,(b:1,a:1):1):1);", fast);
 
-        String[] expected = {"a", "b", "c", "d"};
-        for (DefaultTreeModel tree : new DefaultTreeModel[]{tree1, tree2, tree3}) {
-            for (int i = 0; i < expected.length; i++) {
-                assertEquals(expected[i], tree.getNodeTaxon(tree.getExternalNode(i)).getId());
-                assertEquals(i, tree.getExternalNode(i).getNumber());
+            String[] expected = {"a", "b", "c", "d"};
+            for (TreeModel tree : new TreeModel[]{tree1, tree2, tree3}) {
+                for (int i = 0; i < expected.length; i++) {
+                    assertEquals(expected[i], tree.getNodeTaxon(tree.getExternalNode(i)).getId());
+                    assertEquals(i, tree.getExternalNode(i).getNumber());
+                }
             }
         }
     }
@@ -73,7 +77,7 @@ public class CheckpointTreeAdoptionTest {
      * Moves the root of the tree so that it is no longer the last node: ((a,b),(c,d)) becomes (a,(b,(c,d)))
      * with the old root's node now inside the tree.
      */
-    private static void moveRoot(DefaultTreeModel tree) {
+    private static void moveRoot(TreeModel tree) {
         NodeRef root = tree.getRoot();
         NodeRef u = tree.getChild(root, 0);        // (a,b)
         NodeRef a = tree.getChild(u, 0);
@@ -93,8 +97,17 @@ public class CheckpointTreeAdoptionTest {
 
     @Test
     public void adoptedTreeAndTraitsMatchTheSavedRunWhenTheRootHasMoved() throws Exception {
+        adoptedTreeAndTraitsMatchTheSavedRun(false);
+    }
+
+    @Test
+    public void adoptedTreeAndTraitsMatchTheSavedRunWhenTheRootHasMovedFastTreeModel() throws Exception {
+        adoptedTreeAndTraitsMatchTheSavedRun(true);
+    }
+
+    private void adoptedTreeAndTraitsMatchTheSavedRun(boolean fast) throws Exception {
         // the run that writes the checkpoint: its root is not the last node any more
-        DefaultTreeModel saved = tree("((a:1,b:1):1,(c:1,d:1):1);");
+        TreeModel saved = tree("((a:1,b:1):1,(c:1,d:1):1);", fast);
         moveRoot(saved);
         assertTrue("the test needs a root that is not the last node",
                 saved.getRoot().getNumber() != saved.getNodeCount() - 1);
@@ -133,7 +146,7 @@ public class CheckpointTreeAdoptionTest {
         }
 
         // the resumed run: a different (random) starting tree and the same model structure
-        DefaultTreeModel resumed = tree("(d:3,(c:2,(b:1,a:1):1):1);");
+        TreeModel resumed = tree("(d:3,(c:2,(b:1,a:1):1):1);", fast);
         Parameter resumedCategories = new Parameter.Default("categories", resumed.getNodeCount() - 1, 0.0);
         TreeParameterModel resumedModel = new TreeParameterModel(resumed, resumedCategories, false);
 

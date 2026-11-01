@@ -574,7 +574,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 for (int row = 0; row < dim; ++row) {
                     for (int col = 0; col < dim; ++col) {
 
-                        hess3 += delta.unsafe_get(row, 0)
+                        hess3 += 0.5 * delta.unsafe_get(row, 0)
                                 * secondQuadraticComponent.unsafe_get(row, col)
                                 * delta.unsafe_get(col, 0);
                     }

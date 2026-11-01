@@ -29,7 +29,10 @@ package dr.inferencexml.loggers;
 
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.util.FileHelpers;
+import dr.util.OutputFileHelper;
 import dr.xml.*;
+
+import java.io.File;
 
 /**
  * @author Guy Baele
@@ -47,7 +50,13 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
      * @return an object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        final String fileName = FileHelpers.getFile(xo.getStringAttribute(FILE_NAME)).getAbsolutePath();
+        final String fileName = xo.getStringAttribute(FILE_NAME);
+
+        // A relative checkpoint file name is placed in the output directory: the one given with
+        // the -output command line option if any, otherwise the directory of the log files.
+        final File checkpointFile = OutputFileHelper.resolveOutputFile(fileName, null,
+                OutputFileHelper.getOutputDirectory());
+        final String absolutePath = checkpointFile.getAbsolutePath();
 
         final int checkpointEvery = xo.getIntegerAttribute(CHECKPOINT_EVERY);
 
@@ -55,7 +64,7 @@ public class CheckpointLoggerParser extends AbstractXMLObjectParser {
 
         final boolean overwrite = xo.getBooleanAttribute(ALLOW_OVERWRITE_LOG);
 
-        return BeastCheckpointer.getInstance(fileName, checkpointEvery, checkpointFinal, overwrite);
+        return BeastCheckpointer.getInstance(absolutePath, checkpointEvery, checkpointFinal, overwrite);
     }
 
     //************************************************************************

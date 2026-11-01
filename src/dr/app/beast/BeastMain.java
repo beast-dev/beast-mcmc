@@ -158,7 +158,8 @@ public class BeastMain {
                     citationFileName = fileNamePrefix + fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
                 }
 
-                FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
+                FileOutputStream citationStream = new FileOutputStream(OutputFileHelper.resolveOutputFile(
+                        citationFileName, null, OutputFileHelper.getExplicitOutputDirectory()));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
                 citationLogger.addHandler(citationHandler);
@@ -355,6 +356,19 @@ public class BeastMain {
 
     }
 
+    /**
+     * Place a relative output file name (or file name stem) given on the command line in the
+     * directory requested with the -output option. Absolute names and names given without
+     * -output are returned unchanged.
+     */
+    private static String resolveOutputPath(String fileName) {
+        File outputDirectory = OutputFileHelper.getExplicitOutputDirectory();
+        if (outputDirectory == null || new File(fileName).isAbsolute()) {
+            return fileName;
+        }
+        return new File(outputDirectory, fileName).getPath();
+    }
+
     public static void printUsage(Arguments arguments) {
 
         arguments.printUsage("beast", "[<input-file-name>]");
@@ -387,6 +401,7 @@ public class BeastMain {
                         new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "s", "Specify a random number generator seed"),
                         new Arguments.StringOption("prefix","p",  "PREFIX", "Specify a prefix for all output log filenames"),
+                        new Arguments.StringOption("output", "out", "DIRECTORY", "Specify an existing directory where output files should be written"),
                         new Arguments.Option("overwrite", "ow", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "e", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "nt", "The maximum number of computational threads to use (default auto)"),
@@ -555,6 +570,19 @@ public class BeastMain {
 
             if (arguments.hasOption("prefix")) {
                 fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            if (arguments.hasOption("output")) {
+                File outputDirectory = new File(arguments.getStringOption("output")).getAbsoluteFile();
+                try {
+                    OutputFileHelper.validateOutputDirectory(outputDirectory);
+                } catch (IOException ioe) {
+                    System.err.println(ioe.getMessage());
+                    System.err.println();
+                    printUsage(arguments);
+                    System.exit(1);
+                }
+                System.setProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY, outputDirectory.getPath());
             }
 
             // ============= Evaluation approximations =============
@@ -786,12 +814,12 @@ public class BeastMain {
 
             if (arguments.hasOption("save_state")) {
                 String stateFile = arguments.getStringOption("save_state");
-                System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, stateFile);
+                System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, resolveOutputPath(stateFile));
             }
 
             if (arguments.hasOption("save_stem")) {
                 String stemName = arguments.getStringOption("save_stem");
-                System.setProperty(BeastCheckpointer.SAVE_STEM, stemName);
+                System.setProperty(BeastCheckpointer.SAVE_STEM, resolveOutputPath(stemName));
             }
 
             if (arguments.hasOption("full_checkpoint_precision")) {

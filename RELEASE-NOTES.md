@@ -1,8 +1,9 @@
 # BEAST X v10.6.0 Release Notes
 
 BEAST X v10.6.0 adds new substitution and coalescent models, faster MCMC on
-large trees, an output directory option, and many improvements to BEAUti, including the fixed local clock and new
-prior specifications for discrete trait models. A full list of changes and
+large trees, an output directory option, and many improvements to BEAUti,
+including the fixed local clock and new prior specifications for discrete
+trait models. A full list of changes and
 bug fixes is in [CHANGELOG.md](CHANGELOG.md).
 
 ## New models

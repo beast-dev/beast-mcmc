@@ -1,8 +1,7 @@
 # BEAST X v10.6.0 Release Notes
 
-BEAST X v10.6.0 adds new substitution and coalescent models, a faster tree
-model and coalescent calculations, an output directory option, and a large
-number of improvements to BEAUti, including the fixed local clock and new
+BEAST X v10.6.0 adds new substitution and coalescent models, faster MCMC on
+large trees, an output directory option, and many improvements to BEAUti, including the fixed local clock and new
 prior specifications for discrete trait models. A full list of changes and
 bug fixes is in [CHANGELOG.md](CHANGELOG.md).
 
@@ -49,16 +48,10 @@ bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   before the run starts. A checkpoint file named in the XML is written next
   to the log files rather than in the working directory.
 
-- **Fast tree model.** `<treeModel implementation="fast">` stores the tree in
-  flat arrays with copy-on-write storing and restoring. It produces exactly
-  the same MCMC output as the default tree model but at a lower cost per step
-  on large trees. Node rates and node traits are not supported by it.
-
-- **Faster coalescent calculations.** Coalescent interval times are now
-  maintained incrementally rather than resorted from scratch at every
-  evaluation, and the CTMC scale reference prior updates its tree length
-  incrementally. Both make a noticeable difference on trees with thousands of
-  tips.
+- **Speed improvements.** A new tree model implementation
+  (`<treeModel implementation="fast">`) and incremental coalescent
+  calculations make each MCMC step cheaper on large trees, with identical
+  results to earlier versions.
 
 - **Operator logging.** The operators element can be logged to provide
   information about operator performance during a run. If the operator log
@@ -130,11 +123,13 @@ bug fixes is in [CHANGELOG.md](CHANGELOG.md).
 
 ## New features in TreeAnnotator
 
+- **Node height distributions for PearTree.** TreeAnnotator can write a
+  kernel density estimate (KDE) of the posterior distribution of each node's
+  height into the annotated tree, so that the full distribution, rather than
+  only an HPD interval, can be visualised in PearTree.
+
 - **Multiple HPD intervals.** Several HPD levels can be annotated at once,
   for example `--hpd 0.95,0.90,0.5`.
-
-- **Height distribution curves.** A kernel density estimate of the
-  distribution of node heights can be written for visualisation in PearTree.
 
 - **Common ancestor heights.** Clade MRCA heights can be calculated with the
   CA method of Heled and Bouckaert (2013) to avoid negative branch lengths.

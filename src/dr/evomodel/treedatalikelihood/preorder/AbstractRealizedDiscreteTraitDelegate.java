@@ -176,12 +176,23 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
             CoalescentIntervalTraversal traversal = likelihood.getTraversalDelegate();
             traversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
+            Map<Integer, Integer> nodeToBufferMap = new HashMap<>();
+
+            if (traversal.isSlabMetadataRecording()) {
+                for (int n = 0; n < tree.getNodeCount(); ++n) {
+                    int buffer = traversal.bufferForNode(n);
+                    if (buffer >= 0) {
+                        nodeToBufferMap.put(n, buffer);
+                    }
+                }
+                return nodeToBufferMap;
+            }
+
             List<ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation> originalOps = traversal.getBranchIntervalOperations();
 
             int maxNumCoalescentIntervals = likelihoodDelegate.getMaxNumberOfCoalescentIntervals();
 
             ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation.initializeMap(tree, maxNumCoalescentIntervals);
-            Map<Integer, Integer> nodeToBufferMap = new HashMap<>();
             for (ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation originalOp : originalOps) {
                 int input1NodeNumber = originalOp.inputBuffer1 % tree.getNodeCount();
                 int input2NodeNumber = originalOp.inputBuffer2 % tree.getNodeCount();

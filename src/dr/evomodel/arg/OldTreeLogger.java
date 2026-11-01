@@ -122,7 +122,7 @@ public class OldTreeLogger extends MCLogger {
             logLine("\tDimensions ntax=" + taxonCount + ";");
             logLine("\tTaxlabels");
             for (int i = 0; i < taxonCount; i++) {
-                logLine("\t\t" + tree.getTaxon(i).getId());
+                logLine("\t\t" + TreeUtils.quoteTaxonName(tree.getTaxon(i).getId()));
             }
             logLine("\t\t;");
             logLine("End;");
@@ -135,9 +135,9 @@ public class OldTreeLogger extends MCLogger {
                 for (int i = 0; i < taxonCount; i++) {
                     int k = i + 1;
                     if (k < taxonCount) {
-                        logLine("\t\t" + k + " " + tree.getTaxonId(i) + ",");
+                        logLine("\t\t" + k + " " + TreeUtils.quoteTaxonName(tree.getTaxonId(i)) + ",");
                     } else {
-                        logLine("\t\t" + k + " " + tree.getTaxonId(i));
+                        logLine("\t\t" + k + " " + TreeUtils.quoteTaxonName(tree.getTaxonId(i)));
                     }
                 }
 

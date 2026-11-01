@@ -772,18 +772,31 @@ public class BeautiImporter {
 
     private void checkTaxonList(TaxonList taxonList) throws ImportException {
 
-        // check the taxon names for invalid characters
-        boolean foundAmp = false;
+        // check the taxon names for invalid characters: '&' breaks the XML and '"' cannot be
+        // used in a quoted name (BEAST uses double quotes when writing names with spaces or quotes)
+        List<String> badNames = new ArrayList<String>();
         for (Taxon taxon : taxonList) {
             String name = taxon.getId();
-            if (name.indexOf('&') >= 0) {
-                foundAmp = true;
+            if (name.indexOf('&') >= 0 || name.indexOf('"') >= 0) {
+                badNames.add(name);
             }
         }
-        if (foundAmp) {
-            throw new ImportException("One or more taxon names include an illegal character ('&').\n" +
-                    "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
-                    "Please edit the taxon name(s) before reloading the data file.");
+        if (!badNames.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(badNames.size() == 1 ? "A taxon name includes" : badNames.size() + " taxon names include")
+                    .append(" an illegal character ('&' or '\"').\n")
+                    .append("These characters will prevent BEAST from reading the resulting XML file.\n\n")
+                    .append("Please edit the taxon name(s) before reloading the data file:\n");
+            int shown = 0;
+            for (String name : badNames) {
+                if (shown == 10) {
+                    sb.append("    ... and ").append(badNames.size() - shown).append(" more\n");
+                    break;
+                }
+                sb.append("    ").append(name).append("\n");
+                shown++;
+            }
+            throw new ImportException(sb.toString());
         }
 
         // Give the taxa without one a date of zero, so that the Tip Dates panel can edit them (its table

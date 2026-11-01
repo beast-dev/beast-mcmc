@@ -35,6 +35,12 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*;
@@ -45,26 +51,133 @@ import static dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate.*
  */
 public class CoalescentIntervalTraversal extends TreeTraversal {
 
+
+    public static class DegenerateIntervalException extends RuntimeException {
+        public DegenerateIntervalException(String message) {
+            super(message);
+        }
+    }
+
+
+    public static class ActiveSetException extends RuntimeException {
+        public final NodeRef node;
+        public ActiveSetException(String message, NodeRef node) {
+            super(message);
+            this.node = node;
+        }
+    }
+
     private final BigFastTreeIntervals treeIntervals;
     private final int numberSubIntervals;
+    private final boolean checkForZeroLengthIntervals;
 
     private int currentMatrixNumber;
     private int currentLikelihoodInterval;
+
+    private boolean slabMetadataRecording = false;
+    private final BastaSlabMetadataBuilder slabMetadataBuilder = new BastaSlabMetadataBuilder();
+    private static final int SLAB_DUMP_OPS_PER_BLOCK_DEFAULT = readSlabOpsPerBlockEnv();
+    private static final int SLAB_DUMP_K_INDEX_OFFSET_PAT_DEFAULT = readKIndexOffsetPatEnv();
+    private int slabOpsPerBlock = SLAB_DUMP_OPS_PER_BLOCK_DEFAULT;
+
+    private int kIndexOffsetPat = SLAB_DUMP_K_INDEX_OFFSET_PAT_DEFAULT;
+
+    private int[] denseVal;
+    private int[] denseGen;
+    private int denseGenCounter = 0;
+    private int denseUsed;
+    private int denseTipCount;
+
+    private void resetBufferDensification() {
+        denseTipCount = treeModel.getExternalNodeCount();
+        denseUsed = denseTipCount;
+        denseGenCounter++;
+        if (denseVal == null) {
+            int initial = Math.max(1024, treeModel.getNodeCount() * 4);
+            denseVal = new int[initial];
+            denseGen = new int[initial];
+        }
+    }
+
+    private int densifyBuffer(int raw) {
+        if (raw < denseTipCount) {
+            return raw;
+        }
+        if (raw >= denseVal.length) {
+            int n = denseVal.length;
+            while (n <= raw) {
+                n <<= 1;
+            }
+            denseVal = Arrays.copyOf(denseVal, n);
+            denseGen = Arrays.copyOf(denseGen, n);
+        }
+        if (denseGen[raw] != denseGenCounter) {
+            denseGen[raw] = denseGenCounter;
+            denseVal[raw] = denseUsed++;
+        }
+        return denseVal[raw];
+    }
+
+    private int mapBuffer(int raw) {
+        return slabMetadataRecording ? densifyBuffer(raw) : raw;
+    }
+
+    private static boolean isEnvFlagSet(String name) {
+        try {
+            String v = System.getenv(name);
+            return v != null && !v.isEmpty() && !v.equals("0");
+        } catch (SecurityException e) {
+            return false;
+        }
+    }
+
+    private static int readSlabOpsPerBlockEnv() {
+        try {
+            String v = System.getenv("BASTA_SLAB_OPS_PER_BLOCK");
+            if (v != null && !v.isEmpty()) {
+                int parsed = Integer.parseInt(v.trim());
+                if (parsed > 0) return parsed;
+            }
+        } catch (SecurityException | NumberFormatException ignored) {
+            // Fall through to default.
+        }
+        return 32;
+    }
+
+    private static int readKIndexOffsetPatEnv() {
+        try {
+            String v = System.getenv("BASTA_K_INDEX_OFFSET_PAT");
+            if (v != null && !v.isEmpty()) {
+                int parsed = Integer.parseInt(v.trim());
+                if (parsed > 0) return parsed;
+            }
+        } catch (SecurityException | NumberFormatException ignored) {
+        }
+        return 16;
+    }
 
     protected CoalescentIntervalTraversal(final Tree tree,
                                           final BigFastTreeIntervals treeIntervals,
                                           final BranchRateModel branchRateModel,
                                           final int numberSubIntervals) {
-        super(tree, branchRateModel, TraversalType.REVERSE_LEVEL_ORDER);
+        this(tree, treeIntervals, branchRateModel, numberSubIntervals, true);
+    }
 
-        assert tree instanceof TreeModel;
+    protected CoalescentIntervalTraversal(final Tree tree,
+                                          final BigFastTreeIntervals treeIntervals,
+                                          final BranchRateModel branchRateModel,
+                                          final int numberSubIntervals,
+                                          final boolean checkForZeroLengthIntervals) {
+        super(tree, branchRateModel, TraversalType.REVERSE_LEVEL_ORDER);
 
         this.treeIntervals = treeIntervals;
         this.numberSubIntervals = numberSubIntervals;
+        this.checkForZeroLengthIntervals = checkForZeroLengthIntervals;
     }
 
     @Override
     public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
+        dispatchVersion++;
         matrixOperations.clear();
 
         if (SWAP_API) {
@@ -74,10 +187,71 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
             intervalStarts.clear();
         }
 
+        if (slabMetadataRecording) {
+            slabMetadataBuilder.beginTraversal(
+                    treeModel.getNodeCount(),
+                    treeModel.getExternalNodeCount(),
+                    treeModel.getExternalNodeCount(),
+                    kIndexOffsetPat);
+            resetBufferDensification();
+        }
+
         if (traversalType == TraversalType.REVERSE_LEVEL_ORDER) {
             traverseReverseCoalescentLevelOrder();
         } else {
             assert false : "Unknown traversal type";
+        }
+
+    }
+
+    public void setSlabMetadataRecording(boolean enabled) {
+        this.slabMetadataRecording = enabled;
+    }
+
+    public boolean isSlabMetadataRecording() {
+        return slabMetadataRecording;
+    }
+
+    public int bufferForNode(int nodeNumber) {
+        if (!slabMetadataRecording) {
+            return nodeNumber;
+        }
+        if (nodeNumber < denseTipCount) {
+            return nodeNumber;
+        }
+        if (denseVal != null && nodeNumber >= 0 && nodeNumber < denseVal.length
+                && denseGen[nodeNumber] == denseGenCounter) {
+            return denseVal[nodeNumber];
+        }
+        return -1;
+    }
+
+    public int[] buildAndPackSlabMetadata(int slabOpsPerBlock) {
+        if (!slabMetadataRecording) {
+            throw new IllegalStateException(
+                    "Slab metadata recording was not enabled.");
+        }
+        return slabMetadataBuilder.buildAndPackDirect(slabOpsPerBlock);
+    }
+
+    public int getLastPackedSlabMetadataLength() {
+        return slabMetadataBuilder.getLastPackedLength();
+    }
+
+    public int getSlabOpsPerBlock() {
+        return slabOpsPerBlock;
+    }
+
+    public int getKIndexOffsetPat() {
+        return kIndexOffsetPat;
+    }
+
+    public void setSlabConstants(int slabOpsPerBlock, int kIndexOffsetPat) {
+        if (slabOpsPerBlock > 0) {
+            this.slabOpsPerBlock = slabOpsPerBlock;
+        }
+        if (kIndexOffsetPat > 0) {
+            this.kIndexOffsetPat = kIndexOffsetPat;
         }
     }
 
@@ -145,7 +319,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
 
         private void test(NodeRef node) {
             if (!activeSet.contains(node)) {
-                throw new RuntimeException("Not in active set");
+                throw new ActiveSetException("Not in active set", node);
             }
         }
 
@@ -277,9 +451,12 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         currentLikelihoodInterval = 0;
         currentMatrixNumber = -1;
 
-        // Rebuild active nodes from scratch; TODO cache
         ActiveNodesForInterval activeNodesForInterval = new ActiveNodesForInterval(treeModel.getNodeCount());
-        activeNodesForInterval.add(treeIntervals.getSamplingNode(-1)); // Most recent sampled taxon
+        final NodeRef firstTip = treeIntervals.getSamplingNode(-1);
+        activeNodesForInterval.add(firstTip);
+        if (slabMetadataRecording) {
+            slabMetadataBuilder.onSample(firstTip.getNumber());
+        }
 
         intervalStarts.add(0);
 
@@ -330,9 +507,9 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
     private void propagateTransmissionProbabilities(int subInterval, NodeRef node, double length,
                                                     ActiveNodesForInterval activeNodesForInterval) {
 
-        final int inputBuffer1 = activeNodesForInterval.getActiveBuffer(node);
+        final int inputBuffer1 = mapBuffer(activeNodesForInterval.getActiveBuffer(node));
         activeNodesForInterval.incrementActiveBuffer(node);
-        final int outputBuffer = activeNodesForInterval.getActiveBuffer(node);
+        final int outputBuffer = mapBuffer(activeNodesForInterval.getActiveBuffer(node));
         final int executionOrder = activeNodesForInterval.getExecutionOrder(node) + 1;
 
         final int inputMatrix1 = computeTransmissionProbabilities(subInterval, node, length);
@@ -350,6 +527,10 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
             branchIntervalOperations.add(operation);
         }
 
+        if (slabMetadataRecording) {
+            slabMetadataBuilder.onPropagate(node.getNumber(), outputBuffer, inputBuffer1, subInterval);
+        }
+
         activeNodesForInterval.setExecutionOrder(node, executionOrder);
     }
 
@@ -357,13 +538,13 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
                                                       NodeRef leftChild, NodeRef rightChild, double length,
                                                       ActiveNodesForInterval activeNodesForInterval) {
         
-        final int inputBuffer1 = activeNodesForInterval.getActiveBuffer(leftChild);
-        final int inputBuffer2 = activeNodesForInterval.getActiveBuffer(rightChild);
+        final int inputBuffer1 = mapBuffer(activeNodesForInterval.getActiveBuffer(leftChild));
+        final int inputBuffer2 = mapBuffer(activeNodesForInterval.getActiveBuffer(rightChild));
 
-        final int extraBuffer1 = activeNodesForInterval.getAccumulationBuffer(leftChild);
-        final int extraBuffer2 = activeNodesForInterval.getAccumulationBuffer(rightChild);
+        final int extraBuffer1 = mapBuffer(activeNodesForInterval.getAccumulationBuffer(leftChild));
+        final int extraBuffer2 = mapBuffer(activeNodesForInterval.getAccumulationBuffer(rightChild));
 
-        final int outputBuffer = activeNodesForInterval.getActiveBuffer(nodeAtTopOfInterval);
+        final int outputBuffer = mapBuffer(activeNodesForInterval.getActiveBuffer(nodeAtTopOfInterval));
         final int executionOrder = Math.max(
                 activeNodesForInterval.getExecutionOrder(leftChild),
                 activeNodesForInterval.getExecutionOrder(rightChild)) + 1;
@@ -384,6 +565,12 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
             branchIntervalOperations.add(operation);
         }
 
+        if (slabMetadataRecording) {
+            slabMetadataBuilder.onCoalescent(nodeAtTopOfInterval.getNumber(), leftChild.getNumber(),
+                    rightChild.getNumber(), outputBuffer, inputBuffer1, inputBuffer2,
+                    extraBuffer1, extraBuffer2, subInterval);
+        }
+
         activeNodesForInterval.setExecutionOrder(nodeAtTopOfInterval, executionOrder);
     }
 
@@ -396,8 +583,8 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         final NodeRef leftChild = treeModel.getChild(nodeAtTopOfInterval, 0);
         final NodeRef rightChild = treeModel.getChild(nodeAtTopOfInterval, 1);
 
-        if (subIntervalLength <= 0.0) {
-            throw new RuntimeException("Cannot coalescence in <= 0.0 time");
+        if (checkForZeroLengthIntervals && subIntervalLength <= 0.0) {
+            throw new DegenerateIntervalException("Cannot coalescence in <= 0.0 time");
         }
 
         // Handle initial sub-intervals
@@ -473,11 +660,20 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
 
         activeNodesForInterval.add(nodeAtTopOfInterval);
+        if (slabMetadataRecording) {
+            slabMetadataBuilder.onSample(nodeAtTopOfInterval.getNumber());
+        }
     }
 
     private final List<BranchIntervalOperation> branchIntervalOperations = new ArrayList<>();
     private final List<TransitionMatrixOperation> matrixOperations = new ArrayList<>();
     private final List<Integer> intervalStarts = new ArrayList<>();
+
+    private long dispatchVersion = 0L;
+
+    public long getDispatchVersion() {
+        return dispatchVersion;
+    }
 
     private final BranchIntervalOperationList branchIntervalOperationList = null;
 }

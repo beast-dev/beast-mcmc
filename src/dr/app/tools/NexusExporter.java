@@ -42,6 +42,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.io.TreeExporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.TreeUtils;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 
@@ -58,7 +59,10 @@ public class NexusExporter implements TreeExporter {
     private final boolean useNumericalTaxa;
     private final AttributeType writeAttributesAs;
     public static final String DEFAULT_TREE_PREFIX = "TREE";
-    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.\\(\\);,\"\'].*";
+    /**
+     * @deprecated use {@link TreeUtils#SPECIAL_CHARACTERS_REGEX} or {@link TreeUtils#quoteTaxonName(String)}
+     */
+    public static final String SPECIAL_CHARACTERS_REGEX = TreeUtils.SPECIAL_CHARACTERS_REGEX;
 
     public enum AttributeType {
         NODE_ATTRIBUTES,
@@ -241,10 +245,7 @@ public class NexusExporter implements TreeExporter {
             out.println("\tDimensions ntax=" + taxonCount + ";");
             out.println("\tTaxlabels");
             for (String name : names) {
-                if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
-                    name = "'" + name + "'";
-                }
-                out.println("\t\t" + name);
+                out.println("\t\t" + TreeUtils.quoteTaxonName(name));
             }
             out.println("\t\t;");
             out.println("End;");
@@ -260,9 +261,7 @@ public class NexusExporter implements TreeExporter {
             int k = 1;
             for (String name : names) {
                 idMap.put(name, k);
-                if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
-                    name = "'" + name + "'";
-                }
+                name = TreeUtils.quoteTaxonName(name);
                 if (k < names.size()) {
                     out.println("\t\t" + k + " " + name + ",");
                 } else {
@@ -285,11 +284,7 @@ public class NexusExporter implements TreeExporter {
                 }
                 out.print(k);
             } else {
-                String name = tree.getTaxonId(k - 1);
-                if (name.matches(SPECIAL_CHARACTERS_REGEX)) {
-                    name = "'" + name + "'";
-                }
-                out.print(name);
+                out.print(TreeUtils.quoteTaxonName(tree.getTaxonId(k - 1)));
             }
 
         } else {
@@ -434,14 +429,7 @@ public class NexusExporter implements TreeExporter {
      */
     private StringBuilder appendTaxonName(Taxon taxon, StringBuilder builder) {
 
-        String name = taxon.getId();
-        if (!name.matches(SPECIAL_CHARACTERS_REGEX)) {
-            // JEBL way of quoting the quote character
-            name = name.replace("\'", "\'\'");
-            builder.append("\'").append(name).append("\'");
-            return builder;
-        }
-        return builder.append(name);
+        return builder.append(TreeUtils.quoteTaxonName(taxon.getId()));
     }
 
 }// END: class

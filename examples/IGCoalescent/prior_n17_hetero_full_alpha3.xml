@@ -1,0 +1,176 @@
+<?xml version="1.0" standalone="yes"?>
+
+<!-- Prior-only run for PR #1075 (integrated inverse-Gamma coalescent prior). -->
+<!-- 17 heterochronous taxa. -->
+<!-- No sequence data: the MCMC samples the coalescent (and, in the "full"  -->
+<!-- variant, the population size) prior alone.                             -->
+<beast>
+
+	<taxa id="taxa">
+		<taxon id="D4Brazi82">
+			<date value="1982.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4ElSal83">
+			<date value="1983.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4ElSal94">
+			<date value="1994.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Indon76">
+			<date value="1976.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Indon77">
+			<date value="1977.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Mexico84">
+			<date value="1984.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4NewCal81">
+			<date value="1981.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Philip64">
+			<date value="1964.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Philip56">
+			<date value="1956.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Philip84">
+			<date value="1984.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4PRico86">
+			<date value="1986.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4SLanka78">
+			<date value="1978.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Tahiti79">
+			<date value="1979.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Tahiti85">
+			<date value="1985.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Thai63">
+			<date value="1963.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Thai78">
+			<date value="1978.0" direction="forwards" units="years"/>
+		</taxon>
+		<taxon id="D4Thai84">
+			<date value="1984.0" direction="forwards" units="years"/>
+		</taxon>
+	</taxa>
+
+	<constantSize id="demo" units="years">
+		<populationSize>
+			<parameter id="demo.popSize" value="10.0" lower="0.0"/>
+		</populationSize>
+	</constantSize>
+
+	<coalescentSimulator id="startingTree">
+		<taxa idref="taxa"/>
+		<constantSize idref="demo"/>
+	</coalescentSimulator>
+
+	<treeModel id="treeModel">
+		<coalescentTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<treeLengthStatistic id="treeLength">
+		<treeModel idref="treeModel"/>
+	</treeLengthStatistic>
+
+	<tmrcaStatistic id="age(root)" absolute="true">
+		<treeModel idref="treeModel"/>
+	</tmrcaStatistic>
+
+	<coalescentLikelihood id="coalescent">
+		<model>
+			<constantSize idref="demo"/>
+		</model>
+		<populationTree>
+			<treeModel idref="treeModel"/>
+		</populationTree>
+	</coalescentLikelihood>
+
+	<!-- Waiting times scale with Ne (rate = kChoose2/Ne), so Ne and every node height are
+	     positively correlated in the joint prior. Rescaling just the root together with Ne
+	     still confines the *internal* tree shape to whatever grew while Ne sat near its
+	     starting region; allInternalNodeHeights carries every internal node (root included),
+	     so this move can stretch the whole tree and Ne together in one step. -->
+	<compoundParameter id="popSizeAndAllHeights">
+		<parameter idref="demo.popSize"/>
+		<parameter idref="treeModel.allInternalNodeHeights"/>
+	</compoundParameter>
+
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+		<prior id="prior">
+			<invgammaPrior shape="3.0" scale="20.0">
+				<parameter idref="demo.popSize"/>
+			</invgammaPrior>
+			<coalescentLikelihood idref="coalescent"/>
+		</prior>
+
+		<log id="screenLog" logEvery="10000">
+			<column label="prior" dp="4" width="12">
+				<prior idref="prior"/>
+			</column>
+			<column label="age(root)" sf="6" width="12">
+				<tmrcaStatistic idref="age(root)"/>
+			</column>
+			<column label="popSize" sf="6" width="12">
+				<parameter idref="demo.popSize"/>
+			</column>
+		</log>
+
+		<log id="fileLog" logEvery="1000" fileName="prior_n17_hetero_full_alpha3.log">
+			<prior idref="prior"/>
+			<parameter idref="treeModel.rootHeight"/>
+			<tmrcaStatistic idref="age(root)"/>
+			<treeLengthStatistic idref="treeLength"/>
+			<parameter idref="demo.popSize"/>
+		</log>
+
+		<operators id="operators" optimizationSchedule="default">
+			<scaleOperator scaleFactor="0.75" weight="3">
+				<parameter idref="demo.popSize"/>
+			</scaleOperator>
+			<scaleOperator scaleFactor="0.75" weight="5" scaleAll="true" ignoreBounds="true">
+				<parameter idref="popSizeAndAllHeights"/>
+			</scaleOperator>
+		<subtreeSlide weight="15" gaussian="true" size="1.0">
+			<treeModel idref="treeModel"/>
+		</subtreeSlide>
+		<narrowExchange weight="15">
+			<treeModel idref="treeModel"/>
+		</narrowExchange>
+		<wideExchange weight="3">
+			<treeModel idref="treeModel"/>
+		</wideExchange>
+		<wilsonBalding weight="3">
+			<treeModel idref="treeModel"/>
+		</wilsonBalding>
+		<uniformOperator weight="30">
+			<parameter idref="treeModel.internalNodeHeights"/>
+		</uniformOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="treeModel.rootHeight"/>
+		</scaleOperator>
+		</operators>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<mcmc idref="mcmc"/>
+		</property>
+	</report>
+
+</beast>

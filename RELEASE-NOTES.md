@@ -2,8 +2,8 @@
 
 BEAST X v10.6.0 adds new substitution, clock, coalescent and trait models,
 the structured coalescent in BEAUti, faster MCMC on large trees, an output
-directory option, and many improvements to BEAUti and TreeAnnotator. A full list of changes and
-bug fixes is in [CHANGELOG.md](CHANGELOG.md).
+directory option, and many improvements to BEAUti and TreeAnnotator. A full
+list of changes and bug fixes is in [CHANGELOG.md](CHANGELOG.md).
 
 ## New models
 

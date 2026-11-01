@@ -212,6 +212,11 @@ list of changes and bug fixes is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Other improvements
 
+- **LogCombiner burn-in.** The burn-in can be given as a number of trees or
+  samples, or as a percentage of each file, as well as in MCMC states, and
+  LogCombiner reports for each file how many trees or samples were read and
+  written, with a warning when the burn-in removed nothing or everything.
+
 - **Double-quoted taxon names.** Taxon names that need quoting in tree and
   NEXUS files (whitespace or any of `. ( ) [ ] : ; , = '`) are delimited with
   double quotes rather than single quotes in all of BEAST's output, so names

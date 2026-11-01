@@ -61,8 +61,37 @@ public class LogCombiner {
 
     private final static Version version = new BeastVersion();
 
+    /**
+     * How the burn-in value given for each file is to be interpreted.
+     */
+    public enum BurninType {
+        /** the burn-in is a number of MCMC states: samples with a state number below it are discarded */
+        STATES("states"),
+        /** the burn-in is a number of samples (trees or log lines) to discard from the start of each file */
+        SAMPLES("samples"),
+        /** the burn-in is a percentage of the samples in each file to discard from its start */
+        PERCENT("percent");
+
+        BurninType(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        private final String label;
+    }
+
     public LogCombiner(long[] burnins, long resample, String[] inputFileNames, String outputFileName, boolean treeFiles,
                        boolean convertToDecimal, boolean stripAnnotations,
+                       boolean renumberOutput, boolean useScale, double scale) throws IOException {
+        this(burnins, BurninType.STATES, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal,
+                stripAnnotations, renumberOutput, useScale, scale);
+    }
+
+    public LogCombiner(long[] burnins, BurninType burninType, long resample, String[] inputFileNames, String outputFileName,
+                       boolean treeFiles, boolean convertToDecimal, boolean stripAnnotations,
                        boolean renumberOutput, boolean useScale, double scale) throws IOException {
 
         System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName + "'");
@@ -112,11 +141,12 @@ public class LogCombiner {
                 burnin = burnins[i];
             }
 
-            if (burnin > 0) {
-                System.out.print("Combining file: '" + inputFileNames[i] + "' removing burnin: " + burnin);
-            } else {
-                System.out.print("Combining file: '" + inputFileNames[i] + "' without removing burnin");
-            }
+            Burnin fileBurnin = resolveBurnin(inputFile, burnin, burninType, treeFiles);
+            burnin = fileBurnin.stateThreshold;
+            System.out.print("Combining file: '" + inputFileNames[i] + "'" + fileBurnin.description);
+
+            long samplesRead = 0;
+            long samplesKept = 0;
 
             if (resample > 0) {
                 System.out.print(", resampling with frequency: " + resample);
@@ -156,6 +186,7 @@ public class LogCombiner {
                                 stateStep = state;
                             }
 
+                            samplesRead++;
                             if (state >= burnin) {
                                 if (stateStep > 0) {
                                     if (!renumberOutput) {
@@ -191,6 +222,7 @@ public class LogCombiner {
                                 }
 
                                 if (logThis) {
+                                    samplesKept++;
                                     writeTree(stateLineEntry, tree, convertToDecimal, writer);
                                 }
 
@@ -229,7 +261,7 @@ public class LogCombiner {
                                     stateStep = state;
                                 }
 
-                                // if the columnCount is not the same then perhaps the line is corrupt so skip it.
+                                samplesRead++;
                                 if (state >= burnin) {
                                     if (stateStep > 0) {
                                         if (!renumberOutput) {
@@ -269,6 +301,7 @@ public class LogCombiner {
                                     }
 
                                     if (logThis) {
+                                        samplesKept++;
                                         writer.print("tree STATE_");
                                         writer.print(stateLineEntry);
                                         writer.println(treeString);
@@ -282,7 +315,6 @@ public class LogCombiner {
                 }
 
                 firstFile = false;
-
 
             } else {
                 BufferedReader reader = new BufferedReader(new FileReader(inputFile));
@@ -328,9 +360,14 @@ public class LogCombiner {
                     }
 
                     if (!skip) {
+                        samplesRead++;
+                        if (columnCount == 0) {
+                            // the first sample line sets the expected number of columns (it used to be set with
+                            // the state step, from the second line, so the first sample of the first file was lost)
+                            columnCount = parts.length;
+                        }
                         if (stateStep < 0 && state > 0) {
                             stateStep = state;
-                            columnCount = parts.length;
                         }
 
                         // if the columnCount is not the same then perhaps the line is corrupt so skip it.
@@ -390,6 +427,7 @@ public class LogCombiner {
                                 }
 
                                 if (logThis) {
+                                    samplesKept++;
                                     writer.print(stateLineEntry);
                                     for (int j = 1; j < parts.length; j++) {
                                         String value = parts[j];
@@ -417,12 +455,138 @@ public class LogCombiner {
             }
 
             firstFile = false;
+
+            reportFile(inputFileNames[i], fileBurnin, samplesRead, samplesKept, resample, treeFiles);
         }
 
         if (treeFiles) {
             stopLog(writer);
         }
         writer.close();
+    }
+
+    /**
+     * The burn-in for one file, resolved to a threshold on the state number.
+     */
+    private static class Burnin {
+        /** samples with a state number below this are discarded */
+        long stateThreshold;
+        /** the number of samples in the file (counted only for SAMPLES and PERCENT) */
+        long sampleCount = -1;
+        /** the value as given by the user */
+        long value;
+        /** how the value was given */
+        BurninType type;
+        /** the text appended to the "Combining file" message */
+        String description;
+    }
+
+    /**
+     * Converts the burn-in given by the user into a threshold on the state number for one file. For a burn-in
+     * given as a number of samples or a percentage the file is scanned first to find the state number of the
+     * first sample to be kept, so that the main loop only ever compares state numbers.
+     */
+    private static Burnin resolveBurnin(File inputFile, long value, BurninType type, boolean treeFiles) throws IOException {
+        Burnin burnin = new Burnin();
+        burnin.value = value;
+        burnin.type = type;
+
+        if (type == BurninType.STATES) {
+            burnin.stateThreshold = value;
+            burnin.description = (value > 0 ? " removing burnin: " + value + " states" : " without removing burnin");
+            return burnin;
+        }
+
+        java.util.List<Long> states = readSampleStates(inputFile, treeFiles);
+        burnin.sampleCount = states.size();
+
+        long samplesToRemove;
+        if (type == BurninType.PERCENT) {
+            samplesToRemove = Math.round(states.size() * (value / 100.0));
+        } else {
+            samplesToRemove = value;
+        }
+
+        String unit = treeFiles ? "trees" : "samples";
+        if (samplesToRemove <= 0) {
+            burnin.stateThreshold = -1;
+            burnin.description = " without removing burnin";
+        } else if (samplesToRemove >= states.size()) {
+            burnin.stateThreshold = Long.MAX_VALUE;
+            burnin.description = " removing burnin: all " + states.size() + " " + unit;
+        } else {
+            burnin.stateThreshold = states.get((int) samplesToRemove);
+            burnin.description = " removing burnin: " + samplesToRemove + " " + unit +
+                    (type == BurninType.PERCENT ? " (" + value + "%)" : "") +
+                    ", i.e. states below " + burnin.stateThreshold;
+        }
+        return burnin;
+    }
+
+    /**
+     * Reads the state numbers of the samples in a log or tree file, in file order.
+     */
+    private static java.util.List<Long> readSampleStates(File inputFile, boolean treeFiles) throws IOException {
+        java.util.List<Long> states = new java.util.ArrayList<Long>();
+        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+        try {
+            String line = reader.readLine();
+            if (treeFiles) {
+                Pattern pattern = Pattern.compile("tree STATE_(\\d+)\\s.*");
+                while (line != null) {
+                    Matcher m = pattern.matcher(line);
+                    if (m.matches()) {
+                        states.add(Long.parseLong(m.group(1)));
+                    }
+                    line = reader.readLine();
+                }
+            } else {
+                // skip comments and the header line, as the main loop does
+                while (line != null && (line.startsWith("[") || line.startsWith("#"))) {
+                    line = reader.readLine();
+                }
+                if (line != null) {
+                    line = reader.readLine();
+                }
+                while (line != null) {
+                    int tab = line.indexOf('\t');
+                    String first = (tab < 0 ? line : line.substring(0, tab));
+                    try {
+                        states.add(Long.parseLong(first));
+                    } catch (NumberFormatException nfe) {
+                        // not a sample line
+                    }
+                    line = reader.readLine();
+                }
+            }
+        } finally {
+            reader.close();
+        }
+        return states;
+    }
+
+    /**
+     * Prints how many samples were read from a file and how many were written, warning when the burn-in
+     * removed nothing or everything, which is usually a sign that it was given in the wrong units.
+     */
+    private static void reportFile(String fileName, Burnin burnin, long samplesRead, long samplesKept, long resample, boolean treeFiles) {
+        String unit = treeFiles ? "trees" : "samples";
+        System.out.println("  " + samplesRead + " " + unit + " read, " + samplesKept + " written");
+
+        if (samplesRead == 0) {
+            System.out.println("  WARNING: no " + unit + " were found in '" + fileName + "'" +
+                    (treeFiles ? " - the trees must be in BEAST's 'tree STATE_<n> ... = ...' format" : ""));
+        } else if (samplesKept == 0) {
+            System.out.println("  WARNING: the burnin removed every " + (treeFiles ? "tree" : "sample") + " in '" + fileName + "'");
+        } else if (burnin.value > 0 && burnin.type == BurninType.STATES && resample < 0) {
+            long removed = samplesRead - samplesKept;
+            if (removed <= 1 && samplesRead > 2) {
+                System.out.println("  WARNING: the burnin of " + burnin.value + " states removed " +
+                        (removed == 0 ? "nothing" : "only the first " + (treeFiles ? "tree" : "sample")) +
+                        " from '" + fileName + "' - the burnin is a number of MCMC states, not of " + unit +
+                        " (use -burninTrees or -burninPercent to give it as " + unit + " or as a percentage)");
+            }
+        }
     }
 
     private void rescaleTree(Tree tree, double scale) {
@@ -635,6 +799,7 @@ public class LogCombiner {
         System.out.println();
         System.out.println("  Example: logcombiner test1.log test2.log combined.log");
         System.out.println("  Example: logcombiner -burnin 10000 test1.log test2.log combined.log");
+        System.out.println("  Example: logcombiner -trees -burninPercent 10 test1.trees test2.trees combined.trees");
         System.out.println();
 
     }
@@ -712,7 +877,7 @@ public class LogCombiner {
             }
 
             try {
-                new LogCombiner(burnins, resample, inputFiles, outputFileName, treeFiles, convertToDecimal,
+                new LogCombiner(burnins, dialog.getBurninType(), resample, inputFiles, outputFileName, treeFiles, convertToDecimal,
                         stripAnnotations, renumberOutput, useScale, scale);
 
             } catch (Exception ex) {
@@ -735,6 +900,8 @@ public class LogCombiner {
                             new Arguments.Option("trees", "t", "use this option to combine tree log files"),
                             new Arguments.Option("decimal", "d","this option converts numbers from scientific to decimal notation"),
                             new Arguments.LongOption("burnin", "b",  "the number of states to be considered as 'burn-in'"),
+                            new Arguments.LongOption("burninTrees", "bt", "the number of trees (or log samples) at the start of each file to be considered as 'burn-in'"),
+                            new Arguments.RealOption("burninPercent", "bp", 0.0, 100.0, "the percentage of each file to be considered as 'burn-in'"),
                             new Arguments.LongOption("resample", "r", "resample the log files to this frequency " +
                                     "(the original sampling frequency must be a factor of this value)"),
                             new Arguments.RealOption("scale", "s", "a scaling factor that will multiply any time units by this value"),
@@ -765,8 +932,27 @@ public class LogCombiner {
             renumberOutput = arguments.hasOption("renumber");
 
             burnin = -1;
+            BurninType burninType = BurninType.STATES;
+            int burninOptions = 0;
             if (arguments.hasOption("burnin")) {
                 burnin = arguments.getLongOption("burnin");
+                burninOptions++;
+            }
+            if (arguments.hasOption("burninTrees")) {
+                burnin = arguments.getLongOption("burninTrees");
+                burninType = BurninType.SAMPLES;
+                burninOptions++;
+            }
+            if (arguments.hasOption("burninPercent")) {
+                burnin = Math.round(arguments.getRealOption("burninPercent"));
+                burninType = BurninType.PERCENT;
+                burninOptions++;
+            }
+            if (burninOptions > 1) {
+                System.err.println("Only one of -burnin, -burninTrees and -burninPercent can be given");
+                System.err.println();
+                printUsage(arguments);
+                System.exit(1);
             }
 
             resample = -1;
@@ -794,7 +980,7 @@ public class LogCombiner {
             System.arraycopy(args2, 0, inputFileNames, 0, inputFileNames.length);
             String outputFileName = args2[args2.length - 1];
 
-            new LogCombiner(new long[]{burnin}, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal,
+            new LogCombiner(new long[]{burnin}, burninType, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal,
                     stripAnnotations, renumberOutput, useScale, scale);
 
             System.out.println("Finished.");

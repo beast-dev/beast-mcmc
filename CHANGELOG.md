@@ -291,6 +291,13 @@ set loaded by default (`parsers=development` in `beast.properties`).
 
 #### Other tools
 
+- **LogCombiner burn-in** — the burn-in can be given as a number of trees or log samples
+  (`-burninTrees`, short `-bt`) or as a percentage of each file (`-burninPercent`, `-bp`)
+  as well as in MCMC states (`-burnin`); the dialog has a "Burn-in given as" choice and the
+  table column names the unit. For every file LogCombiner now reports how many trees or
+  samples were read and written, and warns when the burn-in removed nothing, only the first
+  sample or everything, which is what happens when a number of trees is entered where states
+  are expected. ([#1247](https://github.com/beast-dev/beast-mcmc/issues/1247))
 - TreeStateTimeSummarizer writes `startHeight`, `endHeight` and `branchingEvents`
   columns for each state interval.
 - `scripts/fit_rate_prior.py` fits a lognormal distribution to a set of HPD bounds for
@@ -349,7 +356,9 @@ set loaded by default (`parsers=development` in `beast.properties`).
   value, which threw when a variable started exactly on zero; it is taken from the bounds.
 - **Fixed a NullPointerException in the rate covariance statistic** with the fast tree
   model.
-- **Fixed LogCombiner** having two options with the short name `-r`.
+- **Fixed LogCombiner dropping the first sample of the first log file** (the state 0 line
+  was compared against a column count that was only set from the second line), and having
+  two options with the short name `-r`.
 
 #### BEAUti
 

@@ -356,6 +356,19 @@ set loaded by default (`parsers=development` in `beast.properties`).
   value, which threw when a variable started exactly on zero; it is taken from the bounds.
 - **Fixed a NullPointerException in the rate covariance statistic** with the fast tree
   model.
+- **Fixed LogCombiner taking the wrong samples when resampling at a lower frequency** —
+  the samples to keep were chosen by a running count of the samples kept so far rather than
+  by their own state number, so a burn-in shifted the choice by one sampling interval and
+  the samples taken from each file depended on how many had been taken from the files before
+  it. Combining with a burn-in of 1,000,000 and a resampling frequency of 100,000 took the
+  sample at state 1,090,000 rather than 1,100,000. The state numbers written were that same
+  running count, so with a burn-in they did not correspond to the samples beneath them.
+  Samples are now chosen by their own state number relative to the first one kept from the
+  same file, and the state numbers written run consecutively through the combined output.
+  Combining without resampling is unaffected.
+  ([#857](https://github.com/beast-dev/beast-mcmc/issues/857))
+- **Fixed LogCombiner failing with an ArithmeticException** when renumbering output states
+  without also resampling.
 - **Fixed LogCombiner dropping the first sample of the first log file** (the state 0 line
   was compared against a column count that was only set from the second line), and having
   two options with the short name `-r`.

@@ -216,6 +216,9 @@ list of changes and bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   samples, or as a percentage of each file, as well as in MCMC states, and
   LogCombiner reports for each file how many trees or samples were read and
   written, with a warning when the burn-in removed nothing or everything.
+  Resampling at a lower frequency now takes the right samples: a burn-in used
+  to shift the choice by one sampling interval, and the samples taken from
+  each file depended on how many had been taken from the files before it.
 
 - **Double-quoted taxon names.** Taxon names that need quoting in tree and
   NEXUS files (whitespace or any of `. ( ) [ ] : ; , = '`) are delimited with

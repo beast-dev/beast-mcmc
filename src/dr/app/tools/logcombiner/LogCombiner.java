@@ -118,7 +118,7 @@ public class LogCombiner {
 
         boolean firstFile = true;
         boolean firstTree = true;
-        long stateCount = (renumberOutput ? -1 : 0);
+        Numbering numbering = new Numbering(resample, renumberOutput);
         long stateStep = -1;
         int columnCount = 0;
 
@@ -148,6 +148,7 @@ public class LogCombiner {
             long samplesRead = 0;
             long samplesKept = 0;
             long samplesUnparsed = 0;
+            numbering.startFile();
 
             if (resample > 0) {
                 System.out.print(", resampling with frequency: " + resample);
@@ -185,48 +186,19 @@ public class LogCombiner {
 
                             if (stateStep < 0 && state > 0) {
                                 stateStep = state;
+                                if (resample >= 0 && resample % stateStep != 0) {
+                                    System.err.println("ERROR: Resampling frequency, " + resample + ", is not a multiple of the sampling frequency, " + stateStep);
+                                    return;
+                                }
                             }
 
                             samplesRead++;
                             if (state >= burnin) {
-                                if (stateStep > 0) {
-                                    if (!renumberOutput) {
-                                        stateCount += stateStep;
-                                    } else {
-                                        stateCount += 1;
-                                    }
-                                }
-
-                                if (resample >= 0) {
-                                    if (resample % stateStep != 0) {
-                                        System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
-                                        return;
-                                    }
-                                }
-
-                                boolean logThis;
-                                if (resample < 0) {
-                                    // not resampling, log every state
-                                    logThis = true;
-                                } else if (!renumberOutput) {
-                                    // resampling but not renumbering
-                                    logThis = (stateCount % resample == 0);
-                                } else {
-                                    logThis = (stateCount * stateStep % resample == 0);
-                                }
-
-                                long stateLineEntry;
-                                if (!renumberOutput) {
-                                    stateLineEntry = stateCount;
-                                } else {
-                                    stateLineEntry = stateCount / (resample / stateStep);
-                                }
-
-                                if (logThis) {
+                                long stateLineEntry = numbering.next(state, stateStep);
+                                if (stateLineEntry >= 0) {
                                     samplesKept++;
                                     writeTree(stateLineEntry, tree, convertToDecimal, writer);
                                 }
-
                             }
                         }
                     } catch (Importer.ImportException e) {
@@ -260,48 +232,16 @@ public class LogCombiner {
                             if (!skip) {
                                 if (stateStep < 0 && state > 0) {
                                     stateStep = state;
+                                    if (resample >= 0 && resample % stateStep != 0) {
+                                        System.err.println("ERROR: Resampling frequency, " + resample + ", is not a multiple of the sampling frequency, " + stateStep);
+                                        return;
+                                    }
                                 }
 
                                 samplesRead++;
                                 if (state >= burnin) {
-                                    if (stateStep > 0) {
-                                        if (!renumberOutput) {
-                                            stateCount += stateStep;
-                                        } else {
-                                            stateCount += 1;
-                                        }
-                                    }
-
-                                    if (resample >= 0) {
-                                        if (resample % stateStep != 0) {
-                                            System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
-                                            return;
-                                        }
-                                    }
-
-                                    boolean logThis;
-                                    if (resample < 0) {
-                                        logThis = true;
-                                    } else if (!renumberOutput) {
-                                        logThis = (stateCount % resample == 0);
-                                    } else {
-                                        logThis = ((stateCount * stateStep) % resample == 0);
-                                    }
-
-                                    long stateLineEntry;
-                                    if (!renumberOutput) {
-                                        stateLineEntry = stateCount;
-                                    } else {
-
-//                                	System.out.println("stateCount: " + stateCount);
-//                                	System.out.println("resample: " + resample);
-//                                	System.out.println("stateStep: " + stateStep);
-//                                	System.out.println("resample / stateStep: " + (resample / stateStep));
-
-                                        stateLineEntry = stateCount / (resample / stateStep);
-                                    }
-
-                                    if (logThis) {
+                                    long stateLineEntry = numbering.next(state, stateStep);
+                                    if (stateLineEntry >= 0) {
                                         samplesKept++;
                                         writer.print("tree STATE_");
                                         writer.print(stateLineEntry);
@@ -369,6 +309,10 @@ public class LogCombiner {
                         }
                         if (stateStep < 0 && state > 0) {
                             stateStep = state;
+                    if (resample >= 0 && resample % stateStep != 0) {
+                        System.err.println("ERROR: Resampling frequency, " + resample + ", is not a multiple of the sampling frequency, " + stateStep);
+                        return;
+                    }
                         }
 
                         // if the columnCount is not the same then perhaps the line is corrupt so skip it.
@@ -392,44 +336,8 @@ public class LogCombiner {
 
                             if (!skip) {
 
-                                if (stateStep > 0) {
-                                    if (!renumberOutput) {
-                                        stateCount += stateStep;
-                                    } else {
-                                        stateCount += 1;
-                                    }
-                                }
-
-                                if (resample >= 0) {
-                                    if (resample % stateStep != 0) {
-                                        System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
-                                        return;
-                                    }
-                                }
-
-                                boolean logThis;
-                                if (resample < 0) {
-                                    logThis = true;
-                                } else if (!renumberOutput){
-                                    logThis = (stateCount % resample == 0);
-                                } else {
-                                    logThis = ((stateCount * stateStep) % resample == 0);
-                                }
-
-                                long stateLineEntry;
-                                if (!renumberOutput){
-                                    stateLineEntry = stateCount;
-                                } else {
-
-//                                	System.out.println("stateCount: " + stateCount);
-//                                	System.out.println("resample: " + resample);
-//                                	System.out.println("stateStep: " + stateStep);
-//                                	System.out.println("resample / stateStep: " + (resample / stateStep));
-
-                                    stateLineEntry = stateCount / (resample / stateStep);
-                                }
-
-                                if (logThis) {
+                                long stateLineEntry = numbering.next(state, stateStep);
+                                if (stateLineEntry >= 0) {
                                     samplesKept++;
                                     writer.print(stateLineEntry);
                                     for (int j = 1; j < parts.length; j++) {
@@ -482,6 +390,69 @@ public class LogCombiner {
         BurninType type;
         /** the text appended to the "Combining file" message */
         String description;
+    }
+
+    /**
+     * Chooses which samples are written when resampling at a lower frequency, and gives each one the state
+     * number it is written with.
+     *
+     * Samples are chosen by their own state number relative to the first sample kept from the same file, so
+     * that a burn-in shifts neither which samples are taken nor how they are numbered. The state numbers
+     * written run consecutively across the whole of the combined output, so that it reads as one chain.
+     */
+    private static class Numbering {
+
+        Numbering(long resample, boolean renumberOutput) {
+            this.resample = resample;
+            this.renumberOutput = renumberOutput;
+        }
+
+        /**
+         * Starts a new input file. The choice of samples begins again from the first one kept, while the
+         * state numbers written carry on from the previous file.
+         */
+        void startFile() {
+            firstKeptState = -1;
+            lastWrittenState = -1;
+        }
+
+        /**
+         * @param state     the state number of a sample that is past the burn-in
+         * @param stateStep the sampling frequency of the file, or -1 if it is not yet known
+         * @return the state number to write this sample with, or -1 if it is not to be written
+         */
+        long next(long state, long stateStep) {
+            if (firstKeptState < 0) {
+                firstKeptState = state;
+            }
+
+            if (resample >= 0 && (state - firstKeptState) % resample != 0) {
+                return -1;
+            }
+
+            if (written) {
+                if (renumberOutput) {
+                    outputState += 1;
+                } else if (lastWrittenState >= 0) {
+                    outputState += state - lastWrittenState;
+                } else {
+                    // the first sample taken from a later file: continue at one interval past the last one
+                    outputState += (resample >= 0 ? resample : Math.max(stateStep, 0));
+                }
+            }
+            written = true;
+            lastWrittenState = state;
+
+            return outputState;
+        }
+
+        private final long resample;
+        private final boolean renumberOutput;
+
+        private long outputState = 0;
+        private boolean written = false;
+        private long firstKeptState = -1;
+        private long lastWrittenState = -1;
     }
 
     /**

@@ -31,6 +31,7 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
@@ -231,6 +232,20 @@ public class BeastGenerator extends Generator {
                         } else {
                             numOfTaxa = pd.getTaxonCount();
                         }
+                    }
+                }
+            }
+
+            //++++++++++++++++ Robust Counting ++++++++++++++++++
+            // the three codon positions are compared site by site, so they must be the same length
+            AncestralStatesComponentOptions ancestralStates = (AncestralStatesComponentOptions)
+                    options.getComponentOptions(AncestralStatesComponentOptions.class);
+            for (AbstractPartitionData partition : options.getDataPartitions()) {
+                if (ancestralStates.dNdSRobustCounting(partition)) {
+                    String reason = ancestralStates.dNdSRobustCountingUnavailableReason(partition);
+                    if (reason != null) {
+                        throw new GeneratorException("Renaissance counting cannot be used for partition \"" +
+                                partition.getName() + "\":\n" + reason, BeautiFrame.ANCESTRAL_STATES);
                     }
                 }
             }

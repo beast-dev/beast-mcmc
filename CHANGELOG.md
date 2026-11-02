@@ -417,6 +417,14 @@ set loaded by default (`parsers=development` in `beast.properties`).
 - **Fixed `includeStem` always written as true** for taxon set TMRCA statistics.
 - **Fixed robust counting XML** for prefixed traits and for alignments with sites that
   are gaps in every sequence.
+
+- **Renaissance counting is no longer offered for a partition that is not a whole number
+  of codons long** — the three codon positions are compared site by site, so they must hold
+  the same number of sites, which taking every third site only gives when the partition's
+  length is a multiple of three. BEAUti offered the option regardless, and BEAST then
+  refused the file with "Codon-partitioned robust counting requires all partitions to have
+  the same length". The option is now disabled with the reason shown, and a file whose
+  option was set before this was checked is reported rather than written.
 - **Fixed amino acid site model XML generation** failing with a NullPointerException,
   and marginal likelihood XML for the 3Di models.
 - **Fixed importing a traits file turning on tip dates** for the whole analysis.

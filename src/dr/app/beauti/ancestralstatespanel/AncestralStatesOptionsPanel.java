@@ -84,9 +84,11 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             "Reconstruct complete change history on tree");
 
 
-    private JTextArea dNnSText = new JTextArea(
+    private static final String DNDS_REQUIREMENTS =
             "This model requires a 3-partition codon model to be selected in the Site model " +
-                    "for this partition and NO Site Heterogeneity Model before it can be selected.");
+                    "for this partition and NO Site Heterogeneity Model before it can be selected.";
+
+    private JTextArea dNnSText = new JTextArea(DNDS_REQUIREMENTS);
 
     // dNdS robust counting is automatic if RC is turned on for a codon
     // partitioned data set.
@@ -350,7 +352,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 PanelUtils.setupComponent(dNnSText);
                 addComponent(dNnSText);
 
-                boolean enableRC = ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
+                String reason = ancestralStatesComponent.dNdSRobustCountingUnavailableReason(partition);
+                dNnSText.setText(reason != null ? reason : DNDS_REQUIREMENTS);
+
+                boolean enableRC = (reason == null);
                 // && !ancestralStatesComponent.isCountingStates(partition);
                 dNdSRobustCountingCheck.setEnabled(enableRC);
 

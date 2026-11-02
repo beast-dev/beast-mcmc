@@ -31,6 +31,7 @@ import dr.app.gui.FileDrop;
 import dr.app.util.Utils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.components.WholeNumberField;
+import dr.util.FileHelpers;
 import jam.panels.ActionPanel;
 import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
@@ -60,6 +61,7 @@ public class LogCombinerDialog {
 	private final JCheckBox decimalCheck = new JCheckBox("Convert numbers from scientific to decimal notation");
 	private final JCheckBox renumberOutput = new JCheckBox("Renumber output states");
 	private final JCheckBox resampleCheck = new JCheckBox("Resample states at lower frequency: ");
+	private final JCheckBox compressCheck = new JCheckBox("Compress output file using Zstandard (.zst)");
 	private final WholeNumberField resampleText = new WholeNumberField(0, Integer.MAX_VALUE);
 
 	private final List<FileInfo> files = new ArrayList<FileInfo>();
@@ -140,6 +142,7 @@ public class LogCombinerDialog {
 
                 outputFile = new File(dialog.getDirectory(), dialog.getFile());
                 fileNameText.setText(outputFile.getName());
+                compressCheck.setSelected(FileHelpers.isZstdFileName(outputFile));
 
             }
         };
@@ -163,6 +166,33 @@ public class LogCombinerDialog {
 		panel3.add(fileNameText, BorderLayout.CENTER);
 		panel3.add(button, BorderLayout.EAST);
 		optionPanel.addComponentWithLabel("Output File: ", panel3);
+
+		// selecting the box adds the .zst extension to the output file name, deselecting removes it
+		compressCheck.setOpaque(false);
+		compressCheck.setToolTipText("<html>Write the combined file compressed with Zstandard.<br>" +
+				"BEAST, LogCombiner, TreeAnnotator and Tracer read .zst files directly.</html>");
+		compressCheck.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				if (outputFile != null) {
+					outputFile = setCompressedExtension(outputFile, compressCheck.isSelected());
+					fileNameText.setText(outputFile.getName());
+				}
+			}
+		});
+		optionPanel.addComponentWithLabel("", compressCheck);
+	}
+
+	private static File setCompressedExtension(File file, boolean compress) {
+		String name = file.getName();
+		boolean isCompressed = FileHelpers.isZstdFileName(file);
+		if (compress && !isCompressed) {
+			name = name + FileHelpers.ZSTD_EXTENSION;
+		} else if (!compress && isCompressed) {
+			name = name.substring(0, name.length() - FileHelpers.ZSTD_EXTENSION.length());
+		} else {
+			return file;
+		}
+		return new File(file.getParentFile(), name);
 	}
 
 	public boolean showDialog(String title) {
@@ -229,7 +259,7 @@ public class LogCombinerDialog {
 
 	public String getOutputFileName() {
 		if (outputFile == null) return null;
-		return outputFile.getPath();
+		return setCompressedExtension(outputFile, compressCheck.isSelected()).getPath();
 	}
 
 	private void filesTableSelectionChanged() {

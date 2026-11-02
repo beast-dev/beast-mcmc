@@ -741,6 +741,7 @@ public class LogCombiner {
                             new Arguments.RealOption("scale", "s", "a scaling factor that will multiply any time units by this value"),
                             new Arguments.Option("strip", null, "strip out all annotations (trees only)"),
                             new Arguments.Option("renumber", "n", "this option renumbers output states consecutively"),
+                            new Arguments.Option("zstd", "z", "compress the output file using Zstandard (adds the .zst extension)"),
                             new Arguments.Option("help", "h", "option to print this message")
                     });
 
@@ -794,6 +795,9 @@ public class LogCombiner {
             String[] inputFileNames = new String[args2.length - 1];
             System.arraycopy(args2, 0, inputFileNames, 0, inputFileNames.length);
             String outputFileName = args2[args2.length - 1];
+            if (arguments.hasOption("zstd") && !FileHelpers.isZstdFileName(new File(outputFileName))) {
+                outputFileName += FileHelpers.ZSTD_EXTENSION;
+            }
 
             new LogCombiner(new long[]{burnin}, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal,
                     stripAnnotations, renumberOutput, useScale, scale);

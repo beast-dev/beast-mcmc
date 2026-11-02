@@ -468,6 +468,9 @@ set loaded by default (`parsers=development` in `beast.properties`).
 - BEAGLE is loaded with `System.loadLibrary`, which JDK 24 and later warn about unless
   native access is enabled: the `beast.jar` manifest enables it for `java -jar`, and the
   Mac and Linux `beast` scripts add the option when the installed Java accepts it.
+- The warning that a likelihood was created but not used by the MCMC now says "(no ID)"
+  for a likelihood that has no id, rather than "(id: null)".
+  ([#1019](https://github.com/beast-dev/beast-mcmc/issues/1019))
 - Stopping a run uses `Thread.interrupt` rather than the removed `Thread.stop`.
 - Development builds report their version as 10.x.x rather than an unexpanded `${version}`.
 - **Packaging** — releases are built by a GitHub Actions workflow (`build_release.xml`)

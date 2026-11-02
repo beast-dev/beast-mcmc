@@ -122,7 +122,9 @@ public final class MarkovChain implements Serializable {
         for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
             if (!Likelihood.CONNECTED_LIKELIHOOD_SET.contains(l)) {
 
-                System.err.println("WARNING: Likelihood component, " + l.prettyName() + " (id: " + l.getId() + "), created but not used in the MCMC");
+                String id = l.getId();
+                System.err.println("WARNING: Likelihood component, " + l.prettyName() +
+                        (id != null ? " (id: " + id + ")" : " (no ID)") + ", created but not used in the MCMC");
             }
         }
 

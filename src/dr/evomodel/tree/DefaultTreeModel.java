@@ -649,6 +649,56 @@ public class DefaultTreeModel extends TreeModel {
         this.setRoot(nodes[newRootIndex]);
     }
 
+    @Override
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames,
+                                   String[] heightParameterNames) {
+        if (heightParameterNames != null) {
+            int[] holders = findHeightParameterHolders(heightParameterNames);
+            if (holders != null) {
+                adoptHeightParameters(holders);
+            }
+        }
+        adoptTreeStructure(edges, nodeHeights, childOrder, taxaNames);
+    }
+
+    @Override
+    public String getNodeHeightParameterName(NodeRef node) {
+        return ((Node) node).heightParameter.getParameterName();
+    }
+
+    /**
+     * Gives each internal node i the height, rate and trait parameters of internal node holders[i]; the parameters
+     * keep their values. A running chain permutes these among the internal nodes, as endTreeEdit swaps them between
+     * the old and new root at each root change.
+     */
+    private void adoptHeightParameters(int[] holders) {
+
+        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+
+        Parameter rootHeightParameter = oldRoot.heightParameter;
+
+        Parameter[] heightParameters = new Parameter[nodeCount];
+        Parameter[] rateParameters = new Parameter[nodeCount];
+        ArrayList<Map<String, Parameter>> traitParameters = new ArrayList<Map<String, Parameter>>();
+        for (int i = 0; i < nodeCount; i++) {
+            heightParameters[i] = nodes[i].heightParameter;
+            rateParameters[i] = nodes[i].rateParameter;
+            traitParameters.add(nodes[i].traitParameters);
+        }
+
+        for (int i = externalNodeCount; i < nodeCount; i++) {
+            nodes[i].heightParameter = heightParameters[holders[i]];
+            nodes[i].rateParameter = rateParameters[holders[i]];
+            nodes[i].traitParameters = traitParameters.get(holders[i]);
+        }
+        remapParameterNodes();
+
+        // endTreeEdit swaps the root's parameters from oldRoot to the new root, so point it at their new node
+        oldRoot = getNodeOfParameter(rootHeightParameter);
+
+        pushTreeChangedEvent();
+    }
+
     /**
      * Recursive algorithm to copy a proposed tree structure into the current treeModel.
      */

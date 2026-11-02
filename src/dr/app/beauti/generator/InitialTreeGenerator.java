@@ -154,8 +154,8 @@ public class InitialTreeGenerator extends Generator {
                         }
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
-                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
-                        + "which may be 1 of many aligments using this tree.");
+                writer.writeComment("To generate the UPGMA starting tree, only the first alignment is used, "
+                        + "which may be one of several alignments using this tree.");
                 writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
@@ -207,8 +207,9 @@ public class InitialTreeGenerator extends Generator {
 
     private void writeSubTree(String treeId, String taxaId, Taxa taxa, PartitionTreeModel model, XMLWriter writer) {
 
+        // a starting height for the subtree; zero (the Taxon Sets panel's default) means none
         Double height = options.taxonSetsHeights.get(taxa);
-        if (height == null) {
+        if (height == null || height <= 0.0) {
             height = Double.NaN;
         }
 
@@ -244,12 +245,14 @@ public class InitialTreeGenerator extends Generator {
         List<Taxa> subsets = new ArrayList<Taxa>();
 //        Taxa remainingTaxa = new Taxa(taxa);
 
+        // Only taxon sets marked as monophyletic are simulated as nested subtrees: sets that are
+        // not constrained to be monophyletic may overlap each other (or the monophyletic ones) and
+        // the simulator cannot build a tree containing incompatible clades.
         for (Taxa taxa2 : options.taxonSets) {
             boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
             boolean isMono = Boolean.TRUE.equals(options.taxonSetsMono.get(taxa2));
-            boolean hasHeight = options.taxonSetsHeights.get(taxa2) != null;
             boolean isSubset = taxa.containsAll(taxa2);
-            if (sameTree && (isMono || hasHeight) && taxa2 != taxa && isSubset) {
+            if (sameTree && isMono && taxa2 != taxa && isSubset) {
                 subsets.add(taxa2);
             }
         }
@@ -310,20 +313,6 @@ public class InitialTreeGenerator extends Generator {
         writer.writeCloseTag(NewickParser.NEWICK);
     }
 
-//    private void writeNewickNode(Tree tree, NodeRef node, XMLWriter writer) {
-//        if (tree.getChildCount(node) > 0)
-//            writer.writeText("(");
-//        if (tree.getChildCount(node) == 0)
-//            writer.writeText(tree.getNodeTaxon(node).getId() + " : " + tree.getBranchLength(node));
-//
-//        for (int i = 0; i < tree.getChildCount(node); i++) {
-//            if (i > 0) writer.writeText(", ");
-//            writeNewickNode(tree, tree.getChild(node, i), writer);
-//
-//        }
-//        if (tree.getChildCount(node) > 0)
-//            writer.writeText(")");
-//    }
 
     /**
      * Generate XML for the user tree

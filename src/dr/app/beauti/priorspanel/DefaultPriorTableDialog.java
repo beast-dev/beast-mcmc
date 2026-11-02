@@ -96,18 +96,11 @@ public class DefaultPriorTableDialog {
             priorsPanel.setContinueButton(button);
         }
 
-//       if (priorspanel.hasUndefinedPrior) {
-//            buttons = new String[] {"OK"};
-//            title = "Undefined Priors";
 //            optionPane = new JOptionPane(priorspanel,
 //                    JOptionPane.ERROR_MESSAGE,
 //                    JOptionPane.OK_OPTION,
 //                    null,
 //                    buttons,
-//                    buttons[0]);
-//        } else {
-//            buttons = new String[] {"Continue", "Cancel"};
-//            title = "Unchanged Default Priors";
 //            optionPane = new JOptionPane(priorspanel,
 //                    JOptionPane.PLAIN_MESSAGE,
 //                    JOptionPane.OK_CANCEL_OPTION,
@@ -123,6 +116,9 @@ public class DefaultPriorTableDialog {
         dialog.pack();
         dialog.setResizable(true);
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         return optionPane.getValue() != null && optionPane.getValue().equals("Continue");
     }

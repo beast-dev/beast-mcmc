@@ -133,6 +133,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
 
     private final Parameter indicatorsParameter;
 
+    @Override
     public Parameter getRatesParameter() {
         return ratesParameter;
     }

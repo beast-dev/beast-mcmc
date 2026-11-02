@@ -1,23 +1,6 @@
 *.iml
 *.ipr
 *.iws
-.idea
-.DS_Store
-*.code-workspace
-
-*.dmg
-*.zip
-*.tgz
-*.log
-*.trees
-*.tree
-
-*.xml
-!examples/**/*.xml
-!examples/data
-!tests/**/*.xml
-!build*.xml
-
 bin/
 build/
 dist/
@@ -29,13 +12,28 @@ test*
 examples/**/.*
 benchmarking
 problem_cases
+.idea
+.DS_Store
 
+*.log
+*.trees
+*.tree
+*.xml
+!examples/**/*.xml
+!examples/data
+benchmarking/Results/
+!tests/**/*.xml
+!build*.xml
 
 zig_zag
 src/revision.txt
 src/version.txt
-release*
+*.dmg
+*.zip
+*.tgz
+release*/
 !release.yml
+src/revision.txt
 
 *.citations.txt
 *.ops

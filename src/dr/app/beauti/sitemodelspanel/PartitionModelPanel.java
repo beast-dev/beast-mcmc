@@ -38,7 +38,6 @@ import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelStructureType;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
-import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
@@ -62,8 +61,6 @@ import java.util.logging.Logger;
  * @author Walter Xie
  */
 public class PartitionModelPanel extends OptionsPanel {
-
-    private static final boolean ENABLE_STOCHASTIC_DOLLO = true;
 
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
@@ -105,9 +102,6 @@ public class PartitionModelPanel extends OptionsPanel {
     private JButton setYang96Button;
     private JButton setSRD06Button;
 
-    private JCheckBox dolloCheck = new JCheckBox("Use stochastic Dollo model");
-    // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical",
-    // "Sample"});
 
     //combo box to choose between FIT CTMC and BIT CTMC
     private JComboBox discreteTraitSiteModelCombo = new JComboBox(
@@ -228,7 +222,7 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         useAmbiguitiesTreeLikelihoodCheck
-                .setToolTipText("<html>Detemine useAmbiguities in &lt treeLikelihood &gt .</html>");
+                .setToolTipText("<html>Use the ambiguous states in the tree likelihood of this model.</html>");
 
         PanelUtils.setupComponent(frequencyCombo);
         frequencyCombo.addItemListener(new ItemListener() {
@@ -312,46 +306,6 @@ public class PartitionModelPanel extends OptionsPanel {
         AminoAcidModelType type = (AminoAcidModelType) aaSubstCombo.getSelectedItem();
         citationText.setText(type.getCitation().toString());
 
-        dolloCheck.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                if (dolloCheck.isSelected()) {
-                    binarySubstCombo.setSelectedIndex(0);
-                    binarySubstCombo.setEnabled(false);
-                    useAmbiguitiesTreeLikelihoodCheck.setSelected(true);
-                    useAmbiguitiesTreeLikelihoodCheck.setEnabled(false);
-                    frequencyCombo.setEnabled(false);
-                    frequencyCombo.setSelectedItem(FrequencyPolicyType.EMPIRICAL);
-                    heteroCombo.setSelectedIndex(0);
-                    heteroCombo.setEnabled(false);
-                    model.setBinarySubstitutionModel(BinaryModelType.BIN_DOLLO);
-                    model.setDolloModel(true);
-                    DolloComponentOptions comp = (DolloComponentOptions)
-                            model.getOptions().getComponentOptions(DolloComponentOptions.class);
-                    comp.createParameters(model.getOptions());
-                    comp.setActive(true);
-
-                } else {
-                    binarySubstCombo.setEnabled(true);
-                    useAmbiguitiesTreeLikelihoodCheck.setEnabled(true);
-                    frequencyCombo.setEnabled(true);
-                    heteroCombo.setEnabled(true);
-                    model.setBinarySubstitutionModel((BinaryModelType) binarySubstCombo.getSelectedItem());
-                    model.setDolloModel(false);
-                }
-            }
-        });
-
-        PanelUtils.setupComponent(dolloCheck);
-//        dolloCheck.addChangeListener(new ChangeListener() {
-//            public void stateChanged(ChangeEvent e) {
-//                model.setDolloModel(true);
-//            }
-//        });
-        dolloCheck.setEnabled(true);
-        dolloCheck
-                .setToolTipText("<html>Activates a Stochastic Dollo model as described in<br>"
-                        + "Alekseyenko, Lee & Suchard (2008) <i>Syst Biol</i> <b>57</b>: 772-784.</html>");
-
         PanelUtils.setupComponent(discreteTraitSiteModelCombo);
         discreteTraitSiteModelCombo.setToolTipText("Select Backward-in-time CTMC for structured coalescent model options.");
         discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
@@ -426,7 +380,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(bitPanel);
 
-        BeautiOptions.getInstance().needCoalescentModel.put(partitionModel.getName(), true);
+        partitionModel.getOptions().needCoalescentModel.put(partitionModel.getName(), true);
 
         PanelUtils.setupComponent(continuousTraitSiteModelCombo);
         continuousTraitSiteModelCombo
@@ -515,6 +469,9 @@ public class PartitionModelPanel extends OptionsPanel {
                     final JDialog dialog = optionPane.createDialog(frame, "Select Latent Factor Dimension");
                     dialog.pack();
                     dialog.setVisible(true);
+
+                    // the dialog is modal, so it has been closed by the time this returns
+                    dialog.dispose();
 
                     Integer value = (Integer) optionPane.getValue();
                     if (value == JOptionPane.CANCEL_OPTION) {
@@ -680,8 +637,6 @@ public class PartitionModelPanel extends OptionsPanel {
         substUnlinkCheck.setSelected(model.isUnlinkedSubstitutionModel());
         heteroUnlinkCheck.setSelected(model.isUnlinkedHeterogeneityModel());
         freqsUnlinkCheck.setSelected(model.isUnlinkedFrequencyModel());
-
-        dolloCheck.setSelected(model.isDolloModel());
     }
 
     /**
@@ -861,12 +816,6 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addComponentWithLabel("", useAmbiguitiesTreeLikelihoodCheck);
 
-                // Easy XML specification is currently only available for binary models
-                if (ENABLE_STOCHASTIC_DOLLO) {
-                    addSeparator();
-                    addComponent(dolloCheck);
-                }
-
                 break;
 
             case DataType.GENERAL:
@@ -875,10 +824,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 //use the mapping to the partition tree and not the model name itself for the HashMap
                 String modelName = model.getPartitionData().getPartitionTreeModel().getName();
                 if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
-                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, true);
+                    model.getOptions().needCoalescentModel.put(modelName, true);
                     addComponentWithLabel("Forward-in-time Model Structure:", discreteTraitSiteModelStructureCombo);
                 } else {
-                    BeautiOptions.getInstance().needCoalescentModel.put(modelName, false);
+                    model.getOptions().needCoalescentModel.put(modelName, false);
                     addComponentWithLabel("Backward-in-time Coalescent Model:", bitModelCombo);
                     addComponentWithLabel("Backward-in-time Model structure:", discreteTraitSiteModelStructureCombo);
                     addComponent(bitDemeSharing);

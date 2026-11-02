@@ -30,6 +30,9 @@ package dr.app.beauti.options;
 import java.util.*;
 
 import dr.app.beauti.components.ComponentFactory;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
@@ -46,6 +49,7 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
 import dr.evoxml.util.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
@@ -79,11 +83,8 @@ public class BeautiOptions extends ModelOptions {
 
     private static final long serialVersionUID = -3676802825545741012L;
 
+    // the current options: each BeautiFrame creates its own with newInstance; getInstance is for legacy callers
     private static BeautiOptions INSTANCE;
-
-    private BeautiOptions() {
-        this(new ComponentFactory[]{});
-    }
 
     private BeautiOptions(ComponentFactory[] components) {
 
@@ -91,12 +92,29 @@ public class BeautiOptions extends ModelOptions {
         registerComponents(components);
     }
 
-    public static BeautiOptions getInstance() {
-        if(INSTANCE == null) {
-            INSTANCE = new BeautiOptions();
+    /**
+     * @return the most recently created (or opened) options
+     */
+    public static synchronized BeautiOptions getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new BeautiOptions(new ComponentFactory[]{});
         }
-
         return INSTANCE;
+    }
+
+    /**
+     * Creates a fresh, independent options object with the components installed and makes it the current one.
+     */
+    public static synchronized BeautiOptions newInstance(ComponentFactory[] components) {
+        INSTANCE = new BeautiOptions(components);
+        return INSTANCE;
+    }
+
+    /**
+     * Makes an options object (e.g. one read from a file) the current one.
+     */
+    public static synchronized void setInstance(BeautiOptions options) {
+        INSTANCE = options;
     }
 
     /**
@@ -126,26 +144,34 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsTreeModel.clear();
 
         // meanDistance = 1.0;
+        useTipDates = false;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
         maximumTipHeight = 0.0;
         translation = 0;
+        originDate = null;
+        dateGuesser = new DateGuesser();
+        taxonSetsHeights.clear();
 
         dataPartitions.clear();
         traits.clear();
-        // partitionModels.clear();
-        // partitionTreeModels.clear();
-        // partitionTreePriors.clear();
-        // partitionClockTreeLinks.clear();
-        // activedSameTreePrior = null;
-        // shareSameTreePrior = true;
         userTrees.clear();
 
         // rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
         // meanSubstitutionRate = 1.0;
         unlinkPartitionRates = true;
 
-        units = Units.Type.SUBSTITUTIONS;
+        units = Units.Type.YEARS;
+
+        multiPartitionLists.clear();
+        otherPartitions.clear();
+        needCoalescentModel.clear();
+        operatorSetType = OperatorSetType.DEFAULT;
+        useClassicOperatorsAndPriors = false;
+        logCoalescentEventsStatistic = false;
+        generateDemographicLogFile = false;
+        demographicModelName = null;
+        demographicLogFileName = null;
 
         // Operator schedule options
         optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
@@ -188,14 +214,76 @@ public class BeautiOptions extends ModelOptions {
         clearDataPartitionCaches();
     }
 
+    /**
+     * Recomputes maximumTipHeight and the "_height" attribute of every dated taxon from the taxon dates (and the
+     * origin date, if any), with the most recent date at height 0.
+     *
+     * @return each taxon's height, in taxon order, or null if no taxon has a date
+     */
+    public double[] calculateTipHeights() {
+        maximumTipHeight = 0.0;
+        if (taxonList == null || taxonList.getTaxonCount() == 0) {
+            return null;
+        }
+
+        Date mostRecent = originDate;
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            Date date = taxonList.getTaxon(i).getDate();
+            if (date != null && (mostRecent == null || date.after(mostRecent))) {
+                mostRecent = date;
+            }
+        }
+        if (mostRecent == null) {
+            return null;
+        }
+
+        double[] heights = new double[taxonList.getTaxonCount()];
+        TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
+        double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            Taxon taxon = taxonList.getTaxon(i);
+            Date date = taxon.getDate();
+            if (date != null) {
+                heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
+                taxon.setAttribute("_height", heights[i]);
+                if (heights[i] > maximumTipHeight) {
+                    maximumTipHeight = heights[i];
+                }
+            }
+        }
+        return heights;
+    }
+
+    /**
+     * Derives the output file names from the file name stem: the log, the tree log(s) (one per tree model,
+     * with "(time)" and "(subst)" variants when the substitution-length trees are logged too), the checkpoint
+     * and the operator analysis.
+     *
+     * @param addTxtExtension whether to add ".txt" to the log file names
+     */
+    public void updateFileNames(boolean addTxtExtension) {
+        String extension = addTxtExtension ? ".txt" : "";
+        logFileName = fileNameStem + ".log" + extension;
+        checkpointFileName = fileNameStem + ".chkpt";
+        operatorAnalysisFileName = fileNameStem + ".ops" + extension;
+
+        treeFileName.clear();
+        substTreeFileName.clear();
+        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+            String prefix = fileNameStem + "." + tree.getPrefix();
+            treeFileName.add(prefix + (substTreeLog ? "(time)." : "") + "trees" + extension);
+            if (substTreeLog) {
+                substTreeFileName.add(prefix + "(subst).trees" + extension);
+            }
+        }
+    }
+
     public void selectTaxonSetsStatistics(List<Parameter> params) {
 
         if (taxonSets != null) {
             for (Taxa taxa : taxonSets) {
                 params.add(updateTMRCAStatistic(taxa));
             }
-        } else {
-            System.err.println("TaxonSets are null");
         }
     }
 
@@ -235,7 +323,7 @@ public class BeautiOptions extends ModelOptions {
     }
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
     }
 
@@ -307,10 +395,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectParameters(parameters);
         }
 
-//        for (TraitData trait : getTraitsList()) { // all traits including locations
-//            if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
-//        	   trait.gets.selectParameters(parameters);
-//        }
 
         selectComponentParameters(this, parameters);
 
@@ -352,10 +436,6 @@ public class BeautiOptions extends ModelOptions {
             prior.selectOperators(ops);
         }
 
-//        for (TraitData trait : getTraitsList()) { // all traits including locations
-//        	if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
-//                trait.getTraitData().selectOperators(ops);
-//        }
 
         selectComponentOperators(this, ops);
 
@@ -600,13 +680,6 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionSubstitutionModels(dataPartitions);
     }
 
-//    public List<PartitionSubstitutionModel> getPartitionTraitsSubstitutionModels() {
-//        return getPartitionSubstitutionModels(getTraitsList());
-//    }
-//
-//    public List<PartitionSubstitutionModel> getPartitionNonTraitsSubstitutionModels() {
-//        return getPartitionSubstitutionModels(getNonTraitsDataList());
-//    }
 
 
     // ++++++++++++++ Partition Clock Model ++++++++++++++
@@ -651,14 +724,7 @@ public class BeautiOptions extends ModelOptions {
     // ++++++++++++++ Partition Tree Model ++++++++++++++
 //    public void addPartitionTreeModel(PartitionTreeModel tree) {
 //
-//        if (!partitionTreeModels.contains(tree)) {
-//            partitionTreeModels.add(tree);
-//        }
-//    }
 
-//    public List<PartitionTreeModel> getPartitionTreeModels() {
-//        return partitionTreeModels;
-//    }
 
     private final Map<List<? extends AbstractPartitionData>, List<PartitionTreeModel>> ptmlCache = new HashMap<List<? extends AbstractPartitionData>, List<PartitionTreeModel>>();
 
@@ -685,9 +751,6 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionTreeModels(dataPartitions);
     }
 
-//    public List<PartitionTreeModel> getNonTraitPartitionTreeModels() {
-//        return getPartitionTreeModels(getNonTraitsDataList());
-//    }
 
 
     // ++++++++++++++ Partition Tree Prior ++++++++++++++
@@ -840,40 +903,6 @@ public class BeautiOptions extends ModelOptions {
 
     // +++++++++++++ Traits +++++++++++++
 
-//    public List<PartitionData> getNonTraitsDataList() {
-//        List<PartitionData> nonTraitsData = new ArrayList<PartitionData>();
-//        for (PartitionData partition : dataPartitions) {
-//            if (partition.getTraitType() == null) {
-//                nonTraitsData.add(partition);
-//            }
-//        }
-//        return nonTraitsData;
-//    }
-//
-//    public List<TraitData> getTraitsList() {
-//        List<TraitData> traits = new ArrayList<TraitData>();
-//        for (PartitionData partition : dataPartitions) {
-//            if (partition.getTraitType() != null) {
-//                traits.add((TraitData) partition);
-//            }
-//        }
-//        return traits;
-//    }
-//
-//    public List<TraitData> getDiscreteIntegerTraits() {
-//        List<TraitData> traits = new ArrayList<TraitData>();
-//        for (PartitionData partition : dataPartitions) {
-//            if (partition.getTraitType() != null && partition.getTraitType() != TraitData.TraitType.CONTINUOUS) {
-//                traits.add((TraitData) partition);
-//            }
-//        }
-//        return traits;
-//    }
-//
-//    public boolean hasDiscreteIntegerTraitsExcludeSpecies() { // exclude species at moment
-//        return getDiscreteIntegerTraits().size() > 1
-//                || (getDiscreteIntegerTraits().size() > 0 && (!traitExists(TraitData.TRAIT_SPECIES)));
-//    }
 
     public int getIndexOfTrait(String traitName) {
         int i = 0;
@@ -1029,16 +1058,6 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
-//    public boolean hasAlignmentPartition() {
-//        for (AbstractPartitionData partition : dataPartitions) {
-//            if (partition instanceof PartitionData) {
-//                if (((PartitionData) partition).getAlignment() != null) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
 
 
     public boolean hasDiscreteTrait() {
@@ -1137,9 +1156,6 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-            // if (hasPhylogeographic()) {
-            //      message += ";    Phylogeographic Analysis";
-            // }
 
             // message += "; " + clockModelOptions.statusMessageClockModel();
 
@@ -1303,5 +1319,49 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public boolean logCoalescentEventsStatistic = false;
+
+    /**
+     * Restores the fields that a file saved by an earlier version of BEAUti does not carry. A field added
+     * after that file was written arrives as null (or as 0 or false, for a primitive: use
+     * {@link ObjectInputStream#readFields()} here instead if some later field needs a non-zero default).
+     */
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+
+        if (taxonSets == null) taxonSets = new ArrayList<Taxa>();
+        if (taxonSetsMono == null) taxonSetsMono = new HashMap<Taxa, Boolean>();
+        if (taxonSetsHeights == null) taxonSetsHeights = new HashMap<Taxa, Double>();
+        if (taxonSetsIncludeStem == null) taxonSetsIncludeStem = new HashMap<Taxa, Boolean>();
+        if (taxonSetsTreeModel == null) taxonSetsTreeModel = new HashMap<Taxa, PartitionTreeModel>();
+        if (dateGuesser == null) dateGuesser = new DateGuesser();
+        if (dataPartitions == null) dataPartitions = new ArrayList<AbstractPartitionData>();
+        if (traits == null) traits = new ArrayList<TraitData>();
+        if (multiPartitionLists == null) multiPartitionLists = new ArrayList<List<PartitionData>>();
+        if (otherPartitions == null) otherPartitions = new ArrayList<AbstractPartitionData>();
+        if (userTrees == null) userTrees = new HashMap<String, TreeHolder>();
+        if (treeFileName == null) treeFileName = new ArrayList<String>();
+        if (substTreeFileName == null) substTreeFileName = new ArrayList<String>();
+        if (needCoalescentModel == null) needCoalescentModel = new HashMap<String, Boolean>();
+
+        if (datesUnits == null) datesUnits = DateUnitsType.YEARS;
+        if (datesDirection == null) datesDirection = DateUnitsType.FORWARDS;
+        if (units == null) units = Units.Type.YEARS;
+        if (optimizationTransform == null) optimizationTransform = OperatorSchedule.DEFAULT_TRANSFORM;
+        if (operatorSetType == null) operatorSetType = OperatorSetType.DEFAULT;
+        if (fileNameStem == null) fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
+
+        if (globalModelOptions == null) globalModelOptions = new GlobalModelOptions(this);
+        if (clockModelOptions == null) clockModelOptions = new ClockModelOptions(this);
+        if (treeModelOptions == null) treeModelOptions = new TreeModelOptions(this);
+
+        // the tree models of an older file have no entry, and the tree prior panel reads it as a boolean
+        for (PartitionTreeModel treeModel : getPartitionTreeModels()) {
+            if (!needCoalescentModel.containsKey(treeModel.getName())) {
+                needCoalescentModel.put(treeModel.getName(), true);
+            }
+        }
+
+        clearDataPartitionCaches();
+    }
 
 }

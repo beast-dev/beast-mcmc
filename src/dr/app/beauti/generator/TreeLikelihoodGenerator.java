@@ -229,10 +229,6 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model.isDolloModel()) {
-            return; // DolloComponent will add tree likelihood
-        }
-
         String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
             treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
@@ -364,10 +360,6 @@ public class TreeLikelihoodGenerator extends Generator {
                 return; // some partitions don't have evolutionary models (i.e., empirical trees)
             }
 
-            if (model.isDolloModel()) {
-                return; // DolloComponent will add tree likelihood
-            }
-
             String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
             if (ancestralStatesOptions.usingAncestralStates(partition)) {
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
@@ -420,7 +412,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model == null || model.isDolloModel()) {
+        if (model == null) {
             return false;
         }
 

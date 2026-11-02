@@ -29,12 +29,16 @@ package dr.app.beauti.options;
 
 import dr.evolution.tree.Tree;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TreeHolder {
+public class TreeHolder implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     public TreeHolder(Tree tree, String name, String fileName) {
         this.trees = Collections.singletonList(tree);
         this.name = name;

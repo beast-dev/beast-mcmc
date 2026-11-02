@@ -37,6 +37,9 @@ import dr.app.beauti.generator.ClockModelGenerator;
 import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+
 import dr.evolution.datatype.GeneralDataType;
 import dr.inference.distribution.BinomialLikelihood;
 import dr.inference.distribution.DistributionLikelihood;
@@ -88,6 +91,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     @Override
     public void checkOptions() throws GeneratorException {
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            if (model.isActivateBSSVS() && model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST) {
+                throw new GeneratorException("BSSVS cannot be used with the GLM substitution model of " +
+                        model.getName() + ".", BeautiFrame.SITE_MODELS);
+            }
+        }
         super.checkOptions();
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
@@ -580,10 +589,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
                     new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
-//            writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-////            writeParameter("rateCopyNumber",2, writer);
-//            writeParameter("", 2, writer);
-//            writer.writeCloseTag(DuplicatedParameterParser.COPIES);
             writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
         } else {
             writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
@@ -597,10 +602,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 writer.writeOpenTag(DuplicatedParameterParser.DUPLICATED_PARAMETER,
                         new Attribute.Default<>(DuplicatedParameterParser.COPIES, "2"));
                 writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
-//                writer.writeOpenTag(DuplicatedParameterParser.COPIES);
-////                writeParameter("indicatorCopyNumber",2, writer);
-//                writeParameter("", 2, writer);
-//                writer.writeCloseTag(DuplicatedParameterParser.COPIES);
                 writer.writeCloseTag(DuplicatedParameterParser.DUPLICATED_PARAMETER);
             } else {
                 //asymmetric

@@ -321,10 +321,10 @@ public class DateGuesser implements Serializable {
     }
 
 
-    private void parseDateFromValue(String label, HashMap<String, String> myload, double[] values) throws GuessDatesException {
+    private void parseDateFromValue(String label, HashMap<String, String> dateStrings, double[] values) throws GuessDatesException {
         String dateStr = "";
-        if (myload.containsKey(label)) {
-            dateStr = (String)(myload.get(label));
+        if (dateStrings.containsKey(label)) {
+            dateStr = (String)(dateStrings.get(label));
         } else {
             throw new GuessDatesException("The imported table doesn't contain the taxon label, " + label);
         }

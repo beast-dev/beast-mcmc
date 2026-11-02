@@ -94,9 +94,6 @@ public class JointPriorDialog implements AbstractPriorDialog {
         nameField.setColumns(30);
 
         parametersTableModel = new ParametersTableModel();
-//        TableSorter sorter = new TableSorter(traitsTableModel);
-//        traitsTable = new JTable(sorter);
-//        sorter.setTableHeader(traitsTable.getTableHeader());
         parametersTable = new JTable(parametersTableModel);
 
         parametersTable.getTableHeader().setReorderingAllowed(false);
@@ -226,6 +223,9 @@ public class JointPriorDialog implements AbstractPriorDialog {
         dialog.pack();
         dialog.setResizable(true);
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();

@@ -31,7 +31,7 @@ package dr.app.beauti.types;
  * @author Andrew Rambaut
  */
 public enum TreeAsDataType {
-    EMPRICAL_TREES("Empirical Trees"),
+    EMPIRICAL_TREES("Empirical Trees"),
     THORNEY_BEAST("ThorneyBEAST");
 
     TreeAsDataType(String name) {

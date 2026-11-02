@@ -16,7 +16,7 @@ env:
     BEAGLE_DIR: beagle-lib
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
-    BEAGLE_BRANCH: matrix_vector-tensor-cores
+    BEAGLE_BRANCH: main
     JAVA_VERSION: "8"
     JAVA_DISTRIBUTION: temurin
 

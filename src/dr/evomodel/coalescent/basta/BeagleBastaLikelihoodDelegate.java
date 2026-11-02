@@ -271,7 +271,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             }
 
             int partialsAlloc = useAdjointGradient ? 2 * currentPartialsCount : currentPartialsCount;
-            beagle.allocateCoalescentBuffers(5, maxNumCoalescentIntervals, partialsAlloc, 0, threadCount);
+            beagle.allocateCoalescentBuffers(5, currentIntervalsCount, partialsAlloc, 0, threadCount);
             int gradPartialsArg = useAdjointGradient ? -currentPartialsCount : currentPartialsCount;
             beagle.allocateCoalescentGradBuffers(gradPartialsArg);
             gradientBuffersAllocated = true;

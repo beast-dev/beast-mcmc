@@ -297,7 +297,9 @@ set loaded by default (`parsers=development` in `beast.properties`).
   table column names the unit. For every file LogCombiner now reports how many trees or
   samples were read and written, and warns when the burn-in removed nothing, only the first
   sample or everything, which is what happens when a number of trees is entered where states
-  are expected. ([#1247](https://github.com/beast-dev/beast-mcmc/issues/1247))
+  are expected. Lines that could not be read, which are skipped as a possible corruption,
+  are counted and reported separately rather than being blamed on the burn-in.
+  ([#1247](https://github.com/beast-dev/beast-mcmc/issues/1247))
 - TreeStateTimeSummarizer writes `startHeight`, `endHeight` and `branchingEvents`
   columns for each state interval.
 - `scripts/fit_rate_prior.py` fits a lognormal distribution to a set of HPD bounds for
@@ -500,6 +502,12 @@ set loaded by default (`parsers=development` in `beast.properties`).
   ([#1283](https://github.com/beast-dev/beast-mcmc/pull/1283))
 - The birth-death models moved to `dr.evomodel.birthdeath`; `EfficientSpeciationLikelihood`
   is now `EfficientBirthDeathLikelihood`.
+- `MultiPartitionTreeLikelihood` shares the count of BEAGLE instances with the other
+  implementations, as they already share it with each other. BEAGLE devices are handed out
+  by indexing `-beagle_order` with that count, so a class holding its own would start again
+  at the first device. Nothing constructs this class, so this changes no behaviour; it keeps
+  the bug fixed for v10.5.0 from returning with it.
+  ([#1079](https://github.com/beast-dev/beast-mcmc/issues/1079))
 - Eigen3 (JNI) and EJML eigendecomposition implementations were added but are not yet
   selectable from XML.
 

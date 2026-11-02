@@ -210,6 +210,9 @@ public class TopologySearchStudy {
 
     private static Result run(String pipeline, Map<String, String> variants, File fasta, Map<String, Double> heights,
                               boolean dated, boolean ucln, Tree truth, File directory) throws Exception {
+        if (pipeline.equals("E") || pipeline.equals("F")) {
+            return external(pipeline, fasta, heights, dated, sitesOf(fasta), directory);
+        }
         TreeLimeOptions options = TreeLimeHarness.importData(fasta.getPath());
         if (dated) {
             for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
@@ -274,6 +277,10 @@ public class TopologySearchStudy {
         }
 
         options.maximizationOptions.printToScreen = false;
+        if (System.getProperty("objective") != null) { // -Dobjective=ML: the tree likelihoods only (H2's bias check)
+            options.maximizationOptions.objective =
+                    dr.app.treelime.options.MaximizationOptions.Objective.valueOf(System.getProperty("objective"));
+        }
         options.maximizationOptions.getTopologySearch().mode = search ? TopologySearchOptions.Mode.NNI :
                 TopologySearchOptions.Mode.OFF;
         if (fromTruth) {
@@ -321,6 +328,99 @@ public class TopologySearchStudy {
         }
         result.rate = substitutions / time;
         return result;
+    }
+
+    // -------------------------------------------------------------------------------------------------------------
+    // H2's comparators (§13.2), run from -Dtools=<dir> holding iqtree3, lsd2 and tt-venv/bin/treetime: IQ-TREE's ML
+    // tree under the true model family (HKY+G4), then dated by LSD2 (E: -r a, all branches, no collapsing; without tip
+    // dates the root at 0 and the tips at 1) or by TreeTime (F: --coalescent opt --reroot best; dated tips only). F is
+    // NaN: the comparators do not report TreeLime's objective
+
+    private static Result external(String pipeline, File fasta, Map<String, Double> heights, boolean dated, int sites,
+                                   File directory) throws Exception {
+        final String tools = System.getProperty("tools");
+        if (tools == null) {
+            throw new IllegalArgumentException("pipeline " + pipeline + " needs -Dtools=<dir>");
+        }
+        if (pipeline.equals("F") && !dated) {
+            throw new IllegalArgumentException("TreeTime (F) needs tip dates");
+        }
+        final File iqTree = new File(directory, "iq.treefile");
+        if (!iqTree.exists()) {
+            execute(directory, tools + "/iqtree3", "-s", fasta.getPath(), "-m", "HKY+G4", "-T", "1", "-seed", "1",
+                    "--prefix", new File(directory, "iq").getPath(), "-quiet", "-redo");
+        }
+        // dates forward in time, the most recent tip at 100 (as the TreeLime pipelines' taxon dates)
+        PrintWriter lsdDates = new PrintWriter(new File(directory, "dates.txt"));
+        PrintWriter csvDates = new PrintWriter(new File(directory, "dates.csv"));
+        lsdDates.println(heights.size());
+        csvDates.println("name,date");
+        for (Map.Entry<String, Double> tip : heights.entrySet()) {
+            lsdDates.println(tip.getKey() + " " + (100.0 - tip.getValue()));
+            csvDates.println(tip.getKey() + "," + (100.0 - tip.getValue()));
+        }
+        lsdDates.close();
+        csvDates.close();
+
+        Result result = new Result();
+        result.f = Double.NaN;
+        File treeFile;
+        if (pipeline.equals("E")) {
+            List<String> command = new ArrayList<String>(java.util.Arrays.asList(tools + "/lsd2", "-i",
+                    iqTree.getPath(), "-s", Integer.toString(sites), "-r", "a", "-l", "-1",
+                    "-o", new File(directory, "lsd").getPath()));
+            if (dated) {
+                command.add("-d");
+                command.add(new File(directory, "dates.txt").getPath());
+            }
+            execute(directory, command.toArray(new String[0]));
+            treeFile = new File(directory, "lsd.date.nexus"); // lsd.nwk is the rooted input tree, in substitutions
+            result.rate = firstNumberAfter(new File(directory, "lsd"), "rate "); // " rate 0.0042, tMRCA 82.4 , ..."
+        } else {
+            final File out = new File(directory, "tt");
+            execute(directory, tools + "/tt-venv/bin/treetime", "--tree", iqTree.getPath(), "--aln", fasta.getPath(),
+                    "--dates", new File(directory, "dates.csv").getPath(), "--coalescent", "opt", "--reroot", "best",
+                    "--outdir", out.getPath());
+            treeFile = new File(out, "timetree.nexus");
+            result.rate = firstNumberAfter(new File(out, "molecular_clock.txt"), "--rate:");
+        }
+        java.io.FileReader reader = new java.io.FileReader(treeFile);
+        result.tree = new FlexibleTree(treeFile.getName().endsWith(".nexus") ?
+                new dr.evolution.io.NexusImporter(reader).importNextTree() :
+                new dr.evolution.io.NewickImporter(reader).importNextTree());
+        reader.close();
+        return result;
+    }
+
+    private static int sitesOf(File fasta) throws Exception {
+        final List<String> lines = Files.readAllLines(fasta.toPath());
+        return lines.size() > 1 ? lines.get(1).trim().length() : 0;
+    }
+
+    private static void execute(File directory, String... command) throws Exception {
+        ProcessBuilder builder = new ProcessBuilder(command).directory(directory).redirectErrorStream(true)
+                .redirectOutput(new File(directory, new File(command[0]).getName() + ".log"));
+        builder.environment().put("OMP_TOOL", "disabled"); // IQ-TREE's OpenMP otherwise looks for libarcher.so
+        final int status = builder.start().waitFor();
+        if (status != 0) {
+            throw new RuntimeException(String.join(" ", command) + " exited with " + status + "; see " +
+                    new File(directory, new File(command[0]).getName() + ".log"));
+        }
+    }
+
+    // the number after the key on the first line of a tool's text output that starts with it
+    private static double firstNumberAfter(File file, String key) throws Exception {
+        for (String line : Files.readAllLines(file.toPath())) {
+            final int at = line.indexOf(key);
+            if (line.trim().startsWith(key)) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("[-+]?[0-9.]+(?:[eE][-+]?[0-9]+)?")
+                        .matcher(line.substring(at + key.length()));
+                if (m.find()) {
+                    return Double.parseDouble(m.group());
+                }
+            }
+        }
+        return Double.NaN;
     }
 
     // a constant-size coalescent with tips at the given heights

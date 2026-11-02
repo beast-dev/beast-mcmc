@@ -294,7 +294,7 @@
 	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
 		<joint id="joint">
 			<prior id="prior">
-				<dirichletPrior alpha="1.0" sumsTo="1.0">
+				<dirichletPrior alpha="2.0" sumsTo="1.0">
 					<parameter idref="freeRates.weights"/>
 				</dirichletPrior>
 				<dirichletPrior alpha="1.0" sumsTo="1.0">

@@ -408,19 +408,19 @@
 				<dirichletPrior alpha="1.0" sumsTo="1.0">
 					<parameter idref="CP3.frequencies"/>
 				</dirichletPrior>
-				<dirichletPrior alpha="1.0" sumsTo="1.0">
+				<dirichletPrior alpha="2.0" sumsTo="1.0">
 					<parameter idref="CP1.freeRates.weights"/>
 				</dirichletPrior>
 				<dirichletPrior alpha="1.0" sumsTo="1.0">
 					<statistic idref="CP1.freeRates.weightedRates"/>
 				</dirichletPrior>
-				<dirichletPrior alpha="1.0" sumsTo="1.0">
+				<dirichletPrior alpha="2.0" sumsTo="1.0">
 					<parameter idref="CP2.freeRates.weights"/>
 				</dirichletPrior>
 				<dirichletPrior alpha="1.0" sumsTo="1.0">
 					<statistic idref="CP2.freeRates.weightedRates"/>
 				</dirichletPrior>
-				<dirichletPrior alpha="1.0" sumsTo="1.0">
+				<dirichletPrior alpha="2.0" sumsTo="1.0">
 					<parameter idref="CP3.freeRates.weights"/>
 				</dirichletPrior>
 				<dirichletPrior alpha="1.0" sumsTo="1.0">

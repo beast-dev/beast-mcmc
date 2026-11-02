@@ -223,7 +223,7 @@
 				<dirichletPrior alpha="1.0" sumsTo="1.0">
 					<parameter idref="frequencies"/>
 				</dirichletPrior>
-				<dirichletPrior alpha="1.0" sumsTo="1.0">
+				<dirichletPrior alpha="2.0" sumsTo="1.0">
 					<parameter idref="freeRates.weights"/>
 				</dirichletPrior>
 				<dirichletPrior alpha="1.0" sumsTo="1.0">

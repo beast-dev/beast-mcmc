@@ -109,6 +109,15 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     }
 
     @Override
+    public void updateBastaPartialsGrad_v5(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex) {
+        int errCode = BastaJNIWrapper.INSTANCE.updateBastaPartialsGrad_v5(instance, operations, operationCount,
+                intervals, intervalCount, populationSizeIndex, coalescentProbabilityIndex);
+        if (errCode != 0) {
+            throw new BeagleException("updateBastaPartialsGrad_v5", errCode);
+        }
+    }
+
+    @Override
     public void updateTransitionMatricesGrad(int[] transitionMatrixIndices, double[] branchLengths, int count) {
         int errCode = BastaJNIWrapper.INSTANCE.updateTransitionMatricesGrad(instance, transitionMatrixIndices, branchLengths, count);
         if (errCode != 0) {
@@ -124,6 +133,17 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
                 eigenIndex, partialAdjointBufferBase, matrixAdjointBufferBase, popSizeGradOut, result);
         if (errCode != 0) {
             throw new BeagleException("accumulateBastaPartialsGrad", errCode);
+        }
+    }
+
+    @Override
+    public void accumulateBastaPartialsGrad_v5(int[] operations, int operationCount, int[] intervalStarts, int intervalCount, double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, int eigenIndex, int partialAdjointBufferBase,
+                                               int matrixAdjointBufferBase, double[] popSizeGradOut, double[] result) {
+        int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartialsGrad_v5(instance, operations, operationCount,
+                intervalStarts, intervalCount, intervalLengths, populationSizeIndex, coalescentProbabilityIndex,
+                eigenIndex, partialAdjointBufferBase, matrixAdjointBufferBase, popSizeGradOut, result);
+        if (errCode != 0) {
+            throw new BeagleException("accumulateBastaPartialsGrad_v5", errCode);
         }
     }
 
@@ -148,6 +168,18 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
     }
 
     @Override
+    public void updateBastaPartials_v5(int[] operations, int operationCount,
+                                       int[] intervals, int intervalCount,
+                                       int populationSizeIndex,
+                                       int coalescentProbabilityIndex) {
+        int errCode = BastaJNIWrapper.INSTANCE.updateBastaPartials_v5(instance, operations, operationCount,
+                intervals, intervalCount, populationSizeIndex, coalescentProbabilityIndex);
+        if (errCode != 0) {
+            throw new BeagleException("updateBastaPartials_v5", errCode);
+        }
+    }
+
+    @Override
     public void accumulateBastaPartials(int[] operations, int operationCount, int[] segments, int segmentCount,
                                         double[] intervalLengths, int populationSizesIndex,
                                         int coalescentIndex, double[] result) {
@@ -155,6 +187,17 @@ public class BastaJNIImpl extends BeagleJNIImpl implements BeagleBasta {
                 segments, segmentCount, intervalLengths, populationSizesIndex, coalescentIndex, result);
         if (errCode != 0) {
             throw new BeagleException("accumulateBastaPartials", errCode);
+        }
+    }
+
+    @Override
+    public void accumulateBastaPartials_v5(int[] operations, int operationCount, int[] segments, int segmentCount,
+                                           double[] intervalLengths, int populationSizesIndex,
+                                           int coalescentIndex, double[] result) {
+        int errCode = BastaJNIWrapper.INSTANCE.accumulateBastaPartials_v5(instance,operations, operationCount,
+                segments, segmentCount, intervalLengths, populationSizesIndex, coalescentIndex, result);
+        if (errCode != 0) {
+            throw new BeagleException("accumulateBastaPartials_v5", errCode);
         }
     }
 

@@ -280,7 +280,7 @@ public class WorkingPriorParsers {
                     }
 
                     if (traceIndexParameter == -1) {
-                        throw new XMLParseException("LogTransformedNormalKDEDistribution: Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
+                        throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
                     }
 
                     Double[] parameterSamples = new Double[traces.getStateCount()];
@@ -332,7 +332,7 @@ public class WorkingPriorParsers {
                         }
 
                         if (traceIndexParameter == -1) {
-                            throw new XMLParseException("LogTransformedNormalKDEDistribution: Column '" + newParameterName[i] + "' can not be found for " + getParserName() + " element.");
+                            throw new XMLParseException("Column '" + newParameterName[i] + "' can not be found for " + getParserName() + " element.");
                         }
 
                         Double[] parameterSamples = new Double[traces.getStateCount()];
@@ -461,7 +461,7 @@ public class WorkingPriorParsers {
                     }
 
                     if (traceIndexParameter == -1) {
-                        throw new XMLParseException("LogitTransformedNormalKDEDistribution: Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
+                        throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
                     }
 
                     Double[] parameterSamples = new Double[traces.getStateCount()];
@@ -515,7 +515,7 @@ public class WorkingPriorParsers {
                         }
 
                         if (traceIndexParameter == -1) {
-                            throw new XMLParseException("LogitTransformedNormalKDEDistribution: Column '" + newParameterName[i] + "' can not be found for " + getParserName() + " element.");
+                            throw new XMLParseException("Column '" + newParameterName[i] + "' can not be found for " + getParserName() + " element.");
                         }
 
                         Double[] parameterSamples = new Double[traces.getStateCount()];

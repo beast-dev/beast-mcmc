@@ -492,6 +492,11 @@ set loaded by default (`parsers=development` in `beast.properties`).
   ([#1283](https://github.com/beast-dev/beast-mcmc/pull/1283))
 - The birth-death models moved to `dr.evomodel.birthdeath`; `EfficientSpeciationLikelihood`
   is now `EfficientBirthDeathLikelihood`.
+- Removed `LogTransformedNormalKDEDistribution` and `LogitTransformedNormalKDEDistribution`,
+  which duplicated about a thousand lines between them. `TransformedNormalKDEDistribution`
+  has done the same job for any transform since 2019 and is what every caller already used;
+  the two classes it replaced were left behind and did not give the right answer.
+  ([#969](https://github.com/beast-dev/beast-mcmc/issues/969))
 - Eigen3 (JNI) and EJML eigendecomposition implementations were added but are not yet
   selectable from XML.
 

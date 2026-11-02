@@ -96,6 +96,8 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private double[] beagleModelUnused;
     private boolean beagleModelKnown = false;
 
+    private Aggregation aggregation = Aggregation.AUTO;
+
     // Logs the rate of each internal node of the character tree, as branch rates are logged on the time tree.
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper(RATE_TRAIT, new TreeTrait.D() {
         public String getTraitName() {
@@ -219,6 +221,17 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             return !(treeEvent.isNodeParameterChanged() || treeEvent.isHeightChanged());
         }
         return false;
+    }
+
+    public Aggregation getAggregation() {
+        return aggregation;
+    }
+
+    public void setAggregation(Aggregation aggregation) {
+        if (aggregation == null) {
+            throw new IllegalArgumentException("aggregation must not be null");
+        }
+        this.aggregation = aggregation;
     }
 
     public HierarchicalRateProvider getRateProvider() {
@@ -665,6 +678,23 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     public TreeTrait getTreeTrait(String key) {
         return treeTraits.getTreeTrait(key);
+    }
+
+    /**
+     * Whether the BEAGLE plugin may aggregate the unobserved states of each site pattern: AUTO lets the plugin
+     * decide, ON and OFF force it. All hierarchical models of one likelihood must agree.
+     */
+    public enum Aggregation {
+        AUTO, ON, OFF;
+
+        public static Aggregation parse(String value) {
+            for (Aggregation a : values()) {
+                if (a.name().equalsIgnoreCase(value)) {
+                    return a;
+                }
+            }
+            throw new IllegalArgumentException("aggregate must be auto, on or off; found '" + value + "'");
+        }
     }
 
     public interface HierarchicalRateProvider {

@@ -398,6 +398,14 @@ set loaded by default (`parsers=development` in `beast.properties`).
   is given an ordinary prior, and the user is told what was dropped and taken to the Priors
   panel. ([#1062](https://github.com/beast-dev/beast-mcmc/issues/1062))
 
+- **Fixed a NEXUS file with character sets that do not fit its alignment failing to
+  import** — a character set running past the end of the alignment, starting before its
+  first site, or ending before it starts, failed while the sites were being taken, with an
+  index error that said nothing about which set was at fault; in the application the import
+  simply did not happen. Such a file is now refused with a message naming the character
+  set, the range it asks for and the length of the alignment.
+  ([#1066](https://github.com/beast-dev/beast-mcmc/issues/1066))
+
 - **Fixed the fixed local clock failing to generate XML** for a taxon set imported from a
   one-column file. ([#1231](https://github.com/beast-dev/beast-mcmc/issues/1231))
 - **Fixed every taxon set being nested as a subtree of the random starting tree**, which

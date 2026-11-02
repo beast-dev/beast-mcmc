@@ -842,12 +842,13 @@ public class BeautiImporter {
                               List<CharSet> charSets,
                               boolean compressPatterns,
                               PartitionSubstitutionModel model,
-                              String fileName, String fileNameStem) {
+                              String fileName, String fileNameStem) throws ImportException {
         assert alignment != null;
 
         List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
         if (charSets != null && !charSets.isEmpty()) {
             for (CharSet charSet : charSets) {
+                checkCharSet(charSet, alignment.getSiteCount());
                 PartitionData partitionData = new PartitionData(options, charSet.name, fileName,
                         charSet.constructCharSetAlignment(alignment));
                 if (compressPatterns) {
@@ -865,6 +866,37 @@ public class BeautiImporter {
         createPartitionFramework(model, partitions);
     }
 
+
+    /**
+     * Checks that a character set lies within the alignment it describes. A character set that runs off the
+     * end would otherwise fail while the sites were being taken, with nothing to say which set was at fault.
+     *
+     * @param charSet   the character set, as read from the file
+     * @param siteCount the number of sites in the alignment it applies to
+     */
+    private void checkCharSet(CharSet charSet, int siteCount) throws ImportException {
+        for (CharSetBlock block : charSet.getBlocks()) {
+            int from = block.getFromSite();
+            // a 'to' of zero or less means to the end of the alignment
+            int to = block.getToSite() > 0 ? block.getToSite() : siteCount;
+
+            if (from < 1) {
+                throw new ImportException("The character set '" + charSet.getName() + "' starts at site " +
+                        from + ". Character sets are numbered from 1.");
+            }
+
+            if (to > siteCount) {
+                throw new ImportException("The character set '" + charSet.getName() + "' covers sites " +
+                        from + " to " + to + " but the alignment is only " + siteCount + " sites long." +
+                        "\nCheck the character sets, and the number of characters given in the data block.");
+            }
+
+            if (from > to) {
+                throw new ImportException("The character set '" + charSet.getName() + "' covers sites " +
+                        from + " to " + to + ", which ends before it starts.");
+            }
+        }
+    }
 
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {

@@ -57,6 +57,10 @@ public class LogCombinerDialog {
 	private FilesTableModel filesTableModel = null;
 
 	private final JComboBox fileTypeCombo = new JComboBox(new String[] { "Log Files", "Tree Files" });
+	private final JComboBox burninTypeCombo = new JComboBox(new String[] { "MCMC states", "Trees / samples", "Percentage of file" });
+	private static final String[] BURNIN_COLUMN_NAMES = { "Burnin (states)", "Burnin (samples)", "Burnin (%)" };
+	private static final LogCombiner.BurninType[] BURNIN_TYPES = {
+			LogCombiner.BurninType.STATES, LogCombiner.BurninType.SAMPLES, LogCombiner.BurninType.PERCENT };
 	private final JCheckBox decimalCheck = new JCheckBox("Convert numbers from scientific to decimal notation");
 	private final JCheckBox renumberOutput = new JCheckBox("Renumber output states");
 	private final JCheckBox resampleCheck = new JCheckBox("Resample states at lower frequency: ");
@@ -87,6 +91,15 @@ public class LogCombinerDialog {
 		filesTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(filesTable);
+        filesTable.setToolTipText("The burn-in to discard from the start of each file, in the units chosen above");
+
+		burninTypeCombo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				filesTable.getColumnModel().getColumn(1).setHeaderValue(
+						BURNIN_COLUMN_NAMES[burninTypeCombo.getSelectedIndex()]);
+				filesTable.getTableHeader().repaint();
+			}
+		});
 
 		filesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent evt) { filesTableSelectionChanged(); }
@@ -151,6 +164,7 @@ public class LogCombinerDialog {
 		panel2.add(resampleCheck, BorderLayout.CENTER);
 		panel2.add(resampleText, BorderLayout.EAST);
 		optionPanel.addComponentWithLabel("File type: ", fileTypeCombo);
+		optionPanel.addComponentWithLabel("Burn-in given as: ", burninTypeCombo);
 		optionPanel.addComponent(decimalCheck);
                     optionPanel.addComponent(renumberOutput);
 		optionPanel.addComponent(panel2);
@@ -198,7 +212,15 @@ public class LogCombinerDialog {
 		return fileArray;
 	}
 
+	public LogCombiner.BurninType getBurninType() {
+		return BURNIN_TYPES[burninTypeCombo.getSelectedIndex()];
+	}
+
 	public long[] getBurnins() {
+		// a value still being typed in the table has not reached the model yet
+		if (filesTable.isEditing()) {
+			filesTable.getCellEditor().stopCellEditing();
+		}
 		long[] burnins = new long[files.size()];
 		for (int i = 0; i < files.size(); i++) {
 			FileInfo fileInfo = files.get(i);
@@ -300,7 +322,7 @@ public class LogCombinerDialog {
 		 *
 		 */
 		private static final long serialVersionUID = 4153326364833213013L;
-		private final String[] columns = { "File", "Burnin" };
+		private final String[] columns = { "File", BURNIN_COLUMN_NAMES[0] };
 
 		public FilesTableModel() {
 		}

@@ -795,18 +795,31 @@ public class BeautiImporter {
 
     private void checkTaxonList(TaxonList taxonList) throws ImportException {
 
-        // check the taxon names for invalid characters
-        boolean foundAmp = false;
+        // check the taxon names for invalid characters: '&' breaks the XML and '"' cannot be
+        // used in a quoted name (BEAST uses double quotes when writing names with spaces or quotes)
+        List<String> badNames = new ArrayList<String>();
         for (Taxon taxon : taxonList) {
             String name = taxon.getId();
-            if (name.indexOf('&') >= 0) {
-                foundAmp = true;
+            if (name.indexOf('&') >= 0 || name.indexOf('"') >= 0) {
+                badNames.add(name);
             }
         }
-        if (foundAmp) {
-            throw new ImportException("One or more taxon names include an illegal character ('&').\n" +
-                    "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
-                    "Please edit the taxon name(s) before reloading the data file.");
+        if (!badNames.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(badNames.size() == 1 ? "A taxon name includes" : badNames.size() + " taxon names include")
+                    .append(" an illegal character ('&' or '\"').\n")
+                    .append("These characters will prevent BEAST from reading the resulting XML file.\n\n")
+                    .append("Please edit the taxon name(s) before reloading the data file:\n");
+            int shown = 0;
+            for (String name : badNames) {
+                if (shown == 10) {
+                    sb.append("    ... and ").append(badNames.size() - shown).append(" more\n");
+                    break;
+                }
+                sb.append("    ").append(name).append("\n");
+                shown++;
+            }
+            throw new ImportException(sb.toString());
         }
 
         // Give the taxa without one a date of zero, so that the Tip Dates panel can edit them (its table
@@ -852,12 +865,13 @@ public class BeautiImporter {
                               List<CharSet> charSets,
                               boolean compressPatterns,
                               PartitionSubstitutionModel model,
-                              String fileName, String fileNameStem) {
+                              String fileName, String fileNameStem) throws ImportException {
         assert alignment != null;
 
         List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
         if (charSets != null && !charSets.isEmpty()) {
             for (CharSet charSet : charSets) {
+                checkCharSet(charSet, alignment.getSiteCount());
                 PartitionData partitionData = new PartitionData(options, charSet.name, fileName,
                         charSet.constructCharSetAlignment(alignment));
                 if (compressPatterns) {
@@ -875,6 +889,37 @@ public class BeautiImporter {
         createPartitionFramework(model, partitions);
     }
 
+
+    /**
+     * Checks that a character set lies within the alignment it describes. A character set that runs off the
+     * end would otherwise fail while the sites were being taken, with nothing to say which set was at fault.
+     *
+     * @param charSet   the character set, as read from the file
+     * @param siteCount the number of sites in the alignment it applies to
+     */
+    private void checkCharSet(CharSet charSet, int siteCount) throws ImportException {
+        for (CharSetBlock block : charSet.getBlocks()) {
+            int from = block.getFromSite();
+            // a 'to' of zero or less means to the end of the alignment
+            int to = block.getToSite() > 0 ? block.getToSite() : siteCount;
+
+            if (from < 1) {
+                throw new ImportException("The character set '" + charSet.getName() + "' starts at site " +
+                        from + ". Character sets are numbered from 1.");
+            }
+
+            if (to > siteCount) {
+                throw new ImportException("The character set '" + charSet.getName() + "' covers sites " +
+                        from + " to " + to + " but the alignment is only " + siteCount + " sites long." +
+                        "\nCheck the character sets, and the number of characters given in the data block.");
+            }
+
+            if (from > to) {
+                throw new ImportException("The character set '" + charSet.getName() + "' covers sites " +
+                        from + " to " + to + ", which ends before it starts.");
+            }
+        }
+    }
 
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {

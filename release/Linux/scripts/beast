@@ -25,4 +25,11 @@ fi
 BEAST_LIB="$BEAST/lib"
 BEAST_PLUG="$BEAST/plugins"
 
-java -Xms64m -Xmx2048m -Dbeast.plugins.dir="$BEAST_PLUG" -Djava.library.path="$BEAST_LIB:/usr/local/lib:$LD_LIBRARY_PATH" -cp "$BEAST_LIB/beast.jar" dr.app.beast.BeastMain $*
+# BEAGLE is loaded with System.loadLibrary which JDK 24 and later warn about unless native
+# access is enabled. Only add the option if this java accepts it (JDK 17 and later).
+NATIVE_ACCESS=""
+if java --enable-native-access=ALL-UNNAMED -version > /dev/null 2>&1; then
+	NATIVE_ACCESS="--enable-native-access=ALL-UNNAMED"
+fi
+
+java -Xms64m -Xmx2048m $NATIVE_ACCESS -Dbeast.plugins.dir="$BEAST_PLUG" -Djava.library.path="$BEAST_LIB:/usr/local/lib:$LD_LIBRARY_PATH" -cp "$BEAST_LIB/beast.jar" dr.app.beast.BeastMain $*

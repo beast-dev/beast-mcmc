@@ -207,8 +207,9 @@ public class InitialTreeGenerator extends Generator {
 
     private void writeSubTree(String treeId, String taxaId, Taxa taxa, PartitionTreeModel model, XMLWriter writer) {
 
+        // a starting height for the subtree; zero (the Taxon Sets panel's default) means none
         Double height = options.taxonSetsHeights.get(taxa);
-        if (height == null) {
+        if (height == null || height <= 0.0) {
             height = Double.NaN;
         }
 
@@ -244,12 +245,14 @@ public class InitialTreeGenerator extends Generator {
         List<Taxa> subsets = new ArrayList<Taxa>();
 //        Taxa remainingTaxa = new Taxa(taxa);
 
+        // Only taxon sets marked as monophyletic are simulated as nested subtrees: sets that are
+        // not constrained to be monophyletic may overlap each other (or the monophyletic ones) and
+        // the simulator cannot build a tree containing incompatible clades.
         for (Taxa taxa2 : options.taxonSets) {
             boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
             boolean isMono = Boolean.TRUE.equals(options.taxonSetsMono.get(taxa2));
-            boolean hasHeight = options.taxonSetsHeights.get(taxa2) != null;
             boolean isSubset = taxa.containsAll(taxa2);
-            if (sameTree && (isMono || hasHeight) && taxa2 != taxa && isSubset) {
+            if (sameTree && isMono && taxa2 != taxa && isSubset) {
                 subsets.add(taxa2);
             }
         }

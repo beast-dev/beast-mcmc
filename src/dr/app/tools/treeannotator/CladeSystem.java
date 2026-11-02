@@ -65,9 +65,14 @@ public final class CladeSystem {
         add(targetTree, storeBitsets);
         for (Clade clade : this.getClades()) {
             Clade sourceClade = sourceCladeSystem.getClade(clade.getKey());
-            assert sourceClade != null;
-            clade.setCredibility(sourceClade.getCredibility());
-            clade.setCount(sourceClade.getCount());
+            if (sourceClade != null) {
+                clade.setCredibility(sourceClade.getCredibility());
+                clade.setCount(sourceClade.getCount());
+            } else {
+                // a user-supplied target tree may contain clades not present in the sampled trees
+                clade.setCredibility(0.0);
+                clade.setCount(0);
+            }
         }
     }
 

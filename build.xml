@@ -165,6 +165,9 @@ ${extra_release_tag}</echo>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Main-Class" value="${main_class_BEAST}"/>
+                <!-- BEAGLE is loaded with System.loadLibrary which JDK 24+ warns about unless
+                     native access is enabled; this covers 'java -jar beast.jar' (earlier JDKs ignore it) -->
+                <attribute name="Enable-Native-Access" value="ALL-UNNAMED"/>
             </manifest>
             <fileset dir="${build}">
                 <include name="beagle/basta/*.class"/>

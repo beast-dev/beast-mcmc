@@ -546,12 +546,12 @@ public class ClockModelGenerator extends Generator {
                 writeParameter(LocalClockModelParser.RATE, "clock.rate", clockModel, writer);
 
                 for (Taxa taxonSet : options.taxonSets) {
-                    if (options.taxonSetsMono.get(taxonSet)) {
+                    if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                         String parameterName = taxonSet.getId() + ".rate";
                         writer.writeOpenTag(
                                 LocalClockModelParser.CLADE,
                                 new Attribute[]{
-                                        new Attribute.Default<String>("includeStem", options.taxonSetsIncludeStem.get(taxonSet).toString())
+                                        new Attribute.Default<String>("includeStem", Boolean.toString(Boolean.TRUE.equals(options.taxonSetsIncludeStem.get(taxonSet))))
                                 }
                         );
                         writeParameter(parameterName, clockModel, writer);
@@ -586,7 +586,7 @@ public class ClockModelGenerator extends Generator {
                         new Attribute.Default<String>(ParameterParser.VALUE, "-0.01")}, true);
                 int parameterNumber = 1;
                 for (Taxa taxonSet : options.taxonSets) {
-                    if (options.taxonSetsMono.get(taxonSet)) {
+                    if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                         writer.writeTag(PARAMETER, new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.COEFFICIENT + parameterNumber),
                                 new Attribute.Default<String>(ParameterParser.VALUE, "0.01")}, true);
@@ -616,7 +616,7 @@ public class ClockModelGenerator extends Generator {
                     writer.writeOpenTag(BranchSpecificBranchModelParser.CLADE,
                             new Attribute[]{
                                     new Attribute.Default<String>(BranchSpecificFixedEffectsParser.CATEGORY, "" + (counter+1)),
-                                    new Attribute.Default<String>(LocalClockModelParser.INCLUDE_STEM, Boolean.toString(options.taxonSetsIncludeStem.get(taxonSet))),
+                                    new Attribute.Default<String>(LocalClockModelParser.INCLUDE_STEM, Boolean.toString(Boolean.TRUE.equals(options.taxonSetsIncludeStem.get(taxonSet)))),
                                     new Attribute.Default<String>(LocalClockModelParser.EXCLUDE_CLADE, "false")
                             }
                     );
@@ -1088,7 +1088,7 @@ public class ClockModelGenerator extends Generator {
             case FIXED_LOCAL_CLOCK:
                 writer.writeIDref(PARAMETER, prefix + "clock.rate");
                 for (Taxa taxonSet : options.taxonSets) {
-                    if (options.taxonSetsMono.get(taxonSet)) {
+                    if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                         String parameterName = taxonSet.getId() + ".rate";
                         writer.writeIDref(PARAMETER, model.getPrefix() + parameterName);
                     }

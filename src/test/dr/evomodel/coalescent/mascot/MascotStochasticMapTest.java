@@ -107,7 +107,7 @@ public class MascotStochasticMapTest extends TestCase {
 
         MascotStochasticMap first = likelihood.getStochasticMap();
         assertSame(first, likelihood.getStochasticMap());
-        assertEquals(likelihood.getLogLikelihood(), first.getLogLikelihood(), 0.0);
+        assertMapLogLikelihood(likelihood.getLogLikelihood(), first);
 
         likelihood.forceRedraw();
         MascotStochasticMap redrawn = likelihood.getStochasticMap();
@@ -123,13 +123,13 @@ public class MascotStochasticMapTest extends TestCase {
         likelihood.storeModelState();
         built.popSizes.setParameterValue(0, 1.3 * built.popSizes.getParameterValue(0));
         MascotStochasticMap proposed = likelihood.getStochasticMap();
-        assertEquals(likelihood.getLogLikelihood(), proposed.getLogLikelihood(), 0.0);
+        assertMapLogLikelihood(likelihood.getLogLikelihood(), proposed);
         assertTrue(Math.abs(proposed.getLogLikelihood() - before) > 1.0e-6);
 
         likelihood.restoreModelState();
         MascotStochasticMap restored = likelihood.getStochasticMap();
         assertNotSame(proposed, restored);
-        assertEquals(before, restored.getLogLikelihood(), 0.0);
+        assertMapLogLikelihood(before, restored);
     }
 
     /** Histories are handed out as copies, so a caller mutating one cannot change what others read. */
@@ -147,6 +147,14 @@ public class MascotStochasticMapTest extends TestCase {
 
     // ---------------------------------------------------------------------------------------------------------
 
+    /**
+     * A map reports the log likelihood of its own forward pass, which runs in Java. A native likelihood in its default
+     * FMA mode can differ from it in the last bits; in Java, or natively with mascot.fp=strict, the two are equal.
+     */
+    static void assertMapLogLikelihood(double logLikelihood, MascotStochasticMap map) {
+        assertEquals(logLikelihood, map.getLogLikelihood(), 1.0e-12 * Math.max(1.0, Math.abs(logLikelihood)));
+    }
+
     static void checkStructure(MascotMappingFixtures.Built built, int draws) {
         MascotLikelihood likelihood = built.likelihood;
         TreeModel tree = built.tree;
@@ -154,7 +162,7 @@ public class MascotStochasticMapTest extends TestCase {
         for (int d = 0; d < draws; d++) {
             likelihood.forceRedraw();
             MascotStochasticMap map = likelihood.getStochasticMap();
-            assertEquals(likelihood.getLogLikelihood(), map.getLogLikelihood(), 0.0);
+            assertMapLogLikelihood(likelihood.getLogLikelihood(), map);
             if (map.getSampler() != likelihood.getStochasticMapSampler()) {
                 assertEquals("only a fallback to the grid sampler is allowed", StochasticMapSampler.GRID,
                         map.getSampler());

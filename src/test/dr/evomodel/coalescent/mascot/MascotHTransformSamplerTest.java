@@ -66,7 +66,7 @@ public class MascotHTransformSamplerTest extends TestCase {
         assertEquals(StochasticMapSampler.H_TRANSFORM, hTransform.getSampler());
         assertNotSame(grid, hTransform);
         assertSame(hTransform, likelihood.getStochasticMap());
-        assertEquals(likelihood.getLogLikelihood(), hTransform.getLogLikelihood(), 0.0);
+        MascotStochasticMapTest.assertMapLogLikelihood(likelihood.getLogLikelihood(), hTransform);
     }
 
     /** On stiff steps the h-transform is biased, so such states are drawn, exactly, by the grid sampler. */

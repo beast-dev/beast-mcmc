@@ -210,7 +210,7 @@ public class TopologySearchStudy {
 
     private static Result run(String pipeline, Map<String, String> variants, File fasta, Map<String, Double> heights,
                               boolean dated, boolean ucln, Tree truth, File directory) throws Exception {
-        if (pipeline.equals("E") || pipeline.equals("F")) {
+        if (pipeline.equals("E") || pipeline.equals("F") || pipeline.equals("Fb")) {
             return external(pipeline, fasta, heights, dated, sitesOf(fasta), directory);
         }
         TreeLimeOptions options = TreeLimeHarness.importData(fasta.getPath());
@@ -360,8 +360,8 @@ public class TopologySearchStudy {
         if (tools == null) {
             throw new IllegalArgumentException("pipeline " + pipeline + " needs -Dtools=<dir>");
         }
-        if (pipeline.equals("F") && !dated) {
-            throw new IllegalArgumentException("TreeTime (F) needs tip dates");
+        if (pipeline.startsWith("F") && !dated) {
+            throw new IllegalArgumentException("TreeTime (" + pipeline + ") needs tip dates");
         }
         final File iqTree = new File(directory, "iq.treefile");
         if (!iqTree.exists()) {
@@ -395,10 +395,21 @@ public class TopologySearchStudy {
             treeFile = new File(directory, "lsd.date.nexus"); // lsd.nwk is the rooted input tree, in substitutions
             result.rate = firstNumberAfter(new File(directory, "lsd"), "rate "); // " rate 0.0042, tMRCA 82.4 , ..."
         } else {
-            final File out = new File(directory, "tt");
-            execute(directory, tools + "/tt-venv/bin/treetime", "--tree", iqTree.getPath(), "--aln", fasta.getPath(),
+            // F: TreeTime as its command line runs it, which collapses zero-length branches into polytomies and
+            // resolves some of them with the dates (a multifurcating tree); Fb: the point estimate, IQ-TREE's binary
+            // topology rooted and dated by TreeTime (treetime_point.py beside this class, copied to the tools)
+            final boolean point = pipeline.equals("Fb");
+            final File out = new File(directory, point ? "ttb" : "tt");
+            List<String> command = new ArrayList<String>(point ?
+                    java.util.Arrays.asList(tools + "/tt-venv/bin/python", tools + "/treetime_point.py") :
+                    java.util.Arrays.asList(tools + "/tt-venv/bin/treetime"));
+            command.addAll(java.util.Arrays.asList("--tree", iqTree.getPath(), "--aln", fasta.getPath(),
                     "--dates", new File(directory, "dates.csv").getPath(), "--coalescent", "opt", "--reroot", "best",
-                    "--outdir", out.getPath());
+                    "--outdir", out.getPath()));
+            if (point) {
+                command.add("--keep-polytomies");
+            }
+            execute(directory, command.toArray(new String[0]));
             treeFile = new File(out, "timetree.nexus");
             result.rate = firstNumberAfter(new File(out, "molecular_clock.txt"), "--rate:");
         }
@@ -407,6 +418,13 @@ public class TopologySearchStudy {
                 new dr.evolution.io.NexusImporter(reader).importNextTree() :
                 new dr.evolution.io.NewickImporter(reader).importNextTree());
         reader.close();
+        if (pipeline.equals("Fb")) {
+            for (int i = 0; i < result.tree.getInternalNodeCount(); ++i) {
+                if (result.tree.getChildCount(result.tree.getInternalNode(i)) != 2) {
+                    throw new IllegalStateException("TreeTime's point estimate is not binary: " + treeFile);
+                }
+            }
+        }
         return result;
     }
 

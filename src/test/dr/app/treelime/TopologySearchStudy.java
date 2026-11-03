@@ -134,21 +134,30 @@ public class TopologySearchStudy {
         final java.io.PrintStream out = outName != null ?
                 new java.io.PrintStream(new java.io.FileOutputStream(outName, true), true) : System.out;
         out.println("#taxa\tsites\tclock\ttips\trep\tpipeline\tF\tseconds\trf_rooted\trf_unrooted\troot_ok\tkf_rel" +
-                "\tage_rmse_rel\troot_age_err\trate_err\trounds\taccepted\tstop");
+                "\tage_rmse_rel\troot_age_err\trate_err\trounds\taccepted\tstop\twrong\tunresolved");
         for (String pipeline : pipelines) {
             final long started = System.nanoTime();
             final Result result = run(pipeline, variants, fasta, tipHeights, dated, ucln, truth, directory);
             final double seconds = (System.nanoTime() - started) / 1E9;
-            final Tree found = result.tree;
-            final double rootTruth = truth.getNodeHeight(truth.getRoot());
-            final double rootFound = found.getNodeHeight(found.getRoot());
-            out.printf("%s\t%s\t%.4f\t%.1f\t%.4f\t%.4f\t%d\t%.4f\t%.4f\t%s\t%s\t%d\t%d\t%s%n", cell, pipeline,
-                    result.f, seconds, SplitDistance.normalizedRooted(truth, found),
-                    SplitDistance.normalizedUnrooted(truth, found), rootSplit(truth).equals(rootSplit(found)) ? 1 : 0,
-                    kuhnerFelsenstein(truth, found) / treeLength(truth), ageRmse(truth, found),
-                    dated ? String.format("%.4f", rootFound / rootTruth - 1.0) : "NA",
-                    dated ? String.format("%.4f", result.rate / trueRate - 1.0) : "NA",
-                    result.rounds, result.accepted, result.stop);
+            // a bootstrap pipeline gives a row per summary tree beside its own
+            Map<String, Result> rows = new LinkedHashMap<String, Result>();
+            rows.put(pipeline, result);
+            rows.putAll(result.summaries);
+            for (Map.Entry<String, Result> row : rows.entrySet()) {
+                final Result r = row.getValue();
+                final Tree found = r.tree;
+                final double rootTruth = truth.getNodeHeight(truth.getRoot());
+                final double rootFound = found.getNodeHeight(found.getRoot());
+                final int[] clades = wrongAndUnresolved(truth, found);
+                out.printf("%s\t%s\t%.4f\t%.1f\t%.4f\t%.4f\t%d\t%.4f\t%.4f\t%s\t%s\t%d\t%d\t%s\t%d\t%d%n", cell,
+                        row.getKey(), r.f, seconds, SplitDistance.normalizedRooted(truth, found),
+                        SplitDistance.normalizedUnrooted(truth, found),
+                        rootSplit(truth).equals(rootSplit(found)) ? 1 : 0,
+                        kuhnerFelsenstein(truth, found) / treeLength(truth), ageRmse(truth, found),
+                        dated ? String.format("%.4f", rootFound / rootTruth - 1.0) : "NA",
+                        dated ? String.format("%.4f", r.rate / trueRate - 1.0) : "NA",
+                        r.rounds, r.accepted, r.stop, clades[0], clades[1]);
+            }
         }
         System.exit(0);
     }
@@ -171,6 +180,8 @@ public class TopologySearchStudy {
         int rounds;
         int accepted;
         String stop = "NA";
+        // a bootstrap pipeline's summary trees, by row label
+        final Map<String, Result> summaries = new LinkedHashMap<String, Result>();
     }
 
     // real data (§13.3): path strict|hmc pipelines; one row per pipeline with F, time, the unrooted and rooted RF to
@@ -241,6 +252,9 @@ public class TopologySearchStudy {
     // the pipeline on prepared options (data, dates, models)
     private static Result run(String pipeline, Map<String, String> variants, TreeLimeOptions options, Tree truth,
                               File directory) throws Exception {
+        if (pipeline.matches("boot[0-9]+")) {
+            return bootstrap(Integer.parseInt(pipeline.substring(4)), options, new File(directory, pipeline));
+        }
         String attributes;
         boolean search = true;
         boolean fromTruth = false;
@@ -428,6 +442,85 @@ public class TopologySearchStudy {
         return result;
     }
 
+    /**
+     * boot&lt;B&gt; (plan 7 H2 topology, comparison 2): the searched bootstrap as TreeLime writes it (plan 8 S7f,
+     * Standard from each replicate's NJ tree, the default objective), run by its own script with BEAST and
+     * TreeAnnotator from this class path, one replicate at a time. The row is the analysis's own optimum (the
+     * Standard search on the data); its summaries, TreeAnnotator's majority-rule consensus, HIPSTR, MrHIPSTR and MCC
+     * trees with median heights, are rows of their own (boot&lt;B&gt;.mrc and so on).
+     */
+    private static Result bootstrap(int replicates, TreeLimeOptions options, File directory) throws Exception {
+        options.maximizationOptions.printToScreen = false;
+        options.maximizationOptions.objective = new dr.app.treelime.options.MaximizationOptions().objective;
+        options.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.STANDARD;
+        options.maximizationOptions.setBootstrapSplitSupport(true);
+        options.fileNameStem = "boot";
+        dr.app.treelime.generator.BootstrapGenerator generator =
+                new dr.app.treelime.generator.BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        generator.generate(directory, replicates, 1L);
+
+        final String java = new File(System.getProperty("java.home"), "bin/java").getPath();
+        StringBuilder classPath = new StringBuilder();
+        for (String entry : System.getProperty("java.class.path").split(File.pathSeparator)) {
+            classPath.append(classPath.length() > 0 ? File.pathSeparator : "").append(new File(entry).getAbsolutePath());
+        }
+        ProcessBuilder script = new ProcessBuilder("sh", dr.app.treelime.generator.BootstrapGenerator.SCRIPT_FILE)
+                .directory(directory).redirectErrorStream(true)
+                .redirectOutput(new File(directory, "run_replicates.out"));
+        script.environment().put("BEAST", java + " -Xmx2g -Djava.library.path=" +
+                System.getProperty("java.library.path") + " -Dbeagle.thread.count=1 -cp " + classPath +
+                " dr.app.beast.BeastMain");
+        script.environment().put("TREEANNOTATOR", java + " -Xmx2g -cp " + classPath +
+                " dr.app.tools.treeannotator.TreeAnnotator");
+        script.environment().put("JOBS", "1");
+        script.environment().put("THREADS", "1");
+        if (script.start().waitFor() != 0) {
+            throw new RuntimeException("the bootstrap script failed; see " + new File(directory, "run_replicates.out"));
+        }
+
+        dr.app.treelime.options.PartitionTreeModel model = options.getPartitionTreeModels().get(0);
+        Result result = new Result();
+        result.f = Double.NaN;
+        result.rate = Double.NaN;
+        result.tree = readTree(new File(directory, dr.app.treelime.generator.BeastGenerator.timeTreeFile(options, model)));
+        for (dr.app.treelime.generator.BootstrapGenerator.SummaryTree summary :
+                dr.app.treelime.generator.BootstrapGenerator.SummaryTree.values()) {
+            Result row = new Result();
+            row.f = Double.NaN;
+            row.rate = Double.NaN;
+            row.tree = readTree(new File(directory, generator.getSummaryTreeFile(model, summary)));
+            result.summaries.put("boot" + replicates + "." + summary.type, row);
+        }
+        return result;
+    }
+
+    private static Tree readTree(File file) throws Exception {
+        java.io.FileReader reader = new java.io.FileReader(file);
+        try {
+            return new FlexibleTree(new dr.evolution.io.NexusImporter(reader).importNextTree());
+        } finally {
+            reader.close();
+        }
+    }
+
+    // the found tree's rooted clades (two tips or more, not the root) that the truth lacks, and the clades its
+    // polytomies leave out ((n - 2) minus its clades); on a binary tree the second is 0 and the first half the RF count
+    private static int[] wrongAndUnresolved(Tree truth, Tree found) {
+        Map<String, double[]> x = clades(truth), y = clades(found);
+        final String root = fill(found, found.getRoot(), new HashMap<String, double[]>()).toString();
+        int own = 0;
+        int wrong = 0;
+        for (Map.Entry<String, double[]> e : y.entrySet()) {
+            if (e.getValue()[2] == 0 && !e.getKey().equals(root)) {
+                own++;
+                if (!x.containsKey(e.getKey())) {
+                    wrong++;
+                }
+            }
+        }
+        return new int[]{wrong, found.getExternalNodeCount() - 2 - own};
+    }
+
     private static int sitesOf(File fasta) throws Exception {
         final List<String> lines = Files.readAllLines(fasta.toPath());
         return lines.size() > 1 ? lines.get(1).trim().length() : 0;
@@ -609,6 +702,9 @@ public class TopologySearchStudy {
     }
 
     private static String rootSplit(Tree tree) {
+        if (tree.getChildCount(tree.getRoot()) != 2) {
+            return "unresolved"; // a polytomy at the root has no root split
+        }
         TreeSet<String> a = new TreeSet<String>(), b = new TreeSet<String>();
         fill(tree, tree.getChild(tree.getRoot(), 0), new HashMap<String, double[]>()).forEach(a::add);
         fill(tree, tree.getChild(tree.getRoot(), 1), new HashMap<String, double[]>()).forEach(b::add);

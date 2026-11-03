@@ -1,5 +1,6 @@
 package dr.evomodel.coalescent.smooth;
 
+import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -44,8 +45,12 @@ public class SmoothLogPopSizeLogger implements Loggable {
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            NewSmoothSkygridLikelihood likelihood = (NewSmoothSkygridLikelihood) xo.getChild(NewSmoothSkygridLikelihood.class);
-            return new SmoothLogPopSizeLogger(likelihood);
+            Object likelihood = xo.getChild(AbstractCoalescentLikelihood.class);
+            // <smoothSkygridLikelihood> builds a NewSmoothSkygridLikelihood only with implementation="new"
+            if (!(likelihood instanceof NewSmoothSkygridLikelihood)) {
+                throw new XMLParseException("This element needs a <smoothSkygridLikelihood> with implementation=\"new\"");
+            }
+            return new SmoothLogPopSizeLogger((NewSmoothSkygridLikelihood) likelihood);
         }
 
         @Override
@@ -59,7 +64,7 @@ public class SmoothLogPopSizeLogger implements Loggable {
         }
 
         XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(NewSmoothSkygridLikelihood.class)
+                new ElementRule(AbstractCoalescentLikelihood.class)
         };
 
         @Override

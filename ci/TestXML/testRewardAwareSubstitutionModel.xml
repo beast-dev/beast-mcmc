@@ -116,23 +116,25 @@
         <!--		<treeModel idref="treeModel"/>-->
         <arbitraryBranchRates idref="ind.totalRewardsBranchRateModel"/>
         <!--		# reward rates = # states ind ctmc-->
+        <!--		reward rate of state i = values[stateIndices[i]]: a = 1, b = 0 (values: 0, 1, then the varying ones)-->
         <rewardRates>
-            <parameter id="ind.rewardRates" dimension="2" value="1 0" lower="0.0"/>
+            <values>
+                <parameter id="ind.rewardRates" value="0 1" lower="0.0"/>
+            </values>
+            <varyingValues>
+                <parameter id="ind.rewardRates.varying" dimension="0"/>
+            </varyingValues>
+            <stateIndices>
+                <parameter id="ind.rewardRates.stateIndices" value="1 0"/>
+            </stateIndices>
         </rewardRates>
         <indicator>
             <parameter dimension="4" value="0"/>
         </indicator>
-        <extremeIndices>
-            <parameter dimension="2" value="1 0"/>
-        </extremeIndices>
-        <indexedParameter id="total.reward.pointMasses">
-            <values>
-                <parameter idref="ind.rewardRates"/>
-            </values>
-            <indices>
-                <parameter id="atomIndex" dimension="4" value="0 0 0 1"/>
-            </indices>
-        </indexedParameter>
+        <!--		state of each atomic branch (indicator 1)-->
+        <atomIndices>
+            <parameter id="atomIndex" dimension="4" value="0 0 0 1"/>
+        </atomIndices>
         <generalSubstitutionModel id="ind.underlying.submodel">
             <generalDataType idref="ind.dataType"/>
             <frequencies>

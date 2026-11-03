@@ -64,6 +64,8 @@ public class BootstrapSummaryParser extends AbstractXMLObjectParser {
     public static final String DATES = "dates";
     public static final String RATES = "rates";
     public static final String CLADES = "clades";
+    public static final String SPLITS = "splits";
+    public static final String SPLIT_CONSENSUS = "splitConsensus";
     public static final String TOPOLOGY_SEARCHED = "topologySearched";
 
     public String getParserName() {
@@ -82,7 +84,9 @@ public class BootstrapSummaryParser extends AbstractXMLObjectParser {
                 XMLObject child = (XMLObject) xo.getChild(i);
                 trees.add(new BootstrapSummary.TreeFiles(file(child, TIME_TREE), file(child, BOOTSTRAP_TREES),
                         file(child, DATES), child.hasAttribute(RATES) ? file(child, RATES) : null,
-                        child.hasAttribute(CLADES) ? file(child, CLADES) : null));
+                        child.hasAttribute(CLADES) ? file(child, CLADES) : null,
+                        child.hasAttribute(SPLITS) ? file(child, SPLITS) : null,
+                        child.hasAttribute(SPLIT_CONSENSUS) ? file(child, SPLIT_CONSENSUS) : null));
             }
         }
         BootstrapSummary summary = new BootstrapSummary(file(xo, PARAMETERS), file(xo, BOOTSTRAP_PARAMETERS),
@@ -133,6 +137,10 @@ public class BootstrapSummaryParser extends AbstractXMLObjectParser {
                     AttributeRule.newStringRule(RATES, true),
                     AttributeRule.newStringRule(CLADES, true, "A table of every clade of the replicates (with " +
                             "topologySearched)"),
+                    AttributeRule.newStringRule(SPLITS, true, "The time tree's topology, unrooted, with each " +
+                            "split's bootstrap percentage as its node label (Newick; with topologySearched)"),
+                    AttributeRule.newStringRule(SPLIT_CONSENSUS, true, "The unrooted majority-rule consensus of " +
+                            "the replicates' splits, with percentages (Newick; with topologySearched)"),
             }, 0, Integer.MAX_VALUE),
     };
 }

@@ -64,7 +64,9 @@ import java.util.Random;
  * searches from the NJ tree of its own data, and the replicates' trees give clade support (rooted clade frequency,
  * split and root support on the original time tree, every clade's frequency in a table) and, through TreeAnnotator,
  * summary trees: HIPSTR and MrHIPSTR (Baele et al. 2025, Bioinformatics 41:btaf488), the majority-rule consensus,
- * the MCC tree, and the original time tree annotated with the replicates' clade frequencies and ages.
+ * the MCC tree, and the original time tree annotated with the replicates' clade frequencies and ages; optionally
+ * (on by default) the traditional split support, the unrooted topology with bootstrap percentages and the majority-rule
+ * consensus of the splits.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -415,6 +417,21 @@ public class BootstrapGenerator extends Generator {
     }
 
     /**
+     * @return the traditional split support: the time tree's topology, unrooted, with each split's bootstrap
+     * percentage as its node label (Newick)
+     */
+    public String getSplitsFile(PartitionTreeModel tree) {
+        return options.fileNameStem + "." + tree.getPrefix() + "splits.tree";
+    }
+
+    /**
+     * @return the unrooted majority-rule consensus of the replicates' splits, with percentages (Newick)
+     */
+    public String getSplitConsensusFile(PartitionTreeModel tree) {
+        return options.fileNameStem + "." + tree.getPrefix() + "splits.consensus.tree";
+    }
+
+    /**
      * @return the table of every clade in the replicates: frequency and ages
      */
     public String getCladesFile(PartitionTreeModel tree) {
@@ -459,6 +476,11 @@ public class BootstrapGenerator extends Generator {
             }
             if (isSearched()) {
                 attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.CLADES, getCladesFile(tree)));
+                if (options.maximizationOptions.isBootstrapSplitSupport()) {
+                    attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.SPLITS, getSplitsFile(tree)));
+                    attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.SPLIT_CONSENSUS,
+                            getSplitConsensusFile(tree)));
+                }
             }
             writer.writeTag(BootstrapSummaryParser.TREE_FILES, attributes.toArray(new Attribute[0]), true);
         }

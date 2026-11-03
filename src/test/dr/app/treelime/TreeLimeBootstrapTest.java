@@ -395,6 +395,8 @@ public class TreeLimeBootstrapTest extends TestCase {
         String summary = new String(bytes(directory, BootstrapGenerator.SUMMARY_FILE));
         assertTrue(summary.contains("topologySearched=\"true\""));
         assertTrue(summary.contains("clades=\"dengue.clades.tsv\""));
+        assertTrue(summary.contains("splits=\"dengue.splits.tree\""));
+        assertTrue(summary.contains("splitConsensus=\"dengue.splits.consensus.tree\""));
         String script = new String(bytes(directory, BootstrapGenerator.SCRIPT_FILE));
         assertTrue(script.contains("TREEANNOTATOR=\"${TREEANNOTATOR:-treeannotator}\""));
         for (BootstrapGenerator.SummaryTree tree : BootstrapGenerator.SummaryTree.values()) {
@@ -424,7 +426,7 @@ public class TreeLimeBootstrapTest extends TestCase {
                 new File(directory, "run.bootstrap.params.tsv"), null,
                 Arrays.asList(new BootstrapSummary.TreeFiles(new File(directory, "run.timetree.nex"),
                         new File(directory, "run.bootstrap.trees"), new File(directory, "run.dates.tsv"), null,
-                        new File(directory, "run.clades.tsv"))), 0.95);
+                        new File(directory, "run.clades.tsv"), null, null)), 0.95);
         summary.setTopologySearched(true);
         assertEquals(3, summary.summarize());
 
@@ -451,6 +453,58 @@ public class TreeLimeBootstrapTest extends TestCase {
         for (File file : directory.listFiles()) {
             file.deleteOnExit();
         }
+    }
+
+    // the traditional split support: on the time tree (((A,B),C),(D,E)), with replicates the same twice and
+    // (((A,C),B),(D,E)) once, the split AB|CDE is in 2 of 3 (67%) and ABC|DE in all 3 (100%); the unrooted tree has A
+    // beside the rest, and the majority-rule consensus of the splits keeps both
+    public void testSplitSupport() throws Exception {
+        File directory = directory();
+        String[] taxa = {"A", "B", "C", "D", "E"};
+        write(directory, "run.timetree.nex", nexus(taxa, new String[]{"(((1:1.0,2:1.0):1.0,3:2.0):1.0,(4:1.5,5:1.5):1.5)"}));
+        write(directory, "run.bootstrap.trees", nexus(taxa, new String[]{
+                "(((1:1.0,2:1.0):1.0,3:2.0):1.0,(4:1.5,5:1.5):1.5)", "(((1:1.2,2:1.2):0.8,3:2.0):1.0,(4:1.0,5:1.0):2.0)",
+                "(((1:1.0,3:1.0):1.0,2:2.0):1.0,(4:1.5,5:1.5):1.5)"}));
+        write(directory, "run.dates.tsv", "#node\tclade\tage\tlower\tupper\tci_method\n" +
+                "6\tA,B\t1.0\tNA\tNA\tNA\n");
+        write(directory, "run.params.tsv", "name\tvalue\tstatus\tse\tlower\tupper\tci_method\n" +
+                "kappa\t2.0\testimated\tNA\tNA\tNA\tNA\n");
+        write(directory, "run.bootstrap.params.tsv", "replicate\tkappa\n1\t1.9\n2\t2.1\n3\t2.0\n");
+        BootstrapSummary summary = new BootstrapSummary(new File(directory, "run.params.tsv"),
+                new File(directory, "run.bootstrap.params.tsv"), null,
+                Arrays.asList(new BootstrapSummary.TreeFiles(new File(directory, "run.timetree.nex"),
+                        new File(directory, "run.bootstrap.trees"), new File(directory, "run.dates.tsv"), null, null,
+                        new File(directory, "run.splits.tree"), new File(directory, "run.splits.consensus.tree"))),
+                0.95);
+        summary.setTopologySearched(true);
+        summary.summarize();
+
+        String splits = new String(bytes(directory, "run.splits.tree"), "UTF-8").trim();
+        assertEquals("(A:1.0,B:1.0,(C:2.0,(D:1.5,E:1.5)100:2.5)67:1.0);", splits);
+        String consensus = new String(bytes(directory, "run.splits.consensus.tree"), "UTF-8").trim();
+        assertFalse(consensus, consensus.contains(":"));
+        assertTrue(consensus, consensus.contains(")100") && consensus.contains(")67"));
+        assertEquals(consensus, 3, consensus.length() - consensus.replace("(", "").length());
+        for (File file : directory.listFiles()) {
+            file.deleteOnExit();
+        }
+    }
+
+    private static String nexus(String[] taxa, String[] trees) {
+        StringBuilder sb = new StringBuilder("#NEXUS\n\nBegin taxa;\n\tDimensions ntax=" + taxa.length +
+                ";\n\tTaxlabels\n");
+        for (String taxon : taxa) {
+            sb.append("\t\t").append(taxon).append("\n");
+        }
+        sb.append("\t\t;\nEnd;\n\nBegin trees;\n\tTranslate\n");
+        for (int i = 0; i < taxa.length; i++) {
+            sb.append("\t\t").append(i + 1).append(' ').append(taxa[i]).append(i < taxa.length - 1 ? ",\n" : "\n");
+        }
+        sb.append("\t\t;\n");
+        for (int i = 0; i < trees.length; i++) {
+            sb.append("tree TREE").append(i + 1).append(" = [&R] ").append(trees[i]).append(";\n");
+        }
+        return sb.append("End;\n").toString();
     }
 
     // the run script's TreeAnnotator step, with BEAST's TreeAnnotator itself: replicates that agree only on AB give a
@@ -525,12 +579,7 @@ public class TreeLimeBootstrapTest extends TestCase {
 
     // a NEXUS tree file over taxa A-D (1-4), one tree per Newick string
     private static String nexus(String[] trees) {
-        StringBuilder sb = new StringBuilder("#NEXUS\n\nBegin taxa;\n\tDimensions ntax=4;\n\tTaxlabels\n\t\tA\n\t\tB\n" +
-                "\t\tC\n\t\tD\n\t\t;\nEnd;\n\nBegin trees;\n\tTranslate\n\t\t1 A,\n\t\t2 B,\n\t\t3 C,\n\t\t4 D\n\t\t;\n");
-        for (int i = 0; i < trees.length; i++) {
-            sb.append("tree TREE").append(i + 1).append(" = [&R] ").append(trees[i]).append(";\n");
-        }
-        return sb.append("End;\n").toString();
+        return nexus(new String[]{"A", "B", "C", "D"}, trees);
     }
 
     private static List<Tree> readTrees(File file) throws Exception {

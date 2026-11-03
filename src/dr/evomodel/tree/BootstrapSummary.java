@@ -28,12 +28,17 @@
 package dr.evomodel.tree;
 
 import dr.app.tools.NexusExporter;
+import dr.app.tools.treeannotator.BiClade;
+import dr.app.tools.treeannotator.Clade;
+import dr.app.tools.treeannotator.CladeSystem;
+import dr.app.tools.treeannotator.MajorityRuleTreeBuilder;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.TaxonList;
 
 import java.io.File;
 import java.io.FileReader;
@@ -59,7 +64,11 @@ import java.util.Set;
  * After a searched bootstrap (plan 8 S7f) the replicates' topologies differ: an interval then uses the replicates that
  * have the clade (conditional on it), each node of the time tree gets its rooted clade frequency (support) and the
  * frequency of its split ignoring the root (split_support), the root the frequency of its root split (root_support),
- * and every clade of the replicates goes into a table with its frequency and heights.
+ * and every clade of the replicates goes into a table with its frequency and heights. Optionally, the traditional
+ * split support: the time tree's topology as an unrooted Newick tree with the bootstrap percentage of each split as
+ * its node label (as RAxML and IQ-TREE write it), and the unrooted majority-rule consensus of the splits. Both come
+ * from TreeAnnotator's clade counting (CladeSystem, MajorityRuleTreeBuilder) on every tree rerooted on the same tip,
+ * which makes each split the one clade on its side away from that tip.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -78,17 +87,22 @@ public class BootstrapSummary {
         final File dates;
         final File rates; // null without a clock
         final File clades; // null for none: every replicate clade, after a searched bootstrap
+        final File splits; // null for none: the time tree's topology, unrooted, with split support (Newick)
+        final File splitConsensus; // null for none: the majority-rule consensus of the splits (Newick)
 
         public TreeFiles(File timeTree, File bootstrapTrees, File dates, File rates) {
-            this(timeTree, bootstrapTrees, dates, rates, null);
+            this(timeTree, bootstrapTrees, dates, rates, null, null, null);
         }
 
-        public TreeFiles(File timeTree, File bootstrapTrees, File dates, File rates, File clades) {
+        public TreeFiles(File timeTree, File bootstrapTrees, File dates, File rates, File clades, File splits,
+                         File splitConsensus) {
             this.timeTree = timeTree;
             this.bootstrapTrees = bootstrapTrees;
             this.dates = dates;
             this.rates = rates;
             this.clades = clades;
+            this.splits = splits;
+            this.splitConsensus = splitConsensus;
         }
     }
 
@@ -249,7 +263,8 @@ public class BootstrapSummary {
         original.setId(imported.getId());
         CladeValues estimate = new CladeValues(original);
         List<CladeValues> replicates = new ArrayList<CladeValues>();
-        for (Tree tree : readTrees(files.bootstrapTrees)) {
+        List<Tree> replicateTrees = readTrees(files.bootstrapTrees);
+        for (Tree tree : replicateTrees) {
             replicates.add(new CladeValues(tree));
         }
 
@@ -343,6 +358,9 @@ public class BootstrapSummary {
             annotateSupport(original, estimate, replicates);
             if (files.clades != null) {
                 writeClades(files.clades, estimate, replicates);
+            }
+            if (files.splits != null || files.splitConsensus != null) {
+                writeSplitSupport(files, original, replicateTrees);
             }
         }
         PrintStream out = new PrintStream(files.timeTree, "UTF-8");
@@ -438,6 +456,111 @@ public class BootstrapSummary {
                     Double.toString(interval[0]), Double.toString(interval[1])});
         }
         write(file, rows);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // Traditional split support, from TreeAnnotator's clade counting on trees rerooted on one tip
+
+    private static void writeSplitSupport(TreeFiles files, Tree original, List<Tree> replicateTrees)
+            throws IOException {
+        // the outgroup: the first taxon by name, the same tip in every tree
+        String outgroup = null;
+        for (int i = 0; i < original.getExternalNodeCount(); ++i) {
+            String id = original.getNodeTaxon(original.getExternalNode(i)).getId();
+            if (outgroup == null || id.compareTo(outgroup) < 0) {
+                outgroup = id;
+            }
+        }
+        // the clade indices follow the original tree's taxa, in every tree (taxa are equal by name)
+        CladeSystem splits = new CladeSystem(true, true);
+        splits.setTaxonList(original);
+        for (Tree tree : replicateTrees) {
+            splits.add(rerootOnTip(tree, outgroup));
+        }
+        splits.calculateCladeCredibilities(replicateTrees.size());
+
+        if (files.splits != null) {
+            writeNewick(files.splits, rerootOnTip(original, outgroup), splits, original, true);
+        }
+        if (files.splitConsensus != null) {
+            FlexibleTree consensus = new FlexibleTree(new MajorityRuleTreeBuilder()
+                    .getMajorityRuleConsensusTree(splits, original));
+            writeNewick(files.splitConsensus, consensus, splits, original, false);
+        }
+    }
+
+    // a copy rerooted on the branch above the tip: the root's children are the tip and the rest
+    private static FlexibleTree rerootOnTip(Tree tree, String taxon) {
+        FlexibleTree copy = new FlexibleTree(tree);
+        for (int i = 0; i < copy.getExternalNodeCount(); ++i) {
+            NodeRef tip = copy.getExternalNode(i);
+            if (copy.getNodeTaxon(tip).getId().equals(taxon)) {
+                copy.changeRoot(tip, copy.getBranchLength(tip), 0.0);
+                return copy;
+            }
+        }
+        throw new IllegalArgumentException("No taxon " + taxon + " in a replicate tree");
+    }
+
+    // the tree rerooted on a tip, written unrooted: that tip beside the other root child's children, every internal
+    // node but those two labelled with its split's bootstrap percentage
+    private static void writeNewick(File file, FlexibleTree tree, CladeSystem splits, TaxonList taxa,
+                                    boolean lengths) throws IOException {
+        NodeRef root = tree.getRoot();
+        NodeRef outgroup = tree.isExternal(tree.getChild(root, 0)) ? tree.getChild(root, 0) : tree.getChild(root, 1);
+        NodeRef rest = tree.getChild(root, 0) == outgroup ? tree.getChild(root, 1) : tree.getChild(root, 0);
+        StringBuilder newick = new StringBuilder("(");
+        newick.append(name(tree, outgroup));
+        if (lengths) {
+            newick.append(':').append(tree.getBranchLength(outgroup) + tree.getBranchLength(rest));
+        }
+        if (tree.isExternal(rest)) {
+            newick.append(',');
+            appendNewick(newick, tree, rest, splits, taxa, lengths);
+        } else {
+            for (int i = 0; i < tree.getChildCount(rest); ++i) {
+                newick.append(',');
+                appendNewick(newick, tree, tree.getChild(rest, i), splits, taxa, lengths);
+            }
+        }
+        newick.append(");");
+        PrintWriter writer = new PrintWriter(new FileWriter(file));
+        writer.println(newick);
+        writer.close();
+    }
+
+    private static void appendNewick(StringBuilder newick, Tree tree, NodeRef node, CladeSystem splits,
+                                     TaxonList taxa, boolean lengths) {
+        if (tree.isExternal(node)) {
+            newick.append(name(tree, node));
+        } else {
+            newick.append('(');
+            for (int i = 0; i < tree.getChildCount(node); ++i) {
+                newick.append(i > 0 ? "," : "");
+                appendNewick(newick, tree, tree.getChild(node, i), splits, taxa, lengths);
+            }
+            newick.append(')').append(Math.round(100.0 * splitFrequency(tree, node, splits, taxa)));
+        }
+        if (lengths) {
+            newick.append(':').append(tree.getBranchLength(node));
+        }
+    }
+
+    // the frequency of the split below the node: the count of its clade in the rerooted replicates
+    private static double splitFrequency(Tree tree, NodeRef node, CladeSystem splits, TaxonList taxa) {
+        Set<String> leaves = TreeUtils.getDescendantLeaves(tree, node);
+        Object[] indices = new Object[leaves.size()];
+        int k = 0;
+        for (String id : leaves) {
+            indices[k++] = taxa.getTaxonIndex(id);
+        }
+        Clade clade = splits.getClade(BiClade.makeKey(indices));
+        return clade == null ? 0.0 : clade.getCredibility();
+    }
+
+    private static String name(Tree tree, NodeRef tip) {
+        String id = tree.getNodeTaxon(tip).getId();
+        return id.matches("[A-Za-z0-9_.\\-]+") ? id : "'" + id.replace("'", "''") + "'";
     }
 
     private static void annotate(FlexibleTree tree, NodeRef node, String name, double[] interval) {

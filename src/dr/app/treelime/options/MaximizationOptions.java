@@ -139,6 +139,9 @@ public class MaximizationOptions implements Serializable {
     private int bootstrapJobs = 1;
     // threads each replicate's BEAST may use (-threads and -beagle_threads); 0 lets BEAST decide
     public int bootstrapThreads = 0;
+    // with a searched bootstrap, the traditional split support beside TreeAnnotator's summaries (plan 8 S7f); null
+    // (on) in older files
+    private Boolean bootstrapSplitSupport = true;
     // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
     private Map<String, Double> lowerBounds = new HashMap<String, Double>();
     // ids of parameters with an upper bound other than the default; a null value for none. Null in older files
@@ -243,6 +246,18 @@ public class MaximizationOptions implements Serializable {
 
     public void setBootstrapJobs(int jobs) {
         this.bootstrapJobs = jobs;
+    }
+
+    /**
+     * @return whether a searched bootstrap also writes the traditional split support: the tree's topology, unrooted,
+     * with each split's bootstrap percentage, and the majority-rule consensus of the splits
+     */
+    public boolean isBootstrapSplitSupport() {
+        return bootstrapSplitSupport == null || bootstrapSplitSupport;
+    }
+
+    public void setBootstrapSplitSupport(boolean splitSupport) {
+        this.bootstrapSplitSupport = splitSupport;
     }
 
     public String getReportFileName(String fileNameStem) {

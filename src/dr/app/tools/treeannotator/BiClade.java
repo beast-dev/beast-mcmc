@@ -36,7 +36,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $
  */
-class BiClade implements Clade {
+public class BiClade implements Clade {
 
     /**
 

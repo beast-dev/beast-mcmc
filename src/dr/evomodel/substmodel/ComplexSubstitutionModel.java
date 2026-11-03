@@ -236,6 +236,11 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
         double norm = 1.0;
         if (doNormalization) {
+            // Intended model change (93157adac, BEAST X 10.6.0): with scaleRatesByFrequencies="false", Q is built
+            // with the flat (all-ones) vector, and it is now normalized with it too, not with the root frequencies.
+            // The normalized Q has total, not mean, exit rate 1, so the likelihood changes for any root frequencies:
+            // with uniform ones, rates are n times slower than before for n states (as in BEAUti's backward-in-time
+            // discrete-trait models, which use normalize="true" scaleRatesByFrequencies="false").
             norm = super.getNormalizationValue(matrix, frequencyScaling ? pi : flat);
         }
         return norm;

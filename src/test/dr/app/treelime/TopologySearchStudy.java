@@ -344,7 +344,9 @@ public class TopologySearchStudy {
             result.accepted = timeTreeSearch.getAcceptedMoves();
             result.stop = timeTreeSearch.getStopReason().name();
         } else {
-            result.f = ((Likelihood) objects.get("joint").getNativeObject()).getLogLikelihood();
+            // the objective's own density, as the search rows report (not the full joint under the default)
+            result.f = ((Likelihood) objects.get(options.maximizationOptions.objective.getDensityId())
+                    .getNativeObject()).getLogLikelihood();
         }
         result.tree = new FlexibleTree(tree);
         BranchRateModel branchRates = ((TreeDataLikelihood) objects.get("treeLikelihood").getNativeObject())

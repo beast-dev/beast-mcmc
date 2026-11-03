@@ -1120,8 +1120,10 @@ public class BeastGenerator extends Generator {
         writer.writeText("");
 
         final boolean thorough = search.mode == TopologySearchOptions.Mode.THOROUGH;
+        final boolean standard = search.mode == TopologySearchOptions.Mode.STANDARD;
         writer.writeComment("Search the topology by rooted NNIs" + (thorough ? ", SPRs, subtree swaps and root moves" +
-                        " from the starting tree and the NJ tree, then by perturbations of the best trees" :
+                        " from the NJ tree, then by perturbations of the best trees" :
+                        standard ? ", SPRs and root moves from the NJ tree" :
                         (search.mode == TopologySearchOptions.Mode.NNI_SPR ? " and SPRs" : "") +
                                 " from the starting tree") + "; a move is kept only when the " + density +
                         " density rises",
@@ -1133,6 +1135,9 @@ public class BeastGenerator extends Generator {
         if (thorough) {
             // the preset that reached the highest objective most reliably in the validation study (plan 7 M7)
             attributes.add(new Attribute.Default<String>("preset", "thorough"));
+        } else if (standard) {
+            // Thorough without perturbations: 2 of 53 misses at about 0.05 of its time (plan 7 M7)
+            attributes.add(new Attribute.Default<String>("preset", "standard"));
         } else if (search.mode == TopologySearchOptions.Mode.NNI_SPR) {
             // SPR includes the moves that give the root another node (plan 7 M6)
             attributes.add(new Attribute.Default<String>("moves", "nni,spr,root"));

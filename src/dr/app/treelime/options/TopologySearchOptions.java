@@ -51,7 +51,9 @@ public class TopologySearchOptions implements Serializable {
         OFF("Off: keep the starting tree's topology"),
         THOROUGH("Thorough: NNI, SPR and swaps from the NJ tree, then perturbations (best tree)"),
         NNI("NNI hill-climb from the starting tree"),
-        NNI_SPR("NNI and SPR hill-climb from the starting tree");
+        NNI_SPR("NNI and SPR hill-climb from the starting tree"),
+        // after the others: files store the names, and the mode is not in the GUI (plan 7 M7)
+        STANDARD("Standard: NNI, SPR and root moves from the NJ tree (no perturbations)");
 
         private final String label;
 
@@ -83,6 +85,14 @@ public class TopologySearchOptions implements Serializable {
 
     public boolean isOn() {
         return mode != null && mode != Mode.OFF;
+    }
+
+    /**
+     * @return whether the search starts from the NJ tree of the data it is given (Standard and Thorough), not from
+     * the starting tree; a searched bootstrap needs it, so that each replicate starts from its own data
+     */
+    public boolean startsFromNj() {
+        return mode == Mode.STANDARD || mode == Mode.THOROUGH;
     }
 
     /**

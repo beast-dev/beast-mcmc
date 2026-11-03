@@ -55,6 +55,11 @@ import java.util.Set;
  * bootstrap.params.tsv) and time trees (bootstrap.trees) give intervals that are written into the original analysis's
  * tables (params.tsv, dates.tsv, rates.tsv) and as height_CI, date_CI and rate_CI annotations on its time tree. Nodes
  * are matched by clade, which the fixed topology keeps the same in every replicate.
+ * <p>
+ * After a searched bootstrap (plan 8 S7f) the replicates' topologies differ: an interval then uses the replicates that
+ * have the clade (conditional on it), each node of the time tree gets its rooted clade frequency (support) and the
+ * frequency of its split ignoring the root (split_support), the root the frequency of its root split (root_support),
+ * and every clade of the replicates goes into a table with its frequency and heights.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -72,12 +77,18 @@ public class BootstrapSummary {
         final File bootstrapTrees;
         final File dates;
         final File rates; // null without a clock
+        final File clades; // null for none: every replicate clade, after a searched bootstrap
 
         public TreeFiles(File timeTree, File bootstrapTrees, File dates, File rates) {
+            this(timeTree, bootstrapTrees, dates, rates, null);
+        }
+
+        public TreeFiles(File timeTree, File bootstrapTrees, File dates, File rates, File clades) {
             this.timeTree = timeTree;
             this.bootstrapTrees = bootstrapTrees;
             this.dates = dates;
             this.rates = rates;
+            this.clades = clades;
         }
     }
 
@@ -87,6 +98,7 @@ public class BootstrapSummary {
     private final List<TreeFiles> trees;
     private final double level;
     private final List<String> notes = new ArrayList<String>();
+    private boolean topologySearched = false;
 
     /**
      * @param level the intervals' coverage, e.g. 0.95
@@ -98,6 +110,13 @@ public class BootstrapSummary {
         this.summary = summary;
         this.trees = trees;
         this.level = level;
+    }
+
+    /**
+     * @param topologySearched whether each replicate searched the topology, so that clades differ between them
+     */
+    public void setTopologySearched(boolean topologySearched) {
+        this.topologySearched = topologySearched;
     }
 
     /**
@@ -280,7 +299,8 @@ public class BootstrapSummary {
         }
         write(files.dates, dates);
         if (missing > 0) {
-            notes.add(missing + " node(s) of " + files.timeTree.getName() + " were missing from a replicate tree");
+            notes.add(missing + " node(s) of " + files.timeTree.getName() + " were missing from a replicate tree" +
+                    (topologySearched ? "; their intervals use the replicates that have them" : ""));
         }
 
         // rates, on the branch above each node
@@ -319,11 +339,105 @@ public class BootstrapSummary {
             annotate(original, node, ages ? "age_CI" : "date_CI", dateIntervals.get(entry.getKey()));
             annotate(original, node, "rate_CI", rateIntervals.get(entry.getKey()));
         }
+        if (topologySearched) {
+            annotateSupport(original, estimate, replicates);
+            if (files.clades != null) {
+                writeClades(files.clades, estimate, replicates);
+            }
+        }
         PrintStream out = new PrintStream(files.timeTree, "UTF-8");
         NexusExporter exporter = new NexusExporter(out);
         exporter.setSortedTranslationTable(true);
         exporter.exportTree(original);
         out.close();
+    }
+
+    // the frequency, over the replicates, of each node's rooted clade (support) and of its split (the clade or its
+    // complement, i.e. ignoring the root: split_support); at the root, of its root split (root_support)
+    private static void annotateSupport(FlexibleTree tree, CladeValues estimate, List<CladeValues> replicates) {
+        final Set<String> all = TreeUtils.getDescendantLeaves(tree, tree.getRoot());
+        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+            NodeRef node = tree.getInternalNode(i);
+            if (tree.isRoot(node)) {
+                Set<String> side = TreeUtils.getDescendantLeaves(tree, tree.getChild(node, 0));
+                Set<String> other = complement(all, side);
+                int count = 0;
+                for (CladeValues replicate : replicates) {
+                    // a rooted tree's root split is its only one whose two sides are both clades
+                    if (replicate.heights.containsKey(side) && replicate.heights.containsKey(other)) {
+                        count++;
+                    }
+                }
+                tree.setNodeAttribute(node, "root_support", count / (double) replicates.size());
+                continue;
+            }
+            Set<String> clade = TreeUtils.getDescendantLeaves(tree, node);
+            Set<String> other = complement(all, clade);
+            int rooted = 0;
+            int split = 0;
+            for (CladeValues replicate : replicates) {
+                boolean has = replicate.heights.containsKey(clade);
+                rooted += has ? 1 : 0;
+                split += has || (other.size() > 1 && replicate.heights.containsKey(other)) ? 1 : 0;
+            }
+            tree.setNodeAttribute(node, "support", rooted / (double) replicates.size());
+            tree.setNodeAttribute(node, "split_support", split / (double) replicates.size());
+        }
+    }
+
+    private static Set<String> complement(Set<String> all, Set<String> clade) {
+        Set<String> other = new HashSet<String>(all);
+        other.removeAll(clade);
+        return other;
+    }
+
+    // every clade (two tips or more, not the root) of the replicates: its frequency, whether the original time tree
+    // has it, and its heights above the youngest tip over the replicates that have it; most frequent first
+    private void writeClades(File file, CladeValues estimate, List<CladeValues> replicates) throws IOException {
+        final Map<Set<String>, List<Double>> heights = new HashMap<Set<String>, List<Double>>();
+        int tips = 0;
+        for (Set<String> clade : estimate.heights.keySet()) {
+            tips = Math.max(tips, clade.size());
+        }
+        for (CladeValues replicate : replicates) {
+            for (Map.Entry<Set<String>, Double> entry : replicate.heights.entrySet()) {
+                int size = entry.getKey().size();
+                if (size > 1 && size < tips) {
+                    List<Double> values = heights.get(entry.getKey());
+                    if (values == null) {
+                        values = new ArrayList<Double>();
+                        heights.put(entry.getKey(), values);
+                    }
+                    values.add(entry.getValue());
+                }
+            }
+        }
+        List<Set<String>> clades = new ArrayList<Set<String>>(heights.keySet());
+        java.util.Collections.sort(clades, new java.util.Comparator<Set<String>>() {
+            public int compare(Set<String> a, Set<String> b) {
+                int byCount = Integer.compare(heights.get(b).size(), heights.get(a).size());
+                return byCount != 0 ? byCount : Integer.compare(a.size(), b.size());
+            }
+        });
+        List<String[]> rows = new ArrayList<String[]>();
+        rows.add(new String[]{"clade", "size", "frequency", "in_time_tree", "height_median", "height_lower",
+                "height_upper"});
+        for (Set<String> clade : clades) {
+            List<Double> values = heights.get(clade);
+            double[] sorted = new double[values.size()];
+            for (int i = 0; i < sorted.length; ++i) {
+                sorted[i] = values.get(i);
+            }
+            Arrays.sort(sorted);
+            double[] interval = interval(values);
+            List<String> taxa = new ArrayList<String>(clade);
+            java.util.Collections.sort(taxa);
+            rows.add(new String[]{String.join(",", taxa), Integer.toString(clade.size()),
+                    Double.toString(values.size() / (double) replicates.size()),
+                    estimate.heights.containsKey(clade) ? "yes" : "no", Double.toString(percentile(sorted, 0.5)),
+                    Double.toString(interval[0]), Double.toString(interval[1])});
+        }
+        write(file, rows);
     }
 
     private static void annotate(FlexibleTree tree, NodeRef node, String name, double[] interval) {
@@ -355,7 +469,8 @@ public class BootstrapSummary {
     private void appendToSummary(int replicates) throws IOException {
         PrintWriter writer = new PrintWriter(new FileWriter(summary, true));
         writer.println();
-        writer.println("Bootstrap: " + replicates + " replicates (fixed topology); " +
+        writer.println("Bootstrap: " + replicates + " replicates (" + (topologySearched ? "topology searched by each " +
+                "replicate; clade support, split_support and root_support on the time tree" : "fixed topology") + "); " +
                 formatLevel() +
                 "% percentile intervals (" + CI_METHOD + ") and bootstrap standard errors in the parameter table, " +
                 "date (or height) intervals in the dates table, rate intervals in the rates table, and height_CI, " +

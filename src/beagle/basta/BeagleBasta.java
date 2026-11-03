@@ -31,7 +31,11 @@ import beagle.Beagle;
 
 public interface BeagleBasta extends Beagle {
 
-    int BASTA_OPERATION_SIZE = 9;
+    int BASTA_OPERATION_SIZE = 8;
+
+    // BEAGLE 4.2's 9-integer operations (BastaOperation_v5), used by the _v5 methods: the 9th integer is the
+    // operation's offset into the current population-size buffer (setBastaPopulationSizes / ...Buffer)
+    int BASTA_OPERATION_SIZE_V5 = 9;
 
     void updateBastaPartials(final int[] operations,
                              int operationCount,
@@ -39,6 +43,13 @@ public interface BeagleBasta extends Beagle {
                              int intervalCount,
                              int populationSizeIndex,
                              int coalescentProbabilityIndex);
+
+    void updateBastaPartials_v5(final int[] operations,
+                                int operationCount,
+                                final int[] intervals,
+                                int intervalCount,
+                                int populationSizeIndex,
+                                int coalescentProbabilityIndex);
 
     void accumulateBastaPartials(final int[] operations,
                                  int operationCount,
@@ -48,6 +59,15 @@ public interface BeagleBasta extends Beagle {
                                  int populationSizesIndex,
                                  int coalescentIndex,
                                  double[] result);
+
+    void accumulateBastaPartials_v5(final int[] operations,
+                                    int operationCount,
+                                    final int[] intervalStarts,
+                                    int intervalCount,
+                                    final double[] intervalLengths,
+                                    int populationSizesIndex,
+                                    int coalescentIndex,
+                                    double[] result);
 
     void allocateCoalescentBuffers(int coalescentBufferCount, int maxCoalescentIntervalCount, int partialsBufferCount, int initial, int threadCount);
 
@@ -60,6 +80,8 @@ public interface BeagleBasta extends Beagle {
     void getBastaBuffer(int index, double[] buffer);
 
     void updateBastaPartialsGrad(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
+
+    void updateBastaPartialsGrad_v5(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
 
     void updateTransitionMatricesGrad(int[] transitionMatrixIndices, double[] branchLengths, int count);
 
@@ -74,6 +96,17 @@ public interface BeagleBasta extends Beagle {
                                      int matrixAdjointBufferBase,
                                      double[] popSizeGradOut,
                                      double[] result);
+
+    void accumulateBastaPartialsGrad_v5(int[] operations, int operationCount,
+                                        final int[] intervalStarts, int intervalCount,
+                                        final double[] intervalLengths,
+                                        int populationSizeIndex,
+                                        int coalescentProbabilityIndex,
+                                        int eigenIndex,
+                                        int partialAdjointBufferBase,
+                                        int matrixAdjointBufferBase,
+                                        double[] popSizeGradOut,
+                                        double[] result);
 
     void allocateCoalescentGradBuffers(int partialsCount);
 

@@ -16,10 +16,13 @@ env:
     BEAGLE_DIR: beagle-lib
     BEAGLE_LIB: beagle-lib/usr/local/lib
     LD_LIBRARY_PATH: beagle-lib/usr/local/lib
-    # BASTA TestXML fixtures require BEAGLE-BIT, currently available from
-    # beagle-lib's basta_development branch.
-    BEAGLE_BRANCH: basta_development
-    BEAGLE_CACHE_VERSION: beagle-bit-basta-v1
+    # BASTA TestXML fixtures require BEAGLE-BIT with the BASTA _v5 functions
+    # (9-integer operations, population-size buffers): beagle-lib v4.2.0.
+    # build_beagle.sh clones it with 'git clone -b', which takes a tag. The
+    # cache key does not include the commit, so the cache version names the
+    # tagged commit.
+    BEAGLE_BRANCH: v4.2.0
+    BEAGLE_CACHE_VERSION: beagle-bit-v4.2.0-02bc4078
 
 jobs:
     build:

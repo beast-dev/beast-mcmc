@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
+import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE_V5;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyIntegerArray;
 
 /**
@@ -271,7 +271,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             }
 
             int partialsAlloc = useAdjointGradient ? 2 * currentPartialsCount : currentPartialsCount;
-            beagle.allocateCoalescentBuffers(5, maxNumCoalescentIntervals, partialsAlloc, 0, threadCount);
+            beagle.allocateCoalescentBuffers(5, currentIntervalsCount, partialsAlloc, 0, threadCount);
             int gradPartialsArg = useAdjointGradient ? -currentPartialsCount : currentPartialsCount;
             beagle.allocateCoalescentGradBuffers(gradPartialsArg);
             gradientBuffersAllocated = true;
@@ -351,7 +351,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
 
         ensureStorageInitialized();
         
-        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
+        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE_V5]; // TODO instantiate once
         int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
 
@@ -362,12 +362,12 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
         if (mode == Mode.LIKELIHOOD) {
-            beagle.updateBastaPartials(operations, branchIntervalOperations.size(),
+            beagle.updateBastaPartials_v5(operations, branchIntervalOperations.size(),
                     intervals, intervalStarts.size(),
                     populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
             // TODO do dipatch inside BEAGLE by passing mode.getModeAsInt()
         } else if (mode == Mode.GRADIENT) {
-            beagle.updateBastaPartialsGrad(operations, branchIntervalOperations.size(),
+            beagle.updateBastaPartialsGrad_v5(operations, branchIntervalOperations.size(),
                     intervals, intervalStarts.size(),
                     populationSizeIndex, COALESCENT_PROBABILITY_INDEX);
         } else {
@@ -428,7 +428,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                                                         StructuredCoalescentLikelihoodGradient.WrtParameter wrt) {
 
         // TODO vectorize once per likelihood-calculation
-        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
+        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE_V5]; // TODO instantiate once
         int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
 
@@ -436,7 +436,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
         if (mode == Mode.LIKELIHOOD) {
-            beagle.accumulateBastaPartials(operations, branchIntervalOperations.size(),
+            beagle.accumulateBastaPartials_v5(operations, branchIntervalOperations.size(),
                     intervals, intervalStarts.size(), lengths,
                     populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
                     out);
@@ -448,7 +448,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
             }
 
             double[] migRateOut = new double[stateCount * stateCount];
-            beagle.accumulateBastaPartialsGrad(operations, branchIntervalOperations.size(),
+            beagle.accumulateBastaPartialsGrad_v5(operations, branchIntervalOperations.size(),
                     intervals, intervalStarts.size(), lengths,
                     populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
                     0, -1, -1, null, migRateOut);
@@ -461,7 +461,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
     protected double[] computeCoalescentIntervalReductionGrad(List<Integer> intervalStarts,
                                                               List<BranchIntervalOperation> branchIntervalOperations,
                                                               double[] gradient) {
-        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE]; // TODO instantiate once
+        int[] operations = new int[branchIntervalOperations.size() * BASTA_OPERATION_SIZE_V5]; // TODO instantiate once
         int[] intervals = new int[intervalStarts.size()]; // TODO instantiate once
         double[] lengths = new double[intervalStarts.size() - 1]; // TODO instantiate once
 
@@ -470,7 +470,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
         int populationSizeIndex = populationSizesBufferHelper.getOffsetIndex(0);
 
         double[] out = new double[stateCount*stateCount];
-        beagle.accumulateBastaPartialsGrad(operations, branchIntervalOperations.size(),
+        beagle.accumulateBastaPartialsGrad_v5(operations, branchIntervalOperations.size(),
                 intervals, intervalStarts.size(), lengths,
                 populationSizeIndex, COALESCENT_PROBABILITY_INDEX,
                 0, -1, -1, null,
@@ -639,7 +639,7 @@ public class BeagleBastaLikelihoodDelegate extends BastaLikelihoodDelegate.Abstr
                 maxOutputBuffer = currentOutputBuffer;
             }
 
-            k += BASTA_OPERATION_SIZE;
+            k += BASTA_OPERATION_SIZE_V5;
         }
         
         int i = 0;

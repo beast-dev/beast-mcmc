@@ -74,12 +74,31 @@ public class BastaJNIWrapper {
                                               int coalescentProbabilityIndex,
                                               double[] result);
 
+    // BEAGLE 4.2 _v5 natives: 9-integer operations (BeagleBasta.BASTA_OPERATION_SIZE_V5)
+    public native int updateBastaPartials_v5(int instance,
+                                             final int[] operations,
+                                             int operationCount,
+                                             final int[] intervals,
+                                             int intervalCount,
+                                             int populationSizeIndex,
+                                             int coalescentProbabilityIndex);
+
+    public native int accumulateBastaPartials_v5(int instance,
+                                                 final int[] operations,
+                                                 int operationCount,
+                                                 final int[] intervals,
+                                                 int intervalCount,
+                                                 final double[] intervalLengths,
+                                                 int populationSizesIndex,
+                                                 int coalescentProbabilityIndex,
+                                                 double[] result);
+
     private static String getPlatformSpecificLibraryName() {
         String osName = System.getProperty("os.name").toLowerCase();
         String osArch = System.getProperty("os.arch").toLowerCase();
         if (osName.startsWith("windows")) {
-            if (osArch.equals("x86") || osArch.equals("i386")) return "hmsbeagle-jni-bit32";
-            if (osArch.startsWith("amd64") || osArch.startsWith("x86_64")) return "hmsbeagle-jni-bit64";
+            if (osArch.equals("x86") || osArch.equals("i386")) return "hmsbeagle-bit32";
+            if (osArch.startsWith("amd64") || osArch.startsWith("x86_64")) return "hmsbeagle-bit64";
         }
         return "hmsbeagle-jni-bit";
     }
@@ -101,6 +120,8 @@ public class BastaJNIWrapper {
 
     public native int updateBastaPartialsGrad(int instance, int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
 
+    public native int updateBastaPartialsGrad_v5(int instance, int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
+
     public native int updateTransitionMatricesGrad(int instance, int[] transitionMatrixIndices, double[] branchLengths, int count);
 
     public native int accumulateBastaPartialsGrad(int instance,
@@ -114,6 +135,18 @@ public class BastaJNIWrapper {
                                                   int matrixAdjointBufferBase,
                                                   double[] popSizeGradOut,
                                                   double[] result);
+
+    public native int accumulateBastaPartialsGrad_v5(int instance,
+                                                     int[] operations, int operationCount,
+                                                     int[] intervalStarts, int intervalCount,
+                                                     double[] intervalLengths,
+                                                     int populationSizeIndex,
+                                                     int coalescentProbabilityIndex,
+                                                     int eigenIndex,
+                                                     int partialAdjointBufferBase,
+                                                     int matrixAdjointBufferBase,
+                                                     double[] popSizeGradOut,
+                                                     double[] result);
 
     public native int allocateCoalescentGradBuffers(int instance, int partialsCount);
 

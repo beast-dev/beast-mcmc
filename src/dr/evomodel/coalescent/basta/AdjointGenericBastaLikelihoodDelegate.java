@@ -19,8 +19,9 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
 
     private static final double EIGEN_TOLERANCE = 1.0e-12;
 
-    // beagle-lib basta_adjoint's operation layout (BEAGLE_BASTA_OP_COUNT = 8): no per-operation population-size
-    // index, unlike BeagleBasta.BASTA_OPERATION_SIZE used by BeagleBastaLikelihoodDelegate
+    // BEAGLE's 8-integer operation layout (BEAGLE_BASTA_OP_COUNT = 8, as BeagleBasta.BASTA_OPERATION_SIZE): no
+    // per-operation population-size offset, unlike the 9-integer _v5 layout (BeagleBasta.BASTA_OPERATION_SIZE_V5)
+    // used by BeagleBastaLikelihoodDelegate
     private static final int BASTA_OPERATION_SIZE = 8;
     private static final double EXACT_EXP_THRESHOLD = 1.0e-10;
 

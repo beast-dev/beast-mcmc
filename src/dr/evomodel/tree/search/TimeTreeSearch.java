@@ -122,6 +122,7 @@ public class TimeTreeSearch implements Reportable, Citable {
     private int perturbations = 0;
     private double[] nniDelta = null;
     private int nniDeltaNegative = 0;
+    private int nniDeltaSkipped = 0; // nodes left NaN because a budget ran out
     private int sprRounds = 0;
     private int swapRounds = 0;
     private int swapAccepted = 0;
@@ -450,9 +451,15 @@ public class TimeTreeSearch implements Reportable, Citable {
         final double[] delta = new double[tree.getNodeCount()];
         java.util.Arrays.fill(delta, Double.NaN);
         nniDeltaNegative = 0;
+        nniDeltaSkipped = 0;
         for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
             final NodeRef node = tree.getInternalNode(i);
             if (tree.isRoot(node)) {
+                continue;
+            }
+            // the budgets cover the local support too (on Dengue it ran hours past maxRunTime)
+            if (checkBudgets() != null) {
+                nniDeltaSkipped++;
                 continue;
             }
             final BitSet only = new BitSet(tree.getNodeCount());
@@ -476,6 +483,9 @@ public class TimeTreeSearch implements Reportable, Citable {
         trialSeconds += (System.nanoTime() - started) / 1E9;
         if (nniDeltaNegative > 0) {
             say("nniDelta: " + nniDeltaNegative + " node(s) have an NNI alternative scoring higher than the best tree");
+        }
+        if (nniDeltaSkipped > 0) {
+            say("nniDelta: " + nniDeltaSkipped + " node(s) not scored, the search's budget having run out");
         }
         return delta;
     }
@@ -1192,7 +1202,8 @@ public class TimeTreeSearch implements Reportable, Citable {
                 }
             }
             sb.append("NniDelta: smallest ").append(min).append(nniDeltaNegative > 0 ? " (" + nniDeltaNegative +
-                    " negative: an NNI scores higher)" : "").append("\n");
+                    " negative: an NNI scores higher)" : "").append(nniDeltaSkipped > 0 ? " (" + nniDeltaSkipped +
+                    " nodes not scored: budget spent)" : "").append("\n");
         }
         if (settings.swap) {
             sb.append("SwapRounds: ").append(swapRounds).append(" (moves accepted ").append(swapAccepted).append(")\n");

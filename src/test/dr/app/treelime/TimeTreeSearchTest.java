@@ -260,6 +260,24 @@ public class TimeTreeSearchTest extends TestCase {
         }
     }
 
+    // a spent budget stops the search and the local support at the end too (on Dengue nniDelta ran hours past
+    // maxRunTime): the nodes are left unscored, and the report says so
+    public void testBudgetCoversNniDelta() throws Exception {
+        Map<String, XMLObject> objects = parse(new Setup().search("maxEvaluations=\"1\"").xml());
+        if (objects == null) {
+            return;
+        }
+        TreeModel tree = tree(objects);
+        TimeTreeSearch search = search(objects);
+        search.run();
+        assertEquals(TimeTreeSearch.StopReason.MAX_EVALUATIONS, search.getStopReason());
+        double[] delta = search.getNniDelta();
+        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+            assertTrue(Double.isNaN(delta[tree.getInternalNode(i).getNumber()]));
+        }
+        assertTrue(search.getReport(), search.getReport().contains("nodes not scored: budget spent"));
+    }
+
     // V8: the constraint filter refuses exactly the NNIs after which the monophyly statistic fails; the search keeps
     // the clade
     public void testConstraintFilter() throws Exception {

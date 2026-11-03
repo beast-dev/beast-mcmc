@@ -441,7 +441,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", null, "BEAGLE: use double precision if available"),
                         new Arguments.Option("beagle_async", null, "BEAGLE: use asynchronous kernels if available"),
-                        new Arguments.Option("beagle_low_memory", null, "BEAGLE: use lower memory pre-order traversal kernels"),
+                        new Arguments.Option("beagle_low_memory", null, "BEAGLE: ignored, kept for old command lines (no native BEAGLE has low-memory pre-order kernels)"),
                         new Arguments.StringOption("beagle_extra_buffer_count", null, "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
                         new Arguments.StringOption("beagle_scaling", "bs", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),

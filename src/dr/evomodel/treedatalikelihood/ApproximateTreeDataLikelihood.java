@@ -30,6 +30,7 @@ package dr.evomodel.treedatalikelihood;
 import dr.evomodel.treedatalikelihood.discrete.LaplaceEvidence;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
 import dr.inference.model.*;
+import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
 /**
@@ -68,6 +69,19 @@ public class ApproximateTreeDataLikelihood extends AbstractModelLikelihood {
             // a density of the parameter alone (a distributionLikelihood) has no model
             addModel(maximizer.getLikelihood().getModel());
         }
+    }
+
+    /**
+     * Tree used by the underlying tree-data likelihood.
+     * Collapsed-target compatibility is the caller's responsibility.
+     */
+    public TreeModel getTree() {
+        for (Likelihood likelihood : maximizer.getLikelihood().getLikelihoodSet()) {
+            if (likelihood instanceof TreeDataLikelihood) {
+                return (TreeModel) ((TreeDataLikelihood) likelihood).getTree();
+            }
+        }
+        return null;
     }
 
     private void updateMarginalLikelihood() {

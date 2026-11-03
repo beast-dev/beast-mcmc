@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="taxon_1">
+            <attr name="loc">A</attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="loc">B</attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="loc">B</attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="loc">C</attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="loc">A</attr>
+        </taxon>
+    </taxa>
+
+    <generalDataType id="loc.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+    </generalDataType>
+
+    <attributePatterns id="loc.pattern" attribute="loc">
+        <taxa idref="taxa"/>
+        <generalDataType idref="loc.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        ((taxon_1:1.0,taxon_2:1.5):2.0,(taxon_3:0.8,(taxon_4:1.2,taxon_5:1.2):0.6):1.5);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="loc.branchRates">
+        <rate>
+            <parameter id="loc.clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <logRateSubstitutionModel id="loc.model" normalize="true" scaleRatesByFrequencies="false">
+        <generalDataType idref="loc.dataType"/>
+        <rootFrequencies>
+            <frequencyModel id="loc.frequencyModel" normalize="true">
+                <generalDataType idref="loc.dataType"/>
+                <frequencies>
+                    <parameter id="loc.frequencies" dimension="3" value="0.2 0.3 0.5"/>
+                </frequencies>
+            </frequencyModel>
+        </rootFrequencies>
+        <logRates>
+            <parameter id="loc.logRates" dimension="6" value="0.8 -0.6 0.25 -0.9 0.45 -0.2"/>
+        </logRates>
+    </logRateSubstitutionModel>
+
+    <siteModel id="loc.siteModel">
+        <substitutionModel>
+            <logRateSubstitutionModel idref="loc.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="treeLikelihood" useAmbiguities="true"
+                        usePreOrder="true" branchInfinitesimalDerivative="true"
+                        phyloGeoFast="true" phyloGeoFastRepresentation="spectralRotated"
+                        scalingScheme="never" delayScaling="false">
+        <patterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="loc.siteModel"/>
+        <strictClockBranchRates idref="loc.branchRates"/>
+    </treeDataLikelihood>
+
+    <exactLogCtmcRateGradient id="spectralExactGradient" traitName="loc" mode="exact">
+        <treeDataLikelihood idref="treeLikelihood"/>
+        <logRateSubstitutionModel idref="loc.model"/>
+    </exactLogCtmcRateGradient>
+
+    <report>
+        <exactLogCtmcRateGradient idref="spectralExactGradient"/>
+    </report>
+
+    <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
+        <message>
+            Check flat-Q normalization likelihood with non-uniform root frequencies
+        </message>
+        <actual regex="TreeDataLikelihood\((.*?)\)">
+            <treeDataLikelihood idref="treeLikelihood"/>
+        </actual>
+        <expected>
+            -6.829548723129837
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check exact spectral gradient with non-uniform frequencies and flat Q normalization
+        </message>
+        <actual regex="analytic: (.*?)\n">
+            <exactLogCtmcRateGradient idref="spectralExactGradient"/>
+        </actual>
+        <expected regex="numeric : (.*?)\n">
+            <exactLogCtmcRateGradient idref="spectralExactGradient"/>
+        </expected>
+    </assertEqual>
+
+</beast>

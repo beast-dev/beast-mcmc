@@ -22,7 +22,6 @@
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
-
 package dr.evomodel.substmodel.eigen;
 
 /*
@@ -31,26 +30,54 @@ package dr.evomodel.substmodel.eigen;
  * @author Xiang Ji
  *
  */
-public class EigenJNIWrapper {
-    public EigenJNIWrapper () {
-    }
+
+public class EigenJNIWrapper implements AutoCloseable {
+    private long nativeHandle;
 
     static {
-        System.load("/usr/local/lib/libeigen-jni.jnilib");
+        System.loadLibrary("eigen-jni");
     }
 
-    public native int createInstance(int matrixCount,
-                                     int stateCount);
+    public EigenJNIWrapper() {
+    }
 
-    public native int setMatrix(int matrix,
-                                int[] indices,
-                                double[] values,
-                                int nonZeroCount);
+    public void createInstance(int matrixCount, int stateCount) {
+        nativeHandle = nativeCreateInstance(matrixCount, stateCount);
+        if (nativeHandle == 0) {
+            throw new RuntimeException("Failed to create native EigenImpl");
+        }
+    }
+
+    public int setMatrix(int matrix, int[] indices, double[] values,
+                         int nonZeroCount, int stateCount) {
+        return nativeSetMatrix(nativeHandle, matrix, indices, values,
+                               nonZeroCount, stateCount);
+    }
+
+    public int getEigenDecomposition(int matrix, double[] eigenValues,
+                                     double[] eigenVectors,
+                                     double[] inverseEigenVectors) {
+        return nativeGetEigenDecomposition(nativeHandle, matrix,
+                                           eigenValues, eigenVectors,
+                                           inverseEigenVectors);
+    }
+
+    @Override
+    public void close() {
+        if (nativeHandle != 0) {
+            nativeDestroyInstance(nativeHandle);
+            nativeHandle = 0;
+        }
+    }
 
     public native String getVersion();
-
-    public native int getEigenDecomposition(int matrix,
-                                            double[] eigenValues,
-                                            double[] eigenVectors,
-                                            double[] inverseEigenVectors);
+    private static native long nativeCreateInstance(int matrixCount, int stateCount);
+    private static native void nativeDestroyInstance(long handle);
+    private static native int nativeSetMatrix(long handle, int matrix,
+                                              int[] indices, double[] values,
+                                              int nonZeroCount, int stateCount);
+    private static native int nativeGetEigenDecomposition(long handle, int matrix,
+                                                          double[] eigenValues,
+                                                          double[] eigenVectors,
+                                                          double[] inverseEigenVectors);
 }

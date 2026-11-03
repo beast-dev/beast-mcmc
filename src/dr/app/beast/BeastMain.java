@@ -697,7 +697,9 @@ public class BeastMain {
         }
 
         if (arguments.hasOption("beagle_low_memory")) {
-            beagleFlags |= BeagleFlag.PREORDER_TRANSPOSE_LOW_MEMORY.getMask();
+            // no native BEAGLE (4.0.x to 4.2.x) defines this flag's bit, so it would only be an unknown preference bit
+            System.err.println("Warning: -beagle_low_memory is ignored: no native BEAGLE has low-memory pre-order kernels");
+            System.err.println();
         }
 
         if (arguments.hasOption("beagle_order")) {

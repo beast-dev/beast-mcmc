@@ -43,7 +43,11 @@ public class StructuredCoalescentLikelihoodGradientParser extends AbstractXMLObj
 
         StructuredCoalescentLikelihoodGradient.WrtParameter type = StructuredCoalescentLikelihoodGradient.WrtParameter.factory(wrtParamter);
 
-        return new StructuredCoalescentLikelihoodGradient(BastaLikelihood, substitutionModel, type);
+        try {
+            return new StructuredCoalescentLikelihoodGradient(BastaLikelihood, substitutionModel, type);
+        } catch (IllegalArgumentException iae) { // BASTA gradients through a native BEAGLE older than 4.2.0
+            throw new XMLParseException(iae.getMessage());
+        }
 //        return StructuredCoalescentLikelihoodGradient.factory(BastaLikelihood, substitutionModel, type);
     }
 

@@ -70,9 +70,14 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         if (dependentParam != null) {
             addVariable(dependentParam);
             N = dependentParam.getDimension();
-        } else
+        } else {
             N = 0;
+        }
+
+        checkDependentVariables();
     }
+
+    protected void checkDependentVariables() { }
 
     //    public double[][] getScaleDesignMatrix() { return scaleDesignMatrix; }
     public int[] getScaleDesign() {
@@ -180,6 +185,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     }
 
     public int getEffectNumber(Parameter effect) {
+        if (independentParam == null) {
+            return -1;
+        }
         return independentParam.indexOf(effect);
     }
 

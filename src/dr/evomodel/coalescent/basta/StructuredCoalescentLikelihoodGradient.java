@@ -26,6 +26,7 @@
  */
 
 package dr.evomodel.coalescent.basta;
+import beagle.BeagleInfo;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
@@ -33,6 +34,7 @@ import dr.evomodel.substmodel.GlmSubstitutionModel;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.treedatalikelihood.BeagleFunctionality;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
@@ -56,6 +58,12 @@ public class StructuredCoalescentLikelihoodGradient implements
         this.structuredCoalescentLikelihood = BastaLikelihood;
         this.wrtParameter = wrtParameter;
         this.substitutionModel = substitutionModel;
+
+        if (structuredCoalescentLikelihood.getLikelihoodDelegate() instanceof BeagleBastaLikelihoodDelegate &&
+                !BeagleFunctionality.IS_BASTA_GRADIENT_SUPPORTED()) {
+            throw new IllegalArgumentException("BASTA gradients through BEAGLE need native BEAGLE 4.2.0 or later; found " +
+                    BeagleInfo.getVersion());
+        }
 
         this.parameter = wrtParameter.getParameter(structuredCoalescentLikelihood, substitutionModel);
         this.chainRuleDependent = wrtParameter.getChainRuleDependent(structuredCoalescentLikelihood, substitutionModel);

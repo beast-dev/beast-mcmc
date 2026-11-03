@@ -124,6 +124,7 @@ public class MaximizerWrtParameter implements Reportable {
 
     private double lastFiniteValue = 0.0;
     private boolean lastEvaluationNonFinite = false;
+    private boolean numericGradient = false; // the gradient is this class's own finite differences
     private static final double NON_FINITE_PENALTY = 1E10;
     private static final double EDGE = 30.0; // logit 30: a ratio of 1 - 1E-13; log -30: a value of 1E-13
     // the largest gradient norm, relative to max(1, |x|), at which a line search failure no restart improves on counts
@@ -360,6 +361,7 @@ public class MaximizerWrtParameter implements Reportable {
         this.transform = transform;
 
         this.gradient = gradient == null ? constructGradient() : gradient;
+        this.numericGradient = gradient == null;
 
         this.function = constructFunction();
         this.settings = settings;
@@ -1369,20 +1371,25 @@ public class MaximizerWrtParameter implements Reportable {
             // the unweighted log density otherwise: the transform only reparameterizes, so the optimum is unchanged
 
             ++gradientCalls;
-            result = gradient.getGradientLogDensity();
+            if (numericGradient && transform != null) {
+                result = transformedNumericGradient(point);
+            } else {
+                result = gradient.getGradientLogDensity();
 
-            if (transform != null) {
-                if (settings.includeJacobian) {
-                    result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
-                } else {
-                    // chain rule only, matching the unweighted log density, at the transformed point itself: mapping
-                    // the model values back can round a ratio to exactly 1, whose logit is +Inf and inverse NaN
-                    result = transform.updateGradientInverseUnWeightedLogDensity(result, point, 0, point.length);
+                if (transform != null) {
+                    if (settings.includeJacobian) {
+                        result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
+                    } else {
+                        // chain rule only, matching the unweighted log density, at the transformed point itself:
+                        // mapping the model values back can round a ratio to exactly 1, whose logit is +Inf and
+                        // inverse NaN
+                        result = transform.updateGradientInverseUnWeightedLogDensity(result, point, 0, point.length);
+                    }
                 }
-            }
-            result = result.clone();
-            for (int i = 0; i < result.length; ++i) {
-                result[i] = -result[i];
+                result = result.clone();
+                for (int i = 0; i < result.length; ++i) {
+                    result[i] = -result[i];
+                }
             }
             lastFiniteValue = value;
         }
@@ -1513,6 +1520,45 @@ public class MaximizerWrtParameter implements Reportable {
                 return cachedGradient.clone();
             }
         };
+    }
+
+    /**
+     * The objective's gradient by central differences at the transformed point itself. In model space a step can
+     * leave the parameter's domain, which the transform exists to avoid: on a near-zero branch, a node height stepped
+     * above its parent's gives a negative branch length (an assertion under -ea, a non-finite density without).
+     */
+    private double[] transformedNumericGradient(final double[] point) {
+        final double[] y = point.clone();
+        final double[] result = new double[y.length];
+        NumericalDerivative.gradient(new MultivariateFunction() {
+            @Override
+            public double evaluate(double[] argument) {
+                setPoint(argument);
+                double value = -evaluateLogLikelihood();
+                if (settings.includeJacobian) {
+                    final double[] values = parameter.getParameterValues();
+                    value += transform.logJacobian(values, 0, values.length);
+                }
+                return value;
+            }
+
+            @Override
+            public int getNumArguments() {
+                return y.length;
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return Double.POSITIVE_INFINITY;
+            }
+        }, y, result, settings.stepSize);
+        setPoint(point);
+        return result;
     }
 
     private GradientWrtParameterProvider constructGradient() {

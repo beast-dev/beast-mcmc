@@ -28,6 +28,7 @@
 package test.dr.evomodel.treedatalikelihood;
 
 import beagle.BeagleFlag;
+import beagle.BeagleInfo;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
@@ -45,6 +46,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.BeagleFunctionality;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate.LikelihoodException;
 import dr.evomodel.treedatalikelihood.EpochEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
@@ -72,6 +74,16 @@ public class EpochAugmentedLikelihoodTest extends TraceCorrelationAssert {
 
     public EpochAugmentedLikelihoodTest(String name) {
         super(name);
+    }
+
+    @Override
+    public void runBare() throws Throwable {
+        if (!BeagleFunctionality.IS_MATRIX_VECTOR_SUPPORTED()) {
+            System.err.println("SKIPPED " + getClass().getSimpleName() + "." + getName() +
+                    ": needs native BEAGLE 4.2.0 or later, found " + BeagleInfo.getVersion());
+            return;
+        }
+        super.runBare();
     }
 
     public void setUp() throws Exception {

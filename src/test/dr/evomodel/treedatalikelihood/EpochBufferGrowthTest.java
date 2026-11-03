@@ -44,6 +44,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.AugmentedNodeRegistry;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.BeagleFunctionality;
 import dr.evomodel.treedatalikelihood.EpochEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -68,8 +69,9 @@ import java.util.Random;
  * nodes included. Standard and spectral BEAGLE implementations, with and without pre-order, without rescaling and
  * with dynamic rescaling (whose first evaluation is repeated, after a rescaling exception).
  * <p>
- * The growing twin grows at least twice, and at most once per evaluation. With a BEAGLE older than 4.2.0, or with
- * -Dbeagle.augmented.preallocate=true (testFallback), both twins preallocate and the same comparisons hold.
+ * The growing twin grows at least twice, and at most once per evaluation. With -Dbeagle.augmented.preallocate=true
+ * (testFallback), both twins preallocate and the same comparisons hold. The tests are skipped with a native BEAGLE
+ * older than 4.2.0, which has no degree-2 nodes.
  *
  * @author Marc A Suchard
  */
@@ -83,6 +85,16 @@ public class EpochBufferGrowthTest extends TraceCorrelationAssert {
         super(name);
     }
 
+    @Override
+    public void runBare() throws Throwable {
+        if (!BeagleFunctionality.IS_MATRIX_VECTOR_SUPPORTED()) {
+            System.err.println("SKIPPED " + getClass().getSimpleName() + "." + getName() +
+                    ": needs native BEAGLE 4.2.0 or later, found " + BeagleInfo.getVersion());
+            return;
+        }
+        super.runBare();
+    }
+
     public void setUp() throws Exception {
         super.setUp();
         createAlignment(DENGUE4_TAXON_SEQUENCE, Nucleotides.INSTANCE);
@@ -93,7 +105,7 @@ public class EpochBufferGrowthTest extends TraceCorrelationAssert {
     }
 
     /**
-     * With growth turned off, as with a BEAGLE older than 4.2.0, neither twin grows and they still agree
+     * With growth turned off (-Dbeagle.augmented.preallocate=true), neither twin grows and they still agree
      */
     public void testFallback() {
         final String previous = System.getProperty(PREALLOCATE);
@@ -133,7 +145,7 @@ public class EpochBufferGrowthTest extends TraceCorrelationAssert {
         if (fallback) {
             assertFalse(label + ": grows although turned off", grows);
         } else {
-            assertEquals(label + ": growth with BEAGLE " + BeagleInfo.getVersion(), isGrowthAvailable(), grows);
+            assertTrue(label + ": no growth with BEAGLE " + BeagleInfo.getVersion(), grows);
         }
         if (!grows) {
             assertEquals(label, capacity, growing.delegate.getAllocatedAugmentedCount());
@@ -184,11 +196,6 @@ public class EpochBufferGrowthTest extends TraceCorrelationAssert {
         } else {
             assertEquals(label, 0, growing.delegate.getGrowthEventCount());
         }
-    }
-
-    private static boolean isGrowthAvailable() { // beagleEnsureBufferCounts from BEAGLE 4.2.0
-        final int[] version = BeagleInfo.getVersionNumbers();
-        return version.length >= 2 && (version[0] > 4 || (version[0] == 4 && version[1] >= 2));
     }
 
     /**

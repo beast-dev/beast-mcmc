@@ -28,6 +28,7 @@
 package test.dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
+import beagle.BeagleInfo;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.SimpleNode;
@@ -42,6 +43,7 @@ import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treedatalikelihood.AugmentedNodeRegistry;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.BeagleFunctionality;
 import dr.evomodel.treedatalikelihood.EpochEvolutionaryProcessDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -82,6 +84,16 @@ public class EpochSpectralPreOrderReportTest extends TraceCorrelationAssert {
 
     public EpochSpectralPreOrderReportTest(String name) {
         super(name);
+    }
+
+    @Override
+    public void runBare() throws Throwable {
+        if (!BeagleFunctionality.IS_MATRIX_VECTOR_SUPPORTED()) {
+            System.err.println("SKIPPED " + getClass().getSimpleName() + "." + getName() +
+                    ": needs native BEAGLE 4.2.0 or later, found " + BeagleInfo.getVersion());
+            return;
+        }
+        super.runBare();
     }
 
     public void setUp() throws Exception {

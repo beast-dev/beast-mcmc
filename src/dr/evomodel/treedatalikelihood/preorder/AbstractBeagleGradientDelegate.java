@@ -28,6 +28,7 @@
 package dr.evomodel.treedatalikelihood.preorder;
 
 import beagle.Beagle;
+import beagle.BeaglePartialsType;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.*;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -59,6 +60,10 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         this.likelihoodDelegate = likelihoodDelegate;
         this.beagle = likelihoodDelegate.getBeagleInstance();
         this.preOrderType = getPreOrderType();
+        if (preOrderType.getBeagleType() == BeaglePartialsType.TOP) {
+            BeagleFunctionality.checkMatrixVectorSupported("Top pre-order partials (an exact adjoint gradient, " +
+                    "mode=\"exact\", or a discretePreOrderReport of type \"top\")");
+        }
 
         assert (this.likelihoodDelegate.isUsePreOrder()); /// TODO: reinitialize beagle instance if usePreOrder = false
 
@@ -154,7 +159,12 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
 
         if (DEBUG_TRANSPOSE) { debugMatrixTranspose(operations); }
 
-        beagle.updatePrePartials_v5(operations, operationCount, Beagle.NONE, preOrderType.getBeagleType());
+        if (preOrderType.getBeagleType() == BeaglePartialsType.BOTTOM) {
+            // in every BEAGLE; from 4.2.0 the same as updatePrePartials_v5 with BOTTOM
+            beagle.updatePrePartials(operations, operationCount, Beagle.NONE);
+        } else {
+            beagle.updatePrePartials_v5(operations, operationCount, Beagle.NONE, BeaglePartialsType.TOP);
+        }
 
         if (gradient == null) {
             gradient = new double[getGradientLength()];

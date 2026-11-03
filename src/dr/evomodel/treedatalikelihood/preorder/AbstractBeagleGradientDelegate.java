@@ -61,8 +61,9 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
         this.beagle = likelihoodDelegate.getBeagleInstance();
         this.preOrderType = getPreOrderType();
         if (preOrderType.getBeagleType() == BeaglePartialsType.TOP) {
-            BeagleFunctionality.checkMatrixVectorSupported("Top pre-order partials (an exact adjoint gradient, " +
-                    "mode=\"exact\", or a discretePreOrderReport of type \"top\")");
+            BeagleFunctionality.checkMatrixVectorSupported("Top pre-order partials (exact adjoint gradients and " +
+                    "Hessians: mode=\"exact\" or \"exactSpectral\", or exactLogCtmcRateHessian; discretePreOrderReport " +
+                    "of type \"top\", the default, or \"top-spectral\")");
         }
 
         assert (this.likelihoodDelegate.isUsePreOrder()); /// TODO: reinitialize beagle instance if usePreOrder = false

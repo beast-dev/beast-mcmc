@@ -89,6 +89,9 @@ public class ApproximateLogCtmcRateGradientParser extends AbstractXMLObjectParse
         }
 
         ApproximationMode mode = parseGradientMode(xo);
+        if (xo.getName().equalsIgnoreCase(EXACT_PARSER_NAME)) {
+            mode = ApproximationMode.EXACT_SPECTRAL; // without a mode, parseGradientMode gives firstOrder
+        }
 
         for (Object child : xo.getChildren()) {
             if (child instanceof GlmSubstitutionModel) {

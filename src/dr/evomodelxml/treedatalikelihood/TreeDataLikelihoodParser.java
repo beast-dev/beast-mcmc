@@ -295,16 +295,20 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     );
 
                 } else {
-                 dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                        treeModel,
-                        subPatterns,
-                        branchModels.get(i),
-                        siteRateModels.get(i),
-                        useAmbiguities,
-                        preferGPU,
-                        scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        settings);
+                    try {
+                        dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                                treeModel,
+                                subPatterns,
+                                branchModels.get(i),
+                                siteRateModels.get(i),
+                                useAmbiguities,
+                                preferGPU,
+                                scalingScheme,
+                                delayRescalingUntilUnderflow,
+                                settings);
+                    } catch (IllegalArgumentException iae) { // e.g., a feature that the native BEAGLE lacks
+                        throw new XMLParseException(iae.getMessage());
+                    }
                 }
                 TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                         dataLikelihoodDelegate,

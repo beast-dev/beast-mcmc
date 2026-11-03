@@ -59,14 +59,20 @@ public class BeagleFunctionality {
         return checkGTEVersion(new int[]{3,1,3});
     }
 
-    static boolean IS_DEGREE2_SUPPORTED() {
-        // a second child of Beagle.NONE (a degree-2 node) on the CPU from BEAGLE 4.1.1
-        return checkGTEVersion(new int[]{4,1,1});
+    public static boolean IS_MATRIX_VECTOR_SUPPORTED() {
+        // the spectral representation, top pre-order partials (updatePrePartials_v5), adjoint cross-products, degree-2
+        // operations (a second child of Beagle.NONE) and buffer growth (ensureBufferCounts) are in native BEAGLE from
+        // 4.2.0; a 4.1.x version may or may not have them (development builds of matrix_vector were 4.1.0 to 4.1.2),
+        // and the Java implementation (-java) has none of them
+        return !Boolean.getBoolean("java.only") && checkGTEVersion(new int[]{4,2,0});
     }
 
-    static boolean IS_BUFFER_GROWTH_SUPPORTED() {
-        // beagleEnsureBufferCounts from BEAGLE 4.2.0
-        return checkGTEVersion(new int[]{4,2,0});
+    public static void checkMatrixVectorSupported(String feature) {
+        if (!IS_MATRIX_VECTOR_SUPPORTED()) {
+            throw new IllegalArgumentException(feature + " needs native BEAGLE 4.2.0 or later" +
+                    (Boolean.getBoolean("java.only") ? ", not the Java implementation (-java)" :
+                            "; found " + BeagleInfo.getVersion()));
+        }
     }
 
     static boolean IS_PRE_ORDER_SUPPORTED() {

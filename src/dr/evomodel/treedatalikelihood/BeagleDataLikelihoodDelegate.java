@@ -189,6 +189,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             throw new IllegalArgumentException("The spectral representation cannot convolve transition matrices; " +
                     "epoch models need useAugmentedEpochNodes=\"true\" with useSpectralRepresentation=\"true\"");
         }
+        if (settings.useSpectralRepresentation) {
+            checkMatrixVectorSupported("The spectral representation (useSpectralRepresentation=\"true\")");
+        }
 
         // With augmented epoch nodes, degree-2 nodes lie along the branches and need their own buffers
         if (settings.useAugmentedEpochNodes) {
@@ -199,10 +202,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 throw new IllegalArgumentException("Augmented epoch nodes do not yet support " +
                         "branch infinitesimal derivatives");
             }
-            if (!IS_DEGREE2_SUPPORTED()) {
-                throw new IllegalArgumentException("Augmented epoch nodes require BEAGLE 4.1.1 or later, found " +
-                        BeagleInfo.getVersion());
-            }
+            checkMatrixVectorSupported("Augmented epoch nodes (useAugmentedEpochNodes=\"true\")");
 
             // An epoch branch model passes on every change of the tree, because the branches that a substitution
             // model applies to depend on the node heights, and then everything is updated. With degree-2 nodes the
@@ -223,8 +223,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             epochDelegate = null;
         }
         registry = (epochDelegate == null) ? null : epochDelegate.getAugmentedNodeRegistry();
-        growable = epochDelegate != null && IS_BUFFER_GROWTH_SUPPORTED() &&
-                !Boolean.getBoolean(PREALLOCATE_AUGMENTED_PROPERTY);
+        growable = epochDelegate != null && !Boolean.getBoolean(PREALLOCATE_AUGMENTED_PROPERTY);
 
         final int augmentedNodeCapacity = (epochDelegate == null) ? 0 :
                 epochDelegate.getAugmentedNodeRegistry().getCapacity();
@@ -366,16 +365,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
             }
 
-            if (settings.useSpectralRepresentation) {
-                requirementFlags |= BeagleFlag.SPECTRAL_REPRESENTATION.getMask();
-            }
-
             if (preferredOrder.size() > 0) {
                 preferenceFlags = preferredOrder.get(instanceCount % preferredOrder.size());
             }
 
             if (requiredOrder.size() > 0) {
                 requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
+            }
+
+            if (settings.useSpectralRepresentation) {
+                requirementFlags |= BeagleFlag.SPECTRAL_REPRESENTATION.getMask();
             }
 
             if (epochDelegate != null) {

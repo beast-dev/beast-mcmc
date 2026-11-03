@@ -255,6 +255,10 @@ public class TopologySearchStudy {
         if (pipeline.equals("A")) {
             search = false;
             attributes = "";
+        } else if (pipeline.equals("Atruth") && truth != null) { // the true topology, fixed (H2's bias check)
+            search = false;
+            attributes = "";
+            fromTruth = true;
         } else if (pipeline.equals("fast")) {
             attributes = "moves=\"nni\"";
         } else if (pipeline.equals("standard")) {
@@ -277,7 +281,9 @@ public class TopologySearchStudy {
         }
 
         options.maximizationOptions.printToScreen = false;
-        if (System.getProperty("objective") != null) { // -Dobjective=ML: the tree likelihoods only (H2's bias check)
+        // the product's default (the harness pins MAP for the unit tests), or -Dobjective=ML / MAP (H2's bias check)
+        options.maximizationOptions.objective = new dr.app.treelime.options.MaximizationOptions().objective;
+        if (System.getProperty("objective") != null) {
             options.maximizationOptions.objective =
                     dr.app.treelime.options.MaximizationOptions.Objective.valueOf(System.getProperty("objective"));
         }
@@ -300,6 +306,18 @@ public class TopologySearchStudy {
                     " ");
         }
         xml = xml.substring(0, xml.indexOf("<!-- The optimum")) + "</beast>\n";
+        // -Dxmlreplace=a=>b||c=>d: literal edits of the generated XML (H2's bias check)
+        for (String edit : System.getProperty("xmlreplace", "").split("\\|\\|")) {
+            final int arrow = edit.indexOf("=>");
+            if (arrow > 0) {
+                final String from = edit.substring(0, arrow).replace("\\n", "\n").replace("\\t", "\t");
+                final String to = edit.substring(arrow + 2).replace("\\n", "\n").replace("\\t", "\t");
+                if (!xml.contains(from)) {
+                    throw new IllegalArgumentException("xmlreplace: not in the XML: " + from);
+                }
+                xml = xml.replace(from, to);
+            }
+        }
         Map<String, XMLObject> objects = new BeastParser(new String[]{}, null, false, false, false,
                 new BeastVersion()).parse(new StringReader(xml), false);
 

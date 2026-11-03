@@ -306,6 +306,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                 scalingScheme,
                                 delayRescalingUntilUnderflow,
                                 settings);
+                    } catch (NumberFormatException nfe) { // a malformed -Dbeagle.* property, not an XML error
+                        throw nfe;
                     } catch (IllegalArgumentException iae) { // e.g., a feature that the native BEAGLE lacks
                         throw new XMLParseException(iae.getMessage());
                     }

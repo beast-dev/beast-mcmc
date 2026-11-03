@@ -55,6 +55,8 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
         flat = new double[stateCount];
         Arrays.fill(flat, 1.0);
+        uniform = new double[stateCount];
+        Arrays.fill(uniform, 1.0 / stateCount);
     }
 
     @Override
@@ -237,17 +239,16 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         double norm = 1.0;
         if (doNormalization) {
             // Intended model change (93157adac, BEAST X 10.6.0): with scaleRatesByFrequencies="false", Q is built
-            // with the flat (all-ones) vector, and it is now normalized with it too, not with the root frequencies.
-            // The normalized Q has total, not mean, exit rate 1, so the likelihood changes for any root frequencies:
-            // with uniform ones, rates are n times slower than before for n states (as in BEAUti's backward-in-time
-            // discrete-trait models, which use normalize="true" scaleRatesByFrequencies="false").
-            norm = super.getNormalizationValue(matrix, frequencyScaling ? pi : flat);
+            // with the flat vector and normalized with uniform 1/n weights, not with the root frequencies, so the
+            // likelihood and its gradients (getNormalizationFrequencies) agree. The normalized Q has mean exit rate 1;
+            // with uniform root frequencies (as in BEAUti's backward-in-time discrete-trait models) nothing changes.
+            norm = super.getNormalizationValue(matrix, frequencyScaling ? pi : uniform);
         }
         return norm;
     }
 
     public double[] getNormalizationFrequencies() {
-        return frequencyScaling ? getFrequencyModel().getFrequencies() : flat;
+        return frequencyScaling ? getFrequencyModel().getFrequencies() : uniform;
     }
 
     public double getLogLikelihood() {
@@ -371,4 +372,5 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     private boolean doNormalization = true;
     private boolean frequencyScaling = true;
     private final double[] flat;
+    private final double[] uniform;
 }

@@ -91,6 +91,14 @@ public final class MaximizationWarnings {
                         "ignored: " + String.join(", ", calibrations) + ". Choose the MAP objective to use them.");
             }
         }
+        if (maximization.objective.omitsTreePrior()) {
+            for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                if (prior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
+                    warnings.add("The calibrated Yule tree prior holds the calibrations, and this objective leaves " +
+                            "out the tree prior, so they are ignored. Choose the MAP objective to use them.");
+                }
+            }
+        }
         return warnings;
     }
 

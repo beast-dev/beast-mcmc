@@ -77,6 +77,7 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
     public static final String REASON = "reason";
     public static final String CAN_OPTIMIZE = "canOptimize";
     public static final String NOT_IDENTIFIED = "notIdentified";
+    public static final String MAP_NAME = "mapName";
 
     public String getParserName() {
         return TIME_TREE_EXPORT;
@@ -128,6 +129,9 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
 
         TimeTreeExporter exporter = new TimeTreeExporter(stem, trees, treeLoggers, maximizer, likelihood, prior, fixed,
                 xo.hasAttribute(NOT_IDENTIFIED) ? xo.getStringAttribute(NOT_IDENTIFIED) : null);
+        if (xo.hasAttribute(MAP_NAME)) {
+            exporter.setMapName(xo.getStringAttribute(MAP_NAME));
+        }
 
         boolean overwrite = xo.getAttribute(LoggerParser.ALLOW_OVERWRITE_LOG, false);
         if (System.getProperty("log.allow.overwrite") != null) {
@@ -171,6 +175,8 @@ public class TimeTreeExportParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(FILE_NAME_STEM),
             AttributeRule.newBooleanRule(LoggerParser.ALLOW_OVERWRITE_LOG, true),
+            AttributeRule.newStringRule(MAP_NAME, true, "The name of a likelihood-times-priors objective in the " +
+                    "summary (default MAP)"),
             AttributeRule.newStringRule(NOT_IDENTIFIED, true, "Why the maximum-likelihood fit is not identified: " +
                     "the information criteria are not reported"),
             new ElementRule(TreeLogger.class, 0, Integer.MAX_VALUE),

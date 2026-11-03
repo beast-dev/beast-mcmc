@@ -36,6 +36,7 @@ import junit.framework.TestCase;
 import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -201,6 +202,9 @@ public class TreeLimeForkIdentityTest extends TestCase {
             Object maximization = get(options, "maximizationOptions");
             Method setMode = method(maximization, "setGradientMode");
             setMode.invoke(maximization, enumValue(setMode.getParameterTypes()[0], "NUMERIC"));
+            // and BEAUti's prior block: the full joint
+            Field objective = maximization.getClass().getField("objective");
+            objective.set(maximization, enumValue(objective.getType(), "MAP"));
         }
         for (Step step : steps) {
             apply(options, step);

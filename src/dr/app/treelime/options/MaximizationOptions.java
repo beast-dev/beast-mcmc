@@ -44,16 +44,23 @@ public class MaximizationOptions implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum Objective {
-        MAP("Maximum a posteriori (likelihood and priors)", "joint"),
-        ML("Maximum likelihood (tree likelihoods only)", "likelihood"),
-        PRIOR("Prior only (for checking)", "prior");
+        // the coalescent's exponential intervals have their mode at zero, so at the joint mode it pulls the node
+        // heights down: in the validation study (plan 7 M7) the root came out ~20% too young and the rate ~30% too
+        // high on every dated replicate; without the tree prior both errors fell to ~5%
+        MAP_NO_TREE_PRIOR("Maximum a posteriori without the tree prior (for dates and rates)", "jointNoTreePrior",
+                "priorNoTreePrior"),
+        MAP("Maximum a posteriori (likelihood and priors)", "joint", "prior"),
+        ML("Maximum likelihood (tree likelihoods only)", "likelihood", null),
+        PRIOR("Prior only (for checking)", "prior", "prior");
 
         private final String label;
         private final String densityId;
+        private final String priorDensityId;
 
-        Objective(String label, String densityId) {
+        Objective(String label, String densityId, String priorDensityId) {
             this.label = label;
             this.densityId = densityId;
+            this.priorDensityId = priorDensityId;
         }
 
         /**
@@ -61,6 +68,21 @@ public class MaximizationOptions implements Serializable {
          */
         public String getDensityId() {
             return densityId;
+        }
+
+        /**
+         * @return the id of the priors in the objective, or null for maximum likelihood
+         */
+        public String getPriorDensityId() {
+            return priorDensityId;
+        }
+
+        /**
+         * @return whether a MAP objective leaves out the tree priors (coalescent, speciation) and the priors on their
+         * parameters
+         */
+        public boolean omitsTreePrior() {
+            return this == MAP_NO_TREE_PRIOR;
         }
 
         public String toString() {
@@ -101,7 +123,7 @@ public class MaximizationOptions implements Serializable {
         }
     }
 
-    public Objective objective = Objective.MAP;
+    public Objective objective = Objective.MAP_NO_TREE_PRIOR;
     private GradientMode gradientMode = GradientMode.ANALYTIC_WHERE_AVAILABLE;
     public int nIterations = 1000; // at least 1: 0 means no limit to lbfgs4j
     public String maxRunTime = ""; // a duration with an optional unit, "" for none

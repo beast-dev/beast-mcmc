@@ -122,6 +122,7 @@ public class TimeTreeExporter {
     private final List<FixedParameters> fixed;
     private final List<TreeLogger> treeLoggers;
     private final String notIdentified;
+    private String mapName = "MAP";
 
     /**
      * @param stem        the tables and the run record are this path plus a suffix (.dates.tsv, .summary.txt, ...)
@@ -415,6 +416,13 @@ public class TimeTreeExporter {
     /**
      * @return MAP, ML, prior, or other when the maximized density is neither
      */
+    /**
+     * @param mapName the name of a likelihood-times-priors objective, e.g. one whose priors leave out the tree prior
+     */
+    public void setMapName(String mapName) {
+        this.mapName = mapName;
+    }
+
     public String objectiveName() {
         if (maximizer == null) {
             return NA;
@@ -430,7 +438,7 @@ public class TimeTreeExporter {
             List<Likelihood> terms = ((CompoundLikelihood) objective).getLikelihoods();
             if (likelihood != null && prior != null && terms.size() == 2 && terms.contains(likelihood) &&
                     terms.contains(prior)) {
-                return "MAP";
+                return mapName;
             }
         }
         return "other";

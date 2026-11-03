@@ -38,6 +38,7 @@ import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.ClockType;
 import dr.app.treelime.types.StartingTreeType;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.XMLObject;
 import junit.framework.TestCase;
@@ -513,6 +514,45 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertTrue(run.parameter("clock.rate").getParameterValue(0) != 1.0);
+        assertGradientChecked(run);
+    }
+
+    // the default objective: the joint without the coalescent, whose mode at zero pulls the node heights down
+    public void testMapWithoutTheTreePrior() throws Exception {
+        assertEquals(MaximizationOptions.Objective.MAP_NO_TREE_PRIOR, new MaximizationOptions().objective);
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");
+        if (options == null) {
+            return;
+        }
+        TreeLimeHarness.setTipDatesFromNames(options);
+        quiet(options).maximizationOptions.nIterations = 2000;
+        options.maximizationOptions.objective = MaximizationOptions.Objective.MAP_NO_TREE_PRIOR;
+        String xml = TreeLimeHarness.generate(options);
+        assertTrue(between(xml, "<objective>", "</objective>").contains("<joint idref=\"jointNoTreePrior\"/>"));
+        String inner = between(xml, "<prior id=\"priorNoTreePrior\">", "</prior>");
+        assertTrue(inner.contains("<ctmcScalePrior"));
+        assertFalse(inner.contains("coalescent"));
+        assertFalse(inner.contains("constant.popSize"));
+        // the population size is in no term of the objective
+        assertFalse(between(xml, "<compoundParameter id=\"optimizedParameters\">", "</compoundParameter>")
+                .contains("constant.popSize"));
+        String block = between(xml, "<jointGradient id=\"gradient.nodeHeights\">", "</jointGradient>");
+        assertFalse(block.contains("<coalescentGradient>"));
+        assertTrue(block.contains("<ctmcScalePriorNodeHeightGradient>"));
+        assertTrue(xml.contains("mapName=\"MAP without the tree prior\""));
+
+        Run run = run(xml);
+        assertEquals("jointNoTreePrior", run.maximizer.getLikelihood().getId());
+        Likelihood inside = (Likelihood) run.objects.get("priorNoTreePrior").getNativeObject();
+        Likelihood likelihood = (Likelihood) run.objects.get("likelihood").getNativeObject();
+        Likelihood coalescent = (Likelihood) run.objects.get("coalescent").getNativeObject();
+        Likelihood prior = (Likelihood) run.objects.get("prior").getNativeObject();
+        assertEquals(likelihood.getLogLikelihood() + inside.getLogLikelihood(), run.end, 1E-8 * Math.abs(run.end));
+        // the full prior still holds the coalescent, for the record
+        assertTrue(prior.getLogLikelihood() != inside.getLogLikelihood());
+        assertTrue(Double.isFinite(coalescent.getLogLikelihood()));
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+        assertTrue(run.end > run.start);
         assertGradientChecked(run);
     }
 

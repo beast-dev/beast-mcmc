@@ -285,7 +285,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private int getState(int nodeNumber) {
         NodeRef node = tree.getNode(nodeNumber);
         if (tree.isExternal(node)) {
-            return dataType.getState(tree.getTaxonId(nodeNumber));
+            return AbstractHierarchicalRateProvider.stateOfCode(dataType, tree.getTaxonId(nodeNumber));
         }
         throw new RuntimeException("Should not be called for internal node on character tree.");
     }
@@ -509,9 +509,11 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         }
         final int internalCount = stateCount - 1;
         if (beagleModelTriples == null) {
-            beagleModelTriples = new double[stateCount * stateCount];
+            // the plugin reads 3 (S - 1) triples and ignores the inverse eigenvectors; JNI copies whole arrays, so
+            // S x S arrays would cost two S^2 copies per model upload (2 x 134 MB at S = 4096)
+            beagleModelTriples = new double[Math.max(1, 3 * internalCount)];
             beagleModelLambdas = new double[stateCount];
-            beagleModelUnused = new double[stateCount * stateCount];
+            beagleModelUnused = new double[1];
         }
         final double[] header = new double[getBundleHeaderLength()];
         getBundleHeader(header);
@@ -697,6 +699,157 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         }
     }
 
+    /**
+     * The states a tip observes at one site pattern, as the BEAGLE plugin reads its partials: none when every entry
+     * is equal (a gap, or a constant uncertain column), otherwise the states with a non-zero entry, or every state
+     * when no entry is zero.
+     */
+    public static void markObservedStates(double[] partials, int offset, int stateCount, boolean[] observed) {
+        final double first = partials[offset];
+        boolean constant = true;
+        boolean zero = false;
+        for (int i = 0; i < stateCount; i++) {
+            final double v = partials[offset + i];
+            constant = constant && v == first;
+            zero = zero || v == 0.0;
+        }
+        if (constant) {
+            return;
+        }
+        for (int i = 0; i < stateCount; i++) {
+            if (!zero || partials[offset + i] != 0.0) {
+                observed[i] = true;
+            }
+        }
+    }
+
+    /**
+     * What the plugin's aggregation sees for one alignment, given the first 3 (S - 1) entries of
+     * {@link #getBeagleModelTriples} (the post-order triples): observed[k][x] says whether some tip observes state x at
+     * pattern k (states path: codes below the state count; partials path: {@link #markObservedStates}). Each distinct
+     * observed set is a class; its reduced state count S_c is 1 for an empty set and otherwise one more than the
+     * number of character-tree nodes on the paths from the observed states to the root.
+     */
+    public static AggregationSummary summarizeAggregation(double[] postOrderTriples, int stateCount, int categoryCount,
+                                                          boolean[][] observed) {
+        final int nodeCount = 2 * stateCount - 1;
+        final int[] parentOf = new int[nodeCount];
+        Arrays.fill(parentOf, -1);
+        for (int t = 0; t < 3 * (stateCount - 1); t += 3) {
+            final int parent = (int) postOrderTriples[t];
+            parentOf[(int) postOrderTriples[t + 1]] = parent;
+            parentOf[(int) postOrderTriples[t + 2]] = parent;
+        }
+        final java.util.Map<String, Integer> reducedByClass = new java.util.HashMap<>();
+        final boolean[] marked = new boolean[nodeCount];
+        long sum = 0;
+        int max = 0;
+        for (boolean[] states : observed) {
+            final StringBuilder key = new StringBuilder();
+            for (int x = 0; x < stateCount; x++) {
+                if (states[x]) {
+                    key.append(x).append(',');
+                }
+            }
+            Integer reduced = reducedByClass.get(key.toString());
+            if (reduced == null) {
+                Arrays.fill(marked, false);
+                int count = 0;
+                for (int x = 0; x < stateCount; x++) {
+                    if (!states[x]) {
+                        continue;
+                    }
+                    for (int m = parentOf[x]; m >= 0 && !marked[m]; m = parentOf[m]) {
+                        marked[m] = true;
+                        count++;
+                    }
+                }
+                reduced = count + 1;
+                reducedByClass.put(key.toString(), reduced);
+            }
+            sum += reduced;
+            max = Math.max(max, reduced);
+        }
+        return new AggregationSummary(observed.length, reducedByClass.size(), stateCount, categoryCount, sum, max);
+    }
+
+    public static final class AggregationSummary {
+
+        // the plugin's automatic rule (BeagleCPUHierarchicalImpl createInstance and buildClasses, default kernel)
+        private static final int MIN_STATES = 9;
+        private static final int FUSED_MAX_STATES = 128;
+        private static final int FUSED_MIN_PATTERNS = 1000;
+
+        public final int patternCount;
+        public final int classCount;
+        public final int stateCount;
+        public final int categoryCount;
+        public final long reducedStateSum;
+        public final int maxReducedStates;
+
+        AggregationSummary(int patternCount, int classCount, int stateCount, int categoryCount, long reducedStateSum,
+                           int maxReducedStates) {
+            this.patternCount = patternCount;
+            this.classCount = classCount;
+            this.stateCount = stateCount;
+            this.categoryCount = categoryCount;
+            this.reducedStateSum = reducedStateSum;
+            this.maxReducedStates = maxReducedStates;
+        }
+
+        public double getMeanReducedStates() {
+            return patternCount == 0 ? 0.0 : (double) reducedStateSum / patternCount;
+        }
+
+        public double getRatio() {
+            return patternCount == 0 ? 1.0 : (double) reducedStateSum / ((double) patternCount * stateCount);
+        }
+
+        public double getThreshold() {
+            return categoryCount <= 1 ? 0.08 : (categoryCount <= 3 ? 0.15 : 0.25);
+        }
+
+        public boolean automaticRuleAggregates() {
+            final boolean fusedBand = stateCount <= FUSED_MAX_STATES && patternCount >= FUSED_MIN_PATTERNS;
+            return stateCount >= MIN_STATES && !fusedBand && getRatio() < getThreshold();
+        }
+
+        public boolean aggregates(Aggregation aggregation) {
+            switch (aggregation) {
+                case ON:
+                    return true;
+                case OFF:
+                    return false;
+                default:
+                    return automaticRuleAggregates();
+            }
+        }
+
+        public String describe(Aggregation aggregation) {
+            return String.format("%d patterns in %d classes of observed states, reduced state count mean %.2f and max %d "
+                            + "of %d, r = %.4f (automatic threshold %.2f at %d categor%s); aggregate=%s: %s",
+                    patternCount, classCount, getMeanReducedStates(), maxReducedStates, stateCount, getRatio(),
+                    getThreshold(), categoryCount, categoryCount == 1 ? "y" : "ies",
+                    aggregation.name().toLowerCase(), describeDecision(aggregation));
+        }
+
+        private String describeDecision(Aggregation aggregation) {
+            if (aggregation == Aggregation.ON) {
+                return "aggregated";
+            }
+            if (aggregation == Aggregation.OFF) {
+                return "not aggregated";
+            }
+            if (stateCount < MIN_STATES) {
+                return "not aggregated (too few states)";
+            }
+            if (stateCount <= FUSED_MAX_STATES && patternCount >= FUSED_MIN_PATTERNS) {
+                return "not aggregated (the fused kernel applies)";
+            }
+            return getRatio() < getThreshold() ? "aggregated" : "not aggregated (r above the threshold)";
+        }
+    }
+
     public interface HierarchicalRateProvider {
         double getRate(TreeModel tree, int node);
         TreeModel getTreeModel();
@@ -863,7 +1016,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
             private static void collectStates(TreeModel tree, NodeRef node, DataType dataType, List<Integer> states) {
                 if (tree.isExternal(node)) {
-                    states.add(dataType.getState(tree.getTaxonId(node.getNumber())));
+                    states.add(AbstractHierarchicalRateProvider.stateOfCode(dataType, tree.getTaxonId(node.getNumber())));
                 } else {
                     for (int i = 0; i < tree.getChildCount(node); i++) {
                         collectStates(tree, tree.getChild(node, i), dataType, states);

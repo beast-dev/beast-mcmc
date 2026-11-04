@@ -53,22 +53,33 @@ public interface Citable {
         /**
          * The citation shared by the parts of a composite (a joint or block gradient, say): the cited parts' category,
          * description and citations when every cited part has the same description, else none, so a composite of
-         * differently cited parts adds nothing beyond what its parts add themselves.
+         * differently cited parts adds nothing beyond what its parts add themselves. Citations in preparation are
+         * ignored: a part cited only by those counts as uncited.
          */
         public static Citable common(final List<?> parts) {
             Citable first = null;
             final java.util.LinkedHashSet<Citation> citations = new java.util.LinkedHashSet<Citation>();
             for (Object part : parts) {
-                if (part instanceof Citable && !((Citable) part).getCitations().isEmpty()) {
-                    Citable citable = (Citable) part;
-                    if (first == null) {
-                        first = citable;
-                    } else if (!first.getDescription().equals(citable.getDescription())
-                            || first.getCategory() != citable.getCategory()) {
-                        return NONE;
-                    }
-                    citations.addAll(citable.getCitations());
+                if (!(part instanceof Citable)) {
+                    continue;
                 }
+                Citable citable = (Citable) part;
+                final List<Citation> cited = new java.util.ArrayList<Citation>();
+                for (Citation citation : citable.getCitations()) {
+                    if (citation.getStatus() != Citation.Status.IN_PREPARATION) {
+                        cited.add(citation);
+                    }
+                }
+                if (cited.isEmpty()) {
+                    continue;
+                }
+                if (first == null) {
+                    first = citable;
+                } else if (!first.getDescription().equals(citable.getDescription())
+                        || first.getCategory() != citable.getCategory()) {
+                    return NONE;
+                }
+                citations.addAll(cited);
             }
             if (first == null) {
                 return NONE;

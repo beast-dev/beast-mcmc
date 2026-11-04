@@ -469,4 +469,151 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
         assertEquals("hierarchical path restored", first, hierarchical.getLogLikelihood(), 0.0);
         assertEquals("eigen path restored", first, eigen.getLogLikelihood(), 1e-10 * Math.abs(first));
     }
+
+    private static String balancedNewick(String[] codes, int from, int to) {
+        if (to - from == 1) {
+            return codes[from] + ":1";
+        }
+        int mid = (from + to) / 2;
+        return "(" + balancedNewick(codes, from, mid) + "," + balancedNewick(codes, mid, to) + "):1";
+    }
+
+    private static HierarchicalSubstitutionModel generalModel(String name, TreeModel characterTree, double[] rates,
+                                                              FrequencyModel frequencies) {
+        return new HierarchicalSubstitutionModel(name,
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(rates.clone()),
+                        characterTree, frequencies, false));
+    }
+
+    private static void swapTips(TreeModel characterTree, java.util.Random random) {
+        final int tips = characterTree.getExternalNodeCount();
+        NodeRef a, b;
+        do {
+            a = characterTree.getExternalNode(random.nextInt(tips));
+            b = characterTree.getExternalNode(random.nextInt(tips));
+        } while (characterTree.getParent(a) == characterTree.getParent(b));
+        NodeRef pa = characterTree.getParent(a), pb = characterTree.getParent(b);
+        characterTree.beginTreeEdit();
+        characterTree.removeChild(pa, a);
+        characterTree.removeChild(pb, b);
+        characterTree.addChild(pa, b);
+        characterTree.addChild(pb, a);
+        characterTree.endTreeEdit();
+    }
+
+    public void testCharacterTreeMovesWithSparseStatesThroughBeagle() throws Exception {
+        if (skip("testCharacterTreeMovesWithSparseStatesThroughBeagle")) {
+            return;
+        }
+        final int states = 16, columns = 150;
+        String[] codes = new String[states];
+        for (int i = 0; i < states; i++) {
+            codes[i] = String.valueOf((char) ('A' + i));
+        }
+        dr.evolution.datatype.GeneralDataType general = new dr.evolution.datatype.GeneralDataType(codes);
+        java.util.Random random = new java.util.Random(20261103);
+        String[][] taxonSequence = new String[2][];
+        taxonSequence[0] = PRIMATES_TAXON_SEQUENCE[0];
+        taxonSequence[1] = new String[taxonSequence[0].length];
+        StringBuilder[] rows = new StringBuilder[taxonSequence[0].length];
+        for (int t = 0; t < rows.length; t++) {
+            rows[t] = new StringBuilder();
+        }
+        for (int k = 0; k < columns; k++) {
+            int[] pool = new int[1 + random.nextInt(3)];
+            for (int j = 0; j < pool.length; j++) {
+                pool[j] = random.nextInt(states);
+            }
+            for (StringBuilder row : rows) {
+                row.append(codes[pool[random.nextInt(pool.length)]]);
+            }
+        }
+        for (int t = 0; t < rows.length; t++) {
+            taxonSequence[1][t] = rows[t].toString();
+        }
+        createAlignment(taxonSequence, general);
+        treeModel = createPrimateTreeModel();
+        treeModel.beginTreeEdit();
+        for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
+            NodeRef node = treeModel.getInternalNode(i);
+            treeModel.setNodeHeight(node, 20.0 * treeModel.getNodeHeight(node));
+        }
+        treeModel.endTreeEdit();
+
+        double[] pi = new double[states];
+        double total = 0.0;
+        for (int i = 0; i < states; i++) {
+            pi[i] = 0.5 + random.nextDouble();
+            total += pi[i];
+        }
+        for (int i = 0; i < states; i++) {
+            pi[i] /= total;
+        }
+        FrequencyModel frequencies = new FrequencyModel(general, new Parameter.Default(pi));
+        TreeModel characterTree = new DefaultTreeModel("characterTree",
+                new NewickImporter(balancedNewick(codes, 0, states) + ";").importTree(null));
+        double[] rates = new double[states - 1];
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] = 0.3 + 1.7 * random.nextDouble();
+        }
+        Parameter rateParameter = new Parameter.Default(rates.clone());
+        HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rateParameter, characterTree,
+                        frequencies, false));
+
+        for (int categories : new int[]{1, 4}) {
+            GammaSiteRateModel sites = categories == 1 ? new GammaSiteRateModel("gamma") : gamma(0.5, categories);
+            TreeDataLikelihood hierarchical = likelihood(model, sites, true);
+            TreeDataLikelihood eigen = likelihood(model, sites, false);
+            double current = hierarchical.getLogLikelihood();
+            assertEquals("C=" + categories + " start", eigen.getLogLikelihood(), current, 1e-10 * Math.abs(current));
+            int topologyMoves = 0, rejected = 0;
+            for (int step = 0; step < 18; step++) {
+                hierarchical.storeModelState();
+                eigen.storeModelState();
+                final int kind = step % 3;
+                if (kind == 0) {
+                    swapTips(characterTree, random);
+                    topologyMoves++;
+                } else if (kind == 1) {
+                    int i = random.nextInt(rateParameter.getDimension());
+                    rateParameter.setParameterValue(i, rateParameter.getParameterValue(i) * (0.7 + 0.6 * random.nextDouble()));
+                } else {
+                    NodeRef node = treeModel.getInternalNode(random.nextInt(treeModel.getInternalNodeCount()));
+                    if (!treeModel.isRoot(node)) {
+                        double low = Math.max(treeModel.getNodeHeight(treeModel.getChild(node, 0)),
+                                treeModel.getNodeHeight(treeModel.getChild(node, 1)));
+                        double high = treeModel.getNodeHeight(treeModel.getParent(node));
+                        treeModel.setNodeHeight(node, low + (high - low) * random.nextDouble());
+                    }
+                }
+                final String what = "C=" + categories + " step " + step;
+                final double proposed = hierarchical.getLogLikelihood();
+                final double fresh = likelihood(generalModel("fresh", characterTree, rateParameter.getParameterValues(),
+                        frequencies), sites, false).getLogLikelihood();
+                assertEquals(what + " hierarchical against a fresh eigen model", fresh, proposed, 1e-10 * Math.abs(fresh));
+                assertEquals(what + " eigen path", fresh, eigen.getLogLikelihood(), 1e-10 * Math.abs(fresh));
+                if ((step / 3) % 2 == 1) {
+                    hierarchical.restoreModelState();
+                    eigen.restoreModelState();
+                    rejected++;
+                    assertEquals(what + " restored", current, hierarchical.getLogLikelihood(), 0.0);
+                } else {
+                    hierarchical.acceptModelState();
+                    eigen.acceptModelState();
+                    current = proposed;
+                }
+            }
+            assertEquals(6, topologyMoves);
+            assertEquals(9, rejected);
+            hierarchical.makeDirty();
+            eigen.makeDirty();
+            final double fresh = likelihood(generalModel("fresh", characterTree, rateParameter.getParameterValues(),
+                    frequencies), sites, false).getLogLikelihood();
+            assertEquals("C=" + categories + " full recompute at the end", fresh, hierarchical.getLogLikelihood(),
+                    1e-10 * Math.abs(fresh));
+            assertEquals("C=" + categories + " eigen full recompute at the end", fresh, eigen.getLogLikelihood(),
+                    1e-10 * Math.abs(fresh));
+        }
+    }
 }

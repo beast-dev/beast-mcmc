@@ -297,7 +297,9 @@ set loaded by default (`parsers=development` in `beast.properties`).
   table column names the unit. For every file LogCombiner now reports how many trees or
   samples were read and written, and warns when the burn-in removed nothing, only the first
   sample or everything, which is what happens when a number of trees is entered where states
-  are expected. ([#1247](https://github.com/beast-dev/beast-mcmc/issues/1247))
+  are expected. Lines that could not be read, which are skipped as a possible corruption,
+  are counted and reported separately rather than being blamed on the burn-in.
+  ([#1247](https://github.com/beast-dev/beast-mcmc/issues/1247))
 - TreeStateTimeSummarizer writes `startHeight`, `endHeight` and `branchingEvents`
   columns for each state interval.
 - `scripts/fit_rate_prior.py` fits a lognormal distribution to a set of HPD bounds for
@@ -398,6 +400,14 @@ set loaded by default (`parsers=development` in `beast.properties`).
   is given an ordinary prior, and the user is told what was dropped and taken to the Priors
   panel. ([#1062](https://github.com/beast-dev/beast-mcmc/issues/1062))
 
+- **Fixed a NEXUS file with character sets that do not fit its alignment failing to
+  import** — a character set running past the end of the alignment, starting before its
+  first site, or ending before it starts, failed while the sites were being taken, with an
+  index error that said nothing about which set was at fault; in the application the import
+  simply did not happen. Such a file is now refused with a message naming the character
+  set, the range it asks for and the length of the alignment.
+  ([#1066](https://github.com/beast-dev/beast-mcmc/issues/1066))
+
 - **Fixed the fixed local clock failing to generate XML** for a taxon set imported from a
   one-column file. ([#1231](https://github.com/beast-dev/beast-mcmc/issues/1231))
 - **Fixed every taxon set being nested as a subtree of the random starting tree**, which
@@ -497,6 +507,12 @@ set loaded by default (`parsers=development` in `beast.properties`).
   has done the same job for any transform since 2019 and is what every caller already used;
   the two classes it replaced were left behind and did not give the right answer.
   ([#969](https://github.com/beast-dev/beast-mcmc/issues/969))
+- `MultiPartitionTreeLikelihood` shares the count of BEAGLE instances with the other
+  implementations, as they already share it with each other. BEAGLE devices are handed out
+  by indexing `-beagle_order` with that count, so a class holding its own would start again
+  at the first device. Nothing constructs this class, so this changes no behaviour; it keeps
+  the bug fixed for v10.5.0 from returning with it.
+  ([#1079](https://github.com/beast-dev/beast-mcmc/issues/1079))
 - Eigen3 (JNI) and EJML eigendecomposition implementations were added but are not yet
   selectable from XML.
 

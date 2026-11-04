@@ -14,6 +14,7 @@ benchmarking
 problem_cases
 .idea
 .DS_Store
+__pycache__
 
 *.log
 *.trees

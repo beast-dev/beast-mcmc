@@ -67,11 +67,23 @@ public class BeautiImporter {
     private final BeautiOptions options;
     private final BeautiFrame frame;
 
+    /**
+     * What the import made of the file; only a BEAST XML file says anything here at present.
+     */
+    private final ImportReport report = new ImportReport();
+
     private PartitionNameDialog partitionNameDialog = null;
 
     public BeautiImporter(BeautiFrame frame, BeautiOptions options) {
         this.frame = frame;
         this.options = options;
+    }
+
+    /**
+     * @return what this import made of the file: the settings it read and the ones it could not
+     */
+    public ImportReport getReport() {
+        return report;
     }
 
     public void importFromFile(File file) throws IOException, ImportException, JDOMException {
@@ -132,6 +144,10 @@ public class BeautiImporter {
 
             BeastImporter importer = new BeastImporter(reader);
 
+            // the settings of the analysis are only taken from a file imported into an empty document;
+            // with data already loaded they would replace what the user has set up
+            boolean emptyDocument = options.dataPartitions.isEmpty();
+
             List<TaxonList> taxonLists = new ArrayList<TaxonList>();
             List<Alignment> alignments = new ArrayList<Alignment>();
 
@@ -171,6 +187,13 @@ public class BeautiImporter {
                 options.updateTMRCAStatistic(taxonSet); // force the creation of a tmrca statistic
             }
             Collections.sort(options.taxonSets);
+
+            if (emptyDocument) {
+                new BeastSettingsImporter(importer.getRootElement(), options, report).importSettings();
+            } else {
+                report.notRecovered("the settings in " + file.getName() + " (its sequences were added to " +
+                        "the partitions already loaded; import it on its own to read its settings)");
+            }
 
             reader.close();
         } catch (JDOMException e) {
@@ -842,12 +865,13 @@ public class BeautiImporter {
                               List<CharSet> charSets,
                               boolean compressPatterns,
                               PartitionSubstitutionModel model,
-                              String fileName, String fileNameStem) {
+                              String fileName, String fileNameStem) throws ImportException {
         assert alignment != null;
 
         List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
         if (charSets != null && !charSets.isEmpty()) {
             for (CharSet charSet : charSets) {
+                checkCharSet(charSet, alignment.getSiteCount());
                 PartitionData partitionData = new PartitionData(options, charSet.name, fileName,
                         charSet.constructCharSetAlignment(alignment));
                 if (compressPatterns) {
@@ -865,6 +889,37 @@ public class BeautiImporter {
         createPartitionFramework(model, partitions);
     }
 
+
+    /**
+     * Checks that a character set lies within the alignment it describes. A character set that runs off the
+     * end would otherwise fail while the sites were being taken, with nothing to say which set was at fault.
+     *
+     * @param charSet   the character set, as read from the file
+     * @param siteCount the number of sites in the alignment it applies to
+     */
+    private void checkCharSet(CharSet charSet, int siteCount) throws ImportException {
+        for (CharSetBlock block : charSet.getBlocks()) {
+            int from = block.getFromSite();
+            // a 'to' of zero or less means to the end of the alignment
+            int to = block.getToSite() > 0 ? block.getToSite() : siteCount;
+
+            if (from < 1) {
+                throw new ImportException("The character set '" + charSet.getName() + "' starts at site " +
+                        from + ". Character sets are numbered from 1.");
+            }
+
+            if (to > siteCount) {
+                throw new ImportException("The character set '" + charSet.getName() + "' covers sites " +
+                        from + " to " + to + " but the alignment is only " + siteCount + " sites long." +
+                        "\nCheck the character sets, and the number of characters given in the data block.");
+            }
+
+            if (from > to) {
+                throw new ImportException("The character set '" + charSet.getName() + "' covers sites " +
+                        from + " to " + to + ", which ends before it starts.");
+            }
+        }
+    }
 
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {

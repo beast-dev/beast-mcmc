@@ -83,6 +83,13 @@ public class BeastImporter {
         origin = cal.getTime();
     }
 
+    /**
+     * @return the root of the parsed document, for reading more of the file than the taxa and alignments
+     */
+    public Element getRootElement() {
+        return root;
+    }
+
     public void importBEAST(List<TaxonList> taxonLists, List<Alignment> alignments) throws Importer.ImportException {
 
         TaxonList taxa = null;
@@ -166,6 +173,12 @@ public class BeastImporter {
 
     private Alignment readAlignment(Element e, TaxonList taxa) throws Importer.ImportException {
         SimpleAlignment alignment = new SimpleAlignment();
+
+        // the id names the partition this alignment belongs to, and ties it to the rest of the file
+        String id = e.getAttributeValue(XMLParser.ID);
+        if (id != null) {
+            alignment.setId(id);
+        }
 
         List children = e.getChildren();
         for(Object aChildren : children) {

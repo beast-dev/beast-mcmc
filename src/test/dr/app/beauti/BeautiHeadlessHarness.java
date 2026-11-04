@@ -519,5 +519,28 @@ public final class BeautiHeadlessHarness {
             clockModel(options).setClockType(ClockType.UNCORRELATED);
             treePrior(options).setNodeHeightPrior(TreePriorType.YULE);
         });
+
+        // ---- the free rates site heterogeneity model ----
+        add("apes_hky_freerates_strict_constant", "examples/Data/apes.nex", options ->
+                substitutionModel(options).setFreeRatesHetero(true));
+        add("apes_hky_freerates3_strict_constant", "examples/Data/apes.nex", options -> {
+            substitutionModel(options).setFreeRatesHetero(true);
+            substitutionModel(options).setRateCategories(3);
+        });
+        add("apes_hky_codon123_freerates_strict_yule", "examples/Data/apes.nex", options -> {
+            substitutionModel(options).setCodonHeteroPattern("123");
+            substitutionModel(options).setFreeRatesHetero(true);
+            treePrior(options).setNodeHeightPrior(TreePriorType.YULE);
+        });
+        add("apes_hky_codon112_freerates_linked_strict_constant", "examples/Data/apes.nex", options -> {
+            substitutionModel(options).setCodonHeteroPattern("112");
+            substitutionModel(options).setFreeRatesHetero(true);
+            substitutionModel(options).setUnlinkedHeterogeneityModel(false);
+        });
+        add("dengue4aa_blosum62_freerates_ucld_yule", "examples/Data/Dengue4.env.aa.fasta", options -> {
+            substitutionModel(options).setFreeRatesHetero(true);
+            clockModel(options).setClockType(ClockType.UNCORRELATED);
+            treePrior(options).setNodeHeightPrior(TreePriorType.YULE);
+        });
     }
 }

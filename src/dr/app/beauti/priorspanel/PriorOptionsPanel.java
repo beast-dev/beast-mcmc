@@ -874,6 +874,39 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
     };
 
+    /**
+     * A symmetric Dirichlet: every component shares the one concentration, held in the parameter's
+     * shape. Above one it pulls the components towards equality, below one towards the corners.
+     */
+    static final PriorOptionsPanel DIRICHLET = new PriorOptionsPanel(false) {
+
+        void setup() {
+            addField("Concentration", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
+        }
+
+        public Distribution getDistribution() {
+            // a Dirichlet over several components has no one-dimensional density to plot
+            return null;
+        }
+
+        public void setArguments(Parameter parameter) {
+            getField(0).setValue(parameter.shape > 0.0 ? parameter.shape : 1.0);
+            getField(0).setLabel(parameter.getName() + " concentration (alpha)");
+        }
+
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null) {
+                return false;
+            }
+            parameter.shape = getValue(0);
+            return true;
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
+    };
     static final PriorOptionsPanel ONE_OVER_X = new PriorOptionsPanel(false) {
 
         void setup() {

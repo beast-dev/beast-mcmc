@@ -194,6 +194,14 @@ public class OperatorsGenerator extends Generator {
             case RATE_BIT_EXCHANGE:
                 writeRateBitExchangeOperator(operator, writer);
                 break;
+            case FREE_RATE_DELTA_EXCHANGE:
+                writeFreeRateOperator(FreeRateDeltaExchangeOperatorParser.FREE_RATE_DELTA_EXCHANGE,
+                        FreeRateDeltaExchangeOperatorParser.DELTA, operator, writer);
+                break;
+            case FREE_RATE_UP_DOWN:
+                writeFreeRateOperator(FreeRateUpDownOperatorParser.FREERATE_UP_DOWN_OPERATOR,
+                        FreeRateUpDownOperatorParser.SCALE_FACTOR, operator, writer);
+                break;
             case TREE_BIT_MOVE:
                 writeTreeBitMoveOperator(operator, prefix, writer);
                 break;
@@ -454,6 +462,28 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(RateBitExchangeOperator.RATES);
 
         writer.writeCloseTag(RateBitExchangeOperator.OPERATOR_NAME);
+    }
+
+    /**
+     * Writes one of the two free rates operators, which act on the category weights (parameter 1)
+     * and rates (parameter 2) together so that the weights keep summing to one and the mean rate stays one.
+     */
+    private void writeFreeRateOperator(String tag, String tuningAttribute, Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(tag,
+                new Attribute[]{
+                        new Attribute.Default<Double>(tuningAttribute, operator.getTuning()),
+                        getWeightAttribute(operator.getWeight())
+                });
+
+        writer.writeOpenTag(FreeRateDeltaExchangeOperatorParser.WEIGHTS_PARAMETER);
+        writeParameter1Ref(writer, operator);
+        writer.writeCloseTag(FreeRateDeltaExchangeOperatorParser.WEIGHTS_PARAMETER);
+
+        writer.writeOpenTag(FreeRateDeltaExchangeOperatorParser.RATES_PARAMETER);
+        writeParameter2Ref(writer, operator);
+        writer.writeCloseTag(FreeRateDeltaExchangeOperatorParser.RATES_PARAMETER);
+
+        writer.writeCloseTag(tag);
     }
 
     private void writeTreeBitMoveOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {

@@ -46,7 +46,8 @@ set loaded by default (`parsers=development` in `beast.properties`).
   is accepted); its matrix was regenerated from FoldSeek's log-odds matrix and the values
   differ from v10.5.0.
 - **The FreeRate site model** logs its rate and weight columns sorted by increasing rate
-  rather than by weight.
+  rather than by weight, and prefixes the column names with the model's id
+  (`siteModel.rates1`) so that several site models can be logged together.
 
 ### New features
 
@@ -67,7 +68,10 @@ set loaded by default (`parsers=development` in `beast.properties`).
   and `<rates>` children; `<freeRateSimplexTransform dimension=...>` maps positive reals
   to the weighted simplex; `<newTransformedParameterOperator>` wraps any operator with the
   Jacobian correction for a transform. Transformed multivariate parameters are
-  checkpointed by their untransformed dimension.
+  checkpointed by their untransformed dimension. The two FreeRate operators are
+  registered in `release_parsers.properties`, and `<freeRateSiteRateModel>` requires its
+  `categories` attribute and declares the `<substitutionModel>` and
+  `<proportionInvariant>` children, so XML using them passes `-strict` parsing.
 - **Integrated coalescent prior.** `<coalescentLikelihoodIG>` marginalises the constant
   population size under an inverse-gamma(`alpha`, `beta`) prior, with `<include>`/`<exclude>`
   taxon lists; ported from Luiz Max Carvalho's work
@@ -237,6 +241,21 @@ set loaded by default (`parsers=development` in `beast.properties`).
 
 #### BEAUti
 
+- **Free Rates site heterogeneity model** — the Sites panel's "Site Heterogeneity Model"
+  offers "Free Rates" for nucleotide and amino acid partitions, with 2 to 16 rate
+  categories (the "Number of Rate Categories" menu offers 4 to 16 for the gamma model,
+  as before). The XML has a `<freeRateSiteRateModel>` with `freeRates.rates` and
+  `freeRates.weights` parameters, a `freeRates.weightedRates` product statistic that
+  carries the Dirichlet(1) prior on the rates, a symmetric Dirichlet(2) prior on the
+  weights (the concentration above one keeps a category's weight from collapsing to
+  zero, where its rate is unidentifiable and the likelihood numerically unstable), the
+  `<freeRateDeltaExchange>` and `<freeRateUpDownOperator>` operators, and the site
+  model in the log so that the rates and weights are logged sorted by rate. The model
+  can be linked or unlinked across codon positions like the gamma model. Generalized
+  stepping-stone sampling has no working prior for it yet and is refused.
+- **Dirichlet prior concentration** — the prior dialog has a "Concentration" field for
+  every Dirichlet prior (base frequencies, GTR rates, the free rates weights and
+  rate shares), written as the `alpha` of `<dirichletPrior>`; it was fixed at 1.0.
 - **Structured coalescent (BASTA)** — a discrete trait partition's "Discrete Trait
   Substitution Model" can be "Backward-in-time CTMC", with a constant-population
   coalescent model, symmetric, asymmetric or GLM structure, BSSVS, and a "Share coalescent

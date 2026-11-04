@@ -37,7 +37,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -125,7 +124,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
                     writeCodonPatternsRef(prefix1, num, substModel.getCodonPartitionCount(), writer);
 
-                    writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
+                    writer.writeIDref(SubstitutionModelGenerator.getSiteModelTag(substModel), substModel.getPrefix(num) + SiteModel.SITE_MODEL);
 
                     writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
                 }
@@ -135,7 +134,7 @@ public class TreeLikelihoodGenerator extends Generator {
                 String prefix1 = partition.getPrefix();
                 writer.writeOpenTag(TreeDataLikelihoodParser.PARTITION);
                 writer.writeIDref(SitePatternsParser.PATTERNS, prefix1 + SitePatternsParser.PATTERNS);
-                writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
+                writer.writeIDref(SubstitutionModelGenerator.getSiteModelTag(substModel), substModel.getPrefix() + SiteModel.SITE_MODEL);
                 writer.writeCloseTag(TreeDataLikelihoodParser.PARTITION);
             }
 
@@ -254,9 +253,9 @@ public class TreeLikelihoodGenerator extends Generator {
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
 
         if (num > 0) {
-            writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
+            writer.writeIDref(SubstitutionModelGenerator.getSiteModelTag(substModel), substModel.getPrefix(num) + SiteModel.SITE_MODEL);
         } else {
-            writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
+            writer.writeIDref(SubstitutionModelGenerator.getSiteModelTag(substModel), substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
 
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);

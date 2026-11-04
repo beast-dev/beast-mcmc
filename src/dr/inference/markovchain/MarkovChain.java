@@ -266,8 +266,9 @@ public final class MarkovChain implements Serializable {
                     phaseStart = profile.add(mcmcOperator, ChainProfile.Phase.EVALUATE, phaseStart);
                 }
 
-                boolean EXTRA_CHECK = true;
 
+                // extra check from branch `store_restore_bug` put here in case it is needed...
+                final boolean EXTRA_CHECK = false;
                 if (EXTRA_CHECK) {
                     String before = likelihood instanceof CompoundLikelihood ?
                             ((CompoundLikelihood) likelihood).getDiagnosis() : "";

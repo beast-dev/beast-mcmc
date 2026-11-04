@@ -264,6 +264,7 @@ public final class MarkovChain implements Serializable {
                 mcmcOperator.addEvaluationTime(System.nanoTime() - evaluationStart);
                 if (ChainProfile.STEPS) {
                     phaseStart = profile.add(mcmcOperator, ChainProfile.Phase.EVALUATE, phaseStart);
+                }
 
                 boolean EXTRA_CHECK = true;
 
@@ -286,14 +287,6 @@ public final class MarkovChain implements Serializable {
 
                         System.exit(-1);
                     }
-                }
-
-                if (PROFILE) {
-                    long duration = System.currentTimeMillis() - elapsedTime;
-                    if (DEBUG) {
-                        System.out.println("Time: " + duration);
-                    }
-                    mcmcOperator.addEvaluationTime(duration);
                 }
 
                 Map<String, Double> diagnosticOperatorDensities = null;

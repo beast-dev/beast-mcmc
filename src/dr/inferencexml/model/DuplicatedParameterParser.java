@@ -1,7 +1,8 @@
 /*
  * DuplicatedParameterParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
@@ -39,11 +41,18 @@ public class DuplicatedParameterParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-        XMLObject cxo = xo.getChild(COPIES);
-        Parameter dup = (Parameter) cxo.getChild(Parameter.class);
-
-        DuplicatedParameter duplicatedParameter = new DuplicatedParameter(parameter);
-        duplicatedParameter.addDuplicationParameter(dup);
+        Parameter dup = null;
+        if (xo.hasChildNamed(COPIES)) {
+            dup = (Parameter) xo.getElementFirstChild(COPIES);
+        }
+        int copies = 1;
+        if (xo.hasAttribute(COPIES)) {
+            copies = xo.getIntegerAttribute(COPIES);
+        }
+        DuplicatedParameter duplicatedParameter = new DuplicatedParameter(parameter, copies);
+        if (dup != null) {
+            duplicatedParameter.addDuplicationParameter(dup);
+        }
 
         return duplicatedParameter;
     }
@@ -53,11 +62,12 @@ public class DuplicatedParameterParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newIntegerRule(COPIES, true),
             new ElementRule(Parameter.class),
             new ElementRule(COPIES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
-                    }),
+                    }, true)
     };
 
     public String getParserDescription() {

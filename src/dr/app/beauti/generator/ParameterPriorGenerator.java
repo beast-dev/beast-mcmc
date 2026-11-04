@@ -1,7 +1,8 @@
 /*
  * ParameterPriorGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -31,15 +33,21 @@ import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.branchratemodel.BranchSpecificFixedEffectsParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.*;
+import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,22 +58,64 @@ import java.util.Map;
  */
 public class ParameterPriorGenerator extends Generator {
 
+    //map parameters to prior IDs, for use with HMC or other approaches that define their prior befor the <mcmc> XML block
+    private final HashMap<String, String> mapParameterToPrior;
+
     public ParameterPriorGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
+        //TODO don't like this being here, but will see how things pan out as more HMC approaches are added
+        mapParameterToPrior = new HashMap<String, String>();
+    }
+
+    /**
+     * Add all possibly previously defined priors to a HashMap
+     * Cannot be done in constructor as the models have not been defined by the user at that point
+     */
+    public void addParametersToPrior() {
+        int totalModels = options.getPartitionClockModels().size();
+        List<PartitionClockModel> partitionClockModels = options.getPartitionClockModels();
+        //HMC skygrid
+        mapParameterToPrior.put(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION_PRIOR);
+        //HMC relaxed clock
+        for (int i = 0; i < totalModels; i++) {
+            String prefix = partitionClockModels.get(i).getPrefix();
+            // keyed by the full parameter name so each clock model gets its own priors
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.LOCATION_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMC_CLOCK_BRANCH_RATES, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.HMCLN_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+        }
+        //mixed effects clock
+        //always write distribution likelihoods for rate, scale and intercept
+        for (int i = 0; i < totalModels; i++) {
+            String prefix = partitionClockModels.get(i).getPrefix();
+            mapParameterToPrior.put(ClockType.ME_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(ClockType.ME_CLOCK_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            mapParameterToPrior.put(BranchSpecificFixedEffectsParser.INTERCEPT, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+            //check for coefficients
+            String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
+            int number = 1;
+            String concat = coeff + number;
+            while (partitionClockModels.get(i).hasParameter(concat)) {
+                mapParameterToPrior.put(concat, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+                number++;
+                concat = coeff + number;
+            }
+        }
     }
 
     /**
      * Write the priors for each parameter
      *
-     * @param useStarBEAST
      * @param writer       the writer
      */
-    public void writeParameterPriors(XMLWriter writer, boolean useStarBEAST) {
+    public void writeParameterPriors(XMLWriter writer) {
+
+        //first make sure that all possibly previously defined priors are part of the HashMap
+        addParametersToPrior();
+
         boolean first = true;
 
-        Map<Taxa, Boolean> taxonSetsMono = useStarBEAST ? options.speciesSetsMono : options.taxonSetsMono;
-
-        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : taxonSetsMono.entrySet()) {
+        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
             if (taxaBooleanEntry.getValue()) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
@@ -81,34 +131,19 @@ public class ParameterPriorGenerator extends Generator {
 
         List<Parameter> parameters = options.selectParameters();
 
-        if (useStarBEAST) {
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
+        for (Parameter parameter : parameters) {
+            if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
+                    parameter.priorType == PriorType.NONE_FIXED ||
+                    parameter.priorType == PriorType.NONE_STATISTIC)) {
+                if (parameter.isCached) {
+                    writeCachedParameterPrior(parameter, writer);
+                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
+                    writeParameterPrior(parameter, writer);
                 }
             }
-
-        } else {
-
-            for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
-                        parameter.priorType == PriorType.NONE_FIXED ||
-                        parameter.priorType == PriorType.NONE_STATISTIC)) {
-                    if (parameter.isCached) {
-                        writeCachedParameterPrior(parameter, writer);
-                        //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
-                        writeParameterPrior(parameter, writer);
-                    }
-                }
-            }
-
         }
+
     }
 
     private void writeCachedParameterPrior(Parameter parameter, XMLWriter writer) {
@@ -127,19 +162,51 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        if (parameter.priorType != PriorType.NONE_FIXED && parameter.isTruncated) {
-            // if there is a truncation then put it at the top so it short-circuits any other prior
-            // calculations
 
-            // todo: We should switch this to truncatedDistribution so that the density is normalized correctly
+        //if models need to have a prior defined before the priors block
+        /*if (reservedParameters.contains(parameter.getName())) {
 
-            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                    new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
-                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
-                    });
-            writeParameterIdref(writer, parameter);
-            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+            return;
+        }*/
+
+        if (mapParameterToPrior.keySet().contains(parameter.getName())) {
+            writePriorIdref(writer, parameter, mapParameterToPrior.get(parameter.getName()));
+            return;
+        }
+
+        if (parameter.priorType == PriorType.NONE_FIXED) {
+            return;
+        }
+
+        boolean isTruncated = parameter.isTruncated;
+        if (isTruncated) {
+            Attribute[] attributes = null;
+
+            if (!Double.isInfinite(parameter.truncationLower)) {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                    };
+                }
+            } else {
+                if (!Double.isInfinite(parameter.truncationUpper)) {
+                    attributes = new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    };
+                } else {
+                    // both are infinite so there is no trunction
+                    isTruncated = false;
+                }
+            }
+
+            if (isTruncated) {
+                writer.writeOpenTag(PriorParsers.TRUNCATED, attributes);
+            }
         }
 
         switch (parameter.priorType) {
@@ -296,10 +363,10 @@ public class ParameterPriorGenerator extends Generator {
                         writer.writeIDref("taxa", parameter.getTaxonSet().getId());
                     } else {
                         writer.writeOpenTag("taxa");
-                        writer.writeIDref("taxa", "taxa");
+                        writer.writeIDref("taxa", treeModel.getTaxaId());
                         writer.writeOpenTag("exclude");
                         for (Taxa taxonSet : options.taxonSets) {
-                            if (options.taxonSetsMono.get(taxonSet)) {
+                            if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                                 writer.writeIDref("taxa", taxonSet.getId());
                             }
                         }
@@ -309,11 +376,18 @@ public class ParameterPriorGenerator extends Generator {
                     }
                 }
 
-                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
+                break;
+            case HIERARCHICAL_EXPONENTIAL_PRIOR:
+                // the exponential density is defined alongside the trait model because its mean is
+                // an estimated parameter; the prior on that mean is written from the mean parameter
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD,
+                        ((PartitionClockModel) parameter.getOptions()).getPrefix() + PartitionClockModel.CLOCK_RATE_EXP);
                 break;
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:
+            case EXPONENTIAL_HPM_PRIOR:
                 // Do nothing, densities are already in a distributionLikelihood
                 break;
             case DIRICHLET_PRIOR:
@@ -329,6 +403,11 @@ public class ParameterPriorGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }
+
+        if (isTruncated) {
+            writer.writeCloseTag(PriorParsers.TRUNCATED);
+        }
+
     }
 
     private void writeParameterIdref(XMLWriter writer, Parameter parameter) {
@@ -336,6 +415,33 @@ public class ParameterPriorGenerator extends Generator {
             writer.writeIDref("statistic", parameter.getName());
         } else {
             writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        }
+    }
+
+    private void writePriorIdref(XMLWriter writer, Parameter parameter, String priorID) {
+        switch (parameter.priorType) {
+            case GAMMA_PRIOR:
+                writer.writeIDref(PriorParsers.GAMMA_PRIOR, priorID);
+                break;
+            case LOGNORMAL_PRIOR:
+                writer.writeIDref(PriorParsers.LOG_NORMAL_PRIOR, priorID);
+                break;
+            case EXPONENTIAL_PRIOR:
+                writer.writeIDref(PriorParsers.EXPONENTIAL_PRIOR, priorID);
+                break;
+            case INVERSE_GAMMA_PRIOR:
+                writer.writeIDref(PriorParsers.INVGAMMA_PRIOR_CORRECT, priorID);
+                break;
+            case CTMC_RATE_REFERENCE_PRIOR:
+                writer.writeIDref(CTMCScalePriorParser.MODEL_NAME, priorID);
+                break;
+            case LOGNORMAL_HPM_PRIOR:
+            case EXPONENTIAL_HPM_PRIOR:
+            case NORMAL_HPM_PRIOR:
+                writer.writeIDref(DistributionLikelihood.DISTRIBUTION_LIKELIHOOD, priorID);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown or invalid prior defined on " + parameter.getName() + ": " + parameter.priorType);
         }
     }
 

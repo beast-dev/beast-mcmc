@@ -1,7 +1,8 @@
 /*
  * OperatorsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.operatorspanel;
@@ -30,10 +32,10 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.types.OperatorSetType;
+import dr.app.gui.table.TableEditorStopper;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.RealNumberCellEditor;
 import jam.framework.Exportable;
-import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -41,13 +43,12 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: OperatorsPanel.java,v 1.12 2005/07/11 14:07:25 rambaut Exp $
  */
 public class OperatorsPanel extends BeautiPanel implements Exportable {
 
@@ -61,10 +62,11 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     JCheckBox autoOptimizeCheck = null;
 
-    JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[] {
+    JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[]{
             OperatorSetType.DEFAULT,
             OperatorSetType.FIXED_TREE_TOPOLOGY,
-            OperatorSetType.NEW_TREE_MIX,
+            OperatorSetType.FIXED_TREE,
+            OperatorSetType.CLASSIC,
             OperatorSetType.ADAPTIVE_MULTIVARIATE,
             OperatorSetType.CUSTOM
     });
@@ -80,6 +82,9 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
         operatorTableModel = new OperatorTableModel();
         operatorTable = new JTable(operatorTableModel);
+
+        // a tuning or weight being typed is taken when the table loses the focus (e.g. to the Generate button)
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(operatorTable);
 
         operatorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         operatorTable.getTableHeader().setReorderingAllowed(false);
@@ -150,11 +155,10 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
 
-
         operatorSetCombo.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        options.operatorSetType = (OperatorSetType)operatorSetCombo.getSelectedItem();
+                        options.operatorSetType = (OperatorSetType) operatorSetCombo.getSelectedItem();
                         operators = options.selectOperators();
                         operatorTableModel.fireTableDataChanged();
                         operatorsChanged();
@@ -258,7 +262,7 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
             switch (col) {
                 case 0:// Check box
-                    // if the paramter is fixed then 'in use' can't be turned on
+                    // if the parameter is fixed then 'in use' can't be turned on
                     editable = !op.isParameterFixed();
                     break;
                 case 3:
@@ -318,15 +322,17 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
                     aRow, aColumn);
 
             Operator op = operators.get(aRow);
+            // an operator that is not in use is greyed; the rest take the table's colours, so that a
+            // selected row is still readable (and so that a dark appearance works)
             if (!op.isUsed() && aColumn > 0) {
-                renderer.setForeground(Color.gray);
+                renderer.setForeground(UIManager.getColor("Label.disabledForeground"));
             } else {
-                renderer.setForeground(Color.black);
+                renderer.setForeground(aIsSelected ? aTable.getSelectionForeground() : aTable.getForeground());
             }
             if (op.isParameterFixed()) {
-               setToolTipText(
-                       "This parameter is set to a fixed value. To turn \r" +
-                       "this move on, select a prior in the Priors tab");
+                setToolTipText(
+                        "This parameter is set to a fixed value. To turn \r" +
+                                "this move on, select a prior in the Priors tab");
             }
 
             return this;

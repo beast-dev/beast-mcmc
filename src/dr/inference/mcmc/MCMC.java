@@ -1,7 +1,8 @@
 /*
  * MCMC.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.mcmc;
@@ -30,6 +32,7 @@ import dr.inference.state.StateLoader;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
+import dr.inference.markovchain.ChainProfile;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
@@ -49,7 +52,6 @@ import java.io.PrintStream;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MCMC.java,v 1.41 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MCMC implements Identifiable, Spawnable, Loggable {
 
@@ -77,7 +79,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         mc = new MarkovChain(likelihood, schedule, criterion,
                 options.getFullEvaluationCount(), options.minOperatorCountForFullEvaluation(),
                 options.getEvaluationTestThreshold(),
-                options.useCoercion());
+                options.useAdaptation(), options.useSmoothedAcceptanceProbability());
 
         this.options = options;
         this.loggers = loggers;
@@ -161,7 +163,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 if (initialStateLoader != null) {
                     double[] savedLnL = new double[1];
 
-                    initialStateLoader.loadState(mc, savedLnL);
+                    loadedState = initialStateLoader.loadState(mc, savedLnL);
 
                     mc.setCurrentLength(loadedState);
 
@@ -175,27 +177,20 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             long chainLength = getChainLength();
 
-            //this also potentially gets the new coercionDelay of a possibly increased chain length
-            final long coercionDelay = getCoercionDelay();
+            //this also potentially gets the new adaptationDelay of a possibly increased chain length
+            final long adaptationDelay = getAdaptationDelay();
 
-            //assume that dumped state has passed the coercionDelay
-            //TODO: discuss whether we want to dump the coercionDelay or chainLength to file
-            if (coercionDelay > loadedState) {
-                mc.runChain(coercionDelay - loadedState, true);
-                chainLength -= coercionDelay;
-            }
+            //assume that saved state has passed the adaptationDelay
+            //TODO: discuss whether we want to save the adaptationDelay or chainLength to file
+//            System.out.println("adaptationDelay = " + adaptationDelay + " vs. loadedState = " +loadedState);
+            if (adaptationDelay > loadedState) {
+                mc.runChain(adaptationDelay - loadedState, true);
+                chainLength -= adaptationDelay;
 
-            //if (coercionDelay > 0) {
-            // Run the chain for coercionDelay steps with coercion disabled
-            //mc.runChain(coercionDelay, true);
-            //chainLength -= coercionDelay;
-
-            // reset operator acceptance levels
-            //GB: we are now restoring these; commenting out for now
-                /*for (int i = 0; i < schedule.getOperatorCount(); i++) {
+                for (int i = 0; i < schedule.getOperatorCount(); i++) {
                     schedule.getOperator(i).reset();
-                }*/
-            //}
+                }
+            }
 
             mc.runChain(chainLength, false);
 
@@ -277,18 +272,22 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             }
             // OperatorAnalysisPrinter class can do the job now
             if (showOperatorAnalysis) {
-                OperatorAnalysisPrinter.showOperatorAnalysis(System.out, getOperatorSchedule(), options.useCoercion());
+                OperatorAnalysisPrinter.showOperatorAnalysis(System.out, getOperatorSchedule(), options.useAdaptation(), false);
             }
 
             if (operatorAnalysisFile != null) {
                 try {
                     PrintStream out = new PrintStream(new FileOutputStream(operatorAnalysisFile));
-                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useCoercion());
+                    OperatorAnalysisPrinter.showOperatorAnalysis(out, getOperatorSchedule(), options.useAdaptation(), operatorAnalysisCSVFile);
                     out.flush();
                     out.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+
+            if (ChainProfile.ENABLED) {
+                System.out.println(mc.getProfile().report());
             }
 
             // How should premature finish be flagged?
@@ -367,19 +366,19 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
 
     //PRIVATE METHODS *****************************************
-    protected long getCoercionDelay() {
+    protected long getAdaptationDelay() {
 
-        long delay = options.getCoercionDelay();
+        long delay = options.getAdaptationDelay();
         if (delay < 0) {
             delay = (long)(options.getChainLength() / 100);
         }
-        if (options.useCoercion()) return delay;
+        if (options.useAdaptation()) return delay;
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
             MCMCOperator op = schedule.getOperator(i);
 
-            if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return delay;
+            if (op instanceof AdaptableMCMCOperator) {
+                if (((AdaptableMCMCOperator) op).getMode() == AdaptationMode.ADAPTATION_ON) return delay;
             }
         }
 
@@ -391,8 +390,9 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     }
 
 
-    public void setOperatorAnalysisFile(File operatorAnalysisFile) {
+    public void setOperatorAnalysisFile(File operatorAnalysisFile, boolean csvFile) {
         this.operatorAnalysisFile = operatorAnalysisFile;
+        this.operatorAnalysisCSVFile = csvFile;
     }
 
     public String getId() {
@@ -408,8 +408,9 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     //private FileLogger operatorLogger = null;
     protected final boolean isAdapting = true;
     protected boolean stopping = false;
-    protected boolean showOperatorAnalysis = true;
+    protected boolean showOperatorAnalysis = Boolean.parseBoolean(System.getProperty(OperatorSchedule.SHOW_OPERATORS));
     protected File operatorAnalysisFile = null;
+    protected boolean operatorAnalysisCSVFile = false;
     protected final dr.util.Timer timer = new dr.util.Timer();
     protected long currentState = 0;
     //private int stepsPerReport = 1000;

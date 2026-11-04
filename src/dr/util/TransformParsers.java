@@ -1,7 +1,8 @@
 /*
  * TransformParsers.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,19 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.util;
 
 import dr.inference.model.Parameter;
+import dr.inferencexml.model.MaskingParser;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static dr.util.Transform.Util.parseMultivariableTransform;
 
 /**
  * @author Marc A. Suchard
@@ -72,6 +78,66 @@ public class TransformParsers {
     };
 
     @SuppressWarnings("unused")
+    public static XMLObjectParser COMPOUND_MULTIVARIATE_PARSER = new AbstractXMLObjectParser() {
+
+        private static final String MASK = "mask";
+
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            if (xo.hasChildNamed(MASK)) {
+                Transform.ParsedTransform  parsedTransform = (Transform.ParsedTransform)
+                        xo.getChild(Transform.ParsedTransform.class);
+                Transform transform = parsedTransform.transform;
+
+                MaskingParser.MaskingParameter mask = (MaskingParser.MaskingParameter) xo.getElementFirstChild(MASK);
+
+                List<Transform> transforms = new ArrayList<>();
+                for (int i = 0; i < mask.getDimension(); ++i) {
+                    if (mask.getParameterValue(i) == 1.0) {
+                        transforms.add(transform);
+                    } else {
+                        transforms.add(Transform.NONE);
+                    }
+                }
+
+                return new Transform.Array(transforms, null);
+            } else {
+                List<Transform.MultivariableTransform> transforms = new ArrayList<Transform.MultivariableTransform>();
+                for (int i = 0; i < xo.getChildCount(); i++) {
+                    transforms.add(parseMultivariableTransform(xo.getChild(i)));
+                }
+
+                return new Transform.MultivariateArray(transforms);
+            }
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[] {
+                    new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
+                    new ElementRule(Transform.MultivariableTransform.class, 0, Integer.MAX_VALUE),
+                    new ElementRule(MASK, Parameter.class, "", true),
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return null;
+        }
+
+        @Override
+        public Class getReturnType() {
+            return Transform.MultivariateArray.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return COMPOUND_MULTIVARIATE;
+        }
+    };
+
+    @SuppressWarnings("unused")
     public static XMLObjectParser COMPOSE_PARSER = new AbstractXMLObjectParser() {
 
         @Override
@@ -86,6 +152,14 @@ public class TransformParsers {
             Transform.ParsedTransform innerPT = (Transform.ParsedTransform)
                     innerXo.getChild(Transform.ParsedTransform.class);
 
+//            if (outerPT.parameters == null || innerPT.parameters == null) {
+//                if (outerPT.parameters == null) {
+//                     outerPT.parameters = innerPT.parameters;
+//                } else {
+//                    innerPT.parameters = outerPT.parameters;
+//                }
+//            }
+
             if (!outerPT.equivalent(innerPT)) {
                 throw new XMLParseException("Not equivalent transformations");
             }
@@ -96,6 +170,14 @@ public class TransformParsers {
                 Transform.ParsedTransform composition = outerPT.clone();
                 composition.transform = new Transform.Compose((Transform.UnivariableTransform) outerPT.transform,
                         (Transform.UnivariableTransform) innerPT.transform);
+                return composition;
+
+            } else if (outerPT.transform instanceof Transform.MultivariableTransform &&
+                    innerPT.transform instanceof Transform.MultivariableTransform) {
+
+                Transform.ParsedTransform composition = outerPT.clone();
+                composition.transform = new Transform.ComposeMultivariable((Transform.MultivariableTransform) outerPT.transform,
+                        (Transform.MultivariableTransform) innerPT.transform);
                 return composition;
 
             } else {
@@ -204,20 +286,34 @@ public class TransformParsers {
              }
 
              Transform.ParsedTransform transform = new Transform.ParsedTransform();
-             transform.transform = thisTransform;
-             if (xo.hasAttribute(START)) {
-                 transform.start = xo.getIntegerAttribute(START);
-                 transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
-                 transform.every = xo.getAttribute(EVERY, 1);
-                 // todo: check values are valid
-                 transform.start--; // zero-indexed
-             } else {
-                 if (xo.hasAttribute(SUM)) {
-                     transform.fixedSum = xo.getDoubleAttribute(SUM);
-                 }
-                 transform.parameters = new ArrayList<Parameter>();
 
-                 transform.parameters.addAll(xo.getAllChildren(Parameter.class));
+             if (xo.hasAttribute(START) && xo.hasAttribute(DIM)) {
+                 throw new XMLParseException("Transform can only have one of attributes 'start' or 'dim'.");
+             }
+
+             if (xo.hasAttribute(DIM)) {
+                 int dim = xo.getIntegerAttribute(DIM);
+                 transform.transform = new Transform.Array(thisTransform, dim, null);
+             } else {
+                 transform.transform = thisTransform;
+                 if (xo.hasAttribute(START)) {
+                     transform.start = xo.getIntegerAttribute(START);
+                     transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
+                     transform.every = xo.getAttribute(EVERY, 1);
+                     // todo: check values are valid
+                     transform.start--; // zero-indexed
+                 } else {
+                     if (xo.hasAttribute(SUM)) {
+                         transform.fixedSum = xo.getDoubleAttribute(SUM);
+                     }
+                     if (xo.getAllChildren(Parameter.class).size() > 0) {
+                         transform.parameters = new ArrayList<Parameter>();
+                         transform.parameters.addAll(xo.getAllChildren(Parameter.class));
+                     } else {
+                         transform.parameters = null;
+                     }
+
+                 }
              }
 
              return transform;
@@ -231,6 +327,7 @@ public class TransformParsers {
                      AttributeRule.newIntegerRule(EVERY, true),
                      AttributeRule.newDoubleRule(SUM, true),
                      AttributeRule.newBooleanRule(INVERSE, true),
+                     AttributeRule.newIntegerRule(DIM, true),
                      new ElementRule(Transform.ParsedTransform.class, 0, 1),
                      new ElementRule(Parameter.class, 0, Integer.MAX_VALUE)
              };
@@ -261,4 +358,6 @@ public class TransformParsers {
     private static final String OUTER = "outer";
     private static final String INNER = "inner";
     private static final String COMPOUND = "compoundTransform";
+    private static final String DIM = "dim";
+    private static final String COMPOUND_MULTIVARIATE = "multivariateCompoundTransform";
 }

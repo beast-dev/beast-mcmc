@@ -1,7 +1,8 @@
 /*
  * ContinuousDiffusionStatistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -50,6 +52,8 @@ import org.apache.commons.math.stat.ranking.NaturalRanking;
 
 import java.util.*;
 
+import static java.lang.Double.NaN;
+
 /**
  * @author Marc Suchard
  * @author Philippe Lemey
@@ -70,6 +74,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String SPEARMAN = "spearman";
     public static final String CORRELATION_COEFFICIENT = "correlationCoefficient";
     public static final String DISTANCE_TIME_CORRELATION = "distanceTimeCorrelation";
+    public static final String SQUAREDDISTANCE_TIME4_CORRELATION = "squaredDistanceTimeFourCorrelation";
     public static final String R_SQUARED = "Rsquared";
     public static final String STATISTIC = "statistic";
     public static final String TRAIT = "trait";
@@ -248,8 +253,12 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
                             double time;
                             if (stateString != null) {
-                                time = history.getStateTime(stateString);
-//                            System.out.println("tine before = "+(timeUp - timeLow)+", time after= "+time);
+                                if (!history.returnMismatch()){
+                                    time = history.getStateTime(stateString);
+                                } else {
+                                    time = NaN;
+                                }
+                              //System.out.println("time before = "+(timeUp - timeLow)+", time after= "+time);
                             } else {
                                 time = timeUp - timeLow;
                             }
@@ -267,7 +276,11 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                             if (useGreatCircleDistances && (trait.length == 2)) { // Great Circle distance
                                 double distance;
                                 if (stateString != null) {
-                                    distance = history.getStateGreatCircleDistance(stateString);
+                                    if (!history.returnMismatch()){
+                                        distance = history.getStateGreatCircleDistance(stateString);
+                                    } else {
+                                        distance = NaN;
+                                    }
                                 } else {
                                     distance = getGreatCircleDistance(traitLow, traitUp);
                                 }
@@ -290,10 +303,17 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                     if (stateString != null) {
                                         double[] stateTimeDistance = getStateTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, precision, branchRates, true);
                                         if (stateTimeDistance[0] > 0) {
-                                            maxDistanceFromRootCumulative = tempDistanceFromRootLow * (stateTimeDistance[0] / timeFromRoot);
-                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
-                                            maxBranchDistanceFromRoot = stateTimeDistance[1];
-                                            maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            if (!history.returnMismatch()){
+                                                maxDistanceFromRootCumulative = tempDistanceFromRootLow * (stateTimeDistance[0] / timeFromRoot);
+                                                maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
+                                                maxBranchDistanceFromRoot = stateTimeDistance[1];
+                                                maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            } else {
+                                                maxDistanceFromRootCumulative = NaN;
+                                                maxDistanceOverTimeFromRootWA = NaN;
+                                                maxBranchDistanceFromRoot = NaN;
+                                                maxBranchDistanceOverTimeFromRootWA = NaN;
+                                            }
                                         }
                                     } else {
                                         maxDistanceFromRootCumulative = tempDistanceFromRootLow;
@@ -317,7 +337,11 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                             } else {
                                 double distance;
                                 if (stateString != null) {
-                                    distance = history.getStateNativeDistance(stateString);
+                                    if (!history.returnMismatch()){
+                                        distance = history.getStateNativeDistance(stateString);
+                                    } else {
+                                        distance = NaN;
+                                    }
                                 } else {
                                     distance = getNativeDistance(traitLow, traitUp);
                                 }
@@ -337,10 +361,17 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                     if (stateString != null) {
                                         double[] stateTimeDistance = getStateTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, precision, branchRates, false);
                                         if (stateTimeDistance[0] > 0) {
-                                            maxDistanceFromRootCumulative = tempDistanceFromRoot * (stateTimeDistance[0] / timeFromRoot);
-                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
-                                            maxBranchDistanceFromRoot = stateTimeDistance[1];
-                                            maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            if (!history.returnMismatch()){
+                                                maxDistanceFromRootCumulative = tempDistanceFromRoot * (stateTimeDistance[0] / timeFromRoot);
+                                                maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
+                                                maxBranchDistanceFromRoot = stateTimeDistance[1];
+                                                maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
+                                            } else {
+                                                maxDistanceFromRootCumulative = NaN;
+                                                maxDistanceOverTimeFromRootWA = NaN;
+                                                maxBranchDistanceFromRoot = NaN;
+                                                maxBranchDistanceOverTimeFromRootWA = NaN;
+                                            }
                                         }
                                     } else {
                                         maxDistanceFromRootCumulative = tempDistanceFromRoot;
@@ -428,6 +459,17 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 Regression r = new Regression(convertDoubles(times),convertDoubles(distances));
                 return r.getCorrelationCoefficient();
             }
+        }  else if (summaryStat == summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION)  {
+            List<Double> squareddistances = squareElements(distances);
+            if (summaryMode == Mode.SPEARMAN) {
+                return getSpearmanRho(convertDoubles(times),convertDoubles(squareddistances));
+            } else if (summaryMode == Mode.R_SQUARED) {
+                Regression r = new Regression(convertDoubles(times), convertDoubles(squareddistances));
+                return r.getRSquared();
+            } else {
+                Regression r = new Regression(convertDoubles(times),convertDoubles(squareddistances));
+                return r.getCorrelationCoefficient();
+            }
          }  else {
             return treeLength;
         }
@@ -446,7 +488,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         return Math.sqrt(sum);
     }
 
-    public double getGreatCircleDistance(double[] loc1, double[] loc2){
+    public static double getGreatCircleDistance(double[] loc1, double[] loc2){
         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(loc1[0], loc1[1]);
         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(loc2[0], loc2[1]);
         return coord1.distance(coord2);
@@ -458,6 +500,14 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             returnArray[i] = Double.valueOf(list.get(i).toString());
         }
         return returnArray;
+    }
+
+    private static List<Double> squareElements(List<Double> inputList) {
+        List<Double> squaredList = new ArrayList<>();
+        for (Double number : inputList) {
+            squaredList.add(number * number);
+        }
+        return squaredList;
     }
 
     private double[] imputeValue(double[] nodeValue, double[] parentValue, double time, double nodeHeight, double parentHeight, double[] precisionArray, double rate, boolean trueNoise) {
@@ -571,6 +621,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public History setUpHistory(String historyString, int nodeState, int parentNodeState, double timeLow, double timeUp){
         double[] heights;
         String[] states;
+        boolean mismatch = false;
         if (historyString.equals("{}")){
             heights = new double[]{timeUp,timeLow};
             states = new String[]{getState(nodeState)};
@@ -604,16 +655,21 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
             //sanity check
             if (!jumpStrings[0][1].equals(getState(parentNodeState))){
-                System.out.println(jumpStrings[0][1]+"\t"+getState(parentNodeState));
-                System.err.println("mismatch in jump history and parent node state");
-                System.exit(-1);
+//                System.out.println(jumpStrings[0][1]+"\t"+getState(parentNodeState));
+                System.err.println("mismatch in jump history and parent node state, continuous diffusion statistic will return NaN");
+                mismatch = true;
+//                System.exit(-1);
             }
 
             //sanity check
             states[numberOfJumps] = jumpStrings[numberOfJumps-1][2];
             if (!jumpStrings[numberOfJumps-1][2].equals(getState(nodeState))){
-                System.err.println("mismatch in jump history and node state");
-                System.exit(-1);
+//                System.out.println(getState(parentNodeState));
+//                System.out.println(getState(nodeState));
+//                System.out.println(historyString);
+                System.err.println("mismatch in jump history and node state, continuous diffusion statistic will return NaN");
+                mismatch = true;
+//                System.exit(-1);
             }
 
             heights[0] = timeUp;
@@ -625,7 +681,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 //            System.out.print(heights[q] +"\t"+ states[q] +"\t");
 //        }
 //        System.out.println(heights[states.length]+"\r");
-        return new History(heights,states);
+        return new History(heights,states,mismatch);
     }
 
     private String getState(int stateInt){
@@ -896,7 +952,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         WAVEFRONT_DISTANCE,
         WAVEFRONT_DISTANCE_PHYLO,
         WAVEFRONT_RATE,
-        DISTANCE_TIME_CORRELATION
+        DISTANCE_TIME_CORRELATION,
+        SQUAREDDISTANCE_TIME4_CORRELATION
     }
 
     enum BranchSet {
@@ -987,6 +1044,12 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                     System.err.println(name+": mode = "+mode+" ignored for "+DISTANCE_TIME_CORRELATION+", reverting to correlation coefficient mode");
                     statMode = Mode.CORRELATION_COEFFICIENT;
                 }
+            } else if (statistic.equals(SQUAREDDISTANCE_TIME4_CORRELATION)) {
+                summaryStat = summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION;
+                if (mode.equals(AVERAGE) || mode.equals(WEIGHTED_AVERAGE) || mode.equals(COEFFICIENT_OF_VARIATION) || mode.equals(MEDIAN)){
+                    System.err.println(name+": mode = "+mode+" ignored for "+SQUAREDDISTANCE_TIME4_CORRELATION+", reverting to correlation coefficient mode");
+                    statMode = Mode.CORRELATION_COEFFICIENT;
+                }
             } else if (statistic.equals(WAVEFRONT_DISTANCE)) {
                 summaryStat = summaryStatistic.WAVEFRONT_DISTANCE;
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
@@ -1029,6 +1092,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 summaryStat = summaryStatistic.DIFFUSION_COEFFICIENT;
             } else if (statistic.equals(DISTANCE_TIME_CORRELATION)) {
                 summaryStat = summaryStatistic.DISTANCE_TIME_CORRELATION;
+            } else if (statistic.equals(SQUAREDDISTANCE_TIME4_CORRELATION)) {
+                summaryStat = summaryStatistic.SQUAREDDISTANCE_TIME4_CORRELATION;
             } else {
                 System.err.println(name+": unknown statistic: "+statistic+". Reverting to diffusion rate.");
                 summaryStat = summaryStatistic.DIFFUSION_RATE;
@@ -1187,10 +1252,12 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         private double[] historyHeights;
         private String[] historyStates;
         private double[][] historyTraits;
+        private boolean mismatch;
 
-        public History(double historyHeights[], String historyStates[]) {
+        public History(double historyHeights[], String historyStates[], boolean mismatch) {
             this.historyHeights = historyHeights;
             this.historyStates = historyStates;
+            this.mismatch = mismatch;
         }
 
         public void truncateUpper(double time) {
@@ -1252,6 +1319,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 }
             }
             return time;
+        }
+
+        public boolean returnMismatch(){
+            return mismatch;
         }
 
         private void setTraitsforHeights(double[] traitUp,  double[] traitLow, double[] precisionArray, double rate, boolean trueNoise){

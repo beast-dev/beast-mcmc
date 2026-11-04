@@ -1,7 +1,8 @@
 /*
  * MLOptimizer.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.ml;
@@ -40,7 +42,6 @@ import org.w3c.dom.Element;
  *
  * @author Andrew Rambaut
  *
- * @version $Id: MLOptimizer.java,v 1.5 2006/06/13 03:50:54 alexei Exp $
  */
 public class MLOptimizer implements Runnable, Identifiable {
 
@@ -69,7 +70,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 		this.id = id;
 
-		mc = new MarkovChain(likelihood, schedule, new GreatDelugeCriterion(0.2), 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, false);
+		mc = new MarkovChain(likelihood, schedule, new GreatDelugeCriterion(0.2), 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, false, false);
         //mc = new MarkovChain(null, likelihood, schedule, new HillClimbingCriterion(), false);
 
 		this.chainLength = chainLength;

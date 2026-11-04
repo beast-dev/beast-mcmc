@@ -1,7 +1,8 @@
 /*
  * NNIParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,16 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
+import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.NNI;
+import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
@@ -44,8 +50,12 @@ public class NNIParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-
-        return new NNI(treeModel, weight);
+        NNI op = new NNI(treeModel,weight);
+        if(treeModel instanceof ConstrainedTreeModel){
+            return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, op,xo);
+        }else{
+            return op;
+        }
     }
 
     // ************************************************************************
@@ -59,7 +69,7 @@ public class NNIParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return NNI.class;
+        return AbstractTreeOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

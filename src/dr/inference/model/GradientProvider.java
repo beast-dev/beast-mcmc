@@ -1,7 +1,8 @@
 /*
- * GradientProvider2.java
+ * GradientProvider.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -34,4 +36,15 @@ public interface GradientProvider {
     int getDimension();
 
     double[] getGradientLogDensity(Object x);
+
+    static double[] toDoubleArray(Object obj) {
+        double[] x;
+        if (obj instanceof double[]) {
+            x = (double[]) obj;
+        } else {
+            x = new double[1];
+            x[0] = (Double) obj;
+        }
+        return x;
+    }
 }

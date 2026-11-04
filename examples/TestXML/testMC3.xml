@@ -145,7 +145,7 @@
 	<!-- throughout the time spanned by the genealogy.                           -->
 	<constantSize id="constant" units="years">
 		<populationSize>
-			<parameter id="constant.popSize" value="380.0" lower="0.0" upper="38000.0"/>
+			<parameter id="constant.popSize" value="380.0" lower="0.0"/>
 		</populationSize>
 	</constantSize>
 
@@ -180,7 +180,7 @@
 	<!-- The strict clock (Uniform rates across branches)                        -->
 	<strictClockBranchRates id="branchRates">
 		<rate>
-			<parameter id="clock.rate" value="2.3E-5" lower="0.0" upper="100.0"/>
+			<parameter id="clock.rate" value="2.3E-5" lower="0.0"/>
 		</rate>
 	</strictClockBranchRates>
 
@@ -195,7 +195,7 @@
 			</frequencyModel>
 		</frequencies>
 		<kappa>
-			<parameter id="hky.kappa" value="1.0" lower="0.0" upper="100.0"/>
+			<parameter id="hky.kappa" value="1.0" lower="0.0"/>
 		</kappa>
 	</hkyModel>
 
@@ -205,7 +205,7 @@
 			<hkyModel idref="hky"/>
 		</substitutionModel>
 		<gammaShape gammaCategories="4">
-			<parameter id="siteModel.alpha" value="0.5" lower="0.0" upper="100.0"/>
+			<parameter id="siteModel.alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
 	</siteModel>
 
@@ -260,6 +260,26 @@
 	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" preBurnin="0">
 		<posterior id="posterior">
 			<prior id="prior">
+
+				<exponentialPrior mean="0.5" offset="0.0">
+					<parameter idref="siteModel.alpha"/>
+				</exponentialPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
+					<parameter idref="hky.kappa"/>
+				</logNormalPrior>
+
+				<logNormalPrior mean="1.0" stdev="1.5" offset="0.0" meanInRealSpace="false">
+					<parameter idref="constant.popSize"/>
+				</logNormalPrior>
+
+				<ctmcScalePrior>
+					<ctmcScale>
+						<parameter idref="clock.rate"/>
+					</ctmcScale>
+					<treeModel idref="treeModel"/>
+				</ctmcScalePrior>
+
 				<coalescentLikelihood idref="coalescent"/>
 			</prior>
 			<likelihood id="likelihood">

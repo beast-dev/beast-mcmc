@@ -1,7 +1,8 @@
 /*
- * SiteModelOptions.java
+ * GlobalModelOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -44,12 +46,12 @@ public class GlobalModelOptions extends ModelOptions {
     public GlobalModelOptions(BeautiOptions options) {
         this.options = options;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
         createOperator("dataLikelihoodMultivariate", "Multiple", "Adaptive Multivariate Normal", null,
                 OperatorType.ADAPTIVE_MULTIVARIATE, 1.0, treeWeights);
 //        createOperator("treePriorMultivariate", "Multiple", "Adaptive Multivariate Normal", null,

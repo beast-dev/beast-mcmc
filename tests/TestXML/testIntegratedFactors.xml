@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+    <taxa>
+        <taxon id="taxon_1">
+            <attr name="traits">NA NA NA 1.6188495143349344</attr>
+        </taxon>
+        <taxon id="taxon_4">
+            <attr name="traits">NA -0.6082563372860684 0.23482542132571338 -1.5775823157813575</attr>
+        </taxon>
+        <taxon id="taxon_3">
+            <attr name="traits">NA NA 2.390910330866482 -0.5398641355107183</attr>
+        </taxon>
+        <taxon id="taxon_5">
+            <attr name="traits">-0.32018251693060906 NA 1.678512771911757 NA</attr>
+        </taxon>
+        <taxon id="taxon_2">
+            <attr name="traits">NA 0.8878669634579271 NA NA</attr>
+        </taxon>
+    </taxa>
+    <newick id="startingTree">
+        (((taxon_1:0.753433556409727,taxon_4:0.753433556409727):0.19188402611653377,(taxon_3:0.8474324282895581,taxon_5:0.8474324282895582):0.09788515423670259):0.05468241747373925,taxon_2:1.0);
+    </newick>
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" asMatrix="true" traitDimension="4"
+                    name="traits">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <DiagonalMatrix id="diffusion.precision">
+                <parameter dimension="2" value="1" lower="0"/>
+            </DiagonalMatrix>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+    <matrixParameter id="L">
+        <parameter value="-0.42898479922720356 -0.8970245252413375 -0.8920557774375898 -0.11560476062111587"/>
+        <parameter value="0.09104086929644847 0.4270454816694809 -0.8909827170981991 -0.7122666957434696"/>
+    </matrixParameter>
+    <cachedPrior id="loadings.prior">
+        <normalPrior id="loadings.prior.inner" mean="0" stdev="1">
+            <matrixParameter idref="L"/>
+        </normalPrior>
+        <matrixParameter idref="L"/>
+    </cachedPrior>
+    <integratedFactorModel id="factorModel" traitName="traits" nugget="0" standardize="false">
+        <loadings>
+            <matrixParameter idref="L"/>
+        </loadings>
+        <precision>
+            <parameter id="traits.precision"
+                       value="1.5926965839497895 3.18683034788186 0.4007908987139632 0.4357075785181596" lower="0.0"/>
+        </precision>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+    </integratedFactorModel>
+    <traitDataLikelihood id="traitLikelihood" traitName="factors" cacheBranches="true" allowIdentical="true"
+                         useTreeLength="false" scaleByTime="true" reportAsMultivariate="true"
+                         integrateInternalTraits="true" standardize="true">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <integratedFactorModel idref="factorModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001" dimension="1"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+    </traitDataLikelihood>
+    <gammaPrior id="gammaPrior" shape="1.0" scale="1.0">
+        <parameter idref="traits.precision"/>
+    </gammaPrior>
+
+
+    <operators id="operators">
+        <fireParameterChanged weight="1"
+                              value="-1.7602681547880719 -0.26585513665368177 -0.8583256421345544 1.8746839016075518
+                                     -0.45853354257678275 -0.09793696210859011 -0.8064419255097306 -0.20065549976147048">
+            <parameter idref="L"/>
+        </fireParameterChanged>
+        <fireParameterChanged weight="1"
+                              value="1.3472074867452084 2.67176888890172 0.3813981793253533 1.0735008831923052">
+            <parameter idref="traits.precision"/>
+        </fireParameterChanged>
+    </operators>
+
+
+    <integratedFactors id="integratedFactors">
+        <integratedFactorModel idref="factorModel"/>
+        <traitDataLikelihood idref="traitLikelihood"/>
+    </integratedFactors>
+
+    <cachedReport id="report">
+        <integratedFactors idref="integratedFactors"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="report"/>
+    </report>
+
+    <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check factor mean
+        </message>
+        <actual regex="Factor mean:\s+(.*)\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            -0.3947245651737603 -0.9192096089078916 0.1985702448067741 -0.4841419812475749 -0.7779825007922909
+            -0.7396077600664626 -0.4180438103370534 -0.926102822952771 -1.0147509141874191 -0.4575182320241688
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check factor covariance
+        </message>
+        <actual regex="(?s)Factor covariance:\s+(.*?)\n\n">
+            <cachedReport idref="report"/>
+        </actual>
+        <expected>
+            1.2972036002614686 -0.003931068249860936 0.19015817731099105 0.08383442855821996 0.34873160779625323
+            -0.06429482391932775 0.28581037551464306 -0.03983414026802958 0.1758949328560675 0.15631096484987364
+            -0.003931068127824541 1.2023691485002246 0.08768633893445184 0.38300348187874533 -0.08971919096179816
+            0.39301310227051545 -0.06000449367408245 0.43619706930758184 0.179871070805078 0.5006241090202366
+            0.19015817727563444 0.0876863388568921 0.33432866966597885 0.1765915735789609 0.1066405604508418
+            0.03656457964849655 0.08941973824607885 0.05143388825100945 0.08740991374770601 0.12857285541327582
+            0.08383442866923682 0.38300348189670785 0.17659157364551534 0.714565654064927 -0.013896114003468919
+            0.2606072302951361 -0.0021171944421178885 0.29354560078070335 0.14729790954835695 0.3644787021200955
+            0.3487316077541891 -0.08971919106456598 0.10664056044436165 -0.013896114095174576 1.1076707305837772
+            -0.32548158278685163 0.33156914029257223 -0.16672658571750046 0.11780777674118781 0.021285718245004945
+            -0.0642948238078255 0.3930131022914338 0.03656457971560386 0.26060723029820565 -0.32548158269454686
+            1.0369990420068689 -0.13465404064804098 0.46448001344242584 0.12814589858233236 0.4264641766344539
+            0.28581037547405685 -0.06000449372469634 0.08941973824096294 -0.0021171944816269746 0.33156914029405016
+            -0.134654040688206 0.8409916341880717 -0.21805747724772798 0.10193659337357985 0.03290918084230424
+            -0.0398341401526047 0.43619706933759517 0.051433888322007425 0.29354560079286784 -0.16672658562125886
+            0.4644800134515208 -0.21805747720369717 1.1878771993167447 0.1561049681005929 0.48452013853341214
+            0.1758949329467896 0.17987107064339897 0.08740991387401209 0.1472979093976951 0.11780777687397403
+            0.12814589843122082 0.10193659350488815 0.15610496794560452 0.543053964063688 0.5826228770968216
+            0.15631096493788027 0.5006241090699177 0.1285728554567449 0.3644787021519278 0.02128571831372105
+            0.426464176663103 0.032909180858936044 0.4845201385528526 0.5826228772243653 1.5327819235620836
+        </expected>
+    </assertEqual>
+
+
+    <mcmc id="mcmc" chainLength="10" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <cachedPrior idref="loadings.prior"/>
+                <gammaPrior idref="gammaPrior"/>
+            </prior>
+            <likelihood id="likelihood">
+                <integratedFactorModel idref="factorModel"/>
+                <traitDataLikelihood idref="traitLikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <column label="posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+        </log>
+    </mcmc>
+
+    <cachedReport id="postReport">
+        <integratedFactors idref="integratedFactors"/>
+    </cachedReport>
+
+    <report>
+        <cachedReport idref="postReport"/>
+    </report>
+
+    <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="\[\],">
+        <message>
+            Check factor mean
+        </message>
+        <actual regex="Factor mean:\s+(.*)\n">
+            <cachedReport idref="postReport"/>
+        </actual>
+        <expected>
+            0.5233207543401477 -1.1242975431519824 -0.5382499946666712 -0.6170405358072628 -0.4247255851464047
+            -1.4121915793695337 0.30864331005284384 -1.247480962075059 -0.5988289029476606 -1.3179237818527425
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="5e-2" toleranceType="absolute" verbose="true" charactersToStrip="{},">
+        <message>
+            Check factor covariance
+        </message>
+        <actual regex="(?s)Factor covariance:\s+(.*?)\n\n">
+            <cachedReport idref="postReport"/>
+        </actual>
+        <expected>
+            0.23137535954606392 0.18141156998244035 0.020369047277085883 0.09525849908504917 0.012781121026137043
+            0.0822201938226649 -0.008475395022401244 0.07633649741308023 0.041642182791292726 0.10024747948488635
+            0.18141157000091523 2.2838536663604145 0.016315505777469843 1.2516293021578804 0.015085269642444112
+            1.1119553652793002 -0.2991876611452641 1.1910189558228694 -0.12543378517530276 1.4095150799303156
+            0.020369047097346993 0.016315505747438886 0.19722129483864137 0.01702365412433076 0.010734117263837106
+            0.006106516631022265 0.01081737639867697 -0.004169117130289343 0.04580057501300416 0.0041113936458655725
+            0.09525849909482942 1.251629302157312 0.01702365414568482 1.6288447037069318 0.009893827854550787
+            0.9069373907593672 -0.24684404984058567 0.9738468739333257 -0.11282602232218072 1.1504554017278679
+            0.012781120600152462 0.015085269566181605 0.010734117017705103 0.009893827786890567 0.20778311313563336
+            0.02891671654305208 0.01593410838518139 -0.0046975475928412525 0.050591093192906555 0.007368010189190781
+            0.08222019380442591 1.1119553652639524 0.006106516624373085 0.9069373907444742 0.02891671658262379
+            1.6551538920033408 -0.2649227086999372 1.0454996644751873 -0.11779201173568685 1.1583373788615745
+            -0.008475395392906648 -0.29918766119631734 0.010817376207910456 -0.24684404988300818 0.015934108440433192
+            -0.2649227087142939 0.3130285365484724 -0.4762556462361409 0.09274722427835513 -0.32143158684536977
+            0.07633649740678161 1.191018955807067 -0.0041691171250287954 0.9738468739178643 -0.0046975475413340555
+            1.0454996644748462 -0.4762556462098519 1.8596663577901609 -0.17864341057690955 1.2490912602744402
+            0.04164218253959007 -0.1254337852244051 0.04580057494115408 -0.11282602236261154 0.050591093366961104
+            -0.11779201174809127 0.09274722439704419 -0.17864341060123753 1.124450113090802 -0.23020208478901008
+            0.10024747944757395 1.4095150799089424 0.004111393620069575 1.1504554017068358 0.007368010209730752
+            1.1583373788553217 -0.32143158685012363 1.2490912602687558 -0.23020208479577428 2.5025848599860865
+        </expected>
+    </assertEqual>
+</beast>
+
+<!--
+# JULIA code for getting expectations:
+
+
+
+using LinearAlgebra, PhyloNetworks
+
+L1 = [-0.42898479922720356 -0.8970245252413375 -0.8920557774375898 -0.11560476062111587;
+      0.09104086929644847 0.4270454816694809 -0.8909827170981991 -0.7122666957434696]
+
+L2 = [-1.7602681547880719 -0.26585513665368177 -0.8583256421345544 1.8746839016075518;
+      -0.45853354257678275 -0.09793696210859011 -0.8064419255097306 -0.20065549976147048]
+
+λ1 = [1.5926965839497895, 3.18683034788186, 0.4007908987139632, 0.4357075785181596]
+
+λ2 = [1.3472074867452084, 2.67176888890172, 0.3813981793253533, 1.0735008831923052]
+
+
+Y = [NaN NaN NaN 1.6188495143349344;
+    NaN -0.6082563372860684 0.23482542132571338 -1.5775823157813575;
+    NaN NaN 2.390910330866482 -0.5398641355107183;
+    -0.32018251693060906 NaN 1.678512771911757 NaN;
+    NaN 0.8878669634579271 NaN NaN]
+
+
+newick = "(((taxon_1:0.753433556409727,taxon_4:0.753433556409727):0.19188402611653377,(taxon_3:0.8474324282895581,taxon_5:0.8474324282895582):0.09788515423670259):0.05468241747373925,taxon_2:1.0);"
+
+
+
+function factor_distributions(Y, newick, L, λ, pss)
+
+    M = Matrix(vcv(readTopology(newick))) .+ (1 / pss)
+
+    k, p = size(L1)
+    n = size(M, 1)
+
+    Dk = Diagonal(ones(k))
+    Dn = Diagonal(ones(n))
+
+    Σ11 = kron(M, Dk)
+    Σ22 = kron(M, L' * Dk * L) + kron(Dn, inv(Diagonal(λ)))
+    Σ12 = kron(M, Dk * L)
+
+    y = vec(Y')
+    obs_inds = findall(x -> !isnan(x), y)
+    Σ22 = Σ22[obs_inds, obs_inds]
+    Σ12 = Σ12[:, obs_inds]
+
+
+    Σ = Σ11 - Σ12 * inv(Σ22) * Σ12'
+    μ = Σ12 * inv(Σ22) * y[obs_inds]
+
+    return μ, Σ
+end
+
+u1, S1 = factor_distributions(Y, newick, L1, λ1, 0.001)
+
+u2, S2 = factor_distributions(Y, newick, L2, λ2, 0.001)
+-->

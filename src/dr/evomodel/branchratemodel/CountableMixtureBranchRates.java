@@ -1,7 +1,8 @@
 /*
  * CountableMixtureBranchRates.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchratemodel;
@@ -49,9 +51,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     private final TreeModel treeModel;
     private final List<AbstractBranchRateModel> randomEffectsModels;
     private final int categoryCount;
+    private final Parameter timeCoefficient;
+    private final CountableMixtureBranchRates.TimeDependentModel timeDependentModel;
 
     public CountableMixtureBranchRates(CountableBranchCategoryProvider rateCategories,
-                                       TreeModel treeModel, Parameter ratesParameter,
+                                       TreeModel treeModel, Parameter ratesParameter, Parameter timeCoefficient,
                                        List<AbstractBranchRateModel> randomEffects, boolean inLogSpace) {
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
@@ -66,6 +70,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         this.ratesParameter = ratesParameter;
         addVariable(ratesParameter);
 
+        this.timeCoefficient = timeCoefficient;
+        if (timeCoefficient!=null){
+            addVariable(timeCoefficient);
+        }
+
         // Handle random effects
         this.randomEffectsModels = randomEffects;
         if (randomEffectsModels != null) {
@@ -73,6 +82,8 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             addModel(model);
         }
         // TODO Check that randomEffectsModel means are zero
+
+        this.timeDependentModel = new CountableMixtureBranchRates.TimeDependentModel.Average();
 
         modelInLogSpace = inLogSpace;
 
@@ -145,6 +156,23 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
                 return getBranchRandomEffect(tree, node);
             }
         });
+        helper.addTrait(new TreeTrait.D() {
+
+            @Override
+            public String getTraitName() {
+                return getBranchTimeEffectTraitName();
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public Double getTrait(Tree tree, NodeRef node) {
+                return getBranchTimeEffect(tree, node);
+            }
+        });
     }
 
     private String getCategoryTraitName() {
@@ -165,6 +193,10 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     private int getBranchCategory(Tree tree, NodeRef node) {
         return rateCategories.getBranchCategory(tree, node);
+    }
+
+    private String getBranchTimeEffectTraitName() {
+        return getTraitName() + ".time.effect";
     }
 
     private double getBranchCategoryRate(Tree tree, NodeRef node) {
@@ -200,6 +232,33 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             }
         }
         return effect;
+    }
+
+    private double getBranchTimeEffect(Tree tree, NodeRef node) {
+        if (timeCoefficient!=null) {
+            int rateCategory = rateCategories.getBranchCategory(tree, node);
+            double coefficient = timeCoefficient.getParameterValue(rateCategory);
+// attempt to implement a proportional time coefficient
+//            double coefficient;
+//            if (timeCoefficient.getDimension() == rateCategories.getCategoryCount()){
+//                coefficient = timeCoefficient.getParameterValue(rateCategory);
+//            } else  {
+//                coefficient = timeCoefficient.getParameterValue(0);
+//                coefficient *= ratesParameter.getParameterValue(0)/ratesParameter.getParameterValue(rateCategory);
+//            }
+
+            if (modelInLogSpace) {
+                return coefficient * timeDependentModel.getMidpointValue(tree, node, true);
+            } else {
+                return Math.pow(timeDependentModel.getMidpointValue(tree, node, false), coefficient);
+            }
+        } else {
+            if (modelInLogSpace) {
+                return 0.0;
+            } else {
+                return 1;
+            }
+        }
     }
 
     public TreeTrait[] getTreeTraits() {
@@ -304,6 +363,29 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
         int rateCategory = rateCategories.getBranchCategory(tree, node);
         double effect = ratesParameter.getParameterValue(rateCategory);
+
+        double coefficient = 0;
+        if (timeCoefficient!=null){
+            coefficient = timeCoefficient.getParameterValue(rateCategory);
+        }
+
+// attempt to implement a proportional time coefficient
+//        double coefficient;
+//        if (timeCoefficient.getDimension() == rateCategories.getCategoryCount()){
+//            coefficient = timeCoefficient.getParameterValue(rateCategory);
+//        } else  {
+//            coefficient = timeCoefficient.getParameterValue(0);
+//            coefficient *= ratesParameter.getParameterValue(0)/ratesParameter.getParameterValue(rateCategory);
+//        }
+
+        if (timeCoefficient!=null) {
+            if (modelInLogSpace) {
+                effect += coefficient * timeDependentModel.getMidpointValue(tree, node, true);
+            } else {
+                effect *= Math.pow(timeDependentModel.getMidpointValue(tree, node, false), coefficient);
+            }
+        }
+
         if (randomEffectsModels != null) {
             for (AbstractBranchRateModel model : randomEffectsModels) {
                 if (modelInLogSpace) {
@@ -323,4 +405,25 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     private final CountableBranchCategoryProvider rateCategories;
     private final boolean modelInLogSpace;
+
+    public interface TimeDependentModel {
+
+        double getMidpointValue(Tree tree, NodeRef node, boolean log);
+
+        class Average implements TimeDependentModel {
+
+            public double getMidpointValue(Tree tree, NodeRef node, boolean log) {
+
+                double nodeHeight = tree.getNodeHeight(node);
+                double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
+                double midpoint = (nodeHeight + parentNodeHeight) / 2;
+
+                if (log) {
+                    return Math.log(midpoint);
+                } else {
+                    return midpoint;
+                }
+            }
+        }
+    }
 }

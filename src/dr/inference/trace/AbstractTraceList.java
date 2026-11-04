@@ -1,7 +1,8 @@
 /*
  * AbstractTraceList.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
@@ -55,9 +57,9 @@ public abstract class AbstractTraceList extends FilteredTraceList {
         List<Double> values = trace.getValues(start, trace.getValueCount(), super.filtered);
 
         if (trace.getTraceType() == TraceType.CATEGORICAL) {
-            trace.setTraceStatistics(new TraceCorrelation(values, trace.getCategoryLabelMap(), trace.getCategoryOrder(), getStepSize()));
+            trace.setTraceStatistics(new TraceCorrelation(values, trace.getCategoryLabelMap(), trace.getCategoryOrder(), getStepSize(), trace.isConstant()));
         } else {
-            trace.setTraceStatistics(new TraceCorrelation(values, trace.getTraceType(), getStepSize()));
+            trace.setTraceStatistics(new TraceCorrelation(values, trace.getTraceType(), getStepSize(), trace.isConstant()));
         }
 
 //        System.out.println("index = " + index + " :  " + trace.getName() + "     " + trace.getTraceType());

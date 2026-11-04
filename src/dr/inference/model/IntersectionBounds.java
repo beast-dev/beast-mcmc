@@ -1,7 +1,8 @@
 /*
  * IntersectionBounds.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -82,17 +84,17 @@ public class IntersectionBounds implements Bounds<Double> {
     }
 
     public String toString() {
-        String str = "upper=[" + getUpperLimit(0);
+        StringBuilder str = new StringBuilder("upper=[" + getUpperLimit(0));
         for (int i = 1; i < getBoundsDimension(); i++) {
-            str += ", " + getUpperLimit(i);
+            str.append(", ").append(getUpperLimit(i));
         }
-        str += "] lower=[" + getLowerLimit(0);
+        str.append("] lower=[").append(getLowerLimit(0));
         for (int i = 1; i < getBoundsDimension(); i++) {
-            str += ", " + getLowerLimit(i);
+            str.append(", ").append(getLowerLimit(i));
         }
 
-        str += "]";
-        return str;
+        str.append("]");
+        return str.toString();
     }
 
     private ArrayList<Bounds<Double>> bounds = null;

@@ -1,7 +1,8 @@
 /*
  * SlidingPatternsOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.arg.operators;
@@ -42,15 +44,16 @@ import java.util.List;
  * Time: 8:01:56 PM
  * To change this template use File | Settings | File Templates.
  */
-public class SlidingPatternsOperator extends AbstractCoercableOperator {
+@Deprecated
+public class SlidingPatternsOperator extends AbstractAdaptableOperator {
 //
-//		SimpleMCMCOperator implements CoercableMCMCOperator {
+//		SimpleMCMCOperator implements AdaptableMCMCOperator {
 
     public static final String WINDOW_SIZE = "windowSize";
     public static final String OPERATOR_NAME = "slidingPatternsOperator";
     public static final String BREAK_POINTS = "breakPoints";
 
-    public SlidingPatternsOperator(List<SitePatterns> list, Parameter breakPoints, int windowSize, int weight, CoercionMode mode) {
+    public SlidingPatternsOperator(List<SitePatterns> list, Parameter breakPoints, int windowSize, int weight, AdaptationMode mode) {
         super(mode);
         this.partitions = list;
         this.windowSize = windowSize;
@@ -96,26 +99,31 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
         int cBreakPt = (int) breakPoints.getParameterValue(whichBoundary);
         SitePatterns left = partitions.get(whichBoundary);
         SitePatterns right = partitions.get(whichBoundary + 1);
-        int min = left.getFrom();
-        int max = right.getTo();
-
-        int pBreakPt = min;
-        while (pBreakPt <= min || pBreakPt >= max) {        // cBreakPt + [windowSize-1, windowSize+1] (and not 0)
-            if (MathUtils.nextBoolean())
-                pBreakPt = cBreakPt + MathUtils.nextInt(windowSize) + 1;
-            else
-                pBreakPt = cBreakPt - MathUtils.nextInt(windowSize) - 1;
-        }
 
 
-        return 0;
+        // this is no longer compatible with SitePatterns. It should implement its own instance
+        throw new UnsupportedOperationException("this function is no longer functioning");
+
+//        int min = left.getFrom();
+//        int max = right.getTo();
+//
+//        int pBreakPt = min;
+//        while (pBreakPt <= min || pBreakPt >= max) {        // cBreakPt + [windowSize-1, windowSize+1] (and not 0)
+//            if (MathUtils.nextBoolean())
+//                pBreakPt = cBreakPt + MathUtils.nextInt(windowSize) + 1;
+//            else
+//                pBreakPt = cBreakPt - MathUtils.nextInt(windowSize) - 1;
+//        }
+//
+//        return 0;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         windowSize = (int) Math.exp(value);
     }
 
@@ -123,75 +131,39 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
         return windowSize;
     }
 
+    public String getAdaptableParameterName() {
+        return "windowSize";
+    }
+
 //	public int getMode() {
 //		return mode;
 //	}
 
     public static boolean arePartitionsContiguous(List<SitePatterns> list) {
-        int current = -1;
-        int index = 0;
-        for (SitePatterns patterns : list) {
-            int start = patterns.getFrom();
-            int end = patterns.getTo();
-            /* System.err.println(start+" -> "+end+" : "+patterns.getSiteCount()+" "+patterns.getPatternCount());
-                           int[] data = patterns.getSitePattern(0);
-                           System.err.print("Data 0:");
-                           for (int i : data)
-                               System.err.print(" "+i);
-                           System.err.println("");*/
-//            if (current == -1)
-//                current = end;
-            if (current != -1 && start != (current + 1))
-//                throw new NonContiguousPartitionsException("Partition #"+0+" does not start contiguously");
-                return false;
-            current = end;
-        }
+        // this is no longer compatible with SitePatterns. It should implement its own instance
+        throw new UnsupportedOperationException("this function is no longer functioning");
 
-        return true;
+//        int current = -1;
+//        int index = 0;
+//        for (SitePatterns patterns : list) {
+//            int start = patterns.getFrom();
+//            int end = patterns.getTo();
+//            /* System.err.println(start+" -> "+end+" : "+patterns.getSiteCount()+" "+patterns.getPatternCount());
+//                           int[] data = patterns.getSitePattern(0);
+//                           System.err.print("Data 0:");
+//                           for (int i : data)
+//                               System.err.print(" "+i);
+//                           System.err.println("");*/
+////            if (current == -1)
+////                current = end;
+//            if (current != -1 && start != (current + 1))
+////                throw new NonContiguousPartitionsException("Partition #"+0+" does not start contiguously");
+//                return false;
+//            current = end;
+//        }
+//
+//        return true;
     }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-//	public int getWeight() {
-//		return weight;
-//	}
-
-//	public void setWeight(int w) {
-//		weight = w;
-//	}
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, totalAlignmentLength, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing windowSize to about " + ws;
-        } else return "";
-    }
-
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -201,16 +173,16 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-//			int mode = CoercableMCMCOperator.DEFAULT;
+//			int mode = AdaptableMCMCOperator.DEFAULT;
 //			if (xo.hasAttribute(AUTO_OPTIMIZE)) {
 //				if (xo.getBooleanAttribute(AUTO_OPTIMIZE)) {
-//					mode = CoercableMCMCOperator.COERCION_ON;
+//					mode = AdaptableMCMCOperator.ADAPTATION_ON;
 //				} else {
-//					mode = CoercableMCMCOperator.COERCION_OFF;
+//					mode = AdaptableMCMCOperator.ADAPTATION_OFF;
 //				}
 //			}
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             int weight = xo.getIntegerAttribute(WEIGHT);
             int windowSize = xo.getIntegerAttribute(WINDOW_SIZE);
@@ -235,14 +207,17 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
 
             ParameterParser.replaceParameter(cxo, breakPoints);
 
-            breakPoints.setDimension(dim);
-            for (int index = 0; index < dim; index++)
-                breakPoints.setParameterValueQuietly(index,
-                        list.get(index + 1).getFrom());
+            // this is no longer compatible with SitePatterns. It should implement its own instance
+            throw new UnsupportedOperationException("this function is no longer functioning");
 
-//            Parameter parameter = (Parameter)xo.getChild(Parameter.class);
-
-            return new SlidingPatternsOperator(list, breakPoints, windowSize, weight, mode);
+//            breakPoints.setDimension(dim);
+//            for (int index = 0; index < dim; index++)
+//                breakPoints.setParameterValueQuietly(index,
+//                        list.get(index + 1).getFrom());
+//
+////            Parameter parameter = (Parameter)xo.getChild(Parameter.class);
+//
+//            return new SlidingPatternsOperator(list, breakPoints, windowSize, weight, mode);
         }
 
         //************************************************************************
@@ -275,7 +250,7 @@ public class SlidingPatternsOperator extends AbstractCoercableOperator {
     private int totalAlignmentLength;
     private final List<SitePatterns> partitions;
     private int windowSize = 10;
-    //	private int mode = CoercableMCMCOperator.DEFAULT;
+    //	private int mode = AdaptableMCMCOperator.DEFAULT;
     //	private int weight = 1;
     private final Parameter breakPoints;
 }

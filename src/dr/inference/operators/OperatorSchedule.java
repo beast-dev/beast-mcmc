@@ -1,7 +1,8 @@
 /*
  * OperatorSchedule.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -33,9 +35,15 @@ import java.util.List;
  * choosing the next operator during an MCMC run.
  *
  * @author Alexei Drummond
- * @version $Id: OperatorSchedule.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
 public interface OperatorSchedule extends Serializable {
+
+    String SHOW_OPERATORS = "show_operators";
+    OptimizationTransform DEFAULT_TRANSFORM = OptimizationTransform.LOG;
+    //int POWERB = 1000000; //TODO discuss with Luiz why this value doesn't seem to work
+    int POWERB = 1;
+    double POWERC = 0.55; // c = 5/9
+
     /**
      * @return Choose the next operator.
      */
@@ -64,22 +72,35 @@ public interface OperatorSchedule extends Serializable {
     /**
      * @return the optimization schedule
      */
-    double getOptimizationTransform(double d);
+    OptimizationTransform getOptimizationTransform();
 
     /**
      * @return the minimum number of times an operator has been called
      */
     long getMinimumAcceptAndRejectCount();
 
-    public enum OptimizationTransform {
-        DEFAULT("default"),
-        LOG("log"),
-        SQRT("sqrt"),
-        LINEAR("linear");
+    enum OptimizationTransform {
+
+        LOG("log") {
+            @Override public double transform(double d) { return Math.log(d); }
+        },
+        SQRT("sqrt") {
+            @Override public double transform(double d) { return Math.sqrt(d); }
+        },
+        LINEAR("linear") {
+            @Override public double transform(double d) { return d; }
+        },
+        POWER("power") {
+            @Override public double transform(double d) {
+                return Math.pow(d/((double)POWERB), POWERC);
+            }
+        };
 
         OptimizationTransform(String name) {
             this.name = name;
         }
+
+        public abstract double transform(double d);
 
         @Override
         public String toString() {
@@ -87,5 +108,5 @@ public interface OperatorSchedule extends Serializable {
         }
 
         private final String name;
-    };
+    }
 }

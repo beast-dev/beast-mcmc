@@ -1,7 +1,8 @@
 /*
  * TipDateSamplingComponentOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.tipdatesampling;
@@ -41,10 +43,12 @@ import java.util.Map;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class TipDateSamplingComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 4841188731567472917L;
     private final BeautiOptions options;
 
     public TipDateSamplingComponentOptions(final BeautiOptions options) {
@@ -125,8 +129,8 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
 
         if (parameter == null) {
             double height = 0.0;
-            if (taxon.getAttribute("height") != null) {
-                height = (Double)taxon.getAttribute("height");
+            if (taxon.getAttribute("_height") != null) {
+                height = (Double)taxon.getAttribute("_height");
             }
 
             parameter = new Parameter.Builder("age(" + taxon.getId() + ")", "sampled age of taxon, " + taxon.getId())

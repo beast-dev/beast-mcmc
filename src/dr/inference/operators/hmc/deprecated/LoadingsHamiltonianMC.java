@@ -1,7 +1,8 @@
 /*
  * LoadingsHamiltonianMC.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators.hmc.deprecated;
 
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.*;
-import dr.inference.operators.hmc.deprecated.AbstractHamiltonianMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 
 /**
  * Created by max on 1/11/16.
@@ -47,7 +48,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     private int nSteps;
 
 
-    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd, MatrixParameterInterface loadings){
+    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, AdaptationMode mode, double stepSize, int nSteps, double momentumSd, MatrixParameterInterface loadings){
         super(mode , momentumSd);
         setWeight(weight);
         this.lfm = lfm;
@@ -63,23 +64,18 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     }
 
     @Override
-    public double getCoercableParameter() {
+    protected double getAdaptableParameterValue() {
         return 0;
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
 
     }
 
     @Override
     public double getRawParameter() {
         return 0;
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override

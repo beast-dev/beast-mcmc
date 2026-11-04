@@ -1,3 +1,30 @@
+/*
+ * ARGAddRemoveOperatorTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.evomodel.arg.operators;
 
 import dr.evolution.io.Importer;
@@ -16,7 +43,7 @@ import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.ScaleOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
@@ -161,10 +188,10 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
 //        CompoundParameter rates = (CompoundParameter) arg.createNodeRatesParameter(false, true, true);
 
 //        ARGAddRemoveEventOperator operator1 = new ARGAddRemoveEventOperator(arg, 5, 0.5,
-//                CoercionMode.COERCION_ON, internalHeights, allInternalNodeHeights, rates, 0.9, null,-1);
+//                AdaptationMode.ADAPTATION_ON, internalHeights, allInternalNodeHeights, rates, 0.9, null,-1);
 
-        ScaleOperator operator2 = new ScaleOperator(rootHeight, 0.75, CoercionMode.COERCION_ON, 5);
-        ScaleOperator operator3 = new ScaleOperator(internalHeights, 0.75, CoercionMode.COERCION_ON, 10);
+        ScaleOperator operator2 = new ScaleOperator(rootHeight, 0.75, AdaptationMode.ADAPTATION_ON, 5);
+        ScaleOperator operator3 = new ScaleOperator(internalHeights, 0.75, AdaptationMode.ADAPTATION_ON, 10);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();
 //        schedule.addOperator(operator1);

@@ -1,7 +1,8 @@
 /*
  * UniformizedSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,15 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
 
-import dr.inference.markovjumps.MarkovJumpsType;
-import dr.inference.markovjumps.StateHistory;
-import dr.inference.markovjumps.SubordinatedProcess;
-import dr.inference.markovjumps.UniformizedStateHistory;
+import dr.inference.markovjumps.*;
 import dr.inference.model.Model;
+import dr.math.MathUtils;
 
 import java.util.logging.Logger;
 
@@ -105,7 +105,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     }
 
     public void computeCondStatMarkovJumps(double time,
-                                           double[] transitionProbs,
+                                           double[] transitionProbabilities,
                                            double[] countMatrix) {
 
         throw new IllegalArgumentException("Not implemented for UniformizedSubstitutionModel");
@@ -126,6 +126,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                 tmp[startingState * stateCount + endingState]);
     }
 
+    @SuppressWarnings("unused")
     public String getCompleteHistory() {
         return getCompleteHistory(null, null);
     }
@@ -142,8 +143,13 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         return completeHistory.toStringChanges(site, dataType); //, 0.0);
     }
 
-    public int getNumberOfJumpsInCompleteHistory() {
-        return completeHistory == null ? -1 : completeHistory.getNumberOfJumps();
+    static void warn() {
+        if (reportWarning) {
+            Logger.getLogger("dr.app.beagle").info(
+                    "Unable to compute a robust count; this is most likely due to poor starting values."
+            );
+        }
+        reportWarning = false;
     }
 
     public double computeCondStatMarkovJumps(int startingState,
@@ -170,34 +176,37 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                 );
             } catch (SubordinatedProcess.Exception e) {
 
-                if (RETURN_NAN) {
-                    if (reportWarning) {
-                        Logger.getLogger("dr.app.beagle").info(
-                                "Unable to compute a robust count; this is most likely due to poor starting values."
-                        );
+                if (RETURN_UNIFORMLY_DISTRIBUTED_EVENT) {
+                    warn();
+                    history = new StateHistory(0.0, startingState, stateCount);
+                    if (startingState != endingState) {
+                        history.addChange(new StateChange(MathUtils.nextDouble() * time, endingState));
                     }
-                    reportWarning = false;
+                    history.addEndingState(new StateChange(time, endingState));
+                } else if (RETURN_NAN) {
+                    warn();
                     return Double.NaN;
-                }
+                } else {
 
-                // Error in uniformization; try rejection sampling
-                System.err.println("Attempting rejection sampling after uniformization failure");
+                    // Error in uniformization; try rejection sampling
+                    System.err.println("Attempting rejection sampling after uniformization failure");
 
-                substModel.getInfinitesimalMatrix(tmp);
-                int attempts = 0;
-                boolean success = false;
+                    substModel.getInfinitesimalMatrix(tmp);
+                    int attempts = 0;
+                    boolean success = false;
 
-                while (!success) {
-                    if (attempts >= maxRejectionAttempts) {
-                        throw new RuntimeException("Rejection sampling failure, after uniformization failure");
+                    while (!success) {
+                        if (attempts >= maxRejectionAttempts) {
+                            throw new RuntimeException("Rejection sampling failure, after uniformization failure");
+                        }
+
+                        history = StateHistory.simulateUnconditionalOnEndingState(0.0, startingState, time, tmp, stateCount);
+                        if (history.getEndingState() == endingState) {
+                            success = true;
+                        }
+
+                        attempts++;
                     }
-
-                    history = StateHistory.simulateUnconditionalOnEndingState(0.0, startingState, time, tmp, stateCount);
-                    if (history.getEndingState() == endingState) {
-                        success = true;
-                    }
-
-                    attempts++;
                 }
             }
             total += getProcessForSimulant(history);
@@ -226,7 +235,8 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
     private double[] tmp;
 
-    private static int maxRejectionAttempts = 100000;
+    private static final int maxRejectionAttempts = 100000;
     private static final boolean RETURN_NAN = true;
+    private static final boolean RETURN_UNIFORMLY_DISTRIBUTED_EVENT = true;
     private static boolean reportWarning = true;
 }

@@ -1,7 +1,8 @@
 /*
  * XMLSyntaxRule.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.xml;
@@ -94,4 +96,14 @@ public interface XMLSyntaxRule {
      * @return true if rule allows a sub-element with that name
      */
     boolean isLegalSubelementName(String elementName);
+
+    class Utils {
+
+		public static XMLSyntaxRule[] concatenate(XMLSyntaxRule[] lhs, XMLSyntaxRule[] rhs) {
+			XMLSyntaxRule[] sum = new XMLSyntaxRule[lhs.length + rhs.length];
+			System.arraycopy(lhs, 0, sum, 0, lhs.length);
+			System.arraycopy(rhs, 0, sum, lhs.length, rhs.length);
+			return sum;
+		}
+	}
 }

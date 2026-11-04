@@ -1,7 +1,8 @@
 /*
- * YuleLikelihoodTest.java
+ * RandomWalkOperatorTest.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,28 +13,22 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package test.dr.inference.operators;
 
-import dr.evolution.io.NewickImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.Units;
-import dr.evomodel.speciation.*;
-import dr.evomodelxml.tree.TreeModelParser;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.RandomWalkOperator;
 import junit.framework.*;
 
@@ -41,7 +36,6 @@ import junit.framework.*;
  * RandomWalkOperatorTest.
  *
  * @author Andrew Rambaut
- * @version 1.0
  * @since <pre>08/26/2007</pre>
  */
 public class RandomWalkOperatorTest extends TestCase {
@@ -56,7 +50,7 @@ public class RandomWalkOperatorTest extends TestCase {
 
     public void testRandomWalkOperator() {
         Parameter parameter = new Parameter.Default("test", 0.5, 0.0, 1.0);
-        RandomWalkOperator rwo = new RandomWalkOperator(parameter, 1.0, RandomWalkOperator.BoundaryCondition.reflecting, 1.0, CoercionMode.COERCION_OFF);
+        RandomWalkOperator rwo = new RandomWalkOperator(parameter, 1.0, RandomWalkOperator.BoundaryCondition.reflecting, 1.0, AdaptationMode.ADAPTATION_OFF);
         
         double test1 = rwo.reflectValue(8.7654321, 3.14159265, Double.POSITIVE_INFINITY);
         double test2 = rwo.reflectValue(8.7654321, Double.NEGATIVE_INFINITY, 3.14159265);

@@ -1,7 +1,8 @@
 /*
  * TreeBitMoveOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -37,11 +40,10 @@ import java.util.List;
  * A generic operator swaps a randomly selected rate change from parent to offspring or vice versa.
  *
  * @author Alexei Drummond
- * @version $Id$
  */
 public class TreeBitMoveOperator extends SimpleMCMCOperator {
 
-    public TreeBitMoveOperator(TreeModel tree, String t1, String t2, double weight) {
+    public TreeBitMoveOperator(DefaultTreeModel tree, String t1, String t2, double weight) {
         this.tree = tree;
         this.indicatorTrait = t1;
         this.trait2 = t2;
@@ -107,7 +109,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
-    public final int rateChange(TreeModel tree, NodeRef node) {
+    public final int rateChange(DefaultTreeModel tree, NodeRef node) {
         return (int) Math.round(tree.getNodeTrait(node, indicatorTrait));
     }
 
@@ -126,7 +128,7 @@ public class TreeBitMoveOperator extends SimpleMCMCOperator {
     }
     // Private instance variables
 
-    private TreeModel tree;
+    private DefaultTreeModel tree;
     private String indicatorTrait;
     private String trait2;
 }

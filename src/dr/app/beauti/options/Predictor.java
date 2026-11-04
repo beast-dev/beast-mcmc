@@ -1,7 +1,8 @@
 /*
- * TraitData.java
+ * Predictor.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -129,6 +131,45 @@ public class Predictor implements Serializable {
     public void setStandardized(boolean standardized) {
         isStandardized = standardized;
     }
+
+    public boolean hasZeroValues(boolean ignoreDiagonals) {
+        //matrices are neither origin nor destination
+        if (isOrigin() || isDestination()) {
+            for (int i = 0; i < data.length; i++) {
+                if (data[i][0] == 0.0) {
+                    return true;
+                }
+            }
+        } else {
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data.length; j++) {
+                    if (data[i][j] == 0) {
+                        if (i != j) {
+                            return true;
+                        } else if (!ignoreDiagonals) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isBinary() {
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data.length; j++) {
+                if (data[i][j] != 0 &&
+                        data[i][j] != 1) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
 
     public double[][] getMatrixValues(Type predictorType) {
         double[][] matrixValues = new double[data.length][];

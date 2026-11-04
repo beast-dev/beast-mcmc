@@ -1,7 +1,8 @@
 /*
  * RateEvolutionLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.oldevomodel.clock;
@@ -59,13 +61,13 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
         addModel(treeModel);
 
         this.ratesParameter = new TreeParameterModel(treeModel, ratesParameter, false);
-        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, ratesParameter.getDimension());
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, ratesParameter.getDimension());
         ratesParameter.addBounds(bound);
 
         addModel(this.ratesParameter);
 
         this.rootRateParameter = rootRateParameter;
-        rootRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0, 1));
+        rootRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, 1));
         addVariable(rootRateParameter);
 
         if (rootRateParameter.getDimension() != 1) {

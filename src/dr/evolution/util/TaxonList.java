@@ -1,7 +1,8 @@
 /*
  * TaxonList.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.util;
 
 import dr.util.Identifiable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,68 +37,83 @@ import java.util.Set;
 /**
  * Interface for a list of taxa.
  *
- * @version $Id: TaxonList.java,v 1.16 2006/09/05 13:29:34 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
 public interface TaxonList extends Identifiable, Iterable<Taxon> {
 
-	/**
-	 * @return a count of the number of taxa in the list.
-	 */
-	public int getTaxonCount();
+    /**
+     * @return a count of the number of taxa in the list.
+     */
+    int getTaxonCount();
 
-	/**
-	 * @return the ith taxon.
-	 */
-	public Taxon getTaxon(int taxonIndex);
+    /**
+     * @return the ith taxon.
+     */
+    Taxon getTaxon(int taxonIndex);
 
-	/**
-	 * @return the ID of the ith taxon.
-	 */
-	public String getTaxonId(int taxonIndex);
+    /**
+     * @return the ID of the ith taxon.
+     */
+    String getTaxonId(int taxonIndex);
 
-	/**
-	 * returns the index of the taxon with the given id.
-	 */
-	int getTaxonIndex(String id);
+    /**
+     * returns the index of the taxon with the given id.
+     */
+    int getTaxonIndex(String id);
 
-	/**
-	 * returns the index of the given taxon.
-	 */
-	int getTaxonIndex(Taxon taxon);
+    /**
+     * returns the index of the given taxon.
+     */
+    int getTaxonIndex(Taxon taxon);
 
     /**
      * returns the taxa as a Java list
+     *
      * @return
      */
     List<Taxon> asList();
 
-	/**
-	 * @return an object representing the named attributed for the given taxon.
-	 * @param taxonIndex the index of the taxon whose attribute is being fetched.
-	 * @param name the name of the attribute of interest.
-	 */
-	public Object getTaxonAttribute(int taxonIndex, String name);
+    /**
+     * @param taxonIndex the index of the taxon whose attribute is being fetched.
+     * @param name       the name of the attribute of interest.
+     * @return an object representing the named attributed for the given taxon.
+     */
+    Object getTaxonAttribute(int taxonIndex, String name);
 
-	class Utils {
+    class Utils {
 
-		public static boolean hasAttribute(TaxonList taxa, int index, String name) {
-			return taxa.getTaxonAttribute(index, name) != null;
-		}
+        public static boolean hasAttribute(TaxonList taxa, int index, String name) {
+            return taxa.getTaxonAttribute(index, name) != null;
+        }
 
-		public static Set<String> getTaxonListIdSet(TaxonList taxa) {
-			Set<String> taxaSet = new HashSet<String>();
-			for (int i =0; i < taxa.getTaxonCount(); i++) {
-				taxaSet.add(taxa.getTaxonId(i));
-			}
-			return taxaSet;
-		}
+        public static List<Taxon> asList(TaxonList taxonList) {
+            List<Taxon> taxa = new ArrayList<>();
+            for (int i = 0, n = taxonList.getTaxonCount(); i < n; i++) {
+                taxa.add(taxonList.getTaxon(i));
+            }
+            return taxa;
+        }
+
+        public static int getTaxonIndex(TaxonList taxonList, String id) {
+            for (int i = 0, n = taxonList.getTaxonCount(); i < n; i++) {
+                if (taxonList.getTaxonId(i).equals(id)) return i;
+            }
+            return -1;
+        }
+
+
+        public static Set<String> getTaxonListIdSet(TaxonList taxa) {
+            Set<String> taxaSet = new HashSet<String>();
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                taxaSet.add(taxa.getTaxonId(i));
+            }
+            return taxaSet;
+        }
 
         public static int findDuplicateTaxon(TaxonList taxonList) {
             Set<String> taxaSet = new HashSet<String>();
-                        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
                 Taxon taxon = taxonList.getTaxon(i);
                 if (taxaSet.contains(taxon.getId())) {
                     return i;
@@ -109,23 +127,30 @@ public interface TaxonList extends Identifiable, Iterable<Taxon> {
             if (taxa1.getTaxonCount() != taxa2.getTaxonCount()) {
                 return false;
             }
-            for (int i =0; i < taxa1.getTaxonCount(); i++) {
+            for (int i = 0; i < taxa1.getTaxonCount(); i++) {
                 if (taxa2.getTaxonIndex(taxa1.getTaxon(i)) == -1) {
                     return false;
                 }
             }
             return true;
         }
+    }
 
+    class MissingAttributeException extends Exception {
+        public MissingAttributeException(String message) {
+            super(message);
+        }
 
-	}
+    }
 
-	class MissingTaxonException extends Exception {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 1864895946392309485L;
+    class MissingTaxonException extends Exception {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 1864895946392309485L;
 
-		public MissingTaxonException(String message) { super(message); }
-	}
+        public MissingTaxonException(String message) {
+            super(message);
+        }
+    }
 }

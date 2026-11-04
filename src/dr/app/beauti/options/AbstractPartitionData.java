@@ -1,7 +1,8 @@
 /*
  * AbstractPartitionData.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
 
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.distance.DistanceMatrix;
@@ -35,12 +38,15 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Alexei Drummond
  * @author Walter Xie
  */
 public abstract class AbstractPartitionData implements Serializable {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 5904121432221533689L;
     protected String fileName;
     protected String name;
     protected List<TraitData> traits;
@@ -60,7 +66,7 @@ public abstract class AbstractPartitionData implements Serializable {
         this.fileName = fileName;
     }
 
-    protected void calculateMeanDistance(Patterns patterns) {
+    protected void calculateMeanDistance(PatternList patterns) {
         if (patterns != null) {
             distances = new JukesCantorDistanceMatrix(patterns);
             meanDistance = distances.getMeanDistance();
@@ -127,23 +133,19 @@ public abstract class AbstractPartitionData implements Serializable {
 
     public int getTaxonCount() {
         return getPartitionTreeModel().getTaxonCount();
-//        if (getTaxonList() != null) {
-//            return getTaxonList().getTaxonCount();
-//        } else {
-//            return getPartitionTreeModel().getTaxonCount();
-//        }
     }
 
     public boolean isCreatedFromTrait() {
        return traits != null;
     }
 
-    public abstract String getPrefix(); // be careful of microsatellite PartitionPattern
+    public abstract String getPrefix();
 
     public abstract TaxonList getTaxonList();
 
     public abstract int getSiteCount();
 
+    public abstract int getPatternCount();
     public abstract DataType getDataType();
 
     public abstract String getDataDescription();

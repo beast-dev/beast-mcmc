@@ -43,8 +43,8 @@
 
 	<operators id="operators.hmc">
 
- 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.1" mode="nuts"
- 			drawVariance="1.0">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.1" mode="vanilla"
+ 			drawVariance="1.0" autoOptimize="true">
  			<gradient>
 				<distributionLikelihood idref="distribution"/>
 			</gradient>
@@ -83,7 +83,7 @@
 			<object idref="mcmc.hmc"/>
 		</property>
 	</report>
-<!--
+<!--&lt;!&ndash;-->
 
 	<mcmc id="mcmc.rw" chainLength="100000" autoOptimize="true">
         <posterior>
@@ -118,7 +118,7 @@
 
 	<traceAnalysis fileName="testMvnRw.log" stdError="true"/>
 	<traceAnalysis fileName="testMvnHmc.log" stdError="true"/>
- -->
+ <!--&ndash;&gt;-->
 
 </beast>
 

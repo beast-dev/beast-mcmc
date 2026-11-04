@@ -1,7 +1,8 @@
 /*
- * MicrosatUpDownOperator.java
+ * MicrosatelliteUpDownOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -37,7 +39,7 @@ import dr.math.MathUtils;
  * This is almost the same as UpDownOperator, except it uses scaleAllAndNotify method instead of scale.
  *
  */
-public class MicrosatelliteUpDownOperator extends AbstractCoercableOperator {
+public class MicrosatelliteUpDownOperator extends AbstractAdaptableOperator {
 
     private Scalable.Default[] upParameter = null;
     private Scalable.Default[] downParameter = null;
@@ -47,7 +49,7 @@ public class MicrosatelliteUpDownOperator extends AbstractCoercableOperator {
                                         Scalable.Default[] downParameter,
                                         double scale,
                                         double weight,
-                                        CoercionMode mode) {
+                                        AdaptationMode mode) {
 
         super(mode);
         setWeight(weight);
@@ -93,17 +95,8 @@ public class MicrosatelliteUpDownOperator extends AbstractCoercableOperator {
         return (goingUp - goingDown - 2) * Math.log(scale);
     }
 
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public final String getOperatorName() {
@@ -124,20 +117,17 @@ public class MicrosatelliteUpDownOperator extends AbstractCoercableOperator {
         return name;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0) / Math.log(10);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.pow(10.0, value) + 1.0);
     }
 
     public double getRawParameter() {
         return scaleFactor;
-    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
     }
 
     // Since this operator invariably modifies at least 2 parameters it

@@ -1,7 +1,8 @@
 /*
  * GY94CodonModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,16 +22,17 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel.codon;
 
-import dr.evomodel.substmodel.DefaultEigenSystem;
-import dr.evomodel.substmodel.EigenSystem;
-import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.DifferentialMassProvider.DifferentialWrapper.WrtParameter;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
+import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -38,15 +40,16 @@ import dr.util.Citation;
 import java.util.Collections;
 import java.util.List;
 
+
 /**
  * Yang model of codon evolution
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc A. Suchard
- * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
-public class GY94CodonModel extends AbstractCodonModel implements Citable {
+public class GY94CodonModel extends AbstractCodonModel implements Citable,
+        ParameterReplaceableSubstitutionModel, DifferentiableSubstitutionModel {
     /**
      * kappa
      */
@@ -95,8 +98,23 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable {
                 kappaParameter.getDimension()));
 
         // Assuming it's always the same dim
-        
-        
+
+
+        Statistic synonymousRateStatistic = new Statistic.Abstract() {
+
+            public String getStatisticName() {
+                return "synonymousRate";
+            }
+
+            public int getDimension() {
+                return 1;
+            }
+
+            public double getStatisticValue(int dim) {
+                return getSynonymousRate();
+            }
+
+        };
         addStatistic(synonymousRateStatistic);
     }
 
@@ -134,15 +152,15 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable {
         return omegaParameter.getParameterValue(0);
     }
 
-    public double getSynonymousRate() {
+    private double getSynonymousRate() {
         double k = getKappa();
         double o = getOmega();
         return ((31.0 * k) + 36.0) / ((31.0 * k) + 36.0 + (138.0 * o) + (58.0 * o * k));
     }
 
-    public double getNonSynonymousRate() {
-        return 0;
-    }
+//    public double getNonSynonymousRate() {
+//        return 0;
+//    }
 
     protected void setupRelativeRates(double[] rates) {
 
@@ -167,6 +185,8 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable {
                     break;        // non-synonymous transversion
             }
         }
+
+        // TODO Remove code duplication with YangCodonModel
     }
 
     // **************************************************************
@@ -174,31 +194,12 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable {
     // **************************************************************
 
     public String toXHTML() {
-        StringBuffer buffer = new StringBuffer();
 
-        buffer.append("<em>Goldman Yang 94 Codon Model</em> kappa = ");
-        buffer.append(getKappa());
-        buffer.append(", omega = ");
-        buffer.append(getOmega());
-
-        return buffer.toString();
+        return "<em>Goldman Yang 94 Codon Model</em> kappa = " +
+                getKappa() +
+                ", omega = " +
+                getOmega();
     }
-
-    public Statistic synonymousRateStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "synonymousRate";
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public double getStatisticValue(int dim) {
-            return getSynonymousRate();
-        }
-
-    };
 
     /* private Statistic nonsynonymousRateStatistic = new Statistic.Abstract() {
 
@@ -241,4 +242,97 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable {
             11, 725, 736
     );
 
+    @Override
+    public ParameterReplaceableSubstitutionModel factory(List<Parameter> oldParameters, List<Parameter> newParameters) {
+        Parameter omega = omegaParameter;
+        Parameter kappa = kappaParameter;
+        FrequencyModel frequencies = freqModel;
+        for (int i = 0; i < oldParameters.size(); i++) {
+            Parameter oldParameter = oldParameters.get(i);
+            Parameter newParameter = newParameters.get(i);
+            if (oldParameter == omegaParameter) {
+                omega = newParameter;
+            }
+
+            if (oldParameter == kappaParameter) {
+                kappa = newParameter;
+            }
+
+            if (oldParameter == freqModel.getFrequencyParameter()) {
+                frequencies = new FrequencyModel(freqModel.getDataType(), newParameter);
+            }
+        }
+        if (omega == omegaParameter && kappa == kappaParameter && frequencies == freqModel) {
+            return this;
+        } else {
+            return new GY94CodonModel(codonDataType, omega, kappa, frequencies);
+        }
+    }
+
+
+    public void setupDifferentialRates(WrtParameter wrt, double[] differentialRates, double normalizingConstant) {
+
+        for (int i = 0; i < rateCount; ++i) {
+            differentialRates[i] = wrt.getRate(rateMap[i]) / normalizingConstant;
+        }
+    }
+
+    @Override
+    public void setupDifferentialFrequency(WrtParameter wrt, double[] differentialFrequency) {
+        wrt.setupDifferentialFrequencies(differentialFrequency, getFrequencyModel().getFrequencies());
+    }
+
+    @Override
+    public double getWeightedNormalizationGradient(WrtParameter wrtParameter, double[][] differentialMassMatrix, double[] frequencies) {
+        return getNormalizationValue(differentialMassMatrix, frequencies);
+    }
+
+    @Override
+    public WrappedMatrix getInfinitesimalDifferentialMatrix(WrtParameter wrt) {
+        return DifferentiableSubstitutionModelUtil.getInfinitesimalDifferentialMatrix(wrt, this);
+    }
+
+    @Override
+    public WrtParameter factory(Parameter parameter, int dim) {
+        WrtParameter wrt;
+        if (parameter == omegaParameter) {
+            wrt = new Omega();
+        } else {
+            throw new RuntimeException("Not yet implemented!");
+        }
+        return wrt;
+    }
+
+    class Omega implements WrtParameter {
+
+        @Override
+        public double getRate(int switchCase) {
+
+            final double kappa = getKappa();
+            switch (switchCase) {
+                case 0: return 0.0;
+                case 1: return 0.0;
+                case 2: return 0.0;
+                case 3: return kappa;
+                case 4: return 1.0;
+            }
+            throw new IllegalArgumentException("Invalid switch case");
+        }
+
+        @Override
+        public double getNormalizationDifferential() {
+            return 1.0;
+        }
+
+        @Override
+        public void setupDifferentialFrequencies(double[] differentialFrequencies, double[] frequencies) {
+            System.arraycopy(frequencies, 0, differentialFrequencies, 0, frequencies.length);
+        }
+
+        @Override
+        public void setupDifferentialRates(double[] differentialRates, double[] relativeRates, double normalizingConstant) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+
+    }
 }

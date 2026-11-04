@@ -1,7 +1,8 @@
 /*
  * StateHistory.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.markovjumps;
 
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.math.MathUtils;
 
@@ -42,12 +45,8 @@ import java.util.List;
 
 public class StateHistory {
 
-//    private StateHistory(int startingState, int stateCount) {
-//        this(0.0, startingState, stateCount);
-//    }
-
-    protected StateHistory(double startingTime, int startingState, int stateCount) {
-        stateList = new ArrayList<StateChange>();
+    public StateHistory(double startingTime, int startingState, int stateCount) {
+        stateList = new ArrayList<>();
         stateList.add(new StateChange(startingTime, startingState));
         this.stateCount = stateCount;
         finalized = false;
@@ -78,11 +77,6 @@ public class StateHistory {
 
     public double getTotalRegisteredCounts(double[] register) {
         int[] counts = getJumpCounts();
-//        double total = 0;
-//        for (int i = 0; i < counts.length; i++) {
-//            total += counts[i] * register[i];
-//        }
-//        return total;
         return dotProduct(counts, register);
     }
 
@@ -293,7 +287,11 @@ public class StateHistory {
                     sb.append(",");
                 }
                 double time = stateList.get(i).getTime(); // + startTime;
-                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, site);
+                if (dataType instanceof Codons) {
+                    addEventToStringBuilder(sb, dataType.getTriplet(currentState), dataType.getTriplet(nextState), time, site);
+                } else {
+                    addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, site);
+                }
                 firstChange = false;
                 currentState = nextState;
             }
@@ -313,6 +311,7 @@ public class StateHistory {
         sb.append(time).append(",").append(source).append(",").append(dest).append("}");
     }
 
+    @SuppressWarnings("unused")
     public static StateHistory simulateConditionalOnEndingState(double startingTime,
                                                                 int startingState,
                                                                 double endingTime,
@@ -354,9 +353,19 @@ public class StateHistory {
         return history;
     }
 
+    public StateHistory(StateHistory in) {
 
-    private int stateCount;
-    private List<StateChange> stateList;
+        this.stateCount = in.stateCount;
+        this.stateList = new ArrayList<>();
+        for (StateChange sc : in.stateList) {
+            this.stateList.add(new StateChange(sc));
+        }
+        this.finalized = in.finalized;
+        this.isFiltered = in.isFiltered;
+    }
+
+    private final int stateCount;
+    private final List<StateChange> stateList;
     private boolean finalized;
     private boolean isFiltered = false;
 

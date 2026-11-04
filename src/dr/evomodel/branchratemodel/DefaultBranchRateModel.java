@@ -1,7 +1,8 @@
 /*
  * DefaultBranchRateModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchratemodel;
@@ -28,13 +30,15 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.*;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
+import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+
+import java.util.function.DoubleBinaryOperator;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: DefaultBranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
-public final class DefaultBranchRateModel implements BranchRateModel {
+public final class DefaultBranchRateModel implements BranchRateModel, DifferentiableBranchRates {
     public double getBranchRate(Tree tree, NodeRef node) {
         return 1.0;
     }
@@ -87,6 +91,10 @@ public final class DefaultBranchRateModel implements BranchRateModel {
         return null;
     }
 
+    public double getPriorRateAsIncrement(Tree tree){
+        return 0;
+    }
+
     public void setId(String id) {
         // nothing to do
     }
@@ -129,5 +137,41 @@ public final class DefaultBranchRateModel implements BranchRateModel {
 
     public String getTraitString(final Tree tree, final NodeRef node) {
         return Double.toString(getBranchRate(tree, node));
+    }
+
+    @Override
+    public double getBranchRateDifferential(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public double getBranchRateSecondDifferential(Tree tree, NodeRef node) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Parameter getRateParameter() {
+        return null;
+    }
+
+    @Override
+    public int getParameterIndexFromNode(NodeRef node) {
+        return -1;
+    }
+
+    @Override
+    public ArbitraryBranchRates.BranchRateTransform getTransform() {
+        return null;
+    }
+
+    @Override
+    public double[] updateGradientLogDensity(double[] gradient, double[] value, int from, int to) {
+        return gradient;
+    }
+
+    @Override
+    public double[] updateDiagonalHessianLogDensity(double[] diagonalHessian, double[] gradient, double[] value,
+                                                    int from, int to) {
+        return diagonalHessian;
     }
 }

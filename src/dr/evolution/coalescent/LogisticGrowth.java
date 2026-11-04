@@ -1,7 +1,8 @@
 /*
  * LogisticGrowth.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent;
@@ -30,7 +32,6 @@ package dr.evolution.coalescent;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: LogisticGrowth.java,v 1.15 2005/05/24 20:25:56 rambaut Exp $
  */
 public class LogisticGrowth extends ExponentialGrowth {
 
@@ -140,6 +141,32 @@ public class LogisticGrowth extends ExponentialGrowth {
         return (r*t*z + (1 + c)*nZero*Math.log(nZero + c*nZero + z + c*ert*z))/(r*z*(nZero + c*nZero + z));
     }
 
+    @Override
+    public double getIntensityGradient(double finishTime) {
+        final double nZero = getN0();
+        final double r = getGrowthRate();
+        final double c = getShape();
+
+        double ert = Math.exp(r * finishTime);
+        if( lowLimit == 0 ) {
+            return (c * ert + 1.0) / ((1+c) * nZero);
+        }
+        final double z = lowLimit;
+        return (1.0 + (1 + c)*nZero/(nZero + c*nZero + z + c*ert*z) * (c * ert))/(nZero + c*nZero + z);
+    }
+
+    @Override
+    public double getLogDemographicGradient(double finishTime) {
+        final double d = getDemographic(finishTime);
+        final double nZero = getN0();
+        final double r = getGrowthRate();
+        final double c = getShape();
+        final double expOfMRT = Math.exp(-r * finishTime);
+
+        final double result = d == 0.0 ? 0.0 : -nZero * (1.0 + c) * c * r * expOfMRT / (d * (c + expOfMRT) * (c + expOfMRT));
+
+        return result;
+    }
     /**
      * Returns value of demographic intensity function at time t
      * (= integral 1/N(x) dx from 0 to t).

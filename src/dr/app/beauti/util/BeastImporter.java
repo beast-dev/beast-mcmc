@@ -1,7 +1,8 @@
 /*
  * BeastImporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.util;
@@ -52,7 +54,6 @@ import java.util.Locale;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class BeastImporter {
 
@@ -80,6 +81,13 @@ public class BeastImporter {
 
         cal.setTimeInMillis(0);
         origin = cal.getTime();
+    }
+
+    /**
+     * @return the root of the parsed document, for reading more of the file than the taxa and alignments
+     */
+    public Element getRootElement() {
+        return root;
     }
 
     public void importBEAST(List<TaxonList> taxonLists, List<Alignment> alignments) throws Importer.ImportException {
@@ -166,6 +174,12 @@ public class BeastImporter {
     private Alignment readAlignment(Element e, TaxonList taxa) throws Importer.ImportException {
         SimpleAlignment alignment = new SimpleAlignment();
 
+        // the id names the partition this alignment belongs to, and ties it to the rest of the file
+        String id = e.getAttributeValue(XMLParser.ID);
+        if (id != null) {
+            alignment.setId(id);
+        }
+
         List children = e.getChildren();
         for(Object aChildren : children) {
             Element child = (Element) aChildren;
@@ -203,15 +217,18 @@ public class BeastImporter {
         if (direction != null && direction.equalsIgnoreCase(DateParser.FORWARDS)) {
             backwards = false;
         }
+        String uncertainty = e.getAttributeValue(DateParser.UNCERTAINTY);
+        Date date;
         try {
-            return new Date(dateFormat.parse(value));
+            date = new Date(dateFormat.parse(value));
         } catch (ParseException e1) {
-            // ignore the parse exception and try it just as a number
+            // try just parsing it as a number
+            date = new Date(Double.parseDouble(value), Units.Type.YEARS, backwards);
         }
-
-        // try just parsing it as a number
-        return new Date(Double.valueOf(value), Units.Type.YEARS, backwards);
-
+        if (uncertainty != null) {
+            date.setUncertainty(Double.parseDouble(uncertainty));
+        }
+        return date;
     }
 
 

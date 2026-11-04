@@ -1,7 +1,8 @@
 /*
  * Trace.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
@@ -35,7 +37,6 @@ import java.util.*;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
 public class Trace {
     public enum OrderType {
@@ -50,12 +51,15 @@ public class Trace {
     private List<Double> values = new ArrayList<Double>();
     private String name;
 
-    protected List<String> categoryValueList = new ArrayList<String>();
-    protected Map<Integer, String> categoryLabelMap = null;
-    protected OrderType orderType = OrderType.DEFAULT;
-    protected List<Integer> categoryOrder = null;
+    private boolean isConstant = true;
+    private double constantValue = Double.NaN;
 
-    protected Set<Integer> uniqueValues = new TreeSet<Integer>();
+    private List<String> categoryValueList = new ArrayList<String>();
+    private Map<Integer, String> categoryLabelMap = null;
+    private OrderType orderType = OrderType.DEFAULT;
+    private List<Integer> categoryOrder = null;
+
+    private Set<Integer> uniqueValues = new TreeSet<Integer>();
 
     public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
         this.name = name;
@@ -73,6 +77,13 @@ public class Trace {
         if (uniqueValues.size() < MAX_UNIQUE_VALUES) {
             // unique values are treated as integers
             uniqueValues.add(value.intValue());
+        }
+
+        // check if the trace is still constant
+        if (isConstant && value != constantValue) {
+            isConstant = false;
+        } else if (Double.isNaN(constantValue)) {
+            constantValue = value;
         }
 
         values.add(value);
@@ -96,7 +107,16 @@ public class Trace {
             uniqueValues.add(value);
         }
 
-        values.add(value.doubleValue());
+        double d = value.doubleValue();
+
+        // check if the trace is still constant
+        if (isConstant && d != constantValue) {
+            isConstant = false;
+        } else if (Double.isNaN(constantValue)) {
+            constantValue = d;
+        }
+
+        values.add(d);
     }
 
     /**
@@ -167,12 +187,12 @@ public class Trace {
             }
             Collections.sort(values, new Comparator<Pair<Comparable, Integer>>() {
                 public int compare(Pair<Comparable, Integer> value1, Pair<Comparable, Integer> value2) {
-                    return value1.fst.compareTo(value2.fst);
+                    return value1.first.compareTo(value2.first);
                 }
             });
             order = new ArrayList<Integer>();
             for (Pair<Comparable, Integer> value : values) {
-                order.add(value.snd);
+                order.add(value.second);
             }
         } else {
             order = new ArrayList<Integer>(getFrequencyCounter().getUniqueValues());
@@ -273,6 +293,10 @@ public class Trace {
         this.traceType = traceType;
     }
 
+    public boolean isConstant() {
+        return isConstant;
+    }
+
     //******************** TraceCorrelation ****************************
     private TraceCorrelation traceStatistics;
 
@@ -293,5 +317,13 @@ public class Trace {
 
     public Filter getFilter() {
         return filter;
+    }
+
+    public static double[] toArray(List<Double> list) {
+        double[] primitive = new double[list.size()];
+        for (int i = 0; i < list.size(); ++i) {
+            primitive[i] = list.get(i);
+        }
+        return primitive;
     }
 }

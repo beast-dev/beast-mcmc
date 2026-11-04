@@ -1,7 +1,8 @@
 /*
  * TreeLogAnalyser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -197,13 +199,13 @@ public class TreeLogAnalyser {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = none]"),
-                        new Arguments.StringOption("export", "file-name", "name of file to export"),
-                        new Arguments.RealOption("limit", "don't export trees with support lower than limit [default = 0.0]"),
-                        new Arguments.RealOption("probability", "credible set probability limit [default = 0.95]"),
-                        new Arguments.IntegerOption("max", "export no more than max trees [default = all]"),
-                        new Arguments.Option("short", "use this option to produce a short report"),
-                        new Arguments.Option("help", "option to print this message")
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in' [default = none]"),
+                        new Arguments.StringOption("export", "e", "file-name", "name of file to export"),
+                        new Arguments.RealOption("limit", "l", "don't export trees with support lower than limit [default = 0.0]"),
+                        new Arguments.RealOption("probability", "p", "credible set probability limit [default = 0.95]"),
+                        new Arguments.IntegerOption("max", "m", "export no more than max trees [default = all]"),
+                        new Arguments.Option("short", "s", "use this option to produce a short report"),
+                        new Arguments.Option("help", "h", "option to print this message")
                 });
 
         try {

@@ -1,7 +1,8 @@
 /*
  * MDSTest.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package test.dr.multidimensionalscaling;
 
+import dr.inference.multidimensionalscaling.MultiDimensionalScalingCore;
 import dr.inference.multidimensionalscaling.NativeMDSSingleton;
 import test.dr.math.MathTestCase;
 
@@ -47,9 +50,12 @@ public class MDSTest extends MathTestCase {
 
     public void testInitialization() {
         if (mds != null) {
-            int i = mds.initialize(2, 100, 0);
+
+            MultiDimensionalScalingCore.CoreInformation information = new MultiDimensionalScalingCore.CoreInformation();
+
+            int i = mds.initialize(2, 100, information);
             assertEquals(i, 0);
-            i = mds.initialize(2, 100, 0);
+            i = mds.initialize(2, 100, information);
             assertEquals(i, 1);
         } else {
             System.out.println("testInitialization skipped");

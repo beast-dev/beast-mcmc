@@ -1,7 +1,8 @@
 /*
  * PathLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -38,9 +40,8 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @author Alex Alekseyenko
  * @author Marc Suchard
- * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class PathLikelihood implements Likelihood {
+public class PathLikelihood implements Likelihood, Profileable {
 
     public static final String PATH_LIKELIHOOD = "pathLikelihood";
     public static final String PATH_PARAMETER = "theta";
@@ -137,6 +138,18 @@ public class PathLikelihood implements Likelihood {
 
         return Double.toString(getLogLikelihood());
 
+    }
+
+    @Override
+    public long getTotalCalculationCount() {
+        long count = 0;
+        if (source instanceof Profileable) {
+            count += ((Profileable)source).getTotalCalculationCount();
+        }
+        if (destination instanceof Profileable) {
+            count += ((Profileable)destination).getTotalCalculationCount();
+        }
+        return count;
     }
 
     // **************************************************************

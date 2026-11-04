@@ -1,7 +1,8 @@
 /*
  * TransformedTreeModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.tree;
@@ -73,6 +75,8 @@ public class TransformedTreeModelParser extends AbstractXMLObjectParser {
             transform = new ProgressiveScalarTreeTransform(tree, scale);
         } else if (version.compareTo("ou") == 0) {
             transform = new OuScalarTreeTransform(scale);
+        } else if (version.compareTo("extendTipBranch") == 0){
+            transform = new ExtendTipBranchTransform(scale);
         } else {
             transform = new SingleScalarTreeTransform(scale);
         }

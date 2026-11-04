@@ -1,7 +1,8 @@
 /*
  * AncestralStatesComponentGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2025 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.ancestralstates;
 
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
@@ -32,12 +35,18 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.tree.TreeLoggerParser;
+import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.util.Attribute;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
@@ -59,12 +68,15 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         boolean reconstructAtMRCA = false;
         boolean countingStates = false;
         boolean dNdSRobustCounting = false;
+        boolean completeHistory = false;
 
         for (AbstractPartitionData partition : options.getDataPartitions()) {
             if (component.reconstructAtNodes(partition)) reconstructAtNodes = true;
             if (component.reconstructAtMRCA(partition)) reconstructAtMRCA = true;
             if (component.isCountingStates(partition)) countingStates = true;
             if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
+            if (component.isCountingStates(partition) && component.isCompleteHistoryLogging(partition))
+                completeHistory = true;
         }
 
         if (!reconstructAtNodes && !reconstructAtMRCA && !countingStates && !dNdSRobustCounting) {
@@ -85,7 +97,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 return dNdSRobustCounting;
 
             case AFTER_TREES_LOG:
-                return reconstructAtMRCA || dNdSRobustCounting;
+                return reconstructAtMRCA || dNdSRobustCounting || completeHistory;
 
             case AFTER_MCMC:
                 return dNdSRobustCounting;
@@ -112,7 +124,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writeLogs(writer, component);
                 break;
             case IN_TREES_LOG:
-                writeTreeLogs(writer, component, (PartitionTreeModel)item);
+                writeTreeLogs(writer, component, (PartitionTreeModel) item);
                 break;
             case AFTER_TREES_LOG:
                 writeAncestralStateLoggers(writer, component);
@@ -184,9 +196,6 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                                                      AbstractPartitionData partition,
                                                      boolean isCompleteHistoryLogging) {
 
-//        if (DEBUG) {
-//            System.err.println("DEBUG: Writing RC for " + partition.getName());
-//        }
 
         writer.writeComment("Robust counting for: " + partition.getName());
 
@@ -230,7 +239,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("labeling", "N"),
                         new Attribute.Default<String>("prefix", prefix),
                         new Attribute.Default<String>("saveCompleteHistory",
-                                                        isCompleteHistoryLogging ? "true" : "false"),
+                                isCompleteHistoryLogging ? "true" : "false"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",
@@ -338,9 +347,13 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 }
         );
         if (partition.getDataType().getType() == DataType.CONTINUOUS) {
-            writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
+            writer.writeIDref("traitDataLikelihood", prefix + "traitLikelihood");
         } else {
-            writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
+            if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                writer.writeIDref(dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, prefix + "treeLikelihood");
+            } else {
+                writer.writeIDref(StructuredCoalescentLikelihoodParser.STRUCTURED_COALESCENT, prefix + "treeLikelihood");
+            }
         }
         writer.writeCloseTag("trait");
     }
@@ -356,6 +369,10 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             if (component.reconstructAtMRCA(partition)) {
                 writeStateLogger(writer, partition, component.getMRCATaxonSet(partition));
             }
+
+            if (component.isCountingStates(partition) && component.isCompleteHistoryLogging(partition)) {
+                writeCompleteHistoryTreeLogToFile(writer, partition);
+            }
         }
     }
 
@@ -366,7 +383,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag("log", new Attribute[]{
                 new Attribute.Default<String>("id", "fileLog_" + partition.getName()),
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
-                new Attribute.Default<String>("fileName",  options.fileNameStem + "." + partition.getName() + STATE_LOG_SUFFIX)});
+                new Attribute.Default<String>("fileName", options.fileNameStem + "." + partition.getName() + STATE_LOG_SUFFIX)});
 
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
@@ -388,6 +405,39 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     }// END: writeLogs
 
+    /**
+     * write tree log to file with complete history logger
+     *
+     * @param writer    XMLWriter
+     * @param partition the Data Partition
+     */
+    private void writeCompleteHistoryTreeLogToFile(XMLWriter writer, AbstractPartitionData partition) {
+        writer.writeComment("write complete history tree log to file");
+
+        PartitionTreeModel tree = partition.getPartitionTreeModel();
+
+        String treeLogFileName = options.fileNameStem + "." + partition.getPrefix() + "history.trees";
+
+        if (options.treeFileName.get(0).endsWith(".txt")) {
+            treeLogFileName += ".txt";
+        }
+
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, treeLogFileName));
+        attributes.add(new Attribute.Default<String>(TreeLoggerParser.SORT_TRANSLATION_TABLE, "true"));
+
+        writer.writeOpenTag(TreeLoggerParser.LOG_TREE, attributes);
+
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
+
+        String historyLoggerId = partition.getPrefix() + "treeLikelihood";
+        writer.writeIDref(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD, historyLoggerId);
+
+        writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
+    }
+
     private void writeAncestralTrait(XMLWriter writer, AbstractPartitionData partition, String mrcaId, String prefix, String nameString) {
         String traitName = prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG;
         if (partition.getDataType().getType() == DataType.CONTINUOUS) {
@@ -403,7 +453,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
 
         if (partition.getDataType().getType() == DataType.CONTINUOUS) {
-            writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
+            writer.writeIDref("traitDataLikelihood", prefix + "traitLikelihood");
         } else {
             writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
         }
@@ -427,8 +477,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
                 new Attribute.Default<String>("fileName", options.fileNameStem + "." + partition.getName() + DNDS_LOG_SUFFIX)});
 
-        writer.writeOpenTag("dNdSLogger", new Attribute[]{new Attribute.Default<String>("id",
-                partition.getName() + ".dNdS")});
+        writer.writeOpenTag("dNdSLogger", new Attribute[]{
+                new Attribute.Default<String>("id", partition.getName() + ".dNdS"),
+                new Attribute.Default<String>("prefix", prefix)});
         writer.writeIDref("treeModel", "treeModel");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");

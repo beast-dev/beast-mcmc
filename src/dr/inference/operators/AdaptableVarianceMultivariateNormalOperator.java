@@ -1,7 +1,8 @@
 /*
  * AdaptableVarianceMultivariateNormalOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
@@ -37,6 +40,9 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.Transform;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -50,7 +56,7 @@ import dr.xml.XMLSyntaxRule;
  * @author Guy Baele
  * @author Marc A. Suchard
  */
-public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercableOperator {
+public class AdaptableVarianceMultivariateNormalOperator extends AbstractAdaptableOperator implements Citable, CheckpointableMCMCOperator {
 
     public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -88,7 +94,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[][] proposal;
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor, double[][] inMatrix,
-                                                       double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
+                                                       double weight, double beta, int initial, int burnin, int every, AdaptationMode mode, boolean isVarianceMatrix, boolean skipRankCheck) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -141,7 +147,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     }
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double[] transformationSums, double scaleFactor,
-                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance, boolean skipRankCheck) {
+                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, AdaptationMode mode, boolean isVariance, boolean skipRankCheck) {
         this(parameter, transformations, transformationSizes, transformationSums, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance, skipRankCheck);
     }
 
@@ -239,6 +245,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 System.err.println("  AVMVN iterations > burnin");
             }
 
+            // TODO Beginning of adaptable covariance
+
             if (iterations > (burnin+1)) {
 
                 if (iterations % every == 0) {
@@ -308,6 +316,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 }
 
             }
+
+            // TODO End of adaptable covariance -- move into separate class
 
         } else if (iterations == 1) {
 
@@ -417,14 +427,17 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
             if (MULTI) {
                 if (transformationSizes[i] > 1) {
+                    if (DEBUG) {
+                        System.err.println("Current transformation sum = " + transformationSums[i]);
+                    }
                     double[] temp = transformations[i].inverse(transformedX, currentIndex, currentIndex + transformationSizes[i] - 1, transformationSums[i]);
                     for (int k = 0; k < temp.length; k++) {
                         parameter.setParameterValueQuietly(currentIndex + k, temp[k]);
                     }
-                    logJacobian += transformations[i].getLogJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].getLogJacobian(temp, 0, transformationSizes[i] - 1);
+                    logJacobian += transformations[i].logJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].logJacobian(temp, 0, transformationSizes[i] - 1);
                 } else {
                     parameter.setParameterValueQuietly(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);
@@ -435,7 +448,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     throw new RuntimeException("Transformations on more than 1 parameter value should be set quietly");
                 } else {
                     parameter.setParameterValue(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
-                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                    logJacobian += transformations[i].logJacobian(x[currentIndex]) - transformations[i].logJacobian(parameter.getParameterValue(currentIndex));
                 }
                 if (DEBUG) {
                     System.err.println("Current logJacobian = " + logJacobian);
@@ -567,11 +580,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         return output;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 
@@ -583,38 +597,69 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
+    @Override
+    public String getCheckpointStateType() {
+        return "adaptableVarianceMultivariateNormal";
     }
 
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
+    @Override
+    public void writeCheckpointState(CheckpointStateWriter writer) {
+        writer.writeInt(iterations);
+        writer.writeInt(updates);
+        writer.writeVector(oldMeans);
+        writer.writeVector(newMeans);
+        writer.writeMatrix(empirical);
+        writer.writeMatrix(proposal);
+        writer.writeMatrix(cholesky);
     }
 
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
+    @Override
+    public void readCheckpointState(CheckpointStateReader reader) {
+        restoreAdaptiveState(
+                reader.readInt(),
+                reader.readInt(),
+                reader.readVector(),
+                reader.readVector(),
+                reader.readMatrix(),
+                reader.readMatrix(),
+                reader.readMatrix());
     }
 
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
+    private void restoreAdaptiveState(int iterations, int updates, double[] oldMeans, double[] newMeans,
+                                      double[][] empirical, double[][] proposal, double[][] cholesky) {
+        if (oldMeans.length != dim || newMeans.length != dim ||
+                empirical.length != dim || proposal.length != dim || cholesky.length != dim) {
+            throw new RuntimeException("Dimension mismatch restoring AdaptableVarianceMultivariateNormalOperator state");
+        }
+        validateMatrixDimensions(empirical, dim, "empirical");
+        validateMatrixDimensions(proposal, dim, "proposal");
+        validateMatrixDimensions(cholesky, dim, "cholesky");
+
+        this.iterations = iterations;
+        this.updates = updates;
+        System.arraycopy(oldMeans, 0, this.oldMeans, 0, dim);
+        System.arraycopy(newMeans, 0, this.newMeans, 0, dim);
+        copyMatrix(empirical, this.empirical);
+        copyMatrix(proposal, this.proposal);
+        copyMatrix(cholesky, this.cholesky);
     }
 
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
+    private void validateMatrixDimensions(double[][] matrix, int dim, String name) {
+        for (int i = 0; i < dim; i++) {
+            if (matrix[i].length != dim) {
+                throw new RuntimeException("Dimension mismatch restoring " + name + " matrix");
+            }
+        }
     }
 
-    public final String getPerformanceSuggestion() {
+    private void copyMatrix(double[][] source, double[][] destination) {
+        for (int i = 0; i < source.length; i++) {
+            System.arraycopy(source[i], 0, destination[i], 0, source[i].length);
+        }
+    }
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
-
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -629,7 +674,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 System.err.println("\nParsing AdaptableVarianceMultivariateNormalOperator.");
             }
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double beta = xo.getDoubleAttribute(BETA);
@@ -643,7 +688,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 burnin = xo.getIntegerAttribute(BURNIN);
             }
             if (burnin > initial || burnin < 0) {
-                throw new XMLParseException("burnin must be smaller than the initial period");
+                throw new XMLParseException("Burn-in must be smaller than the initial period.");
             }
 
             if (xo.hasAttribute(UPDATE_EVERY)) {
@@ -651,17 +696,21 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
 
             if (every <= 0) {
-                throw new XMLParseException("covariance matrix needs to be updated at least every single iteration");
+                throw new XMLParseException("Covariance matrix needs to be updated at least every single iteration.");
             }
 
             if (scaleFactor <= 0.0) {
-                throw new XMLParseException("scaleFactor must be greater than 0.0");
+                throw new XMLParseException("ScaleFactor must be greater than zero.");
             }
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
             Transform.ParsedTransform pt = (Transform.ParsedTransform) xo.getChild(Transform.ParsedTransform.class);
-            boolean oldXML = pt.parameters == null;
+            boolean oldXML;
+            if (pt == null) {
+                throw new XMLParseException("No valid transformations have been provided in the XML file.");
+            }
+            oldXML = pt.parameters == null;
 
             Parameter parameter;
             Transform[] transformations;
@@ -768,7 +817,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                         if (thisObject.transform.getTransformName().equals(Transform.LOG_CONSTRAINED_SUM.getTransformName())) {
                             transformations[transformationSizeCounter] = thisObject.transform;
                             transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
-                            transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            //transformationSums[transformationSizeCounter] = thisObject.fixedSum;
+                            transformationSums[transformationSizeCounter] = thisObject.end - thisObject.start;
                             if (DEBUG) {
                                 System.err.println("Transformation size (logConstrainedSum) = " + transformationSizes[transformationSizeCounter]);
                             }
@@ -896,4 +946,34 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         };
 
     };
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.ADVANCED_ESTIMATION_METHODS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Adaptive MCMC estimation method of continuous parameters";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(
+                new Citation(
+                        new Author[]{
+                                new Author("G", "Baele"),
+                                new Author("P", "Lemey"),
+                                new Author("A", "Rambaut"),
+                                new Author("MA", "Suchard")
+                        },
+                        "Adaptive MCMC in Bayesian phylogenetics: an application to analyzing partitioned data in BEAST",
+                        2017,
+                        "Bioinformatics",
+                        33,
+                        1798,
+                        1805,
+                        Citation.Status.PUBLISHED
+                ));
+    }
 }

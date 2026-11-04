@@ -1,7 +1,8 @@
 /*
  * FullyConjugateTreeTipsPotentialDerivative.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous.hmc;
@@ -35,6 +37,7 @@ import dr.xml.Reportable;
  * @author Max Tolkoff
  * @author Marc A. Suchard
  */
+@Deprecated
 public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtParameterProvider, Reportable {
 
     private final FullyConjugateMultivariateTraitLikelihood treeLikelihood;
@@ -73,15 +76,15 @@ public class FullyConjugateTreeTipsPotentialDerivative implements GradientWrtPar
     public double[] getGradientLogDensity() {
 
         final int dimTraits = treeLikelihood.getDimTrait() * treeLikelihood.getNumData();
-        final int ntaxa = traitParameter.getDimension() / dimTraits;
+        final int nTaxa = traitParameter.getDimension() / dimTraits;
 
         final double[] derivative = new double[traitParameter.getDimension()];
 
         final double[][] allMeans = treeLikelihood.getConditionalMeans();
         final double[] allScalars = treeLikelihood.getPrecisionFactors();
-        final double[][] precisionMatrix = treeLikelihood.getDiffusionModel().getPrecisionmatrix();
+        final double[][] precisionMatrix = treeLikelihood.getDiffusionModel().getPrecisionMatrix();
 
-        for (int i = 0; i < ntaxa; ++i) {
+        for (int i = 0; i < nTaxa; ++i) {
 
             final double[] mean = allMeans[i];
             final double scale = allScalars[i];

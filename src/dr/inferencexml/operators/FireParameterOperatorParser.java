@@ -1,7 +1,8 @@
 /*
  * FireParameterOperatorParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,11 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.operators;
 
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.DirtyLikelihoodOperator;
 import dr.inference.operators.FireParameterOperator;
@@ -37,6 +38,9 @@ import dr.xml.*;
  */
 public class FireParameterOperatorParser extends AbstractXMLObjectParser {
 
+    private static final String VALUE = "value";
+    private static final String COPY_FROM = "copyFrom";
+
     public static final String FIRE_PARAMETER_OPERATOR = "fireParameterChanged";
 
     public String getParserName() {
@@ -46,10 +50,25 @@ public class FireParameterOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+        double[] values = null;
+        if (xo.hasAttribute(VALUE)) {
+            values = xo.getDoubleArrayAttribute(VALUE);
+
+        } else if (xo.hasChildNamed(COPY_FROM)) {
+            Parameter copyFromParameter = (Parameter) xo.getChild(COPY_FROM).getChild(0);
+            values = copyFromParameter.getParameterValues();
+        }
+
+        if (values != null) {
+            System.out.println("\nWarning: when the operator " + FIRE_PARAMETER_OPERATOR + " is given a \"" + VALUE +
+                    "\" attribute or \"" + COPY_FROM + "\" element, the resulting MCMC run will NOT result in a " +
+                    "valid draw from the posterior. " +
+                    "Only set the \"" + VALUE + "\" attribute for debugging purposes.\n");
+        }
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-        return new FireParameterOperator(parameter, weight);
+        return new FireParameterOperator(parameter, values, weight);
 
     }
 
@@ -72,5 +91,9 @@ public class FireParameterOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             new ElementRule(Parameter.class),
+            new XORRule(
+                    AttributeRule.newDoubleArrayRule(VALUE),
+                    new ElementRule(COPY_FROM, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    true)
     };
 }

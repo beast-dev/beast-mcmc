@@ -1,7 +1,8 @@
 /*
  * LogisticGrowthN0.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -41,7 +43,6 @@ import dr.evolution.coalescent.*;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Matthew Hall
- * @version $Id: LogisticGrowth.java,v 1.15 2008/03/21 20:25:56 rambaut Exp $
  */
 public class LogisticGrowthN0 extends ExponentialGrowth {
 
@@ -104,7 +105,7 @@ public class LogisticGrowthN0 extends ExponentialGrowth {
      * a = (q/exp(q*T50))
      * k = N0*(1+exp(q*T50))*x - (1/q)exp(q*T50)
      *
-     * For large x, W0(x) is approximately equal to ln(x) - ln(ln(x)); if q*exp(-q*k)/a rounds to infinity, we log it
+     * For large x, W(x) is approximately equal to ln(x) - ln(ln(x)); if q*exp(-q*k)/a rounds to infinity, we log it
      * and use this instead
      */
     public double getInverseIntensity(double x) {

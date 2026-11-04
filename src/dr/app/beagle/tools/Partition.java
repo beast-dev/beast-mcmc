@@ -1,7 +1,8 @@
 /*
  * Partition.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beagle.tools;
@@ -49,7 +51,6 @@ import dr.math.MathUtils;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class Partition {
 
@@ -106,7 +107,8 @@ public class Partition {
 					 FrequencyModel freqModel, //
 					 int from, //
 					 int to, //
-					 int every //
+					 int every, //
+					 DataType dType
 	) {
 
 		this.treeModel = treeModel;
@@ -119,7 +121,11 @@ public class Partition {
 		this.to = to;
 		this.every = every;
 
-		dataType = freqModel.getDataType();
+		if(dType == null) {
+			dataType = freqModel.getDataType();
+		}else{
+			dataType = dType;
+		}
 		partitionSiteCount = getPartitionSiteCount();
 
 		setBufferHelpers();
@@ -130,6 +136,18 @@ public class Partition {
 		random = new MersenneTwister(MathUtils.nextLong());
 
 	}// END: Constructor
+
+	public Partition(TreeModel treeModel, //
+					 BranchModel branchModel, //
+					 GammaSiteRateModel siteModel, //
+					 BranchRateModel branchRateModel, //
+					 FrequencyModel freqModel, //
+					 int from, //
+					 int to, //
+					 int every //
+	){
+		this(treeModel, branchModel, siteModel, branchRateModel, freqModel, from, to, every, null);
+	}
 
 	private void setSubstitutionModelDelegate() {
 		substitutionModelDelegate = new SubstitutionModelDelegate(treeModel,
@@ -346,7 +364,8 @@ public class Partition {
 				if (DEBUG) {
 					synchronized (this) {
 						System.out.println("Simulated sequence (translated):");
-						System.out.println(Utils.intArray2Sequence(taxon, partitionSequence, BeagleSequenceSimulator.gapFlag, dataType).getSequenceString());
+						System.out.println(Utils.intArray2Sequence(taxon, partitionSequence,
+								BeagleSequenceSimulator.gapFlag, dataType, null).getSequenceString());
 					}
 				}// END: DEBUG
 

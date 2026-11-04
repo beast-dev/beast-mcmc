@@ -1,7 +1,8 @@
 /*
  * BeagleDataLikelihoodDelegate.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,9 +22,33 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
+
+import beagle.*;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.UncertainSiteList;
+import dr.evolution.datatype.DataType;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.TransitionMatrixProviderBranchModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.tipstatesmodel.TipStatesModel;
+import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.inference.model.*;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Logger;
+
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.*;
+import static dr.evomodel.treedatalikelihood.SubstitutionModelDelegate.BUFFER_POOL_SIZE_DEFAULT;
 
 /**
  * BeagleDataLikelihoodDelegate
@@ -32,37 +57,21 @@ package dr.evomodel.treedatalikelihood;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 
-import beagle.*;
-import dr.evomodel.branchmodel.BranchModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
-import dr.evomodel.treelikelihood.*;
-import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.UncertainSiteList;
-import dr.evolution.datatype.DataType;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.Vector;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.CommonCitations;
+public class BeagleDataLikelihoodDelegate extends AbstractModel implements
+        DataLikelihoodDelegate, DiscreteProcessAlongTree, TipStateAccessor, Citable {
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.logging.Logger;
+    private static final boolean COUNT_CALCULATIONS = true; // keep a cumulative total of number of computations
 
-public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate, Citable {
+    private static final boolean RESCALING_OFF = false; // a debugging switch
+
+    private static final boolean DEBUG = false; // write debug information to stdOut
+
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
     // will wrap around.
+    private static final String RESOURCE_AUTO_PROPERTY = "beagle.resource.auto";
     private static final String RESOURCE_ORDER_PROPERTY = "beagle.resource.order";
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
@@ -71,24 +80,27 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
+    private static final String THREAD_COUNT = "beagle.thread.count";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
-    private static int instanceCount = 0;
+    public static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
-    private static List<Integer> preferredOrder = null;
-    private static List<Integer> requiredOrder = null;
+    private static List<Long> preferredOrder = null;
+    private static List<Long> requiredOrder = null;
     private static List<String> scalingOrder = null;
     private static List<Integer> extraBufferOrder = null;
 
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
-    private static final int RESCALE_FREQUENCY = 100;
+    private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
-    private static final boolean RESCALING_OFF = false; // a debugging switch
-
-    private static final boolean DEBUG = false;
+    // count the number of partial likelihood and matrix updates
+    private long totalMatrixUpdateCount = 0;
+    private long totalPartialsUpdateCount = 0;
+    private long totalEvaluationCount = 0;
+    private boolean releaseSingleton = true;
 
     /**
      *
@@ -97,25 +109,36 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @param patternList List of patterns
      * @param siteRateModel Specifies rates per site
      * @param useAmbiguities Whether to respect state ambiguities in data
+     * @param settings pre-order settings
      */
     public BeagleDataLikelihoodDelegate(Tree tree,
                                         PatternList patternList,
                                         BranchModel branchModel,
                                         SiteRateModel siteRateModel,
                                         boolean useAmbiguities,
+                                        boolean preferGPU,
                                         PartialsRescalingScheme rescalingScheme,
-                                        boolean delayRescalingUntilUnderflow) {
+                                        boolean delayRescalingUntilUnderflow,
+                                        PreOrderSettings settings,
+                                        Parameter siteAssignInd,
+                                        Parameter partitionCat) {
 
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
 
-        logger.info("\nUsing BEAGLE DataLikelihood Delegate");
+        logger.info("\nCreating BEAGLE DataLikelihood Delegate");
         setId(patternList.getId());
 
         this.dataType = patternList.getDataType();
         this.patternList = patternList;
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
+
+        if(siteAssignInd != null) {
+            this.partitionCat = partitionCat;
+            this.siteAssignInd = siteAssignInd;
+            addVariable(siteAssignInd);
+        }
 
         // Check for matching state counts
         int stateCount2 = branchModel.getRootFrequencyModel().getFrequencyCount();
@@ -124,7 +147,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     + ") does not match substitution model state count (" + stateCount2 + ")");
         }
 
-        patternWeights = patternList.getPatternWeights();
+        if(siteAssignInd == null) {
+            patternWeights = patternList.getPatternWeights();
+        }else{
+            patternWeights = new double[patternCount];
+            // following line commented out because patternWeights array is initialized with default values of 0.0
+            //Arrays.fill(patternWeights, 0.0);
+            for(int i = 0; i < siteAssignInd.getSize(); i++){
+                int cat = (int) siteAssignInd.getParameterValue(i);
+                if((int) partitionCat.getParameterValue(0) == cat) {
+                    int pwIndex = patternList.getPatternIndex(i);
+                    patternWeights[pwIndex] = patternWeights[pwIndex] + 1;
+                }
+            }
+            storedPatternWeights = new double[patternWeights.length];
+        }
 
         this.branchModel = branchModel;
         addModel(this.branchModel);
@@ -147,6 +184,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         firstRescaleAttempt = true;
 
+        isRestored = false;
+
+        this.settings = settings;
+
         try {
 
             int compactPartialsCount = tipCount;
@@ -159,30 +200,68 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
-            scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
+            scaleBufferHelper = new BufferIndexHelper(getSingleScaleBufferCount(), 0);
 
-            evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+            if (extraBufferOrder == null) {
+                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+            }
+
+            int extraBufferCount = BUFFER_POOL_SIZE_DEFAULT;
+            if (extraBufferOrder.size() > 0) {
+                extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
+            }
+
+            if (settings.branchInfinitesimalDerivative) {
+                evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                        extraBufferCount, settings);
+            } else {
+                if (settings.useRewardAwareBranchModelDelegate) {
+                    evolutionaryProcessDelegate = new RewardAwareSubstitutionModelDelegate(tree, (TransitionMatrixProviderBranchModel) branchModel, 0,
+                            extraBufferCount, settings);
+                } else {
+                    if (branchModel.getSubstitutionModels().size() == 1) {
+                        evolutionaryProcessDelegate = new HomogenousSubstitutionModelDelegate(tree, branchModel);
+                    } else {
+                        // use a more general delegate that allows different substitution models on different branches and
+                        // can do matrix convolution.
+
+                        // TODO: the constructor should take the delegate and the delegate should wrap the branchModel
+                        evolutionaryProcessDelegate = new SubstitutionModelDelegate(tree, branchModel, 0,
+                                extraBufferCount, settings);
+                    }
+                }
+            }
+
+            int numPartials = partialBufferHelper.getBufferCount();
+            int numScaleBuffers = scaleBufferHelper.getBufferCount();
+            int numMatrices = evolutionaryProcessDelegate.getMatrixBufferCount();
+
+            // one partial buffer for root node and two for each node including tip nodes (for store restore)
+            if (settings.usePreOrder){
+                numPartials += nodeCount;
+                numScaleBuffers += nodeCount - 1; // don't need to rescale at root
+                numMatrices += evolutionaryProcessDelegate.getCachedMatrixBufferCount(settings);
+            }
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
                 resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
             }
             if (preferredOrder == null) {
-                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+                preferredOrder = parseSystemPropertyLongArray(PREFERRED_FLAGS_PROPERTY);
             }
             if (requiredOrder == null) {
-                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+                requiredOrder = parseSystemPropertyLongArray(REQUIRED_FLAGS_PROPERTY);
             }
             if (scalingOrder == null) {
                 scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
-            }
-            if (extraBufferOrder == null) {
-                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
             }
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
             this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
+            this.prefersGPU = preferGPU;
+            this.useAmbiguities = useAmbiguities;
 
             int[] resourceList = null;
             long preferenceFlags = 0;
@@ -199,6 +278,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 if (resourceList[0] > 0) {
                     preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
                 }
+            }
+            if (preferGPU) {
+                preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
             }
 
             if (preferredOrder.size() > 0) {
@@ -259,8 +341,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 forceVectorization = true;
             }
 
+            String tc = System.getProperty(THREAD_COUNT);
+            if (tc != null) {
+                threadCount = Integer.parseInt(tc);
+            }
+
+            if (threadCount < 1) {
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_NONE.getMask();
+            } else {
+                preferenceFlags &= ~BeagleFlag.THREADING_NONE.getMask();
+                preferenceFlags |= BeagleFlag.THREADING_CPP.getMask();
+            }
+
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
-                    && !forceVectorization
+                    && !forceVectorization && !IS_ODD_STATE_SSE_FIXED()
                     ) {
                 // @todo SSE doesn't seem to work for larger state spaces so for now we override the
                 // SSE option.
@@ -272,25 +367,85 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 }
             }
 
-            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
-                // if single precision not explicitly set then prefer double
-                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-            }
+//            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
+//                // if single precision not explicitly set then prefer double
+//                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+//            }
+
+//            requirementFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
 
             if (evolutionaryProcessDelegate.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
+            if ((resourceList == null &&
+                    (BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags) ||
+                            BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
+                            BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
+                    ||
+                    (resourceList != null && resourceList[0] > 0)) {
+                // non-CPU implementations don't have SSE so remove default preference for SSE
+                // when using non-CPU preferences or prioritising non-CPU resource
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+                preferenceFlags &= ~BeagleFlag.THREADING_CPP.getMask();
+            }
+
+            if (settings.usePreOrder && stateCount > 4) {
+                requirementFlags |= BeagleFlag.PREORDER_TRANSPOSE_AUTO.getMask();
+            }
+
+            // start auto resource selection
+            String resourceAuto = System.getProperty(RESOURCE_AUTO_PROPERTY);
+            if (Boolean.parseBoolean(resourceAuto)) {
+
+                long benchmarkFlags = 0;
+
+                if (this.rescalingScheme == PartialsRescalingScheme.NONE) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_NONE.getMask();
+                } else if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_ALWAYS.getMask();
+                } else {
+                    benchmarkFlags =  BeagleBenchmarkFlag.SCALING_DYNAMIC.getMask();
+                }
+
+                logger.info("\t\tRunning benchmarks to automatically select fastest BEAGLE resource for analysis or partition... ");
+
+                List<BenchmarkedResourceDetails> benchmarkedResourceDetails =
+                        BeagleFactory.getBenchmarkedResourceDetails(
+                                tipCount,
+                                compactPartialsCount,
+                                stateCount,
+                                patternCount,
+                                categoryCount,
+                                resourceList,
+                                preferenceFlags,
+                                requirementFlags,
+                                1, // eigenModelCount,
+                                1, // partitionCount,
+                                0, // calculateDerivatives,
+                                benchmarkFlags);
+
+                logger.info(" Benchmark results, from fastest to slowest:");
+
+                for (BenchmarkedResourceDetails benchmarkedResource : benchmarkedResourceDetails) {
+                    logger.info(benchmarkedResource.toString());
+                }
+
+                resourceList = new int[]{benchmarkedResourceDetails.get(0).getResourceNumber()};
+            }
+            // end auto resource selection
+
+
             beagle = BeagleFactory.loadBeagleInstance(
                     tipCount,
-                    partialBufferHelper.getBufferCount(),
+                    numPartials,
                     compactPartialsCount,
                     stateCount,
                     patternCount,
                     evolutionaryProcessDelegate.getEigenBufferCount(),
-                    evolutionaryProcessDelegate.getMatrixBufferCount(),
+                    numMatrices,
                     categoryCount,
-                    scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
+                    numScaleBuffers, // Always allocate; they may become necessary
                     resourceList,
                     preferenceFlags,
                     requirementFlags
@@ -322,15 +477,42 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
 
+            instanceFlags = instanceDetails.getFlags();
+
+            if ((instanceFlags & BeagleFlag.THREADING_CPP.getMask()) != 0) {
+                if (IS_THREAD_COUNT_COMPATIBLE() && threadCount != 0) {
+                    if (threadCount > 0) {
+                        beagle.setCPUThreadCount(threadCount);
+                        logger.info("    Using " + threadCount + " thread" + (threadCount > 1 ? "s" : "") + " for CPU.");
+                    } else {
+                        // if no thread_count is specified then this will be -1 so put no upper bound on threads
+                        // currently the parser provides a default based on the number of cores as BEAGLE's
+                        // default is suboptimal
+                        logger.info("    Using default thread count for CPU.");
+                        // this is just intended to remove the cap on number of threads so BEAGLE will
+                        // make its own decision (for better or worse).
+                        beagle.setCPUThreadCount(1000);
+                    }
+                } else {
+                    logger.info("    BEAGLE threading turned off (or unavailable) for CPU.");
+                }
+            }
+
             if (patternList instanceof UncertainSiteList) { // TODO Remove
                 useAmbiguities = true;
             }
 
-            logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+//            if (!IS_PRE_ORDER_SUPPORTED() && settings.usePreOrder) {
+//                throw new IllegalArgumentException("BEAGLE library does not support pre-order computation");
+//            }
+
+            //add in logger info for preOrder traversal
+            logger.info("    " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
+            logger.info("    " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+            logger.info("    With " + patternList.getPatternCount() + " unique site patterns.");
 
             if (patternList.areUncertain() && !useAmbiguities) {
-                logger.info("  WARNING: Uncertain site patterns will be ignored.");
+                logger.info("    WARNING: Uncertain site patterns will be ignored.");
             }
 
             for (int i = 0; i < tipCount; i++) {
@@ -352,13 +534,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             beagle.setPatternWeights(patternWeights);
 
-            String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
+            String rescaleMessage = "    Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
                     resourceDetails != null &&
                     (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
                 // If auto scaling in BEAGLE is not supported then do it here
                 this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
-                rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
+                rescaleMessage = "    Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
             }
             boolean parenthesis = false;
             if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
@@ -378,10 +560,28 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
             updateSubstitutionModel = true;
             updateSiteModel = true;
+            updateRootFrequency = true;
 
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+
+        instanceCount++;
+    }
+
+    public BeagleDataLikelihoodDelegate(Tree tree,
+                                        PatternList patternList,
+                                        BranchModel branchModel,
+                                        SiteRateModel siteRateModel,
+                                        boolean useAmbiguities,
+                                        boolean preferGPU,
+                                        PartialsRescalingScheme rescalingScheme,
+                                        boolean delayRescalingUntilUnderflow,
+                                        PreOrderSettings settings
+
+    ) {
+        this(tree, patternList, branchModel, siteRateModel, useAmbiguities, preferGPU, rescalingScheme,
+                delayRescalingUntilUnderflow, settings, null, null);
     }
 
     @Override
@@ -391,7 +591,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public TreeTraversal.TraversalType getOptimalTraversalType() {
-        return TreeTraversal.TraversalType.POST_ORDER;
+        if ((instanceFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0) {
+            return TreeTraversal.TraversalType.POST_ORDER;
+        } else {
+            return TreeTraversal.TraversalType.REVERSE_LEVEL_ORDER;
+        }
     }
 
     @Override
@@ -409,47 +613,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         return RateRescalingScheme.NONE;
     }
 
+    public final BranchModel getBranchModel() {
+        return branchModel;
+    }
+
     public PatternList getPatternList() {
         return this.patternList;
     }
 
-    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
-        List<Integer> order = new ArrayList<Integer>();
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    int n = Integer.parseInt(part.trim());
-                    order.add(n);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
+    public Beagle getBeagleInstance() { return beagle; }
 
-    private static List<String> parseSystemPropertyStringArray(String propertyName) {
-
-        List<String> order = new ArrayList<String>();
-
-        String r = System.getProperty(propertyName);
-        if (r != null) {
-            String[] parts = r.split(",");
-            for (String part : parts) {
-                try {
-                    String s = part.trim();
-                    order.add(s);
-                } catch (NumberFormatException nfe) {
-                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                }
-            }
-        }
-        return order;
-    }
-
-    private int getScaleBufferCount() {
+    private int getSingleScaleBufferCount() {
         return internalNodeCount + 1;
     }
 
@@ -469,7 +643,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
-            
+
             if (patternList instanceof UncertainSiteList) {
                 ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
                 v += stateCount;
@@ -559,6 +733,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     @Override
     public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException {
 
+        if(siteAssignInd != null) {
+            setAllPatternWeights(siteAssignInd);
+            beagle.setPatternWeights(patternWeights);
+        }
+
         //recomputeScaleFactors = false;
         if (DEBUG) {
             System.out.println("Partition: " + this.getModelName());
@@ -644,6 +823,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                 return Double.NEGATIVE_INFINITY;
             }
             beagle.setCategoryRates(categoryRates);
+            // TODO Try beagle.setCategoryWeights() here
+            double[] categoryWeights = this.siteRateModel.getCategoryProportions();
+            // these could be set only when they change but store/restore would need to be considered
+            beagle.setCategoryWeights(0, categoryWeights); // TODO move
+        }
+
+        if (updateRootFrequency) {
+            double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
+            beagle.setStateFrequencies(0, frequencies); // TODO make lazy?
         }
 
         if (branchUpdateCount > 0) {
@@ -653,6 +841,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     branchLengths,
                     branchUpdateCount,
                     flip);
+        }
+
+        if (COUNT_CALCULATIONS) {
+            totalMatrixUpdateCount += branchUpdateCount;
         }
 
         if (flip) {
@@ -668,6 +860,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             int nodeNum = op.getNodeNumber();
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+
+            if (!isRestored && !partialBufferHelper.isSafeUpdate(nodeNum) && !recomputeScaleFactors) {
+                System.err.println("Stored partial should not be updated!");
+            }
 
             if (useScaleFactors) {
                 // get the index of this scaling buffer
@@ -707,12 +903,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
+        if (COUNT_CALCULATIONS) {
+            totalEvaluationCount += 1;
+            totalPartialsUpdateCount += operationCount;
+        }
+
         int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
-
-        double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-
-        // This should probably explicitly be the state frequencies for the root node...
-        double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
 
         int cumulateScaleBufferIndex = Beagle.NONE;
 
@@ -728,10 +924,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } else if (useAutoScaling) {
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
-
-        // these could be set only when they change but store/restore would need to be considered
-        beagle.setCategoryWeights(0, categoryWeights);
-        beagle.setStateFrequencies(0, frequencies);
 
         double[] sumLogLikelihoods = new double[1];
 
@@ -769,7 +961,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                         if (rescalingMessageCount > 0) {
                             Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown; " + getId() + ").");
                         } else {
-                            Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            if (getId() != null) {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling... (" + getId() + ")");
+                            } else {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                            }
                         }
                     }
                     rescalingMessageCount += 1;
@@ -789,7 +985,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             // next step
             flip = false;
             underflowHandling = 0;
-            throw new LikelihoodUnderflowException();
+
+            if (USE_CACHED_EXCEPTION) {
+                if (cachedException == null) {
+                    cachedException = new LikelihoodUnderflowException();
+                }
+                throw cachedException;
+            } else {
+                throw new LikelihoodUnderflowException();
+            }
 
         } else {
 
@@ -801,6 +1005,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         updateSubstitutionModel = false;
         updateSiteModel = false;
+        updateRootFrequency = false;
         //********************************************************************
 
         // If these are needed...
@@ -810,6 +1015,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         //beagle.getSiteLogLikelihoods(patternLogLikelihoods);
 
         return logL;
+    }
+
+    public double[] getSiteLogLikelihoods(){
+        double[] patternLogLikelihoods = new double[patternCount];
+        beagle.getSiteLogLikelihoods(patternLogLikelihoods);
+        return patternLogLikelihoods;
     }
 
     public void getPartials(int number, double[] partials) {
@@ -822,10 +1033,28 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }
 
+    private void setAllPatternWeights(Parameter siteAssignInd){
+        // First, set all patternWeights to 0.0
+        Arrays.fill(patternWeights, 0.0);
+        for(int i = 0; i < siteAssignInd.getSize(); i++){
+            int cat = (int) siteAssignInd.getParameterValue(i);
+            if((int) partitionCat.getParameterValue(0) == cat) {
+                int pwIndex = patternList.getPatternIndex(i);
+                patternWeights[pwIndex] = patternWeights[pwIndex] + 1;
+            }
+        }
+    }
+
+    public int getPartitionCat(){
+        return (int) partitionCat.getParameterValue(0);
+    };
+
     @Override
     public void makeDirty() {
         updateSiteModel = true;
         updateSubstitutionModel = true;
+        updateRootFrequency = true;
+        fireModelChanged();
     }
 
     @Override
@@ -834,6 +1063,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             updateSiteModel = true;
         } else if (model == branchModel) {
             updateSubstitutionModel = true;
+            updateRootFrequency = true;
         }
 
         // Tell TreeDataLikelihood to update all nodes
@@ -842,7 +1072,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
+        if(variable == siteAssignInd) {
+            setAllPatternWeights(siteAssignInd);
+            beagle.setPatternWeights(patternWeights);
+        }
     }
 
     /**
@@ -850,6 +1083,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      */
     @Override
     public void storeState() {
+        if(siteAssignInd != null) {
+            System.arraycopy(patternWeights, 0, storedPatternWeights, 0, patternWeights.length);
+        }
+
         partialBufferHelper.storeState();
         evolutionaryProcessDelegate.storeState();
 
@@ -861,6 +1098,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         // turn on double buffering flipping (may have been turned off to enable a rescale)
         flip = true;
+
+        isRestored = false;
     }
 
     /**
@@ -868,7 +1107,18 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      */
     @Override
     public void restoreState() {
+
+        if (siteAssignInd != null) {
+            //updateSiteModel = true;
+            updateSubstitutionModel = true;
+            // Swap pointers
+            double[] temp = patternWeights;
+            patternWeights = storedPatternWeights;
+            storedPatternWeights = temp;
+        }
+
         updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
+        updateRootFrequency = true;
 
         partialBufferHelper.restoreState();
         evolutionaryProcessDelegate.restoreState();
@@ -881,12 +1131,22 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 //            rescalingCount = storedRescalingCount;
         }
 
+        isRestored = true;
+
     }
 
     @Override
     public void setCallback(TreeDataLikelihood treeDataLikelihood) {
-        // Callback not necessary
+        // Do nothing
     }
+
+    @Override
+    public void setComputePostOrderStatisticsOnly(boolean computePostOrderStatistic) {
+        // Do nothing
+    }
+
+    @Override
+    public boolean providesPostOrderStatisticsOnly() { return false; }
 
     @Override
     public int vectorizeNodeOperations(List<ProcessOnTreeDelegate.NodeOperation> nodeOperations, int[] operations) {
@@ -895,6 +1155,61 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     protected void acceptState() {
+    }
+
+    public final boolean isUsePreOrder(){
+        return this.settings.usePreOrder;
+    }
+
+    public final EvolutionaryProcessDelegate getEvolutionaryProcessDelegate() {
+        return this.evolutionaryProcessDelegate;
+    }
+
+    public final SiteRateModel getSiteRateModel(){
+        return this.siteRateModel;
+    }
+
+    public final int getPartialBufferIndex(int nodeNumber) {
+        return partialBufferHelper.getOffsetIndex(nodeNumber);
+    }
+
+    public final int getScaleBufferCount() {
+        return scaleBufferHelper.getBufferCount();
+    }
+
+    public final int getPartialBufferCount() {
+        return partialBufferHelper.getBufferCount();
+    }
+
+    public PreOrderSettings getPreOrderSettings() {
+        return settings;
+    }
+
+
+    public boolean getPreferGPU() {
+        return prefersGPU;
+    }
+
+
+    public boolean getUseAmbiguities() {
+        return useAmbiguities;
+    }
+
+    public PartialsRescalingScheme getRescalingScheme() {
+        return rescalingScheme;
+    }
+
+    public boolean getDelayRescalingUntilUnderflow() {
+        return delayRescalingUntilUnderflow;
+    }
+    // **************************************************************
+    // INSTANCE PROFILEABLE
+    // **************************************************************
+
+    @Override
+    public long getTotalCalculationCount() {
+        // Can only return one count at the moment so return the number of partials updated
+        return totalPartialsUpdateCount;
     }
 
     // **************************************************************
@@ -908,12 +1223,41 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     @Override
     public String getDescription() {
-        return "Using BEAGLE likelihood calculation library";
+        return "BEAGLE likelihood calculation library";
     }
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
+        return Collections.singletonList(CommonCitations.AYRES_2019_BEAGLE);
+    }
+
+    private void releaseBeagle() throws Throwable {
+        if (beagle != null && releaseSingleton) {
+            beagle.finalize();
+            releaseSingleton = false;
+        }
+    }
+
+    public static void releaseBeagleDataLikelihoodDelegate(TreeDataLikelihood treeDataLikelihood) throws Throwable {
+        DataLikelihoodDelegate likelihoodDelegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        if (likelihoodDelegate instanceof BeagleDataLikelihoodDelegate) {
+            BeagleDataLikelihoodDelegate delegate = (BeagleDataLikelihoodDelegate) likelihoodDelegate;
+            delegate.releaseBeagle();
+        }
+    }
+
+    public static void releaseAllBeagleInstances() throws Throwable {
+        for (Likelihood likelihood : dr.inference.model.Likelihood.FULL_LIKELIHOOD_SET) {
+            if (likelihood instanceof TreeDataLikelihood) {
+                releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood);
+            } else if (likelihood instanceof CompoundLikelihood) {
+                for (Likelihood likelihood2: ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                    if (likelihood2 instanceof TreeDataLikelihood) {
+                        releaseBeagleDataLikelihoodDelegate((TreeDataLikelihood) likelihood2);
+                    }
+                }
+            }
+        }
     }
 
     // **************************************************************
@@ -948,6 +1292,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
 
+    private int threadCount = -1;
+    private long instanceFlags;
+
     private boolean firstRescaleAttempt = false;
     private int rescalingMessageCount = 0;
 
@@ -967,7 +1314,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     /**
      * the pattern weights
      */
-    private final double[] patternWeights;
+    private double[] patternWeights;
+    private double[] storedPatternWeights;
+    private Parameter siteAssignInd;
+    private Parameter partitionCat;
+
+    /**
+     * if the chain is already restored
+     */
+    private boolean isRestored;
 
     /**
      * the number of patterns
@@ -1030,8 +1385,42 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private boolean updateSiteModel;
 
     /**
+     * Flag to specify that the root frequencies has changed
+     */
+    private boolean updateRootFrequency;
+
+    /**
      * Flag to take into account the first likelihood evaluation when initiating the MCMC chain
      */
     private boolean initialEvaluation = true;
 
+    /**
+     * PreOrder related settings
+     */
+    private PreOrderSettings settings;
+
+    private boolean useAmbiguities;
+    private boolean prefersGPU;
+    private static boolean USE_CACHED_EXCEPTION = true;
+    private LikelihoodUnderflowException cachedException = null; // new LikelihoodUnderflowException();
+
+    @Override
+    public void setTipStates(int tipNum, int[] states) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public void getTipStates(int tipNum, int[] states) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getPatternCount() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public int getTipCount() {
+        return tipCount;
+    }
 }

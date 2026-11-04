@@ -1,7 +1,8 @@
 /*
  * NewickImporter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.io;
@@ -37,6 +39,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,7 +47,6 @@ import java.util.Map;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: NewickImporter.java,v 1.20 2005/12/07 11:25:35 rambaut Exp $
  */
 public class NewickImporter extends Importer implements TreeImporter {
     public static final String COMMENT = "comment";
@@ -115,11 +117,33 @@ public class NewickImporter extends Importer implements TreeImporter {
     }
 
     /**
+     * countTrees.
+     * Counts the number of trees in the file without importing them
+     */
+    public int countTrees() throws IOException {
+        boolean done = false;
+        int count = 0;
+
+        do {
+            try {
+                skipUntil("(");
+                skipUntil(";");
+                count++;
+
+            } catch (EOFException e) {
+                done = true;
+            }
+        } while (!done);
+
+        return count;
+    }
+
+    /**
      * importTrees.
      */
-    public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException {
+    public List<Tree> importTrees(TaxonList taxonList) throws IOException, ImportException {
         boolean done = false;
-        ArrayList<FlexibleTree> array = new ArrayList<FlexibleTree>();
+        List<Tree> trees = new ArrayList<>();
 
         do {
 
@@ -130,7 +154,7 @@ public class NewickImporter extends Importer implements TreeImporter {
 
                 FlexibleNode root = readInternalNode(taxonList);
                 FlexibleTree tree = new FlexibleTree(root, false, true);
-                array.add(tree);
+                trees.add(tree);
 
                 if (taxonList == null) {
                     taxonList = tree;
@@ -144,9 +168,6 @@ public class NewickImporter extends Importer implements TreeImporter {
                 done = true;
             }
         } while (!done);
-
-        Tree[] trees = new Tree[array.size()];
-        array.toArray(trees);
 
         return trees;
     }
@@ -257,6 +278,9 @@ public class NewickImporter extends Importer implements TreeImporter {
         // If there is a label before the colon, store it:
         try {
             String label = readToken(",():;");
+            if ((char) getLastDelimiter() == ';') {
+                unreadCharacter(';');
+            }
             if (label.length() > 0) {
                 node.setAttribute("label", label);
             }

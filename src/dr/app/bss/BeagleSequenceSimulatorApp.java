@@ -1,7 +1,8 @@
 /*
  * BeagleSequenceSimulatorApp.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.bss;
@@ -39,7 +41,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  * @author Filip Bielejec
- * @version $Id$
  */
 public class BeagleSequenceSimulatorApp {
 
@@ -49,8 +50,8 @@ public class BeagleSequenceSimulatorApp {
 	// Share those if neccessary
 	public static final String SHORT_NAME = "\u03C0BUSS";
 	public static final String LONG_NAME = "Parallel BEAST/BEAGLE Utility for Sequence Simulation";
-	public static final String VERSION = "1.3.8rc";
-	public static final String DATE = "2015";
+	public static final String VERSION = "1.4";
+	public static final String DATE = "2018";
 
 	// Icons
 	private Image beagleSequenceSimulatorImage;
@@ -137,7 +138,7 @@ public class BeagleSequenceSimulatorApp {
 		);
 
 		beagleSequenceSimulatorImage = CreateImage(Utils.BSS_ICON);
-		MainFrame frame = new MainFrame(SHORT_NAME);
+		MainFrame frame = new MainFrame(SHORT_NAME + " " + VERSION);
 		frame.setIconImage(beagleSequenceSimulatorImage);
 		app.setDocumentFrame(frame);
 

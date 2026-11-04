@@ -1,7 +1,8 @@
 /*
  * CompoundParameterParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
@@ -34,6 +36,7 @@ import dr.xml.*;
 public class CompoundParameterParser extends AbstractXMLObjectParser {
 
     public static final String COMPOUND_PARAMETER = "compoundParameter";
+    public static final String DIMENSION = "dim";
 
     public String getParserName() {
         return COMPOUND_PARAMETER;
@@ -43,10 +46,22 @@ public class CompoundParameterParser extends AbstractXMLObjectParser {
 
         CompoundParameter compoundParameter = new CompoundParameter((String) null);
 
+        final int dim = xo.getAttribute(DIMENSION, 0);
+
         for (int i = 0; i < xo.getChildCount(); i++) {
             compoundParameter.addParameter((Parameter) xo.getChild(i));
         }
 
+        if (dim > compoundParameter.getDimension() && compoundParameter.getDimension() == 1) {
+            Parameter singleParameter = compoundParameter.getParameter(0);
+            for (int i = 0; i < dim - 1; i++) {
+                compoundParameter.addParameter(
+                        new Parameter.Default(singleParameter.getId() + String.valueOf(i + 1),
+                        singleParameter.getParameterValue(0),
+                        singleParameter.getBounds().getLowerLimit(0),
+                        singleParameter.getBounds().getUpperLimit(0)));
+            }
+        }
         return compoundParameter;
     }
 

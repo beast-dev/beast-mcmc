@@ -1,7 +1,8 @@
 /*
  * PriorsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.priorspanel;
@@ -55,7 +57,6 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = -2936049032365493416L;
@@ -132,9 +133,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 } else {
                     setForeground(parameter.isLinked ? Color.GRAY : SystemColor.controlText);
                 }
-//                if (parameter.isLinked) {
-//                    setFont(getFont().deriveFont(Font.ITALIC));
-//                }
                 return this;
             }
         };
@@ -193,19 +191,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         messageLabel.setText(getMessage());
 
-        Action classicPriorsAction = new AbstractAction("Use classic priors/operators") {
-            public void actionPerformed(ActionEvent actionEvent) {
-                options.classicOperatorsAndPriors = classicPriorsCheck.isSelected();
-                priorTableModel.fireTableDataChanged();
-                frame.setAllOptions();
-            }
-        };
-
-        classicPriorsCheck = new JCheckBox(classicPriorsAction);
-        classicPriorsCheck.setVisible(true);
-        classicPriorsCheck.setEnabled(true);
-        classicPriorsCheck.setToolTipText("<html>Whether to use the older (v1.8.4) prior and operator combinations.</html>");
-
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
@@ -247,8 +232,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             toolBar2.setBorder(BorderFactory.createEmptyBorder());
             toolBar2.setLayout(new BoxLayout(toolBar2, BoxLayout.X_AXIS));
 
-            PanelUtils.setupComponent(classicPriorsCheck);
-            toolBar2.add(classicPriorsCheck);
+//            PanelUtils.setupComponent(classicPriorsCheck);
+//            toolBar2.add(classicPriorsCheck);
 
             add(toolBar2, BorderLayout.NORTH);
         } else {
@@ -523,8 +508,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         while (!done) {
             int result = hierarchicalPriorDialog.showDialog(paramList);
             if (result == JOptionPane.OK_OPTION && hierarchicalPriorDialog.validateModelName()) {
-                hierarchicalPriorDialog.getArguments();
-                done = true;
+                done = hierarchicalPriorDialog.getArguments();
             }
             if (result == JOptionPane.CANCEL_OPTION) {
                 return;
@@ -663,8 +647,11 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (result == JOptionPane.OK_OPTION) {
             // Only do this if OK button is pressed (not cancel):
 
-            // If this was part of a linked parameter, remove it from that...
-            removeFromJointPrior(parameter);
+            // If this was part of a linked parameter or a hierarchical model, take it out of that first;
+            // the user can still decline, which leaves the prior as it was.
+            if (!removeFromJointPrior(parameter)) {
+                return;
+            }
 
             // move to individual Dialog, otherwise it will change if Cancel
             priorDialog.getArguments(parameter);
@@ -679,11 +666,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
                 if (options.treeModelOptions.isNodeCalibrated(parameter)) {
                     List<PartitionTreeModel> treeModels;
-                    if (options.useStarBEAST) {
-                        treeModels = options.getPartitionTreeModels();
-                    } else {
-                        treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
-                    }
+                    treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
 
                     for (PartitionTreeModel treeModel : treeModels) {
                         treeModel.setNodeCalibrations(true);
@@ -697,27 +680,30 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    private void removeFromJointPrior(Parameter parameter) {
+    /**
+     * Takes the parameter out of any linked parameter and of any hierarchical model it belongs to, asking
+     * the user before the latter.
+     *
+     * @return false if the user declined, in which case nothing has been changed
+     */
+    private boolean removeFromJointPrior(Parameter parameter) {
+        // the hierarchical model is the one the user is asked about, so deal with it first
+        HierarchicalModelComponentOptions hmco = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+        if (hmco.isHierarchicalParameter(parameter)) {
+            if (hmco.removeParameter(this, parameter, true) == JOptionPane.NO_OPTION) {
+                return false;
+            }
+        }
+
         LinkedParameterComponentOptions comp = (LinkedParameterComponentOptions)
                 options.getComponentOptions(LinkedParameterComponentOptions.class);
-
         LinkedParameter linkedParameter = comp.getLinkedParameter(parameter);
         if (linkedParameter != null) {
             comp.removeDependentParameter(parameter);
         }
 
-        // Possibly remove parameter from its HPM
-        HierarchicalModelComponentOptions hmco = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
-        if (hmco.isHierarchicalParameter(parameter)) {
-            if (hmco.removeParameter(this, parameter, true) == JOptionPane.NO_OPTION) {
-                // Bail out
-                System.err.println("Bailing out of modification");
-                return;
-            }
-            System.err.println("Parameter removed from an HPM");
-        }
-
+        return true;
     }
 
     public void getOptions(BeautiOptions options) {

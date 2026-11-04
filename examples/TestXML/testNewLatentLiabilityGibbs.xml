@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="taxa1">
+            <date value="2003.5" direction="forwards" units="years"/>
+            <attr name="latent">-1. -2.0</attr>
+        </taxon>
+        <taxon id="taxa2">
+            <date value="2003.5" direction="forwards" units="years"/>
+            <attr name="latent">1. 1.0</attr>
+        </taxon>
+    </taxa>
+    -->
+    <alignment id="alignment" dataType="binary">
+        <sequence>
+            <taxon idref="taxa1"/>q
+            00
+        </sequence>
+        <sequence>
+            <taxon idref="taxa2"/>
+            11
+        </sequence>
+
+    </alignment>
+
+    <patterns id="patterns" from="1" unique="false" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="startingTree">(taxa1:1,taxa2:1);
+    </newick>
+    <!-- Generate a tree model                                                   -->
+    <treeModel id="treeModel">
+        <coalescentTree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2" name="latent"
+                    asMatrix="true">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+
+    </treeModel>
+
+    <matrixParameter id="precision">
+        <parameter id="precision.col1" value="1.00 0.1 "/>
+        <parameter id="precision.col2" value="0.1 1.00 "/>
+
+    </matrixParameter>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter idref="precision"/>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <multivariateWishartPrior id="precisionPrior" df="2">
+        <scaleMatrix>
+            <matrixParameter>
+                <parameter value="1.0 0.0 "/>
+                <parameter value="0.0 1.0 "/>
+
+            </matrixParameter>
+        </scaleMatrix>
+        <data>
+            <parameter idref="precision"/>
+        </data>
+    </multivariateWishartPrior>
+
+    <traitDataLikelihood id="scalarLikelihood" traitName="latent" forceFullPrecision="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+
+        <missingIndicator latentFrom="1" latentTo="2">
+            <parameter id="mask"/>
+        </missingIndicator>
+    </traitDataLikelihood>
+
+    <maskedParameter id="latentParameters">
+        <mask>
+            <parameter idref="mask"/>
+        </mask>
+        <parameter idref="leafTraits"/>
+    </maskedParameter>
+
+    <compoundParameter id="threshold">
+        <parameter value="1"/>
+    </compoundParameter>
+    <orderedLatentLiabilityLikelihood id="liabilityLikelihood" NData="1" NTraits="2">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <traitDataLikelihood idref="scalarLikelihood"/>
+
+        <tipTrait>
+            <parameter idref="leafTraits"/>
+        </tipTrait>
+        <threshold>
+            <parameter idref="threshold"/>
+        </threshold>
+        <numClasses>
+            <parameter value="2 2"/>
+        </numClasses>
+    </orderedLatentLiabilityLikelihood>
+
+
+    <report>
+        <maskedParameter idref="latentParameters"/>
+    </report>
+    <maskedParameter id="traceLatent" from="1" to="2">
+        <parameter idref="leafTraits"/>
+    </maskedParameter>
+    <operators id="operators" optimizationSchedule="log">
+
+        <newLatentLiabilityGibbsOperator weight="5">
+            <traitDataLikelihood idref="scalarLikelihood"/>
+            <OrderedLatentLiabilityLikelihood idref="liabilityLikelihood"/>
+            <CompoundParameter idref="leafTraits"/>
+        </newLatentLiabilityGibbsOperator>
+
+    </operators>
+    <mcmc id="mcmc" chainLength="1000000" autoOptimize="false" autoOptimizeDelay="500">
+        <posterior id="posterior">
+            <prior id="prior">
+                <multivariateWishartPrior idref="precisionPrior"/>
+            </prior>
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="scalarLikelihood"/>
+                <latentLiabilityLikelihood idref="liabilityLikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="100">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+            <column label="latentTraits" dp="4" width="12">
+                <maskedParameter idref="traceLatent"/>
+            </column>
+        </log>
+        <log id="fileLog1" logEvery="1000" fileName="testNewGibbs2traits.log">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="likelihood"/>
+            <matrixParameter idref="precision"/>
+            <parameter idref="leafTraits"/>
+        </log>
+    </mcmc>
+    <report>
+        <property name="timer">
+            <mcmc idref="mcmc"/>
+        </property>
+    </report>
+</beast>

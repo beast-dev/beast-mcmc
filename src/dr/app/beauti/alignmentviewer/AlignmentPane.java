@@ -1,7 +1,8 @@
 /*
  * AlignmentPane.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.alignmentviewer;
@@ -30,7 +32,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: AlignmentPane.java,v 1.2 2005/11/11 16:40:41 rambaut Exp $
  */
 public class AlignmentPane extends JComponent implements Scrollable {
 	private final TaxonPane taxonPane;
@@ -158,17 +159,6 @@ public class AlignmentPane extends JComponent implements Scrollable {
         }
 
         int x = x1;
-//        if (columnDecorator != null) {
-//            for (int col = col1; col <= col2; col++) {
-//                Paint columnBackground = columnDecorator.getColumnBackground(col);
-//                if (columnBackground != null) {
-//                    g2.setPaint(columnBackground);
-//                    Rectangle rect = new Rectangle(x, y1, columnWidth, y2 - y1);
-//                    g2.fill(rect);
-//                }
-//                x += columnWidth;
-//            }
-//        }
 
         y = y1;
         for (int row = row1; row <= row2; row++) {

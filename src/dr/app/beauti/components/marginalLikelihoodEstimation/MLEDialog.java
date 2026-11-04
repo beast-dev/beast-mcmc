@@ -1,7 +1,8 @@
 /*
  * MLEDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
@@ -87,7 +89,7 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.pathSteps = pathStepsField.getValue();
+                options.pathSteps = pathStepsField.getValue(options.pathSteps);
             }
         });
 
@@ -103,7 +105,7 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleChainLength = chainLengthField.getValue();
+                options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
             }
         });
 
@@ -121,7 +123,7 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleLogEvery = logEveryField.getValue();
+                options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
             }
         });
 
@@ -233,6 +235,9 @@ public class MLEDialog {
 
         dialog.setVisible(true);
 
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
+
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
         if (value != null && value != -1) {
@@ -277,9 +282,9 @@ public class MLEDialog {
     public void getOptions(MarginalLikelihoodEstimationOptions options) {
         //this.options = options;
 
-        options.pathSteps = pathStepsField.getValue();
-        options.mleChainLength = chainLengthField.getValue();
-        options.mleLogEvery = logEveryField.getValue();
+        options.pathSteps = pathStepsField.getValue(options.pathSteps);
+        options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
+        options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
 
         options.printOperatorAnalysis = operatorAnalysis.isSelected();
 

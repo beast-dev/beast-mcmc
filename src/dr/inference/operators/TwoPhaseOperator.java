@@ -1,7 +1,8 @@
 /*
  * TwoPhaseOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -36,20 +38,20 @@ import dr.inference.model.Parameter;
  * @author Guy Baele
  */
 
-public class TwoPhaseOperator extends AbstractCoercableOperator {
+public class TwoPhaseOperator extends AbstractAdaptableOperator {
 
     public static final boolean DEBUG = false;
     public static final boolean PROVIDE_SAMPLES = false;
 
-    /*private AbstractCoercableOperator[] phaseOneOperators;
-    private AbstractCoercableOperator[] phaseTwoOperators;
+    /*private AbstractAdaptableOperator[] phaseOneOperators;
+    private AbstractAdaptableOperator[] phaseTwoOperators;
 
     double phaseOneTotalWeight, phaseTwoTotalWeight;*/
 
-    private List<AbstractCoercableOperator> phaseOneOperators;
+    private List<AbstractAdaptableOperator> phaseOneOperators;
     private List<AdaptableVarianceMultivariateNormalOperator> phaseTwoOperators;
-    //private List<AbstractCoercableOperator> phaseTwoOperators;
-    private List<AbstractCoercableOperator> currentOperators;
+    //private List<AbstractAdaptableOperator> phaseTwoOperators;
+    private List<AbstractAdaptableOperator> currentOperators;
 
     private SimpleOperatorSchedule phaseOneScheduler;
     private SimpleOperatorSchedule phaseTwoScheduler;
@@ -65,7 +67,7 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
 
     private boolean switchOperators;
 
-    public TwoPhaseOperator(List<AbstractCoercableOperator> phaseOneOperators, List<AdaptableVarianceMultivariateNormalOperator> phaseTwoOperators, List<Parameter> parameters, int initial, int burnin, double weight, CoercionMode mode) {
+    public TwoPhaseOperator(List<AbstractAdaptableOperator> phaseOneOperators, List<AdaptableVarianceMultivariateNormalOperator> phaseTwoOperators, List<Parameter> parameters, int initial, int burnin, double weight, AdaptationMode mode) {
 
         super(mode);
 
@@ -192,7 +194,7 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
             }
             currentOperatorScheduler = phaseTwoScheduler;
             //TODO: fix Java type safety problem below
-            currentOperators = (List<AbstractCoercableOperator>)(List<?>) phaseTwoOperators;
+            currentOperators = (List<AbstractAdaptableOperator>)(List<?>) phaseTwoOperators;
             //an extra draw is needed here
             currentOperatorIndex = currentOperatorScheduler.getNextOperatorIndex();
 
@@ -245,26 +247,30 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
         currentOperators.get(currentOperatorIndex).reset();
     }*/
 
-    public double getCoercableParameter() {
-        return currentOperators.get(currentOperatorIndex).getCoercableParameter();
+    @Override
+    protected double getAdaptableParameterValue() {
+        return currentOperators.get(currentOperatorIndex).getAdaptableParameter();
     }
 
-    public void setCoercableParameter(double value) {
-        currentOperators.get(currentOperatorIndex).setCoercableParameter(value);
+    @Override
+    public void setAdaptableParameterValue(double value) {
+        currentOperators.get(currentOperatorIndex).setAdaptableParameterValue(value);
     }
 
+    @Override
     public double getRawParameter() {
         return currentOperators.get(currentOperatorIndex).getRawParameter();
     }
 
-    public String getPerformanceSuggestion() {
-        return currentOperators.get(currentOperatorIndex).getPerformanceSuggestion();
+    @Override
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
 
-    @Override
-    public double getTargetAcceptanceProbability() {
-        return currentOperators.get(currentOperatorIndex).getTargetAcceptanceProbability();
-    }
+//    @Override
+//    public double getTargetAcceptanceProbability() {
+//        return currentOperators.get(currentOperatorIndex).getTargetAcceptanceProbability();
+//    }
 
     public String getOperatorName() {
         return "twoPhaseOperator(use at own risk)";

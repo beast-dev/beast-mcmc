@@ -1,7 +1,8 @@
 /*
  * LogNormalDistributionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.NormalDistribution;
@@ -40,10 +39,10 @@ import org.w3c.dom.Element;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: LogNormalDistributionModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class LogNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class LogNormalDistributionModel extends AbstractModel implements
+        ParametricDistributionModel, GradientProvider, HessianProvider, PriorPreconditioningProvider {
 
     public enum Parameterization {
         MU_SIGMA,
@@ -319,7 +318,8 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
     public double logPdf(double x) {
         if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
-        return NormalDistribution.logPdf(Math.log(x - offset), getMu(), getSigma()) - Math.log(x - offset);
+        double lp = NormalDistribution.logPdf(Math.log(x - offset), getMu(), getSigma()) - Math.log(x - offset);
+        return lp;
     }
 
     public double cdf(double x) {
@@ -364,13 +364,79 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         }
     };
 
+    @Override
+    public double getStandardDeviation(int index) {
+        return getStdev();
+    }
+
+    @Override
+    public int getDimension() { return 1; }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object obj) {
+        return getDerivativeLogDensity(obj, DerivativeType.HESSIAN);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        double[] diagonalHessian = getDiagonalHessianLogDensity(x);
+        double[][] result = new double[diagonalHessian.length][diagonalHessian.length];
+        for (int i = 0; i < diagonalHessian.length; i++) {
+            result[i][i] = diagonalHessian[i];
+        }
+        return result;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        return getDerivativeLogDensity(obj, DerivativeType.GRADIENT);
+    }
+
+    private double[] getDerivativeLogDensity(Object obj, DerivativeType derivativeType) {
+
+        double[] x = GradientProvider.toDoubleArray(obj);
+
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            //TODO: add offset back in here?
+//            result[i] = ( NormalDistribution.gradLogPdf(Math.log(x[i]), getMu(), getSigma()) - 1) / x[i];
+            result[i] = derivativeType.getDerivativeLogPdf(x[i], getMu(), getSigma());
+        }
+        return result;
+    }
+
+    private enum DerivativeType {
+        GRADIENT("gradient") {
+            @Override
+            public double getDerivativeLogPdf(double x, double m, double sd) {
+                return ( NormalDistribution.gradLogPdf(Math.log(x), m, sd) - 1.0) / x;
+            }
+        },
+        HESSIAN("hessian") {
+            @Override
+            public double getDerivativeLogPdf(double x, double m, double sd) {
+                final double logX = Math.log(x);
+                return ( NormalDistribution.hessianLogPdf(logX, m, sd) - NormalDistribution.gradLogPdf(logX, m, sd) + 1.0) / (x * x);
+            }
+        };
+
+        private String type;
+
+        DerivativeType(String type) {
+            this.type = type;
+        }
+
+        public abstract double getDerivativeLogPdf(double x, double m, double sd);
+    }
+
     // *****************************************************************
     // Interface DensityModel
     // *****************************************************************
 
     @Override
     public double logPdf(double[] x) {
-        return logPdf(x[0]);
+
+        return logPdf(x[0]); //TODO correct this?
     }
 
     @Override

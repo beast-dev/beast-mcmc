@@ -1,7 +1,8 @@
 /*
  * FastMatrixParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -28,7 +30,6 @@ package dr.inference.model;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,12 +37,17 @@ import java.util.List;
  */
 public class FastMatrixParameter extends CompoundParameter implements MatrixParameterInterface {
 
-    public static final String FAST_MATRIX_PARAMETER = "fastMatrixParameter";
-    public static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
-    public static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
-    public static final String STARTING_VALUE = "startingValue";
+    private static final String FAST_MATRIX_PARAMETER = "fastMatrixParameter";
+    private static final String ROW_DIMENSION = MatrixParameter.ROW_DIMENSION;
+    private static final String COLUMN_DIMENSION = MatrixParameter.COLUMN_DIMENSION;
+    private static final String STARTING_VALUE = "startingValue";
+    private static final String SIGNAL_COMPONENTS = "signalComponents";
 
     public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue) {
+        this(id, rowDimension, colDimension, startingValue, true);
+    }
+
+    public FastMatrixParameter(String id, int rowDimension, int colDimension, double startingValue, boolean signalComponents) {
         super(id);
         singleParameter = new Parameter.Default(rowDimension * colDimension);
         addParameter(singleParameter);
@@ -52,6 +58,66 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         this.colDimension = colDimension;
         DefaultBounds bounds = new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, singleParameter.getDimension());
         addBounds(bounds);
+
+        this.signalComponents = signalComponents;
+    }
+
+    public FastMatrixParameter(String id, List<Parameter> original, boolean signalComponents) {
+        this(id, original.get(0).getDimension(), original.size(), 0.0, signalComponents);
+
+        checkParameterLengths(original);
+
+        setProxyParameterNames(original);
+
+
+        for (int row = 0; row < rowDimension; ++row) {
+            for (int col = 0; col < original.size(); ++col) {
+                setParameterValueQuietly(row, col, original.get(col).getParameterValue(row));
+            }
+        }
+        fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+    }
+
+    @Override
+    public String getDimensionName(int dim) {
+        int pNum = dim / getRowDimension();
+        int index = dim % getRowDimension();
+        String name = getParameter(pNum).getParameterName() + (index + 1);
+        return name;
+    }
+
+    private void checkParameterLengths(List<Parameter> parameters) {
+        final int length = parameters.get(0).getDimension();
+        for (Parameter p : parameters) {
+            if (p.getDimension() != length) {
+                throw new RuntimeException("All columns must be the same length");
+            }
+        }
+    }
+
+    private void setProxyParameterNames(List<Parameter> original) {
+        proxyParameterNames = new ArrayList<String>(original.size());
+
+        for (Parameter p : original) {
+            proxyParameterNames.add(p.getParameterName());
+        }
+    }
+
+    private void setProxyParameterName(String name, int column) {
+        if (proxyParameterNames == null) {
+            proxyParameterNames = new ArrayList<>();
+            for (int i = 0; i < getColumnDimension(); ++i) {
+                proxyParameterNames.add(null);
+            }
+        }
+
+        proxyParameterNames.set(column, name);
+    }
+
+    private List<String> proxyParameterNames;
+
+    private String getProxyParameterName(int column) {
+        return proxyParameterNames != null ? proxyParameterNames.get(column) : null;
     }
 
     public Parameter getParameter(int index) {
@@ -62,6 +128,14 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
             }
         }
         return proxyList.get(index);
+    }
+
+    public void fireParameterChangedEvent() {
+        if (signalComponents) {
+            super.fireParameterChangedEvent();
+        } else {
+            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+        }
     }
 
     class ParameterProxy extends Parameter.Abstract {
@@ -117,8 +191,14 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
 
         @Override
+        public void setId(String name) {
+            matrix.setProxyParameterName(name, column);
+        }
+
+        @Override
         public String getParameterName() {
-            return getId();
+            String proxyName = matrix.getProxyParameterName(column);
+            return proxyName != null ? proxyName : getId();
         }
 
         @Override
@@ -132,7 +212,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         }
 
         @Override
-        public void fireParameterChangedEvent(int index, ChangeType type){
+        public void fireParameterChangedEvent(int index, ChangeType type) {
             matrix.fireParameterChangedEvent(index + column * getDimension(), type);
             super.fireParameterChangedEvent(index, ChangeType.VALUE_CHANGED);
         }
@@ -156,16 +236,6 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     }
 
-    private final int index(int row, int col) {
-        // column-major
-        if(col > getColumnDimension()){
-            throw new RuntimeException("Column " + col + " out of bounds: Compared to " + getColumnDimension() + "maximum size.");
-        }
-        if(row > getRowDimension()){
-            throw new RuntimeException("Row " + row + " out of bounds: Compared to " + getRowDimension() + "maximum size.");
-        }
-        return col * rowDimension + row;
-    }
 
     @Override
     public double getParameterValue(int row, int col) {
@@ -197,6 +267,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     }
 
     @Override
+    public boolean isConstrainedSymmetric() {
+        return false;
+    }
+
+    @Override
     public void setParameterValue(int row, int col, double value) {
         singleParameter.setParameterValue(index(row, col), value);
     }
@@ -222,13 +297,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     @Override
     public double[][] getParameterAsMatrix() {
-        double[][] rtn = new double[getRowDimension()][getColumnDimension()];
-        for (int j = 0; j < getColumnDimension(); ++j) {
-            for (int i = 0; i < getRowDimension(); ++i) {
-                rtn[i][j] = getParameterValue(i, j);
-            }
-        }
-        return rtn;
+        return MatrixParameterInterface.getParameterAsMatrix(this);
     }
 
     @Override
@@ -256,11 +325,11 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         return super.getParameter(0);
     }
 
-    public void addBounds(Bounds<Double> boundary){
+    public void addBounds(Bounds<Double> boundary) {
         singleParameter.addBounds(boundary);
     }
 
-    public Bounds<Double> getBounds(){
+    public Bounds<Double> getBounds() {
         return singleParameter.getBounds();
     }
 
@@ -268,6 +337,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     private final int rowDimension;
     private final int colDimension;
     private final Parameter singleParameter;
+    private final boolean signalComponents;
 
     private List<ParameterProxy> proxyList = null;
 
@@ -280,13 +350,53 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final String name = xo.hasId() ? xo.getId() : null;
-            final double startingValue = xo.hasAttribute(STARTING_VALUE) ? xo.getDoubleAttribute(STARTING_VALUE) : 1;
             final int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
             final int colDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
+            final boolean signalComponents = xo.getAttribute(SIGNAL_COMPONENTS, false);
 
-            FastMatrixParameter matrixParameter = new FastMatrixParameter(name, rowDimension, colDimension, startingValue);
+            List<Parameter> columns = new ArrayList<Parameter>();
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                if (xo.getChild(i) instanceof Parameter) {
+                    columns.add((Parameter) xo.getChild(i));
+                }
+            }
 
-            return matrixParameter;
+            if (columns.size() > 0) {
+                if (columns.get(0).getDimension() != rowDimension || columns.size() != colDimension) {
+                    throw new XMLParseException("Unable to cast matrixParameter to fastMatrixParameter");
+                }
+
+                FastMatrixParameter matrix = new FastMatrixParameter(name, columns, signalComponents);
+                replaceParameterReferences(xo, matrix);
+
+                return matrix;
+            } else {
+
+                final double startingValue = xo.getAttribute(STARTING_VALUE, 1.0);
+                return new FastMatrixParameter(name, rowDimension, colDimension, startingValue, signalComponents);
+
+            }
+        }
+
+        private void replaceParameterReferences(XMLObject xo, FastMatrixParameter matrix) throws XMLParseException {
+            List<XMLObject> children = new ArrayList<XMLObject>();
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                if (xo.getChild(i) instanceof Parameter) {
+                    Object obj = xo.getRawChild(i);
+                    if (obj instanceof Reference) {
+                        throw new XMLParseException("Currently can not use references in constructing a fast matrix parameter");
+                    }
+                    children.add((XMLObject) xo.getRawChild(i));
+                }
+            }
+
+            if (children.size() != matrix.getColumnDimension()) {
+                throw new XMLParseException("Invalid dimensions");
+            }
+
+            for (int i = 0; i < children.size(); ++i) {
+                children.get(i).setNativeObject(matrix.getParameter(i));
+            }
         }
 
         //************************************************************************
@@ -306,6 +416,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
                 AttributeRule.newIntegerRule(ROW_DIMENSION, false),
                 AttributeRule.newIntegerRule(COLUMN_DIMENSION, false),
                 AttributeRule.newDoubleRule(STARTING_VALUE, true),
+                AttributeRule.newBooleanRule(SIGNAL_COMPONENTS, true),
+//                new ElementRule(MatrixParameterInterface.class, true),
         };
 
         public Class getReturnType() {

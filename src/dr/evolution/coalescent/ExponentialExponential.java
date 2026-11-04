@@ -1,7 +1,8 @@
 /*
  * ExponentialExponential.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent;
@@ -54,8 +56,18 @@ public class ExponentialExponential extends ExponentialGrowth {
      */
     public void setAncestralGrowthRate(double r1) { this.r1 = r1; }
 
+	/**
+	 * sets the population size at the transition time
+	 * @param N1 new size
+	 */
+	public void setN1(double N1) {
+		double r = getGrowthRate();
+		double changeTime = getTransitionTime();
+		double N0 = N1 * Math.exp(r * changeTime);
+		setN0(N0);
+	}
 
-    // Implementation of abstract methods
+	// Implementation of abstract methods
 
 	public double getDemographic(double t) {
 		
@@ -70,9 +82,12 @@ public class ExponentialExponential extends ExponentialGrowth {
             return N0*Math.exp(-r * t);
         }
 
-        double N1 = N0 * Math.exp(-r * changeTime);
+//        double N1 = N0 * Math.exp(-r * changeTime);
+//		return N1 * Math.exp(-r1* (t - changeTime));
 
-		return N1 * Math.exp(-r1* (t - changeTime));
+		// Simplify the above to avoid calling exp() twice
+		return N0 * Math.exp(-r * changeTime - r1 * (t - changeTime));
+
 	}
 
      /**

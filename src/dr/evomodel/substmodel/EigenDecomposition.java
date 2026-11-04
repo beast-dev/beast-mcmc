@@ -1,7 +1,8 @@
 /*
  * EigenDecomposition.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -31,9 +33,10 @@ import java.io.Serializable;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @Author Marc A. Suchard
- * @version $Id$
  */
 public class EigenDecomposition implements Serializable {
+
+    protected static final boolean NEW_TRANSPOSE = true;
 
     public EigenDecomposition(double[] evec, double[] ievc, double[] eval) {
         Evec = evec;
@@ -47,6 +50,50 @@ public class EigenDecomposition implements Serializable {
         double[] eval = Eval.clone();
 
         return new EigenDecomposition(evec, ievc, eval);
+    }
+
+    public EigenDecomposition transpose() {
+        // note: exchange e/ivec
+        int dim = (int) Math.sqrt(Ievc.length);
+        double[] evec = Ievc.clone();
+        rescale(evec, Eval, 0.5, dim);
+        transposeInPlace(evec, dim);
+
+        double[] ievc = Evec.clone();
+        transposeInPlace(ievc, dim);
+        rescale(ievc, Eval, 2.0, dim);
+
+        double[] eval = Eval.clone();
+        return new EigenDecomposition(evec, ievc, eval);
+    }
+
+    protected static void rescale(double[] rowVectors, double[] eval, double scalar, int dim) {
+        if (!NEW_TRANSPOSE || eval.length != 2 * dim) {
+            return;
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            if (eval[dim + i] != 0.0) {
+                for (int j = 0; j < dim; ++j) {
+                    rowVectors[i * dim + j] = scalar * rowVectors[i * dim + j];
+                    rowVectors[(i + 1) * dim + j] = -scalar * rowVectors[(i + 1) * dim + j];
+                }
+                ++i;
+            }
+        }
+    }
+
+    public static void transposeInPlace(double[] matrix, int n) {
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int index1 = i * n + j;
+                int index2 = j * n + i;
+
+                double temp = matrix[index1];
+                matrix[index1] = matrix[index2];
+                matrix[index2] = temp;
+            }
+        }
     }
 
     /**
@@ -92,8 +139,8 @@ public class EigenDecomposition implements Serializable {
     }
 
     // Eigenvalues, eigenvectors, and inverse eigenvectors
-    private final double[] Evec;
-    private final double[] Ievc;
-    private final double[] Eval;
-    private double normalization = 1.0;
+    protected final double[] Evec;
+    protected final double[] Ievc;
+    protected final double[] Eval;
+    protected double normalization = 1.0;
 }

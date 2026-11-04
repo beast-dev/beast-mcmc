@@ -1,7 +1,8 @@
 /*
  * TreeTraitLogger.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood.utilities;
@@ -28,13 +30,18 @@ package dr.evomodel.treelikelihood.utilities;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.xml.Report;
 import dr.xml.Reportable;
 
+import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A utility class to format traits on a tree in a LogColumn-based file.  This class takes an array of TraitProvider
@@ -46,14 +53,27 @@ import java.util.List;
 public class TreeTraitLogger implements Loggable, Reportable {
 
     public TreeTraitLogger(Tree tree, TreeTrait[] traits) {
-        this(tree, traits, NodeRestriction.ALL);
+        this(tree, traits, NodeRestriction.ALL, false);
     }
 
     public TreeTraitLogger(Tree tree,
                            TreeTrait[] traits,
-                           NodeRestriction nodeRestriction) {
+                           NodeRestriction nodeRestriction,
+                           boolean taxonNameExplicit) {
         this.tree = tree;
         this.nodeRestriction = nodeRestriction;
+        this.taxonNameExplicit = taxonNameExplicit;
+        this.leafSet = null;
+        addTraits(traits);
+    }
+
+    public TreeTraitLogger(Tree tree,
+                           TreeTrait[] traits,
+                           TaxonList taxonList) throws TreeUtils.MissingTaxonException {
+        this.tree = tree;
+        this.nodeRestriction = NodeRestriction.ALL;
+        this.taxonNameExplicit = false;
+        this.leafSet = TreeUtils.getLeavesForTaxa(tree, taxonList);
         addTraits(traits);
     }
 
@@ -62,9 +82,7 @@ public class TreeTraitLogger implements Loggable, Reportable {
             treeTraits = new ArrayList<TreeTrait>();
         }
 
-        for (TreeTrait trait : traits) {
-            treeTraits.add(trait);
-        }
+        treeTraits.addAll(Arrays.asList(traits));
     }
 
     public LogColumn[] getColumns() {
@@ -73,7 +91,22 @@ public class TreeTraitLogger implements Loggable, Reportable {
 
         for (final TreeTrait trait : treeTraits) {
 
-            if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
+            if (leafSet != null) {
+                LogColumn column = new LogColumn.Abstract(trait.getTraitName()) {
+                    @Override
+                    protected String getFormattedValue() {
+                        NodeRef node = TreeUtils.getCommonAncestorNode(tree, leafSet);
+                        if (node != null) {
+                            return trait.getTraitString(tree, node);
+                        } else {
+                            return "-";
+                        }
+                    }
+                };
+
+                columns.add(column);
+
+            } else if (trait.getIntent() == TreeTrait.Intent.WHOLE_TREE) {
                 LogColumn column = new LogColumn.Abstract(trait.getTraitName()) {
                     @Override
                     protected String getFormattedValue() {
@@ -88,6 +121,12 @@ public class TreeTraitLogger implements Loggable, Reportable {
                 for (int i = nodeRestriction.begin(tree); i < nodeRestriction.end(tree); ++i) {
                     final NodeRef node = tree.getNode(i);
 
+                    String name = null;
+                    if (taxonNameExplicit) {
+                        Taxon taxon = tree.getNodeTaxon(node);
+                        name = (taxon != null) ? taxon.getId() : null;
+                    }
+
                     if (!tree.isRoot(node) || trait.getIntent() == TreeTrait.Intent.NODE) {
 
                         if (trait instanceof TreeTrait.DA) {
@@ -97,7 +136,9 @@ public class TreeTraitLogger implements Loggable, Reportable {
 
                                 final int idx = j;
                                 LogColumn column = new LogColumn.Abstract(trait.getTraitName()
-                                        + "." + (i + 1) + "." + (j + 1)) {
+                                        + "." +
+                                        (name != null ? name : i + 1)
+                                        + "." + (j + 1)) {
                                     @Override
                                     protected String getFormattedValue() {
                                         double[] x = (double[]) trait.getTrait(tree, node);
@@ -131,6 +172,8 @@ public class TreeTraitLogger implements Loggable, Reportable {
     private final Tree tree;
     private List<TreeTrait> treeTraits;
     private final NodeRestriction nodeRestriction;
+    private final boolean taxonNameExplicit;
+    private final Set<String> leafSet;
 
     @Override
     public String getReport() {
@@ -156,6 +199,15 @@ public class TreeTraitLogger implements Loggable, Reportable {
         INTERNAL {
             int begin(Tree tree) { return tree.getExternalNodeCount(); }
             int end(Tree tree) { return tree.getNodeCount(); }
+        },
+        ROOT {
+            int begin(Tree tree) {
+
+                assert (tree.getNode(tree.getRoot().getNumber()) == tree.getRoot());
+
+                return tree.getRoot().getNumber();
+            }
+            int end(Tree tree) { return tree.getRoot().getNumber() + 1; }
         };
 
         abstract int begin(Tree tree);
@@ -166,7 +218,9 @@ public class TreeTraitLogger implements Loggable, Reportable {
              if (lower.compareTo("external") == 0) {
                  return EXTERNAL;
              } else if (lower.compareTo("internal") == 0) {
-                return INTERNAL;
+                 return INTERNAL;
+             } else if (lower.compareTo("root") == 0) {
+                 return ROOT;
             } else {
                  return ALL;
             }

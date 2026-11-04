@@ -1,0 +1,95 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testMCMC.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the MCMC engine -->
+
+<beast>
+
+    <compoundSymmetricMatrix id="precisionMatrix" asCorrelation="true" isCholesky="true">
+        <diagonal>
+            <parameter id="precision.diagonal" value="1 1" lower="0 0"/>
+        </diagonal>
+        <offDiagonal>
+            <parameter id="precision.offDiagonal" value="0"/>
+        </offDiagonal>
+    </compoundSymmetricMatrix>
+
+	<operators id="operators.randomWalk" optimizationSchedule="log">
+        <randomWalkOperator windowSize="0.1" weight="20" boundaryCondition="log">
+            <parameter idref="precision.diagonal"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="0.1" weight="20">
+            <parameter idref="precision.offDiagonal"/>
+            <LKJTransform dimension="2"/>
+        </randomWalkOperator>
+	</operators>
+
+	<mcmc id="mcmc.randomWalk" chainLength="100000000" autoOptimize="true">
+        <posterior id="posterior.randomWalk">
+        	<dummyLikelihood id="likelihood.randomWalk">
+                <parameter idref="precisionMatrix"/>
+            </dummyLikelihood>
+
+            <prior id="prior.randomWalk">
+                <!-- eta = (nu - p + 1) / 2 -->
+                <LKJCorrelationPrior id="precision.offDiagonal.prior" shapeParameter="9.5" dimension="2">
+                    <data>
+                        <parameter idref="precision.offDiagonal"/>
+                    </data>
+                </LKJCorrelationPrior>
+                <!-- shape = nu / 2 (chi squared)-->
+                <gammaPrior id="precision.diagonal.prior" shape="10" scale="2">
+                    <parameter idref="precision.diagonal"/>
+                </gammaPrior>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.randomWalk"/>
+
+		<log logEvery="100">
+			<column label="posterior.randomWalk" dp="4" width="12">
+				<likelihood idref="likelihood.randomWalk"/>
+                <prior idref="prior.randomWalk"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="precisionMatrix"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testPrecisionWishartLKJDistribution.log">
+			<posterior idref="posterior.randomWalk"/>
+			<prior idref="prior.randomWalk"/>
+			<likelihood idref="likelihood.randomWalk"/>
+            <matrixParameter idref="precisionMatrix"/>
+            <parameter idref="precision.diagonal"/>
+            <parameter idref="precision.offDiagonal"/>
+		</log>
+	</mcmc>
+
+</beast>
+
+<!--
+# Read log 
+dat <- read_log(file = "testPrecisionWishartLKJDistribution.log", burning = 0)
+dat <- dat[, grep("state|precisionMatrix", colnames(dat))]
+
+# Get observed moments
+means <- get_mean(dat)
+vars <- get_var(dat)
+
+# Get theoretical moments (uniform on [a, b])
+p <- 2
+n <- 20
+S <- matrix(c( 1.0, 0,
+               0, 1.0), 2)
+exp <- n * S
+var <- n * (S^2 + tcrossprod(diag(S)))
+
+all.equal(pull(means, 1), exp[1, 1], tol = 0.001)
+all.equal(pull(means, 2), exp[1, 2], tol = 0.001)
+all.equal(pull(means, 3), exp[2, 1], tol = 0.001)
+all.equal(pull(means, 4), exp[2, 2], tol = 0.001)
+
+all.equal(pull(vars, 1), var[1, 1], tol = 0.01)
+all.equal(pull(vars, 2), var[1, 2], tol = 0.01)
+all.equal(pull(vars, 3), var[2, 1], tol = 0.01)
+all.equal(pull(vars, 4), var[2, 2], tol = 0.01)
+-->

@@ -1,7 +1,8 @@
 /*
  * BEASTGen.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beastgen;
@@ -37,7 +39,7 @@ import java.util.regex.Pattern;
 
 public class BEASTGen {
 
-    public BEASTGen(DateGuesser guesser, Map argumentMap, String treeFileName, String templateFileName, String inputFileName, String outputFileName) throws IOException {
+    public BEASTGen(DateGuesser guesser, Map argumentMap, String treeFileName, String traitsFileName ,String templateFileName, String inputFileName, String outputFileName) throws IOException {
 
         Configuration cfg = new Configuration();
         cfg.setObjectWrapper(new DefaultObjectWrapper());
@@ -47,7 +49,7 @@ public class BEASTGen {
 
         Map root = null;
         try {
-            root = constructDataModel(inputFileName, treeFileName, guesser);
+            root = constructDataModel(inputFileName, treeFileName, traitsFileName, guesser);
         } catch (Importer.ImportException ie) {
             System.err.println("Error importing file: " + ie.getMessage());
             System.exit(1);
@@ -69,15 +71,15 @@ public class BEASTGen {
         }
     }
 
-    private Map constructDataModel(String inputFileName, String treeFileName, DateGuesser guesser) throws IOException, Importer.ImportException {
-        DataModelImporter importer = new DataModelImporter(guesser);
+    private Map constructDataModel(String inputFileName, String treeFileName, String traitsFileName,DateGuesser guesser) throws IOException, Importer.ImportException {
+            DataModelImporter importer = new DataModelImporter(guesser,traitsFileName);
+
 
         Map root = importer.importFromFile(new File(inputFileName));
 
         if (treeFileName != null) {
             importer.importFromTreeFile(treeFileName, root);
         }
-
         return root;
     }
 
@@ -115,15 +117,16 @@ public class BEASTGen {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption("date_order", "The order of the date field (negative numbers from last)"),
-                        new Arguments.StringOption("date_prefix", "prefix", "A string that is the prefix to the date field"),
-                        new Arguments.StringOption("date_regex", "regex", "A string that gives the regular expression to match the date"),
-                        new Arguments.StringOption("date_format", "format", "A string that gives the date format for parsing"),
-                        new Arguments.Option("date_precision", "Specifies the date is a variable precision yyyy-MM-dd format"),
-                        new Arguments.StringOption("tree", "tree-file-name", "Read a tree from a file"),
-                        new Arguments.StringOption("D", "\"key=value,key=value...\"", "Properties for exchange in templates"),
-                        new Arguments.Option("version", "Print the version and credits and stop"),
-                        new Arguments.Option("help", "Print this information and stop"),
+                        new Arguments.IntegerOption("date_order", "do", "The order of the date field (negative numbers from last)"),
+                        new Arguments.StringOption("date_prefix", "dp", "prefix", "A string that is the prefix to the date field"),
+                        new Arguments.StringOption("date_regex", "dr", "regex", "A string that gives the regular expression to match the date"),
+                        new Arguments.StringOption("date_format", "f", "format", "A string that gives the date format for parsing"),
+                        new Arguments.Option("date_precision", "p", "Specifies the date is a variable precision yyyy-MM-dd format"),
+                        new Arguments.StringOption("tree", "tf", "tree-file-name", "Read a tree from a file"),
+                        new Arguments.StringOption("traits", "t", "trait-file-name", "Assign traits to each taxon from a tsv file with headers."),
+                        new Arguments.StringOption("D", "D","\"key=value,key=value...\"", "Properties for exchange in templates"),
+                        new Arguments.Option("version", "v", "Print the version and credits and stop"),
+                        new Arguments.Option("help", "h", "Print this information and stop"),
                 });
 
 
@@ -195,6 +198,11 @@ public class BEASTGen {
             treeFileName = arguments.getStringOption("tree");
         }
 
+        String traitsFileName=null;
+        if(arguments.hasOption("traits")){
+            traitsFileName=arguments.getStringOption("traits");
+        }
+
 
         Map argumentMap = new HashMap();
 
@@ -244,7 +252,7 @@ public class BEASTGen {
         }
 
         try {
-            new BEASTGen(guesser, argumentMap, treeFileName, args2[0], args2[1], (args2.length == 3 ? args2[2] : null));
+            new BEASTGen(guesser, argumentMap, treeFileName, traitsFileName,args2[0], args2[1], (args2.length == 3 ? args2[2] : null));
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);

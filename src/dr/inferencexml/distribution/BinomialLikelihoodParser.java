@@ -1,7 +1,8 @@
 /*
  * BinomialLikelihoodParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.distribution;
@@ -76,10 +78,16 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
         } else {
             trialsParam = new Parameter.Default(1.0);
         }
-        
-        if (trialsParam.getDimension() <= 1) {
-            trialsParam.setDimension(countsParam.getDimension());
+
+        if (trialsParam.getDimension()  <= 1) {
+            try {
+                trialsParam.setDimension(countsParam.getDimension());
+            } catch (UnsupportedOperationException uoe) {
+                // This is a parameter that cannot have its dimension changed (i.e., a CompoundParameter)
+                // Just ignore this exception and the next bit will check if it is OK.
+            }
         }
+
         if (trialsParam.getDimension() != countsParam.getDimension()) {
             throw new XMLParseException("Trials dimension (" + trialsParam.getDimension()
                     + ") must equal counts dimension (" + countsParam.getDimension() + ")");

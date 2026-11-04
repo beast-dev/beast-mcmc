@@ -1,7 +1,8 @@
 /*
  * TraitsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.traitspanel;
@@ -50,10 +52,10 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TraitsPanel extends BeautiPanel implements Exportable {
 
@@ -102,9 +104,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         this.dataPanel = dataPanel;
 
         traitsTableModel = new TraitsTableModel();
-//        TableSorter sorter = new TableSorter(traitsTableModel);
-//        predictorsTable = new JTable(sorter);
-//        sorter.setTableHeader(predictorsTable.getTableHeader());
         traitsTable = new JTable(traitsTableModel);
 
         traitsTable.getTableHeader().setReorderingAllowed(false);
@@ -152,11 +151,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
-//        dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-//            public void valueChanged(ListSelectionEvent evt) {
-//                traitSelectionChanged();
-//            }
-//        });
 
         JScrollPane scrollPane2 = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -196,10 +190,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         toolBar1.add(button);
 
         // Don't see the need for a clear values button
-//        button = new JButton(new ClearTraitAction());
-//        PanelUtils.setupComponent(button);
-//        button.setToolTipText(CLEAR_TRAIT_VALUES_TOOLTIP);
-//        toolBar1.add(button);
         button = new JButton(createTraitPartitionAction);
         PanelUtils.setupComponent(button);
         button.setToolTipText(CREATE_TRAIT_PARTITIONS_TOOLTIP);
@@ -250,15 +240,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //        int selRow = predictorsTable.getSelectedRow();
 //        traitsTableModel.fireTableDataChanged();
 //
-//        if (selRow < 0) {
-//            selRow = 0;
-//        }
-//        predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
 
 
-//        if (selectedTrait == null) {
-//            predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
-//        }
 
         traitsTableModel.fireTableDataChanged();
         dataTableModel.fireTableDataChanged();
@@ -268,12 +251,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-//        int selRow = predictorsTable.getSelectedRow();
-//        if (selRow >= 0 && options.traitsOptions.selecetedTraits.size() > 0) {
-//            selectedTrait = options.traitsOptions.selecetedTraits.get(selRow);
-//        }
-//        options.datesUnits = unitsCombo.getSelectedIndex();
-//        options.datesDirection = directionCombo.getSelectedIndex();
     }
 
     public JComponent getExportableComponent() {
@@ -282,18 +259,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public void fireTraitsChanged() {
         if (currentTrait != null) {
-//        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-//            frame.setupStarBEAST();
-//        } else
             if (currentTrait != null && currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
                 frame.updateDiscreteTraitAnalysis();
             }
 
-//            if (selRow > 0) {
-//                predictorsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
-//            } else if (selRow == 0 && options.traitsOptions.traits.size() > 0) { // options.traitsOptions.traits.size() after remove
-//                predictorsTable.getSelectionModel().setSelectionInterval(0, 0);
-//            }
 
             traitsTableModel.fireTableDataChanged();
 //            options.updatePartitionAllLinks();
@@ -307,9 +276,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             currentTrait = options.traits.get(selRow);
 //            predictorsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             removeTraitAction.setEnabled(true);
-//        } else {
-//            currentTrait = null;
-//            removeTraitAction.setEnabled(false);
         }
 
         if (options.traits.size() <= 0) {
@@ -438,15 +404,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public boolean addTrait(String traitName) {
-        return addTrait(null, traitName, false);
+        return addTrait(null, traitName);
     }
 
-    public boolean addTrait(String message, String traitName, boolean isSpeciesTrait) {
+    public boolean addTrait(String message, String traitName) {
         if (createTraitDialog == null) {
             createTraitDialog = new CreateTraitDialog(frame);
         }
 
-        createTraitDialog.setSpeciesTrait(isSpeciesTrait);
         createTraitDialog.setTraitName(traitName);
         createTraitDialog.setMessage(message);
 
@@ -473,19 +438,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         } else if (result == CreateTraitDialog.OK_IMPORT) {
             boolean done = frame.doImportTraits();
             if (done) {
-                if (isSpeciesTrait) {
-                    // check that we did indeed import a 'species' trait
-                    if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-                        JOptionPane.showMessageDialog(this,
-                                "The imported trait file didn't contain a trait\n" +
-                                        "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
-                                        "Please edit it or select a different file.",
-                                "Reserved trait name",
-                                JOptionPane.WARNING_MESSAGE);
-
-                        return false;
-                    }
-                }
                 updateButtons();
             }
             return done;
@@ -496,42 +448,18 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         return true;
     }
 
+
     public void createTraitPartition() {
         int[] selRows = traitsTable.getSelectedRows();
-        java.util.List<TraitData> traits = new ArrayList<TraitData>();
-        int discreteCount = 0;
-        int continuousCount = 0;
+        List<TraitData> traits = new ArrayList<TraitData>();
         for (int row : selRows) {
             TraitData trait = options.traits.get(row);
             traits.add(trait);
-
-            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                discreteCount ++;
-            }
-            if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
-                continuousCount ++;
-            }
         }
 
-        boolean success = false;
-        if (discreteCount > 0) {
-            if (continuousCount > 0)  {
-                JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
 
-            // with discrete traits, create a separate partition for each
-            for (TraitData trait : traits) {
-                java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
-                singleTrait.add(trait);
-                if (dataPanel.createFromTraits(singleTrait)) {
-                    success = true;
-                }
-            }
-        } else {
-            // with
-            success = dataPanel.createFromTraits(traits);
-        }
+        boolean success = dataPanel.createPartitionFromTraits(traits, null, TraitsPanel.this);
+
         if (success) {
             frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
         }
@@ -548,10 +476,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void removeTrait(String traitName) {
-        if (options.useStarBEAST && traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-            JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used by *BEAST.\nTurn *BEAST off before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
         TraitData traitData = options.getTrait(traitName);
         if (options.getTraitPartitions(traitData).size() > 0) {
             JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
@@ -674,7 +598,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            return !options.useStarBEAST || !options.traits.get(row).getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString());
+            return true;
         }
 
         public String getColumnName(int column) {
@@ -748,10 +672,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public void setValueAt(Object aValue, int row, int col) {
             if (col == 1) {
-//                Location location = options.taxonList.getTaxon(row).getLocation();
-//                if (location != null) {
-//                    options.taxonList.getTaxon(row).setLocation(location);
-//                }
                 if (currentTrait != null) {
                     options.taxonList.getTaxon(row).setAttribute(currentTrait.getName(), aValue);
                 }

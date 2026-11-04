@@ -1,7 +1,8 @@
 /*
  * YuleModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.speciation;
 
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -52,13 +54,13 @@ public class YuleModelParser extends AbstractXMLObjectParser {
 
         final XMLObject cxo = xo.getChild(BIRTH_RATE);
 
-        final boolean conditonalOnRoot =  xo.getAttribute(BirthDeathModelParser.CONDITIONAL_ON_ROOT, false);
+        final boolean conditonalOnRoot =  xo.getAttribute(Gernhard08BirthDeathModelParser.CONDITIONAL_ON_ROOT, false);
         final Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
 
         Logger.getLogger("dr.evomodel").info("\nUsing Yule prior on tree");
 
-        return new BirthDeathGernhard08Model(xo.getId(), brParameter, null, null,
-                BirthDeathGernhard08Model.TreeType.UNSCALED, units, conditonalOnRoot);
+        return new Gernhard08BirthDeathModel(xo.getId(), brParameter, null, null,
+                Gernhard08BirthDeathModel.TreeType.UNSCALED, units, conditonalOnRoot);
     }
 
     //************************************************************************
@@ -70,7 +72,7 @@ public class YuleModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return BirthDeathGernhard08Model.class;
+        return Gernhard08BirthDeathModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -78,7 +80,7 @@ public class YuleModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newBooleanRule(BirthDeathModelParser.CONDITIONAL_ON_ROOT, true),
+            AttributeRule.newBooleanRule(Gernhard08BirthDeathModelParser.CONDITIONAL_ON_ROOT, true),
             new ElementRule(BIRTH_RATE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]

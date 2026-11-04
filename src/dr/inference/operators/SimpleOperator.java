@@ -1,7 +1,8 @@
 /*
  * SimpleOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /**
@@ -34,12 +36,12 @@ package dr.inference.operators;
  */
 public abstract class SimpleOperator implements MCMCOperator {
 
-	/**
-	 *
-	 */
-	public SimpleOperator() {
-		// TODO Auto-generated constructor stub
-	}
+    /**
+     *
+     */
+    public SimpleOperator() {
+        // TODO Auto-generated constructor stub
+    }
 
     public abstract String getOperatorName();
 
@@ -124,6 +126,10 @@ public abstract class SimpleOperator implements MCMCOperator {
         return (double) accepted / (double) (accepted + rejected);
     }
 
+    public final double getSmoothedAcceptanceProbability() {
+        throw new UnsupportedOperationException("Not implemented for SimpleOperator");
+    }
+
     public double getSpan(boolean reset) {
         double span = 0;
         if( spanDeviation[1] > spanDeviation[0] && spanCount > 20 ) {
@@ -138,20 +144,23 @@ public abstract class SimpleOperator implements MCMCOperator {
         return span;
     }
 
+    @Override
     public double getMeanEvaluationTime() {
         return (double) sumEvaluationTime / (double) (accepted + rejected);
     }
 
+    @Override
     public long getTotalEvaluationTime() {
         return sumEvaluationTime;
     }
 
+    @Override
     public void addEvaluationTime(long time) {
         sumEvaluationTime += time;
     }
 
     private long sumEvaluationTime = 0;
-   
+
     private double[] spanDeviation = {Double.MAX_VALUE,-Double.MAX_VALUE};
     private int spanCount = 0;
 

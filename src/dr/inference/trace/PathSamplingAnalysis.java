@@ -1,7 +1,8 @@
 /*
  * PathSamplingAnalysis.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
@@ -34,6 +36,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -170,7 +173,11 @@ public class PathSamplingAnalysis {
                     String parent = file.getParent();
 
                     if (!file.isAbsolute()) {
-                        parent = System.getProperty("user.dir");
+                        if (parent == null) {
+                            parent = System.getProperty("user.dir");
+                        } else {
+                            parent = Paths.get(System.getProperty("user.dir"), parent).toString();
+                        }
                     }
 
                     final String fileNamePrefix = System.getProperty("file.name.prefix");

@@ -1,7 +1,8 @@
 /*
  * SimpleOperatorSchedule.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -32,14 +34,12 @@ import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Logger;
 
 /**
  * This class implements a simple operator schedule.
  *
  * @author Alexei Drummond
- * @version $Id: SimpleOperatorSchedule.java,v 1.5 2005/06/14 10:40:34 rambaut Exp $
  */
 public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
@@ -48,7 +48,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	private double totalWeight = 0;
 	private int current = 0;
 	private boolean sequential = false;
-	private OptimizationTransform optimizationSchedule = OptimizationTransform.DEFAULT;
+	private OptimizationTransform optimizationTransform = DEFAULT_TRANSFORM;
 
 	int operatorUseThreshold = Integer.MAX_VALUE; // operator use threshold over which an operator may get turned off if ...
 	double operatorAcceptanceThreshold = 0.0; // acceptance rate threshold under which an operator gets turned off
@@ -95,7 +95,9 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 	public int getNextOperatorIndex() {
 
-		checkOperatorAcceptanceRates();
+		if (operatorAcceptanceThreshold > 0.0) {
+			checkOperatorAcceptanceRates();
+		}
 
 		if (sequential) {
 			int index = getWeightedOperatorIndex(current);
@@ -138,7 +140,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 		for (int i : availableOperators) {
 			MCMCOperator op = operators.get(i);
-			if (!(op instanceof CoercableMCMCOperator) && op.getCount() > operatorUseThreshold) {
+			if (!(op instanceof AdaptableMCMCOperator) && op.getCount() > operatorUseThreshold) {
 				double acceptanceRate = ((double)op.getAcceptCount()) / op.getCount();
 				if (acceptanceRate < operatorAcceptanceThreshold) {
 					toRemove.add(i);
@@ -155,19 +157,12 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		}
 	}
 
-	public double getOptimizationTransform(double d) {
-        switch( optimizationSchedule ) {
-			case DEFAULT:
-            case LOG:  return Math.log(d);
-            case SQRT: return Math.sqrt(d);
-			case LINEAR: return d;
-
-			default: throw new UnsupportedOperationException("Unknown enum value");
-        }
+	public OptimizationTransform getOptimizationTransform() {
+       return optimizationTransform;
 	}
 
-	public void setOptimizationSchedule(OptimizationTransform optimizationSchedule) {
-		this.optimizationSchedule = optimizationSchedule;
+	public void setOptimizationTransform(OptimizationTransform optimizationTransform) {
+		this.optimizationTransform = optimizationTransform;
 	}
 
     public long getMinimumAcceptAndRejectCount() {
@@ -192,8 +187,9 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		for (int i = 0; i < getOperatorCount(); i++) {
 			MCMCOperator op = getOperator(i);
 			columnList.add(new OperatorAcceptanceColumn(op.getOperatorName(), op));
-			if (op instanceof CoercableMCMCOperator) {
-				columnList.add(new OperatorSizeColumn(op.getOperatorName() + "_size", (CoercableMCMCOperator)op));
+			columnList.add(new OperatorTimeColumn(op.getOperatorName() + "_time", op));
+			if (op instanceof AdaptableMCMCOperator) {
+				columnList.add(new OperatorSizeColumn(op.getOperatorName() + "_size", (AdaptableMCMCOperator)op));
 			}
 		}
 		LogColumn[] columns = columnList.toArray(new LogColumn[columnList.size()]);
@@ -209,14 +205,14 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 		}
 
 		public double getDoubleValue() {
-			return MCMCOperator.Utils.getAcceptanceProbability(op);
+			return op.getAcceptanceProbability();
 		}
 	}
 
 	private class OperatorSizeColumn extends NumberColumn {
-		private final CoercableMCMCOperator op;
+		private final AdaptableMCMCOperator op;
 
-		public OperatorSizeColumn(String label, CoercableMCMCOperator op) {
+		public OperatorSizeColumn(String label, AdaptableMCMCOperator op) {
 			super(label);
 			this.op = op;
 		}
@@ -225,4 +221,18 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 			return op.getRawParameter();
 		}
 	}
+
+	private class OperatorTimeColumn extends NumberColumn {
+		private final MCMCOperator op;
+
+		public OperatorTimeColumn(String label, MCMCOperator op) {
+			super(label);
+			this.op = op;
+		}
+
+		public double getDoubleValue() {
+			return op.getTotalEvaluationTime();
+		}
+	}
+
 }

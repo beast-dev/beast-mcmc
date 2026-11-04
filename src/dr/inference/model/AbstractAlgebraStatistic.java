@@ -1,7 +1,8 @@
 /*
- * ProductStatistic.java
+ * AbstractAlgebraStatistic.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -114,6 +116,29 @@ public abstract class AbstractAlgebraStatistic extends Statistic.Abstract {
         }
 
         return value;
+    }
+
+    /**
+     * Inherits the dimension names of the first contained statistic (e.g. the coefficients of a
+     * GLM) so that, say, a productStatistic of HZ.coefficients and HZ.coefIndicators is logged as
+     * HZ.coefficientsTimesIndicators.distances rather than HZ.coefficientsTimesIndicators1.
+     */
+    @Override
+    public String getDimensionName(int dim) {
+
+        // Check we have set the dimension (this may also switch to elementwise operation)
+        getDimension();
+
+        if (!elementwise && !statistics.isEmpty()) {
+            Statistic first = statistics.get(0);
+            String name = first.getDimensionName(dim);
+            String prefix = first.getStatisticName() + ".";
+            if (name != null && name.startsWith(prefix)) {
+                return getStatisticName() + "." + name.substring(prefix.length());
+            }
+        }
+
+        return super.getDimensionName(dim);
     }
 
     protected abstract double doOperation(double a, double b);

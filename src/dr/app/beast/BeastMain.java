@@ -1,7 +1,8 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2025 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
@@ -28,27 +30,31 @@ package dr.app.beast;
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
 import dr.app.checkpoint.BeastCheckpointer;
-import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
+import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
+import dr.inference.operators.OperatorSchedule;
 import dr.math.MathUtils;
-import dr.util.ErrorLogHandler;
-import dr.util.MessageLogHandler;
-import dr.util.Version;
-import dr.xml.XMLObjectParser;
+import dr.util.*;
 import dr.xml.XMLParser;
+import dr.app.util.SimpleAboutDialog;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.logging.*;
 
 public class BeastMain {
@@ -58,11 +64,21 @@ public class BeastMain {
     public static final double DEFAULT_DELTA = 1.0;
     public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
+    private static final String CITATION_FILE_SUFFIX = ".citations.txt";
+
+    private static final String CHKPT_OVERRULE = "checkpointOverrule";
+
+    private final Logger citationLogger;
+    private final Logger infoLogger;
+    private final Logger errorLogger;
+
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
+        public final static String backgroundColor =  "#35484F";
+        public final static String foregroundColor = "#CBB944";
 
         public BeastConsoleApp(String nameString, String titleString, String aboutString, javax.swing.Icon icon) throws IOException {
-            super(nameString, titleString, aboutString, icon, false);
+            super(nameString, titleString, aboutString, Color.decode(backgroundColor), Color.decode(foregroundColor), icon, false);
             getDefaultFrame().setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         }
 
@@ -70,7 +86,9 @@ public class BeastMain {
             Iterator iter = parser.getThreads();
             while (iter.hasNext()) {
                 Thread thread = (Thread) iter.next();
-                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
+                thread.interrupt();
+                //noinspection removal
+//                thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
 
@@ -81,7 +99,8 @@ public class BeastMain {
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
                      boolean parserWarning, boolean strictXML, List<String> additionalParsers,
-                     boolean useMC3, double[] chainTemperatures, int swapChainsEvery) {
+                     MCMCMCOptions mc3Options) {
+
 
         if (inputFile == null) {
             throw new RuntimeException("Error: no input file specified");
@@ -89,7 +108,8 @@ public class BeastMain {
 
         String fileName = inputFile.getName();
 
-        final Logger infoLogger = Logger.getLogger("dr.app.beast");
+        infoLogger = Logger.getLogger("dr.apps.beast");
+
         try {
 
             FileReader fileReader = new FileReader(inputFile);
@@ -124,12 +144,25 @@ public class BeastMain {
                     }
                 }
             });
+
             infoLogger.addHandler(errorHandler);
 
-            if (System.getProperty("citations.filename") != null) {
-                FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
-                Handler citationHandler = new MessageLogHandler(citationStream);
-                Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
+            citationLogger = Logger.getLogger("dr.util.citations");
+
+            if (Boolean.parseBoolean(System.getProperty("output_citations"))) {
+                String fileNamePrefix = (System.getProperty("file.name.prefix") != null ? System.getProperty("file.name.prefix") : "");
+                String citationFileName;
+                if (System.getProperty("citations.filename") != null) {
+                    citationFileName = fileNamePrefix + System.getProperty("citations.filename");
+                } else {
+                    citationFileName = fileNamePrefix + fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
+                }
+
+                FileOutputStream citationStream = new FileOutputStream(OutputFileHelper.resolveOutputFile(
+                        citationFileName, null, OutputFileHelper.getExplicitOutputDirectory()));
+                //Handler citationHandler = new MessageLogHandler(citationStream);
+                Handler citationHandler = CitationLogHandler.getHandler(citationStream);
+                citationLogger.addHandler(citationHandler);
             }
 
             logger.setUseParentHandlers(false);
@@ -140,41 +173,50 @@ public class BeastMain {
             // This is a special logger that is for logging numerical and statistical errors
             // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
             // RuntimeException to shut down the run.
-            Logger errorLogger = Logger.getLogger("error");
+            errorLogger = Logger.getLogger("error");
             messageHandler = new ErrorLogHandler(maxErrorCount);
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
 
-            for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                if (plugin != null) {
-                    Set<XMLObjectParser> parserSet = plugin.getParsers();
-                    for (XMLObjectParser pluginParser : parserSet) {
-                        parser.addXMLObjectParser(pluginParser);
-                    }
-                }
-            }
+            PluginLoader.loadPlugins(parser);
 
             // Install the checkpointer. This creates a factory that returns
             // appropriate savers and loaders according to the user's options.
-            new BeastCheckpointer();
+            // new BeastCheckpointer();
 
-            if (!useMC3) {
+            // if any of these properties is not null, overrule XML checkpointing settings
+            if (System.getProperty(BeastCheckpointer.SAVE_STATE_FILE, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_AT, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_EVERY, null) != null ||
+                    System.getProperty(BeastCheckpointer.LOAD_STATE_FILE, null) != null ||
+                    System.getProperty(BeastCheckpointer.SAVE_STATE_TIME, null) != null) {
+                System.setProperty(CHKPT_OVERRULE, "true");
+            }
+
+            if (Boolean.parseBoolean(System.getProperty(CHKPT_OVERRULE, "false"))) {
+                BeastCheckpointer.getInstance(null, -1, -1, false);
+                infoLogger.info("Overriding checkpointing settings in the provided XML file");
+            }
+
+            if (mc3Options == null) {
+
                 // just parse the file running all threads...
-
                 parser.parse(fileReader, true);
 
             } else {
+
+                double[] chainTemperatures = mc3Options.getChainTemperatures();
+
                 int chainCount = chainTemperatures.length;
                 MCMC[] chains = new MCMC[chainCount];
-                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
+//                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
-                Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
+                infoLogger.info("Starting cold chain plus hot chains with temperatures: ");
                 for (int i = 1; i < chainTemperatures.length; i++) {
-                    Logger.getLogger("dr.apps.beast").info("Hot Chain " + i + ": " + chainTemperatures[i]);
+                    infoLogger.info("Hot Chain " + i + ": " + chainTemperatures[i]);
                 }
 
-                Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
+                infoLogger.info("Parsing XML file: " + fileName);
 
                 // parse the file for the initial cold chain returning the MCMC object
                 chains[0] = (MCMC) parser.parse(fileReader, MCMC.class);
@@ -183,7 +225,7 @@ public class BeastMain {
                 }
                 fileReader.close();
 
-                chainTemperatures[0] = 1.0;
+                chainTemperatures[0] = 1.0; // TODO Should perform in Mc3Options constructor
 
                 for (int i = 1; i < chainCount; i++) {
                     // parse the file once for each hot chain
@@ -191,8 +233,11 @@ public class BeastMain {
 
                     // turn off all messages for subsequent reads of the file (they will be the same as the
                     // first time).
-                    messageHandler.setLevel(Level.OFF);
+                    logger.setLevel(Level.OFF);
+
                     parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
+
+                    PluginLoader.loadPlugins(parser);
 
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {
@@ -202,11 +247,12 @@ public class BeastMain {
                 }
 
                 // restart messages
-                messageHandler.setLevel(Level.ALL);
+                logger.setLevel(Level.ALL);
 
-                MCMCMC mc3 = new MCMCMC(chains, options);
-                Thread thread = new Thread(mc3);
-                thread.start();
+                MCMCMC mc3 = new MCMCMC(chains, mc3Options);
+//                Thread thread = new Thread(mc3);
+//                thread.start();
+                mc3.run();
             }
 
         } catch (java.io.IOException ioe) {
@@ -240,8 +286,11 @@ public class BeastMain {
                                 "the button at the bottom right of the window.");
 
             } else {
-                infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
-                        pxe.getMessage() + "\n\nError thrown at: " + pxe.getStackTrace()[0] + "\n");
+                infoLogger.severe(
+                        "\n******\nError in input BEAST XML file, " + fileName + ":\n" +
+                        pxe.getMessage() +
+                        "\n******\n"
+                );
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
@@ -278,6 +327,13 @@ public class BeastMain {
             System.err.flush();
             throw new RuntimeException("Terminate");
         }
+
+        try {
+            dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
+            dr.evomodel.coalescent.basta.BeagleBastaLikelihoodDelegate.releaseAllBeagleBastaInstances();
+        } catch (Throwable e) {
+           throw new RuntimeException("Terminate");
+        }
     }
 
     public static void centreLine(String line, int pageWidth) {
@@ -298,6 +354,19 @@ public class BeastMain {
         }
         System.out.println();
 
+    }
+
+    /**
+     * Place a relative output file name (or file name stem) given on the command line in the
+     * directory requested with the -output option. Absolute names and names given without
+     * -output are returned unchanged.
+     */
+    private static String resolveOutputPath(String fileName) {
+        File outputDirectory = OutputFileHelper.getExplicitOutputDirectory();
+        if (outputDirectory == null || new File(fileName).isAbsolute()) {
+            return fileName;
+        }
+        return new File(outputDirectory, fileName).getPath();
     }
 
     public static void printUsage(Arguments arguments) {
@@ -324,55 +393,86 @@ public class BeastMain {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
-                        new Arguments.Option("verbose", "Give verbose XML parsing messages"),
-                        new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
-                        new Arguments.Option("strict", "Fail on non-conforming BEAST XML file"),
-                        new Arguments.Option("window", "Provide a console window"),
-                        new Arguments.Option("options", "Display an options dialog"),
-                        new Arguments.Option("working", "Change working directory to input file's directory"),
-                        new Arguments.LongOption("seed", "Specify a random number generator seed"),
-                        new Arguments.StringOption("prefix", "PREFIX", "Specify a prefix for all output log filenames"),
-                        new Arguments.Option("overwrite", "Allow overwriting of log files"),
-                        new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
-                        new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
-                        new Arguments.Option("java", "Use Java only, no native implementations"),
-                        new Arguments.LongOption("tests", "The number of full evaluation tests to perform (default 1000)"),
-                        new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
+                        new Arguments.Option("verbose","vb","Give verbose XML parsing messages"),
+                        new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
+                        new Arguments.Option("strict", "sx", "Fail on non-conforming BEAST XML file"),
+                        new Arguments.Option("window", "w", "Provide a console window"),
+                        new Arguments.Option("options", "o", "Display an options dialog"),
+                        new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
+                        new Arguments.LongOption("seed", "s", "Specify a random number generator seed"),
+                        new Arguments.StringOption("prefix","p",  "PREFIX", "Specify a prefix for all output log filenames"),
+                        new Arguments.StringOption("output", "out", "DIRECTORY", "Specify an existing directory where output files should be written"),
+                        new Arguments.Option("overwrite", "ow", "Allow overwriting of log files"),
+                        new Arguments.IntegerOption("errors", "e", "Specify maximum number of numerical errors before stopping"),
+                        new Arguments.IntegerOption("threads", "nt", "The maximum number of computational threads to use (default auto)"),
+                        new Arguments.Option("fail_threads", "ft", "Exit with error on uncaught exception in thread"),
+                        new Arguments.Option("ignore_versions", "i", "Ignore mismatches between XML and BEAST versions"),
+                        new Arguments.Option("java", null, "Use Java only, no native implementations"),
+                        new Arguments.LongOption("tests", null, "The number of full evaluation tests to perform (default 1000)"),
+                        new Arguments.RealOption("threshold", null, 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
+                        new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "op", "Print transition kernel performance to file"),
 
-                        new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
-                        new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
-                        new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
-                        new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
-                        new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
-                        new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
-                        new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
-                        new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
-                        new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
-                        new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
-                        new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
-                        new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
-                        new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
-                        new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
-                        new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
+                        new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
+                        new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
+
+                        new Arguments.StringOption("pattern_compression", "pc", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
+                                false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
+                        new Arguments.RealOption("ambiguous_threshold", "at", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
+
+                        new Arguments.Option("beagle", "b", "Use BEAGLE library if available (default on)"),
+                        new Arguments.Option("beagle_info", "bi", "BEAGLE: show information on available resources"),
+                        new Arguments.Option("beagle_auto", "ba", "BEAGLE: automatically select fastest resource for analysis"),
+                        new Arguments.StringOption("beagle_order", "bo", "order", "BEAGLE: set order of resource use"),
+                        new Arguments.IntegerOption("beagle_instances", null, "BEAGLE: divide site patterns amongst instances"),
+                        new Arguments.StringOption("beagle_multipartition", "bm", new String[]{"auto", "on", "off"},
+                                false, "BEAGLE: use multipartition extensions if available (default auto)"),
+                        new Arguments.Option("beagle_CPU", "bc", "BEAGLE: use CPU instance"),
+                        new Arguments.Option("beagle_GPU", "bg", "BEAGLE: use GPU instance if available"),
+                        new Arguments.Option("beagle_SSE", null, "BEAGLE: use SSE extensions if available"),
+                        new Arguments.Option("beagle_tensor_core", null, "BEAGLE: use tensor cores on GPU if available"),
+                        new Arguments.Option("beagle_SSE_off", null, "BEAGLE: turn off use of SSE extensions"),
+                        new Arguments.Option("beagle_threading_off", null, "BEAGLE: turn off multi-threading for a CPU instance"),
+                        new Arguments.StringOption("beagle_threading", null, new String[]{"none", "cpp", "openmp"}, false, "BEAGLE: specify threading implementation to use"),
+                        new Arguments.IntegerOption("beagle_threads", "bt", 0, Integer.MAX_VALUE, "BEAGLE: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.Option("beagle_basta_threading_off", null, "BEAGLE-BIT: turn off multi-threading for a CPU instance"),
+                        new Arguments.IntegerOption("beagle_basta_threads", null, 0, Integer.MAX_VALUE, "BEAGLE-BIT: manually set number of threads per CPU instance (default auto)"),
+                        new Arguments.Option("beagle_cuda", null, "BEAGLE: use CUDA parallization if available"),
+                        new Arguments.Option("beagle_opencl", null, "BEAGLE: use OpenCL parallization if available"),
+                        new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
+                        new Arguments.Option("beagle_double", null, "BEAGLE: use double precision if available"),
+                        new Arguments.Option("beagle_async", null, "BEAGLE: use asynchronous kernels if available"),
+                        new Arguments.Option("beagle_low_memory", null, "BEAGLE: use lower memory pre-order traversal kernels"),
+                        new Arguments.StringOption("beagle_extra_buffer_count", null, "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
+                        new Arguments.StringOption("beagle_scaling", "bs", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
-                        new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
-                        new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
-                        new Arguments.Option("mpi", "Use MPI rank to label output"),
+                        new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
+                        new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
+                        new Arguments.Option("mpi", null, "Use MPI rank to label output"),
 
-                        new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
-                        new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
-                        new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
-                        new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
 
-                        new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
-                        new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
-                        new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
-                        new Arguments.StringOption("save_dump", "FILENAME", "Specify a filename to save a dumped state to"),
+                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains"),
+                        new Arguments.RealOption("mc3_delta", null, 0.0, Double.MAX_VALUE, "temperature increment parameter"),
+                        new Arguments.RealArrayOption("mc3_temperatures", null, -1, "a comma-separated list of the hot chain temperatures"),
+                        new Arguments.IntegerOption("mc3_swap", null, 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.StringOption("mc3_scheme", null, "NAME", "Specify parallel tempering swap scheme"),
 
-                        new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.StringOption("load_state", null, "FILENAME", "Specify a filename to load a saved state from"),
+                        new Arguments.StringOption("save_stem", null, "FILENAME", "Specify a stem for the filenames to save states to"),
+                        new Arguments.LongOption("save_at", null, "Specify a state at which to save a state file"),
+                        new Arguments.StringOption("save_time", null, "HH:mm:ss", "Specify a length of time after which to save a state file"),
+                        new Arguments.LongOption("save_every", null, "Specify a frequency to save the state file"),
+                        new Arguments.StringOption("save_state", null, "FILENAME", "Specify a filename to save state to"),
+                        new Arguments.Option("full_checkpoint_precision", null, "Use hex-encoded doubles in checkpoint files"),
+                        new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
+                        new Arguments.LongOption("checkpoint_seed", null, "Seed specified for checkpoint restart"),
 
-                        new Arguments.Option("version", "Print the version and credits and stop"),
-                        new Arguments.Option("help", "Print this information and stop"),
+                        new Arguments.StringOption("citations_file", null, "FILENAME", "Specify a filename to write a citation list to"),
+                        new Arguments.Option("citations_off", null, "Turn off writing citations to file"),
+                        new Arguments.StringOption("plugins_dir",null,  "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
+
+                        new Arguments.Option("version", "v", "Print the version and credits and stop"),
+                        new Arguments.Option("help", "h", "Print this information and stop"),
                 });
 
         int argumentCount = 0;
@@ -420,9 +520,11 @@ public class BeastMain {
             System.setProperty("show_warnings", Boolean.toString(true));
         }
 
+        if (arguments.hasOption("ignore_versions")) {
+            System.setProperty("ignore.versions", Boolean.toString(true));
+        }
+
         final boolean strictXML = arguments.hasOption("strict");
-        final boolean window = arguments.hasOption("window");
-        final boolean options = arguments.hasOption("options") || (argumentCount == 0);
         final boolean working = arguments.hasOption("working");
         String fileNamePrefix = null;
         boolean allowOverwrite = arguments.hasOption("overwrite");
@@ -431,65 +533,110 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         boolean useJava = false;
 
-        if (arguments.hasOption("tests")) {
-            long fullEvaluationCount = arguments.getLongOption("tests");
-            System.setProperty("mcmc.evaluation.count", Long.toString(fullEvaluationCount));
-        }
-
-        if (arguments.hasOption("threshold")) {
-            double fullEvaluationThreshold = arguments.getRealOption("threshold");
-            System.setProperty("mcmc.evaluation.threshold", Double.toString(fullEvaluationThreshold));
-        }
-
         int threadCount = -1;
 
-        if (arguments.hasOption("java")) {
-            useJava = true;
-        }
+        boolean usingSMC = false;
 
-        if (arguments.hasOption("prefix")) {
-            fileNamePrefix = arguments.getStringOption("prefix");
-        }
-
-        // ============= MC^3 settings =============
-
-        int chainCount = 1;
-        if (arguments.hasOption("mc3_chains")) {
-            chainCount = arguments.getIntegerOption("mc3_chains");
-        } else if (arguments.hasOption("mc3_temperatures")) {
-            chainCount = 1 + arguments.getRealArrayOption("mc3_temperatures").length;
-        }
-
-        double delta = DEFAULT_DELTA;
-        if (arguments.hasOption("mc3_delta")) {
-            if (arguments.hasOption("mc3_temperatures")) {
-                System.err.println("Either the -mc3_delta or the -mc3_temperatures option should be used, not both");
-                System.err.println();
-                printUsage(arguments);
-                System.exit(1);
-            }
-            delta = arguments.getRealOption("mc3_delta");
-        }
-
-        double[] chainTemperatures = new double[chainCount];
-        chainTemperatures[0] = 1.0;
-        if (arguments.hasOption("mc3_temperatures")) {
-            double[] hotChainTemperatures = arguments.getRealArrayOption("mc3_temperatures");
-            assert hotChainTemperatures.length == chainCount - 1;
-
-            System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
-        } else {
-            for (int i = 1; i < chainCount; i++) {
-                chainTemperatures[i] = 1.0 / (1.0 + (delta * i));
-            }
-        }
-
+        boolean usingMC3 = false;
+        double[] chainTemperatures = null;
         int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
-        if (arguments.hasOption("mc3_swap")) {
-            swapChainsEvery = arguments.getIntegerOption("mc3_swap");
+        MCMCMCOptions.SwapScheme swapScheme = MCMCMCOptions.SwapScheme.ORIGINAL_FLAVOR;
+
+        if (arguments.hasOption("particles")) {
+            System.setProperty("smc.particle_folder", arguments.getStringOption("particles"));
+            usingSMC = true;
+
+            System.setProperty("mcmc.evaluation.count", Long.toString(0));
         }
 
-        boolean useMC3 = chainCount > 1;
+        // smc option is always run without GUI.
+        final boolean window = !usingSMC && arguments.hasOption("window");
+        final boolean options = !usingSMC && (arguments.hasOption("options") || (argumentCount == 0));
+
+        if (!usingSMC) {
+            if (arguments.hasOption("tests")) {
+                long fullEvaluationCount = arguments.getLongOption("tests");
+                System.setProperty("mcmc.evaluation.count", Long.toString(fullEvaluationCount));
+            }
+
+            if (arguments.hasOption("threshold")) {
+                double fullEvaluationThreshold = arguments.getRealOption("threshold");
+                System.setProperty("mcmc.evaluation.threshold", Double.toString(fullEvaluationThreshold));
+            }
+
+            if (arguments.hasOption("java")) {
+                useJava = true;
+            }
+
+            if (arguments.hasOption("prefix")) {
+                fileNamePrefix = arguments.getStringOption("prefix");
+            }
+
+            if (arguments.hasOption("output")) {
+                File outputDirectory = new File(arguments.getStringOption("output")).getAbsoluteFile();
+                try {
+                    OutputFileHelper.validateOutputDirectory(outputDirectory);
+                } catch (IOException ioe) {
+                    System.err.println(ioe.getMessage());
+                    System.err.println();
+                    printUsage(arguments);
+                    System.exit(1);
+                }
+                System.setProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY, outputDirectory.getPath());
+            }
+
+            // ============= Evaluation approximations =============
+
+            if (arguments.hasOption("pattern_compression")) {
+                System.setProperty("patterns.compression", arguments.getStringOption("pattern_compression").toLowerCase());
+            }
+            if (arguments.hasOption("ambiguous_threshold")) {
+                System.setProperty("patterns.threshold", String.valueOf(arguments.getRealOption("ambiguous_threshold")));
+            }
+
+            // ============= MC^3 settings =============
+
+            int chainCount = 1;
+            if (arguments.hasOption("mc3_chains")) {
+                chainCount = arguments.getIntegerOption("mc3_chains");
+            } else if (arguments.hasOption("mc3_temperatures")) {
+                chainCount = 1 + arguments.getRealArrayOption("mc3_temperatures").length;
+            }
+
+            double delta = DEFAULT_DELTA;
+            if (arguments.hasOption("mc3_delta")) {
+                if (arguments.hasOption("mc3_temperatures")) {
+                    System.err.println("Either the -mc3_delta or the -mc3_temperatures option should be used, not both");
+                    System.err.println();
+                    printUsage(arguments);
+                    System.exit(1);
+                }
+                delta = arguments.getRealOption("mc3_delta");
+            }
+
+            chainTemperatures = new double[chainCount];
+            chainTemperatures[0] = 1.0;
+            if (arguments.hasOption("mc3_temperatures")) {
+                double[] hotChainTemperatures = arguments.getRealArrayOption("mc3_temperatures");
+                assert hotChainTemperatures.length == chainCount - 1;
+
+                System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
+            } else {
+                for (int i = 1; i < chainCount; i++) {
+                    chainTemperatures[i] = 1.0 / (1.0 + (delta * i));
+                }
+            }
+
+            if (arguments.hasOption("mc3_swap")) {
+                swapChainsEvery = arguments.getIntegerOption("mc3_swap");
+            }
+
+            if (arguments.hasOption("mc3_scheme")) {
+                swapScheme = MCMCMCOptions.SwapScheme.parse(arguments.getStringOption("mc3_scheme"));
+            }
+
+            usingMC3 = chainCount > 1;
+        }
 
         // ============= BEAGLE settings =============
         long beagleFlags = 0;
@@ -497,13 +644,19 @@ public class BeastMain {
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
 
         // if any beagle flag is specified then use beagle...
-        boolean useBeagle = !arguments.hasOption("beagle_off");
+        //final boolean useBeagle = true;
 
+        if (arguments.hasOption("beagle_auto")) {
+            System.setProperty("beagle.resource.auto", Boolean.TRUE.toString());
+        }
         if (arguments.hasOption("beagle_CPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
         }
         if (arguments.hasOption("beagle_GPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+        }
+        if(arguments.hasOption("beagle_tensor_core")) {
+            beagleFlags |= BeagleFlag.VECTOR_TENSOR.getMask();
         }
         if (arguments.hasOption("beagle_cuda")) {
             beagleFlags |= BeagleFlag.FRAMEWORK_CUDA.getMask();
@@ -513,10 +666,27 @@ public class BeastMain {
         }
         if (!arguments.hasOption("beagle_SSE_off")) {
             beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+        } else {
+            beagleFlags |= BeagleFlag.VECTOR_NONE.getMask();
         }
-//        if (arguments.hasOption("beagle_double")) {
-//            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-//        }
+        if (arguments.hasOption("beagle_thread_count")) {
+            System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_thread_count")));
+        }
+        if (arguments.hasOption("beagle_threads")) {
+            System.setProperty("beagle.thread.count", Integer.toString(arguments.getIntegerOption("beagle_threads")));
+        }
+        if (arguments.hasOption("beagle_threading_off")) {
+            System.setProperty("beagle.thread.count", Integer.toString(1));
+        }
+        if (arguments.hasOption("beagle_threading")) {
+            System.setProperty("beagle.threading.type", arguments.getStringOption("beagle_threading"));
+        }
+        if (arguments.hasOption("beagle_basta_threading_off")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(1));
+        }
+        if (arguments.hasOption("beagle_basta_threads")) {
+            System.setProperty("beagle.basta.thread.count", Integer.toString(arguments.getIntegerOption("beagle_basta_threads")));
+        }
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
         } else {
@@ -524,6 +694,10 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_async")) {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
+        }
+
+        if (arguments.hasOption("beagle_low_memory")) {
+            beagleFlags |= BeagleFlag.PREORDER_TRANSPOSE_LOW_MEMORY.getMask();
         }
 
         if (arguments.hasOption("beagle_order")) {
@@ -546,6 +720,19 @@ public class BeastMain {
             System.setProperty("beagle.rescale", Long.toString(arguments.getLongOption("beagle_rescale")));
         }
 
+        if (arguments.hasOption("beagle_multipartition")) {
+            // attempt to force the use/non-use of the multipartition extensions, otherwise auto
+            if (arguments.getStringOption("beagle_multipartition").toLowerCase().equals("on")) {
+                System.setProperty("beagle.multipartition.extensions", Boolean.TRUE.toString());
+            } else if (arguments.getStringOption("beagle_multipartition").toLowerCase().equals("off")) {
+                System.setProperty("beagle.multipartition.extensions", Boolean.FALSE.toString());
+            }
+        }
+
+        if (arguments.hasOption("beagle_extra_buffer_count")) {
+            System.setProperty("beagle.extra.buffer.count", arguments.getStringOption("beagle_extra_buffer_count"));
+        }
+
         // ============= Other settings =============
         if (arguments.hasOption("threads")) {
             // threadCount defaults to -1 unless the user specifies an option
@@ -557,6 +744,20 @@ public class BeastMain {
             }
         }
 
+        if (arguments.hasOption("fail_threads")) {
+
+            Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                    System.err.println("Error in thread " + t.getName() + ": ");
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            };
+
+            Thread.setDefaultUncaughtExceptionHandler(handler);
+        }
+
         if (arguments.hasOption("seed")) {
             seed = arguments.getLongOption("seed");
             if (seed <= 0) {
@@ -566,47 +767,96 @@ public class BeastMain {
             }
         }
 
-        if (arguments.hasOption("load_dump")) {
-            String debugStateFile = arguments.getStringOption("load_dump");
-            System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, debugStateFile);
+        if (arguments.hasOption("adaptation_off")) {
+            System.setProperty("mcmc.use_adaptation", Boolean.FALSE.toString());
+        }
+        if (arguments.hasOption("adaptation_target")) {
+            System.setProperty("adaptation_target",
+                    Double.toString(arguments.getRealOption("mcmc.adaptation_target")));
+        }
+        if (arguments.hasOption("plugins_dir")) {
+            System.setProperty("beast.plugins.dir",
+                     arguments.getStringOption("plugins_dir")+":"+System.getProperty("beast.plugins.dir"));
         }
 
-        if (arguments.hasOption("dump_state")) {
-            long debugWriteState = arguments.getLongOption("dump_state");
-            System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(debugWriteState));
+        if (arguments.hasOption("citations_off")) {
+            System.setProperty("output_citations", Boolean.FALSE.toString());
+        } else {
+            System.setProperty("output_citations", Boolean.TRUE.toString());
         }
 
-        if (arguments.hasOption("dump_every")) {
-            long debugWriteEvery = arguments.getLongOption("dump_every");
-            System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, Long.toString(debugWriteEvery));
+        if (arguments.hasOption(OperatorSchedule.SHOW_OPERATORS)) {
+            System.setProperty(OperatorSchedule.SHOW_OPERATORS, Boolean.TRUE.toString());
         }
 
-        if (arguments.hasOption("save_dump")) {
-            String debugStateFile = arguments.getStringOption("save_dump");
-            System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, debugStateFile);
-        }
+        if (!usingSMC) {
+            // ignore these other options
 
-        if (arguments.hasOption("citations_file")) {
-            String debugStateFile = arguments.getStringOption("citations_file");
-            System.setProperty("citations.filename", debugStateFile);
-        }
-
-        if (useMPI) {
-            String[] nullArgs = new String[0];
-            try {
-                BeastMPI.Init(nullArgs);
-            } catch (Exception e) {
-                throw new RuntimeException("Unable to access MPI.");
+            if (arguments.hasOption("load_state")) {
+                String stateFile = arguments.getStringOption("load_state");
+                System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, stateFile);
             }
-            int rank = BeastMPI.COMM_WORLD.Rank();
-            System.setProperty("mpi.rank.postfix", String.valueOf(rank));
 
-        }
+            if (arguments.hasOption("save_at")) {
+                long saveAt = arguments.getLongOption("save_at");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_AT, Long.toString(saveAt));
+            }
 
-        String rankProp = System.getProperty("mpi.rank.postfix");
-        if (rankProp != null) {
-            int rank = Integer.valueOf(rankProp);
-            seed = updateSeedByRank(seed, rank);
+            if (arguments.hasOption("save_time")) {
+                String saveTime = arguments.getStringOption("save_time");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_TIME, saveTime);
+            }
+
+            if (arguments.hasOption("save_every")) {
+                long saveEvery = arguments.getLongOption("save_every");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, Long.toString(saveEvery));
+            }
+
+            if (arguments.hasOption("save_state")) {
+                String stateFile = arguments.getStringOption("save_state");
+                System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, resolveOutputPath(stateFile));
+            }
+
+            if (arguments.hasOption("save_stem")) {
+                String stemName = arguments.getStringOption("save_stem");
+                System.setProperty(BeastCheckpointer.SAVE_STEM, resolveOutputPath(stemName));
+            }
+
+            if (arguments.hasOption("full_checkpoint_precision")) {
+                System.setProperty(BeastCheckpointer.FULL_CHECKPOINT_PRECISION, "true");
+            }
+
+            if (arguments.hasOption("force_resume")) {
+                System.setProperty("force.resume", Boolean.TRUE.toString());
+            }
+
+            if (arguments.hasOption("checkpoint_seed")) {
+                long checkpointSeed = arguments.getLongOption("checkpoint_seed");
+                System.setProperty(BeastCheckpointer.CHECKPOINT_SEED, Long.toString(checkpointSeed));
+            }
+
+            if (arguments.hasOption("citations_file")) {
+                String citationsFile = arguments.getStringOption("citations_file");
+                System.setProperty("citations.filename", citationsFile);
+            }
+
+            if (useMPI) {
+                String[] nullArgs = new String[0];
+                try {
+                    BeastMPI.Init(nullArgs);
+                } catch (Exception e) {
+                    throw new RuntimeException("Unable to access MPI.");
+                }
+                int rank = BeastMPI.COMM_WORLD.Rank();
+                System.setProperty("mpi.rank.postfix", String.valueOf(rank));
+
+            }
+
+            String rankProp = System.getProperty("mpi.rank.postfix");
+            if (rankProp != null) {
+                int rank = Integer.valueOf(rankProp);
+                seed = updateSeedByRank(seed, rank);
+            }
         }
 
         int maxErrorCount = 0;
@@ -619,30 +869,38 @@ public class BeastMain {
 
         BeastConsoleApp consoleApp = null;
 
-        String nameString = "BEAST " + version.getVersionString();
+        // don't include the pre-release commit in the window title bar
+        String nameString = "BEAST X v" + version.getVersion();
+
+        if (window || options) {
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.application.name", "BEAST");
+        }
+
+        // the about box, laid out as BEAUti's: the icon beside the title, then this below
+        final String aboutTitle = "BEAST X";
+        final String aboutString = "<html>" +
+                "<div style=\"font-family:sans-serif; " +
+                "background-color: " + BeastConsoleApp.backgroundColor + "; color: " + BeastConsoleApp.foregroundColor + ";" +
+                "\">" +
+                "<center>" +
+                "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                "<hr><div style=\"font-size:11;\">" +
+                version.getHTMLCredits() +
+                "</div></center></div></html>";
 
         if (window) {
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-            System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            javax.swing.Icon fullIcon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(fullIcon, 128, 128);
 
-            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
-
-            String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
-                    "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
-                    "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
-                    "</div></html>";
-
-            String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
-                    "<center>" +
-                    version.getHTMLCredits() +
-                    "</div></center></div></html>";
-
-            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString, icon);
+            consoleApp = new BeastConsoleApp(nameString, aboutTitle, aboutString,  icon);
             consoleApp.initialize();
+            if (OSType.isMac()) {
+                // the application menu and Dock icon (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(consoleApp, fullIcon);
+            }
 
         }
 
@@ -653,21 +911,36 @@ public class BeastMain {
         if (options && !beagleShowInfo) {
 
             String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<div style=\"font-weight: 100; font-size: 42px\">BEAST</div>" +
+                    "<div style=\"font-family: HelveticaNeue-Light, Helvetica, Arial, sans-serif\">" +
+                    "<div style=\"font-family: HelveticaNeue-Thin; font-weight: 80; font-size: 42px\">BEAST X</div>" +
                     "<div style=\"font-weight: 200; font-size: 11px\">Bayesian Evolutionary Analysis Sampling Trees</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</div>" +
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
                     version.getBuildString() + "</a></div>" +
                     "</div></html>";
-            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            final javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+
+            if (OSType.isMac() && !window) {
+                // About and the Dock icon for the dialog alone (with a window the console application has them)
+                final javax.swing.Icon fullIcon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+                MacDesktopIntegration.registerAbout(new Runnable() {
+                    public void run() {
+                        new SimpleAboutDialog(aboutTitle, aboutString, fullIcon, Color.decode(BeastConsoleApp.backgroundColor),
+                                Color.decode(BeastConsoleApp.foregroundColor)).setVisible(true);
+                    }
+                }, fullIcon);
+            }
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
             dialog.setAllowOverwrite(allowOverwrite);
             dialog.setSeed(seed);
 
-            dialog.setUseBeagle(useBeagle);
+            if (System.getProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY) != null) {
+                dialog.setOutputDirectory(new File(System.getProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY)));
+            }
+
+            //dialog.setUseBeagle(useBeagle);
 
             if (BeagleFlag.PROCESSOR_GPU.isSet(beagleFlags)) {
                 dialog.setPreferBeagleGPU();
@@ -680,7 +953,9 @@ public class BeastMain {
             }
 
             if (!dialog.showDialog(nameString)) {
-                return;
+                // Quit was pressed or the dialog was closed: the hidden dialog windows would
+                // otherwise keep the application alive after main returns
+                System.exit(0);
             }
 
             if (dialog.allowOverwrite()) {
@@ -690,44 +965,49 @@ public class BeastMain {
             seed = dialog.getSeed();
             threadCount = dialog.getThreadPoolSize();
 
-            useBeagle = dialog.useBeagle();
-            if (useBeagle) {
-                beagleShowInfo = dialog.showBeagleInfo();
-                if (dialog.preferBeagleCPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
-                }
-                if (dialog.preferBeagleSSE()) {
-                    beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
-                } else {
-                    beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
-                }
-                if (dialog.preferBeagleGPU()) {
-                    beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
-                }
-                if (dialog.preferBeagleDouble()) {
-                    beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-                }
-                if (dialog.preferBeagleSingle()) {
-                    beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
-                }
-                System.setProperty("beagle.scaling", dialog.scalingScheme());
+            beagleShowInfo = dialog.showBeagleInfo();
+            if (dialog.preferBeagleCPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
+            }
+            if (dialog.preferBeagleSSE()) {
+                beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+            } else {
+                beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+            }
+            if (dialog.preferBeagleGPU()) {
+                beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+            }
+            if (dialog.preferBeagleDouble()) {
+                beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+            }
+            if (dialog.preferBeagleSingle()) {
+                beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+            }
+            System.setProperty("beagle.scaling", dialog.scalingScheme());
+
+            File outputDirectory = dialog.getOutputDirectory();
+            if (outputDirectory != null) {
+                // the dialog has already checked that the folder exists and is writable
+                System.setProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY, outputDirectory.getPath());
+            } else {
+                System.clearProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY);
             }
 
             inputFile = dialog.getInputFile();
             if (!beagleShowInfo && inputFile == null) {
                 System.err.println("No input file specified");
-                return;
+                System.exit(1);
             }
 
         }
 
-        if (useBeagle) {
-            BeagleInfo.printVersionInformation();
+        BeagleInfo.printVersionInformation();
 
-            if (BeagleInfo.getVersion().startsWith("1.")) {
-                System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                        "with models in BEAST, please upgrade to BEAGLE v2.x at http://github.com/beagle-dev/beagle-lib/\n");
-            }
+        int[] versionNumbers = BeagleInfo.getVersionNumbers();
+        if (versionNumbers.length != 0 && versionNumbers[0] < 4) {
+            System.err.println("BEAST v" + BeastVersion.INSTANCE.getVersion() + " requires BEAGLE v4.0 or later.\n" +
+                    "Please install or upgrade to the latest BEAGLE from https://beagle-dev.github.io/");
+            throw new RuntimeException("Terminate");
         }
 
         if (beagleShowInfo) {
@@ -748,7 +1028,6 @@ public class BeastMain {
 
             String inputFileName = null;
 
-
             if (args2.length > 0) {
                 inputFileName = args2[0];
                 inputFile = new File(inputFileName);
@@ -756,11 +1035,11 @@ public class BeastMain {
 
             if (inputFileName == null) {
                 // No input file name was given so throw up a dialog box...
-                inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+                inputFile = Utils.getLoadFile("BEAST X " + version.getVersionString() + " - Select XML input file");
             }
         }
 
-        if (inputFile != null && inputFile.getParent() != null && working) {
+        if (inputFile != null && inputFile.getParent() != null && (working || options)) {
             System.setProperty("user.dir", inputFile.getParent());
         }
 
@@ -784,9 +1063,7 @@ public class BeastMain {
             System.setProperty("log.allow.overwrite", "true");
         }
 
-        if (useBeagle) {
-            additionalParsers.add("beagle");
-        }
+        additionalParsers.add("beagle");
 
         if (beagleFlags != 0) {
             System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
@@ -802,13 +1079,15 @@ public class BeastMain {
         System.out.println("Random number seed: " + seed);
 
         try {
-            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, warnings, strictXML, additionalParsers,
+                    usingMC3 ? new MCMCMCOptions(chainTemperatures, swapChainsEvery, swapScheme) : null);
+//                    usingMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             // The stack trace here is not useful
 //            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
-                System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+                System.out.println("BEAST X has terminated with an error. Please select QUIT from the menu.");
                 // logger.severe will throw a RTE but we want to keep the console visible
             } else {
                 System.out.flush();
@@ -821,7 +1100,7 @@ public class BeastMain {
             BeastMPI.Finalize();
         }
 
-        if (!window) {
+        if (!usingMC3 && !window) { // DM: with MC3 the main thread gets here and terminates all threads prematurely 
             System.exit(0);
         }
     }

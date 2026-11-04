@@ -1,3 +1,30 @@
+/*
+ * KDEDistributionTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.math;
 
 import dr.inference.distribution.DistributionLikelihood;
@@ -5,19 +32,23 @@ import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.math.MathUtils;
-import dr.math.distributions.GammaKDEDistribution;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
 import dr.math.distributions.NormalKDEDistribution;
+import dr.math.distributions.TransformedNormalKDEDistribution;
 import dr.math.matrixAlgebra.Vector;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
+
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogTransformedNormalKDEDistribution;
+import static dr.math.distributions.TransformedNormalKDEDistribution.getLogitTransformedNormalKDEDistribution;
 
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 public class KDEDistributionTest extends MathTestCase {
-    
+
     public void testNormalCDF() {
 
         MathUtils.setSeed(666);
@@ -28,6 +59,7 @@ public class KDEDistributionTest extends MathTestCase {
             values[i] = MathUtils.nextGaussian();
         }
 
+        // Normal KDE
         NormalKDEDistribution distribution = new NormalKDEDistribution(values);
 
         double cdf = distribution.cdf(0);
@@ -48,6 +80,56 @@ public class KDEDistributionTest extends MathTestCase {
     }
 
     private final static double cdfTolerance = 1E-2;
+
+    public void testLogNormalCDF() {
+        // Log Normal KDE on truncated normal
+        MathUtils.setSeed(666);
+        int length = 100000;
+
+        Double[] values = new Double[length];
+        for (int i = 0; i < length; ++i) {
+            values[i] = MathUtils.nextGaussian();
+            if (values[i] < 0.0) values[i] = -values[i];
+        }
+
+        // Testing CDF
+        TransformedNormalKDEDistribution distribution = getLogTransformedNormalKDEDistribution(values);
+        double cdf = distribution.cdf(1E-3);
+        System.out.println("cdfLog(0.00) = " + cdf);
+        assertEquals(cdf, 0.0007978844, cdfTolerance);
+
+        cdf = distribution.cdf(1.96);
+        System.out.println("cdfLog(1.96) = " + cdf);
+        assertEquals(cdf, 0.9500042, cdfTolerance);
+
+    }
+
+    public void testLogitNormalCDF() {
+        // Logit Normal KDE on logit normal
+        MathUtils.setSeed(666);
+        int length = 100000;
+
+        Double[] values = new Double[length];
+        for (int i = 0; i < length; i++) {
+            values[i] = MathUtils.nextGaussian();
+            values[i] = Math.exp(values[i]) / (1 + Math.exp(values[i]));
+        }
+
+        // Testing CDF
+        TransformedNormalKDEDistribution distribution = getLogitTransformedNormalKDEDistribution(values, 1.0);
+        double cdf = distribution.cdf(0.5);
+        System.out.println("cdfLogit(0.00) = " + cdf);
+        assertEquals(cdf, 0.5, cdfTolerance);
+
+        cdf = distribution.cdf(0.75);
+        System.out.println("cdfLogit(0.75) = " + cdf);
+        assertEquals(cdf, 0.8640314, cdfTolerance); // `R pnorm(logit(0.75))`
+
+        cdf = distribution.cdf(0.25);
+        System.out.println("cdfLogit(0.25) = " + cdf);
+        assertEquals(cdf, 0.1359686, cdfTolerance); // `R pnorm(logit(0.25))`
+
+    }
 
     public void testNormalKDE() {
 
@@ -84,7 +166,7 @@ public class KDEDistributionTest extends MathTestCase {
         System.out.println("den[0] = " + testDensity[0]);
         System.out.println("den[N] = " + testDensity[NormalKDEDistribution.MINIMUM_GRID_SIZE - 1]);
 
-      //  System.exit(-1);
+        //  System.exit(-1);
     }
 
     public void testGammaKDE() {
@@ -106,10 +188,75 @@ public class KDEDistributionTest extends MathTestCase {
 
     }
 
-    private static double[] rBandWidth = { 12.24266 };
+    private static double[] rBandWidth = {12.24266, 0.0001379084};
+
+    private static double[] rLogBandWidth = {0.1979396};
+
+
+    public void testSampleWitchHat() {
+        // Witch hat gamma
+        Random randUnif = new Random();
+        randUnif.setSeed(17920920); // The day before
+        int length = 10000;
+        Double[] samples = new Double[length];
+        double scale = 0.001;
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = randUnif.nextDouble();
+            samples[i] = -Math.log(samples[i]) * scale; // Gamma(1, scale)
+        }
+
+        // R vector
+        System.out.print("samples <- c(");
+        for (int i = 0; i < samples.length - 1; i++) {
+            System.out.print(samples[i] + ",");
+        }
+        System.out.println(samples[samples.length - 1] + ")\n");
+
+        // Estimations
+        NormalKDEDistribution nKDE = new NormalKDEDistribution(samples, null, null, null, 2048);
+        TransformedNormalKDEDistribution ltnNew = getLogTransformedNormalKDEDistribution(samples);
+
+        // R estimations
+        /*
+        densNormal <- density(samples, n = 512, bw = "nrd")
+        densLogNormal <- logKDE::logdensity_fft(samples, n = 2048, bw = "nrd")
+         */
+
+        // bandwidth
+        double tolerance = 1E-3;
+        assertEquals(rBandWidth[1], nKDE.getBandWidth(), tolerance);
+        assertEquals(rLogBandWidth[0], ltnNew.getBandWidth(), tolerance);
+
+        System.out.println("bw(normal) = " + nKDE.getBandWidth());
+        System.out.println("bw(logNormal) = " + ltnNew.getBandWidth());
+
+        // cdf normal (Fails)
+        double cdf = nKDE.cdf(0.00005);
+        System.out.println("cdf(0.00005) = " + cdf);
+//        assertEquals(cdf, 0.04877058, cdfTolerance);
+        cdf = nKDE.cdf(0.0001);
+        System.out.println("cdf(0.0001) = " + cdf);
+//        assertEquals(cdf, 0.09516258, cdfTolerance);
+        cdf = nKDE.cdf(0.001);
+        System.out.println("cdf(0.001) = " + cdf);
+//        assertEquals(cdf, 0.6321206, cdfTolerance);
+
+        // cdf log normal (Succeeds)
+        cdf = ltnNew.cdf(0.00005);
+        System.out.println("cdfLog(0.00005) = " + cdf);
+        assertEquals(cdf, 0.04877058, cdfTolerance);
+        cdf = ltnNew.cdf(0.0001);
+        System.out.println("cdfLog(0.0001) = " + cdf);
+        assertEquals(cdf, 0.09516258, cdfTolerance);
+        cdf = ltnNew.cdf(0.001);
+        System.out.println("cdfLog(0.001) = " + cdf);
+        assertEquals(cdf, 0.6321206, cdfTolerance);
+
+    }
 
     /**
      * Test KDE construction from a BEAST log file
+     *
      * @param args 0: BEAST log file; 1: trace to construct KDE; 2: burn-in
      */
     public static void main(String[] args) {
@@ -136,7 +283,7 @@ public class KDEDistributionTest extends MathTestCase {
             }
 
             Double[] parameterSamples = new Double[traces.getStateCount()];
-            DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
+            DistributionLikelihood likelihood = new DistributionLikelihood(getLogTransformedNormalKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
             //DistributionLikelihood likelihood = new DistributionLikelihood(new NormalKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
             //DistributionLikelihood likelihood = new DistributionLikelihood(new GammaKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
 
@@ -150,9 +297,9 @@ public class KDEDistributionTest extends MathTestCase {
                 System.out.println(d + " > " + likelihood.calculateLogLikelihood());
             }
 
-        } catch(IOException ioe) {
+        } catch (IOException ioe) {
             System.out.println(ioe);
-        } catch(TraceException te) {
+        } catch (TraceException te) {
             System.out.println(te);
         }
 

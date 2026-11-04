@@ -1,0 +1,150 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="X">-1 0.1</attr>
+        </taxon>
+        <taxon id="B">
+            <attr name="X">-1 -0.3</attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="X">-2 0.4</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree">
+        ((A:1.1,B:1.1):1,C:2.1);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+
+    <!--<parameter id = "meanRoot" value = "0.0 0.0">-->
+
+    <!--</parameter>-->
+
+    <matrixParameter id="precision">
+        <parameter id="precision.col1" value="1.00 0.1 "/>
+        <parameter id="precision.col2" value="0.1 2.00 "/>
+    </matrixParameter>
+
+    <multivariateWishartPrior id="precisionPrior" df="2">
+        <scaleMatrix>
+            <matrixParameter>
+                <parameter value="1.0 0.0 "/>
+                <parameter value="0.0 1.0 "/>
+            </matrixParameter>
+        </scaleMatrix>
+        <data>
+            <parameter idref="precision"/>
+        </data>
+    </multivariateWishartPrior>
+
+    <multivariateDiffusionModel id="diffusionModelzz">
+        <precisionMatrix>
+            <matrixParameter idref="precision"/>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <traitDataLikelihood id="scalarLikelihood" traitName="X" forceFullPrecision="false">
+        <multivariateDiffusionModel idref="diffusionModelzz"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter id="meanRoot" value = "0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter id="sampleSizeRoot" value="Infinity"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+
+    </traitDataLikelihood>
+
+
+    <multivariateNormalPrior id="mvnPriorOnRootMean">
+        <meanParameter>
+            <parameter value="1.0 2.0"/>
+        </meanParameter>
+        <precisionParameter>
+            <matrixParameter>
+                <parameter value="1.0 0.0"/>
+                <parameter value="0.0 1.0"/>
+            </matrixParameter>
+        </precisionParameter>
+        <data>
+            <parameter idref="meanRoot"/>
+        </data>
+    </multivariateNormalPrior>
+
+
+    <operators id="operators" optimizationSchedule="log">
+
+        <!--<precisionGibbsOperator weight="1.0">-->
+            <!--<wishartStatistics traitName="trait">-->
+                <!--<traitDataLikelihood idref="scalarLikelihood"/>-->
+            <!--</wishartStatistics>-->
+            <!--<multivariateWishartPrior idref="precisionPrior"/>-->
+            <!--<matrixParameter idref="precision"/>-->
+        <!--</precisionGibbsOperator>-->
+
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="meanRoot"/>
+        </randomWalkOperator>
+
+    </operators>
+
+    <mcmc id="mcmc" chainLength="500" autoOptimize="false" autoOptimizeDelay="500">
+        <posterior id="posterior">
+            <prior id="prior">
+                <multivariateNormalPrior idref="mvnPriorOnRootMean"/>
+            </prior>
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="scalarLikelihood"/>
+                <!--<latentLiabilityLikelihood idref="liabilityLikelihood"/>-->
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <column label="Posteriorrrr" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="Prior" dp="4" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Likelihood" dp="8" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+            <column label="rootmean" dp="8" width="12">
+                <parameter idref="meanRoot"/>
+            </column>
+        </log>
+        <log id="fileLog1" logEvery="1" fileName="testrootmean.log">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="likelihood"/>
+            <parameter idref="meanRoot"/>
+
+        </log>
+
+    </mcmc>
+
+</beast>
+

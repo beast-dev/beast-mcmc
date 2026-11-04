@@ -1,7 +1,8 @@
 /*
  * EpochBranchModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchmodel;
@@ -30,10 +32,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
+import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.branchratemodel.RateEpochBranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
@@ -59,7 +61,7 @@ public class EpochBranchModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("\nUsing multi-epoch branch model.");
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        MutableTreeModel treeModel = (MutableTreeModel) xo.getChild(MutableTreeModel.class);
         SubstitutionModel ancestralSubstitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
         List<Epoch> epochs = new ArrayList<Epoch>();
@@ -101,7 +103,7 @@ public class EpochBranchModelParser extends AbstractXMLObjectParser {
 
         substitutionModels.add(ancestralSubstitutionModel);
 
-        return new EpochBranchModel(tree, substitutionModels, transitionTimes);
+        return new EpochBranchModel(treeModel, substitutionModels, transitionTimes);
     }
 
     class Epoch implements Comparable<Object> {
@@ -143,7 +145,7 @@ public class EpochBranchModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(TreeModel.class, "The tree across which the epochs will be assigned"),
+            new ElementRule(MutableTreeModel.class),
             new ElementRule(SubstitutionModel.class, "The ancestral substitution model after the last epoch"),
             new ElementRule(EPOCH,
                     new XMLSyntaxRule[]{

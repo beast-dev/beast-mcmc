@@ -1,7 +1,8 @@
 /*
  * NodeHeightScaleOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -43,7 +45,7 @@ import java.util.*;
  */
 // Cleaning out untouched stuff. Can be resurrected if needed
 @Deprecated
-public class NodeHeightScaleOperator extends AbstractCoercableOperator {
+public class NodeHeightScaleOperator extends AbstractAdaptableOperator {
 
     public static final String NODE_HEIGHT_SCALE_OPERATOR = "nodeHeightScaleOperator";
     public static final String SCALE_FACTOR = ScaleOperatorParser.SCALE_FACTOR;
@@ -55,7 +57,7 @@ public class NodeHeightScaleOperator extends AbstractCoercableOperator {
     private final Map<Double, Integer> intervals = new TreeMap<Double, Integer>();
     private Parameter nodeHeightParameter;
 
-    public NodeHeightScaleOperator(TreeModel tree, double scale, boolean scaleAll, CoercionMode mode) {
+    public NodeHeightScaleOperator(TreeModel tree, double scale, boolean scaleAll, AdaptationMode mode) {
 
         super(mode);
 
@@ -172,11 +174,12 @@ public class NodeHeightScaleOperator extends AbstractCoercableOperator {
         return "nodeHeightScale";
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 
@@ -188,37 +191,9 @@ public class NodeHeightScaleOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    @Override
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
 
@@ -230,7 +205,7 @@ public class NodeHeightScaleOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             final double weight = xo.getDoubleAttribute(WEIGHT);
             final double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);

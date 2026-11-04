@@ -1,7 +1,8 @@
 /*
  * MLEGSSDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
@@ -64,7 +66,6 @@ public class MLEGSSDialog {
 
     private JComboBox stepDistribution = new JComboBox();
     private JComboBox treeWorkingPrior = new JComboBox();
-    //private JComboBox parameterWorkingPrior = new JComboBox();
 
     private MarginalLikelihoodEstimationOptions options;
     private BeautiOptions beautiOptions;
@@ -98,7 +99,7 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.pathSteps = pathStepsField.getValue();
+                options.pathSteps = pathStepsField.getValue(options.pathSteps);
             }
         });
 
@@ -114,7 +115,7 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleChainLength = chainLengthField.getValue();
+                options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
             }
         });
 
@@ -132,7 +133,7 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                options.mleLogEvery = logEveryField.getValue();
+                options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
             }
         });
 
@@ -223,28 +224,50 @@ public class MLEGSSDialog {
                 } else if (treePrior.equals(TreePriorType.YULE)) {
                     msmAllowed = true;
                 }
-                if (selection.equals("Matching coalescent model") && !mcmAllowed && !msmAllowed) {
-                    JOptionPane.showMessageDialog(frame,
-                            "The selected coalescent model can't be equipped with a \n" +
-                                    "matching working prior. Reverting back to use a product \n" +
-                                    "of exponential distributions.",
-                            "Matching coalescent model warning",
-                            JOptionPane.WARNING_MESSAGE);
-                    treeWorkingPrior.setSelectedItem("Product of exponential distributions");
-                    options.choiceTreeWorkingPrior = "Product of exponential distributions";
-                } else if (msmAllowed) {
-                    treeWorkingPrior.setSelectedItem("Matching speciation model");
-                    options.choiceTreeWorkingPrior = "Matching speciation model";
+                if (selection.equals("Matching coalescent model")) {
+                    if (mcmAllowed) {
+                        options.choiceTreeWorkingPrior = "Matching coalescent model";
+                    } else {
+                        JOptionPane.showMessageDialog(frame,
+                                "The selected speciation model can't be equipped with a \n" +
+                                        "matching coalescent model. Reverting back to using an \n" +
+                                        "appropriate tree working prior.",
+                                "Matching coalescent model warning",
+                                JOptionPane.WARNING_MESSAGE);
+                        if (msmAllowed) {
+                            treeWorkingPrior.setSelectedItem("Matching speciation model");
+                            options.choiceTreeWorkingPrior = "Matching speciation model";
+                        } else {
+                            treeWorkingPrior.setSelectedItem("Product of exponential distributions");
+                            options.choiceTreeWorkingPrior = "Product of exponential distributions";
+                        }
+                    }
+                } else if (selection.equals("Matching speciation model") && !msmAllowed) {
+                    if (msmAllowed) {
+                        options.choiceTreeWorkingPrior = "Matching speciation model";
+                    } else {
+                        JOptionPane.showMessageDialog(frame,
+                                "The selected coalescent model can't be equipped with a \n" +
+                                        "matching speciation model. Please use an appropriate working \n" +
+                                        "prior for your selected coalescent model.",
+                                "Matching speciation model warning",
+                                JOptionPane.WARNING_MESSAGE);
+                        if (mcmAllowed) {
+                            treeWorkingPrior.setSelectedItem("Matching coalescent model");
+                            options.choiceTreeWorkingPrior = "Matching coalescent model";
+                        } else {
+                            treeWorkingPrior.setSelectedItem("Product of exponential distributions");
+                            options.choiceTreeWorkingPrior = "Product of exponential distributions";
+                        }
+                    }
                 } else {
                     options.choiceTreeWorkingPrior = selection;
                 }
+
             }
         });
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
 
-        //parameterWorkingPrior.addItem("Normal KDE");
-        //parameterWorkingPrior.addItem("Gamma KDE");
-        //labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
 
         stepDistribution.addItem("Beta");
         labelStepDistribution = optionsPanel.addComponentWithLabel("Stepping stone distribution:", stepDistribution);
@@ -324,7 +347,35 @@ public class MLEGSSDialog {
                                         JOptionPane.WARNING_MESSAGE);
                                 dialog.setVisible(true);
                             } else {
-                                dialog.setVisible(false);
+                                TreePriorType treePrior = beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior();
+                                if (((String)treeWorkingPrior.getSelectedItem()).equals("Matching coalescent model")) {
+                                    if (!(treePrior.equals(TreePriorType.CONSTANT) || treePrior.equals(TreePriorType.EXPONENTIAL)
+                                            || treePrior.equals(TreePriorType.EXPANSION) || treePrior.equals(TreePriorType.LOGISTIC))) {
+                                        JOptionPane.showMessageDialog(frame,
+                                                "Please select a suitable tree working prior.",
+                                                "Tree working prior selection warning",
+                                                JOptionPane.WARNING_MESSAGE);
+                                        dialog.setVisible(true);
+                                    }
+                                } else if (((String)treeWorkingPrior.getSelectedItem()).equals("Matching speciation model")) {
+                                    if (!treePrior.equals(TreePriorType.YULE)) {
+                                        JOptionPane.showMessageDialog(frame,
+                                                "Please select a suitable tree working prior.",
+                                                "Tree working prior selection warning",
+                                                JOptionPane.WARNING_MESSAGE);
+                                        dialog.setVisible(true);
+                                    }
+                                } else if (((String)treeWorkingPrior.getSelectedItem()).equals("Product of exponential distributions")) {
+                                    if (treePrior.equals(TreePriorType.YULE)) {
+                                        JOptionPane.showMessageDialog(frame,
+                                                "Please select a suitable tree working prior.",
+                                                "Tree working prior selection warning",
+                                                JOptionPane.WARNING_MESSAGE);
+                                        dialog.setVisible(true);
+                                    }
+                                } else {
+                                    dialog.setVisible(false);
+                                }
                             }
                         }
                     }
@@ -333,6 +384,9 @@ public class MLEGSSDialog {
 
         dialog.pack();
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
@@ -376,9 +430,9 @@ public class MLEGSSDialog {
     }
 
     public void getOptions(MarginalLikelihoodEstimationOptions options) {
-        options.pathSteps = pathStepsField.getValue();
-        options.mleChainLength = chainLengthField.getValue();
-        options.mleLogEvery = logEveryField.getValue();
+        options.pathSteps = pathStepsField.getValue(options.pathSteps);
+        options.mleChainLength = chainLengthField.getValue(options.mleChainLength);
+        options.mleLogEvery = logEveryField.getValue(options.mleLogEvery);
 
         options.mleFileName = logFileNameField.getText();
         options.mleResultFileName = resultFileNameField.getText();

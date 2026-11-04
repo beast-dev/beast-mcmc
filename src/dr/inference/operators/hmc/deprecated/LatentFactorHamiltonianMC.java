@@ -1,7 +1,8 @@
 /*
  * LatentFactorHamiltonianMC.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,21 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators.hmc.deprecated;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.model.*;
-import dr.inference.operators.hmc.deprecated.AbstractHamiltonianMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 
 /**
  * Created by max on 12/2/15.
  */
 @Deprecated
-public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
+public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator {
     private LatentFactorModel lfm;
     private FullyConjugateMultivariateTraitLikelihood tree;
     private MatrixParameterInterface factors;
@@ -50,7 +51,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private Parameter missingIndicator;
 
 
-    public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
+    public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, AdaptationMode mode, double stepSize, int nSteps, double momentumSd){
         super(mode, momentumSd);
         setWeight(weight);
         this.lfm = lfm;
@@ -69,23 +70,18 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
     @Override
-    public double getCoercableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(stepSize);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    protected void setAdaptableParameterValue(double value) {
         stepSize = Math.exp(value);
     }
 
     @Override
     public double getRawParameter() {
         return stepSize;
-    }
-
-    @Override
-    public String getPerformanceSuggestion() {
-        return null;
     }
 
     @Override

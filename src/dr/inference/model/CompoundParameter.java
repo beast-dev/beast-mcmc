@@ -1,7 +1,8 @@
 /*
  * CompoundParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -33,7 +35,6 @@ import java.util.List;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: CompoundParameter.java,v 1.13 2005/06/14 10:40:34 rambaut Exp $
  */
 public class CompoundParameter extends Parameter.Abstract implements VariableListener {
 
@@ -47,7 +48,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         for (Parameter parameter : params) {
             for (int j = 0; j < parameter.getDimension(); j++) {
                 parameters.add(parameter);
-                pindex.add(j);
+                pIndex.add(j);
             }
             uniqueParameters.add(parameter);
             labelParameter(parameter);
@@ -71,7 +72,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         uniqueParameters.add(param);
         for (int j = 0; j < param.getDimension(); j++) {
             parameters.add(param);
-            pindex.add(j);
+            pIndex.add(j);
         }
         dimension += param.getDimension();
         if (dimension != parameters.size()) {
@@ -95,7 +96,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
         for (int i = 0; i < param.getDimension(); i++) {
             parameters.remove(dim);
-            pindex.remove(dim);
+            pIndex.remove(dim);
         }
 
         if (parameters.contains(param)) throw new RuntimeException();
@@ -124,7 +125,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public String getDimensionName(int dim) {
-        return parameters.get(dim).getDimensionName(pindex.get(dim));
+        return parameters.get(dim).getDimensionName(pIndex.get(dim));
     }
 
     public int getDimension() {
@@ -132,7 +133,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public void setDimension(int dim) {
-        throw new RuntimeException();
+        throw new UnsupportedOperationException();
     }
 
     public void addBounds(Bounds<Double> boundary) {
@@ -143,9 +144,11 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         } //else {
         IntersectionBounds newBounds = new IntersectionBounds(getDimension());
         newBounds.addBounds(bounds);
+        newBounds.addBounds(boundary);
 
 //        }
-        ((IntersectionBounds) bounds).addBounds(boundary);
+//        ((IntersectionBounds) bounds).addBounds(boundary);
+        bounds = newBounds;
     }
 
     public Bounds<Double> getBounds() {
@@ -158,52 +161,48 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
     public void addDimension(int index, double value) {
         Parameter p = parameters.get(index);
-        int pi = pindex.get(index);
+        int pi = pIndex.get(index);
 
         parameters.add(index, p);
-        pindex.add(index, pi);
+        pIndex.add(index, pi);
 
         p.addDimension(pi, value);
         for (int i = pi; i < p.getDimension(); i++) {
-            pindex.set(index, i);
+            pIndex.set(index, i);
             index += 1;
         }
     }
 
     public double removeDimension(int index) {
         Parameter p = parameters.get(index);
-        int pi = pindex.get(index);
+        int pi = pIndex.get(index);
 
         parameters.remove(index);
-        pindex.remove(index);
+        pIndex.remove(index);
 
         double v = p.removeDimension(pi);
         for (int i = pi; i < p.getDimension(); i++) {
-            pindex.set(index, i);
+            pIndex.set(index, i);
             index += 1;
         }
         return v;
     }
 
     public void fireParameterChangedEvent() {
-        doNotPropogateChangeUp = true;
+        doNotPropagateChangeUp = true;
         for (Parameter p : parameters) {
             p.fireParameterChangedEvent();
         }
-        doNotPropogateChangeUp = false;
+        doNotPropagateChangeUp = false;
         fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
     }
 
     public double getParameterValue(int dim) {
-        return parameters.get(dim).getParameterValue(pindex.get(dim));
-    }
-
-    public double[] inspectParametersValues() {
-        return getParameterValues();
+        return parameters.get(dim).getParameterValue(pIndex.get(dim));
     }
 
     public void setParameterValue(int dim, double value) {
-        parameters.get(dim).setParameterValue(pindex.get(dim), value);
+        parameters.get(dim).setParameterValue(pIndex.get(dim), value);
     }
 
 //    public void setParameterValue(int row, int column, double a)
@@ -212,7 +211,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 //    }
 
     public void setParameterValueQuietly(int dim, double value) {
-        parameters.get(dim).setParameterValueQuietly(pindex.get(dim), value);
+        parameters.get(dim).setParameterValueQuietly(pIndex.get(dim), value);
     }
 
 //    public void setParameterValueQuietly(int row, int column, double a){
@@ -220,7 +219,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 //    }
 
     public void setParameterValueNotifyChangedAll(int dim, double value) {
-        parameters.get(dim).setParameterValueNotifyChangedAll(pindex.get(dim), value);
+        parameters.get(dim).setParameterValueNotifyChangedAll(pIndex.get(dim), value);
     }
 
 //    public void setParameterValueNotifyChangedAll(int row, int column, double val){
@@ -252,12 +251,16 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public String toString() {
-        StringBuffer buffer = new StringBuffer(String.valueOf(getParameterValue(0)));
+        return toStringCompoundParameter(getDimension());
+    }
+
+    protected String toStringCompoundParameter(int dim) {
+        StringBuilder buffer = new StringBuilder(String.valueOf(getParameterValue(0)));
         final Bounds bounds = getBounds();
         buffer.append("[").append(String.valueOf(bounds.getLowerLimit(0)));
         buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
 
-        for (int i = 1; i < getDimension(); i++) {
+        for (int i = 1; i < dim; i++) {
             buffer.append(", ").append(String.valueOf(getParameterValue(i)));
             buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
             buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
@@ -272,14 +275,85 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
         int dim = 0;
-        for (Parameter parameter1 : uniqueParameters) {
-            if (variable == parameter1) {
-                if (!doNotPropogateChangeUp) {
-                    fireParameterChangedEvent(dim + index, type);
+        if (!doNotPropagateChangeUp) {
+            for (Parameter parameter1 : uniqueParameters) {
+                if (variable == parameter1) {
+                    int subparameterIndex = (index == -1) ? -1 : dim + index;
+                    fireParameterChangedEvent(subparameterIndex, type);
+                    break;
                 }
-                break;
+                dim += parameter1.getDimension();
             }
-            dim += parameter1.getDimension();
+        }
+    }
+
+    public double getParameterValue(int index, int parameter) {
+        return getParameter(parameter).getParameterValue(index);
+    }
+
+    public static CompoundParameter mergeParameters(String newName,
+                                                    CompoundParameter[] parameters,
+                                                    Boolean enforceSameNames) {
+        int nParameters = parameters[0].getParameterCount();
+        for (int i = 1; i < parameters.length; i++) {
+            assert (nParameters == parameters[i].getParameterCount());
+        }
+
+        CompoundParameter mergedParameter = new CompoundParameter(newName);
+        for (int i = 0; i < nParameters; i++) {
+            String parameterName = parameters[0].getParameter(i).getParameterName();
+            CompoundParameter rowParameter = new CompoundParameter(parameterName);
+            for (int j = 0; j < parameters.length; j++) {
+                Parameter subParameter = parameters[j].getParameter(i);
+                if (enforceSameNames && subParameter.getParameterName() != parameterName) {
+                    throw new RuntimeException("parameter " + j + " with sub-parameter " + i + " has name " +
+                            subParameter.getParameterName() + ". This does not match parameter 0 with sub-parameter " +
+                            +i + " that has name " + parameterName + ".");
+                }
+                rowParameter.addParameter(subParameter);
+            }
+            mergedParameter.addParameter(rowParameter);
+        }
+
+        return mergedParameter;
+    }
+
+    public static CompoundParameter mergeParameters(CompoundParameter[] parameters) {
+        String newName = parameters[0].getParameterName();
+        for (int i = 1; i < parameters.length; i++) {
+            newName += "_and_" + parameters[i].getParameterName();
+        }
+        return mergeParameters(newName, parameters, true);
+    }
+
+    public static void checkParametersMerged(CompoundParameter mergedParameter, CompoundParameter[] parameters) {
+        int nParams = mergedParameter.getParameterCount();
+        for (int i = 0; i < nParams; i++) {
+            CompoundParameter subMerged = (CompoundParameter) mergedParameter.getParameter(i);
+
+            for (int j = 0; j < parameters.length; j++) {
+                assert (subMerged.getParameter(j) == parameters[j].getParameter(i));
+            }
+
+            //Below is redundant but a good sanity check
+            int currentParameter = 0;
+            int currentIndex = 0;
+            int currentDimension = parameters[currentParameter].getParameter(i).getDimension();
+
+            for (int j = 0; j < subMerged.getDimension(); j++) {
+                if (currentIndex == currentDimension) {
+                    currentParameter++;
+                    currentIndex = 0;
+                    currentDimension = parameters[currentParameter].getParameter(i).getDimension();
+                }
+
+                double v1 = subMerged.getParameterValue(j);
+                double v2 = parameters[currentParameter].getParameter(i).getParameterValue(currentIndex);
+
+                assert (v1 == v2);
+
+                currentIndex++;
+            }
         }
     }
 
@@ -290,11 +364,11 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     private class CompoundBounds implements Bounds<Double> {
 
         public Double getUpperLimit(int dim) {
-            return parameters.get(dim).getBounds().getUpperLimit(pindex.get(dim));
+            return parameters.get(dim).getBounds().getUpperLimit(pIndex.get(dim));
         }
 
         public Double getLowerLimit(int dim) {
-            return parameters.get(dim).getBounds().getLowerLimit(pindex.get(dim));
+            return parameters.get(dim).getBounds().getLowerLimit(pIndex.get(dim));
         }
 
         public int getBoundsDimension() {
@@ -302,19 +376,19 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
-    protected ArrayList<Parameter> getParameters(){
+    protected ArrayList<Parameter> getParameters() {
         return parameters;
     }
 
-    private final List<Parameter> uniqueParameters = new ArrayList<Parameter>();
+    protected final List<Parameter> uniqueParameters = new ArrayList<Parameter>();
 
     private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
-    private final ArrayList<Integer> pindex = new ArrayList<Integer>();
-    private Bounds bounds = null;
+    private final ArrayList<Integer> pIndex = new ArrayList<Integer>();
+    private Bounds<Double> bounds = null;
     private int dimension;
     private String name;
 
-    private boolean doNotPropogateChangeUp = false;
+    protected boolean doNotPropagateChangeUp = false;
 
     public static void main(String[] args) {
 

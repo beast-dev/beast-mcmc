@@ -1,7 +1,8 @@
 /*
  * AbstractHamiltonianMCOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,20 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators.hmc.deprecated;
 
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.math.distributions.NormalDistribution;
 
 /**
  * Created by max on 12/3/15.
  */
 @Deprecated
-public abstract class AbstractHamiltonianMCOperator extends AbstractCoercableOperator {
-    public AbstractHamiltonianMCOperator(CoercionMode mode, double momentumSd) {
+public abstract class AbstractHamiltonianMCOperator extends AbstractAdaptableOperator {
+    public AbstractHamiltonianMCOperator(AdaptationMode mode, double momentumSd) {
         super(mode);
         this.momentumSd=momentumSd;
     }
@@ -48,6 +50,11 @@ public abstract class AbstractHamiltonianMCOperator extends AbstractCoercableOpe
 
     private double momentumSd;
     protected double[] momentum;
+
+    @Override
+    public String getAdaptableParameterName() {
+        return "";
+    }
 
     protected void drawMomentum(int size){
         momentum=new double[size];

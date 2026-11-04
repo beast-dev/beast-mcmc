@@ -1,7 +1,8 @@
 /*
  * InverseGammaDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
@@ -34,20 +36,14 @@ import dr.math.UnivariateFunction;
  * (Parameters: shape, scale; mean: ??; variance: ??)
  *
  * @author Joseph Heled
- * @version $Id$
  */
 public class InverseGammaDistribution implements Distribution {
 
     private double shape, scale;
 
-    private final double factor;
-    private final double logFacor;
-
     public InverseGammaDistribution(double shape, double scale) {
         this.shape = shape;
         this.scale = scale;
-        this.factor = Math.pow(scale, shape) / Math.exp(GammaFunction.lnGamma(shape));
-        this.logFacor = shape * Math.log(scale) - GammaFunction.lnGamma(shape);
     }
 
     public double getShape() {
@@ -67,11 +63,11 @@ public class InverseGammaDistribution implements Distribution {
     }
 
     public double pdf(double x) {
-        return pdf(x, shape, scale, factor);
+        return pdf(x, shape, scale, 1.0);
     }
 
     public double logPdf(double x) {
-        return logPdf(x, shape, scale, logFacor);
+        return logPdf(x, shape, scale, 0.0);
     }
 
     public double cdf(double x) {
@@ -138,11 +134,11 @@ public class InverseGammaDistribution implements Distribution {
      * @param scale scale parameter
      * @return log pdf value
      */
-    public static double logPdf(double x, double shape, double scale, double factor) {
+    public static double logPdf(double x, double shape, double scale, double lfactor) {
         if (x <= 0)
             return Double.NEGATIVE_INFINITY;
 
-        return  factor + shape*Math.log(scale) - (shape + 1)*Math.log(x) - (scale/x) - GammaFunction.lnGamma(shape);
+        return  lfactor + shape*Math.log(scale) - (shape + 1)*Math.log(x) - (scale/x) - GammaFunction.lnGamma(shape);
     }
 
     /**

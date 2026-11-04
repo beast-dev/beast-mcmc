@@ -1,7 +1,8 @@
 /*
  * TraceDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,22 +22,25 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
 
+import dr.math.MachineAccuracy;
 import dr.stats.DiscreteStatistics;
 import dr.stats.FrequencyCounter;
 import dr.util.HeapSort;
 
 import java.util.*;
 
+import static jebl.math.MachineAccuracy.EPSILON;
+
 /**
  * A class that stores the distribution statistics for a trace
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: TraceDistribution.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
 public class TraceDistribution {
     private TraceType traceType;
@@ -47,17 +51,23 @@ public class TraceDistribution {
     private FrequencyCounter<Integer> frequencyCounter;
 
     public TraceDistribution(List<Double> values, TraceType traceType) {
+        this(values, traceType, false);
+    }
+
+    public TraceDistribution(List<Double> values, TraceType traceType, boolean isConstant) {
         this.traceType = traceType;
+        this.isConstant = isConstant;
 
         assert traceType != TraceType.CATEGORICAL : "cant use this constructor with categorical data";
 
         initStatistics(values, 0.95);
     }
 
-    public TraceDistribution(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder) {
+    public TraceDistribution(List<Double> values, Map<Integer, String> categoryLabelMap, List<Integer> categoryOrder, boolean isConstant) {
         this.traceType = TraceType.CATEGORICAL;
         this.categoryLabelMap = categoryLabelMap;
         this.categoryOrder = categoryOrder;
+        this.isConstant = isConstant;
         initStatistics(values, 0.95);
     }
 
@@ -75,10 +85,6 @@ public class TraceDistribution {
 
     public TraceType getTraceType() {
         return traceType;
-    }
-
-    public boolean isMinEqualToMax() {
-        return minEqualToMax;
     }
 
     public int getSize() {
@@ -105,6 +111,9 @@ public class TraceDistribution {
         return geometricMean;
     }
 
+    public boolean isConstant() {
+        return isConstant;
+    }
 
     public double getMedian() {
         return median;
@@ -174,26 +183,35 @@ public class TraceDistribution {
         }
 
         size = values.length;
-        mean = DiscreteStatistics.mean(values);
-        stdError = DiscreteStatistics.stdev(values);
-        variance = DiscreteStatistics.variance(values);
 
-        minimum = Double.POSITIVE_INFINITY;
-        maximum = Double.NEGATIVE_INFINITY;
+        if (!isConstant) {
+            minimum = Double.POSITIVE_INFINITY;
+            maximum = Double.NEGATIVE_INFINITY;
 
-        for (double value : values) {
-            if (value < minimum) minimum = value;
-            if (value > maximum) maximum = value;
+            for (double value : values) {
+                if (value < minimum) minimum = value;
+                if (value > maximum) maximum = value;
+            }
+
+            isConstant = MachineAccuracy.isSame(maximum, minimum);
         }
 
-        if (minimum > 0) {
-            geometricMean = DiscreteStatistics.geometricMean(values);
-            hasGeometricMean = true;
-        }
+        if (isConstant) {
+            mean = values[0];
+            stdError = 0;
+            variance = 0;
+            minimum = maximum = values[0];
 
-        if (maximum == minimum) {
-            minEqualToMax = false;
             return;
+        } else {
+            mean = DiscreteStatistics.mean(values);
+            stdError = DiscreteStatistics.stdev(values);
+            variance = DiscreteStatistics.variance(values);
+
+            if (minimum > 0) {
+                geometricMean = DiscreteStatistics.geometricMean(values);
+                hasGeometricMean = true;
+            }
         }
 
         int[] indices = new int[values.length];
@@ -207,7 +225,6 @@ public class TraceDistribution {
 //        ESS = values.length; // move to TraceCorrelation
         calculateHPDIntervalCustom(0.5, values, indices);
 
-        minEqualToMax = true;
     }
 
     /**
@@ -227,7 +244,8 @@ public class TraceDistribution {
         hpdUpperCustom = hpd[1];
     }
 
-    protected boolean minEqualToMax = false;
+    private boolean isConstant;
+
     protected boolean hasGeometricMean = false;
 
     protected int size = 0;

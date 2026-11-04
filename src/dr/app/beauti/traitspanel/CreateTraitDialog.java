@@ -1,7 +1,8 @@
 /*
  * CreateTraitDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.traitspanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.util.TextUtil;
 import jam.panels.OptionsPanel;
@@ -42,9 +43,18 @@ import java.awt.event.ItemListener;
 /**
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class CreateTraitDialog {
+    public static final String EXAMPLE_FORMAT = "<html>A trait file is tab delimited. " +
+            "The first row is always <font color=red>traits</font> followed by the name of the trait " +
+            "(e.g. <font color=red>size</font>) in the second column. The rest rows are mapping taxa to trait values, with " +
+            "taxon name in the first column and trait values in the second column. For example: <br>" +
+            "traits\tsize<br>" +
+            "taxon1\tsmall<br>" +
+            "taxon2\tmedium<br>" +
+            "taxon3\tbig<br>" +
+            "... ...<br>.</html>";
+
 
     private final BeautiFrame frame;
 
@@ -57,7 +67,6 @@ public class CreateTraitDialog {
     private final JCheckBox createTraitPartitionCheck = new JCheckBox("Create a corresponding data partition", true);
 
     private String message = null;
-    private boolean isSpeciesTrait = false;
 
     public static final int OK_IMPORT = 10;
 
@@ -90,13 +99,17 @@ public class CreateTraitDialog {
         exampleButton.setEnabled(false);
         exampleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(STARBEASTOptions.EXAMPLE_FORMAT, new Dimension(400,300));
-
-                JOptionPane.showMessageDialog(frame, scrollPane,
-                    "Example of mapping file format",
-                    JOptionPane.PLAIN_MESSAGE);
+                showExampleTraitFormat(frame);
             }
         });
+    }
+
+    public static void showExampleTraitFormat(BeautiFrame frame) {
+        JScrollPane scrollPane = TextUtil.createHTMLScrollPane(EXAMPLE_FORMAT, new Dimension(400,300));
+
+        JOptionPane.showMessageDialog(frame, scrollPane,
+                "Example of mapping file format",
+                JOptionPane.PLAIN_MESSAGE);
     }
 
     public void setTraitName(String traitName) {
@@ -106,11 +119,6 @@ public class CreateTraitDialog {
     public void setMessage(String message) {
         this.message = message;
     }
-
-    public void setSpeciesTrait(final boolean isSpeciesTrait) {
-        this.isSpeciesTrait = isSpeciesTrait;
-    }
-
 
     public int showDialog() {
 
@@ -132,6 +140,9 @@ public class CreateTraitDialog {
             dialog.pack();
 
             dialog.setVisible(true);
+
+            // the dialog is modal, so it has been closed by the time this returns
+            dialog.dispose();
 
             Integer value = (Integer) optionPane.getValue();
             if (value != null && value != -1) {
@@ -157,21 +168,17 @@ public class CreateTraitDialog {
 
         optionPanel.addComponent(createRadio);
         JLabel label = optionPanel.addComponentWithLabel("Name:", nameField);
-        if (isSpeciesTrait) {
-            label.setEnabled(false);
-            nameField.setEnabled(false);
-        }
 
         optionPanel.addComponent(importRadio);
         optionPanel.addComponent(exampleButton);
-        exampleButton.putClientProperty("Quaqua.Button.style", "help");
+        // (a round help button on macOS, where the text is not shown)
+        exampleButton.putClientProperty("JButton.buttonType", "help");
+        exampleButton.setToolTipText(exampleButton.getText());
 
-        if (!isSpeciesTrait) {
-            optionPanel.addComponentWithLabel("Type:", typeCombo);
-            optionPanel.addComponent(createTraitPartitionCheck);
-        }
-        // if create "species" partition for *BEAST, then everything goes wrong
-        createTraitPartitionCheck.setSelected(!isSpeciesTrait);
+        optionPanel.addComponentWithLabel("Type:", typeCombo);
+        optionPanel.addComponent(createTraitPartitionCheck);
+
+        createTraitPartitionCheck.setSelected(true);
     }
 
     public String getName() {

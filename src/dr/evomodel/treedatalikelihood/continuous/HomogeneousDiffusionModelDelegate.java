@@ -1,7 +1,8 @@
 /*
- * HomogenousDiffusionModelDelegate.java
+ * HomogeneousDiffusionModelDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,18 +22,24 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.math.KroneckerOperation;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
 /**
  * A simple diffusion model delegate with the same diffusion model over the whole tree
+ *
  * @author Marc A. Suchard
  * @author Andrew Rambaut
- * @version $Id$
  */
 public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
@@ -43,5 +50,30 @@ public final class HomogeneousDiffusionModelDelegate extends AbstractDiffusionMo
     @Override
     protected double[] getDriftRates(int[] branchIndices, int updateCount) {
         return null;
+    }
+
+    @Override
+    public double[] getAccumulativeDrift(final NodeRef node, double[] priorMean, ContinuousDiffusionIntegrator cdi, int dim) {
+        return priorMean;
+    }
+
+    @Override
+    public double[][] getJointVariance(final double priorSampleSize, final double[][] treeVariance,
+                                       final double[][] treeSharedLengths, final double[][] traitVariance) {
+        return KroneckerOperation.product(treeVariance, traitVariance);
+    }
+
+    @Override
+    public void getMeanTipVariances(final double priorSampleSize,
+                                    final double[] treeLengths,
+                                    final DenseMatrix64F traitVariance,
+                                    final DenseMatrix64F varSum) {
+        double sumLengths = 0;
+        for (double treeLength : treeLengths) {
+            sumLengths += treeLength;
+        }
+        sumLengths /= treeLengths.length;
+        CommonOps.scale(sumLengths, traitVariance, varSum);
+        CommonOps.addEquals(varSum, 1 / priorSampleSize, traitVariance);
     }
 }

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<beast>
+    <parameter id="startingValue" value="-0.1 -0.2"/>
+
+    <autoRegressiveNormalDistributionModel id="normal" dim="2">
+        <scale>
+            <parameter value="1.0"/>
+        </scale>
+        <rho>
+            <parameter value="0.7"/>
+        </rho>
+    </autoRegressiveNormalDistributionModel>
+
+    <multivariateDistributionLikelihood id="distribution">
+        <distribution>
+            <autoRegressiveNormalDistributionModel idref="normal"/>
+        </distribution>
+        <data>
+            <parameter idref="startingValue"/>
+        </data>
+    </multivariateDistributionLikelihood>
+
+    <operators id="operator.zzhmcNUTS">
+
+        <NoUTurnOperator weight="1" adaptiveStepsize="false">
+
+            <zigZagOperator id="zigzag" weight="1" threadCount="1" reversibleFlag="true" randomTimeWidth="0">
+
+                <gradient>
+                    <distributionLikelihood idref="distribution"/>
+                </gradient>
+
+                <precisionVectorProduct id="product" roughTravelTimeGuess="1">
+                    <autoRegressiveNormalDistributionModel idref="normal"/>
+                </precisionVectorProduct>
+
+                <precisionColumn useCache="false">
+                    <autoRegressiveNormalDistributionModel idref="normal"/>
+                </precisionColumn>
+
+            </zigZagOperator>
+
+        </NoUTurnOperator>
+
+
+    </operators>
+
+
+    <operators id="operator.hmcNUTS">
+
+        <NoUTurnOperator weight="1" adaptiveStepsize="true">
+
+            <hamiltonianMonteCarloOperator weight = "1" stepSize="1">
+
+                <gradient>
+                    <distributionLikelihood idref="distribution"/>
+                </gradient>
+
+                <parameter idref="startingValue"/>
+
+            </hamiltonianMonteCarloOperator>
+
+        </NoUTurnOperator>
+
+    </operators>
+
+    <mcmc id="mcmc.zzhmcNUTS" chainLength="10000" autoOptimize="true">
+        <posterior>
+            <likelihood id = "likelihood.zzhmcNUTS">
+                <distributionLikelihood idref="distribution"/>
+            </likelihood>
+        </posterior>
+
+        <operators idref="operator.zzhmcNUTS"/>
+
+        <log logEvery="1">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.zzhmcNUTS"/>
+            </column>
+            <column label="startingValue" sf="6" width="12">
+                <parameter idref="startingValue"/>
+            </column>
+        </log>
+
+        <log logEvery="1" fileName="zzhmcNUTS2d.log">
+            <likelihood idref="likelihood.zzhmcNUTS"/>
+            <parameter idref="startingValue"/>
+        </log>
+
+    </mcmc>
+
+
+    <mcmc id="mcmc.hmcNUTS" chainLength="10000" autoOptimize="true">
+        <posterior>
+            <likelihood id = "likelihood.hmcNUTS">
+                <distributionLikelihood idref="distribution"/>
+            </likelihood>
+        </posterior>
+
+        <operators idref="operator.hmcNUTS"/>
+
+        <log logEvery="1">
+            <column label="posterior" dp="4" width="12">
+                <likelihood idref="likelihood.hmcNUTS"/>
+            </column>
+            <column label="startingValue" sf="6" width="12">
+                <parameter idref="startingValue"/>
+            </column>
+        </log>
+
+        <log logEvery="1" fileName="hmcNUTS2d.log">
+            <likelihood idref="likelihood.hmcNUTS"/>
+            <parameter idref="startingValue"/>
+        </log>
+
+    </mcmc>
+
+    <traceAnalysis fileName="zzhmcNUTS2d.log" stdError="true"/>
+    <traceAnalysis fileName="hmcNUTS2d.log" stdError="true"/>
+
+</beast>

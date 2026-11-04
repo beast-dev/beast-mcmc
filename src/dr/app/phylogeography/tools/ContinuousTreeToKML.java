@@ -1,7 +1,8 @@
 /*
  * ContinuousTreeToKML.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.phylogeography.tools;
@@ -62,8 +64,8 @@ public class ContinuousTreeToKML {
 
     public static void main(String[] args) {
 
-        double altitude = 0;            // altitutude of the root of the 3D trees
-        double mostRecentDate = 2010;  // required to convert heights to calendar dates
+        double altitude = 0;            // altitude of the root of the 3D trees
+        double mostRecentDate = 2013;  // required to convert heights to calendar dates
         String coordinateLabel = "loc";
 
         boolean makeTreeSlices = false;
@@ -73,15 +75,15 @@ public class ContinuousTreeToKML {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption(ANNOTATION, "location annotation label", "specifies the label used for location coordinates annotation [default=location]"),
-                        new Arguments.RealOption(ALTITUDE,"specifies the altitude of the root of the 3D tree [default=no 3D tree]"),
-                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
+                        new Arguments.StringOption(ANNOTATION,null, "location annotation label", "specifies the label used for location coordinates annotation [default=location]"),
+                        new Arguments.RealOption(ALTITUDE,null, "specifies the altitude of the root of the 3D tree [default=no 3D tree]"),
+                        new Arguments.RealOption(MRSD,null, "specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
 
-                        new Arguments.StringOption(SLICES,"time","specifies a slice time-list [default=none]"),
-                        new Arguments.StringOption(SLICEMIDPOINT, falseTrue, false,
+                        new Arguments.StringOption(SLICES,null,"time","specifies a slice time-list [default=none]"),
+                        new Arguments.StringOption(SLICEMIDPOINT, null, falseTrue, false,
                                 "shows complete branch for sliced tree if time is more recent than the branch's midpoint [default=false"),
 
-                        new Arguments.Option(HELP, "option to print this message")
+                        new Arguments.Option(HELP, "h", "option to print this message")
                 });
 
         try {

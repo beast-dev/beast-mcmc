@@ -1,7 +1,8 @@
 /*
  * ExponentialDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
@@ -37,7 +39,6 @@ import dr.math.UnivariateFunction;
  *
  * @author Alexei Drummond
  * @author Korbinian Strimmer
- * @version $Id: ExponentialDistribution.java,v 1.5 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ExponentialDistribution implements Distribution {
     //
@@ -60,6 +61,8 @@ public class ExponentialDistribution implements Distribution {
     public double logPdf(double x) {
         return logPdf(x, lambda);
     }
+
+    public double gradLogPdf(double x) { return gradLogPdf(x, lambda); }
 
     public double cdf(double x) {
         return cdf(x, lambda);
@@ -121,6 +124,16 @@ public class ExponentialDistribution implements Distribution {
     	if (x < 0) return Double.NEGATIVE_INFINITY;
     	
         return Math.log(lambda) - (lambda * x);
+    }
+
+    public static double gradLogPdf(double x, double lambda) {
+        if (x < 0) return Double.NEGATIVE_INFINITY;
+
+        return -lambda;
+    }
+
+    public static double hessianLogPdf(double x, double lambda) {
+        return 0.0;
     }
 
     /**

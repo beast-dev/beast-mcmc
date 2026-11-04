@@ -1,7 +1,8 @@
 /*
  * SubstitutionProcess.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel;
@@ -41,6 +43,8 @@ public interface SubstitutionProcess {
      */
     void getTransitionProbabilities(double distance, double[] matrix);
 
+    void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen);
+
     /**
      * This function returns the Eigen vectors.
      *
@@ -60,7 +64,7 @@ public interface SubstitutionProcess {
      *
      * @return the rates
      */
-    public void getInfinitesimalMatrix(double[] matrix);
+    void getInfinitesimalMatrix(double[] matrix);
 
     /**
      * @return the data type

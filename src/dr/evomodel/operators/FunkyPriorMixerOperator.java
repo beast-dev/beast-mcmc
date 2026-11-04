@@ -1,7 +1,8 @@
 /*
  * FunkyPriorMixerOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -43,11 +45,11 @@ import dr.math.MathUtils;
 @Deprecated
 public class FunkyPriorMixerOperator extends
         SimpleMCMCOperator {
-//        AbstractCoercableOperator {
+//        AbstractAdaptableOperator {
 //        implements GibbsOperator {
 
     public FunkyPriorMixerOperator(TreeModel treeModel, Parameter parameter, double windowSize, RandomWalkOperator.BoundaryCondition bc,
-                                   double weight, CoercionMode mode) {
+                                   double weight, AdaptationMode mode) {
       
 //        super(mode);
         this.treeModel = treeModel;
@@ -203,6 +205,7 @@ public class FunkyPriorMixerOperator extends
         return FunkyPriorMixerOperatorParser.FUNKY_OPERATOR;
     }
 
+    /* This is not an adaptable operator so these will not be called
     public double getCoercableParameter() {
         return Math.log(windowSize);
     }
@@ -210,6 +213,7 @@ public class FunkyPriorMixerOperator extends
     public void setCoercableParameter(double value) {
         windowSize = Math.exp(value);
     }
+    */
 
     public double getRawParameter() {
         return windowSize;
@@ -237,7 +241,7 @@ public class FunkyPriorMixerOperator extends
 
     public final String getPerformanceSuggestion() {
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double prob = getAcceptanceProbability();
         double targetProb = getTargetAcceptanceProbability();
 
 //        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);

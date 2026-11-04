@@ -1,7 +1,8 @@
 /*
  * AbstractBranchRateModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,17 +22,19 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.*;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 
 /**
  * An abstract base class for BranchRateModels to help implement some of the interfaces
  * @author Andrew Rambaut
- * @version $Id:$
  */
 public abstract class AbstractBranchRateModel extends AbstractModelLikelihood implements BranchRateModel {
     /**
@@ -84,4 +87,36 @@ public abstract class AbstractBranchRateModel extends AbstractModelLikelihood im
     public void makeDirty() {
         // Do nothing
     }
+//
+//    public LogColumn[] getColumns() {
+//        if (this instanceof DifferentiableBranchRates) {
+//            Tree tree = ((DifferentiableBranchRates) this).getTree();
+//            if (tree == null) {
+//                return super.getColumns();
+//            }
+//            LogColumn[] columns = new LogColumn[tree.getNodeCount() - 1];
+//            for (int i = 0; i < columns.length; i++) {
+//                if (tree.getNode(i) != tree.getRoot())
+//                    columns[i] = new BranchRateColumn(getModelName() + i, i, tree);
+//            }
+//            return columns;
+//        } else {
+//            return super.getColumns();
+//        }
+//    }
+//
+//    private class BranchRateColumn extends NumberColumn {
+//        private final int dim;
+//        private final Tree tree;
+//
+//        public BranchRateColumn(String label, int dim, Tree tree) {
+//            super(label);
+//            this.dim = dim;
+//            this.tree = tree;
+//        }
+//
+//        public double getDoubleValue() {
+//            return dim < tree.getRoot().getNumber() ? getBranchRate(tree, tree.getNode(dim)) : getBranchRate(tree, tree.getNode(dim + 1)); }
+//    }
+
 }

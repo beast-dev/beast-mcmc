@@ -1,12 +1,40 @@
+/*
+ * YuleModelTest.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package test.dr.evomodel.speciation;
 
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.Units;
 import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeModel;
@@ -18,10 +46,7 @@ import dr.inference.mcmc.MCMC;
 import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.OperatorSchedule;
-import dr.inference.operators.SimpleOperatorSchedule;
+import dr.inference.operators.*;
 import dr.inference.trace.ArrayTraceList;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
@@ -36,7 +61,6 @@ import java.util.List;
  * YuleModel Tester.
  *
  * @author Alexei Drummond
- * @version 1.0
  * @since <pre>08/26/2007</pre>
  */
 public class YuleModelTest extends TraceCorrelationAssert {
@@ -61,11 +85,11 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
     public void testYuleWithSubtreeSlide() {
 
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+        DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree);
 
         OperatorSchedule schedule = new SimpleOperatorSchedule();
         MCMCOperator operator =
-                new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, CoercionMode.COERCION_ON);
+                new SubtreeSlideOperator(treeModel, 1, 1, true, false, false, false, AdaptationMode.ADAPTATION_ON, AdaptableMCMCOperator.DEFAULT_ADAPTATION_TARGET);
         schedule.addOperator(operator);
 
         yuleTester(treeModel, schedule);
@@ -82,6 +106,8 @@ public class YuleModelTest extends TraceCorrelationAssert {
 
     private void yuleTester(TreeModel treeModel, OperatorSchedule schedule) {
 
+        MathUtils.setSeed(666);
+
         MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions(1000000);
 
@@ -91,7 +117,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, BirthDeathGernhard08Model.TreeType.TIMESONLY,
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel(b, d, null, Gernhard08BirthDeathModel.TreeType.TIMESONLY,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 

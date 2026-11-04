@@ -1,7 +1,8 @@
 /*
  * GeneralisedGaussLaguerreQuadrature.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math;
@@ -70,8 +72,8 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
     }
 
     private void setupArrays(){
-        final int maxIterations = 10;
-        final double eps = 1E-14;
+        final int maxIterations = 110;
+        final double eps = 3E-14;
 
         double z = 0;
 
@@ -79,7 +81,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
         for(int i=0; i<noPoints; i++){
             if(i==0){
-                z = (1.0+alpha)*(3.0+0.92*alpha)/(1.0+2.4*noPoints+1.8*alpha);
+                z +=  (1.0+alpha)*(3.0+0.92*alpha)/(1.0+2.4*noPoints+1.8*alpha);
             } else if (i==1){
                 z += (15.0+6.25*alpha)/(1.0+0.9*alpha+2.5*noPoints);
             } else {
@@ -109,12 +111,10 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
                 throw new RuntimeException("Too many iterations");
             }
             abscissae[i] = z;
-
-            coefficients[i] = -Math.exp(GammaFunction.lnGamma(alpha+noPoints) - GammaFunction.lnGamma((double)noPoints))/
+            coefficients[i] = -Math.exp(GammaFunction.lnGamma(alpha+noPoints) - GammaFunction.lnGamma(noPoints))/
                     (pp*noPoints*p2);
 
         }
-
     }
 
 
@@ -168,5 +168,12 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
     }
 
+    public double[] getAbscissae() {
+        return abscissae;
+    }
+
+    public double[] getCoefficients() {
+        return coefficients;
+    }
 
 }

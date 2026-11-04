@@ -1,7 +1,8 @@
 /*
  * CountableRealizationsParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchmodel.lineagespecific;
@@ -105,26 +107,55 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
     }
 
     public double getParameterValue(int index) {
-    	
+
 //    	int whichCategoryIndex = index % dim; // TODO Maybe?
 //    	int whichDimIndex = index - whichCategoryIndex * dim; // TODO Maybe?
 //    	Parameter param = uniquelyRealizedParameters.getParameter((int) categoriesParameter.getParameterValue(whichCategoryIndex));
-//    	return param.getParameterValue(whichDimIndex);     
-    	
-    	int whichCategoryIndex = categoriesParameter.getValue(index).intValue();//
-    	int whichDimIndex = 0;
-    	
-    	Parameter param = uniquelyRealizedParameters.getParameter(whichCategoryIndex);
-    	
-    	return param.getParameterValue(whichDimIndex);     
+//    	return param.getParameterValue(whichDimIndex);
+
+        int whichCategoryIndex = categoriesParameter.getValue(index).intValue();//
+        int whichDimIndex = 0;
+
+        Parameter param = uniquelyRealizedParameters.getParameter(whichCategoryIndex);
+
+        return param.getParameterValue(whichDimIndex);
     }//END: getParameterValue
 
-	public void setParameterValue(int dim, double value) {
+    public double[] getAllParameterValues(int index) {
 
-		int whichCategoryIndex = (int) categoriesParameter.getParameterValue(dim);
-		uniquelyRealizedParameters.setParameterValue(whichCategoryIndex, value);
+        int whichCategoryIndex = categoriesParameter.getValue(index).intValue();//
 
-	}//END: setParameterValue
+        Parameter param = uniquelyRealizedParameters.getParameter(whichCategoryIndex);
+        double[] returnVal = new double[param.getSize()];
+
+        for(int i = 0; i < param.getSize(); i++){
+            returnVal[i] = param.getParameterValue(i);
+        }
+
+        return returnVal;
+    }
+
+    public void setParameterValue(int dim, double value) {
+
+        int whichCategoryIndex = (int) categoriesParameter.getParameterValue(dim);
+        uniquelyRealizedParameters.setParameterValue(whichCategoryIndex, value);
+
+    }//END: setParameterValue
+
+    public void setParameterValue(int dim, double[] value) {
+
+        int whichCategoryIndex = (int) categoriesParameter.getParameterValue(dim);
+
+        if(uniquelyRealizedParameters.getParameter(whichCategoryIndex).getSize() != value.length){
+            throw new RuntimeException("parameter and array with parameter values must have same dimension");
+        }
+
+        for(int i = 0; i < value.length; i++){
+            uniquelyRealizedParameters.getParameter(whichCategoryIndex).setParameterValue(i,value[i]);
+        }
+        //uniquelyRealizedParameters.setParameterValue(whichCategoryIndex, value);
+
+    }//END: setParameterValue
 
     public void setParameterValueQuietly(int dim, double value) {
         throw new RuntimeException("Not implemented");

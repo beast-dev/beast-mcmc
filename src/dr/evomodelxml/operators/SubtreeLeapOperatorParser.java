@@ -1,7 +1,8 @@
 /*
  * SubtreeLeapOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
@@ -40,6 +42,8 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
 
     public static final String SIZE = "size";
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
+    public static final String DISTANCE_KERNEL = "distanceKernel";
+    public static final String SLIDE_ONLY = "slideOnly";
 
     public String getParserName() {
         return SUBTREE_LEAP;
@@ -47,7 +51,7 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
@@ -56,6 +60,15 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         final double size = xo.getAttribute(SIZE, Double.NaN);
         final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
+        SubtreeLeapOperator.DistanceKernelType distanceKernel = SubtreeLeapOperator.DistanceKernelType.NORMAL;
+        if (xo.hasAttribute(DISTANCE_KERNEL)) {
+            try {
+                distanceKernel = SubtreeLeapOperator.DistanceKernelType.valueOf(xo.getStringAttribute(DISTANCE_KERNEL).trim().toUpperCase());
+            } catch (IllegalArgumentException iae) {
+                throw new XMLParseException("Unrecognised distanceKernel attribute: " + xo.getStringAttribute(DISTANCE_KERNEL));
+            }
+        }
+
         if (size <= 0.0) {
             throw new XMLParseException("The SubTreeLeap size attribute must be positive and non-zero.");
         }
@@ -63,9 +76,10 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
         if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
             throw new XMLParseException("Target acceptance probability has to lie in (0, 1)");
         }
-        SubtreeLeapOperator operator = new SubtreeLeapOperator(treeModel, weight, size, targetAcceptance, mode);
 
-        return operator;
+        final boolean slideOnly = xo.getAttribute(SLIDE_ONLY, false);
+
+        return new SubtreeLeapOperator(treeModel, weight, size, distanceKernel, slideOnly, mode, targetAcceptance);
     }
 
     public String getParserDescription() {
@@ -84,7 +98,9 @@ public class SubtreeLeapOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule(SIZE, false),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newStringRule(DISTANCE_KERNEL, true),
+            AttributeRule.newBooleanRule(SLIDE_ONLY, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };
 

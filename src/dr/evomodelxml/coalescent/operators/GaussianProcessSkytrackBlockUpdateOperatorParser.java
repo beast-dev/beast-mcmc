@@ -1,7 +1,8 @@
 /*
  * GaussianProcessSkytrackBlockUpdateOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.coalescent.operators;
 
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -80,8 +82,8 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
             gmrfLogger.addHandler(gmrfHandler);
         }
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
-        if (mode == CoercionMode.DEFAULT) mode = CoercionMode.COERCION_ON;
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
+        if (mode == AdaptationMode.DEFAULT) mode = AdaptationMode.ADAPTATION_ON;
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -134,7 +136,7 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(SCALE_FACTOR),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newDoubleRule(STOP_VALUE, true),
             AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
             AttributeRule.newBooleanRule(OLD_SKYRIDE, true),

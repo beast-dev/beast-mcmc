@@ -1,7 +1,8 @@
 /*
  * DiscretizedLocationOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -28,8 +30,8 @@ package dr.evomodel.operators;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AbstractAdaptableOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -42,15 +44,15 @@ import java.util.logging.Logger;
 /**
  * @author Marc Suchard
  */
-public class DiscretizedLocationOperator extends AbstractCoercableOperator {
+public class DiscretizedLocationOperator extends AbstractAdaptableOperator {
 
     public static final String GIBBS_OPERATOR = "discretizedLocationOperator";
     public static final String INTERNAL_ONLY = "onlyInternalNodes";
     public static final String DISK = "neighborhoodSize";
     public static final String RANDOMIZE = "randomize";
 
-    public DiscretizedLocationOperator(AbstractMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes, int disk, CoercionMode mode) {
-        super(mode);
+    public DiscretizedLocationOperator(AbstractMultivariateTraitLikelihood traitModel, boolean onlyInternalNodes, int disk, AdaptationMode mode) {
+        super(mode, 0.5);
         this.treeModel = traitModel.getTreeModel();
         this.traitName = traitModel.getTraitName();
         this.onlyInternalNodes = onlyInternalNodes;
@@ -208,11 +210,12 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
         return Math.log(value - 1);
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return autoOptimize;
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         autoOptimize = value;
     }
 
@@ -220,13 +223,14 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
         return convertFromAutoOptimizeValue(autoOptimize);
     }
 
+    @Override
+    public String getAdaptableParameterName() {
+        return null;
+    }
+
 //    public double getScaleFactor() {
 //        return scaleFactor;
 //    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.50;
-    }
 
     public final String getPerformanceSuggestion() {
 
@@ -255,7 +259,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             boolean onlyInternalNodes = xo.getAttribute(INTERNAL_ONLY, true);

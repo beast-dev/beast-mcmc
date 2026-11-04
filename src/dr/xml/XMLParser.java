@@ -1,7 +1,8 @@
 /*
  * XMLParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.xml;
 
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -163,11 +166,15 @@ public class XMLParser {
 
         Element e = document.getDocumentElement();
         if (e.getTagName().equals("beast")) {
-            // If the 'version' is attribute is present then check it is not an more recent version...
+            // If the 'version' is attribute is present then check it is not a more recent version...
             if (e.hasAttribute(VERSION)) {
                 String xmlVersion = e.getAttribute(VERSION);
-                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion())) {
-                   throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than the version of BEAST running it (" + version.getVersion() + "). This may be incompatible and cause unpredictable errors.");
+                if (version != null && Version.Utils.isMoreRecent(xmlVersion, version.getVersion()) &&
+                        !Boolean.parseBoolean(System.getProperty("ignore.versions"))) {
+                    throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than \n" +
+                            "the version of BEAST running it (" + version.getVersion() + "). \n" +
+                            "This may be incompatible and cause unpredictable errors. \n" +
+                            "To override this behaviour use the `-ignore_versions` command line option." );
                 }
             }
 
@@ -261,7 +268,6 @@ public class XMLParser {
 
             if (verbose) System.out.println("  Restoring idref=" + idref);
 
-
             return new Reference(restoredXMLObject);
 
         } else {
@@ -332,7 +338,9 @@ public class XMLParser {
                     addCitable((Citable)obj);
                 }
 
-                if (obj instanceof Likelihood) {
+                if (obj instanceof CompoundLikelihood) {
+                    Likelihood.FULL_LIKELIHOOD_SET.addAll(((CompoundLikelihood) obj).getLikelihoods());
+                } else if (obj instanceof Likelihood) {
                     Likelihood.FULL_LIKELIHOOD_SET.add((Likelihood) obj);
                 } else if (obj instanceof Model) {
                     Model.FULL_MODEL_SET.add((Model) obj);
@@ -341,6 +349,14 @@ public class XMLParser {
                 }
 
                 xo.setNativeObject(obj);
+            } else {
+                // The element doesn't have a specific parser so is likely to be an internal
+                // element to another parser. However, it has an ID then it is likely to be
+                // something that was intended to parse so give a warning.
+                if (e.hasAttribute(ID)) { // object has ID
+                    java.util.logging.Logger.getLogger("dr.xml").warning("Element called, " + xo.getName() +
+                            ", has an ID, " + e.getAttribute(ID) + ", but no parser.");
+                }
             }
 
             if (id != null) {
@@ -407,23 +423,29 @@ public class XMLParser {
 
 
     /**
-     * Get filename and path from BEAST XML object
+     * Get an input file's name and path from a BEAST XML object.
+     * Relative names are resolved against the working directory (or the directory of the
+     * XML file for names starting with "./").
      *
      * @param xo
      * @return
      */
     private static File getFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
         String fileName = xo.getStringAttribute(attributeName);
+        return FileHelpers.getFile(fileName, getFileNamePrefix());
+    }
 
-        // Check to see if a filename prefix has been specified, check it doesn't contain directory
-        // separator characters and then prefix it.
-        final String fileNamePrefix = System.getProperty("file.name.prefix");
-        final String fileSeparator = System.getProperty("file.separator");
-        if (fileNamePrefix != null) {
-            if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
-                throw new XMLParseException("The specified file name prefix is illegal.");
-            }
-        }
+    /**
+     * Get an output file's name and path from a BEAST XML object.
+     * Relative names are placed in the output directory requested with the -output command line
+     * option when there is one; otherwise they are resolved like input files. The directory of
+     * the first output file is remembered so that checkpoint files can follow the log files.
+     *
+     * @param xo
+     * @return
+     */
+    private static File getOutputFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
+        String fileName = xo.getStringAttribute(attributeName);
 
         final String fileRankPostfix = System.getProperty("mpi.rank.postfix");
         if (fileRankPostfix != null) {
@@ -435,7 +457,30 @@ public class XMLParser {
             }
         }
 
-        return FileHelpers.getFile(fileName, fileNamePrefix);
+        File resolvedFile = OutputFileHelper.resolveOutputFile(fileName, getFileNamePrefix(),
+                OutputFileHelper.getExplicitOutputDirectory());
+
+        File parentDir = resolvedFile.getParentFile();
+        if (parentDir != null) {
+            OutputFileHelper.setDefaultOutputDirectory(parentDir);
+        }
+
+        return resolvedFile;
+    }
+
+    /**
+     * @return the file name prefix given with the -prefix command line option, or null
+     * @throws XMLParseException if the prefix is empty or contains a directory separator
+     */
+    private static String getFileNamePrefix() throws XMLParseException {
+        final String fileNamePrefix = System.getProperty("file.name.prefix");
+        final String fileSeparator = System.getProperty("file.separator");
+        if (fileNamePrefix != null) {
+            if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
+                throw new XMLParseException("The specified file name prefix is illegal.");
+            }
+        }
+        return fileNamePrefix;
     }
 
     /**
@@ -468,7 +513,7 @@ public class XMLParser {
     }
 
     public static File getLogFile(XMLObject xo, String attributeName) throws XMLParseException {
-        final File logFile = getFileHandle(xo, attributeName);
+        final File logFile = getOutputFileHandle(xo, attributeName);
         boolean allowOverwrite = false;
 
         if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
@@ -481,7 +526,7 @@ public class XMLParser {
         }
 
         if (logFile.exists() && !allowOverwrite) {
-            throw new XMLParseException("\nThe log file " + logFile.getName() + " already exists in the working directory." +
+            throw new XMLParseException("\nThe log file " + logFile.getAbsolutePath() + " already exists." +
                     "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
                     "\nBEAST or select the option in the Run Options dialog box as appropriate.");
         }

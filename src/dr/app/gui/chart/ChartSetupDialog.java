@@ -1,7 +1,8 @@
 /*
  * ChartSetupDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.gui.chart;
@@ -42,6 +44,7 @@ public class ChartSetupDialog {
 
     private final JCheckBox manualXAxis;
     private final JCheckBox manualYAxis;
+    private final JCheckBox calendarXAxis;
     private final RealNumberField minXValue;
     private final RealNumberField maxXValue;
     private final RealNumberField minYValue;
@@ -51,6 +54,7 @@ public class ChartSetupDialog {
     private final boolean canLogYAxis;
     private final boolean canManualXAxis;
     private final boolean canManualYAxis;
+    private final boolean canCalendarXAxis;
     private final int defaultMinXAxisFlag;
     private final int defaultMaxXAxisFlag;
     private final int defaultMinYAxisFlag;
@@ -70,12 +74,15 @@ public class ChartSetupDialog {
         this.canManualXAxis = canManualXAxis;
         this.canManualYAxis = canManualYAxis;
 
+        this.canCalendarXAxis = true; // TODO pass as parameter
+
         this.defaultMinXAxisFlag = defaultMinXAxisFlag;
         this.defaultMaxXAxisFlag = defaultMaxXAxisFlag;
         this.defaultMinYAxisFlag = defaultMinYAxisFlag;
         this.defaultMaxYAxisFlag = defaultMaxYAxisFlag;
 
         logXAxis = new JCheckBox("Log axis");
+        calendarXAxis = new JCheckBox("Calendar date transform");
         manualXAxis = new JCheckBox("Manual range");
         minXValue = new RealNumberField();
         minXValue.setColumns(12);
@@ -96,6 +103,7 @@ public class ChartSetupDialog {
             if (canLogXAxis) {
                 optionPanel.addComponent(logXAxis);
             }
+            optionPanel.addComponent(calendarXAxis);
             optionPanel.addComponent(manualXAxis);
             final JLabel minXLabel = new JLabel("Minimum Value:");
             optionPanel.addComponents(minXLabel, minXValue);
@@ -111,6 +119,7 @@ public class ChartSetupDialog {
                 }
             });
             manualXAxis.setSelected(false);
+            calendarXAxis.setSelected(false);
             minXLabel.setEnabled(false);
             minXValue.setEnabled(false);
             maxXLabel.setEnabled(false);
@@ -144,6 +153,11 @@ public class ChartSetupDialog {
             maxYValue.setEnabled(false);
         }
     }
+
+    public boolean displayCalendarDates() {
+        return calendarXAxis.isSelected();
+    }
+
 
     public int showDialog(JChart chart) {
 
@@ -206,6 +220,14 @@ public class ChartSetupDialog {
         }
 
         if (canManualXAxis) {
+
+            if (calendarXAxis.isSelected()) {
+                xAxis = new CalendarAxis();
+                chart.setXAxis(xAxis);
+            } else {
+                chart.setXAxis(new LinearAxis());
+            }
+
             if (manualXAxis.isSelected()) {
                 xAxis.setManualRange(minXValue.getValue(), maxXValue.getValue());
                 xAxis.setAxisFlags(Axis.AT_VALUE, Axis.AT_VALUE);

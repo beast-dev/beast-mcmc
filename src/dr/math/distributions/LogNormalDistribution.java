@@ -1,7 +1,8 @@
 /*
  * LogNormalDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,19 +22,20 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
 import dr.math.UnivariateFunction;
 
 /**
  * log normal distribution (pdf, cdf, quantile)
  *
  * @author Korbinian Strimmer
- * @version $Id: LogNormalDistribution.java,v 1.3 2005/06/21 16:25:15 beth Exp $
  */
-public class LogNormalDistribution implements Distribution {
+public class LogNormalDistribution implements Distribution, GradientProvider {
     //
     // Public stuff
     //
@@ -202,4 +204,19 @@ public class LogNormalDistribution implements Distribution {
     // Private
 
     protected double M, S;
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] =(NormalDistribution.gradLogPdf(Math.log(x[i]), M, S) - 1) / x[i];
+        }
+        return result;
+    }
 }

@@ -1,7 +1,8 @@
 /*
- * MultivariateNormalOperator.java
+ * ModeIndependenceOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -39,7 +41,7 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class ModeIndependenceOperator extends AbstractCoercableOperator {
+public class ModeIndependenceOperator extends AbstractAdaptableOperator {
 
     public static final String MVN_OPERATOR = "modeIndependenceOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -53,7 +55,7 @@ public class ModeIndependenceOperator extends AbstractCoercableOperator {
     private double[][] cholesky;
 
     public ModeIndependenceOperator(Parameter parameter, double scaleFactor, double[][] inMatrix, double weight,
-                                    CoercionMode mode, boolean isVarianceMatrix) {
+                                    AdaptationMode mode, boolean isVarianceMatrix) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -88,7 +90,7 @@ public class ModeIndependenceOperator extends AbstractCoercableOperator {
     }
 
     public ModeIndependenceOperator(Parameter parameter, double scaleFactor,
-                                    MatrixParameter varMatrix, double weight, CoercionMode mode, boolean isVariance) {
+                                    MatrixParameter varMatrix, double weight, AdaptationMode mode, boolean isVariance) {
         this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, mode, isVariance);
     }
 
@@ -141,11 +143,12 @@ public class ModeIndependenceOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 
@@ -157,37 +160,8 @@ public class ModeIndependenceOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -198,7 +172,7 @@ public class ModeIndependenceOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);

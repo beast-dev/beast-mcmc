@@ -1,7 +1,8 @@
 /*
  * AbstractMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -30,8 +32,6 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeChangedEvent;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -48,7 +48,8 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -73,6 +74,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String STANDARDIZE_TRAITS = "standardizeTraits";
     public static final String RECIPROCAL_RATES = "reciprocalRates";
     public static final String PRIOR_SAMPLE_SIZE = "priorSampleSize";
+    public static final String PRIOR_PRECISION = "priorPrecision";
     public static final String RANDOM_SAMPLE = "randomSample";
     public static final String IGNORE_PHYLOGENY = "ignorePhylogeny";
     public static final String ASCERTAINMENT = "ascertainedTaxon";
@@ -176,7 +178,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         this.useTreeLength = useTreeLength;
         this.reciprocalRates = reciprocalRates;
 
-        dimTrait = diffusionModel.getPrecisionmatrix().length;
+        dimTrait = diffusionModel.getPrecisionMatrix().length;
         dim = traitParameter != null ? traitParameter.getParameter(0).getDimension() : 0;
         numData = dim / dimTrait;
 
@@ -350,6 +352,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             final int dim = driftModels.size();
             double[] drift = new double[dim];
             double realTimeBranchLength = treeModel.getBranchLength(node);
+            realTimeBranchLength = rescaleLength(realTimeBranchLength); // Drift should be normalized if tree is normalized
             for (int i = 0; i < dim; ++i) {
                 drift[i] = driftModels.get(i).getBranchRate(treeModel, node) * realTimeBranchLength;
             }
@@ -513,13 +516,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     protected double getTreeLength() {
-        double treeLength = 0;
-        for (int i = 0; i < treeModel.getNodeCount(); i++) {
-            NodeRef node = treeModel.getNode(i);
-            if (!treeModel.isRoot(node))
-                treeLength += treeModel.getBranchLength(node); // Bug was here
-        }
-        return treeLength;
+        return Tree.getTreeLength(treeModel);
     }
 
     public void recalculateTreeLength() {
@@ -765,22 +762,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             List<BranchRateModel> driftModels = parseDriftModels(xo, diffusionModel);
 
-            List<BranchRateModel> optimalValues = null;
+            List<BranchRateModel> optimalValues = parseOptimalValuesModels(xo, diffusionModel);
+
             BranchRateModel strengthOfSelection = null;
 
-            if (xo.hasChildNamed(OPTIMAL_TRAITS)) {
-                optimalValues = new ArrayList<BranchRateModel>();
-                XMLObject cxo = xo.getChild(OPTIMAL_TRAITS);
-                final int numberModels = cxo.getChildCount();
-                if (numberModels != diffusionModel.getPrecisionmatrix().length) {
-                    throw new XMLParseException("Wrong number of optimal trait models (" + numberModels + ") for a trait of" +
-                            " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
-                    );
-                }
-                for (int i = 0; i < numberModels; ++i) {
-                    optimalValues.add((BranchRateModel) cxo.getChild(i));
-                }
-            }
 
             if (xo.hasChildNamed(STRENGTH_OF_SELECTION)) {
                 XMLObject cxo = xo.getChild(STRENGTH_OF_SELECTION);
@@ -788,13 +773,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-            String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                    utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
+                    utilities.parseTraitsFromTaxonAttributes(xo, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
-            List<Integer> missingIndices = returnValue.missingIndices;
-            traitName = returnValue.traitName;
+            List<Integer> missingIndices = returnValue.getMissingIndices();
+            String traitName = returnValue.traitName;
 
             /* TODO Add partially integrated traits here */
 
@@ -884,7 +868,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     Parameter meanParameter = (Parameter) cxo.getChild(MultivariateDistributionLikelihood.MVN_MEAN)
                             .getChild(Parameter.class);
 
-                    if (meanParameter.getDimension() != diffusionModel.getPrecisionmatrix().length) {
+                    if (meanParameter.getDimension() != diffusionModel.getPrecisionMatrix().length) {
                         throw new XMLParseException("Root prior mean dimension does not match trait diffusion dimension");
                     }
 
@@ -915,7 +899,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                         scaleByTime, useTreeLength,
                                         rateModel, null, optimalValues, strengthOfSelection,
                                         samplingDensity, reportAsMultivariate,
-                                        mean, restrictedPartialsList,pseudoObservations, reciprocalRates);
+                                        mean, restrictedPartialsList, pseudoObservations, reciprocalRates);
                             }
                         } else {
                             like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
@@ -940,7 +924,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             }
 
             if (xo.hasChildNamed(TreeTraitParserUtilities.JITTER)) {
-                utilities.jitter(xo, diffusionModel.getPrecisionmatrix().length, missingIndices);
+                utilities.jitter(xo, diffusionModel.getPrecisionMatrix().length, missingIndices,
+                        traitParameter.getDimension());
             }
 
             if (xo.hasChildNamed(CHECK)) {
@@ -953,7 +938,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             if (!xo.hasAttribute(TreeTraitParserUtilities.ALLOW_IDENTICAL) &&
                     isRRW &&
-                    utilities.hasIdenticalTraits(traitParameter, missingIndices, diffusionModel.getPrecisionmatrix().length)) {
+                    utilities.hasIdenticalTraits(traitParameter, missingIndices, diffusionModel.getPrecisionMatrix().length)) {
                 throw new XMLParseException("For multivariate trait analyses, all trait values should be unique.\n" +
                         "Check data or add random noise using 'jitter' option.");
             }
@@ -1049,9 +1034,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             final int number = cxo.getChildCount();
 
-            if (number != diffusionModel.getPrecisionmatrix().length) {
+            if (number != diffusionModel.getPrecisionMatrix().length) {
                 throw new XMLParseException("Wrong number of drift models (" + number + ") for a trait of" +
-                        " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
+                        " dimension " + diffusionModel.getPrecisionMatrix().length + " in " + xo.getId()
                 );
             }
 
@@ -1061,6 +1046,33 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         }
         return driftModels;
+    }
+
+
+    public static List<BranchRateModel> parseOptimalValuesModels(XMLObject xo,
+                                                                 MultivariateDiffusionModel diffusionModel)
+            throws XMLParseException {
+
+        List<BranchRateModel> optimalValues = null;
+
+        if (xo.hasChildNamed(OPTIMAL_TRAITS)) {
+            optimalValues = new ArrayList<BranchRateModel>();
+            XMLObject cxo = xo.getChild(OPTIMAL_TRAITS);
+
+            final int numberModels = cxo.getChildCount();
+
+            if (numberModels != diffusionModel.getPrecisionMatrix().length) {
+                throw new XMLParseException("Wrong number of optimal trait models (" + numberModels + ") for a trait of" +
+                        " dimension " + diffusionModel.getPrecisionMatrix().length + " in " + xo.getId()
+                );
+            }
+
+            for (int i = 0; i < numberModels; ++i) {
+                optimalValues.add((BranchRateModel) cxo.getChild(i));
+            }
+        }
+
+        return optimalValues;
     }
 
     public static List<RestrictedPartials> parseRestrictedPartials(XMLObject xo, boolean integrate)

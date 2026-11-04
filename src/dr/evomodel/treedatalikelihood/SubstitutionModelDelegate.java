@@ -1,7 +1,8 @@
 /*
  * SubstitutionModelDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
@@ -42,17 +44,18 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @author Marc A. Suchard
- * @version $Id$
  */
-public final class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
+public class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;
     public static final boolean MEASURE_RUN_TIME = false;
+//    private final boolean cacheQMatrices;
+    private final PreOrderSettings settings;
 
     public double updateTime;
     public double convolveTime;
 
-    private static final int BUFFER_POOL_SIZE_DEFAULT = 100;
+    static final int BUFFER_POOL_SIZE_DEFAULT = 100;
 
     private final Tree tree;
     private final List<SubstitutionModel> substitutionModelList;
@@ -67,7 +70,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     private final BufferIndexHelper eigenBufferHelper;
     private final BufferIndexHelper matrixBufferHelper;
 
-    private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
+    private final Deque<Integer> availableBuffers = new ArrayDeque<>();
 
     /**
      * A class which handles substitution models including epoch models where multiple
@@ -76,7 +79,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
      * @param branchModel Describes which substitution models use on each branch
      */
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
-        this(tree, branchModel, 0, BUFFER_POOL_SIZE_DEFAULT);
+        this(tree, branchModel, 0, BUFFER_POOL_SIZE_DEFAULT, PreOrderSettings.getDefault());
     }
 
     /**
@@ -87,10 +90,19 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
      * @param partitionNumber which data partition is this (used to offset eigen and matrix buffer numbers)
      */
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber) {
-        this(tree, branchModel, partitionNumber, BUFFER_POOL_SIZE_DEFAULT);
+        this(tree, branchModel, partitionNumber, BUFFER_POOL_SIZE_DEFAULT, PreOrderSettings.getDefault());
     }
 
-    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, int bufferPoolSize) {
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, int bufferPoolSize){
+        this(tree, branchModel, partitionNumber, bufferPoolSize, PreOrderSettings.getDefault());
+    }
+
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, PreOrderSettings settings) {
+        this(tree, branchModel, 0, BUFFER_POOL_SIZE_DEFAULT, settings);
+    }
+
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int partitionNumber, int bufferPoolSize,
+                                     PreOrderSettings settings) {
 
         if (MEASURE_RUN_TIME) {
             updateTime = 0;
@@ -132,7 +144,15 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     + reserveBufferIndex);
         }
 
+//        this.cacheQMatrices = cacheQMatrices;
+        this.settings = settings;
+
     }// END: Constructor
+
+    @Override
+    public BranchModel getBranchSubstitutionModel() {
+        return branchModel;
+    }
 
     @Override
     public boolean canReturnComplexDiagonalization() {
@@ -156,6 +176,72 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
     }
 
     @Override
+    public int getInfinitesimalMatrixBufferIndex(int branchIndex) {
+        return getMatrixBufferCount() + getEigenIndex(branchIndex);
+    }
+
+    private int getInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
+        return getMatrixBufferCount() + eigenIndex;
+    }
+
+    @Override
+    public int getInfinitesimalSquaredMatrixBufferIndex(int branchIndex) {
+        return getMatrixBufferCount() + getEigenBufferCount() + getEigenIndex(branchIndex);
+    }
+
+    @Override
+    public int getFirstOrderDifferentialMatrixBufferIndex(int branchIndex) {
+        int bufferIndex = matrixBufferHelper.getBufferCount() + getInfinitesimalMatrixBufferCount(settings) + branchIndex;
+        return bufferIndex;
+    }
+
+    @Override
+    public int getSecondOrderDifferentialMatrixBufferIndex(int branchIndex) {
+        return getFirstOrderDifferentialMatrixBufferIndex(branchIndex) + nodeCount - 1;
+    }
+
+    @Override
+    public void cacheInfinitesimalMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+        beagle.setDifferentialMatrix(getInfinitesimalMatrixBufferIndex(bufferIndex), differentialMatrix);
+    }
+
+    @Override
+    public void cacheInfinitesimalSquaredMatrix(Beagle beagle, int bufferIndex, double[] differentialMatrix) {
+        beagle.setDifferentialMatrix(getInfinitesimalSquaredMatrixBufferIndex(bufferIndex), differentialMatrix);
+    }
+
+    @Override
+    public void cacheFirstOrderDifferentialMatrix(Beagle beagle, int branchIndex, double[] differentialMassMatrix) {
+        beagle.setDifferentialMatrix(getFirstOrderDifferentialMatrixBufferIndex(branchIndex), differentialMassMatrix);
+    }
+
+    private int getSquaredInfinitesimalMatrixBufferIndexByEigenIndex(int eigenIndex) {
+        return getMatrixBufferCount() + getEigenBufferCount() + eigenIndex;
+    }
+
+    @Override
+    public int getCachedMatrixBufferCount(PreOrderSettings settings) {
+        int matrixBufferCount = getInfinitesimalMatrixBufferCount(settings) + getDifferentialMassMatrixBufferCount(settings);
+        return matrixBufferCount;
+    }
+
+    private int getInfinitesimalMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchRateDerivative) {
+            return 2 * getEigenBufferCount();
+        } else {
+            return 0;
+        }
+    }
+
+    private int getDifferentialMassMatrixBufferCount(PreOrderSettings settings) {
+        if (settings.branchInfinitesimalDerivative) {
+            return 2 * (nodeCount - 1);
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
     public int getSubstitutionModelCount() {
         return substitutionModelList.size();
     }
@@ -175,6 +261,7 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         return matrixBufferHelper.getOffsetIndex(branchIndex);
     }
 
+
     @Override
     public double[] getRootStateFrequencies() {
         return branchModel.getRootFrequencyModel().getFrequencies();
@@ -188,7 +275,9 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                 eigenBufferHelper.flipOffset(i);
             }
 
-            EigenDecomposition ed = substitutionModelList.get(i).getEigenDecomposition();
+            SubstitutionModel substitutionModel = substitutionModelList.get(i);
+
+            EigenDecomposition ed = substitutionModel.getEigenDecomposition();
 
             beagle.setEigenDecomposition(
                     eigenBufferHelper.getOffsetIndex(i),
@@ -196,6 +285,18 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
                     ed.getInverseEigenVectors(),
                     ed.getEigenValues());
         }
+    }
+
+    @Override
+    public SubstitutionModel getSubstitutionModelForBranch(int branchIndex) {
+        BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndex));
+        int[] order = mapping.getOrder();
+
+        if (order.length > 1) {
+            throw new RuntimeException("Not yet implemented");
+        }
+
+        return getSubstitutionModel(order[0]);
     }
 
     @Override

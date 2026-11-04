@@ -1,0 +1,95 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="A"/>
+            A
+        </sequence>
+        <sequence>
+            <taxon idref="B"/>
+            A
+        </sequence>
+    </alignment>
+
+    <patterns id="patterns" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="tree">(A:1,B:1);</newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <generalSubstitutionModel id="state.model" dataType="nucleotide">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter id="state.frequencies" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="state.rates" dimension="6" value="1.0"/>
+        </rates>
+        <rateIndicator>
+            <parameter id="state.indicators" dimension="6" value="1.0"/>
+        </rateIndicator>
+    </generalSubstitutionModel>
+
+    <siteModel id="siteModel">
+        <substitutionModel>
+            <generalSubstitutionModel idref="state.model"/>
+        </substitutionModel>
+        <mutationRate>
+            <parameter id="clock.rate" value="0.5" lower="0.0"/>
+        </mutationRate>
+    </siteModel>
+
+    <markovJumpsTreeLikelihood id="treeLikelihood" allowCompressedSites="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+        <generalSubstitutionModel idref="state.model"/>
+        <counts>
+            <parameter id="allJumps" value="0 1 1 1
+                                            1 0 1 1
+                                            1 1 0 1
+                                            1 1 1 0"/>
+        </counts>
+    </markovJumpsTreeLikelihood>
+
+    <operators id="operators">
+        <bitFlipOperator weight="1" usesPriorOnSum="false">
+            <parameter idref="state.indicators"/>
+        </bitFlipOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="2">
+        <posterior id="posterior">
+            <generalSubstitutionModel idref="state.model"/>
+            <treeLikelihood idref="treeLikelihood"/>
+        </posterior>
+        <operators idref="operators"/>
+        <log logEvery="1">
+            <posterior idref="posterior"/>
+            <treeLikelihood idref="treeLikelihood"/>
+        </log>
+    </mcmc>
+
+</beast>

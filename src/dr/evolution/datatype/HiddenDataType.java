@@ -1,7 +1,8 @@
 /*
  * HiddenDataType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,9 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.datatype;
+
+import java.util.function.Function;
 
 /**
  * @author Marc Suchard
@@ -34,6 +38,22 @@ public interface HiddenDataType {
     int getHiddenClassCount();
 
     int getStateCount();
+
+    String getCodeWithoutHiddenState(int state);
+
+    String DESCRIPTION = "hidden";
+
+    static String getCodeImpl(int state, int stateCount,
+                              Function<Integer, String> parentGetCode) {
+        int hiddenState = state / stateCount;
+        return getCodeWithoutHiddenStateImpl(state, stateCount, parentGetCode) + hiddenState;
+    }
+
+    static String getCodeWithoutHiddenStateImpl(int state, int stateCount,
+                                                Function<Integer, String> parentGetCode) {
+        int innerState = state % stateCount;
+        return parentGetCode.apply(innerState);
+    }
 
     class Utils {
 

@@ -1,7 +1,8 @@
 /*
  * PatternList.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.alignment;
@@ -33,7 +35,6 @@ import dr.util.Identifiable;
  * interface for any list of patterns with weights.
  *
  * @author Andrew Rambaut
- * @version $Id: PatternList.java,v 1.12 2005/05/24 20:25:55 rambaut Exp $
  */
 public interface PatternList extends TaxonList, Identifiable {
     /**
@@ -61,6 +62,8 @@ public interface PatternList extends TaxonList, Identifiable {
      * @return the site pattern at patternIndex
      */
     int[] getPattern(int patternIndex);
+
+    int getPatternIndex(int siteIndex);
 
     /**
      * Gets the pattern as an array of state frequency vectors (one per sequence)

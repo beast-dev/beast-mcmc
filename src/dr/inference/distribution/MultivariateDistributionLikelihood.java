@@ -1,7 +1,8 @@
 /*
  * MultivariateDistributionLikelihood.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.distribution;
@@ -29,18 +31,21 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.TreeTraitNormalDistributionModel;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.DistributionLikelihoodParser;
+import dr.inferencexml.distribution.PriorParsers;
 import dr.math.distributions.*;
 import dr.util.Attribute;
-import dr.util.Citable;
 import dr.util.Transform;
 import dr.xml.*;
 
 import java.util.logging.Logger;
 
+import static dr.util.Transform.Util.parseTransform;
+
 
 /**
  * @author Marc Suchard
  * @author Guy Baele
+ * @author Paul Bastide
  */
 public class MultivariateDistributionLikelihood extends AbstractDistributionLikelihood {
 
@@ -66,41 +71,82 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String TREE_TRAIT_NORMAL = "treeTraitNormalDistribution";
     public static final String ROOT_VALUE = "rootValue";
     public static final String CONDITION = "conditionOnRoot";
+    public static final String LKJ_PRIOR = "LKJCorrelationPrior";
+    public static final String LKJ_SHAPE = "shapeParameter";
+    public static final String DIMENSION = "dimension";
+    public static final String CHOLESKY = "cholesky";
+    public static final String SPHERICAL_BETA_PRIOR = "sphericalBetaPrior";
+    public static final String SPHERICAL_BETA_SHAPE = "shapeParameter";
+    public static final String MV_LOG_NORMAL_PRIOR = "MVlogNormalPrior";
+    public static final String DETERMINANT_PRIOR = "determinantPrior";
 
     public static final String DATA = "data";
 
     private final MultivariateDistribution distribution;
-    private final Transform[] transforms;
+    private final Transform[] transforms; // TODO: Unify transforms[] and multivariateTransform
     private Parameter parameter = null;
 
     public MultivariateDistributionLikelihood(String name, ParametricMultivariateDistributionModel model) {
-        this(name, model, null);
+        this(name, model, null, null);
     }
 
     public MultivariateDistributionLikelihood(String name, ParametricMultivariateDistributionModel model,
                                               Transform[] transforms) {
+        this(name, model, transforms, null);
+    }
+
+    public MultivariateDistributionLikelihood(String name, ParametricMultivariateDistributionModel model,
+                                              Transform[] transforms,
+                                              Transform.MultivariateTransform multivariateTransform) {
         super(model);
-        this.distribution = model;
+        assert (multivariateTransform == null || transforms == null)
+                : "Transform[] and MultivatiateTransform cannot be simulataneously specified.";
+        this.distribution = (multivariateTransform == null) ? model
+                : new TransformedMultivariateDistribution(model, multivariateTransform);
         this.transforms = transforms;
     }
 
     public MultivariateDistributionLikelihood(String name, MultivariateDistribution distribution) {
-        this(name, distribution, null);
+        this(name, distribution, null, null);
     }
 
     public MultivariateDistributionLikelihood(String name, MultivariateDistribution distribution,
-                                              Transform[] transforms) {
+                                                   Transform[] transforms) {
+        this(name, distribution, transforms, null);
+    }
+
+    public MultivariateDistributionLikelihood(String name, MultivariateDistribution distribution,
+                                              Transform.MultivariateTransform multivariateTransform) {
+        this(name, distribution, null, multivariateTransform);
+    }
+
+    public MultivariateDistributionLikelihood(String name, MultivariateDistribution distribution,
+                                              Transform[] transforms,
+                                              Transform.MultivariateTransform multivariateTransform) {
         super(new DefaultModel(name));
-        this.distribution = distribution;
+        assert (multivariateTransform == null || transforms == null)
+                : "Transform[] and MultivatiateTransform cannot be simulataneously specified.";
+        this.distribution = (multivariateTransform == null) ? distribution
+                : new TransformedMultivariateDistribution(distribution, multivariateTransform);;
         this.transforms = transforms;
     }
 
     public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
-        this(distribution, null);
+        this(distribution, null, null);
     }
 
     public MultivariateDistributionLikelihood(MultivariateDistribution distribution, Transform[] transforms) {
-        this(distribution.getType(), distribution, transforms);
+        this(distribution, transforms, null);
+    }
+
+    public MultivariateDistributionLikelihood(MultivariateDistribution distribution,
+                                              Transform.MultivariateTransform multivariateTransform) {
+        this(distribution, null, multivariateTransform);
+    }
+
+    public MultivariateDistributionLikelihood(MultivariateDistribution distribution, Transform[] transforms,
+                                              Transform.MultivariateTransform multivariateTransform) {
+        this(distribution.getType(), distribution, transforms, multivariateTransform);
     }
 
     public String toString() {
@@ -118,7 +164,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             if (transforms != null) {
                 double[] y = new double[x.length];
                 for (int i = 0; i < x.length; ++i) {
-                    logL += transforms[i].getLogJacobian(x[i]);
+                    logL += transforms[i].logJacobian(x[i]);
                     y[i] = transforms[i].transform(x[i]);
                 }
                 logL += distribution.logPdf(y);
@@ -404,6 +450,16 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                                         + " in " + xo.getName() + "element");
                             likelihood.addData(data);
                         }
+                    } else if (cxo.getChild(j) instanceof Attribute[]) {
+                        Attribute[] attributes = (Attribute[]) cxo.getChild(j);
+                        for (Attribute att : attributes) {
+                            Object value = att.getAttributeValue();
+                            if (value instanceof double[]) {
+                                likelihood.addData(att);
+                            } else {
+                                throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                            }
+                        }
                     } else {
                         throw new XMLParseException("illegal element in " + xo.getName() + " element");
                     }
@@ -424,7 +480,12 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 AttributeRule.newBooleanRule(DATA_AS_MATRIX, true),
                 new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
                 new ElementRule(DATA,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)
+                        new XMLSyntaxRule[]{
+                                new XORRule(
+                                        new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+                                        new ElementRule(Attribute[].class)
+                                ),
+                        }, true)
         };
 
         public String getParserDescription() {
@@ -455,12 +516,19 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                     mean.getDimension() != precision.getColumnDimension())
                 throw new XMLParseException("Mean and precision have wrong dimensions in " + xo.getName() + " element");
 
-            Transform[] transforms = parseListOfTransforms(xo, mean.getDimension());
+            final Transform transform = parseTransform(xo);
+            Transform.MultivariateTransform multivariateTransform = null;
+            Transform[] transforms = null;
+            if (transform != null && transform.isMultivariate()) {
+                multivariateTransform = (Transform.MultivariateTransform) transform;
+            } else {
+                transforms = parseListOfTransforms(xo, mean.getDimension());
+            }
 
             MultivariateDistributionLikelihood likelihood =
                     new MultivariateDistributionLikelihood(
                             new MultivariateNormalDistribution(mean.getParameterValues(),
-                                    precision.getParameterAsMatrix()), transforms
+                                    precision.getParameterAsMatrix()), transforms, multivariateTransform
                     );
             cxo = xo.getChild(DATA);
             if (cxo != null) {
@@ -705,6 +773,249 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public Class getReturnType() {
             return MultivariateDistributionLikelihood.class;
+        }
+    };
+
+    public static XMLObjectParser DETERMINANT_PRIOR_PARSER = new AbstractXMLObjectParser() {
+        @Override
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            double shape = xo.getDoubleAttribute(LKJ_SHAPE);
+            MatrixParameterInterface parameter = (MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+            int dim = parameter.getRowDimension();
+            if (parameter.getColumnDimension() != dim) {
+                throw new XMLParseException("matrix must be square");
+            }
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new ConstrainedDeterminantDistributionModel(shape, dim));
+            likelihood.addData(parameter);
+            return likelihood;
+        }
+
+        @Override
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule(LKJ_SHAPE, true),
+                    new ElementRule(MatrixParameterInterface.class)
+
+            };
+        }
+
+        @Override
+        public String getParserDescription() {
+            return "Calculates p(X) = c * det(X)^a (currently omits normalization constant c)";
+        }
+
+        @Override
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+
+        @Override
+        public String getParserName() {
+            return DETERMINANT_PRIOR;
+        }
+    };
+
+    public static XMLObjectParser LKJ_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return LKJ_PRIOR;
+        }
+
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            MultivariateDistributionLikelihood likelihood;
+
+            if (!xo.hasAttribute(DIMENSION)) {
+                throw new XMLParseException("Must specify a shape parameter.");
+            }
+            int dim = xo.getIntegerAttribute(DIMENSION);
+
+            boolean cholesky = xo.getAttribute(CHOLESKY, true);
+
+            if (xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE)) {
+                // Make non-informative settings
+                if (cholesky) {
+                    likelihood = new MultivariateDistributionLikelihood(new LKJCholeskyCorrelationDistribution(dim));
+                } else {
+                    likelihood = new MultivariateDistributionLikelihood(new LKJCorrelationDistribution(dim));
+                }
+            } else {
+                if (!xo.hasAttribute(LKJ_SHAPE)) {
+                    throw new XMLParseException("Must specify a shape parameter.");
+                }
+
+                double shape = xo.getDoubleAttribute(LKJ_SHAPE);
+
+                if (cholesky) {
+                    likelihood
+                            = new MultivariateDistributionLikelihood(new LKJCholeskyCorrelationDistribution(dim, shape));
+                } else {
+                    likelihood
+                            = new MultivariateDistributionLikelihood(new LKJCorrelationDistribution(dim, shape));
+                }
+
+            }
+
+            XMLObject cxo = xo.getChild(DATA);
+            for (int j = 0; j < cxo.getChildCount(); j++) {
+                if (cxo.getChild(j) instanceof CompoundSymmetricMatrix) {
+                    CompoundSymmetricMatrix covMatrix = (CompoundSymmetricMatrix) cxo.getChild(j);
+                    likelihood.addData(covMatrix.getOffDiagonalParameter());
+                } else if (cxo.getChild(j) instanceof Parameter) {
+                    likelihood.addData((Parameter) cxo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
+                    AttributeRule.newDoubleRule(LKJ_SHAPE, true),
+                    new ElementRule(DATA,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}
+                    )
+            };
+        }
+
+        public String getParserDescription() {
+            return "Calculates the likelihood of some data under a LKJ distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+    public static XMLObjectParser MV_LOG_NORMAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return MV_LOG_NORMAL_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            int dim = xo.getIntegerAttribute(DIMENSION);
+            final double mean = xo.getDoubleAttribute(PriorParsers.MEAN);
+            final double stdev = xo.getDoubleAttribute(PriorParsers.STDEV);
+            LogNormalDistribution logNormalDistribution = new LogNormalDistribution(mean, stdev);
+
+            MultivariateDistributionLikelihood likelihood =
+                    new MultivariateDistributionLikelihood(new MultivariateLogNormalDistribution(logNormalDistribution, dim));
+
+            XMLObject cxo = xo.getChild(DATA);
+
+            for (int j = 0; j < cxo.getChildCount(); j++) {
+                if (cxo.getChild(j) instanceof Parameter) {
+                    likelihood.addData((Parameter) cxo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
+                }
+            }
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;
+
+        {
+            rules = new XMLSyntaxRule[]{
+                    new ElementRule(DATA,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}
+                    )
+            };
+        }
+
+        public String getParserDescription() {
+            return "Calculates the likelihood of some data under a multivariate log normal distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+    public static XMLObjectParser SPHERICAL_BETA_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return SPHERICAL_BETA_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            MultivariateDistributionLikelihood likelihood = null;
+
+            // Shape parameter
+            double shape = 1.0;
+            if (!(xo.hasAttribute(NON_INFORMATIVE) && xo.getBooleanAttribute(NON_INFORMATIVE))) {
+                if (!xo.hasAttribute(SPHERICAL_BETA_SHAPE)) {
+                    throw new XMLParseException("Must specify a shape parameter.");
+                }
+                shape = xo.getDoubleAttribute(SPHERICAL_BETA_SHAPE);
+            }
+
+            // Parse Data
+            XMLObject cxo = xo.getChild(DATA);
+            if (cxo != null) {
+                for (int j = 0; j < cxo.getChildCount(); j++) {
+                    if (cxo.getChild(j) instanceof Parameter) {
+                        Parameter data = (Parameter) cxo.getChild(j);
+                        if (data instanceof MatrixParameter) {
+                            MatrixParameter matrix = (MatrixParameter) data;
+                            int dim = matrix.getColumnDimension();
+                            if (matrix.getRowDimension() != (dim - 1)) {
+                                throw new XMLParseException(
+                                        "The Matricial Spherical Beta distribution can only be applied to a matrix" +
+                                                " with P columns each of dimension P-1.");
+                            }
+                            likelihood = new MultivariateDistributionLikelihood(new SphericalBetaDistribution(dim - 1, shape));
+                            for (int i = 0; i < dim; i++) {
+                                likelihood.addData(matrix.getParameter(i));
+                            }
+                        } else {
+                            int dim = data.getDimension();
+                            likelihood = new MultivariateDistributionLikelihood(new SphericalBetaDistribution(dim, shape));
+                            likelihood.addData(data);
+                        }
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    }
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
+                    AttributeRule.newDoubleRule(SPHERICAL_BETA_SHAPE, true),
+                    new ElementRule(DATA,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}
+                    )
+            };
+        }
+
+        public String getParserDescription() {
+            return "Calculates the likelihood of some data under a spherical beta distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
         }
     };
 }

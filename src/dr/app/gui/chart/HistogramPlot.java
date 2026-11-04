@@ -1,7 +1,8 @@
 /*
- * FrequencyPlot.java
+ * HistogramPlot.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,19 +22,18 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.gui.chart;
 
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceType;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class HistogramPlot extends Plot.AbstractPlot {
@@ -181,9 +181,10 @@ public class HistogramPlot extends Plot.AbstractPlot {
             }
         }
 
-        Axis axis = new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
+        // LinearAxis2 can handle small range (range < 1E-30) correctly, but LinearAxis cannot
+        Axis axis = new LinearAxis2(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK);
         if (minimumBinCount <= 0) {
-            axis = new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
+            axis = new LinearAxis2(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS);
         }
         axis.setRange(min, max);
 
@@ -192,6 +193,10 @@ public class HistogramPlot extends Plot.AbstractPlot {
 
         double binSize = axis.getMinorTickSpacing();
         int binCount = (int) ((axis.getMaxAxis() - axis.getMinAxis()) / binSize) + 2;
+
+        // creating more bins than raw data is unreasonable
+        if (minimumBinCount > raw.getCount())
+            minimumBinCount = raw.getCount() - 2;
 
         if (minimumBinCount > 0) {
             // avoid dead loop

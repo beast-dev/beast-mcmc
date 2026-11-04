@@ -1,7 +1,8 @@
 /*
  * NormalNormalMeanGibbsOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -28,9 +30,11 @@ package dr.inference.operators;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.NormalDistributionModel;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
+import dr.math.distributions.LogNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.util.Attribute;
 import dr.xml.*;
@@ -54,6 +58,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
             throw new RuntimeException("Mean prior must be Normal");
 
         this.likelihood = inLikelihood.getDistribution();
+        this.likelihoodType = LikelihoodType.factory(likelihood);
         this.dataList = inLikelihood.getDataList();
         if (likelihood instanceof NormalDistributionModel)
             this.meanParameter = (Parameter) ((NormalDistributionModel) likelihood).getMean();
@@ -63,7 +68,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
             } else {
                 this.meanParameter = ((LogNormalDistributionModel) likelihood).getMuParameter();
             }
-            isLog = true;
+//            isLog = true;
         } else
             throw new RuntimeException("Likelihood must be Normal or log Normal");
 
@@ -92,25 +97,76 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
         double priorPrecision = 1.0 / prior.variance();
         double priorMean = prior.mean();
-        double likelihoodPrecision = 1.0 / likelihood.variance();
+        double likelihoodPrecision = likelihoodType.getPrecision(likelihood);
 
         double total = 0;
         int n = 0;
         for ( Attribute<double[]> statistic : dataList ) {
             for (double x : statistic.getAttributeValue()) {
-                if (isLog)
-                    total += Math.log(x);
-                else
-                    total += x;
+//                if (isLog)
+//                    total += Math.log(x);
+//                else
+//                    total += x;
+                total += likelihoodType.getData(x);
                 n++;
             }
         }
 
-        double precision = priorPrecision + likelihoodPrecision * n;
-        double mu = (priorPrecision * priorMean + likelihoodPrecision * total) / precision;
+        double precision = priorPrecision + pathParameter * likelihoodPrecision * n;
+        double mu = (priorPrecision * priorMean + pathParameter * likelihoodPrecision * total) / precision;
         meanParameter.setParameterValue(0,
                 MathUtils.nextGaussian() / Math.sqrt(precision) + mu);  // N(\mu, \precision)
         return 0;
+    }
+
+    private enum LikelihoodType {
+        NORMAL {
+            @Override
+            double getPrecision(Distribution likelihood) {
+                return 1.0 / likelihood.variance();
+            }
+
+            @Override
+            double getData(double x) {
+                return x;
+            }
+        },
+        LOGNORMAL {
+            @Override
+            double getPrecision(Distribution likelihood) {
+                if (likelihood instanceof LogNormalDistributionModel) {
+                    return ((LogNormalDistributionModel) likelihood).getPrecision();
+                } else {
+                    throw new RuntimeException("Not yet implemented!");
+                }
+            }
+
+            @Override
+            double getData(double x) {
+                return Math.log(x);
+            }
+        };
+
+        abstract double getPrecision(Distribution likelihood);
+
+        abstract double getData(double x);
+
+        public static LikelihoodType factory(Distribution likelihood) {
+            if (likelihood instanceof LogNormalDistributionModel) {
+                return LikelihoodType.LOGNORMAL;
+            } else {
+                return LikelihoodType.NORMAL;
+            }
+        }
+    }
+
+    @Override
+    public void setPathParameter(double beta) {
+        if (beta < 0.0 || beta > 1.0) {
+            throw new IllegalArgumentException("Invalid pathParameter value");
+        }
+
+        this.pathParameter = beta;
     }
 
     /**
@@ -176,10 +232,13 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
 
     };
 
+    private final LikelihoodType likelihoodType;
     private final Distribution likelihood;
     private final Distribution prior;
-    private boolean isLog = false;
+//    private boolean isLog = false;
 
     private final List<Attribute<double[]>> dataList;
     private final Parameter meanParameter;
+
+    private double pathParameter = 1.0;
 }

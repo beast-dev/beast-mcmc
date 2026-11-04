@@ -1,7 +1,8 @@
 /*
  * Pair.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.util;
@@ -32,16 +34,24 @@ package dr.util;
  * @author rambaut
  */
 public class Pair<A, B> {
-    public final A fst;
-    public final B snd;
+    public final A first;
+    public final B second;
 
-    public Pair(A var1, B var2) {
-        this.fst = var1;
-        this.snd = var2;
+    public Pair(A first, B second) {
+        this.first = first;
+        this.second = second;
+    }
+
+    public A getFirst() {
+        return first;
+    }
+
+    public B getSecond() {
+        return second;
     }
 
     public String toString() {
-        return "Pair[" + this.fst + "," + this.snd + "]";
+        return "Pair[" + this.first + "," + this.second + "]";
     }
 
     private boolean equals(Object var0, Object var1) {
@@ -49,10 +59,10 @@ public class Pair<A, B> {
     }
 
     public boolean equals(Object var1) {
-        return var1 instanceof Pair && equals(this.fst, ((Pair) var1).fst) && equals(this.snd, ((Pair) var1).snd);
+        return var1 instanceof Pair && equals(this.first, ((Pair) var1).first) && equals(this.second, ((Pair) var1).second);
     }
 
     public int hashCode() {
-        return this.fst == null ? (this.snd == null ? 0 : this.snd.hashCode() + 1) : (this.snd == null ? this.fst.hashCode() + 2 : this.fst.hashCode() * 17 + this.snd.hashCode());
+        return this.first == null ? (this.second == null ? 0 : this.second.hashCode() + 1) : (this.second == null ? this.first.hashCode() + 2 : this.first.hashCode() * 17 + this.second.hashCode());
     }
 }

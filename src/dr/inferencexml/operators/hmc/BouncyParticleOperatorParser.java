@@ -1,7 +1,8 @@
 /*
- * HamiltonianMonteCarloOperatorParser.java
+ * BouncyParticleOperatorParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,23 +22,20 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.operators.hmc;
 
-import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.PrecisionColumnProvider;
+import dr.inference.hmc.PrecisionMatrixVectorProductProvider;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.hmc.HamiltonianMonteCarloOperator;
-import dr.inference.operators.hmc.NewBouncyParticleOperator;
-import dr.inference.operators.hmc.NoUTurnOperator;
-import dr.inferencexml.model.MaskedParameterParser;
-import dr.math.distributions.NormalDistribution;
-import dr.util.Transform;
+import dr.inference.operators.hmc.AbstractParticleOperator;
+import dr.inference.operators.hmc.BouncyParticleOperator;
+import dr.inference.operators.hmc.MassPreconditionScheduler;
 import dr.xml.*;
 
 /**
@@ -46,10 +44,20 @@ import dr.xml.*;
  */
 
 public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
-    public final static String BPO_OPERATOR = "bouncyParticleOperator";
 
-    public final static String DRAW_VARIANCE = "drawVariance";
-    public static final String MODE = "mode";
+    private final static String BPO_OPERATOR = "bouncyParticleOperator";
+    private final static String RANDOM_TIME_WIDTH = "randomTimeWidth";
+    private final static String UPDATE_FREQUENCY = "preconditioningUpdateFrequency";
+
+    private final static String UPDATE_SCM_DELAY = "updateSampleCovDelay";
+    private final static String UPDATE_SCM_FREQUENCY = "updateSampleCovFrequency";
+
+    private final static String MASKING = "mask";
+    private final static String REFRESH_VELOCITY = "refreshVelocity";
+
+    private final static String TEST_NATIVE_BOUNCE = "testNativeFindBounce";
+    private final static String USE_NATIVE_BOUNCE = "useNativeFindBounce";
+    private final static String USE_NATIVE_UPDATE_DYNAMICS = "useNativeUpdateDynamics";
 
     @Override
     public String getParserName() {
@@ -58,39 +66,51 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        boolean refreshVelocity = xo.getAttribute(REFRESH_VELOCITY, true);
 
-        System.err.println("HERE?");
-        System.exit(-1);
-        double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-        double drawVariance = xo.getDoubleAttribute(DRAW_VARIANCE);
+        return new BouncyParticleOperator(
+                (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class),
+                (PrecisionMatrixVectorProductProvider) xo.getChild(PrecisionMatrixVectorProductProvider.class),
+                (PrecisionColumnProvider) xo.getChild(PrecisionColumnProvider.class),
+                xo.getDoubleAttribute(MCMCOperator.WEIGHT),
+                parseRuntimeOptions(xo),
+                parseNativeCodeOptions(xo),
+                refreshVelocity,
+                parseMask(xo),
+                null, MassPreconditionScheduler.Type.NONE);
+    }
 
-        CoercionMode coercionMode = CoercionMode.parseMode(xo);
-
-        GradientWrtParameterProvider derivative =
-                (GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class);
-
-        TreeDataLikelihood treeDataLikelihood =
-                (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-
-        ContinuousDataLikelihoodDelegate likelihoodDelegate =
-                (ContinuousDataLikelihoodDelegate) xo.getChild(ContinuousDataLikelihoodDelegate.class);
-
-        String traitName = (String) xo.getChild(String.class);
-
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
-
-        Transform transform = (Transform.MultivariableTransformWithParameter)
-                xo.getChild(Transform.MultivariableTransformWithParameter.class);
-
-        if (derivative.getDimension() != parameter.getDimension()) {
-            throw new XMLParseException("Gradient (" + derivative.getDimension() +
-                    ") must be the same dimensions as the parameter (" + parameter.getDimension() + ")");
+    static Parameter parseMask(XMLObject xo) throws XMLParseException {
+        Parameter mask = null;
+        if (xo.hasChildNamed(MASKING)) {
+            mask = (Parameter) xo.getElementFirstChild(MASKING);
         }
 
+        return mask;
+    }
 
-        return new NewBouncyParticleOperator(coercionMode, weight, treeDataLikelihood, likelihoodDelegate, traitName,
-                    parameter, drawVariance);
 
+    static AbstractParticleOperator.Options parseRuntimeOptions(XMLObject xo) throws XMLParseException {
+
+        double randomTimeWidth = xo.getAttribute(RANDOM_TIME_WIDTH, 0.5);
+        int updateFrequency = xo.getAttribute(UPDATE_FREQUENCY, 0);
+        int preconditioningMaxUpdate = xo.getAttribute(PreconditionHandlerParser.PRECONDITIONING_MAX_UPDATE, 0);
+        int preconditioningDelay = xo.getAttribute(PreconditionHandlerParser.PRECONDITIONING_DELAY, 0);
+
+        int updateSampleCovFrequency = xo.getAttribute(UPDATE_SCM_FREQUENCY, 0);
+        int updateSampleCovDelay = xo.getAttribute(UPDATE_SCM_DELAY, 0);
+
+        return new AbstractParticleOperator.Options(randomTimeWidth, updateFrequency, preconditioningMaxUpdate,
+                preconditioningDelay, updateSampleCovFrequency, updateSampleCovDelay);
+    }
+
+    static AbstractParticleOperator.NativeCodeOptions parseNativeCodeOptions(XMLObject xo) throws XMLParseException {
+
+        boolean testNativeFindNextBounce = xo.getAttribute(TEST_NATIVE_BOUNCE, false);
+        boolean useNativeFindNextBounce = xo.getAttribute(USE_NATIVE_BOUNCE, false);
+        boolean useNativeUpdateDynamics = xo.getAttribute(USE_NATIVE_UPDATE_DYNAMICS, false);
+
+        return new AbstractParticleOperator.NativeCodeOptions(testNativeFindNextBounce, useNativeFindNextBounce, useNativeUpdateDynamics);
     }
 
     @Override
@@ -98,23 +118,28 @@ public class BouncyParticleOperatorParser extends AbstractXMLObjectParser {
         return rules;
     }
 
-    private final XMLSyntaxRule[] rules = {
+    final static XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newDoubleRule(DRAW_VARIANCE),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
-            AttributeRule.newStringRule(MODE, true),
-            new ElementRule(Parameter.class),
-            new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newDoubleRule(RANDOM_TIME_WIDTH, true),
+            AttributeRule.newIntegerRule(UPDATE_FREQUENCY, true),
+            AttributeRule.newIntegerRule(UPDATE_SCM_FREQUENCY, true),
+            AttributeRule.newIntegerRule(UPDATE_SCM_DELAY, true),
             new ElementRule(GradientWrtParameterProvider.class),
+            new ElementRule(PrecisionMatrixVectorProductProvider.class),
+            new ElementRule(PrecisionColumnProvider.class),
+            new ElementRule(MASKING, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class),
+            }, true),
     };
 
     @Override
     public String getParserDescription() {
-        return "Returns a Hamiltonian Monte Carlo transition kernel";
+        return "Returns a bouncy particle transition kernel for truncated normals";
     }
 
     @Override
     public Class getReturnType() {
-        return HamiltonianMonteCarloOperator.class;
+        return BouncyParticleOperator.class;
     }
 }

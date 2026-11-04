@@ -1,7 +1,8 @@
 /*
  * BeautiAlignmentBuffer.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.datapanel;
@@ -36,7 +38,6 @@ import dr.evolution.sequence.Sequence;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: SimpleAlignmentBuffer.java,v 1.2 2005/12/11 22:41:25 rambaut Exp $
  */
 public class BeautiAlignmentBuffer implements AlignmentBuffer {
 

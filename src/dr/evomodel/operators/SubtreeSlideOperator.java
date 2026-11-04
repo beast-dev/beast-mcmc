@@ -1,7 +1,8 @@
 /*
  * SubtreeSlideOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -29,6 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
+import dr.inference.model.Statistic;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 
@@ -39,22 +42,31 @@ import java.util.List;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
- * @version $Id: SubtreeSlideOperator.java,v 1.15 2005/06/14 10:40:34 rambaut Exp $
  */
-public class SubtreeSlideOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
+public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
 
     private static final boolean DEBUG = false;
 
     private TreeModel tree = null;
     private double size = 1.0;
     private boolean gaussian = false;
-    private final boolean swapInRandomRate;
-    private final boolean swapInRandomTrait;
     private final boolean scaledDirichletBranches;
-    private CoercionMode mode = CoercionMode.DEFAULT;
+    private AdaptationMode mode = AdaptationMode.DEFAULT;
+    private final double targetAcceptance;
 
+    /**
+     * Swapping node rates or traits (swapRates, swapTraits) is no longer supported: node rates and
+     * traits are legacy features of DefaultTreeModel.
+     */
     public SubtreeSlideOperator(TreeModel tree, double weight, double size, boolean gaussian,
-                                boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches, CoercionMode mode) {
+                                boolean swapRates, boolean swapTraits, boolean scaleDirichletBranches,
+                                AdaptationMode mode, double targetAcceptance) {
+        super(mode, targetAcceptance);
+
+        if (swapRates || swapTraits) {
+            throw new IllegalArgumentException("Swapping node rates or traits is no longer supported by the subtree slide operator");
+        }
+
         this.tree = tree;
         setWeight(weight);
 
@@ -68,11 +80,10 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
         this.size = size;
         this.gaussian = gaussian;
-        this.swapInRandomRate = swapRates;
-        this.swapInRandomTrait = swapTraits;
         this.scaledDirichletBranches = scaleDirichletBranches;
 
         this.mode = mode;
+        this.targetAcceptance = targetAcceptance;
     }
 
     /**
@@ -108,6 +119,8 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
             System.out.println("Node selected: " + i + " ; delta = " + delta);
         }
 
+        boolean topologyChanged = false;
+
         // 3. if the move is up
         if (delta > 0) {
 
@@ -132,24 +145,6 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
                     tree.addChild(PiP, CiP);
                     tree.setRoot(iP);
                     //System.err.println("Creating new root!");
-
-                    if (tree.hasNodeTraits()) {
-                        // **********************************************
-                        // swap traits and rates so that root keeps it trait and rate values
-                        // **********************************************
-
-                        tree.swapAllTraits(newChild, iP);
-
-                    }
-
-                    if (tree.hasRates()) {
-                        final double rootNodeRate = tree.getNodeRate(newChild);
-                        tree.setNodeRate(newChild, tree.getNodeRate(iP));
-                        tree.setNodeRate(iP, rootNodeRate);
-                    }
-
-                    // **********************************************
-
                 }
                 // 3.1.2 no new root
                 else {
@@ -165,6 +160,8 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
                 tree.setNodeHeight(iP, newHeight);
 
                 tree.endTreeEdit();
+
+                topologyChanged = true;
 
                 // 3.1.3 count the hypothetical sources of this destination.
                 final int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
@@ -231,23 +228,6 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
                     tree.addChild(newParent, iP);
                     tree.setRoot(CiP);
 
-                    if (tree.hasNodeTraits()) {
-                        // **********************************************
-                        // swap traits and rates, so that root keeps it trait and rate values
-                        // **********************************************
-
-                        tree.swapAllTraits(iP, CiP);
-
-                    }
-
-                    if (tree.hasRates()) {
-                        final double rootNodeRate = tree.getNodeRate(iP);
-                        tree.setNodeRate(iP, tree.getNodeRate(CiP));
-                        tree.setNodeRate(CiP, rootNodeRate);
-                    }
-
-                    // **********************************************
-
                     //System.err.println("DOWN: Creating new root!");
                 } else {
                     tree.removeChild(iP, CiP);
@@ -263,6 +243,8 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
                 tree.endTreeEdit();
 
+                topologyChanged = true;
+
                 logq = Math.log(possibleDestinations);
             } else {
                 tree.setNodeHeight(iP, newHeight);
@@ -270,28 +252,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
             }
         }
 
-        if (swapInRandomRate) {
-            final NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-            if (j != i) {
-                final double tmp = tree.getNodeRate(i);
-                tree.setNodeRate(i, tree.getNodeRate(j));
-                tree.setNodeRate(j, tmp);
-            }
-
-        }
-
-        if (swapInRandomTrait) {
-            final NodeRef j = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-            if (j != i) {
-
-                tree.swapAllTraits(i, j);
-
-//                final double tmp = tree.getNodeTrait(i, TRAIT);
-//                tree.setNodeTrait(i, TRAIT, tree.getNodeTrait(j, TRAIT));
-//                tree.setNodeTrait(j, TRAIT, tmp);
-            }
-
-        }
+        setTopologyChanged(topologyChanged, delta);
 
         // just return -Inf
         //if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
@@ -346,38 +307,24 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
         this.size = size;
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(getSize());
     }
 
-    public void setCoercableParameter(double value) {
+    @Override
+    protected void setAdaptableParameterValue(double value) {
         setSize(Math.exp(value));
     }
 
+    @Override
     public double getRawParameter() {
         return getSize();
     }
 
-    public CoercionMode getMode() {
-        return mode;
-    }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
+    @Override
+    public String getAdaptableParameterName() {
+        return "size";
     }
 
     public String getOperatorName() {

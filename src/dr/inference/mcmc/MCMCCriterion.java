@@ -1,7 +1,8 @@
 /*
  * MCMCCriterion.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.mcmc;
@@ -33,7 +35,6 @@ import dr.inference.markovchain.Acceptor;
  *
  * @author Alexei Drummond
  *
- * @version $Id: MCMCCriterion.java,v 1.12 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCMCCriterion implements Acceptor {
 
@@ -41,6 +42,7 @@ public class MCMCCriterion implements Acceptor {
     // is flat and will always accept (symmetric) proposals, i.e. hastings ratio of 0 in log space.
     // As this temperature parameter increases, the posterior gets more peaked.
     protected double temperature = 1.0;
+    private int rank = 0;
 
     public MCMCCriterion() {
 
@@ -80,4 +82,7 @@ public class MCMCCriterion implements Acceptor {
         this.temperature = temperature;
     }
 
+    public int getRank() { return rank; }
+
+    public void setRank(int rank) { this.rank = rank; }
 }

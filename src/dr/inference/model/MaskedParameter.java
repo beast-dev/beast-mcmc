@@ -1,7 +1,8 @@
 /*
  * MaskedParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -34,7 +36,7 @@ import java.util.Arrays;
 public class MaskedParameter extends Parameter.Abstract implements VariableListener {
 
     public enum Signaling {
-        NORMAL, NO_DEPENDENT;
+        NORMAL, NO_DEPENDENT
     }
 
     private final Signaling signaling;
@@ -43,7 +45,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         this(parameter, maskParameter, ones, Signaling.NORMAL);
     }
 
-    public MaskedParameter(Parameter parameter, Parameter maskParameter, boolean ones,
+    private MaskedParameter(Parameter parameter, Parameter maskParameter, boolean ones,
                            Signaling signaling) {
         this(parameter, signaling);
         addMask(maskParameter, ones);

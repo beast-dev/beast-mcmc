@@ -1,7 +1,8 @@
 /*
  * EmpiricalTreeDistributionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -30,25 +32,31 @@ import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.math.MathUtils;
 import dr.inference.model.Statistic;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
+ *
+ * @todo - this should extend TreeModel rather than inheriting from DefaultTreeModel
  */
-public class EmpiricalTreeDistributionModel extends TreeModel {
+public class EmpiricalTreeDistributionModel extends DefaultTreeModel implements Loggable {
 
     /**
      * This constructor takes an array of trees and jumps randomly amongst them.
      * @param trees
      * @param startingTree
      */
-    public EmpiricalTreeDistributionModel(final Tree[] trees, int startingTree) {
+    public EmpiricalTreeDistributionModel(final List<Tree> trees, int startingTree) {
         this(trees, null, startingTree);
     }
 
@@ -62,7 +70,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
         this(null, importer, startingTree);
     }
 
-    private EmpiricalTreeDistributionModel(final Tree[] trees, final TreeImporter importer, int startingTree) {
+    private EmpiricalTreeDistributionModel(final List<Tree> trees, final TreeImporter importer, int startingTree) {
         super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
 
         this.trees = trees;
@@ -81,12 +89,24 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
         });
     }
 
+    public List<Tree> getTrees() { return trees; }
+
+    public void setTree(int index) {
+        currentTreeIndex = index;
+        currentTree = trees.get(index);
+        fireModelChanged();
+    }
+
+    public int getCurrentTreeIndex() { return currentTreeIndex; }
+
     protected void storeState() {
         storedCurrentTree = currentTree;
+        storedCurrentTreeIndex = currentTreeIndex;
     }
 
     protected void restoreState() {
         currentTree = storedCurrentTree;
+        currentTreeIndex = storedCurrentTreeIndex;
     }
 
     protected void acceptState() {
@@ -113,11 +133,11 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
             currentTreeIndex += 1;
         } else {
             if (treeNumber == -1) {
-                currentTreeIndex = MathUtils.nextInt(trees.length);
-                currentTree = trees[currentTreeIndex];
+                currentTreeIndex = MathUtils.nextInt(trees.size());
+                currentTree = trees.get(currentTreeIndex);
             } else {
                 currentTreeIndex = treeNumber;
-                currentTree = trees[currentTreeIndex];
+                currentTree = trees.get(currentTreeIndex);
             }
         }
 
@@ -127,7 +147,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
 
 //        System.err.println(") new tree = " + currentTreeIndex);
 
-        fireModelChanged(new TreeChangedEvent());
+        fireModelChanged(TreeChangedEvent.create());
     }
 
     public NodeRef getRoot() {
@@ -159,7 +179,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     }
 
     public Taxon getNodeTaxon(final NodeRef node) {
-        return trees[currentTreeIndex].getNodeTaxon(node);
+        return trees.get(currentTreeIndex).getNodeTaxon(node);
     }
 
     public boolean hasNodeHeights() {
@@ -266,12 +286,43 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
         return currentTree.getAttributeNames();
     }
 
+    @Override
+    public LogColumn[] getColumns() {
+        if (columns == null) {
+            LogColumn column = new NumberColumn("empiricalTreeNumber") {
+                @Override
+                public double getDoubleValue() {
+                    return currentTreeIndex;
+                }
+            };
+
+            columns = new LogColumn[] { column };
+        }
+        return columns;
+    }
+
+//    public TreeModel getCurrentTreeModel() {
+//
+//        if (treeModelCache.containsKey(currentTree)) {
+//            return treeModelCache.get(currentTree);
+//        } else {
+//            TreeModel treeModel = new DefaultTreeModel(currentTree);
+//            treeModelCache.put(currentTree, treeModel);
+//            return treeModel;
+//        }
+//    }
+//
+//    Map<Tree, TreeModel> treeModelCache = new HashMap<>();
+
+    private LogColumn[] columns;
+
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 
-    private final Tree[] trees;
+    private final List<Tree> trees;
     private final TreeImporter importer;
     private Tree currentTree;
     private Tree storedCurrentTree;
 
     private int currentTreeIndex;
+    private int storedCurrentTreeIndex;
 }

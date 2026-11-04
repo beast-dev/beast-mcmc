@@ -1,7 +1,8 @@
 /*
  * FLU.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.substmodel.aminoacid;
@@ -39,7 +41,6 @@ import java.util.List;
  * Cuong Cao Dang, Quang Si Le, Olivier Gascuel  and Vinh Sy Le (2010)
  * FLU, an amino acid substitution model for influenza proteins. BMC Evol Biol 10:99
  *
- * @version 08/01/2010
  *
  * @author Marc A. Suchard
  * @author Yu-Nong Gong

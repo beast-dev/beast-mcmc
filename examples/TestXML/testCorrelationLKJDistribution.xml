@@ -1,0 +1,200 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testMCMC.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the MCMC engine -->
+
+<beast>
+
+    <parameter id="precision.correlation" value="0.0 0.0 0.0 0.0 0.0 0.0" />
+
+    <LKJCorrelationPrior id="prior.correlation" shapeParameter="2.5" dimension="4" cholesky="false">
+		<data>
+            <parameter idref="precision.correlation"/>
+		</data>
+	</LKJCorrelationPrior>
+
+    <parameter id="precision.cholesky" value="0.0 0.0 0.0 0.0 0.0 0.0" />
+
+    <LKJCorrelationPrior id="prior.cholesky" shapeParameter="2.5" dimension="4">
+		<data>
+            <parameter idref="precision.cholesky"/>
+		</data>
+	</LKJCorrelationPrior>
+
+    <operators id="operators.randomWalk.correlation">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.correlation"/>
+            <LKJTransform dimension="4" cholesky="false"/>
+        </randomWalkOperator>
+    </operators>
+
+    <operators id="operators.randomWalk.cholesky">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="precision.cholesky"/>
+            <LKJTransform dimension="4"/>
+        </randomWalkOperator>
+    </operators>
+
+	<operators id="operators.hmcVanilla.correlation">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="prior.correlation"/>
+			</gradient>
+			<parameter idref="precision.correlation"/>
+            <LKJTransform dimension = "4" cholesky="false"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<operators id="operators.hmcVanilla.cholesky">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+ 			drawVariance="1.0">
+ 			<gradient>
+				<distributionLikelihood idref="prior.cholesky"/>
+			</gradient>
+			<parameter idref="precision.cholesky"/>
+            <LKJTransform dimension = "4"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<mcmc id="mcmc.randomWalk.correlation" chainLength="60000000" autoOptimize="true">
+        <posterior id="posterior.randomWalk.correlation">
+        	<dummyLikelihood id="likelihood.randomWalk.correlation">
+                <parameter idref="precision.correlation"/>
+            </dummyLikelihood>
+
+            <prior id="prior.randomWalk.correlation">
+                <LKJCorrelationPrior idref="prior.correlation"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.randomWalk.correlation"/>
+
+		<log logEvery="100">
+			<column label="posterior.randomWalk.correlation" dp="4" width="12">
+				<likelihood idref="likelihood.randomWalk.correlation"/>
+                <prior idref="prior.randomWalk.correlation"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <parameter idref="precision.correlation"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testCorrelationLKJDistribution_randomWalk_correlation.log">
+            <parameter idref="precision.correlation"/>
+		</log>
+	</mcmc>
+
+	<mcmc id="mcmc.randomWalk.cholesky" chainLength="60000000" autoOptimize="true">
+        <posterior id="posterior.randomWalk.cholesky">
+        	<dummyLikelihood id="likelihood.randomWalk.cholesky">
+                <parameter idref="precision.cholesky"/>
+            </dummyLikelihood>
+
+            <prior id="prior.randomWalk.cholesky">
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.randomWalk.cholesky"/>
+
+		<log logEvery="100">
+			<column label="posterior.randomWalk.cholesky" dp="4" width="12">
+				<likelihood idref="likelihood.randomWalk.cholesky"/>
+                <prior idref="prior.randomWalk.cholesky"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="precision.cholesky"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testCorrelationLKJDistribution_randomWalk_cholesky.log">
+            <matrixParameter idref="precision.cholesky"/>
+		</log>
+	</mcmc>
+
+	<mcmc id="mcmc.hmcVanilla.correlation" chainLength="10000000" autoOptimize="true">
+        <posterior id="posterior.hmcVanilla.correlation">
+        	<dummyLikelihood id="likelihood.hmcVanilla.correlation">
+                <parameter idref="precision.correlation"/>
+            </dummyLikelihood>
+
+            <prior id="prior.hmcVanilla.correlation">
+                <LKJCorrelationPrior idref="prior.correlation"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.hmcVanilla.correlation"/>
+
+		<log logEvery="100">
+			<column label="posterior.hmcVanilla.correlation" dp="4" width="12">
+				<likelihood idref="likelihood.hmcVanilla.correlation"/>
+                <prior idref="prior.hmcVanilla.correlation"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="precision.correlation"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testCorrelationLKJDistribution_hmcVanilla_correlation.log">
+            <matrixParameter idref="precision.correlation"/>
+		</log>
+	</mcmc>
+
+	<mcmc id="mcmc.hmcVanilla.cholesky" chainLength="10000000" autoOptimize="true">
+        <posterior id="posterior.hmcVanilla.cholesky">
+        	<dummyLikelihood id="likelihood.hmcVanilla.cholesky">
+                <parameter idref="precision.cholesky"/>
+            </dummyLikelihood>
+
+            <prior id="prior.hmcVanilla.cholesky">
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators.hmcVanilla.cholesky"/>
+
+		<log logEvery="100">
+			<column label="posterior.hmcVanilla.cholesky" dp="4" width="12">
+				<likelihood idref="likelihood.hmcVanilla.cholesky"/>
+                <prior idref="prior.hmcVanilla.cholesky"/>
+			</column>
+			<column label="Precision" dp="4" width="12">
+                <matrixParameter idref="precision.cholesky"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testCorrelationLKJDistribution_hmcVanilla_cholesky.log">
+            <matrixParameter idref="precision.cholesky"/>
+		</log>
+	</mcmc>
+
+	<!-- <report> -->
+	<!-- 	<property name="timer"> -->
+	<!-- 		<object idref="mcmc.randomWalk"/> -->
+	<!-- 	</property> -->
+	<!-- </report> -->
+
+</beast>
+
+<!--
+# Read log 
+dat <- read_log(file = "testNormalModelCorrelation.log", burning = 0)
+
+# Get observed moments
+means <- get_mean(dat)
+vars <- get_var(dat)
+
+# Get theoretical moments (uniform on [a, b])
+exp_th <- 0 # LKJ exp is Identity matrix
+
+# var of a LKJ -> transformed beta
+shape <- 2.0
+dim <- 4
+dim_offdiag <- dim * (dim - 1) / 2
+
+var_th <- 1 / (2 * shape + dim - 1)
+
+for (i in 1:(dim_offdiag)) {
+  stopifnot(all.equal(pull(means, i), exp_th, tol = 0.001)) 
+}
+
+for (i in 1:(dim_offdiag)) {
+  stopifnot(all.equal(pull(vars, i), var_th, tol = 0.001))
+}
+-->

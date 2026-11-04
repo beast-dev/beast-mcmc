@@ -1,0 +1,640 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+		<taxon id="t16"> <attr name="simTrait"> -1.08620104981184 -1.08188574777903 -0.392988209152307 -1.97078575189441 </attr> </taxon>
+		<taxon id="t21"> <attr name="simTrait"> -0.902052941041434 -0.216172072304104 -0.523365635961216 -1.13048406475673 </attr> </taxon>
+		<taxon id="t49"> <attr name="simTrait"> -0.0978687057347054 0.111645313187048 0.35717114067549 2.09724374599856 </attr> </taxon>
+		<taxon id="t37"> <attr name="simTrait"> -0.990989240876509 0.513769057773718 0.378432188338339 0.503426051493209 </attr> </taxon>
+		<taxon id="t12"> <attr name="simTrait"> -1.05753668628049 1.16843539835522 1.65899853234237 0.798085335027943 </attr> </taxon>
+		<taxon id="t45"> <attr name="simTrait"> -0.694910470904697 0.269651267358283 0.680099731378929 0.255015586125871 </attr> </taxon>
+		<taxon id="t36"> <attr name="simTrait"> -0.676948542433985 0.357673025916996 0.379738101635482 0.0441308889106263 </attr> </taxon>
+		<taxon id="t48"> <attr name="simTrait"> -0.281611727272804 0.000785910322963814 0.770078540164318 1.44965748876908 </attr> </taxon>
+		<taxon id="t7"> <attr name="simTrait"> -0.634122808624146 0.0491524638951258 0.763156724826932 0.447561983276782 </attr> </taxon>
+		<taxon id="t40"> <attr name="simTrait"> -0.923873290506427 -0.26969423975416 0.667164642864906 0.200921954255138 </attr> </taxon>
+		<taxon id="t24"> <attr name="simTrait"> -0.441973921264739 0.128358842729872 0.782766038035235 -0.124178704396332 </attr> </taxon>
+		<taxon id="t35"> <attr name="simTrait"> -0.747736338894237 -0.00551855153545189 1.12228620935886 0.911544906287326 </attr> </taxon>
+		<taxon id="t47"> <attr name="simTrait"> -0.250614524028038 0.432744433971853 0.447058146821746 1.03095700915197 </attr> </taxon>
+		<taxon id="t5"> <attr name="simTrait"> -0.369377459008747 0.270206225691939 0.523407032155764 0.590259033980869 </attr> </taxon>
+		<taxon id="t34"> <attr name="simTrait"> -0.528022299227884 0.256679921715153 0.606437941014327 0.524151913031445 </attr> </taxon>
+		<taxon id="t33"> <attr name="simTrait"> -0.280847744456183 -0.0368668111405211 1.26093027441034 0.624560001041951 </attr> </taxon>
+		<taxon id="t9"> <attr name="simTrait"> -0.239624882883438 -0.415267345367156 1.25761350568151 0.0440831206758578 </attr> </taxon>
+		<taxon id="t4"> <attr name="simTrait"> -0.310176337766947 0.215472502085723 0.652144794762461 -0.369290763539728 </attr> </taxon>
+		<taxon id="t42"> <attr name="simTrait"> -0.323812545218568 -0.0653273358975892 1.53850356703654 -0.0968046148394724 </attr> </taxon>
+		<taxon id="t46"> <attr name="simTrait"> -0.891961273477434 0.527035897729816 1.34922201455852 0.581185694344926 </attr> </taxon>
+		<taxon id="t23"> <attr name="simTrait"> -0.739035967676036 0.738784059709959 0.917186767846983 0.454491974538363 </attr> </taxon>
+		<taxon id="t32"> <attr name="simTrait"> -0.619836247916223 0.541841304027812 0.8599594744769 0.27552159209529 </attr> </taxon>
+		<taxon id="t8"> <attr name="simTrait"> -0.707268012851914 -1.20733748976303 0.136692764473181 -0.181921749640516 </attr> </taxon>
+		<taxon id="t18"> <attr name="simTrait"> -0.59587995177198 -0.741219637385581 -0.00501984252618998 0.193590252112044 </attr> </taxon>
+		<taxon id="t41"> <attr name="simTrait"> -0.610527586551701 -0.979620501537813 -0.0928794140929769 -0.0894037330622636 </attr> </taxon>
+		<taxon id="t31"> <attr name="simTrait"> -1.47209055605592 -1.24077598464091 0.292298974006678 -0.854718835452826 </attr> </taxon>
+		<taxon id="t50"> <attr name="simTrait"> -1.44259056530182 0.533404001774868 0.452558309081694 0.0147323903890552 </attr> </taxon>
+		<taxon id="t28"> <attr name="simTrait"> -1.74481554931826 0.165486530626398 -1.10293209222341 -0.646607874140994 </attr> </taxon>
+		<taxon id="t14"> <attr name="simTrait"> -1.78763583302449 -0.273620327461392 -0.856709215940586 -0.752047705720689 </attr> </taxon>
+		<taxon id="t3"> <attr name="simTrait"> -1.78586052415914 -0.187300391638962 -1.71305351764589 -0.52534589962875 </attr> </taxon>
+		<taxon id="t25"> <attr name="simTrait"> -1.55994116127519 -0.421666664603688 -2.16249953439676 -0.0862309334236758 </attr> </taxon>
+		<taxon id="t10"> <attr name="simTrait"> -1.5791550981495 0.538247495368806 -0.688352800592518 -0.217494578915797 </attr> </taxon>
+		<taxon id="t27"> <attr name="simTrait"> -1.91567136231097 0.85718541508941 -0.665439149094541 0.403132946458187 </attr> </taxon>
+		<taxon id="t11"> <attr name="simTrait"> -1.95085864915934 0.715260942860833 -1.00270564776376 0.380666751189034 </attr> </taxon>
+		<taxon id="t22"> <attr name="simTrait"> -1.34290770012515 0.235257282253894 -0.533258224777956 -0.915124550674635 </attr> </taxon>
+		<taxon id="t39"> <attr name="simTrait"> -1.42843196982816 0.3939688290558 -0.368660025552845 -1.32488727349222 </attr> </taxon>
+		<taxon id="t1"> <attr name="simTrait"> -1.97729187841943 0.477721497541329 0.00848024268219898 -0.689203772555105 </attr> </taxon>
+		<taxon id="t43"> <attr name="simTrait"> -2.00347883300913 0.700089299095528 0.899645767861542 -0.585199335050258 </attr> </taxon>
+		<taxon id="t20"> <attr name="simTrait"> -1.80314318814088 -1.34472380112995 0.493329502864596 0.211509216772147 </attr> </taxon>
+		<taxon id="t30"> <attr name="simTrait"> -1.81923153584802 -1.18319798600553 1.10159155559943 0.423440492029117 </attr> </taxon>
+		<taxon id="t2"> <attr name="simTrait"> -2.61729067131548 -1.13760268196271 1.23478086183715 -1.04852727597032 </attr> </taxon>
+		<taxon id="t17"> <attr name="simTrait"> -0.393893663071797 0.295668972575418 -0.424922794305813 1.53938267382437 </attr> </taxon>
+		<taxon id="t38"> <attr name="simTrait"> -0.320392992738582 0.35914668100999 -0.021776600808329 1.46490931569901 </attr> </taxon>
+		<taxon id="t26"> <attr name="simTrait"> -1.16144276655973 -0.193216013303451 0.371339755065459 -0.838607136302574 </attr> </taxon>
+		<taxon id="t13"> <attr name="simTrait"> -0.768140117915604 -0.00886631166249681 0.00749290339419534 -0.200452854205651 </attr> </taxon>
+		<taxon id="t19"> <attr name="simTrait"> -0.527439016389196 0.304829566161456 0.48767396383133 0.0464919510148916 </attr> </taxon>
+		<taxon id="t15"> <attr name="simTrait"> -0.365169271786662 -0.333230170342726 -1.36823593918816 -0.679266668431622 </attr> </taxon>
+		<taxon id="t29"> <attr name="simTrait"> -0.748410563867927 -0.0658632381218594 -0.893490158776143 -0.732847604082649 </attr> </taxon>
+		<taxon id="t44"> <attr name="simTrait"> -0.28300984160117 -0.77770467526985 -0.634579766600907 -0.352547003962922 </attr> </taxon>
+		<taxon id="t6"> <attr name="simTrait"> -0.417391506054772 0.0904761071103364 0.149501767857483 0.619905078512765 </attr> </taxon>
+    </taxa>
+
+	<newick id="tree" usingHeights="true" usingDates="false">
+		(((t16:0.2669120944,(t21:0.1179767583,(t49:0.1377510131,((t37:0.06888311066,t12:0.1027487536):0.01891150883,(t45:0.03050371596,(((((t36:0.07604341532,(t48:0.01830071082,t7:0.01010980547):0.0008062216752):0.04581388327,t40:0.05522025861):0.04578831428,t24:0.06092992921):0.01533072851,((t35:0.05924853423,t47:0.005306019884):0.04469822675,t5:0.004070003068):0.018820849):0.02662104855,((t34:0.00307900863,((t33:0.02881359051,t9:0.04366350786):0.03754202354,t4:0.02745630653):0.02622853521):0.004047393042,((t42:0.09475016404,t46:0.07564130526):0.007645747663,(t23:0.01932723842,t32:0.006599979977):0.0002051294203):0.0164176812):0.0137406295):0.06637741739):0.002114571876):0.1074137178):0.03003012592):0.127976066):0.1753643411,((t8:0.01254122802,t18:0.01065390812):0.007291049339,t41:0.04894641794):0.3922824419):0.2306052858,((t31:0.158422386,(((t50:0.04081005031,(((t28:0.1044515193,(t14:0.007424130149,(t3:0.02313741978,t25:0.08821028243):0.04187188865):0.1160045377):0.001411434832,(t10:0.001459638691,(t27:0.05479100855,t11:0.01035830197):0.07769644802):0.06272894016):0.01386010626,((t22:0.0523116194,t39:0.01756513333):0.06777870016,t1:0.01011313611):0.03235599305):0.01180315468):0.0178968221,t43:0.03917824983):0.1105892694,(t20:0.04533417192,(t30:0.03758788288,t2:0.1076004859):0.006037492264):0.2390785222):0.008898533427):0.08114893383,(((t17:0.01438626946,t38:0.006045402167):0.09946179619,((t26:0.09837701357,t13:0.004843558083):0.0003468517638,(((t19:0.1433988181,t15:0.0297955862):0.003772104913,t29:0.03417430552):0.03488924101,t44:0.0284976228):0.08178307643):0.09219037346):0.02379393721,t6:0.02295576132):0.1429955332):0.4771769157);
+    </newick>
+
+	<treeModel id="treeModel">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits name="simTrait" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="4">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+	</treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+        	<cachedMatrixInverse id="precisionMatrix">
+	            <compoundSymmetricMatrix id="varianceMatrix" asCorrelation="true" isCholesky="true">
+    	            <diagonal>
+        	            <parameter id="variance.diagonal" value="1.0 2.0 3.0 4.0" lower="0.0 0.0 0.0 0.0"/>
+            	    </diagonal>
+	                <offDiagonal>
+    	                <parameter id="variance.correlation" value="0.01 0.02 0.03 0.04 0.05 0.06" />
+	                </offDiagonal>
+	            </compoundSymmetricMatrix>
+	        </cachedMatrixInverse>
+    	</precisionMatrix>
+	</multivariateDiffusionModel>
+
+	<report>
+		<compoundSymetricMatrix idref="varianceMatrix"/>
+		<cachedMatrixInverse idref="precisionMatrix"/>
+	</report>
+
+	<traitDataLikelihood id="bmLikelihood" traitName="simTrait" forceFullPrecision="true" allowSingular="true">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+     	<conjugateRootPrior>
+            <meanParameter>
+                <parameter id="meanRoot"  value="0.0 0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter id="sampleSizeRoot" value="2.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+	</traitDataLikelihood>
+
+    <!-- ************************************************** -->
+    <!-- Correlation -->
+
+    <precisionGradient id="precisionCorrelationGradient" parameter="correlation">
+        <wishartStatistics  traitName="simTrait">
+            <traitDataLikelihood idref="bmLikelihood"/>
+        </wishartStatistics>
+        <traitDataLikelihood idref="bmLikelihood"/>
+        <cachedMatrixInverse idref="precisionMatrix"/>
+    </precisionGradient>
+
+    <report>
+        <precisionGradient idref="precisionCorrelationGradient"/>
+    </report>
+
+    <LKJCorrelationPrior id="prior.cholesky" shapeParameter="1.0" dimension="4">
+		<data>
+            <parameter idref="variance.correlation"/>
+		</data>
+	</LKJCorrelationPrior>
+
+	<operators id="bmOperators.correlation.hmcVanilla">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="1000" gradientCheckTolerance="0.001">
+            <jointGradient>
+                <gradient>
+                    <distributionLikelihood idref="prior.cholesky"/>
+                </gradient>
+                <gradient idref="precisionCorrelationGradient"/>
+            </jointGradient>
+			<parameter idref="variance.correlation"/>
+            <LKJTransform dimension = "4"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<operators id="bmOperators.correlation.randomWalk">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="variance.correlation"/>
+            <LKJTransform dimension = "4"/>
+        </randomWalkOperator>
+	</operators>
+
+	<mcmc id="mcmc.correlation.hmcVanilla" chainLength="100000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+            </prior>
+            <likelihood id="likelihood.correlation.hmcVanilla">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="varianceMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.correlation.hmcVanilla"/>
+		<log logEvery="1000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.correlation.hmcVanilla"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+			</column>
+			<column label="variance" dp="4" width="12">
+                <matrixParameter idref="varianceMatrix"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testDiffusionCorrelationHmcVanilla.log">
+            <likelihood idref="likelihood.correlation.hmcVanilla"/>
+            <LKJCorrelationPrior idref="prior.cholesky"/>
+            <matrixParameter idref="variance.correlation"/>
+		</log>
+	</mcmc>
+
+
+	<mcmc id="mcmc.correlation.randomWalk" chainLength="1000000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+            </prior>
+            <likelihood id="likelihood.correlation.randomWalk">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="varianceMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.correlation.randomWalk"/>
+		<log logEvery="10000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.correlation.randomWalk"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="varianceMatrix"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testDiffusionCorrelationRandomWalk.log">
+            <likelihood idref="likelihood.correlation.randomWalk"/>
+            <LKJCorrelationPrior idref="prior.cholesky"/>
+            <matrixParameter idref="variance.correlation"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.correlation.randomWalk"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionCorrelationRandomWalk.log" stdError="true"/>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.correlation.hmcVanilla"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionCorrelationHmcVanilla.log" stdError="true"/>
+
+    <!-- <maximizeWrtParameter id="maximize.correlation"  nIteration="100" printToScreen="true"> -->
+        <!-- <densityWrtParameter> -->
+            <!-- <traitDataLikelihood idref="bmLikelihood"/> -->
+            <!-- <matrixParameter idref="variance.correlation"/> -->
+        <!-- </densityWrtParameter> -->
+        <!-- <LKJTransform  dimension = "4"/> -->
+    <!-- </maximizeWrtParameter> -->
+
+    <!-- <report> -->
+        <!-- <maximizeWrtParameter idref="maximize.correlation"/> -->
+    <!-- </report> -->
+
+<!--
+burnIn   <= 100000,   maxState  = 1000000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.correlation.randomWalk   -123.0474   1.6285  -122.6992   -126.2559   -120.7808   901 -123.0823   -121.2734   
+prior.cholesky  -2.5403 0.0528  -2.5299 -2.6475 -2.4636 901 -2.5531 -2.4915 
+variance.correlation1   -0.0998 0.1443  -0.1105 -0.3528 0.2097  901 -0.2021 -0.0141 
+variance.correlation2   -0.2037 0.1263  -0.209  -0.4386 0.0321  901 -0.2762 -0.1054 
+variance.correlation3   0.382   0.1044  0.3936  0.1789  0.5746  777.9691    0.3517  0.4842  
+variance.correlation4   0.1189  0.1389  0.1184  -0.1673 0.3786  901 0.0246  0.2057  
+variance.correlation5   0.2941  0.1134  0.3063  0.0762  0.5003  819.5673    0.2476  0.3951  
+variance.correlation6   0.1239  0.1108  0.128   -0.0814 0.3503  901 0.0506  0.1933  
+
+burnIn   <= 10000,   maxState  = 100000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.correlation.hmcVanilla   -123.1777   1.7049  -122.8462   -126.4065   -120.5711   832.4837    -123.0633   -121.1209   
+prior.cholesky  -2.544  0.0583  -2.5332 -2.6561 -2.4627 709.0074    -2.5439 -2.4816 
+variance.correlation1   -0.1058 0.1354  -0.1027 -0.3506 0.1653  901 -0.1876 -0.003  
+variance.correlation2   -0.2129 0.1289  -0.2153 -0.4606 0.0316  737.7649    -0.3332 -0.1705 
+variance.correlation3   0.378   0.1079  0.3852  0.1689  0.5843  901 0.3292  0.4669  
+variance.correlation4   0.127   0.1463  0.1377  -0.1766 0.3887  901 0.0515  0.2419  
+variance.correlation5   0.2917  0.1174  0.3 0.083   0.5303  840.7909    0.2191  0.3778  
+variance.correlation6   0.1211  0.1173  0.1235  -0.1199 0.3236  827.9129    0.0157  0.1757  
+
+Gradient is taken with respect to the transformed paramter values.
+Untransformed X: [ -0.1119208514441313, -0.23532520104750781, 0.4116883318819756, 0.1646961451565884, 0.33596828181760713, 0.13779583158900233]
+X: [ -0.11239171262082137, -0.23981944552392548, 0.4376424051337831, 0.17110550057850926, 0.38687057827217475, 0.16411877695814805]
+Gradient: [ 7.834179042951381E-5, -4.0110100708550915E-5, -6.76217835171726E-6, -3.5556663561273084E-5, -2.02413787704944E-5, -5.0116519979780295E-5]
+Gradient type: numerical
+Fx: 120.26202027956195
+Time: 0.315s
+Count: 1092
+-->
+
+    <!-- ************************************************** -->
+    <!-- Diagonal -->
+
+    <precisionGradient id="precisionDiagonalGradient" parameter="diagonal">
+        <wishartStatistics  traitName="simTrait">
+            <traitDataLikelihood idref="bmLikelihood"/>
+        </wishartStatistics>
+        <traitDataLikelihood idref="bmLikelihood"/>
+        <cachedMatrixInverse idref="precisionMatrix"/>
+    </precisionGradient>
+
+    <logNormalPrior id="prior.diagonal" mean="0.0" stdev="1.0" offset="0.0" meanInRealSpace="false">
+        <parameter idref="variance.diagonal"/>
+    </logNormalPrior>
+
+	<operators id="bmOperators.diagonal.hmcVanilla">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="1000" gradientCheckTolerance="0.001">
+            <jointGradient>
+                <gradient>
+                    <logNormalPrior idref="prior.diagonal"/>
+                    <parameter idref="variance.diagonal"/>
+                </gradient>
+                <gradient idref="precisionDiagonalGradient"/>
+            </jointGradient>
+            <parameter idref="variance.diagonal"/>
+            <transform type="log"/>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<operators id="bmOperators.diagonal.randomWalk">
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="variance.diagonal"/>
+        </randomWalkOperator>
+	</operators>
+
+	<mcmc id="mcmc.diagonal.randomWalk" chainLength="1000000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <logNormalPrior idref="prior.diagonal"/>
+            </prior>
+            <likelihood id="likelihood.diagonal.randomWalk">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="varianceMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.diagonal.randomWalk"/>
+		<log logEvery="10000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.diagonal.randomWalk"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+                <logNormalPrior idref="prior.diagonal"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="varianceMatrix"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testDiffusionDiagonalRandomWalk.log">
+				<likelihood idref="likelihood.diagonal.randomWalk"/>
+                <logNormalPrior idref="prior.diagonal"/>
+                <matrixParameter idref="variance.diagonal"/>
+		</log>
+	</mcmc>
+
+
+
+    <mcmc id="mcmc.diagonal.hmcVanilla" chainLength="100000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <logNormalPrior idref="prior.diagonal"/>
+            </prior>
+            <likelihood id="likelihood.diagonal.hmcVanilla">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="varianceMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.diagonal.hmcVanilla"/>
+		<log logEvery="1000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+                <logNormalPrior idref="prior.diagonal"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="varianceMatrix"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testDiffusionDiagonalHmcVanilla.log">
+				<likelihood idref="likelihood.diagonal.hmcVanilla"/>
+                <logNormalPrior idref="prior.diagonal"/>
+                <matrixParameter idref="variance.diagonal"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.diagonal.randomWalk"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionDiagonalRandomWalk.log" stdError="true"/>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.diagonal.hmcVanilla"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionDiagonalHmcVanilla.log" stdError="true"/>
+
+    <!-- <maximizeWrtParameter id="maximize.diagonal"  nIteration="100" printToScreen="true"> -->
+        <!-- <densityWrtParameter> -->
+            <!-- <traitDataLikelihood idref="bmLikelihood"/> -->
+            <!-- <paramter idref="variance.diagonal"/> -->
+        <!-- </densityWrtParameter> -->
+        <!-- <signTransform> -->
+            <!-- <paramter idref="variance.diagonal"/> -->
+        <!-- </signTransform> -->
+    <!-- </maximizeWrtParameter> -->
+
+    <!-- <report> -->
+        <!-- <maximizeWrtParameter idref="maximize.diagonal"/> -->
+    <!-- </report> -->
+
+<!--
+burnIn   <= 100000,   maxState  = 1000000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.randomWalk  -122.9643   1.3487  -122.6586   -125.6149   -121.1228   901 -122.7637   -121.3351   
+prior.diagonal  -8.3049 0.7123  -8.2738 -9.7178 -6.9768 901 -8.6072 -7.6696 
+variance.diagonal1  1.1684  0.2222  1.1404  0.7772  1.5978  851.0836    0.9411  1.209   
+variance.diagonal2  1.4863  0.3058  1.4358  0.973   2.1123  901 1.2418  1.5958  
+variance.diagonal3  2.95    0.5655  2.8809  2.0027  4.1008  847.0588    2.3885  3.0797  
+variance.diagonal4  4.0405  0.7294  3.951   2.8227  5.4616  901 3.3597  4.2622  
+
+burnIn   <= 10000,   maxState  = 100000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.diagonal.hmcVanilla  -122.9294   1.3757  -122.593    -125.7369   -121.0758   659.7939    -122.802    -121.4873   
+prior.diagonal  -8.3274 0.6952  -8.3263 -9.6703 -7.0262 889.4919    -8.7727 -7.8328 
+variance.diagonal1  1.1753  0.206   1.1427  0.8405  1.5945  835.0064    0.977   1.228   
+variance.diagonal2  1.5015  0.3006  1.4667  0.9253  2.0798  901 1.2594  1.6171  
+variance.diagonal3  2.9363  0.5577  2.8901  1.9511  4.0068  887.6832    2.3694  3.122   
+variance.diagonal4  4.0618  0.7656  3.9468  2.8242  5.6118  773.7036    3.4782  4.4419  
+
+Gradient is taken with respect to the transformed paramter values.
+Untransformed X: [ 1.020068591645332, 1.5483093910435606, 2.8030988411776523, 4.068280443171627]
+X: [ 0.019869871746330925, 0.4371636202124041, 1.03072553420013, 1.4032204146428915]
+Gradient: [ -1.926297395738426E-5, 2.578491421995093E-5, 2.811647535672739E-6, -5.779593362365016E-5]
+Gradient type: numerical
+Fx: 119.37775756796418
+Time: 0.138s
+Count: 513
+-->
+
+    <!-- ************************************************** -->
+    <!-- Both -->
+
+    <precisionGradient id="precisionBothGradient" parameter="both">
+        <traitDataLikelihood idref="bmLikelihood"/>
+        <cachedMatrixInverse idref="precisionMatrix"/>
+    </precisionGradient>
+
+    <compoundGradient id="priorGradient">
+        <gradient>
+            <logNormalPrior idref="prior.diagonal"/>
+            <parameter idref="variance.diagonal"/>
+        </gradient>
+        <gradient>
+            <LKJCorrelationPrior idref="prior.cholesky"/>
+        </gradient>
+    </compoundGradient>
+
+    <report>
+        <compoundGradient idref="priorGradient"/>
+    </report>
+
+    <report>
+        <precisionGradient idref="precisionBothGradient"/>
+    </report>
+
+    <jointGradient id="post.precisionBothGradient">
+        <precisionGradient idref="precisionBothGradient"/>
+        <compoundGradient idref="priorGradient"/>
+    </jointGradient>
+
+
+    <operators id="bmOperators.both.hmcVanilla">
+        <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla"
+                                       drawVariance="1.0" gradientCheckCount="1000" gradientCheckTolerance="0.001">
+            <gradient idref="post.precisionBothGradient"/>
+            <compoundParameter id="try.me">
+                <parameter idref="variance.diagonal"/>
+                <parameter idref="variance.correlation"/>
+            </compoundParameter>
+            <multivariateCompoundTransform>
+                <transform type="log" dim="4"/>
+                <LKJTransform dimension="4"/>
+            </multivariateCompoundTransform>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+	
+	<!-- <operators id="bmOperators.both.hmcVanilla"> -->
+ 		<!-- <hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.01" mode="vanilla" -->
+                                       <!-- drawVariance="1.0" gradientCheckCount="100" gradientCheckTolerance="0.5"> -->
+            <!-- <jointGradient> -->
+                <!-- <compoundGradient> -->
+                    <!-- <gradient idref="precisionDiagonalGradient"/> -->
+                    <!-- <gradient idref="precisionCorrelationGradient"/> -->
+                <!-- </compoundGradient> -->
+                <!-- <compoundGradient idref="priorGradient"/> -->
+            <!-- </jointGradient> -->
+ 			 <!-- <compoundParameter> -->
+ 				<!-- <parameter idref="variance.diagonal"/> -->
+ 				<!-- <parameter idref="variance.correlation"/> -->
+ 			<!-- </compoundParameter> -->
+ 			<!-- <multivariateCompoundTransform> -->
+ 			    <!-- <transform type="log" dim = "4"/> -->
+ 			    <!-- <LKJTransform dimension = "4"/> -->
+ 			<!-- </multivariateCompoundTransform> -->
+ 		<!-- </hamiltonianMonteCarloOperator> -->
+	<!-- </operators> -->
+	
+	<operators id="bmOperators.both.randomWalk">
+	    <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="variance.diagonal"/>
+        </randomWalkOperator>
+        <randomWalkOperator windowSize="1.0" weight="1">
+            <parameter idref="variance.correlation"/>
+            <LKJTransform dimension = "4"/>
+        </randomWalkOperator>
+	</operators>
+
+
+    <mcmc id="mcmc.both.randomWalk" chainLength="1000000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+                <logNormalPrior idref="prior.diagonal"/>
+            </prior>
+            <likelihood id="likelihood.both.randomWalk">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="varianceMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.both.randomWalk"/>
+		<log logEvery="10000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.both.randomWalk"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+                <logNormalPrior idref="prior.diagonal"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="varianceMatrix"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testDiffusionBothRandomWalk.log">
+				<likelihood idref="likelihood.both.randomWalk"/>
+                <matrixParameter idref="varianceMatrix"/>
+		</log>
+	</mcmc>
+
+
+
+	<mcmc id="mcmc.both.hmcVanilla" chainLength="100000" autoOptimize="false">
+		<posterior>
+            <prior>
+                <LKJCorrelationPrior idref="prior.cholesky"/>
+                <logNormalPrior idref="prior.diagonal"/>
+            </prior>
+            <likelihood id="likelihood.both.hmcVanilla">
+                <traitDataLikelihood idref="bmLikelihood"/>
+                <dummyLikelihood>
+                    <parameter idref="varianceMatrix"/>
+                </dummyLikelihood>
+            </likelihood>
+		</posterior>
+		<operators idref="bmOperators.both.hmcVanilla"/>
+		<log logEvery="1000">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood.both.hmcVanilla"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+                <logNormalPrior idref="prior.diagonal"/>
+			</column>
+			<column label="precision" dp="4" width="12">
+                <matrixParameter idref="varianceMatrix"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testDiffusionBothHmcVanilla.log">
+				<likelihood idref="likelihood.both.hmcVanilla"/>
+                <matrixParameter idref="varianceMatrix"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.both.randomWalk"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionBothRandomWalk.log" stdError="true"/>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.both.hmcVanilla"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testDiffusionBothHmcVanilla.log" stdError="true"/>
+
+
+<!--
+burnIn   <= 100000,   maxState  = 1000000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.both.randomWalk  -124.0139   2.0636  -123.7122   -127.7267   -120.365    546.0568    -124.6525   -122.0348   
+varianceMatrix00    1.0815  0.2094  1.0539  0.7244  1.4643  901 0.8815  1.1386  
+varianceMatrix01    -0.127  0.181   -0.1214 -0.4915 0.2103  901 -0.2386 -0.0108 
+varianceMatrix02    -0.3537 0.2492  -0.3542 -0.8701 0.1095  772.6983    -0.4781 -0.1572 
+varianceMatrix03    0.8397  0.2979  0.8248  0.2882  1.4562  901 0.5621  0.9374  
+varianceMatrix10    -0.127  0.181   -0.1214 -0.4915 0.2103  901 -0.2386 -0.0108 
+varianceMatrix11    1.6084  0.3277  1.5612  1.0754  2.3053  901 1.2637  1.6387  
+varianceMatrix12    0.2993  0.2992  0.2973  -0.2609 0.9287  898.0898    0.1461  0.5132  
+varianceMatrix13    0.5893  0.3616  0.5596  -0.0924 1.3209  901 0.3083  0.7755  
+varianceMatrix20    -0.3537 0.2492  -0.3542 -0.8701 0.1095  772.6983    -0.4781 -0.1572 
+varianceMatrix21    0.2993  0.2992  0.2973  -0.2609 0.9287  898.0898    0.1461  0.5132  
+varianceMatrix22    2.9205  0.6115  2.8119  1.9544  4.0934  901 2.2696  2.9968  
+varianceMatrix23    0.251   0.4544  0.2237  -0.6253 1.1326  901 -0.0511 0.5141  
+varianceMatrix30    0.8397  0.2979  0.8248  0.2882  1.4562  901 0.5621  0.9374  
+varianceMatrix31    0.5893  0.3616  0.5596  -0.0924 1.3209  901 0.3083  0.7755  
+varianceMatrix32    0.251   0.4544  0.2237  -0.6253 1.1326  901 -0.0511 0.5141  
+varianceMatrix33    4.1096  0.8134  4.0349  2.6748  5.8104  901 3.4457  4.3748  
+
+burnIn   <= 10000,   maxState  = 100000
+statistic   mean    stdErr  median  hpdLower    hpdUpper    ESS 50hpdLower  50hpdUpper
+likelihood.both.hmcVanilla  -123.9732   2.1681  -123.5814   -128.3631   -120.6192   901 -124.2939   -121.7155   
+varianceMatrix00    1.0873  0.2124  1.0611  0.7048  1.5157  901 0.9147  1.1455  
+varianceMatrix01    -0.1323 0.1842  -0.1271 -0.4884 0.2358  901 -0.2198 0.0124  
+varianceMatrix02    -0.3602 0.2468  -0.3497 -0.8312 0.137   820.1575    -0.5257 -0.2025 
+varianceMatrix03    0.8466  0.2955  0.828   0.2287  1.4031  674.5274    0.6707  1.019   
+varianceMatrix10    -0.1323 0.1842  -0.1271 -0.4884 0.2358  901 -0.2198 0.0124  
+varianceMatrix11    1.5991  0.317   1.5767  0.9722  2.144   864.7923    1.3884  1.7926  
+varianceMatrix12    0.3007  0.2899  0.302   -0.2482 0.8911  901 0.0657  0.4255  
+varianceMatrix13    0.579   0.3492  0.5704  -0.092  1.2714  901 0.3269  0.7688  
+varianceMatrix20    -0.3602 0.2468  -0.3497 -0.8312 0.137   820.1575    -0.5257 -0.2025 
+varianceMatrix21    0.3007  0.2899  0.302   -0.2482 0.8911  901 0.0657  0.4255  
+varianceMatrix22    2.9095  0.5906  2.855   1.9107  4.0856  901 2.4433  3.1756  
+varianceMatrix23    0.2754  0.4691  0.2597  -0.6426 1.1683  789.2855    -0.021  0.5479  
+varianceMatrix30    0.8466  0.2955  0.828   0.2287  1.4031  674.5274    0.6707  1.019   
+varianceMatrix31    0.579   0.3492  0.5704  -0.092  1.2714  901 0.3269  0.7688  
+varianceMatrix32    0.2754  0.4691  0.2597  -0.6426 1.1683  789.2855    -0.021  0.5479  
+varianceMatrix33    4.1178  0.8044  4.0202  2.7216  5.7067  892.0132    3.436   4.3673  
+-->
+</beast>
+

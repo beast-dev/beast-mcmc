@@ -1,7 +1,8 @@
 /*
  * SteppingStoneSamplingAnalysis.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,20 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.trace;
+
+import dr.util.Attribute;
+import dr.util.FileHelpers;
+import dr.xml.*;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.nio.file.Paths;
 import java.util.*;
-
-import dr.util.Attribute;
-import dr.util.FileHelpers;
-
-import dr.xml.*;
 
 /**
  * @author Guy Baele
@@ -167,9 +169,13 @@ public class SteppingStoneSamplingAnalysis {
     				String name = file.getName();
     				String parent = file.getParent();
 
-    				if (!file.isAbsolute()) {
-    					parent = System.getProperty("user.dir");
-    				}
+                    if (!file.isAbsolute()) {
+                        if (parent == null) {
+                            parent = System.getProperty("user.dir");
+                        } else {
+                            parent = Paths.get(System.getProperty("user.dir"), parent).toString();
+                        }
+                    }
 
                     final String fileNamePrefix = System.getProperty("file.name.prefix");
                     final String fileSeparator = System.getProperty("file.separator");

@@ -1,7 +1,8 @@
 /*
  * EmpiricalAminoAcidModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.substmodel;
@@ -47,34 +49,20 @@ public class EmpiricalAminoAcidModelParser extends AbstractXMLObjectParser {
 
         FrequencyModel freqModel = null;
 
-        if (xo.hasAttribute(FREQUENCIES)) {
+        if (xo.hasChildNamed(FREQUENCIES)) {
             XMLObject cxo = xo.getChild(FREQUENCIES);
             freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
         }
 
-        EmpiricalRateMatrix rateMatrix = null;
-
         String type = xo.getStringAttribute(TYPE);
 
-        if (type.equals(AminoAcidModelType.BLOSUM_62.getXMLName())) {
-            rateMatrix = Blosum62.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.DAYHOFF.getXMLName())) {
-            rateMatrix = Dayhoff.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.JTT.getXMLName())) {
-            rateMatrix = JTT.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.MT_REV_24.getXMLName())) {
-            rateMatrix = MTREV.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.CP_REV_45.getXMLName())) {
-            rateMatrix = CPREV.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.WAG.getXMLName())) {
-            rateMatrix = WAG.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.LG.getXMLName())) {
-            rateMatrix = LG.INSTANCE;
-        } else if (type.equals(AminoAcidModelType.FLU.getXMLName())) {
-            rateMatrix = FLU.INSTANCE;
-        } else {
+        AminoAcidModelType modelType = AminoAcidModelType.fromXMLName(type);
+
+        if (modelType == null) {
             throw new XMLParseException("Unrecognized empirical amino acid model: " + type);
         }
+
+        EmpiricalRateMatrix rateMatrix = modelType.getRateMatrixInstance();
 
         return new EmpiricalAminoAcidModel(rateMatrix, freqModel);
     }

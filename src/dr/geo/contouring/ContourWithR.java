@@ -1,7 +1,8 @@
 /*
  * ContourWithR.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.geo.contouring;
 
-import org.rosuda.JRI.REXP;
-import org.rosuda.JRI.RVector;
-import org.rosuda.JRI.Rengine;
+//import org.rosuda.JRI.REXP;
+//import org.rosuda.JRI.RVector;
+//import org.rosuda.JRI.Rengine;
 
 /**
  * @author Marc Suchard
@@ -40,26 +42,28 @@ public class ContourWithR implements ContourMaker {
     }
 
     public ContourWithR(final double[] xValues, final double[] yValues, int N) {
-        this.xValues = xValues;
-        this.yValues = yValues;
-        this.N = N;
+        throw new UnsupportedOperationException("R jnilib no longer supported");
+//        this.xValues = xValues;
+//        this.yValues = yValues;
+//        this.N = N;
     }
 
     private final double[] xValues;
     private final double[] yValues;
 
     public ContourPath[] getContourPaths(double hpdValue) {
-        makeContour(xValues, yValues, hpdValue, N);
-        if (contourList == null)
-            return null;
-
-        ContourPath[] contourPaths = new ContourPath[getNumberContours()];
-
-        for(int i=0; i<getNumberContours(); i++) {
-            double[][] cont = getContour(i);
-            contourPaths[i] = new ContourPath(null,1,cont[0],cont[1]);
-        }
-        return contourPaths;
+        throw new UnsupportedOperationException("R jnilib no longer supported");
+//        makeContour(xValues, yValues, hpdValue, N);
+//        if (contourList == null)
+//            return null;
+//
+//        ContourPath[] contourPaths = new ContourPath[getNumberContours()];
+//
+//        for(int i=0; i<getNumberContours(); i++) {
+//            double[][] cont = getContour(i);
+//            contourPaths[i] = new ContourPath(null,1,cont[0],cont[1]);
+//        }
+//        return contourPaths;
     }
 
 
@@ -68,43 +72,45 @@ public class ContourWithR implements ContourMaker {
     }
 
     public void makeContour(double[] xValues, double[] yValues, double hpd, int N) {
+        throw new UnsupportedOperationException("R jnilib no longer supported");
 
-
-        REXP x = rEngine.eval("makeContour(" +
-                makeRString(xValues) + "," +
-                makeRString(yValues) + "," +
-                hpd + "," +
-                N + ")");
-        contourList = x.asVector();
+//        REXP x = rEngine.eval("makeContour(" +
+//                makeRString(xValues) + "," +
+//                makeRString(yValues) + "," +
+//                hpd + "," +
+//                N + ")");
+//        contourList = x.asVector();
     }
 
     public int getNumberContours() {
-        if (contourList != null)
-            return contourList.size();
-        return 0;
+        throw new UnsupportedOperationException("R jnilib no longer supported");
+//        if (contourList != null)
+//            return contourList.size();
+//        return 0;
     }
 
 
 
 
     public double[][] getContour(int whichContour) {
+        throw new UnsupportedOperationException("R jnilib no longer supported");
 
-        if (contourList != null) {
-            double[][] result = new double[2][];
-            RVector oneContour = contourList.at(whichContour).asVector();
-            result[0] = oneContour.at(1).asDoubleArray();
-            result[1] = oneContour.at(2).asDoubleArray();
-            return result;
-        }
-        return null;
+//        if (contourList != null) {
+//            double[][] result = new double[2][];
+//            RVector oneContour = contourList.at(whichContour).asVector();
+//            result[0] = oneContour.at(1).asDoubleArray();
+//            result[1] = oneContour.at(2).asDoubleArray();
+//            return result;
+//        }
+//        return null;
     }
 
 
-    private static Rengine rEngine = null;
+//    private static Rengine rEngine = null;
     private int N;
 
 
-    private RVector contourList = null;
+//    private RVector contourList = null;
 
     private static final String[] rArgs = {"--no-save", "--max-vsize=1G"};
 
@@ -135,27 +141,27 @@ public class ContourWithR implements ContourMaker {
 
     static public boolean processWithR = false;
 
-    static {
-        try {
-            System.loadLibrary("jri");
-            processWithR = true;
-            System.err.println("JRI loaded. Will process using R contouring.");
-
-//        if (!Rengine.versionCheck()) {
-//            throw new RuntimeException("JRI library version mismatch");
+//    static {
+//        try {
+//            System.loadLibrary("jri");
+//            processWithR = true;
+//            System.err.println("JRI loaded. Will process using R contouring.");
+//
+////        if (!Rengine.versionCheck()) {
+////            throw new RuntimeException("JRI library version mismatch");
+////        }
+//
+//        rEngine = new Rengine(rArgs, false, null);
+//
+//        if (!rEngine.waitForR()) {
+//            throw new RuntimeException("Cannot load R");
 //        }
-
-        rEngine = new Rengine(rArgs, false, null);
-
-        if (!rEngine.waitForR()) {
-            throw new RuntimeException("Cannot load R");
-        }
-
-        for (String command : rBootCommands) {
-            rEngine.eval(command);
-        }
-        } catch (UnsatisfiedLinkError e) {
-            System.err.println("JRI not available. Will process using Java contouring.");
-        }
-    }
+//
+//        for (String command : rBootCommands) {
+//            rEngine.eval(command);
+//        }
+//        } catch (UnsatisfiedLinkError e) {
+//            System.err.println("JRI not available. Will process using Java contouring.");
+//        }
+//    }
 }

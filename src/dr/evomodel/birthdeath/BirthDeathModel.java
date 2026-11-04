@@ -1,0 +1,142 @@
+/*
+ * SpeciationModel.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.evomodel.birthdeath;
+
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.Units;
+import dr.evomodel.speciation.CalibrationPoints;
+import dr.evomodel.speciation.SpeciationModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+
+import java.util.Set;
+
+/**
+ * @author Alexei Drummond
+ * @author Andrew Rambaut
+ */
+public abstract class BirthDeathModel extends SpeciationModel implements Units {
+    /**
+     * Units in which population size is measured.
+     */
+    private Type units;
+
+    public BirthDeathModel(String name, Type units) {
+        super(name, units);
+        setUnits(units);
+    }
+
+    public abstract double calculateTreeLogLikelihood(Tree tree);
+
+    public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
+
+    public BirthDeathModelGradientProvider getProvider() {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    // Likelihood for the speciation model conditional on monophyly and calibration densities in
+    // 'calibration'.
+    //
+    // The likelihood enforces the monophyly, so there is no need to specify it again in the XML.
+    //
+    public double calculateTreeLogLikelihood(Tree tree, CalibrationPoints calibration) {
+        return Double.NEGATIVE_INFINITY;
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // no intermediates need to be recalculated...
+    }
+
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        // no intermediates need to be recalculated...
+    }
+
+    protected void storeState() {
+    } // no additional state needs storing
+
+    protected void restoreState() {
+    } // no additional state needs restoring
+
+    protected void acceptState() {
+    } // no additional state needs accepting
+
+    /**
+     * sets units of measurement.
+     *
+     * @param u units
+     */
+    public void setUnits(Type u) {
+        units = u;
+    }
+
+    /**
+     * returns units of measurement.
+     */
+    public Type getUnits() {
+        return units;
+    }
+
+    // TODO Probably should be somewhere else
+    public double processInterval(int model, double tYoung, double tOld, int nLineages) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public void updateLikelihoodModelValues(int model) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double processSampling(int model, double tOld) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double processCoalescence(int model, double tOld) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double[] getBreakPoints() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double processModelSegmentBreakPoint(int model, double intervalStart, double segmentIntervalEnd, int nLineages) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double processOrigin(int model, double rootAge) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public void updateModelValues() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public double logConditioningProbability(int model) {
+        throw new RuntimeException("Not implemented");
+    }
+}

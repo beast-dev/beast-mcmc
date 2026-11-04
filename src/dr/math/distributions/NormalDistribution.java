@@ -1,7 +1,8 @@
 /*
  * NormalDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
 
+import dr.inference.distribution.NormalStatisticsProvider;
+import dr.inference.model.GradientProvider;
 import dr.math.ErrorFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -33,9 +37,8 @@ import dr.math.UnivariateFunction;
  * normal distribution (pdf, cdf, quantile)
  *
  * @author Korbinian Strimmer
- * @version $Id: NormalDistribution.java,v 1.7 2005/05/24 20:26:01 rambaut Exp $
  */
-public class NormalDistribution implements Distribution, RandomGenerator {
+public class NormalDistribution implements Distribution, RandomGenerator, GradientProvider, NormalStatisticsProvider {
     //
     // Public stuff
     //
@@ -93,15 +96,15 @@ public class NormalDistribution implements Distribution, RandomGenerator {
     }
 
     private final UnivariateFunction pdfFunction = new UnivariateFunction() {
-        public final double evaluate(double x) {
+        public double evaluate(double x) {
             return pdf(x);
         }
 
-        public final double getLowerBound() {
+        public double getLowerBound() {
             return Double.NEGATIVE_INFINITY;
         }
 
-        public final double getUpperBound() {
+        public double getUpperBound() {
             return Double.POSITIVE_INFINITY;
         }
     };
@@ -138,6 +141,14 @@ public class NormalDistribution implements Distribution, RandomGenerator {
 
     public static double gradLogPdf(double x, double m, double sd) {
         return (m - x) / (sd * sd);
+    }
+
+    public static double gradLogPdfWrtPrecision(double x, double m, double sd) {
+        return 0.5 / (sd * sd) - 0.5 * (x - m) * (x - m); // TODO Check
+    }
+
+    public static double hessianLogPdf(double x, double m, double sd) {
+        return -1.0 / (sd * sd);
     }
 
     /**
@@ -504,5 +515,31 @@ public class NormalDistribution implements Distribution, RandomGenerator {
     public double logPdf(Object x) {
         double v = (Double) x;
         return logPdf(x);
+    }
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], getMean(), getSD());
+        }
+        return result;
+    }
+
+    //NormalStatisticsProviderInterface
+    @Override
+    public double getNormalMean(int dim) {
+        return getMean();
+    }
+
+    @Override
+    public double getNormalSD(int dim) {
+        return getSD();
     }
 }

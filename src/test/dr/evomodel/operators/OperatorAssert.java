@@ -1,3 +1,30 @@
+/*
+ * OperatorAssert.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 /**
  *
  */
@@ -10,13 +37,10 @@ import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.evomodel.tree.TreeHeightStatistic;
-import dr.evomodel.tree.TreeLengthStatistic;
-import dr.evomodel.tree.TreeLogger;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.*;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
@@ -96,7 +120,7 @@ public abstract class OperatorAssert extends TestCase {
     	MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions(chainLength);
 
-        TreeModel treeModel = new TreeModel("treeModel", tree);
+        DefaultTreeModel treeModel = new DefaultTreeModel("treeModel", tree);
         TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);
 
@@ -105,7 +129,7 @@ public abstract class OperatorAssert extends TestCase {
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, BirthDeathGernhard08Model.TreeType.UNSCALED,
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel(b, d, null, Gernhard08BirthDeathModel.TreeType.UNSCALED,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 
@@ -192,5 +216,5 @@ public abstract class OperatorAssert extends TestCase {
         }
     }
 
-    public abstract OperatorSchedule getOperatorSchedule(TreeModel treeModel);
+    public abstract OperatorSchedule getOperatorSchedule(DefaultTreeModel treeModel);
 }

@@ -1,7 +1,8 @@
 /*
  * BeastDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,17 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beast;
 
+import beagle.BeagleInfo;
+import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.gui.FileDrop;
 import dr.app.gui.components.WholeNumberField;
+import dr.app.util.OSType;
+import dr.util.OutputFileHelper;
 import jam.html.SimpleLinkListener;
 import jam.panels.OptionsPanel;
 
@@ -39,8 +45,14 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 
+/**
+ * @author Andrew Rambaut
+ * @author Guy Baele
+ */
 
 public class BeastDialog {
     private final JFrame frame;
@@ -49,7 +61,9 @@ public class BeastDialog {
 
     private final WholeNumberField seedText = new WholeNumberField((long) 1, Long.MAX_VALUE);
     private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
-    private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
+    private final JCheckBox outputDirectoryCheckBox = new JCheckBox("Write all output files to a folder:");
+    private final JTextField outputDirectoryNameText = new JTextField("not selected", 16);
+    private final JButton outputDirectoryButton = new JButton("Choose Folder...");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
     private final JComboBox beagleResourceCombo = new JComboBox(new Object[]{"CPU", "GPU"});
     private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions when possible");
@@ -59,6 +73,7 @@ public class BeastDialog {
     private final JComboBox threadsCombo = new JComboBox(new Object[]{"Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8});
 
     private File inputFile = null;
+    private File outputDirectory = null;
 
     public BeastDialog(final JFrame frame, final String titleString, final Icon icon) {
         this.frame = frame;
@@ -134,6 +149,163 @@ public class BeastDialog {
                       "with the same name.</html>");
         optionPanel.addComponent(overwriteCheckBox);
 
+        outputDirectoryCheckBox.setToolTipText(
+                "<html>By default, log, tree and checkpoint files are written to the<br>" +
+                        "folder containing the BEAST XML file (or to the folders named<br>" +
+                        "in the XML). Select this to write them all to a chosen folder<br>" +
+                        "instead (equivalent to the -output command line option).</html>");
+        optionPanel.addComponent(outputDirectoryCheckBox);
+
+        outputDirectoryButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                File directory = chooseDirectory(frame, "Select output folder...", outputDirectory);
+                if (directory != null) {
+                    setOutputDirectory(directory);
+                }
+            }
+        });
+        outputDirectoryNameText.setEditable(false);
+
+        JPanel outputDirectoryPanel = new JPanel(new BorderLayout(0, 0));
+        outputDirectoryPanel.add(outputDirectoryNameText, BorderLayout.CENTER);
+        outputDirectoryPanel.add(outputDirectoryButton, BorderLayout.EAST);
+        outputDirectoryNameText.setToolTipText(
+                "<html>Drag a folder here or use the button to select one<br>" +
+                        "from a file dialog box.</html>");
+        outputDirectoryButton.setToolTipText(
+                "<html>Drag a folder here or use the button to select one<br>" +
+                        "from a file dialog box.</html>");
+        final JLabel outputDirectoryLabel = optionPanel.addComponentWithLabel("Output folder: ", outputDirectoryPanel);
+
+        new FileDrop(null, outputDirectoryNameText, focusBorder, new FileDrop.Listener() {
+            public void filesDropped(java.io.File[] files) {
+                File dropped = files[0];
+                if (!dropped.isDirectory()) {
+                    // a file was dropped: use the folder it is in
+                    dropped = dropped.getAbsoluteFile().getParentFile();
+                }
+                if (dropped != null) {
+                    outputDirectoryCheckBox.setSelected(true);
+                    setOutputDirectory(dropped);
+                }
+            }
+        });
+
+        outputDirectoryCheckBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                boolean selected = outputDirectoryCheckBox.isSelected();
+                outputDirectoryLabel.setEnabled(selected);
+                outputDirectoryNameText.setEnabled(selected);
+                outputDirectoryButton.setEnabled(selected);
+            }
+        });
+        // the first time the option is turned on, ask for the folder straight away; once
+        // a folder has been chosen the option can be turned on and off without changing it
+        outputDirectoryCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                if (outputDirectoryCheckBox.isSelected() && outputDirectory == null) {
+                    File directory = chooseDirectory(frame, "Select output folder...", null);
+                    if (directory != null) {
+                        setOutputDirectory(directory);
+                    } else {
+                        // cancelled without choosing a folder so turn the option off again
+                        outputDirectoryCheckBox.setSelected(false);
+                    }
+                }
+            }
+        });
+        outputDirectoryLabel.setEnabled(false);
+        outputDirectoryNameText.setEnabled(false);
+        outputDirectoryButton.setEnabled(false);
+
+        optionPanel.addSeparator();
+
+        final JButton chkptButton = new JButton("Custom settings");
+        chkptButton.setToolTipText("<html>By default, a checkpoint file will be written according to the<br>" +
+                "specifications in your XML file. No previous checkpointed file<br>" +
+                "will be loaded and no custom file name can be provided.</html>");
+
+        chkptButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JDialog dialog = new JDialog(frame, "Checkpointing settings");
+                dialog.setLocationRelativeTo(chkptButton);
+                dialog.setModal(true);
+                dialog.setAlwaysOnTop(true);
+
+                OptionsPanel chkptPanel = new OptionsPanel(0, 3);
+                //chkptPanel.setLayout(new BorderLayout());
+                chkptPanel.setOpaque(false);
+                JCheckBox overruleXML = new JCheckBox();
+                overruleXML.setToolTipText("This will ignore the checkpointing settings in your XML file.");
+                overruleXML.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if (overruleXML.isSelected()) {
+                            System.setProperty("checkpointOverrule", Boolean.TRUE.toString());
+                        } else {
+                            System.setProperty("checkpointOverrule", Boolean.FALSE.toString());
+                        }
+                    }
+                });
+                chkptPanel.addComponentWithLabel("Overrule XML checkpointing settings", overruleXML);
+
+                chkptPanel.addSeparator();
+
+                JTextField checkpointInput = new JTextField(15);
+                checkpointInput.addKeyListener(new java.awt.event.KeyListener() {
+                    public void keyTyped(KeyEvent e) {
+                    }
+
+                    public void keyPressed(KeyEvent e) {
+                    }
+
+                    public void keyReleased(KeyEvent e) {
+                        System.setProperty(BeastCheckpointer.LOAD_STATE_FILE, checkpointInput.getText());
+                    }
+                });
+
+                JTextField checkpointOutput = new JTextField(15);
+                checkpointOutput.addKeyListener(new java.awt.event.KeyListener() {
+                    public void keyTyped(KeyEvent e) {
+                    }
+
+                    public void keyPressed(KeyEvent e) {
+                    }
+
+                    public void keyReleased(KeyEvent e) {
+                        System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, checkpointOutput.getText());
+                    }
+                });
+
+                WholeNumberField checkpointEvery = new WholeNumberField(1, Integer.MAX_VALUE);
+                checkpointEvery.addKeyListener(new java.awt.event.KeyListener() {
+                    public void keyTyped(KeyEvent e) {
+                    }
+
+                    public void keyPressed(KeyEvent e) {
+                    }
+
+                    public void keyReleased(KeyEvent e) {
+                        System.setProperty(BeastCheckpointer.SAVE_STATE_EVERY, checkpointEvery.getValue() + "");
+                    }
+                });
+                checkpointEvery.setValue(1000000);
+                checkpointEvery.setColumns(10);
+
+                chkptPanel.addComponentWithLabel("Load previous checkpoint file: ", checkpointInput);
+                chkptPanel.addComponentWithLabel("Save new checkpoint file (will overwrite): ", checkpointOutput);
+                chkptPanel.addComponentWithLabel("Save checkpoint every: ", checkpointEvery);
+
+                dialog.add(chkptPanel);
+                dialog.pack();
+                dialog.setVisible(true);
+            }
+        });
+
+        JPanel chkptPanel = new JPanel(new BorderLayout(0, 0));
+        chkptPanel.add(chkptButton, BorderLayout.CENTER);
+        optionPanel.addComponentWithLabel("Checkpointing:", chkptPanel);
+
         optionPanel.addSeparator();
 
         seedText.setColumns(12);
@@ -155,53 +327,43 @@ public class BeastDialog {
 
         optionPanel.addSeparator();
 
-        optionPanel.addSpanningComponent(beagleCheckBox);
-        beagleCheckBox.setSelected(true);
+        // Only offer the BEAGLE options if the library can be loaded; otherwise explain
+        // that it is needed and where to get it.
+        final boolean beagleInstalled = BeagleInfo.getVersionNumbers().length > 0;
 
-        final OptionsPanel optionPanel1 = new OptionsPanel(0, 6);
-//        optionPanel1.setBorder(BorderFactory.createEmptyBorder());
-        optionPanel1.setBorder(new TitledBorder(""));
+        if (beagleInstalled) {
+            final JLabel beagleLabel = new JLabel("BEAGLE library v" + BeagleInfo.getVersion() + " options:");
+            optionPanel.addSpanningComponent(beagleLabel);
 
-        OptionsPanel optionPanel2 = new OptionsPanel(0, 3);
-        optionPanel2.setBorder(BorderFactory.createEmptyBorder());
-        final JLabel label1 = optionPanel2.addComponentWithLabel("Prefer use of: ", beagleResourceCombo);
-        optionPanel2.addComponent(beagleSSECheckBox);
-        beagleSSECheckBox.setSelected(true);
-        final JLabel label2 = optionPanel2.addComponentWithLabel("Prefer precision: ", beaglePrecisionCombo);
-        final JLabel label3 = optionPanel2.addComponentWithLabel("Rescaling scheme: ", beagleScalingCombo);
-        optionPanel2.addComponent(beagleInfoCheckBox);
-        optionPanel2.setBorder(BorderFactory.createEmptyBorder());
+            final OptionsPanel optionPanel1 = new OptionsPanel(0, 6);
+            optionPanel1.setBorder(BorderFactory.createEmptyBorder());
 
-        optionPanel1.addComponent(optionPanel2);
+            OptionsPanel optionPanel2 = new OptionsPanel(0, 3);
+            optionPanel2.setBorder(BorderFactory.createEmptyBorder());
+            optionPanel2.addComponentWithLabel("Prefer use of: ", beagleResourceCombo);
+            optionPanel2.addComponent(beagleSSECheckBox);
+            beagleSSECheckBox.setSelected(true);
+            optionPanel2.addComponentWithLabel("Prefer precision: ", beaglePrecisionCombo);
+            optionPanel2.addComponentWithLabel("Rescaling scheme: ", beagleScalingCombo);
+            optionPanel2.addComponent(beagleInfoCheckBox);
 
-        final JEditorPane beagleInfo = new JEditorPane("text/html",
-                "<html><div style=\"font-family:'helvetica neue light',helvetica,sans-serif;font-size:12;\"><p>BEAGLE is a high-performance phylogenetic library that can make use of<br>" +
-                        "additional computational resources such as graphics boards. It must be<br>" +
-                        "downloaded and installed independently of BEAST:</p>" +
-                        "<pre><a href=\"http://github.com/beagle-dev/beagle-lib/\">http://github.com/beagle-dev/beagle-lib/</a></pre></div></html>");
-        beagleInfo.setOpaque(false);
-        beagleInfo.setEditable(false);
-        beagleInfo.addHyperlinkListener(new SimpleLinkListener());
-        optionPanel1.addComponent(beagleInfo);
-        optionPanel1.setBorder(BorderFactory.createEmptyBorder());
-        optionPanel.addSpanningComponent(optionPanel1);
+            optionPanel1.addComponent(optionPanel2);
+            optionPanel.addSpanningComponent(optionPanel1);
+        } else {
+            final JEditorPane beagleInfo = new JEditorPane("text/html",
+                    "<html><div style=\"font-family:'helvetica neue light',helvetica,sans-serif;font-size:12;\">" +
+                            "<p><b>The BEAGLE library was not found.</b></p>" +
+                            "<p>BEAGLE is a high-performance phylogenetic library that is required to<br>" +
+                            "run BEAST and can make use of additional computational resources such<br>" +
+                            "as graphics boards. It must be downloaded and installed independently<br>" +
+                            "of BEAST:</p>" +
+                            "<pre><a href=\"http://github.com/beagle-dev/beagle-lib/\">http://github.com/beagle-dev/beagle-lib/</a></pre></div></html>");
+            beagleInfo.setOpaque(false);
+            beagleInfo.setEditable(false);
+            beagleInfo.addHyperlinkListener(new SimpleLinkListener());
+            optionPanel.addSpanningComponent(beagleInfo);
+        }
 
-        beagleInfoCheckBox.setEnabled(false);
-        beagleCheckBox.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                beagleInfo.setEnabled(beagleCheckBox.isSelected());
-                beagleInfoCheckBox.setEnabled(beagleCheckBox.isSelected());
-                label1.setEnabled(beagleCheckBox.isSelected());
-                beagleResourceCombo.setEnabled(beagleCheckBox.isSelected());
-                beagleSSECheckBox.setEnabled(beagleCheckBox.isSelected());
-                label2.setEnabled(beagleCheckBox.isSelected());
-                beaglePrecisionCombo.setEnabled(beagleCheckBox.isSelected());
-                label3.setEnabled(beagleCheckBox.isSelected());
-                beagleScalingCombo.setEnabled(beagleCheckBox.isSelected());
-            }
-        });
-
-        beagleCheckBox.setSelected(false);
         beagleResourceCombo.setSelectedItem("CPU");
     }
 
@@ -219,9 +381,79 @@ public class BeastDialog {
         //dialog.setResizable(true);
         dialog.pack();
 
-        dialog.setVisible(true);
+        while (true) {
+            optionPane.setValue(JOptionPane.UNINITIALIZED_VALUE);
+            dialog.setVisible(true);
 
-        return (optionPane.getValue() != null ? optionPane.getValue().equals("Run") : false);
+            if (optionPane.getValue() == null || !optionPane.getValue().equals("Run")) {
+                // Quit was pressed or the window was closed
+                dialog.dispose();
+                return false;
+            }
+
+            String problem = checkSettings();
+            if (problem == null) {
+                dialog.dispose();
+                return true;
+            }
+
+            // show the problem and return to the settings dialog
+            JOptionPane.showMessageDialog(dialog, problem, "BEAST", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * @return a description of what is wrong with the settings, or null if BEAST can be run with them
+     */
+    private String checkSettings() {
+        if (inputFile == null && !beagleInfoCheckBox.isSelected()) {
+            return "No BEAST XML file has been selected.";
+        }
+        if (!outputDirectoryCheckBox.isSelected()) {
+            return null;
+        }
+        if (outputDirectory == null) {
+            return "No output folder has been selected.\nChoose a folder or deselect the option to write output files to a folder.";
+        }
+        try {
+            OutputFileHelper.validateOutputDirectory(outputDirectory);
+        } catch (IOException ioe) {
+            return ioe.getMessage();
+        }
+        return null;
+    }
+
+    /**
+     * Ask the user to pick a folder, using the native folder chooser on macOS.
+     *
+     * @return the chosen folder or null if the dialog was cancelled
+     */
+    private static File chooseDirectory(JFrame frame, String title, File current) {
+        if (OSType.isMac()) {
+            System.setProperty("apple.awt.fileDialogForDirectories", "true");
+            try {
+                FileDialog dialog = new FileDialog(frame, title, FileDialog.LOAD);
+                if (current != null) {
+                    dialog.setDirectory(current.getPath());
+                }
+                dialog.setVisible(true);
+                if (dialog.getFile() == null) {
+                    return null;
+                }
+                return new File(dialog.getDirectory(), dialog.getFile());
+            } finally {
+                System.setProperty("apple.awt.fileDialogForDirectories", "false");
+            }
+        }
+
+        JFileChooser chooser = new JFileChooser(current);
+        chooser.setDialogTitle(title);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        if (chooser.showOpenDialog(frame) != JFileChooser.APPROVE_OPTION) {
+            return null;
+        }
+        return chooser.getSelectedFile();
     }
 
     public long getSeed() {
@@ -240,14 +472,6 @@ public class BeastDialog {
         overwriteCheckBox.setSelected(allowOverwrite);
     }
 
-    public boolean useBeagle() {
-        return beagleCheckBox.isSelected();
-    }
-
-    public void setUseBeagle(boolean useBeagle) {
-         beagleCheckBox.setSelected(useBeagle);
-    }
-
     public boolean preferBeagleGPU() {
         return beagleResourceCombo.getSelectedItem().equals("GPU");
     }
@@ -259,7 +483,6 @@ public class BeastDialog {
     public void setPreferBeagleGPU() {
         beagleResourceCombo.setSelectedItem("GPU");
     }
-
 
     public boolean preferBeagleSSE() {
         return beagleSSECheckBox.isSelected();
@@ -303,5 +526,32 @@ public class BeastDialog {
 
     public File getInputFile() {
         return inputFile;
+    }
+
+    /**
+     * @return the folder that all output files should be written to, or null if the
+     * default locations should be used
+     */
+    public File getOutputDirectory() {
+        if (!outputDirectoryCheckBox.isSelected()) {
+            return null;
+        }
+        return outputDirectory;
+    }
+
+    /**
+     * Pre-select an output folder (for example one given with the -output command line option)
+     * and turn the option on.
+     */
+    public void setOutputDirectory(File directory) {
+        outputDirectory = (directory != null ? directory.getAbsoluteFile() : null);
+        if (outputDirectory != null) {
+            outputDirectoryNameText.setText(outputDirectory.getPath());
+            outputDirectoryNameText.setCaretPosition(outputDirectoryNameText.getText().length());
+            outputDirectoryNameText.setToolTipText(outputDirectory.getPath());
+            outputDirectoryCheckBox.setSelected(true);
+        } else {
+            outputDirectoryNameText.setText("not selected");
+        }
     }
 }

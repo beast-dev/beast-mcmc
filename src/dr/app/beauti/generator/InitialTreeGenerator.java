@@ -1,7 +1,8 @@
 /*
  * InitialTreeGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -36,8 +38,8 @@ import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
-import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.evoxml.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -84,7 +86,7 @@ public class InitialTreeGenerator extends Generator {
                         });
                 writer.writeOpenTag(RescaledTreeParser.RESCALED_TREE, attributes);
                 writeSourceTree(model, writer);
-                if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) {
+                if (options.taxonSets != null && options.taxonSets.size() > 0) {
                     for (Taxa taxa : options.taxonSets) {
                         Double height = options.taxonSetsHeights.get(taxa);
                         if (height != null) {
@@ -108,17 +110,10 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 String simulatorId = prefix + STARTING_TREE;
 
-                String taxaId = TaxaParser.TAXA;
-                AbstractPartitionData partition = options.getDataPartitions(model).get(0);
-                if (!options.hasIdenticalTaxa()) {
-                    taxaId = partition.getPartitionTreeModel().getPrefix() + TaxaParser.TAXA;
-                }
-                if (partition instanceof PartitionPattern && ((PartitionPattern) partition).getPatterns().hasMask()) {
-                    taxaId = partition.getPrefix() + TaxaParser.TAXA;
-                }
+                String taxaId = model.getTaxaId();
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
-                if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
+                if (options.taxonSets != null && options.taxonSets.size() > 0) {
                     writeSubTree(simulatorId, taxaId, options.taxonList, model, writer);
                 } else {
                     writer.writeOpenTag(
@@ -134,6 +129,7 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
                 }
                 break;
+
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
 
@@ -144,11 +140,7 @@ public class InitialTreeGenerator extends Generator {
 
         switch (model.getStartingTreeType()) {
             case USER:
-                if (model.isNewick()) {
-                    writeNewickTree(model.getUserStartingTree(), writer);
-                } else {
-                    writeSimpleTree(model.getUserStartingTree(), writer);
-                }
+                writeNewickTree(model.getUserStartingTree(), writer);
                 break;
 
             case UPGMA:
@@ -162,8 +154,8 @@ public class InitialTreeGenerator extends Generator {
                         }
                 );
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
-                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
-                        + "which may be 1 of many aligments using this tree.");
+                writer.writeComment("To generate the UPGMA starting tree, only the first alignment is used, "
+                        + "which may be one of several alignments using this tree.");
                 writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
@@ -184,7 +176,7 @@ public class InitialTreeGenerator extends Generator {
 
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
 
-        if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
+        if (options.taxonSets != null && options.taxonSets.size() > 0) {
             // *BEAST case is in STARBEASTGenerator.writeStartingTreeForCalibration(XMLWriter writer)
             writer.writeOpenTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
@@ -215,8 +207,9 @@ public class InitialTreeGenerator extends Generator {
 
     private void writeSubTree(String treeId, String taxaId, Taxa taxa, PartitionTreeModel model, XMLWriter writer) {
 
+        // a starting height for the subtree; zero (the Taxon Sets panel's default) means none
         Double height = options.taxonSetsHeights.get(taxa);
-        if (height == null) {
+        if (height == null || height <= 0.0) {
             height = Double.NaN;
         }
 
@@ -252,12 +245,14 @@ public class InitialTreeGenerator extends Generator {
         List<Taxa> subsets = new ArrayList<Taxa>();
 //        Taxa remainingTaxa = new Taxa(taxa);
 
+        // Only taxon sets marked as monophyletic are simulated as nested subtrees: sets that are
+        // not constrained to be monophyletic may overlap each other (or the monophyletic ones) and
+        // the simulator cannot build a tree containing incompatible clades.
         for (Taxa taxa2 : options.taxonSets) {
             boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
-            boolean isMono = options.taxonSetsMono.get(taxa2);
-            boolean hasHeight = options.taxonSetsHeights.get(taxa2) != null;
+            boolean isMono = Boolean.TRUE.equals(options.taxonSetsMono.get(taxa2));
             boolean isSubset = taxa.containsAll(taxa2);
-            if (sameTree && (isMono || hasHeight) && taxa2 != taxa && isSubset) {
+            if (sameTree && isMono && taxa2 != taxa && isSubset) {
                 subsets.add(taxa2);
             }
         }
@@ -293,7 +288,7 @@ public class InitialTreeGenerator extends Generator {
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
         PartitionTreePrior prior = model.getPartitionTreePrior();
 
-        if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.useStarBEAST) {
+        if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT) {
             writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
         } else if (prior.getNodeHeightPrior() == TreePriorType.EXPONENTIAL) {
             writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
@@ -311,27 +306,13 @@ public class InitialTreeGenerator extends Generator {
                 new Attribute[]{
 //                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
-                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.useTipDates)
                 }
         );
         writer.writeText(TreeUtils.newick(tree));
         writer.writeCloseTag(NewickParser.NEWICK);
     }
 
-//    private void writeNewickNode(Tree tree, NodeRef node, XMLWriter writer) {
-//        if (tree.getChildCount(node) > 0)
-//            writer.writeText("(");
-//        if (tree.getChildCount(node) == 0)
-//            writer.writeText(tree.getNodeTaxon(node).getId() + " : " + tree.getBranchLength(node));
-//
-//        for (int i = 0; i < tree.getChildCount(node); i++) {
-//            if (i > 0) writer.writeText(", ");
-//            writeNewickNode(tree, tree.getChild(node, i), writer);
-//
-//        }
-//        if (tree.getChildCount(node) > 0)
-//            writer.writeText(")");
-//    }
 
     /**
      * Generate XML for the user tree
@@ -348,7 +329,7 @@ public class InitialTreeGenerator extends Generator {
 //                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
                         new Attribute.Default<Object>(DateParser.UNITS, options.units.toString()),
-                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
+                        new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.useTipDates)
                 }
         );
         writeSimpleNode(tree, tree.getRoot(), writer);

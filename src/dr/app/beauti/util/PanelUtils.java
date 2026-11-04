@@ -1,7 +1,8 @@
 /*
  * PanelUtils.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.util;
@@ -30,7 +32,6 @@ import java.awt.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class PanelUtils {
 	public static JPanel createAddRemoveButtonPanel(Action addAction,
@@ -78,8 +79,10 @@ public class PanelUtils {
 //			comp.putClientProperty("JButton.buttonType", "roundRect");
 		}
 		if (comp instanceof JComboBox) {
-			comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
-			// comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+			// (left as Aqua's pop-up style, the native control for choosing a value; the pull-down style,
+			// JComboBox.isPopDown, is for menus of actions)
+			ComboBoxRenderer renderer= new ComboBoxRenderer();
+			((JComboBox)comp).setRenderer(renderer);
 		}
         if (comp instanceof JTextArea) {
             ((JTextArea) comp).setEditable(false);
@@ -101,5 +104,34 @@ public class PanelUtils {
 		}
 		return result;
 	}// END: getActiveFrame
+
+	/**
+	 * Pads the items of a combo box, and (like the default renderer) paints the selected item of the
+	 * popup list in the list's selection colours so that it is highlighted under the mouse.
+	 */
+	static class ComboBoxRenderer extends JLabel implements ListCellRenderer<Object> {
+		ComboBoxRenderer() {
+			setOpaque(true);
+		}
+
+		public Component getListCellRendererComponent(JList<? extends Object> list,
+													  Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			if (value instanceof JSeparator){
+				return (Component)value;
+			}else{
+				setText("  " + value + " ");
+			}
+			if (isSelected) {
+				setBackground(list.getSelectionBackground());
+				setForeground(list.getSelectionForeground());
+			} else {
+				setBackground(list.getBackground());
+				setForeground(list.getForeground());
+			}
+			setEnabled(list.isEnabled());
+			setFont(list.getFont());
+			return this;
+		}
+	}
 
 }

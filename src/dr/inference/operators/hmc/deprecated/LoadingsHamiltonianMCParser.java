@@ -1,7 +1,8 @@
 /*
  * LoadingsHamiltonianMCParser.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,15 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators.hmc.deprecated;
 
-import dr.inference.operators.hmc.deprecated.LoadingsHamiltonianMC;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
-import dr.inference.operators.CoercionMode;
 import dr.xml.*;
 
 /**
@@ -49,7 +50,7 @@ public class LoadingsHamiltonianMCParser extends AbstractXMLObjectParser {
         LatentFactorModel lfm=(LatentFactorModel) xo.getChild(LatentFactorModel.class);
         MomentDistributionModel prior=(MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
         double weight=xo.getDoubleAttribute(WEIGHT);
-        CoercionMode mode=CoercionMode.parseMode(xo);
+        AdaptationMode mode= AdaptationMode.parseMode(xo);
         int nSteps=xo.getIntegerAttribute(N_STEPS);
         double stepSize=xo.getDoubleAttribute(STEP_SIZE);
         double momentumSd= xo.getDoubleAttribute(MOMENTUM_SD);

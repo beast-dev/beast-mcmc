@@ -1,3 +1,30 @@
+/*
+ * TreeUtils.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evolution.tree;
 
 import dr.evolution.util.Taxon;
@@ -14,6 +41,38 @@ import java.util.*;
 public class TreeUtils {
 
     /**
+     * Matches a taxon name that must be quoted when written to a Newick or NEXUS file:
+     * one containing whitespace or any of the characters . ( ) [ ] : ; , = ' "
+     */
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.\\(\\)\\[\\]:;,=\"\'].*";
+
+    private static final String SPECIAL_CHARACTERS = ".()[]:;,=\'\"";
+
+    /**
+     * Returns the taxon name as it should be written in a Newick or NEXUS file: unchanged
+     * if it contains only safe characters, otherwise wrapped in double quotes. Double
+     * quotes are used as the delimiter so that names containing apostrophes can be written.
+     *
+     * @param name the taxon name
+     * @return the name, quoted if necessary
+     * @throws IllegalArgumentException if the name contains a double quote character,
+     *                                  which cannot be represented
+     */
+    public static String quoteTaxonName(String name) {
+        boolean needsQuotes = false;
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '"') {
+                throw new IllegalArgumentException("Taxon name contains a double quote (\") and cannot be written: " + name);
+            }
+            if (Character.isWhitespace(c) || SPECIAL_CHARACTERS.indexOf(c) >= 0) {
+                needsQuotes = true;
+            }
+        }
+        return needsQuotes ? "\"" + name + "\"" : name;
+    }
+
+    /**
      * Count number of leaves in subtree whose root is node.
      *
      * @param tree the tree
@@ -22,14 +81,21 @@ public class TreeUtils {
      */
     public static int getLeafCount(Tree tree, NodeRef node) {
 
-        int childCount = tree.getChildCount(node);
-        if (childCount == 0) return 1;
+        if (tree.isExternal(node)) return 1;
 
         int leafCount = 0;
-        for (int i = 0; i < childCount; i++) {
+        for (int i = 0; i < tree.getChildCount(node); i++) {
             leafCount += getLeafCount(tree, tree.getChild(node, i));
         }
         return leafCount;
+    }
+
+    public static double getTreeLength(Tree tree) {
+        double length = 0;
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            length += tree.getBranchLength(tree.getNode(i));
+        }
+        return length;
     }
 
     public static double getTreeLength(Tree tree, NodeRef node) {
@@ -81,6 +147,20 @@ public class TreeUtils {
         }
 
         return 0;
+    }
+
+    /**
+     * Get the length of the path between node1 and node2.
+     * @param tree
+     * @param node1
+     * @param node2
+     * @return
+     */
+    public static double getPathLength(Tree tree, NodeRef node1, NodeRef node2) {
+
+        NodeRef mrca = getCommonAncestorNode(tree, node1, node2);
+
+        return (2 * tree.getNodeHeight(mrca)) - tree.getNodeHeight(node1) - tree.getNodeHeight(node2);
     }
 
     public static double getMinNodeHeight(Tree tree, NodeRef node) {
@@ -241,6 +321,41 @@ public class TreeUtils {
             }
         }
     }
+
+    /**
+     * Gets the most recent common ancestor (MRCA) node for a pair of nodes. One
+     * node could be the ancestor of the other.
+     *
+     * @param tree    the Tree
+     * @param node1   a node
+     * @param node2   a second node
+     * @return        the NodeRef of the MRCA
+     */
+    public static NodeRef getCommonAncestorNode(Tree tree, NodeRef node1, NodeRef node2) {
+
+        // get set of ancestors going back to the root for node1
+        Set<NodeRef> ancestors = new HashSet<NodeRef>();
+        NodeRef node = node1;
+        while (node != null) {
+            ancestors.add(node);
+            node = tree.getParent(node);
+        }
+
+        node = node2;
+        NodeRef mrca = null;
+
+        // walk back from node2 looking form mrca with node1
+        while (node != null && mrca == null) {
+            if (ancestors.contains(node)) {
+                mrca = node;
+            }
+
+            node = tree.getParent(node);
+        }
+
+        return mrca;
+    }
+
 
     /**
      * Gets the most recent common ancestor (MRCA) node of a set of leaf nodes.
@@ -714,7 +829,7 @@ public class TreeUtils {
             idx += 1;
             postOrderList[idx] = child.getNumber();
             if( ! tree.isExternal(child) ) {
-              idx = preOrderTraversalList(tree, idx, postOrderList);
+                idx = preOrderTraversalList(tree, idx, postOrderList);
             }
         }
         return idx;
@@ -880,14 +995,7 @@ public class TreeUtils {
                     buffer.append((k + 1));
                 }
             } else {
-                String label = tree.getTaxonId(node.getNumber());
-                if (label.contains(" ") || label.contains(":") || label.contains(";") || label.contains(",")) {
-                    buffer.append("\"");
-                    buffer.append(label);
-                    buffer.append("\"");
-                } else {
-                    buffer.append(label);
-                }
+                buffer.append(quoteTaxonName(tree.getTaxonId(node.getNumber())));
             }
         } else {
             buffer.append("(");

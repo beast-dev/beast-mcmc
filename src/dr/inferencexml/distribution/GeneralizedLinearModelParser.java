@@ -1,7 +1,8 @@
 /*
  * GeneralizedLinearModelParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.distribution;
@@ -121,7 +123,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 //        System.err.println("START 2");
 
         boolean checkIdentifiability = xo.getAttribute(CHECK_IDENTIFIABILITY, true);
-        if (checkIdentifiability) {
+        if (glm.getNumberOfFixedEffects() > 0 && checkIdentifiability) {
             if (!glm.getAllIndependentVariablesIdentifiable()) {
                 throw new XMLParseException("All design matrix predictors are not identifiable in "+  xo.getId());
             }
@@ -177,6 +179,9 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 //                System.err.println(new Matrix(designMatrix.getParameterAsMatrix()));
 //                System.exit(-1);
 
+                setupDimensionNames(independentParam, designMatrix);
+                setupDimensionNames(indicator, designMatrix);
+
                 glm.addIndependentParameter(independentParam, designMatrix, indicator);
 //                System.err.println("C");
             }
@@ -184,6 +189,49 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     }
 
     private boolean checkFullRankOfMatrix;
+
+    /**
+     * Names each dimension of a coefficient (or indicator) parameter after the corresponding
+     * column of the design matrix so that, say, HZ.coefficients gets logged as
+     * HZ.coefficients.distances rather than HZ.coefficients1.
+     */
+    private void setupDimensionNames(Parameter parameter, DesignMatrix designMatrix) {
+        if (parameter == null || parameter.getDimension() != designMatrix.getColumnDimension()) {
+            return;
+        }
+
+        String prefix = parameter.getParameterName();
+        String[] names = new String[designMatrix.getColumnDimension()];
+
+        for (int col = 0; col < names.length; ++col) {
+            String columnName = designMatrix.getParameter(col).getId();
+            if (columnName == null || columnName.length() == 0) {
+                // no id on this column so nothing better than the index to use
+                return;
+            }
+            names[col] = (prefix == null ? "" : prefix + ".") + trimSharedPrefix(columnName, prefix);
+        }
+
+        parameter.setDimensionNames(names);
+    }
+
+    /**
+     * Removes any leading, dot-delimited prefix that the design matrix column shares with the
+     * parameter (typically the trait name) to avoid names like HZ.coefficients.HZ.distances.
+     */
+    private static String trimSharedPrefix(String columnName, String prefix) {
+        if (prefix == null) {
+            return columnName;
+        }
+        int lastDot = prefix.lastIndexOf('.');
+        if (lastDot > 0) {
+            String sharedPrefix = prefix.substring(0, lastDot + 1);
+            if (columnName.startsWith(sharedPrefix) && columnName.length() > sharedPrefix.length()) {
+                return columnName.substring(sharedPrefix.length());
+            }
+        }
+        return columnName;
+    }
 
     private void checkFullRank(DesignMatrix designMatrix) throws XMLParseException {
         int fullRank = designMatrix.getColumnDimension();
@@ -262,7 +310,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                                     new XMLSyntaxRule[]{
                                             new ElementRule(Parameter.class)
                                     }, true),
-                    }, 1, 3),
+                    }, 0, 10),
             new ElementRule(RANDOM_EFFECTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, 0, 3),
 //				new ElementRule(BASIS_MATRIX,

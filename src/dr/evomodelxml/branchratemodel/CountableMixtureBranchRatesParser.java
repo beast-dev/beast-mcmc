@@ -1,7 +1,8 @@
 /*
  * CountableMixtureBranchRatesParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
 import dr.evomodel.branchratemodel.CountableMixtureBranchRates;
@@ -39,6 +39,8 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+import static dr.evomodelxml.branchratemodel.BranchCategoriesParser.parseCladeCategories;
 
 /**
  */
@@ -52,6 +54,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
     public static final String RANDOM_EFFECTS = "randomEffects";
     public static final String FIXED_EFFECTS = "fixedEffects";
     public static final String IN_LOG_SPACE = "inLogSpace";
+    public static final String TIME_COEFFICIENT = "branchTimeEffect";
 
     public String getParserName() {
         return COUNTABLE_CLOCK_BRANCH_RATES;
@@ -72,6 +75,12 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
         }
 
+        Parameter timeCoefficient;
+        if (xo.hasChildNamed(TIME_COEFFICIENT)){
+            timeCoefficient = (Parameter) xo.getElementFirstChild(TIME_COEFFICIENT);
+        } else {
+            timeCoefficient = null;
+        }
 
         Parameter allocationParameter = (Parameter) xo.getElementFirstChild(ALLOCATION);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -93,34 +102,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
         if (!xo.getAttribute(RANDOMIZE, true)) {
             CountableBranchCategoryProvider.CladeBranchCategoryModel cm = new
                     CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, allocationParameter);
-            for (int i = 0; i < xo.getChildCount(); ++i) {
-                if (xo.getChild(i) instanceof XMLObject) {
-                    XMLObject xoc = (XMLObject) xo.getChild(i);
-                    if (xoc.getName().equals(LocalClockModelParser.CLADE)) {
-                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
-
-                        boolean includeStem = xoc.getAttribute(LocalClockModelParser.INCLUDE_STEM, false);
-                        boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
-                        int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
-                        try {
-                            cm.setClade(taxonList, rateCategory, includeStem, excludeClade, false);
-                        } catch (TreeUtils.MissingTaxonException e) {
-                            throw new XMLParseException("Unable to find taxon for clade in countable mixture model: " + e.getMessage());
-                        }
-                    }  else if (xoc.getName().equals(LocalClockModelParser.TRUNK)) {
-                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
-
-                        boolean includeStem = xoc.getAttribute(LocalClockModelParser.INCLUDE_STEM, false);
-                        boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
-                        int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
-                        try {
-                            cm.setClade(taxonList, rateCategory, includeStem, excludeClade, true);
-                        } catch (TreeUtils.MissingTaxonException e) {
-                            throw new XMLParseException("Unable to find taxon for trunk in countable mixture model: " + e.getMessage());
-                        }
-                    }
-                }
-            }
+            parseCladeCategories(xo, cm);
             cladeModel = cm;
         } else {
             CountableBranchCategoryProvider.IndependentBranchCategoryModel cm = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, allocationParameter);
@@ -131,7 +113,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
         if (fixedEffects != null) {
             return new CountableModelMixtureBranchRates(cladeModel, treeModel, fixedEffects, randomEffects, inLogSpace);
         } else {
-            return new CountableMixtureBranchRates(cladeModel, treeModel, ratesParameter, randomEffects, inLogSpace);
+            return new CountableMixtureBranchRates(cladeModel, treeModel, ratesParameter, timeCoefficient, randomEffects, inLogSpace);
         }
     }
 
@@ -163,6 +145,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
                             "Fixed effects", false)
             ),
             new ElementRule(ALLOCATION, Parameter.class, "Allocation parameter", false),
+            new ElementRule(TIME_COEFFICIENT, Parameter.class, "The coefficient for the branch time-dependent rate function", true),
             new ElementRule(RANDOM_EFFECTS,
                     new XMLSyntaxRule[] {
                             new ElementRule(AbstractBranchRateModel.class, 0, Integer.MAX_VALUE),

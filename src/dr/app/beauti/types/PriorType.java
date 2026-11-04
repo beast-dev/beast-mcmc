@@ -1,7 +1,8 @@
 /*
  * PriorType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.types;
 
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionOptions;
 import dr.app.beauti.util.NumberUtil;
+import dr.evolution.datatype.DataType;
 import dr.math.distributions.*;
 
 /**
@@ -52,8 +56,10 @@ public enum PriorType {
     ONE_OVER_X_PRIOR("1/x", true, true, false),
     DIRICHLET_PRIOR("Dirichlet", false, false, false),
     CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
+    HIERARCHICAL_EXPONENTIAL_PRIOR("Exponential with estimated mean", true, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
+    EXPONENTIAL_HPM_PRIOR("Exponential HPM", true, false, false),
     LINKED_PARAMETER("Linked Parameter", false, false, false),
     POISSON_PRIOR("Poisson", false, false, false);
 
@@ -113,11 +119,15 @@ public enum PriorType {
                 break;
             case CTMC_RATE_REFERENCE_PRIOR:
                 break;
+            case HIERARCHICAL_EXPONENTIAL_PRIOR:
+                break;
             case LINKED_PARAMETER:
                 break;
             case NORMAL_HPM_PRIOR:
                 break;
             case LOGNORMAL_HPM_PRIOR:
+                break;
+            case EXPONENTIAL_HPM_PRIOR:
                 break;
         }
         if (dist != null && parameter.isTruncated) {
@@ -135,7 +145,7 @@ public enum PriorType {
             buffer.append("? ");
         } else if (parameter.isPriorImproper()) {
             buffer.append("! ");
-        } else if (!parameter.isPriorEdited()) {
+        } else if (!parameter.isPriorEdited() && !parameter.isPriorFixed) {
             buffer.append("* ");
         } else {
             buffer.append("  ");
@@ -228,6 +238,10 @@ public enum PriorType {
             case POISSON_PRIOR:
                 buffer.append("Poisson [");
                 buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
+                if (parameter.offset > 0.0) {
+                    buffer.append(", offset ");
+                    buffer.append(NumberUtil.formatDecimal(parameter.offset, 10, 6));
+                }
                 buffer.append("]");
                 break;
             case BETA_PRIOR:
@@ -239,6 +253,9 @@ public enum PriorType {
                 break;
             case CTMC_RATE_REFERENCE_PRIOR:
                 buffer.append("Approx. Reference Prior");
+                break;
+            case HIERARCHICAL_EXPONENTIAL_PRIOR:
+                buffer.append("Exponential [estimated mean]");
                 break;
             case LINKED_PARAMETER:
                 buffer.append("Linked [");
@@ -255,6 +272,11 @@ public enum PriorType {
                 buffer.append(parameter.linkedName);
                 buffer.append("]");
                 break;
+            case EXPONENTIAL_HPM_PRIOR:
+                buffer.append("Exponential HPM [");
+                buffer.append(parameter.linkedName);
+                buffer.append("]");
+                break;
             default:
                 throw new IllegalArgumentException("Unknown prior type");
         }
@@ -265,7 +287,6 @@ public enum PriorType {
             buffer.append(NumberUtil.formatDecimal(parameter.truncationUpper, 10, 6));
             buffer.append("]");
         }
-
 
         if (parameter.priorType == NONE_FIXED) {
             buffer.append(", value=").append(NumberUtil.formatDecimal(parameter.getInitial(), 10, 6));
@@ -294,6 +315,18 @@ public enum PriorType {
         buffer.append("]");
 
         return buffer.toString();
+    }
+
+    /**
+     * The hierarchical exponential prior of Gao et al. (2023) is defined for the overall rate
+     * scalar of a discrete trait diffusion model under a strict clock, so it is only offered there.
+     */
+    public static boolean isDiscreteTraitClockRate(Parameter parameter) {
+        if (!parameter.isCMTCRate || !parameter.getBaseName().equals("clock.rate")) {
+            return false;
+        }
+        PartitionOptions partitionOptions = parameter.getOptions();
+        return partitionOptions != null && partitionOptions.getDataType().getType() == DataType.GENERAL;
     }
 
     public static PriorType[] getPriorTypes(Parameter parameter) {
@@ -347,6 +380,20 @@ public enum PriorType {
             }
         }
         if (parameter.isCMTCRate) {
+            if (isDiscreteTraitClockRate(parameter)) {
+                return new PriorType[]{
+                        NONE_FIXED,
+                        CTMC_RATE_REFERENCE_PRIOR,
+                        HIERARCHICAL_EXPONENTIAL_PRIOR,
+                        NONE_IMPROPER,
+                        UNIFORM_PRIOR,
+                        EXPONENTIAL_PRIOR,
+                        NORMAL_PRIOR,
+                        LOGNORMAL_PRIOR,
+                        GAMMA_PRIOR,
+                        INVERSE_GAMMA_PRIOR,
+                        ONE_OVER_X_PRIOR};
+            }
             return new PriorType[]{
                     NONE_FIXED,
                     CTMC_RATE_REFERENCE_PRIOR,
@@ -362,7 +409,8 @@ public enum PriorType {
         if (parameter.isHierarchical) {
             return new PriorType[]{
                     LOGNORMAL_HPM_PRIOR,
-                    NORMAL_HPM_PRIOR};
+                    NORMAL_HPM_PRIOR,
+                    EXPONENTIAL_HPM_PRIOR};
         }
         if (parameter.isMaintainedSum) {
             return new PriorType[]{
@@ -400,7 +448,6 @@ public enum PriorType {
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
         }
-
 
         // just a continuous parameter
         return new PriorType[]{

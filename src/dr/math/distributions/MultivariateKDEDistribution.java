@@ -1,7 +1,8 @@
 /*
  * MultivariateKDEDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,17 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
+
 /**
  * @author Guy Baele
  */
-public class MultivariateKDEDistribution implements MultivariateDistribution {
+public class MultivariateKDEDistribution implements MultivariateDistribution, GradientProvider {
 	
 	public static final String TYPE = "multivariateKDE";
     public static final boolean DEBUG = false;
@@ -98,6 +102,27 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
 
 	public String getType() {
 		return TYPE;
+	}
+
+	@Override
+	public int getDimension() {
+		return dimension;
+	}
+
+	@Override
+	public double[] getGradientLogDensity(Object obj) {
+		double[] x = GradientProvider.toDoubleArray(obj);
+
+		if (x.length != dimension) {
+			throw new IllegalArgumentException("data array is of the wrong dimension");
+		}
+		double[] gradLogPdf = new double[x.length];
+		for (int i = 0; i < dimension; i++) {
+			assert multivariateKDE[i] instanceof NormalKDEDistribution :
+					"Gradient of the working prior is only implemented for the (transformed) normal KDE estimator.";
+			gradLogPdf[i] = ((NormalKDEDistribution) multivariateKDE[i]).getGradLogDensity(x[i]);
+		}
+		return gradLogPdf;
 	}
 	
 }

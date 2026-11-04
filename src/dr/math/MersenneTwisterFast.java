@@ -1,7 +1,8 @@
 /*
  * MersenneTwisterFast.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math;
@@ -531,9 +533,20 @@ class MersenneTwisterFast implements Serializable {
 	}
 
 	public int[] getRandomState() {
-		int[] state = new int[mt.length + 1];
+		//add length by 3 extra integers to store internal state of nextGaussian
+		int[] state = new int[mt.length + 4];
 		state[0] = mti;
 		System.arraycopy(mt, 0, state, 1, mt.length);
+
+		// Convert `nextNextGaussian` and `haveNextNextGaussian`
+		int int0 = haveNextNextGaussian ? 1 : 0;
+		long l = Double.doubleToRawLongBits(nextNextGaussian);
+		int int1 = (int)(l >> 32);
+		int int2 = (int)l;
+		//store in final 3 array entries
+		state[state.length-3] = int0;
+		state[state.length-2] = int1;
+		state[state.length-1] = int2;
 
 		return state;
 	}
@@ -541,6 +554,14 @@ class MersenneTwisterFast implements Serializable {
 	public void setRandomState(int[] rngState) {
 		mti = rngState[0];
 		System.arraycopy(rngState, 1, mt, 0, mt.length);
+
+		// Convert back `int0`
+		int int0 = rngState[rngState.length-3];
+		int int1 = rngState[rngState.length-2];
+		int int2 = rngState[rngState.length-1];
+		haveNextNextGaussian = (int0 == 1);
+		long l = (((long)int1) << 32) | (int2 & 0xffffffffL);
+		nextNextGaussian = Double.longBitsToDouble(l);
 	}
 
 }

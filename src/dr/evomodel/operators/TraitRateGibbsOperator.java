@@ -1,7 +1,8 @@
 /*
  * TraitRateGibbsOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -42,13 +44,13 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
- * Gibbs samples each of AbritraryBranchRates when their prior is a gamma distribution
+ * Gibbs samples each of ArbitraryBranchRates when their prior is a gamma distribution
  *
  * @author Marc A. Suchard
  */
 public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public static final String GIBBS_OPERATOR = "traitRateGibbsOperator";
+    private static final String GIBBS_OPERATOR = "traitRateGibbsOperator";
 
     private final MutableTreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
@@ -84,8 +86,9 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
             throw new RuntimeException("Can only provide one prior density in TraitRateGibbsOperation");
         }
 
-        if (!branchRateModel.usingReciprocal()) {
-            throw new RuntimeException("ArbitraryBranchRates in TraitRateGibbsOperatior must use reciprocal rates");
+        boolean reciprocal = branchRateModel.usingReciprocal();
+        if (!reciprocal) {
+            throw new RuntimeException("ArbitraryBranchRates in TraitRateGibbsOperator must use reciprocal rates");
         }
 
         Logger.getLogger("dr.evomodel").info("Using Gibbs operator and trait rates");
@@ -184,7 +187,8 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
                 throw new XMLParseException("Currently only works with a GammaDistributionModel or GammaDistribution");
             }
 
-            if (!branchRates.usingReciprocal()) {
+            boolean reciprocal = branchRates.usingReciprocal();
+            if (!reciprocal) {
                 throw new XMLParseException(
                         "Gibbs sampling of rates only works with reciprocal rates under an ArbitraryBranchRates model");
             }

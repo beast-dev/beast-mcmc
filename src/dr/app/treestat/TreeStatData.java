@@ -1,7 +1,8 @@
 /*
  * TreeStatData.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,18 +22,19 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.treestat;
 
 import dr.app.treestat.statistics.SummaryStatisticDescription;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import org.jdom.Document;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class TreeStatData {
 	public static final String version = "1.0";
@@ -41,14 +43,15 @@ public class TreeStatData {
 	}
 
 	// Data options
-	public Set<String> allTaxa = new HashSet<String>();
-	public List<TaxonSet> taxonSets = new ArrayList<TaxonSet>();
+	public Set<Taxon> allTaxa = new HashSet<>();
+	public List<String> taxonSetNames = new ArrayList<>();
+	public Map<String, TaxonSet> taxonSets = new HashMap<>();
 	public List<Character> characters = new ArrayList<Character>();
 	public List<SummaryStatisticDescription> statistics = new ArrayList<SummaryStatisticDescription>();
 
 	public static class TaxonSet {
 		String name;
-		List taxa;
+		Taxa taxa;
 		public String toString() { return name; }
 	}
 

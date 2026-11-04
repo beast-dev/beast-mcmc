@@ -1,7 +1,8 @@
 /*
  * FunkyPriorMixerOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.operators;
@@ -28,8 +30,8 @@ package dr.evomodelxml.operators;
 import dr.evomodel.operators.FunkyPriorMixerOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RandomWalkOperator;
 import dr.xml.*;
@@ -53,7 +55,7 @@ public class FunkyPriorMixerOperatorParser extends AbstractXMLObjectParser {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
@@ -85,7 +87,7 @@ public class FunkyPriorMixerOperatorParser extends AbstractXMLObjectParser {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
                 new StringAttributeRule(BOUNDARY_CONDITION, null, RandomWalkOperator.BoundaryCondition.values(), true),
                 new ElementRule(Parameter.class),
                 new ElementRule(TreeModel.class)

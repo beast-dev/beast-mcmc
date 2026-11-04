@@ -1,7 +1,8 @@
 /*
  * LaplaceDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,16 +22,19 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
 
+import dr.inference.model.GradientProvider;
+import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
 
 /**
  * @author Alexei Drummond
  */
-public class LaplaceDistribution implements Distribution {
+public class LaplaceDistribution implements Distribution, GradientProvider {
 
     // the mean parameter
     double mu;
@@ -112,7 +116,13 @@ public class LaplaceDistribution implements Distribution {
     }
 
     public double logPdf(double x) {
-        return Math.log(c) - (Math.abs(x - mu) / beta);
+        return logPdf(x, mu, beta);
+    }
+
+
+    public static double logPdf(double x, double mu, double beta) {
+
+        return Math.log(1 / (2 * beta)) - (Math.abs(x - mu) / beta);
     }
 
     public double quantile(double y) {
@@ -147,4 +157,31 @@ public class LaplaceDistribution implements Distribution {
             return Double.POSITIVE_INFINITY;
         }
     };
+
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+
+    public static double gradLogPdf(double x, double m, double scale) {
+        if (x < m) {
+            return (x - m) / scale;
+        } else if (x > m) {
+            return (m - x) / scale;
+        } else {
+            return 0.0; // maybe bad idea: let likelihood determine joint gradient where non-differentiable.
+        }
+    }
+
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] result = new double[x.length];
+        for (int i = 0; i < x.length; ++i) {
+            result[i] = gradLogPdf(x[i], getMu(), getBeta());
+        }
+        return result;
+    }
 }

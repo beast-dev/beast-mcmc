@@ -1,7 +1,8 @@
 /*
  * UpDownOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.operators;
@@ -105,7 +107,7 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        final CoercionMode mode = CoercionMode.parseMode(xo);
+        final AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         final Scalable[] upArgs = getArgs(xo.getChild(UP));
         final Scalable[] dnArgs = getArgs(xo.getChild(DOWN));
@@ -140,7 +142,7 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(SCALE_FACTOR),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
 
             // Allow an arbitrary number of Parameters or Scalable in up or down
             new ElementRule(UP, ee, 1, Integer.MAX_VALUE),

@@ -1,7 +1,8 @@
 /*
  * TaxonParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -34,7 +36,6 @@ import dr.xml.*;
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: TaxonParser.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
 public class TaxonParser extends AbstractXMLObjectParser {
 
@@ -46,13 +47,14 @@ public class TaxonParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        if (dr.xml.XMLParser.ID.contains("\'") && dr.xml.XMLParser.ID.contains("\"")) {
-            // unable to handle taxon names that contain both single and double quotes
-            // as it won't be possible to wrap it in either.
-            throw new XMLParseException("Illegal taxon name, " + dr.xml.XMLParser.ID + ", - contains both single and double quotes");
+        String id = xo.getStringAttribute(dr.xml.XMLParser.ID);
+        if (id.indexOf('"') >= 0) {
+            // taxon names are written to tree files delimited by double quotes so
+            // a name containing one cannot be represented
+            throw new XMLParseException("Illegal taxon name, " + id + ", - contains a double quote character (\")");
         }
 
-        Taxon taxon = new Taxon(xo.getStringAttribute(dr.xml.XMLParser.ID));
+        Taxon taxon = new Taxon(id);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);

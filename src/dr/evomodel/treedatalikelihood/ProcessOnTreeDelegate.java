@@ -1,7 +1,8 @@
 /*
  * ProcessOnTreeDelegate.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,10 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
-
-import dr.inference.model.Model;
 
 import java.util.List;
 
@@ -34,14 +34,13 @@ import java.util.List;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 public interface ProcessOnTreeDelegate {
 
     TreeTraversal.TraversalType getOptimalTraversalType();
 
     final class BranchOperation {
-        public BranchOperation(int branchNumber, double branchLength) {
+        BranchOperation(int branchNumber, double branchLength) {
             this.branchNumber = branchNumber;
             this.branchLength = branchLength;
         }
@@ -63,7 +62,7 @@ public interface ProcessOnTreeDelegate {
     }
 
     final class NodeOperation {
-        public NodeOperation(int nodeNumber, int leftChild, int rightChild) {
+        NodeOperation(int nodeNumber, int leftChild, int rightChild) {
             this.nodeNumber = nodeNumber;
             this.leftChild = leftChild;
             this.rightChild = rightChild;
@@ -91,7 +90,7 @@ public interface ProcessOnTreeDelegate {
     }
 
     final class BranchNodeOperation {
-        public BranchNodeOperation(int nodeNumber, int parentNumber, double branchLength) {
+        BranchNodeOperation(int nodeNumber, int parentNumber, double branchLength) {
             this.nodeNumber = nodeNumber;
             this.parentNumber = parentNumber;
             this.branchLength = branchLength;
@@ -116,6 +115,7 @@ public interface ProcessOnTreeDelegate {
 
     final class Utils {
 
+        @SuppressWarnings("unused")
         static <T> String toString(List<T> operations) {
             StringBuilder sb = new StringBuilder();
             for (T op : operations) {

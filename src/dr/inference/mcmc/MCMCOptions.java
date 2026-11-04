@@ -1,7 +1,8 @@
 /*
  * MCMCOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.mcmc;
@@ -33,7 +35,6 @@ import dr.inference.markovchain.MarkovChain;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MCMCOptions.java,v 1.7 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCMCOptions {
 
@@ -41,8 +42,10 @@ public class MCMCOptions {
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
     private final double evaluationTestThreshold;
-    private final boolean coercion;
-    private final long coercionDelay;
+    private final boolean useAdaptation;
+    private final boolean smoothAcceptanceProbability;
+    private final long adaptationDelay;
+    private final double adaptationTarget;
     private final double temperature;
 
     /**
@@ -50,7 +53,7 @@ public class MCMCOptions {
      * @param chainLength
      */
     public MCMCOptions(long chainLength) {
-        this(chainLength, 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, true, 0, 1.0);
+        this(chainLength, 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, true, 0, 0.234, false, 1.0);
     }
 
     /**
@@ -59,17 +62,21 @@ public class MCMCOptions {
      * @param fullEvaluationCount
      * @param minOperatorCountForFullEvaluation
      * @param evaluationTestThreshold
-     * @param coercion
-     * @param coercionDelay
+     * @param useAdaptation
+     * @param adaptationDelay
      * @param temperature
      */
-    public MCMCOptions(long chainLength, long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold, boolean coercion, long coercionDelay, double temperature) {
+    public MCMCOptions(long chainLength, long fullEvaluationCount, int minOperatorCountForFullEvaluation,
+                       double evaluationTestThreshold, boolean useAdaptation, long adaptationDelay, double adaptationTarget, boolean smoothAcceptanceProbability,
+                       double temperature) {
         this.chainLength = chainLength;
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
         this.evaluationTestThreshold = evaluationTestThreshold;
-        this.coercion = coercion;
-        this.coercionDelay = coercionDelay;
+        this.useAdaptation = useAdaptation;
+        this.adaptationDelay = adaptationDelay;
+        this.adaptationTarget = adaptationTarget;
+        this.smoothAcceptanceProbability = smoothAcceptanceProbability;
         this.temperature = temperature;
     }
 
@@ -88,13 +95,20 @@ public class MCMCOptions {
         return evaluationTestThreshold;
     }
 
-    public final boolean useCoercion() {
-        return coercion;
+    public final boolean useAdaptation() {
+        return useAdaptation;
     }
 
+    public final long getAdaptationDelay() {
+        return adaptationDelay;
+    }
 
-    public final long getCoercionDelay() {
-        return coercionDelay;
+    public final double getAdaptationTarget() {
+        return adaptationTarget;
+    }
+
+    public boolean useSmoothedAcceptanceProbability() {
+        return smoothAcceptanceProbability;
     }
 
     public final double getTemperature() {

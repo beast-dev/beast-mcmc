@@ -1,7 +1,8 @@
 /*
  * WrappedVector.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,23 +22,20 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.matrixAlgebra;
 
-import dr.inference.model.Parameter;
+
+import dr.inference.model.Variable;
+import dr.xml.AbstractXMLObjectParser;
 
 /**
- * Created by msuchard on 1/27/17.
+ * @author Marc A. Suchard
  */
 
-public interface WrappedVector {
-
-    double get(final int i);
-
-    void set(final int i, final double x);
-
-    int getDim();
+public interface WrappedVector extends ReadableVector, WritableVector {
 
     double[] getBuffer();
 
@@ -78,10 +76,26 @@ public interface WrappedVector {
         }
     }
 
-    final class Raw extends Abstract {
+    class Raw extends Abstract {
 
         public Raw(double[] buffer, int offset, int dim) {
             super(buffer, offset, dim);
+        }
+
+        public Raw(double[] buffer) {
+            this(buffer, 0, buffer.length);
+        }
+
+        public Raw(int[] in) {
+            this(convert(in), 0, in.length);
+        }
+
+        private static double[] convert(int[] in) {
+            double[] buffer = new double[in.length];
+            for (int i = 0; i < in.length; ++i) {
+                buffer[i] = in[i];
+            }
+            return buffer;
         }
 
         @Override
@@ -95,12 +109,43 @@ public interface WrappedVector {
         }
     }
 
+    final class View extends Raw {
+
+        public View(WrappedVector vector, int offset, int length) {
+            super(vector.getBuffer(), vector.getOffset() + offset, length);
+
+            if (!(vector instanceof WrappedVector.Raw)) {
+                throw new RuntimeException("This can only extend WrappedVector.Raw");
+            }
+        }
+    }
+
+    final class Parameter extends Abstract {
+
+        private final Variable<Double> variable;
+
+        public Parameter(Variable<Double> variable) {
+            this(variable, 0, variable.getSize());
+        }
+
+        public Parameter(Variable<Double> variable, int offset, int dim) {
+            super(null, offset, dim);
+            this.variable = variable;
+        }
+
+        @Override
+        final public double get(final int i) { return variable.getValue(offset + i); }
+
+        @Override
+        final public void set(final int i, final double x) { variable.setValue(offset + i, x); }
+    }
+
     final class Indexed extends Abstract {
 
         final private int[] indices;
 
-        public Indexed(double[] buffer, int offset, int[] indices, int dim) {
-            super(buffer, offset, dim);
+        public Indexed(double[] buffer, int offset, int[] indices) {
+            super(buffer, offset, indices.length);
             this.indices = indices;
         }
 
@@ -109,5 +154,16 @@ public interface WrappedVector {
 
         @Override
         final public void set(int i, double x) { buffer[offset + indices[i]] = x; }
+    }
+
+    final class Utils {
+
+        public static WrappedVector copy(ReadableVector vector) {
+            double[] buffer = new double[vector.getDim()];
+            for (int i = 0; i < buffer.length; ++i) {
+                buffer[i] = vector.get(i);
+            }
+            return new WrappedVector.Raw(buffer);
+        }
     }
 }

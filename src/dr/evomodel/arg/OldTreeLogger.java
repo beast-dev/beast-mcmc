@@ -1,7 +1,8 @@
 /*
  * OldTreeLogger.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.arg;
@@ -39,7 +41,6 @@ import dr.inference.model.Likelihood;
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: OldTreeLogger.java,v 1.25 2006/09/05 13:29:34 rambaut Exp $
  */
 public class OldTreeLogger extends MCLogger {
 
@@ -121,7 +122,7 @@ public class OldTreeLogger extends MCLogger {
             logLine("\tDimensions ntax=" + taxonCount + ";");
             logLine("\tTaxlabels");
             for (int i = 0; i < taxonCount; i++) {
-                logLine("\t\t" + tree.getTaxon(i).getId());
+                logLine("\t\t" + TreeUtils.quoteTaxonName(tree.getTaxon(i).getId()));
             }
             logLine("\t\t;");
             logLine("End;");
@@ -134,9 +135,9 @@ public class OldTreeLogger extends MCLogger {
                 for (int i = 0; i < taxonCount; i++) {
                     int k = i + 1;
                     if (k < taxonCount) {
-                        logLine("\t\t" + k + " " + tree.getTaxonId(i) + ",");
+                        logLine("\t\t" + k + " " + TreeUtils.quoteTaxonName(tree.getTaxonId(i)) + ",");
                     } else {
-                        logLine("\t\t" + k + " " + tree.getTaxonId(i));
+                        logLine("\t\t" + k + " " + TreeUtils.quoteTaxonName(tree.getTaxonId(i)));
                     }
                 }
 

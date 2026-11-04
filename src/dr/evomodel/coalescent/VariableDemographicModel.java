@@ -1,7 +1,8 @@
 /*
  * VariableDemographicModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.model.Model;
@@ -41,8 +44,8 @@ import java.util.List;
 
 /**
  * @author Joseph Heled
- * @version $Id$
  */
+@Deprecated
 public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet, Citable {
 
     private final Parameter popSizeParameter;
@@ -112,7 +115,9 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
             System.err.println("INFO: resetting length of parameter " + popSizeParameter.getParameterName() +
                     "(size " + popSizeParameter.getSize() + ") in variable demographic model to " + events);
             popSizeParameter.setDimension(events);
-            popSizeParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, popSizeParameter.getDimension()));
+
+            // adding a non-infinite bound on this parameter precludes the use of the scale operator (and is unnecessary).
+            popSizeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, popSizeParameter.getDimension()));
         }
 
         if (nIndicators != events - 1) {
@@ -224,17 +229,17 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
     @Override
     public List<Citation> getCitations() {
         return Arrays.asList(new Citation(
-                        new Author[]{
-                                new Author("J", "Heled"),
-                                new Author("AJ", "Drummond"),
-                        },
-                        "Bayesian inference of population size history from multiple loci",
-                        2008,
-                        "BMC Evolutionary Biology",
-                        8,
-                        "289",
-                        "10.1186/1471-2148-8-289"
-                ));
+                new Author[]{
+                        new Author("J", "Heled"),
+                        new Author("AJ", "Drummond"),
+                },
+                "Bayesian inference of population size history from multiple loci",
+                2008,
+                "BMC Evolutionary Biology",
+                8,
+                "289",
+                "10.1186/1471-2148-8-289"
+        ));
     }
 
 }

@@ -1,0 +1,91 @@
+/*
+ * SpeciationLikelihoodGradientParser.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.evomodelxml.birthdeath;
+
+import dr.evomodel.birthdeath.*;
+import dr.evomodel.tree.TreeModel;
+import dr.xml.*;
+
+/**
+ * @author Xiang Ji
+ * @author Marc Suchard
+ */
+public class BirthDeathLikelihoodGradientParser extends AbstractXMLObjectParser {
+
+    private static final String NAME = "birthDeathLikelihoodGradient";
+    private static final String WRT_PARAMETER = "wrtParameter";
+    private static final String USE_NEW_LOOP = "useNewLoop";
+
+    @Override
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        BirthDeathLikelihood likelihood = (BirthDeathLikelihood) xo.getChild(BirthDeathLikelihood.class);
+        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
+
+        if (! ((likelihood.getBirthDeathModel() instanceof EpisodicBirthDeathSamplingModel) ||
+                (likelihood.getBirthDeathModel() instanceof BirthDeathEpisodicSeriallySampledModel)) ) {
+            throw new RuntimeException("Not yet implemented for other cases.");
+        }
+
+        BirthDeathLikelihoodGradient.WrtParameter type = BirthDeathLikelihoodGradient.WrtParameter.factory(wrtParamter);
+
+        boolean newLoop = xo.getAttribute(USE_NEW_LOOP, false);
+        if (newLoop && (likelihood instanceof EfficientBirthDeathLikelihood)) {
+            return new EfficientBirthDeathLikelihoodGradient((EfficientBirthDeathLikelihood) likelihood, type);
+        } else {
+            return new BirthDeathLikelihoodGradient(likelihood, tree, type);
+        }
+    }
+
+    @Override
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(WRT_PARAMETER),
+            new ElementRule(BirthDeathLikelihood.class),
+            new ElementRule(TreeModel.class),
+            AttributeRule.newBooleanRule(USE_NEW_LOOP, true),
+    };
+
+    @Override
+    public String getParserDescription() {
+        return null;
+    }
+
+    @Override
+    public Class getReturnType() {
+        return BirthDeathLikelihoodGradient.class;
+    }
+
+    @Override
+    public String getParserName() {
+        return NAME;
+    }
+}

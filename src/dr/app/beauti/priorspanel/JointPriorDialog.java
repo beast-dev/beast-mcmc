@@ -1,7 +1,8 @@
 /*
  * JointPriorDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -92,9 +94,6 @@ public class JointPriorDialog implements AbstractPriorDialog {
         nameField.setColumns(30);
 
         parametersTableModel = new ParametersTableModel();
-//        TableSorter sorter = new TableSorter(traitsTableModel);
-//        traitsTable = new JTable(sorter);
-//        sorter.setTableHeader(traitsTable.getTableHeader());
         parametersTable = new JTable(parametersTableModel);
 
         parametersTable.getTableHeader().setReorderingAllowed(false);
@@ -224,6 +223,9 @@ public class JointPriorDialog implements AbstractPriorDialog {
         dialog.pack();
         dialog.setResizable(true);
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();

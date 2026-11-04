@@ -1,7 +1,8 @@
 /*
  * MaskedParameterParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
@@ -28,6 +30,8 @@ package dr.inferencexml.model;
 import dr.inference.model.MaskedParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -42,6 +46,8 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
     public static final String EVERY = "every";
     public static final String BUILD = "build";
     private static final String SIGNAL_DEPENDENTS = "signalDependents";
+    private static final String IS_NA_MISSING = "isNaMissing";
+    private static final String VALUE = "value";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -51,16 +57,34 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(MASKING);
         if (cxo != null) {
             mask = (Parameter) cxo.getChild(Parameter.class);
-        }
-        else if(xo.getAttribute(BUILD, false)){
+        } else if (xo.getAttribute(BUILD, false)) {
+            int total = 0;
+            boolean isNaMissing = xo.getAttribute(IS_NA_MISSING, false);
             mask = new Parameter.Default(parameter.getDimension(), 0.0);
+            double[] defaultFillValue = new double[]{ 0.0 };
+            if (xo.hasAttribute(VALUE)) {
+                defaultFillValue = xo.getDoubleArrayAttribute(VALUE);
+            }
+            int offset = 0;
             for (int i = 0; i < parameter.getDimension(); i++) {
-                if(parameter.getParameterValue(i) == 0){
+                if (isNaMissing && Double.isNaN(parameter.getParameterValue(i))) {
                     mask.setParameterValue(i, 1.0);
+                    double value = defaultFillValue[offset++];
+                    if (offset == defaultFillValue.length) {
+                        offset = 0;
+                    }
+                    parameter.setParameterValue(i, value);
+                    Logger.getLogger("dr.inferencexml.model").info("Setting dim " + (i + 1) + " in " +
+                            parameter.getId() + " to " + value);
+                    ++total;
+                }
+                if (!isNaMissing && parameter.getParameterValue(i) == 0) {
+                    mask.setParameterValue(i, 1.0);
+                    ++total;
                 }
             }
-        }
-        else {
+            Logger.getLogger("dr.inferencexml.model").info("Found in total " + total + " missing values\n");
+        } else {
             int from = xo.getAttribute(FROM, 1) - 1;
             int to = xo.getAttribute(TO, parameter.getDimension()) - 1;
             int every = xo.getAttribute(EVERY, 1);
@@ -108,6 +132,8 @@ public class MaskedParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(TO, true),
             AttributeRule.newIntegerRule(EVERY, true),
             AttributeRule.newBooleanRule(SIGNAL_DEPENDENTS, true),
+            AttributeRule.newBooleanRule(IS_NA_MISSING, true),
+            AttributeRule.newDoubleArrayRule(VALUE, true),
     };
 
     public String getParserDescription() {

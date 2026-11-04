@@ -1,7 +1,8 @@
 /*
  * Factory.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.state;
 
 import dr.inference.markovchain.MarkovChainListener;
+
+import java.io.File;
 
 public abstract class Factory {
 
@@ -42,6 +46,12 @@ public abstract class Factory {
      * @return the array
      */
     public abstract MarkovChainListener[] getStateSaverChainListeners();
+
+    /**
+     * Get an instance of StateLoader/Saver for use as a particle for SMC.
+     * @return the StateLoaderSaver
+     */
+    public abstract StateLoaderSaver getStateLoaderSaver(File loadFile, File saveFile);
 
     // Set this to a concrete instance to provide these classes to the MarkovChain
     public static Factory INSTANCE;

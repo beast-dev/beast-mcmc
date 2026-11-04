@@ -1,7 +1,8 @@
 /*
  * InversionResult.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,9 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.matrixAlgebra.missingData;
+
+import static dr.math.matrixAlgebra.missingData.InversionResult.Code.*;
 
 /**
  * @author Marc A. Suchard
@@ -36,10 +40,15 @@ public class InversionResult {
         PARTIALLY_OBSERVED
     }
 
-    public InversionResult(Code code, int dim, double determinant) {
+    InversionResult(Code code, int dim, double logDeterminant, boolean isLog) {
         this.code = code;
         this.dim = dim;
-        this.determinant = determinant;
+        this.logDeterminant = logDeterminant;
+        this.isLog = isLog;
+    }
+
+    public InversionResult(Code code, int dim, double logDeterminant) {
+        this(code, dim, logDeterminant, true);
     }
 
     final public Code getReturnCode() {
@@ -47,19 +56,52 @@ public class InversionResult {
     }
 
     final public int getEffectiveDimension() {
+        assert (dim > -1) : "Should not try to get this effective dimension.";
         return dim;
     }
 
     final public double getDeterminant() {
-        return determinant;
+        return isLog ? Math.exp(logDeterminant) : logDeterminant;
+    }
+
+    final public double getLogDeterminant() {
+        return isLog ? logDeterminant : Math.log(logDeterminant);
+    }
+
+    public static InversionResult mult(InversionResult c1, InversionResult c2) {
+        double logDet = c1.getLogDeterminant() + c2.getLogDeterminant();
+        if (c1.getEffectiveDimension() == 0 || c2.getEffectiveDimension() == 0) {
+            return new InversionResult(Code.NOT_OBSERVED, 0, logDet, true);
+        }
+        if (c1.getReturnCode() == Code.FULLY_OBSERVED) {
+            return new InversionResult(c2.getReturnCode(), c2.getEffectiveDimension(), logDet, true);
+        }
+        if (c2.getReturnCode() == Code.FULLY_OBSERVED) {
+            return new InversionResult(c1.getReturnCode(), c1.getEffectiveDimension(), logDet, true);
+        }
+        return new InversionResult(Code.PARTIALLY_OBSERVED, -1, logDet, true);
+        // Effective dimension is unknown in this last case (<= min(dim1, dim2)), but should never be used.
+    }
+
+    public static Code getCode(int fullDim, int effectiveDim) {
+        final InversionResult.Code code;
+        if (effectiveDim == 0) {
+            code = NOT_OBSERVED;
+        } else if (effectiveDim == fullDim) {
+            code = FULLY_OBSERVED;
+        } else {
+            code = PARTIALLY_OBSERVED;
+        }
+        return code;
     }
 
     public String toString() {
-        return code + ":" + dim + ":" + determinant;
+        return code + ":" + dim + ":" + logDeterminant;
     }
 
     final private Code code;
     final private int dim;
-    final private double determinant;
+    final private double logDeterminant;
+    final private boolean isLog;
 }
 

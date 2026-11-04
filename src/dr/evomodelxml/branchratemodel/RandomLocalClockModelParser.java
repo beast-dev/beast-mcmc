@@ -1,7 +1,8 @@
 /*
  * RandomLocalClockModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.branchratemodel;
@@ -42,6 +44,7 @@ public class RandomLocalClockModelParser extends AbstractXMLObjectParser {
     public static final String CLOCK_RATE = "clockRate";
     public static final String RATES_ARE_MULTIPLIERS = "ratesAreMultipliers";
     public static final String THRESHOLD = "threshold";
+    public static final String SIMULATION = "simulation";
 
     public String getParserName() {
         return LOCAL_BRANCH_RATES;
@@ -67,8 +70,10 @@ public class RandomLocalClockModelParser extends AbstractXMLObjectParser {
 
         double threshold = xo.getAttribute(THRESHOLD, Double.NaN); // NaN == binary values
 
+        boolean simulation = xo.getAttribute(SIMULATION, false);
+
         return new RandomLocalClockModel(tree, meanRateParameter, rateIndicatorParameter,
-                ratesParameter, ratesAreMultipliers, threshold);
+                ratesParameter, ratesAreMultipliers, threshold, simulation);
     }
 
     //************************************************************************
@@ -98,5 +103,6 @@ public class RandomLocalClockModelParser extends AbstractXMLObjectParser {
             new ElementRule(CLOCK_RATE, Parameter.class, "The mean rate across all local clocks", true),
             AttributeRule.newBooleanRule(RATES_ARE_MULTIPLIERS, false),
             AttributeRule.newDoubleRule(THRESHOLD, true),
+            AttributeRule.newBooleanRule(SIMULATION, true),
     };
 }

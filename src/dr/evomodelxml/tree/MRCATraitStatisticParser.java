@@ -1,7 +1,8 @@
 /*
  * MRCATraitStatisticParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.tree;
@@ -28,6 +30,7 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.MRCATraitStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
@@ -50,7 +53,7 @@ public class MRCATraitStatisticParser extends AbstractXMLObjectParser {
         String name = xo.getAttribute(NAME, xo.getId());
         String trait = xo.getStringAttribute(TRAIT);
 
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+        DefaultTreeModel tree = (DefaultTreeModel) xo.getChild(DefaultTreeModel.class);
         TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
 
         try {
@@ -77,7 +80,7 @@ public class MRCATraitStatisticParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(TreeModel.class),
+            new ElementRule(DefaultTreeModel.class),
             new StringAttributeRule("name", "A name for this statistic primarily for the purposes of logging", true),
             new StringAttributeRule("trait", "The name of the trait (can be rate)"),
             AttributeRule.newBooleanRule("rate", true),

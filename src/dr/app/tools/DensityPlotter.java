@@ -1,7 +1,8 @@
 /*
  * DensityPlotter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -221,21 +223,21 @@ public class DensityPlotter {
 
 		Arguments arguments = new Arguments(
 				new Arguments.Option[]{
-						new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
-						new Arguments.StringOption("trait", "trait_name", "specifies an attribute to use to create a density map [default = rate]"),
-						new Arguments.StringOption("trait2", "trait_name", "specifies a second attribute to use to create a density map [default = rate]"),
-						new Arguments.IntegerOption("time_bins", "the number of bins for the time axis of the density map [default = 100]"),
-						new Arguments.IntegerOption("value_bins", "the number of bins for the value axis of the density map [default = 20]"),
-						new Arguments.RealOption("time_upper", "the upper time bound for the density map [default = max tree age]"),
-						new Arguments.RealOption("time_lower", "the lower time bound for the density map [default = 0]"),
-						new Arguments.RealOption("value_upper", "the upper value bound for the density map [default = max value]"),
-						new Arguments.RealOption("value_lower", "the lower value bound for the density map [default = min value]"),
-						new Arguments.RealOption("value2_upper", "the upper second value bound for the density map [default = max value]"),
-						new Arguments.RealOption("value2_lower", "the lower second value bound for the density map [default = min value]"),
-						new Arguments.StringOption("headers", "with_headers", "prints row/column labels in output [default = true"),
-						new Arguments.Option("tiff", "output in TIFF format"),
-						new Arguments.Option("help", "option to print this message"),
-						new Arguments.Option("logScale", "transform trait to log scale")
+						new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+						new Arguments.StringOption("trait", null, "trait_name", "specifies an attribute to use to create a density map [default = rate]"),
+						new Arguments.StringOption("trait2", null, "trait_name", "specifies a second attribute to use to create a density map [default = rate]"),
+						new Arguments.IntegerOption("time_bins", null, "the number of bins for the time axis of the density map [default = 100]"),
+						new Arguments.IntegerOption("value_bins", null, "the number of bins for the value axis of the density map [default = 20]"),
+						new Arguments.RealOption("time_upper", null, "the upper time bound for the density map [default = max tree age]"),
+						new Arguments.RealOption("time_lower", null, "the lower time bound for the density map [default = 0]"),
+						new Arguments.RealOption("value_upper", null, "the upper value bound for the density map [default = max value]"),
+						new Arguments.RealOption("value_lower", null, "the lower value bound for the density map [default = min value]"),
+						new Arguments.RealOption("value2_upper", null, "the upper second value bound for the density map [default = max value]"),
+						new Arguments.RealOption("value2_lower", null, "the lower second value bound for the density map [default = min value]"),
+						new Arguments.StringOption("headers", null, "with_headers", "prints row/column labels in output [default = true]"),
+						new Arguments.Option("tiff", null, "output in TIFF format"),
+						new Arguments.Option("help", "h", "option to print this message"),
+						new Arguments.Option("logScale", null, "transform trait to log scale")
 				});
 
 		try {

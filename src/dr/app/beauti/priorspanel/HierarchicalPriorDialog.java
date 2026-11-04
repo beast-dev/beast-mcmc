@@ -1,7 +1,8 @@
 /*
  * HierarchicalPriorDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -71,13 +73,11 @@ public class HierarchicalPriorDialog {
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
 
-//    private final SpecialNumberPanel specialNumberPanel;
 
     private JTextField nameField;
     private JPanel panel;
 
-    //    private final SpecialNumberPanel specialNumberPanel;
-    private JChart[] chart;
+        private JChart[] chart;
     private JPanel[] quantilePanel;
     private JTextArea[] quantileText;
 
@@ -126,7 +126,6 @@ public class HierarchicalPriorDialog {
             quantilePanel[i].add(quantileText[i]);
         }
 
-//        specialNumberPanel = new SpecialNumberPanel(this);
 //        specialNumberPanel.setEnabled(false);
     }
 
@@ -167,9 +166,6 @@ public class HierarchicalPriorDialog {
 //            System.err.println("Model name exists");
             return false;
 
-//            if (option == JOptionPane.NO_OPTION) {
-//                return false;
-//            }
         }
 
         return true;
@@ -228,23 +224,26 @@ public class HierarchicalPriorDialog {
 
         final JDialog dialog = optionPane.createDialog(frame, "Phylogenetic Hierarchical Model Setup");
 
-        priorCombo.addItemListener(new ItemListener() {
+        // these listeners hold this dialog, so they are taken off again when it closes (below)
+        ItemListener priorListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setupComponents();
                 dialog.validate();
                 dialog.repaint();
                 dialog.pack();
             }
-        });
+        };
+        priorCombo.addItemListener(priorListener);
 
+        PriorOptionsPanel.Listener optionsListener = new PriorOptionsPanel.Listener() {
+            public void optionsPanelChanged() {
+                setupChart();
+                dialog.validate();
+                dialog.repaint();
+            }
+        };
         for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
-            optionsPanel.addListener(new PriorOptionsPanel.Listener() {
-                public void optionsPanelChanged() {
-                    setupChart();
-                    dialog.validate();
-                    dialog.repaint();
-                }
-            });
+            optionsPanel.addListener(optionsListener);
         }
 
         dialog.pack();
@@ -267,15 +266,18 @@ public class HierarchicalPriorDialog {
         dialog.setResizable(true);
         dialog.setVisible(true);
 
+        priorCombo.removeItemListener(priorListener);
+        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            optionsPanel.removeListener(optionsListener);
+        }
+        dialog.dispose();
+
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
         if (value != null && value != -1) {
             result = value;
         }
 
-//        if (result == JOptionPane.OK_OPTION) {
-//            getArguments();
-//        }
 
         return result;
     }
@@ -287,13 +289,13 @@ public class HierarchicalPriorDialog {
 
     }
 
-    public void getArguments() {
+    public boolean getArguments() {
         for (Parameter parameter : parameterList) {
             parameter.priorType = (PriorType) priorCombo.getSelectedItem();
         }
         // Get hyperpriors
-        optionsPanels.get(PriorType.NORMAL_PRIOR).getArguments(parameter);
-        optionsPanels.get(PriorType.GAMMA_PRIOR).getArguments(parameter);
+        return (optionsPanels.get(PriorType.NORMAL_PRIOR).getArguments(parameter) &&
+                optionsPanels.get(PriorType.GAMMA_PRIOR).getArguments(parameter));
 
     }
 
@@ -368,13 +370,6 @@ public class HierarchicalPriorDialog {
         mainPanel.repaint();
     }
 
-//    public void setSelectedField(RealNumberField selectedField) {
-//        this.selectedField = selectedField;
-//    }
-//
-//    public RealNumberField getSelectedField() {
-//        return selectedField;
-//    }
 
     NumberFormatter formatter = new NumberFormatter(4);
 
@@ -407,17 +402,22 @@ public class HierarchicalPriorDialog {
     // options panels
 
     class NormalOptionsPanel extends PriorOptionsPanel {
+        private final double MEAN_DEFAULT = 0.0;
+        private final double STDEV_DEFAULT = 1000.0;
 
         public NormalOptionsPanel() {
             super(false);
         }
 
         public void setup() {
-            addField("Hyperprior Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Hyperprior Stdev", 1000.0, 0.0, Double.MAX_VALUE);
+            addField("Hyperprior Mean", MEAN_DEFAULT, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Hyperprior Stdev", STDEV_DEFAULT, 0.0, Double.MAX_VALUE);
         }
 
         public Distribution getDistribution() {
+            if (getValue(0) == null || getValue(1) == null) {
+                return null;
+            }
             return new NormalDistribution(getValue(0), getValue(1));
         }
 
@@ -427,10 +427,16 @@ public class HierarchicalPriorDialog {
             getField(1).setValue(hpmMeanStDev);
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getInitialField().getValue() == null ||
+                    getValue(0) == null ||
+                    getValue(1) == null ) {
+                return false;
+            }
             hpmMeanInitial = getInitialField().getValue();
             hpmMeanMean = getValue(0);
             hpmMeanStDev = getValue(1);
+            return true;
         }
 
         @Override
@@ -440,18 +446,23 @@ public class HierarchicalPriorDialog {
     }
 
     class GammaOptionsPanel extends PriorOptionsPanel {
+        private final double SHAPE_DEFAULT = 0.001;
+        private final double SCALE_DEFAULT = 1000.0;
 
         public GammaOptionsPanel() {
             super(false);
         }
 
         public void setup() {
-            addField("Hyperprior Shape", 0.001, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Hyperprior Scale", 1000.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Hyperprior Shape", SHAPE_DEFAULT, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Hyperprior Scale", SCALE_DEFAULT, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 //            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
+            if (getValue(0) == null || getValue(1) == null) {
+                return null;
+            }
             return new OffsetPositiveDistribution(
                     new GammaDistribution(getValue(0), getValue(1)), 0.0);
         }
@@ -462,10 +473,17 @@ public class HierarchicalPriorDialog {
             getField(1).setValue(hpmPrecScale);
         }
 
-        public void getArguments(Parameter parameter) {
+        public boolean getArguments(Parameter parameter) {
+            if (getInitialField().getValue() == null ||
+                    getValue(0) == null ||
+                    getValue(1) == null) {
+                return false;
+            }
+
             hpmPrecInitial = getInitialField().getValue();
             parameter.shape = hpmPrecShape = getValue(0);
             parameter.scale = hpmPrecScale = getValue(1);
+            return true;
         }
 
         @Override

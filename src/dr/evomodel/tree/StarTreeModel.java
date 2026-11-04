@@ -1,7 +1,8 @@
 /*
  * StarTreeModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -34,8 +36,10 @@ import dr.inference.model.Variable;
 
 /**
  * @author Marc Suchard
+ *
+ * @todo - this should extend the abstract TreeModel rather than inheriting from DefaultTreeModel
  */
-public class StarTreeModel extends TreeModel {
+public class StarTreeModel extends DefaultTreeModel {
 
     public StarTreeModel(String id, Tree tree) {
         super(id, tree);
@@ -120,7 +124,7 @@ public class StarTreeModel extends TreeModel {
         return node.getHeight();
     }
 
-    public void setSharedRootHeightParameter(TreeModel sharedRoot) {
+    public void setSharedRootHeightParameter(DefaultTreeModel sharedRoot) {
         this.sharedRoot = sharedRoot;
         addModel(sharedRoot);
     }
@@ -191,5 +195,5 @@ public class StarTreeModel extends TreeModel {
     private double savedMaxTipHeight;
 
     private Parameter rootHeightParameter = null;
-    private TreeModel sharedRoot = null;
+    private DefaultTreeModel sharedRoot = null;
 }

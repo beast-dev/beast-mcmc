@@ -1,7 +1,8 @@
 /*
  * ContinuousAntigenicTraitLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.antigenic;
@@ -38,7 +40,6 @@ import java.util.logging.Logger;
  * Antigenic evolution assuming each virus's antigenic property diffuses independently.
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id$
  */
 @Deprecated // for the moment at least
 public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood implements Citable {

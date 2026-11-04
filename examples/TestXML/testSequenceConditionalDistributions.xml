@@ -1,0 +1,127 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testML.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the ML engine -->
+
+<beast>
+
+	<!-- The list of taxa analyse (can also include dates/ages).                 -->
+	<!-- ntax=6                                                                  -->
+	<taxa id="taxa">
+		<taxon id="human"/>
+		<taxon id="chimp"/>
+		<taxon id="bonobo"/>
+	</taxa>
+
+	<alignment id="alignment1" dataType="nucleotide">
+		<sequence>
+			<taxon idref="human"/>
+			A
+		</sequence>
+		<sequence>
+			<taxon idref="chimp"/>
+			G
+		</sequence>
+		<sequence>
+			<taxon idref="bonobo"/>
+			G
+		</sequence>
+	</alignment>
+
+	<!-- patterns not be reconstructed -->
+	<patterns id="patterns1" from="1" unique="false">
+		<alignment idref="alignment1"/>
+	</patterns>
+
+	<newick id="startingTree">
+		(human:1,(chimp:0.5,bonobo:0.5):0.5);
+	</newick>
+
+	<treeModel id="treeModel">
+		<coalescentTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
+	<hkyModel id="hky">
+		<frequencies>
+			<frequencyModel dataType="nucleotide">
+				<!--<alignment idref="alignment"/>-->
+				<frequencies>
+					<parameter id="hky.frequencies" value="0.1 0.3 0.2 0.4"/>
+				</frequencies>
+			</frequencyModel>
+		</frequencies>
+		<kappa>
+			<parameter id="hky.kappa" value="1.0" lower="0.0" upper="5.0"/>
+		</kappa>
+	</hkyModel>
+
+	<!-- site model                                                              -->
+	<siteModel id="siteModel">
+		<substitutionModel>
+			<hkyModel idref="hky"/>
+		</substitutionModel>
+		<mutationRate>
+			<parameter id="siteModel.mu" value="1.0" lower="0.0"/>
+		</mutationRate>
+	</siteModel>
+
+	<ancestralTreeLikelihood id="treeLikelihood1">
+		<patterns idref="patterns1"/>
+		<treeModel idref="treeModel"/>
+		<siteModel idref="siteModel"/>
+	</ancestralTreeLikelihood>
+
+	<operators id="operators">
+		<dirtyLikelihood weight="1.0">
+			<treeLikelihood idref="treeLikelihood1"/>
+		</dirtyLikelihood>
+	</operators>
+
+	<mcmc id="mcmc" chainLength="10000">
+		<likelihood id="likelihood">
+			<treeLikelihood idref="treeLikelihood1"/>
+		</likelihood>
+		<operators idref="operators"/>
+		<log logEvery="100">
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+			<column label="Root Height" sf="6" width="12">
+				<parameter idref="treeModel.rootHeight"/>
+			</column>
+			<column label="Kappa" sf="6" width="12">
+				<parameter idref="hky.kappa"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="ancestor.log">
+			<traitLogger traitName="states" nodes="internal">
+				<treeModel idref="treeModel"/>
+				<ancestralTreeLikelihood idref="treeLikelihood1"/>
+			</traitLogger>
+<!--
+
+ 			<ancestralTreeLikelihood idref="treeLikelihood1"/>
+ -->
+		</log>
+		<logTree logEvery="100" nexusFormat="true" fileName="ancestor.trees">
+			<treeModel idref="treeModel"/>
+			<ancestralTreeLikelihood idref="treeLikelihood1"/>
+		</logTree>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+</beast>

@@ -1,7 +1,8 @@
 /*
  * ContinuousDiffusionIntegrator.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,14 +22,20 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood.continuous.cdi;
 
 import dr.math.matrixAlgebra.WrappedVector;
+import dr.matrix.SparseCompressedMatrix;
 import dr.xml.Reportable;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.ops.CommonOps;
 
-import static dr.math.matrixAlgebra.missingData.MissingOps.*;
+import java.util.Arrays;
+
+import static dr.math.matrixAlgebra.missingData.MissingOps.wrap;
 
 /**
  * @author Marc A. Suchard
@@ -39,14 +46,36 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 
-    void finalize() throws Throwable;
+//    void finalize() throws Throwable;
 
     void setPostOrderPartial(int bufferIndex, final double[] partial);
 
     void getPostOrderPartial(int bufferIndex, final double[] partial);
 
-    double getBranchMatrices(int bufferIndex, final double[] precision, final double[] displacement);
+    double getBranchLength(int bufferIndex);
 
+    void getBranchMatrices(int bufferIndex, int precisionIndex,
+                           DiffusionRepresentation precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
+
+    DiffusionRepresentation diffusionFactory(int size);
+    void getBranchPrecision(int bufferIndex, int precisionIndex, DiffusionRepresentation precision);
+
+    void getBranchVariance(int bufferIndex, int precisionIndex, double[] variance);
+
+    void getBranchDisplacement(int bufferIndex, double[] displacement);
+
+    void getBranchActualization(int bufferIndex, double[] actualization);
+
+    void getBranch1mActualization(int bufferIndex, double[] actualization);
+
+    void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement, double[] expectation);
+
+    void getRootMatrices(int priorBufferIndex, int precisionIndex,
+                         DiffusionRepresentation precision, final double[] displacement, final double[] actualization); // TODO Use single buffer for consistency with other getters/setters
+
+    void getRootPrecision(int priorBufferIndex, int precisionIndex, DiffusionRepresentation precision);
+
+    @SuppressWarnings("unused")
     void setPreOrderPartial(int bufferIndex, final double[] partial);
 
     void getPreOrderPartial(int bufferIndex, final double[] partial);
@@ -57,8 +86,16 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
     void setDiffusionPrecision(int diffusionIndex, final double[] matrix, double logDeterminant);
 
-    void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts);
+    default void setDiffusionPrecision(int diffusionIndex, SparseCompressedMatrix matrix, double logDeterminant) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
+    void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation);
+
+    void updatePostOrderPartials(final int[] operations, int operationCount, int precisionIndex,
+                                 boolean computeRemainders, boolean incrementOuterProducts);
+
+    @SuppressWarnings("unused")
     void updatePreOrderPartials(final int[] operations, int operationCount);
 
     InstanceDetails getDetails();
@@ -67,12 +104,24 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                          final double[] edgeLengths, final double[] driftRates,
                                          int updateCount);
 
+    void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                  final double[] edgeLengths, final double[] optimalRates,
+                                                  final double[] strengthOfSelectionMatrix,
+                                                  final double[] rotation,
+                                                  int updateCount);
+
+    void updateIntegratedOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                            final double[] edgeLengths, final double[] optimalRates,
+                                                            final double[] strengthOfSelectionMatrix,
+                                                            final double[] rotation,
+                                                            int updateCount);
+
 //    void updateOrnsteinUhlenbeckMatrices(int precisionIndex, final int[] probabilityIndices,
 //                                         final double[] edgeLengths,
 //                                         int updateCount);
 
-    void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, double[] logLike,
-                                    boolean incrementOuterProducts);
+    void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
+                                    double[] logLike, boolean incrementOuterProducts, boolean isIntegratedProcess);
 
 //    int getPartialBufferCount();
 
@@ -83,20 +132,48 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
     // TODO Only send a list of operations
     void updatePreOrderPartial(int kp, int ip, int im, int jp, int jm);
 
+    void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex);
+
+    int getBufferCount();
+
+    int getDimTrait();
+
+    int getDimProcess();
+
+//    void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
+
+//    void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient);
+
     class Basic implements ContinuousDiffusionIntegrator {
 
 //        private int instance = -1;
-        private InstanceDetails details = new InstanceDetails();
+        private final InstanceDetails details = new InstanceDetails();
 
 //        private final PrecisionType precisionType;
         final int numTraits;
-        final int dimTrait;
+        final int dimTrait; // Trait being propagated
+        final int dimProcess; // Actual process
         final int bufferCount;
         final int diffusionCount;
 
-        final int dimMatrix;
+//        final int dimMatrix;
         final int dimPartialForTrait;
         final int dimPartial;
+
+        @Override
+        public DiffusionRepresentation diffusionFactory(int count) {
+            return new DiffusionRepresentation.Dense(
+                    new double[dimTrait * dimTrait * numTraits * count], count, dimTrait);
+        }
+
+        @Override
+        public int getBufferCount() { return bufferCount; }
+
+        @Override
+        public int getDimTrait() { return dimTrait; }
+
+        @Override
+        public int getDimProcess() { return dimProcess; }
 
         @Override
         public String getReport() {
@@ -107,11 +184,13 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 final PrecisionType precisionType,
                 final int numTraits,
                 final int dimTrait,
+                final int dimProcess,
                 final int bufferCount,
                 final int diffusionCount
         ) {
             assert(numTraits > 0);
             assert(dimTrait > 0);
+            assert(dimProcess > 0);
             assert(bufferCount > 0);
             assert(diffusionCount > 0);
 
@@ -120,17 +199,18 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //            this.precisionType = precisionType;
             this.numTraits = numTraits;
             this.dimTrait = dimTrait;
+            this.dimProcess = dimProcess;
             this.bufferCount = bufferCount;
             this.diffusionCount = diffusionCount;
 
-            this.dimMatrix = precisionType.getMatrixLength(dimTrait);
-            this.dimPartialForTrait = dimTrait + dimMatrix;
+            this.dimPartialForTrait = precisionType.getPartialsDimension(dimTrait);
             this.dimPartial = numTraits * dimPartialForTrait;
 
             if (DEBUG) {
                 System.err.println("numTraits: " + numTraits);
                 System.err.println("dimTrait: " + dimTrait);
-                System.err.println("dimMatrix: " + dimMatrix);
+                System.err.println("dimProcess: " + dimProcess);
+//                System.err.println("dimMatrix: " + dimMatrix);
                 System.err.println("dimPartialForTrait: " + dimPartialForTrait);
                 System.err.println("dimPartial: " + dimPartial);
             }
@@ -146,13 +226,14 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //            return false;
 //        }
 
-        @Override
-        public void finalize() throws Throwable {
-            super.finalize();
-        }
+//        @Override
+//        public void finalize() throws Throwable {
+//            super.finalize();
+//        }
 
         @Override
         public void setPostOrderPartial(int bufferIndex, final double[] partial) {
+
             assert(partial.length == dimPartial);
             assert(partials != null);
 
@@ -164,28 +245,186 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             assert(partials != null);
             assert(partial.length >= dimPartial);
 
-            System.arraycopy(partials, dimPartial * bufferIndex, partial, 0, dimPartial);
+            System.arraycopy(partials, getArrayStart(bufferIndex),
+                    partial, 0,
+                    getArrayLength(bufferIndex));
         }
-        
+
         @Override
-        public double getBranchMatrices(int bufferIndex, double[] precision, double[] displacement) {
-            return 1.0 / branchLengths[bufferIndex * dimMatrix];
+        public double getBranchLength(int bufferIndex) {
+            return branchLengths[bufferIndex];
+        }
+
+        @Override
+        public void getBranchMatrices(int bufferIndex, int precisionIndex,
+                                      DiffusionRepresentation precision, double[] displacement, double[] actualization) {
+
+            if (bufferIndex == -1) {
+                throw new IllegalArgumentException("Not yet implemented");
+            }
+
+            getBranchPrecision(bufferIndex, precisionIndex, precision);
+            getBranchDisplacement(bufferIndex, displacement);
+            getBranchActualization(bufferIndex, actualization);
+        }
+
+        @Override
+        public void getBranchPrecision(int bufferIndex, int precisionIndex, DiffusionRepresentation precision) {
+
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            assert (precision != null);
+            assert (precision.getDimension() >= dimTrait * dimTrait);
+
+            updatePrecisionOffsetAndDeterminant(precisionIndex);
+
+            double scalar = 1.0 / getBranchLength(bufferIndex);
+//            for (int i = 0; i < dimTrait * dimTrait; ++i) { // TODO Write generic function for WrappedVector?
+//                precision[i] = scalar * diffusions[precisionOffset + i];
+//            }
+            precision.fill(diffusions, precisionOffset, dimTrait * dimTrait,
+                    null, 0, // TODO here!
+                    scalar);
+            // TODO Generify for sparse diffusions!!!!
+        }
+
+        @Override
+        public void getBranchVariance(int bufferIndex, int precisionIndex, double[] variance) {
+            DiffusionRepresentation rep = new DiffusionRepresentation.Dense(variance, dimTrait, 1);
+            getBranchPrecision(bufferIndex, precisionIndex, rep);
+            DenseMatrix64F Var = DenseMatrix64F.wrap(dimTrait, dimTrait, variance);
+            CommonOps.invert(Var);
+        }
+
+        @Override
+        public void getBranchDisplacement(int bufferIndex, double[] displacement) {
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            getDefaultDisplacement(displacement);
+        }
+
+        private void getDefaultDisplacement(double[] displacement) {
+
+            assert (displacement != null);
+            assert (displacement.length >= dimTrait);
+
+            Arrays.fill(displacement, 0, dimTrait, 0.0);
+        }
+
+        @Override
+        public void getBranchExpectation(double[] actualization, double[] parentValue, double[] displacement,
+                                         double[] expectation) {
+
+            assert (expectation != null);
+            assert (expectation.length >= dimTrait);
+
+            assert (parentValue != null);
+            assert (parentValue.length >= dimTrait);
+
+            System.arraycopy(parentValue, 0, expectation, 0, dimTrait);
+        }
+
+        @Override
+        public void getBranchActualization(int bufferIndex, double[] actualization) {
+
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            // Fill in actualization
+            assert (actualization != null);
+            assert (actualization.length >= dimTrait);
+
+            for (int i = 0; i < dimTrait; ++i) {
+                actualization[i] = 1.0;
+            }
+        }
+
+        @Override
+        public void getBranch1mActualization(int bufferIndex, double[] actualization) {
+
+            if (bufferIndex == -1) {
+                throw new RuntimeException("Not yet implemented");
+            }
+
+            // Fill in actualization
+            assert (actualization != null);
+            assert (actualization.length >= dimTrait);
+
+            for (int i = 0; i < dimTrait; ++i) {
+                actualization[i] = 0.0;
+            }
+        }
+
+        private void getDefaultActualization(double[] actualization) {
+
+            assert (actualization != null);
+            assert (actualization.length >= dimTrait);
+
+            if (actualization.length >= dimTrait * dimTrait) {
+                for (int i = 0; i < dimTrait; ++i) {
+                    actualization[i * dimTrait + i] = 1.0;
+                }
+            } else {
+                for (int i = 0; i < dimTrait; ++i) {
+                    actualization[i] = 1.0;
+                }
+            }
+        }
+
+        @Override
+        public void getRootMatrices(int priorBufferIndex, int precisionIndex,
+                                    DiffusionRepresentation precision, double[] displacement, double[] actualization) {
+
+            getRootPrecision(priorBufferIndex, precisionIndex, precision);
+            getDefaultDisplacement(displacement);
+            getDefaultActualization(actualization);
+        }
+
+        @Override
+        public void getRootPrecision(int priorBufferIndex, int precisionIndex, DiffusionRepresentation precision) {
+
+            assert (precision != null);
+            assert (precision.getDimension() >= dimTrait * dimTrait);
+
+            updatePrecisionOffsetAndDeterminant(precisionIndex);
+
+            int priorOffset = dimPartial * priorBufferIndex;
+            final double priorScalar = partials[priorOffset + dimTrait];
+            precision.fill(diffusions, precisionOffset, dimTrait * dimTrait,
+                    sparseDiffusions == null ? null : sparseDiffusions[precisionIndex], 0,
+                    priorScalar);
+//            for (int i = 0; i < dimTrait * dimTrait; ++i) {
+//                precision[i] = priorScalar * diffusions[precisionOffset + i];
+//            }
         }
 
         @Override
         public void setPreOrderPartial(int bufferIndex, final double[] partial) {
-            assert(partial.length >= dimPartial);
-            assert(prePartials != null);
 
-            System.arraycopy(partial, 0, prePartials, dimPartial * bufferIndex, dimPartial);
+            System.arraycopy(partial, 0,
+                    preOrderPartials, getArrayStart(bufferIndex),
+                    getArrayLength(bufferIndex));
         }
 
         @Override
         public void getPreOrderPartial(int bufferIndex, final double[] partial) {
-            assert(partial.length >= dimPartial);
-            assert(prePartials != null);
 
-            System.arraycopy(prePartials, dimPartial * bufferIndex, partial, 0, dimPartial);
+            System.arraycopy(preOrderPartials, getArrayStart(bufferIndex),
+                    partial, 0,
+                    getArrayLength(bufferIndex));
+        }
+
+        private int getArrayStart(int bufferIndex) {
+            return (bufferIndex == -1) ? 0 : dimPartial * bufferIndex;
+        }
+
+        private int getArrayLength(int bufferIndex) {
+            return (bufferIndex == -1) ? dimPartial * bufferCount : dimPartial;
         }
 
         @Override
@@ -208,18 +447,26 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         @Override
         public void setDiffusionPrecision(int precisionIndex, final double[] matrix, double logDeterminant) {
-            assert(matrix.length == dimTrait * dimTrait);
+            assert(matrix.length == dimProcess * dimProcess);
             assert(diffusions != null);
             assert(determinants != null);
 
-            System.arraycopy(matrix, 0, diffusions, dimTrait * dimTrait * precisionIndex, dimTrait * dimTrait);
+            System.arraycopy(matrix, 0, diffusions, dimProcess * dimProcess * precisionIndex, dimProcess * dimProcess);
             determinants[precisionIndex] = logDeterminant;
         }
 
         @Override
-        public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, final double[] logLikelihoods,
-                                               boolean incrementOuterProducts) {
+        public void setDiffusionStationaryVariance(int precisionIndex, final double[] alpha, final double[] rotation) {
+            // Do Nothing.
+        }
+
+        @Override
+        public void calculateRootLogLikelihood(int rootBufferIndex, int priorBufferIndex, int precisionIndex,
+                                               final double[] logLikelihoods, boolean incrementOuterProducts, boolean isIntegratedProcess) {
             assert(logLikelihoods.length == numTraits);
+            assert(!isIntegratedProcess);
+
+            updatePrecisionOffsetAndDeterminant(precisionIndex);
 
             if (DEBUG) {
                 System.err.println("Root calculation for " + rootBufferIndex);
@@ -274,7 +521,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         }
                     }
 
-                    degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
+                    degreesOfFreedom[trait] += 1; // increment degrees-of-freedom
                 }
 
                 if (DEBUG) {
@@ -282,14 +529,14 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     for (int g = 0; g < dimTrait; ++g) {
                         System.err.print(" " + partials[rootOffset + g]);
                     }
-                    System.err.println("");
+                    System.err.println();
                     System.err.println("prec: " + partials[rootOffset + dimTrait]);
                     System.err.println("rootScalar: " + rootScalar);
                     System.err.println("\t" + logLike + " " + (logLike + remainder));
                     if (incrementOuterProducts) {
                         System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                     }
-                    System.err.println("");
+                    System.err.println();
                 }
 
                 rootOffset += dimPartialForTrait;
@@ -312,12 +559,22 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             throw new RuntimeException("Not yet implemented");
         }
 
+        void resetSumOfSquares() {
+            // Do nothing
+        }
+
         @Override
-        public void updatePostOrderPartials(final int[] operations, int operationCount, boolean incrementOuterProducts) {
+        public void updatePostOrderPartials(final int[] operations, int operationCount,
+                                            int precisionIndex,
+                                            boolean computeRemainders, boolean incrementOuterProducts) {
 
             if (DEBUG) {
                 System.err.println("Post-order operations:");
             }
+
+            updatePrecisionOffsetAndDeterminant(precisionIndex);
+
+            resetSumOfSquares();
 
             int offset = 0;
             for (int op = 0; op < operationCount; ++op) {
@@ -332,6 +589,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                         operations[offset + 2],
                         operations[offset + 3],
                         operations[offset + 4],
+                        computeRemainders,
                         incrementOuterProducts
                 );
 
@@ -340,7 +598,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
             if (DEBUG) {
                 System.err.println("End");
-                System.err.println("");
+                System.err.println();
             }
         }
 
@@ -348,6 +606,11 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
         public void updateBrownianDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
                                                     final double[] edgeLengths, final double[] driftRates,
                                                     int updateCount) {
+            updateBranchLengthsAndDet(precisionIndex, probabilityIndices, edgeLengths, updateCount);
+        }
+
+        private void updateBranchLengthsAndDet(int precisionIndex, final int[] probabilityIndices,
+                                               final double[] edgeLengths, int updateCount) {
 
             if (DEBUG) {
                 System.err.println("Matrices (basic):");
@@ -359,12 +622,33 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                     System.err.println("\t" + probabilityIndices[up] + " <- " + edgeLengths[up]);
                 }
 
-                // TODO Currently only written for SCALAR model
-                branchLengths[dimMatrix * probabilityIndices[up]] = edgeLengths[up];  // TODO Remove dimMatrix
+                branchLengths[probabilityIndices[up]] = edgeLengths[up];
             }
 
-            precisionOffset = dimTrait * dimTrait * precisionIndex;
+            updatePrecisionOffsetAndDeterminant(precisionIndex);
+        }
+
+        void updatePrecisionOffsetAndDeterminant(int precisionIndex) {
+            precisionOffset = dimProcess * dimProcess * precisionIndex;
             precisionLogDet = determinants[precisionIndex];
+        }
+
+        @Override
+        public void updateOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                             final double[] edgeLengths, final double[] optimalRates,
+                                                             final double[] strengthOfSelectionMatrix,
+                                                             final double[] rotation,
+                                                             int updateCount){
+            updateBranchLengthsAndDet(precisionIndex, probabilityIndices, edgeLengths, updateCount);
+        }
+
+        @Override
+        public void updateIntegratedOrnsteinUhlenbeckDiffusionMatrices(int precisionIndex, final int[] probabilityIndices,
+                                                             final double[] edgeLengths, final double[] optimalRates,
+                                                             final double[] strengthOfSelectionMatrix,
+                                                             final double[] rotation,
+                                                             int updateCount){
+            updateBranchLengthsAndDet(precisionIndex, probabilityIndices, edgeLengths, updateCount);
         }
 
         @Override
@@ -381,10 +665,11 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
         double[] remainders;
         double[] diffusions;
+        SparseCompressedMatrix[] sparseDiffusions;
         double[] determinants;
         int[] degreesOfFreedom;
         double[] outerProducts;
-        double[] prePartials;
+        double[] preOrderPartials;
 
         // Set during updateDiffusionMatrices() and used in updatePartials()
         int precisionOffset;
@@ -406,10 +691,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             int jbo = dimPartial * jBuffer;
 
             // Determine matrix offsets
-            final int imo = dimMatrix * iMatrix;
-            final int jmo = dimMatrix * jMatrix;
+            final int imo = iMatrix; //TODO: not sure why we need iMatrix & jMatrix to begin with?
+            final int jmo = jMatrix;
 
-            // Read variance increments along descendent branches of k
+            // Read variance increments along descendant branches of k
             final double vi = branchLengths[imo];
             final double vj = branchLengths[jmo];
 //
@@ -424,7 +709,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             for (int trait = 0; trait < numTraits; ++trait) {
 
                 // A. Get current precision of k and j
-                final double pk = prePartials[kbo + dimTrait];
+                final double pk = preOrderPartials[kbo + dimTrait];
                 final double pj = partials[jbo + dimTrait];
 
 //                final DenseMatrix64F Pk = wrap(prePartials, kbo + dimTrait, dimTrait, dimTrait);
@@ -474,9 +759,14 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //                    }
 //                    prePartials[ibo + g] = sum; // Write node
 //                }
+                final double pTmp = Double.isInfinite(pk) ? 1.0 : 1.0 + pjp / pk;
+                final double pWeight = Double.isInfinite(pTmp) ? 0.0 : 1.0 / pTmp;
 
                 for (int g = 0; g < dimTrait; ++g) {
-                    prePartials[ibo + g] = (pk * prePartials[kbo + g] + pjp * partials[jbo + g]) / pip;
+//                    double mean = (pk * preOrderPartials[kbo + g] + pjp * partials[jbo + g]) / pip;
+                    double mean = pWeight * preOrderPartials[kbo + g] + (1.0 - pWeight) * partials[jbo + g];
+                    preOrderPartials[ibo + g] = mean;
+//                    preBranchPartials[ibo + g] = mean; // TODO Only when necessary
                 }
 
                 // C. Inflate variance along node branch
@@ -493,21 +783,24 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //
 //                // X. Store precision results for node
 
-                prePartials[ibo + dimTrait] = pi;
+//                preOrderPartials[ibo + dimTrait] = pi;
+                preOrderPartials[ibo + dimTrait] = Double.isInfinite(pi) ? Double.POSITIVE_INFINITY : pi;
+
+//                preBranchPartials[ibo + dimTrait] = pip; // TODO Ony when necessary
 
 //                unwrap(Pi, prePartials, ibo + dimTrait);
 //                unwrap(Vi, prePartials, ibo + dimTrait + dimTrait * dimTrait);
 //
                 if (DEBUG) {
                     System.err.println("trait: " + trait);
-                    System.err.println("pM: " + new WrappedVector.Raw(prePartials, kbo, dimTrait));
+                    System.err.println("pM: " + new WrappedVector.Raw(preOrderPartials, kbo, dimTrait));
                     System.err.println("pk: " + pk);
                     System.err.println("sM: " + new WrappedVector.Raw(partials, jbo, dimTrait));
                     System.err.println("sV: " + vj);
 //                    System.err.println("sVp: " + Vjp);
                     System.err.println("sPp: " + pjp);
                     System.err.println("Pip: " + pip);
-                    System.err.println("cM: " + new WrappedVector.Raw(prePartials, ibo, dimTrait));
+                    System.err.println("cM: " + new WrappedVector.Raw(preOrderPartials, ibo, dimTrait));
                     System.err.println("cV: " + pi);
                 }
 //
@@ -519,12 +812,19 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 //            throw new RuntimeException("Not yet implemented");
         }
 
+        @Override
+        public void calculatePreOrderRoot(int priorBufferIndex, int rootNodeIndex, int precisionIndex) {
+            System.arraycopy(partials, dimPartial * priorBufferIndex, // Copy from prior
+                    preOrderPartials, dimPartial * rootNodeIndex, dimPartial); // To pre-order root
+        }
+
         protected void updatePartial(
                 final int kBuffer,
                 final int iBuffer,
                 final int iMatrix,
                 final int jBuffer,
                 final int jMatrix,
+                final boolean computeRemainders,
                 final boolean incrementOuterProducts
         ) {
             // Determine buffer offsets
@@ -533,10 +833,10 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             int jbo = dimPartial * jBuffer;
 
             // Determine matrix offsets
-            final int imo = dimMatrix * iMatrix;
-            final int jmo = dimMatrix * jMatrix;
+            final int imo = iMatrix; //TODO: just use iMatrix * jMatrix? (also, why do we need these?)
+            final int jmo = jMatrix;
 
-            // Read variance increments along descendent branches of k
+            // Read variance increments along descendant branches of k
             final double vi = branchLengths[imo];
             final double vj = branchLengths[jmo];
 
@@ -563,13 +863,16 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                 // Compute partial mean and precision at node k
 
                 // A. Partial precision scalar
-                final double pk = pip + pjp;
+                final double pk = Double.isInfinite(pip + pjp) ? Double.POSITIVE_INFINITY : pip + pjp;
+                final double pTmp = Double.isInfinite(pip) ? 1.0 : 1.0 + pjp / pip;
+                final double pWeight = Double.isInfinite(pTmp) ? 0.0 : 1.0 / pTmp;
 
                 // B. Partial mean
                 if (INLINE) {
                     // For each dimension // TODO in parallel
                     for (int g = 0; g < dimTrait; ++g) {
-                        partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk;
+//                        partials[kbo + g] = (pip * partials[ibo + g] + pjp * partials[jbo + g]) / pk;
+                        partials[kbo + g] = pWeight * partials[ibo + g] + (1.0 - pWeight) * partials[jbo + g];
                     }
                 } else {
                     updateMean(partials, kbo, ibo, jbo, pip, pjp, pk, dimTrait);
@@ -580,7 +883,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
                 if (DEBUG) {
                     System.err.println("\ttrait: " + trait);
-                    //System.err.println("\t\tprec: " + pi);
+                    //System.err.println("\t\tPrec: " + pi);
                     System.err.print("\t\tmean i:");
                     for (int e = 0; e < dimTrait; ++e) {
                         System.err.print(" " + partials[ibo + e]);
@@ -603,7 +906,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
 
                 // Computer remainder at node k
                 double remainder = 0.0;
-                if (pi != 0 && pj != 0) {
+                if (computeRemainders && pi != 0 && pj != 0) {
 
                     // TODO Suspect this is very inefficient, since SSi and SSj were already computed when k = i or j
 
@@ -682,7 +985,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                             System.err.println("Outer-products:" + wrap(outerProducts, dimTrait * dimTrait * trait, dimTrait, dimTrait));
                         }
 
-                        degreesOfFreedom[trait] += 1; // incremenent degrees-of-freedom
+                        degreesOfFreedom[trait] += 1; // increment degrees-of-freedom
                     }
                 } // End if remainder
 
@@ -699,7 +1002,7 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             }
         }
 
-        private static void updateMean(final double[] partials,
+        protected static void updateMean(final double[] partials,
                                        final int kob,
                                        final int iob,
                                        final int job,
@@ -707,24 +1010,28 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
                                        final double pjp,
                                        final double pk,
                                        final int dimTrait) {
+            final double pTmp = Double.isInfinite(pip) ? 1.0 : 1.0 + pjp / pip;
+            final double pWeight = Double.isInfinite(pTmp) ? 0.0 : 1.0 / pTmp;
             for (int g = 0; g < dimTrait; ++g) {
-                partials[kob + g] = (pip * partials[iob + g] + pjp * partials[job + g]) / pk;
+//                partials[kob + g] = (pip * partials[iob + g] + pjp * partials[job + g]) / pk;
+                partials[kob + g] = pWeight * partials[iob + g] + (1.0 - pWeight) * partials[job + g];
             }
         }
 
         private void allocateStorage() {
             partials = new double[dimPartial * bufferCount];
-            branchLengths = new double[dimMatrix * bufferCount]; // TODO Should be just bufferCount
+            branchLengths = new double[bufferCount];
 //            variances = new double[dimMatrix * bufferCount]; // TODO Should be dimTrait * dimTrait
             remainders = new double[numTraits * bufferCount];
 
-            diffusions = new double[dimTrait * dimTrait * diffusionCount];
+            diffusions = new double[dimProcess * dimProcess * diffusionCount];
             determinants = new double[diffusionCount];
 
             degreesOfFreedom = new int[numTraits];
-            outerProducts = new double[dimTrait * dimTrait * numTraits];
+            outerProducts = new double[dimProcess * dimProcess * numTraits];
 
-            prePartials = new double[dimPartial * bufferCount];
+            preOrderPartials = new double[dimPartial * bufferCount];
+//            preBranchPartials = new double[dimPartial * bufferCount];
         }
 
         private String getOperationString(final int[] operations, final int offset) {
@@ -735,7 +1042,15 @@ public interface ContinuousDiffusionIntegrator extends Reportable {
             return sb.toString();
         }
 
-        private static boolean DEBUG = false;
+//        public void getPrecisionPreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//            throw new RuntimeException("Not implemented for unsafe integrators.");
+//        }
+//
+//        public void getVariancePreOrderDerivative(BranchSufficientStatistics statistics, DenseMatrix64F gradient) {
+//            throw new RuntimeException("Not implemented for unsafe integrators.");
+//        }
+
+        private static final boolean DEBUG = false;
     }
 
 }

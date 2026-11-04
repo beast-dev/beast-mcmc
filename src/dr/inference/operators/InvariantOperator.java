@@ -1,7 +1,8 @@
 /*
  * InvariantOperator.java
  *
- * Copyright (c) 2002-2017 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -28,6 +30,7 @@ package dr.inference.operators;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.DirtyLikelihoodOperatorParser;
+import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc Suchard
@@ -124,6 +127,8 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
             double[] x = parameter.getParameterValues();
 
             EllipticalSliceOperator.transformPoint(x, translationInvariant, rotationInvariant, dim);
+
+//            System.err.println("x = " + new WrappedVector.Raw(x, 0, 10));
 
             final int len = x.length;
             for (int i = 0; i < len; ++i) {

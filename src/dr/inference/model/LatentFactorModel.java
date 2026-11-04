@@ -1,7 +1,8 @@
 /*
  * LatentFactorModel.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -48,7 +50,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final MatrixParameterInterface factors;
     private final MatrixParameterInterface loadings;
     private MatrixParameterInterface sData;
-    private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
     private final Parameter continuous;
 
@@ -105,7 +106,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final int nmeasurements;
 
     public LatentFactorModel(MatrixParameterInterface data, MatrixParameterInterface factors, MatrixParameterInterface loadings,
-                             DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
+                             DiagonalMatrix colPrecision,
                              Parameter missingIndicator,
                              boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeResiduals,
                              boolean recomputeFactors, boolean recomputeLoadings
@@ -182,13 +183,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             }
         }
 
-        this.rowPrecision = rowPrecision;
         this.colPrecision = colPrecision;
 
         addVariable(data);
         addVariable(factors);
         addVariable(loadings);
-        addVariable(rowPrecision);
         addVariable(colPrecision);
 
         dimFactors = factors.getRowDimension();

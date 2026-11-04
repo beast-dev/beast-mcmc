@@ -1,7 +1,8 @@
 /*
  * ProcessSimulation.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treedatalikelihood;
@@ -30,7 +32,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
@@ -45,14 +46,14 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
     private final Tree tree;
 
     private final SimulationTreeTraversal treeTraversalDelegate;
-    private final TreeDataLikelihood treeDataLikelihood;
+    private final ProcessAlongTree treeDataLikelihood;
     private final ProcessSimulationDelegate simulationDelegate;
 
     private final int[] operations;
 
     private boolean validSimulation;
 
-    public ProcessSimulation(TreeDataLikelihood treeDataLikelihood,
+    public ProcessSimulation(ProcessAlongTree treeDataLikelihood,
                              ProcessSimulationDelegate simulationDelegate) {
 
         this.treeDataLikelihood = treeDataLikelihood;
@@ -63,16 +64,32 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
                 simulationDelegate.getOptimalTraversalType());
 
         treeDataLikelihood.addModelListener(this);
+        treeDataLikelihood.addModelRestoreListener(this);
 
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
 
-        this.operations = new int[tree.getNodeCount() * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
+        this.operations = new int[tree.getNodeCount() * simulationDelegate.getSingleOperationSize()];
 
         validSimulation = false;
     }
 
+    private static final boolean IGNORE_REMAINDER = true;
+
     public final void cacheSimulatedTraits(final NodeRef node) {
+
+        if (IGNORE_REMAINDER) {
+
+            if (!validSimulation) {
+                treeDataLikelihood.calculatePostOrderStatistics();
+                simulateTraits(node);
+                validSimulation = true;
+            }
+
+            return;
+        }
+
+        //TODO: eliminate if statement and delete rest of function
 
         treeDataLikelihood.getLogLikelihood(); // Ensure likelihood is up-to-date
 
@@ -91,10 +108,14 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         }
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        int count = simulationDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(), operations);
 
         final NodeRef root = tree.getRoot();
-        simulationDelegate.simulate(operations, count, root.getNumber());
+        if (simulationDelegate.isVectorized()) {
+            int count = simulationDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(), operations);
+            simulationDelegate.simulate(operations, count, root.getNumber());
+        } else {
+            simulationDelegate.simulate(treeTraversalDelegate.getNodeOperations(), root);
+        }
 
         treeTraversalDelegate.setAllNodesUpdated();
     }
@@ -118,6 +139,6 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
 
     @Override
     public void modelRestored(Model model) {
-        // Do nothing
+        validSimulation = false;
     }
 }

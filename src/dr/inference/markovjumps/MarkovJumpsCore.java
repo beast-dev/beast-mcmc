@@ -1,7 +1,8 @@
 /*
  * MarkovJumpsCore.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.markovjumps;
@@ -30,10 +32,10 @@ import java.util.Arrays;
 /**
  * @author Marc Suchard
  * @author Vladimir Minin
- *
+ * <p>
  * A base class for implementing Markov chain-induced counting processes (markovjumps) in BEAST using BEAGLE
  * This work is supported by NSF grant 0856099
- *
+ * <p>
  * Minin VN and Suchard MA (2008) Counting labeled transitions in continous-time Markov models of evolution.
  * Journal of Mathematical Biology, 56, 391-412.
  *
@@ -278,10 +280,10 @@ public class MarkovJumpsCore {
         }
     }
 
-    private int stateCount;
-    private int stateCount2;
-    private double[] auxInt;
-    private double[] tmp1;
-    private double[] tmp2;
-    private double[] expEvalScalar;
+    private final int stateCount;
+    private final int stateCount2;
+    private final double[] auxInt;
+    private final double[] tmp1;
+    private final double[] tmp2;
+    private final double[] expEvalScalar;
 }

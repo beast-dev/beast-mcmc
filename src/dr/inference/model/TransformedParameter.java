@@ -1,7 +1,8 @@
 /*
  * TransformedParameter.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
@@ -29,6 +31,7 @@ import dr.util.Transform;
 
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 
 public class TransformedParameter extends Parameter.Abstract implements VariableListener {
@@ -38,14 +41,15 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     }
 
     public TransformedParameter(Parameter parameter, Transform transform, boolean inverse) {
+
         this.parameter = parameter;
         this.transform = transform;
         this.inverse = inverse;
         this.parameter.addVariableListener(this);
-    }
-
-    public int getDimension() {
-        return parameter.getDimension();
+        Bounds bounds = parameter.getBounds();
+        if (bounds != null && !(transform instanceof Transform.MultivariateTransform)) {
+            addBounds(bounds);
+        }
     }
 
     protected void storeValues() {
@@ -72,12 +76,44 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         }
     }
 
+    protected double[] transform(double values[]) {
+        if (inverse) {
+            return transform.inverse(values, 0, values.length);
+        } else {
+            return transform.transform(values, 0, values.length);
+        }
+    }
+
     private double inverse(double value) {
         return inverse ? transform.transform(value) : transform.inverse(value);
     }
 
+    protected double[] inverse(double values[]) {
+        if (inverse) {
+            return transform.transform(values, 0, values.length);
+        } else {
+            return transform.inverse(values, 0, values.length);
+        }
+    }
+
     public double getParameterValue(int dim) {
         return transform(parameter.getParameterValue(dim));
+    }
+
+    public double getParameterUntransformedValue(int dim) {
+        return parameter.getParameterValue(dim);
+    }
+
+    public double[] getParameterUntransformedValues() {
+        return parameter.getParameterValues();
+    }
+
+    public void setParameterUntransformedValue(int dim, double a) {
+        parameter.setParameterValue(dim, a);
+    }
+
+    public Parameter getUntransformedParameter() {
+        return parameter;
     }
 
     public void setParameterValue(int dim, double value) {
@@ -103,8 +139,15 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         final double[] lower = new double[dim];
         final double[] upper = new double[dim];
         for (int i = 0; i < dim; ++i) {
-            lower[i] = inverse(bounds.getLowerLimit(i));
-            upper[i] = inverse(bounds.getUpperLimit(i));
+            final double transformedLowerBound = transform(bounds.getLowerLimit(i));
+            final double transformedUpperBound = transform(bounds.getUpperLimit(i));
+            if (transformedLowerBound < transformedUpperBound) {
+                lower[i] = transformedLowerBound;
+                upper[i] = transformedUpperBound;
+            } else {
+                lower[i] = transformedUpperBound;
+                upper[i] = transformedLowerBound;
+            }
         }
         transformedBounds = new DefaultBounds(upper, lower);
 
@@ -128,8 +171,12 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
 //        }
 //        System.err.println("\n");
 //
-        parameter.addBounds(transformedBounds);
+//        parameter.addBounds(transformedBounds);
 //        throw new RuntimeException("Should not call addBounds() on transformed parameter");
+    }
+
+    public boolean check() {
+        return parameter.check();
     }
 
     public Bounds<Double> getBounds() {
@@ -145,13 +192,42 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         throw new RuntimeException("Not yet implemented.");
     }
 
-    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        // Propogate change up model graph
-        fireParameterChangedEvent(index, type);
+    @Override
+    public void fireParameterChangedEvent() {
+
+        doNotPropagateChangeUp = true;
+        parameter.fireParameterChangedEvent();
+        doNotPropagateChangeUp = false;
+
+        fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
     }
 
-    private final Parameter parameter;
-    private final Transform transform;
-    private final boolean inverse;
-    private Bounds<Double> transformedBounds = null;
+    @Override
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (!doNotPropagateChangeUp) {
+            fireParameterChangedEvent(index, type);
+        }
+    }
+
+    public double diffLogJacobian(double[] oldValues, double[] newValues) {
+        // Takes **untransformed** values
+        if (inverse) {
+            return -transform.logJacobian(transform(oldValues), 0, oldValues.length)
+                    + transform.logJacobian(transform(newValues), 0, newValues.length);
+        } else {
+            return transform.logJacobian(oldValues, 0, oldValues.length)
+                    - transform.logJacobian(newValues, 0, newValues.length);
+        }
+    }
+
+    public Transform getTransform() {
+        return transform;
+    }
+
+    protected final Parameter parameter;
+    protected final Transform transform;
+    protected final boolean inverse;
+    protected Bounds<Double> transformedBounds;
+
+    protected boolean doNotPropagateChangeUp = false;
 }

@@ -1,0 +1,64 @@
+/*
+ * MultiDimensionalScalingLayout.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.inference.multidimensionalscaling;
+
+/**
+ * @author Marc Suchard
+ */
+
+public class MultiDimensionalScalingLayout {
+
+    final int rowLocationCount;
+    final int columnLocationCount;
+    final int columnLocationOffset;
+    final int uniqueLocationCount;
+    final int observationCount;
+    final int observationStride;
+
+    public MultiDimensionalScalingLayout(int locationCount) {
+        this.rowLocationCount = locationCount;
+        this.columnLocationCount = locationCount;
+        this.columnLocationOffset = 0;
+        this.uniqueLocationCount = locationCount;
+        this.observationCount = locationCount * locationCount;
+        this.observationStride = locationCount;
+    }
+
+    public MultiDimensionalScalingLayout(int rowLocationCount, int columnLocationCount) {
+        this.rowLocationCount = rowLocationCount;
+        this.columnLocationCount = columnLocationCount;
+        this.columnLocationOffset = rowLocationCount;
+        this.uniqueLocationCount = rowLocationCount + columnLocationCount;
+        this.observationCount = rowLocationCount * columnLocationCount;
+        this.observationStride = columnLocationCount;
+    }
+
+    public boolean isSymmetric() {
+        return columnLocationOffset == 0;
+    }
+}

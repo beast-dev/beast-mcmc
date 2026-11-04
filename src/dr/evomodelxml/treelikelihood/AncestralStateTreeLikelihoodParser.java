@@ -1,7 +1,8 @@
 /*
  * AncestralStateTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,16 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.treelikelihood;
 
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
@@ -57,6 +62,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
     public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String MAP_RECONSTRUCTION = "useMAP";
     public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
+    public static final String CONDITIONAL_PROBABILITIES_IN_LOG_SPACE = "conditionalProbabilitiesInLogSpace";
 
     public String getParserName() {
         return RECONSTRUCTING_TREE_LIKELIHOOD;
@@ -64,9 +70,9 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 
     protected BeagleTreeLikelihood createTreeLikelihood(
             PatternList patternList, //
-            TreeModel treeModel, //
+            MutableTreeModel treeModel, //
             BranchModel branchModel, //
-            GammaSiteRateModel siteRateModel, //
+            SiteRateModel siteRateModel, //
             BranchRateModel branchRateModel, //
             TipStatesModel tipStatesModel, //
             boolean useAmbiguities, //
@@ -87,6 +93,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+        boolean conditionalProbabilitiesInLogSpace = xo.getAttribute(CONDITIONAL_PROBABILITIES_IN_LOG_SPACE, false);
 
         if (patternList.areUnique()) {
             throw new XMLParseException("Ancestral state reconstruction cannot be used with compressed (unique) patterns.");
@@ -106,7 +113,8 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 dataType,
                 tag,
                 useMAP,
-                useMarginalLogLikelihood
+                useMarginalLogLikelihood,
+                conditionalProbabilitiesInLogSpace
         );
     }
 
@@ -115,8 +123,8 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, true),
                 AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                 new ElementRule(PatternList.class),
-                new ElementRule(TreeModel.class),
-                new ElementRule(GammaSiteRateModel.class),
+                new ElementRule(MutableTreeModel.class),
+                new ElementRule(SiteRateModel.class),
                 new ElementRule(BranchModel.class, true),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(TipStatesModel.class, true),

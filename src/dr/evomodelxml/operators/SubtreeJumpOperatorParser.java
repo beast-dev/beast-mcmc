@@ -1,7 +1,8 @@
 /*
  * SubtreeJumpOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,18 +22,23 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.operators;
 
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
+import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
+import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
 import dr.evomodel.operators.SubtreeJumpOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
 
 /**
+ * This is an adaptable version of the FixedHeightSubtreePruneRegraft move by Sebastian Hoehna.
  */
 public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
@@ -49,7 +55,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
@@ -65,7 +71,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
         if (Double.isInfinite(size)) {
             // uniform so no auto optimize
-            mode = CoercionMode.COERCION_OFF;
+            mode = AdaptationMode.ADAPTATION_OFF;
         }
 
         if (targetAcceptance <= 0.0 || targetAcceptance >= 1.0) {
@@ -73,8 +79,11 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
         }
 
         SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, targetAcceptance, uniform, mode);
-        operator.setTargetAcceptanceProbability(targetAcceptance);
+//        operator.setTargetAcceptanceProbability(targetAcceptance);
 
+        if(treeModel instanceof ConstrainedTreeModel){
+            return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, operator,xo);
+        }
         return operator;
     }
 
@@ -83,7 +92,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return SubtreeJumpOperator.class;
+        return FixedHeightSubtreePruneRegraftOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -94,7 +103,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             AttributeRule.newDoubleRule(SIZE, true),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE, true),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };
 

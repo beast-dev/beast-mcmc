@@ -1,7 +1,8 @@
 /*
  * FireParameterOperator.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -30,11 +32,13 @@ import dr.inferencexml.operators.FireParameterOperatorParser;
 
 /**
  * @author Marc Suchard
+ * @author Gabriel Hassler
  */
 public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public FireParameterOperator(Parameter parameter, double weight) {
+    public FireParameterOperator(Parameter parameter, double[] values, double weight) {
         this.parameter = parameter;
+        this.values = values;
         setWeight(weight);
     }
 
@@ -47,7 +51,16 @@ public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOp
     }
 
     public double doOperation() {
-        parameter.setParameterValue(0, parameter.getParameterValue(0));
+        if (values != null) {
+
+            for (int i = 0; i < parameter.getDimension(); i++) {
+                parameter.setParameterValueQuietly(i, values[i]);
+            }
+            parameter.fireParameterChangedEvent();
+
+        } else {
+            parameter.setParameterValue(0, parameter.getParameterValue(0));
+        }
         return 0;
     }
 
@@ -56,4 +69,5 @@ public class FireParameterOperator extends SimpleMCMCOperator implements GibbsOp
     }
 
     private Parameter parameter;
+    private final double[] values;
 }

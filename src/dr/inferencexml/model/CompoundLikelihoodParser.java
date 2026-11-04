@@ -1,7 +1,8 @@
 /*
  * CompoundLikelihoodParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.model;
@@ -38,7 +40,8 @@ import java.util.logging.Logger;
 public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     public static final String COMPOUND_LIKELIHOOD = "compoundLikelihood";
     public static final String THREADS = "threads";
-    public static final String POSTERIOR = "posterior";
+    @Deprecated public static final String POSTERIOR = "posterior"; // replaced with JOINT
+    public static final String JOINT = "joint";
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
     public static final String PSEUDO_PRIOR = "pseudoPrior";
@@ -50,7 +53,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, REFERENCE_PRIOR, WORKING_PRIOR};
+        return new String[]{getParserName(), POSTERIOR, JOINT, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, REFERENCE_PRIOR, WORKING_PRIOR};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

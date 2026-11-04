@@ -1,7 +1,8 @@
 /*
  * TipStateSwapOperatorParser.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodelxml.operators;
@@ -34,6 +36,8 @@ import dr.xml.*;
  */
 public class TipStateSwapOperatorParser extends AbstractXMLObjectParser {
 
+    private static final String UNIFORM_RANDOMIZATION = "uniformRandomization";
+
     public String getParserName() {
         return TipStateSwapOperator.TIP_STATE_OPERATOR;
     }
@@ -43,7 +47,9 @@ public class TipStateSwapOperatorParser extends AbstractXMLObjectParser {
         AncestralStateBeagleTreeLikelihood treeLikelihood =
                 (AncestralStateBeagleTreeLikelihood) xo.getChild(AncestralStateBeagleTreeLikelihood.class);
         final double weight = xo.getDoubleAttribute("weight");
-        return new TipStateSwapOperator(treeLikelihood, weight);
+        final boolean uniformRandomization = xo.getAttribute(UNIFORM_RANDOMIZATION, false);
+
+        return new TipStateSwapOperator(treeLikelihood, weight, uniformRandomization);
     }
 
     //************************************************************************

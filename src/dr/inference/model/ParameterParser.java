@@ -1,7 +1,8 @@
 /*
  * ParameterParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,10 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
@@ -35,13 +33,16 @@ import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.xml.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
 /**
  * Parses a multi-dimensional continuous parameter.
  * 
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: ParameterParser.java,v 1.12 2005/05/24 20:26:00 rambaut Exp $
  */
 public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
 
@@ -223,10 +224,10 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
             }
         }
 
-        Parameter param = new Parameter.Default(values.length);
-        for(int i = 0; i < values.length; i++) {
-            param.setParameterValue(i, values[i]);
-        }
+        Parameter param = new Parameter.Default(values);
+//        for(int i = 0; i < values.length; i++) {
+//            param.setParameterValue(i, values[i]);
+//        }
         param.addBounds(new Parameter.DefaultBounds(uppers, lowers));
         return param;
     }
@@ -303,6 +304,15 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
                 return;
             }
         }
+    }
+
+    public static Parameter getOptionalParameter(XMLObject xo, String name) {
+        Parameter parameter = null;
+        if (xo.hasChildNamed(name)) {
+            XMLObject slabXo = xo.getChild(name);
+            parameter = (Parameter) slabXo.getChild(Parameter.class);
+        }
+        return parameter;
     }
 
 //    static public Parameter getParameter(XMLObject xo) throws XMLParseException {

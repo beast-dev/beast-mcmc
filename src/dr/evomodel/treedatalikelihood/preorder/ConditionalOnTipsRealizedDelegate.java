@@ -1,25 +1,58 @@
+/*
+ * ConditionalOnTipsRealizedDelegate.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
 package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
 
 /**
  * @author Marc A. Suchard
+ * @author Paul Bastide
  */
 public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuousTraitDelegate {
 
     static final private boolean DEBUG = false;
 
     final protected int dimPartial;
-    final boolean hasNoDrift;
+//    final boolean hasNoDrift;
+    final boolean hasDrift;
+    final boolean hasActualization;
 
     public ConditionalOnTipsRealizedDelegate(String name,
                                              Tree tree,
@@ -32,20 +65,34 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
         this.likelihoodDelegate = likelihoodDelegate;
         this.cdi = likelihoodDelegate.getIntegrator();
-        this.dimPartial = dimTrait + likelihoodDelegate.getPrecisionType().getMatrixLength(dimTrait);
+        this.dimPartial = likelihoodDelegate.getPrecisionType().getPartialsDimension(dimTrait);
         partialNodeBuffer = new double[numTraits * dimPartial];
         partialPriorBuffer = new double[numTraits * dimPartial];
 
         tmpMean = new double[dimTrait];
 
-        this.hasNoDrift = ! likelihoodDelegate.getDiffusionProcessDelegate().hasDrift();
+//        this.hasNoDrift = ! likelihoodDelegate.getDiffusionProcessDelegate().hasDrift();
 
-        if (hasNoDrift) {
+        this.hasDrift = likelihoodDelegate.getDiffusionProcessDelegate().hasDrift();
+        this.hasActualization = likelihoodDelegate.getDiffusionProcessDelegate().hasActualization();
+        boolean hasDiagonalActualization = likelihoodDelegate.getDiffusionProcessDelegate().hasDiagonalActualization();
+
+        if (!hasDrift) {
             this.precisionBuffer = null;
             this.displacementBuffer = null;
+            this.actualizationBuffer = null;
         } else {
             this.precisionBuffer = new double[dimTrait * dimTrait];
             this.displacementBuffer = new double[dimTrait];
+            if (!hasActualization) {
+                this.actualizationBuffer = null;
+            } else {
+                if (hasDiagonalActualization) {
+                    this.actualizationBuffer = new double[dimTrait];
+                } else {
+                    this.actualizationBuffer = new double[dimTrait * dimTrait];
+                }
+            }
         }
     }
 
@@ -104,11 +151,21 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
             final double sqrtScale = Math.sqrt(1.0 / totalPrec);
 
-            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    tmpMean, 0, // input mean
-                    cholesky, sqrtScale, // input variance
-                    sample, offsetSample, // output sample
-                    tmpEpsilon);
+            if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+                MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+                        tmpMean, 0,
+                        diffusionRepresentation.getPrecisionCholeskyDecomposition(0),
+                        sqrtScale,
+                        sample, offsetSample,
+                        tmpEpsilon);
+            } else {
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        tmpMean, 0, // input mean
+                        diffusionRepresentation.getVarianceCholeskyDecomposition(0),
+                        sqrtScale, // input variance
+                        sample, offsetSample, // output sample
+                        tmpEpsilon);
+            }
 
             if (DEBUG) {
                 System.err.println("\tsample: " + new WrappedVector.Raw(sample, offsetSample, dimTrait));
@@ -124,7 +181,9 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                 final int external) {
 
         cdi.getPostOrderPartial(nodePartial, partialNodeBuffer);
-        final double branchPrecision = cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
+//        final double branchPrecision = cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
+        final double branchPrecision = 1.0 / cdi.getBranchLength(nodeMatrix);
+//        cdi.getBranchMatrices(nodeMatrix, precisionBuffer, displacementBuffer);
 
         int offsetPartial = 0;
         int offsetSample = dimNode * nodeNumber;
@@ -133,10 +192,20 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         if (DEBUG) {
             System.err.println("Simulate for node " + nodeNumber);
         }
+
+        if (hasDrift) {
+            ((SafeMultivariateIntegrator) cdi).getBranchPrecision(nodeMatrix, precisionBuffer);
+            cdi.getBranchDisplacement(nodeMatrix, displacementBuffer);
+        }
+
+        if (hasActualization) {
+            cdi.getBranchActualization(nodeMatrix, actualizationBuffer);
+        }
+
         for (int trait = 0; trait < numTraits; ++trait) {
 
             simulateTraitForNode(nodeNumber, trait, offsetSample, offsetParent, offsetPartial, external, branchPrecision);
-            
+
             offsetSample += dimTrait;
             offsetParent += dimTrait;
             offsetPartial += dimPartial;
@@ -180,11 +249,21 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
 
             final double sqrtScale = Math.sqrt(1.0 / totalPrecision);
 
-            MultivariateNormalDistribution.nextMultivariateNormalCholesky(
-                    tmpMean, 0, // input mean
-                    cholesky, sqrtScale, // input variance
-                    sample, offsetSample, // output sample
-                    tmpEpsilon);
+            if (diffusionModel instanceof SparseBandedMultivariateDiffusionModel) {
+                MultivariateNormalDistribution.nextMultivariateNormalViaBackSolvePrecision(
+                        tmpMean, 0,
+                        diffusionRepresentation.getPrecisionCholeskyDecomposition(0),
+                        sqrtScale,
+                        sample, offsetSample,
+                        tmpEpsilon);
+            } else {
+                MultivariateNormalDistribution.nextMultivariateNormalCholesky(
+                        tmpMean, 0, // input mean
+                        diffusionRepresentation.getVarianceCholeskyDecomposition(0),
+                        sqrtScale, // input variance
+                        sample, offsetSample, // output sample
+                        tmpEpsilon);
+            }
         }
 
         if (DEBUG) {
@@ -193,10 +272,11 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
     }
 
     final ContinuousDataLikelihoodDelegate likelihoodDelegate;
-    final private ContinuousDiffusionIntegrator cdi;
+    final ContinuousDiffusionIntegrator cdi;
     final double[] partialNodeBuffer;
     final double[] partialPriorBuffer;
     final double[] precisionBuffer;
     final double[] displacementBuffer;
+    final double[] actualizationBuffer;
     final double[] tmpMean;
 }

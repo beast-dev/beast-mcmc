@@ -1,7 +1,8 @@
 /*
  * MultivariateGammaDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,15 +22,18 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
+
+import dr.inference.model.GradientProvider;
 
 /**
  * @author Marc Suchard
  * @author Guy Baele
  */
-public class MultivariateGammaDistribution implements MultivariateDistribution {
+public class MultivariateGammaDistribution implements MultivariateDistribution, GradientProvider {
 
     //TODO: Currently this implements a product of independent Gammas, need to re-code as true multivariate distribution
 
@@ -44,14 +48,14 @@ public class MultivariateGammaDistribution implements MultivariateDistribution {
 
         this.shape = shape;
         this.scale = scale;
-        
+
         this.flags = new boolean[dim];
         for (int i = 0; i < dim; i++) {
-        	flags[i] = true;
+            flags[i] = true;
         }
 
     }
-    
+
     public MultivariateGammaDistribution(double[] shape, double[] scale, boolean[] flags) {
 
         if (shape.length != scale.length)
@@ -61,7 +65,7 @@ public class MultivariateGammaDistribution implements MultivariateDistribution {
 
         this.shape = shape;
         this.scale = scale;
-        
+
         this.flags = flags;
 
     }
@@ -75,9 +79,9 @@ public class MultivariateGammaDistribution implements MultivariateDistribution {
         }
 
         for (int i = 0; i < dim; i++) {
-        	if (flags[i]) { 
-        		logPdf += GammaDistribution.logPdf(x[i], shape[i], scale[i]);
-        	}
+            if (flags[i]) {
+                logPdf += GammaDistribution.logPdf(x[i], shape[i], scale[i]);
+            }
         }
 
         return logPdf;
@@ -98,8 +102,22 @@ public class MultivariateGammaDistribution implements MultivariateDistribution {
     private double[] shape;
     private double[] scale;
     private int dim;
-    
+
     //for each flag that is true, add the logPdf of that gamma distribution to the overall logPdf
     private boolean[] flags;
-    
+
+    @Override
+    public int getDimension() {
+        return dim;
+    }
+
+    @Override
+    public double[] getGradientLogDensity(Object obj) {
+        double[] x = GradientProvider.toDoubleArray(obj);
+        double[] grad = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            grad[i] = GammaDistribution.gradLogPdf(x[i], shape[i], scale[i]);
+        }
+        return grad;
+    }
 }

@@ -1,7 +1,8 @@
 /*
  * CompoundBranchRateModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchratemodel;
@@ -28,7 +30,6 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodelxml.branchratemodel.CompoundBranchRateModelParser;
-import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -42,7 +43,6 @@ import java.util.List;
  * work, one model should drive the actual rate of evolution and the others should be set up to provide
  * relative rates.
  * @author Andrew Rambaut
- * @version $Id:=$
  */
 public class CompoundBranchRateModel extends AbstractBranchRateModel {
 

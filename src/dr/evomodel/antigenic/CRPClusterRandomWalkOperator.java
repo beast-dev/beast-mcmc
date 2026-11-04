@@ -1,7 +1,8 @@
 /*
  * CRPClusterRandomWalkOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.antigenic;
@@ -45,7 +47,7 @@ import dr.inference.model.Parameter;
  * Time: 11:15 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
+public class CRPClusterRandomWalkOperator extends AbstractAdaptableOperator {
 
 
 
@@ -61,7 +63,7 @@ public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
     private double windowSize;
 
     public CRPClusterRandomWalkOperator( Parameter assignments, MatrixParameter virusLocations,double windowSize,   double weight){
-        super(CoercionMode.COERCION_ON);
+        super(AdaptationMode.ADAPTATION_ON);
 
         this.virusLocations=virusLocations;
         this.windowSize = windowSize;
@@ -181,9 +183,10 @@ public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
 
 
 
-    public String getPerformanceSuggestion() {
-        return null;
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
+
 
 
 
@@ -193,22 +196,18 @@ public class CRPClusterRandomWalkOperator extends AbstractCoercableOperator {
 
 
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         windowSize = Math.exp(value);
     }
 
     public double getRawParameter() {
         return windowSize;
     }
-
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
 
 
 

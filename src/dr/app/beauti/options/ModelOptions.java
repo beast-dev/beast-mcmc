@@ -1,7 +1,8 @@
 /*
  * ModelOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.options;
@@ -45,9 +47,9 @@ public abstract class ModelOptions implements Serializable {
 
     private static final long serialVersionUID = 6199011531067286245L;
 
-    protected final Map<String, Parameter> parameters = new HashMap<String, Parameter>();
-    protected final Map<String, Operator> operators = new HashMap<String, Operator>();
-    protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+    protected final Map<String, Parameter> parameters = new HashMap<>();
+    protected final Map<String, Operator> operators = new HashMap<>();
+    protected final Map<TaxonList, Parameter> statistics = new HashMap<>();
 
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
@@ -56,11 +58,11 @@ public abstract class ModelOptions implements Serializable {
     protected static final double treeWeights = 30.0;
     protected static final double rateWeights = 3.0;
 
-    private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+    private final List<ComponentOptions> components = new ArrayList<>();
 
     //+++++++++++++++++++ Abstract Methods ++++++++++++++++++++++++++++++++
 
-    public abstract void initModelParametersAndOpererators();
+    public abstract void initModelParametersAndOperators();
 
     public abstract List<Parameter> selectParameters(List<Parameter> params);
 
@@ -137,16 +139,24 @@ public abstract class ModelOptions implements Serializable {
                 .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
     }
 
+    //TODO think about having a createParameter method with a String priorID argument
+    //public Parameter createParameterGammaPrior(String name, String priorID, String description, ...) {
+
     public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                double shape, double scale, boolean priorFixed) {
-        return createParameterGammaPrior(name, description, scaleType, initial, shape, scale, priorFixed, false);
+        return createParameterGammaPrior(name, description, scaleType, initial, shape, scale, priorFixed, priorFixed, false);
     }
 
     public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                               double shape, double scale, boolean priorFixed, boolean amtk) {
+                                               double shape, double scale, boolean priorFixed, boolean priorParametersFixed) {
+        return createParameterGammaPrior(name, description, scaleType, initial, shape, scale, priorFixed, priorParametersFixed, false);
+    }
+
+    public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                               double shape, double scale, boolean priorFixed, boolean priorParametersFixed, boolean amtk) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
-                .initial(initial).shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).
-                        isAdaptiveMultivariateCompatible(amtk)
+                .initial(initial).shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed)
+                .isPriorParametersFixed(priorParametersFixed).isAdaptiveMultivariateCompatible(amtk)
                 .build(parameters);
     }
 
@@ -233,6 +243,12 @@ public abstract class ModelOptions implements Serializable {
                 .build(operators);
     }
 
+    public Operator createOperator(String parameterName, String description, OperatorType type, double tuning, double weight) {
+        Parameter parameter = getParameter(parameterName);
+        return new Operator.Builder(parameterName, description, parameter, type, tuning, weight)
+                .build(operators);
+    }
+
     public Operator createOperator(String parameterName, OperatorType type, double tuning, double weight, boolean autoOptimize) {
         Parameter parameter = getParameter(parameterName);
         return new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight)
@@ -290,10 +306,8 @@ public abstract class ModelOptions implements Serializable {
     public Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
         if (parameter == null) {
-            for (String key : parameters.keySet()) {
-                System.err.println(key);
-            }
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown; known parameters: "
+                    + parameters.keySet());
         }
         return parameter;
     }
@@ -306,10 +320,12 @@ public abstract class ModelOptions implements Serializable {
     public Parameter getStatistic(TaxonList taxonList) {
         Parameter parameter = statistics.get(taxonList);
         if (parameter == null) {
+            List<String> known = new ArrayList<String>();
             for (TaxonList key : statistics.keySet()) {
-                System.err.println("Taxon list: " + key.getId());
+                known.add(key.getId());
             }
-            throw new IllegalArgumentException("Statistic for taxon list, " + taxonList.getId() + ", is unknown");
+            throw new IllegalArgumentException("Statistic for taxon list, " + taxonList.getId() +
+                    ", is unknown; known taxon lists: " + known);
         }
         return parameter;
     }

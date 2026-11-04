@@ -1,7 +1,8 @@
 /*
  * GuessDatesDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,20 +22,18 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.tipdatepanel;
 
 import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.components.RealNumberField;
 import jam.mac.Utils;
 import jam.panels.OptionsPanel;
 
 
-import java.io.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -46,7 +45,6 @@ import java.util.prefs.Preferences;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class GuessDatesDialog {
 
@@ -319,6 +317,9 @@ public class GuessDatesDialog {
         dialog.pack();
 
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();

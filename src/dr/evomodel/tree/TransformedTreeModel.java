@@ -1,7 +1,8 @@
 /*
  * TransformedTreeModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.tree;
@@ -83,7 +85,7 @@ public class TransformedTreeModel extends AbstractModel implements MutableTreeMo
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == treeTransform) {
-            fireModelChanged(new TreeChangedEvent.WholeTree()); // All internal node heights have changed!
+            fireModelChanged(TreeChangedEvent.create()); // All internal node heights have changed!
         } else if (model == treeModel) {
             fireModelChanged(object, index);
         } else {

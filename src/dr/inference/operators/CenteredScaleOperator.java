@@ -1,7 +1,8 @@
 /*
  * CenteredScaleOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -32,19 +34,18 @@ import dr.math.MathUtils;
  * A generic operator for use with a sum-constrained vector parameter.
  *
  * @author Alexei Drummond
- * @version $Id: CenteredScaleOperator.java,v 1.20 2005/06/14 10:40:34 rambaut Exp $
  */
 
 // AR - I don't see how this can work...
 @Deprecated
-public class CenteredScaleOperator extends AbstractCoercableOperator {
+public class CenteredScaleOperator extends AbstractAdaptableOperator {
 
     public CenteredScaleOperator(Parameter parameter) {
-        super(CoercionMode.DEFAULT);
+        super(AdaptationMode.DEFAULT);
         this.parameter = parameter;
     }
 
-    public CenteredScaleOperator(Parameter parameter, double scale, int weight, CoercionMode mode) {
+    public CenteredScaleOperator(Parameter parameter, double scale, double weight, AdaptationMode mode) {
         super(mode);
         this.parameter = parameter;
         this.scaleFactor = scale;
@@ -99,11 +100,12 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
         return parameter.getParameterName();
     }
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(1.0 / scaleFactor - 1.0);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = 1.0 / (Math.exp(value) + 1.0);
     }
 
@@ -111,21 +113,8 @@ public class CenteredScaleOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeScaleFactor(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public String toString() {

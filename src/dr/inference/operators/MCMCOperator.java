@@ -1,7 +1,8 @@
 /*
  * MCMCOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -32,14 +34,10 @@ import java.io.Serializable;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: MCMCOperator.java,v 1.6 2005/06/14 10:40:34 rambaut Exp $
  */
 public interface MCMCOperator extends Serializable {
 
     public static final String WEIGHT = "weight";
-
-// This attribute is now called AUTO_OPTIMIZE and is in CoercableMCMCOperator
-//	public static final String ADAPT = "adapt";
 
     /**
      * operates on the model.
@@ -108,36 +106,6 @@ public interface MCMCOperator extends Serializable {
     void setSumDeviation(double sumDeviation);
 
     /**
-     * @return the optimal acceptance probability
-     */
-    double getTargetAcceptanceProbability();
-
-    /**
-     * @return the minimum acceptable acceptance probability
-     */
-    double getMinimumAcceptanceLevel();
-
-    /**
-     * @return the maximum acceptable acceptance probability
-     */
-    double getMaximumAcceptanceLevel();
-
-    /**
-     * @return the minimum good acceptance probability
-     */
-    double getMinimumGoodAcceptanceLevel();
-
-    /**
-     * @return the maximum good acceptance probability
-     */
-    double getMaximumGoodAcceptanceLevel();
-
-    /**
-     * @return a short descriptive message of the performance of this operator.
-     */
-    String getPerformanceSuggestion();
-
-    /**
      * @return the relative weight of this operator.
      */
     double getWeight();
@@ -157,22 +125,26 @@ public interface MCMCOperator extends Serializable {
      */
     String getOperatorName();
 
+    /**
+     * get the average time to evaluate the likelihood after this operator
+     * @return
+     */
     double getMeanEvaluationTime();
 
     void addEvaluationTime(long time);
 
     long getTotalEvaluationTime();
 
-    class Utils {
+    /**
+     * Get to total average acceptance probability
+     * @return
+     */
+    double getAcceptanceProbability();
 
-        public static double getAcceptanceProbability(MCMCOperator op) {
-            final long accepted = op.getAcceptCount();
-            final long rejected = op.getRejectCount();
-            return (double) accepted / (double) (accepted + rejected);
-        }
+    /**
+     * Get the acceptance probability over a window of operations
+     * @return
+     */
+     double getSmoothedAcceptanceProbability();
 
-        public static long getOperationCount(MCMCOperator op) {
-            return op.getAcceptCount() + op.getRejectCount();
-        }
-    }
 }

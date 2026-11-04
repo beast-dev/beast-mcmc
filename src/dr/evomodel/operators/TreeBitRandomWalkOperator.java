@@ -1,7 +1,8 @@
 /*
  * TreeBitRandomWalkOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.TreeBitRandomWalkOperatorParser;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -41,11 +44,10 @@ import java.util.List;
  * at the new location, optionally the associated variable values are swapped as well.
  *
  * @author Alexei Drummond
- * @version $Id$
  */
 public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
-    public TreeBitRandomWalkOperator(TreeModel tree, String t1, String t2, double weight, int k, boolean swapTrait2) {
+    public TreeBitRandomWalkOperator(DefaultTreeModel tree, String t1, String t2, double weight, int k, boolean swapTrait2) {
         this.tree = tree;
         this.indicatorTrait = t1;
         this.trait2 = t2;
@@ -125,7 +127,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
-    public final int rateChange(TreeModel tree, NodeRef node) {
+    public final int rateChange(DefaultTreeModel tree, NodeRef node) {
         return (int) Math.round(tree.getNodeTrait(node, indicatorTrait));
     }
 
@@ -145,7 +147,7 @@ public class TreeBitRandomWalkOperator extends SimpleMCMCOperator {
 
     // Private instance variables
 
-    private TreeModel tree;
+    private DefaultTreeModel tree;
     private String indicatorTrait;
     private String trait2;
     private int k;

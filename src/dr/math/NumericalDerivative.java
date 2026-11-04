@@ -1,7 +1,8 @@
 /*
  * NumericalDerivative.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math;
@@ -93,6 +95,14 @@ public class NumericalDerivative
 		return result;
 	}
 
+	public static double[] gradient4thOrder(MultivariateFunction f, double[] x) {
+		double[] result = new double[x.length];
+
+		gradient4thOrder(f, x, result);
+
+		return result;
+	}
+
 	/**
 	 * determine gradient
 	 *
@@ -100,11 +110,11 @@ public class NumericalDerivative
 	 * @param x argument vector
 	 * @param grad vector for gradient
 	 */
-	public static void gradient(MultivariateFunction f, double[] x, double[] grad)
-	{	
+	public static void gradient(MultivariateFunction f, double[] x, double[] grad, double stepSizeRatio)
+	{
 		for (int i = 0; i < f.getNumArguments(); i++)
 		{
-			double h = MachineAccuracy.SQRT_EPSILON*(Math.abs(x[i]) + 1.0);
+			double h = stepSizeRatio * Math.max(Math.abs(x[i]), 1.0);
 		
 			double oldx = x[i];
 			x[i] = oldx + h;
@@ -115,6 +125,30 @@ public class NumericalDerivative
 
 			// Centered first derivative
 			grad[i] = (fxplus-fxminus)/(2.0*h);
+		}
+	}
+
+	public static void gradient(MultivariateFunction f, double[] x, double[] grad)
+	{
+		gradient(f, x, grad, Math.pow(MachineAccuracy.EPSILON, 0.333));
+	}
+
+	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad) {
+		for (int i = 0; i < f.getNumArguments(); ++i) {
+			double h = Math.pow(MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x[i]), 1.0);
+
+			double oldX = x[i];
+			x[i] = oldX + 2 * h;
+			double fxPlus2H = f.evaluate(x);
+			x[i] = oldX + h;
+			double fxPlusH = f.evaluate(x);
+			x[i] = oldX - h;
+			double fxMinusH = f.evaluate(x);
+			x[i] = oldX - 2 * h;
+			double fxMinus2H = f.evaluate(x);
+			x[i] = oldX;
+
+			grad[i] = (-fxPlus2H + 8 * fxPlusH - 8 * fxMinusH + fxMinus2H) / (12 * h);
 		}
 	}
 
@@ -148,5 +182,51 @@ public class NumericalDerivative
 		}
 		
 		return result;
+	}
+
+	/**
+	 *
+	 * determine hessian
+	 *
+	 * @param f multivariate function
+	 * @param x argument vector
+	 * @return
+	 */
+	public static double[][] getNumericalHessian(MultivariateFunction f, double[] x) {
+		double[][] hessian = new double[f.getNumArguments()][f.getNumArguments()];
+		for (int i = 0; i < f.getNumArguments(); i++) {
+			double hi = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(x[i]) + 1.0);
+			double oldXi = x[i];
+			double f__ = f.evaluate(x);
+			x[i] = oldXi + hi;
+			double fp_ = f.evaluate(x);
+			x[i] = oldXi - hi;
+			double fm_ = f.evaluate(x);
+			x[i] = oldXi + 2.0 * hi;
+			double fpp = f.evaluate(x);
+			x[i] = oldXi - 2.0 * hi;
+			double fmm = f.evaluate(x);
+			hessian[i][i] = (-fpp + 16.0 * fp_ - 30.0 * f__ + 16.0 * fm_ - fmm) / (12.0 * hi * hi);
+			for (int j = i + 1; j < f.getNumArguments(); j++) {
+				double hj = MachineAccuracy.SQRT_SQRT_EPSILON * (Math.abs(x[j]) + 1.0);
+				double oldXj = x[j];
+				x[i] = oldXi + hi;
+				x[j] = oldXj + hj;
+				fpp = f.evaluate(x);
+				x[i] = oldXi + hi;
+				x[j] = oldXj - hj;
+				double fpm = f.evaluate(x);
+				x[i] = oldXi - hi;
+				x[j] = oldXj + hj;
+				double fmp = f.evaluate(x);
+				x[i] = oldXi - hi;
+				x[j] = oldXj - hj;
+				fmm = f.evaluate(x);
+				x[i] = oldXi;
+				x[j] = oldXj;
+				hessian[i][j] = hessian[j][i] = (fpp - fpm - fmp + fmm) / (4.0 * hi * hj);
+			}
+		}
+		return hessian;
 	}
 }

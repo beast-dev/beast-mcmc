@@ -1,7 +1,8 @@
 /*
  * BeastGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
@@ -29,25 +31,24 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
-import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
-import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
@@ -60,6 +61,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -68,7 +72,6 @@ import java.util.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: BeastGenerator.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class BeastGenerator extends Generator {
 
@@ -88,8 +91,6 @@ public class BeastGenerator extends Generator {
     private final OperatorsGenerator operatorsGenerator;
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
-    //    private final DiscreteTraitGenerator discreteTraitGenerator;
-    private final STARBEASTGenerator starBeastGenerator;
     private final TMRCAStatisticsGenerator tmrcaStatisticsGenerator;
 
     public BeastGenerator(BeautiOptions options, ComponentFactory[] components) {
@@ -110,9 +111,6 @@ public class BeastGenerator extends Generator {
         parameterPriorGenerator = new ParameterPriorGenerator(options, components);
         logGenerator = new LogGenerator(options, components);
 
-        // this has moved into the component system...
-//        discreteTraitGenerator = new DiscreteTraitGenerator(options, components);
-        starBeastGenerator = new STARBEASTGenerator(options, components);
     }
 
     /**
@@ -122,36 +120,7 @@ public class BeastGenerator extends Generator {
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
     public void checkOptions() throws GeneratorException {
-        //++++++++++++++ Microsatellite +++++++++++++++
-        // this has to execute before all checking below
-        // mask all ? from microsatellite data for whose tree only has 1 data partition
-
         try{
-            if (options.contains(Microsatellite.INSTANCE)) {
-                // clear all masks
-                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
-                    partitionPattern.getPatterns().clearMask();
-                }
-
-                // set mask
-                for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                    // if a tree only has 1 data partition, which mostly mean unlinked trees
-                    if (options.getDataPartitions(model).size() == 1) {
-                        PartitionPattern partition = (PartitionPattern) options.getDataPartitions(model).get(0);
-                        Patterns patterns = partition.getPatterns();
-
-                        for (int i = 0; i < patterns.getTaxonCount(); i++) {
-                            int state = patterns.getPatternState(i, 0);
-                            // mask ? from data
-                            if (state < 0) {
-                                patterns.addMask(i);
-                            }
-                        }
-
-//                        System.out.println("mask set = " + patterns.getMaskSet() + " in partition " + partition.getName());
-                    }
-                }
-            }
 
             //++++++++++++++++ Taxon List ++++++++++++++++++
             TaxonList taxonList = options.taxonList;
@@ -159,7 +128,6 @@ public class BeastGenerator extends Generator {
 
             ids.add(TaxaParser.TAXA);
             ids.add(AlignmentParser.ALIGNMENT);
-            ids.add(TraitData.TRAIT_SPECIES);
 
             if (taxonList != null) {
                 if (taxonList.getTaxonCount() < 2) {
@@ -207,49 +175,8 @@ public class BeastGenerator extends Generator {
                 ids.add(taxa.getId());
             }
 
-            //++++++++++++++++ *BEAST ++++++++++++++++++
-            if (options.useStarBEAST) {
-                if (!options.traitExists(TraitData.TRAIT_SPECIES))
-                    throw new GeneratorException("A trait labelled \"species\" is required for *BEAST species designations." +
-                            "\nPlease create or import the species designations in the Traits table.", BeautiFrame.TRAITS);
-
-                //++++++++++++++++ Species Sets ++++++++++++++++++
-                // should be only 1 calibrated internal node with monophyletic at moment
-                if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
-                    if (options.speciesSets.size() != 1 || !options.speciesSetsMono.get(options.speciesSets.get(0))) {
-                        throw new GeneratorException(MESSAGE_CAL_YULE, BeautiFrame.TAXON_SETS);
-                    }
-                }
-
-                for (Taxa species : options.speciesSets) {
-                    if (species.getTaxonCount() < 2) {
-                        throw new GeneratorException("Species set, " + species.getId() + ",\n should contain" +
-                                "at least two species. \nPlease go back to Species Sets panel to select included species.", BeautiFrame.TAXON_SETS);
-                    }
-                    if (ids.contains(species.getId())) {
-                        throw new GeneratorException("A species set has the same id," + species.getId() +
-                                MESSAGE_CAL, BeautiFrame.TAXON_SETS);
-                    }
-                    ids.add(species.getId());
-                }
-
-                int tId = options.starBEASTOptions.getEmptySpeciesIndex();
-                if (tId >= 0) {
-                    throw new GeneratorException("The taxon " + options.taxonList.getTaxonId(tId) +
-                            " has NULL value for \"species\" trait", BeautiFrame.TRAITS);
-                }
-            }
-
             //++++++++++++++++ Traits ++++++++++++++++++
             // missing data is not necessarily an issue...
-//        for (TraitData trait : options.traits) {
-//            for (int i = 0; i < trait.getTaxaCount(); i++) {
-////                System.out.println("Taxon " + trait.getTaxon(i).getId() + " : [" + trait.getTaxon(i).getAttribute(trait.getName()) + "]");
-//                if (!trait.hasValue(i))
-//                    throw new IllegalArgumentException("Taxon " + trait.getTaxon(i).getId() +
-//                            " has no value for Trait " + trait.getName());
-//            }
-//        }
 
             //++++++++++++++++ Tree Prior ++++++++++++++++++
 //        if (options.isShareSameTreePrior()) {
@@ -263,7 +190,8 @@ public class BeastGenerator extends Generator {
             }
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID && Double.isNaN(prior.getSkyGridInterval())) {
+                if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)
+                        && Double.isNaN(prior.getSkyGridInterval())) {
                     throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", BeautiFrame.TREES);
                 }
             }
@@ -308,6 +236,32 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            //++++++++++++++++ Robust Counting ++++++++++++++++++
+            // the three codon positions are compared site by site, so they must be the same length
+            AncestralStatesComponentOptions ancestralStates = (AncestralStatesComponentOptions)
+                    options.getComponentOptions(AncestralStatesComponentOptions.class);
+            for (AbstractPartitionData partition : options.getDataPartitions()) {
+                if (ancestralStates.dNdSRobustCounting(partition)) {
+                    String reason = ancestralStates.dNdSRobustCountingUnavailableReason(partition);
+                    if (reason != null) {
+                        throw new GeneratorException("Renaissance counting cannot be used for partition \"" +
+                                partition.getName() + "\":\n" + reason, BeautiFrame.ANCESTRAL_STATES);
+                    }
+                }
+            }
+
+            //++++++++++++++++ Hierarchical Models ++++++++++++++++++
+            // a hierarchical model holds its parameters directly, so one built before the analysis was
+            // changed can be left over parameters that are no longer in it; such a model would be written
+            // out referring to parameters that the file does not declare
+            HierarchicalModelComponentOptions hpmOptions = (HierarchicalModelComponentOptions)
+                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
+            String prunedHPMs = hpmOptions.pruneToActiveParameters(options.selectParameters());
+            if (prunedHPMs != null) {
+                throw new GeneratorException(prunedHPMs +
+                        "\n\nCheck the Priors panel, then generate the file again.", BeautiFrame.PRIORS);
+            }
+
             //++++++++++++++++ Prior Bounds ++++++++++++++++++
             for (Parameter param : options.selectParameters()) {
                 if (!Double.isNaN(param.getInitial()) ) {
@@ -332,18 +286,57 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            //++++++++++++++++ Clock Model ++++++++++++++++++
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                if (model.getClockType() == ClockType.HMC_CLOCK &&
+                        model.getClockDistributionType() != ClockDistributionType.LOGNORMAL) {
+                    throw new GeneratorException("The HMC relaxed clock of " + model.getName() +
+                            " is only available with a lognormal distribution.", BeautiFrame.CLOCK_MODELS);
+                }
+            }
+
+            //++++++++++++++++ Priors ++++++++++++++++++
+            for (Parameter param : options.selectParameters()) {
+                if (param.priorType == PriorType.UNIFORM_PRIOR && param.isPriorImproper()) {
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\na uniform prior cannot have an infinite bound." +
+                            "\nGive it bounds, or choose the improper uniform prior.", BeautiFrame.PRIORS);
+                }
+            }
+
             checkComponentOptions();
 
             // add other tests and warnings here
             // Speciation model with dated tips
             // Sampling rates without dated tips or priors on rate or nodes
 
+        } catch (GeneratorException ge) {
+            // thrown by a check above, with the panel the user should be taken to
+            throw ge;
         } catch (Exception e) {
             // catch any other exceptions here and rethrow to generate messages
             throw new GeneratorException(e.getMessage());
         }
 
+    }
 
+    public boolean checkUserTreeIsBifurcating(){
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            if(model.getStartingTreeType()==StartingTreeType.USER){
+                if(!(isBifurcatingTree(model.getUserStartingTree(),model.getUserStartingTree().getRoot()))){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public boolean isBifurcatingTree(Tree tree, NodeRef node) {
+        if (tree.getChildCount(node) > 2) return false;
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            if (!isBifurcatingTree(tree, tree.getChild(node, i))) return false;
+        }
+        return true;
     }
 
     /**
@@ -355,8 +348,36 @@ public class BeastGenerator extends Generator {
      *                             ArgumentException
      */
     public void generateXML(File file) throws GeneratorException, IOException, Arguments.ArgumentException {
+        // write to a temporary file and move it into place, so that a failure part way through leaves
+        // neither a half-written file nor a destroyed previous one
+        File directory = file.getAbsoluteFile().getParentFile();
+        File temporaryFile = File.createTempFile(file.getName(), ".tmp", directory);
+        boolean complete = false;
+        try {
+            XMLWriter writer = new XMLWriter(new BufferedWriter(new FileWriter(temporaryFile)));
+            try {
+                writeXML(writer);
+            } finally {
+                writer.close();
+            }
+            if (writer.checkError()) {
+                throw new IOException("The file could not be written in full (the disk may be full).");
+            }
+            try {
+                Files.move(temporaryFile.toPath(), file.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporaryFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            complete = true;
+        } finally {
+            if (!complete) {
+                temporaryFile.delete();
+            }
+        }
+    }
 
-        XMLWriter writer = new XMLWriter(new BufferedWriter(new FileWriter(file)));
+    private void writeXML(XMLWriter writer) throws GeneratorException, Arguments.ArgumentException {
 
         writer.writeText("<?xml version=\"1.0\" standalone=\"yes\"?>");
         writer.writeComment("Generated by BEAUTi " + VERSION.getVersionString(),
@@ -380,7 +401,6 @@ public class BeastGenerator extends Generator {
             writeTaxon(originTaxon, true, false, writer);
         }
 
-
         //++++++++++++++++ Taxon List ++++++++++++++++++
         try {
             // write complete taxon list
@@ -388,21 +408,13 @@ public class BeastGenerator extends Generator {
 
             writer.writeText("");
 
-            if (!options.hasIdenticalTaxa()) {
-                // write all taxa in each gene tree regarding each data partition,
-                for (AbstractPartitionData partition : options.dataPartitions) {
-                    if (partition.getTaxonList() != null) {
-                        writeDifferentTaxa(partition, writer);
-                    }
-                }
-            } else {
-                // microsat
-                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
-                    if (partitionPattern.getTaxonList() != null && partitionPattern.getPatterns().hasMask()) {
-                        writeDifferentTaxa(partitionPattern, writer);
-                    }
+            // partitions with different taxa have separate trees, each needing its own taxon list
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                if (!model.getTaxaId().equals(TaxaParser.TAXA)) {
+                    writeTreeTaxa(model, writer);
                 }
             }
+
         } catch (Exception e) {
             e.printStackTrace(System.err);
             throw new GeneratorException("Taxon list generation has failed:\n" + e.getMessage());
@@ -411,7 +423,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         List<Taxa> taxonSets = options.taxonSets;
         try {
-            if (taxonSets != null && taxonSets.size() > 0 && !options.useStarBEAST) {
+            if (taxonSets != null && !taxonSets.isEmpty()) {
                 tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
             }
         } catch (Exception e) {
@@ -426,7 +438,7 @@ public class BeastGenerator extends Generator {
         try {
             for (AbstractPartitionData partition : options.dataPartitions) {
                 Alignment alignment = null;
-                if (partition instanceof PartitionData) { // microsat has no alignment
+                if (partition instanceof PartitionData) {
                     alignment = ((PartitionData) partition).getAlignment();
                 }
                 if (alignment != null && !alignments.contains(alignment)) {
@@ -444,8 +456,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
         try {
-            if (!options.samplePriorOnly) {
-                List<Microsatellite> microsatList = new ArrayList<Microsatellite>();
+            // Construct pattern lists even if sampling from a null alignment
+            //if (!options.samplePriorOnly) {
                 for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
                     if (partition.getTaxonList() != null) {
                         switch (partition.getDataType().getType()) {
@@ -463,17 +475,18 @@ public class BeastGenerator extends Generator {
                                 // attribute patterns which is generated next bit of this method.
                                 break;
 
-                            case DataType.MICRO_SAT:
-                                // microsat does not have alignment
-                                patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
+                            case DataType.TREE:
+                            case DataType.DUMMY:
+                                //Do nothing
                                 break;
+
                             default:
                                 throw new IllegalArgumentException("Unsupported data type");
                         }
                         writer.writeText("");
                     }
                 }
-            }
+            //}
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Pattern lists generation has failed:\n" + e.getMessage());
@@ -486,6 +499,11 @@ public class BeastGenerator extends Generator {
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 treePriorGenerator.writeTreePriorModel(prior, writer);
                 writer.writeText("");
+
+                if (prior.getSubtreeTaxonSet() != null) {
+                    treePriorGenerator.writeSubtreePriorModel(prior, writer);
+                    writer.writeText("");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -518,7 +536,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Statistics ++++++++++++++++++
         try {
-            if (taxonSets != null && taxonSets.size() > 0 && !options.useStarBEAST) {
+            if (taxonSets != null && taxonSets.size() > 0) {
                 tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
             }
         } catch (Exception e) {
@@ -531,6 +549,10 @@ public class BeastGenerator extends Generator {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 treePriorGenerator.writePriorLikelihood(model, writer);
                 writer.writeText("");
+                if (model.getPartitionTreePrior().getSubtreeTaxonSet() != null) {
+                    treePriorGenerator.writeSubtreePriorLikelihood(model, writer);
+                    writer.writeText("");
+                }
             }
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
@@ -615,11 +637,14 @@ public class BeastGenerator extends Generator {
                         options.otherPartitions.add(partition);
                     }
 
-
                 }
             }
 
             treeLikelihoodGenerator.writeAllTreeLikelihoods(writer);
+
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                clockModelGenerator.writeHMCClockGradients(model, writer);
+            }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
         } catch (Exception e) {
@@ -627,59 +652,6 @@ public class BeastGenerator extends Generator {
             throw new GeneratorException("Tree likelihood generation has failed:\n" + e.getMessage());
         }
 
-        //++++++++++++++++ *BEAST ++++++++++++++++++
-        if (options.useStarBEAST) {
-            //++++++++++++++++ species ++++++++++++++++++
-            try {
-                starBeastGenerator.writeSpecies(writer);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST species section generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ Species Sets ++++++++++++++++++
-            List<Taxa> speciesSets = options.speciesSets;
-            try {
-                if (speciesSets != null && speciesSets.size() > 0) {
-                    tmrcaStatisticsGenerator.writeTaxonSets(writer, speciesSets);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("Species sets generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ trees ++++++++++++++++++
-            try {
-                if (speciesSets != null && speciesSets.size() > 0) {
-                    starBeastGenerator.writeStartingTreeForCalibration(writer);
-                }
-
-                starBeastGenerator.writeSpeciesTree(writer, speciesSets != null && speciesSets.size() > 0);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST trees generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ Statistics ++++++++++++++++++
-            try {
-                if (speciesSets != null && speciesSets.size() > 0) {
-                    tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST TMRCA statistics generation has failed:\n" + e.getMessage());
-            }
-
-            //++++++++++++++++ prior and likelihood ++++++++++++++++++
-            try {
-                starBeastGenerator.writeSTARBEAST(writer);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new GeneratorException("*BEAST trees section generation has failed:\n" + e.getMessage());
-            }
-
-        }
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
 
         //++++++++++++++++ Operators ++++++++++++++++++
@@ -715,11 +687,6 @@ public class BeastGenerator extends Generator {
             if (options.performTraceAnalysis) {
                 writeTraceAnalysis(writer);
             }
-            if (options.generateCSV) {
-                for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                    treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
-                }
-            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("The last part of XML generation has failed:\n" + e.getMessage());
@@ -727,7 +694,6 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag("beast");
         writer.flush();
-        writer.close();
     }
 
     /**
@@ -752,7 +718,7 @@ public class BeastGenerator extends Generator {
             Taxon taxon = taxonList.getTaxon(i);
 
             boolean hasDate = false;
-            if (options.clockModelOptions.isTipCalibrated()) {
+            if (options.useTipDates) {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
 
@@ -790,7 +756,6 @@ public class BeastGenerator extends Generator {
                         new Attribute.Default<String>(XMLParser.ID, taxon.getId())},
                 !(hasDate || hasAttr)); // false if any of hasDate or hasAttr is true
 
-
         if (hasDate) {
             dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
 
@@ -816,14 +781,14 @@ public class BeastGenerator extends Generator {
 
         for (TraitData trait : options.traits) {
             // there is no harm in allowing the species trait to be listed in the taxa
-//                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+            // if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
             writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
                     new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
             // denotes missing data using '?'
             writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
             writer.writeCloseTag(AttributeParser.ATTRIBUTE);
-//                }
+            // }
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
@@ -832,22 +797,25 @@ public class BeastGenerator extends Generator {
 
     }
 
-    public void writeDifferentTaxa(AbstractPartitionData dataPartition, XMLWriter writer) {
-        TaxonList taxonList = dataPartition.getTaxonList();
-
-        String name = dataPartition.getPartitionTreeModel().getName();
-
-        writer.writeComment("gene name = " + name + ", ntax= " + taxonList.getTaxonCount());
-        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, name + "." + TaxaParser.TAXA)});
-
-        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            if ( !(dataPartition instanceof PartitionPattern && ((PartitionPattern) dataPartition).getPatterns().isMasked(i) ) ) {
-                final Taxon taxon = taxonList.getTaxon(i);
-                writer.writeIDref(TaxonParser.TAXON, taxon.getId());
+    private void writeTreeTaxa(PartitionTreeModel model, XMLWriter writer) {
+        Taxa taxa = new Taxa();
+        for (AbstractPartitionData partition : options.getDataPartitions(model)) {
+            if (partition.getTaxonList() != null) {
+                for (Taxon taxon : partition.getTaxonList()) {
+                    if (!taxa.contains(taxon)) {
+                        taxa.addTaxon(taxon);
+                    }
+                }
             }
         }
 
+        writer.writeComment("The taxa in tree " + model.getName(), "ntax=" + taxa.getTaxonCount());
+        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getTaxaId())});
+        for (Taxon taxon : taxa) {
+            writer.writeIDref(TaxonParser.TAXON, taxon.getId());
+        }
         writer.writeCloseTag(TaxaParser.TAXA);
+        writer.writeText("");
     }
 
     /**
@@ -898,31 +866,22 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag("mcmc", attributes);
 
         if (options.hasData()) {
-            writer.writeOpenTag(CompoundLikelihoodParser.POSTERIOR, new Attribute.Default<String>(XMLParser.ID, "posterior"));
+            writer.writeOpenTag(CompoundLikelihoodParser.JOINT, new Attribute.Default<String>(XMLParser.ID, "joint"));
         }
 
         // write prior block
         writer.writeOpenTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
 
-        if (options.useStarBEAST) { // species
-            // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.TRAIT_SPECIES + "." + COALESCENT);
-            // prior on population sizes
-//            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
-            writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);
-//            } else {
-//                writer.writeIDref(SpeciesTreeBMPrior.STPRIOR, STP);
-//            }
-            // prior on species tree
-            writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
-        }
-
-        parameterPriorGenerator.writeParameterPriors(writer, options.useStarBEAST);
+        parameterPriorGenerator.writeParameterPriors(writer);
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
             treePriorGenerator.writePriorLikelihoodReference(prior, model, writer);
             writer.writeText("");
+            if (prior.getSubtreeTaxonSet() != null) {
+                treePriorGenerator.writeSubtreePriorLikelihoodReference(prior, model, writer);
+                writer.writeText("");
+            }
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
@@ -946,7 +905,7 @@ public class BeastGenerator extends Generator {
 
             writer.writeCloseTag(CompoundLikelihoodParser.LIKELIHOOD);
 
-            writer.writeCloseTag(CompoundLikelihoodParser.POSTERIOR);
+            writer.writeCloseTag(CompoundLikelihoodParser.JOINT);
         }
 
         writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");
@@ -960,6 +919,9 @@ public class BeastGenerator extends Generator {
 
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
+
+        //write current state of chain to checkpoint file
+        logGenerator.writeCheckpointToFile(writer);
 
         writer.writeCloseTag("mcmc");
     }

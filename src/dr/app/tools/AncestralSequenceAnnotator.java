@@ -1,7 +1,8 @@
 /*
  * AncestralSequenceAnnotator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,15 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
 
 
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.evomodelxml.siteratemodel.GammaSiteModelParser;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.evomodel.substmodel.aminoacid.EmpiricalAminoAcidModel;
@@ -173,7 +176,7 @@ public class AncestralSequenceAnnotator {
             System.out.println("\tIgnoring first " + burnin + " trees.");
         }
 
-        simulationResults.exportTrees(simulatedTree.toArray(new Tree[simulatedTree.size()]));
+        simulationResults.exportTrees(simulatedTree);
 
         MutableTree targetTree;
 
@@ -806,8 +809,8 @@ public class AncestralSequenceAnnotator {
             }
 
             //System.out.println("alpha and pinv parameters: " + alphaParameter.getParameterValue(0) + "\t" + pInvParameter.getParameterValue(0));
-            //GammaSiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
-            GammaSiteRateModel siteModel = new GammaSiteRateModel(GammaSiteModelParser.SITE_MODEL, new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
+            //GammaSiteRateModelParser siteModel = new GammaSiteRateModelParser(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
+            GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL, new Parameter.Default(1.0), 1.0, alphaParameter, categories, pInvParameter);
             siteModel.setSubstitutionModel(sml.getSubstitutionModel());
             //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), new Parameter.Default(1.0), 1, new Parameter.Default(0.5));
             //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), null, null, 0, null);
@@ -815,8 +818,8 @@ public class AncestralSequenceAnnotator {
         }
 
         /* Default with no gamma or pinv */
-        //SiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel());
-        GammaSiteRateModel siteModel = new GammaSiteRateModel(GammaSiteModelParser.SITE_MODEL);
+        //SiteRateModel siteModel = new GammaSiteRateModelParser(sml.getSubstitutionModel());
+        GammaSiteRateModel siteModel = new GammaSiteRateModel(SiteModelParser.SITE_MODEL);
         siteModel.setSubstitutionModel(sml.getSubstitutionModel());
         return siteModel;
 
@@ -898,7 +901,7 @@ public class AncestralSequenceAnnotator {
         flexTree.adoptTreeModelOrdering();
         FlexibleTree finalTree = new FlexibleTree(tree);
         finalTree.adoptTreeModelOrdering();
-        TreeModel treeModel = new TreeModel(tree);
+        TreeModel treeModel = new DefaultTreeModel(tree);
 
         // Turn off noisy logging by TreeLikelihood constructor
         Logger logger = Logger.getLogger("dr.evomodel");
@@ -1483,7 +1486,7 @@ public class AncestralSequenceAnnotator {
                         for (int j = 0; j < numElements; j++)
                             index[j] = alignment.getTaxonIndex("" + j);
 
-                        StringBuffer sb = new StringBuffer();
+                        StringBuilder sb = new StringBuilder();
                         support = new double[alignment.getPatternCount()];
 
 //						System.err.println(new dr.math.matrixAlgebra.Vector(weight));
@@ -1548,8 +1551,8 @@ public class AncestralSequenceAnnotator {
                 // Trim out gaps from consensus and support
 //				ArrayList<Double> newSupport = new ArrayList<Double>(support.length);
                 boolean noComma = true;
-                StringBuffer newSupport = new StringBuffer("{");
-                StringBuffer newSeq = new StringBuffer();
+                StringBuilder newSupport = new StringBuilder("{");
+                StringBuilder newSeq = new StringBuilder();
                 if (consensusSeq.length() != support.length) {
                     System.err.println("What happened here?");
                     System.exit(-1);
@@ -1756,13 +1759,13 @@ public class AncestralSequenceAnnotator {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
-                        new Arguments.StringOption("heights", new String[]{"keep", "median", "mean"}, false, "an option of 'keep', 'median' or 'mean'"),
-                        new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.StringOption("beastInput", new String[]{"true", "false"}, false, "If the input is taken from BEAST rather than BAli-Phy"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
-                        new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
-                        new Arguments.Option("help", "option to print this message"),
-                        new Arguments.StringOption("kalign", "full_path_to_kalign", "specifies full path to the kalign executable file")
+                        new Arguments.StringOption("heights", "nh", new String[]{"keep", "median", "mean"}, false, "an option of 'keep', 'median' or 'mean'"),
+                        new Arguments.IntegerOption("burnin", "b", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.StringOption("beastInput", null, new String[]{"true", "false"}, false, "If the input is taken from BEAST rather than BAli-Phy"),
+                        new Arguments.RealOption("limit", null, "the minimum posterior probability for a node to be annotated"),
+                        new Arguments.StringOption("target", null, "target_file_name", "specifies a user target tree to be annotated"),
+                        new Arguments.Option("help", "h", "option to print this message"),
+                        new Arguments.StringOption("kalign", null, "full_path_to_kalign", "specifies full path to the kalign executable file")
                 });
 
         try {

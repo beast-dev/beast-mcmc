@@ -1,7 +1,8 @@
 /*
  * MultivariateNormalDistribution.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,20 +22,27 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.distributions;
 
+import java.util.Arrays;
 import dr.inference.model.GradientProvider;
+import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
+import dr.matrix.SparseSquareUpperTriangular;
+import org.ejml.alg.dense.decomposition.TriangularSolver;
+import org.ejml.alg.dense.decomposition.chol.CholeskyDecompositionInner_D64;
+import org.ejml.data.DenseMatrix64F;
 
 /**
  * @author Marc Suchard
  */
 public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator,
-        GradientProvider {
+        GradientProvider, HessianProvider {
 
     public static final String TYPE = "MultivariateNormal";
 
@@ -86,7 +94,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     public double getLogDet() {
         if (logDet == null) {
-            logDet = Math.log(calculatePrecisionMatrixDeterminate(precision));
+            logDet = calculatePrecisionMatrixLogDeterminate(precision);
         }
         if (Double.isInfinite(logDet)) {
             if (isDiagonal(precision)) {
@@ -96,7 +104,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return logDet;
     }
 
-    private boolean isDiagonal(double x[][]) {
+    private boolean isDiagonal(double[][] x) {
         for (int i = 0; i < x.length; ++i) {
             for (int j = i + 1; j < x.length; ++j) {
                 if (x[i][j] != 0.0) {
@@ -107,7 +115,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return true;
     }
 
-    private double logDetForDiagonal(double x[][]) {
+    private double logDetForDiagonal(double[][] x) {
         double logDet = 0;
         for (int i = 0; i < x.length; ++i) {
             logDet += Math.log(x[i][i]);
@@ -128,8 +136,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), 1.0);
     }
 
-    public double[] nextMultivariateNormal(double[] x) {
-        return nextMultivariateNormalCholesky(x, getCholeskyDecomposition(), 1.0);
+    @SuppressWarnings("unused")
+    public double[] nextMultivariateNormal(double[] mean) {
+        return nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), 1.0);
     }
 
     // Scale lives in variance-space
@@ -142,10 +151,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         nextMultivariateNormalCholesky(mean, getCholeskyDecomposition(), Math.sqrt(scale), result);
     }
 
-
-    public static double calculatePrecisionMatrixDeterminate(double[][] precision) {
+    public static double calculatePrecisionMatrixLogDeterminate(double[][] precision) {
         try {
-            return new Matrix(precision).determinant();
+            return new Matrix(precision).logDeterminant();
         } catch (IllegalDimension e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -197,6 +205,84 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
 
         return gradient;
+    }
+
+    public static double[] gradLogPdf(double[] x, double[] mean, double[] precision) {
+        final int dim = x.length;
+        final double[] gradient = new double[dim];
+        final double[] delta = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            delta[i] = mean[i] - x[i];
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            double sum = 0;
+            for (int j = 0; j <dim; ++j) {
+                sum += precision[i * dim + j] * delta[j];
+            }
+            gradient[i] = sum;
+        }
+
+        return gradient;
+    }
+
+    public double[][] hessianLogPdf(double[] x) {
+        if (hasSinglePrecision) {
+            return hessianLogPdf(x, mean, singlePrecision);
+        } else {
+            return hessianLogPdf(x, mean, precision);
+        }
+    }
+
+    public static double[][] hessianLogPdf(double[] x, double[] mean, double singlePrecision) {
+
+        final int dim = x .length;
+        final double[][] hessian = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            hessian[i][i] = -singlePrecision;
+        }
+        return hessian;
+    }
+
+    public static double[][] hessianLogPdf(double[] x, double[] mean, double[][] precision) {
+
+        final int dim = x .length;
+        final double[][] hessian = new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+                hessian[i][j] = -precision[i][j];
+            }
+        }
+        return hessian;
+    }
+
+    public double[] diagonalHessianLogPdf(double[] x) {
+        if (hasSinglePrecision) {
+            return diagonalHessianLogPdf(x, mean, singlePrecision);
+        } else {
+            return diagonalHessianLogPdf(x, mean, precision);
+        }
+    }
+
+    public static double[] diagonalHessianLogPdf(double[] x, double[] mean, double singlePrecision) {
+
+        final int dim = x .length;
+        final double[] hessian = new double[dim];
+        Arrays.fill(hessian, -singlePrecision);
+
+        return hessian;
+    }
+
+    public static double[] diagonalHessianLogPdf(double[] x, double[] mean, double[][] precision) {
+        final int dim = x.length;
+        final double[] hessian = new double[dim];
+
+        for (int i = 0; i < dim; ++i) {
+            hessian[i] = -precision[i][i];
+        }
+
+        return hessian;
     }
 
     // scale only modifies precision
@@ -259,6 +345,42 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return cholesky;
     }
 
+    public static double[] nextMultivariateNormalViaBackSolvePrecision(double[] mean, double[][] precision) {
+
+        final double[] p = new double[mean.length * mean.length];
+
+        int offset = 0;
+        for (int i = 0; i < mean.length; ++i) {
+            System.arraycopy(precision[i], 0, p, offset, mean.length);
+            offset += mean.length;
+        }
+
+        return nextMultivariateNormalViaBackSolvePrecision(mean, p);
+    }
+
+    public static double[] nextMultivariateNormalViaBackSolvePrecision(double[] mean, double[] precision) {
+
+        final int dim = mean.length;
+
+        DenseMatrix64F p = DenseMatrix64F.wrap(dim,dim, precision);
+        CholeskyDecompositionInner_D64 dd = new CholeskyDecompositionInner_D64();
+        dd.decompose(p); // Now holds Cholesky decomposition (destructive)
+
+        double[] epsilon = new double[dim];
+        for (int i = 0; i < dim; ++i) {
+            epsilon[i] = MathUtils.nextGaussian();
+        }
+
+        // Back-solve
+        TriangularSolver.solveTranL(p.getData(), epsilon, dim);
+
+        for (int i = 0; i < dim; ++i) {
+            epsilon[i] += mean[i];
+        }
+        
+        return epsilon;
+    }
+
     public static double[] nextMultivariateNormalPrecision(double[] mean, double[][] precision) {
         return nextMultivariateNormalVariance(mean, getInverse(precision));
     }
@@ -300,8 +422,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
     }
 
-    public static void nextMultivariateNormalCholesky(final WrappedVector mean, final double[][] cholesky,
-                                                      final double sqrtScale, final WrappedVector result,
+    public static void nextMultivariateNormalCholesky(final ReadableVector mean,
+                                                      final ReadableMatrix cholesky, final double sqrtScale,
+                                                      final WritableVector result,
                                                       final double[] epsilon) {
 
         final int dim = mean.getDim();
@@ -312,7 +435,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         for (int i = 0; i < dim; i++) {
             double x = mean.get(i);
             for (int j = 0; j <= i; j++) {
-                x += cholesky[i][j] * epsilon[j];
+                x += cholesky.get(i,j) * epsilon[j];
                 // caution: decomposition returns lower triangular
             }
             result.set(i, x);
@@ -338,6 +461,24 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         }
     }
 
+    public static void nextMultivariateNormalViaBackSolvePrecision(
+            final double[] mean, final int meanOffset, SparseSquareUpperTriangular choleskyPrecision,
+            final double sqrtScale, final double[] result, final int resultOffset,
+            final double[] epsilon) {
+
+        final int dim = epsilon.length;
+
+        for (int i = 0; i < dim; ++i) {
+            epsilon[i] = MathUtils.nextGaussian() * sqrtScale;
+        }
+
+        choleskyPrecision.backSolveInPlaceMatrixVector(result, resultOffset, epsilon, 0);
+
+        for (int i = 0; i < dim; ++i) {
+            result[resultOffset + i] += mean[meanOffset + i];
+        }
+    }
+
     // TODO should be a junit test
     public static void main(String[] args) {
         testPdf();
@@ -349,7 +490,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         double[] stop = {0, 0};
         double[][] precision = {{2, 0.5}, {0.5, 1}};
         double scale = 0.2;
-        System.err.println("logPDF = " + logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
+        System.err.println("logPDF = " + logPdf(start, stop, precision, calculatePrecisionMatrixLogDeterminate(precision), scale));
         System.err.println("Should = -19.94863\n");
 
         System.err.println("logPDF = " + logPdf(start, stop, 2, 0.2));
@@ -360,7 +501,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
         double[] start = {1, 2};
         double[][] precision = {{2, 0.5}, {0.5, 1}};
-        int length = 100000;
+        int length = 1000000;
 
 
         System.err.println("Random draws (via precision) ...");
@@ -369,7 +510,8 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         double[] var = new double[2];
         double ZZ = 0;
         for (int i = 0; i < length; i++) {
-            double[] draw = nextMultivariateNormalPrecision(start, precision);
+//            double[] draw = nextMultivariateNormalPrecision(start, precision);
+            double[] draw = nextMultivariateNormalViaBackSolvePrecision(start, precision);
             for (int j = 0; j < 2; j++) {
                 mean[j] += draw[j];
                 SS[j] += draw[j] * draw[j];
@@ -389,11 +531,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         System.err.println("TRUE: [ 1 2 ]\n");
         System.err.println("MVar: " + new Vector(var));
         System.err.println("TRUE: [ 0.571 1.14 ]\n");
-        System.err.println("Covv: " + ZZ);
+        System.err.println("CovV: " + ZZ);
         System.err.println("TRUE: -0.286");
     }
 
-    public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
+    private static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
 
     // RandomGenerator interface
     public Object nextRandom() {
@@ -421,5 +563,15 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     @Override
     public double[][] getPrecisionMatrix() {
         return precision;
+    }
+
+    @Override
+    public double[] getDiagonalHessianLogDensity(Object x) {
+        return diagonalHessianLogPdf((double[]) x);
+    }
+
+    @Override
+    public double[][] getHessianLogDensity(Object x) {
+        return hessianLogPdf((double[]) x);
     }
 }

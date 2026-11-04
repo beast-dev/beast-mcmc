@@ -1,7 +1,8 @@
 /*
  * ClockModelsPanel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.clockmodelspanel;
@@ -28,6 +30,7 @@ package dr.app.beauti.clockmodelspanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.*;
+import dr.app.beauti.util.CloneModelDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.TableEditorStopper;
@@ -51,7 +54,6 @@ import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
@@ -77,7 +79,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
-    private CloneModelDialog cloneModelDialog = null;
+    private CloneModelDialog<PartitionClockModel> cloneModelDialog = null;
 
     CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
@@ -112,9 +114,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(addModelAction);
-//        actionPanel1.setRemoveAction(removeModelAction);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -186,7 +185,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();
-        if (options.getPartitionSubstitutionModels().size() > 0) {
+        if (options.getPartitionSubstitutionModels().size() > 0 && !options.onlyContinuousPartitions()) {
             if (selRow < 0) {
                 selRow = 0;
             }
@@ -313,7 +312,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     private void cloneModelSettings() {
         if (cloneModelDialog == null) {
-            cloneModelDialog = new CloneModelDialog(frame);
+            cloneModelDialog = new CloneModelDialog<PartitionClockModel>(frame, "clock model");
         }
 
 
@@ -440,10 +439,13 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                     aHasFocus,
                     aRow, aColumn);
 
-            if (!isUsed(aRow))
-                renderer.setForeground(Color.gray);
-            else
-                renderer.setForeground(Color.black);
+            // an unused row is greyed; the rest take the table's colours, so that a selected row is
+            // still readable (and so that a dark appearance works)
+            if (!isUsed(aRow)) {
+                renderer.setForeground(UIManager.getColor("Label.disabledForeground"));
+            } else {
+                renderer.setForeground(aIsSelected ? aTable.getSelectionForeground() : aTable.getForeground());
+            }
             return this;
         }
 

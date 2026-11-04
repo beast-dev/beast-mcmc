@@ -1,0 +1,127 @@
+/*
+ * ContinuousBranchValueProvider.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.evomodel.branchratemodel;
+
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+
+import java.util.HashMap;
+
+/**
+ * @author Marc A. Suchard
+ * @author Philippe Lemey
+ * @author Xiang Ji
+ */
+public interface ContinuousBranchValueProvider {
+
+    double getBranchValue(final Tree tree, final NodeRef node);
+
+    class MidPoint implements ContinuousBranchValueProvider {
+
+        @Override
+        public double getBranchValue(Tree tree, NodeRef node) {
+
+            assert (tree.getRoot() != node);
+
+            final double midPoint = (tree.getNodeHeight(tree.getParent(node)) + tree.getNodeHeight(node)) * 0.5;
+
+            return transform(midPoint);
+        }
+
+        double transform(double x) {
+            return Math.log(x);
+        }
+    }
+
+    class ConstrainedMidPoint extends AbstractModel implements ContinuousBranchValueProvider {
+
+        final static String NAME = "constrainedMidPoint";
+        private final Parameter heightLowerBound;
+
+        public ConstrainedMidPoint(Parameter heightLowerBound) {
+            super(NAME);
+            this.heightLowerBound = heightLowerBound;
+            addVariable(heightLowerBound);
+        }
+
+        @Override
+        public double getBranchValue(Tree tree, NodeRef node) {
+            assert (tree.getRoot() != node);
+
+            final double parentNodeHeight = tree.getNodeHeight(tree.getParent(node));
+            final double nodeHeight = tree.getNodeHeight(node);
+            final double timeEffect;
+
+            if (parentNodeHeight < heightLowerBound.getParameterValue(0)) {
+                timeEffect = heightLowerBound.getParameterValue(0);
+            } else if (nodeHeight < heightLowerBound.getParameterValue(0)) {
+                timeEffect = (0.5 * parentNodeHeight * parentNodeHeight
+                        + 0.5 * heightLowerBound.getParameterValue(0) * heightLowerBound.getParameterValue(0)
+                        - heightLowerBound.getParameterValue(0) * nodeHeight ) / (parentNodeHeight - nodeHeight);
+            } else {
+                timeEffect = 0.5 * (nodeHeight + parentNodeHeight);
+            }
+
+            return transform(timeEffect);
+        }
+
+        double transform(double x) {
+            return Math.log(x);
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        }
+
+        @Override
+        protected void storeState() {
+
+        }
+
+        @Override
+        protected void restoreState() {
+
+        }
+
+        @Override
+        protected void acceptState() {
+
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+
+        }
+    }
+}

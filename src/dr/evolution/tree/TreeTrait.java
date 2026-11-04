@@ -1,7 +1,8 @@
 /*
  * TreeTrait.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.tree;
@@ -29,7 +31,6 @@ package dr.evolution.tree;
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @author Alexei Drummond
- * @version $Id$
  */
 public interface TreeTrait<T> {
     public enum Intent {
@@ -85,6 +86,19 @@ public interface TreeTrait<T> {
      * @return Intent
      */
     boolean getLoggable();
+
+
+    interface TraitInfo<T> {
+        String getTraitName();
+
+        TreeTrait.Intent getTraitIntent();
+
+        Class getTraitClass();
+
+        T getTrait(Tree tree, NodeRef node);
+
+        boolean isTraitLoggable();
+    }
 
     /**
      * Default behavior
@@ -183,6 +197,28 @@ public interface TreeTrait<T> {
             } else {
                 return Double.toString(values[0]);
             }
+        }
+
+        public static DA factory(final TraitInfo<double[]> info) {
+            
+            DA trait = new DA() {
+
+                public String getTraitName() {
+                    return info.getTraitName();
+                }
+
+                public Intent getIntent() {
+                    return info.getTraitIntent();
+                }
+
+                public Class getTraitClass() { return info.getTraitClass(); }
+
+                public double[] getTrait(Tree tree, NodeRef node) { return info.getTrait(tree, node); }
+
+                public boolean getLoggable() { return info.isTraitLoggable(); }
+            };
+
+            return trait;
         }
     }
 

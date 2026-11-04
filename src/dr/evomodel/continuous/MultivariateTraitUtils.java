@@ -1,7 +1,8 @@
 /*
  * MultivariateTraitUtils.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.continuous;
@@ -58,7 +60,7 @@ public class MultivariateTraitUtils {
 
     public static double[][] computeTreeTraitPrecision(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
         double[][] treePrecision = computeTreePrecision(trait, conditionOnRoot);
-        double[][] traitPrecision = trait.getDiffusionModel().getPrecisionmatrix();
+        double[][] traitPrecision = trait.getDiffusionModel().getPrecisionMatrix();
         return productKronecker(treePrecision, traitPrecision);
     }
 
@@ -257,7 +259,7 @@ public class MultivariateTraitUtils {
     public static double[][] computeTreeTraitVariance(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
         double[][] treeVariance = computeTreeVariance(trait, conditionOnRoot);
         double[][] traitVariance =
-                new SymmetricMatrix(trait.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
+                new SymmetricMatrix(trait.getDiffusionModel().getPrecisionMatrix()).inverse().toComponents();
         return productKronecker(treeVariance, traitVariance);
     }
 

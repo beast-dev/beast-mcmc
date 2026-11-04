@@ -1,7 +1,8 @@
 /*
- * ProductParameter.java
+ * SumParameter.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,10 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,31 +35,40 @@ import java.util.List;
  */
 public class SumParameter extends Parameter.Abstract implements VariableListener {
 
-    public SumParameter(List<Parameter> parameter) {
-        this.paramList = parameter;
-        for (Parameter p : paramList) {
-            p.addVariableListener(this);
+    public SumParameter(List<Statistic> statisticList) {
+        this.statisticList = statisticList;
+        dimension = statisticList.size() == 1 ? 1 : statisticList.get(0).getDimension();
+        for (Statistic s : statisticList) {
+            if (s instanceof Parameter) {
+                parameterList.add(((Parameter) s));
+                ((Parameter) s).addVariableListener(this);
+            }
         }
     }
 
     public int getDimension() {
-        return paramList.get(0).getDimension();
+        return dimension;
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return true;
     }
 
     protected void storeValues() {
-        for (Parameter p : paramList) {
+        for (Parameter p : parameterList) {
             p.storeParameterValues();
         }
     }
 
     protected void restoreValues() {
-        for (Parameter p : paramList) {
+        for (Parameter p : parameterList) {
             p.restoreParameterValues();
         }
     }
 
     protected void acceptValues() {
-        for (Parameter p : paramList) {
+        for (Parameter p : parameterList) {
             p.acceptParameterValues();
         }
     }
@@ -67,11 +79,15 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
 
     public double getParameterValue(int dim) {
         double value = 0;
-        for (int i = 0; i < paramList.size(); i++) {
-            if (i == 0){
-                value = paramList.get(i).getParameterValue(dim);
-            } else {
-                value += paramList.get(i).getParameterValue(dim);
+        if (statisticList.size() == 1) {
+            value = statisticList.get(0).getStatisticValue(0);
+            for (int i = 1; i < statisticList.get(0).getDimension(); i++) {
+                value += statisticList.get(0).getStatisticValue(i);
+            }
+        } else {
+            value = statisticList.get(0).getStatisticValue(dim);
+            for (int i = 1; i < statisticList.size(); i++) {
+                value += statisticList.get(i).getStatisticValue(dim);
             }
         }
         return value;
@@ -92,8 +108,8 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
     public String getParameterName() {
         if (getId() == null) {
             StringBuilder sb = new StringBuilder("sum");
-            for (Parameter p : paramList) {
-                sb.append(".").append(p.getId());
+            for (Statistic s : statisticList) {
+                sb.append(".").append(s.getId());
             }
             setId(sb.toString());
         }
@@ -106,7 +122,7 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
 
     public Bounds<Double> getBounds() {
         if (bounds == null) {
-            return paramList.get(0).getBounds(); // TODO
+            return parameterList.get(0).getBounds(); // TODO
         } else {
             return bounds;
         }
@@ -124,6 +140,8 @@ public class SumParameter extends Parameter.Abstract implements VariableListener
         fireParameterChangedEvent(index,type);
     }
 
-    private final List<Parameter> paramList;
+    private final List<Statistic> statisticList;
+    private final List<Parameter> parameterList = new ArrayList<>();
+    private final int dimension;
     private Bounds bounds = null;
 }

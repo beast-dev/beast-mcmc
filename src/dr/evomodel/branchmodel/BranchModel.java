@@ -1,7 +1,8 @@
 /*
  * BranchModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.branchmodel;
@@ -38,12 +40,11 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @author Marc A. Suchard
- * @version $Id$
  */
 public interface BranchModel extends Model  {
     /**
      * Returns a mapping of substitution models to the given branch. The Mapping
-     * contains a list of substitution models in order from tipward to rootward
+     * contains a list of substitution models in order from rootward to tipward
      * and a set of relative weights for each (may be times or proportions).
      *
      * @param branch the branch
@@ -62,7 +63,7 @@ public interface BranchModel extends Model  {
      * Gets the substitution model that will be applied at the root.
      * @return the substitution model
      */
-    SubstitutionModel getRootSubstitutionModel();
+    SubstitutionModel getRootSubstitutionModel(); // TODO should deprecate infavor of getRootFrequenceModel
 
     /**
      * Gets the frequency model that will be applied at the root.

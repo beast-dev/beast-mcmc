@@ -1,7 +1,8 @@
 /*
  * Sequences.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.sequence;
@@ -29,16 +31,12 @@ import dr.evolution.util.Taxon;
 import dr.util.Attributable;
 import dr.util.Identifiable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Class for storing sequences.
  *
  * @author Andrew Rambaut
- * @version $Id: Sequences.java,v 1.12 2005/05/24 20:25:56 rambaut Exp $
  */
 public class Sequences implements SequenceList, Attributable, Identifiable {
 
@@ -88,6 +86,10 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
         return sequence.getAttribute(name);
     }
 
+    public List<Sequence> getSequences() {
+        return Collections.unmodifiableList(sequences);
+    }
+    
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************

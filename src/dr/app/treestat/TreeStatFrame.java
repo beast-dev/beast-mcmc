@@ -1,7 +1,8 @@
 /*
  * TreeStatFrame.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,11 +22,13 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.treestat;
 
 import dr.evolution.tree.TreeUtils;
+import dr.evolution.util.Taxon;
 import jam.framework.Application;
 import jam.framework.DocumentFrame;
 import jam.util.IconUtils;
@@ -34,6 +37,7 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
+import java.util.HashSet;
 
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
@@ -190,7 +194,10 @@ public class TreeStatFrame extends DocumentFrame {
             tree = importer.importTree(null);
         }
 
-        treeStatData.allTaxa = TreeUtils.getLeafSet(tree);
+        treeStatData.allTaxa = new HashSet<Taxon>();
+        for (String taxonName : TreeUtils.getLeafSet(tree)) {
+            treeStatData.allTaxa.add(new Taxon(taxonName));
+        }
         statusLabel.setText(Integer.toString(treeStatData.allTaxa.size()) + " taxa loaded.");
         reader.close();
 

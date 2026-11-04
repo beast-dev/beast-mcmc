@@ -1,7 +1,8 @@
 /*
  * UniformOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -35,7 +37,6 @@ import dr.math.MathUtils;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: UniformOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class UniformOperator extends SimpleMCMCOperator {
 
@@ -61,7 +62,7 @@ public class UniformOperator extends SimpleMCMCOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
-    public final double doOperation() {
+    public double doOperation() {
 
         final int index = MathUtils.nextInt(parameter.getDimension());
         final Bounds<Double> bounds = parameter.getBounds();
@@ -76,12 +77,11 @@ public class UniformOperator extends SimpleMCMCOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    public String getOperatorName() {
         return "uniform(" + parameter.getParameterName() + ")";
     }
 
     public final void optimize(double targetProb) {
-
         throw new RuntimeException("This operator cannot be optimized!");
     }
 
@@ -111,7 +111,7 @@ public class UniformOperator extends SimpleMCMCOperator {
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
-    private final Double lowerBound;
-    private final Double upperBound;
+    protected Parameter parameter = null;
+    protected final Double lowerBound;
+    protected final Double upperBound;
 }

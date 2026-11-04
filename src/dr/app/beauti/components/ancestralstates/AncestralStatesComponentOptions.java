@@ -1,7 +1,8 @@
 /*
  * AncestralStatesComponentOptions.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.ancestralstates;
@@ -32,10 +34,12 @@ import java.util.*;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class AncestralStatesComponentOptions implements ComponentOptions {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 527809019817481210L;
     public AncestralStatesComponentOptions() {
     }
 
@@ -119,17 +123,51 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
                 partition.getPartitionSubstitutionModel().isInvarHetero())) {
             throw new IllegalArgumentException("dNdS Robust Counting can only be when site-specific rate heterogeneity is off.");
         }
+        if (dNdSRobustCounting && !isWholeNumberOfCodons(partition)) {
+            throw new IllegalArgumentException("dNdS Robust Counting can only be used with a partition that is a " +
+                    "whole number of codons long.");
+        }
         getOptions(partition).dNdSRobustCounting = dNdSRobustCounting;
+    }
+
+    /**
+     * Robust counting compares the three codon positions site by site, so each must have the same number of
+     * sites. Taking every third site of a partition gives three equal counts only when the partition is a
+     * whole number of codons long.
+     */
+    public boolean isWholeNumberOfCodons(final AbstractPartitionData partition) {
+        return partition.getSiteCount() % 3 == 0;
+    }
+
+    /**
+     * @return why renaissance counting cannot be used for this partition, as a sentence for the user, or
+     * null if it can be used
+     */
+    public String dNdSRobustCountingUnavailableReason(final AbstractPartitionData partition) {
+        PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+
+        if (model.getCodonPartitionCount() != 3 || model.isGammaHetero() || model.isInvarHetero()) {
+            return "This model requires a 3-partition codon model to be selected in the Site model " +
+                    "for this partition and NO Site Heterogeneity Model before it can be selected.";
+        }
+
+        if (!isWholeNumberOfCodons(partition)) {
+            return "This partition is " + partition.getSiteCount() + " sites long, which is not a whole number " +
+                    "of codons, so the three codon positions would not have the same number of sites. " +
+                    "This model requires the partition to be a multiple of three sites long.";
+        }
+
+        return null;
     }
 
     public boolean dNdSRobustCountingAvailable(final AbstractPartitionData partition) {
         // todo  - are there other constraints of the use of this model?
-        return partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 3 &&
-                !partition.getPartitionSubstitutionModel().isGammaHetero() &&
-                !partition.getPartitionSubstitutionModel().isInvarHetero();
+        return dNdSRobustCountingUnavailableReason(partition) == null;
     }
 
     class AncestralStateOptions implements Serializable {
+
+        private static final long serialVersionUID = 1L;
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
         String mrcaTaxonSetName = null;

@@ -1,7 +1,8 @@
 /*
  * TimeSlicer.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.tools;
@@ -53,6 +55,8 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static dr.evolution.util.TimeScale.DAYS_PER_YEAR;
+
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
@@ -60,7 +64,7 @@ import java.util.*;
  *         example for location slices through time:
  *         -burnin500 -trait location -sliceFileHeights sliceTimes -summary true -mrsd 2007.63 -format KML -progress true -impute true -noise true -HPD 95 WNV_relaxed_gamma_geo.trees output.kml
  *         <p/>
- *         example for Markov reward o backbone summary (note we cannot imput here):
+ *         example for Markov reward on backbone summary (note we cannot imput here):
  *         -burnin 50 -trait AC1_R,AC2_R,AC3_R,AC4_R,AC5_R,AC6_R,AC7_R,AC8_R,AC9_R,AC10_R,AC11_R,AC12_R,AC13_R,AC14_R -sliceTimes 2002,2002.25,2002.5,2002.75,2003,2003.25,2003.5,2003.75,2004,2004.25,2004.5,2004.75,2005,2005.25,2005.5,2005.75,2006 -summary true -mrsd 2007 -branchNorm true -format TAB -progress true -backbonetaxa december2006taxa.txt -branchset backbone airCommunitiesMM_rewards.sub.trees TSRewardOutput.txt
  *         example of 1D antigenic summary
  *         -burnin0 -trait antigenic -sliceFileTimes timeInterval -summary true -mrsd 2007 -format TAB -progress true -impute true -noise false -HPD 95 H3N2_antigenic_sub.trees antigenic.txt
@@ -244,7 +248,7 @@ public class TimeSlicer {
     private Element contourFolderElement;
     private Element pointsFolderElement;
     private Element nodeFolderElement;
-    private StringBuffer tabOutput = new StringBuffer();
+    private final StringBuilder tabOutput = new StringBuilder();
 
     public void output(String outFileName, boolean summaryOnly, final boolean summarizeRoot, final boolean summarizeTips, boolean contours, boolean points, OutputFormat outputFormat, double[] hpdValues, String sdrFile, String snrFile) {
 
@@ -974,6 +978,7 @@ public class TimeSlicer {
             for (int i = 0; i < count; i++) {
                 Trait trait = thisTrait.get(i);
                 double[] value = trait.getValue();
+
                 for (int j = 0; j < dim; j++) {
                     y[j][i] = value[j];
                 }
@@ -990,7 +995,7 @@ public class TimeSlicer {
                     TraceDistribution trace = new TraceDistribution(x, TraceType.REAL);
                     Element statsElement = new Element("stats");
                     addDimInfo(statsElement, j, dim);
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     sb.append(KMLCoordinates.NEWLINE);
                     tabOutput.append(KMLCoordinates.NEWLINE);
                     tabOutput.append(traits[traitIndex] + "\t");
@@ -1071,7 +1076,7 @@ public class TimeSlicer {
 
                 if (!ancient) {
                     calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                    calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                    calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                     begin.addContent(dateFormat.format(calendar.getTime()));
                 } else {
@@ -1286,7 +1291,7 @@ public class TimeSlicer {
 
             if (!ancient) {
                 calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                 begin.addContent(dateFormat.format(calendar.getTime()));
             } else {
@@ -1365,7 +1370,7 @@ public class TimeSlicer {
 
                 if (!ancient) {
                     calendar.set(Calendar.YEAR, (int) Math.floor(date));
-                    calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+                    calendar.set(Calendar.DAY_OF_YEAR, (int) (DAYS_PER_YEAR * (date - Math.floor(date))));
 
                     begin.addContent(dateFormat.format(calendar.getTime()));
                 } else {
@@ -1434,7 +1439,7 @@ public class TimeSlicer {
         return data;
     }
     private void outputHeader(String[] traits) {
-        StringBuffer sb = new StringBuffer("slice");
+        StringBuilder sb = new StringBuilder("slice");
         for (int i = 0; i < traits.length; i++) {
             // Load first value to check dimensionality
             Trait trait = values.get(0).get(i).get(0);
@@ -1604,7 +1609,7 @@ public class TimeSlicer {
         public String toString() {
             if (!isMultivariate)
                 return obj.toString();
-            StringBuffer sb = new StringBuffer(array[0].toString());
+            StringBuilder sb = new StringBuilder(array[0].toString());
             for (int i = 1; i < array.length; i++)
                 sb.append(sep).append(array[i]);
             return sb.toString();
@@ -1622,7 +1627,7 @@ public class TimeSlicer {
         int traitCount = thisSlice.size();
         int valueCount = thisSlice.get(0).size();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (int v = 0; v < valueCount; v++) {
             if (Double.isNaN(sliceValue))
@@ -1940,8 +1945,10 @@ public class TimeSlicer {
                                         System.exit(-1);
                                     }
 //                                    if (slices[i] > nodeHeight) {
-                                    trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
-                                            slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                                    //if (!treeTime.isRoot(treeTime.getParent(node))){
+                                        trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
+                                                slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
+                                    //}
 //                                    System.out.println(slices[i]+"\t"+nodeHeight+"\t"+parentHeight+"\t"+precision[0][0]+"\t"+precision[0][1]+"\t"+precision[1][0]+"\t"+precision[1][1]+"\t"+rate+"\t"+trait);
 ////
 //  }
@@ -2263,12 +2270,7 @@ public class TimeSlicer {
     }
 
     public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) {
-            progressStream.print(" ");
-        }
-        progressStream.println(line);
+        BaseTreeTool.centreLine(line, 60, progressStream);
     }
 
     public static void printTitle() {
@@ -2667,50 +2669,50 @@ public class TimeSlicer {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.IntegerOption(SKIP, "skip every i'th tree [default = 0]"),
-                        new Arguments.StringOption(TRAIT, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
-                        new Arguments.StringOption(SLICE_TIMES, "slice_times", "specifies a slice time-list [default=none]"),
-                        new Arguments.StringOption(SLICE_HEIGHTS, "slice_heights", "specifies a slice height-list [default=none]"),
-                        new Arguments.StringOption(SLICE_FILE_HEIGHTS, "heights_file", "specifies a file with a slice heights-list, is overwritten by command-line specification of slice heights [default=none]"),
-                        new Arguments.StringOption(SLICE_FILE_TIMES, "Times_file", "specifies a file with a slice Times-list, is overwritten by command-line specification of slice times [default=none]"),
-                        new Arguments.StringOption(RATE_ATTRIBUTE, "rate_attribute", "specifies the trait rate attribute string [default=location.rate]; use 'none' when no rate needs to be used (homogeneous Brownian model)"),
-                        new Arguments.IntegerOption(SLICE_COUNT, "the number of time slices to use [default=0]"),
-                        new Arguments.StringOption(SLICE_MODE, "Slice_mode", "specifies how to perform the slicing [default=branches]"),
-                        new Arguments.StringOption(ROOT, falseTrue, false, "include a summary for the root [default=off]"),
-                        new Arguments.StringOption(TIPS, falseTrue, false, "include a summary for the tips [default=off]"),
-                        new Arguments.StringOption(CONTOURS, falseTrue, true, "include contours in summary [default=true]"),
-                        new Arguments.StringOption(POINTS, falseTrue, false, "include all points for the summary [default=off]"),
-                        new Arguments.RealOption(START_TIME, "the time of the earliest slice [default=0]"),
-                        new Arguments.RealOption(MRSD, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
-                        new Arguments.Option(HELP, "option to print this message"),
-                        new Arguments.StringOption(NOISE, falseTrue, false,
+                        new Arguments.IntegerOption(BURNIN, "b", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.IntegerOption(SKIP, null, "skip every i'th tree [default = 0]"),
+                        new Arguments.StringOption(TRAIT, null, "trait_name", "specifies an attribute-list to use to create a density map [default = location.rate]"),
+                        new Arguments.StringOption(SLICE_TIMES, null, "slice_times", "specifies a slice time-list [default=none]"),
+                        new Arguments.StringOption(SLICE_HEIGHTS, null, "slice_heights", "specifies a slice height-list [default=none]"),
+                        new Arguments.StringOption(SLICE_FILE_HEIGHTS, null, "heights_file", "specifies a file with a slice heights-list, is overwritten by command-line specification of slice heights [default=none]"),
+                        new Arguments.StringOption(SLICE_FILE_TIMES, null, "Times_file", "specifies a file with a slice Times-list, is overwritten by command-line specification of slice times [default=none]"),
+                        new Arguments.StringOption(RATE_ATTRIBUTE, null, "rate_attribute", "specifies the trait rate attribute string [default=location.rate]; use 'none' when no rate needs to be used (homogeneous Brownian model)"),
+                        new Arguments.IntegerOption(SLICE_COUNT, null, "the number of time slices to use [default=0]"),
+                        new Arguments.StringOption(SLICE_MODE, null, "Slice_mode", "specifies how to perform the slicing [default=branches]"),
+                        new Arguments.StringOption(ROOT, null, falseTrue, false, "include a summary for the root [default=off]"),
+                        new Arguments.StringOption(TIPS, null, falseTrue, false, "include a summary for the tips [default=off]"),
+                        new Arguments.StringOption(CONTOURS, null, falseTrue, true, "include contours in summary [default=true]"),
+                        new Arguments.StringOption(POINTS, null, falseTrue, false, "include all points for the summary [default=off]"),
+                        new Arguments.RealOption(START_TIME, null, "the time of the earliest slice [default=0]"),
+                        new Arguments.RealOption(MRSD, null, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
+                        new Arguments.Option(HELP, "h", "option to print this message"),
+                        new Arguments.StringOption(NOISE, null, falseTrue, false,
                                 "add true noise [default = true])"),
-                        new Arguments.StringOption(IMPUTE, falseTrue, false,
+                        new Arguments.StringOption(IMPUTE,null,  falseTrue, false,
                                 "impute trait at time-slice [default = false]"),
-                        new Arguments.StringOption(SUMMARY, falseTrue, false,
+                        new Arguments.StringOption(SUMMARY, null, falseTrue, false,
                                 "compute summary statistics [default = true]"),
-                        new Arguments.StringOption(FORMAT, enumNamesToStringArray(OutputFormat.values()), false,
+                        new Arguments.StringOption(FORMAT, null, enumNamesToStringArray(OutputFormat.values()), false,
                                 "summary output format [default = KML]"),
-                        new Arguments.StringOption(HPD, "hpd", "mass (1 - 99%) to include in HPD regions (or list) [default = 80]"),
-                        new Arguments.StringOption(CONTOUR_MODE, enumNamesToStringArray(ContourMode.values()), false,
+                        new Arguments.StringOption(HPD, null, "hpd", "mass (1 - 99%) to include in HPD regions (or list) [default = 80]"),
+                        new Arguments.StringOption(CONTOUR_MODE, null, enumNamesToStringArray(ContourMode.values()), false,
                                 "contouring model [default = snyder]"),
-                        new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
+                        new Arguments.StringOption(NORMALIZATION, null, enumNamesToStringArray(Normalization.values()), false,
                                 "tree normalization [default = length"),
-                        new Arguments.StringOption(SDR, "sliceDispersalRate", "specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
-                        new Arguments.StringOption(SNR, "sliceNonynonymousRate", "specifies output file name for Nonynsonymous rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
-                        new Arguments.StringOption(PROGRESS, "progress report", "reports slice progress and checks the bivariate contour HPD regions by calculating what fraction of points the polygons for a given slice contain  [default = false]"),
-                        new Arguments.StringOption(BRANCH_NORMALIZE, falseTrue, false,
+                        new Arguments.StringOption(SDR, null, "sliceDispersalRate", "specifies output file name for dispersal rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
+                        new Arguments.StringOption(SNR, null, "sliceNonynonymousRate", "specifies output file name for Nonynsonymous rates for each slice (from previous sliceTime[or root of the trees] up to current sliceTime"),
+                        new Arguments.StringOption(PROGRESS, null, "progress report", "reports slice progress and checks the bivariate contour HPD regions by calculating what fraction of points the polygons for a given slice contain  [default = false]"),
+                        new Arguments.StringOption(BRANCH_NORMALIZE, null, falseTrue, false,
                                 "devide a branch trait by branch length (can be useful for 'rewards' [default = false]"),
-                        new Arguments.StringOption(BRANCHSET, TimeSlicer.enumNamesToStringArray(BranchSet.values()), false,
+                        new Arguments.StringOption(BRANCHSET, null, TimeSlicer.enumNamesToStringArray(BranchSet.values()), false,
                                 "branch set [default = all]"),
-                        new Arguments.StringOption(BACKBONETAXA, "Backbone taxa file", "specifies a file with taxa that define the backbone"),
-                        new Arguments.RealOption(LATMAX, "specifies the maximum latitude for a child node for a branch to be included in the summary [default=MAX_VALUE]"),
-                        new Arguments.RealOption(LATMIN, "specifies the minimum latitude for a child node for a branch to be included in the summary [default=MIN_VALUE]"),
-                        new Arguments.RealOption(LONGMAX, "specifies the maximum longitude for a child node for a branch to be included in the summary [default=MAX_VALUE]"),
-                        new Arguments.RealOption(LONGMIN, "specifies the minimum longitude for a child node for a branch to be included in the summary [default=MIN_VALUE]"),
-                        new Arguments.IntegerOption(GRIDSIZE, "the grid size for contouring [default=200]"),
-                        new Arguments.StringOption(DESCENDENTS, "descendent taxa", "specifies a branch based on the descendent taxa [default=all branches]")
+                        new Arguments.StringOption(BACKBONETAXA, null, "Backbone taxa file", "specifies a file with taxa that define the backbone"),
+                        new Arguments.RealOption(LATMAX, null, "specifies the maximum latitude for a child node for a branch to be included in the summary [default=MAX_VALUE]"),
+                        new Arguments.RealOption(LATMIN, null, "specifies the minimum latitude for a child node for a branch to be included in the summary [default=MIN_VALUE]"),
+                        new Arguments.RealOption(LONGMAX, null, "specifies the maximum longitude for a child node for a branch to be included in the summary [default=MAX_VALUE]"),
+                        new Arguments.RealOption(LONGMIN, null, "specifies the minimum longitude for a child node for a branch to be included in the summary [default=MIN_VALUE]"),
+                        new Arguments.IntegerOption(GRIDSIZE, null, "the grid size for contouring [default=200]"),
+                        new Arguments.StringOption(DESCENDENTS, null, "descendent taxa", "specifies a branch based on the descendent taxa [default=all branches]")
 
                 });
 

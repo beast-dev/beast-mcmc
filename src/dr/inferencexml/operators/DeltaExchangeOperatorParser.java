@@ -1,7 +1,8 @@
 /*
  * DeltaExchangeOperatorParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,14 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inferencexml.operators;
 
 import dr.inference.model.Parameter;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
+import dr.inference.operators.AdaptableMCMCOperator;
+import dr.inference.operators.AdaptationMode;
 import dr.inference.operators.DeltaExchangeOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
@@ -47,7 +49,7 @@ public class DeltaExchangeOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoercionMode mode = CoercionMode.parseMode(xo);
+        AdaptationMode mode = AdaptationMode.parseMode(xo);
 
         final boolean isIntegerOperator = xo.getAttribute(INTEGER_OPERATOR, false);
 
@@ -60,6 +62,9 @@ public class DeltaExchangeOperatorParser extends AbstractXMLObjectParser {
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
+        if (parameter.getDimension() < 2) {
+            throw new XMLParseException("parameter must be at least two dims");
+        }
 
         int[] parameterWeights;
         if (xo.hasAttribute(PARAMETER_WEIGHTS)) {
@@ -105,7 +110,7 @@ public class DeltaExchangeOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(DELTA),
             AttributeRule.newIntegerArrayRule(PARAMETER_WEIGHTS, true),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newBooleanRule(INTEGER_OPERATOR, true),
             new ElementRule(Parameter.class)
     };

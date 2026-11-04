@@ -1,7 +1,8 @@
 /*
  * MultivariateNormalIndependenceSampler.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -41,7 +43,7 @@ import java.util.Set;
  * @author Marc Suchard
  * @author Guy Baele
  */
-public class MultivariateNormalIndependenceSampler extends AbstractCoercableOperator {
+public class MultivariateNormalIndependenceSampler extends AbstractAdaptableOperator {
 
     public static final String OPERATOR_NAME = "multivariateNormalIndependenceSampler";
     public static final String SCALE_FACTOR = "scaleFactor";
@@ -56,7 +58,7 @@ public class MultivariateNormalIndependenceSampler extends AbstractCoercableOper
     public MultivariateNormalIndependenceSampler(Parameter parameter,
                                                  SelfControlledCaseSeries sccs,
                                                  double setSizeMean,
-                                                 double weight, double scaleFactor, CoercionMode mode) {
+                                                 double weight, double scaleFactor, AdaptationMode mode) {
         super(mode);
         this.scaleFactor = scaleFactor;
         this.parameter = parameter;
@@ -67,8 +69,8 @@ public class MultivariateNormalIndependenceSampler extends AbstractCoercableOper
         this.setSizeMean = setSizeMean;
     }
 
-    public String getPerformanceSuggestion() {
-        return "";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public String getOperatorName() {
@@ -134,7 +136,7 @@ public class MultivariateNormalIndependenceSampler extends AbstractCoercableOper
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
@@ -179,11 +181,12 @@ public class MultivariateNormalIndependenceSampler extends AbstractCoercableOper
 
     };
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 

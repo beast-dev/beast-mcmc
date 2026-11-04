@@ -1,7 +1,8 @@
 /*
  * MassivelyParallelMDSImpl.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,18 +22,21 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.multidimensionalscaling;
 
 import dr.math.matrixAlgebra.Vector;
 
+import static dr.inference.multidimensionalscaling.NativeMDSSingleton.MDS_RESOURCE;
+import static dr.inference.multidimensionalscaling.NativeMDSSingleton.THREADS;
+
 /**
  * MassivelyParallelMDSImpl
  *
  * @author Marc Suchard
  * @author Andrew Rambaut
- * @version $Id$
  *          <p/>
  *          $HeadURL$
  *          <p/>
@@ -42,17 +46,55 @@ import dr.math.matrixAlgebra.Vector;
  */
 public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
-    private NativeMDSSingleton singleton = null;
+    private NativeMDSSingleton singleton;
     private int instance = -1; // Get instance # via initialization
 
-    MassivelyParallelMDSImpl() {
+    private final CoreInformation information;
+
+    public MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
+
+        information = new CoreInformation();
+
+        String resource = System.getProperty(MDS_RESOURCE);
+        if (resource != null) {
+            try {
+                int number = Integer.parseInt(resource);
+                if (number > 0) {
+                    information.deviceNumber = number - 1;
+                }
+            } catch (NumberFormatException exception) {
+                throw new RuntimeException("Unable to parse '" + MDS_RESOURCE + "' environmental property");
+            }
+        }
+
+        String r = System.getProperty(THREADS);
+        if (r != null) {
+            try {
+                information.numThreads = Integer.parseInt(r.trim());
+            } catch (NumberFormatException exception) {
+                throw new RuntimeException("Unable to parse '" + THREADS + "' environmental property");
+            }
+        }
     }
 
     @Override
     public void initialize(int embeddingDimension, int locationCount, long flags) {
-        instance = singleton.initialize(embeddingDimension, locationCount, flags);
-        this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        information.flags = flags;
+        instance = singleton.initialize(embeddingDimension, locationCount, information);
+        this.observationCount = (locationCount * (locationCount - 1)) / 2; // TODO Adjust for missing entries
+    }
+
+    @Override
+    public void initialize(int embeddingDimension, MultiDimensionalScalingLayout layout, long flags) {
+        information.flags = flags;
+        instance = singleton.initialize(embeddingDimension, layout, information);
+        this.observationCount = layout.observationCount;
+    }
+
+    @Override
+    public void setNonMissingObservationCount(int count) {
+        this.observationCount = count;
     }
 
     @Override
@@ -80,6 +122,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public double calculateLogLikelihood() {
         double sumOfIncrements = singleton.getSumOfIncrements(instance);
 
+        // TODO when left-truncated, I am not sure the below is correct
         return 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount - sumOfIncrements;
     }
 
@@ -120,9 +163,17 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     }
 
     @Override
+    public void getObservationGradient(double[] observation) {
+        singleton.getObservationGradient(instance, observation);
+    }
+
+    @Override
     public void makeDirty() {
         singleton.makeDirty(instance);
     }
+
+    @Override
+    public int getInternalDimension() { return singleton.getInternalDimension(instance); }
 
     private int observationCount;
     private double precision;

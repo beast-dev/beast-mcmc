@@ -1,7 +1,8 @@
 /*
  * SequenceErrorModelComponentGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.components.sequenceerror;
@@ -42,7 +44,6 @@ import dr.xml.XMLParser;
 
 /**
  * @author Andrew Rambaut
- * @version $Id$
  */
 public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator {
 
@@ -152,7 +153,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
 
                 writer.writeIDref(HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT, prefix + "hypermutants");
 
-                writeParameter(HypermutantErrorModel.HYPERMUTATION_RATE, prefix + SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER, 1, writer);
+                writeParameter(HypermutantErrorModel.HYPERMUTATION_RATE, prefix + SequenceErrorModelComponentOptions.HYPERMUTATION_RATE_PARAMETER, 1, writer);
                 writeParameter(HypermutantErrorModel.HYPERMUTATION_INDICATORS, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER, 1, writer);
 
                 writer.writeCloseTag(HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL);
@@ -194,7 +195,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
             SequenceErrorType errorType = component.getSequenceErrorType(partition);
             if (errorType != SequenceErrorType.NO_ERROR) {
                 if (component.isHypermutation(partition)) {
-                    writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER);
+                    writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.HYPERMUTATION_RATE_PARAMETER);
                     writer.writeIDref(StatisticParser.STATISTIC, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_COUNT_STATISTIC);
                     writer.writeOpenTag(StatisticParser.STATISTIC,
                             new Attribute.Default<String>("name", "isHypermutated"));

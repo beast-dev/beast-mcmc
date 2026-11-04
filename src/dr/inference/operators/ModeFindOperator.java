@@ -1,7 +1,8 @@
 /*
  * ModeFindOperator.java
  *
- * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.inference.operators;
@@ -34,7 +36,7 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class ModeFindOperator extends AbstractCoercableOperator {
+public class ModeFindOperator extends AbstractAdaptableOperator {
 
     public static final String OPERATOR = "modeFindOperator";
     public static final String MAX_TIMES = "maxTimes";
@@ -48,12 +50,12 @@ public class ModeFindOperator extends AbstractCoercableOperator {
     private final MultiDimensionalScalingMM mm;
 
     public ModeFindOperator(MultiDimensionalScalingMM mm, int maxTimes, double weight,
-                            CoercionMode mode, double scaleFactor) {
+                            AdaptationMode mode, double scaleFactor) {
         this(mm, maxTimes, weight, 1000, mode, scaleFactor);
     }
 
     public ModeFindOperator(MultiDimensionalScalingMM mm, int maxTimes, double weight,
-                            int maxModeSteps, CoercionMode mode, double scaleFactor) {
+                            int maxModeSteps, AdaptationMode mode, double scaleFactor) {
         super(mode);
         setWeight(weight);
 
@@ -70,7 +72,7 @@ public class ModeFindOperator extends AbstractCoercableOperator {
             MatrixParameterInterface parameter = mm.getLikelihood().getMatrixParameter();
 
 
-            boolean sample = mode == CoercionMode.COERCION_ON || mode == CoercionMode.DEFAULT;
+            boolean sample = mode == AdaptationMode.ADAPTATION_ON || mode == AdaptationMode.DEFAULT;
 
 //            double[] original = null;
 //
@@ -116,12 +118,12 @@ public class ModeFindOperator extends AbstractCoercableOperator {
     }
 
     @Override
-    public double getCoercableParameter() {
+    protected double getAdaptableParameterValue() {
         return Math.log(scaleFactor);
     }
 
     @Override
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         scaleFactor = Math.exp(value);
     }
 
@@ -130,8 +132,8 @@ public class ModeFindOperator extends AbstractCoercableOperator {
         return scaleFactor;
     }
 
-    public final String getPerformanceSuggestion() {
-        return "None";
+    public String getAdaptableParameterName() {
+        return "scaleFactor";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -142,7 +144,7 @@ public class ModeFindOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
             double scaleFactor = xo.getAttribute(SCALE_FACTOR, 1.0);
 
             System.err.println(mode);

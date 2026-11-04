@@ -1,7 +1,8 @@
 /*
  * ARGSubtreeSlideOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 /*
@@ -49,10 +51,9 @@ import java.util.ArrayList;
  * Implements the subtree slide move.
  *
  * @author Alexei Drummond
- * @version $Id: ARGSubtreeSlideOperator.java,v 1.1.2.2 2006/11/06 01:38:30 msuchard Exp $
  */
-public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
-//		SimpleMCMCOperator implements CoercableMCMCOperator {
+public class ARGSubtreeSlideOperator extends AbstractAdaptableOperator {
+//		SimpleMCMCOperator implements AdaptableMCMCOperator {
 
 	public static final String SUBTREE_SLIDE = "argSubtreeSlide";
 	//	public static final String
@@ -66,11 +67,11 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 	private boolean swapRates;
 	private boolean swapTraits;
 	private boolean scaledDirichletBranches;
-//	private int mode = CoercableMCMCOperator.DEFAULT;
-//	CoercionMode model;
+//	private int mode = AdaptableMCMCOperator.DEFAULT;
+//	AdaptationMode model;
 
 	public ARGSubtreeSlideOperator(ARGModel tree, int weight, double size, boolean gaussian, boolean swapRates,
-	                               boolean swapTraits, boolean scaledDirichletBranches, CoercionMode mode) {
+	                               boolean swapTraits, boolean scaledDirichletBranches, AdaptationMode mode) {
 		super(mode);
 		this.tree = tree;
 		setWeight(weight);
@@ -547,11 +548,12 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 		this.size = size;
 	}
 
-	public double getCoercableParameter() {
+	@Override
+	protected double getAdaptableParameterValue() {
 		return Math.log(getSize());
 	}
 
-	public void setCoercableParameter(double value) {
+	public void setAdaptableParameterValue(double value) {
 		setSize(Math.exp(value));
 	}
 
@@ -563,22 +565,8 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 //		return mode;
 //	}
 
-	public double getTargetAcceptanceProbability() {
-		return 0.234;
-	}
-
-
-	public String getPerformanceSuggestion() {
-		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-		double targetProb = getTargetAcceptanceProbability();
-
-		double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
-
-		if (prob < getMinimumGoodAcceptanceLevel()) {
-			return "Try decreasing size to about " + ws;
-		} else if (prob > getMaximumGoodAcceptanceLevel()) {
-			return "Try increasing size to about " + ws;
-		} else return "";
+	public String getAdaptableParameterName() {
+		return "size";
 	}
 
 	public String getOperatorName() {
@@ -597,7 +585,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 			boolean swapTraits = false;
 			boolean scaledDirichletBranches = false;
 
-			CoercionMode mode = CoercionMode.parseMode(xo);
+			AdaptationMode mode = AdaptationMode.parseMode(xo);
 
 			if (xo.hasAttribute(SWAP_RATES)) {
 				swapRates = xo.getBooleanAttribute(SWAP_RATES);

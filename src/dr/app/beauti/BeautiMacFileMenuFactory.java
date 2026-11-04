@@ -1,7 +1,8 @@
 /*
  * BeautiMacFileMenuFactory.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti;
@@ -99,18 +101,6 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
             item.setEnabled(false);
             menu.add(item);
-
-//            menu.addSeparator();
-//
-//            item = new JMenuItem("Apply Template...");
-//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
-//            item.setEnabled(false);
-//            menu.add(item);
-//
-//            item = new JMenuItem("Save Template As...");
-//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
-//            item.setEnabled(false);
-//            menu.add(item);
 
             menu.addSeparator();
 

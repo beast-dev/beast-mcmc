@@ -1,7 +1,8 @@
 /*
  * RandomWalkOnMapOperator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.operators;
@@ -37,7 +39,7 @@ import dr.xml.*;
 /**
  * @author Marc Suchard
  */
-public class RandomWalkOnMapOperator extends AbstractCoercableOperator {
+public class RandomWalkOnMapOperator extends AbstractAdaptableOperator {
 
     public static final String OPERATOR_NAME = "randomWalkOnMapOperator";
     public static final String WINDOW_SIZE = "windowSize";
@@ -48,7 +50,7 @@ public class RandomWalkOnMapOperator extends AbstractCoercableOperator {
     public RandomWalkOnMapOperator(Parameter parameter,
                                    MapDiffusionModel mapModel,
                                    double windowSize,
-                                   double weight, CoercionMode mode) {
+                                   double weight, AdaptationMode mode) {
         super(mode);
         this.parameter = parameter;
         this.model = mapModel;
@@ -125,11 +127,12 @@ public class RandomWalkOnMapOperator extends AbstractCoercableOperator {
     }
 
 
-    public double getCoercableParameter() {
+    @Override
+    protected double getAdaptableParameterValue() {
         return Math.log(windowSize);
     }
 
-    public void setCoercableParameter(double value) {
+    public void setAdaptableParameterValue(double value) {
         windowSize = Math.exp(value);
     }
 
@@ -137,38 +140,8 @@ public class RandomWalkOnMapOperator extends AbstractCoercableOperator {
         return windowSize;
     }
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
-
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
-
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
-
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
-
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
-
-    public final String getPerformanceSuggestion() {
-
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);
-
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing windowSize to about " + ws;
-        } else return "";
+    public String getAdaptableParameterName() {
+        return "windowSize";
     }
 
     public static dr.xml.XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -180,7 +153,7 @@ public class RandomWalkOnMapOperator extends AbstractCoercableOperator {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+            AdaptationMode mode = AdaptationMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);

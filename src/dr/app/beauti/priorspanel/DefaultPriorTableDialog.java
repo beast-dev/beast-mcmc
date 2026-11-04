@@ -1,7 +1,8 @@
 /*
  * DefaultPriorTableDialog.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.priorspanel;
@@ -39,7 +41,6 @@ import java.awt.*;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
- * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class DefaultPriorTableDialog {
 
@@ -95,18 +96,11 @@ public class DefaultPriorTableDialog {
             priorsPanel.setContinueButton(button);
         }
 
-//       if (priorspanel.hasUndefinedPrior) {
-//            buttons = new String[] {"OK"};
-//            title = "Undefined Priors";
 //            optionPane = new JOptionPane(priorspanel,
 //                    JOptionPane.ERROR_MESSAGE,
 //                    JOptionPane.OK_OPTION,
 //                    null,
 //                    buttons,
-//                    buttons[0]);
-//        } else {
-//            buttons = new String[] {"Continue", "Cancel"};
-//            title = "Unchanged Default Priors";
 //            optionPane = new JOptionPane(priorspanel,
 //                    JOptionPane.PLAIN_MESSAGE,
 //                    JOptionPane.OK_CANCEL_OPTION,
@@ -122,6 +116,9 @@ public class DefaultPriorTableDialog {
         dialog.pack();
         dialog.setResizable(true);
         dialog.setVisible(true);
+
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
 
         return optionPane.getValue() != null && optionPane.getValue().equals("Continue");
     }

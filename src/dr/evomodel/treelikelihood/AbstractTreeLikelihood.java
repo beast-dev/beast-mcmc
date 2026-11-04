@@ -1,7 +1,8 @@
 /*
  * AbstractTreeLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,13 +22,16 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.xml.Reportable;
@@ -37,7 +41,6 @@ import dr.xml.Reportable;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
 @Deprecated // Switching to TreeDataLikelihood
@@ -45,7 +48,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
 
-    public AbstractTreeLikelihood(String name, TreeModel treeModel) {
+    public AbstractTreeLikelihood(String name, MutableTreeModel treeModel) {
 
         super(name);
 
@@ -228,7 +231,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     /**
      * the tree
      */
-    protected TreeModel treeModel = null;
+    protected MutableTreeModel treeModel = null;
 
     /**
      * the number of nodes in the tree

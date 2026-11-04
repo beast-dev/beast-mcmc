@@ -1,7 +1,8 @@
 /*
  * AlignmentGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
@@ -68,9 +69,6 @@ public class AlignmentGenerator extends Generator {
             if (alignments.size() > 1) {
                 //if (!options.allowDifferentTaxa) {
                 alignment.setId(AlignmentParser.ALIGNMENT + index);
-                //} else { // e.g. alignment_gene1
-                // alignment.setId("alignment_" + mulitTaxaTagName + index);
-                //}
             } else {
                 alignment.setId(AlignmentParser.ALIGNMENT);
             }
@@ -152,9 +150,6 @@ public class AlignmentGenerator extends Generator {
                 if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
                         == BinaryModelType.BIN_COVARION) {
                     description = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion"
-                } else if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
-                        == BinaryModelType.BIN_DOLLO) {
-                    description = null;
                 }
                 break;
         }
@@ -163,14 +158,6 @@ public class AlignmentGenerator extends Generator {
     }
 
     private String getAlignmentDataTypeIdref(Alignment alignment) {
-        String description = alignment.getDataType().getDescription();
-        switch (alignment.getDataType().getType()) {
-            case DataType.TWO_STATES:
-                if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
-                        == BinaryModelType.BIN_DOLLO) {
-                    description = DolloComponentOptions.DATA_NAME;
-                }
-        }
-        return description;
+        return alignment.getDataType().getDescription();
     }
 }

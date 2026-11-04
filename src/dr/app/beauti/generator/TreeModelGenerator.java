@@ -1,7 +1,8 @@
 /*
  * TreeModelGenerator.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,25 +22,24 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.DataType;
-import dr.evomodel.tree.TMRCAStatistic;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.DefaultTreeModel;
+import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
-import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
-import dr.evomodelxml.tree.TMRCAStatisticParser;
-import dr.evomodelxml.tree.TreeModelParser;
-import dr.evoxml.MicrosatellitePatternParser;
+import dr.evomodelxml.tree.*;
+import dr.evoxml.TaxaParser;
 import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.Statistic;
+import dr.inference.model.StatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -54,20 +54,81 @@ public class TreeModelGenerator extends Generator {
         super(options, components);
     }
 
+    void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
+        if (model.isUsingEmpiricalTrees()) {
+            writeEmpiricalTreeModel(model, writer);
+        } else {
+            writeDefaultTreeModel(model, writer);
+        }
+
+        //if ThorneyBEAST
+        //writeConstrainedTreeModel(model, writer);
+    }
+
     /**
-     * Write tree model XML block.
+     * Write constrained tree model XML block.
      *
      * @param model
      * @param writer the writer
      */
-    void writeTreeModel(PartitionTreeModel model, XMLWriter writer) {
+    void writeConstrainedTreeModel(PartitionTreeModel model, XMLWriter writer) {
+
+    }
+
+    /**
+     * Write an empirical tree model XML block.
+     *
+     * @param model
+     * @param writer the writer
+    <empiricalTreeDistributionModel id="treeModel" fileName="subset1.trees">
+    <taxa idref="subset1"/>
+    </empiricalTreeDistributionModel>
+    <statistic id="treeModel.currentTree" name="Current Tree">
+    <empiricalTreeDistributionModel idref="treeModel"/>
+    </statistic>
+     */
+    void writeEmpiricalTreeModel(PartitionTreeModel model, XMLWriter writer) {
+        String prefix = model.getPrefix();
+
+        final String treeModelName = prefix + DefaultTreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+
+        writer.writeComment("An empirical distribution of trees");
+        writer.writeTag(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL,
+                new Attribute[] {
+                        new Attribute.Default<>(XMLParser.ID, treeModelName),
+                        new Attribute.Default<>(EmpiricalTreeDistributionModelParser.FILE_NAME, model.getEmpiricalTreesFilename())
+                }, false);
+
+        writer.writeIDref(TaxaParser.TAXA, model.getTaxaId());
+        writer.writeCloseTag(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL);
+
+        writer.writeComment("Statistic to give the current empirical tree");
+        writer.writeTag(StatisticParser.STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<>(XMLParser.ID, treeModelName + ".currentTree"),
+                        new Attribute.Default<>(StatisticParser.NAME,  "Current Tree"),
+                }, false);
+        writer.writeIDref(EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL, treeModelName);
+        writer.writeCloseTag(StatisticParser.STATISTIC);
+
+        writeTreeModelStatistics(model, writer);
+    }
+
+
+    /**
+     * Write default tree model XML block.
+     *
+     * @param model
+     * @param writer the writer
+     */
+    void writeDefaultTreeModel(PartitionTreeModel model, XMLWriter writer) {
 
         String prefix = model.getPrefix();
 
-        final String treeModelName = prefix + TreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+        final String treeModelName = prefix + DefaultTreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
 
         writer.writeComment("Generate a tree model");
-        writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
+        writer.writeTag(DefaultTreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, treeModelName), false);
 
         final String STARTING_TREE = InitialTreeGenerator.STARTING_TREE;
 
@@ -87,7 +148,7 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
         writer.writeTag(ParameterParser.PARAMETER,
-                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + OldCoalescentSimulatorParser.ROOT_HEIGHT), true);
+                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.ROOT_HEIGHT), true);
         writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
 
 
@@ -105,15 +166,6 @@ public class TreeModelGenerator extends Generator {
                 new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allInternalNodeHeights"), true);
         writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
-//        int randomLocalClockCount = 0;
-//        int autocorrelatedClockCount = 0;
-//        for (PartitionData pd : model.getDataPartitions()) { // only the PDs linked to this tree model
-//        	PartitionClockModel clockModel = pd.getPartitionClockModel();
-//        	switch (clockModel.getClockType()) {
-//	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
-//	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
-//        	}
-//        }
 //
 //        if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
 //        	//FAIL
@@ -124,65 +176,53 @@ public class TreeModelGenerator extends Generator {
 //    	if (autocorrelatedClockCount == 1) {
 //        if (count[0] == 1) {
 //                writer.writeOpenTag(TreeModelParser.NODE_RATES,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-//                        });
 //                writer.writeTag(ParameterParser.PARAMETER,
 //                        new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + TreeModelParser.NODE_RATES), true);
 //                writer.writeCloseTag(TreeModelParser.NODE_RATES);
 //
 //                writer.writeOpenTag(TreeModelParser.NODE_RATES,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "true"),
-//                                new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "false"),
-//                                new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "false")
-//                        });
 //                writer.writeTag(ParameterParser.PARAMETER,
 //                        new Attribute.Default<String>(XMLParser.ID,
-//                                treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
-//                writer.writeCloseTag(TreeModelParser.NODE_RATES);
-////    	} else if (randomLocalClockCount == 1 ) {
-//        } else
 
         //+++++++++++++ removed because random local clock XML is changed ++++++++++++++++
 //        int[] count = validateClockTreeModelCombination(model);
 //        if (count[1] == 1) {
 //            writer.writeOpenTag(TreeModelParser.NODE_RATES,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-//                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-//                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-//                    });
 //            writer.writeTag(ParameterParser.PARAMETER,
 //                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".relativeRates"), true);
 //            writer.writeCloseTag(TreeModelParser.NODE_RATES);
 //
 //            writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
-//                    new Attribute[]{
-//                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-//                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-//                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-//                    });
 //            writer.writeTag(ParameterParser.PARAMETER,
-//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".changes"), true);
-//            writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
-//        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, model, writer);
 
-        writer.writeCloseTag(TreeModel.TREE_MODEL);
+        writer.writeCloseTag(DefaultTreeModel.TREE_MODEL);
 
-//        if (autocorrelatedClockCount == 1) {
-//        if (count[0] == 1) {
-//            writer.writeText("");
+        writeTreeModelStatistics(model, writer);
 //            writer.writeOpenTag(CompoundParameter.COMPOUND_PARAMETER,
-//                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + "allRates")});
-//            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + TreeModelParser.NODE_RATES);
-//            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE);
-//            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
-//        }
+    }
+
+    void writeTreeModelStatistics(PartitionTreeModel model, XMLWriter writer) {
+        String prefix = model.getPrefix();
+
+        final String treeModelName = prefix + DefaultTreeModel.TREE_MODEL; // treemodel.treeModel or treeModel
+
+        writer.writeComment("Statistic for height of the root of the tree");
+        writer.writeTag(TreeHeightStatisticParser.TREE_HEIGHT_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<>(XMLParser.ID, prefix + "rootHeight"),
+                }, false);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelName);
+        writer.writeCloseTag(TreeHeightStatisticParser.TREE_HEIGHT_STATISTIC);
+
+        writer.writeComment("Statistic for sum of the branch lengths of the tree (tree length)");
+        writer.writeTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, prefix + "treeLength"),
+                }, false);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelName);
+        writer.writeCloseTag(TreeLengthStatisticParser.TREE_LENGTH_STATISTIC);
 
         if (model.hasTipCalibrations()) {
             writer.writeComment("Statistic for time of most recent common ancestor of tree");
@@ -191,36 +231,8 @@ public class TreeModelGenerator extends Generator {
                             new Attribute.Default<String>(XMLParser.ID, prefix + "age(root)"),
                             new Attribute.Default<String>(TMRCAStatisticParser.ABSOLUTE, "true")
                     }, false);
-            writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+            writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelName);
             writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
-        }
-
-        if (model.getDataType().getType() == DataType.MICRO_SAT) {
-            for (AbstractPartitionData partitionData : options.getDataPartitions(model)) {
-                writer.writeComment("Generate a microsatellite tree model");
-                writer.writeTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
-                        new Attribute.Default<String>(XMLParser.ID, partitionData.getName() + "." +
-                                MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL), false);
-
-                writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.TREE);
-                writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
-                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE);
-
-                writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, partitionData.getName() + "." +
-                                MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL + ".internalNodesParameter"),
-                        new Attribute.Default<Integer>(ParameterParser.DIMENSION, model.getDimension())}, true);
-                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
-
-                writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
-
-                writer.writeIDref(MicrosatellitePatternParser.MICROSATPATTERN, partitionData.getName());
-
-                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
-
-                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL);
-            }
         }
     }
 }

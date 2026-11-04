@@ -1,7 +1,8 @@
 /*
  * MergePatternsParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evoxml;
@@ -34,11 +36,11 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  *
- * @version $Id: MergePatternsParser.java,v 1.1 2005/07/08 11:27:53 rambaut Exp $
  */
 public class MergePatternsParser extends AbstractXMLObjectParser {
 
     public static final String MERGE_PATTERNS = "mergePatterns";
+    private static final String UNIQUE = "unique";
 
     public String getParserName() { return MERGE_PATTERNS; }
 
@@ -47,10 +49,11 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        boolean unique = xo.getAttribute(UNIQUE, true);
 	    PatternList patternList = (PatternList)xo.getChild(0);
-	    Patterns patterns = new Patterns(patternList);
+	    Patterns patterns = new Patterns(patternList, unique);
 	    for (int i = 1; i < xo.getChildCount(); i++) {
-		    patterns.addPatterns((PatternList)xo.getChild(i));
+		    patterns.addPatterns((PatternList)xo.getChild(i), unique);
 	    }
 
         if (xo.hasAttribute(XMLParser.ID)) {
@@ -59,13 +62,18 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
             logger.info("  pattern count = " + patterns.getPatternCount());
         }
 
+        if (!unique) {
+            patterns.trimWeights();
+        }
+
         return patterns;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-        new ElementRule(PatternList.class, 1, Integer.MAX_VALUE)
+            new ElementRule(PatternList.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(UNIQUE, true),
     };
 
     public String getParserDescription() {

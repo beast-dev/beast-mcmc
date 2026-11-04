@@ -1,7 +1,8 @@
 /*
  * DiscreteTreeToKML.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,20 +22,19 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.app.phylogeography.tools;
 
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.Set;
+import java.util.HashSet;
+
 
 import dr.app.util.Arguments;
 import jebl.evolution.io.ImportException;
@@ -76,6 +76,7 @@ public class DiscreteTreeToKML {
     public static final String SLICES = "slices";
     public static final String SLICEBW = "slicebw";
     public static final String SLICEMIDPOINT = "slicemidpoint";
+    public static final String SAMPLEDTAXA = "sampledtaxa";
 
 
     public static final String[] use = new String[] {"heights","posteriors"};
@@ -180,6 +181,29 @@ public class DiscreteTreeToKML {
         return tree;
     }
 
+    private static Set getTargetSet(String x) {
+        Set targetSet = new HashSet();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(x));
+            try {
+                String line = reader.readLine().trim();
+                while (line != null && !line.equals("")) {
+                    targetSet.add(line);
+                    line = reader.readLine();
+                    if (line != null) line = line.trim();
+                }
+            }
+            catch (IOException io) {
+                System.err.println("Error reading " + x);
+            }
+        }
+        catch (FileNotFoundException a) {
+            System.err.println("Error finding " + x);
+        }
+        return targetSet;
+    }
+
+
     public static void main(String[] args) throws Arguments.ArgumentException {
 
         String inputFileName = null;
@@ -226,41 +250,42 @@ public class DiscreteTreeToKML {
         double[] sliceTimes = null;
         double treeSliceBranchWidth = 3;
         boolean showBranchAtMidPoint = false; // shows complete branch for slice if time is more recent than the branch's midpoint
-
+        Set sampledTaxaSet = null;
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.StringOption(COORDINATES, "coordinate file", "specifies a tab-delimited file with coordinates for the locations"),
-                        new Arguments.StringOption(ANNOTATION, "location state annotation string", "specifies the string used for location state annotation [default=state]"),
-                        new Arguments.RealOption(TIMESCALER,"specifies the scaling factor by which to rescale time [default=1]"),
-                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
-                        new Arguments.RealOption(BWC,"specifies the branch width constant [default=2]"),
-                        new Arguments.RealOption(BWM,"specifies the branch width multiplier [default=5]"),
-                        new Arguments.StringOption(USP, falseTrue, false,
+                        new Arguments.StringOption(COORDINATES, null, "coordinate file", "specifies a tab-delimited file with coordinates for the locations"),
+                        new Arguments.StringOption(ANNOTATION, null, "location state annotation string", "specifies the string used for location state annotation [default=state]"),
+                        new Arguments.RealOption(TIMESCALER,null, "specifies the scaling factor by which to rescale time [default=1]"),
+                        new Arguments.RealOption(MRSD,null, "specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
+                        new Arguments.RealOption(BWC,null, "specifies the branch width constant [default=2]"),
+                        new Arguments.RealOption(BWM,null, "specifies the branch width multiplier [default=5]"),
+                        new Arguments.StringOption(USP, null, falseTrue, false,
                                 "use state probabilities for branch width [default = true]"),
-                        new Arguments.StringOption(BCUSE, use, false,
+                        new Arguments.StringOption(BCUSE, null, use, false,
                                 "use heights or posterior probabilities for branch colors [default = heights]"),
-                        new Arguments.RealOption(BW,"specifies the branch width if posterior probabilities are not used [default=10]"),
-                        new Arguments.IntegerOption(DIVIDER,"specifies in how many segments at branch should be chopped up [default=50]"),
-                        new Arguments.StringOption(BSTARTCOLOR, "branch start color", "specifies a starting color for the branches [default=FF00FF]"),
-                        new Arguments.StringOption(BENDCOLOR, "branch end color", "specifies an end color for the branches [default=FFFF00]"),
-                        new Arguments.StringOption(BCOLOR, "branch color", "specifies a branch color if color range based on rates is not used [default=ffffff]"),
-                        new Arguments.StringOption(ARCHBRANCH, falseTrue, false,
+                        new Arguments.RealOption(BW,null, "specifies the branch width if posterior probabilities are not used [default=10]"),
+                        new Arguments.IntegerOption(DIVIDER,null, "specifies in how many segments at branch should be chopped up [default=50]"),
+                        new Arguments.StringOption(BSTARTCOLOR, null, "branch start color", "specifies a starting color for the branches [default=FF00FF]"),
+                        new Arguments.StringOption(BENDCOLOR, null, "branch end color", "specifies an end color for the branches [default=FFFF00]"),
+                        new Arguments.StringOption(BCOLOR, null, "branch color", "specifies a branch color if color range based on rates is not used [default=ffffff]"),
+                        new Arguments.StringOption(ARCHBRANCH,null,  falseTrue, false,
                                 "use arcs for the branches [default = true], by default arc-heights are proportional to the distance between locations"),
-                        new Arguments.StringOption(ARCHHEIGHT, arch, false,
+                        new Arguments.StringOption(ARCHHEIGHT,null,  arch, false,
                                 "use time or distance for arch heights [default = no arcs]"),
-                        new Arguments.RealOption(ALTITUDE,"specifies the altitudefactor for the branches [default=1000]"),
-                        new Arguments.StringOption(TEMP, falseTrue, false,
+                        new Arguments.RealOption(ALTITUDE,null, "specifies the altitudefactor for the branches [default=1000]"),
+                        new Arguments.StringOption(TEMP, null, falseTrue, false,
                                 "display branches only temporary [default=false"),
-                        new Arguments.IntegerOption(CIRCLESEGMENTS,"specifies the number of segments to construct circles [default=100]"),
-                        new Arguments.IntegerOption(RADIUS,"specifies the radiusfactor for the circles [default='autoradius']"),
-                        new Arguments.StringOption(CIRCLEOP, "circle opacity", "sets the opacity of the circles [default=8F]"),
-                        new Arguments.Option(HELP, "option to print this message"),
-                        new Arguments.StringOption(COORDSFORTAXA, "file with taxa coords", "specifies a file with additional coordinates for particular taxa"),
-                        new Arguments.RealOption(SLICEBW,"specifies the branch width for tree slices [default=3]"),
-                        new Arguments.StringOption(SLICES,"time","specifies a slice time-list [default=none]"),
-                        new Arguments.StringOption(SLICEMIDPOINT, falseTrue, false,
+                        new Arguments.IntegerOption(CIRCLESEGMENTS,null, "specifies the number of segments to construct circles [default=100]"),
+                        new Arguments.IntegerOption(RADIUS,null, "specifies the radiusfactor for the circles [default='autoradius']"),
+                        new Arguments.StringOption(CIRCLEOP, null, "circle opacity", "sets the opacity of the circles [default=8F]"),
+                        new Arguments.Option(HELP,"h", "option to print this message"),
+                        new Arguments.StringOption(COORDSFORTAXA,null,  "file with taxa coords", "specifies a file with additional coordinates for particular taxa"),
+                        new Arguments.RealOption(SLICEBW,null, "specifies the branch width for tree slices [default=3]"),
+                        new Arguments.StringOption(SLICES,null, "time","specifies a slice time-list [default=none]"),
+                        new Arguments.StringOption(SLICEMIDPOINT,null,  falseTrue, false,
                                 "shows complete branch for sliced tree if time is more recent than the branch's midpoint [default=false"),
+                        new Arguments.StringOption(SAMPLEDTAXA,null,  "sampled taxa file", "specifies a file with taxa that are sampled (in an analysis with ghost lineages)"),
                 });
 
         try {
@@ -406,7 +431,15 @@ public class DiscreteTreeToKML {
             if (midpointString != null && midpointString.compareToIgnoreCase("true") == 0)
                 showBranchAtMidPoint = true;
 
-        } catch (Arguments.ArgumentException e) {
+            String sampledTaxaFileString = arguments.getStringOption(SAMPLEDTAXA);
+            if (sampledTaxaFileString != null) {
+                //sampledTaxaSet = new HashSet();
+                sampledTaxaSet = getTargetSet(args[3]);
+                progressStream.println("sampled taxa set read");
+            }
+
+
+            } catch (Arguments.ArgumentException e) {
             progressStream.println(e);
             printUsage(arguments);
             System.exit(-1);
@@ -434,7 +467,7 @@ public class DiscreteTreeToKML {
             }
         }
 
-        DiscreteKMLString exporterString = new DiscreteKMLString(tree, stateAnnotation, locations, inputFileName, mostRecentDate, timeScaler, divider, branchWidthConstant, branchWidthMultiplier, useStateProbability, branchWidth, startBranchColor, endBranchColor, branchColor, useHeights, usePosterior, arcBranches, arcTimeHeight, altitudeFactor, temporary, numberOfIntervals, radius, circleOpacity, coordinatesForTaxa, taxaCoordinates, makeTreeSlices);
+        DiscreteKMLString exporterString = new DiscreteKMLString(tree, stateAnnotation, locations, inputFileName, mostRecentDate, timeScaler, divider, branchWidthConstant, branchWidthMultiplier, useStateProbability, branchWidth, startBranchColor, endBranchColor, branchColor, useHeights, usePosterior, arcBranches, arcTimeHeight, altitudeFactor, temporary, numberOfIntervals, radius, circleOpacity, coordinatesForTaxa, taxaCoordinates, makeTreeSlices, sampledTaxaSet);
 
         try {
             BufferedWriter out1 = new BufferedWriter(new FileWriter(outputFileName));

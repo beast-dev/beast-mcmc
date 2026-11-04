@@ -1,7 +1,8 @@
 /*
  * Coalescent.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.evolution.coalescent;
@@ -35,7 +37,6 @@ import dr.math.MultivariateFunction;
  *
  * Parts of this class were derived from C++ code provided by Oliver Pybus.
  *
- * @version $Id: Coalescent.java,v 1.12 2005/05/24 20:25:55 rambaut Exp $
  *
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -80,8 +81,14 @@ public class Coalescent implements MultivariateFunction, Units {
 
         double logL = 0.0;
 
-        double startTime = 0.0;
         final int n = intervals.getIntervalCount();
+
+        if (n == 0) {
+            return 0.0;
+        }
+
+        double startTime = intervals.getStartTime();
+
         for (int i = 0; i < n; i++) {
 
             final double duration = intervals.getInterval(i);
@@ -92,6 +99,7 @@ public class Coalescent implements MultivariateFunction, Units {
                 return Double.NEGATIVE_INFINITY;
             }
             final int lineageCount = intervals.getLineageCount(i);
+
 
             final double kChoose2 = Binomial.choose2(lineageCount);
             // common part
@@ -121,6 +129,7 @@ public class Coalescent implements MultivariateFunction, Units {
 
         return logL;
     }
+
 
     /**
      * Calculates the log likelihood of this set of coalescent intervals,

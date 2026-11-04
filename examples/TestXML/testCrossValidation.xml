@@ -1,0 +1,197 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="X">10 NA 1</attr>
+            <attr name="X2">10 0.5 1</attr>
+
+        </taxon>
+        <taxon id="B">
+            <attr name="X">NA NA 2</attr>
+            <attr name="X2">-1 1.5 2</attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="X">NA 0 NA</attr>
+            <attr name="X2">0.5 0 0.5</attr>
+
+        </taxon>
+        <taxon id="D">
+            <attr name="X">-20 3 4</attr>
+            <attr name="X2">-20 3 4</attr>
+        </taxon>
+        <taxon id="E">
+            <attr name="X">100 0 NA</attr>
+            <attr name="X2">100 0 -2</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree">
+        ((A:2,(B:1,C:1):1):2,(D:3, E:3):1);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3" asMatrix="true">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+        <nodeTraits name="X2" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3" asMatrix="true">
+            <parameter id="leafTraitsTrue"/>
+        </nodeTraits>
+    </treeModel>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="precisionMatrix">
+                <parameter id="prec.col1" value="1.0 0.1 -0.5"/>
+                <parameter id="prec.col2" value="0.1 2.0 -0.6"/>
+                <parameter id="prec.col3" value="-0.6 -0.5 3.0"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <!--<repeatedMeasuresModel id="repeatedMeasures" traitName="X">-->
+        <!--<treeModel idref="treeModel"/>-->
+        <!--<traitParameter>-->
+            <!--<parameter idref="leafTraits"/>-->
+        <!--</traitParameter>-->
+        <!--&lt;!&ndash;<samplingPrecision>&ndash;&gt;-->
+        <!--&lt;!&ndash;<parameter id="gamma" value="2 3"/>&ndash;&gt;-->
+        <!--&lt;!&ndash;</samplingPrecision>&ndash;&gt;-->
+        <!--<samplingPrecision>-->
+            <!--<matrixParameter id="samplingPrecision">-->
+                <!--<parameter value="3.0 0.3 -0.2"/>-->
+                <!--<parameter value="0.3 2.0 0.1"/>-->
+                <!--<parameter value="-0.2 0.1 1.0"/>-->
+            <!--</matrixParameter>-->
+        <!--</samplingPrecision>-->
+        <!--<multivariateDiffusionModel idref="diffusionModel"/>-->
+    <!--</repeatedMeasuresModel>-->
+
+    <traitDataLikelihood id="traitLikelihood" traitName="X" forceFullPrecision="true" scaleByTime="true" useTreeLength="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+        <!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter id="mean" value="0.0 0.0 0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="0.001"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+        <!--<missingIndicator>-->
+            <!--<parameter id="missingParameter"/>-->
+        <!--</missingIndicator>-->
+
+    </traitDataLikelihood>
+
+
+    <multivariateWishartPrior id="precisionPrior" df="3">
+        <scaleMatrix>
+            <matrixParameter>
+                <parameter value="1 0 0"/>
+                <parameter value="0 1 0"/>
+                <parameter value="0 0 1"/>
+            </matrixParameter>
+        </scaleMatrix>
+        <data>
+            <matrixParameter idref="precisionMatrix"/>
+        </data>
+    </multivariateWishartPrior>
+
+    <!--<multivariateWishartPrior id="samplingPrior" df="3">-->
+        <!--<scaleMatrix>-->
+            <!--<matrixParameter>-->
+                <!--<parameter value="2 0 0"/>-->
+                <!--<parameter value="0 2 0"/>-->
+                <!--<parameter value="0 0 2"/>-->
+            <!--</matrixParameter>-->
+        <!--</scaleMatrix>-->
+        <!--<data>-->
+            <!--<matrixParameter idref="samplingPrecision"/>-->
+        <!--</data>-->
+    <!--</multivariateWishartPrior>-->
+
+    <operators id="operators" optimizationSchedule="log">
+
+        <precisionGibbsOperator weight="1">
+            <wishartStatistics id="treeWishartStatistics" traitName="X">
+                <traitDataLikelihood idref="traitLikelihood"/>
+            </wishartStatistics>
+            <multivariateWishartPrior idref="precisionPrior"/>
+        </precisionGibbsOperator>
+
+        <!--<newLatentLiabilityGibbsOperator weight="1000" missingByColumn="false">-->
+            <!--<traitDataLikelihood idref="traitLikelihood"/>-->
+            <!--<dummyLatentTruncationProvider>-->
+                <!--<traitDataLikelihood idref="traitLikelihood"/>-->
+            <!--</dummyLatentTruncationProvider>-->
+            <!--<CompoundParameter idref="leafTraits"/>-->
+            <!--<mask>-->
+                <!--<parameter idref="missingParameter"/>-->
+            <!--</mask>-->
+        <!--</newLatentLiabilityGibbsOperator>-->
+
+
+        <!--<precisionGibbsOperator weight="1">-->
+            <!--<repeatedMeasuresWishartStatistics>-->
+                <!--<repeatedMeasuresModel idref="repeatedMeasures"/>-->
+                <!--<traitDataLikelihood idref="traitLikelihood"/>-->
+                <!--<wishartStatistics idref="treeWishartStatistics"/>-->
+            <!--</repeatedMeasuresWishartStatistics>-->
+            <!--<multivariateWishartPrior idref="samplingPrior"/>-->
+        <!--</precisionGibbsOperator>-->
+    </operators>
+
+
+    <traitValidation id="validation" traitName="X2" inferredTrait="X" useTreeTraits="true">
+        <traitDataLikelihood idref="traitLikelihood"/>
+        <traitParameter>
+            <parameter idref="leafTraitsTrue"/>
+        </traitParameter>
+        <!--<mask>-->
+            <!--<parameter idref="missingParameter"/>-->
+        <!--</mask>-->
+    </traitValidation>
+
+
+    <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <!--<gammaPrior idref="samplingPrior"/>-->
+                <multivariateWishartPrior idref="precisionPrior"/>
+            </prior>
+            <likelihood>
+                <traitDataLikelihood idref="traitLikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="10000">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <traitValidation idref="validation"/>
+
+        </log>
+        <log id="fileLog" logEvery="100" fileName="precision_log.log">
+            <posterior idref="posterior"/>
+            <prior idref="prior"/>
+            <likelihood idref="traitLikelihood"/>
+            <traitValidation idref="validation"/>
+        </log>
+    </mcmc>
+
+</beast>
+

@@ -1,7 +1,8 @@
 /*
  * SymmetricMatrix.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -21,6 +22,7 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
  */
 
 package dr.math.matrixAlgebra;
@@ -43,6 +45,10 @@ public class SymmetricMatrix extends Matrix {
 		super(a);
 	}
 
+    public SymmetricMatrix(double[] a, int n) {
+        super(a, n, n);
+    }
+
 	/**
 	 * @param n int
 	 * @throws java.lang.NegativeArraySizeException
@@ -62,6 +68,89 @@ public class SymmetricMatrix extends Matrix {
 	 */
 	public SymmetricMatrix(int n, int m) throws NegativeArraySizeException {
 		super(n, m);
+	}
+
+    public void setSymmetric(int n, int m, double value) {
+        components[n][m] = components[m][n] = value;
+    }
+
+	/**
+	 * @param diag double[] size n with diagonal elements
+	 * @param offdiag double[] size n*(n-1)/2 with off diagonal elements
+	 * @throws java.lang.NegativeArraySizeException
+	 *          if n <= 0
+	 */
+	public static SymmetricMatrix compoundSymmetricMatrix(double[] diag, double[] offdiag, int n) {
+		if (n <= 0)
+			throw new NegativeArraySizeException(
+					"Requested matrix size: " + n);
+
+        assert n == diag.length : "Requested matrix size: " + n + " doesn't match diagonal array size: " + diag.length;
+        assert n * (n - 1) / 2 == offdiag.length
+                : "Requested matrix size: " + n + " doesn't match off diagonal array size: " + offdiag.length;
+
+		double[][] a = new double[n][n];
+		int k = 0;
+		for (int i = 0; i < n; i++) {
+			a[i][i] = diag[i];
+			for (int j = i + 1; j < n; j++) {
+				a[i][j] = a[j][i] = offdiag[k];
+				k++;
+			}
+		}
+		return new SymmetricMatrix(a);
+	}
+
+	/**
+	 * Symmetric matrix with diagonal elements equal to 1.
+	 *
+	 * @param offdiag double[] size n*(n-1)/2 with off diagonal elements, row-major.
+     * @throws java.lang.NegativeArraySizeException
+     *          if n <= 0
+	 */
+	public static SymmetricMatrix compoundCorrelationSymmetricMatrix(double[] offdiag, int n) {
+		return compoundSymmetricMatrix(1.0, offdiag, n);
+	}
+
+	public static SymmetricMatrix compoundSymmetricMatrix(double diagonal, double[] offdiag, int n) {
+		if (n <= 0)
+			throw new NegativeArraySizeException(
+					"Requested matrix size: " + n);
+
+		assert n * (n - 1) / 2 == offdiag.length
+				: "Requested matrix size: " + n + " doesn't match off diagonal array size: " + offdiag.length;
+
+		double[][] a = new double[n][n];
+		int k = 0;
+		for (int i = 0; i < n; i++) {
+			a[i][i] = diagonal;
+			for (int j = i + 1; j < n; j++) {
+				a[i][j] = a[j][i] = offdiag[k];
+				k++;
+			}
+		}
+		return new SymmetricMatrix(a);
+	}
+
+	/**
+	 * Symmetric matrix with diagonal elements equal to 1.
+	 *
+	 * @param M SymmetricMatrix
+	 * @return double n(n-1)/2 with upper-triangular elements, row-major.
+	 */
+	public static double[] extractUpperTriangular(SymmetricMatrix M) {
+		int n = M.columns();
+
+		double[] offdiag = new double[n * (n - 1) / 2];
+
+		int k = 0;
+		for (int i = 0; i < n; i++) {
+			for (int j = i + 1; j < n; j++) {
+				offdiag[k] = M.components[i][j];
+				k++;
+			}
+		}
+		return offdiag;
 	}
 
 	/**
@@ -138,11 +227,11 @@ public class SymmetricMatrix extends Matrix {
 	}
 
 	/**
-	 * @return Matrix		inverse of the receiver.
+	 * @return SymmetricMatrix		inverse of the receiver.
 	 * @throws java.lang.ArithmeticException if the receiver is
 	 *                                       a singular matrix.
 	 */
-	public Matrix inverse() throws ArithmeticException {
+	public SymmetricMatrix inverse() throws ArithmeticException {
 		return rows() < lupCRLCriticalDimension
 				? new SymmetricMatrix(
 				(new LUPDecomposition(this)).inverseMatrixComponents())
@@ -232,7 +321,7 @@ public class SymmetricMatrix extends Matrix {
 	 *                          the receivers are not equal to the number of rows
 	 *                          of the supplied matrix.
 	 */
-	public SymmetricMatrix product(SymmetricMatrix a) throws IllegalDimension {
+	public Matrix product(SymmetricMatrix a) throws IllegalDimension {
 		return new SymmetricMatrix(productComponents(a));
 	}
 

@@ -452,6 +452,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
 
+                        new Arguments.Section("Running several chains"),
                         new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
 
                         new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains"),

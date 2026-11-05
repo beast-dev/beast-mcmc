@@ -33,6 +33,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -318,8 +319,6 @@ public class BeastGenerator extends Generator {
         } catch (GeneratorException ge) {
             // thrown by a check above, with the panel the user should be taken to
             throw ge;
-        } catch (GeneratorException e) {
-            throw e; // keeps the panel to switch to
         } catch (Exception e) {
             // catch any other exceptions here and rethrow to generate messages
             throw new GeneratorException(e.getMessage());
@@ -376,10 +375,6 @@ public class BeastGenerator extends Generator {
                 }
                 if (model.isInvarHetero()) {
                     throw new GeneratorException(engine + "has no invariant sites model (partition " +
-                            partition.getName() + ").", BeautiFrame.SITE_MODELS);
-                }
-                if (model.isDolloModel()) {
-                    throw new GeneratorException(engine + "cannot be used with the stochastic Dollo model (partition " +
                             partition.getName() + ").", BeautiFrame.SITE_MODELS);
                 }
                 if (ancestralStatesOptions.usingAncestralStates(partition)) {

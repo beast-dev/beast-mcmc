@@ -348,7 +348,8 @@ public class BeastGenerator extends Generator {
     /**
      * The MAT (mutation-annotated tree) likelihood takes one pattern list per tree, resamples the mutation
      * history only along with the subtree-leap and fixed-height SPR moves, has no invariant sites, treats
-     * ambiguous states as missing and provides no gradients.
+     * ambiguous states as missing, provides no gradients and has been validated with the strict and
+     * uncorrelated relaxed clocks only.
      */
     private void checkMATOptions() throws GeneratorException {
         AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
@@ -389,6 +390,11 @@ public class BeastGenerator extends Generator {
                 if (clockType == ClockType.HMC_CLOCK || clockType == ClockType.SHRINKAGE_LOCAL_CLOCK) {
                     throw new GeneratorException(engine + "provides no gradients, so it cannot be used with the " +
                             clockType + " (partition " + partition.getName() + ").", BeautiFrame.CLOCK_MODELS);
+                }
+                if (clockType != ClockType.STRICT_CLOCK && clockType != ClockType.UNCORRELATED) {
+                    throw new GeneratorException(engine + "has been validated with the strict and uncorrelated " +
+                            "relaxed clocks only; the " + clockType + " is not yet supported (partition " +
+                            partition.getName() + ").", BeautiFrame.CLOCK_MODELS);
                 }
             }
             if (sequencePartitions > 1) {

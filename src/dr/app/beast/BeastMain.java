@@ -394,6 +394,7 @@ public class BeastMain {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
+                        new Arguments.Section("General"),
                         new Arguments.Option("verbose","vb","Give verbose XML parsing messages"),
                         new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
                         new Arguments.Option("strict", "sx", "Fail on non-conforming BEAST XML file"),
@@ -413,13 +414,18 @@ public class BeastMain {
                         new Arguments.RealOption("threshold", null, 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
                         new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "op", "Print transition kernel performance to file"),
 
+                        new Arguments.Section("The chain"),
+                        new Arguments.LongOption("chain_length", "cl", 1, Long.MAX_VALUE, "Run for this many states, whatever the XML file says"),
+                        new Arguments.LongOption("log_every", "le", 1, Long.MAX_VALUE, "Log every this many states, whatever the XML file says"),
                         new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
 
+                        new Arguments.Section("Site patterns"),
                         new Arguments.StringOption("pattern_compression", "pc", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
                                 false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
                         new Arguments.RealOption("ambiguous_threshold", "at", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
 
+                        new Arguments.Section("BEAGLE"),
                         new Arguments.Option("beagle", "b", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "bi", "BEAGLE: show information on available resources"),
                         new Arguments.Option("beagle_auto", "ba", "BEAGLE: automatically select fastest resource for analysis"),
@@ -448,6 +454,7 @@ public class BeastMain {
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
+                        new Arguments.Section("Running several chains"),
                         new Arguments.Option("mpi", null, "Use MPI rank to label output"),
 
                         new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
@@ -458,6 +465,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("mc3_swap", null, 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
                         new Arguments.StringOption("mc3_scheme", null, "NAME", "Specify parallel tempering swap scheme"),
 
+                        new Arguments.Section("Checkpointing"),
                         new Arguments.StringOption("load_state", null, "FILENAME", "Specify a filename to load a saved state from"),
                         new Arguments.StringOption("save_stem", null, "FILENAME", "Specify a stem for the filenames to save states to"),
                         new Arguments.LongOption("save_at", null, "Specify a state at which to save a state file"),
@@ -468,13 +476,12 @@ public class BeastMain {
                         new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
                         new Arguments.LongOption("checkpoint_seed", null, "Seed specified for checkpoint restart"),
 
-                        new Arguments.LongOption("chain_length", "cl", 1, Long.MAX_VALUE, "Run for this many states, whatever the XML file says"),
-                        new Arguments.LongOption("log_every", "le", 1, Long.MAX_VALUE, "Log every this many states, whatever the XML file says"),
-
+                        new Arguments.Section("Citations and plugins"),
                         new Arguments.StringOption("citations_file", null, "FILENAME", "Specify a filename to write a citation list to"),
                         new Arguments.Option("citations_off", null, "Turn off writing citations to file"),
                         new Arguments.StringOption("plugins_dir",null,  "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
+                        new Arguments.Section("Information"),
                         new Arguments.Option("version", "v", "Print the version and credits and stop"),
                         new Arguments.Option("help", "h", "Print this information and stop"),
                 });

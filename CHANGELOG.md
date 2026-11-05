@@ -211,6 +211,9 @@ set loaded by default (`parsers=development` in `beast.properties`).
 - **Chain profiling** — `-Dmcmc.profile=steps`, `likelihoods` or `all` times the phases
   of every MCMC step per operator and every likelihood evaluation, reported after the
   operator analysis. ([#1276](https://github.com/beast-dev/beast-mcmc/pull/1276))
+- **The command line help is grouped into sections** — the options are listed under
+  headings (General, The chain, Site patterns, BEAGLE, Running several chains,
+  Checkpointing, Citations and plugins, Information) rather than as one long list.
 - **Overriding the chain length and logging frequency** — `-chain_length` (short `-cl`)
   runs for a given number of states and `-log_every` (short `-le`) logs every given number
   of states, whatever the file says, so that a file can be run short, or sampled more or

@@ -64,6 +64,17 @@ public class Arguments {
         boolean isAvailable = false;
     }
 
+    /**
+     * A heading in the usage, to group the options that follow it. It is not an option: it cannot be given
+     * on the command line and is skipped when the arguments are matched.
+     */
+    public static class Section extends Option {
+
+        public Section(String title) {
+            super(title, null, null);
+        }
+    }
+
     public static class StringOption extends Option {
         /**
          * @param label       Option name:
@@ -618,6 +629,9 @@ public class Arguments {
 
         System.out.print("  Usage: " + name);
         for (Option option : options) {
+            if (option instanceof Section) {
+                continue;
+            }
             System.out.print(" [--" + option.label);
             if (option.shortLabel != null && !option.shortLabel.isEmpty()) {
                 System.out.print("|-" + option.shortLabel);
@@ -661,6 +675,11 @@ public class Arguments {
         System.out.println(" " + commandLine);
 
         for (Option option : options) {
+            if (option instanceof Section) {
+                System.out.println();
+                System.out.println("  " + option.label + ":");
+                continue;
+            }
             System.out.print("    --" + option.label);
             if (option.shortLabel != null && !option.shortLabel.isEmpty()) {
                 System.out.print(" | -" + option.shortLabel);
@@ -671,6 +690,9 @@ public class Arguments {
 
     private int findOption(String label) {
         for (int i = 0; i < options.length; i++) {
+            if (options[i] instanceof Section) {
+                continue;
+            }
             String l = options[i].label;
             if ((!caseSensitive && label.equalsIgnoreCase(l)) || label.equals(l)) {
                 return i;

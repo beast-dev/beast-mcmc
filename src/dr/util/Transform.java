@@ -1251,6 +1251,14 @@ public interface Transform {
             return Math.log(upper - lower) - Math.log(upper - value) - Math.log(value - lower);
         }
 
+        public double getLower() {
+            return lower;
+        }
+
+        public double getUpper() {
+            return upper;
+        }
+
         private final double upper;
         private final double lower;
     }

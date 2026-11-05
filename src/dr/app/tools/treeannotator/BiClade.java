@@ -36,7 +36,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $
  */
-class BiClade implements Clade {
+public class BiClade implements Clade {
 
     /**
 
@@ -165,8 +165,11 @@ class BiClade implements Clade {
         return heightValues;
     }
     public void addChildHeightValues(double leftHeight, double rightHeight) {
-        leftHeightValues.add(leftHeight);
-        rightHeightValues.add(rightHeight);
+        // trees are collected on several threads; one lock keeps the left and right values paired
+        synchronized (leftHeightValues) {
+            leftHeightValues.add(leftHeight);
+            rightHeightValues.add(rightHeight);
+        }
     }
 
     public List<Double> getLeftHeightValues() {

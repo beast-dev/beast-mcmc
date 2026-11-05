@@ -46,6 +46,8 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MultivariateFunction;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ import static dr.math.MachineAccuracy.SQRT_EPSILON;
  * @author Xiang Ji
  */
 public class BranchSubstitutionParameterGradient
-        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
+        implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable, Citable {
 
     protected final TreeDataLikelihood treeDataLikelihood;
     protected final TreeTrait treeTraitProvider;
@@ -323,5 +325,20 @@ public class BranchSubstitutionParameterGradient
 //        checkCommutability(new WrappedMatrix.Raw(generator, 0, len, len), new WrappedMatrix.Raw(differential, 0, len, len));
 //
 //        return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, nullableTolerance, smallGradientThreshold);
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return HomogeneousSubstitutionModelGradient.CITATION_CATEGORY;
+    }
+
+    @Override
+    public String getDescription() {
+        return HomogeneousSubstitutionModelGradient.CITATION_DESCRIPTION;
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return java.util.Collections.singletonList(HomogeneousSubstitutionModelGradient.CITATION);
     }
 }

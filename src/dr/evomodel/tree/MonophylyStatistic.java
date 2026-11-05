@@ -72,6 +72,27 @@ public class MonophylyStatistic extends TreeStatistic implements BooleanStatisti
         return tree;
     }
 
+    /**
+     * @return the ids of the taxa that must form a clade
+     */
+    public Set<String> getLeafSet() {
+        return Collections.unmodifiableSet(leafSet);
+    }
+
+    /**
+     * @return the ids of the taxa that may sit inside the clade without breaking it
+     */
+    public Set<String> getIgnoreLeafSet() {
+        return Collections.unmodifiableSet(ignoreLeafSet);
+    }
+
+    /**
+     * @return whether the statistic is true when the taxa are not a clade
+     */
+    public boolean isInverse() {
+        return inverse;
+    }
+
     public int getDimension() {
         return 1;
     }

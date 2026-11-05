@@ -45,6 +45,7 @@ import com.github.lbfgs4j.liblbfgs.Function;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Evaluate;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Param;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LBFGS_Progress;
+import com.github.lbfgs4j.liblbfgs.LbfgsConstant.LineSearch;
 import com.github.lbfgs4j.liblbfgs.LbfgsConstant.ReturnValue;
 import com.github.lbfgs4j.liblbfgs.MutableDouble;
 
@@ -83,6 +84,7 @@ public class MaximizerWrtParameter implements Reportable {
     private double cachedValue = Double.NaN;
     private double[] cachedGradient = null;
     private double[] parameterPoint = null;
+    private double[] minimumValues = null; // the parameter's values at minimumPoint, as the latest run ended
     private boolean cachedPointApplied = true; // false when the point's untransformed values were not finite
 
     // the latest run of maximize()
@@ -99,7 +101,9 @@ public class MaximizerWrtParameter implements Reportable {
     private double[] stallHistory = null;
     private double worstGradientCheckError = Double.NaN;
     private int restarts = 0;
+    private int escapes = 0; // stall escapes (setStallEscapes) in the latest run
     private boolean convergedToPrecision = false; // CONVERGED after a line search failure no restart could improve on
+    private double stalledGradientNorm = Double.NaN; // no restart could improve on the failure, at this gradient norm
     private double valueAtLastRestart = Double.POSITIVE_INFINITY;
     private final List<Double> gradientCheckErrors = new ArrayList<Double>();
 
@@ -110,9 +114,24 @@ public class MaximizerWrtParameter implements Reportable {
     private double[] holdPoint = null;
     private int holds = 0;
 
+    // the latest run's start, and its best accepted point over the whole call (holds reset L-BFGS's own)
+    private Settings active;
+    private boolean quiet = false;
+    private double startValue = Double.NaN;
+    private double callBestValue = Double.NaN;
+    private double[] callBestPoint = null;
+    private boolean endedAtBest = false;
+
     private double lastFiniteValue = 0.0;
     private boolean lastEvaluationNonFinite = false;
+    private boolean numericGradient = false; // the gradient is this class's own finite differences
     private static final double NON_FINITE_PENALTY = 1E10;
+    private static final double EDGE = 30.0; // logit 30: a ratio of 1 - 1E-13; log -30: a value of 1E-13
+    // the largest gradient norm, relative to max(1, |x|), at which a line search failure no restart improves on counts
+    // as a minimum to numerical precision
+    private static final double PRECISION_GRADIENT_TOLERANCE = 1E-2;
+    // the length of a stall escape's backtracking (Armijo) phase, in iterations
+    private static final int ESCAPE_ITERATIONS = 20;
 
     private static final Logger LOGGER = Logger.getLogger("dr.evomodel");
 
@@ -130,6 +149,7 @@ public class MaximizerWrtParameter implements Reportable {
         int stallWindow = 0;
         int checkGradientEvery = 0;
         int lineSearchRestarts = 0;
+        int stallEscapes = 0;
         Double epsilon = null;
         Integer past = null;
         Double delta = null;
@@ -173,10 +193,24 @@ public class MaximizerWrtParameter implements Reportable {
         /**
          * After a failed line search, restart L-BFGS from the best point so far with a cleared memory, up to this
          * many times, while each restart makes progress (0: stop at the failure). With delta set (setConvergence), a
-         * restart that finds no decrease at all ends the run as converged, to numerical precision.
+         * restart that finds no decrease at all ends the run: as converged, to numerical precision, when
+         * the gradient there is small, and as a line search failure (stalled) otherwise.
          */
         public Settings setLineSearchRestarts(int lineSearchRestarts) {
             this.lineSearchRestarts = lineSearchRestarts;
+            return this;
+        }
+
+        /**
+         * When the run stalls (setLineSearchRestarts: no decrease, a large gradient), escape up to this many times
+         * (0: report the stall): from the best point, with a cleared memory, run up to ESCAPE_ITERATIONS iterations
+         * with a backtracking (Armijo) line search, which accepts any sufficient decrease, then go back to the
+         * More-Thuente line search with the restarts renewed. More-Thuente also asks for a curvature condition,
+         * which a stretch where the objective is close to linear cannot meet: on Dengue from the UPGMA tree, at a
+         * rate of 7E-8, the objective falls 6600 along a unit step of steepest descent and its line search fails.
+         */
+        public Settings setStallEscapes(int stallEscapes) {
+            this.stallEscapes = stallEscapes;
             return this;
         }
 
@@ -200,6 +234,59 @@ public class MaximizerWrtParameter implements Reportable {
             this.epsilon = epsilon;
             this.past = past;
             this.delta = delta;
+            return this;
+        }
+
+        // these settings with a run's own budget in place of the parsed one
+        Settings withBudget(Budget budget) {
+            Settings copy = new Settings(budget.maxIterations, stepSize, startAtCurrentState,
+                    printToScreen && !budget.quiet, includeJacobian);
+            copy.setBudgets(budget.maxRunTime, budget.maxEvaluations, budget.relTol, budget.stallWindow);
+            copy.checkGradientEvery = checkGradientEvery;
+            copy.lineSearchRestarts = lineSearchRestarts;
+            copy.stallEscapes = stallEscapes;
+            copy.setConvergence(epsilon, past, delta);
+            copy.lowerBoundHolds.addAll(lowerBoundHolds);
+            return copy;
+        }
+    }
+
+    /**
+     * The stopping rules of one call to {@link #maximize(Budget)}, in place of the parsed nIterations, maxRunTime,
+     * maxEvaluations, relTol and stallWindow; the other settings stay as parsed. For callers that run the same
+     * maximizer many times with different budgets, such as a topology search's short and full re-fits.
+     */
+    public static final class Budget {
+        final int maxIterations;
+        double maxRunTime = 0.0;
+        long maxEvaluations = 0;
+        double relTol = 0.0;
+        int stallWindow = 0;
+        boolean quiet = false;
+
+        /**
+         * @param maxIterations L-BFGS iterations (0: no limit)
+         */
+        public Budget(int maxIterations) {
+            this.maxIterations = maxIterations;
+        }
+
+        /**
+         * As {@link Settings#setBudgets}: seconds, evaluations (0: no limit), and the stall rule (stallWindow 0: off).
+         */
+        public Budget setLimits(double maxRunTime, long maxEvaluations, double relTol, int stallWindow) {
+            this.maxRunTime = maxRunTime;
+            this.maxEvaluations = maxEvaluations;
+            this.relTol = relTol;
+            this.stallWindow = stallWindow;
+            return this;
+        }
+
+        /**
+         * Print nothing: no progress, no warnings, no stop messages.
+         */
+        public Budget setQuiet(boolean quiet) {
+            this.quiet = quiet;
             return this;
         }
     }
@@ -274,9 +361,11 @@ public class MaximizerWrtParameter implements Reportable {
         this.transform = transform;
 
         this.gradient = gradient == null ? constructGradient() : gradient;
+        this.numericGradient = gradient == null;
 
         this.function = constructFunction();
         this.settings = settings;
+        this.active = settings;
 
         for (LowerBoundHold hold : settings.lowerBoundHolds) {
             hold.offset = locate(this.parameter, hold.parameter);
@@ -313,7 +402,7 @@ public class MaximizerWrtParameter implements Reportable {
 
     public double[] getMinimumPoint(boolean inParameterSpace) {
         if (inParameterSpace && (transform != null)) {
-            return transform.inverse(minimumPoint, 0, minimumPoint.length);
+            return minimumValues.clone();
         } else {
             return minimumPoint;
         }
@@ -349,6 +438,10 @@ public class MaximizerWrtParameter implements Reportable {
 
     public int getRestarts() {
         return restarts;
+    }
+
+    public int getEscapes() {
+        return escapes;
     }
 
     /**
@@ -404,6 +497,29 @@ public class MaximizerWrtParameter implements Reportable {
         return minimumValue;
     }
 
+    /**
+     * @return the objective at the latest run's starting point (after any hold at the start)
+     */
+    public double getStartValue() {
+        return startValue;
+    }
+
+    /**
+     * @return the lowest objective the latest run accepted, at its start or at an iterate with every element at or
+     * above its lower-bound hold, across holds and restarts; the run ends there or lower (getMinimumValue)
+     */
+    public double getBestValue() {
+        return callBestValue;
+    }
+
+    /**
+     * @return whether the latest run ended on its best accepted point instead of where L-BFGS stopped, because a hold
+     * (or a non-finite stop) left it higher
+     */
+    public boolean endedAtBestPoint() {
+        return endedAtBest;
+    }
+
     public boolean includesJacobian() {
         return settings.includeJacobian;
     }
@@ -456,6 +572,9 @@ public class MaximizerWrtParameter implements Reportable {
      * transform (node-height ratios, the stick-breaking simplex) it belongs to the block, not to the element of the
      * same name.
      */
+    // the share of a bounded transform's interval below its upper end that counts as at the upper bound
+    private static final double UPPER_BOUND_MARGIN = 0.01;
+
     public static final class Coordinate {
         public final String name;
         public final double value; // natural scale
@@ -464,9 +583,10 @@ public class MaximizerWrtParameter implements Reportable {
         public final boolean free; // false for the stick-breaking simplex's last coordinate, which is always 0
         public final boolean held; // at its lower bound (holdAtLowerBound)
         public final double gradient; // dlogDensity/d(transformed), before held coordinates are masked
+        public final double upperBound; // the upper end of a bounded logit transform's interval; NaN for none
 
         Coordinate(String name, double value, double transformed, String transform, boolean free, boolean held,
-                   double gradient) {
+                   double gradient, double lowerBound, double upperBound) {
             this.name = name;
             this.value = value;
             this.transformed = transformed;
@@ -474,13 +594,27 @@ public class MaximizerWrtParameter implements Reportable {
             this.free = free;
             this.held = held;
             this.gradient = gradient;
+            this.upperBound = upperBound;
+            this.atUpperBound = !Double.isNaN(upperBound) &&
+                    value >= upperBound - UPPER_BOUND_MARGIN * (upperBound - lowerBound);
         }
 
         /**
-         * @return optimized, held_at_bound or dependent
+         * At the upper bound of its transform's interval (within 1% of the interval): the optimum may lie beyond it
+         * (the gamma shape of data without rate heterogeneity, whose optimum is +Inf).
+         */
+        public final boolean atUpperBound;
+
+        /**
+         * @return optimized, held_at_bound, at_upper_bound or dependent
          */
         public String getStatus() {
-            return held ? "held_at_bound" : (free ? "optimized" : "dependent");
+            return held ? "held_at_bound" : atUpperBound ? "at_upper_bound" : (free ? "optimized" : "dependent");
+        }
+
+        @Override
+        public String toString() {
+            return name + " = " + value + (atUpperBound ? " (upper bound " + upperBound + ")" : "");
         }
     }
 
@@ -493,17 +627,36 @@ public class MaximizerWrtParameter implements Reportable {
         if (!executed) {
             return coordinates;
         }
-        final double[] values = modelValues(minimumPoint);
+        // as the run ended: a transform's inverse can write into the model (the ratio transform sets the tree's node
+        // heights), which may have moved on since (a topology search restores another tree)
+        final double[] values = minimumValues;
         final String[] transforms = new String[minimumPoint.length];
         final boolean[] free = new boolean[minimumPoint.length];
         Arrays.fill(free, true);
-        describeTransform(transform, 0, minimumPoint.length, transforms, free);
+        final double[] lowers = new double[minimumPoint.length];
+        final double[] uppers = new double[minimumPoint.length];
+        Arrays.fill(lowers, Double.NaN);
+        Arrays.fill(uppers, Double.NaN);
+        describeTransform(transform, 0, minimumPoint.length, transforms, free, lowers, uppers);
         final double[] grad = heldGradient != null ? heldGradient : minimumGradient;
         for (int i = 0; i < minimumPoint.length; ++i) {
             coordinates.add(new Coordinate(parameter.getDimensionName(i), values[i], minimumPoint[i], transforms[i],
-                    free[i], heldCoordinates != null && heldCoordinates[i], -grad[i]));
+                    free[i], heldCoordinates != null && heldCoordinates[i], -grad[i], lowers[i], uppers[i]));
         }
         return coordinates;
+    }
+
+    /**
+     * @return the coordinates of the latest run's optimum at the upper bound of their transform's interval
+     */
+    public List<Coordinate> getAtUpperBound() {
+        List<Coordinate> at = new ArrayList<Coordinate>();
+        for (Coordinate coordinate : getOptimum()) {
+            if (coordinate.atUpperBound) {
+                at.add(coordinate);
+            }
+        }
+        return at;
     }
 
     /**
@@ -519,28 +672,34 @@ public class MaximizerWrtParameter implements Reportable {
         return k;
     }
 
-    // the name of the transform acting on each coordinate in [from, to)
-    private static void describeTransform(Transform transform, int from, int to, String[] names, boolean[] free) {
+    // the name of the transform acting on each coordinate in [from, to), and the interval of a bounded logit
+    private static void describeTransform(Transform transform, int from, int to, String[] names, boolean[] free,
+                                          double[] lowers, double[] uppers) {
         if (transform == null) {
             Arrays.fill(names, from, to, "none");
         } else if (transform instanceof Transform.MultivariateArray) {
             int start = from;
             for (Transform.MultivariableTransform part : ((Transform.MultivariateArray) transform).getTransforms()) {
                 int end = Math.min(to, start + part.getDimension());
-                describeTransform(part, start, end, names, free);
+                describeTransform(part, start, end, names, free, lowers, uppers);
                 start = end;
             }
         } else if (transform instanceof Transform.Collection) {
             for (Transform.ParsedTransform segment : ((Transform.Collection) transform).getSegments()) {
                 describeTransform(segment.transform, from + segment.start, Math.min(to, from + segment.end), names,
-                        free);
+                        free, lowers, uppers);
             }
         } else if (transform instanceof Transform.Array) {
             for (int i = from; i < to; ++i) {
-                describeTransform(((Transform.Array) transform).getTransform(i - from), i, i + 1, names, free);
+                describeTransform(((Transform.Array) transform).getTransform(i - from), i, i + 1, names, free,
+                        lowers, uppers);
             }
         } else {
             Arrays.fill(names, from, to, transform.getTransformName());
+            if (transform instanceof Transform.ScaledLogitTransform) {
+                Arrays.fill(lowers, from, to, ((Transform.ScaledLogitTransform) transform).getLower());
+                Arrays.fill(uppers, from, to, ((Transform.ScaledLogitTransform) transform).getUpper());
+            }
             if (transform instanceof UnitSimplexToRealsTransform && to > from) {
                 free[to - 1] = false;
             }
@@ -569,6 +728,25 @@ public class MaximizerWrtParameter implements Reportable {
     }
 
     public void maximize() {
+        maximize(null);
+    }
+
+    /**
+     * Maximize with this call's own budget (null: the parsed settings).
+     */
+    public void maximize(Budget budget) {
+        final Settings settings = budget == null ? this.settings : this.settings.withBudget(budget);
+        active = settings;
+        quiet = budget != null && budget.quiet;
+        try {
+            run(settings);
+        } finally {
+            active = this.settings;
+            quiet = false;
+        }
+    }
+
+    private void run(final Settings settings) {
 
         LBFGS_Param paramsBFGS = Lbfgs.defaultParams();
 
@@ -593,6 +771,16 @@ public class MaximizerWrtParameter implements Reportable {
 
             if (transform != null) {
                 x = transform.transform(x, 0, x.length);
+                // a value at the edge of its transform's domain (a node-height ratio of exactly 1 after an earlier
+                // run, a log-scale value of 0) is infinite here, and L-BFGS takes a start with |x| infinite as
+                // already minimized: start just inside instead
+                for (int i = 0; i < x.length; ++i) {
+                    if (x[i] == Double.POSITIVE_INFINITY) {
+                        x[i] = EDGE;
+                    } else if (x[i] == Double.NEGATIVE_INFINITY) {
+                        x[i] = -EDGE;
+                    }
+                }
             }
         } else {
             x = new double[dim];
@@ -603,7 +791,7 @@ public class MaximizerWrtParameter implements Reportable {
         if (settings.printToScreen) {
             LOGGER.info(getBanner());
         }
-        if (firstRun) {
+        if (firstRun && !quiet) {
             for (String warning : getWarnings()) {
                 LOGGER.info("WARNING: maximizeWrtParameter: " + warning);
             }
@@ -624,6 +812,10 @@ public class MaximizerWrtParameter implements Reportable {
         useCache = true;
         lastFiniteValue = 0.0;
         lastEvaluationNonFinite = false;
+        startValue = Double.NaN;
+        callBestValue = Double.NaN;
+        callBestPoint = null;
+        endedAtBest = false;
         heldCoordinates = settings.lowerBoundHolds.isEmpty() ? null : new boolean[dim];
         heldValues = settings.lowerBoundHolds.isEmpty() ? null : new double[dim];
         holdPoint = null;
@@ -662,17 +854,41 @@ public class MaximizerWrtParameter implements Reportable {
                 System.out.printf("\tevaluations = %d, seconds = %.3f\n\n", valueCalls, elapsedSeconds());
             }
             stopRequest = checkBudgets(fx, iterations);
-            if (stopRequest == null && heldCoordinates != null && belowBound(point)) {
+            final boolean below = heldCoordinates != null && belowBound(point);
+            if (!below && !lastEvaluationNonFinite) {
+                recordBest(point, fx);
+            }
+            if (stopRequest == null && below) {
                 holdPoint = point.clone();
             }
             return stopRequest == null && holdPoint == null ? ReturnValue.LBFGS_SUCCESS : ReturnValue.LBFGS_STOP;
         };
 
         final MutableDouble fx = new MutableDouble();
+        final LineSearch defaultLineSearch = paramsBFGS.lineSearch;
         restarts = 0;
+        escapes = 0;
+        int restartsAtEscape = 0; // an escape renews the line search restarts
+        boolean escaping = false;
+        double valueBeforeEscape = Double.POSITIVE_INFINITY;
         while (true) {
             status = Lbfgs.lbfgs(dim, x, fx, evaluate, progress, null, paramsBFGS);
             reason = stopRequest != null ? stopRequest : reasonFor(status);
+
+            final boolean escapeRun = escaping;
+            if (escaping) {
+                // the escape's backtracking phase is over: More-Thuente again, for the rest of the iterations (0: no
+                // limit), unless the paths below end the run
+                escaping = false;
+                paramsBFGS.lineSearch = defaultLineSearch;
+                paramsBFGS.max_iterations = settings.numberIterations > 0 ? settings.numberIterations - iterations : 0;
+                if (stopRequest == null && status == ReturnValue.LBFGS_STOP) {
+                    // the past/delta test ended the phase, not convergence: where the objective is exactly linear,
+                    // backtracking leaves L-BFGS no curvature (s'y = 0), and its steps stop. A stall like any other:
+                    // go on if the phase made progress, else check the gradient
+                    reason = Reason.LINE_SEARCH_FAILURE;
+                }
+            }
 
             if (holdPoint != null) {
                 // an element went below its bound: hold it there and restart with a cleared memory
@@ -699,8 +915,25 @@ public class MaximizerWrtParameter implements Reportable {
             // a failed line search ends the run; restarting from the best point with a cleared memory (a steepest-
             // descent first step) often gets past it, as long as each restart has made progress
             final int remaining = settings.numberIterations > 0 ? settings.numberIterations - iterations : 1;
-            if (reason == Reason.LINE_SEARCH_FAILURE && restarts < settings.lineSearchRestarts && remaining > 0 &&
-                    bestValue[0] < valueAtLastRestart) {
+            if (escapeRun && bestValue[0] < valueBeforeEscape && stopRequest == null && remaining > 0 &&
+                    (reason == Reason.MAX_ITERATIONS || reason == Reason.LINE_SEARCH_FAILURE ||
+                            reason == Reason.NON_FINITE)) {
+                // the escape made progress: go on from its best point with More-Thuente and renewed restarts
+                restartsAtEscape = restarts;
+                valueAtLastRestart = Double.POSITIVE_INFINITY;
+                previousIterations[0] = iterations;
+                x = bestPoint[0].clone();
+                if (settings.numberIterations > 0) {
+                    paramsBFGS.max_iterations = remaining;
+                }
+                if (settings.printToScreen) {
+                    LOGGER.info("maximizeWrtParameter: escape " + escapes + " lowered -log density from " +
+                            valueBeforeEscape + " to " + bestValue[0] + "; back to the More-Thuente line search");
+                }
+                continue;
+            }
+            if (reason == Reason.LINE_SEARCH_FAILURE && restarts - restartsAtEscape < settings.lineSearchRestarts &&
+                    remaining > 0 && bestValue[0] < valueAtLastRestart) {
                 restarts++;
                 valueAtLastRestart = bestValue[0];
                 previousIterations[0] = iterations;
@@ -715,14 +948,39 @@ public class MaximizerWrtParameter implements Reportable {
                 continue;
             }
             convergedToPrecision = false;
-            if (reason == Reason.LINE_SEARCH_FAILURE && restarts > 0 && !(bestValue[0] < valueAtLastRestart) &&
-                    settings.delta != null) {
-                // a restart from the best point with a cleared memory found no decrease at all: the objective has
-                // stopped improving, the past/delta stopping rule's condition, so the best point is a minimum to
-                // numerical precision
-                reason = Reason.CONVERGED;
-                convergedToPrecision = true;
+            stalledGradientNorm = Double.NaN;
+            final boolean noneAccepted = bestValue[0] == Double.POSITIVE_INFINITY;
+            if (reason == Reason.LINE_SEARCH_FAILURE &&
+                    (noneAccepted || restarts > 0 && !(bestValue[0] < valueAtLastRestart)) && settings.delta != null) {
+                // a restart from the best point with a cleared memory found no decrease at all, or the first line
+                // search from the start (or a hold) failed, which a restart would repeat: the objective has
+                // stopped improving, the past/delta stopping rule's condition. The best point is a minimum to
+                // numerical precision only if its gradient is small too; a large one means the line search, not the
+                // objective, stopped (on Dengue from the UPGMA tree: relative gradient norm 141, rate 7E-8)
                 x = bestPoint[0].clone();
+                final double gradientNorm = norm(function.gradientAt(x));
+                if (gradientNorm / Math.max(1.0, norm(x)) <= PRECISION_GRADIENT_TOLERANCE) {
+                    reason = Reason.CONVERGED;
+                    convergedToPrecision = true;
+                } else if (!escapeRun && escapes < settings.stallEscapes && remaining > 0) {
+                    // escape (setStallEscapes): a backtracking line search from the best point, which needs only
+                    // a sufficient decrease; an escape that finds none ends the run as stalled
+                    escapes++;
+                    escaping = true;
+                    valueBeforeEscape = bestValue[0];
+                    valueAtLastRestart = bestValue[0];
+                    previousIterations[0] = iterations;
+                    paramsBFGS.lineSearch = LineSearch.LBFGS_LINESEARCH_BACKTRACKING_ARMIJO;
+                    paramsBFGS.max_iterations = settings.numberIterations > 0 ?
+                            Math.min(remaining, ESCAPE_ITERATIONS) : ESCAPE_ITERATIONS;
+                    if (settings.printToScreen) {
+                        LOGGER.info("maximizeWrtParameter: stalled with gradient norm " + gradientNorm +
+                                "; escape " + escapes + " with a backtracking line search from the best point");
+                    }
+                    continue;
+                } else {
+                    stalledGradientNorm = gradientNorm;
+                }
             }
             break;
         }
@@ -733,6 +991,18 @@ public class MaximizerWrtParameter implements Reportable {
 
         minimumPoint = x;
         minimumValue = function.valueAt(minimumPoint);
+        if (callBestPoint != null &&
+                minimumValue > callBestValue + 1E-8 * Math.max(1.0, Math.abs(callBestValue))) {
+            // a hold moved the point up to a bound, and the budget ran out before L-BFGS got back below the best
+            // point accepted earlier in this call (or a non-finite stop ended higher): end at that point instead,
+            // releasing the elements held after it
+            minimumPoint = callBestPoint.clone();
+            releaseHoldsAbove(minimumPoint);
+            minimumValue = function.valueAt(minimumPoint);
+            endedAtBest = true;
+        }
+        assert !(minimumValue > callBestValue + 1E-8 * Math.max(1.0, Math.abs(callBestValue))) :
+                "the run ended above its best accepted point";
         minimumGradient = function.gradientAt(minimumPoint).clone();
         heldGradient = cachedUnmaskedGradient != null ? cachedUnmaskedGradient.clone() : minimumGradient;
         likelihoodRecomputes = getLikelihoodCalculationCount() - recomputesAtStart;
@@ -740,19 +1010,46 @@ public class MaximizerWrtParameter implements Reportable {
         cachedPoint = null;
         executed = true;
 
-        setParameter(new WrappedVector.Raw(modelValues(minimumPoint)), parameter);
+        minimumValues = modelValues(minimumPoint);
+        setParameter(new WrappedVector.Raw(minimumValues), parameter);
 
         final boolean failed = reason == Reason.LINE_SEARCH_FAILURE || reason == Reason.NON_FINITE
                 || reason == Reason.ERROR;
-        if (settings.printToScreen || (failed && firstRun)) {
+        if (settings.printToScreen || (failed && firstRun && !quiet)) {
             LOGGER.info("maximizeWrtParameter " + parameterName() + " stopped: " + reason + " (" + status +
                     ") after " + iterations + " iterations, " + valueCalls + " evaluations, " +
                     String.format("%.3f", seconds) + "s; -log density = " + minimumValue);
         }
         for (Held held : getHeld()) {
-            if (settings.printToScreen || held.gradient > 0) {
+            if (settings.printToScreen || (held.gradient > 0 && !quiet)) {
                 LOGGER.info((held.gradient > 0 ? "WARNING: " : "") + "maximizeWrtParameter: held at the lower bound: "
                         + held);
+            }
+        }
+        if (!quiet) {
+            for (Coordinate coordinate : getAtUpperBound()) {
+                LOGGER.info("WARNING: maximizeWrtParameter: at the upper bound: " + coordinate +
+                        "; the optimum may lie beyond it");
+            }
+        }
+    }
+
+    private void recordBest(double[] point, double value) {
+        if (Double.isFinite(value) && !(value >= callBestValue)) {
+            callBestValue = value;
+            callBestPoint = point.clone();
+        }
+    }
+
+    // un-hold the elements that lie above their bounds at the point: they were held after it was accepted
+    private void releaseHoldsAbove(double[] point) {
+        if (heldCoordinates == null) {
+            return;
+        }
+        final double[] values = untransformed(point);
+        for (int i = 0; i < values.length; ++i) {
+            if (heldCoordinates[i] && values[i] > heldValues[i] + 1E-12 * Math.max(1.0, Math.abs(heldValues[i]))) {
+                heldCoordinates[i] = false;
             }
         }
     }
@@ -773,13 +1070,19 @@ public class MaximizerWrtParameter implements Reportable {
         return transform != null ? transform.inverse(point, 0, point.length) : point.clone();
     }
 
+    // below the bound by more than a transform's round trip: the scaled logit maps a start at a bound of 0.05 to
+    // 0.049999999999999954, which held the gamma shape at once in every run and never let it move off
+    private static boolean below(double value, double bound) {
+        return value < bound - 1E-12 * Math.max(1.0, Math.abs(bound));
+    }
+
     // whether an element not yet held lies below its bound at the transformed point
     private boolean belowBound(double[] point) {
         final double[] values = untransformed(point);
         for (LowerBoundHold hold : settings.lowerBoundHolds) {
             for (int j = 0; j < hold.parameter.getDimension(); ++j) {
                 int index = hold.offset + j;
-                if (!heldCoordinates[index] && values[index] < hold.bound) {
+                if (!heldCoordinates[index] && below(values[index], hold.bound)) {
                     return true;
                 }
             }
@@ -798,7 +1101,7 @@ public class MaximizerWrtParameter implements Reportable {
         for (LowerBoundHold hold : settings.lowerBoundHolds) {
             for (int j = 0; j < hold.parameter.getDimension(); ++j) {
                 int index = hold.offset + j;
-                if (!heldCoordinates[index] && values[index] < hold.bound) {
+                if (!heldCoordinates[index] && below(values[index], hold.bound)) {
                     values[index] = hold.bound;
                     newlyHeld.add(index);
                 }
@@ -831,11 +1134,11 @@ public class MaximizerWrtParameter implements Reportable {
         StringBuilder sb = new StringBuilder("Maximizing wrt ").append(parameterName())
                 .append(" (dim ").append(function.getDimension())
                 .append(", ").append(gradient.getGradientType()).append(" gradient")
-                .append(", nIterations = ").append(settings.numberIterations > 0 ? settings.numberIterations : "unlimited");
-        if (settings.maxRunTime > 0) sb.append(", maxRunTime = ").append(settings.maxRunTime).append("s");
-        if (settings.maxEvaluations > 0) sb.append(", maxEvaluations = ").append(settings.maxEvaluations);
-        if (settings.stallWindow > 0) {
-            sb.append(", stall: relTol = ").append(settings.relTol).append(" over ").append(settings.stallWindow);
+                .append(", nIterations = ").append(active.numberIterations > 0 ? active.numberIterations : "unlimited");
+        if (active.maxRunTime > 0) sb.append(", maxRunTime = ").append(active.maxRunTime).append("s");
+        if (active.maxEvaluations > 0) sb.append(", maxEvaluations = ").append(active.maxEvaluations);
+        if (active.stallWindow > 0) {
+            sb.append(", stall: relTol = ").append(active.relTol).append(" over ").append(active.stallWindow);
         }
         return sb.append(")").toString();
     }
@@ -864,18 +1167,18 @@ public class MaximizerWrtParameter implements Reportable {
     }
 
     private Reason checkBudgets(double fx, int k) {
-        if (settings.maxRunTime > 0 && elapsedSeconds() >= settings.maxRunTime) {
+        if (active.maxRunTime > 0 && elapsedSeconds() >= active.maxRunTime) {
             return Reason.MAX_RUN_TIME;
         }
-        if (settings.maxEvaluations > 0 && valueCalls >= settings.maxEvaluations) {
+        if (active.maxEvaluations > 0 && valueCalls >= active.maxEvaluations) {
             return Reason.MAX_EVALUATIONS;
         }
         if (stallHistory != null) {
-            final int window = settings.stallWindow;
+            final int window = active.stallWindow;
             stallHistory[k % (window + 1)] = fx;
             if (k > window) {
                 final double before = stallHistory[(k - window) % (window + 1)];
-                if (before - fx <= settings.relTol * Math.max(1.0, Math.abs(fx))) {
+                if (before - fx <= active.relTol * Math.max(1.0, Math.abs(fx))) {
                     return Reason.STALL;
                 }
             }
@@ -922,7 +1225,7 @@ public class MaximizerWrtParameter implements Reportable {
 
             if (transform != null) {
                 sb.append("Gradient is taken with respect to the transformed parameter values.\n");
-                sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
+                sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(minimumValues)).append("\n");
             }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
             sb.append("Gradient: ").append(new dr.math.matrixAlgebra.Vector(minimumGradient)).append("\n");
@@ -935,17 +1238,30 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Status: ").append(status).append("\n");
             sb.append("Reason: ").append(reason);
             if (convergedToPrecision) {
-                sb.append(" (to numerical precision: a restart from the best point after a failed line search found " +
-                        "no decrease)");
+                sb.append(" (to numerical precision: no line search from the best point found a decrease, and the " +
+                        "gradient there is small)");
+            } else if (!Double.isNaN(stalledGradientNorm)) {
+                sb.append(" (stalled: no line search from the best point found a decrease").append(
+                        settings.stallEscapes > 0 ? ", escapes included" : "").append(", but the gradient norm there is ")
+                        .append(stalledGradientNorm).append(", so it is not a stationary point)");
             }
             sb.append("\n");
             sb.append("Iterations: ").append(iterations).append("\n");
             sb.append("Restarts: ").append(restarts).append("\n");
+            if (settings.stallEscapes > 0) {
+                sb.append("Escapes: ").append(escapes).append("\n");
+            }
+            if (endedAtBest) {
+                sb.append("EndedAtBestPoint: true (a hold left the last point above the best one accepted earlier)\n");
+            }
             if (!settings.lowerBoundHolds.isEmpty()) {
                 sb.append("Holds: ").append(holds).append("\n");
                 for (Held held : getHeld()) {
                     sb.append("HeldAtLowerBound: ").append(held).append("\n");
                 }
+            }
+            for (Coordinate coordinate : getAtUpperBound()) {
+                sb.append("AtUpperBound: ").append(coordinate).append("\n");
             }
             sb.append("ValueCalls: ").append(valueCalls).append("\n");
             sb.append("GradientCalls: ").append(gradientCalls).append("\n");
@@ -1028,6 +1344,10 @@ public class MaximizerWrtParameter implements Reportable {
             setPoint(point);
             argument = parameter.getParameterValues();
             logLikelihood = evaluateLogLikelihood();
+        } else if (parameterPoint != null) {
+            // the inverse has already written its non-finite values into a model it updates directly (the ratio
+            // transform sets the tree's node heights): put back the last point applied
+            setPoint(parameterPoint);
         }
 
         double value;
@@ -1051,19 +1371,25 @@ public class MaximizerWrtParameter implements Reportable {
             // the unweighted log density otherwise: the transform only reparameterizes, so the optimum is unchanged
 
             ++gradientCalls;
-            result = gradient.getGradientLogDensity();
+            if (numericGradient && transform != null) {
+                result = transformedNumericGradient(point);
+            } else {
+                result = gradient.getGradientLogDensity();
 
-            if (transform != null) {
-                if (settings.includeJacobian) {
-                    result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
-                } else {
-                    // chain rule only, matching the unweighted log density
-                    result = transform.updateGradientUnWeightedLogDensity(result, argument, 0, argument.length);
+                if (transform != null) {
+                    if (settings.includeJacobian) {
+                        result = transform.updateGradientLogDensity(result, argument, 0, argument.length);
+                    } else {
+                        // chain rule only, matching the unweighted log density, at the transformed point itself:
+                        // mapping the model values back can round a ratio to exactly 1, whose logit is +Inf and
+                        // inverse NaN
+                        result = transform.updateGradientInverseUnWeightedLogDensity(result, point, 0, point.length);
+                    }
                 }
-            }
-            result = result.clone();
-            for (int i = 0; i < result.length; ++i) {
-                result[i] = -result[i];
+                result = result.clone();
+                for (int i = 0; i < result.length; ++i) {
+                    result[i] = -result[i];
+                }
             }
             lastFiniteValue = value;
         }
@@ -1082,6 +1408,14 @@ public class MaximizerWrtParameter implements Reportable {
         cachedPointApplied = finitePoint;
         cachedValue = value;
         cachedGradient = result;
+
+        if (useCache && Double.isNaN(startValue)) {
+            // L-BFGS evaluates the starting point first
+            startValue = value;
+            if (!lastEvaluationNonFinite) {
+                recordBest(point, value);
+            }
+        }
 
         if (settings.checkGradientEvery > 0 && Double.isFinite(value)
                 && gradientCalls % settings.checkGradientEvery == 0) {
@@ -1186,6 +1520,45 @@ public class MaximizerWrtParameter implements Reportable {
                 return cachedGradient.clone();
             }
         };
+    }
+
+    /**
+     * The objective's gradient by central differences at the transformed point itself. In model space a step can
+     * leave the parameter's domain, which the transform exists to avoid: on a near-zero branch, a node height stepped
+     * above its parent's gives a negative branch length (an assertion under -ea, a non-finite density without).
+     */
+    private double[] transformedNumericGradient(final double[] point) {
+        final double[] y = point.clone();
+        final double[] result = new double[y.length];
+        NumericalDerivative.gradient(new MultivariateFunction() {
+            @Override
+            public double evaluate(double[] argument) {
+                setPoint(argument);
+                double value = -evaluateLogLikelihood();
+                if (settings.includeJacobian) {
+                    final double[] values = parameter.getParameterValues();
+                    value += transform.logJacobian(values, 0, values.length);
+                }
+                return value;
+            }
+
+            @Override
+            public int getNumArguments() {
+                return y.length;
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return Double.POSITIVE_INFINITY;
+            }
+        }, y, result, settings.stepSize);
+        setPoint(point);
+        return result;
     }
 
     private GradientWrtParameterProvider constructGradient() {

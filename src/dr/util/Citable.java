@@ -49,6 +49,71 @@ public interface Citable {
     List<Citation> getCitations();
 
     class Utils {
+
+        /**
+         * The citation shared by the parts of a composite (a joint or block gradient, say): the cited parts' category,
+         * description and citations when every cited part has the same description, else none, so a composite of
+         * differently cited parts adds nothing beyond what its parts add themselves. Citations in preparation are
+         * ignored: a part cited only by those counts as uncited.
+         */
+        public static Citable common(final List<?> parts) {
+            Citable first = null;
+            final java.util.LinkedHashSet<Citation> citations = new java.util.LinkedHashSet<Citation>();
+            for (Object part : parts) {
+                if (!(part instanceof Citable)) {
+                    continue;
+                }
+                Citable citable = (Citable) part;
+                final List<Citation> cited = new java.util.ArrayList<Citation>();
+                for (Citation citation : citable.getCitations()) {
+                    if (citation.getStatus() != Citation.Status.IN_PREPARATION) {
+                        cited.add(citation);
+                    }
+                }
+                if (cited.isEmpty()) {
+                    continue;
+                }
+                if (first == null) {
+                    first = citable;
+                } else if (!first.getDescription().equals(citable.getDescription())
+                        || first.getCategory() != citable.getCategory()) {
+                    return NONE;
+                }
+                citations.addAll(cited);
+            }
+            if (first == null) {
+                return NONE;
+            }
+            final Citable cited = first;
+            final List<Citation> list = new java.util.ArrayList<Citation>(citations);
+            return new Citable() {
+                public Citation.Category getCategory() {
+                    return cited.getCategory();
+                }
+
+                public String getDescription() {
+                    return cited.getDescription();
+                }
+
+                public List<Citation> getCitations() {
+                    return list;
+                }
+            };
+        }
+
+        private static final Citable NONE = new Citable() {
+            public Citation.Category getCategory() {
+                return Citation.Category.MISC;
+            }
+
+            public String getDescription() {
+                return "";
+            }
+
+            public List<Citation> getCitations() {
+                return java.util.Collections.emptyList();
+            }
+        };
         public static String getCitationString(Citable citable, String prepend, String postpend) {
             if (citable.getCitations().size() == 0) {
                 return null;

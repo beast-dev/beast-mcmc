@@ -108,6 +108,18 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer       the writer
      */
     public void writeParameterPriors(XMLWriter writer) {
+        writeParameterPriors(writer, null);
+    }
+
+    /**
+     * Write the priors for each parameter, or for one side of the split between the tree priors' parameters (e.g.
+     * the coalescent's population size) and the others
+     *
+     * @param writer     the writer
+     * @param treePriors null for every prior; true for the priors on the tree priors' parameters only, false for the
+     *                   others (with the monophyly constraints)
+     */
+    public void writeParameterPriors(XMLWriter writer, Boolean treePriors) {
 
         //first make sure that all possibly previously defined priors are part of the HashMap
         addParametersToPrior();
@@ -115,7 +127,7 @@ public class ParameterPriorGenerator extends Generator {
         boolean first = true;
 
         for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
-            if (taxaBooleanEntry.getValue()) {
+            if (taxaBooleanEntry.getValue() && !Boolean.TRUE.equals(treePriors)) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
                     first = false;
@@ -131,6 +143,10 @@ public class ParameterPriorGenerator extends Generator {
         List<Parameter> parameters = options.selectParameters();
 
         for (Parameter parameter : parameters) {
+            if (treePriors != null &&
+                    (GradientRegistry.findOwner(options, parameter) instanceof PartitionTreePrior) != treePriors) {
+                continue;
+            }
             if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
                     parameter.priorType == PriorType.NONE_FIXED ||
                     parameter.priorType == PriorType.NONE_STATISTIC)) {

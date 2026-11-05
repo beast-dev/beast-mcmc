@@ -89,7 +89,9 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
     @Override
     public void modelRestored(Model model) {
         epochKnown = storedEpochKnown && !epochsRebuiltSinceStore;
-        ratiosKnown = true;
+        // the stored ratios match the stored heights only if they were up to date at the store; node-height events
+        // leave them stale until the next read, so recompute them then
+        ratiosKnown = false;
     }
 
 
@@ -111,36 +113,40 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
         epochs.clear();
         epochsRebuiltSinceStore = true;
 
-        postOrderTraversal.updateAllNodes();
-        postOrderTraversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
-
-        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = postOrderTraversal.getNodeOperations();
-
-        for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {
-            final NodeRef node = tree.getNode(op.getNodeNumber());
-            final NodeRef leftChild = tree.getNode(op.getLeftChild());
-            final NodeRef rightChild = tree.getNode(op.getRightChild());
-
-            final double leftAnchorHeight = getAnchorTipHeight(leftChild);
-            final double rightAnchorHeight = getAnchorTipHeight(rightChild);
-
-            if (tree.isRoot(node)) {
-                if (!tree.isExternal(leftChild)) {
-                    nodeEpochMap.get(leftChild.getNumber()).endEpoch(node, null);
-                }
-                if (!tree.isExternal(rightChild)) {
-                    nodeEpochMap.get(rightChild.getNumber()).endEpoch(node, null);
-                }
-            } else {
-                if (rightAnchorHeight > leftAnchorHeight) {
-                    addToEpoch(node, rightChild, leftChild);
-                } else {
-                    addToEpoch(node, leftChild, rightChild);
-                }
-            }
-        }
+        // a post-order over the topology alone: the epochs depend only on it and the tip heights, while the likelihood
+        // traversal also computes branch lengths, which an inverse in progress (a new root height, or the NaN heights
+        // of a rejected step) can leave negative or NaN
+        addEpochsPostOrder(tree.getRoot());
 
         epochKnown = true;
+    }
+
+    private void addEpochsPostOrder(NodeRef node) {
+        if (tree.isExternal(node)) {
+            return;
+        }
+        final NodeRef leftChild = tree.getChild(node, 0);
+        final NodeRef rightChild = tree.getChild(node, 1);
+        addEpochsPostOrder(leftChild);
+        addEpochsPostOrder(rightChild);
+
+        final double leftAnchorHeight = getAnchorTipHeight(leftChild);
+        final double rightAnchorHeight = getAnchorTipHeight(rightChild);
+
+        if (tree.isRoot(node)) {
+            if (!tree.isExternal(leftChild)) {
+                nodeEpochMap.get(leftChild.getNumber()).endEpoch(node, null);
+            }
+            if (!tree.isExternal(rightChild)) {
+                nodeEpochMap.get(rightChild.getNumber()).endEpoch(node, null);
+            }
+        } else {
+            if (rightAnchorHeight > leftAnchorHeight) {
+                addToEpoch(node, rightChild, leftChild);
+            } else {
+                addToEpoch(node, leftChild, rightChild);
+            }
+        }
     }
 
     private void addToEpoch(NodeRef node, NodeRef anchorChild, NodeRef otherChild) {
@@ -202,6 +208,7 @@ public class NodeHeightToRatiosTransformDelegate extends AbstractNodeHeightTrans
 
     @Override
     public double[] setMaskByRatio(double threshold) {
+        updateRatios();
         double[] maskByRatio = new double[ratios.getDimension()];
         for (int i = 0; i < ratios.getDimension(); i++) {
             if (ratios.getParameterValue(i) > threshold && ratios.getParameterValue(i) < 1.0 - threshold) {

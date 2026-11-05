@@ -32,14 +32,20 @@ import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.Transform;
 import dr.xml.Reportable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class NodeHeightTransform extends Transform.MultivariateTransform implements Reportable {
+public class NodeHeightTransform extends Transform.MultivariateTransform implements Reportable, Citable {
 
     private AbstractNodeHeightTransformDelegate nodeHeightTransformDelegate;
     private TreeModel tree;
@@ -159,5 +165,69 @@ public class NodeHeightTransform extends Transform.MultivariateTransform impleme
     @Override
     public double[][] computeJacobianMatrixInverse(double[] values) {
         throw new RuntimeException("Not yet implemented!");
+    }
+
+    // the ratio transform is cited; the coalescent-interval transform is not
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Using the ratio transformation of internal node heights";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return nodeHeightTransformDelegate instanceof NodeHeightToRatiosTransformDelegate ?
+                Collections.singletonList(RATIO_CITATION) : Collections.<Citation>emptyList();
+    }
+
+    public static final Citation RATIO_CITATION = new Citation(
+            new Author[]{
+                    new Author("X", "Ji"),
+                    new Author("AA", "Fisher"),
+                    new Author("S", "Su"),
+                    new Author("JL", "Thorne"),
+                    new Author("B", "Potter"),
+                    new Author("P", "Lemey"),
+                    new Author("G", "Baele"),
+                    new Author("MA", "Suchard"),
+            },
+            "Scalable Bayesian divergence time estimation with ratio transformations",
+            2023,
+            "Systematic Biology",
+            72,
+            1136,
+            1153,
+            "10.1093/sysbio/syad039");
+
+    /**
+     * The ratio transform composed with the map of the ratios to the real line, cited as the ratio transform.
+     */
+    public static final class RealLine extends Transform.ComposeMultivariable implements Citable {
+
+        private final NodeHeightTransform ratios;
+
+        public RealLine(Transform.MultivariableTransform outer, NodeHeightTransform ratios) {
+            super(outer, ratios);
+            this.ratios = ratios;
+        }
+
+        @Override
+        public Citation.Category getCategory() {
+            return ratios.getCategory();
+        }
+
+        @Override
+        public String getDescription() {
+            return ratios.getDescription();
+        }
+
+        @Override
+        public List<Citation> getCitations() {
+            return ratios.getCitations();
+        }
     }
 }

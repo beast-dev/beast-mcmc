@@ -527,6 +527,10 @@ public class GammaDistribution implements Distribution, GradientProvider, Hessia
 
     // Private
 
+    // the Newton steps converge in a handful of iterations; a shape far out of range (e.g. 1E-20 or 1E20) can cycle
+    // or stall, and NaN then tells the caller there is no quantile
+    private static final int MAX_ITERATIONS = 10000;
+
     private static double pointChi2(double prob, double v) {
         // Returns z so that Prob{x<z}=prob where x is Chi2 distributed with df
         // = v
@@ -537,6 +541,7 @@ public class GammaDistribution implements Distribution, GradientProvider, Hessia
         final double e = 0.5e-6, aa = 0.6931471805, p = prob;
         double ch, a, q, p1, p2, t, x, b, s1, s2, s3, s4, s5, s6;
         double epsi = .01;
+        int iterations = 0;
         if( p < 0.000002 || p > 1 - 0.000002)  {
             epsi = .000001;
         }
@@ -572,6 +577,9 @@ public class GammaDistribution implements Distribution, GradientProvider, Hessia
                             - (6.73 + ch * (13.32 + 3 * ch)) / p2;
                     ch -= (1 - Math.exp(a + g + .5 * ch + c * aa) * p2 / p1)
                             / t;
+                    if (++iterations > MAX_ITERATIONS) {
+                        return Double.NaN;
+                    }
                 } while (Math.abs(q / ch - 1) - epsi > 0);
             }
         }
@@ -600,6 +608,9 @@ public class GammaDistribution implements Distribution, GradientProvider, Hessia
                     * (s2 - b
                     * (s3 - b
                     * (s4 - b * (s5 - b * s6))))));
+            if (++iterations > MAX_ITERATIONS) {
+                return Double.NaN;
+            }
         } while (Math.abs(q / ch - 1) > e);
 
         return (ch);

@@ -794,9 +794,19 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("Annotating target tree...");
 
         try {
-            cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLimit));
-
-            cladeSystem.traverseTree(targetTree, annotationAction);
+            // a majority-rule consensus has polytomies: traverseTree reads only a node's first two children, so it
+            // would annotate them with (and set their heights from) clades the node is not
+            boolean binary = true;
+            for (int i = 0; i < targetTree.getInternalNodeCount(); i++) {
+                binary &= targetTree.getChildCount(targetTree.getInternalNode(i)) == 2;
+            }
+            if (binary) {
+                cladeSystem.traverseTree(targetTree, new SetHeightsAction(rootHeights, countLimit));
+                cladeSystem.traverseTree(targetTree, annotationAction);
+            } else {
+                cladeSystem.traverseNonBinaryTree(targetTree, new SetHeightsAction(rootHeights, countLimit));
+                cladeSystem.traverseNonBinaryTree(targetTree, annotationAction);
+            }
         } catch (Exception e) {
             System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
             System.exit(1);

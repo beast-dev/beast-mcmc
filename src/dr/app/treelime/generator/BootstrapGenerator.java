@@ -34,6 +34,7 @@ import dr.app.treelime.options.BootstrapReplicate;
 import dr.app.treelime.options.PartitionData;
 import dr.app.treelime.options.PartitionSubstitutionModel;
 import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.options.TopologySearchOptions;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
@@ -56,8 +57,16 @@ import java.util.Random;
  * Nonparametric bootstrap replicates of a TreeLime analysis written as files (plan 8 S3g): each replicate resamples
  * the columns of every partition with replacement, within each model partition (codon positions 1+2 pooled, or 1, 2
  * and 3 separately; padded constant sites included), and is written as an ordinary TreeLime XML whose partitions read
- * the resampled data. The starting tree still comes from the original data, so every replicate keeps the original
- * topology: a fixed-topology bootstrap. A counts file rebuilds any replicate.
+ * the resampled data. A counts file rebuilds any replicate.
+ * <p>
+ * With the topology search off, the starting tree still comes from the original data, so every replicate keeps the
+ * original topology: a fixed-topology bootstrap. With the Standard or Thorough search on (plan 8 S7f), each replicate
+ * searches from the NJ tree of its own data, and the replicates' trees give clade support (rooted clade frequency,
+ * split and root support on the original time tree, every clade's frequency in a table) and, through TreeAnnotator,
+ * summary trees: HIPSTR and MrHIPSTR (Baele et al. 2025, Bioinformatics 41:btaf488), the majority-rule consensus,
+ * the MCC tree, and the original time tree annotated with the replicates' clade frequencies and ages; optionally
+ * (on by default) the traditional split support, the unrooted topology with bootstrap percentages and the majority-rule
+ * consensus of the splits.
  *
  * @author Xiang Ji
  * @author Marc A. Suchard
@@ -68,6 +77,24 @@ public class BootstrapGenerator extends Generator {
     public static final String COUNTS_FILE = "bootstrap.counts.tsv";
     public static final String SCRIPT_FILE = "run_replicates.sh";
     public static final String SUMMARY_FILE = "bootstrap.summary.xml";
+
+    /**
+     * The summary trees TreeAnnotator writes from a searched bootstrap's replicates: its -type, and the file suffix.
+     */
+    public enum SummaryTree {
+        HIPSTR("hipstr", "hipstr.tree"),
+        MRHIPSTR("mrhipstr", "mrhipstr.tree"),
+        CONSENSUS("mrc", "consensus.tree"),
+        MCC("mcc", "mcc.tree");
+
+        public final String type;
+        public final String suffix;
+
+        SummaryTree(String type, String suffix) {
+            this.type = type;
+            this.suffix = suffix;
+        }
+    }
 
     private final ComponentFactory[] components;
 
@@ -313,6 +340,14 @@ public class BootstrapGenerator extends Generator {
         if (replicates < 1) {
             throw new GeneratorException("Choose at least one bootstrap replicate.");
         }
+        TopologySearchOptions search = options.maximizationOptions.getTopologySearch();
+        if (search.isOn() && !search.startsFromNj()) {
+            // the starting tree comes from the original data: searched from it, every replicate leans towards the
+            // original's topology, which inflates the support
+            throw new GeneratorException("A bootstrap with the topology search needs each replicate to start from " +
+                    "its own data: choose the Standard or Thorough search (from the NJ tree), or turn the search off " +
+                    "for a fixed-topology bootstrap.");
+        }
         List<PartitionData> partitions = getPartitions();
         prepare();
         if (!directory.isDirectory() && !directory.mkdirs()) {
@@ -323,7 +358,8 @@ public class BootstrapGenerator extends Generator {
         try {
             counts.println("# " + VERSION + ": how often each column of each partition was drawn");
             counts.println("# master_seed=" + masterSeed + "\treplicates=" + replicates + "\tstem=" + options.fileNameStem);
-            counts.println("# fixed-topology bootstrap: every replicate keeps the original starting tree");
+            counts.println(isSearched() ? "# searched bootstrap: every replicate searches the topology from the NJ " +
+                    "tree of its own data" : "# fixed-topology bootstrap: every replicate keeps the original starting tree");
             for (PartitionData partition : partitions) {
                 int[] sites = sites(partition);
                 counts.println("# partition " + partition.getName() + ": alignment columns " + (sites[0] + 1) + "-" +
@@ -360,6 +396,49 @@ public class BootstrapGenerator extends Generator {
     }
 
     /**
+     * @return whether each replicate searches the topology (plan 8 S7f) rather than keeping the starting tree's
+     */
+    public boolean isSearched() {
+        return options.maximizationOptions.getTopologySearch().isOn();
+    }
+
+    /**
+     * @return the file of a summary tree of the replicates, one per tree
+     */
+    public String getSummaryTreeFile(PartitionTreeModel tree, SummaryTree summary) {
+        return options.fileNameStem + "." + tree.getPrefix() + summary.suffix;
+    }
+
+    /**
+     * @return the original time tree annotated by TreeAnnotator with the replicates' clade frequencies and ages
+     */
+    public String getSupportTreeFile(PartitionTreeModel tree) {
+        return options.fileNameStem + "." + tree.getPrefix() + "support.tree";
+    }
+
+    /**
+     * @return the traditional split support: the time tree's topology, unrooted, with each split's bootstrap
+     * percentage as its node label (Newick)
+     */
+    public String getSplitsFile(PartitionTreeModel tree) {
+        return options.fileNameStem + "." + tree.getPrefix() + "splits.tree";
+    }
+
+    /**
+     * @return the unrooted majority-rule consensus of the replicates' splits, with percentages (Newick)
+     */
+    public String getSplitConsensusFile(PartitionTreeModel tree) {
+        return options.fileNameStem + "." + tree.getPrefix() + "splits.consensus.tree";
+    }
+
+    /**
+     * @return the table of every clade in the replicates: frequency and ages
+     */
+    public String getCladesFile(PartitionTreeModel tree) {
+        return options.fileNameStem + "." + tree.getPrefix() + "clades.tsv";
+    }
+
+    /**
      * @return the original analysis's XML, which the run script runs with the replicates
      */
     public String getOriginalFile() {
@@ -374,11 +453,15 @@ public class BootstrapGenerator extends Generator {
                 ", written into its tables and time tree");
         writer.writeOpenTag("beast");
         String stem = options.fileNameStem;
-        writer.writeOpenTag(BootstrapSummaryParser.BOOTSTRAP_SUMMARY, new Attribute[]{
+        List<Attribute> summaryAttributes = new ArrayList<Attribute>(Arrays.<Attribute>asList(
                 new Attribute.Default<Double>(BootstrapSummaryParser.LEVEL, 0.95),
                 new Attribute.Default<String>(BootstrapSummaryParser.PARAMETERS, stem + ".params.tsv"),
                 new Attribute.Default<String>(BootstrapSummaryParser.BOOTSTRAP_PARAMETERS, getBootstrapParametersFile()),
-                new Attribute.Default<String>(BootstrapSummaryParser.SUMMARY, stem + ".summary.txt")});
+                new Attribute.Default<String>(BootstrapSummaryParser.SUMMARY, stem + ".summary.txt")));
+        if (isSearched()) {
+            summaryAttributes.add(new Attribute.Default<Boolean>(BootstrapSummaryParser.TOPOLOGY_SEARCHED, true));
+        }
+        writer.writeOpenTag(BootstrapSummaryParser.BOOTSTRAP_SUMMARY, summaryAttributes.toArray(new Attribute[0]));
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
             List<Attribute> attributes = new ArrayList<Attribute>();
             attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.TIME_TREE,
@@ -390,6 +473,14 @@ public class BootstrapGenerator extends Generator {
             if (BeastGenerator.singleClock(options, tree) != null) {
                 attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.RATES,
                         BeastGenerator.treeTableFile(options, tree, ".rates.tsv")));
+            }
+            if (isSearched()) {
+                attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.CLADES, getCladesFile(tree)));
+                if (options.maximizationOptions.isBootstrapSplitSupport()) {
+                    attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.SPLITS, getSplitsFile(tree)));
+                    attributes.add(new Attribute.Default<String>(BootstrapSummaryParser.SPLIT_CONSENSUS,
+                            getSplitConsensusFile(tree)));
+                }
             }
             writer.writeTag(BootstrapSummaryParser.TREE_FILES, attributes.toArray(new Attribute[0]), true);
         }
@@ -455,6 +546,36 @@ public class BootstrapGenerator extends Generator {
         out.println("else");
         out.println("    echo \"no bootstrap summary: the original analysis or every replicate failed\"");
         out.println("fi");
+        if (isSearched()) {
+            writeTreeAnnotator(out);
+        }
+    }
+
+    // a searched bootstrap: summary trees of the replicates by TreeAnnotator, and the original time tree (after the
+    // summary above has written its intervals) annotated with the replicates' clade frequencies and median ages
+    private void writeTreeAnnotator(PrintWriter out) {
+        out.println();
+        out.println("# Summary trees of the replicates by TreeAnnotator: HIPSTR and MrHIPSTR (Baele et al. 2025, " +
+                "Bioinformatics 41:btaf488),");
+        out.println("# the majority-rule consensus and the MCC tree; then the original time tree with the replicates' " +
+                "clade frequencies");
+        out.println("# (posterior = bootstrap frequency) and median ages over the replicates that have each clade");
+        out.println("annotate() { # options, the replicates' trees, the output");
+        out.println("    $TREEANNOTATOR -burninTrees 0 -limitCount 1 -heights median $1 \"$2\" \"$3\" > \"$3.log\" 2>&1 && " +
+                "rm -f \"$3.log\" || echo \"TreeAnnotator failed for $3: see $3.log\"");
+        out.println("}");
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            String trees = getBootstrapTreesFile(tree);
+            out.println("if [ -f \"" + trees + "\" ]; then");
+            for (SummaryTree summary : SummaryTree.values()) {
+                out.println("    annotate \"-type " + summary.type + "\" \"" + trees + "\" \"" +
+                        getSummaryTreeFile(tree, summary) + "\"");
+            }
+            String timeTree = BeastGenerator.timeTreeFile(options, tree);
+            out.println("    if [ -f \"" + timeTree + "\" ]; then annotate \"-target " + timeTree + "\" \"" + trees +
+                    "\" \"" + getSupportTreeFile(tree) + "\"; fi");
+            out.println("fi");
+        }
     }
 
     private void writeScript(File directory, int replicates) throws IOException {
@@ -467,7 +588,9 @@ public class BootstrapGenerator extends Generator {
             out.println("# Runs the " + replicates + " bootstrap replicates of " + options.fileNameStem +
                     " with BEAST, " + jobs + " at a time, then gathers their time trees in " +
                     options.fileNameStem + ".bootstrap.*trees and their estimates in " + getBootstrapParametersFile() + ".");
-            out.println("# Fixed-topology bootstrap: every replicate keeps the original starting tree.");
+            out.println(isSearched() ? "# Searched bootstrap: every replicate searches the topology from the NJ tree " +
+                    "of its own data; TreeAnnotator then summarizes the replicates' trees." :
+                    "# Fixed-topology bootstrap: every replicate keeps the original starting tree.");
             out.println("# BEAST: the BEAST command if it is not 'beast'; JOBS: the replicates run at once;");
             out.println("# THREADS: the threads each run may use (-threads and -beagle_threads; 0 lets BEAST decide).");
             out.println("# JOBS x THREADS should not exceed the machine's threads, e.g. on 16 threads:");
@@ -479,6 +602,11 @@ public class BootstrapGenerator extends Generator {
             out.println("THREADS=\"${THREADS:-" + threads + "}\"");
             out.println("THREAD_OPTIONS=\"\"");
             out.println("if [ \"$THREADS\" -gt 0 ]; then THREAD_OPTIONS=\"-threads $THREADS -beagle_threads $THREADS\"; fi");
+            if (isSearched()) {
+                out.println("# TREEANNOTATOR: BEAST's TreeAnnotator if it is not 'treeannotator', e.g. " +
+                        "\"java -cp /path/to/beast.jar dr.app.tools.treeannotator.TreeAnnotator\"");
+                out.println("TREEANNOTATOR=\"${TREEANNOTATOR:-treeannotator}\"");
+            }
             out.println("export BEAST THREAD_OPTIONS");
             out.println("# the original analysis (0) and each replicate in its own BEAST, JOBS at a time; the gathering " +
                     "and summary below wait for all of them");

@@ -41,6 +41,8 @@ import dr.evomodel.treedatalikelihood.preorder.ProcessSimulationDelegate;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -52,7 +54,7 @@ import static dr.evomodel.substmodel.DifferentialMassProvider.Mode;
  * @author Marc A. Suchard
  * @author Xiang Ji
  */
-public class HomogeneousSubstitutionParameterGradient implements GradientWrtParameterProvider, Reportable {
+public class HomogeneousSubstitutionParameterGradient implements GradientWrtParameterProvider, Reportable, Citable {
     //TODO: create an AbstractClass to unify this and the BranchSubstitutionParameterGradient
 
     private final Parameter parameter;
@@ -200,5 +202,20 @@ public class HomogeneousSubstitutionParameterGradient implements GradientWrtPara
     @Override
     public String getReport() {
         return mode.getReport() + " " + GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, tolerance);
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return HomogeneousSubstitutionModelGradient.CITATION_CATEGORY;
+    }
+
+    @Override
+    public String getDescription() {
+        return HomogeneousSubstitutionModelGradient.CITATION_DESCRIPTION;
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return java.util.Collections.singletonList(HomogeneousSubstitutionModelGradient.CITATION);
     }
 }

@@ -1,0 +1,415 @@
+<?xml version="1.0" standalone="yes"?>
+
+<!--       by Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard         -->
+<!--       Department of Computer Science, University of Auckland and        -->
+<!--       Institute of Evolutionary Biology, University of Edinburgh        -->
+<!--       David Geffen School of Medicine, University of California, Los Angeles-->
+<!--       http://beast.community/                                           -->
+<beast>
+	
+
+	<!-- The list of taxa to be analysed (can also include dates/ages).          -->
+	<!-- ntax=12                                                                 -->
+	<taxa id="taxa">
+		<taxon id="Tarsius_syrichta"/>
+		<taxon id="Lemur_catta"/>
+		<taxon id="Homo_sapiens"/>
+		<taxon id="Pan"/>
+		<taxon id="Gorilla"/>
+		<taxon id="Pongo"/>
+		<taxon id="Hylobates"/>
+		<taxon id="Macaca_fuscata"/>
+		<taxon id="M_mulatta"/>
+		<taxon id="M_fascicularis"/>
+		<taxon id="M_sylvanus"/>
+		<taxon id="Saimiri_sciureus"/>
+	</taxa>
+	
+	
+
+	<!-- The sequence alignment (each sequence refers to a taxon above).         -->
+	<!-- ntax=12 nchar=449                                                       -->
+	<alignment id="alignment1" dataType="nucleotide">
+		<sequence>
+			<taxon idref="Tarsius_syrichta"/>
+			AAGTTTCATTGGAGCCACCACTCTTATAATTGCCCATGGCCTCACCTCCTCCCTATTATTTTGCCTAGCAAATACAAACTACGAACGAGTCCACAGTCGAACAATAGCACTAGCCCGTGGCCTTCAAACCCTATTACCTCTTGCAGCAACATGATGACTCCTCGCCAGCTTAACCAACCTGGCCCTTCCCCCAACAATTAATTTAATCGGTGAACTGTCCGTAATAATAGCAGCATTTTCATGGTCACACCTAACTATTATCTTAGTAGGCCTTAACACCCTTATCACCGCCCTATATTCCCTATATATACTAATCATAACTCAACGAGGAAAATACACATATCATATCAACAATATCATGCCCCCTTTCACCCGAGAAAATACATTAATAATCATACACCTATTTCCCTTAATCCTACTATCTACCAACCCCAAAGTAATTATAGGAA
+		</sequence>
+		<sequence>
+			<taxon idref="Lemur_catta"/>
+			AAGCTTCATAGGAGCAACCATTCTAATAATCGCACATGGCCTTACATCATCCATATTATTCTGTCTAGCCAACTCTAACTACGAACGAATCCATAGCCGTACAATACTACTAGCACGAGGGATCCAAACCATTCTCCCTCTTATAGCCACCTGATGACTACTCGCCAGCCTAACTAACCTAGCCCTACCCACCTCTATCAATTTAATTGGCGAACTATTCGTCACTATAGCATCCTTCTCATGATCAAACATTACAATTATCTTAATAGGCTTAAATATGCTCATCACCGCTCTCTATTCCCTCTATATATTAACTACTACACAACGAGGAAAACTCACATATCATTCGCACAACCTAAACCCATCCTTTACACGAGAAAACACCCTTATATCCATACACATACTCCCCCTTCTCCTATTTACCTTAAACCCCAAAATTATTCTAGGAC
+		</sequence>
+		<sequence>
+			<taxon idref="Homo_sapiens"/>
+			AAGCTTCACCGGCGCAGTCATTCTCATAATCGCCCACGGGCTTACATCCTCATTACTATTCTGCCTAGCAAACTCAAACTACGAACGCACTCACAGTCGCATCATAATCCTCTCTCAAGGACTTCAAACTCTACTCCCACTAATAGCTTTTTGATGACTTCTAGCAAGCCTCGCTAACCTCGCCTTACCCCCCACTATTAACCTACTGGGAGAACTCTCTGTGCTAGTAACCACGTTCTCCTGATCAAATATCACTCTCCTACTTACAGGACTCAACATACTAGTCACAGCCCTATACTCCCTCTACATATTTACCACAACACAATGGGGCTCACTCACCCACCACATTAACAACATAAAACCCTCATTCACACGAGAAAACACCCTCATGTTCATACACCTATCCCCCATTCTCCTCCTATCCCTCAACCCCGACATCATTACCGGGT
+		</sequence>
+		<sequence>
+			<taxon idref="Pan"/>
+			AAGCTTCACCGGCGCAATTATCCTCATAATCGCCCACGGACTTACATCCTCATTATTATTCTGCCTAGCAAACTCAAATTATGAACGCACCCACAGTCGCATCATAATTCTCTCCCAAGGACTTCAAACTCTACTCCCACTAATAGCCTTTTGATGACTCCTAGCAAGCCTCGCTAACCTCGCCCTACCCCCTACCATTAATCTCCTAGGGGAACTCTCCGTGCTAGTAACCTCATTCTCCTGATCAAATACCACTCTCCTACTCACAGGATTCAACATACTAATCACAGCCCTGTACTCCCTCTACATGTTTACCACAACACAATGAGGCTCACTCACCCACCACATTAATAACATAAAGCCCTCATTCACACGAGAAAATACTCTCATATTTTTACACCTATCCCCCATCCTCCTTCTATCCCTCAATCCTGATATCATCACTGGAT
+		</sequence>
+		<sequence>
+			<taxon idref="Gorilla"/>
+			AAGCTTCACCGGCGCAGTTGTTCTTATAATTGCCCACGGACTTACATCATCATTATTATTCTGCCTAGCAAACTCAAACTACGAACGAACCCACAGCCGCATCATAATTCTCTCTCAAGGACTCCAAACCCTACTCCCACTAATAGCCCTTTGATGACTTCTGGCAAGCCTCGCCAACCTCGCCTTACCCCCCACCATTAACCTACTAGGAGAGCTCTCCGTACTAGTAACCACATTCTCCTGATCAAACACCACCCTTTTACTTACAGGATCTAACATACTAATTACAGCCCTGTACTCCCTTTATATATTTACCACAACACAATGAGGCCCACTCACACACCACATCACCAACATAAAACCCTCATTTACACGAGAAAACATCCTCATATTCATGCACCTATCCCCCATCCTCCTCCTATCCCTCAACCCCGATATTATCACCGGGT
+		</sequence>
+		<sequence>
+			<taxon idref="Pongo"/>
+			AAGCTTCACCGGCGCAACCACCCTCATGATTGCCCATGGACTCACATCCTCCCTACTGTTCTGCCTAGCAAACTCAAACTACGAACGAACCCACAGCCGCATCATAATCCTCTCTCAAGGCCTTCAAACTCTACTCCCCCTAATAGCCCTCTGATGACTTCTAGCAAGCCTCACTAACCTTGCCCTACCACCCACCATCAACCTTCTAGGAGAACTCTCCGTACTAATAGCCATATTCTCTTGATCTAACATCACCATCCTACTAACAGGACTCAACATACTAATCACAACCCTATACTCTCTCTATATATTCACCACAACACAACGAGGTACACCCACACACCACATCAACAACATAAAACCTTCTTTCACACGCGAAAATACCCTCATGCTCATACACCTATCCCCCATCCTCCTCTTATCCCTCAACCCCAGCATCATCGCTGGGT
+		</sequence>
+		<sequence>
+			<taxon idref="Hylobates"/>
+			AAGCTTTACAGGTGCAACCGTCCTCATAATCGCCCACGGACTAACCTCTTCCCTGCTATTCTGCCTTGCAAACTCAAACTACGAACGAACTCACAGCCGCATCATAATCCTATCTCGAGGGCTCCAAGCCTTACTCCCACTGATAGCCTTCTGATGACTCGCAGCAAGCCTCGCTAACCTCGCCCTACCCCCCACTATTAACCTCCTAGGTGAACTCTTCGTACTAATGGCCTCCTTCTCCTGGGCAAACACTACTATTACACTCACCGGGCTCAACGTACTAATCACGGCCCTATACTCCCTTTACATATTTATCATAACACAACGAGGCACACTTACACACCACATTAAAAACATAAAACCCTCACTCACACGAGAAAACATATTAATACTTATGCACCTCTTCCCCCTCCTCCTCCTAACCCTCAACCCTAACATCATTACTGGCT
+		</sequence>
+		<sequence>
+			<taxon idref="Macaca_fuscata"/>
+			AAGCTTTTCCGGCGCAACCATCCTTATGATCGCTCACGGACTCACCTCTTCCATATATTTCTGCCTAGCCAATTCAAACTATGAACGCACTCACAACCGTACCATACTACTGTCCCGAGGACTTCAAATCCTACTTCCACTAACAGCCTTTTGATGATTAACAGCAAGCCTTACTAACCTTGCCCTACCCCCCACTATCAATCTACTAGGTGAACTCTTTGTAATCGCAACCTCATTCTCCTGATCCCATATCACCATTATGCTAACAGGACTTAACATATTAATTACGGCCCTCTACTCTCTCCACATATTCACTACAACACAACGAGGAACACTCACACATCACATAATCAACATAAAGCCCCCCTTCACACGAGAAAACACATTAATATTCATACACCTCGCTCCAATTATCCTTCTATCCCTCAACCCCAACATCATCCTGGGGT
+		</sequence>
+		<sequence>
+			<taxon idref="M_mulatta"/>
+			AAGCTTTTCTGGCGCAACCATCCTCATGATTGCTCACGGACTCACCTCTTCCATATATTTCTGCCTAGCCAATTCAAACTATGAACGCACTCACAACCGTACCATACTACTGTCCCGGGGACTTCAAATCCTACTTCCACTAACAGCTTTCTGATGATTAACAGCAAGCCTTACTAACCTTGCCCTACCCCCCACTATCAACCTACTAGGTGAACTCTTTGTAATCGCGACCTCATTCTCCTGGTCCCATATCACCATTATATTAACAGGATTTAACATACTAATTACGGCCCTCTACTCCCTCCACATATTCACCACAACACAACGAGGAGCACTCACACATCACATAATCAACATAAAACCCCCCTTCACACGAGAAAACATATTAATATTCATACACCTCGCTCCAATCATCCTCCTATCTCTCAACCCCAACATCATCCTGGGGT
+		</sequence>
+		<sequence>
+			<taxon idref="M_fascicularis"/>
+			AAGCTTCTCCGGCGCAACCACCCTTATAATCGCCCACGGGCTCACCTCTTCCATGTATTTCTGCTTGGCCAATTCAAACTATGAGCGCACTCATAACCGTACCATACTACTATCCCGAGGACTTCAAATTCTACTTCCATTGACAGCCTTCTGATGACTCACAGCAAGCCTTACTAACCTTGCCCTACCCCCCACTATTAATCTACTAGGCGAACTCTTTGTAATCACAACTTCATTTTCCTGATCCCATATCACCATTGTGTTAACGGGCCTTAATATACTAATCACAGCCCTCTACTCTCTCCACATGTTCATTACAGTACAACGAGGAACACTCACACACCACATAATCAATATAAAACCCCCCTTCACACGAGAAAACATATTAATATTCATACACCTCGCTCCAATTATCCTTCTATCTCTCAACCCCAACATCATCCTGGGGT
+		</sequence>
+		<sequence>
+			<taxon idref="M_sylvanus"/>
+			AAGCTTCTCCGGTGCAACTATCCTTATAGTTGCCCATGGACTCACCTCTTCCATATACTTCTGCTTGGCCAACTCAAACTACGAACGCACCCACAGCCGCATCATACTACTATCCCGAGGACTCCAAATCCTACTCCCACTAACAGCCTTCTGATGATTCACAGCAAGCCTTACTAATCTTGCTCTACCCTCCACTATTAATCTACTGGGCGAACTCTTCGTAATCGCAACCTCATTTTCCTGATCCCACATCACCATCATACTAACAGGACTGAACATACTAATTACAGCCCTCTACTCTCTTCACATATTCACCACAACACAACGAGGAGCGCTCACACACCACATAATTAACATAAAACCACCTTTCACACGAGAAAACATATTAATACTCATACACCTCGCTCCAATTATTCTTCTATCTCTTAACCCCAACATCATTCTAGGAT
+		</sequence>
+		<sequence>
+			<taxon idref="Saimiri_sciureus"/>
+			AAGCTTCACCGGCGCAATGATCCTAATAATCGCTCACGGGTTTACTTCGTCTATGCTATTCTGCCTAGCAAACTCAAATTACGAACGAATTCACAGCCGAACAATAACATTTACTCGAGGGCTCCAAACACTATTCCCGCTTATAGGCCTCTGATGACTCCTAGCAAATCTCGCTAACCTCGCCCTACCCACAGCTATTAATCTAGTAGGAGAATTACTCACAATCGTATCTTCCTTCTCTTGATCCAACTTTACTATTATATTCACAGGACTTAATATACTAATTACAGCACTCTACTCACTTCATATGTATGCCTCTACACAGCGAGGTCCACTTACATACAGCACCAGCAATATAAAACCAATATTTACACGAGAAAATACGCTAATATTTATACATATAACACCAATCCTCCTCCTTACCTTGAGCCCCAAGGTAATTATAGGAC
+		</sequence>
+	</alignment>
+	
+	
+
+	<!-- The sequence alignment (each sequence refers to a taxon above).         -->
+	<!-- ntax=12 nchar=449                                                       -->
+	<alignment id="alignment2" dataType="nucleotide">
+		<sequence>
+			<taxon idref="Tarsius_syrichta"/>
+			CCATGTACTGTAAATATAGTTTAAACAAAACATTAGATTGTGAGTCTAATAATAGAAGCCCAAAGATTTCTTATTTACCAAGAAAGTA-TGCAAGAACTGCTAACTCATGCCTCCATATATAACAATGTGGCTTTCTT-ACTTTTAAAGGATAGAAGTAATCCATCGGTCTTAGGAACCGAAAA-ATTGGTGCAACTCCAAATAAAAGTAATAAATTTATTTTCATCCTCCATTTTACTATCACTTACACTCTTAATTACCCCATTTATTATTACAACAACTAAAAAATATGAAACACATGCATACCCTTACTACGTAAAAAACTCTATCGCCTGCGCATTTATAACAAGCCTAGTCCCAATGCTCATATTTCTATACACAAATCAAGAAATAATCATTTCCAACTGACATTGAATAACGATTCATACTATCAAATTATGCCTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Lemur_catta"/>
+			CCACGTACTGTAAATATAGTTTAAA-AAAACACTAGATTGTGAATCCAGAAATAGAAGCTCAAAC-CTTCTTATTTACCGAGAAAGTAATGTATGAACTGCTAACTCTGCACTCCGTATATAAAAATACGGCTATCTCAACTTTTAAAGGATAGAAGTAATCCATTGGCCTTAGGAGCCAAAAA-ATTGGTGCAACTCCAAATAAAAGTAATAAATCTATTATCCTCTTTCACCCTTGTCACACTGATTATCCTAACTTTACCTATCATTATAAACGTTACAAACATATACAAAAACTACCCCTATGCACCATACGTAAAATCTTCTATTGCATGTGCCTTCATCACTAGCCTCATCCCAACTATATTATTTATCTCCTCAGGACAAGAAACAATCATTTCCAACTGACATTGAATAACAATCCAAACCCTAAAACTATCTATTAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Homo_sapiens"/>
+			TTTCCTCTTGTAAATATAGTTTAACCAAAACATCAGATTGTGAATCTGACAACAGAGGCTTA-CGACCCCTTATTTACCGAGAAAGCT-CACAAGAACTGCTAACTCATGCCCCCATGTCTAACAACATGGCTTTCTCAACTTTTAAAGGATAACAGCTATCCATTGGTCTTAGGCCCCAAAAATTTTGGTGCAACTCCAAATAAAAGTAATAACCATGCACACTACTATAACCACCCTAACCCTGACTTCCCTAATTCCCCCCATCCTTACCACCCTCGTTAACCCTAACAAAAAAAACTCATACCCCCATTATGTAAAATCCATTGTCGCATCCACCTTTATTATCAGTCTCTTCCCCACAACAATATTCATGTGCCTAGACCAAGAAGTTATTATCTCGAACTGACACTGAGCCACAACCCAAACAACCCAGCTCTCCCTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Pan"/>
+			TCACCTCCTGTAAATATAGTTTAACCAAAACATCAGATTGTGAATCTGACAACAGAGGCTCA-CGACCCCTTATTTACCGAGAAAGCT-TATAAGAACTGCTAATTCATATCCCCATGCCTGACAACATGGCTTTCTCAACTTTTAAAGGATAACAGCCATCCGTTGGTCTTAGGCCCCAAAAATTTTGGTGCAACTCCAAATAAAAGTAATAACCATGTATACTACCATAACCACCTTAACCCTAACTCCCTTAATTCTCCCCATCCTCACCACCCTCATTAACCCTAACAAAAAAAACTCATATCCCCATTATGTGAAATCCATTATCGCGTCCACCTTTATCATTAGCCTTTTCCCCACAACAATATTCATATGCCTAGACCAAGAAGCTATTATCTCAAACTGGCACTGAGCAACAACCCAAACAACCCAGCTCTCCCTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Gorilla"/>
+			TCACCTCCTGTAAATATAGTTTAACCAAAACATCAGATTGTGAATCTGATAACAGAGGCTCA-CAACCCCTTATTTACCGAGAAAGCT-CGTAAGAGCTGCTAACTCATACCCCCGTGCTTGACAACATGGCTTTCTCAACTTTTAAAGGATAACAGCTATCCATTGGTCTTAGGACCCAAAAATTTTGGTGCAACTCCAAATAAAAGTAATAACTATGTACGCTACCATAACCACCTTAGCCCTAACTTCCTTAATTCCCCCTATCCTTACCACCTTCATCAATCCTAACAAAAAAAGCTCATACCCCCATTACGTAAAATCTATCGTCGCATCCACCTTTATCATCAGCCTCTTCCCCACAACAATATTTCTATGCCTAGACCAAGAAGCTATTATCTCAAGCTGACACTGAGCAACAACCCAAACAATTCAACTCTCCCTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Pongo"/>
+			TCGCCTACTGTAAATATAGTTTAACCAAAACATTAGATTGTGAATCTAATAATAGGGCCCCA-CAACCCCTTATTTACCGAGAAAGCT-CACAAGAACTGCTAACTCTCACT-CCATGTGTGACAACATGGCTTTCTCAGCTTTTAAAGGATAACAGCTATCCCTTGGTCTTAGGATCCAAAAATTTTGGTGCAACTCCAAATAAAAGTAACAGCCATGTTTACCACCATAACTGCCCTCACCTTAACTTCCCTAATCCCCCCCATTACCGCTACCCTCATTAACCCCAACAAAAAAAACCCATACCCCCACTATGTAAAAACGGCCATCGCATCCGCCTTTACTATCAGCCTTATCCCAACAACAATATTTATCTGCCTAGGACAAGAAACCATCGTCACAAACTGATGCTGAACAACCACCCAGACACTACAACTCTCACTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Hylobates"/>
+			TTACTCCCTGTAAACATAGTTTAATCAAAACATTAGATTGTGAATCTAACAATAGAGGCTCG-AAACCTCTTGCTTACCGAGAAAGCC-CACAAGAACTGCTAACTCACTATCCCATGTATGACAACATGGCTTTCTCAACTTTTAAAGGATAACAGCTATCCATTGGTCTTAGGACCCAAAAATTTTGGTGCAACTCCAAATAAAAGTAATAGCAATGTACACCACCATAGCCATTCTAACGCTAACCTCCCTAATTCCCCCCATTACAGCCACCCTTATTAACCCCAATAAAAAGAACTTATACCCGCACTACGTAAAAATGACCATTGCCTCTACCTTTATAATCAGCCTATTTCCCACAATAATATTCATGTGCACAGACCAAGAAACCATTATTTCAAACTGACACTGAACTGCAACCCAAACGCTAGAACTCTCCCTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Macaca_fuscata"/>
+			TTACCTCCTGTAGATATAGTTTAACTAAAACACTAGATTGTGAATCTAACCATAGAGACTCA-CCACCTCTTATTTACCGAGAAAACT-CGCAAGGACTGCTAACCCATGTACCCGTACCTAAAATTACGGTTTTCTCAACTTTTAAAGGATAACAGCTATCCATTGACCTTAGGAGTCAAAAACATTGGTGCAACTCCAAATAAAAGTAATAATCATGCACACCCCCATCATTATAACAACCCTTATCTCCCTAACTCTCCCAATTTTTGCCACCCTCATCAACCCTTACAAAAAACGTCCATACCCAGATTACGTAAAAACAACCGTAATATATGCTTTCATCATCAGCCTCCCCTCAACAACTTTATTCATCTTCTCAAACCAAGAAACAACCATTTGGAGCTGACATTGAATAATGACCCAAACACTAGACCTAACGCTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="M_mulatta"/>
+			TTACTTCCTGTAGATATAGTTTAACTAAAACATTAGATTGTGAATCTAACCATAGAGACTTA-CCACCTCTTATTTACCGAGAAAACT-CGCGAGGACTGCTAACCCATGTATCCGTACCTAAAATTACGGTTTTCTCAACTTTTAAAGGATAACAGCTATCCATTGACCTTAGGAGTCAAAAATATTGGTGCAACTCCAAATAAAAGTAATAATCATGCACACCCCTATCATAATAACAACCCTTATCTCCCTAACTCTCCCAATTTTTGCCACCCTCATCAACCCTTACAAAAAACGTCCATACCCAGATTACGTAAAAACAACCGTAATATATGCTTTCATCATCAGCCTCCCCTCAACAACTTTATTCATCTTCTCAAACCAAGAAACAACCATTTGAAGCTGACATTGAATAATAACCCAAACACTAGACCTAACACTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="M_fascicularis"/>
+			TTACCTCCTGTAAATATAGTTTAACTAAAACATTAGATTGTGAATCTAACTATAGAGGCCTA-CCACTTCTTATTTACCGAGAAAACT-CGCAAGGACTGCTAATCCATGCCTCCGTACTTAAAACTACGGTTTCCTCAACTTTTAAAGGATAACAGCTATCCATTGACCTTAGGAGTCAAAAACATTGGTGCAACTCCAAATAAAAGTAATAATCATGCACACCCCCATCATAATAACAACCCTCATCTCCCTGACCCTTCCAATTTTTGCCACCCTCACCAACCCCTATAAAAAACGTTCATACCCAGACTACGTAAAAACAACCGTAATATATGCTTTTATTACCAGTCTCCCCTCAACAACCCTATTCATCCTCTCAAACCAAGAAACAACCATTTGGAGTTGACATTGAATAACAACCCAAACATTAGACCTAACACTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="M_sylvanus"/>
+			TTACTTCCTGTAAATATAGTTTAATTAAAACATTAGACTGTGAATCTAACTATAGAAGCTTA-CCACTTCTTATTTACCGAGAAAACT-TGCAAGGACCGCTAATCCACACCTCCGTACTTAAAACTACGGTTTTCTCAACTTTTAAAGGATAACAGCTATCCATTGGCCTTAGGAGTCAAAAATATTGGTGCAACTCCAAATAAAAGTAATAATCATGTATACCCCCATCATAATAACAACTCTCATCTCCCTAACTCTTCCAATTTTCGCTACCCTTATCAACCCCAACAAAAAACACCTATATCCAAACTACGTAAAAACAGCCGTAATATATGCTTTCATTACCAGCCTCTCTTCAACAACTTTATATATATTCTTAAACCAAGAAACAATCATCTGAAGCTGGCACTGAATAATAACCCAAACACTAAGCCTAACATTAAGCTT
+		</sequence>
+		<sequence>
+			<taxon idref="Saimiri_sciureus"/>
+			CCTCACCTTGTAATTATAGTTTAGCTAAAACATTAGATTGTGAATCTAATAATAGAAGAATA-TAACTTCTTAATTACCGAGAAAGTG-CGCAAGAACTGCTAATTCATGCTCCCAAGACTAACAACTTGGCTTCCTCAACTTTTAAAGGATAGTAGTTATCCATTGGTCTTAGGAGCCAAAAACATTGGTGCAACTCCAAATAAAAGTAATA---ATACACTTCTCCATCACTCTAATAACACTAATTAGCCTACTAGCGCCAATCCTAGCTACCCTCATTAACCCTAACAAAAGCACACTATACCCGTACTACGTAAAACTAGCCATCATCTACGCCCTCATTACCAGTACCTTATCTATAATATTCTTTATCCTTACAGGCCAAGAATCAATAATTTCAAACTGACACTGAATAACTATCCAAACCATCAAACTATCCCTAAGCTT
+		</sequence>
+	</alignment>
+	
+	
+
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=227                                                           -->
+	<patterns id="firsthalf.patterns" from="1" strip="false">
+		<alignment idref="alignment1"/>
+	</patterns>
+	
+	
+
+	<!-- The unique patterns from 1 to end                                       -->
+	<!-- npatterns=231                                                           -->
+	<patterns id="secondhalf.patterns" from="1" strip="false">
+		<alignment idref="alignment2"/>
+	</patterns>
+	
+
+	<!-- A prior assumption that the population size has remained constant       -->
+	<!-- throughout the time spanned by the genealogy.                           -->
+	<constantSize id="constant" units="years">
+		<populationSize>
+			<parameter id="constant.popSize" value="1.0" lower="0.0"/>
+		</populationSize>
+	</constantSize>
+	
+
+	<!-- Construct a starting tree that is compatible with specified clade heights-->
+	<rescaledTree id="startingTree">
+
+		<!-- Construct a rough-and-ready UPGMA tree as an starting tree              -->
+		<upgmaTree>
+			<distanceMatrix correction="JC">
+				<patterns>
+
+					<!-- To generate UPGMA starting tree, only use the 1st aligment, which may be 1 of many aligments using this tree.-->
+					<alignment idref="alignment1"/>
+				</patterns>
+			</distanceMatrix>
+		</upgmaTree>
+	</rescaledTree>
+	
+
+	<!-- Generate a tree model                                                   -->
+	<treeModel id="treeModel">
+		<upgmaTree idref="startingTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+
+	<!-- Statistic for height of the root of the tree                            -->
+	<treeHeightStatistic id="rootHeight">
+		<treeModel idref="treeModel"/>
+	</treeHeightStatistic>
+
+	<!-- Statistic for sum of the branch lengths of the tree (tree length)       -->
+	<treeLengthStatistic id="treeLength">
+		<treeModel idref="treeModel"/>
+	</treeLengthStatistic>
+	
+
+	<!-- Generate a coalescent likelihood                                        -->
+	<coalescentLikelihood id="coalescent">
+		<model>
+			<constantSize idref="constant"/>
+		</model>
+		<intervals>
+			<treeIntervals>
+				<treeModel idref="treeModel"/>
+			</treeIntervals>
+		</intervals>
+	</coalescentLikelihood>
+	
+
+	<!-- The strict clock (Uniform rates across branches)                        -->
+	<strictClockBranchRates id="branchRates">
+		<rate>
+			<parameter id="clock.rate" value="1.0"/>
+		</rate>
+	</strictClockBranchRates>
+	
+	<rateStatistic id="meanRate" name="meanRate" mode="mean" internal="true" external="true">
+		<treeModel idref="treeModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+	</rateStatistic>
+	
+
+	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
+	<HKYModel id="hky">
+		<frequencies>
+			<frequencyModel dataType="nucleotide">
+				<frequencies>
+					<parameter id="frequencies" value="0.25 0.25 0.25 0.25"/>
+				</frequencies>
+			</frequencyModel>
+		</frequencies>
+		<kappa>
+			<parameter id="kappa" value="2.0" lower="0.0"/>
+		</kappa>
+	</HKYModel>
+
+	<!-- site model                                                              -->
+	<siteModel id="siteModel">
+		<substitutionModel>
+			<HKYModel idref="hky"/>
+		</substitutionModel>
+	</siteModel>
+
+	<!--                                                                         -->
+	<statistic id="mu" name="mu">
+		<siteModel idref="siteModel"/>
+	</statistic>
+	
+
+	<!-- Likelihood for tree given sequence data                                 -->
+	<treeDataLikelihood id="treeLikelihood" useAmbiguities="false" usePreOrder="true" branchInfinitesimalDerivative="true">
+		<partition>
+			<patterns idref="firsthalf.patterns"/>
+			<siteModel idref="siteModel"/>
+		</partition>
+		<partition>
+			<patterns idref="secondhalf.patterns"/>
+			<siteModel idref="siteModel"/>
+		</partition>
+		<treeModel idref="treeModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+	</treeDataLikelihood>
+	
+
+	<!-- The densities to maximize: priors, tree likelihoods and their joint     -->
+	<joint id="joint">
+		<prior id="prior">
+			<logNormalPrior mu="1.0" sigma="1.25" offset="0.0">
+				<parameter idref="kappa"/>
+			</logNormalPrior>
+			<dirichletPrior alpha="1.0" sumsTo="1.0">
+				<parameter idref="frequencies"/>
+			</dirichletPrior>
+			<gammaPrior shape="0.001" scale="1000.0" offset="0.0">
+				<parameter idref="constant.popSize"/>
+			</gammaPrior>
+			<coalescentLikelihood idref="coalescent"/>
+			
+			
+			<strictClockBranchRates idref="branchRates"/>
+		</prior>
+		<likelihood id="likelihood">
+			<treeDataLikelihood idref="treeLikelihood"/>
+		</likelihood>
+	</joint>
+	
+
+	<!-- Maximize the joint density by L-BFGS, with analytic tree-likelihood gradients for 1 of 2 parameters; 1 set(s) of frequencies on the simplex, with analytic gradients-->
+	<!-- The tree topology is fixed; the internal node heights of 1 tree(s) are optimized as ratios on the real line-->
+	<compoundParameter id="optimizedParameters">
+		<parameter idref="kappa"/>
+		<parameter idref="constant.popSize"/>
+	</compoundParameter>
+	
+
+	<!-- Gradient blocks, one per optimized parameter, in the order of optimizedParameters-->
+	<jointGradient id="gradient.kappa">
+		<numericalGradient>
+			<prior idref="prior"/>
+			<parameter idref="kappa"/>
+		</numericalGradient>
+		<branchSubstitutionParameterGradient homogeneous="true">
+			<treeDataLikelihood idref="treeLikelihood"/>
+			<parameter idref="kappa"/>
+		</branchSubstitutionParameterGradient>
+	</jointGradient>
+	<numericalGradient id="gradient.constant.popSize">
+		<prior idref="prior"/>
+		<parameter idref="constant.popSize"/>
+	</numericalGradient>
+	
+	<branchSubstitutionParameterGradient id="gradient.frequencies" homogeneous="true">
+		<treeDataLikelihood idref="treeLikelihood"/>
+		<parameter idref="frequencies"/>
+	</branchSubstitutionParameterGradient>
+
+	<!-- The internal node heights of treeModel: root and internal nodes, mapped to the real line through ratios-->
+	<nodeHeightProxyParameter id="nodeHeights" rootNode="true">
+		<treeModel idref="treeModel"/>
+	</nodeHeightProxyParameter>
+	<nodeHeightTransform id="nodeHeightTransform" withRoot="true">
+		<treeModel idref="treeModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+		<ratios realLine="true">
+			<parameter id="nodeHeight.ratios"/>
+		</ratios>
+	</nodeHeightTransform>
+	<jointGradient id="gradient.nodeHeights">
+		<coalescentGradient>
+			<coalescentLikelihood idref="coalescent"/>
+			<treeModel idref="treeModel"/>
+		</coalescentGradient>
+		<nodeHeightGradient traitName="Sequence">
+			<treeDataLikelihood idref="treeLikelihood"/>
+		</nodeHeightGradient>
+	</jointGradient>
+	
+	<compoundGradient id="maximizerGradient">
+		<jointGradient idref="gradient.kappa"/>
+		<numericalGradient idref="gradient.constant.popSize"/>
+		<branchSubstitutionParameterGradient idref="gradient.frequencies"/>
+		<jointGradient idref="gradient.nodeHeights"/>
+	</compoundGradient>
+	
+	<maximizeWrtParameter id="maximizer" nIterations="1000" startAtCurrentState="true" printToScreen="true" includeJacobian="false" lineSearchRestarts="5" past="10" delta="1.0E-8">
+		<objective>
+			<joint idref="joint"/>
+		</objective>
+		<compoundGradient idref="maximizerGradient"/>
+		<multivariateCompoundTransform>
+			<compoundTransform>
+				<transform type="log">
+					<parameter idref="kappa"/>
+					<parameter idref="constant.popSize"/>
+				</transform>
+				<compoundParameter idref="optimizedParameters"/>
+			</compoundTransform>
+			<UnitSimplexTransform dimension="4"/>
+			<nodeHeightTransform idref="nodeHeightTransform"/>
+		</multivariateCompoundTransform>
+	</maximizeWrtParameter>
+	
+
+	<!-- The optimum, the gradient there, and why the maximizer stopped          -->
+	<report fileName="golden.max.txt">
+		<maximizeWrtParameter idref="maximizer"/>
+	</report>
+	<report>
+		<maximizeWrtParameter idref="maximizer"/>
+	</report>
+	
+
+	<!-- The trees at the optimum, logged once by timeTreeExport                 -->
+	<logTree id="timeTreeLog" logEvery="1" nexusFormat="true" sortTranslationTable="true" fileName="golden.timetree.nex">
+		<treeModel idref="treeModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+		<joint idref="joint"/>
+	</logTree>
+	<logTree id="substTreeLog" logEvery="1" nexusFormat="true" sortTranslationTable="true" fileName="golden.subst.nex" branchLengths="substitutions">
+		<treeModel idref="treeModel"/>
+		<strictClockBranchRates idref="branchRates"/>
+		<joint idref="joint"/>
+	</logTree>
+	
+
+	<!-- Log the trees; the dates and rates, the parameters and a record of the run-->
+	<timeTreeExport id="timeTreeExport" fileNameStem="golden">
+		<logTree idref="timeTreeLog"/>
+		<logTree idref="substTreeLog"/>
+		<maximizeWrtParameter idref="maximizer"/>
+		<treeLikelihoods>
+			<likelihood idref="likelihood"/>
+		</treeLikelihoods>
+		<priors>
+			<prior idref="prior"/>
+		</priors>
+		<timeTree>
+			<treeModel idref="treeModel"/>
+			<strictClockBranchRates idref="branchRates"/>
+		</timeTree>
+		<notOptimized reason="fixed in the Priors tab">
+			<parameter idref="clock.rate"/>
+		</notOptimized>
+	</timeTreeExport>
+	
+</beast>
+

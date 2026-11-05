@@ -47,6 +47,8 @@ public class BooleanLikelihood extends Likelihood.Abstract {
 	 */
 	public void addData(BooleanStatistic data) { dataList.add(data); }
 
+	public java.util.List<BooleanStatistic> getData() { return java.util.Collections.unmodifiableList(dataList); }
+
 	protected ArrayList<BooleanStatistic> dataList = new ArrayList<BooleanStatistic>();
 
 	// **************************************************************

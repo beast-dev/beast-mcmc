@@ -90,6 +90,8 @@ class TreeLimeHarness {
         }
         TreeLimeOptions options = new TreeLimeOptions(COMPONENTS);
         new TreeLimeImporter(null, options).importFromFile(data);
+        // the tests were written for the full joint (with the tree prior); TreeLimeMaximizationTest covers the default
+        options.maximizationOptions.objective = dr.app.treelime.options.MaximizationOptions.Objective.MAP;
         return options;
     }
 

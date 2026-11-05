@@ -44,16 +44,23 @@ public class MaximizationOptions implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum Objective {
-        MAP("Maximum a posteriori (likelihood and priors)", "joint"),
-        ML("Maximum likelihood (tree likelihoods only)", "likelihood"),
-        PRIOR("Prior only (for checking)", "prior");
+        // the coalescent's exponential intervals have their mode at zero, so at the joint mode it pulls the node
+        // heights down: in the validation study (plan 7 M7) the root came out ~20% too young and the rate ~30% too
+        // high on every dated replicate; without the tree prior both errors fell to ~5%
+        MAP_NO_TREE_PRIOR("Maximum a posteriori without the tree prior (for dates and rates)", "jointNoTreePrior",
+                "priorNoTreePrior"),
+        MAP("Maximum a posteriori (likelihood and priors)", "joint", "prior"),
+        ML("Maximum likelihood (tree likelihoods only)", "likelihood", null),
+        PRIOR("Prior only (for checking)", "prior", "prior");
 
         private final String label;
         private final String densityId;
+        private final String priorDensityId;
 
-        Objective(String label, String densityId) {
+        Objective(String label, String densityId, String priorDensityId) {
             this.label = label;
             this.densityId = densityId;
+            this.priorDensityId = priorDensityId;
         }
 
         /**
@@ -61,6 +68,21 @@ public class MaximizationOptions implements Serializable {
          */
         public String getDensityId() {
             return densityId;
+        }
+
+        /**
+         * @return the id of the priors in the objective, or null for maximum likelihood
+         */
+        public String getPriorDensityId() {
+            return priorDensityId;
+        }
+
+        /**
+         * @return whether a MAP objective leaves out the tree priors (coalescent, speciation) and the priors on their
+         * parameters
+         */
+        public boolean omitsTreePrior() {
+            return this == MAP_NO_TREE_PRIOR;
         }
 
         public String toString() {
@@ -101,7 +123,7 @@ public class MaximizationOptions implements Serializable {
         }
     }
 
-    public Objective objective = Objective.MAP;
+    public Objective objective = Objective.MAP_NO_TREE_PRIOR;
     private GradientMode gradientMode = GradientMode.ANALYTIC_WHERE_AVAILABLE;
     public int nIterations = 1000; // at least 1: 0 means no limit to lbfgs4j
     public String maxRunTime = ""; // a duration with an optional unit, "" for none
@@ -117,14 +139,29 @@ public class MaximizationOptions implements Serializable {
     private int bootstrapJobs = 1;
     // threads each replicate's BEAST may use (-threads and -beagle_threads); 0 lets BEAST decide
     public int bootstrapThreads = 0;
+    // with a searched bootstrap, the traditional split support beside TreeAnnotator's summaries (plan 8 S7f); null
+    // (on) in older files
+    private Boolean bootstrapSplitSupport = true;
     // ids of parameters with a lower bound other than the default; a null value for none. Null in older files
     private Map<String, Double> lowerBounds = new HashMap<String, Double>();
+    // ids of parameters with an upper bound other than the default; a null value for none. Null in older files
+    private Map<String, Double> upperBounds = new HashMap<String, Double>();
+    // the topology search (plan 7); null in files saved before the setting existed
+    private TopologySearchOptions topologySearch = new TopologySearchOptions();
 
     /**
      * The gamma shape's default: its optimum often lies at 0, where L-BFGS chases a plateau (the discrete gamma tends
      * to a model of invariant sites); the maximizer holds it here instead.
      */
     public static final double GAMMA_SHAPE_LOWER_BOUND = 0.05;
+
+    /**
+     * The gamma shape's default upper bound: without rate heterogeneity in the data its optimum lies at +Inf, which a
+     * fit from a poor tree chases until the discrete gamma's quantiles fail (7E13 in plan 7's H3 runs). At 1000 the
+     * four category rates are within 4% of 1. The maximizer optimizes a parameter with an upper bound on the logit
+     * scale of (0, bound), which the XML states.
+     */
+    public static final double GAMMA_SHAPE_UPPER_BOUND = 1000.0;
 
     // null in files saved before the setting existed
     public GradientMode getGradientMode() {
@@ -164,12 +201,63 @@ public class MaximizationOptions implements Serializable {
         lowerBounds.put(parameter.getName(), bound);
     }
 
+    /**
+     * @return the upper bound of a positive parameter (one with the log transform), which the maximizer then optimizes
+     * on the logit scale of (0, bound); null for none
+     */
+    public Double getUpperBound(Parameter parameter) {
+        if (upperBounds != null && upperBounds.containsKey(parameter.getName())) {
+            return upperBounds.get(parameter.getName());
+        }
+        return getDefaultUpperBound(parameter);
+    }
+
+    public static Double getDefaultUpperBound(Parameter parameter) {
+        return parameter.getBaseName().equals("alpha") ? GAMMA_SHAPE_UPPER_BOUND : null;
+    }
+
+    /**
+     * @param bound null for none
+     */
+    public void setUpperBound(Parameter parameter, Double bound) {
+        if (upperBounds == null) {
+            upperBounds = new HashMap<String, Double>();
+        }
+        upperBounds.put(parameter.getName(), bound);
+    }
+
+    /**
+     * @return the upper bound the maximizer applies: only to a parameter with the log transform, null otherwise
+     */
+    public Double getAppliedUpperBound(Parameter parameter) {
+        return classify(parameter, false) == Treatment.LOG ? getUpperBound(parameter) : null;
+    }
+
+    public TopologySearchOptions getTopologySearch() {
+        if (topologySearch == null) {
+            topologySearch = new TopologySearchOptions();
+        }
+        return topologySearch;
+    }
+
     public int getBootstrapJobs() {
         return Math.max(1, bootstrapJobs);
     }
 
     public void setBootstrapJobs(int jobs) {
         this.bootstrapJobs = jobs;
+    }
+
+    /**
+     * @return whether a searched bootstrap also writes the traditional split support: the tree's topology, unrooted,
+     * with each split's bootstrap percentage, and the majority-rule consensus of the splits
+     */
+    public boolean isBootstrapSplitSupport() {
+        return bootstrapSplitSupport == null || bootstrapSplitSupport;
+    }
+
+    public void setBootstrapSplitSupport(boolean splitSupport) {
+        this.bootstrapSplitSupport = splitSupport;
     }
 
     public String getReportFileName(String fileNameStem) {

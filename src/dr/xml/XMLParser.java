@@ -180,6 +180,9 @@ public class XMLParser {
 
             concurrent = false;
             root = (XMLObject) convert(e, null, null, run, true);
+            if (run) {
+                finishedRunning();
+            }
 
         } else {
             throw new dr.xml.XMLParseException("Unknown root document element, " + e.getTagName());
@@ -401,6 +404,14 @@ public class XMLParser {
     }
 
     protected void executingRunnable() {
+        // do nothing - for overriding by subclasses
+    }
+
+    /**
+     * Called once the whole document has been parsed and run, including files whose analysis runs while parsing
+     * (a maximizer or topology search) and so never reaches a runnable.
+     */
+    protected void finishedRunning() {
         // do nothing - for overriding by subclasses
     }
 

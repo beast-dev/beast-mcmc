@@ -78,6 +78,7 @@ public class MaximizationPanel extends TreeLimePanel {
     private final WholeNumberField jobsField = new WholeNumberField(1, 1024);
     private final WholeNumberField threadsField = new WholeNumberField(0, 1024);
     private final JLabel cpuLabel = new JLabel();
+    private final JLabel tableHintLabel = new JLabel();
 
     private final ParameterTableModel tableModel = new ParameterTableModel();
     private final OptionsPanel optionsPanel;
@@ -101,6 +102,7 @@ public class MaximizationPanel extends TreeLimePanel {
         objectiveCombo.addActionListener(e -> {
             if (!settingOptions) {
                 maximization().objective = (Objective) objectiveCombo.getSelectedItem();
+                updateStatus();
                 frame.setDirty();
             }
         });
@@ -262,23 +264,20 @@ public class MaximizationPanel extends TreeLimePanel {
                 return value == null || value.toString().isEmpty() ? null : value.toString();
             }
         };
-        int[] widths = {60, 150, 200, 260, 90, 330};
+        int[] widths = {60, 150, 200, 260, 90, 90, 330};
         for (int column = 0; column < widths.length; column++) {
             table.getColumnModel().getColumn(column).setPreferredWidth(widths[column]);
         }
         table.getColumnModel().getColumn(0).setMaxWidth(70);
         table.getColumnModel().getColumn(4).setMinWidth(90);
+        table.getColumnModel().getColumn(5).setMinWidth(90);
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setOpaque(false);
 
         JPanel tablePanel = new JPanel(new BorderLayout(0, 6));
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(new Insets(6, 12, 12, 12)));
-        tablePanel.add(new JLabel("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's " +
-                "nodeHeights row is all its internal node heights, the root included. The topology stays as in the " +
-                "starting tree. " +
-                "A parameter that goes below its lower bound is held there (blank for none).</html>"),
-                BorderLayout.NORTH);
+        tablePanel.add(tableHintLabel, BorderLayout.NORTH);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         tablePanel.add(statusLabel, BorderLayout.SOUTH);
 
@@ -288,6 +287,12 @@ public class MaximizationPanel extends TreeLimePanel {
 
     private MaximizationOptions maximization() {
         return options.maximizationOptions;
+    }
+
+    private void updateTableHint() {
+        tableHintLabel.setText("<html>Parameters to optimize; fix one here or in the Priors tab. A tree's " +
+                "nodeHeights row is all its internal node heights, the root included. The topology stays as in the " +
+                "starting tree. A parameter that goes below its lower bound is held there (blank for none).</html>");
     }
 
     // the threads this computer offers, and whether the parallel runs ask for more
@@ -358,6 +363,7 @@ public class MaximizationPanel extends TreeLimePanel {
         jobsField.setValue(maximization.getBootstrapJobs());
         threadsField.setValue(Math.max(0, maximization.bootstrapThreads));
         updateCpuLabel();
+        updateTableHint();
         settingOptions = false;
 
         tableModel.setParameters(options.selectParameters());
@@ -421,7 +427,7 @@ public class MaximizationPanel extends TreeLimePanel {
     private class ParameterTableModel extends AbstractTableModel {
 
         private final String[] columnNames = {"Optimize", "Parameter", "Description", "Transform", "Lower bound",
-                "Likelihood gradient"};
+                "Upper bound", "Likelihood gradient"};
         private List<Parameter> parameters = new ArrayList<Parameter>();
 
         void setParameters(List<Parameter> parameters) {
@@ -457,7 +463,12 @@ public class MaximizationPanel extends TreeLimePanel {
                     return parameter.isNodeHeight && !parameter.isStatistic ?
                             "internal node heights and the root" : parameter.getDescription();
                 case 3:
-                    return treatment.isOptimized() ? treatment.getTransform() : "held fixed: " + treatment.getReason();
+                    if (!treatment.isOptimized()) {
+                        return "held fixed: " + treatment.getReason();
+                    }
+                    Double upper = maximization().getAppliedUpperBound(parameter);
+                    return upper != null ? Treatment.LOGIT.getTransform() + " of (0, " + upper + ")" :
+                            treatment.getTransform();
                 case 4:
                     if (!hasLowerBound(treatment)) {
                         return "";
@@ -465,6 +476,12 @@ public class MaximizationPanel extends TreeLimePanel {
                     Double bound = maximization().getLowerBound(parameter);
                     return bound != null ? bound.toString() : "";
                 case 5:
+                    if (treatment != Treatment.LOG) {
+                        return "";
+                    }
+                    Double upperBound = maximization().getUpperBound(parameter);
+                    return upperBound != null ? upperBound.toString() : "";
+                case 6:
                     if (!treatment.isOptimized()) {
                         return "";
                     }
@@ -485,6 +502,10 @@ public class MaximizationPanel extends TreeLimePanel {
             if (column == 4) {
                 return hasLowerBound(maximization().classify(parameters.get(row), false));
             }
+            // an upper bound turns the log transform into the logit of (0, bound)
+            if (column == 5) {
+                return maximization().classify(parameters.get(row), false) == Treatment.LOG;
+            }
             return column == 0 && maximization().classify(parameters.get(row), true).isOptimized();
         }
 
@@ -494,10 +515,19 @@ public class MaximizationPanel extends TreeLimePanel {
         }
 
         public void setValueAt(Object value, int row, int column) {
-            if (column == 4) {
+            if (column == 4 || column == 5) {
                 String text = ((String) value).trim();
                 try {
-                    maximization().setLowerBound(parameters.get(row), text.isEmpty() ? null : Double.parseDouble(text));
+                    Double bound = text.isEmpty() ? null : Double.parseDouble(text);
+                    if (column == 4) {
+                        maximization().setLowerBound(parameters.get(row), bound);
+                    } else {
+                        if (bound != null && !(bound > 0.0 && bound < Double.POSITIVE_INFINITY)) {
+                            Toolkit.getDefaultToolkit().beep();
+                            return;
+                        }
+                        maximization().setUpperBound(parameters.get(row), bound);
+                    }
                 } catch (NumberFormatException e) {
                     Toolkit.getDefaultToolkit().beep();
                     return;

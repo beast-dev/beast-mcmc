@@ -51,6 +51,7 @@ import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.TimeTreeExportParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
+import dr.evomodelxml.tree.search.TimeTreeSearchParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inference.model.ParameterParser;
@@ -97,6 +98,8 @@ public class BeastGenerator extends Generator {
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
     private final TMRCAStatisticsGenerator tmrcaStatisticsGenerator;
+    // the tag of each gradient block the maximizer writes, by id, for the search's round maximizer
+    private final Map<String, String> gradientTags = new LinkedHashMap<String, String>();
 
     public BeastGenerator(TreeLimeOptions options, ComponentFactory[] components) {
         super(options, components);
@@ -760,16 +763,28 @@ public class BeastGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeObjective(XMLWriter writer) {
-        writer.writeComment("The densities to maximize: priors, tree likelihoods and their joint");
+        writer.writeComment("The densities to maximize: priors, tree likelihoods and their joint" +
+                (options.maximizationOptions.objective.omitsTreePrior() ? "; and the joint without the tree prior" : ""));
 
         if (options.hasData()) {
             writer.writeOpenTag(CompoundLikelihoodParser.JOINT, new Attribute.Default<String>(XMLParser.ID, "joint"));
         }
 
-        // write prior block
+        // write prior block; without the tree prior in the objective, the other priors are a block of their own
+        MaximizationOptions.Objective objective = options.maximizationOptions.objective;
         writer.writeOpenTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
 
-        parameterPriorGenerator.writeParameterPriors(writer);
+        if (objective.omitsTreePrior()) {
+            writer.writeOpenTag(CompoundLikelihoodParser.PRIOR,
+                    new Attribute.Default<String>(XMLParser.ID, objective.getPriorDensityId()));
+            parameterPriorGenerator.writeParameterPriors(writer, false);
+            clockModelGenerator.writeClockLikelihoodReferences(writer);
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
+            writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);
+            parameterPriorGenerator.writeParameterPriors(writer, true);
+        } else {
+            parameterPriorGenerator.writeParameterPriors(writer);
+        }
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
@@ -786,9 +801,11 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
         }
 
-        clockModelGenerator.writeClockLikelihoodReferences(writer);
+        if (!objective.omitsTreePrior()) {
+            clockModelGenerator.writeClockLikelihoodReferences(writer);
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
+        }
 
         writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);
 
@@ -803,6 +820,14 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag(CompoundLikelihoodParser.LIKELIHOOD);
 
             writer.writeCloseTag(CompoundLikelihoodParser.JOINT);
+
+            if (objective.omitsTreePrior()) {
+                writer.writeOpenTag(CompoundLikelihoodParser.JOINT,
+                        new Attribute.Default<String>(XMLParser.ID, objective.getDensityId()));
+                writer.writeIDref(CompoundLikelihoodParser.PRIOR, objective.getPriorDensityId());
+                writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
+                writer.writeCloseTag(CompoundLikelihoodParser.JOINT);
+            }
         }
     }
 
@@ -824,11 +849,29 @@ public class BeastGenerator extends Generator {
         }
 
         List<Parameter> parameters = maximization.selectOptimized(options.selectParameters());
+        for (Parameter parameter : parameters) {
+            Double upper = maximization.getAppliedUpperBound(parameter);
+            if (upper != null && !(parameter.getInitial() > 0.0 && parameter.getInitial() < upper)) {
+                throw new GeneratorException("The initial value of " + parameter.getName() + " (" +
+                        parameter.getInitial() + ") must lie between 0 and its upper bound in the Maximization tab (" +
+                        upper + ").");
+            }
+        }
         Map<Parameter, GradientRegistry.LikelihoodTerm> terms = new LinkedHashMap<Parameter, GradientRegistry.LikelihoodTerm>();
         if (maximization.isAnalytic()) {
             for (Parameter parameter : parameters) {
                 terms.put(parameter, likelihoodTerm(parameter));
             }
+        }
+        if (objective.omitsTreePrior()) {
+            // the tree prior's parameters (e.g. the population size) are in no term of the objective
+            List<Parameter> kept = new ArrayList<Parameter>();
+            for (Parameter parameter : parameters) {
+                if (!(GradientRegistry.findOwner(options, parameter) instanceof PartitionTreePrior)) {
+                    kept.add(parameter);
+                }
+            }
+            parameters = kept;
         }
         if (objective == MaximizationOptions.Objective.ML) {
             // the likelihood is flat in these, in either gradient mode: they are identified only by their priors
@@ -872,6 +915,14 @@ public class BeastGenerator extends Generator {
             throw new GeneratorException("No parameter is selected for optimization in the Maximization tab.");
         }
 
+        final boolean searching = maximization.getTopologySearch().isOn();
+        if (searching) {
+            String blocker = TopologySearchOptions.getBlocker(options);
+            if (blocker != null) {
+                throw new GeneratorException("The topology search cannot run: " + blocker + ".");
+            }
+        }
+
         int analyticCount = 0;
         for (GradientRegistry.LikelihoodTerm term : terms.values()) {
             if (term.isAnalytic()) {
@@ -883,6 +934,8 @@ public class BeastGenerator extends Generator {
                                 parameters.size() + " parameters" : "a numeric gradient") +
                                 (frequencies.isEmpty() ? "" : "; " + frequencies.size() +
                                         " set(s) of frequencies on the simplex, with analytic gradients"),
+                searching ? "The topology is searched (timeTreeSearch below); the internal node heights are " +
+                        "optimized as ratios on the real line" :
                 heightPlans.isEmpty() ? "The tree topology and node heights are fixed" :
                         "The tree topology is fixed; the internal node heights of " + heightPlans.size() +
                                 " tree(s) are optimized as ratios on the real line");
@@ -906,6 +959,10 @@ public class BeastGenerator extends Generator {
 
         List<Attribute> attributes = new ArrayList<Attribute>();
         attributes.add(new Attribute.Default<String>(XMLParser.ID, MAXIMIZER));
+        if (searching) {
+            // the search runs it: at the start, on a new best and at the end
+            attributes.add(new Attribute.Default<Boolean>("maximizeOnParse", false));
+        }
         attributes.add(new Attribute.Default<Integer>("nIterations", Math.max(1, maximization.nIterations)));
         if (!maximization.maxRunTime.isEmpty()) {
             attributes.add(new Attribute.Default<String>("maxRunTime", maximization.maxRunTime));
@@ -929,12 +986,12 @@ public class BeastGenerator extends Generator {
 
         if (maximization.isAnalytic()) {
             writer.writeOpenTag("objective");
-            writer.writeIDref(objective.getDensityId(), objective.getDensityId());
+            writeDensityRef(objective.getDensityId(), writer);
             writer.writeCloseTag("objective");
             writer.writeIDref("compoundGradient", MAXIMIZER_GRADIENT);
         } else {
             writer.writeOpenTag("densityWrtParameter");
-            writer.writeIDref(objective.getDensityId(), objective.getDensityId());
+            writeDensityRef(objective.getDensityId(), writer);
             writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, OPTIMIZED_PARAMETERS);
             writer.writeCloseTag("densityWrtParameter");
         }
@@ -973,19 +1030,154 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag("maximizeWrtParameter");
         writer.writeText("");
 
+        if (searching) {
+            writeTopologySearch(parameters, heightPlans.keySet().iterator().next(), writer);
+        }
+
         writer.writeComment("The optimum, the gradient there, and why the maximizer stopped");
         writer.writeOpenTag(Report.REPORT, new Attribute.Default<String>(Report.FILENAME,
                 maximization.getReportFileName(options.fileNameStem)));
         writer.writeIDref("maximizeWrtParameter", MAXIMIZER);
+        if (searching) {
+            writer.writeIDref(TimeTreeSearchParser.NAME, TREE_SEARCH);
+        }
         writer.writeCloseTag(Report.REPORT);
         writer.writeOpenTag(Report.REPORT);
         writer.writeIDref("maximizeWrtParameter", MAXIMIZER);
+        if (searching) {
+            writer.writeIDref(TimeTreeSearchParser.NAME, TREE_SEARCH);
+        }
         writer.writeCloseTag(Report.REPORT);
         writer.writeText("");
 
         List<Parameter> optimized = new ArrayList<Parameter>(parameters);
         optimized.addAll(frequencies);
         writeTimeTreeExport(optimized, heightPlans.keySet(), writer);
+    }
+
+    /**
+     * Write the topology search (plan 7): a round maximizer over the node heights and the branch rates (or the clock
+     * rate), from the maximizer's own gradient blocks and transforms, and the search, which runs the maximizer at the
+     * start, on each new best and at the end.
+     *
+     * @param parameters the parameters the maximizer moves, node heights aside
+     * @param tree the tree whose topology is searched
+     */
+    private void writeTopologySearch(List<Parameter> parameters, PartitionTreeModel tree, XMLWriter writer) {
+        MaximizationOptions maximization = options.maximizationOptions;
+        TopologySearchOptions search = maximization.getTopologySearch();
+        String density = maximization.objective.getDensityId();
+
+        // the rates the moves warm-start and the rounds re-fit; the other parameters stay as the maximizer left them
+        List<Parameter> rates = new ArrayList<Parameter>();
+        for (Parameter parameter : parameters) {
+            if (GradientRegistry.likelihoodTerm(options, parameter) == GradientRegistry.LikelihoodTerm.BRANCH_RATE) {
+                rates.add(parameter);
+            }
+        }
+
+        writer.writeComment("The topology search's round re-fits: node heights" +
+                (rates.isEmpty() ? "" : " and branch rates") + " only, from the maximizer's gradient blocks");
+        if (!rates.isEmpty()) {
+            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+                    new Attribute.Default<String>(XMLParser.ID, SEARCH_RATES));
+            for (Parameter parameter : rates) {
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+            }
+            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+        }
+        writer.writeOpenTag("compoundGradient", new Attribute.Default<String>(XMLParser.ID, SEARCH_GRADIENT));
+        for (Parameter parameter : rates) {
+            String id = "gradient." + parameter.getName();
+            writer.writeIDref(gradientTags.get(id), id);
+        }
+        String heights = "gradient." + tree.getPrefix() + NODE_HEIGHTS;
+        writer.writeIDref(gradientTags.get(heights), heights);
+        writer.writeCloseTag("compoundGradient");
+        writer.writeText("");
+
+        writer.writeOpenTag("maximizeWrtParameter", new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, ROUND_MAXIMIZER),
+                new Attribute.Default<Boolean>("maximizeOnParse", false),
+                new Attribute.Default<Integer>("nIterations", 200),
+                new Attribute.Default<Boolean>("startAtCurrentState", true),
+                new Attribute.Default<Boolean>("printToScreen", false),
+                new Attribute.Default<Boolean>("includeJacobian", false),
+                new Attribute.Default<Integer>("lineSearchRestarts", 5),
+                new Attribute.Default<Integer>("past", 10),
+                new Attribute.Default<Double>("delta", 1E-8)});
+        writer.writeOpenTag("objective");
+        writeDensityRef(density, writer);
+        writer.writeCloseTag("objective");
+        writer.writeIDref("compoundGradient", SEARCH_GRADIENT);
+        writer.writeOpenTag("multivariateCompoundTransform");
+        if (!rates.isEmpty()) {
+            writeCompoundTransform(rates, SEARCH_RATES, writer);
+        }
+        writer.writeIDref("nodeHeightTransform", tree.getPrefix() + NODE_HEIGHT_TRANSFORM);
+        writer.writeCloseTag("multivariateCompoundTransform");
+        writer.writeCloseTag("maximizeWrtParameter");
+        writer.writeText("");
+
+        final boolean thorough = search.mode == TopologySearchOptions.Mode.THOROUGH;
+        final boolean standard = search.mode == TopologySearchOptions.Mode.STANDARD;
+        writer.writeComment("Search the topology by rooted NNIs" + (thorough ? ", SPRs, subtree swaps and root moves" +
+                        " from the NJ tree, then by perturbations of the best trees" :
+                        standard ? ", SPRs and root moves from the NJ tree" :
+                        (search.mode == TopologySearchOptions.Mode.NNI_SPR ? " and SPRs" : "") +
+                                " from the starting tree") + "; a move is kept only when the " + density +
+                        " density rises",
+                "The best tree: " + options.fileNameStem + ".search.trees; one row per round: " +
+                        options.fileNameStem + ".search.log");
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, TREE_SEARCH));
+        attributes.add(new Attribute.Default<Long>("seed", search.seed));
+        if (thorough) {
+            // the preset that reached the highest objective most reliably in the validation study (plan 7 M7)
+            attributes.add(new Attribute.Default<String>("preset", "thorough"));
+        } else if (standard) {
+            // Thorough without perturbations: 2 of 53 misses at about 0.05 of its time (plan 7 M7)
+            attributes.add(new Attribute.Default<String>("preset", "standard"));
+        } else if (search.mode == TopologySearchOptions.Mode.NNI_SPR) {
+            // SPR includes the moves that give the root another node (plan 7 M6)
+            attributes.add(new Attribute.Default<String>("moves", "nni,spr,root"));
+        }
+        if (!search.maxSearchTime.isEmpty()) {
+            attributes.add(new Attribute.Default<String>("maxRunTime", search.maxSearchTime));
+        }
+        attributes.add(new Attribute.Default<Boolean>("printToScreen", maximization.printToScreen));
+        attributes.add(new Attribute.Default<String>("treeFileName", options.fileNameStem + ".search.trees"));
+        attributes.add(new Attribute.Default<String>("logFileName", options.fileNameStem + ".search.log"));
+        if (search.nStop > 0 || thorough) {
+            // perturb the best trees by BEAST's topology operators and climb again until nStop climbs bring nothing;
+            // 0 with Thorough is the preset's
+            if (search.nStop > 0) {
+                attributes.add(new Attribute.Default<Integer>("nStop", search.nStop));
+            }
+            attributes.add(new Attribute.Default<String>("candidatesFileName",
+                    options.fileNameStem + ".candidates.trees"));
+        }
+        writer.writeOpenTag(TimeTreeSearchParser.NAME, attributes);
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, tree.getPrefix() + DefaultTreeModel.TREE_MODEL);
+        writer.writeOpenTag("objective");
+        writeDensityRef(density, writer);
+        writer.writeCloseTag("objective");
+        writer.writeOpenTag("roundMaximizer");
+        writer.writeIDref("maximizeWrtParameter", ROUND_MAXIMIZER);
+        writer.writeCloseTag("roundMaximizer");
+        writer.writeOpenTag("finalMaximizer");
+        writer.writeIDref("maximizeWrtParameter", MAXIMIZER);
+        writer.writeCloseTag("finalMaximizer");
+        // a tree prior restricted to a subtree needs that subtree to stay a clade (TreeIntervals' exclude); the
+        // monophyly statistics in the objective are found by the search itself
+        Taxa subtree = tree.getPartitionTreePrior().getSubtreeTaxonSet();
+        if (subtree != null) {
+            writer.writeOpenTag("constraints");
+            writer.writeIDref(TaxaParser.TAXA, subtree.getId());
+            writer.writeCloseTag("constraints");
+        }
+        writer.writeCloseTag(TimeTreeSearchParser.NAME);
+        writer.writeText("");
     }
 
     /**
@@ -1022,6 +1214,10 @@ public class BeastGenerator extends Generator {
         List<Attribute> exportAttributes = new ArrayList<Attribute>();
         exportAttributes.add(new Attribute.Default<String>(XMLParser.ID, TIME_TREE_EXPORT));
         exportAttributes.add(new Attribute.Default<String>(TimeTreeExportParser.FILE_NAME_STEM, options.fileNameStem));
+        if (options.maximizationOptions.objective.omitsTreePrior()) {
+            exportAttributes.add(new Attribute.Default<String>(TimeTreeExportParser.MAP_NAME,
+                    "MAP without the tree prior"));
+        }
         String notIdentified = notIdentified(optimized, heightTrees);
         if (notIdentified != null) {
             exportAttributes.add(new Attribute.Default<String>(TimeTreeExportParser.NOT_IDENTIFIED, notIdentified));
@@ -1037,7 +1233,8 @@ public class BeastGenerator extends Generator {
             writer.writeCloseTag(TimeTreeExportParser.TREE_LIKELIHOODS);
         }
         writer.writeOpenTag(TimeTreeExportParser.PRIORS);
-        writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
+        writer.writeIDref(CompoundLikelihoodParser.PRIOR, options.maximizationOptions.objective.omitsTreePrior() ?
+                options.maximizationOptions.objective.getPriorDensityId() : "prior");
         writer.writeCloseTag(TimeTreeExportParser.PRIORS);
 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
@@ -1218,28 +1415,47 @@ public class BeastGenerator extends Generator {
             ClockModelGenerator.writeBranchRatesModelRef(clock, writer);
         }
         String density = options.maximizationOptions.objective.getDensityId();
-        writer.writeIDref(density, density);
+        writeDensityRef(density, writer);
         writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         return id;
     }
 
     // one segment per run of parameters with the same transform, in the order of the compound parameter
     private void writeCompoundTransform(List<Parameter> parameters, XMLWriter writer) {
+        writeCompoundTransform(parameters, OPTIMIZED_PARAMETERS, writer);
+    }
+
+    private void writeCompoundTransform(List<Parameter> parameters, String compoundId, XMLWriter writer) {
         MaximizationOptions maximization = options.maximizationOptions;
         writer.writeOpenTag("compoundTransform");
         int start = 0;
         while (start < parameters.size()) {
+            Double upper = maximization.getAppliedUpperBound(parameters.get(start));
+            int end = start;
+            if (upper != null) {
+                // a positive parameter with an upper bound (the gamma shape): the logit of (0, upper), its own element
+                writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{
+                        new Attribute.Default<String>(TransformParsers.TYPE,
+                                MaximizationOptions.Treatment.LOGIT.getTransform()),
+                        new Attribute.Default<Double>("lower", 0.0),
+                        new Attribute.Default<Double>("upper", upper)});
+                writer.writeIDref(ParameterParser.PARAMETER, parameters.get(end).getName());
+                end++;
+                writer.writeCloseTag(TransformParsers.TRANSFORM);
+                start = end;
+                continue;
+            }
             String type = maximization.classify(parameters.get(start), false).getTransform();
             writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute.Default<String>(TransformParsers.TYPE, type));
-            int end = start;
-            while (end < parameters.size() && maximization.classify(parameters.get(end), false).getTransform().equals(type)) {
+            while (end < parameters.size() && maximization.getAppliedUpperBound(parameters.get(end)) == null &&
+                    maximization.classify(parameters.get(end), false).getTransform().equals(type)) {
                 writer.writeIDref(ParameterParser.PARAMETER, parameters.get(end).getName());
                 end++;
             }
             writer.writeCloseTag(TransformParsers.TRANSFORM);
             start = end;
         }
-        writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, OPTIMIZED_PARAMETERS);
+        writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, compoundId);
         writer.writeCloseTag("compoundTransform");
     }
 
@@ -1249,10 +1465,21 @@ public class BeastGenerator extends Generator {
      */
     private GradientRegistry.LikelihoodTerm likelihoodTerm(Parameter parameter) {
         GradientRegistry.LikelihoodTerm term = GradientRegistry.likelihoodTerm(options, parameter);
-        if (term.isAnalytic() && (!options.otherPartitions.isEmpty() || !options.traits.isEmpty())) {
+        if (term.isAnalytic() && (!options.otherPartitions.isEmpty() || hasTraitPartitions())) {
             return GradientRegistry.LikelihoodTerm.NUMERIC;
         }
         return term;
+    }
+
+    // a trait with a data partition has a trait likelihood; one without (taxon attributes imported with the
+    // sequences, as the geography of the real data sets' XMLs) only writes <attr> tags
+    private boolean hasTraitPartitions() {
+        for (TraitData trait : options.traits) {
+            if (!options.getTraitPartitions(trait).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void writeGradientBlocks(List<Parameter> parameters, Map<Parameter, GradientRegistry.LikelihoodTerm> terms,
@@ -1279,7 +1506,7 @@ public class BeastGenerator extends Generator {
             // the prior term first, so the block's parameter is the parameter itself
             String tag = null;
             if (priorTerm) {
-                tag = writeNumericalGradient(members > 1 ? null : id, "prior", parameter, writer);
+                tag = writeNumericalGradient(members > 1 ? null : id, objective.getPriorDensityId(), parameter, writer);
             }
             if (likelihoodTerm) {
                 if (!term.isAnalytic()) {
@@ -1325,6 +1552,10 @@ public class BeastGenerator extends Generator {
             heightTags.add(writeNodeHeightBlock(entry.getKey(), entry.getValue(), objective, writer));
         }
 
+        gradientTags.clear();
+        for (Parameter parameter : parameters) {
+            gradientTags.put("gradient." + parameter.getName(), tags.get(parameter));
+        }
         writer.writeOpenTag("compoundGradient", new Attribute.Default<String>(XMLParser.ID, MAXIMIZER_GRADIENT));
         for (Parameter parameter : parameters) {
             writer.writeIDref(tags.get(parameter), "gradient." + parameter.getName());
@@ -1334,6 +1565,7 @@ public class BeastGenerator extends Generator {
         }
         int index = 0;
         for (PartitionTreeModel tree : heightPlans.keySet()) {
+            gradientTags.put("gradient." + tree.getPrefix() + NODE_HEIGHTS, heightTags.get(index));
             writer.writeIDref(heightTags.get(index++), "gradient." + tree.getPrefix() + NODE_HEIGHTS);
         }
         writer.writeCloseTag("compoundGradient");
@@ -1353,6 +1585,13 @@ public class BeastGenerator extends Generator {
     }
 
     // returns the tag written
+    // a reference to one of the densities writeObjective writes, by its element: joint, prior or likelihood
+    private static void writeDensityRef(String id, XMLWriter writer) {
+        writer.writeIDref(id.startsWith(CompoundLikelihoodParser.JOINT) ? CompoundLikelihoodParser.JOINT :
+                id.startsWith(CompoundLikelihoodParser.PRIOR) ? CompoundLikelihoodParser.PRIOR :
+                        CompoundLikelihoodParser.LIKELIHOOD, id);
+    }
+
     private String writeNumericalGradient(String id, String density, Parameter parameter, XMLWriter writer) {
         return writeNumericalGradient(id, density, parameter.getName(), ParameterParser.PARAMETER, writer);
     }
@@ -1361,7 +1600,7 @@ public class BeastGenerator extends Generator {
                                           XMLWriter writer) {
         writer.writeOpenTag("numericalGradient", id == null ? new Attribute[0] :
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, id)});
-        writer.writeIDref(density, density);
+        writeDensityRef(density, writer);
         writer.writeIDref(parameterTag, parameterId);
         writer.writeCloseTag("numericalGradient");
         return "numericalGradient";
@@ -1461,19 +1700,21 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag("jointGradient", new Attribute.Default<String>(XMLParser.ID, id));
         if (objective != MaximizationOptions.Objective.ML) {
             if (plan.numericPrior) {
-                writeNumericalGradient(null, "prior", proxyId, "nodeHeightProxyParameter", writer);
+                writeNumericalGradient(null, objective.getPriorDensityId(), proxyId, "nodeHeightProxyParameter", writer);
             } else {
-                if (plan.treePriorGradient.equals("coalescentGradient") ||
-                        plan.treePriorGradient.equals("speciationLikelihoodGradient")) {
-                    writer.writeOpenTag(plan.treePriorGradient, plan.treePriorGradient.equals("coalescentGradient") ?
-                            new Attribute[0] : new Attribute[]{new Attribute.Default<String>("wrtParameter", "nodeHeight")});
-                    writer.writeIDref(plan.treePriorLikelihood, plan.treePriorId);
-                    writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelId);
-                } else {
-                    writer.writeOpenTag(plan.treePriorGradient, new Attribute.Default<String>("wrtParameter", "nodeHeight"));
-                    writer.writeIDref(plan.treePriorLikelihood, plan.treePriorId);
+                if (!objective.omitsTreePrior()) {
+                    if (plan.treePriorGradient.equals("coalescentGradient") ||
+                            plan.treePriorGradient.equals("speciationLikelihoodGradient")) {
+                        writer.writeOpenTag(plan.treePriorGradient, plan.treePriorGradient.equals("coalescentGradient") ?
+                                new Attribute[0] : new Attribute[]{new Attribute.Default<String>("wrtParameter", "nodeHeight")});
+                        writer.writeIDref(plan.treePriorLikelihood, plan.treePriorId);
+                        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelId);
+                    } else {
+                        writer.writeOpenTag(plan.treePriorGradient, new Attribute.Default<String>("wrtParameter", "nodeHeight"));
+                        writer.writeIDref(plan.treePriorLikelihood, plan.treePriorId);
+                    }
+                    writer.writeCloseTag(plan.treePriorGradient);
                 }
-                writer.writeCloseTag(plan.treePriorGradient);
 
                 // a copy of each CTMC rate reference prior on the tree's length, as ParameterPriorGenerator writes it
                 for (Parameter rate : plan.ctmcPriors) {
@@ -1519,6 +1760,10 @@ public class BeastGenerator extends Generator {
     public static final String MAXIMIZER_GRADIENT = "maximizerGradient";
     private static final String UNIT_SIMPLEX_TRANSFORM = "UnitSimplexTransform";
     public static final String MAXIMIZER = "maximizer";
+    public static final String ROUND_MAXIMIZER = "roundMaximizer";
+    public static final String TREE_SEARCH = "treeSearch";
+    private static final String SEARCH_GRADIENT = "searchGradient";
+    private static final String SEARCH_RATES = "searchRates";
     public static final String TIME_TREE_EXPORT = "timeTreeExport";
     public static final String TIME_TREE_LOG = "timeTreeLog";
     public static final String SUBST_TREE_LOG = "substTreeLog";

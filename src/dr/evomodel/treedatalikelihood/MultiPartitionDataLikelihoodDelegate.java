@@ -1461,6 +1461,10 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      */
     private final List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
 
+    public List<SiteRateModel> getSiteRateModels() {
+        return Collections.unmodifiableList(siteRateModels);
+    }
+
     /**
      * the number of rate categories
      */

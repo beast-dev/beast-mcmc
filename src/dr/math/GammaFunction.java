@@ -119,6 +119,9 @@ public class GammaFunction {
      * @param ln_gamma_alpha the log gamma function for alpha
      * @return the incomplete gamma ratio
      */
+    // either expansion needs O(sqrt(alpha)) terms near x = alpha: 1E8 covers alpha to ~1E14 and bounds a call to ~1 s
+    private static final long MAX_ITERATIONS = 100000000L;
+
     private static double incompleteGamma(double x, double alpha, double ln_gamma_alpha) {
         // (1) series expansion     if (alpha>x || x<=1)
         // (2) continued fraction   otherwise
@@ -129,12 +132,21 @@ public class GammaFunction {
         double accurate = 1e-8, overflow = 1e30;
         double factor, gin, rn, a, b, an, dif, term;
         double pn0, pn1, pn2, pn3, pn4, pn5;
+        long iterations = 0;
 
         if (x == 0.0) {
             return 0.0;
         }
         if (x < 0.0 || alpha <= 0.0) {
             throw new IllegalArgumentException("Arguments out of bounds");
+        }
+        // a NaN or infinite argument never converges below, and with alpha past ~1E16 alpha + 1 == alpha; NaN tells
+        // the caller (e.g. an optimizer's line search) that there is no value here
+        if (Double.isNaN(x) || Double.isNaN(alpha) || Double.isInfinite(alpha)) {
+            return Double.NaN;
+        }
+        if (x == Double.POSITIVE_INFINITY) {
+            return 1.0;
         }
 
         factor = Math.exp(alpha * Math.log(x) - x - ln_gamma_alpha);
@@ -179,6 +191,9 @@ public class GammaFunction {
                     pn2 /= overflow;
                     pn3 /= overflow;
                 }
+                if (Double.isNaN(gin) || ++iterations > MAX_ITERATIONS) {
+                    return Double.NaN;
+                }
             } while (true);
             gin = 1 - factor * gin;
         } else {
@@ -190,6 +205,9 @@ public class GammaFunction {
                 rn++;
                 term *= x / rn;
                 gin += term;
+                if (++iterations > MAX_ITERATIONS) {
+                    return Double.NaN;
+                }
             }
             while (term > accurate);
             gin *= factor / alpha;

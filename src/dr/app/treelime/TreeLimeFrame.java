@@ -52,6 +52,7 @@ import dr.app.treelime.generator.BeastGenerator;
 import dr.app.treelime.generator.Generator;
 import dr.app.treelime.maximizationpanel.MaximizationPanel;
 import dr.app.treelime.generator.BootstrapGenerator;
+import dr.app.treelime.generator.MultiStartGenerator;
 import dr.app.treelime.options.MaximizationWarnings;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.options.PartitionTreePrior;
@@ -443,6 +444,8 @@ public class TreeLimeFrame extends DocumentFrame {
         try {
             ObjectInputStream in = new ObjectInputStream(fileIn);
             options = (TreeLimeOptions) in.readObject();
+            // the GUI no longer offers the topology search (the XML still does): files saved with it on load with it off
+            options.maximizationOptions.getTopologySearch().mode = dr.app.treelime.options.TopologySearchOptions.Mode.OFF;
             in.close();
         } catch (IOException ioe) {
             JOptionPane.showMessageDialog(this,
@@ -636,6 +639,48 @@ public class TreeLimeFrame extends DocumentFrame {
      * Writes bootstrap replicate files (plan 8 S3g) into a folder the user chooses: one TreeLime XML per replicate,
      * the counts that rebuild them and a run script.
      */
+    public final boolean doGenerateStarts(int starts) {
+        try {
+            generator.checkOptions();
+        } catch (Generator.GeneratorException ge) {
+            JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid TreeLime setting : ",
+                    JOptionPane.ERROR_MESSAGE);
+            if (ge.getSwitchToPanel() != null) {
+                switchToPanel(ge.getSwitchToPanel());
+            }
+            return false;
+        }
+
+        JFileChooser chooser = new JFileChooser(Utils.getCWD());
+        chooser.setDialogTitle("Folder for the start files");
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return false;
+        }
+        File directory = chooser.getSelectedFile();
+        try {
+            getAllOptions();
+            new MultiStartGenerator(options, components).generate(directory, starts);
+        } catch (Generator.GeneratorException ge) {
+            JOptionPane.showMessageDialog(this, ge.getMessage(), "Cannot write the starts",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            JOptionPane.showMessageDialog(this, "Cannot write the starts: " + e.getMessage(),
+                    "Cannot write the starts", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        JOptionPane.showMessageDialog(this, "<html>Wrote " + starts + " start files (" + options.fileNameStem +
+                        ".start0.xml from the starting tree, the others from random trees) to " + directory + ".<br>" +
+                        MultiStartGenerator.SCRIPT_FILE + " runs them, " +
+                        options.maximizationOptions.getBootstrapJobs() + " at a time (JOBS=n changes it),<br>" +
+                        "then copies the best start's outputs to " + options.fileNameStem + ".best.* and lists " +
+                        "all starts in " + options.fileNameStem + ".starts.tsv.</html>",
+                "Independent starts", JOptionPane.INFORMATION_MESSAGE);
+        return true;
+    }
+
     public final boolean doGenerateBootstrap(int replicates, long seed) {
         try {
             generator.checkOptions();
@@ -718,7 +763,9 @@ public class TreeLimeFrame extends DocumentFrame {
         //TODO make remove this or put warnings in check above? Seems more appropriate here for now
         if(!generator.checkUserTreeIsBifurcating()){
             JOptionPane.showMessageDialog(this, "At least one  user-specified starting tree " +
-                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree.",
+                        "is not fully bifurcating.\nBEAST will randomly resolve it into a bifurcating (binary) tree" +
+                        (options.maximizationOptions.getTopologySearch().isOn() ?
+                                ", which the topology search then starts from." : "."),
                         "Unresolved user-specified starting tree",
                         JOptionPane.WARNING_MESSAGE);
         }

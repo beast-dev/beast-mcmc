@@ -40,7 +40,7 @@ import java.util.concurrent.Future;
  * @author Marc A. Suchard
  */
 public class JointGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider,
-        DerivativeWrtParameterProvider, Reportable {
+        DerivativeWrtParameterProvider, Reportable, dr.util.Citable {
 
     private final int dimension;
     private final Likelihood likelihood;
@@ -312,5 +312,21 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         }
 
         public abstract double[] getDerivativeLogDensity(GradientWrtParameterProvider gradientWrtParameterProvider);
+    }
+
+    // the citation its parts share, if they share one (a gradient summed over partitions, say)
+    @Override
+    public dr.util.Citation.Category getCategory() {
+        return dr.util.Citable.Utils.common(derivativeList).getCategory();
+    }
+
+    @Override
+    public String getDescription() {
+        return dr.util.Citable.Utils.common(derivativeList).getDescription();
+    }
+
+    @Override
+    public List<dr.util.Citation> getCitations() {
+        return dr.util.Citable.Utils.common(derivativeList).getCitations();
     }
 }

@@ -33,10 +33,12 @@ import dr.app.treelime.options.MaximizationOptions;
 import dr.app.treelime.options.PartitionClockModel;
 import dr.app.treelime.options.PartitionSubstitutionModel;
 import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.options.TraitData;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.ClockType;
 import dr.app.treelime.types.StartingTreeType;
 import dr.evomodel.treedatalikelihood.discrete.MaximizerWrtParameter;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.XMLObject;
 import junit.framework.TestCase;
@@ -126,10 +128,39 @@ public class TreeLimeMaximizationTest extends TestCase {
         // the gamma shape's default lower bound
         assertTrue(xml.contains("<holdAtLowerBound value=\"0.05\">\n\t\t\t<parameter idref=\"alpha\"/>"));
 
+        // and its default upper bound: the logit of (0, 1000) in place of the log transform
+        assertTrue(xml, xml.contains("<transform type=\"logit\" lower=\"0.0\" upper=\"1000.0\">\n" +
+                "\t\t\t\t\t<parameter idref=\"alpha\"/>"));
+
         Run run = run(xml);
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertGradientChecked(run);
+        final double shape = run.parameter("alpha").getParameterValue(0);
+        assertTrue(run.maximizer.getAtUpperBound().isEmpty());
+
+        // an upper bound below that optimum: the shape ends at it, with a warning; a start above the bound is refused
+        dr.app.treelime.options.Parameter alpha = null;
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getBaseName().equals("alpha")) {
+                alpha = parameter;
+            }
+        }
+        options.maximizationOptions.setUpperBound(alpha, shape / 2.0);
+        try {
+            TreeLimeHarness.generate(options);
+            fail("an initial value above the upper bound");
+        } catch (Exception e) {
+            assertTrue(e.toString(), String.valueOf(e.getMessage()).contains("upper bound") ||
+                    String.valueOf(e.getCause()).contains("upper bound"));
+        }
+        alpha.setInitial(shape / 4.0);
+        Run bounded = run(TreeLimeHarness.generate(options));
+        assertEquals(1, bounded.maximizer.getAtUpperBound().size());
+        assertEquals("at_upper_bound", bounded.maximizer.getAtUpperBound().get(0).getStatus());
+        assertEquals(shape / 2.0, bounded.parameter("alpha").getParameterValue(0), 0.01 * shape / 2.0);
+        assertTrue(bounded.maximizer.getReport(), bounded.maximizer.getReport().contains("AtUpperBound: alpha = "));
+        assertTrue(bounded.end < run.end);
 
         // a blank bound writes none
         for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
@@ -138,6 +169,12 @@ public class TreeLimeMaximizationTest extends TestCase {
             }
         }
         assertFalse(TreeLimeHarness.generate(options).contains("<holdAtLowerBound"));
+        for (dr.app.treelime.options.Parameter parameter : options.selectParameters()) {
+            if (parameter.getBaseName().equals("alpha")) {
+                options.maximizationOptions.setUpperBound(parameter, null);
+            }
+        }
+        assertFalse(TreeLimeHarness.generate(options).contains("type=\"logit\" lower="));
     }
 
     // a monophyletic taxon set that plain UPGMA splits: the UPGMA start is built with the set as a constraint
@@ -383,6 +420,25 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertGradientChecked(run);
     }
 
+    // a trait without a data partition (taxon attributes imported with the sequences, as the real data sets' geography)
+    // has no trait likelihood, so it keeps the analytic tree-likelihood gradients; it used to make every one numeric
+    public void testUnusedTraitKeepsAnalyticGradients() throws Exception {
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");
+        if (options == null) {
+            return;
+        }
+        for (PartitionClockModel clock : options.getPartitionClockModels()) {
+            clock.setClockType(ClockType.HMC_CLOCK);
+        }
+        options.traits.add(new TraitData(options, "geography", "", TraitData.TraitType.DISCRETE));
+        assertTrue(options.getTraitPartitions(options.traits.get(0)).isEmpty());
+        String xml = TreeLimeHarness.generate(quiet(options));
+        assertTrue(xml.contains("<attr name=\"geography\">"));
+        String location = between(xml, "<jointGradient id=\"gradient.branchRatesHMC.rate\">", "</jointGradient>");
+        assertTrue(location, location.contains("<locationScaleGradient traitName=\"Sequence\" useHessian=\"false\">"));
+        assertFalse(xml.contains("analytic tree-likelihood gradients for 0 of"));
+    }
+
     // the HMC relaxed clock's location (rate) and scale: the analytic locationScaleGradient of the tree likelihood, as
     // in the hmc_clock XMLs, together with the branch rates' branchRateGradient
     public void testHmcClockLocationAndScale() throws Exception {
@@ -458,6 +514,45 @@ public class TreeLimeMaximizationTest extends TestCase {
         assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
         assertTrue(run.end > run.start);
         assertTrue(run.parameter("clock.rate").getParameterValue(0) != 1.0);
+        assertGradientChecked(run);
+    }
+
+    // the default objective: the joint without the coalescent, whose mode at zero pulls the node heights down
+    public void testMapWithoutTheTreePrior() throws Exception {
+        assertEquals(MaximizationOptions.Objective.MAP_NO_TREE_PRIOR, new MaximizationOptions().objective);
+        TreeLimeOptions options = TreeLimeHarness.importData("examples/Data/Dengue4.env.nex");
+        if (options == null) {
+            return;
+        }
+        TreeLimeHarness.setTipDatesFromNames(options);
+        quiet(options).maximizationOptions.nIterations = 2000;
+        options.maximizationOptions.objective = MaximizationOptions.Objective.MAP_NO_TREE_PRIOR;
+        String xml = TreeLimeHarness.generate(options);
+        assertTrue(between(xml, "<objective>", "</objective>").contains("<joint idref=\"jointNoTreePrior\"/>"));
+        String inner = between(xml, "<prior id=\"priorNoTreePrior\">", "</prior>");
+        assertTrue(inner.contains("<ctmcScalePrior"));
+        assertFalse(inner.contains("coalescent"));
+        assertFalse(inner.contains("constant.popSize"));
+        // the population size is in no term of the objective
+        assertFalse(between(xml, "<compoundParameter id=\"optimizedParameters\">", "</compoundParameter>")
+                .contains("constant.popSize"));
+        String block = between(xml, "<jointGradient id=\"gradient.nodeHeights\">", "</jointGradient>");
+        assertFalse(block.contains("<coalescentGradient>"));
+        assertTrue(block.contains("<ctmcScalePriorNodeHeightGradient>"));
+        assertTrue(xml.contains("mapName=\"MAP without the tree prior\""));
+
+        Run run = run(xml);
+        assertEquals("jointNoTreePrior", run.maximizer.getLikelihood().getId());
+        Likelihood inside = (Likelihood) run.objects.get("priorNoTreePrior").getNativeObject();
+        Likelihood likelihood = (Likelihood) run.objects.get("likelihood").getNativeObject();
+        Likelihood coalescent = (Likelihood) run.objects.get("coalescent").getNativeObject();
+        Likelihood prior = (Likelihood) run.objects.get("prior").getNativeObject();
+        assertEquals(likelihood.getLogLikelihood() + inside.getLogLikelihood(), run.end, 1E-8 * Math.abs(run.end));
+        // the full prior still holds the coalescent, for the record
+        assertTrue(prior.getLogLikelihood() != inside.getLogLikelihood());
+        assertTrue(Double.isFinite(coalescent.getLogLikelihood()));
+        assertEquals(MaximizerWrtParameter.Reason.CONVERGED, run.maximizer.getReason());
+        assertTrue(run.end > run.start);
         assertGradientChecked(run);
     }
 

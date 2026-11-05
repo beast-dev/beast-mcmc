@@ -253,7 +253,7 @@ public class PriorsPanel extends TreeLimePanel implements Exportable {
                     return;
                 }
                 options.maximizationOptions.objective = maximumLikelihoodCheck.isSelected() ?
-                        MaximizationOptions.Objective.ML : MaximizationOptions.Objective.MAP;
+                        MaximizationOptions.Objective.ML : MaximizationOptions.Objective.MAP_NO_TREE_PRIOR;
                 frame.setDirty();
             });
             southPanel.add(maximumLikelihoodCheck, BorderLayout.SOUTH);

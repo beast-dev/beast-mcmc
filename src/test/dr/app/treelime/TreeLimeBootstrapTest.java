@@ -32,12 +32,14 @@ import dr.app.beast.BeastVersion;
 import dr.app.treelime.generator.BootstrapGenerator;
 import dr.app.treelime.options.PartitionData;
 import dr.app.treelime.options.PartitionTreeModel;
+import dr.app.treelime.options.TopologySearchOptions;
 import dr.app.treelime.options.TreeLimeOptions;
 import dr.app.treelime.types.StartingTreeType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SiteResampler;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.BootstrapSummary;
 import dr.xml.XMLObject;
 import junit.framework.TestCase;
 
@@ -359,6 +361,238 @@ public class TreeLimeBootstrapTest extends TestCase {
         assertEquals(4.0, second.getNodeHeight(second.getRoot()), 1E-12);
         for (File file : directory.listFiles()) {
             file.deleteOnExit();
+        }
+    }
+
+    // plan 8 S7f: with the Standard (or Thorough) search each replicate searches from the NJ tree of its own data; a
+    // search from the starting tree, which comes from the original data, is refused
+    public void testSearchedReplicates() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null) {
+            return;
+        }
+        File directory = directory();
+        options.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.NNI_SPR;
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        try {
+            generator.generate(directory, 2, 42);
+            fail("a search from the original starting tree was accepted");
+        } catch (dr.app.treelime.generator.Generator.GeneratorException e) {
+            assertTrue(e.getMessage().contains("Standard or Thorough"));
+        }
+
+        options.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.STANDARD;
+        generator.generate(directory, 2, 42);
+        assertTrue(generator.isSearched());
+        for (int b = 1; b <= 2; b++) {
+            String xml = new String(bytes(directory, "rep" + b + ".xml"), "UTF-8");
+            assertTrue(xml.contains("<timeTreeSearch "));
+            assertTrue(xml.contains("preset=\"standard\""));
+            // the NJ start reads the replicate's own patterns
+            assertTrue(xml.contains("dengue.rep" + b + ".search.trees"));
+        }
+        assertTrue(new String(bytes(directory, BootstrapGenerator.COUNTS_FILE)).contains("# searched bootstrap"));
+        String summary = new String(bytes(directory, BootstrapGenerator.SUMMARY_FILE));
+        assertTrue(summary.contains("topologySearched=\"true\""));
+        assertTrue(summary.contains("clades=\"dengue.clades.tsv\""));
+        assertTrue(summary.contains("splits=\"dengue.splits.tree\""));
+        assertTrue(summary.contains("splitConsensus=\"dengue.splits.consensus.tree\""));
+        String script = new String(bytes(directory, BootstrapGenerator.SCRIPT_FILE));
+        assertTrue(script.contains("TREEANNOTATOR=\"${TREEANNOTATOR:-treeannotator}\""));
+        for (BootstrapGenerator.SummaryTree tree : BootstrapGenerator.SummaryTree.values()) {
+            assertTrue(script.contains("-type " + tree.type));
+        }
+        assertTrue(script.contains("-target dengue.timetree.nex"));
+        for (File file : directory.listFiles()) {
+            file.deleteOnExit();
+        }
+    }
+
+    // a searched bootstrap's summary: on the original time tree ((A,B),(C,D)), with replicates ((A,B),(C,D)) twice and
+    // (((A,B),C),D) once, AB has support 1, CD 2/3 but split support 1 (the third replicate has AB|CD below its root),
+    // and the root split 2/3; the clades table has every replicate clade, most frequent first, with heights only from
+    // the replicates that have it
+    public void testSearchedSupport() throws Exception {
+        File directory = directory();
+        write(directory, "run.timetree.nex", nexus(new String[]{"((1:1.0,2:1.0):2.0,(3:1.5,4:1.5):1.5)"}));
+        write(directory, "run.bootstrap.trees", nexus(new String[]{"((1:1.0,2:1.0):2.0,(3:1.5,4:1.5):1.5)",
+                "((1:1.2,2:1.2):2.2,(3:1.0,4:1.0):2.4)", "(((1:1.0,2:1.0):1.0,3:2.0):2.0,4:4.0)"}));
+        write(directory, "run.dates.tsv", "#node\tclade\tage\tlower\tupper\tci_method\n" +
+                "5\tA,B\t1.0\tNA\tNA\tNA\n6\tC,D\t1.5\tNA\tNA\tNA\n7\tA,B,C,D\t3.0\tNA\tNA\tNA\n");
+        write(directory, "run.params.tsv", "name\tvalue\tstatus\tse\tlower\tupper\tci_method\n" +
+                "kappa\t2.0\testimated\tNA\tNA\tNA\tNA\n");
+        write(directory, "run.bootstrap.params.tsv", "replicate\tkappa\n1\t1.9\n2\t2.1\n3\t2.0\n");
+        BootstrapSummary summary = new BootstrapSummary(new File(directory, "run.params.tsv"),
+                new File(directory, "run.bootstrap.params.tsv"), null,
+                Arrays.asList(new BootstrapSummary.TreeFiles(new File(directory, "run.timetree.nex"),
+                        new File(directory, "run.bootstrap.trees"), new File(directory, "run.dates.tsv"), null,
+                        new File(directory, "run.clades.tsv"), null, null)), 0.95);
+        summary.setTopologySearched(true);
+        assertEquals(3, summary.summarize());
+
+        Tree tree = readTrees(new File(directory, "run.timetree.nex")).get(0);
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            dr.evolution.tree.NodeRef node = tree.getInternalNode(i);
+            java.util.Set<String> clade = dr.evolution.tree.TreeUtils.getDescendantLeaves(tree, node);
+            if (tree.isRoot(node)) {
+                assertEquals(2.0 / 3.0, ((Number) tree.getNodeAttribute(node, "root_support")).doubleValue(), 1E-12);
+            } else if (clade.contains("A")) {
+                assertEquals(1.0, ((Number) tree.getNodeAttribute(node, "support")).doubleValue(), 1E-12);
+                assertEquals(1.0, ((Number) tree.getNodeAttribute(node, "split_support")).doubleValue(), 1E-12);
+            } else {
+                assertEquals(2.0 / 3.0, ((Number) tree.getNodeAttribute(node, "support")).doubleValue(), 1E-12);
+                assertEquals(1.0, ((Number) tree.getNodeAttribute(node, "split_support")).doubleValue(), 1E-12);
+            }
+        }
+        List<String> clades = Files.readAllLines(new File(directory, "run.clades.tsv").toPath());
+        assertEquals(4, clades.size());
+        assertTrue(clades.get(1), clades.get(1).startsWith("A,B\t2\t1.0\tyes\t1.0\t"));
+        assertTrue(clades.get(2), clades.get(2).startsWith("C,D\t2\t0.6666666666666666\tyes\t"));
+        // A,B,C in one replicate only, 2.0 above the youngest tip
+        assertTrue(clades.get(3), clades.get(3).startsWith("A,B,C\t3\t0.3333333333333333\tno\t2.0\t2.0\t2.0"));
+        for (File file : directory.listFiles()) {
+            file.deleteOnExit();
+        }
+    }
+
+    // the traditional split support: on the time tree (((A,B),C),(D,E)), with replicates the same twice and
+    // (((A,C),B),(D,E)) once, the split AB|CDE is in 2 of 3 (67%) and ABC|DE in all 3 (100%); the unrooted tree has A
+    // beside the rest, and the majority-rule consensus of the splits keeps both
+    public void testSplitSupport() throws Exception {
+        File directory = directory();
+        String[] taxa = {"A", "B", "C", "D", "E"};
+        write(directory, "run.timetree.nex", nexus(taxa, new String[]{"(((1:1.0,2:1.0):1.0,3:2.0):1.0,(4:1.5,5:1.5):1.5)"}));
+        write(directory, "run.bootstrap.trees", nexus(taxa, new String[]{
+                "(((1:1.0,2:1.0):1.0,3:2.0):1.0,(4:1.5,5:1.5):1.5)", "(((1:1.2,2:1.2):0.8,3:2.0):1.0,(4:1.0,5:1.0):2.0)",
+                "(((1:1.0,3:1.0):1.0,2:2.0):1.0,(4:1.5,5:1.5):1.5)"}));
+        write(directory, "run.dates.tsv", "#node\tclade\tage\tlower\tupper\tci_method\n" +
+                "6\tA,B\t1.0\tNA\tNA\tNA\n");
+        write(directory, "run.params.tsv", "name\tvalue\tstatus\tse\tlower\tupper\tci_method\n" +
+                "kappa\t2.0\testimated\tNA\tNA\tNA\tNA\n");
+        write(directory, "run.bootstrap.params.tsv", "replicate\tkappa\n1\t1.9\n2\t2.1\n3\t2.0\n");
+        BootstrapSummary summary = new BootstrapSummary(new File(directory, "run.params.tsv"),
+                new File(directory, "run.bootstrap.params.tsv"), null,
+                Arrays.asList(new BootstrapSummary.TreeFiles(new File(directory, "run.timetree.nex"),
+                        new File(directory, "run.bootstrap.trees"), new File(directory, "run.dates.tsv"), null, null,
+                        new File(directory, "run.splits.tree"), new File(directory, "run.splits.consensus.tree"))),
+                0.95);
+        summary.setTopologySearched(true);
+        summary.summarize();
+
+        String splits = new String(bytes(directory, "run.splits.tree"), "UTF-8").trim();
+        assertEquals("(A:1.0,B:1.0,(C:2.0,(D:1.5,E:1.5)100:2.5)67:1.0);", splits);
+        String consensus = new String(bytes(directory, "run.splits.consensus.tree"), "UTF-8").trim();
+        assertFalse(consensus, consensus.contains(":"));
+        assertTrue(consensus, consensus.contains(")100") && consensus.contains(")67"));
+        assertEquals(consensus, 3, consensus.length() - consensus.replace("(", "").length());
+        for (File file : directory.listFiles()) {
+            file.deleteOnExit();
+        }
+    }
+
+    private static String nexus(String[] taxa, String[] trees) {
+        StringBuilder sb = new StringBuilder("#NEXUS\n\nBegin taxa;\n\tDimensions ntax=" + taxa.length +
+                ";\n\tTaxlabels\n");
+        for (String taxon : taxa) {
+            sb.append("\t\t").append(taxon).append("\n");
+        }
+        sb.append("\t\t;\nEnd;\n\nBegin trees;\n\tTranslate\n");
+        for (int i = 0; i < taxa.length; i++) {
+            sb.append("\t\t").append(i + 1).append(' ').append(taxa[i]).append(i < taxa.length - 1 ? ",\n" : "\n");
+        }
+        sb.append("\t\t;\n");
+        for (int i = 0; i < trees.length; i++) {
+            sb.append("tree TREE").append(i + 1).append(" = [&R] ").append(trees[i]).append(";\n");
+        }
+        return sb.append("End;\n").toString();
+    }
+
+    // the run script's TreeAnnotator step, with BEAST's TreeAnnotator itself: replicates that agree only on AB give a
+    // majority-rule consensus with a polytomy, a binary HIPSTR tree with AB, and the original time tree annotated with
+    // the replicates' clade frequencies
+    public void testScriptRunsTreeAnnotator() throws Exception {
+        TreeLimeOptions options = options();
+        if (options == null || System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            return;
+        }
+        File directory = directory();
+        options.maximizationOptions.getTopologySearch().mode = TopologySearchOptions.Mode.STANDARD;
+        BootstrapGenerator generator = new BootstrapGenerator(options, TreeLimeHarness.COMPONENTS);
+        generator.generate(directory, 3, 42);
+        String[] replicates = {"((1:1.0,2:1.0):2.0,(3:1.5,4:1.5):1.5)", "(((1:1.0,2:1.0):1.0,3:2.0):1.0,4:3.0)",
+                "(((1:1.0,2:1.0):1.5,4:2.5):0.5,3:3.0)"};
+        for (int b = 1; b <= 3; b++) {
+            write(directory, "dengue.rep" + b + ".timetree.nex", nexus(new String[]{replicates[b - 1]})
+                    .replace("tree TREE1 ", "tree STATE_0 "));
+        }
+        write(directory, "dengue.timetree.nex", nexus(new String[]{replicates[0]}));
+        write(directory, "fake_beast.sh", "exit 0\n");
+        ProcessBuilder process = new ProcessBuilder("sh", BootstrapGenerator.SCRIPT_FILE);
+        process.directory(directory);
+        process.environment().put("BEAST", "sh fake_beast.sh");
+        // this JVM's class path, made absolute: the script runs in the temporary directory
+        StringBuilder classPath = new StringBuilder();
+        for (String entry : System.getProperty("java.class.path").split(File.pathSeparator)) {
+            classPath.append(classPath.length() > 0 ? File.pathSeparator : "").append(new File(entry).getAbsolutePath());
+        }
+        process.environment().put("TREEANNOTATOR", new File(System.getProperty("java.home"), "bin/java").getPath() +
+                " -cp " + classPath + " dr.app.tools.treeannotator.TreeAnnotator");
+        process.redirectErrorStream(true);
+        Process running = process.start();
+        String output = new String(readAll(running.getInputStream()));
+        assertEquals(output, 0, running.waitFor());
+        assertFalse(output, output.contains("TreeAnnotator failed"));
+
+        PartitionTreeModel treeModel = options.getPartitionTreeModels().get(0);
+        Tree consensus = readTrees(new File(directory, generator.getSummaryTreeFile(treeModel,
+                BootstrapGenerator.SummaryTree.CONSENSUS))).get(0);
+        assertEquals(3, consensus.getChildCount(consensus.getRoot()));
+        Tree hipstr = readTrees(new File(directory, generator.getSummaryTreeFile(treeModel,
+                BootstrapGenerator.SummaryTree.HIPSTR))).get(0);
+        for (int i = 0; i < hipstr.getInternalNodeCount(); i++) {
+            assertEquals(2, hipstr.getChildCount(hipstr.getInternalNode(i)));
+        }
+        assertTrue(hasClade(hipstr, "A", "B"));
+        Tree support = readTrees(new File(directory, generator.getSupportTreeFile(treeModel))).get(0);
+        for (int i = 0; i < support.getInternalNodeCount(); i++) {
+            dr.evolution.tree.NodeRef node = support.getInternalNode(i);
+            java.util.Set<String> clade = dr.evolution.tree.TreeUtils.getDescendantLeaves(support, node);
+            if (clade.size() == 2) {
+                assertEquals(clade.contains("A") ? 1.0 : 1.0 / 3.0,
+                        ((Number) support.getNodeAttribute(node, "posterior")).doubleValue(), 1E-12);
+            }
+        }
+        for (File file : directory.listFiles()) {
+            file.deleteOnExit();
+        }
+    }
+
+    private static boolean hasClade(Tree tree, String... taxa) {
+        java.util.Set<String> wanted = new java.util.HashSet<String>(Arrays.asList(taxa));
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            if (dr.evolution.tree.TreeUtils.getDescendantLeaves(tree, tree.getInternalNode(i)).equals(wanted)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // a NEXUS tree file over taxa A-D (1-4), one tree per Newick string
+    private static String nexus(String[] trees) {
+        return nexus(new String[]{"A", "B", "C", "D"}, trees);
+    }
+
+    private static List<Tree> readTrees(File file) throws Exception {
+        java.io.FileReader reader = new java.io.FileReader(file);
+        try {
+            dr.evolution.io.NexusImporter importer = new dr.evolution.io.NexusImporter(reader);
+            List<Tree> trees = new java.util.ArrayList<Tree>();
+            while (importer.hasTree()) {
+                trees.add(importer.importNextTree());
+            }
+            return trees;
+        } finally {
+            reader.close();
         }
     }
 

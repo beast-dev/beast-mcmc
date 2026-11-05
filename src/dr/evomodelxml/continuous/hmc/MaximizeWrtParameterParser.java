@@ -61,6 +61,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
     private static final String STALL_WINDOW = "stallWindow";
     private static final String CHECK_GRADIENT_EVERY = "checkGradientEvery";
     private static final String LINE_SEARCH_RESTARTS = "lineSearchRestarts";
+    private static final String STALL_ESCAPES = "stallEscapes";
     private static final String EPSILON = "epsilon";
     private static final String PAST = "past";
     private static final String DELTA = "delta";
@@ -111,9 +112,12 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
         int stallWindow = xo.getAttribute(STALL_WINDOW, 0);
         int checkGradientEvery = xo.getAttribute(CHECK_GRADIENT_EVERY, 0);
         int lineSearchRestarts = xo.getAttribute(LINE_SEARCH_RESTARTS, 0);
-        if (maxEvaluations < 0 || relTol < 0 || stallWindow < 0 || checkGradientEvery < 0 || lineSearchRestarts < 0) {
+        int stallEscapes = xo.getAttribute(STALL_ESCAPES, 0);
+        if (maxEvaluations < 0 || relTol < 0 || stallWindow < 0 || checkGradientEvery < 0 || lineSearchRestarts < 0
+                || stallEscapes < 0) {
             throw new XMLParseException(MAX_EVALUATIONS + ", " + REL_TOL + ", " + STALL_WINDOW + ", " +
-                    CHECK_GRADIENT_EVERY + " and " + LINE_SEARCH_RESTARTS + " must not be negative");
+                    CHECK_GRADIENT_EVERY + ", " + LINE_SEARCH_RESTARTS + " and " + STALL_ESCAPES +
+                    " must not be negative");
         }
 
         Double epsilon = xo.hasAttribute(EPSILON) ? xo.getDoubleAttribute(EPSILON) : null;
@@ -129,6 +133,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
                         .setBudgets(maxRunTime, maxEvaluations, relTol, stallWindow)
                         .setCheckGradientEvery(checkGradientEvery)
                         .setLineSearchRestarts(lineSearchRestarts)
+                        .setStallEscapes(stallEscapes)
                         .setConvergence(epsilon, past, delta);
 
         for (XMLObject cxo : xo.getAllChildren(HOLD_AT_LOWER_BOUND)) {
@@ -231,6 +236,7 @@ public class MaximizeWrtParameterParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(STALL_WINDOW, true, "stop when the objective has improved by at most relTol over this many iterations (default 0: off)"),
             AttributeRule.newIntegerRule(CHECK_GRADIENT_EVERY, true, "check the gradient against finite differences every this many evaluations (default 0: never)"),
             AttributeRule.newIntegerRule(LINE_SEARCH_RESTARTS, true, "after a failed line search, restart from the best point up to this many times (default 0)"),
+            AttributeRule.newIntegerRule(STALL_ESCAPES, true, "when a restart finds no decrease but the gradient is large, escape with a backtracking line search up to this many times (default 0; needs delta)"),
             AttributeRule.newDoubleRule(EPSILON, true, "lbfgs4j's gradient-norm convergence tolerance"),
             AttributeRule.newIntegerRule(PAST, true, "lbfgs4j's delta-test period in iterations (0: off)"),
             AttributeRule.newDoubleRule(DELTA, true, "lbfgs4j's relative-decrease convergence tolerance"),

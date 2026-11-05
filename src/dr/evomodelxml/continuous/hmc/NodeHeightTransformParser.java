@@ -97,7 +97,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
                 for (int i = 0; i < ratioParameter.getDimension(); i++) {
                     transforms.add(new Transform.LogitTransform());
                 }
-                nodeHeightTransform = new Transform.ComposeMultivariable(new Transform.Array(transforms, null), transform);
+                nodeHeightTransform = new NodeHeightTransform.RealLine(new Transform.Array(transforms, null), transform);
             } else {
                 nodeHeightTransform = transform;
             }

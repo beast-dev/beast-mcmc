@@ -175,8 +175,9 @@ public class NodeHeightToRatiosFullTransformDelegate extends NodeHeightToRatiosT
         double[] updatedGradient = new double[ratios.getDimension() + 1];
         System.arraycopy(gradientLogDensityWrtRatios, 0, updatedGradient, 1, ratios.getDimension());
 
+        // logJacobian = -sum log(h_i - a_i), so -logJacobian adds sum (dh_i/dy_0) / (h_i - a_i), as for the ratios
         double[] logTime = getLogTimeArray();
-        updatedGradient[0] = updateHeightParameterGradientUnweightedLogDensity(gradient) - updateHeightParameterGradientUnweightedLogDensity(logTime);
+        updatedGradient[0] = updateHeightParameterGradientUnweightedLogDensity(gradient) + updateHeightParameterGradientUnweightedLogDensity(logTime);
 
         return updatedGradient;
     }

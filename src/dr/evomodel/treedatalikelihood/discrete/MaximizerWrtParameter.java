@@ -69,12 +69,14 @@ public class MaximizerWrtParameter implements Reportable {
 
     public static class Settings {
         int numberIterations;
+        double stepSize;
         boolean startAtCurrentState;
         boolean printToScreen;
         boolean includeJacobian;
 
-        public Settings(int numberIterations, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
+        public Settings(int numberIterations, double stepSize, boolean startAtCurrentState, boolean printToScreen, boolean includeJacobian) {
             this.numberIterations = numberIterations;
+            this.stepSize = stepSize;
             this.startAtCurrentState = startAtCurrentState;
             this.printToScreen = printToScreen;
             this.includeJacobian = includeJacobian;
@@ -181,7 +183,7 @@ public class MaximizerWrtParameter implements Reportable {
             final long reportFirstGradientNs = firstGradientNs;
 
             if (transform != null) {
-                sb.append("Gradient is taken with respect to the transformed paramter values.\n");
+                sb.append("Gradient is taken with respect to the transformed parameter values.\n");
                 sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
             }
             sb.append("X: ").append(new dr.math.matrixAlgebra.Vector(minimumPoint)).append("\n");
@@ -232,6 +234,7 @@ public class MaximizerWrtParameter implements Reportable {
                 setParameter(new WrappedVector.Raw(argument), parameter);
 
                 if (settings.includeJacobian) {
+                    assert transform != null;
                     return -evaluateLogLikelihood() - transform.logJacobian(argument, 0, argument.length);
                 }
                 return -evaluateLogLikelihood();
@@ -321,7 +324,9 @@ public class MaximizerWrtParameter implements Reportable {
 
             @Override
             public double[] getGradientLogDensity() {
-                return NumericalDerivative.gradient(function, parameter.getParameterValues());
+                double[] gradient = new double[parameter.getDimension()];
+                NumericalDerivative.gradient(function, parameter.getParameterValues(), gradient, settings.stepSize);
+                return gradient;
             }
         };
     }
@@ -330,7 +335,7 @@ public class MaximizerWrtParameter implements Reportable {
         ANALYTIC("analytic"),
         NUMERICAL("numerical");
 
-        private String type;
+        private final String type;
 
         GradientType(String type) {
             this.type = type;

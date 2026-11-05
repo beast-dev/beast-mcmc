@@ -36,6 +36,7 @@ import dr.app.util.MacDesktopIntegration;
 import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.inference.mcmc.MCMC;
+import dr.inference.mcmc.RuntimeOverrides;
 import dr.inference.mcmcmc.MCMCMC;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.operators.OperatorSchedule;
@@ -467,6 +468,9 @@ public class BeastMain {
                         new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
                         new Arguments.LongOption("checkpoint_seed", null, "Seed specified for checkpoint restart"),
 
+                        new Arguments.LongOption("chain_length", "cl", 1, Long.MAX_VALUE, "Run for this many states, whatever the XML file says"),
+                        new Arguments.LongOption("log_every", "le", 1, Long.MAX_VALUE, "Log every this many states, whatever the XML file says"),
+
                         new Arguments.StringOption("citations_file", null, "FILENAME", "Specify a filename to write a citation list to"),
                         new Arguments.Option("citations_off", null, "Turn off writing citations to file"),
                         new Arguments.StringOption("plugins_dir",null,  "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
@@ -702,6 +706,18 @@ public class BeastMain {
 
         if (arguments.hasOption("beagle_order")) {
             System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_order"));
+        }
+
+        // these override what the XML file says, so that a file can be run short, or sampled more or
+        // less often, without being edited
+        if (arguments.hasOption("chain_length")) {
+            System.setProperty(RuntimeOverrides.CHAIN_LENGTH_PROPERTY,
+                    Long.toString(arguments.getLongOption("chain_length")));
+        }
+
+        if (arguments.hasOption("log_every")) {
+            System.setProperty(RuntimeOverrides.LOG_EVERY_PROPERTY,
+                    Long.toString(arguments.getLongOption("log_every")));
         }
 
         if (arguments.hasOption("beagle_instances")) {

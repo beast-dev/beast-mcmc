@@ -95,19 +95,19 @@
 
     <assertEqual tolerance="1e-10" toleranceType="absolute" verbose="true">
         <message>
-            Check flat-Q normalization likelihood with non-uniform root frequencies
+            Check uniformly weighted normalization likelihood with non-uniform root frequencies
         </message>
         <actual regex="TreeDataLikelihood\((.*?)\)">
             <treeDataLikelihood idref="treeLikelihood"/>
         </actual>
         <expected>
-            -6.829548723129837
+            -5.712964376818507
         </expected>
     </assertEqual>
 
     <assertEqual tolerance="1e-4" verbose="true" charactersToStrip="\[\],">
         <message>
-            Check exact spectral gradient with non-uniform frequencies and flat Q normalization
+            Check exact spectral gradient with non-uniform frequencies and uniformly weighted normalization
         </message>
         <actual regex="analytic: (.*?)\n">
             <exactLogCtmcRateGradient idref="spectralExactGradient"/>

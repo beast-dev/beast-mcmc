@@ -83,6 +83,34 @@ the seeds of each method agree with each other about as well as BEAGLE's do (lar
 the MAT, 2.9 for BEAGLE). The excess of mutations over parsimony is 0.85-0.89 in every seed: higher than
 without rate heterogeneity, as fast sites now carry more of the homoplasy, but the same in every run.
 
+### Uncorrelated relaxed clock
+
+small-2 with an uncorrelated lognormal relaxed clock (`discretizedBranchRates` as BEAUti writes it: ucld.mean
+with the CTMC scale prior, ucld.stdev with an exponential prior of mean 1/3, swap and uniform-integer
+operators on the rate categories) in every method, `make_validation_xmls.py --clock ucld`. This is the first
+validation of the MAT with a clock other than the strict one: the lazy resampling of subtree moves scores the
+old topology with the accepted state's branch lengths rather than old heights times current rates (the MAT
+delegate's `knownLengths`). Four seeds of BEAGLE and six of the MAT, 50 million states each, 10% burn-in, at
+234757b61, run one after another; full tables in [validation-ucld-results.md](validation-ucld-results.md).
+
+| Method | Tree length | Root height | Population size | ucld.mean (x10^-3) | ucld.stdev (x10^-3) | Coefficient of variation | Excess mutations |
+|---|---|---|---|---|---|---|---|
+| BEAGLE | 61.63-62.18 | 6.21-6.24 | 3.61-3.65 | 3.80-3.84 | 0.591-0.602 | 0.151-0.153 | |
+| MAT local + Gibbs | 61.51-62.36 | 6.19-6.26 | 3.60-3.68 | 3.78-3.84 | 0.565-0.611 | 0.146-0.157 | 0.30-0.35 |
+
+Pooled over seeds, every parameter is within 0.8 Monte Carlo standard errors of BEAGLE. The data are nearly
+clock-like (ucld.stdev piles up at zero, coefficient of variation 0.15), and on ucld.stdev and the coefficient
+of variation the MAT's seeds are spread a little more widely than BEAGLE's: the most different pair (seeds 11
+and 44) are 3.0 standard errors apart, against 0.7 for BEAGLE, and a chi-square test of the six seeds against
+their pooled mean gives p = 0.06 (BEAGLE's four, p = 0.9); on every other parameter the seeds agree (p = 0.12-0.6).
+Seed 44 is the lowest on ucld.stdev for the whole of its run (batch-means and autocorrelation standard errors
+agree, so its ESS is not overstated), and the two seeds added to check it fall in the middle of the others.
+The excess of mutations over parsimony is 0.30-0.35 in every seed, as under the strict clock.
+
+Speed, this time with both engines run alone on an awake machine: BEAGLE 0.52 min per million states on 18
+cores, the MAT 0.24-0.25 min on one. ESS per minute, BEAGLE / MAT: root height 54 / 97, tree length 24 / 49,
+population size 32 / 64, ucld.mean 30 / 62, ucld.stdev 71 / 154, coalescent 24 / 51: about twice BEAGLE's.
+
 ### Speed
 
 | | Method | Time per million states | Cores | ESS per minute: root height | tree length | population size | clock rate | coalescent |

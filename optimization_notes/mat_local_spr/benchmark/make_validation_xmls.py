@@ -13,9 +13,14 @@ exponential prior of mean 0.5 and a scale operator); the MAT then samples each v
 with a siteRateCategoryGibbsOperator (weight --category-weight, by default 1% of the SubtreeLeap weight: each
 update draws every site's category, which mix quickly), and sums the constant sites over them.
 
+With --clock ucld, every method has an uncorrelated lognormal relaxed clock (discretizedBranchRates, as BEAUti
+writes it: ucld.mean with the CTMC scale prior, ucld.stdev with an exponential prior of mean 1/3, scale
+operators on both, swap and uniform-integer operators on the rate categories; the coefficient of variation and
+the rate covariance are logged) in place of the strict clock.
+
 usage: make_validation_xmls.py SOURCE_DIR OUT_DIR [--name benchmark-small-2] [--chain-length N]
                                [--log-every N] [--tree-log-every N] [--gibbs-weight W] [--gamma]
-                               [--category-weight W] [--methods M,...]
+                               [--category-weight W] [--clock strict|ucld] [--methods M,...]
 """
 import argparse
 import os
@@ -50,9 +55,84 @@ def add_gamma(xml):
     return xml
 
 
+STRICT_CLOCK = '''	<strictClockBranchRates id="branchRates">
+		<rate>
+			<parameter id="clock.rate" value="0.001" lower="0.0"/>
+		</rate>
+	</strictClockBranchRates>'''
+
+UCLD_CLOCK = '''	<discretizedBranchRates id="branchRates">
+		<treeModel idref="treeModel"/>
+		<distribution>
+			<logNormalDistributionModel meanInRealSpace="true">
+				<mean>
+					<parameter id="ucld.mean" value="0.001" lower="0.0"/>
+				</mean>
+				<stdev>
+					<parameter id="ucld.stdev" value="0.3333333333333333" lower="0.0"/>
+				</stdev>
+			</logNormalDistributionModel>
+		</distribution>
+		<rateCategories>
+			<parameter id="branchRates.categories"/>
+		</rateCategories>
+	</discretizedBranchRates>'''
+
+UCLD_STATISTICS = '''	<rateStatistic id="coefficientOfVariation" name="coefficientOfVariation" mode="coefficientOfVariation" internal="true" external="true">
+		<treeModel idref="treeModel"/>
+		<discretizedBranchRates idref="branchRates"/>
+	</rateStatistic>
+	<rateCovarianceStatistic id="covariance" name="covariance">
+		<treeModel idref="treeModel"/>
+		<discretizedBranchRates idref="branchRates"/>
+	</rateCovarianceStatistic>
+'''
+
+UCLD_OPERATORS = '''		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="ucld.mean"/>
+		</scaleOperator>
+		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="ucld.stdev"/>
+		</scaleOperator>
+		<swapOperator size="1" weight="30" autoOptimize="false">
+			<parameter idref="branchRates.categories"/>
+		</swapOperator>
+		<uniformIntegerOperator weight="30">
+			<parameter idref="branchRates.categories"/>
+		</uniformIntegerOperator>'''
+
+
+def add_ucld(xml):
+    """The uncorrelated lognormal relaxed clock in place of the strict clock, with its priors, operators and
+    statistics; clock.rate becomes ucld.mean wherever it is referred to."""
+    xml = replace_once(xml, STRICT_CLOCK, UCLD_CLOCK)
+    xml = xml.replace('<strictClockBranchRates idref="branchRates"/>', '<discretizedBranchRates idref="branchRates"/>')
+    xml = replace_once(xml, '''		<discretizedBranchRates idref="branchRates"/>
+	</rateStatistic>
+''', '''		<discretizedBranchRates idref="branchRates"/>
+	</rateStatistic>
+''' + UCLD_STATISTICS)
+    xml = replace_once(xml, '''		<scaleOperator scaleFactor="0.75" weight="3">
+			<parameter idref="clock.rate"/>
+		</scaleOperator>''', UCLD_OPERATORS)
+    xml = xml.replace('idref="clock.rate"', 'idref="ucld.mean"').replace('label="clock.rate"', 'label="ucld.mean"')
+    xml = replace_once(xml, '''				</ctmcScalePrior>''', '''				</ctmcScalePrior>
+				<exponentialPrior mean="0.3333333333333333" offset="0.0">
+					<parameter idref="ucld.stdev"/>
+				</exponentialPrior>''')
+    xml = replace_once(xml, '''			<rateStatistic idref="meanRate"/>''', '''			<parameter idref="ucld.stdev"/>
+			<rateStatistic idref="meanRate"/>
+			<rateStatistic idref="coefficientOfVariation"/>
+			<rateCovarianceStatistic idref="covariance"/>''')
+    assert 'clock.rate' not in xml
+    return xml
+
+
 def make(method, source, name, chain_length, log_every, tree_log_every, gibbs_weight, gamma=False,
-         category_weight=None):
+         category_weight=None, clock='strict'):
     xml = re.sub(r'chainLength="\d+"', 'chainLength="%d"' % chain_length, source)
+    if clock == 'ucld':
+        xml = add_ucld(xml)
     xml = re.sub(r'(<log id="(?:screenLog|fileLog)" logEvery=)"\d+"', r'\1"%d"' % log_every, xml)
     xml = re.sub(r'(<logTree id="treeFileLog" logEvery=)"\d+"', r'\1"%d"' % tree_log_every, xml)
     xml = re.sub(r'fileName="%s(?:-mat)?\.log"' % name, 'fileName="%s.log"' % method, xml)
@@ -93,6 +173,8 @@ def main():
     parser.add_argument('--gamma', action='store_true')
     parser.add_argument('--category-weight', type=float, default=None,
                         help='weight of the siteRateCategoryGibbsOperator (default 1%% of the SubtreeLeap weight)')
+    parser.add_argument('--clock', choices=['strict', 'ucld'], default='strict',
+                        help='the strict clock of the source, or an uncorrelated lognormal relaxed clock')
     parser.add_argument('--methods', default='baseline,mat-local,mat-local-gibbs')
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
@@ -109,7 +191,7 @@ def main():
         if category_weight is None:
             category_weight = round(0.01 * float(re.search(r'<subtreeLeap [^>]*weight="([^"]+)"', text).group(1)), 3)
         xml = make(method, text, args.name, args.chain_length, args.log_every, args.tree_log_every,
-                   args.gibbs_weight, args.gamma, category_weight)
+                   args.gibbs_weight, args.gamma, category_weight, args.clock)
         path = os.path.join(args.out_dir, method + '.xml')
         with open(path, 'w') as f:
             f.write(xml)

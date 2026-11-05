@@ -32,7 +32,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -162,13 +161,14 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private boolean treeChangedSinceCheck = true;
 
     // The subtree moves made by the operators are found and resampled at evaluation: the nodes with a tree
-    // event since the step began (or all of them), the heights of the last accepted state (for the branch
-    // lengths of the old topology), whether a step is in progress (between store and accept/restore), the
+    // or branch rate event since the step began (or all of them), the branch lengths of the last accepted
+    // state in expected substitutions (for the old topology: a relaxed clock's rates need not stay with
+    // their nodes across a move), whether a step is in progress (between store and accept/restore), the
     // moves found in it, and the log Hastings ratio of their resampling, taken by the Markov chain.
     private MutationHistoryResampler resampler = null;
     private final IndexSet touchedNodes;
     private boolean allTouched = true;
-    private final double[] knownHeights;
+    private final double[] knownLengths;
     private boolean inStep = false;
     private int movesThisStep = 0;
     private double pendingLogHastingsRatio = 0.0;
@@ -277,9 +277,9 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         this.dirtyNodes = new IndexSet(nodeCount);
         this.recomputedNodes = new IndexSet(nodeCount);
         this.touchedNodes = new IndexSet(nodeCount);
-        this.knownHeights = new double[nodeCount];
+        this.knownLengths = new double[nodeCount];
         for (int n = 0; n < nodeCount; n++) {
-            knownHeights[n] = tree.getNodeHeight(tree.getNode(n));
+            knownLengths[n] = getBranchLength(tree.getNode(n));
         }
         this.currentView = new TreeView();
         this.infinitesimalMatrix = new double[stateCount * stateCount];
@@ -326,13 +326,12 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      * Attaches the resampler that draws the ancestral states changed by a subtree move when the likelihood
      * is next evaluated (a {@link MutationHistoryResampler} attaches itself when constructed; null detaches
      * it, after which the MAT is updated by parsimony, which is not a valid MCMC move when histories are
-     * sampled).
+     * sampled). Any branch rate model that announces its changes works: the resampler scores the old
+     * topology with the branch lengths kept from the last accepted state. One that changes rates silently
+     * (as the normalised clocks do) is wrong for every tree likelihood; here the assertion at each store
+     * catches it.
      */
     public void setResampler(MutationHistoryResampler resampler) {
-        if (resampler != null && !(branchRateModel instanceof StrictClockBranchRates || branchRateModel instanceof DefaultBranchRateModel)) {
-            throw new IllegalArgumentException("The MAT's mutation history resampler needs a strict clock (the rates of " +
-                    "the branches of the topology before a move cannot be read from " + branchRateModel.getModelName() + ")");
-        }
         this.resampler = resampler;
     }
 
@@ -346,6 +345,14 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      */
     public int[] getLastSubtreeMove() {
         return lastSubtreeMove == null ? null : lastSubtreeMove.clone();
+    }
+
+    /**
+     * @return the length in expected substitutions of the branch above each node in the last accepted
+     * state, with which the resampler scores the topology before a move (for testing)
+     */
+    public double[] getAcceptedBranchLengths() {
+        return knownLengths.clone();
     }
 
     @Override
@@ -597,7 +604,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     /**
      * The tree as it was before the subtree move that reparented the given nodes: the parents are the
      * store's (not yet synchronised with the tree), the children of the few nodes whose children changed
-     * follow from them, and the branch lengths come from the heights of the last accepted state.
+     * follow from them, and the branch lengths are those of the last accepted state.
      */
     private final class OldView implements TopologyView {
 
@@ -670,11 +677,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
         @Override
         public double getBranchLength(int node) {
-            final int parent = mutationStore.getParent(node);
-            if (parent < 0) {
-                return 0.0;
-            }
-            return (knownHeights[parent] - knownHeights[node]) * branchRateModel.getBranchRate(tree, tree.getNode(node));
+            return mutationStore.getParent(node) < 0 ? 0.0 : knownLengths[node];
         }
     }
 
@@ -1114,18 +1117,24 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     @Override
     public void storeState() {
-        // the heights of the state being stored: those of the nodes touched since the last store changed
+        // the branch lengths of the state being stored: those of the nodes touched since the last store
+        // changed, and of their children (a node's height, parent and rate events all name the node, and a
+        // height change also changes its children's lengths)
         if (allTouched) {
-            for (int n = 0; n < knownHeights.length; n++) {
-                knownHeights[n] = tree.getNodeHeight(tree.getNode(n));
+            for (int n = 0; n < knownLengths.length; n++) {
+                knownLengths[n] = getBranchLength(tree.getNode(n));
             }
         } else {
             for (int i = 0; i < touchedNodes.size(); i++) {
-                final int n = touchedNodes.get(i);
-                knownHeights[n] = tree.getNodeHeight(tree.getNode(n));
+                final NodeRef node = tree.getNode(touchedNodes.get(i));
+                knownLengths[node.getNumber()] = getBranchLength(node);
+                for (int c = 0; c < tree.getChildCount(node); c++) {
+                    final NodeRef child = tree.getChild(node, c);
+                    knownLengths[child.getNumber()] = getBranchLength(child);
+                }
             }
         }
-        assert heightsKnown() : "the MAT's heights of the accepted state do not match the tree";
+        assert lengthsKnown() : "the MAT's branch lengths of the accepted state do not match the tree and clock";
         touchedNodes.clear();
         allTouched = false;
         inStep = true;
@@ -1137,9 +1146,9 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         modelChangedSinceStore = false;
     }
 
-    private boolean heightsKnown() {
-        for (int n = 0; n < knownHeights.length; n++) {
-            if (knownHeights[n] != tree.getNodeHeight(tree.getNode(n))) {
+    private boolean lengthsKnown() {
+        for (int n = 0; n < knownLengths.length; n++) {
+            if (knownLengths[n] != getBranchLength(tree.getNode(n))) {
                 return false;
             }
         }
@@ -1197,8 +1206,16 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             return;
         }
         if (model == branchRateModel) {
-            // branch rates only affect branch lengths
-            allNodesDirty = true;
+            // Branch rates only affect branch lengths: the one named by the index (a node number, or a
+            // TreeParameterModel's parameter index re-fired by AbstractModel, which the paired event with
+            // the node number covers), or all of them.
+            if (index < 0 || index >= tree.getNodeCount()) {
+                allNodesDirty = true;
+                allTouched = true;
+            } else {
+                dirtyNodes.add(index);
+                touchedNodes.add(index);
+            }
         } else {
             modelVersion++;
             modelChangedSinceStore = true;

@@ -407,15 +407,15 @@ public class BeastMain {
                         new Arguments.Option("fail_threads", "ft", "Exit with error on uncaught exception in thread"),
                         new Arguments.Option("ignore_versions", "i", "Ignore mismatches between XML and BEAST versions"),
                         new Arguments.Option("java", null, "Use Java only, no native implementations"),
-                        new Arguments.LongOption("tests", null, "The number of full evaluation tests to perform (default 1000)"),
-                        new Arguments.RealOption("threshold", null, 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
-                        new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "op", "Print transition kernel performance to file"),
 
                         new Arguments.Section("The chain"),
                         new Arguments.LongOption("chain_length", "cl", 1, Long.MAX_VALUE, "Run for this many states, whatever the XML file says"),
                         new Arguments.LongOption("log_every", "le", 1, Long.MAX_VALUE, "Log every this many states, whatever the XML file says"),
                         new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
                         new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
+                        new Arguments.LongOption("tests", null, "The number of full evaluation tests to perform (default 1000)"),
+                        new Arguments.RealOption("threshold", null, 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
+                        new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "op", "Print transition kernel performance to file"),
 
                         new Arguments.Section("Site patterns"),
                         new Arguments.StringOption("pattern_compression", "pc", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
@@ -452,9 +452,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
 
-                        new Arguments.Section("Running several chains"),
-                        new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
-
+                        new Arguments.Section("Tempered MCMC"),
                         new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", null, 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", null, -1, "a comma-separated list of the hot chain temperatures"),

@@ -502,6 +502,11 @@ set loaded by default (`parsers=development` in `beast.properties`).
   ([#1283](https://github.com/beast-dev/beast-mcmc/pull/1283))
 - The birth-death models moved to `dr.evomodel.birthdeath`; `EfficientSpeciationLikelihood`
   is now `EfficientBirthDeathLikelihood`.
+- **MPI support has been removed**, along with the `-mpi` option, the `mpi.rank.postfix`
+  property that labelled output files by rank, and the MPJ library. It had not worked for
+  some time: the library was on the compile path but was never put into `beast.jar`, so a
+  released BEAST could not have used it. Use `-threads`, the BEAGLE options, or `-mc3_chains`
+  for parallel work.
 - Removed `LogTransformedNormalKDEDistribution` and `LogitTransformedNormalKDEDistribution`,
   which duplicated about a thousand lines between them. `TransformedNormalKDEDistribution`
   has done the same job for any transform since 2019 and is what every caller already used;

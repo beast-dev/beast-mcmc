@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <generalDataType id="loc.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+    </generalDataType>
+
+    <frequencyModel id="loc.frequencyModel" normalize="true">
+        <generalDataType idref="loc.dataType"/>
+        <frequencies>
+            <parameter id="loc.frequencies" dimension="3" value="0.2 0.3 0.5"/>
+        </frequencies>
+    </frequencyModel>
+
+    <logRateSubstitutionModel id="loc.model" normalize="true" scaleRatesByFrequencies="false">
+        <generalDataType idref="loc.dataType"/>
+        <rootFrequencies>
+            <frequencyModel idref="loc.frequencyModel"/>
+        </rootFrequencies>
+        <logRates>
+            <parameter id="loc.logRates" dimension="6" value="0.5 -0.3 0.1 -0.5 0.2 -0.1"/>
+        </logRates>
+    </logRateSubstitutionModel>
+
+    <differentiableSubstitutionModelDerivativeReport id="dQ.d0" dim="0">
+        <logRateSubstitutionModel idref="loc.model"/>
+        <parameter idref="loc.logRates"/>
+    </differentiableSubstitutionModelDerivativeReport>
+
+    <cachedReport id="restoreReport">
+        <restoreInvariantTest>
+            <target>
+                <logRateSubstitutionModel idref="loc.model"/>
+            </target>
+            <observable label="dQ.d0">
+                <differentiableSubstitutionModelDerivativeReport idref="dQ.d0"/>
+            </observable>
+            <touch label="dQ.d0.touch">
+                <differentiableSubstitutionModelDerivativeReport idref="dQ.d0"/>
+            </touch>
+            <perturbation dim="0" offset="1.0">
+                <parameter idref="loc.logRates"/>
+            </perturbation>
+        </restoreInvariantTest>
+    </cachedReport>
+
+    <assertEqual tolerance="1e-12" verbose="true">
+        <message>
+            RestoreInvariantTest restores derivative-matrix observable
+        </message>
+        <actual regex="maxAbsDifference: (.*?)\n">
+            <cachedReport idref="restoreReport"/>
+        </actual>
+        <expected>
+            0.0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-12" verbose="true">
+        <message>
+            RestoreInvariantTest restores perturbed parameter values
+        </message>
+        <actual regex="maxParameterRestoreDifference: (.*?)\n">
+            <cachedReport idref="restoreReport"/>
+        </actual>
+        <expected>
+            0.0
+        </expected>
+    </assertEqual>
+
+    <assertEqual equal="false" tolerance="1e-12" verbose="true">
+        <message>
+            RestoreInvariantTest proposal changes derivative-matrix observable
+        </message>
+        <actual regex="proposalMaxAbsDifference: (.*?)\n">
+            <cachedReport idref="restoreReport"/>
+        </actual>
+        <expected>
+            0.0
+        </expected>
+    </assertEqual>
+
+</beast>

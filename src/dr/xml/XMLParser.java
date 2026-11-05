@@ -447,16 +447,6 @@ public class XMLParser {
     private static File getOutputFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
         String fileName = xo.getStringAttribute(attributeName);
 
-        final String fileRankPostfix = System.getProperty("mpi.rank.postfix");
-        if (fileRankPostfix != null) {
-            if (fileName.endsWith(".log")) {
-                fileName = fileName.substring(0, fileName.length() - 4) + fileRankPostfix + ".log";
-            }
-            if (fileName.endsWith(".trees")) {
-                fileName = fileName.substring(0, fileName.length() - 6) + fileRankPostfix + ".trees";
-            }
-        }
-
         File resolvedFile = OutputFileHelper.resolveOutputFile(fileName, getFileNamePrefix(),
                 OutputFileHelper.getExplicitOutputDirectory());
 

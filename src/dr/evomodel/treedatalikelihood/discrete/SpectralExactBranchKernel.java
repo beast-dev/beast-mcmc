@@ -986,6 +986,7 @@ final class SpectralExactBranchKernel {
             final double normalizationScalar = normalize && transform != null ? 1 / model.setupMatrix() : 0.0;
 
             model.getInfinitesimalMatrix(generator);
+            final double[] normalizationFrequencies = model.getNormalizationFrequencies();
 
             for (int nodeIndex = 0; nodeIndex < tree.getNodeCount(); nodeIndex++) {
                 if (tree.isRoot(tree.getNode(nodeIndex))) {
@@ -1004,7 +1005,7 @@ final class SpectralExactBranchKernel {
                         final int index = directedRateIndex[source][destinationState];
                         final int ij = source * stateCount + destinationState;
                         // sourceFrequency need no coincide with rootFrequences
-                        final double sourceFrequency = model.getNormalizationFrequencies()[source];
+                        final double sourceFrequency = normalizationFrequencies[source];
                         double element;
                         if (transform == null) {
                             element = generator[ij];

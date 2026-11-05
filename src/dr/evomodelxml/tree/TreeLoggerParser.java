@@ -27,6 +27,8 @@
 
 package dr.evomodelxml.tree;
 
+import dr.inference.mcmc.RuntimeOverrides;
+
 import dr.evolution.colouring.TreeColouringProvider;
 import dr.evolution.tree.*;
 import dr.evomodel.tree.TreeLogger;
@@ -319,7 +321,7 @@ public class TreeLoggerParser extends LoggerParser {
         }
 
         // logEvery of zero only displays at the end
-        logEvery = xo.getAttribute(LOG_EVERY, 0);
+        logEvery = RuntimeOverrides.getLogEvery(xo.getAttribute(LOG_EVERY, 0));
 
 //        double normaliseMeanRateTo = xo.getAttribute(NORMALISE_MEAN_RATE_TO, Double.NaN);
 

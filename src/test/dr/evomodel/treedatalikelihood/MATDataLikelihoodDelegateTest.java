@@ -31,6 +31,9 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.parsimony.FitchParsimony;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
@@ -50,12 +53,14 @@ import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 import dr.evomodel.treedatalikelihood.MAT.MutationStore;
 import dr.evomodel.treedatalikelihood.MAT.SiteRateCategoryGibbsOperator;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AdaptationMode;
 import dr.math.MathUtils;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -70,7 +75,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     private HKY hky;
     private Parameter siteRates;
     private Parameter clockRate;
-    private StrictClockBranchRates branchRates;
+    private BranchRateModel branchRates;
     private MATDataLikelihoodDelegate delegate;
     private TreeDataLikelihood likelihood;
     private boolean integratedHits = false;
@@ -331,12 +336,21 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * direct path density, and rejected moves must restore it exactly.
      */
     public void testResamplingMovesKeepMATConsistent() {
-        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate);
+        checkResamplingMovesKeepMATConsistent();
+    }
+
+    private List<AbstractTreeOperator> subtreeOperators() {
         List<AbstractTreeOperator> operators = new ArrayList<AbstractTreeOperator>();
         operators.add(new SubtreeLeapOperator(treeModel, 1.0, 0.05, SubtreeLeapOperator.DistanceKernelType.NORMAL,
                 AdaptationMode.ADAPTATION_OFF, 0.234));
         operators.add(new SubtreeJumpOperator(treeModel, 1.0, 1.0, 0.234, true, AdaptationMode.ADAPTATION_OFF));
         operators.add(new FixedHeightSubtreePruneRegraftOperator(treeModel, 1.0));
+        return operators;
+    }
+
+    private void checkResamplingMovesKeepMATConsistent() {
+        new MutationHistoryResampler(delegate);
+        List<AbstractTreeOperator> operators = subtreeOperators();
 
         likelihood.getLogLikelihood();
         for (int iteration = 0; iteration < 300; iteration++) {
@@ -476,6 +490,10 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * and the heights the likelihood keeps for the old topology follow accepted and rejected changes.
      */
     public void testHeightOnlyMoveContributesNothing() {
+        checkHeightOnlyMoveContributesNothing();
+    }
+
+    private void checkHeightOnlyMoveContributesNothing() {
         new MutationHistoryResampler(delegate);
         likelihood.getLogLikelihood();
         for (int iteration = 0; iteration < 50; iteration++) {
@@ -495,9 +513,280 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 likelihood.restoreModelState();
             }
         }
-        // (with assertions on, the next store checks the kept heights against the tree)
+        // (with assertions on, the next store checks the kept branch lengths against the tree and clock)
         likelihood.storeModelState();
         likelihood.acceptModelState();
+    }
+
+    /**
+     * Replaces the strict clock with an uncorrelated relaxed clock that gives every branch its own rate.
+     * The rates live in a TreeParameterModel, which rotates them among the node numbers when the root
+     * changes, so that after a move the rate at a node number need not be that of the accepted state.
+     *
+     * @return the clock, whose rates can be set per branch
+     */
+    private ArbitraryBranchRates setUpRelaxedClock() {
+        double[] rates = new double[treeModel.getNodeCount() - 1];
+        for (int i = 0; i < rates.length; i++) {
+            rates[i] = CLOCK_RATE * (0.5 + 0.1 * i);
+        }
+        ArbitraryBranchRates relaxed = new ArbitraryBranchRates(treeModel, new Parameter.Default(rates),
+                ArbitraryBranchRates.make(false, false, false), false);
+        branchRates = relaxed;
+        delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
+                null, branchRates, siteRates);
+        likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
+        return relaxed;
+    }
+
+    /**
+     * @return the length in expected substitutions of the branch above each node of the tree as it is
+     * now (0 for the root)
+     */
+    private double[] liveLengths() {
+        double[] lengths = new double[treeModel.getNodeCount()];
+        for (int n = 0; n < lengths.length; n++) {
+            NodeRef node = treeModel.getNode(n);
+            NodeRef parent = treeModel.getParent(node);
+            lengths[n] = parent == null ? 0.0 : (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(node))
+                    * branchRates.getBranchRate(treeModel, node);
+        }
+        return lengths;
+    }
+
+    /**
+     * As testResamplingMovesKeepMATConsistent under a relaxed clock (the subtree leap moves the root).
+     */
+    public void testRelaxedClockMovesKeepMATConsistent() {
+        setUpRelaxedClock();
+        checkResamplingMovesKeepMATConsistent();
+    }
+
+    /**
+     * As testHeightOnlyMoveContributesNothing under a relaxed clock.
+     */
+    public void testRelaxedClockHeightOnlyMoveContributesNothing() {
+        setUpRelaxedClock();
+        checkHeightOnlyMoveContributesNothing();
+    }
+
+    /**
+     * Under a relaxed clock the likelihood must score the topology before a move with the branch lengths
+     * of the accepted state, which the moved tree cannot give back: when the root changes the clock's rates
+     * are rotated among the node numbers, and the new root's old branch has no rate at all. Checked over
+     * random moves including moves at the root, accepted and rejected.
+     */
+    public void testRelaxedClockOldViewUsesAcceptedLengths() {
+        MathUtils.setSeed(42);
+        setUpRelaxedClock();
+        new MutationHistoryResampler(delegate);
+        likelihood.getLogLikelihood();
+        int moves = 0;
+        int rootMoves = 0;
+        for (int iteration = 0; iteration < 5000 && moves < 200; iteration++) {
+            NodeRef x = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            NodeRef destination = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            if (treeModel.isRoot(x) || isAncestorOrSelf(x, destination)) {
+                continue;
+            }
+            NodeRef parent = treeModel.getParent(x);
+            NodeRef sibling = otherChild(parent, x);
+            if (destination == parent || destination == sibling) {
+                continue;
+            }
+            NodeRef destinationParent = treeModel.getParent(destination);
+            double top = destinationParent == null ? Double.POSITIVE_INFINITY : treeModel.getNodeHeight(destinationParent);
+            double bottom = Math.max(treeModel.getNodeHeight(x), treeModel.getNodeHeight(destination));
+            if (top <= bottom) {
+                continue;
+            }
+            double newHeight = destinationParent == null ? bottom + 1.0 + MathUtils.nextDouble() :
+                    bottom + MathUtils.nextDouble() * (top - bottom);
+            boolean atRoot = treeModel.isRoot(parent) || destinationParent == null;
+            final int oldRoot = treeModel.getRoot().getNumber();
+
+            double[] expected = liveLengths();
+            likelihood.storeModelState();
+            subtreePruneRegraft(x, destination, newHeight);
+            likelihood.getLogLikelihood();
+            assertLikelihoodIsDirect("move " + moves);
+            assertTrue("the accepted lengths are kept through move " + moves,
+                    Arrays.equals(expected, delegate.getAcceptedBranchLengths()));
+            if (atRoot) {
+                int newRoot = treeModel.getRoot().getNumber();
+                assertTrue(newRoot != oldRoot);
+                // the old root had no branch and now has one; the new root's old branch is kept although
+                // the moved tree has no rate for it
+                assertEquals(0.0, expected[oldRoot], 0.0);
+                assertTrue(liveLengths()[oldRoot] > 0.0);
+                assertTrue(expected[newRoot] > 0.0);
+                rootMoves++;
+            }
+            if (MathUtils.nextBoolean()) {
+                likelihood.restoreModelState();
+                assertTrue("rejected move " + moves + " restores the rates with the tree",
+                        Arrays.equals(expected, liveLengths()));
+            } else {
+                likelihood.acceptModelState();
+                // the next store takes the lengths of the moved tree, with the rotated rates
+                likelihood.storeModelState();
+                assertTrue("accepted move " + moves, Arrays.equals(liveLengths(), delegate.getAcceptedBranchLengths()));
+                likelihood.acceptModelState();
+            }
+            moves++;
+        }
+        assertEquals(200, moves);
+        assertTrue("moves at the root: " + rootMoves, rootMoves > 10);
+        assertEquals(0, delegate.getRebuildCount());
+    }
+
+    /**
+     * Under a relaxed clock the Hastings ratio of a move, including a move that changes the root, is still
+     * that of the exact Gibbs block update: the conditional of the old states under the old topology (scored
+     * on the tree before the move, with its rates) over that of the new states under the new one.
+     */
+    public void testRelaxedClockMoveHastingsRatioMatchesScores() {
+        MathUtils.setSeed(42);
+        setUpRelaxedClock();
+        MutationHistoryResampler resampler = new MutationHistoryResampler(delegate);
+        likelihood.getLogLikelihood();
+        int moves = 0;
+        int rootMoves = 0;
+        for (int iteration = 0; iteration < 5000 && moves < 200; iteration++) {
+            NodeRef x = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            NodeRef destination = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+            if (treeModel.isRoot(x) || isAncestorOrSelf(x, destination)) {
+                continue;
+            }
+            NodeRef parent = treeModel.getParent(x);
+            NodeRef sibling = otherChild(parent, x);
+            if (destination == parent || destination == sibling) {
+                continue;
+            }
+            NodeRef destinationParent = treeModel.getParent(destination);
+            double top = destinationParent == null ? Double.POSITIVE_INFINITY : treeModel.getNodeHeight(destinationParent);
+            double bottom = Math.max(treeModel.getNodeHeight(x), treeModel.getNodeHeight(destination));
+            if (top <= bottom) {
+                continue;
+            }
+            double newHeight = destinationParent == null ? bottom + 1.0 + MathUtils.nextDouble() :
+                    bottom + MathUtils.nextDouble() * (top - bottom);
+            boolean atRoot = treeModel.isRoot(parent) || destinationParent == null;
+
+            likelihood.getLogLikelihood();
+            likelihood.storeModelState();
+            int[] block = resampler.getBlock(parent, sibling, destination);
+            double denseOld = resampler.sampleBlock(block, false);
+
+            subtreePruneRegraft(x, destination, newHeight);
+            likelihood.getLogLikelihood();
+            double logRatio = likelihood.takeLogHastingsRatio();
+            double denseNew = resampler.sampleBlock(block, false);
+            assertEquals("move " + moves, denseOld - denseNew, logRatio, 1E-8);
+            assertEquals(directLogLikelihood(), likelihood.getLogLikelihood(), 1E-6);
+
+            if (MathUtils.nextBoolean()) {
+                likelihood.acceptModelState();
+            } else {
+                likelihood.restoreModelState();
+            }
+            moves++;
+            if (atRoot) {
+                rootMoves++;
+            }
+        }
+        assertEquals(200, moves);
+        assertTrue("moves at the root: " + rootMoves, rootMoves > 10);
+    }
+
+    /**
+     * Changes of single branch rates (events naming a node, one or two per step) keep the likelihood exact
+     * through accepted and rejected steps and the moves after them, and resample nothing.
+     */
+    public void testRelaxedClockRateChangesKeepLikelihoodExact() {
+        MathUtils.setSeed(42);
+        ArbitraryBranchRates relaxed = setUpRelaxedClock();
+        new MutationHistoryResampler(delegate);
+        SubtreeLeapOperator leap = new SubtreeLeapOperator(treeModel, 1.0, 0.05,
+                SubtreeLeapOperator.DistanceKernelType.NORMAL, AdaptationMode.ADAPTATION_OFF, 0.234);
+        likelihood.getLogLikelihood();
+        for (int iteration = 0; iteration < 150; iteration++) {
+            double logLBefore = likelihood.getLogLikelihood();
+            String statesBefore = describeStates();
+            likelihood.storeModelState();
+            boolean move = iteration % 3 == 2;
+            if (move) {
+                leap.doOperation();
+            } else {
+                for (int change = 0; change <= iteration % 3; change++) {
+                    NodeRef node;
+                    do {
+                        node = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+                    } while (treeModel.isRoot(node));
+                    relaxed.setBranchRate(treeModel, node, CLOCK_RATE * (0.25 + 2.0 * MathUtils.nextDouble()));
+                }
+            }
+            double logL = likelihood.getLogLikelihood();
+            assertEquals(directLogLikelihood(), logL, 1E-6);
+            double logRatio = likelihood.takeLogHastingsRatio();
+            if (!move) {
+                assertEquals("a rate change resamples nothing", 0.0, logRatio, 0.0);
+                assertEquals(statesBefore, describeStates());
+            }
+            if (MathUtils.nextBoolean()) {
+                likelihood.restoreModelState();
+                assertEquals(logLBefore, likelihood.getLogLikelihood(), 1E-10);
+            } else {
+                likelihood.acceptModelState();
+            }
+        }
+        assertEquals(0, delegate.getRebuildCount());
+    }
+
+    /**
+     * The discretized relaxed clock as BEAUti writes it, whose categories live in a TreeParameterModel (its
+     * events carry the node number and, re-fired by the model, the parameter index): subtree moves,
+     * including at the root, interleaved with changes of category keep the MAT consistent and exact.
+     */
+    public void testDiscretizedClockMovesKeepMATConsistent() {
+        MathUtils.setSeed(42);
+        final int categoryCount = treeModel.getNodeCount() - 1;
+        double[] categories = new double[categoryCount];
+        for (int i = 0; i < categoryCount; i++) {
+            categories[i] = (i * 7) % categoryCount;
+        }
+        Parameter categoryParameter = new Parameter.Default(categories);
+        branchRates = new DiscretizedBranchRates(treeModel, categoryParameter, new LogNormalDistributionModel(
+                new Parameter.Default(CLOCK_RATE), new Parameter.Default(0.5), 0.0, true), 1);
+        delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
+                null, branchRates, siteRates);
+        likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
+        new MutationHistoryResampler(delegate);
+        List<AbstractTreeOperator> operators = subtreeOperators();
+
+        likelihood.getLogLikelihood();
+        for (int iteration = 0; iteration < 300; iteration++) {
+            double logLBefore = likelihood.getLogLikelihood();
+            String statesBefore = describeStates();
+            likelihood.storeModelState();
+            if (iteration % 4 == 3) {
+                categoryParameter.setParameterValue(MathUtils.nextInt(categoryCount), MathUtils.nextInt(categoryCount));
+            } else {
+                assertFalse(Double.isNaN(operators.get(iteration % operators.size()).doOperation()));
+            }
+            double logL = likelihood.getLogLikelihood();
+            assertEquals(directLogLikelihood(), logL, 1E-6);
+            double logRatio = likelihood.takeLogHastingsRatio();
+            assertFalse(Double.isNaN(logRatio) || Double.isInfinite(logRatio));
+            if (MathUtils.nextBoolean()) {
+                likelihood.restoreModelState();
+                assertEquals(statesBefore, describeStates());
+                assertEquals(logLBefore, likelihood.getLogLikelihood(), 1E-10);
+            } else {
+                likelihood.acceptModelState();
+            }
+        }
+        assertEquals(0, delegate.getRebuildCount());
     }
 
     /**
@@ -1574,7 +1863,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         double[] q = new double[16];
         hky.getInfinitesimalMatrix(q);
         double[] pi = hky.getFrequencyModel().getFrequencies();
-        double rate = clockRate.getParameterValue(0);
         double logL = 0.0;
         for (int n = 0; n < parents.length; n++) {
             int b = states[n][site];
@@ -1590,7 +1878,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             int a = states[parents[n]][site];
             assertTrue("unambiguous child below ambiguous parent", a >= 0);
             double length = (treeModel.getNodeHeight(treeModel.getNode(parents[n])) -
-                    treeModel.getNodeHeight(treeModel.getNode(n))) * rate;
+                    treeModel.getNodeHeight(treeModel.getNode(n))) * branchRates.getBranchRate(treeModel, treeModel.getNode(n));
             double nu = categoryModel == null ? 1.0 : categoryModel.getRateForCategory(
                     ((DefaultMutationStore) delegate.getMutationStore()).getCategory(site));
             if (integratedHits) {

@@ -45,6 +45,7 @@ import dr.evolution.tree.treemetrics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.util.Version;
+import dr.util.FileHelpers;
 import jam.console.ConsoleApplication;
 
 import javax.swing.*;
@@ -275,7 +276,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
     private void countTrees(String inputFileName) throws IOException {
         progressStream.println("Counting trees...");
-        Reader reader = new BufferedReader(new FileReader(inputFileName));
+        Reader reader = FileHelpers.getReader(inputFileName);
         TreeImporter importer = new BEASTTreesImporter(reader);
         totalTrees = importer.countTrees();
         if (totalTrees == 0) {
@@ -310,7 +311,7 @@ public class TreeAnnotator extends BaseTreeTool {
 //            BEASTTreesImporter importer = new BEASTTreesImporter(reader, false);
 //            importer.setTaxonList(taxa);
 
-            Reader reader = new BufferedReader(new FileReader(inputFileName));
+            Reader reader = FileHelpers.getReader(inputFileName);
             NexusImporter importer = new NexusImporter(reader, true);
 
             ExecutorService pool;
@@ -420,7 +421,7 @@ public class TreeAnnotator extends BaseTreeTool {
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
-        Reader reader = new BufferedReader(new FileReader(inputFileName));
+        Reader reader = FileHelpers.getReader(inputFileName);
 //         TreeImporter importer = new BEASTTreesImporter(reader, true);
         TreeImporter importer = new NexusImporter(reader, false);
 
@@ -535,12 +536,12 @@ public class TreeAnnotator extends BaseTreeTool {
 
 
     private static MutableTree readTreeFile(String treeFileName) throws IOException {
-        NexusImporter importer = new NexusImporter(new FileReader(treeFileName));
+        NexusImporter importer = new NexusImporter(FileHelpers.getReader(treeFileName));
         Tree tree = null;
         try {
             tree = importer.importNextTree();
             if (tree == null) {
-                NewickImporter x = new NewickImporter(new FileReader(treeFileName));
+                NewickImporter x = new NewickImporter(FileHelpers.getReader(treeFileName));
                 tree = x.importNextTree();
             }
             if (tree == null) {
@@ -572,7 +573,7 @@ public class TreeAnnotator extends BaseTreeTool {
         int counter = 0;
         int bestTreeNumber = 0;
 //        TreeImporter importer = new BEASTTreesImporter(new FileReader(inputFileName), false);
-        TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
+        TreeImporter importer = new NexusImporter(FileHelpers.getReader(inputFileName), true);
         try {
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
@@ -771,7 +772,7 @@ public class TreeAnnotator extends BaseTreeTool {
             if (stepSize < 1) stepSize = 1;
 
             int counter = 0;
-            TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
+            TreeImporter importer = new NexusImporter(FileHelpers.getReader(inputFileName), true);
             try {
                 stream.print("tree");
                 for (TreeMetric treeMetric : treeMetrics) {

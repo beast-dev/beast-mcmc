@@ -46,6 +46,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.util.FileHelpers;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -240,8 +241,7 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         settings.candidateSetSize = xo.getAttribute(CANDIDATE_SET_SIZE, settings.candidateSetSize);
         settings.parentPool = xo.getAttribute(PARENT_POOL, settings.parentPool);
         settings.nniDelta = xo.getAttribute(NNI_DELTA, settings.nniDelta);
-        settings.candidatesFileName = xo.hasAttribute(CANDIDATES_FILE_NAME) ?
-                xo.getStringAttribute(CANDIDATES_FILE_NAME) : null;
+        settings.candidatesFileName = outputFile(xo, CANDIDATES_FILE_NAME);
         settings.sprMaxRadius = xo.getAttribute(SPR_MAX_RADIUS, settings.sprMaxRadius);
         settings.sprRadius = xo.getAttribute(SPR_RADIUS, settings.sprRadius);
         settings.subtreeCutoff = xo.getAttribute(SUBTREE_CUTOFF, settings.subtreeCutoff);
@@ -252,8 +252,8 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
         settings.verifyEvery = xo.getAttribute(VERIFY_EVERY, 0);
         settings.seed = xo.hasAttribute(SEED) ? xo.getLongIntegerAttribute(SEED) : -1;
         settings.printToScreen = xo.getAttribute(PRINT_SCREEN, true);
-        settings.treeFileName = xo.hasAttribute(TREE_FILE_NAME) ? xo.getStringAttribute(TREE_FILE_NAME) : null;
-        settings.logFileName = xo.hasAttribute(LOG_FILE_NAME) ? xo.getStringAttribute(LOG_FILE_NAME) : null;
+        settings.treeFileName = outputFile(xo, TREE_FILE_NAME);
+        settings.logFileName = outputFile(xo, LOG_FILE_NAME);
         try {
             settings.rateWarmStart = BranchRateWarmStart.Mode.parse(
                     xo.getAttribute(RATE_WARM_START, BranchRateWarmStart.Mode.KEEP.getName()));
@@ -284,6 +284,13 @@ public class TimeTreeSearchParser extends AbstractXMLObjectParser {
             search.run();
         }
         return search;
+    }
+
+    // an output file in BEAST's working directory (-working, as the BEAST app runs) with its file-name prefix, as the
+    // loggers place theirs
+    private static String outputFile(XMLObject xo, String attribute) throws XMLParseException {
+        return xo.hasAttribute(attribute) ? FileHelpers.getFile(xo.getStringAttribute(attribute),
+                System.getProperty("file.name.prefix")).getPath() : null;
     }
 
     private static void checkMaximizer(String role, MaximizerWrtParameter maximizer, Likelihood objective)

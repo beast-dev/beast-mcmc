@@ -64,6 +64,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     public static final String CHARACTER_TREE_NEWICK = "characterTreeNewick";
     public static final String RATES_FROM = "ratesFrom";
     public static final String EQUAL_RATES = "equalRates";
+    public static final String AGGREGATE = "aggregate";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -144,8 +145,10 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             }
             HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL,
                     provider, freqModel);
+            model.setAggregation(HierarchicalSubstitutionModel.Aggregation.parse(xo.getAttribute(AGGREGATE, "auto")));
             Logger.getLogger("dr.evomodel").info("Hierarchical substitution model" + (xo.hasId() ? " '" + xo.getId() + "'" : "")
-                    + ": " + form + "; character tree clades " + clades(tree, freqModel));
+                    + ": " + form + "; aggregation " + model.getAggregation().name().toLowerCase()
+                    + "; character tree clades " + clades(tree, freqModel));
             return model;
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(!xo.hasId() ? e.getMessage()
@@ -216,6 +219,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(CHARACTER_TREE_NEWICK, true),
+            AttributeRule.newStringRule(AGGREGATE, true),
             new ElementRule(FrequencyModelParser.FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}, true),
             new ElementRule(RATES_FROM,

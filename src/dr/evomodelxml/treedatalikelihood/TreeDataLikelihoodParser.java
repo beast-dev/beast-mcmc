@@ -41,6 +41,7 @@ import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.*;
@@ -509,6 +510,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Either a single set of patterns should be given or multiple 'partitions' elements within DataTreeLikelihood: "+xo.getId());
         }
 
+        checkOneAggregation(branchModels, xo.getId());
+
         Tree treeModel = (Tree) xo.getChild(Tree.class);
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
@@ -617,6 +620,26 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     };
 
     // the likelihood delegates use the patterns' weights only: an ascertainment correction would be silently lost
+    public static void checkOneAggregation(List<BranchModel> branchModels, String likelihoodId) throws XMLParseException {
+        HierarchicalSubstitutionModel first = null;
+        for (BranchModel branchModel : branchModels) {
+            for (SubstitutionModel model : branchModel.getSubstitutionModels()) {
+                if (!(model instanceof HierarchicalSubstitutionModel)) {
+                    continue;
+                }
+                HierarchicalSubstitutionModel hierarchical = (HierarchicalSubstitutionModel) model;
+                if (first == null) {
+                    first = hierarchical;
+                } else if (hierarchical.getAggregation() != first.getAggregation()) {
+                    throw new XMLParseException("TreeDataLikelihood '" + likelihoodId + "': its hierarchical substitution models must "
+                            + "have the same aggregate setting; '" + first.getId() + "' has "
+                            + first.getAggregation().name().toLowerCase() + " and '" + hierarchical.getId() + "' has "
+                            + hierarchical.getAggregation().name().toLowerCase());
+                }
+            }
+        }
+    }
+
     private static void checkNotAscertained(PatternList patterns, XMLObject xo) throws XMLParseException {
         if (patterns instanceof AscertainedSitePatterns) {
             throw new XMLParseException("The ascertainment correction of '" + patterns.getId() + "' is not applied by " +

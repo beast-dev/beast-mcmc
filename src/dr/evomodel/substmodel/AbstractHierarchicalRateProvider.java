@@ -27,6 +27,7 @@
 
 package dr.evomodel.substmodel;
 
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
@@ -87,7 +88,7 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
         this.nodeOfState = new int[stateCount];
         Arrays.fill(nodeOfState, -1);
         for (int i = 0; i < stateCount; i++) {
-            final int state = dataType.getState(tree.getTaxonId(i));
+            final int state = stateOfCode(dataType, tree.getTaxonId(i));
             if (state < 0 || state >= stateCount || nodeOfState[state] != -1) {
                 throw new IllegalArgumentException("Character tree tip " + tree.getTaxonId(i)
                         + " is not a distinct state of " + dataType.getDescription());
@@ -187,6 +188,30 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
      * The default character tree of a data type: ((A,G),(C,T)) for nucleotides, a balanced pairing of the state
      * codes, by recursive halving of the code list, otherwise.
      */
+    /**
+     * The code of a state as character-tree tip labels spell it; codons have no single-character code, so their
+     * triplet (e.g. AAA) is used.
+     */
+    public static String codeOfState(DataType dataType, int state) {
+        return dataType instanceof Codons ? ((Codons) dataType).getTriplet(state) : dataType.getCode(state);
+    }
+
+    /**
+     * The state a character-tree tip label names (see {@link #codeOfState}); -1 for a codon triplet that is not a
+     * state of the genetic code.
+     */
+    public static int stateOfCode(DataType dataType, String code) {
+        if (dataType instanceof Codons) {
+            for (int i = 0; i < dataType.getStateCount(); i++) {
+                if (((Codons) dataType).getTriplet(i).equals(code)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        return dataType.getState(code);
+    }
+
     public static TreeModel defaultCharacterTree(DataType dataType) {
         if (dataType instanceof dr.evolution.datatype.Nucleotides) {
             return characterTree(NUCLEOTIDE_NEWICK);
@@ -194,7 +219,7 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
         final int stateCount = dataType.getStateCount();
         final String[] labels = new String[stateCount];
         for (int i = 0; i < stateCount; i++) {
-            final String code = dataType.getCode(i);
+            final String code = codeOfState(dataType, i);
             labels[i] = code.matches("[A-Za-z0-9_.\\-]+") ? code : "'" + code + "'";
         }
         return characterTree(balanced(labels, 0, stateCount) + ";");
@@ -313,7 +338,7 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
     private String sortedCodes(int[] states) {
         final String[] codes = new String[states.length];
         for (int i = 0; i < states.length; i++) {
-            codes[i] = dataType.getCode(states[i]);
+            codes[i] = codeOfState(dataType, states[i]);
         }
         Arrays.sort(codes);
         final StringBuilder sb = new StringBuilder();

@@ -73,7 +73,13 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
                     + "representation needs non-negative clade rates, for HKY and TN93 kappa >= 1");
         }
 
+        // BEAGLE state frequencies buffer 0 is both the root distribution and the pi of the bundle build
         this.rootFrequencyModel = branchModel.getRootFrequencyModel();
+        if (rootFrequencyModel != substitutionModel.getFrequencyModel()) {
+            throw new IllegalArgumentException("The hierarchical representation needs the root frequencies to be the "
+                    + "frequency model of '" + substitutionModel.getId() + "'; a separate root frequency model is not "
+                    + "available");
+        }
 
         eigenBufferHelper = new BufferIndexHelper(1, 0);
         matrixBufferHelper = new BufferIndexHelper(tree.getNodeCount(), 0, 0);

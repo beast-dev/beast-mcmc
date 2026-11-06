@@ -38,6 +38,7 @@ import dr.evomodel.branchmodel.EpochBranchModel;
 import dr.evomodel.branchmodel.TransitionMatrixProviderBranchModel;
 import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel.EpochTimeProvider;
 import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
@@ -524,6 +525,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             if (settings.useHierarchicalRepresentation) {
                 requirementFlags |= BeagleFlag.HIERARCHICAL_REPRESENTATION.getMask();
+                switch (getHierarchicalModel().getAggregation()) {
+                    case ON:
+                        requirementFlags |= BeagleFlag.HIERARCHICAL_AGGREGATE_ON.getMask();
+                        break;
+                    case OFF:
+                        requirementFlags |= BeagleFlag.HIERARCHICAL_AGGREGATE_OFF.getMask();
+                        break;
+                    default:
+                        break;
+                }
             }
 
             // start auto resource selection
@@ -661,6 +672,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             logger.info("    " + (settings.usePreOrder ? "Using" : "Ignoring") + " preOrder partials in tree likelihood.");
             logger.info("    " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("    With " + patternList.getPatternCount() + " unique site patterns.");
+            if (settings.useHierarchicalRepresentation) {
+                logAggregation(tree, useAmbiguities);
+            }
 
             if (patternList.areUncertain() && !useAmbiguities) {
                 logger.info("    WARNING: Uncertain site patterns will be ignored.");
@@ -925,6 +939,53 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         }
 
         beagle.setPartials(nodeIndex, partials);
+    }
+
+    private HierarchicalSubstitutionModel getHierarchicalModel() {
+        return (HierarchicalSubstitutionModel) evolutionaryProcessDelegate.getSubstitutionModel(0);
+    }
+
+    /**
+     * Logs what the plugin's aggregation of unobserved states will see, from the observed states of the tips as they
+     * are sent (see HierarchicalSubstitutionModel.summarizeAggregation); the setting in effect is the model's
+     * aggregate attribute unless BEAGLE_HRATE_AGGREGATE is set, which overrides it in the plugin.
+     */
+    private void logAggregation(Tree tree, boolean useAmbiguities) {
+        final HierarchicalSubstitutionModel model = getHierarchicalModel();
+        final boolean[][] observed = new boolean[patternCount][stateCount];
+        final double[] partial = new double[stateCount];
+        for (int i = 0; i < tipCount; i++) {
+            final int sequenceIndex = patternList.getTaxonIndex(tree.getTaxonId(i));
+            for (int k = 0; k < patternCount; k++) {
+                if (!useAmbiguities) {
+                    final int state = patternList.getPatternState(sequenceIndex, k);
+                    if (state >= 0 && state < stateCount) {
+                        observed[k][state] = true;
+                    }
+                    continue;
+                }
+                if (patternList instanceof UncertainSiteList) {
+                    ((UncertainSiteList) patternList).fillPartials(sequenceIndex, k, partial, 0);
+                } else if (patternList.areUncertain()) {
+                    System.arraycopy(patternList.getUncertainPatternState(sequenceIndex, k), 0, partial, 0, stateCount);
+                } else {
+                    final boolean[] stateSet = dataType.getStateSet(patternList.getPatternState(sequenceIndex, k));
+                    for (int j = 0; j < stateCount; j++) {
+                        partial[j] = stateSet[j] ? 1.0 : 0.0;
+                    }
+                }
+                HierarchicalSubstitutionModel.markObservedStates(partial, 0, stateCount, observed[k]);
+            }
+        }
+        final HierarchicalSubstitutionModel.AggregationSummary summary =
+                HierarchicalSubstitutionModel.summarizeAggregation(model.getBeagleModelTriples(), stateCount,
+                        categoryCount, observed);
+        String line = "    Hierarchical aggregation of unobserved states: " + summary.describe(model.getAggregation()) + ".";
+        final String override = System.getenv("BEAGLE_HRATE_AGGREGATE");
+        if ("0".equals(override) || "1".equals(override)) {
+            line += " BEAGLE_HRATE_AGGREGATE=" + override + " overrides it.";
+        }
+        Logger.getLogger("dr.evomodel").info(line);
     }
 
     /**

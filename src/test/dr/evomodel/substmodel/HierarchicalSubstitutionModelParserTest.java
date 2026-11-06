@@ -27,6 +27,8 @@
 
 package test.dr.evomodel.substmodel;
 
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.RelativeRatesProvider;
 import dr.evomodel.substmodel.nucleotide.HKY;
@@ -35,6 +37,7 @@ import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.HierarchicalSubstitutionModelParser;
 import dr.evomodelxml.substmodel.TN93Parser;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.TaxaParser;
@@ -156,6 +159,44 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         HierarchicalSubstitutionModel hrate = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
         HKY hky = (HKY) store.get("hky").getNativeObject();
         assertEquals(0.0, maxPDiff(hrate, hky), 1e-13);
+    }
+
+    public void testAggregateAttribute() throws Exception {
+        String[][] cases = {{"", "AUTO"}, {" aggregate=\"auto\"", "AUTO"}, {" aggregate=\"on\"", "ON"}, {" aggregate=\"OFF\"", "OFF"}};
+        for (String[] c : cases) {
+            Map<String, XMLObject> store = parse(TAXA_AND_TREE + hrate(c[0], FREQUENCIES + CHARACTER_TREE + RATES));
+            HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+            assertEquals(c[0], HierarchicalSubstitutionModel.Aggregation.valueOf(c[1]), model.getAggregation());
+        }
+        String message = parseFailure(TAXA_AND_TREE + hrate(" aggregate=\"yes\"", FREQUENCIES + CHARACTER_TREE + RATES));
+        assertTrue(message, message.contains("aggregate must be auto, on or off; found 'yes'"));
+    }
+
+    public void testOneAggregationPerLikelihood() throws Exception {
+        Map<String, XMLObject> store = parse(TAXA_AND_TREE + HKY_MODEL
+                + hrate(" aggregate=\"on\"", FREQUENCIES + CHARACTER_TREE + RATES).replace("\"hrate\"", "\"hrate1\"")
+                + hrate(" aggregate=\"on\"", FREQUENCIES.replace("hrate.frequencies", "hrate2.frequencies") + CHARACTER_TREE
+                        + RATES.replace("hrate.rates", "hrate2.rates")).replace("\"hrate\"", "\"hrate2\""));
+        HierarchicalSubstitutionModel first = (HierarchicalSubstitutionModel) store.get("hrate1").getNativeObject();
+        HierarchicalSubstitutionModel second = (HierarchicalSubstitutionModel) store.get("hrate2").getNativeObject();
+        HKY hky = (HKY) store.get("hky").getNativeObject();
+        List<BranchModel> branchModels = new ArrayList<BranchModel>();
+        branchModels.add(new HomogeneousBranchModel(first));
+        branchModels.add(new HomogeneousBranchModel(hky));
+        branchModels.add(new HomogeneousBranchModel(second));
+        TreeDataLikelihoodParser.checkOneAggregation(branchModels, "likelihood");
+
+        second.setAggregation(HierarchicalSubstitutionModel.Aggregation.AUTO);
+        try {
+            TreeDataLikelihoodParser.checkOneAggregation(branchModels, "likelihood");
+            fail("models with different aggregate settings should be refused");
+        } catch (XMLParseException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("TreeDataLikelihood 'likelihood'")
+                    && e.getMessage().contains("'hrate1' has on and 'hrate2' has auto"));
+        }
+
+        branchModels.remove(0);
+        TreeDataLikelihoodParser.checkOneAggregation(branchModels, "likelihood");
     }
 
     public void testMissingCharacterTree() throws Exception {

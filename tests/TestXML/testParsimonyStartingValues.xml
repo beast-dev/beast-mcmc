@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beast>
+
+    <!--
+        parsimonyStartingValues on a hand-checkable example.
+
+        Tree ((t1:A, t2:B):2, ((t3:A, t4:B):1, (t5:A, t6:C):1):1), all tip branches of length 1:
+        tree length 11. State D is never observed.
+
+        Sankoff (unit cost): root state A, changes A->B twice and A->C once (3 changes), so the clock rate is 3/11.
+
+        Support: observed A->B, A->C. Every state is its own strongly connected component, so the hub is the first
+        component found (B) and gets both-way links to A, C and D; then the observed pairs get their reverses.
+        On: A<->B, A<->C, B<->C, B<->D. Off: A<->D, C<->D.
+
+        Rates: max(n, 1) / mean(n) with mean(n) = 3 / 2 over observed pairs: A->B 2/1.5, every other rate in the
+        support 1/1.5, rates outside the support 1.
+
+        Asymmetric order: (A,B) (A,C) (A,D) (B,C) (B,D) (C,D), then (B,A) (C,A) (D,A) (C,B) (D,B) (D,C).
+        Reversible order: (A,B) (A,C) (A,D) (B,C) (B,D) (C,D), with n_ij + n_ji per pair.
+    -->
+
+    <taxa id="taxa">
+        <taxon id="t1"><attr name="loc">A</attr></taxon>
+        <taxon id="t2"><attr name="loc">B</attr></taxon>
+        <taxon id="t3"><attr name="loc">A</attr></taxon>
+        <taxon id="t4"><attr name="loc">B</attr></taxon>
+        <taxon id="t5"><attr name="loc">A</attr></taxon>
+        <taxon id="t6"><attr name="loc">C</attr></taxon>
+    </taxa>
+
+    <generalDataType id="loc.dataType">
+        <state code="A"/>
+        <state code="B"/>
+        <state code="C"/>
+        <state code="D"/>
+    </generalDataType>
+
+    <attributePatterns id="loc.pattern" attribute="loc">
+        <taxa idref="taxa"/>
+        <generalDataType idref="loc.dataType"/>
+    </attributePatterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        ((t1:1.0,t2:1.0):2.0,((t3:1.0,t4:1.0):1.0,(t5:1.0,t6:1.0):1.0):1.0);
+    </newick>
+
+    <treeModel id="treeModel">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <!-- 1. asymmetric BSSVS model (SVSComplexSubstitutionModel) -->
+
+    <strictClockBranchRates id="asym.branchRates">
+        <rate>
+            <parameter id="asym.clock.rate" value="0.001" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <generalSubstitutionModel id="asym.model" randomizeIndicator="false">
+        <generalDataType idref="loc.dataType"/>
+        <frequencies>
+            <frequencyModel normalize="true">
+                <generalDataType idref="loc.dataType"/>
+                <frequencies>
+                    <parameter dimension="4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="asym.rates" dimension="12" value="1.0" lower="0.0"/>
+        </rates>
+        <rateIndicator>
+            <parameter id="asym.indicators" dimension="12" value="1.0"/>
+        </rateIndicator>
+    </generalSubstitutionModel>
+
+    <siteModel id="asym.siteModel">
+        <substitutionModel>
+            <generalSubstitutionModel idref="asym.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="asym.treeLikelihood">
+        <attributePatterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="asym.siteModel"/>
+        <generalSubstitutionModel idref="asym.model"/>
+        <strictClockBranchRates idref="asym.branchRates"/>
+    </treeDataLikelihood>
+
+    <parsimonyStartingValues id="asym.start" setClock="true" setIndicators="true" setRelativeRates="true">
+        <treeDataLikelihood idref="asym.treeLikelihood"/>
+        <generalSubstitutionModel idref="asym.model"/>
+        <parameter idref="asym.clock.rate"/>
+    </parsimonyStartingValues>
+
+    <report>
+        <parsimonyStartingValues idref="asym.start"/>
+    </report>
+
+    <assertEqual tolerance="1e-12" verbose="true">
+        <message>Asymmetric: indicators</message>
+        <actual regex="indicators: (.*?)\n">
+            <parsimonyStartingValues idref="asym.start"/>
+        </actual>
+        <expected>
+            1 1 0 1 1 0 1 1 0 1 1 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-7" verbose="true">
+        <message>Asymmetric: rates</message>
+        <actual regex="rates: (.*?)\n">
+            <parsimonyStartingValues idref="asym.start"/>
+        </actual>
+        <expected>
+            1.33333333 0.66666667 1 0.66666667 0.66666667 1 0.66666667 0.66666667 1 0.66666667 0.66666667 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-7" verbose="true">
+        <message>Asymmetric: clock rate = 3 changes / tree length 11</message>
+        <actual regex="clock: (.*?)\n">
+            <parsimonyStartingValues idref="asym.start"/>
+        </actual>
+        <expected>
+            0.27272727
+        </expected>
+    </assertEqual>
+
+    <!-- 2. reversible BSSVS model (SVSGeneralSubstitutionModel) -->
+
+    <strictClockBranchRates id="rev.branchRates">
+        <rate>
+            <parameter id="rev.clock.rate" value="0.001" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <generalSubstitutionModel id="rev.model" randomizeIndicator="false">
+        <generalDataType idref="loc.dataType"/>
+        <frequencies>
+            <frequencyModel normalize="true">
+                <generalDataType idref="loc.dataType"/>
+                <frequencies>
+                    <parameter dimension="4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="rev.rates" dimension="6" value="1.0" lower="0.0"/>
+        </rates>
+        <rateIndicator>
+            <parameter id="rev.indicators" dimension="6" value="1.0"/>
+        </rateIndicator>
+    </generalSubstitutionModel>
+
+    <siteModel id="rev.siteModel">
+        <substitutionModel>
+            <generalSubstitutionModel idref="rev.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="rev.treeLikelihood">
+        <attributePatterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="rev.siteModel"/>
+        <generalSubstitutionModel idref="rev.model"/>
+        <strictClockBranchRates idref="rev.branchRates"/>
+    </treeDataLikelihood>
+
+    <parsimonyStartingValues id="rev.start" setClock="true" setIndicators="true" setRelativeRates="true">
+        <treeDataLikelihood idref="rev.treeLikelihood"/>
+        <generalSubstitutionModel idref="rev.model"/>
+        <parameter idref="rev.clock.rate"/>
+    </parsimonyStartingValues>
+
+    <report>
+        <parsimonyStartingValues idref="rev.start"/>
+    </report>
+
+    <assertEqual tolerance="1e-12" verbose="true">
+        <message>Reversible: indicators</message>
+        <actual regex="indicators: (.*?)\n">
+            <parsimonyStartingValues idref="rev.start"/>
+        </actual>
+        <expected>
+            1 1 0 1 1 0
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-7" verbose="true">
+        <message>Reversible: rates (n_ij + n_ji per pair)</message>
+        <actual regex="rates: (.*?)\n">
+            <parsimonyStartingValues idref="rev.start"/>
+        </actual>
+        <expected>
+            1.33333333 0.66666667 1 0.66666667 0.66666667 1
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-7" verbose="true">
+        <message>Reversible: clock rate</message>
+        <actual regex="clock: (.*?)\n">
+            <parsimonyStartingValues idref="rev.start"/>
+        </actual>
+        <expected>
+            0.27272727
+        </expected>
+    </assertEqual>
+
+    <!-- 3. asymmetric model without indicators: rates only, patterns given explicitly -->
+
+    <strictClockBranchRates id="plain.branchRates">
+        <rate>
+            <parameter id="plain.clock.rate" value="0.001" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <generalSubstitutionModel id="plain.model">
+        <generalDataType idref="loc.dataType"/>
+        <frequencies>
+            <frequencyModel normalize="true">
+                <generalDataType idref="loc.dataType"/>
+                <frequencies>
+                    <parameter dimension="4"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <rates>
+            <parameter id="plain.rates" dimension="12" value="1.0" lower="0.0"/>
+        </rates>
+    </generalSubstitutionModel>
+
+    <siteModel id="plain.siteModel">
+        <substitutionModel>
+            <generalSubstitutionModel idref="plain.model"/>
+        </substitutionModel>
+    </siteModel>
+
+    <treeDataLikelihood id="plain.treeLikelihood">
+        <attributePatterns idref="loc.pattern"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="plain.siteModel"/>
+        <generalSubstitutionModel idref="plain.model"/>
+        <strictClockBranchRates idref="plain.branchRates"/>
+    </treeDataLikelihood>
+
+    <parsimonyStartingValues id="plain.start" setClock="false" setIndicators="false" setRelativeRates="true">
+        <treeDataLikelihood idref="plain.treeLikelihood"/>
+        <generalSubstitutionModel idref="plain.model"/>
+        <attributePatterns idref="loc.pattern"/>
+    </parsimonyStartingValues>
+
+    <report>
+        <parsimonyStartingValues idref="plain.start"/>
+    </report>
+
+    <assertEqual tolerance="1e-7" verbose="true">
+        <message>Rates only: every rate from its count (minimum 1)</message>
+        <actual regex="rates: (.*?)\n">
+            <parsimonyStartingValues idref="plain.start"/>
+        </actual>
+        <expected>
+            1.33333333 0.66666667 0.66666667 0.66666667 0.66666667 0.66666667
+            0.66666667 0.66666667 0.66666667 0.66666667 0.66666667 0.66666667
+        </expected>
+    </assertEqual>
+
+    <assertEqual verbose="true">
+        <message>Rates only: indicators untouched</message>
+        <actual regex="indicators: (.*?)\n">
+            <parsimonyStartingValues idref="plain.start"/>
+        </actual>
+        <expected>not set</expected>
+    </assertEqual>
+
+    <assertEqual verbose="true">
+        <message>Rates only: clock rate untouched</message>
+        <actual regex="clock: (.*?)\n">
+            <parsimonyStartingValues idref="plain.start"/>
+        </actual>
+        <expected>not set</expected>
+    </assertEqual>
+
+</beast>

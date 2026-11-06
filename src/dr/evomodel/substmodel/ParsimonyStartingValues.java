@@ -32,6 +32,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,7 +54,7 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  */
-public class ParsimonyStartingValues {
+public class ParsimonyStartingValues implements Reportable {
 
     private final int stateCount;
     private final double[] counts; // directed counts, [i * stateCount + j]
@@ -62,6 +63,10 @@ public class ParsimonyStartingValues {
     private final boolean[] on;    // [i * stateCount + j]
     private final int observedPairs;
     private final int linkedComponents;
+
+    private double[] indicatorValues; // last values set, for the report
+    private double[] rateValues;
+    private double clockValue = Double.NaN;
 
     public ParsimonyStartingValues(Tree tree, PatternList patterns, DataType dataType) {
 
@@ -273,8 +278,10 @@ public class ParsimonyStartingValues {
     public void setIndicators(Parameter indicators, boolean reversible) {
         int[][] pairs = ratePairs(reversible);
         checkDimension(indicators, pairs.length);
+        indicatorValues = new double[pairs.length];
         for (int k = 0; k < pairs.length; ++k) {
-            indicators.setParameterValueQuietly(k, on[pairs[k][0] * stateCount + pairs[k][1]] ? 1.0 : 0.0);
+            indicatorValues[k] = on[pairs[k][0] * stateCount + pairs[k][1]] ? 1.0 : 0.0;
+            indicators.setParameterValueQuietly(k, indicatorValues[k]);
         }
         indicators.fireParameterChangedEvent();
     }
@@ -299,16 +306,18 @@ public class ParsimonyStartingValues {
             }
         }
         double meanCount = observed > 0 ? total / observed : 1.0;
+        rateValues = new double[pairs.length];
         for (int k = 0; k < pairs.length; ++k) {
             boolean inSupport = on[pairs[k][0] * stateCount + pairs[k][1]];
-            double value = (useSupport && !inSupport) ? 1.0 : Math.max(pairCounts[k], 1.0) / meanCount;
-            rates.setParameterValueQuietly(k, value);
+            rateValues[k] = (useSupport && !inSupport) ? 1.0 : Math.max(pairCounts[k], 1.0) / meanCount;
+            rates.setParameterValueQuietly(k, rateValues[k]);
         }
         rates.fireParameterChangedEvent();
     }
 
     public void setClockRate(Parameter clockRate) {
-        clockRate.setParameterValue(0, getClockRate());
+        clockValue = getClockRate();
+        clockRate.setParameterValue(0, clockValue);
     }
 
     private static void checkDimension(Parameter parameter, int dimension) {
@@ -336,5 +345,24 @@ public class ParsimonyStartingValues {
                         "tree length %.4g, clock rate %.6g",
                 changesPerSite, observedPairs, linkedComponents, getSupportSize(), stateCount * (stateCount - 1),
                 treeLength, getClockRate());
+    }
+
+    @Override
+    public String getReport() {
+        return "Parsimony starting values: " + getSummary() + "\n" +
+                "indicators: " + join(indicatorValues) + "\n" +
+                "rates: " + join(rateValues) + "\n" +
+                "clock: " + (Double.isNaN(clockValue) ? "not set" : String.valueOf(clockValue)) + "\n";
+    }
+
+    private static String join(double[] values) {
+        if (values == null) {
+            return "not set";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (double v : values) {
+            sb.append(sb.length() > 0 ? " " : "").append(v);
+        }
+        return sb.toString();
     }
 }

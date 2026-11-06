@@ -62,21 +62,13 @@ public class ColtEigenSystem implements EigenSystem {
         DoubleMatrix2D eigenV = eigenDecomposition.getV();
         DoubleMatrix2D eigenVInv;
 
-        if (checkConditioning) {
-            RobustSingularValueDecomposition svd;
-            try {
-                svd = new RobustSingularValueDecomposition(eigenV, maxIterations);
-            } catch (ArithmeticException ae) {
-                return getEmptyDecomposition(stateCount);
-            }
-            if (svd.cond() > maxConditionNumber) {
-                return getEmptyDecomposition(stateCount);
-            }
-        }
-
         try {
             eigenVInv = algebra.inverse(eigenV);
         } catch (IllegalArgumentException e) {
+            return getEmptyDecomposition(stateCount);
+        }
+
+        if (checkConditioning && !isWellConditioned(eigenV, eigenVInv, stateCount)) {
             return getEmptyDecomposition(stateCount);
         }
 
@@ -106,6 +98,36 @@ public class ColtEigenSystem implements EigenSystem {
         return new EigenDecomposition(flatEvec, flatIevc, Eval);
     }
 
+
+    /**
+     * Whether the 2-norm condition number of V is at most maxConditionNumber. An SVD of V costs more than the eigen
+     * decomposition itself, so the 1- and infinity-norms of V and its inverse bound it first:
+     * cond2 <= sqrt(cond1 condInf) and cond2 >= max(cond1, condInf) / n. Only when the bounds straddle
+     * maxConditionNumber is the SVD computed.
+     */
+    private boolean isWellConditioned(DoubleMatrix2D eigenV, DoubleMatrix2D eigenVInv, int stateCount) {
+
+        final double cond1 = algebra.norm1(eigenV) * algebra.norm1(eigenVInv);
+        final double condInf = algebra.normInfinity(eigenV) * algebra.normInfinity(eigenVInv);
+
+        if (Double.isNaN(cond1) || Double.isNaN(condInf)) {
+            return false;
+        }
+        if (Math.sqrt(cond1 * condInf) <= maxConditionNumber) {
+            return true;
+        }
+        if (Math.max(cond1, condInf) / stateCount > maxConditionNumber) {
+            return false;
+        }
+
+        RobustSingularValueDecomposition svd;
+        try {
+            svd = new RobustSingularValueDecomposition(eigenV, maxIterations);
+        } catch (ArithmeticException ae) {
+            return false;
+        }
+        return svd.cond() <= maxConditionNumber;
+    }
 
     public double computeExponential(EigenDecomposition eigen, double distance, int i, int j) {
         if (eigen == null) {

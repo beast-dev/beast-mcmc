@@ -1404,6 +1404,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     }
 
     /**
+     * Asks the next likelihood evaluation for fresh scale factors at the nodes it updates. The dynamic scheme
+     * otherwise reuses those of an earlier evaluation; after a large change (a different tree, say), partials scaled
+     * with them can grow so large that a pre-order traversal from them overflows, though the likelihood is finite.
+     *
+     * @return false if the scale factors are always fresh or there are none, so that asking changes nothing
+     */
+    public final boolean recomputeScaleFactorsNextEvaluation() {
+        if (rescalingScheme != PartialsRescalingScheme.DYNAMIC || !useScaleFactors) {
+            return false;
+        }
+        recomputeScaleFactors = true;
+        return true;
+    }
+
+    /**
      * @return the scale buffer holding internal node nodeNumber's own individual
      * (not cumulative) scale factor from the last likelihood evaluation, or
      * Beagle.NONE if nodeNumber is a tip or rescaling was not applied. Callers

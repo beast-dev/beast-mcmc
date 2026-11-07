@@ -228,7 +228,22 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
 
         //update all preOrder partials first
         simulationProcess.cacheSimulatedTraits(node);
+
+        // Partials scaled with stale factors (the dynamic rescaling scheme reuses them) can overflow in the pre-order
+        // traversal, though the likelihood is finite; then both traversals run again with fresh scale factors
+        if (!isFinite(gradient) && likelihoodDelegate.recomputeScaleFactorsNextEvaluation()) {
+            simulationProcess.recomputeSimulatedTraits(node);
+        }
         return gradient.clone();
+    }
+
+    private static boolean isFinite(double[] values) {
+        for (double value : values) {
+            if (!Double.isFinite(value)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     abstract protected void getNodeDerivatives(Tree tree, double[] first, double[] second);

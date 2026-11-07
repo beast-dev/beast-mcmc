@@ -86,6 +86,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private static final String THREAD_COUNT = "beagle.thread.count";
     // keep BEAGLE buffers for every augmented epoch node the tree can have, instead of growing them on demand
     private static final String PREALLOCATE_AUGMENTED_PROPERTY = "beagle.augmented.preallocate";
+    // with useSpectralRepresentation, ask BEAGLE to reuse post-order messages and pre-order push-downs
+    private static final String SPECTRAL_CACHE_PROPERTY = "beagle.spectral.cache";
+    private static final long SPECTRAL_CACHE_FLAG = 1L << 41; // BEAGLE_FLAG_SPECTRAL_CACHE; BeagleFlag.SPECTRAL_CACHE
+                                                              // once lib/beagle.jar has it
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -486,6 +490,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             if (settings.usePreOrder && stateCount > 4) {
                 requirementFlags |= BeagleFlag.PREORDER_TRANSPOSE_AUTO.getMask();
+            }
+
+            // after the default preferences above, which apply only while preferenceFlags is 0
+            if (settings.useSpectralRepresentation && Boolean.getBoolean(SPECTRAL_CACHE_PROPERTY)) {
+                preferenceFlags |= SPECTRAL_CACHE_FLAG;
             }
 
             // start auto resource selection

@@ -88,8 +88,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private static final String PREALLOCATE_AUGMENTED_PROPERTY = "beagle.augmented.preallocate";
     // with useSpectralRepresentation, ask BEAGLE to reuse post-order messages and pre-order push-downs
     private static final String SPECTRAL_CACHE_PROPERTY = "beagle.spectral.cache";
-    private static final long SPECTRAL_CACHE_FLAG = 1L << 41; // BEAGLE_FLAG_SPECTRAL_CACHE; BeagleFlag.SPECTRAL_CACHE
+    private static final long SPECTRAL_CACHE_FLAG = 1L << 43; // BEAGLE_FLAG_SPECTRAL_CACHE; BeagleFlag.SPECTRAL_CACHE
                                                               // once lib/beagle.jar has it
+    // on CPU, ask BEAGLE to compute the adjoint derivative for all branches at once
+    private static final String ADJOINT_BATCHED_PROPERTY = "beagle.adjoint.batched";
+    private static final long ADJOINT_BATCHED_FLAG = 1L << 42; // BEAGLE_FLAG_ADJOINT_BATCHED; BeagleFlag.ADJOINT_BATCHED
+                                                                // once lib/beagle.jar has it
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -495,6 +499,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             // after the default preferences above, which apply only while preferenceFlags is 0
             if (settings.useSpectralRepresentation && Boolean.getBoolean(SPECTRAL_CACHE_PROPERTY)) {
                 preferenceFlags |= SPECTRAL_CACHE_FLAG;
+            }
+            if (Boolean.getBoolean(ADJOINT_BATCHED_PROPERTY)) {
+                preferenceFlags |= ADJOINT_BATCHED_FLAG;
             }
 
             // start auto resource selection

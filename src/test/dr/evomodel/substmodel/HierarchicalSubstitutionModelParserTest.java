@@ -37,7 +37,6 @@ import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.substmodel.HierarchicalSubstitutionModelParser;
 import dr.evomodelxml.substmodel.TN93Parser;
-import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.TaxaParser;
@@ -184,11 +183,11 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         branchModels.add(new HomogeneousBranchModel(first));
         branchModels.add(new HomogeneousBranchModel(hky));
         branchModels.add(new HomogeneousBranchModel(second));
-        TreeDataLikelihoodParser.checkOneAggregation(branchModels, "likelihood");
+        HierarchicalSubstitutionModelParser.checkOneAggregation(branchModels, "likelihood");
 
         second.setAggregation(HierarchicalSubstitutionModel.Aggregation.AUTO);
         try {
-            TreeDataLikelihoodParser.checkOneAggregation(branchModels, "likelihood");
+            HierarchicalSubstitutionModelParser.checkOneAggregation(branchModels, "likelihood");
             fail("models with different aggregate settings should be refused");
         } catch (XMLParseException e) {
             assertTrue(e.getMessage(), e.getMessage().contains("TreeDataLikelihood 'likelihood'")
@@ -196,7 +195,7 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         }
 
         branchModels.remove(0);
-        TreeDataLikelihoodParser.checkOneAggregation(branchModels, "likelihood");
+        HierarchicalSubstitutionModelParser.checkOneAggregation(branchModels, "likelihood");
     }
 
     public void testMissingCharacterTree() throws Exception {

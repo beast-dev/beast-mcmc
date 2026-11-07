@@ -28,6 +28,7 @@
 package dr.evomodelxml.substmodel;
 
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.AbstractHierarchicalRateProvider;
 import dr.evomodel.substmodel.EqualRatesProvider;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -250,5 +251,29 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     @Override
     public String getParserName() {
         return HIERARCHICAL_SUBSTITUTION_MODEL;
+    }
+
+    /**
+     * The plugin's aggregation setting is per instance, so every hierarchical substitution model of one
+     * TreeDataLikelihood must have the same aggregate attribute.
+     */
+    public static void checkOneAggregation(List<BranchModel> branchModels, String likelihoodId) throws XMLParseException {
+        HierarchicalSubstitutionModel first = null;
+        for (BranchModel branchModel : branchModels) {
+            for (SubstitutionModel model : branchModel.getSubstitutionModels()) {
+                if (!(model instanceof HierarchicalSubstitutionModel)) {
+                    continue;
+                }
+                HierarchicalSubstitutionModel hierarchical = (HierarchicalSubstitutionModel) model;
+                if (first == null) {
+                    first = hierarchical;
+                } else if (hierarchical.getAggregation() != first.getAggregation()) {
+                    throw new XMLParseException("TreeDataLikelihood '" + likelihoodId + "': its hierarchical substitution models must "
+                            + "have the same aggregate setting; '" + first.getId() + "' has "
+                            + first.getAggregation().name().toLowerCase() + " and '" + hierarchical.getId() + "' has "
+                            + hierarchical.getAggregation().name().toLowerCase());
+                }
+            }
+        }
     }
 }

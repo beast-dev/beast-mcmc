@@ -28,12 +28,18 @@
 package dr.evomodel.treedatalikelihood;
 
 import beagle.Beagle;
+import beagle.BeagleFlag;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.UncertainSiteList;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+
+import java.util.logging.Logger;
 
 /**
  * @author Jeff Thorne
@@ -216,6 +222,67 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
         // and state frequencies buffer 0 it already holds.
         beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(0), probabilityIndices,
                 null, null, edgeLengths, updateCount);
+    }
+
+    /**
+     * @return the BEAGLE flag bits for the model's aggregate attribute: ON or OFF force the plugin's aggregation of
+     * unobserved states, AUTO sets neither and leaves the choice to the plugin
+     */
+    public long getAggregationFlags() {
+        switch (substitutionModel.getAggregation()) {
+            case ON:
+                return BeagleFlag.HIERARCHICAL_AGGREGATE_ON.getMask();
+            case OFF:
+                return BeagleFlag.HIERARCHICAL_AGGREGATE_OFF.getMask();
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Logs what the plugin's aggregation of unobserved states will see, from the observed states of the tips as they
+     * are sent (see HierarchicalSubstitutionModel.summarizeAggregation); the setting in effect is the model's
+     * aggregate attribute unless BEAGLE_HRATE_AGGREGATE is set, which overrides it in the plugin.
+     */
+    public void logAggregation(Tree tree, PatternList patternList, boolean useAmbiguities, int categoryCount) {
+        final DataType dataType = patternList.getDataType();
+        final int stateCount = dataType.getStateCount();
+        final int patternCount = patternList.getPatternCount();
+        final boolean[][] observed = new boolean[patternCount][stateCount];
+        final double[] partial = new double[stateCount];
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            final int sequenceIndex = patternList.getTaxonIndex(tree.getTaxonId(i));
+            for (int k = 0; k < patternCount; k++) {
+                if (!useAmbiguities) {
+                    final int state = patternList.getPatternState(sequenceIndex, k);
+                    if (state >= 0 && state < stateCount) {
+                        observed[k][state] = true;
+                    }
+                    continue;
+                }
+                if (patternList instanceof UncertainSiteList) {
+                    ((UncertainSiteList) patternList).fillPartials(sequenceIndex, k, partial, 0);
+                } else if (patternList.areUncertain()) {
+                    System.arraycopy(patternList.getUncertainPatternState(sequenceIndex, k), 0, partial, 0, stateCount);
+                } else {
+                    final boolean[] stateSet = dataType.getStateSet(patternList.getPatternState(sequenceIndex, k));
+                    for (int j = 0; j < stateCount; j++) {
+                        partial[j] = stateSet[j] ? 1.0 : 0.0;
+                    }
+                }
+                HierarchicalSubstitutionModel.markObservedStates(partial, 0, stateCount, observed[k]);
+            }
+        }
+        final HierarchicalSubstitutionModel.AggregationSummary summary =
+                HierarchicalSubstitutionModel.summarizeAggregation(substitutionModel.getBeagleModelTriples(),
+                        stateCount, categoryCount, observed);
+        String line = "    Hierarchical aggregation of unobserved states: "
+                + summary.describe(substitutionModel.getAggregation()) + ".";
+        final String override = System.getenv("BEAGLE_HRATE_AGGREGATE");
+        if ("0".equals(override) || "1".equals(override)) {
+            line += " BEAGLE_HRATE_AGGREGATE=" + override + " overrides it.";
+        }
+        Logger.getLogger("dr.evomodel").info(line);
     }
 
     @Override

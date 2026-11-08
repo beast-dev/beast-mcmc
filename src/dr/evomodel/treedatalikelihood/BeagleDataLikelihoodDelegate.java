@@ -81,7 +81,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
     private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
-    private static final String ACTION_DISPATCH_PROPERTY = "beagle.action.dispatch";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
     private static final String THREAD_COUNT = "beagle.thread.count";
 
@@ -341,21 +340,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             if (settings.useAction) {
                 preferenceFlags |= BeagleFlag.BEAGLE_FLAG_COMPUTATION_ACTION.getMask();
-
-                final boolean gpuRequested = (resourceList != null && resourceList[0] > 0)
-                        || BeagleFlag.PROCESSOR_GPU.isSet(preferenceFlags);
-                final boolean dispatch = Boolean.parseBoolean(System.getProperty(ACTION_DISPATCH_PROPERTY, "true"));
-                if (gpuRequested && dispatch && actionPrefersCpu(stateCount, patternCount, categoryCount, tipCount)) {
-                    logger.info("  Action likelihood with " + stateCount + " states, " + patternCount + " patterns, "
-                            + categoryCount + " categories and " + tipCount + " taxa is faster on the CPU than on a GPU; "
-                            + "using the CPU (-D" + ACTION_DISPATCH_PROPERTY + "=false keeps the GPU).");
-                    resourceList = new int[]{0};
-                    preferenceFlags &= ~BeagleFlag.PROCESSOR_GPU.getMask();
-                }
-                if (stateCount <= 64) {
-                    logger.info("  With " + stateCount + " states the standard (eigen-decomposition) likelihood is about "
-                            + "as fast as the action-based one, or faster (useAction=\"false\").");
-                }
             }
 
             if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
@@ -1239,17 +1223,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private int rescalingCountInner = 0;
 
     private int threadCount = -1;
-
-    /**
-     * Whether an action-based likelihood runs faster on the CPU than on a GPU: only for tiny problems.  Measured
-     * (A100 vs 16 CPU threads, likelihood + gradient per evaluation, after BEAGLE's GPU action tuning): the CPU is
-     * up to 3.4x faster for S <= 128 with taxa * S * patterns * categories^2 <= 5120 (e.g. 10 taxa, 61 states,
-     * up to 8 patterns, 1 category), and the GPU is faster everywhere else, by up to 20x for S >= 256.
-     */
-    public static boolean actionPrefersCpu(int stateCount, int patternCount, int categoryCount, int tipCount) {
-        final double work = (double) tipCount * stateCount * patternCount * categoryCount * categoryCount;
-        return stateCount <= 128 && work <= 5120;
-    }
     private long instanceFlags;
 
     private boolean firstRescaleAttempt = false;

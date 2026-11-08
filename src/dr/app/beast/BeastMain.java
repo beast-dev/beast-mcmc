@@ -380,6 +380,7 @@ public class BeastMain {
         System.out.println();
     }
 
+
     //Main method
     public static void main(String[] args) throws java.io.IOException {
 
@@ -835,6 +836,7 @@ public class BeastMain {
                 String citationsFile = arguments.getStringOption("citations_file");
                 System.setProperty("citations.filename", citationsFile);
             }
+
         }
 
         int maxErrorCount = 0;

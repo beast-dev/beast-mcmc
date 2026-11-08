@@ -293,6 +293,30 @@ public final class MarkovChain implements Serializable {
                 }
 
 
+
+                // extra check from branch `store_restore_bug` put here in case it is needed...
+                final boolean EXTRA_CHECK = false;
+                if (EXTRA_CHECK) {
+                    String before = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+
+                    likelihood.makeDirty();
+                    double newScore = evaluate(likelihood);
+
+                    String after = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+
+                    if (Math.abs(score - newScore) > evaluationTestThreshold) {
+
+                        System.err.println("Latent error:");
+                        System.err.println(before);
+                        System.err.println();
+                        System.err.println(after);
+
+                        System.exit(-1);
+                    }
+                }
+
                 Map<String, Double> diagnosticOperatorDensities = null;
                 if (usingFullEvaluation && !Double.isInfinite(score) && !Double.isNaN(score)) {
                     diagnosticOperatorDensities = new HashMap<>();

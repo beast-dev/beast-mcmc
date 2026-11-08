@@ -152,6 +152,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
         return variables.get(i);
     }
 
+
     // **************************************************************
     // ModelListener IMPLEMENTATION
     // **************************************************************

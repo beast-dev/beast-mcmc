@@ -20,7 +20,7 @@ env:
     # plus the hierarchical plugin (BEAGLE 4.3.0). Switch back to matrix_vector once hrate is merged there.
     BEAGLE_BRANCH: hrate
     # pin the commit so a force-push to the branch cannot break CI; set to "" to follow the branch head
-    BEAGLE_SHA_PIN: d57dd5abe8c1b9cad7ed726798c0d1b5575f5d79
+    BEAGLE_SHA_PIN: 47bd6661dafdbf6c7ebfafb93bbe230792929f7a
     JAVA_VERSION: "8"
     JAVA_DISTRIBUTION: temurin
 

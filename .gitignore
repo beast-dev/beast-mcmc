@@ -1,6 +1,7 @@
 *.iml
 *.ipr
 *.iws
+*.code-workspace
 bin/
 build/
 dist/

@@ -182,6 +182,13 @@ list of changes and bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   trees, and the stochastic Dollo model, whose likelihood took no part in the
   MCMC, has been removed.
 
+- **Hierarchical models follow the analysis.** A hierarchical phylogenetic
+  model built before the analysis was changed used to be written out over
+  parameters that were no longer in it, giving a file BEAST would not read.
+  Such a model now has those parameters dropped, and is removed altogether
+  if fewer than two are left, with the change reported before the file is
+  written.
+
 ## New features in TreeAnnotator
 
 - **Node height distributions for PearTree.** TreeAnnotator can write a
@@ -211,6 +218,14 @@ list of changes and bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   full taxon block.
 
 ## Other improvements
+
+- **LogCombiner burn-in.** The burn-in can be given as a number of trees or
+  samples, or as a percentage of each file, as well as in MCMC states, and
+  LogCombiner reports for each file how many trees or samples were read and
+  written, with a warning when the burn-in removed nothing or everything.
+  Resampling at a lower frequency now takes the right samples: a burn-in used
+  to shift the choice by one sampling interval, and the samples taken from
+  each file depended on how many had been taken from the files before it.
 
 - **Double-quoted taxon names.** Taxon names that need quoting in tree and
   NEXUS files (whitespace or any of `. ( ) [ ] : ; , = '`) are delimited with

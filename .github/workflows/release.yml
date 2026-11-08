@@ -167,14 +167,18 @@ jobs:
         run: |
           BEAGLE_SRC="$RUNNER_TEMP/beagle-src"
           BEAGLE_BUILD="$RUNNER_TEMP/beagle-build"
-          git clone --depth=1 https://github.com/beagle-dev/beagle-lib.git "$BEAGLE_SRC"
+          git clone --depth=1 -b v4.2.0 https://github.com/beagle-dev/beagle-lib.git "$BEAGLE_SRC"
           mkdir -p "$BEAGLE_BUILD"
           cd "$BEAGLE_BUILD"
+          # NATIVE_ARCH off: the runner's -mcpu=native must not reach users' Macs.
+          # BUILD_BIT: the BASTA library (libhmsbeagle-jni-bit).
           cmake "$BEAGLE_SRC" \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_OPENCL=OFF
+            -DBUILD_OPENCL=OFF \
+            -DBEAGLE_OPTIMIZE_FOR_NATIVE_ARCH=OFF \
+            -DBUILD_BIT=ON
           make -j$(sysctl -n hw.logicalcpu)
           echo "BEAGLE_BUILD_DIR=$BEAGLE_BUILD" >> "$GITHUB_ENV"
 

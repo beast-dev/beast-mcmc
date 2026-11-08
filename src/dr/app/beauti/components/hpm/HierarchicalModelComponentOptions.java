@@ -149,6 +149,118 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         return hpmList;
     }
 
+    /**
+     * Drops from every hierarchical model the parameters that are no longer part of the analysis, and
+     * discards any model left with fewer than two of them.
+     *
+     * A model holds its parameters directly, and changing the analysis - partitioning into codon positions,
+     * say, or choosing a different substitution model - does not destroy the parameters it replaces, it only
+     * stops them being used. The models were written out whatever had become of their parameters, so the
+     * file could refer to parameters that it did not declare and BEAST would not read it.
+     *
+     * A parameter taken out of a model is given back an ordinary prior, because the density of a parameter
+     * in a hierarchical model is written as part of that model and nothing would be written for it otherwise.
+     *
+     * @param activeParameters the parameters of the analysis as it now stands
+     * @return what was dropped, for reporting to the user, or null if the models were already consistent
+     */
+    public String pruneToActiveParameters(List<Parameter> activeParameters) {
+
+        List<String> messages = new ArrayList<String>();
+        List<HierarchicalPhylogeneticModel> toRemove = new ArrayList<HierarchicalPhylogeneticModel>();
+        List<Parameter> needingAPrior = new ArrayList<Parameter>();
+
+        for (HierarchicalPhylogeneticModel hpm : hpmList) {
+            List<Parameter> parameterList = hpm.getArgumentParameterList();
+
+            List<Parameter> dropped = new ArrayList<Parameter>();
+            for (Parameter parameter : parameterList) {
+                if (!activeParameters.contains(parameter)) {
+                    dropped.add(parameter);
+                }
+            }
+
+            if (dropped.isEmpty()) {
+                continue;
+            }
+
+            parameterList.removeAll(dropped);
+            for (Parameter parameter : dropped) {
+                detach(parameter);
+            }
+
+            if (parameterList.size() < 2) {
+                // a model over a single parameter is not one, so the whole model goes
+                for (Parameter parameter : new ArrayList<Parameter>(parameterList)) {
+                    detach(parameter);
+                    if (activeParameters.contains(parameter)) {
+                        // this one is still in the analysis, so the user will want to give it a prior
+                        needingAPrior.add(parameter);
+                    }
+                }
+                parameterList.clear();
+                toRemove.add(hpm);
+                messages.add("the hierarchical model '" + hpm.getName() + "' has been removed");
+            } else {
+                messages.add(dropped.size() + (dropped.size() == 1 ? " parameter has" : " parameters have") +
+                        " been removed from the hierarchical model '" + hpm.getName() + "'");
+            }
+        }
+
+        hpmList.removeAll(toRemove);
+
+        if (messages.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder message = new StringBuilder();
+        for (String line : messages) {
+            if (message.length() > 0) {
+                message.append(", and ");
+            }
+            message.append(line);
+        }
+        message.append(", because ");
+        message.append(messages.size() == 1 ? "a parameter it was over is" : "parameters they were over are");
+        message.append(" no longer part of the analysis.");
+
+        if (!needingAPrior.isEmpty()) {
+            message.append("\n\n");
+            message.append(needingAPrior.size() == 1 ? "The parameter " : "The parameters ");
+            for (int i = 0; i < needingAPrior.size(); i++) {
+                if (i > 0) {
+                    message.append(i == needingAPrior.size() - 1 ? " and " : ", ");
+                }
+                message.append(needingAPrior.get(i).getName());
+            }
+            message.append(needingAPrior.size() == 1 ? " is still" : " are still");
+            message.append(" in the analysis and now ");
+            message.append(needingAPrior.size() == 1 ? "has a default prior" : "have default priors");
+            message.append(" instead.");
+        }
+
+        return message.toString();
+    }
+
+    /**
+     * Takes a parameter out of a hierarchical model, giving it back an ordinary prior: a uniform one where
+     * the parameter is bounded, and the improper uniform otherwise. The prior is marked as not having been
+     * set by the user, so that the Priors panel draws attention to it.
+     */
+    private void detach(Parameter parameter) {
+        parameter.isLinked = false;
+        parameter.linkedName = null;
+
+        if (parameter.priorType == PriorType.NORMAL_HPM_PRIOR
+                || parameter.priorType == PriorType.LOGNORMAL_HPM_PRIOR
+                || parameter.priorType == PriorType.EXPONENTIAL_HPM_PRIOR) {
+            boolean bounded = !Double.isInfinite(parameter.getLowerBound())
+                    && !Double.isInfinite(parameter.getUpperBound());
+            parameter.priorType = bounded ? PriorType.UNIFORM_PRIOR : PriorType.NONE_IMPROPER;
+            parameter.setPriorEdited(false);
+        }
+    }
+
 
     final private BeautiOptions options;
     final private List<HierarchicalPhylogeneticModel> hpmList;

@@ -101,7 +101,9 @@ public final class MarkovChain implements Serializable {
         for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
             if (!Likelihood.CONNECTED_LIKELIHOOD_SET.contains(l)) {
 
-                System.err.println("WARNING: Likelihood component, " + l.prettyName() + " (id: " + l.getId() + "), created but not used in the MCMC");
+                String id = l.getId();
+                System.err.println("WARNING: Likelihood component, " + l.prettyName() +
+                        (id != null ? " (id: " + id + ")" : " (no ID)") + ", created but not used in the MCMC");
             }
         }
 
@@ -262,6 +264,30 @@ public final class MarkovChain implements Serializable {
                 mcmcOperator.addEvaluationTime(System.nanoTime() - evaluationStart);
                 if (ChainProfile.STEPS) {
                     phaseStart = profile.add(mcmcOperator, ChainProfile.Phase.EVALUATE, phaseStart);
+                }
+
+
+                // extra check from branch `store_restore_bug` put here in case it is needed...
+                final boolean EXTRA_CHECK = false;
+                if (EXTRA_CHECK) {
+                    String before = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+
+                    likelihood.makeDirty();
+                    double newScore = evaluate(likelihood);
+
+                    String after = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+
+                    if (Math.abs(score - newScore) > evaluationTestThreshold) {
+
+                        System.err.println("Latent error:");
+                        System.err.println(before);
+                        System.err.println();
+                        System.err.println(after);
+
+                        System.exit(-1);
+                    }
                 }
 
                 Map<String, Double> diagnosticOperatorDensities = null;

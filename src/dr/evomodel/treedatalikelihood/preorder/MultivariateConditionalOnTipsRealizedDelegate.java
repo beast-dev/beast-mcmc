@@ -35,7 +35,6 @@ import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedMatrix;
 import dr.math.matrixAlgebra.WrappedVector;
 import dr.math.matrixAlgebra.missingData.MissingOps;
-import mpi.Comm;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 

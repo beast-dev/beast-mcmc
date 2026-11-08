@@ -62,6 +62,11 @@ public class CharSetAlignment extends SimpleAlignment {
             if (toSite <= 0) {
                 toSite = sequenceString.length();
             }
+            if (block.getFromSite() < 1 || toSite > sequenceString.length()) {
+                throw new IllegalArgumentException("The character set '" + charset.getName() + "' covers sites " +
+                        block.getFromSite() + " to " + toSite + ", which lies outside the alignment of " +
+                        sequenceString.length() + " sites.");
+            }
             for (int i = block.getFromSite(); i <= toSite; i += block.getEvery()) {
                 // the -1 comes from the fact that charsets are indexed from 1 whereas strings are indexed from 0
                 filtered.append(sequenceString.charAt(i - 1));

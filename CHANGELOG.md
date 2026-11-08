@@ -291,6 +291,15 @@ set loaded by default (`parsers=development` in `beast.properties`).
 
 #### Other tools
 
+- **LogCombiner burn-in** — the burn-in can be given as a number of trees or log samples
+  (`-burninTrees`, short `-bt`) or as a percentage of each file (`-burninPercent`, `-bp`)
+  as well as in MCMC states (`-burnin`); the dialog has a "Burn-in given as" choice and the
+  table column names the unit. For every file LogCombiner now reports how many trees or
+  samples were read and written, and warns when the burn-in removed nothing, only the first
+  sample or everything, which is what happens when a number of trees is entered where states
+  are expected. Lines that could not be read, which are skipped as a possible corruption,
+  are counted and reported separately rather than being blamed on the burn-in.
+  ([#1247](https://github.com/beast-dev/beast-mcmc/issues/1247))
 - TreeStateTimeSummarizer writes `startHeight`, `endHeight` and `branchingEvents`
   columns for each state interval.
 - `scripts/fit_rate_prior.py` fits a lognormal distribution to a set of HPD bounds for
@@ -349,7 +358,22 @@ set loaded by default (`parsers=development` in `beast.properties`).
   value, which threw when a variable started exactly on zero; it is taken from the bounds.
 - **Fixed a NullPointerException in the rate covariance statistic** with the fast tree
   model.
-- **Fixed LogCombiner** having two options with the short name `-r`.
+- **Fixed LogCombiner taking the wrong samples when resampling at a lower frequency** —
+  the samples to keep were chosen by a running count of the samples kept so far rather than
+  by their own state number, so a burn-in shifted the choice by one sampling interval and
+  the samples taken from each file depended on how many had been taken from the files before
+  it. Combining with a burn-in of 1,000,000 and a resampling frequency of 100,000 took the
+  sample at state 1,090,000 rather than 1,100,000. The state numbers written were that same
+  running count, so with a burn-in they did not correspond to the samples beneath them.
+  Samples are now chosen by their own state number relative to the first one kept from the
+  same file, and the state numbers written run consecutively through the combined output.
+  Combining without resampling is unaffected.
+  ([#857](https://github.com/beast-dev/beast-mcmc/issues/857))
+- **Fixed LogCombiner failing with an ArithmeticException** when renumbering output states
+  without also resampling.
+- **Fixed LogCombiner dropping the first sample of the first log file** (the state 0 line
+  was compared against a column count that was only set from the second line), and having
+  two options with the short name `-r`.
 
 #### BEAUti
 
@@ -365,6 +389,25 @@ set loaded by default (`parsers=development` in `beast.properties`).
   imported tree, and a document that did open had its data types replaced by copies so
   the Partitions and Site Models panels still showed the previous document.
   ([#1283](https://github.com/beast-dev/beast-mcmc/pull/1283))
+- **Fixed hierarchical models surviving a change to the analysis** — a hierarchical
+  phylogenetic model holds its parameters directly, and changing the analysis, such as
+  partitioning into codon positions differently, does not destroy the parameters it
+  replaces, it only stops them being used. A model built beforehand was still written out,
+  so the file referred to parameters that it did not declare and BEAST stopped with
+  "Object with idref=CP1.kappa has not been previously declared". Such a model now has its
+  departed parameters dropped before the file is written, and is removed altogether if
+  fewer than two are left; a parameter still in the analysis that is left without a model
+  is given an ordinary prior, and the user is told what was dropped and taken to the Priors
+  panel. ([#1062](https://github.com/beast-dev/beast-mcmc/issues/1062))
+
+- **Fixed a NEXUS file with character sets that do not fit its alignment failing to
+  import** — a character set running past the end of the alignment, starting before its
+  first site, or ending before it starts, failed while the sites were being taken, with an
+  index error that said nothing about which set was at fault; in the application the import
+  simply did not happen. Such a file is now refused with a message naming the character
+  set, the range it asks for and the length of the alignment.
+  ([#1066](https://github.com/beast-dev/beast-mcmc/issues/1066))
+
 - **Fixed the fixed local clock failing to generate XML** for a taxon set imported from a
   one-column file. ([#1231](https://github.com/beast-dev/beast-mcmc/issues/1231))
 - **Fixed every taxon set being nested as a subtree of the random starting tree**, which
@@ -384,6 +427,14 @@ set loaded by default (`parsers=development` in `beast.properties`).
 - **Fixed `includeStem` always written as true** for taxon set TMRCA statistics.
 - **Fixed robust counting XML** for prefixed traits and for alignments with sites that
   are gaps in every sequence.
+
+- **Renaissance counting is no longer offered for a partition that is not a whole number
+  of codons long** — the three codon positions are compared site by site, so they must hold
+  the same number of sites, which taking every third site only gives when the partition's
+  length is a multiple of three. BEAUti offered the option regardless, and BEAST then
+  refused the file with "Codon-partitioned robust counting requires all partitions to have
+  the same length". The option is now disabled with the reason shown, and a file whose
+  option was set before this was checked is reported rather than written.
 - **Fixed amino acid site model XML generation** failing with a NullPointerException,
   and marginal likelihood XML for the 3Di models.
 - **Fixed importing a traits file turning on tip dates** for the whole analysis.
@@ -435,6 +486,9 @@ set loaded by default (`parsers=development` in `beast.properties`).
 - BEAGLE is loaded with `System.loadLibrary`, which JDK 24 and later warn about unless
   native access is enabled: the `beast.jar` manifest enables it for `java -jar`, and the
   Mac and Linux `beast` scripts add the option when the installed Java accepts it.
+- The warning that a likelihood was created but not used by the MCMC now says "(no ID)"
+  for a likelihood that has no id, rather than "(id: null)".
+  ([#1019](https://github.com/beast-dev/beast-mcmc/issues/1019))
 - Stopping a run uses `Thread.interrupt` rather than the removed `Thread.stop`.
 - Development builds report their version as 10.x.x rather than an unexpanded `${version}`.
 - **Packaging** — releases are built by a GitHub Actions workflow (`build_release.xml`)
@@ -448,6 +502,22 @@ set loaded by default (`parsers=development` in `beast.properties`).
   ([#1283](https://github.com/beast-dev/beast-mcmc/pull/1283))
 - The birth-death models moved to `dr.evomodel.birthdeath`; `EfficientSpeciationLikelihood`
   is now `EfficientBirthDeathLikelihood`.
+- **MPI support has been removed**, along with the `-mpi` option, the `mpi.rank.postfix`
+  property that labelled output files by rank, and the MPJ library. It had not worked for
+  some time: the library was on the compile path but was never put into `beast.jar`, so a
+  released BEAST could not have used it. Use `-threads`, the BEAGLE options, or `-mc3_chains`
+  for parallel work.
+- Removed `LogTransformedNormalKDEDistribution` and `LogitTransformedNormalKDEDistribution`,
+  which duplicated about a thousand lines between them. `TransformedNormalKDEDistribution`
+  has done the same job for any transform since 2019 and is what every caller already used;
+  the two classes it replaced were left behind and did not give the right answer.
+  ([#969](https://github.com/beast-dev/beast-mcmc/issues/969))
+- `MultiPartitionTreeLikelihood` shares the count of BEAGLE instances with the other
+  implementations, as they already share it with each other. BEAGLE devices are handed out
+  by indexing `-beagle_order` with that count, so a class holding its own would start again
+  at the first device. Nothing constructs this class, so this changes no behaviour; it keeps
+  the bug fixed for v10.5.0 from returning with it.
+  ([#1079](https://github.com/beast-dev/beast-mcmc/issues/1079))
 - Eigen3 (JNI) and EJML eigendecomposition implementations were added but are not yet
   selectable from XML.
 

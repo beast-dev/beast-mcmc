@@ -166,9 +166,9 @@ public class LaplaceDistribution implements Distribution, GradientProvider {
 
     public static double gradLogPdf(double x, double m, double scale) {
         if (x < m) {
-            return (x - m) / scale;
+            return 1.0 / scale;
         } else if (x > m) {
-            return (m - x) / scale;
+            return -1.0 / scale;
         } else {
             return 0.0; // maybe bad idea: let likelihood determine joint gradient where non-differentiable.
         }

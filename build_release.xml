@@ -262,7 +262,7 @@
                     useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M -Djava.library.path=/usr/local/lib"
+                    vmoptions="-XX:MaxRAMPercentage=50 -Djava.library.path=/usr/local/lib"
                     arguments="-window -working -options"
                     highresolutioncapable="true"
                     version="${version}"

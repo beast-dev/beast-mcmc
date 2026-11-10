@@ -229,8 +229,10 @@
         <delete dir="${Mac_package_dir}"/>
         <mkdir  dir="${Mac_package_dir}"/>
 
+        <!-- The Linux scripts: plain sh, and the Mac copies of them were identical
+             but for two stale heap sizes. One set to maintain, not two. -->
         <copy todir="${Mac_package_dir}/bin">
-            <fileset dir="${Mac_dir}/scripts"/>
+            <fileset dir="${Linux_dir}/scripts"/>
         </copy>
         <chmod dir="${Mac_package_dir}/bin" perm="755" includes="**/**"/>
 

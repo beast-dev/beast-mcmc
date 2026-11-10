@@ -346,7 +346,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beast.jar \
             --main-class dr.app.beast.BeastMain \
-            --java-options "-Xmx8192m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --arguments "-window" \
             --arguments "-working" \
             --arguments "-options" \
@@ -671,7 +671,7 @@ jobs:
             --input jpackage-input \
             --main-jar beast.jar \
             --main-class dr.app.beast.BeastMain \
-            --java-options "-Xmx8192m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --arguments "-window" \
             --arguments "-working" \
             --arguments "-options" \

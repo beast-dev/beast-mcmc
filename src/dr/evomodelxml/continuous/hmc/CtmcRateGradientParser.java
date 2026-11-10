@@ -27,18 +27,22 @@
 
 package dr.evomodelxml.continuous.hmc;
 
+import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.GradientDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient;
 import dr.evomodel.treedatalikelihood.discrete.CtmcRateGradient;
+import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.xml.*;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
- * Parses the gradient with respect to the rates of a generalSubstitutionModel with a rateIndicator.
+ * Parses the gradient with respect to the rates of a generalSubstitutionModel with a rateIndicator, or with respect
+ * to the parameter of a transformedRateSubstitutionModel or logRateSubstitutionModel (the rates are a transform of it).
  *
  * @author Marc A. Suchard
  */
@@ -62,6 +66,13 @@ public class CtmcRateGradientParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Unknown likelihood delegate type");
         }
 
+        final LogRateSubstitutionModel transformedModel =
+                (LogRateSubstitutionModel) xo.getChild(LogRateSubstitutionModel.class);
+        if (transformedModel != null) {
+            return new LogCtmcRateGradient(traitName, treeDataLikelihood, (GradientDataLikelihoodDelegate) delegate,
+                    transformedModel, ApproximateLogCtmcRateGradientParser.parseGradientMode(xo), false);
+        }
+
         final SVSComplexSubstitutionModel substitutionModel =
                 (SVSComplexSubstitutionModel) xo.getChild(SVSComplexSubstitutionModel.class);
 
@@ -78,17 +89,19 @@ public class CtmcRateGradientParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(TRAIT_NAME, true),
             AttributeRule.newStringRule(MODE, true),
             new ElementRule(TreeDataLikelihood.class),
-            new ElementRule(SVSComplexSubstitutionModel.class),
+            new XORRule(
+                    new ElementRule(SVSComplexSubstitutionModel.class),
+                    new ElementRule(LogRateSubstitutionModel.class)),
     };
 
     @Override
     public String getParserDescription() {
         return "Gradient of the log-likelihood with respect to the rates of a generalSubstitutionModel " +
-                "with a rateIndicator";
+                "with a rateIndicator, or to the parameter of a transformedRateSubstitutionModel";
     }
 
     @Override
     public Class getReturnType() {
-        return CtmcRateGradient.class;
+        return AbstractLogAdditiveSubstitutionModelGradient.class;
     }
 }

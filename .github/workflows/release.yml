@@ -364,7 +364,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beauti.jar \
             --main-class dr.app.beauti.BeautiApp \
-            --java-options "-Xmx2048m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/beauti.icns" \
             --dest staging-mac
@@ -379,7 +379,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beast.jar \
             --main-class dr.app.tools.treeannotator.TreeAnnotator \
-            --java-options "-Xmx4096m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/utility.icns" \
             --dest staging-mac
@@ -394,7 +394,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beast.jar \
             --main-class dr.app.tools.logcombiner.LogCombiner \
-            --java-options "-Xmx2048m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/utility.icns" \
             --dest staging-mac
@@ -630,7 +630,7 @@ jobs:
           main-class=dr.app.beauti.BeautiApp
           main-jar=beauti.jar
           arguments=
-          java-options=-Xmx1024m
+          java-options=-XX:MaxRAMPercentage=50
           icon=release/common/icons/beauti.ico
           win-console=false
           EOF
@@ -639,7 +639,7 @@ jobs:
           main-class=dr.app.tools.treeannotator.TreeAnnotator
           main-jar=beast.jar
           arguments=
-          java-options=-Xmx4096m
+          java-options=-XX:MaxRAMPercentage=50
           icon=release/common/icons/utility.ico
           win-console=false
           EOF
@@ -648,7 +648,7 @@ jobs:
           main-class=dr.app.tools.logcombiner.LogCombiner
           main-jar=beast.jar
           arguments=
-          java-options=-Xmx2048m
+          java-options=-XX:MaxRAMPercentage=50
           icon=release/common/icons/utility.ico
           win-console=false
           EOF

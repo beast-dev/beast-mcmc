@@ -31,8 +31,12 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.inference.model.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -80,22 +84,39 @@ public class FastTreeModel extends TreeModel {
         slotNode = new int[nodeCount];
         slotParameters = new SlotHeightParameter[nodeCount];
 
-        // number the nodes as DefaultTreeModel does: tips then internal nodes, each in post-order
+        // number the nodes as DefaultTreeModel does: tips by taxon name (so that the numbering does
+        // not depend on a random starting tree and a run resumed from a checkpoint can follow the
+        // run that wrote it), then internal nodes in post-order
         int[] number = new int[binaryTree.getNodeCount()];
-        int i = 0;
+        List<NodeRef> externalNodes = new ArrayList<NodeRef>();
         int j = externalNodeCount;
         NodeRef binaryRoot = binaryTree.getRoot();
         NodeRef node = binaryRoot;
         do {
             node = TreeUtils.postorderSuccessor(binaryTree, node);
             if (binaryTree.isExternal(node)) {
-                number[node.getNumber()] = i;
-                i++;
+                externalNodes.add(node);
             } else {
                 number[node.getNumber()] = j;
                 j++;
             }
         } while (node != binaryRoot);
+
+        final Tree taxonSource = binaryTree;
+        Collections.sort(externalNodes, new Comparator<NodeRef>() {
+            public int compare(NodeRef node1, NodeRef node2) {
+                Taxon taxon1 = taxonSource.getNodeTaxon(node1);
+                Taxon taxon2 = taxonSource.getNodeTaxon(node2);
+                String id1 = taxon1 != null ? taxon1.getId() : "";
+                String id2 = taxon2 != null ? taxon2.getId() : "";
+                return id1.compareTo(id2);
+            }
+        });
+        int i = 0;
+        for (NodeRef external : externalNodes) {
+            number[external.getNumber()] = i;
+            i++;
+        }
 
         for (int k = 0; k < binaryTree.getNodeCount(); k++) {
             NodeRef binaryNode = binaryTree.getNode(k);
@@ -303,7 +324,8 @@ public class FastTreeModel extends TreeModel {
     }
 
     public boolean isRoot(NodeRef node) {
-        return node.getNumber() == root;
+        // null (the parent of the root) is not the root, as in DefaultTreeModel
+        return node != null && node.getNumber() == root;
     }
 
     public int getChildCount(NodeRef node) {
@@ -654,6 +676,21 @@ public class FastTreeModel extends TreeModel {
             }
         }
 
+        int newRootIndex = -1;
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] == -1) {
+                newRootIndex = i;
+            }
+        }
+        if (newRootIndex < 0) {
+            throw new RuntimeException("No root node (a node without a parent) in the provided edges.");
+        }
+
+        // Set the root before anything else: a height change below notifies the tree's listeners at
+        // once, even inside the edit transaction, and a TreeParameterModel would permute its values
+        // if the root were still the starting tree's (see DefaultTreeModel.adoptTreeStructure).
+        this.setRoot(nodes[newRootIndex]);
+
         //start with setting the external node heights
         for (int i = 0; i < this.getExternalNodeCount(); i++) {
             this.setNodeHeight(this.getExternalNode(nodeMap[i]), nodeHeights[i]);
@@ -663,7 +700,6 @@ public class FastTreeModel extends TreeModel {
             this.setNodeHeight(this.getInternalNode(i), nodeHeights[this.getExternalNodeCount() + i]);
         }
 
-        int newRootIndex = -1;
         //now add the parent-child links again to ALL the nodes
         for (int i = 0; i < edges.length; i++) {
             if (edges[i] != -1) {
@@ -671,14 +707,10 @@ public class FastTreeModel extends TreeModel {
                 if (i < this.getExternalNodeCount()) {
                     //external node
                     this.addChild(this.getNode(edges[i]), this.getExternalNode(nodeMap[i]));
-                    System.out.println("external: " + edges[i] + " > " + nodeMap[i]);
                 } else {
                     //internal node
                     this.addChild(this.getNode(edges[i]), this.getNode(i));
-                    System.out.println("internal: " + edges[i] + " > " + i);
                 }
-            } else {
-                newRootIndex = i;
             }
         }
 
@@ -699,8 +731,6 @@ public class FastTreeModel extends TreeModel {
                 }
             }
         }
-
-        this.setRoot(nodes[newRootIndex]);
     }
 
     @Override

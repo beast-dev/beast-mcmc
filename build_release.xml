@@ -188,6 +188,10 @@
              script probes for it instead; a warning in the Console is the
              lesser of the two. The jpackage bundles pin Temurin 21, which does
              not warn. -->
+        <!-- java.library.path carries both Homebrew prefixes: /usr/local on
+             Intel, /opt/homebrew on Apple Silicon. Unlike bin/beast this app
+             has no env hook, so a path left out here cannot be added later
+             without editing Info.plist. -->
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAST_name} v${version}"
                     mainclass="dr.app.beast.BeastMain"
@@ -195,7 +199,7 @@
                     useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-XX:MaxRAMPercentage=50 -Djava.library.path=/usr/local/lib"
+                    vmoptions="-XX:MaxRAMPercentage=50 -Djava.library.path=/usr/local/lib:/opt/homebrew/lib"
                     arguments="-window -working -options"
                     highresolutioncapable="true"
                     version="${version}"

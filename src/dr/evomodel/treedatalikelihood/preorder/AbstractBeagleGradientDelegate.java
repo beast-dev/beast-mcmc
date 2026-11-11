@@ -388,12 +388,16 @@ public abstract class AbstractBeagleGradientDelegate extends ProcessSimulationDe
             negAncestorCumulativeScaleBufferIndex[nodeNumber] = parentNegAncestorCum;
         } else {
             int slot = scaleBufferBase + nodeNumber;
-            if (parentNegAncestorCum != Beagle.NONE) {
-                beagle.copyScaleFactors(slot, parentNegAncestorCum);
-            } else {
-                beagle.resetScaleFactors(slot);
+            // rebuilt only when its inputs changed: the slot keeps its contents between gradients
+            if (!likelihoodDelegate.isNegAncestorScaleBufferCurrent(slot, parentNegAncestorCum, parentIndividual)) {
+                if (parentNegAncestorCum != Beagle.NONE) {
+                    beagle.copyScaleFactors(slot, parentNegAncestorCum);
+                } else {
+                    beagle.resetScaleFactors(slot);
+                }
+                beagle.removeScaleFactors(new int[]{parentIndividual}, 1, slot);
+                likelihoodDelegate.markNegAncestorScaleBufferBuilt(slot, parentNegAncestorCum, parentIndividual);
             }
-            beagle.removeScaleFactors(new int[]{parentIndividual}, 1, slot);
             negAncestorCumulativeScaleBufferIndex[nodeNumber] = slot;
         }
     }

@@ -578,6 +578,10 @@ jobs:
   #    ZIP is much smaller than four separate app-images would be.
   #    The runtime is automatically trimmed by jpackage's internal jlink to
   #    include only the modules the application actually uses.
+  #
+  #    The four GUI launchers are the whole package: there is no bin/ and no
+  #    command-line entry point, because a native Windows command line is not
+  #    supported. Windows users who want one run the Linux tarball under WSL.
   # ───────────────────────────────────────────────────────────────────────────
   windows-package:
     name: Package (Windows)

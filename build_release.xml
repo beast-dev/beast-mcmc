@@ -2,18 +2,18 @@
   build_release.xml
 
   ANT build file used by GitHub Actions to package BEAST X releases for
-  Mac, Windows and Linux. It is intentionally separate from build.xml so
+  Mac and Linux. It is intentionally separate from build.xml so
   that CI packaging concerns (pre-built JARs, hardened-runtime signing,
   GNU-tar archives) do not pollute the local development build.
 
-  Usage (all three targets run on a macOS runner):
+  The Windows ZIP is not built here: jpackage builds it directly in
+  .github/workflows/release.yml.
+
+  Usage (both targets run on a macOS runner):
 
     ant -f build_release.xml package-mac \
         -Dversion=10.5.1 \
         -Dapple.signer.app="Developer ID Application: ..."
-
-    ant -f build_release.xml package-windows \
-        -Dversion=10.5.1
 
     ant -f build_release.xml package-linux \
         -Dversion=10.5.1
@@ -54,7 +54,6 @@
          Version / release properties  (override with -D on CLI)
          ============================================================ -->
     <property name="version"           value="10.5.0"/>
-    <property name="version_number"    value="${version}"/>
     <property name="extra_release_tag" value=""/>
     <property name="jvm_version"       value="1.8+"/>
     <property name="copyright"         value="Copyright 2002-2025"/>
@@ -69,9 +68,7 @@
     <property name="common_dir"    value="${release_dir}/common"/>
     <property name="Mac_dir"       value="${release_dir}/Mac"/>
     <property name="Linux_dir"     value="${release_dir}/Linux"/>
-    <property name="Windows_dir"   value="${release_dir}/Windows"/>
     <property name="packaging_tools" value="packaging_tools"/>
-    <property name="Packaging_dir" value="${packaging_tools}/windows"/>
 
     <!-- Package / app names -->
     <property name="BEAST_name"              value="BEAST"/>
@@ -86,8 +83,6 @@
               value="${Mac_dir}/${BEAST_package_name} v${version}"/>
     <property name="Linux_package_dir"
               value="${Linux_dir}/${BEAST_package_name_linux}_v${version}"/>
-    <property name="Windows_package_dir"
-              value="${Windows_dir}/${BEAST_package_name} v${version}"/>
 
 
     <!-- ==============================================================
@@ -144,77 +139,6 @@
 
 
     <!-- ==============================================================
-         package-windows
-         Produces:  release/BEAST X v<version><tag>.zip
-         Runs on:   macOS runner (the repo ships the macOS launch4j binaries,
-                    which cross-compile Windows PE executables on macOS).
-         ============================================================== -->
-    <target name="package-windows" description="Package Windows release (cross-compiled on macOS)">
-        <delete dir="${Windows_package_dir}"/>
-        <mkdir  dir="${Windows_package_dir}"/>
-
-        <!-- launch4j is bundled with macOS binaries in packaging_tools/windows/launch4j -->
-        <property name="launch4j.dir" location="${Packaging_dir}/launch4j"/>
-        <taskdef name="launch4j"
-                 classname="net.sf.launch4j.ant.Launch4jTask"
-                 classpath="${launch4j.dir}/launch4j.jar${path.separator}${launch4j.dir}/lib/xstream.jar"/>
-
-        <copy todir="${Windows_package_dir}/examples">
-            <fileset dir="examples"/>
-        </copy>
-        <copy todir="${Windows_package_dir}/bin">
-            <fileset dir="${Windows_dir}/scripts"/>
-        </copy>
-        <copy file="${dist.dir}/beast.jar"  todir="${Windows_package_dir}/lib"/>
-        <copy file="${dist.dir}/beauti.jar" todir="${Windows_package_dir}/lib"/>
-
-
-        <!-- BEAUti -->
-        <launch4j configFile="${Windows_dir}/BEAUti_launch4j.xml"
-                  jar="${dist.dir}/beauti.jar"
-                  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- BEAST -->
-        <launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
-                  jar="${dist.dir}/beast.jar"
-                  outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- TreeAnnotator -->
-        <launch4j configFile="${Windows_dir}/TreeAnnotator_launch4j.xml"
-                  jar="${dist.dir}/beast.jar"
-                  outfile="${Windows_package_dir}/${TreeAnnotator_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- LogCombiner -->
-        <launch4j configFile="${Windows_dir}/LogCombiner_launch4j.xml"
-                  jar="${dist.dir}/beast.jar"
-                  outfile="${Windows_package_dir}/${LogCombiner_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <zip destfile="${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.zip">
-            <zipfileset dir="${Windows_package_dir}"
-                        prefix="${BEAST_package_name} v${version}"/>
-        </zip>
-
-        <echo message="Windows package: ${release_dir}/${BEAST_package_name} v${version}${extra_release_tag}.zip"/>
-    </target>
-
-
-    <!-- ==============================================================
          package-mac
          Produces:  release/Mac/BEAST X v<version>/  — staging directory
                     containing the four unsigned .app bundles.
@@ -229,8 +153,10 @@
         <delete dir="${Mac_package_dir}"/>
         <mkdir  dir="${Mac_package_dir}"/>
 
+        <!-- The Linux scripts: plain sh, and the Mac copies of them were identical
+             but for two stale heap sizes. One set to maintain, not two. -->
         <copy todir="${Mac_package_dir}/bin">
-            <fileset dir="${Mac_dir}/scripts"/>
+            <fileset dir="${Linux_dir}/scripts"/>
         </copy>
         <chmod dir="${Mac_package_dir}/bin" perm="755" includes="**/**"/>
 
@@ -255,6 +181,13 @@
                  classpath="${packaging_tools}/mac/jarbundler-core-3.3.0.jar"/>
 
         <!-- ── BEAST.app ────────────────────────────────────────── -->
+        <!-- No enable-native-access option here, although BEAST loads BEAGLE
+             with System.loadLibrary and JDK 24 and later warn about that. This
+             app runs on whatever Java the user has installed, and a JDK that
+             does not know the option refuses to start at all. The bin/beast
+             script probes for it instead; a warning in the Console is the
+             lesser of the two. The jpackage bundles pin Temurin 21, which does
+             not warn. -->
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAST_name} v${version}"
                     mainclass="dr.app.beast.BeastMain"
@@ -262,7 +195,7 @@
                     useJavaXKey="true"
                     icon="${common_dir}/icons/beast.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M -Djava.library.path=/usr/local/lib"
+                    vmoptions="-XX:MaxRAMPercentage=50 -Djava.library.path=/usr/local/lib"
                     arguments="-window -working -options"
                     highresolutioncapable="true"
                     version="${version}"
@@ -282,7 +215,7 @@
                     useJavaXKey="true"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M"
+                    vmoptions="-XX:MaxRAMPercentage=50"
                     arguments=""
                     version="${version}"
                     highresolutioncapable="true"
@@ -306,7 +239,7 @@
                     useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-Xmx2048M"
+                    vmoptions="-XX:MaxRAMPercentage=50"
                     highresolutioncapable="true"
                     arguments=""
                     version="${version}"
@@ -326,7 +259,7 @@
                     useJavaXKey="true"
                     icon="${common_dir}/icons/utility.icns"
                     jvmversion="${jvm_version}"
-                    vmoptions="-Xmx4096M"
+                    vmoptions="-XX:MaxRAMPercentage=50"
                     highresolutioncapable="true"
                     arguments=""
                     version="${version}"
@@ -412,9 +345,9 @@
     </target>
 
 
-    <!-- ── Convenience target: build all three packages ────────── -->
+    <!-- ── Convenience target: build both packages ─────────────── -->
     <target name="package-all"
-            depends="package-linux, package-windows, package-mac"
-            description="Build all three platform packages (macOS runner only)"/>
+            depends="package-linux, package-mac"
+            description="Build both platform packages (macOS runner only)"/>
 
 </project>

@@ -60,7 +60,6 @@ jobs:
 
     outputs:
       version:       ${{ steps.parse-tag.outputs.version }}
-      version_number: ${{ steps.parse-tag.outputs.version_number }}
       extra_tag:     ${{ steps.parse-tag.outputs.extra_tag }}
 
     steps:
@@ -88,7 +87,6 @@ jobs:
             EXTRA_TAG=""
           fi
           echo "version=$VERSION"        >> "$GITHUB_OUTPUT"
-          echo "version_number=$VERSION" >> "$GITHUB_OUTPUT"
           echo "extra_tag=$EXTRA_TAG"    >> "$GITHUB_OUTPUT"
           echo "Parsed: version=$VERSION  extra_tag=$EXTRA_TAG"
 
@@ -96,7 +94,6 @@ jobs:
         run: |
           ant -f build.xml dist \
             -Dversion="${{ steps.parse-tag.outputs.version }}" \
-            -Dversion_number="${{ steps.parse-tag.outputs.version_number }}" \
             -Dextra_release_tag="${{ steps.parse-tag.outputs.extra_tag }}"
 
       - name: Upload JAR artifact
@@ -141,7 +138,6 @@ jobs:
       - name: Set version env vars
         run: |
           echo "VERSION=${{ needs.build-jars.outputs.version }}"                  >> "$GITHUB_ENV"
-          echo "VERSION_NUMBER=${{ needs.build-jars.outputs.version_number }}"    >> "$GITHUB_ENV"
           echo "EXTRA_TAG=${{ needs.build-jars.outputs.extra_tag }}"              >> "$GITHUB_ENV"
 
       # ── Linux packaging ────────────────────────────────────────
@@ -149,7 +145,6 @@ jobs:
         run: |
           ant -f build_release.xml package-linux \
             -Dversion="$VERSION" \
-            -Dversion_number="$VERSION_NUMBER" \
             -Dextra_release_tag="$EXTRA_TAG" \
             -Ddist.dir=build/dist
 
@@ -257,7 +252,6 @@ jobs:
         run: |
           ant -f build_release.xml package-mac \
             -Dversion="$VERSION" \
-            -Dversion_number="$VERSION_NUMBER" \
             -Dextra_release_tag="$EXTRA_TAG" \
             -Ddist.dir=build/dist
 
@@ -346,7 +340,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beast.jar \
             --main-class dr.app.beast.BeastMain \
-            --java-options "-Xmx8192m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --arguments "-window" \
             --arguments "-working" \
             --arguments "-options" \
@@ -364,7 +358,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beauti.jar \
             --main-class dr.app.beauti.BeautiApp \
-            --java-options "-Xmx2048m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/beauti.icns" \
             --dest staging-mac
@@ -379,7 +373,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beast.jar \
             --main-class dr.app.tools.treeannotator.TreeAnnotator \
-            --java-options "-Xmx4096m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/utility.icns" \
             --dest staging-mac
@@ -394,7 +388,7 @@ jobs:
             --input jpackage-mac-input \
             --main-jar beast.jar \
             --main-class dr.app.tools.logcombiner.LogCombiner \
-            --java-options "-Xmx2048m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --runtime-image jpackage-runtime \
             --icon "${ICONS}/utility.icns" \
             --dest staging-mac
@@ -584,6 +578,10 @@ jobs:
   #    ZIP is much smaller than four separate app-images would be.
   #    The runtime is automatically trimmed by jpackage's internal jlink to
   #    include only the modules the application actually uses.
+  #
+  #    The four GUI launchers are the whole package: there is no bin/ and no
+  #    command-line entry point, because a native Windows command line is not
+  #    supported. Windows users who want one run the Linux tarball under WSL.
   # ───────────────────────────────────────────────────────────────────────────
   windows-package:
     name: Package (Windows)
@@ -613,7 +611,6 @@ jobs:
       - name: Set version env vars
         run: |
           echo "VERSION=${{ needs.build-jars.outputs.version }}"               >> "$GITHUB_ENV"
-          echo "VERSION_NUMBER=${{ needs.build-jars.outputs.version_number }}" >> "$GITHUB_ENV"
           echo "EXTRA_TAG=${{ needs.build-jars.outputs.extra_tag }}"           >> "$GITHUB_ENV"
 
       # Each additional launcher (BEAUTi, TreeAnnotator, LogCombiner) is
@@ -630,7 +627,7 @@ jobs:
           main-class=dr.app.beauti.BeautiApp
           main-jar=beauti.jar
           arguments=
-          java-options=-Xmx1024m
+          java-options=-XX:MaxRAMPercentage=50
           icon=release/common/icons/beauti.ico
           win-console=false
           EOF
@@ -639,7 +636,7 @@ jobs:
           main-class=dr.app.tools.treeannotator.TreeAnnotator
           main-jar=beast.jar
           arguments=
-          java-options=-Xmx4096m
+          java-options=-XX:MaxRAMPercentage=50
           icon=release/common/icons/utility.ico
           win-console=false
           EOF
@@ -648,7 +645,7 @@ jobs:
           main-class=dr.app.tools.logcombiner.LogCombiner
           main-jar=beast.jar
           arguments=
-          java-options=-Xmx2048m
+          java-options=-XX:MaxRAMPercentage=50
           icon=release/common/icons/utility.ico
           win-console=false
           EOF
@@ -671,7 +668,7 @@ jobs:
             --input jpackage-input \
             --main-jar beast.jar \
             --main-class dr.app.beast.BeastMain \
-            --java-options "-Xmx8192m" \
+            --java-options "-XX:MaxRAMPercentage=50" \
             --arguments "-window" \
             --arguments "-working" \
             --arguments "-options" \

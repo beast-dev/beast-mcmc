@@ -24,6 +24,7 @@ __pycache__
 !examples/**/*.xml
 !examples/data
 benchmarking/Results/
+optimization_notes/mat*
 !tests/**/*.xml
 !build*.xml
 

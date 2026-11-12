@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../delphy"
+		},
+		{
+			"path": "../beast-benchmark"
+		},
+		{
+			"path": "../beast-performance"
+		},
+		{
+			"path": "../beagle-lib"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "beast-benchmark",
+		"java.configuration.updateBuildConfiguration": "interactive"
+	}
+}

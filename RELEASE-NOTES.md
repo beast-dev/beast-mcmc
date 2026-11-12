@@ -241,10 +241,6 @@ list of changes and bug fixes is in [CHANGELOG.md](CHANGELOG.md).
   loaded is suppressed, by the `beast.jar` manifest when running with
   `java -jar` and by the Mac and Linux launch scripts.
 
-- **Platform changes.** Stopping a run no longer relies on the removed
-  `Thread.stop`, the Linux release includes the BEASTGen shell scripts, and
-  the Windows launcher configuration has been updated.
-
 - **Packaging.** The macOS and Windows releases are built with `jpackage`,
   the applications are named "BEAST X", and the macOS packages are signed
   and notarised.

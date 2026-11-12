@@ -7,14 +7,9 @@ All issues are tracked at https://github.com/beast-dev/beast-mcmc/issues
 
 ---
 
-## BEAST X v10.6.0 *(in development)*
+## BEAST X v10.6.0
 
-This section covers every change on `main` since the v10.5.0 release (2 July 2025).
-Several of the new models arrived through the long-running `hmc-clock`,
-`BigFastTreeModel` and `freerate` branches and so carry commit dates earlier than
-the v10.5.0 tag; none of them was in the v10.5.0 release. Unless noted, new XML
-elements are registered in `development_parsers.properties`, which is the parser
-set loaded by default (`parsers=development` in `beast.properties`).
+Changes since the v10.5.0 release (2 July 2025).
 
 ### Compatibility notes
 

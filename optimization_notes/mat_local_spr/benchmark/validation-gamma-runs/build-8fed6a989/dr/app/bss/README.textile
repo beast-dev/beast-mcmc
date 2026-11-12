@@ -1,0 +1,47 @@
+h1. BUSS 
+
+* Beast/Beagle utility for sequence simulation*
+
+h1. LICENSE
+
+  This is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as
+  published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+ 
+   This software is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   "GNU Lesser General Public License":http://www.gnu.org/licenses/lgpl.html for more details.
+   
+h1. PURPOSE
+
+Fast & furious sequence simulator in Beast/Beagle.  
+
+h1. CITING
+
+  To cite BUSS in publications, please use:
+         
+          AAA
+         
+        A BibTeX entry for LaTeX users:
+         
+          article{
+            author = {},
+            title = {},
+          }
+   
+h1. TODO
+* export tree with branches in subst/site
+* lognormal clock real scale / log scale in GUI 
+* change save/load to JSON
+* error handling
+* PIBUSS bug with newick import (Importer line 199 read method). Does not happen if first char is newline
+* boolean switch for real/log scales for the parameters of lognormal clock model 
+* parser for output type should be case insensitive
+* fix simulation-inference XML problem when using codons
+* output type not updated after loading bussdata
+* tree/taxa not set in Partitions table after loading bussdata
+* simulating indels  
+* command line interface
+  - complex argument for partitions 

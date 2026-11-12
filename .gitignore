@@ -15,6 +15,7 @@ problem_cases
 .idea
 .DS_Store
 __pycache__
+.code-workspace
 
 *.log
 *.trees

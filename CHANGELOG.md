@@ -485,6 +485,11 @@ set loaded by default (`parsers=development` in `beast.properties`).
   sampled trees** — such clades get a posterior of 0 and keep their target-tree height.
 - Fixed wrong attribute names in the annotated tree, and `-heights keep` being accepted
   for HIPSTR trees, where it is not meaningful.
+- **Fixed BEAGLE not being found on Apple Silicon Macs** — BEAST looks in
+  `/opt/homebrew/lib` as well as `/usr/local/lib`. Homebrew installs there on arm64, so a
+  brew-installed BEAGLE was invisible to both `bin/beast` and BEAST.app, and the failure is
+  quiet: BEAST reports no BEAGLE resources and runs the slower Java likelihood rather than
+  stopping.
 
 ### Other changes
 
@@ -495,7 +500,7 @@ set loaded by default (`parsers=development` in `beast.properties`).
   names containing an apostrophe can be written and read back.
 - BEAGLE is loaded with `System.loadLibrary`, which JDK 24 and later warn about unless
   native access is enabled: the `beast.jar` manifest enables it for `java -jar`, and the
-  Mac and Linux `beast` scripts add the option when the installed Java accepts it.
+  `beast` script adds the option when the installed Java accepts it.
 - The warning that a likelihood was created but not used by the MCMC now says "(no ID)"
   for a likelihood that has no id, rather than "(id: null)".
   ([#1019](https://github.com/beast-dev/beast-mcmc/issues/1019))
@@ -506,6 +511,17 @@ set loaded by default (`parsers=development` in `beast.properties`).
   with `jpackage`), a Windows `jpackage` image sharing one Temurin runtime between BEAST X,
   BEAUti, TreeAnnotator and LogCombiner, and a Linux tarball that includes the BEASTGen
   shell scripts. The applications are named "BEAST X".
+- **Heap sizes** are set as a fraction of the machine's memory (`-XX:MaxRAMPercentage=50`)
+  rather than the fixed `-Xmx` values each launcher carried, which ranged from 1024m to
+  8192m and differed between the script and the packaged application for the same tool. A
+  few thousand sequences of a few tens of thousands of sites exhausted BEAST's old 2 GB
+  while the likelihood was still being set up, before the chain started. The percentage is
+  a ceiling rather than a reservation, so a small analysis still uses very little, and it
+  keeps pace with whatever machine BEAST is run on. `BEAST_XMX=8g beast ...` fixes a size
+  instead. On a machine with less than 8 GB, TreeAnnotator now has a lower ceiling than its
+  former 4096m.
+- The Mac package ships the same `bin/` scripts as the Linux one. The Mac copies were
+  identical but for two stale heap sizes, so there is one set to maintain rather than two.
 - BEAUti has a headless test that compares the XML generated for 34 combinations of data
   and model choices with stored snapshots, and some 800 lines of commented-out code and
   seven unused classes were removed.

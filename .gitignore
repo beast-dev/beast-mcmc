@@ -8,7 +8,7 @@ out/
 packaging_tools/**/.*
 Testing/
 tests
-test*
+/test*
 examples/**/.*
 benchmarking
 problem_cases

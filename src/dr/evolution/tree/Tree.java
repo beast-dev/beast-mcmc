@@ -169,6 +169,16 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
      */
     Tree getCopy();
 
+    /**
+     * @param attributeName the name of an attribute
+     * @return whether the attribute is a branch attribute (as opposed to a node attribute).
+     * By default, attributes are node attributes, so this method returns false unless
+     * overridden in a concrete implementation.
+     */
+    default boolean isBranchAttribute(String attributeName) {
+        return false;
+    }
+
     static double getTreeLength(Tree tree) {
         double treeLength = 0;
         for (int i = 0; i < tree.getNodeCount(); i++) {

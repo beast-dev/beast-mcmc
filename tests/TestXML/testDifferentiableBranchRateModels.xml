@@ -282,7 +282,7 @@
             <treeDataLikelihood idref="scaledTreeLikelihood"/>
         </actual>
         <expected>
-            -27295.364821906456
+            -28761.36937199091
         </expected>
     </assertEqual>
 

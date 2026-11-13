@@ -28,7 +28,7 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.model.Parameter;
-import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
+import dr.math.distributions.gp.GaussianProcessField;
 import dr.math.distributions.gp.GaussianProcessConditionalDerivative;
 import dr.xml.*;
 
@@ -44,8 +44,8 @@ public class GaussianProcessConditionalDerivativeParser extends AbstractXMLObjec
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        AdditiveGaussianProcessDistribution gp = (AdditiveGaussianProcessDistribution)
-                xo.getChild(AdditiveGaussianProcessDistribution.class);
+        GaussianProcessField gp = (GaussianProcessField)
+                xo.getChild(GaussianProcessField.class);
 
         Parameter field = (Parameter) xo.getChild(FIELD).getChild(Parameter.class);
 
@@ -64,7 +64,7 @@ public class GaussianProcessConditionalDerivativeParser extends AbstractXMLObjec
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(AdditiveGaussianProcessDistribution.class),
+            new ElementRule(GaussianProcessField.class),
             new ElementRule(FIELD, Parameter.class),
             new ElementRule(PRIORMEAN, Parameter.class, "Specify the prior mean of the gp derivative", true)
     };

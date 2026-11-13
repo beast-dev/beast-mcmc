@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static beagle.basta.BeagleBasta.BASTA_OPERATION_SIZE;
+import static dr.evomodel.treedatalikelihood.BeagleFunctionality.IS_BASTA_GRADIENT_SUPPORTED;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyIntegerArray;
 
 public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelegate.AbstractBastaLikelihoodDelegate {
@@ -122,6 +123,14 @@ public class AdjointGenericBastaLikelihoodDelegate extends BastaLikelihoodDelega
     }
 
     private BeagleBasta createBeagleInstance(Tree tree, int stateCount) {
+        if (!IS_BASTA_GRADIENT_SUPPORTED()) {
+            // an older BEAGLE-BIT lacks getBastaSlabConstants and allocateCoalescentGradBuffers, and its
+            // accumulateBastaPartialsGrad takes 9 arguments, not 13: use Java, as when no BEAGLE-BIT is found
+            Logger.getLogger("dr.evomodel").info("  BASTA adjoint gradients through BEAGLE need native BEAGLE 4.2.0 " +
+                    "or later; found " + BeagleInfo.getVersion() + ", so using Java");
+            return null;
+        }
+
         List<Integer> resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
         List<Integer> preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
         List<Integer> requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);

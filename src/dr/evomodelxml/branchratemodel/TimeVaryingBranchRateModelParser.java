@@ -46,14 +46,15 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
     private static final String NUM_GRID_POINTS = GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS;
     private static final String CUT_OFF = GMRFSkyrideLikelihoodParser.CUT_OFF;
     private static final String SLOPE = "slope";
+    private static final String INTEGRATEDTRANSFORMEDSPLINES = "splines";
     private static final String FUNCTIONAL_FORM = "functionalForm";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
-        IntegratedTransformedSplines splines =
-                (IntegratedTransformedSplines) xo.getChild(IntegratedTransformedSplines.class);
+        IntegratedTransformedSplines splines = xo.hasChildNamed(INTEGRATEDTRANSFORMEDSPLINES) ?
+                (IntegratedTransformedSplines) xo.getChild(IntegratedTransformedSplines.class) : null;
         Parameter rates = (Parameter) xo.getElementFirstChild(RATES);
         Parameter gridPoints = getGridPoints(xo);
         Parameter slope = xo.hasChildNamed(SLOPE) ?
@@ -89,7 +90,7 @@ public class TimeVaryingBranchRateModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Tree.class),
-            new ElementRule(IntegratedTransformedSplines.class),
+            new ElementRule(IntegratedTransformedSplines.class, true),
             new ElementRule(RATES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),

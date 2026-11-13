@@ -1,0 +1,86 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+	<parameter id="gamma.draw" value="5" lower="0.0"/>
+	<parameter id="normal.draw" value="1"/>
+
+	<gammaPrior id="gamma.distribution" shape="0.1" scale="1">
+		<parameter idref="gamma.draw"/>
+	</gammaPrior>
+
+	<normalPrior id="normal.distribution" mean="-5" stdev="2">
+		<parameter idref="normal.draw"/>
+	</normalPrior>
+
+	<gradient id="gamma.gradient">
+		<gammaPrior idref="gamma.distribution"/>
+		<parameter idref="gamma.draw"/>
+	</gradient>
+
+	<gradient id="normal.gradient">
+		<gammaPrior idref="normal.distribution"/>
+		<parameter idref="normal.draw"/>
+	</gradient>
+
+	<compoundParameter id="both.draw">
+		<parameter idref="gamma.draw"/>
+		<parameter idref="normal.draw"/>
+	</compoundParameter>
+
+	<compoundGradient id="both.gradient">
+		<gradient idref="gamma.gradient"/>
+		<gradient idref="normal.gradient"/>
+	</compoundGradient>
+
+	<report>
+		<gradient idref="both.gradient"/>
+	</report>
+
+	<operators id="operators">
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="100" stepSize="1" mode="vanilla"
+ 			gradientCheckCount="100000"
+ 			gradientCheckTolerance="1E-2"
+ 			autoOptimize="true">
+ 			<gradient idref="both.gradient"/>
+			<parameter idref="both.draw"/>
+			<signTransform start="1" end="1">
+				<parameter idref="both.draw"/>
+			</signTransform>
+ 		</hamiltonianMonteCarloOperator>
+	</operators>
+
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="true">
+        <posterior>
+        	<dummyLikelihood>
+        		<gammaPrior idref="gamma.distribution"/>
+        		<parameter idref="gamma.draw"/>
+        	</dummyLikelihood>
+        	<dummyLikelihood>
+        		<gammaPrior idref="normal.distribution"/>
+        		<parameter idref="normal.draw"/>
+        	</dummyLikelihood>
+        	<gammaPrior idref="gamma.distribution"/>
+        	<normalPrior idref="normal.distribution"/>
+        </posterior>
+        <operators idref="operators"/>
+		<log logEvery="1000">
+			<column label="posterior" dp="4" width="12">
+				<distributionLikelihood idref="gamma.distribution"/>
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="both.draw"/>
+			</column>
+		</log>
+		<log logEvery="1" fileName="testTransformedHmc.log">
+			<parameter idref="both.draw"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<gradient idref="both.gradient"/>
+	</report>
+
+	<traceAnalysis fileName="testTransformedHmc.log" stdError="true"/>
+
+</beast>

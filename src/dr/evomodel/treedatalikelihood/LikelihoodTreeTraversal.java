@@ -36,7 +36,7 @@ import java.util.*;
 /**
  * Created by msuchard on 10/6/16.
  */
-public final class LikelihoodTreeTraversal extends TreeTraversal {
+public class LikelihoodTreeTraversal extends TreeTraversal {
 
 
     public LikelihoodTreeTraversal(final Tree treeModel,
@@ -46,7 +46,7 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
     }
 
     @Override
-    public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
+    public void dispatchTreeTraversalCollectBranchAndNodeOperations() {
         branchOperations.clear();
         nodeOperations.clear();
 
@@ -78,17 +78,18 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
      * @return boolean
      */
     private void traversePostOrder(Tree tree) {
-        traversePostOrder(tree, tree.getRoot());
+        traversePostOrder(tree, tree.getRoot(), 0);
     }
 
     /**
      * Traverse the tree in post order.
      *
-     * @param tree tree
-     * @param node node
+     * @param tree  tree
+     * @param node  node
+     * @param level depth of node below the root (root = 0)
      * @return boolean
      */
-    private boolean traversePostOrder(Tree tree, NodeRef node) {
+    protected boolean traversePostOrder(Tree tree, NodeRef node, int level) {
 
         boolean update = false;
 
@@ -96,7 +97,7 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
 
         // First update the transition probability matrix(ices) for this branch
         if (tree.getParent(node) != null && updateNode[nodeNum]) {
-            addBranchUpdateOperation(tree, node);
+            addBranchOperations(tree, node);
 
             update = true;
         }
@@ -106,23 +107,59 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traversePostOrder(tree, child1);
+            final boolean update1 = traversePostOrder(tree, child1, getChildLevel(tree, child1, level));
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traversePostOrder(tree, child2);
+            final boolean update2 = traversePostOrder(tree, child2, getChildLevel(tree, child2, level));
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
-                nodeOperations.add(new DataLikelihoodDelegate.NodeOperation(nodeNum, child1.getNumber(), child2.getNumber()));
+                nodeOperations.add(new DataLikelihoodDelegate.NodeOperation(nodeNum,
+                        getInputNodeNumber(child1), getInputNodeNumber(child2), level));
 
                 update = true;
 
             }
         }
 
+        if (update && tree.getParent(node) != null) {
+            afterNodeOperation(tree, node, level);
+        }
+
         return update;
 
+    }
+
+    /**
+     * Hook: called on a parent before it descends into child, and for every child (updated or not).
+     *
+     * @return the level of child
+     */
+    protected int getChildLevel(final Tree tree, final NodeRef child, final int parentLevel) {
+        return parentLevel + 1;
+    }
+
+    /**
+     * Hook: adds the operations that update the transition probability matrices of the branch above node.
+     */
+    protected void addBranchOperations(final Tree tree, final NodeRef node) {
+        addBranchUpdateOperation(tree, node);
+    }
+
+    /**
+     * Hook: the buffer that the parent of child reads as its input from child.
+     */
+    protected int getInputNodeNumber(final NodeRef child) {
+        return child.getNumber();
+    }
+
+    /**
+     * Hook: called after the operation for node (if any) has been added, when node or its branch was updated
+     * and node is not the root. Used to add operations that lie between node and its parent.
+     */
+    protected void afterNodeOperation(final Tree tree, final NodeRef node, final int level) {
+        // do nothing
     }
 
     /**
@@ -209,13 +246,13 @@ public final class LikelihoodTreeTraversal extends TreeTraversal {
      * @param tree tree
      * @param node node
      */
-    private void addBranchUpdateOperation(final Tree tree, final NodeRef node) {
+    protected void addBranchUpdateOperation(final Tree tree, final NodeRef node) {
         branchOperations.add(new DataLikelihoodDelegate.BranchOperation(node.getNumber(),
                 computeBranchLength(tree, node)));
     }
 
-    private final List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
-    private final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
+    protected final List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<DataLikelihoodDelegate.BranchOperation>();
+    protected final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<DataLikelihoodDelegate.NodeOperation>();
 
     private List<DataLikelihoodDelegate.BranchNodeOperation> savedWholeTreeBranchOperations;
     private List<DataLikelihoodDelegate.NodeOperation> savedWholeTreeNodeOperations;

@@ -30,7 +30,6 @@ package dr.evomodelxml.treedatalikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
@@ -55,7 +54,9 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -116,20 +117,26 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
         }
 
-        List<Taxon> treeTaxa = treeModel.asList();
-        List<Taxon> patternTaxa = patternLists.get(0).asList();
-
-        if (!patternTaxa.containsAll(treeTaxa)) {
-            throw new XMLParseException("TreeModel "+ treeModel.getId() + " contains more taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() + ").");
+        // Every taxon of a partition must be in the tree. A taxon of the tree that a partition does not have is a
+        // ghost in that partition: it has no data there, and nothing is computed for a subtree made only of ghosts.
+        boolean hasGhosts = false;
+        for (PatternList patterns : patternLists) {
+            List<String> ghosts = findGhostTaxa(treeModel, patterns);
+            if (!ghosts.isEmpty()) {
+                hasGhosts = true;
+                logGhostTaxa(logger, patterns, ghosts, treeModel.getExternalNodeCount());
+            }
         }
 
-        if (!treeTaxa.containsAll(patternTaxa)) {
-            throw new XMLParseException("TreeModel " + treeModel.getId() + " contains fewer taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() +").");
+        if (hasGhosts && phyloGeoFast) {
+            throw new XMLParseException("The tree, " + treeModel.getId() + ", has taxa that are not in a pattern " +
+                    "list, which phyloGeoFast does not support");
         }
 
         boolean useBeagle3MultiPartition = false;
 
-        if (patternLists.size() > 1) {
+        // the multi-partition delegate has no ghosts
+        if (patternLists.size() > 1 && !hasGhosts) {
             // will currently recommend true if using GPU, CUDA or OpenCL.
             useBeagle3MultiPartition = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
 
@@ -305,7 +312,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                 preferGPU,
                                 scalingScheme,
                                 delayRescalingUntilUnderflow,
-                                settings);
+                                settings,
+                                null,
+                                null,
+                                true);
                     } catch (NumberFormatException nfe) { // a malformed -Dbeagle.* property, not an XML error
                         throw nfe;
                     } catch (IllegalArgumentException iae) { // e.g., a feature that the native BEAGLE lacks
@@ -562,6 +572,59 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
     public Class getReturnType() {
         return Likelihood.class;
+    }
+
+    /**
+     * @return the ids of the taxa of the tree that are not in the pattern list, in the order of the tree's tips
+     * @throws XMLParseException if the pattern list has a taxon that the tree does not, or none that it does
+     */
+    private static List<String> findGhostTaxa(Tree tree, PatternList patterns) throws XMLParseException {
+        Set<String> treeIds = new HashSet<String>();
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            treeIds.add(tree.getTaxonId(i));
+        }
+
+        Set<String> patternIds = new HashSet<String>();
+        for (int i = 0; i < patterns.getTaxonCount(); i++) {
+            String id = patterns.getTaxonId(i);
+            if (!treeIds.contains(id)) {
+                throw new XMLParseException("The pattern list, " + patterns.getId() + ", has a taxon, " + id +
+                        ", that is not in the tree, " + tree.getId());
+            }
+            patternIds.add(id);
+        }
+
+        List<String> ghosts = new ArrayList<String>();
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            if (!patternIds.contains(tree.getTaxonId(i))) {
+                ghosts.add(tree.getTaxonId(i));
+            }
+        }
+
+        if (ghosts.size() == tree.getExternalNodeCount()) {
+            throw new XMLParseException("The pattern list, " + patterns.getId() + ", has none of the taxa in the " +
+                    "tree, " + tree.getId());
+        }
+        return ghosts;
+    }
+
+    /**
+     * Says which taxa a partition has no sequences for, since a taxon left out of an alignment by mistake is not an
+     * error.
+     */
+    private static void logGhostTaxa(Logger logger, PatternList patterns, List<String> ghosts, int taxonCount) {
+        final int shown = 20;
+        StringBuilder sb = new StringBuilder("  ");
+        sb.append(ghosts.size()).append(" of the ").append(taxonCount).append(" taxa in the tree are not in ")
+                .append(patterns.getId() != null ? patterns.getId() : "a partition")
+                .append(" and have no data in it: ");
+        for (int i = 0; i < Math.min(shown, ghosts.size()); i++) {
+            sb.append(i > 0 ? ", " : "").append(ghosts.get(i));
+        }
+        if (ghosts.size() > shown) {
+            sb.append(" and ").append(ghosts.size() - shown).append(" more");
+        }
+        logger.info(sb.toString());
     }
 
     public static final XMLSyntaxRule[] rules = {

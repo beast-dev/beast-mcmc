@@ -86,6 +86,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private static final String THREAD_COUNT = "beagle.thread.count";
     // keep BEAGLE buffers for every augmented epoch node the tree can have, instead of growing them on demand
     private static final String PREALLOCATE_AUGMENTED_PROPERTY = "beagle.augmented.preallocate";
+    // set to false to compute nodes with one ghost child through an all-unknown tip instead of a one-child operation
+    public static final String GHOST_ONE_CHILD_PROPERTY = "beagle.ghost.one.child";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -127,6 +129,27 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                                         PreOrderSettings settings,
                                         Parameter siteAssignInd,
                                         Parameter partitionCat) {
+        this(tree, patternList, branchModel, siteRateModel, useAmbiguities, preferGPU, rescalingScheme,
+                delayRescalingUntilUnderflow, settings, siteAssignInd, partitionCat, false);
+    }
+
+    /**
+     * @param allowGhostTaxa if true, taxa of the tree that are not in the pattern list are ghosts: they have no data
+     *                       in this partition, so nothing is computed for any subtree made only of them. If false,
+     *                       such a taxon is an error.
+     */
+    public BeagleDataLikelihoodDelegate(Tree tree,
+                                        PatternList patternList,
+                                        BranchModel branchModel,
+                                        SiteRateModel siteRateModel,
+                                        boolean useAmbiguities,
+                                        boolean preferGPU,
+                                        PartialsRescalingScheme rescalingScheme,
+                                        boolean delayRescalingUntilUnderflow,
+                                        PreOrderSettings settings,
+                                        Parameter siteAssignInd,
+                                        Parameter partitionCat,
+                                        boolean allowGhostTaxa) {
 
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
@@ -181,6 +204,26 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
         internalNodeCount = nodeCount - tipCount;
+
+        isGhostTip = allowGhostTaxa ? findGhostTips(tree, patternList) : null;
+        if (isGhostTip != null) {
+            final int ghostCount = countGhosts(isGhostTip);
+            if (ghostCount == tipCount) {
+                throw new IllegalArgumentException("The pattern list, " + patternList.getId() +
+                        ", has none of the taxa in the tree, " + tree.getId());
+            }
+            // these read the partials, matrices and scale factors of every node, and ghosts have none
+            if (settings.usePreOrder || settings.branchInfinitesimalDerivative) {
+                throw new IllegalArgumentException("The tree, " + tree.getId() + ", has " + ghostCount +
+                        " taxa that are not in the pattern list, " + patternList.getId() +
+                        ", which cannot be combined with pre-order partials or gradients (usePreOrder=\"true\")");
+            }
+            if (settings.useAugmentedEpochNodes) {
+                throw new IllegalArgumentException("The tree, " + tree.getId() + ", has " + ghostCount +
+                        " taxa that are not in the pattern list, " + patternList.getId() +
+                        ", which cannot yet be combined with augmented epoch nodes (useAugmentedEpochNodes=\"true\")");
+            }
+        }
 
         // BEAGLE's spectral implementations keep the eigen information of each branch instead of its transition
         // matrix, so there are no matrices to convolve
@@ -629,8 +672,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 int index = patternList.getTaxonIndex(id);
 
                 if (index == -1) {
-                    throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
-                            ", is not found in patternList, " + patternList.getId());
+                    if (isGhostTip == null || !isGhostTip[i]) {
+                        throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
+                                ", is not found in patternList, " + patternList.getId());
+                    }
+                    // all unknown, so that it can stand in for a ghost subtree when one-child operations are not used
+                    setGhostTip(beagle, i, useAmbiguities);
                 } else {
                     if (useAmbiguities) {
                         setPartials(beagle, patternList, index, i);
@@ -641,6 +688,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             }
 
             beagle.setPatternWeights(patternWeights);
+
+            if (isGhostTip != null) {
+                setUpGhosts(logger);
+            }
 
             if (epochDelegate != null) {
                 logger.info("    Adding degree-2 nodes at the epoch transition times (up to "
@@ -979,11 +1030,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             recomputeScaleFactors = false;
         }
 
+        int becameRealCount = 0;
+        if (nodeStatus != null) {
+            becameRealCount = updateGhostStatus(nodeOperations);
+        }
+
         int branchUpdateCount = 0;
-        for (BranchOperation op : branchOperations) {
-            branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
-            branchLengths[branchUpdateCount] = op.getBranchLength();
-            branchUpdateCount ++;
+        if (nodeStatus == null) {
+            for (BranchOperation op : branchOperations) {
+                branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
+                branchLengths[branchUpdateCount] = op.getBranchLength();
+                branchUpdateCount++;
+            }
+        } else {
+            branchUpdateCount = collectRealBranches(branchOperations, becameRealCount, rootNodeNumber);
         }
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
@@ -1027,20 +1087,51 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         if (flip) {
             // Flip all the buffers to be written to first...
             for (NodeOperation op : nodeOperations) {
-                partialBufferHelper.flipOffset(op.getNodeNumber());
+                if (nodeStatus == null || nodeStatus[op.getNodeNumber()] != GHOST) {
+                    partialBufferHelper.flipOffset(op.getNodeNumber());
+                }
             }
         }
 
-        int operationCount = nodeOperations.size();
+        int operationCount = 0;
         int k = 0;
         for (NodeOperation op : nodeOperations) {
             int nodeNum = op.getNodeNumber();
 
+            int leftChild = op.getLeftChild();
+            int rightChild = op.getRightChild();
+            int rightMatrixNode = rightChild;
+
+            if (nodeStatus != null) {
+                final byte status = nodeStatus[nodeNum];
+                if (status == GHOST) {
+                    // nothing below this node has any data, so it contributes nothing and is not computed
+                    continue;
+                }
+                if (status == ONE_CHILD) {
+                    final int realChild = (nodeStatus[leftChild] == GHOST) ? rightChild : leftChild;
+                    if (useOneChildOperations) {
+                        operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+                        setDegree2Operation(k, realChild);
+                        k += Beagle.OPERATION_TUPLE_SIZE;
+                        operationCount++;
+                        continue;
+                    }
+                    // an all-unknown tip stands in for the ghost subtree: its contribution is one whatever the
+                    // matrix, so the real child's matrix is used for it too
+                    leftChild = realChild;
+                    rightChild = ghostTipNumber;
+                    rightMatrixNode = realChild;
+                }
+            }
+
+            operationCount++;
+
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-            if (op.getRightChild() == NodeOperation.NO_CHILD) {
+            if (rightChild == NodeOperation.NO_CHILD) {
                 // A degree-2 node has one child and is never rescaled
-                setDegree2Operation(k, op);
+                setDegree2Operation(k, leftChild);
                 k += Beagle.OPERATION_TUPLE_SIZE;
                 continue;
             }
@@ -1077,10 +1168,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 operations[k + 2] = Beagle.NONE;
             }
 
-            operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-            operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
-            operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
-            operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+            operations[k + 3] = partialBufferHelper.getOffsetIndex(leftChild); // source node 1
+            operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(leftChild); // source matrix 1
+            operations[k + 5] = partialBufferHelper.getOffsetIndex(rightChild); // source node 2
+            operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(rightMatrixNode); // source matrix 2
 
             k += Beagle.OPERATION_TUPLE_SIZE;
         }
@@ -1096,17 +1187,25 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
         int cumulateScaleBufferIndex = Beagle.NONE;
 
+        int[] accumulatedScaleBuffers = scaleBufferIndices;
+        int accumulatedScaleBufferCount = internalNodeCount;
+        if (nodeStatus != null && (useScaleFactors || useAutoScaling)) {
+            accumulatedScaleBufferCount = collectScaledNodes();
+            accumulatedScaleBuffers = scaledNodeBufferIndices;
+        }
+
         if (useScaleFactors) {
             if (recomputeScaleFactors) {
                 scaleBufferHelper.flipOffset(internalNodeCount);
                 cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
                 beagle.resetScaleFactors(cumulateScaleBufferIndex);
-                beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
+                beagle.accumulateScaleFactors(accumulatedScaleBuffers, accumulatedScaleBufferCount,
+                        cumulateScaleBufferIndex);
             } else {
                 cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
             }
         } else if (useAutoScaling) {
-            beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
+            beagle.accumulateScaleFactors(accumulatedScaleBuffers, accumulatedScaleBufferCount, Beagle.NONE);
         }
 
         double[] sumLogLikelihoods = new double[1];
@@ -1275,6 +1374,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         partialBufferHelper.storeState();
         evolutionaryProcessDelegate.storeState();
 
+        if (nodeStatus != null) {
+            System.arraycopy(nodeStatus, 0, storedNodeStatus, 0, nodeStatus.length);
+            System.arraycopy(ghostBranchLengths, 0, storedGhostBranchLengths, 0, ghostBranchLengths.length);
+        }
+
         if (useScaleFactors || useAutoScaling) { // Only store when actually used
             scaleBufferHelper.storeState();
             System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
@@ -1308,6 +1412,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         partialBufferHelper.restoreState();
         evolutionaryProcessDelegate.restoreState();
 
+        if (nodeStatus != null) {
+            byte[] tmpStatus = storedNodeStatus;
+            storedNodeStatus = nodeStatus;
+            nodeStatus = tmpStatus;
+
+            double[] tmpLengths = storedGhostBranchLengths;
+            storedGhostBranchLengths = ghostBranchLengths;
+            ghostBranchLengths = tmpLengths;
+        }
+
         if (useScaleFactors || useAutoScaling) {
             scaleBufferHelper.restoreState();
             int[] tmp = storedScaleBufferIndices;
@@ -1330,12 +1444,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
      * second child is Beagle.NONE. Rescaling the children keeps the scale factors valid because propagating along a
      * segment by a stochastic matrix cannot make partials any smaller.
      */
-    private void setDegree2Operation(int k, NodeOperation op) {
+    private void setDegree2Operation(int k, int child) {
         operations[k + 1] = Beagle.NONE; // Not writing scaleFactors
         operations[k + 2] = Beagle.NONE; // Not reading scaleFactors
 
-        operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-        operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+        operations[k + 3] = partialBufferHelper.getOffsetIndex(child); // source node 1
+        operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(child); // source matrix 1
 
         operations[k + 5] = Beagle.NONE; // no source node 2
         operations[k + 6] = Beagle.NONE;
@@ -1502,8 +1616,190 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     }
 
     // **************************************************************
+    // GHOST TAXA
+    // **************************************************************
+
+    /**
+     * @return for each tip of the tree, whether its taxon is missing from the pattern list, or null if none is
+     */
+    private static boolean[] findGhostTips(Tree tree, PatternList patternList) {
+        final int tipCount = tree.getExternalNodeCount();
+        boolean[] ghosts = null;
+        for (int i = 0; i < tipCount; i++) {
+            if (patternList.getTaxonIndex(tree.getTaxonId(i)) == -1) {
+                if (ghosts == null) {
+                    ghosts = new boolean[tipCount];
+                }
+                ghosts[i] = true;
+            }
+        }
+        return ghosts;
+    }
+
+    private static int countGhosts(boolean[] isGhostTip) {
+        int count = 0;
+        for (boolean ghost : isGhostTip) {
+            if (ghost) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Gives a ghost tip data that is unknown at every site: a state outside the state space, or partials of one.
+     */
+    private void setGhostTip(Beagle beagle, int nodeIndex, boolean useAmbiguities) {
+        if (useAmbiguities) {
+            double[] partials = new double[patternCount * stateCount * categoryCount];
+            Arrays.fill(partials, 1.0);
+            beagle.setPartials(nodeIndex, partials);
+        } else {
+            int[] states = new int[patternCount];
+            Arrays.fill(states, dataType.getUnknownState());
+            beagle.setTipStates(nodeIndex, states);
+        }
+    }
+
+    /**
+     * Sets up the status of every node and decides how a node with one ghost child is computed, now that the BEAGLE
+     * instance is known.
+     */
+    private void setUpGhosts(Logger logger) {
+        nodeStatus = new byte[nodeCount];       // internal nodes start as FULL, and are set by the first evaluation
+        storedNodeStatus = new byte[nodeCount];
+        ghostBranchLengths = new double[nodeCount];
+        storedGhostBranchLengths = new double[nodeCount];
+        becameReal = new int[nodeCount];
+        branchListed = new boolean[nodeCount];
+        scaledNodeBufferIndices = new int[internalNodeCount];
+
+        for (int i = 0; i < tipCount; i++) {
+            if (isGhostTip[i]) {
+                nodeStatus[i] = GHOST;
+                if (ghostTipNumber < 0) {
+                    ghostTipNumber = i;
+                }
+            }
+        }
+        System.arraycopy(nodeStatus, 0, storedNodeStatus, 0, nodeCount);
+
+        // One-child operations (a second child of Beagle.NONE) are only in BEAGLE's CPU implementations from 4.2.0,
+        // and not with BEAGLE's own rescaling. Otherwise an all-unknown tip stands in for the ghost subtree, which is
+        // exact too, and keeps whatever resource the user chose.
+        useOneChildOperations = IS_MATRIX_VECTOR_SUPPORTED()
+                && (instanceFlags & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0
+                && !useAutoScaling
+                && Boolean.parseBoolean(System.getProperty(GHOST_ONE_CHILD_PROPERTY, "true"));
+
+        logger.info("    " + countGhosts(isGhostTip) + " of the " + tipCount + " taxa in the tree have no sequences in " +
+                "this partition; subtrees of them alone are skipped and a node with one is computed " +
+                (useOneChildOperations ? "from its other child alone." : "with an all-unknown tip in its place."));
+    }
+
+    /**
+     * Sets the status of each node that is being updated from its children's, which come before it.
+     *
+     * @return how many nodes changed from GHOST to having data, now listed at the start of becameReal
+     */
+    private int updateGhostStatus(List<NodeOperation> nodeOperations) {
+        boolean changed = false;
+        int becameRealCount = 0;
+        for (NodeOperation op : nodeOperations) {
+            final int nodeNum = op.getNodeNumber();
+            final boolean leftGhost = nodeStatus[op.getLeftChild()] == GHOST;
+            final boolean rightGhost = nodeStatus[op.getRightChild()] == GHOST;
+            final byte status = leftGhost ? (rightGhost ? GHOST : ONE_CHILD) : (rightGhost ? ONE_CHILD : FULL);
+
+            if (status != nodeStatus[nodeNum]) {
+                if (nodeStatus[nodeNum] == GHOST) {
+                    becameReal[becameRealCount++] = nodeNum;
+                }
+                nodeStatus[nodeNum] = status;
+                changed = true;
+            }
+        }
+
+        // a node that has changed status has no scale factor of its own to reuse, so recompute them
+        if (changed && useScaleFactors) {
+            recomputeScaleFactors = true;
+        }
+        return becameRealCount;
+    }
+
+    /**
+     * Lists the branches whose matrices are needed: those of the updated nodes that have data, and those of nodes
+     * that have just stopped being ghosts, whose matrices were not kept up to date while they were. The length of
+     * every branch is remembered, ghost or not, for when it is needed.
+     *
+     * @return the number of branches listed in branchUpdateIndices and branchLengths
+     */
+    private int collectRealBranches(List<BranchOperation> branchOperations, int becameRealCount, int rootNodeNumber) {
+        int count = 0;
+        for (BranchOperation op : branchOperations) {
+            final int branch = op.getBranchNumber();
+            ghostBranchLengths[branch] = op.getBranchLength();
+            if (nodeStatus[branch] != GHOST) {
+                branchUpdateIndices[count] = branch;
+                branchLengths[count] = op.getBranchLength();
+                branchListed[branch] = true;
+                count++;
+            }
+        }
+
+        for (int i = 0; i < becameRealCount; i++) {
+            final int node = becameReal[i];
+            if (node != rootNodeNumber && !branchListed[node]) {
+                branchUpdateIndices[count] = node;
+                branchLengths[count] = ghostBranchLengths[node];
+                count++;
+            }
+        }
+
+        for (int i = 0; i < count; i++) {
+            branchListed[branchUpdateIndices[i]] = false;
+        }
+        return count;
+    }
+
+    /**
+     * Lists the scale buffers of the nodes whose partials carry a scale factor of their own: not ghosts, which were
+     * not computed, and not nodes computed from one child, which are never rescaled.
+     *
+     * @return the number of buffers listed in scaledNodeBufferIndices
+     */
+    private int collectScaledNodes() {
+        int count = 0;
+        for (int i = 0; i < internalNodeCount; i++) {
+            final byte status = nodeStatus[tipCount + i];
+            if (status == FULL || (status == ONE_CHILD && !useOneChildOperations)) {
+                scaledNodeBufferIndices[count++] = scaleBufferIndices[i];
+            }
+        }
+        return count;
+    }
+
+    // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
+
+    // The status of a node in a partition with ghosts: FULL has data on both sides, ONE_CHILD on one side only, and
+    // a GHOST node has none below it at all. FULL is zero so that new arrays start with it.
+    private static final byte FULL = 0;
+    private static final byte ONE_CHILD = 1;
+    private static final byte GHOST = 2;
+
+    // null when every taxon of the tree is in the pattern list, which then takes the ordinary path throughout
+    private final boolean[] isGhostTip;
+    private byte[] nodeStatus;
+    private byte[] storedNodeStatus;
+    private double[] ghostBranchLengths;        // the length of every branch, for nodes that stop being ghosts
+    private double[] storedGhostBranchLengths;
+    private int[] becameReal;                   // scratch: nodes that stopped being ghosts in this evaluation
+    private boolean[] branchListed;             // scratch: branches already listed for a matrix update
+    private int[] scaledNodeBufferIndices;      // scratch: the scale buffers to accumulate at the root
+    private boolean useOneChildOperations;
+    private int ghostTipNumber = -1;            // a ghost tip, all unknown, that can stand in for a ghost subtree
 
     private final int nodeCount;
     private final int tipCount;

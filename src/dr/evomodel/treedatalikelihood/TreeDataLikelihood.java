@@ -128,7 +128,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * @return the traversal that collects the operations for the delegate, or null if it does not need them
      */
     private LikelihoodTreeTraversal createTreeTraversal(DataLikelihoodDelegate delegate) {
-        if (likelihoodDelegate == null || !likelihoodDelegate.requiresTreeTraversal()) {
+        if (delegate == null || !delegate.requiresTreeTraversal()) {
             return null;
         }
         if (delegate instanceof BeagleDataLikelihoodDelegate) {

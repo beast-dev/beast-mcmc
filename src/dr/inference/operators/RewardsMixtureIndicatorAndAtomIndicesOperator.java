@@ -96,8 +96,7 @@ public final class RewardsMixtureIndicatorAndAtomIndicesOperator extends Abstrac
         setWeight(weight);
     }
 
-    @Override
-    public String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "RewardsMixtureIndicatorAndAtomIndicesOperator";
     }
 

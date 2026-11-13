@@ -27,6 +27,8 @@
 
 package dr.inference.loggers;
 
+import dr.util.FileHelpers;
+
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -115,7 +117,8 @@ public class TabDelimitedFormatter implements LogFormatter {
 
     public void stopLogging() {
         printWriter.flush();
-        if (closeFile) {
+        // a compressed file is only complete once its stream is closed
+        if (closeFile || printWriter instanceof FileHelpers.CompressedPrintWriter) {
             printWriter.close();
         }
     }

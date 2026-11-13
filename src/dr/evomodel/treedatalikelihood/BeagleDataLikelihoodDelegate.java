@@ -1164,10 +1164,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             }
 
-            // turn off double buffer flipping so the next call overwrites the
-            // underflowed buffers. Flip will be turned on again in storeState for
-            // next step
-            flip = false;
+            // Double buffering stays on for the retry. A buffer is flipped only once before an accept or reject, so
+            // the buffers this attempt wrote are simply written again, while every other node, which the retry also
+            // recomputes, writes to its spare buffer. Turning flipping off instead overwrote the stored partials of
+            // those nodes with partials rescaled by new factors: if the proposal was then rejected, the old scale
+            // factors were restored over the new partials and the likelihood of the current state was wrong.
             underflowHandling = 0;
 
             if (USE_CACHED_EXCEPTION) {

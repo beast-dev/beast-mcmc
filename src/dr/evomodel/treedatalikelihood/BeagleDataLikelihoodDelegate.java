@@ -1101,6 +1101,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             int leftChild = op.getLeftChild();
             int rightChild = op.getRightChild();
             int rightMatrixNode = rightChild;
+            boolean fromOneChild = false;
 
             if (nodeStatus != null) {
                 final byte status = nodeStatus[nodeNum];
@@ -1110,18 +1111,17 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 }
                 if (status == ONE_CHILD) {
                     final int realChild = (nodeStatus[leftChild] == GHOST) ? rightChild : leftChild;
-                    if (useOneChildOperations) {
-                        operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
-                        setDegree2Operation(k, realChild);
-                        k += Beagle.OPERATION_TUPLE_SIZE;
-                        operationCount++;
-                        continue;
-                    }
-                    // an all-unknown tip stands in for the ghost subtree: its contribution is one whatever the
-                    // matrix, so the real child's matrix is used for it too
                     leftChild = realChild;
-                    rightChild = ghostTipNumber;
-                    rightMatrixNode = realChild;
+                    if (useOneChildOperations) {
+                        // computed from the real child alone, but rescaled like any other node: a lineage can pass
+                        // through a long run of such nodes, and the partials would drift towards underflow
+                        fromOneChild = true;
+                    } else {
+                        // an all-unknown tip stands in for the ghost subtree: its contribution is one whatever the
+                        // matrix, so the real child's matrix is used for it too
+                        rightChild = ghostTipNumber;
+                        rightMatrixNode = realChild;
+                    }
                 }
             }
 
@@ -1129,7 +1129,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-            if (rightChild == NodeOperation.NO_CHILD) {
+            if (rightChild == NodeOperation.NO_CHILD && !fromOneChild) {
                 // A degree-2 node has one child and is never rescaled
                 setDegree2Operation(k, leftChild);
                 k += Beagle.OPERATION_TUPLE_SIZE;
@@ -1154,6 +1154,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                     operations[k + 1] = scaleBufferIndices[n]; // Write new scaleFactor
                     operations[k + 2] = Beagle.NONE;
 
+                } else if (nodeStatus != null && isEnteringScaled[nodeNum]) {
+                    // its status has changed, so the factor it had, if any, no longer fits its partials: it gets a
+                    // new one, which replaces the old one in the total at the root
+                    scaleBufferHelper.flipOffset(n);
+                    scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
+
+                    operations[k + 1] = scaleBufferIndices[n]; // Write new scaleFactor
+                    operations[k + 2] = Beagle.NONE;
+
                 } else {
                     operations[k + 1] = Beagle.NONE;
                     operations[k + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
@@ -1170,10 +1179,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             operations[k + 3] = partialBufferHelper.getOffsetIndex(leftChild); // source node 1
             operations[k + 4] = evolutionaryProcessDelegate.getMatrixIndex(leftChild); // source matrix 1
-            operations[k + 5] = partialBufferHelper.getOffsetIndex(rightChild); // source node 2
-            operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(rightMatrixNode); // source matrix 2
+            if (fromOneChild) {
+                operations[k + 5] = Beagle.NONE; // no source node 2
+                operations[k + 6] = Beagle.NONE;
+            } else {
+                operations[k + 5] = partialBufferHelper.getOffsetIndex(rightChild); // source node 2
+                operations[k + 6] = evolutionaryProcessDelegate.getMatrixIndex(rightMatrixNode); // source matrix 2
+            }
 
             k += Beagle.OPERATION_TUPLE_SIZE;
+        }
+
+        final boolean patchScaleTotal = nodeStatus != null && useScaleFactors && !recomputeScaleFactors &&
+                (enteringScaledCount > 0 || leavingScaledCount > 0);
+        if (patchScaleTotal) {
+            removeOldScaleFactors();
         }
 
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
@@ -1189,7 +1209,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
         int[] accumulatedScaleBuffers = scaleBufferIndices;
         int accumulatedScaleBufferCount = internalNodeCount;
-        if (nodeStatus != null && (useScaleFactors || useAutoScaling)) {
+        if (nodeStatus != null && ((useScaleFactors && recomputeScaleFactors) || useAutoScaling)) {
             accumulatedScaleBufferCount = collectScaledNodes();
             accumulatedScaleBuffers = scaledNodeBufferIndices;
         }
@@ -1202,6 +1222,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 beagle.accumulateScaleFactors(accumulatedScaleBuffers, accumulatedScaleBufferCount,
                         cumulateScaleBufferIndex);
             } else {
+                if (patchScaleTotal) {
+                    addNewScaleFactors();
+                }
                 cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
             }
         } else if (useAutoScaling) {
@@ -1263,10 +1286,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             }
 
-            // turn off double buffer flipping so the next call overwrites the
-            // underflowed buffers. Flip will be turned on again in storeState for
-            // next step
-            flip = false;
+            // Double buffering stays on for the retry. A buffer is flipped only once before an accept or reject, so
+            // the buffers this attempt wrote are simply written again, while every other node, which the retry also
+            // recomputes, writes to its spare buffer. Turning flipping off instead overwrote the stored partials of
+            // those nodes with partials rescaled by new factors: if the proposal was then rejected, the old scale
+            // factors were restored over the new partials and the likelihood of the current state was wrong.
             underflowHandling = 0;
 
             if (USE_CACHED_EXCEPTION) {
@@ -1673,6 +1697,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         becameReal = new int[nodeCount];
         branchListed = new boolean[nodeCount];
         scaledNodeBufferIndices = new int[internalNodeCount];
+        enteringScaled = new int[nodeCount];
+        leavingScaled = new int[nodeCount];
+        isEnteringScaled = new boolean[nodeCount];
+        changedScaleBuffers = new int[nodeCount];
 
         for (int i = 0; i < tipCount; i++) {
             if (isGhostTip[i]) {
@@ -1703,7 +1731,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
      * @return how many nodes changed from GHOST to having data, now listed at the start of becameReal
      */
     private int updateGhostStatus(List<NodeOperation> nodeOperations) {
-        boolean changed = false;
+        for (int i = 0; i < enteringScaledCount; i++) {
+            isEnteringScaled[enteringScaled[i]] = false;
+        }
+        enteringScaledCount = 0;
+        leavingScaledCount = 0;
+
         int becameRealCount = 0;
         for (NodeOperation op : nodeOperations) {
             final int nodeNum = op.getNodeNumber();
@@ -1715,16 +1748,57 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 if (nodeStatus[nodeNum] == GHOST) {
                     becameReal[becameRealCount++] = nodeNum;
                 }
+
+                // the factor a node had no longer fits partials computed another way, so it is replaced
+                if (carriesScaleFactor(nodeStatus[nodeNum])) {
+                    leavingScaled[leavingScaledCount++] = scaleBufferIndices[nodeNum - tipCount];
+                }
+                if (carriesScaleFactor(status)) {
+                    enteringScaled[enteringScaledCount++] = nodeNum;
+                    isEnteringScaled[nodeNum] = true;
+                }
+
                 nodeStatus[nodeNum] = status;
-                changed = true;
             }
         }
-
-        // a node that has changed status has no scale factor of its own to reuse, so recompute them
-        if (changed && useScaleFactors) {
-            recomputeScaleFactors = true;
-        }
         return becameRealCount;
+    }
+
+    /**
+     * @return whether a node of this status has partials with a scale factor of its own: every node that is computed,
+     * which is every node but a ghost
+     */
+    private static boolean carriesScaleFactor(byte status) {
+        return status != GHOST;
+    }
+
+    /**
+     * When the scale factors are not being recomputed, the total of them at the root is kept from the last time they
+     * were. Rather than recompute them all whenever a node changes status, which happens on most moves of the tree
+     * once there are many ghosts, the total is corrected for just those nodes: their old factors are taken out here,
+     * before the operations run and while their buffers still hold them, and their new ones are added after. The
+     * total is written to its other buffer, so that the stored one is still there to restore.
+     */
+    private void removeOldScaleFactors() {
+        final int previous = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+        scaleBufferHelper.flipOffset(internalNodeCount);
+        final int cumulative = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+        if (cumulative != previous) {
+            beagle.copyScaleFactors(cumulative, previous);
+        }
+        if (leavingScaledCount > 0) {
+            beagle.removeScaleFactors(leavingScaled, leavingScaledCount, cumulative);
+        }
+    }
+
+    private void addNewScaleFactors() {
+        if (enteringScaledCount > 0) {
+            for (int i = 0; i < enteringScaledCount; i++) {
+                changedScaleBuffers[i] = scaleBufferIndices[enteringScaled[i] - tipCount];
+            }
+            beagle.accumulateScaleFactors(changedScaleBuffers, enteringScaledCount,
+                    scaleBufferHelper.getOffsetIndex(internalNodeCount));
+        }
     }
 
     /**
@@ -1771,8 +1845,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private int collectScaledNodes() {
         int count = 0;
         for (int i = 0; i < internalNodeCount; i++) {
-            final byte status = nodeStatus[tipCount + i];
-            if (status == FULL || (status == ONE_CHILD && !useOneChildOperations)) {
+            if (carriesScaleFactor(nodeStatus[tipCount + i])) {
                 scaledNodeBufferIndices[count++] = scaleBufferIndices[i];
             }
         }
@@ -1798,6 +1871,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private int[] becameReal;                   // scratch: nodes that stopped being ghosts in this evaluation
     private boolean[] branchListed;             // scratch: branches already listed for a matrix update
     private int[] scaledNodeBufferIndices;      // scratch: the scale buffers to accumulate at the root
+    private int[] enteringScaled;               // nodes that get a new scale factor in this evaluation
+    private int enteringScaledCount;
+    private boolean[] isEnteringScaled;
+    private int[] leavingScaled;                // the old scale buffers of nodes whose status changed
+    private int leavingScaledCount;
+    private int[] changedScaleBuffers;          // scratch: their scale buffers
     private boolean useOneChildOperations;
     private int ghostTipNumber = -1;            // a ghost tip, all unknown, that can stand in for a ghost subtree
 

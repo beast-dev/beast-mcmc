@@ -29,6 +29,8 @@ package dr.app.beauti.types;
 
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.inference.operators.RateBitExchangeOperator;
+import dr.inferencexml.operators.FreeRateDeltaExchangeOperatorParser;
+import dr.inferencexml.operators.FreeRateUpDownOperatorParser;
 import dr.inferencexml.operators.ScaleOperatorParser;
 
 /**
@@ -49,6 +51,8 @@ public enum OperatorType {
     DELTA_EXCHANGE("deltaExchange"),
     WEIGHTED_DELTA_EXCHANGE("weightedDeltaExchange"),
     INTEGER_DELTA_EXCHANGE("integerDeltaExchange"),
+    FREE_RATE_DELTA_EXCHANGE(FreeRateDeltaExchangeOperatorParser.FREE_RATE_DELTA_EXCHANGE),
+    FREE_RATE_UP_DOWN(FreeRateUpDownOperatorParser.FREERATE_UP_DOWN_OPERATOR),
     SWAP("swap"),
     BITFLIP("bitFlip"),
     BITFLIP_IN_SUBST(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR),// bitFlipInSubstitutionModelOperator

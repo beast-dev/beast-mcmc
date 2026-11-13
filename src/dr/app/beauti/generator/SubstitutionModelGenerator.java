@@ -34,14 +34,17 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
+import dr.evomodelxml.siteratemodel.FreeRateSiteRateModelParser;
 import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evoxml.AlignmentParser;
 import dr.inference.model.ParameterParser;
+import dr.inferencexml.model.ProductStatisticParser;
 import dr.inference.model.StatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -564,6 +567,19 @@ public class SubstitutionModelGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "pInv");
             }
         }
+
+        if (model.isFreeRatesHetero()) {
+            // the site model logs its category rates and weights sorted by rate, so the columns
+            // mean the same thing throughout the chain whichever way the categories get labelled
+            if (codonPartitionCount > 1 && model.isUnlinkedHeterogeneityModel()) {
+                for (int i = 1; i <= codonPartitionCount; i++) {
+                    writer.writeIDref(FreeRateSiteRateModelParser.FREE_RATE_SITE_RATE_MODEL, model.getPrefix(i) + SiteModelParser.SITE_MODEL);
+                }
+            } else {
+                // when linked across codon positions the first partition's site model holds the shared parameters
+                writer.writeIDref(FreeRateSiteRateModelParser.FREE_RATE_SITE_RATE_MODEL, model.getPrefix(1) + SiteModelParser.SITE_MODEL);
+            }
+        }
     }
 
     /**
@@ -579,9 +595,7 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix2 = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(SiteModelParser.SITE_MODEL,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL)});
-
+        writeSiteModelOpenTag(prefix, model, writer);
 
         writer.writeOpenTag(SiteModelParser.SUBSTITUTION_MODEL);
 
@@ -645,6 +659,17 @@ public class SubstitutionModelGenerator extends Generator {
             }
         }
 
+        // like alpha and pInv, the free rates parameters belong to each codon partition when the
+        // heterogeneity model is unlinked, and are otherwise defined in the first partition's site
+        // model and referred to from the others
+        boolean unlinkedHetero = num == -1 || model.isUnlinkedHeterogeneityModel();
+        String heteroPrefix = unlinkedHetero ? prefix : prefix2;
+        boolean definesHetero = unlinkedHetero || num == 1;
+
+        if (model.isFreeRatesHetero()) {
+            writeFreeRatesParameters(heteroPrefix, definesHetero, model, writer);
+        }
+
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
@@ -685,12 +710,75 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeCloseTag(SiteModelParser.PROPORTION_INVARIANT);
         }
 
-        writer.writeCloseTag(SiteModelParser.SITE_MODEL);
+        writer.writeCloseTag(getSiteModelTag(model));
 
-        if (options.useNuRelativeRates()) {
-            writeMuStatistic(writer, prefix, SiteModelParser.SITE_MODEL);
+        if (model.isFreeRatesHetero() && definesHetero) {
+            writeFreeRatesStatistic(heteroPrefix, writer);
         }
 
+        if (options.useNuRelativeRates()) {
+            writeMuStatistic(writer, prefix, getSiteModelTag(model));
+        }
+
+    }
+
+    /**
+     * @return the XML element of a partition model's site model: the free rates model has its own
+     */
+    public static String getSiteModelTag(PartitionSubstitutionModel model) {
+        return model.isFreeRatesHetero() ?
+                FreeRateSiteRateModelParser.FREE_RATE_SITE_RATE_MODEL : SiteModelParser.SITE_MODEL;
+    }
+
+    /**
+     * Opens the site model element with its id (and, for the free rates model, the category count).
+     */
+    private void writeSiteModelOpenTag(String prefix, PartitionSubstitutionModel model, XMLWriter writer) {
+        List<Attribute> attributes = new ArrayList<>();
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL));
+        if (model.isFreeRatesHetero()) {
+            attributes.add(new Attribute.Default<String>(FreeRateSiteRateModelParser.CATEGORIES, "" + model.getRateCategories()));
+        }
+        writer.writeOpenTag(getSiteModelTag(model), attributes.toArray(new Attribute[0]));
+    }
+
+    /**
+     * Writes the rates and weights of the free rates model. The rates start equal (so with a mean of
+     * one) and the weights start equal (so summing to one); the free rates operators keep it that way.
+     *
+     * @param define whether to define the parameters here or refer to an earlier definition
+     */
+    private void writeFreeRatesParameters(String prefix, boolean define, PartitionSubstitutionModel model, XMLWriter writer) {
+        int categories = model.getRateCategories();
+
+        writer.writeOpenTag(FreeRateSiteRateModelParser.RATES);
+        if (define) {
+            writeParameter(prefix + PartitionSubstitutionModel.FREE_RATES_RATES, categories, 1.0, 0.0, Double.NaN, writer);
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + PartitionSubstitutionModel.FREE_RATES_RATES);
+        }
+        writer.writeCloseTag(FreeRateSiteRateModelParser.RATES);
+
+        writer.writeOpenTag(FreeRateSiteRateModelParser.WEIGHTS);
+        if (define) {
+            writeParameter(prefix + PartitionSubstitutionModel.FREE_RATES_WEIGHTS, categories, 1.0 / categories, 0.0, Double.NaN, writer);
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + PartitionSubstitutionModel.FREE_RATES_WEIGHTS);
+        }
+        writer.writeCloseTag(FreeRateSiteRateModelParser.WEIGHTS);
+    }
+
+    /**
+     * Writes the share of the total rate in each free rates category (weight x rate), the statistic
+     * that carries the prior on the rates.
+     */
+    private void writeFreeRatesStatistic(String prefix, XMLWriter writer) {
+        writer.writeComment("the share of the total rate in each free rates category (weight x rate), which the prior is on");
+        writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + PartitionSubstitutionModel.FREE_RATES_WEIGHTED_RATES)});
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + PartitionSubstitutionModel.FREE_RATES_WEIGHTS);
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + PartitionSubstitutionModel.FREE_RATES_RATES);
+        writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
     }
 
     /**
@@ -767,8 +855,7 @@ public class SubstitutionModelGenerator extends Generator {
         String prefix = model.getPrefix();
 
         writer.writeComment("site model");
-        writer.writeOpenTag(SiteModelParser.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL)});
+        writeSiteModelOpenTag(prefix, model, writer);
 
         writer.writeOpenTag(SiteModelParser.SUBSTITUTION_MODEL);
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
@@ -783,6 +870,10 @@ public class SubstitutionModelGenerator extends Generator {
             }
         } else {
             writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        }
+
+        if (model.isFreeRatesHetero()) {
+            writeFreeRatesParameters(prefix, true, model, writer);
         }
 
         if (model.isGammaHetero()) {
@@ -800,10 +891,14 @@ public class SubstitutionModelGenerator extends Generator {
             writeParameter(SiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
-        writer.writeCloseTag(SiteModelParser.SITE_MODEL);
+        writer.writeCloseTag(getSiteModelTag(model));
+
+        if (model.isFreeRatesHetero()) {
+            writeFreeRatesStatistic(prefix, writer);
+        }
 
         if (options.useNuRelativeRates()) {
-            writeMuStatistic(writer, prefix, SiteModelParser.SITE_MODEL);
+            writeMuStatistic(writer, prefix, getSiteModelTag(model));
         }
 
     }
@@ -833,7 +928,7 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeOpenTag(StatisticParser.STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + "mu"),
                 new Attribute.Default<String>(StatisticParser.NAME, "mu")});
-        writer.writeIDref(siteModelTag, prefix + siteModelTag);
+        writer.writeIDref(siteModelTag, prefix + SiteModelParser.SITE_MODEL);
         writer.writeCloseTag(StatisticParser.STATISTIC);
     }
 

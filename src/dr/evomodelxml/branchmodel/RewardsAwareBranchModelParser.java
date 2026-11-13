@@ -1,16 +1,14 @@
 package dr.evomodelxml.branchmodel;
 
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.branchratemodel.RewardsAwareMixtureBranchRatesParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import static org.apache.commons.math.stat.StatUtils.max;
-import static org.apache.commons.math.stat.StatUtils.min;
 
 /**
  * @author Filippo Monti
@@ -19,53 +17,60 @@ import static org.apache.commons.math.stat.StatUtils.min;
 public class RewardsAwareBranchModelParser extends AbstractXMLObjectParser {
 
     public final String PARSER_NAME = "rewardsAwareBranchModel";
-    private final String REWARD_RATES = "rewardRates";
+    private final String INDICATOR = "indicator";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         SubstitutionModel underlyingSubstitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-        Parameter rewardRates = (Parameter) xo.getElementFirstChild(REWARD_RATES);
 
-        if (rewardRates.getDimension() != underlyingSubstitutionModel.getDataType().getStateCount()) {
-            throw new XMLParseException("The number of reward rates should equal to the number of states");
-        }
-        //     TODO   maybe this part should be moved into the RewardsAwareBranchModel constructor?
-        double minRate = min(rewardRates.getParameterValues());
-        double maxRate = max(rewardRates.getParameterValues());
+        Parameter indicator = (Parameter) xo.getElementFirstChild(INDICATOR);
+
+        Parameter atomIndices = (Parameter) xo.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES);
         ArbitraryBranchRates branchRateModel = (ArbitraryBranchRates) xo.getChild(BranchRateModel.class);
         TreeModel tree = (TreeModel) branchRateModel.getTree();
-        makeTotalRewardsCompatible(tree, branchRateModel, minRate, maxRate);
 
-        return new RewardsAwareBranchModel(tree, underlyingSubstitutionModel, rewardRates, branchRateModel);
-    }
+        XMLObject rewardRatesObj = xo.getChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES);
+        Parameter rewardRatesValues = (Parameter) rewardRatesObj.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES);
+        Parameter rewardRatesValuesVarying = (Parameter) rewardRatesObj.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VARYING_VALUES);
+        Parameter rewardRatesMapping = (Parameter) rewardRatesObj.getElementFirstChild(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_MAPPING);
 
-    private void makeTotalRewardsCompatible(TreeModel tree, ArbitraryBranchRates branchRateModel,
-                                            double minRate, double maxRate) {
-        double minBranchRate;
-        double maxBranchRate;
-        double rate;
-
-        for (int i = 0; i < branchRateModel.getTree().getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            if (tree.isRoot(node)) continue;
-
-            minBranchRate = minRate * tree.getBranchLength(node);
-            maxBranchRate = maxRate * tree.getBranchLength(node);
-            rate = branchRateModel.getBranchRate(tree, node);
-
-            if (rate < minBranchRate || rate > maxBranchRate) {
-                System.out.println("WARNING:Total reward *not* compatible: being set to mid point of the range");
-                branchRateModel.setBranchRate(tree, node, (minBranchRate + maxBranchRate) / 2);
-            }
+        if (rewardRatesValues.getDimension() != underlyingSubstitutionModel.getDataType().getStateCount()) {
+            throw new XMLParseException("The number of reward rates should equal to the number of states");
         }
+        if (rewardRatesMapping.getDimension() != underlyingSubstitutionModel.getDataType().getStateCount()) {
+            throw new XMLParseException("The reward rates mapping should have the same dimension as the number of states");
+        }
+        RewardsAwareMixtureBranchRatesParser.validatePermutation(rewardRatesMapping);
+
+        boolean conditional = xo.getAttribute( "conditional", false);
+
+        return new RewardsAwareBranchModel(tree, underlyingSubstitutionModel,
+                rewardRatesValues, rewardRatesValuesVarying, rewardRatesMapping,
+                indicator, branchRateModel, atomIndices, conditional);
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule("conditional", true),
             new ElementRule(BranchRateModel.class),
             new ElementRule(SubstitutionModel.class),
-            new ElementRule(REWARD_RATES, Parameter.class),
+            new ElementRule(INDICATOR, Parameter.class),
+
+            new ElementRule(RewardsAwareMixtureBranchRatesParser.ATOMS_INDICES, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class)
+            }),
+            new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES, new XMLSyntaxRule[] {
+                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VALUES, new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class)
+                    }),
+                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_VARYING_VALUES, new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class)
+                    }),
+                    new ElementRule(RewardsAwareMixtureBranchRatesParser.REWARD_RATES_MAPPING, new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class)
+                    })
+            })
     };
 
     @Override

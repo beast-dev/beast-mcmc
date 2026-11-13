@@ -124,6 +124,27 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         hasInitialized = true;
     }
 
+    /**
+     * @return the traversal that collects the operations for the delegate, or null if it does not need them
+     */
+    private LikelihoodTreeTraversal createTreeTraversal(DataLikelihoodDelegate delegate) {
+        if (likelihoodDelegate == null || !likelihoodDelegate.requiresTreeTraversal()) {
+            return null;
+        }
+        if (delegate instanceof BeagleDataLikelihoodDelegate) {
+            final EvolutionaryProcessDelegate processDelegate =
+                    ((BeagleDataLikelihoodDelegate) delegate).getEvolutionaryProcessDelegate();
+
+            if (processDelegate instanceof EpochEvolutionaryProcessDelegate) {
+                // the process changes at epoch transition times, which need degree-2 nodes
+                return new EpochLikelihoodTraversal(treeModel, branchRateModel, delegate.getOptimalTraversalType(),
+                        (EpochEvolutionaryProcessDelegate) processDelegate);
+            }
+        }
+
+        return new LikelihoodTreeTraversal(treeModel, branchRateModel, delegate.getOptimalTraversalType());
+    }
+
     // **************************************************************
     // Likelihood IMPLEMENTATION
     // **************************************************************
@@ -384,16 +405,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         if (treeTraversalDelegate != null) {
             treeTraversalDelegate.setAllNodesUpdated();
         }
-    }
-
-    /**
-     * @return the traversal that collects the operations for the delegate, or null if it does not need them
-     */
-    private LikelihoodTreeTraversal createTreeTraversal(DataLikelihoodDelegate likelihoodDelegate) {
-        if (likelihoodDelegate == null || !likelihoodDelegate.requiresTreeTraversal()) {
-            return null;
-        }
-        return new LikelihoodTreeTraversal(treeModel, branchRateModel, likelihoodDelegate.getOptimalTraversalType());
     }
 
     /**

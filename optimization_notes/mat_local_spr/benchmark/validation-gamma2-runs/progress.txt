@@ -1,0 +1,8 @@
+mat-local-gibbs seed 11: started Thu Oct 22 22:39:43 WAT 2026
+mat-local-gibbs seed 11: finished in 1337 s
+mat-local-gibbs seed 22: started Thu Oct 22 23:02:00 WAT 2026
+mat-local-gibbs seed 22: finished in 1320 s
+mat-local-gibbs seed 33: started Thu Oct 22 23:24:00 WAT 2026
+mat-local-gibbs seed 33: finished in 1358 s
+mat-local-gibbs seed 44: started Thu Oct 22 23:46:38 WAT 2026
+mat-local-gibbs seed 44: finished in 1384 s

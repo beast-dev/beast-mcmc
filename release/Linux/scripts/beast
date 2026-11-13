@@ -32,4 +32,19 @@ if java --enable-native-access=ALL-UNNAMED -version > /dev/null 2>&1; then
 	NATIVE_ACCESS="--enable-native-access=ALL-UNNAMED"
 fi
 
-java -Xms64m -Xmx2048m $NATIVE_ACCESS -Dbeast.plugins.dir="$BEAST_PLUG" -Djava.library.path="$BEAST_LIB:/usr/local/lib:$LD_LIBRARY_PATH" -cp "$BEAST_LIB/beast.jar" dr.app.beast.BeastMain $*
+# The heap. A fixed 2GB was not enough: a few thousand sequences of a few tens of thousands
+# of sites runs out while the likelihood is still being set up, before the chain starts. Half
+# the machine's RAM keeps pace with whatever BEAST is run on, and is a ceiling rather than a
+# reservation, so a small analysis still uses very little. Set BEAST_XMX to fix a size instead,
+# e.g. BEAST_XMX=8g.
+HEAP="-XX:MaxRAMPercentage=50"
+if [ -n "$BEAST_XMX" ]; then
+	HEAP="-Xmx$BEAST_XMX"
+fi
+
+# Where to look for BEAGLE. /usr/local/lib is where it installs by default and is
+# also Homebrew's prefix on Intel Macs; /opt/homebrew/lib is Homebrew's prefix on
+# Apple Silicon. A directory that does not exist costs nothing. LD_LIBRARY_PATH is
+# spliced in last so anywhere else can be added without editing this script:
+# LD_LIBRARY_PATH=/my/beagle/lib beast analysis.xml
+java -Xms64m $HEAP $NATIVE_ACCESS -Dbeast.plugins.dir="$BEAST_PLUG" -Djava.library.path="$BEAST_LIB:/usr/local/lib:/opt/homebrew/lib:$LD_LIBRARY_PATH" -cp "$BEAST_LIB/beast.jar" dr.app.beast.BeastMain $*

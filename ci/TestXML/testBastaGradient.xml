@@ -192,7 +192,7 @@
 		<!-- <siteModel idref="state.siteModel"/> -->
 		<generalSubstitutionModel idref="state.model"/>
 		<strictClockBranchRates idref="state.branchRates"/>
-		<parameter id="structured.popSizes" dimension="4" value="0.25" lower="0.0"/>
+		<popSizes><parameter id="structured.popSizes" dimension="4" value="0.25" lower="0.0"/></popSizes>
 
 		<!-- The root state frequencies                                              -->
 		<!-- <frequencyModel id="state.root.frequencyModel" normalize="true">
@@ -214,10 +214,10 @@
 		</structuredCoalescentLikelihoodGradient>
 
 	<report>
-		<structuredCoalescentLikelihoodGradient idref="gradient.1"/>
+		<structuredCoalescent idref="state.treeLikelihood"/>
 	</report>
 
 	<report>
-		<structuredCoalescentLikelihoodGradient idref="gradient.2"/>
+		<structuredCoalescentLikelihoodGradient idref="gradient.1"/>
 	</report>
 </beast>

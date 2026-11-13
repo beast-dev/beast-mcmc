@@ -1,0 +1,643 @@
+
+                  BEAST v10.x.x, 2002-2026
+       Bayesian Evolutionary Analysis Sampling Trees
+                 Designed and developed by
+   Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard
+                              
+               Department of Computer Science
+                   University of Auckland
+                  alexei@cs.auckland.ac.nz
+                              
+             Institute of Ecology and Evolution
+                  University of Edinburgh
+                     a.rambaut@ed.ac.uk
+                              
+              David Geffen School of Medicine
+           University of California, Los Angeles
+                     msuchard@ucla.edu
+                              
+                Downloads, Help & Resources:
+                  	http://beast.community
+                              
+Source code distributed under the GNU Lesser General Public License:
+          	http://github.com/beast-dev/beast-mcmc
+                              
+                     BEAST developers:
+	Alex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, 
+	Luiz Max Carvalho, Gabriela Cybis, Mandev Gill, Matthew Hall, Gabe Hassler, Joseph Heled, 
+	Sebastian Hoehna, Xiang Ji, Michael Karcher, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, 
+	Gerton Lunter, Andy Magee, Sidney Markowitz, JT McCrone, Volodymyr Minin, Julia Palacios, 
+	Michael Defoin Platel, Oliver Pybus, Yucai Shao, Max Tolkoff, Chieh-Hsi Wu, Walter Xie and Zhenyu Zhang
+                              
+                         Thanks to:
+    	Roald Forsberg, Beth Shapiro and Korbinian Strimmer
+
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by beagle.BeagleJNIWrapper in an unnamed module (file:/Users/rambaut/Repositories/BEAST-Dev/BEAST/lib/beagle.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Using BEAGLE library v4.0.1 (PRE-RELEASE) for accelerated, parallel likelihood evaluation
+2009-, BEAGLE Working Group - https://beagle-dev.github.io/
+Citation: Ayres et al (2019) Systematic Biology 68: 1052-1061 | doi:10.1093/sysbio/syz020
+
+
+Random number seed: 11
+
+
+
+Loading additional development parsers from development_parsers.properties, which is additional set of parsers only available for development version ...
+
+
+Parsing XML file: t.xml
+  File encoding: UTF8
+Looking for plugins in /Users/rambaut/Repositories/BEAST-Dev/BEAST/optimization_notes/mat_local_spr/benchmark/validation-gamma-timing/mat-1/plugins
+
+Taxon list 'taxa' created with 165 taxa.
+    most recent taxon date = 2004.0 years
+
+Read alignment: alignment
+  Sequences = 165
+      Sites = 1698
+   Datatype = nucleotide
+
+Site patterns 'patterns' created from positions 1-1698 of alignment 'alignment'
+  constant sites compressed, variable sites uncompressed
+  pattern count = 298
+Constant population size coalescent model.
+
+Creating the tree model, 'treeModel' (fast implementation)
+             taxon count = 165
+             tree height = 6.645084066417678
+          min tip height = -0.0
+          max tip height = 3.9700000000000273
+
+Using strict molecular clock model.
+
+Creating state frequencies model 'frequencies': Initial frequencies = {0.25, 0.25, 0.25, 0.25}
+
+Creating JC substitution model.
+
+Creating site rate model: 
+  4 category discrete gamma with initial shape = 0.5
+  using equal weight discretization of gamma distribution
+  MAT likelihood: 294 variable sites, 1404 constant sites (assumed to have no mutations)
+  MAT branch history model: integratedHits
+  MAT site rate categories: 4 (sampled for each variable site; constant sites summed over them)
+
+Creating TreeDataLikelihood
+  Branch rate model: strictClockBranchRates
+  Mutation history resampler matResampler: the local block
+
+Creating operator scheduler
+  Optimization schedule: power
+
+Creating CTMC Scale Reference Prior model
+
+Likelihood computation is using an auto sizing thread pool.
+
+Creating the MCMC chain:
+  chain length = 5000000
+  operator adaption = true
+  adaptation delayed for 50000 steps
+
+Citations for this analysis: 
+
+FRAMEWORK
+BEAST primary citation:
+	Baele G, Ji X, Hassler GW, McCrone JT, Shao Y, Zhang Z, Holbrook AJ, Lemey P, Drummond AJ, Rambaut A, Suchard MA (2025) BEAST X for Bayesian phylogenetic, phylogeographic and phylodynamic inference. Nature Methods. . DOI:10.1038/s41592-025-02751-x
+
+HIGH-PERFORMANCE COMPUTING
+BEAGLE citation:
+	Ayres DL, Cummings MP, Baele G, Darling AE, Lewis PO, Swofford DL, Huelsenbeck JP, Lemey P, Rambaut A, Suchard MA (2019) BEAGLE 3: Improved performance, scaling and usability for a high-performance computing library for statistical phylogenetics. Systematic Biology. 68, 1052-1061
+
+SUBSTITUTION MODELS
+HKY nucleotide substitution model:
+	Hasegawa M, Kishino H, Yano T (1985) Dating the human-ape splitting by a molecular clock of mitochondrial DNA. Journal of Molecular Evolution. 22, 160-174
+Discrete gamma-distributed rate heterogeneity model:
+	Yang Z (1994) Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods. J. Mol. Evol.. 39, 306-314
+
+PRIOR MODELS
+CTMC Scale Reference Prior model:
+	Ferreira MAR, Suchard MA (2008) Bayesian analysis of elapsed times in continuous-time Markov chains. Canadian Journal of Statistics. 36, 355-368
+
+
+# BEAST v10.x.x
+# Generated Thu Oct 22 21:39:08 WAT 2026 [seed=11]
+# -seed 11 -overwrite t.xml
+state	Joint       	Prior       	Likelihood  	age(root)   	clock.rate  
+0	-15951.0144 	-154.3729   	-15796.6415 	1997.33     	1E-3        	-
+10000	-6549.1051  	-522.5941   	-6026.5110  	1997.49     	2.36836E-3  	-
+20000	-6354.9329  	-512.5244   	-5842.4085  	1994.92     	2.08083E-3  	1.08 minutes/million states
+30000	-6427.8533  	-476.9371   	-5950.9163  	1995.72     	2.17967E-3  	1.04 minutes/million states
+40000	-6442.9843  	-475.5220   	-5967.4624  	1995.32     	2.47406E-3  	1.02 minutes/million states
+50000	-6424.2196  	-462.6018   	-5961.6177  	1995.24     	2.4432E-3   	1.02 minutes/million states
+60000	-6452.1576  	-482.4278   	-5969.7298  	1993.77     	2.33087E-3  	1.02 minutes/million states
+70000	-6406.4360  	-471.6733   	-5934.7628  	1995.80     	2.51928E-3  	1.02 minutes/million states
+80000	-6456.6931  	-469.2247   	-5987.4684  	1996.59     	2.78363E-3  	1.01 minutes/million states
+90000	-6397.6525  	-447.8779   	-5949.7746  	1996.06     	2.84978E-3  	1.01 minutes/million states
+100000	-6333.2954  	-426.9807   	-5906.3147  	1996.21     	2.98394E-3  	1.01 minutes/million states
+110000	-6342.1816  	-416.5945   	-5925.5872  	1996.86     	3.33346E-3  	1.01 minutes/million states
+120000	-6364.8481  	-421.4765   	-5943.3716  	1996.89     	3.16719E-3  	1 minutes/million states
+130000	-6313.5111  	-412.1832   	-5901.3278  	1997.37     	3.50419E-3  	1 minutes/million states
+140000	-6351.9521  	-412.0816   	-5939.8704  	1997.32     	3.68737E-3  	1.01 minutes/million states
+150000	-6368.3947  	-387.7795   	-5980.6151  	1996.08     	3.32088E-3  	1.01 minutes/million states
+160000	-6290.5163  	-381.9231   	-5908.5932  	1997.97     	3.45392E-3  	1.01 minutes/million states
+170000	-6337.1231  	-387.8484   	-5949.2747  	1997.51     	4.10545E-3  	1.01 minutes/million states
+180000	-6277.5312  	-378.2901   	-5899.2411  	1997.56     	3.9155E-3   	1.01 minutes/million states
+190000	-6304.6900  	-364.1507   	-5940.5393  	1997.83     	4.02581E-3  	1.01 minutes/million states
+200000	-6303.6083  	-349.7842   	-5953.8241  	1997.60     	4.26097E-3  	1.01 minutes/million states
+210000	-6312.1874  	-354.7876   	-5957.3998  	1998.57     	3.71672E-3  	1.01 minutes/million states
+220000	-6261.8876  	-374.9596   	-5886.9280  	1998.02     	3.93973E-3  	1.01 minutes/million states
+230000	-6273.8267  	-382.5901   	-5891.2366  	1997.87     	3.72393E-3  	1.01 minutes/million states
+240000	-6331.5667  	-384.7833   	-5946.7834  	1997.96     	3.85239E-3  	1.01 minutes/million states
+250000	-6301.6762  	-389.7087   	-5911.9675  	1997.31     	3.25981E-3  	1.01 minutes/million states
+260000	-6342.8223  	-417.2590   	-5925.5634  	1997.56     	3.76277E-3  	1.01 minutes/million states
+270000	-6350.6729  	-400.8285   	-5949.8445  	1996.82     	3.15078E-3  	1.01 minutes/million states
+280000	-6327.3822  	-376.0991   	-5951.2830  	1997.25     	3.68878E-3  	1.01 minutes/million states
+290000	-6373.0465  	-395.8229   	-5977.2236  	1997.74     	3.92104E-3  	1.01 minutes/million states
+300000	-6371.1026  	-405.1144   	-5965.9882  	1997.05     	3.19607E-3  	1.01 minutes/million states
+310000	-6281.0520  	-378.2548   	-5902.7972  	1997.20     	3.62864E-3  	1.01 minutes/million states
+320000	-6313.6169  	-374.2906   	-5939.3264  	1997.48     	3.72384E-3  	1.01 minutes/million states
+330000	-6325.1560  	-390.7120   	-5934.4439  	1997.07     	3.4061E-3   	1.01 minutes/million states
+340000	-6363.0299  	-396.0131   	-5967.0167  	1997.17     	3.77147E-3  	1.01 minutes/million states
+350000	-6287.9898  	-372.1336   	-5915.8562  	1998.28     	3.93934E-3  	1.01 minutes/million states
+360000	-6346.8689  	-397.3758   	-5949.4930  	1997.53     	3.88763E-3  	1 minutes/million states
+370000	-6316.5979  	-393.1109   	-5923.4870  	1997.78     	3.69717E-3  	1 minutes/million states
+380000	-6316.9251  	-387.3966   	-5929.5285  	1998.13     	3.50553E-3  	1 minutes/million states
+390000	-6323.8525  	-382.5534   	-5941.2991  	1997.97     	3.56919E-3  	1 minutes/million states
+400000	-6289.6686  	-410.3193   	-5879.3493  	1998.01     	3.38533E-3  	1 minutes/million states
+410000	-6334.5282  	-392.9594   	-5941.5688  	1997.80     	3.88079E-3  	1 minutes/million states
+420000	-6357.1333  	-378.0890   	-5979.0443  	1997.46     	3.67266E-3  	1 minutes/million states
+430000	-6312.7877  	-386.7736   	-5926.0141  	1997.88     	3.91177E-3  	1 minutes/million states
+440000	-6291.1560  	-394.5359   	-5896.6201  	1998.06     	3.61352E-3  	1 minutes/million states
+450000	-6264.6504  	-374.1393   	-5890.5111  	1997.72     	3.72586E-3  	1 minutes/million states
+460000	-6291.1031  	-387.4541   	-5903.6490  	1997.96     	3.78732E-3  	1 minutes/million states
+470000	-6286.3149  	-386.6512   	-5899.6637  	1997.12     	3.51667E-3  	1 minutes/million states
+480000	-6349.8068  	-388.9127   	-5960.8941  	1997.81     	3.78393E-3  	1 minutes/million states
+490000	-6290.1815  	-379.5564   	-5910.6251  	1997.82     	4.07165E-3  	1 minutes/million states
+500000	-6332.5949  	-384.2282   	-5948.3667  	1998.21     	3.89329E-3  	1 minutes/million states
+510000	-6338.9992  	-389.8544   	-5949.1448  	1996.14     	3.72816E-3  	1 minutes/million states
+520000	-6273.9872  	-362.9269   	-5911.0602  	1998.18     	4.28808E-3  	1 minutes/million states
+530000	-6269.9409  	-359.9610   	-5909.9799  	1998.00     	3.85665E-3  	1 minutes/million states
+540000	-6284.8909  	-347.6868   	-5937.2041  	1998.41     	4.14404E-3  	1 minutes/million states
+550000	-6328.6292  	-338.2273   	-5990.4019  	1998.50     	4.7412E-3   	1 minutes/million states
+560000	-6273.1770  	-369.9478   	-5903.2293  	1997.89     	3.58659E-3  	1 minutes/million states
+570000	-6344.1159  	-372.7708   	-5971.3451  	1997.76     	3.63546E-3  	1 minutes/million states
+580000	-6289.4679  	-376.8000   	-5912.6679  	1997.15     	3.42887E-3  	1 minutes/million states
+590000	-6339.5764  	-371.8073   	-5967.7692  	1998.21     	3.67814E-3  	1 minutes/million states
+600000	-6231.1432  	-366.7716   	-5864.3717  	1998.46     	4.01208E-3  	1 minutes/million states
+610000	-6254.0206  	-386.9006   	-5867.1200  	1998.00     	3.52817E-3  	1 minutes/million states
+620000	-6327.4489  	-385.5303   	-5941.9186  	1997.50     	3.58019E-3  	1 minutes/million states
+630000	-6292.7555  	-380.7186   	-5912.0369  	1997.60     	3.73639E-3  	1 minutes/million states
+640000	-6336.3582  	-391.8165   	-5944.5417  	1997.29     	3.62467E-3  	1 minutes/million states
+650000	-6322.7296  	-395.5356   	-5927.1940  	1997.79     	3.62938E-3  	1 minutes/million states
+660000	-6324.1833  	-411.5666   	-5912.6166  	1998.20     	3.3616E-3   	1 minutes/million states
+670000	-6282.1267  	-393.6212   	-5888.5054  	1997.64     	3.55145E-3  	1 minutes/million states
+680000	-6317.6779  	-367.0554   	-5950.6225  	1997.75     	4.14793E-3  	1 minutes/million states
+690000	-6285.7792  	-332.0536   	-5953.7257  	1998.11     	4.4433E-3   	1 minutes/million states
+700000	-6289.7747  	-343.6818   	-5946.0930  	1997.86     	4.08504E-3  	1 minutes/million states
+710000	-6279.2736  	-354.0104   	-5925.2632  	1998.11     	4.27942E-3  	1 minutes/million states
+720000	-6294.9689  	-359.9222   	-5935.0468  	1998.38     	3.9217E-3   	1 minutes/million states
+730000	-6294.5374  	-370.0743   	-5924.4630  	1998.05     	4.3402E-3   	1 minutes/million states
+740000	-6389.8644  	-373.3024   	-6016.5620  	1998.33     	4.39222E-3  	1 minutes/million states
+750000	-6313.6027  	-355.2026   	-5958.4000  	1998.36     	4.64209E-3  	0.99 minutes/million states
+760000	-6249.5915  	-350.3252   	-5899.2663  	1998.29     	4.37287E-3  	1 minutes/million states
+770000	-6252.5428  	-344.7150   	-5907.8278  	1998.71     	4.66167E-3  	0.99 minutes/million states
+780000	-6262.3247  	-341.0897   	-5921.2350  	1998.98     	4.55798E-3  	0.99 minutes/million states
+790000	-6263.2210  	-350.7688   	-5912.4522  	1998.68     	4.37976E-3  	0.99 minutes/million states
+800000	-6274.4276  	-373.8638   	-5900.5638  	1998.52     	3.95753E-3  	0.99 minutes/million states
+810000	-6295.1067  	-353.2222   	-5941.8845  	1998.32     	4.10867E-3  	0.99 minutes/million states
+820000	-6215.5465  	-348.2462   	-5867.3002  	1998.91     	4.96071E-3  	0.99 minutes/million states
+830000	-6292.6843  	-319.6619   	-5973.0224  	1998.65     	4.46697E-3  	0.99 minutes/million states
+840000	-6308.5995  	-328.5275   	-5980.0720  	1998.52     	5.10079E-3  	0.99 minutes/million states
+850000	-6288.1803  	-351.9792   	-5936.2011  	1998.04     	4.09372E-3  	0.99 minutes/million states
+860000	-6352.4937  	-382.2333   	-5970.2603  	1997.84     	3.55753E-3  	0.99 minutes/million states
+870000	-6358.2964  	-370.7142   	-5987.5822  	1998.83     	4.29445E-3  	0.99 minutes/million states
+880000	-6270.0141  	-365.9515   	-5904.0626  	1998.05     	4.59607E-3  	0.99 minutes/million states
+890000	-6326.8088  	-382.2721   	-5944.5367  	1997.99     	3.6807E-3   	0.99 minutes/million states
+900000	-6292.2525  	-364.9383   	-5927.3142  	1998.71     	4.18899E-3  	0.99 minutes/million states
+910000	-6290.6615  	-368.1623   	-5922.4992  	1998.49     	4.27527E-3  	0.99 minutes/million states
+920000	-6296.7067  	-371.2488   	-5925.4579  	1998.04     	3.70597E-3  	0.99 minutes/million states
+930000	-6327.8324  	-359.9138   	-5967.9186  	1998.06     	4.2475E-3   	0.99 minutes/million states
+940000	-6229.5515  	-357.0031   	-5872.5484  	1998.57     	4.09567E-3  	0.99 minutes/million states
+950000	-6345.7395  	-369.2629   	-5976.4767  	1998.23     	4.02103E-3  	0.99 minutes/million states
+960000	-6249.8263  	-359.2349   	-5890.5913  	1998.39     	3.95788E-3  	0.99 minutes/million states
+970000	-6297.7194  	-357.2169   	-5940.5025  	1998.39     	4.19452E-3  	0.99 minutes/million states
+980000	-6254.9487  	-377.5105   	-5877.4382  	1997.79     	3.53438E-3  	0.99 minutes/million states
+990000	-6322.9133  	-374.4861   	-5948.4272  	1998.06     	4.03293E-3  	0.99 minutes/million states
+1000000	-6374.2241  	-386.9700   	-5987.2541  	1998.14     	4.29049E-3  	0.99 minutes/million states
+1010000	-6294.4461  	-366.1317   	-5928.3144  	1997.83     	4.33752E-3  	0.99 minutes/million states
+1020000	-6257.4555  	-353.7556   	-5903.6999  	1998.28     	4.24907E-3  	0.99 minutes/million states
+1030000	-6341.9376  	-364.9432   	-5976.9944  	1998.73     	4.58869E-3  	0.99 minutes/million states
+1040000	-6291.6399  	-374.8257   	-5916.8142  	1998.11     	4.07189E-3  	0.99 minutes/million states
+1050000	-6249.9789  	-371.7615   	-5878.2174  	1997.31     	3.84615E-3  	0.99 minutes/million states
+1060000	-6343.7088  	-416.8968   	-5926.8120  	1997.29     	3.24707E-3  	0.99 minutes/million states
+1070000	-6352.7141  	-382.6564   	-5970.0578  	1997.61     	3.72153E-3  	0.99 minutes/million states
+1080000	-6328.5656  	-386.4499   	-5942.1158  	1996.78     	3.93379E-3  	0.99 minutes/million states
+1090000	-6333.0043  	-390.0632   	-5942.9411  	1998.05     	3.64257E-3  	0.99 minutes/million states
+1100000	-6320.3261  	-373.1118   	-5947.2143  	1998.25     	4.26518E-3  	0.99 minutes/million states
+1110000	-6304.0632  	-370.8020   	-5933.2613  	1996.93     	3.62089E-3  	1 minutes/million states
+1120000	-6361.5467  	-390.5645   	-5970.9823  	1997.37     	3.52504E-3  	1 minutes/million states
+1130000	-6315.2148  	-390.5665   	-5924.6483  	1997.18     	3.74842E-3  	1 minutes/million states
+1140000	-6379.8748  	-410.8432   	-5969.0316  	1995.79     	3.18471E-3  	1 minutes/million states
+1150000	-6328.0038  	-403.7923   	-5924.2114  	1997.85     	3.37544E-3  	1 minutes/million states
+1160000	-6347.4879  	-413.1631   	-5934.3247  	1996.82     	3.55753E-3  	1 minutes/million states
+1170000	-6408.2751  	-419.3543   	-5988.9209  	1997.23     	3.19592E-3  	1 minutes/million states
+1180000	-6303.6548  	-434.7030   	-5868.9518  	1996.54     	2.95825E-3  	1 minutes/million states
+1190000	-6342.7595  	-416.7302   	-5926.0293  	1998.21     	3.4864E-3   	1 minutes/million states
+1200000	-6406.3003  	-406.3649   	-5999.9355  	1996.97     	3.69888E-3  	1 minutes/million states
+1210000	-6346.6927  	-388.3302   	-5958.3625  	1997.34     	4.12593E-3  	1 minutes/million states
+1220000	-6302.3782  	-375.1137   	-5927.2645  	1998.37     	3.55673E-3  	1 minutes/million states
+1230000	-6316.6862  	-382.1688   	-5934.5174  	1998.35     	4.04129E-3  	1 minutes/million states
+1240000	-6348.9699  	-378.4967   	-5970.4731  	1997.51     	3.79487E-3  	0.99 minutes/million states
+1250000	-6314.8054  	-391.7155   	-5923.0899  	1997.45     	3.37703E-3  	0.99 minutes/million states
+1260000	-6321.1860  	-377.2158   	-5943.9702  	1997.92     	3.48783E-3  	0.99 minutes/million states
+1270000	-6356.1995  	-405.0880   	-5951.1115  	1997.24     	3.29911E-3  	0.99 minutes/million states
+1280000	-6308.5414  	-392.9095   	-5915.6320  	1997.64     	3.75715E-3  	0.99 minutes/million states
+1290000	-6294.6835  	-382.6981   	-5911.9854  	1997.88     	3.39586E-3  	0.99 minutes/million states
+1300000	-6301.2421  	-354.8286   	-5946.4135  	1997.07     	4.15585E-3  	0.99 minutes/million states
+1310000	-6331.6716  	-371.9466   	-5959.7249  	1997.67     	4.12854E-3  	0.99 minutes/million states
+1320000	-6281.8620  	-372.1402   	-5909.7218  	1998.09     	4.28302E-3  	0.99 minutes/million states
+1330000	-6332.5883  	-369.0773   	-5963.5110  	1997.59     	3.59472E-3  	0.99 minutes/million states
+1340000	-6326.7318  	-381.0161   	-5945.7157  	1997.36     	4.18646E-3  	0.99 minutes/million states
+1350000	-6303.8424  	-371.1980   	-5932.6444  	1997.98     	3.55176E-3  	0.99 minutes/million states
+1360000	-6305.7128  	-370.7496   	-5934.9632  	1997.78     	3.91995E-3  	0.99 minutes/million states
+1370000	-6293.6583  	-355.1929   	-5938.4654  	1998.24     	3.88533E-3  	0.99 minutes/million states
+1380000	-6354.9889  	-370.6253   	-5984.3635  	1997.93     	3.62607E-3  	0.99 minutes/million states
+1390000	-6282.9440  	-364.2736   	-5918.6703  	1998.44     	4.20821E-3  	0.99 minutes/million states
+1400000	-6373.5128  	-378.8100   	-5994.7028  	1997.78     	3.68165E-3  	0.99 minutes/million states
+1410000	-6307.6472  	-385.3267   	-5922.3204  	1997.50     	3.78295E-3  	0.99 minutes/million states
+1420000	-6254.1905  	-382.5535   	-5871.6369  	1998.11     	4.09322E-3  	0.99 minutes/million states
+1430000	-6343.5257  	-381.7123   	-5961.8134  	1996.96     	3.98718E-3  	0.99 minutes/million states
+1440000	-6316.6834  	-349.8474   	-5966.8360  	1998.54     	4.63518E-3  	0.99 minutes/million states
+1450000	-6302.3465  	-374.5685   	-5927.7781  	1997.98     	3.87315E-3  	0.99 minutes/million states
+1460000	-6290.8992  	-359.2439   	-5931.6552  	1998.01     	4.5563E-3   	0.99 minutes/million states
+1470000	-6258.8325  	-373.3269   	-5885.5056  	1998.73     	3.87623E-3  	0.99 minutes/million states
+1480000	-6318.5486  	-356.3784   	-5962.1702  	1998.32     	3.82531E-3  	0.99 minutes/million states
+1490000	-6300.8497  	-340.3702   	-5960.4795  	1998.00     	4.32189E-3  	0.99 minutes/million states
+1500000	-6234.8251  	-356.2617   	-5878.5634  	1997.19     	4.0101E-3   	0.99 minutes/million states
+1510000	-6322.0428  	-359.9515   	-5962.0913  	1998.17     	4.19057E-3  	0.99 minutes/million states
+1520000	-6278.3721  	-350.0555   	-5928.3166  	1998.17     	3.79809E-3  	0.99 minutes/million states
+1530000	-6270.6464  	-374.5677   	-5896.0787  	1998.16     	4.37191E-3  	0.99 minutes/million states
+1540000	-6294.6908  	-370.1186   	-5924.5722  	1998.48     	4.42115E-3  	0.99 minutes/million states
+1550000	-6339.1992  	-368.2531   	-5970.9461  	1998.61     	4.05716E-3  	0.99 minutes/million states
+1560000	-6326.8754  	-384.4180   	-5942.4574  	1997.57     	4.02598E-3  	0.99 minutes/million states
+1570000	-6359.9812  	-383.9727   	-5976.0085  	1998.11     	3.99111E-3  	0.99 minutes/million states
+1580000	-6308.3978  	-404.6296   	-5903.7682  	1997.98     	3.25606E-3  	0.99 minutes/million states
+1590000	-6357.0799  	-415.9901   	-5941.0897  	1997.75     	3.73563E-3  	0.99 minutes/million states
+1600000	-6362.3731  	-404.6035   	-5957.7697  	1997.33     	3.80991E-3  	0.99 minutes/million states
+1610000	-6349.6287  	-417.6026   	-5932.0261  	1997.56     	3.21941E-3  	0.99 minutes/million states
+1620000	-6391.8212  	-376.7946   	-6015.0266  	1997.88     	3.58548E-3  	0.99 minutes/million states
+1630000	-6337.8974  	-391.1776   	-5946.7198  	1998.06     	3.25694E-3  	0.99 minutes/million states
+1640000	-6260.0356  	-367.0885   	-5892.9471  	1997.20     	3.82407E-3  	0.99 minutes/million states
+1650000	-6288.5440  	-368.9086   	-5919.6354  	1998.16     	4.15297E-3  	0.99 minutes/million states
+1660000	-6344.3726  	-379.9425   	-5964.4302  	1997.47     	3.48596E-3  	0.99 minutes/million states
+1670000	-6280.3424  	-362.3625   	-5917.9799  	1998.10     	4.6012E-3   	0.99 minutes/million states
+1680000	-6278.9494  	-349.7788   	-5929.1706  	1998.47     	4.38891E-3  	0.99 minutes/million states
+1690000	-6267.2793  	-368.5909   	-5898.6884  	1997.35     	3.58101E-3  	0.99 minutes/million states
+1700000	-6311.1568  	-381.7047   	-5929.4521  	1997.60     	3.76132E-3  	0.99 minutes/million states
+1710000	-6372.4946  	-419.1130   	-5953.3816  	1997.27     	3.14028E-3  	0.99 minutes/million states
+1720000	-6326.6298  	-408.9221   	-5917.7077  	1996.89     	3.37254E-3  	0.99 minutes/million states
+1730000	-6360.6621  	-397.1133   	-5963.5488  	1996.80     	3.47553E-3  	0.99 minutes/million states
+1740000	-6355.5276  	-385.6150   	-5969.9127  	1997.42     	3.3295E-3   	0.99 minutes/million states
+1750000	-6382.5678  	-389.8471   	-5992.7207  	1996.63     	3.67632E-3  	0.99 minutes/million states
+1760000	-6276.4825  	-382.9091   	-5893.5734  	1998.00     	4.02262E-3  	0.99 minutes/million states
+1770000	-6377.6895  	-379.4100   	-5998.2796  	1997.80     	3.60359E-3  	0.99 minutes/million states
+1780000	-6338.4830  	-421.6110   	-5916.8719  	1997.52     	2.90488E-3  	0.99 minutes/million states
+1790000	-6384.3951  	-443.9006   	-5940.4945  	1996.05     	2.76291E-3  	0.99 minutes/million states
+1800000	-6291.1453  	-399.6247   	-5891.5206  	1995.99     	3.51912E-3  	0.99 minutes/million states
+1810000	-6334.9474  	-406.5269   	-5928.4205  	1996.68     	3.39225E-3  	0.99 minutes/million states
+1820000	-6376.5098  	-429.8956   	-5946.6143  	1996.57     	2.91175E-3  	1 minutes/million states
+1830000	-6369.5920  	-425.9085   	-5943.6835  	1997.41     	3.02207E-3  	1 minutes/million states
+1840000	-6300.6396  	-421.7006   	-5878.9390  	1997.71     	3.31959E-3  	1 minutes/million states
+1850000	-6384.9984  	-406.2918   	-5978.7066  	1996.58     	3.2471E-3   	1 minutes/million states
+1860000	-6282.4756  	-400.5828   	-5881.8928  	1997.77     	3.35191E-3  	1 minutes/million states
+1870000	-6308.9285  	-367.0745   	-5941.8540  	1997.71     	3.84031E-3  	1 minutes/million states
+1880000	-6321.9292  	-373.0541   	-5948.8751  	1997.71     	3.76164E-3  	1 minutes/million states
+1890000	-6330.7605  	-360.2353   	-5970.5252  	1997.36     	4.12313E-3  	1 minutes/million states
+1900000	-6401.5303  	-394.8185   	-6006.7118  	1997.53     	3.49074E-3  	1 minutes/million states
+1910000	-6324.5924  	-394.4377   	-5930.1547  	1997.53     	3.42551E-3  	1 minutes/million states
+1920000	-6279.8270  	-382.0464   	-5897.7806  	1997.35     	4.09728E-3  	1 minutes/million states
+1930000	-6287.8029  	-368.6715   	-5919.1314  	1997.77     	4.05475E-3  	1 minutes/million states
+1940000	-6335.8582  	-385.0747   	-5950.7836  	1997.99     	3.94571E-3  	1 minutes/million states
+1950000	-6248.0012  	-365.3558   	-5882.6455  	1998.42     	4.0955E-3   	1 minutes/million states
+1960000	-6319.9746  	-371.7570   	-5948.2176  	1997.93     	3.85931E-3  	1 minutes/million states
+1970000	-6340.9159  	-381.5169   	-5959.3991  	1997.43     	3.69014E-3  	1 minutes/million states
+1980000	-6313.6253  	-378.0533   	-5935.5720  	1997.61     	3.60419E-3  	1 minutes/million states
+1990000	-6285.5274  	-375.7365   	-5909.7909  	1997.54     	3.7773E-3   	1 minutes/million states
+2000000	-6321.5197  	-359.5305   	-5961.9892  	1997.99     	3.8028E-3   	1 minutes/million states
+2010000	-6329.4512  	-382.3984   	-5947.0528  	1997.26     	3.49777E-3  	1 minutes/million states
+2020000	-6322.4175  	-372.5506   	-5949.8669  	1998.21     	3.60927E-3  	1 minutes/million states
+2030000	-6279.1035  	-374.0435   	-5905.0600  	1997.95     	3.94319E-3  	1 minutes/million states
+2040000	-6286.5263  	-358.2225   	-5928.3038  	1998.38     	4.32261E-3  	1 minutes/million states
+2050000	-6311.8786  	-378.0544   	-5933.8242  	1996.89     	3.88198E-3  	1 minutes/million states
+2060000	-6314.5689  	-374.3399   	-5940.2289  	1997.67     	3.65648E-3  	1 minutes/million states
+2070000	-6324.4982  	-394.4043   	-5930.0939  	1997.28     	3.58877E-3  	1 minutes/million states
+2080000	-6269.9542  	-357.9227   	-5912.0315  	1998.72     	4.10565E-3  	1 minutes/million states
+2090000	-6233.9506  	-365.5030   	-5868.4476  	1998.00     	4.1674E-3   	1 minutes/million states
+2100000	-6292.1197  	-376.8674   	-5915.2523  	1998.34     	4.14432E-3  	1 minutes/million states
+2110000	-6258.0933  	-365.0147   	-5893.0786  	1997.83     	3.99021E-3  	0.99 minutes/million states
+2120000	-6317.9410  	-361.0387   	-5956.9022  	1998.63     	3.91603E-3  	1 minutes/million states
+2130000	-6307.9029  	-388.7136   	-5919.1892  	1996.78     	3.49175E-3  	1 minutes/million states
+2140000	-6241.6810  	-382.5719   	-5859.1092  	1998.19     	3.82316E-3  	1 minutes/million states
+2150000	-6384.0239  	-401.7754   	-5982.2485  	1998.10     	3.39643E-3  	1 minutes/million states
+2160000	-6334.0145  	-412.0093   	-5922.0052  	1997.82     	3.50236E-3  	1 minutes/million states
+2170000	-6328.5496  	-394.2389   	-5934.3107  	1997.45     	3.56936E-3  	1 minutes/million states
+2180000	-6346.0212  	-386.5266   	-5959.4946  	1997.34     	3.56646E-3  	1 minutes/million states
+2190000	-6351.6736  	-405.1381   	-5946.5355  	1996.61     	3.62327E-3  	1 minutes/million states
+2200000	-6347.2337  	-391.0766   	-5956.1571  	1997.23     	3.15966E-3  	1 minutes/million states
+2210000	-6326.4347  	-380.1301   	-5946.3045  	1997.48     	3.73215E-3  	1 minutes/million states
+2220000	-6309.9300  	-371.5441   	-5938.3859  	1998.12     	4.30565E-3  	1 minutes/million states
+2230000	-6273.9692  	-337.4955   	-5936.4737  	1998.55     	4.81206E-3  	1 minutes/million states
+2240000	-6214.9214  	-344.2388   	-5870.6825  	1998.27     	3.88949E-3  	1 minutes/million states
+2250000	-6244.7342  	-344.6842   	-5900.0500  	1998.21     	4.14822E-3  	1 minutes/million states
+2260000	-6302.5840  	-345.2135   	-5957.3705  	1998.70     	4.77811E-3  	1 minutes/million states
+2270000	-6269.2527  	-361.4098   	-5907.8429  	1998.33     	3.72933E-3  	1 minutes/million states
+2280000	-6343.4880  	-389.4108   	-5954.0771  	1997.80     	3.40915E-3  	1 minutes/million states
+2290000	-6372.8166  	-390.5577   	-5982.2589  	1997.23     	3.41635E-3  	1 minutes/million states
+2300000	-6304.3165  	-389.9465   	-5914.3700  	1997.14     	3.6346E-3   	1 minutes/million states
+2310000	-6357.8883  	-365.9989   	-5991.8895  	1997.13     	3.92099E-3  	1 minutes/million states
+2320000	-6311.9258  	-340.8060   	-5971.1198  	1997.85     	3.84101E-3  	1 minutes/million states
+2330000	-6281.1264  	-358.1560   	-5922.9704  	1998.32     	4.16374E-3  	1 minutes/million states
+2340000	-6328.2773  	-346.3652   	-5981.9121  	1998.47     	4.49366E-3  	1 minutes/million states
+2350000	-6295.0047  	-361.0388   	-5933.9659  	1997.82     	4.26881E-3  	1 minutes/million states
+2360000	-6318.4323  	-366.8281   	-5951.6042  	1997.30     	4.0956E-3   	1 minutes/million states
+2370000	-6293.4137  	-355.1885   	-5938.2252  	1998.56     	4.09027E-3  	1 minutes/million states
+2380000	-6298.7239  	-380.6251   	-5918.0988  	1997.67     	3.69876E-3  	1 minutes/million states
+2390000	-6331.9808  	-377.3712   	-5954.6096  	1998.13     	4.02476E-3  	1 minutes/million states
+2400000	-6309.0505  	-385.0037   	-5924.0469  	1998.00     	3.87213E-3  	1 minutes/million states
+2410000	-6300.1577  	-368.7181   	-5931.4396  	1998.34     	4.09776E-3  	1 minutes/million states
+2420000	-6321.1737  	-392.7718   	-5928.4020  	1997.94     	3.77382E-3  	1 minutes/million states
+2430000	-6284.8124  	-356.2327   	-5928.5797  	1997.95     	4.44941E-3  	1 minutes/million states
+2440000	-6328.2652  	-355.7024   	-5972.5628  	1998.43     	4.75577E-3  	1 minutes/million states
+2450000	-6353.3830  	-365.1368   	-5988.2462  	1997.53     	3.92261E-3  	1 minutes/million states
+2460000	-6327.1034  	-364.6158   	-5962.4876  	1998.42     	4.23011E-3  	1 minutes/million states
+2470000	-6294.0734  	-383.2502   	-5910.8232  	1998.25     	3.65613E-3  	1 minutes/million states
+2480000	-6254.8682  	-381.9172   	-5872.9510  	1997.61     	3.72284E-3  	1 minutes/million states
+2490000	-6318.9144  	-376.4065   	-5942.5079  	1997.60     	3.82777E-3  	1 minutes/million states
+2500000	-6332.5664  	-387.4210   	-5945.1454  	1997.82     	3.66195E-3  	1 minutes/million states
+2510000	-6319.6064  	-381.6214   	-5937.9850  	1997.03     	3.75821E-3  	1 minutes/million states
+2520000	-6294.1882  	-374.1559   	-5920.0323  	1998.28     	3.837E-3    	1 minutes/million states
+2530000	-6375.3192  	-343.4944   	-6031.8247  	1998.20     	4.51741E-3  	1 minutes/million states
+2540000	-6299.0569  	-381.2496   	-5917.8073  	1998.42     	3.72199E-3  	1 minutes/million states
+2550000	-6248.4977  	-347.1253   	-5901.3724  	1997.53     	4.11422E-3  	1 minutes/million states
+2560000	-6343.2198  	-357.3494   	-5985.8704  	1997.58     	3.79932E-3  	1 minutes/million states
+2570000	-6310.9464  	-385.8891   	-5925.0573  	1997.87     	3.84528E-3  	1 minutes/million states
+2580000	-6313.2985  	-392.4886   	-5920.8099  	1997.82     	4.03173E-3  	1 minutes/million states
+2590000	-6270.5814  	-374.2236   	-5896.3578  	1997.51     	3.50659E-3  	1 minutes/million states
+2600000	-6321.8195  	-366.1052   	-5955.7143  	1998.20     	4.02816E-3  	1 minutes/million states
+2610000	-6306.7380  	-374.0004   	-5932.7376  	1998.38     	3.90729E-3  	1 minutes/million states
+2620000	-6297.6331  	-381.3340   	-5916.2990  	1998.11     	4.17664E-3  	1 minutes/million states
+2630000	-6375.1752  	-385.6511   	-5989.5241  	1997.62     	3.88923E-3  	1 minutes/million states
+2640000	-6328.9698  	-392.3835   	-5936.5863  	1997.85     	4.00702E-3  	1 minutes/million states
+2650000	-6326.7322  	-380.4345   	-5946.2978  	1998.15     	3.92336E-3  	1 minutes/million states
+2660000	-6368.8777  	-365.5795   	-6003.2982  	1997.95     	3.47783E-3  	1 minutes/million states
+2670000	-6359.5418  	-398.4181   	-5961.1236  	1997.37     	3.92188E-3  	1 minutes/million states
+2680000	-6337.6412  	-374.2396   	-5963.4017  	1998.15     	4.18326E-3  	1 minutes/million states
+2690000	-6349.1285  	-378.5067   	-5970.6218  	1997.07     	3.48836E-3  	1 minutes/million states
+2700000	-6326.9041  	-399.4325   	-5927.4716  	1997.05     	3.79009E-3  	1 minutes/million states
+2710000	-6335.1422  	-392.1165   	-5943.0257  	1997.11     	3.68827E-3  	1.01 minutes/million states
+2720000	-6315.6096  	-388.1896   	-5927.4200  	1998.43     	3.50772E-3  	1.01 minutes/million states
+2730000	-6360.7757  	-372.4703   	-5988.3054  	1997.61     	3.96341E-3  	1.01 minutes/million states
+2740000	-6342.0500  	-386.9867   	-5955.0633  	1997.87     	3.48153E-3  	1.01 minutes/million states
+2750000	-6256.5189  	-363.2276   	-5893.2913  	1998.22     	4.05475E-3  	1 minutes/million states
+2760000	-6363.7716  	-391.7094   	-5972.0622  	1997.63     	3.76385E-3  	1 minutes/million states
+2770000	-6301.0875  	-394.0268   	-5907.0607  	1997.40     	3.54158E-3  	1 minutes/million states
+2780000	-6334.6417  	-403.7438   	-5930.8979  	1997.46     	3.35247E-3  	1 minutes/million states
+2790000	-6306.4370  	-405.0404   	-5901.3965  	1997.05     	3.45257E-3  	1.01 minutes/million states
+2800000	-6321.2722  	-417.4304   	-5903.8418  	1996.57     	3.49013E-3  	1 minutes/million states
+2810000	-6409.8904  	-399.8961   	-6009.9942  	1997.27     	3.96252E-3  	1 minutes/million states
+2820000	-6402.4609  	-458.5354   	-5943.9255  	1996.33     	3.03953E-3  	1 minutes/million states
+2830000	-6338.3251  	-430.4889   	-5907.8362  	1996.11     	3.34354E-3  	1 minutes/million states
+2840000	-6377.9835  	-423.4085   	-5954.5750  	1995.45     	2.64513E-3  	1.01 minutes/million states
+2850000	-6326.7264  	-392.7787   	-5933.9476  	1997.27     	3.93456E-3  	1.01 minutes/million states
+2860000	-6414.8276  	-388.3842   	-6026.4434  	1998.30     	3.59806E-3  	1.01 minutes/million states
+2870000	-6370.0092  	-398.4516   	-5971.5576  	1997.72     	3.31658E-3  	1.01 minutes/million states
+2880000	-6348.6957  	-387.2582   	-5961.4375  	1998.21     	3.88098E-3  	1.01 minutes/million states
+2890000	-6263.6428  	-391.6378   	-5872.0050  	1998.19     	3.79163E-3  	1.01 minutes/million states
+2900000	-6247.1523  	-365.3122   	-5881.8401  	1998.37     	4.2463E-3   	1.02 minutes/million states
+2910000	-6347.1562  	-383.9036   	-5963.2526  	1997.77     	3.56509E-3  	1.02 minutes/million states
+2920000	-6312.1339  	-351.8439   	-5960.2901  	1997.87     	4.19741E-3  	1.02 minutes/million states
+2930000	-6329.5768  	-374.8593   	-5954.7175  	1997.81     	3.88335E-3  	1.02 minutes/million states
+2940000	-6298.2819  	-367.0594   	-5931.2225  	1998.77     	3.81416E-3  	1.02 minutes/million states
+2950000	-6312.8713  	-350.6455   	-5962.2259  	1998.08     	3.9236E-3   	1.02 minutes/million states
+2960000	-6319.9435  	-391.4677   	-5928.4758  	1997.83     	3.91229E-3  	1.02 minutes/million states
+2970000	-6314.5697  	-388.4735   	-5926.0962  	1997.92     	3.4284E-3   	1.02 minutes/million states
+2980000	-6325.2352  	-397.9082   	-5927.3270  	1997.96     	3.88719E-3  	1.02 minutes/million states
+2990000	-6371.4395  	-380.3176   	-5991.1220  	1997.94     	3.70676E-3  	1.02 minutes/million states
+3000000	-6351.1003  	-377.6405   	-5973.4598  	1997.76     	4.06711E-3  	1.03 minutes/million states
+3010000	-6316.7842  	-405.8124   	-5910.9718  	1997.99     	4.02732E-3  	1.03 minutes/million states
+3020000	-6345.4435  	-378.8525   	-5966.5910  	1996.40     	3.64121E-3  	1.03 minutes/million states
+3030000	-6291.2630  	-355.8022   	-5935.4609  	1998.32     	4.23935E-3  	1.03 minutes/million states
+3040000	-6349.3985  	-406.7023   	-5942.6962  	1997.51     	3.30103E-3  	1.03 minutes/million states
+3050000	-6306.0602  	-391.0576   	-5915.0026  	1996.83     	3.31818E-3  	1.03 minutes/million states
+3060000	-6357.0111  	-413.0994   	-5943.9117  	1997.81     	3.60857E-3  	1.03 minutes/million states
+3070000	-6374.3480  	-419.9032   	-5954.4448  	1997.71     	3.5877E-3   	1.03 minutes/million states
+3080000	-6314.8659  	-387.7155   	-5927.1504  	1997.65     	3.73147E-3  	1.03 minutes/million states
+3090000	-6359.8158  	-384.9796   	-5974.8362  	1997.35     	3.97781E-3  	1.03 minutes/million states
+3100000	-6305.9343  	-363.6584   	-5942.2759  	1998.05     	4.18145E-3  	1.03 minutes/million states
+3110000	-6337.2883  	-351.6585   	-5985.6298  	1998.57     	4.73358E-3  	1.03 minutes/million states
+3120000	-6292.9034  	-361.3017   	-5931.6018  	1998.24     	3.6905E-3   	1.03 minutes/million states
+3130000	-6341.3379  	-367.2557   	-5974.0822  	1998.35     	4.20462E-3  	1.03 minutes/million states
+3140000	-6324.6771  	-348.4270   	-5976.2501  	1998.57     	4.78939E-3  	1.03 minutes/million states
+3150000	-6317.4270  	-369.8669   	-5947.5601  	1998.70     	4.20701E-3  	1.03 minutes/million states
+3160000	-6324.1521  	-368.3010   	-5955.8510  	1998.67     	4.29205E-3  	1.03 minutes/million states
+3170000	-6271.7257  	-381.2992   	-5890.4265  	1998.30     	3.74658E-3  	1.03 minutes/million states
+3180000	-6329.3011  	-377.7474   	-5951.5538  	1998.17     	3.79792E-3  	1.03 minutes/million states
+3190000	-6312.6313  	-356.9313   	-5955.7000  	1998.52     	4.36812E-3  	1.02 minutes/million states
+3200000	-6314.0123  	-375.1262   	-5938.8861  	1997.91     	4.383E-3    	1.02 minutes/million states
+3210000	-6281.1994  	-363.0300   	-5918.1694  	1998.41     	4.20063E-3  	1.02 minutes/million states
+3220000	-6310.9716  	-364.0210   	-5946.9506  	1998.34     	4.04283E-3  	1.02 minutes/million states
+3230000	-6297.6248  	-332.4350   	-5965.1897  	1998.35     	4.64632E-3  	1.02 minutes/million states
+3240000	-6296.0821  	-354.4738   	-5941.6083  	1997.75     	4.14458E-3  	1.02 minutes/million states
+3250000	-6350.5647  	-380.8491   	-5969.7156  	1997.94     	3.74694E-3  	1.02 minutes/million states
+3260000	-6345.5511  	-389.3597   	-5956.1914  	1997.13     	3.60394E-3  	1.02 minutes/million states
+3270000	-6313.6053  	-368.1906   	-5945.4147  	1998.34     	3.83904E-3  	1.02 minutes/million states
+3280000	-6281.9911  	-363.4053   	-5918.5858  	1998.36     	4.27305E-3  	1.02 minutes/million states
+3290000	-6347.2491  	-383.4975   	-5963.7516  	1997.68     	4.17204E-3  	1.02 minutes/million states
+3300000	-6286.2860  	-391.8505   	-5894.4355  	1998.39     	3.59053E-3  	1.02 minutes/million states
+3310000	-6278.0596  	-387.6113   	-5890.4482  	1997.89     	3.679E-3    	1.02 minutes/million states
+3320000	-6329.3103  	-387.8543   	-5941.4560  	1997.90     	3.54478E-3  	1.02 minutes/million states
+3330000	-6315.5767  	-379.3224   	-5936.2543  	1997.20     	3.90682E-3  	1.02 minutes/million states
+3340000	-6330.2628  	-367.2726   	-5962.9902  	1997.78     	4.38303E-3  	1.02 minutes/million states
+3350000	-6285.9574  	-334.0510   	-5951.9065  	1998.69     	4.21348E-3  	1.02 minutes/million states
+3360000	-6268.4118  	-341.6137   	-5926.7981  	1997.96     	4.29223E-3  	1.02 minutes/million states
+3370000	-6272.2284  	-349.0443   	-5923.1842  	1998.71     	4.02626E-3  	1.02 minutes/million states
+3380000	-6353.2148  	-360.2514   	-5992.9634  	1997.98     	4.04794E-3  	1.02 minutes/million states
+3390000	-6300.6729  	-371.2261   	-5929.4468  	1997.91     	3.79227E-3  	1.02 minutes/million states
+3400000	-6300.8683  	-382.0427   	-5918.8257  	1997.71     	3.75376E-3  	1.02 minutes/million states
+3410000	-6340.8570  	-380.3202   	-5960.5367  	1997.82     	3.53366E-3  	1.02 minutes/million states
+3420000	-6313.7552  	-398.1657   	-5915.5895  	1997.50     	3.64442E-3  	1.02 minutes/million states
+3430000	-6243.7738  	-384.9423   	-5858.8315  	1997.59     	3.55315E-3  	1.02 minutes/million states
+3440000	-6361.3698  	-388.2152   	-5973.1546  	1996.73     	3.77969E-3  	1.02 minutes/million states
+3450000	-6347.1497  	-412.9358   	-5934.2139  	1996.68     	2.97754E-3  	1.02 minutes/million states
+3460000	-6353.1740  	-411.0036   	-5942.1704  	1996.67     	3.22405E-3  	1.02 minutes/million states
+3470000	-6361.4388  	-404.4617   	-5956.9771  	1996.78     	3.56117E-3  	1.02 minutes/million states
+3480000	-6325.6682  	-410.8280   	-5914.8402  	1997.51     	3.25044E-3  	1.02 minutes/million states
+3490000	-6263.2806  	-376.8588   	-5886.4218  	1997.84     	3.57112E-3  	1.02 minutes/million states
+3500000	-6297.8283  	-363.8338   	-5933.9945  	1998.42     	4.3831E-3   	1.02 minutes/million states
+3510000	-6320.0702  	-372.5354   	-5947.5349  	1998.08     	3.80415E-3  	1.02 minutes/million states
+3520000	-6272.7534  	-364.2741   	-5908.4792  	1998.35     	4.4241E-3   	1.02 minutes/million states
+3530000	-6317.0326  	-384.1398   	-5932.8928  	1997.93     	3.56898E-3  	1.02 minutes/million states
+3540000	-6316.5483  	-391.7127   	-5924.8356  	1998.16     	3.22599E-3  	1.03 minutes/million states
+3550000	-6301.6925  	-380.2442   	-5921.4483  	1997.95     	4.28982E-3  	1.03 minutes/million states
+3560000	-6349.0493  	-406.4707   	-5942.5786  	1997.56     	3.83342E-3  	1.03 minutes/million states
+3570000	-6353.7499  	-393.7863   	-5959.9637  	1997.80     	3.50593E-3  	1.03 minutes/million states
+3580000	-6340.8808  	-425.5150   	-5915.3658  	1997.24     	3.19062E-3  	1.03 minutes/million states
+3590000	-6314.6147  	-412.6565   	-5901.9582  	1997.35     	3.35014E-3  	1.03 minutes/million states
+3600000	-6346.5837  	-411.6145   	-5934.9692  	1997.13     	3.03665E-3  	1.03 minutes/million states
+3610000	-6319.5224  	-392.8837   	-5926.6387  	1997.74     	3.51885E-3  	1.03 minutes/million states
+3620000	-6313.7102  	-372.0830   	-5941.6273  	1997.90     	3.78295E-3  	1.04 minutes/million states
+3630000	-6284.0636  	-414.4901   	-5869.5734  	1996.94     	3.00026E-3  	1.04 minutes/million states
+3640000	-6371.4917  	-425.0588   	-5946.4329  	1997.44     	3.72224E-3  	1.04 minutes/million states
+3650000	-6306.6402  	-401.9222   	-5904.7179  	1995.86     	2.81671E-3  	1.04 minutes/million states
+3660000	-6311.3434  	-380.9935   	-5930.3499  	1998.58     	4.16198E-3  	1.04 minutes/million states
+3670000	-6279.5653  	-351.4495   	-5928.1158  	1998.45     	3.96726E-3  	1.04 minutes/million states
+3680000	-6306.4998  	-349.8169   	-5956.6828  	1998.09     	4.66021E-3  	1.04 minutes/million states
+3690000	-6243.5807  	-341.8822   	-5901.6985  	1998.68     	4.4822E-3   	1.03 minutes/million states
+3700000	-6305.2421  	-364.1512   	-5941.0909  	1998.36     	3.98019E-3  	1.03 minutes/million states
+3710000	-6343.9305  	-388.0884   	-5955.8421  	1998.16     	3.62349E-3  	1.03 minutes/million states
+3720000	-6307.9480  	-363.1894   	-5944.7586  	1998.27     	4.14503E-3  	1.03 minutes/million states
+3730000	-6342.5812  	-373.6874   	-5968.8938  	1997.58     	4.03693E-3  	1.03 minutes/million states
+3740000	-6321.6037  	-413.9158   	-5907.6880  	1996.48     	3.00977E-3  	1.03 minutes/million states
+3750000	-6375.0706  	-415.9030   	-5959.1676  	1997.21     	3.23278E-3  	1.03 minutes/million states
+3760000	-6339.8988  	-385.9409   	-5953.9579  	1996.13     	3.75475E-3  	1.03 minutes/million states
+3770000	-6299.0151  	-364.2600   	-5934.7551  	1997.13     	3.80712E-3  	1.03 minutes/million states
+3780000	-6295.2549  	-382.3090   	-5912.9459  	1997.95     	3.72012E-3  	1.03 minutes/million states
+3790000	-6393.6643  	-380.2259   	-6013.4385  	1997.07     	3.8627E-3   	1.03 minutes/million states
+3800000	-6296.9011  	-383.8169   	-5913.0842  	1997.30     	3.6777E-3   	1.03 minutes/million states
+3810000	-6243.5773  	-373.8296   	-5869.7477  	1998.19     	4.02625E-3  	1.03 minutes/million states
+3820000	-6281.2322  	-381.3104   	-5899.9217  	1997.74     	3.44102E-3  	1.03 minutes/million states
+3830000	-6267.1827  	-376.3440   	-5890.8387  	1997.73     	3.86801E-3  	1.03 minutes/million states
+3840000	-6300.4602  	-369.5901   	-5930.8701  	1997.53     	3.72754E-3  	1.02 minutes/million states
+3850000	-6303.5706  	-360.5144   	-5943.0562  	1997.90     	4.6789E-3   	1.02 minutes/million states
+3860000	-6275.1550  	-364.9476   	-5910.2074  	1997.51     	3.79833E-3  	1.02 minutes/million states
+3870000	-6301.2612  	-362.8444   	-5938.4168  	1997.73     	4.55502E-3  	1.02 minutes/million states
+3880000	-6304.8271  	-379.0666   	-5925.7604  	1998.07     	3.90826E-3  	1.02 minutes/million states
+3890000	-6275.2328  	-360.2521   	-5914.9808  	1998.50     	4.04061E-3  	1.02 minutes/million states
+3900000	-6348.6252  	-379.8814   	-5968.7438  	1997.67     	3.64529E-3  	1.01 minutes/million states
+3910000	-6310.8922  	-378.2503   	-5932.6419  	1998.17     	3.90135E-3  	1.01 minutes/million states
+3920000	-6328.7833  	-387.9871   	-5940.7962  	1997.93     	3.40764E-3  	1.01 minutes/million states
+3930000	-6372.2805  	-411.2656   	-5961.0149  	1997.80     	3.64535E-3  	1.01 minutes/million states
+3940000	-6335.7105  	-394.0126   	-5941.6979  	1997.93     	3.6599E-3   	1.01 minutes/million states
+3950000	-6358.9224  	-399.8333   	-5959.0891  	1997.34     	3.44109E-3  	1.01 minutes/million states
+3960000	-6334.5707  	-377.6786   	-5956.8921  	1996.99     	3.84572E-3  	1.01 minutes/million states
+3970000	-6298.0879  	-374.6680   	-5923.4199  	1997.53     	4.02024E-3  	1.01 minutes/million states
+3980000	-6291.9572  	-364.8657   	-5927.0914  	1997.54     	3.83236E-3  	1.01 minutes/million states
+3990000	-6379.7095  	-406.1436   	-5973.5659  	1997.96     	3.68269E-3  	1 minutes/million states
+4000000	-6312.6131  	-396.7225   	-5915.8906  	1997.17     	3.25097E-3  	1 minutes/million states
+4010000	-6320.8055  	-406.2962   	-5914.5093  	1997.07     	3.07667E-3  	1 minutes/million states
+4020000	-6271.7797  	-365.9212   	-5905.8585  	1998.20     	3.71172E-3  	1 minutes/million states
+4030000	-6366.7929  	-373.8986   	-5992.8944  	1997.90     	3.86292E-3  	1 minutes/million states
+4040000	-6371.7488  	-395.2860   	-5976.4627  	1998.12     	4.12946E-3  	1 minutes/million states
+4050000	-6303.5632  	-367.9168   	-5935.6465  	1998.25     	3.82486E-3  	1 minutes/million states
+4060000	-6346.8263  	-385.1892   	-5961.6371  	1997.33     	4.06723E-3  	1 minutes/million states
+4070000	-6302.8318  	-380.1432   	-5922.6885  	1997.03     	3.28709E-3  	1 minutes/million states
+4080000	-6333.2160  	-379.4087   	-5953.8074  	1998.24     	3.40545E-3  	1 minutes/million states
+4090000	-6404.0378  	-385.3186   	-6018.7193  	1997.56     	3.48313E-3  	1 minutes/million states
+4100000	-6313.9372  	-362.9333   	-5951.0039  	1998.14     	3.86528E-3  	1 minutes/million states
+4110000	-6339.1980  	-370.2359   	-5968.9622  	1998.15     	4.08931E-3  	1 minutes/million states
+4120000	-6263.5532  	-373.5780   	-5889.9752  	1998.47     	4.39567E-3  	1 minutes/million states
+4130000	-6294.5447  	-371.9281   	-5922.6166  	1998.17     	3.95662E-3  	1 minutes/million states
+4140000	-6281.0154  	-362.9113   	-5918.1041  	1998.16     	4.67723E-3  	1 minutes/million states
+4150000	-6345.6207  	-390.3928   	-5955.2278  	1997.49     	3.85996E-3  	1 minutes/million states
+4160000	-6298.2440  	-379.6699   	-5918.5740  	1997.44     	3.80738E-3  	1 minutes/million states
+4170000	-6361.1713  	-384.9222   	-5976.2491  	1997.64     	4.25267E-3  	1 minutes/million states
+4180000	-6344.6217  	-361.3530   	-5983.2686  	1997.79     	4.17776E-3  	1 minutes/million states
+4190000	-6256.4548  	-360.6153   	-5895.8395  	1997.95     	4.05193E-3  	1 minutes/million states
+4200000	-6341.0320  	-359.3358   	-5981.6963  	1997.84     	4.32428E-3  	1 minutes/million states
+4210000	-6312.4378  	-368.8733   	-5943.5645  	1998.61     	4.39393E-3  	1 minutes/million states
+4220000	-6309.4603  	-347.1861   	-5962.2742  	1998.42     	3.87887E-3  	1 minutes/million states
+4230000	-6319.9358  	-389.7497   	-5930.1861  	1998.05     	3.62155E-3  	1 minutes/million states
+4240000	-6353.2057  	-412.9384   	-5940.2673  	1996.69     	3.25554E-3  	1 minutes/million states
+4250000	-6300.3638  	-412.8163   	-5887.5475  	1997.65     	3.28259E-3  	1 minutes/million states
+4260000	-6300.4898  	-386.7398   	-5913.7500  	1997.70     	3.66943E-3  	1 minutes/million states
+4270000	-6315.1921  	-402.9477   	-5912.2444  	1997.30     	3.0114E-3   	1 minutes/million states
+4280000	-6345.4437  	-386.5967   	-5958.8470  	1997.64     	3.47435E-3  	1 minutes/million states
+4290000	-6282.3451  	-370.5430   	-5911.8021  	1997.92     	3.82034E-3  	1 minutes/million states
+4300000	-6389.9715  	-382.4863   	-6007.4852  	1997.32     	4.18128E-3  	1 minutes/million states
+4310000	-6325.9825  	-387.2830   	-5938.6994  	1998.59     	3.77921E-3  	1 minutes/million states
+4320000	-6307.5862  	-361.5136   	-5946.0726  	1997.71     	3.92194E-3  	0.99 minutes/million states
+4330000	-6317.1582  	-373.9553   	-5943.2029  	1998.06     	3.72549E-3  	1 minutes/million states
+4340000	-6299.1695  	-387.3197   	-5911.8498  	1997.32     	3.60857E-3  	1 minutes/million states
+4350000	-6272.3363  	-377.7792   	-5894.5571  	1998.08     	3.62178E-3  	1 minutes/million states
+4360000	-6326.4168  	-365.5129   	-5960.9039  	1998.54     	3.88684E-3  	1 minutes/million states
+4370000	-6322.3992  	-372.4471   	-5949.9522  	1997.74     	3.84938E-3  	1 minutes/million states
+4380000	-6293.9531  	-354.6657   	-5939.2874  	1998.25     	3.77692E-3  	1 minutes/million states
+4390000	-6289.9545  	-382.1341   	-5907.8204  	1998.35     	3.58101E-3  	1 minutes/million states
+4400000	-6369.5767  	-358.2354   	-6011.3413  	1997.98     	4.34902E-3  	1 minutes/million states
+4410000	-6274.1047  	-362.8983   	-5911.2064  	1998.09     	4.09715E-3  	1 minutes/million states
+4420000	-6299.8107  	-361.7847   	-5938.0261  	1997.87     	3.72137E-3  	1 minutes/million states
+4430000	-6325.1457  	-362.3689   	-5962.7768  	1997.30     	3.86973E-3  	1 minutes/million states
+4440000	-6318.9610  	-370.2016   	-5948.7594  	1997.41     	3.66294E-3  	1 minutes/million states
+4450000	-6354.3948  	-398.9279   	-5955.4670  	1997.84     	3.57457E-3  	0.99 minutes/million states
+4460000	-6275.6921  	-391.9816   	-5883.7105  	1998.37     	3.66173E-3  	1 minutes/million states
+4470000	-6304.5827  	-370.9359   	-5933.6468  	1997.58     	4.12035E-3  	1 minutes/million states
+4480000	-6324.6450  	-364.8898   	-5959.7552  	1998.08     	4.05239E-3  	1 minutes/million states
+4490000	-6360.9045  	-392.8240   	-5968.0805  	1997.94     	3.6206E-3   	1 minutes/million states
+4500000	-6304.8763  	-367.8335   	-5937.0428  	1997.76     	4.24772E-3  	1 minutes/million states
+4510000	-6364.1741  	-387.1763   	-5976.9978  	1997.71     	3.8292E-3   	0.99 minutes/million states
+4520000	-6384.5697  	-399.5619   	-5985.0078  	1996.48     	3.32339E-3  	0.99 minutes/million states
+4530000	-6344.2877  	-404.4364   	-5939.8513  	1996.81     	3.71185E-3  	0.99 minutes/million states
+4540000	-6337.7830  	-416.3213   	-5921.4616  	1997.11     	3.30403E-3  	0.99 minutes/million states
+4550000	-6312.0161  	-394.6191   	-5917.3969  	1997.27     	3.15682E-3  	0.99 minutes/million states
+4560000	-6379.5408  	-400.1694   	-5979.3714  	1997.45     	3.39824E-3  	0.99 minutes/million states
+4570000	-6296.3739  	-383.8206   	-5912.5533  	1998.36     	3.71134E-3  	0.99 minutes/million states
+4580000	-6360.8769  	-405.5657   	-5955.3112  	1997.57     	3.35528E-3  	0.99 minutes/million states
+4590000	-6293.0948  	-385.4908   	-5907.6039  	1997.76     	3.55138E-3  	0.98 minutes/million states
+4600000	-6351.0058  	-394.6044   	-5956.4014  	1998.16     	3.5292E-3   	0.98 minutes/million states
+4610000	-6362.8805  	-380.4931   	-5982.3875  	1997.08     	3.77013E-3  	0.98 minutes/million states
+4620000	-6351.0500  	-396.7228   	-5954.3272  	1997.54     	3.45929E-3  	0.98 minutes/million states
+4630000	-6333.1122  	-384.5954   	-5948.5168  	1998.21     	3.78537E-3  	0.98 minutes/million states
+4640000	-6316.8745  	-386.0987   	-5930.7758  	1997.58     	3.4558E-3   	0.98 minutes/million states
+4650000	-6281.9679  	-409.1190   	-5872.8488  	1997.23     	3.43697E-3  	0.98 minutes/million states
+4660000	-6332.3835  	-404.0509   	-5928.3327  	1995.99     	3.16573E-3  	0.98 minutes/million states
+4670000	-6363.0440  	-387.6185   	-5975.4255  	1998.12     	3.79975E-3  	0.98 minutes/million states
+4680000	-6308.7132  	-382.5770   	-5926.1362  	1997.58     	3.83062E-3  	0.98 minutes/million states
+4690000	-6302.7033  	-380.9752   	-5921.7281  	1997.72     	3.60552E-3  	0.98 minutes/million states
+4700000	-6358.9540  	-405.3338   	-5953.6202  	1996.46     	3.26241E-3  	0.98 minutes/million states
+4710000	-6360.1724  	-404.1882   	-5955.9842  	1997.10     	3.51556E-3  	0.98 minutes/million states
+4720000	-6293.8512  	-423.9158   	-5869.9354  	1996.98     	2.77051E-3  	0.98 minutes/million states
+4730000	-6367.4920  	-413.4368   	-5954.0552  	1996.05     	3.32366E-3  	0.98 minutes/million states
+4740000	-6335.7490  	-403.7339   	-5932.0151  	1997.43     	3.28395E-3  	0.98 minutes/million states
+4750000	-6324.6416  	-407.2839   	-5917.3576  	1998.04     	3.59799E-3  	0.98 minutes/million states
+4760000	-6321.2313  	-412.8246   	-5908.4067  	1997.48     	3.14136E-3  	0.98 minutes/million states
+4770000	-6343.9212  	-420.3614   	-5923.5598  	1997.22     	3.22133E-3  	0.98 minutes/million states
+4780000	-6350.3725  	-415.0733   	-5935.2992  	1996.98     	2.87441E-3  	0.98 minutes/million states
+4790000	-6304.7791  	-409.4478   	-5895.3313  	1997.01     	2.98365E-3  	0.98 minutes/million states
+4800000	-6358.8830  	-395.6639   	-5963.2191  	1997.06     	3.33735E-3  	0.98 minutes/million states
+4810000	-6324.3246  	-377.3740   	-5946.9505  	1997.88     	3.80082E-3  	0.98 minutes/million states
+4820000	-6304.1582  	-378.6189   	-5925.5393  	1997.98     	3.52301E-3  	0.98 minutes/million states
+4830000	-6309.4469  	-386.3659   	-5923.0809  	1997.53     	3.15686E-3  	0.98 minutes/million states
+4840000	-6374.9462  	-399.2350   	-5975.7112  	1996.41     	3.40475E-3  	0.98 minutes/million states
+4850000	-6364.7109  	-392.9612   	-5971.7497  	1997.92     	3.9616E-3   	0.98 minutes/million states
+4860000	-6332.7405  	-384.1648   	-5948.5757  	1998.18     	3.90147E-3  	0.98 minutes/million states
+4870000	-6280.0378  	-365.2584   	-5914.7794  	1998.49     	4.4547E-3   	0.98 minutes/million states
+4880000	-6319.9826  	-377.6527   	-5942.3299  	1998.02     	3.49532E-3  	0.98 minutes/million states
+4890000	-6346.1203  	-372.8292   	-5973.2911  	1997.33     	3.83173E-3  	0.98 minutes/million states
+4900000	-6336.4165  	-381.6630   	-5954.7535  	1997.98     	4.24837E-3  	0.98 minutes/million states
+4910000	-6350.0189  	-369.3325   	-5980.6864  	1997.62     	3.97171E-3  	0.98 minutes/million states
+4920000	-6352.1276  	-375.9819   	-5976.1456  	1997.00     	3.57218E-3  	0.98 minutes/million states
+4930000	-6316.1700  	-358.1367   	-5958.0333  	1997.90     	3.82804E-3  	0.98 minutes/million states
+4940000	-6304.4385  	-384.5195   	-5919.9190  	1998.34     	4.24673E-3  	0.98 minutes/million states
+4950000	-6372.5079  	-389.6275   	-5982.8804  	1997.10     	3.24117E-3  	0.98 minutes/million states
+4960000	-6332.8886  	-402.2795   	-5930.6091  	1997.69     	3.50899E-3  	0.98 minutes/million states
+4970000	-6318.3353  	-396.4841   	-5921.8512  	1997.97     	3.46662E-3  	0.98 minutes/million states
+4980000	-6341.7194  	-382.7385   	-5958.9808  	1998.38     	3.99393E-3  	0.98 minutes/million states
+4990000	-6351.4973  	-362.0789   	-5989.4185  	1998.20     	4.37908E-3  	0.98 minutes/million states
+5000000	-6303.5829  	-355.3260   	-5948.2569  	1998.71     	4.65374E-3  	0.98 minutes/million states
+
+Operator analysis
+Operator                                          Weight  Tuning   Count      Time(ms)   Time/Op    Pr(accept) 
+scale(clock.rate)                                 3.0      0.685   65294      0          0.0        0.2322     
+up(nodeHeights(treeModel))/down(clock.rate)       3.0      0.995   65620      0          0.0        0.2332     
+subtreeLeap(treeModel)                            165.0    0.384   3605194    0          0.0        0.2339     
+subtreeJump(treeModel)                            16.5             361141     0          0.0        0.0692     
+scale(constant.popSize)                           3.0      0.597   65514      0          0.0        0.2342     
+mutationHistoryGibbs(treeModel)                   16.5             361516     0          0.0        1.0        
+scale(alpha)                                      3.0      0.555   65506      0          0.0        0.2338     
+siteRateCategoryGibbs(treeModel)                  16.5             360215     0          0.0        1.0        
+
+5.001566666666666 minutes
+

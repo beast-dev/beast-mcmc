@@ -439,39 +439,30 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
 
     /**
      * Imports trait information from a file
-     * @param edges Edges are provided as index: child number; parent: array entry
-     * @param traitModels List of TreeParameterModel object that contain trait information
-     * @param traitValues Values to be copied into the List of TreeParameterModel objects
+     * @param edges Edges are provided as index: child number; parent: array entry (-1 for the root)
+     * @param traitModels List of TreeParameterModel object that contain trait information; those
+     *                    belonging to other trees are skipped
+     * @param traitValues Values to be copied into the TreeParameterModel objects of this tree, one
+     *                    row per model (in the order of traitModels) indexed by the saved node number
      */
     public void adoptTraitData(int[] edges, ArrayList<TreeParameterModel> traitModels, double[][] traitValues, String[] taxaNames) {
+        // Saved node i is this tree's external node nodeMap[i] (matched by taxon name) or internal
+        // node i. TreeParameterModel maps a node to its parameter index itself, so the values are
+        // simply set node by node. The root carries no value and is not in the file.
         int[] nodeMap = createNodeMap(taxaNames);
         int index = 0;
 
         for (TreeParameterModel tpm : traitModels) {
+            if (tpm.getTreeModel() != this) {
+                continue;
+            }
 
-            for (int i = 0; i < this.getRoot().getNumber(); i++) {
-                if (i < this.getExternalNodeCount()) {
-                    tpm.setNodeValue(this, this.getExternalNode(nodeMap[i]), traitValues[index][i]);
-                    System.out.println("Setting external node " + this.getExternalNode(nodeMap[i]) + " to " + traitValues[index][i]);
-
-                } else {
-                    tpm.setNodeValue(this, this.getNode(i), traitValues[index][i]);
-                    System.out.println("Setting internal node " + this.getNode(i ) + " to " + traitValues[index][i]);
+            for (int i = 0; i < edges.length; i++) {
+                if (edges[i] == -1) {
+                    continue;
                 }
-            }
-
-            // In TreeParameterModel, when this.getRoot.getNumber() and rootNodeNumber.getValue(0) are not equal,
-            // handleRootMove() will get called and move parameter/trait values to different indices.  Here, we
-            // preemptively move around trait values (if necessary) so that if handleRootMove() gets called, the
-            // trait values end up in the correct indices.
-            if(this.getRoot().getNumber() < edges.length-1){
-                tpm.setNodeValue(this, this.getNode(this.getRoot().getNumber()+1), traitValues[index][this.getNodeCount()-1]);
-                // System.out.println("Setting node " + this.getNode(this.getRoot().getNumber()+1) + " " + " to " + traitValues[index][this.getNodeCount()-1]);
-            }
-
-            for (int i = this.getRoot().getNumber()+2; i < edges.length; i++) {
-                tpm.setNodeValue(this, this.getNode(i), traitValues[index][i-1]);
-                // System.out.println("Setting node " + this.getNode(i ) + " to " + traitValues[index][i-1]);
+                NodeRef node = (i < getExternalNodeCount() ? getExternalNode(nodeMap[i]) : getNode(i));
+                tpm.setNodeValue(this, node, traitValues[index][i]);
             }
 
             index++;

@@ -37,6 +37,7 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
+import dr.util.FileHelpers;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -81,6 +82,9 @@ public class MCMCPanel extends BeautiPanel {
     private JTextField logFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + ".log");
     private JTextField treeFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + ".trees");
     private JTextField checkpointFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + ".chkpt");
+
+    private JCheckBox compressLogCheck = new JCheckBox("Compress log file using Zstandard (.zst)");
+    private JCheckBox compressTreeLogCheck = new JCheckBox("Compress tree log file(s) using Zstandard (.zst)");
 //    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
 
 //    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
@@ -94,6 +98,7 @@ public class MCMCPanel extends BeautiPanel {
 
     private BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
+    private boolean updatingFileNames = false;
     private BeautiOptions options;
 
     private MLEDialog mleDialog = null;
@@ -215,12 +220,12 @@ public class MCMCPanel extends BeautiPanel {
         logFileNameField.setColumns(32);
         logFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
-        logFileNameField.setEditable(false);
+        setupCompressionToggle(logFileNameField, compressLogCheck, false);
 
         treeFileNameField.setColumns(32);
         treeFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
         optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
-        treeFileNameField.setEditable(false);
+        setupCompressionToggle(treeFileNameField, compressTreeLogCheck, true);
 
         checkpointFileNameField.setColumns(32);
         checkpointFileNameField.setBorder(new EmptyBorder(FIELD_INSETS));
@@ -237,7 +242,7 @@ public class MCMCPanel extends BeautiPanel {
                 updateTreeFileNameList();
                 substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
                 if (substTreeLogCheck.isSelected()) {
-                    substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
+                    substTreeFileNameField.setText(displayTreeList(options.substTreeFileName) + treeFileExtension());
                 } else {
                     substTreeFileNameField.setText("");
                 }
@@ -383,6 +388,80 @@ public class MCMCPanel extends BeautiPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Puts the compression check box under the file name field and keeps the two in step:
+     * selecting the box adds the .zst extension to the file name, and typing or deleting the
+     * extension in the field selects or deselects the box. The rest of the file name still
+     * follows the file name stem.
+     */
+    private void setupCompressionToggle(final JTextField fileNameField, final JCheckBox compressCheck, final boolean trees) {
+        optionsPanel.addComponent(compressCheck);
+        compressCheck.setOpaque(false);
+        compressCheck.setToolTipText("<html>Write the file compressed with Zstandard. BEAST, LogCombiner,<br>" +
+                "TreeAnnotator and Tracer read .zst files directly.</html>");
+        compressCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                setCompression(trees, compressCheck.isSelected());
+                updateOtherFileNames(options);
+                frame.setDirty();
+            }
+        });
+
+        fileNameField.setEditable(true);
+        fileNameField.setToolTipText("Add or remove the " + FileHelpers.ZSTD_EXTENSION +
+                " extension to switch compression on or off");
+        fileNameField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                fileNameEdited();
+            }
+
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                fileNameEdited();
+            }
+
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+            }
+
+            private void fileNameEdited() {
+                // ignore the panel setting the file names itself
+                if (updatingFileNames || options == null) {
+                    return;
+                }
+                boolean compress = fileNameField.getText().trim().toLowerCase().endsWith(FileHelpers.ZSTD_EXTENSION);
+                if (compress != compressCheck.isSelected()) {
+                    compressCheck.setSelected(compress);
+                    setCompression(trees, compress);
+                    frame.setDirty();
+                }
+            }
+        });
+        // once editing is done, show the file name that will actually be used
+        fileNameField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateOtherFileNames(options);
+            }
+        });
+        fileNameField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (options != null) {
+                    updateOtherFileNames(options);
+                }
+            }
+        });
+    }
+
+    private void setCompression(boolean trees, boolean compress) {
+        if (trees) {
+            options.compressTreeLog = compress;
+        } else {
+            options.compressLog = compress;
+        }
+    }
+
+    private String treeFileExtension() {
+        return options.compressTreeLog ? FileHelpers.ZSTD_EXTENSION : "";
+    }
+
     private void updateTreeFileNameList() {
         options.updateFileNames(addTxtExtension.isSelected());
     }
@@ -449,17 +528,28 @@ public class MCMCPanel extends BeautiPanel {
     }
 
     private void updateOtherFileNames(BeautiOptions options) {
+        updatingFileNames = true;
+        try {
+            setFileNames(options);
+        } finally {
+            updatingFileNames = false;
+        }
+    }
+
+    private void setFileNames(BeautiOptions options) {
         if (options.fileNameStem != null) {
             options.updateFileNames(addTxtExtension.isSelected());
 
             logFileNameField.setText(options.logFileName);
+            compressLogCheck.setSelected(options.compressLog);
 
-            treeFileNameField.setText(truncate(displayTreeList(options.treeFileName)));
+            treeFileNameField.setText(truncate(displayTreeList(options.treeFileName) + treeFileExtension()));
+            compressTreeLogCheck.setSelected(options.compressTreeLog);
 
             checkpointFileNameField.setText(truncate(options.checkpointFileName));
 
             if (options.substTreeLog) {
-                substTreeFileNameField.setText(truncate(displayTreeList(options.substTreeFileName)));
+                substTreeFileNameField.setText(truncate(displayTreeList(options.substTreeFileName) + treeFileExtension()));
             } else {
                 substTreeFileNameField.setText("");
             }

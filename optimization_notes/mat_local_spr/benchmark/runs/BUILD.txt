@@ -1,0 +1,2 @@
+baseline 11, 22: operator_experiment b7ec573e5 (build/); all other runs: operator_experiment 7d0e64742 (build-7d0e64742/)
+mat-path-gibbs 33, 44: the laptop slept during these runs; time.txt is the mean of seeds 11 and 22 (2887 s), the measured wall times are in time-wall.txt

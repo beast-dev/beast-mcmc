@@ -45,6 +45,7 @@ import java.util.List;
 public class GradientWrapperParser extends AbstractXMLObjectParser {
 
     public static final String NAME = "gradient";
+    private static final String FORCE_PARAMETER = "forceParameter";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -62,7 +63,7 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
             final GradientProvider provider = (GradientProvider) mdl.getDistribution();
             Parameter parameter = mdl.getDataParameter();
 
-            if (parameter == null) {
+            if (parameter == null || xo.getAttribute(FORCE_PARAMETER, false )) {
                 parameter = (Parameter) xo.getChild(Parameter.class);
             }
 
@@ -102,6 +103,7 @@ public class GradientWrapperParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
+                AttributeRule.newBooleanRule(FORCE_PARAMETER, true),
                 new XORRule(
                         new XMLSyntaxRule[]{
                                 new ElementRule(MultivariateDistributionLikelihood.class),

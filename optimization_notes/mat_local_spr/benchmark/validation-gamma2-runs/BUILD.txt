@@ -1,0 +1,1 @@
+mat-local-gibbs: operator_experiment 8fed6a989 (../validation-gamma-runs/build-8fed6a989), one run at a time, category operator weight 1.65; baseline-*: links to ../validation-gamma-runs (run concurrently: their wall times are not comparable)

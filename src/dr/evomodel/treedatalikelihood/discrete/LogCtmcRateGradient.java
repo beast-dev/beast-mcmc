@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.substmodel.*;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.GradientDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
@@ -52,19 +53,29 @@ public class LogCtmcRateGradient extends AbstractLogAdditiveSubstitutionModelGra
     public LogCtmcRateGradient(String traitName,
                                TreeDataLikelihood treeDataLikelihood,
                                BeagleDataLikelihoodDelegate likelihoodDelegate,
-                               GlmSubstitutionModel substitutionModel) {
-        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
-                ApproximationMode.FIRST_ORDER);
+                               GlmSubstitutionModel substitutionModel,
+                               ApproximationMode mode,
+                               boolean forceAllReal) {
+        super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, mode, forceAllReal);
         this.rateProvider = extractRateProvider(substitutionModel);
         this.mapEffectToIndices = makeAsymmetricMap();
     }
 
     public LogCtmcRateGradient(String traitName,
                                TreeDataLikelihood treeDataLikelihood,
-                               BeagleDataLikelihoodDelegate likelihoodDelegate,
+                               GradientDataLikelihoodDelegate likelihoodDelegate,
                                LogRateSubstitutionModel substitutionModel) {
+        this(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel, ApproximationMode.FIRST_ORDER, false);
+    }
+
+    public LogCtmcRateGradient(String traitName,
+                               TreeDataLikelihood treeDataLikelihood,
+                               GradientDataLikelihoodDelegate likelihoodDelegate,
+                               LogRateSubstitutionModel substitutionModel,
+                               ApproximationMode mode,
+                               boolean forceAllReal) {
         super(traitName, treeDataLikelihood, likelihoodDelegate, substitutionModel,
-                ApproximationMode.FIRST_ORDER);
+                mode, forceAllReal);
         this.rateProvider = extractRateProvider(substitutionModel);
         this.mapEffectToIndices = makeAsymmetricMap();
     }

@@ -16,6 +16,7 @@ problem_cases
 .idea
 .DS_Store
 __pycache__
+*.code-workspace
 
 *.log
 *.trees
@@ -24,6 +25,9 @@ __pycache__
 !examples/**/*.xml
 !examples/data
 benchmarking/Results/
+optimization_notesmat_*
+optimization_notes/mat_local_spr
+
 !tests/**/*.xml
 !build*.xml
 
@@ -40,3 +44,4 @@ src/revision.txt
 *.citations.txt
 *.ops
 *.MLE
+.Rproj.user

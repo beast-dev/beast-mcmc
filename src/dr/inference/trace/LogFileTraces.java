@@ -222,7 +222,7 @@ public class LogFileTraces extends AbstractTraceList {
      * @throws IOException
      */
     public void loadTraces(File file) throws TraceException, IOException {
-        final Reader reader = new FileReader(file);
+        final Reader reader = dr.util.FileHelpers.getReader(file);
         loadTraces(reader);
         reader.close();
     }

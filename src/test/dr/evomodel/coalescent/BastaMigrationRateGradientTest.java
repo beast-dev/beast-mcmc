@@ -38,6 +38,7 @@ import dr.evomodel.coalescent.basta.AdjointGenericBastaLikelihoodDelegate;
 import dr.evomodel.coalescent.basta.BastaLikelihood;
 import dr.evomodel.coalescent.basta.BastaLikelihoodDelegate;
 import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodGradient;
+import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.evomodel.tree.DefaultTreeModel;
@@ -80,6 +81,38 @@ public class BastaMigrationRateGradientTest extends TestCase {
                 assertEquals(label + " rate " + i + ": " + Arrays.toString(gradient) + " vs " +
                         Arrays.toString(numeric), numeric[i], gradient[i], 1.0e-5 * Math.max(1.0, Math.abs(numeric[i])));
             }
+        }
+    }
+
+    /**
+     * A cyclic migration model (fast 0 to 1 to 2 to 0, slow back) has complex eigenvalues, so BASTA's transposed
+     * eigen decomposition is the conjugate transpose (EigenDecomposition.transpose). Finite differences pass under any
+     * transpose that is self-consistent; only the pinned log-likelihood (-13.585... without the transpose) would catch
+     * a wrong one.
+     */
+    public void testComplexEigenvalueGradientsMatchFiniteDifferences() throws Exception {
+        Parameter rates = new Parameter.Default("location.rates", new double[]{4.0, 0.1, 4.0, 0.1, 4.0, 0.1});
+        Parameter indicators = new Parameter.Default("location.indicators",
+                new double[]{1.0, 1.0, 1.0, 1.0, 1.0, 1.0});
+        BastaLikelihood likelihood = basta(rates, indicators, false);
+
+        double[] eigenValues = ((BaseSubstitutionModel) likelihood.getSubstitutionModel())
+                .getEigenDecomposition().getEigenValues();
+        boolean complex = false;
+        for (int i = 3; i < eigenValues.length; ++i) {
+            complex |= eigenValues[i] != 0.0;
+        }
+        assertTrue("no complex eigenvalues: " + Arrays.toString(eigenValues), complex);
+
+        assertEquals(-11.592338214980622, likelihood.getLogLikelihood(), 1.0e-10);
+
+        double[] gradient = new StructuredCoalescentLikelihoodGradient(likelihood,
+                likelihood.getSubstitutionModel(),
+                StructuredCoalescentLikelihoodGradient.WrtParameter.MIGRATION_RATE).getGradientLogDensity();
+        double[] numeric = finiteDifferences(likelihood, rates);
+        for (int i = 0; i < gradient.length; ++i) {
+            assertEquals("rate " + i + ": " + Arrays.toString(gradient) + " vs " + Arrays.toString(numeric),
+                    numeric[i], gradient[i], 1.0e-5 * Math.max(1.0, Math.abs(numeric[i])));
         }
     }
 

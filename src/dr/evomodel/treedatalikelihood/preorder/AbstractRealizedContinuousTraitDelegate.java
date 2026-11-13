@@ -181,7 +181,7 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
         }
     }
 
-    public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations, final int[] operations) {
+    public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations, final int rootNodeNumber, final int[] operations) {
 
         int k = 0;
         for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {

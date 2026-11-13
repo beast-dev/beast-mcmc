@@ -158,7 +158,7 @@ public abstract class AbstractGlmSubstitutionModelGradient extends AbstractLogAd
                     total -= crossProduct[index(i, i)] * element;
 
                     total += correction(i, j, crossProduct) * element;
-                    total -= correction(i, j, crossProduct) * element;
+                    total -= correction(i, i, crossProduct) * element;
 
                     normalization += element * pi[i];
                 }

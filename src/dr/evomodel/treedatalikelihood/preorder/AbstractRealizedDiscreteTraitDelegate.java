@@ -758,7 +758,7 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
     }
 
     @Override
-    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
 
         int k = 0;
         for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {

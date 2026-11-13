@@ -45,6 +45,7 @@ import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.util.Attribute;
+import dr.util.FileHelpers;
 import dr.xml.XMLParser;
 
 import java.util.ArrayList;
@@ -181,6 +182,9 @@ public class LogGenerator extends Generator {
 
         if (options.logFileName == null) {
             options.logFileName = options.fileNameStem + ".log";
+            if (options.compressLog) {
+                options.logFileName += FileHelpers.ZSTD_EXTENSION;
+            }
         }
         writer.writeOpenTag(LoggerParser.LOG,
                 new Attribute[]{
@@ -374,6 +378,9 @@ public class LogGenerator extends Generator {
             if (options.treeFileName.get(0).endsWith(".txt")) {
                 treeLogFileName += ".txt";
             }
+            if (options.compressTreeLog) {
+                treeLogFileName += FileHelpers.ZSTD_EXTENSION;
+            }
 
             writeTreeLogToFile(writer, treeLogFileName, tree);
         }
@@ -385,6 +392,9 @@ public class LogGenerator extends Generator {
                         "(subst).trees";
                 if (options.treeFileName.get(0).endsWith(".txt")) {
                     treeLogFileName += ".txt";
+                }
+                if (options.compressTreeLog) {
+                    treeLogFileName += FileHelpers.ZSTD_EXTENSION;
                 }
 
                 writeSubstTreeLogToFile(writer, treeLogFileName, tree);

@@ -29,7 +29,7 @@ package dr.inferencexml.distribution;
 
 import dr.inference.distribution.RandomField;
 import dr.inference.model.Parameter;
-import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
+import dr.math.distributions.gp.GaussianProcessField;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public class GaussianProcessFieldParser extends AbstractXMLObjectParser {
             bases.add(basis);
         }
 
-        AdditiveGaussianProcessDistribution distribution = new AdditiveGaussianProcessDistribution(id, dim, orderVariance, mean, noise, bases);
+        GaussianProcessField distribution = new GaussianProcessField(id, dim, orderVariance, mean, noise, bases);
 
         Parameter field = xo.hasChildNamed(FIELD) ? (Parameter) xo.getElementFirstChild(FIELD) : null;
         distribution.passParameter(field);

@@ -39,7 +39,7 @@ import org.ejml.factory.LinearSolverFactory;
 import org.ejml.interfaces.linsol.LinearSolver;
 import org.ejml.ops.CommonOps;
 
-import static dr.math.distributions.gp.AdditiveGaussianProcessDistribution.computeAdditiveGramian;
+import static dr.math.distributions.gp.GaussianProcessField.computeAdditiveGramian;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class GaussianProcessPrediction implements Reportable, Loggable, VariableListener, ModelListener {
 
-    protected static AdditiveGaussianProcessDistribution gp;
+    protected static GaussianProcessField gp;
     private final Parameter realizedValues;
     private static List<DesignMatrix> predictiveDesigns;
     private final int realizedDim;
@@ -74,7 +74,7 @@ public class GaussianProcessPrediction implements Reportable, Loggable, Variable
     private boolean crossGramianKnown;
     private LogColumn[] columns;
 
-    public GaussianProcessPrediction(AdditiveGaussianProcessDistribution gp,
+    public GaussianProcessPrediction(GaussianProcessField gp,
                                      Parameter realizedValues,
                                      List<DesignMatrix> predictiveDesigns) {
         this.gp = gp;

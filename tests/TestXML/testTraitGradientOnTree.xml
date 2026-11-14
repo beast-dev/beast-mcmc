@@ -172,7 +172,7 @@
 	
 	<!-- OU FULL MODEL WITH REPEATED MEASURES -->
 		
-	<traitDataLikelihood id="ouRepeatedMeasuresLikelihood" traitName="X" forceFullPrecision="true" selectionChart="dense">
+	<traitDataLikelihood id="ouRepeatedMeasuresLikelihood" traitName="X" forceFullPrecision="true">
 		<multivariateDiffusionModel idref="diffusionModel"/>
 		<treeModel idref="treeModel"/>
         <conjugateRootPrior>

@@ -49,7 +49,6 @@ import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
-import dr.inferencexml.timeseries.OUSelectionChartParserHelper;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -208,12 +207,7 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
                         + "<" + STRENGTH_OF_SELECTION_MATRIX + "> with <"
                         + CANONICAL_OU_BRANCH_PROCESSES + ">.");
             }
-            validateBranchProcessSelectionCharts(xo, branchProcessSpecification);
             elasticModel = branchProcessSpecification.getElasticModel(0);
-        } else {
-            OUSelectionChartParserHelper.validateSelectionChart(xo,
-                    elasticModel == null ? null : elasticModel.getStrengthOfSelectionMatrixParameter(),
-                    CONTINUOUS_DATA_LIKELIHOOD);
         }
 
 
@@ -325,7 +319,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
         boolean forceCompletelyObserved = xo.getAttribute(FORCE_COMPLETELY_OBSERVED, false);
         final boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
-        final boolean initializeLegacyCdi = implementationMode != ImplementationMode.MOMENT_BM;
         // The old ContinuousDataLikelihoodDelegate only ever runs the direct legacy/SafeIntegrator
         // CDI path (see its calculateLikelihood()); it cannot support any of the newer canonical/
         // moment-form backends (its enableCanonicalLikelihood()/enableCdiBMLikelihood()/
@@ -340,11 +333,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         // enable*Likelihood() methods need an actual legacy cdi/SafeIntegrator instance - they all
         // build their engine via applyEngineSelection on top of the initializeLegacyCdi=false
         // baseline. So DelegateNew must always be constructed with initializeLegacyCdi=false,
-        // regardless of implementationMode; only the old delegate uses the computed flag above.
+        // regardless of implementationMode.
         final CtsCompatibility delegate = implementationMode == ImplementationMode.LEGACY
                 ? new ContinuousDataLikelihoodDelegate(treeModel,
                         diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
-                        forceCompletelyObserved, allowSingular, initializeLegacyCdi)
+                        forceCompletelyObserved, allowSingular)
                 : new ContinuousDataLikelihoodDelegateNew(treeModel,
                         diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
                         forceCompletelyObserved, allowSingular, false);
@@ -596,18 +589,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         return new MultivariateElasticModel(strengthOfSelectionMatrix);
     }
 
-    private static void validateBranchProcessSelectionCharts(
-            final XMLObject xo,
-            final CanonicalOUBranchProcessSpecification specification) throws XMLParseException {
-        for (int process = 0; process < specification.getProcessCount(); ++process) {
-            OUSelectionChartParserHelper.validateSelectionChart(
-                    xo,
-                    specification.getElasticModel(process).getStrengthOfSelectionMatrixParameter(),
-                    CONTINUOUS_DATA_LIKELIHOOD + " " + CANONICAL_OU_BRANCH_PROCESSES
-                            + " process " + process);
-        }
-    }
-
     public static final XMLSyntaxRule[] rules = {
             new ElementRule(Tree.class),
             new ElementRule(MultivariateDiffusionModel.class),
@@ -645,9 +626,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_OBSERVED, true),
             AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
             AttributeRule.newBooleanRule(INTEGRATE_INTERNAL_TRAITS, true),
-            new StringAttributeRule(OUSelectionChartParserHelper.SELECTION_CHART,
-                    "Selection-matrix chart for OU models. Orthogonal block is the default; dense must be explicit.",
-                    OUSelectionChartParserHelper.ALLOWED_SELECTION_CHARTS, true),
             AttributeRule.newStringRule(IMPLEMENTATION, true),
             new StringAttributeRule(CANONICAL_OU_COORDINATES,
                     "Coordinate system for canonical OU messages. Use homogeneousBlockBasis "

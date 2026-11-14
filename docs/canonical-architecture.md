@@ -66,11 +66,7 @@ or deliberately kept here — see "Tree-vs-Math Separation" below):
 
 - `continuousNew` (root) holds the delegate (`ContinuousDataLikelihoodDelegateNew`),
   the `CtsCompatibility` contract, the engine factory/interface, and tree-side
-  branch-process/transition-provider glue (`ContinuousBranchProcessModel`,
-  `HomogeneousContinuousBranchProcessModel`,
-  `ContinuousBranchTimeModel`/`DefaultContinuousBranchTimeModel`,
-  `GaussianBranchTransitionProvider`/`KernelBasedGaussianBranchTransitionProvider`/
-  `OUGaussianBranchTransitionProvider`).
+  branch-time glue (`ContinuousBranchTimeModel`/`DefaultContinuousBranchTimeModel`).
 - `continuousNew.message` holds the small post-order/pre-order message-provider
   marker interfaces (`ContinuousMessageProvider`,
   `ContinuousCanonicalPostOrderMessageProvider`,

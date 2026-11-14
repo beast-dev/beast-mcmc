@@ -446,7 +446,7 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
                 + "        <rate><parameter id=\"block.trait.clock.rate\" value=\"1.0\"/></rate>"
                 + "    </strictClockBranchRates>"
                 + "    <traitDataLikelihood id=\"likelihood\" traitName=\"X\" implementation=\"" + implementation
-                + "\" reconstructTraits=\"false\" selectionChart=\"rotatedBlock\" canonicalOUCoordinates=\""
+                + "\" reconstructTraits=\"false\" canonicalOUCoordinates=\""
                 + canonicalOUCoordinates + "\">"
                 + "        <multivariateDiffusionModel idref=\"diffusionModel\"/>"
                 + "        <treeModel idref=\"treeModel\"/>"

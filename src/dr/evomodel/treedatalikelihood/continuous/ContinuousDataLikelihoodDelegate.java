@@ -37,6 +37,9 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @author Philippe Lemey
  */
 
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUGradientAdapter;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -46,12 +49,6 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
-import dr.evomodel.treedatalikelihood.continuousNew.*;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUGradientAdapter;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUIntegrator;
-import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUTreeLikelihoodIntegrator;
-import dr.evomodel.treedatalikelihood.continuousNew.message.ContinuousCanonicalPostOrderMessageProvider;
-import dr.evomodel.treedatalikelihood.continuousNew.message.ContinuousCanonicalPreOrderMessageProvider;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.*;
 import dr.evomodel.treedatalikelihood.preorder.*;
@@ -83,7 +80,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     private final ContinuousRateTransformation rateTransformation;
     private final Tree tree;
     private final BranchRateModel rateModel;
-    private final ContinuousBranchTimeModel branchTimeModel;
     private final ConjugateRootTraitPrior rootPrior;
     private final boolean forceCompletelyObserved;
 
@@ -114,19 +110,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
                                             BranchRateModel rateModel,
                                             boolean forceCompletelyObserved,
                                             boolean allowSingular) {
-        this(tree, diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
-                forceCompletelyObserved, allowSingular, true);
-    }
-
-    public ContinuousDataLikelihoodDelegate(Tree tree,
-                                            DiffusionProcessDelegate diffusionProcessDelegate,
-                                            ContinuousTraitPartialsProvider dataModel,
-                                            ConjugateRootTraitPrior rootPrior,
-                                            ContinuousRateTransformation rateTransformation,
-                                            BranchRateModel rateModel,
-                                            boolean forceCompletelyObserved,
-                                            boolean allowSingular,
-                                            boolean initializeLegacyCdi) {
 
         super("ContinuousDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel.treedatalikelihood");
@@ -158,7 +141,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         this.rateTransformation = rateTransformation;
         this.tree = tree;
         this.rateModel = rateModel;
-        this.branchTimeModel = new DefaultContinuousBranchTimeModel(tree, rateModel, rateTransformation);
         this.rootPrior = rootPrior;
 
         this.forceCompletelyObserved = forceCompletelyObserved;
@@ -190,104 +172,84 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
                 * ContinuousDiffusionIntegrator.OPERATION_TUPLE_SIZE];
 
         try {
-//            if (!initializeLegacyCdi) {
-//                cdi = null;
-//                this.dimProcess = dimTrait;
-//
-//                // Check tip data
-//                for (int i = 0; i < tipCount; i++) {
-//                    final NodeRef node = tree.getExternalNode(i);
-//                    final int index = node.getNumber();
-//
-//                    assert (i == index);
-//                    checkDataAlignment(node, tree);
-//                }
-//
-//                updateDiffusionModel = true;
-//                applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.momentBM(this));
-//            } else {
 
-                ContinuousDiffusionIntegrator base;
-                if (precisionType == PrecisionType.SCALAR) {
+            ContinuousDiffusionIntegrator base;
+            if (precisionType == PrecisionType.SCALAR) {
 
-                    if (diffusionProcessDelegate.getDiffusionModelCount() == 1 &&
-                            diffusionProcessDelegate.getDiffusionModel(0)
-                            instanceof SparseBandedMultivariateDiffusionModel) {
+                if (diffusionProcessDelegate.getDiffusionModelCount() == 1 &&
+                        diffusionProcessDelegate.getDiffusionModel(0)
+                        instanceof SparseBandedMultivariateDiffusionModel) {
 
-                        base =
+                    base =
 //                            new ContinuousDiffusionIntegrator.Basic(
-                                new SparseIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
-                    } else {
+                            new SparseIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                } else {
 
-                        base = new ContinuousDiffusionIntegrator.Basic(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                dimTrait,
-                                partialBufferCount,
-                                matrixBufferCount
-                        );
-                    }
+                    base = new ContinuousDiffusionIntegrator.Basic(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait,
+                            partialBufferCount,
+                            matrixBufferCount
+                    );
+                }
 
-                } else if (precisionType == PrecisionType.FULL) {
+            } else if (precisionType == PrecisionType.FULL) {
 
-                    if (diffusionProcessDelegate instanceof IntegratedOUDiffusionModelDelegate) {
-                        assert dimTrait % 2 == 0 : "dimTrait should be twice dimProcess.";
-                        base = new SafeMultivariateActualizedWithDriftIntegrator(
-                                precisionType,
-                                numTraits,
-                                dimTrait,
-                                dimTrait / 2,
-                                partialBufferCount,
-                                matrixBufferCount,
-                                ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
-                        );
-                    } else {
-                        if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                            final OUDiffusionModelDelegate ouDelegate =
-                                    (OUDiffusionModelDelegate) diffusionProcessDelegate;
-                            if (ouDelegate.hasDiagonalActualization()) {
-                                base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
-                                        precisionType,
-                                        numTraits,
-                                        dimTrait,
-                                        dimTrait,
-                                        partialBufferCount,
-                                        matrixBufferCount
-                                );
-                            } else if (ouDelegate.getElasticModel().hasBlockStructure()) {
-                                base = new SafeMultivariateBlockDiagonalActualizedWithDriftIntegrator(
-                                        precisionType,
-                                        numTraits,
-                                        dimTrait,
-                                        dimTrait,
-                                        partialBufferCount,
-                                        matrixBufferCount
-                                );
-                            } else {
-                                final SafeMultivariateActualizedWithDriftIntegrator actualizedIntegrator =
-                                        new SafeMultivariateActualizedWithDriftIntegrator(
-                                                precisionType,
-                                                numTraits,
-                                                dimTrait,
-                                                dimTrait,
-                                                partialBufferCount,
-                                                matrixBufferCount,
-                                                ouDelegate.isSymmetric()
-                                        );
-                                ouDelegate.getOUStrategyBundle().applyTo(actualizedIntegrator);
-                                base = actualizedIntegrator;
-                            }
+                if (diffusionProcessDelegate instanceof IntegratedOUDiffusionModelDelegate) {
+                    assert dimTrait % 2 == 0 : "dimTrait should be twice dimProcess.";
+                    base = new SafeMultivariateActualizedWithDriftIntegrator(
+                            precisionType,
+                            numTraits,
+                            dimTrait,
+                            dimTrait / 2,
+                            partialBufferCount,
+                            matrixBufferCount,
+                            ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                    );
+                } else {
+                    if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
+                        if (((OUDiffusionModelDelegate) diffusionProcessDelegate).hasDiagonalActualization()) {
+                            base = new SafeMultivariateDiagonalActualizedWithDriftIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount
+                            );
                         } else {
-                            if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
-                                base = new SafeMultivariateWithDriftIntegrator(
+                            base = new SafeMultivariateActualizedWithDriftIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount,
+                                    ((OUDiffusionModelDelegate) diffusionProcessDelegate).isSymmetric()
+                            );
+                        }
+                    } else {
+                        if (diffusionProcessDelegate instanceof DriftDiffusionModelDelegate) {
+                            base = new SafeMultivariateWithDriftIntegrator(
+                                    precisionType,
+                                    numTraits,
+                                    dimTrait,
+                                    dimTrait,
+                                    partialBufferCount,
+                                    matrixBufferCount
+                            );
+                        } else {
+                            if (allowSingular) {
+                                base = new SafeMultivariateIntegrator(
                                         precisionType,
                                         numTraits,
                                         dimTrait,
@@ -296,35 +258,25 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
                                         matrixBufferCount
                                 );
                             } else {
-                                if (allowSingular) {
-                                    base = new SafeMultivariateIntegrator(
-                                            precisionType,
-                                            numTraits,
-                                            dimTrait,
-                                            dimTrait,
-                                            partialBufferCount,
-                                            matrixBufferCount
-                                    );
-                                } else {
-                                    base = new MultivariateIntegrator(
-                                            precisionType,
-                                            numTraits,
-                                            dimTrait,
-                                            dimTrait,
-                                            partialBufferCount,
-                                            matrixBufferCount
-                                    );
-                                }
+                                base = new MultivariateIntegrator(
+                                        precisionType,
+                                        numTraits,
+                                        dimTrait,
+                                        dimTrait,
+                                        partialBufferCount,
+                                        matrixBufferCount
+                                );
                             }
                         }
                     }
-                } else {
-                    throw new RuntimeException("Not yet implemented");
                 }
+            } else {
+                throw new RuntimeException("Not yet implemented");
+            }
 
-                cdi = base;
-                System.err.println("Base CDI is " + cdi.getClass().getCanonicalName());
-                this.dimProcess = cdi.getDimProcess();
+            cdi = base;
+            System.err.println("Base CDI is " + cdi.getClass().getCanonicalName());
+            this.dimProcess = cdi.getDimProcess();
 
             // TODO Make separate library
 //            cdi = CDIFactory.loadCDIInstance();
@@ -355,20 +307,18 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
 //                logger.info("  No external CDI resources available, or resource list/requirements not met, using Java implementation");
 //            }
 
-                // Check tip data
-                for (int i = 0; i < tipCount; i++) {
-                    final NodeRef node = tree.getExternalNode(i);
-                    final int index = node.getNumber();
+            // Check tip data
+            for (int i = 0; i < tipCount; i++) {
+                final NodeRef node = tree.getExternalNode(i);
+                final int index = node.getNumber();
 
-                    assert (i == index);
-                    checkDataAlignment(node, tree);
-                }
+                assert (i == index);
+                checkDataAlignment(node, tree);
+            }
 
-                setAllTipData(dataModel.bufferTips());
+            setAllTipData(dataModel.bufferTips());
 
-                updateDiffusionModel = true;
-//                applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.legacy(this));
-
+            updateDiffusionModel = true;
 
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
@@ -399,7 +349,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         return rootPrior;
     }
 
-    @Override
     public int getPartialBufferCount() {
         return partialBufferHelper.getBufferCount();
     }
@@ -517,7 +466,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         sb.append(new Matrix(getTreeTraitPrecision()));
         sb.append("\n\n");
 
-        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, dimTrait, cdi, diffusionProcessDelegate);
+        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, cdi.getDimTrait(), cdi, diffusionProcessDelegate);
 
         if (diffusionProcessDelegate.hasDrift()) {
             sb.append("Tree drift (including root mean):\n");
@@ -603,12 +552,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
 
             MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(driftDatum, new Matrix(varianceDatum).inverse().toComponents());
             double logDensity = mvn.logPdf(datum);
-            if (diffusionProcessDelegate instanceof OUDiffusionModelDelegate) {
-                // Keep OU report diagnostics aligned with the runtime pruning likelihood path.
-                // The report-side closed form is useful for inspection but can drift from runtime in
-                // some OU pathways where branch-level kernels are computed through CDI updates.
-                logDensity = callbackLikelihood.getLogLikelihood();
-            }
             sb.append("\n\n");
             sb.append("logDatumLikelihood: ").append(logDensity).append("\n\n");
 
@@ -629,7 +572,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
             double[] rawDatumJoint = new double[dimProcess * (2 * tipCount - 1)];
             System.arraycopy(rawDatum, 0, rawDatumJoint, 0, rawDatum.length);
 
-            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, dimTrait, cdi, diffusionProcessDelegate);
+            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, cdi.getDimTrait(), cdi, diffusionProcessDelegate);
             double[] driftJoint = KroneckerOperation.vectorize(driftJointMatrix);
 
             for (int idx = 0; idx < driftJoint.length / dimProcess; ++idx) {
@@ -718,14 +661,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         return dimTrait;
     }
 
-    final int getNodeCount() {
-        return tree.getNodeCount();
-    }
-
-    final int getTipCount() {
-        return tipCount;
-    }
-
     @Override
     public RateRescalingScheme getRateRescalingScheme() {
         return rateTransformation.getRateRescalingScheme();
@@ -805,129 +740,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         return diffusionProcessDelegate.getDiffusionModel(0);
     }
 
-    public boolean usesCanonicalOULikelihood() {
-        return useCanonicalOULikelihood;
-    }
-
-    public boolean usesCdiBMLikelihood() {
-        return useCdiBMLikelihood;
-    }
-
-    public boolean usesMomentBMLikelihood() {
-        return useMomentBMLikelihood;
-    }
-
-    public boolean usesCanonicalBMLikelihood() {
-        // Compatibility alias for older code that used "canonical" for the BM CDI path.
-        return usesCdiBMLikelihood();
-    }
-
-    public void enableCanonicalLikelihood() {
-        enableCanonicalLikelihood(CanonicalOUOptions.defaults());
-    }
-
-    public void enableCanonicalLikelihood(final CanonicalOUOptions canonicalOUOptions) {
-        throw new UnsupportedOperationException(
-                "Canonical likelihood not supported in this older class");
-//        if (useCdiBMLikelihood || useMomentBMLikelihood || useCanonicalOULikelihood) {
-//            return;
-//        }
-//        applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.canonical(this));
-    }
-
-    public void enableCdiBMLikelihood() {
-        throw new UnsupportedOperationException(
-                "Canonical likelihood not supported in this older class");
-//        if (useCdiBMLikelihood) {
-//            return;
-//        }
-//        applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.cdiBM(this));
-    }
-
-    public void enableMomentBMLikelihood() {
-        throw new UnsupportedOperationException(
-                "Canonical likelihood not supported in this older class");
-//        if (useMomentBMLikelihood) {
-//            return;
-//        }
-//        applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.momentBM(this));
-    }
-
-    public void enableCanonicalBMLikelihood() {
-        // Compatibility alias for older code that used "canonical" for the BM CDI path.
-        enableCdiBMLikelihood();
-    }
-
-    public void enableCanonicalOULikelihood() {
-        enableCanonicalOULikelihood(CanonicalOUOptions.defaults());
-    }
-
-    public void enableCanonicalOULikelihood(final CanonicalOUOptions canonicalOUOptions) {
-        throw new UnsupportedOperationException(
-                "Canonical likelihood not supported in this older class");
-//        if (useCanonicalOULikelihood) {
-//            return;
-//        }
-//        if (!(diffusionProcessDelegate instanceof OUDiffusionModelDelegate)) {
-//            throw new UnsupportedOperationException(
-//                    "Canonical OU likelihood is only available for OU diffusion delegates.");
-//        }
-//        applyEngineSelection(ContinuousTreeLikelihoodEngineFactory.canonicalOU(
-//                this,
-//                (OUDiffusionModelDelegate) diffusionProcessDelegate));
-    }
-
-//    private void applyEngineSelection(final ContinuousTreeLikelihoodEngineFactory.Selection selection) {
-//        likelihoodEngine = selection.getEngine();
-//        canonicalOUIntegrator = selection.getCanonicalOUIntegrator();
-//        canonicalOUGradientAdapter = selection.getCanonicalOUGradientAdapter();
-//        useCdiBMLikelihood = selection.usesCdiBMLikelihood();
-//        useCanonicalOULikelihood = selection.usesCanonicalOULikelihood();
-//        useMomentBMLikelihood = selection.usesMomentBMLikelihood();
-//    }
-
-    // createCanonicalOUIntegrator was removed from this class: canonical OU construction now
-    // lives only on ContinuousDataLikelihoodDelegateNew (see
-    // dr.evomodel.treedatalikelihood.continuousNew.ContinuousDataLikelihoodDelegateNew and
-    // ContinuousTreeLikelihoodEngineFactory), consistent with this class staying limited to the
-    // direct legacy/SafeIntegrator CDI path. This method had zero callers (its only would-be
-    // caller, applyEngineSelection(), is unreachable dead code above) and referenced the
-    // now-relocated dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification
-    // type, which does not match this file's own (stale) import.
-
-    public CanonicalOUGradientAdapter getCanonicalOUGradientAdapter() {
-        if (!useCanonicalOULikelihood || canonicalOUGradientAdapter == null) {
-            throw new IllegalStateException("Canonical OU likelihood mode is not enabled on this delegate.");
-        }
-        return canonicalOUGradientAdapter;
-    }
-
-    public boolean hasCanonicalPostOrderMessageProvider() {
-        return useCanonicalOULikelihood
-                && canonicalOUIntegrator instanceof ContinuousCanonicalPostOrderMessageProvider;
-    }
-
-    public ContinuousCanonicalPostOrderMessageProvider getCanonicalPostOrderMessageProvider() {
-        if (!hasCanonicalPostOrderMessageProvider()) {
-            throw new IllegalStateException(
-                    "Canonical post-order message provider is only available in canonical OU likelihood mode.");
-        }
-        return (ContinuousCanonicalPostOrderMessageProvider) canonicalOUIntegrator;
-    }
-
-    public boolean hasCanonicalPreOrderMessageProvider() {
-        return useCanonicalOULikelihood
-                && canonicalOUIntegrator instanceof ContinuousCanonicalPreOrderMessageProvider;
-    }
-
-    public ContinuousCanonicalPreOrderMessageProvider getCanonicalPreOrderMessageProvider() {
-        if (!hasCanonicalPreOrderMessageProvider()) {
-            throw new IllegalStateException(
-                    "Canonical pre-order message provider is only available in canonical OU likelihood mode.");
-        }
-        return (ContinuousCanonicalPreOrderMessageProvider) canonicalOUIntegrator;
-    }
-
     private void setAllTipData(boolean flip) {
         for (int index = 0; index < tipCount; index++) {
             setTipData(index, flip);
@@ -947,70 +759,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     void setTipDataDirectly(int tipIndex, double[] tipPartial) {
         cdi.setPostOrderPartial(partialBufferHelper.getOffsetIndex(tipIndex),
                 tipPartial);
-    }
-
-//    void loadAllMomentBMTipData(final MomentBMContinuousTreeLikelihoodEngine engine) {
-//        for (int tipIndex = 0; tipIndex < tipCount; tipIndex++) {
-//            engine.setTipPartial(tipIndex, dataModel.getTipPartial(tipIndex, forceCompletelyObserved));
-//        }
-//    }
-//
-//    void syncMomentBMTipData(final MomentBMContinuousTreeLikelihoodEngine engine) {
-//        if (updateTipData.isEmpty()) {
-//            return;
-//        }
-//
-//        if (updateTipData.getFirst() == -1) {
-//            setAllMomentBMTipData(engine, flip);
-//            updateTipData.clear();
-//            return;
-//        }
-//
-//        while (!updateTipData.isEmpty()) {
-//            final int tipIndex = updateTipData.removeFirst();
-//            if (flip) {
-//                partialBufferHelper.flipOffset(tipIndex);
-//            }
-//            engine.setTipPartial(tipIndex, dataModel.getTipPartial(tipIndex, forceCompletelyObserved));
-//        }
-//    }
-
-//    private void setAllMomentBMTipData(final MomentBMContinuousTreeLikelihoodEngine engine,
-//                                       final boolean flip) {
-//        for (int tipIndex = 0; tipIndex < tipCount; tipIndex++) {
-//            if (flip) {
-//                partialBufferHelper.flipOffset(tipIndex);
-//            }
-//            engine.setTipPartial(tipIndex, dataModel.getTipPartial(tipIndex, forceCompletelyObserved));
-//        }
-//    }
-
-    void updateMomentBMBranchNormalization() {
-        branchNormalization = branchTimeModel.updateNormalization();
-    }
-
-    double getEffectiveBranchTime(final BranchOperation branchOperation) {
-        return branchTimeModel.getEffectiveBranchTime(branchOperation);
-    }
-
-    boolean consumeMomentBMDiffusionModelUpdate() {
-        if (!updateDiffusionModel) {
-            return false;
-        }
-        updateDiffusionModel = false;
-        return true;
-    }
-
-    void flipMomentBMNodeBuffers(final List<NodeOperation> nodeOperations) {
-        if (flip) {
-            for (NodeOperation op : nodeOperations) {
-                partialBufferHelper.flipOffset(op.getNodeNumber());
-            }
-        }
-    }
-
-    boolean isComputingWishartStatistics() {
-        return computeWishartStatistics;
     }
 
     private void checkDataAlignment(NodeRef node, Tree tree) throws TaxonList.MissingTaxonException {
@@ -1037,26 +785,16 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
      *
      * @return the log likelihood.
      */
-//    @Override
-//    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
-//                                      int rootNodeNumber) {
-//        return likelihoodEngine.calculateLikelihood(branchOperations, nodeOperations, rootNodeNumber);
-//    }
+    @Override
+    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
+                                      int rootNodeNumber) {
 
-    double calculateCanonicalOULikelihood() {
-        branchNormalization = branchTimeModel.updateNormalization();
-        return canonicalOUIntegrator.calculateLogLikelihood();
-    }
-
-    double calculateLegacyCdiLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations,
-                                        int rootNodeNumber) {
-
-        branchNormalization = branchTimeModel.updateNormalization();
+        branchNormalization = rateTransformation.getNormalization();
 
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
-            branchLengths[branchUpdateCount] = branchTimeModel.getEffectiveBranchTime(op);
+            branchLengths[branchUpdateCount] = op.getBranchLength() * branchNormalization;
             branchUpdateCount++;
         }
 
@@ -1126,6 +864,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         for (double d : logLikelihoods) {
             logL += d;
         }
+
         return logL;
     }
 
@@ -1137,12 +876,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     public double[] getSiteLogLikelihoods(){
         throw new RuntimeException("getSiteLogLikelihoods() not implemented");
     }
-
-    @Override
-    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodException {
-        return calculateLegacyCdiLikelihood(branchOperations, nodeOperations, rootNodeNumber);
-    }
-
     public final int getActiveNodeIndex(final int index) {
         return partialBufferHelper.getOffsetIndex(index);
     }
@@ -1170,7 +903,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     @Override
     public void makeDirty() {
         updateDiffusionModel = true;
-        markCanonicalModelDirty();
         fireModelChanged(); // Signal simulation processes
     }
 
@@ -1178,11 +910,9 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == diffusionProcessDelegate) {
             updateDiffusionModel = true;
-            markCanonicalModelDirty();
             // Tell TreeDataLikelihood to update all nodes
             fireModelChanged();
         } else if (model == dataModel) {
-            markCanonicalTipObservationsDirty();
             if (object == dataModel) {
                 if (index == -1) { // all taxa updated
                     updateTipData.addFirst(index);
@@ -1194,10 +924,8 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
             }
 
         } else if (model instanceof BranchRateModel) {
-            markCanonicalModelDirty();
             fireModelChanged();
         } else if (model == rootProcessDelegate) {
-            markCanonicalModelDirty();
             fireModelChanged();
         } else {
             throw new RuntimeException("Unknown model component");
@@ -1220,8 +948,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         flip = true;
 
         storedBranchNormalization = branchNormalization;
-
-//        likelihoodEngine.storeState();
     }
 
     /**
@@ -1232,14 +958,10 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         partialBufferHelper.restoreState();
 
         branchNormalization = storedBranchNormalization;
-
-//        likelihoodEngine.restoreState();
     }
 
     @Override
     protected void acceptState() {
-
-//        likelihoodEngine.acceptState();
     }
 
     public PreOrderSettings getPreOrderSettings() {
@@ -1317,12 +1039,6 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
     private final ContinuousDiffusionIntegrator cdi;
 
     private boolean updateDiffusionModel;
-    private boolean useCdiBMLikelihood = false;
-    private boolean useMomentBMLikelihood = false;
-    private boolean useCanonicalOULikelihood = false;
-//    private ContinuousTreeLikelihoodEngine likelihoodEngine;
-    private CanonicalOUIntegrator canonicalOUIntegrator;
-    private CanonicalOUGradientAdapter canonicalOUGradientAdapter;
 
     private final Deque<Integer> updateTipData = new ArrayDeque<Integer>();
 
@@ -1475,16 +1191,72 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
         return mean;
     }
 
-    private void markCanonicalTipObservationsDirty() {
-        if (useCanonicalOULikelihood && canonicalOUIntegrator != null) {
-            canonicalOUIntegrator.markTipObservationsDirty();
-        }
+    // ---- CtsCompatibility ----
+    // This delegate only runs the direct (legacy) CDI integrators. Canonical, moment-form and
+    // canonical-message likelihoods are provided by ContinuousDataLikelihoodDelegateNew.
+
+    private static UnsupportedOperationException requiresNewDelegate(final String what) {
+        return new UnsupportedOperationException(what
+                + " requires ContinuousDataLikelihoodDelegateNew (traitDataLikelihood implementation other than \"legacy\").");
     }
 
-    private void markCanonicalModelDirty() {
-        if (useCanonicalOULikelihood && canonicalOUIntegrator != null) {
-            canonicalOUIntegrator.markModelDirty();
-        }
+    @Override
+    public void enableCanonicalLikelihood() {
+        throw requiresNewDelegate("The canonical likelihood");
     }
 
+    @Override
+    public void enableCanonicalLikelihood(final CanonicalOUOptions canonicalOUOptions) {
+        throw requiresNewDelegate("The canonical likelihood");
+    }
+
+    @Override
+    public void enableCdiBMLikelihood() {
+        throw requiresNewDelegate("The CDI Brownian-motion likelihood");
+    }
+
+    @Override
+    public void enableMomentBMLikelihood() {
+        throw requiresNewDelegate("The moment-form Brownian-motion likelihood");
+    }
+
+    @Override
+    public void enableCanonicalOULikelihood() {
+        throw requiresNewDelegate("The canonical OU likelihood");
+    }
+
+    @Override
+    public void enableCanonicalOULikelihood(final CanonicalOUOptions canonicalOUOptions) {
+        throw requiresNewDelegate("The canonical OU likelihood");
+    }
+
+    @Override
+    public boolean usesCanonicalOULikelihood() {
+        return false;
+    }
+
+    @Override
+    public boolean usesCdiBMLikelihood() {
+        return false;
+    }
+
+    @Override
+    public boolean usesMomentBMLikelihood() {
+        return false;
+    }
+
+    @Override
+    public boolean hasCanonicalPostOrderMessageProvider() {
+        return false;
+    }
+
+    @Override
+    public boolean hasCanonicalPreOrderMessageProvider() {
+        return false;
+    }
+
+    @Override
+    public CanonicalOUGradientAdapter getCanonicalOUGradientAdapter() {
+        return null;
+    }
 }

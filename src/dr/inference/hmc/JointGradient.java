@@ -261,8 +261,7 @@ public class JointGradient implements GradientWrtParameterProvider, HessianWrtPa
         return  "jointGradient." + parameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                GradientWrtParameterProvider.TOLERANCE,
-                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
+                GradientWrtParameterProvider.TOLERANCE);
     }
 
     enum DerivativeType {

@@ -206,9 +206,10 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
                     "meanGradient legacy implementation requires a legacy ContinuousDataLikelihoodDelegate.");
         }
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-        final ProcessGradientSpec gradientSpec = ProcessGradientSpec.single(parameterMode.getDerivationParameter());
-        final ContinuousTraitGradientForBranch traitGradient = gradientSpec.build(
-                dim, tree, continuousData, implementation);
+        final ContinuousTraitGradientForBranch traitGradient =
+                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                        dim, tree, continuousData,
+                        java.util.Collections.singletonList(parameterMode.getDerivationParameter()));
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 

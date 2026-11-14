@@ -169,12 +169,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             } else {
                 throw e;
             }
-        } catch (IllegalArgumentException e) {
-            if (REJECT_ILLEGAL_ARGUMENT_EXCEPTION) {
-                return Double.NEGATIVE_INFINITY;
-            } else {
-                throw e;
-            }
         }
     }
 
@@ -190,7 +184,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     }
 
     private static final boolean REJECT_ARITHMETIC_EXCEPTION = true;
-    private static final boolean REJECT_ILLEGAL_ARGUMENT_EXCEPTION = true;
 
     @Override
     public void setPathParameter(double beta) {
@@ -254,13 +247,11 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
                 if (transform == null) {
 
                     ReadableVector.Utils.setParameter(argument, parameter);
-                    joint.makeDirty();
                     return joint.getLogLikelihood();
                 } else {
 
                     double[] untransformedValue = transform.inverse(argument, 0, argument.length);
                     ReadableVector.Utils.setParameter(untransformedValue, parameter);
-                    joint.makeDirty();
                     return joint.getLogLikelihood() - transform.logJacobian(untransformedValue, 0, untransformedValue.length);
                 }
             }
@@ -286,7 +277,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
         if (transform == null) {
 
-            double[] numericGradientOriginal = numericalGradientForCheck(numeric, parameter.getParameterValues());
+            double[] numericGradientOriginal = NumericalDerivative.gradient(numeric, parameter.getParameterValues());
 
             if (!MathUtils.isClose(analyticalGradientOriginal, numericGradientOriginal, runtimeOptions.gradientCheckTolerance)) {
 
@@ -301,7 +292,7 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
 
             double[] transformedParameter = transform.transform(parameter.getParameterValues(), 0,
                     parameter.getParameterValues().length);
-            double[] numericGradientTransformed = numericalGradientForCheck(numeric, transformedParameter);
+            double[] numericGradientTransformed = NumericalDerivative.gradient(numeric, transformedParameter);
 
             double[] analyticalGradientTransformed = transform.updateGradientLogDensity(analyticalGradientOriginal,
                     parameter.getParameterValues(), 0, parameter.getParameterValues().length);
@@ -318,16 +309,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         }
 
         ReadableVector.Utils.setParameter(restoredParameterValue, parameter);
-    }
-
-    private double[] numericalGradientForCheck(final MultivariateFunction numeric,
-                                               final double[] values) {
-        if (runtimeOptions.gradientCheckStepSizeRatio > 0.0) {
-            final double[] gradient = new double[values.length];
-            NumericalDerivative.gradient4thOrder(numeric, values, gradient, runtimeOptions.gradientCheckStepSizeRatio);
-            return gradient;
-        }
-        return NumericalDerivative.gradient(numeric, values);
     }
 
     private String gradientMismatchInformation(double[] analyticGradient, double[] numericGradient) {
@@ -412,7 +393,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         final int gradientCheckCount;
         final MassPreconditioningOptions preconditioningOptions;
         final double gradientCheckTolerance;
-        final double gradientCheckStepSizeRatio;
         final int checkStepSizeMaxIterations;
         final double checkStepSizeReductionFactor;
         final double targetAcceptanceProbability;
@@ -421,7 +401,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
         public Options(double initialStepSize, int nSteps, double randomStepCountFraction,
                        MassPreconditioningOptions preconditioningOptions,
                        int gradientCheckCount, double gradientCheckTolerance,
-                       double gradientCheckStepSizeRatio,
                        int checkStepSizeMaxIterations, double checkStepSizeReductionFactor,
                        double targetAcceptanceProbability, InstabilityHandler instabilityHandler) {
             this.initialStepSize = initialStepSize;
@@ -429,7 +408,6 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
             this.randomStepCountFraction = randomStepCountFraction;
             this.gradientCheckCount = gradientCheckCount;
             this.gradientCheckTolerance = gradientCheckTolerance;
-            this.gradientCheckStepSizeRatio = gradientCheckStepSizeRatio;
             this.checkStepSizeMaxIterations = checkStepSizeMaxIterations;
             this.checkStepSizeReductionFactor = checkStepSizeReductionFactor;
             this.targetAcceptanceProbability = targetAcceptanceProbability;

@@ -44,7 +44,6 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDiagonalAttenuationGradient;
-import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createSelectionParameterGradient;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
@@ -89,17 +88,6 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
                                   MatrixParameterInterface parameter,
                                   Parameter requestedParameter,
                                   AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
-                if (nativeBlockParameter != null) {
-                    // The orthogonal block path is the supported tree-HMC route.
-                    // Non-orthogonal block charts are still wired here, but should
-                    // be treated as experimental until their live HMC gradient
-                    // behavior is hardened to the same standard.
-                    return createSelectionParameterGradient(
-                            branchSpecificGradient,
-                            treeDataLikelihood,
-                            requestedParameter,
-                            nativeBlockParameter);
-                }
                 throw new RuntimeException("Gradient wrt full attenuation not yet implemented.");
             }
         },
@@ -176,34 +164,34 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
                     "attenuationGradient legacy implementation requires a legacy ContinuousDataLikelihoodDelegate.");
         }
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+        if (nativeBlockParameter != null) {
+            throw new XMLParseException(
+                    "attenuationGradient for a block-diagonal selection matrix requires "
+                            + "traitDataLikelihood implementation=\"canonical\".");
+        }
         int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
         Tree tree = treeDataLikelihood.getTree();
 
-        final ContinuousTraitGradientForBranch traitGradient;
-        if (nativeBlockParameter != null) {
-            requestedParameter.setId(parameter.getId());
-            traitGradient = new ContinuousTraitGradientForBranch.SelectionParameterGradient(
-                    dim, tree, continuousData, requestedParameter, nativeBlockParameter);
-        } else {
-            final ProcessGradientSpec gradientSpec = ProcessGradientSpec.single(
-                    ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH);
-            traitGradient = gradientSpec.build(dim, tree, continuousData, implementation);
-        }
+        final ContinuousTraitGradientForBranch traitGradient =
+                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                        dim, tree, continuousData,
+                        java.util.Collections.singletonList(
+                                ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH));
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(
                         traitName,
                         treeDataLikelihood,
                         continuousData,
                         traitGradient,
-                        nativeBlockParameter != null ? requestedParameter : parameter);
+                        parameter);
 
         ParameterMode parameterMode = parseParameterMode(xo);
         return parameterMode.factory(
                 branchSpecificGradient,
                 treeDataLikelihood,
                 parameter,
-                nativeBlockParameter != null ? requestedParameter : null,
-                nativeBlockParameter);
+                null,
+                null);
     }
 
     @Override

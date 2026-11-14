@@ -42,9 +42,6 @@ import java.util.concurrent.Future;
 public class CompoundGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider,
         DerivativeWrtParameterProvider, ScoreContributionsWrtParameterProvider, Reportable {
 
-    private static final boolean BATCH_GRADIENT_DISABLED =
-            Boolean.getBoolean("beast.disableBatchGradient");
-
     protected final int dimension;
     final List<GradientWrtParameterProvider> derivativeList;
     private final Likelihood likelihood;
@@ -116,6 +113,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
         } else {
             parallelExecutor = null;
         }
+
     }
 
     @Override
@@ -160,15 +158,9 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
     public DerivativeOrder getHighestOrder() {
         return highestOrder;
     }
-
+    
     @Override
     public double[] getGradientLogDensity() {
-        if (!BATCH_GRADIENT_DISABLED) {
-            final double[] batched = getBatchGradientLogDensity();
-            if (batched != null) {
-                return batched;
-            }
-        }
         if (parallelExecutor != null)
             return getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType.GRADIENT);
         else {
@@ -222,49 +214,6 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
         return result;
     }
 
-    private double[] getBatchGradientLogDensity() {
-        if (derivativeList.size() < 2) {
-            return null;
-        }
-        final List<BatchGradientWrtParameterProvider> batch = new ArrayList<BatchGradientWrtParameterProvider>(
-                derivativeList.size());
-        Object key = null;
-        for (final GradientWrtParameterProvider provider : derivativeList) {
-            if (!(provider instanceof BatchGradientWrtParameterProvider)) {
-                return null;
-            }
-            final BatchGradientWrtParameterProvider batchProvider =
-                    (BatchGradientWrtParameterProvider) provider;
-            final Object providerKey = batchProvider.getBatchGradientKey();
-            if (providerKey == null) {
-                return null;
-            }
-            if (key == null) {
-                key = providerKey;
-            } else if (key != providerKey) {
-                return null;
-            }
-            batch.add(batchProvider);
-        }
-
-        final BatchGradient gradients = batch.get(0).getGradientLogDensityBatch(batch);
-        if (gradients == null || gradients.size() != batch.size()) {
-            throw new IllegalStateException("Batched gradient result size mismatch.");
-        }
-        final double[] result = new double[dimension];
-        int offset = 0;
-        for (int i = 0; i < batch.size(); ++i) {
-            final int providerDimension = batch.get(i).getDimension();
-            if (gradients.dimension(i) != providerDimension) {
-                throw new IllegalStateException("Batched gradient dimension mismatch for "
-                        + batch.get(i).getParameter().getParameterName());
-            }
-            gradients.copyGradientTo(i, result, offset);
-            offset += providerDimension;
-        }
-        return result;
-    }
-
     private double[] getDerivativeLogDensityParallelImpl(JointGradient.DerivativeType derivativeType) {
 
         return parallelExecutor.getDerivativeLogDensityInParallel(derivativeType, (gradients, length) -> {
@@ -285,7 +234,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
 
         int offset = 0;
         for (GradientWrtParameterProvider grad : derivativeList) {
-
+            
             double[] tmp = derivativeType.getDerivativeLogDensity(grad);
             System.arraycopy(tmp, 0, result, offset, grad.getDimension());
             offset += grad.getDimension();
@@ -299,8 +248,7 @@ public class CompoundGradient implements GradientWrtParameterProvider, HessianWr
         return  "compoundGradient." + parameter.getParameterName() + "\n" +
                 GradientWrtParameterProvider.getReportAndCheckForError(this,
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-                GradientWrtParameterProvider.TOLERANCE,
-                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
+                GradientWrtParameterProvider.TOLERANCE);
     }
 
     public List<GradientWrtParameterProvider> getDerivativeList() {

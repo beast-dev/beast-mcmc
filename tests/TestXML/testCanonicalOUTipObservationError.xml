@@ -71,7 +71,7 @@
     </repeatedMeasuresModel>
 
     <traitDataLikelihood id="blockOULikelihood" traitName="X"
-                         implementation="canonical-message" selectionChart="rotatedBlock"
+                         implementation="canonical-message"
                          canonicalOUCoordinates="natural" reconstructTraits="false">
         <multivariateDiffusionModel idref="diffusionModel"/>
         <treeModel idref="treeModel"/>

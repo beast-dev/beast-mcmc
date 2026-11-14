@@ -149,8 +149,6 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
         }
     }
 
-    private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
-
     private void computeOuterProducts() {
 
         // Make sure partials on tree are ready
@@ -160,35 +158,17 @@ public class WishartStatisticsWrapper extends AbstractModel implements Conjugate
             simulateMissingTraits();
         }
 
+        treeTraversalDelegate.updateAllNodes();
+        treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
+
+        final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
+        final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
+
         final NodeRef root = dataLikelihood.getTree().getRoot();
 
-        // calculateLikelihood() can throw LikelihoodException to signal underflow/rescaling is
-        // needed, exactly like TreeDataLikelihood's own postorder traversal; retry with the same
-        // convention (mark all nodes dirty and recompute operations) rather than treat it as fatal.
-        long underflowCount = 0;
-        boolean done = false;
-        do {
-            treeTraversalDelegate.updateAllNodes();
-            treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-
-            final List<DataLikelihoodDelegate.BranchOperation> branchOperations = treeTraversalDelegate.getBranchOperations();
-            final List<DataLikelihoodDelegate.NodeOperation> nodeOperations = treeTraversalDelegate.getNodeOperations();
-
-            outerProductDelegate.setComputeWishartStatistics(true);
-            try {
-                outerProductDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
-                done = true;
-            } catch (DataLikelihoodDelegate.LikelihoodException e) {
-                underflowCount++;
-            } finally {
-                outerProductDelegate.setComputeWishartStatistics(false);
-            }
-        } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
-
-        if (!done) {
-            throw new RuntimeException("Unable to compute Wishart statistics after "
-                    + MAX_UNDERFLOWS_BEFORE_ERROR + " underflow retries.");
-        }
+        outerProductDelegate.setComputeWishartStatistics(true);
+        outerProductDelegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+        outerProductDelegate.setComputeWishartStatistics(false);
 
         wishartStatistics = outerProductDelegate.getWishartStatistics();
 

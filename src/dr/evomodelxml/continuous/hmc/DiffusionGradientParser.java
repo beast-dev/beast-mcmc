@@ -115,9 +115,9 @@ public class DiffusionGradientParser extends AbstractXMLObjectParser {
         Tree tree = treeDataLikelihood.getTree();
 
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-        final ProcessGradientSpec gradientSpec = ProcessGradientSpec.fromList(derivationParametersList);
-        final ContinuousTraitGradientForBranch traitGradient = gradientSpec.build(
-                dim, tree, continuousData, implementation);
+        final ContinuousTraitGradientForBranch traitGradient =
+                new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
+                        dim, tree, continuousData, derivationParametersList);
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, compoundParameter);
 

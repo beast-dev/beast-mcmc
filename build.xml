@@ -427,13 +427,11 @@
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalMathConversionTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalDiagonalOUMessageOpsTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalBMBranchTransitionProviderTest.java"/>
-                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalBMXmlWiringTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUDiagonalXmlParityTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUHeterogeneousBranchProcessTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUMessageProviderTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalTransitionCacheBranchProcessTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/ContinuousDataLikelihoodParserSelectionTest.java"/>
-                    <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalNumericsTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalGaussianMessagePasserOULikelihoodTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalGaussianMessagePasserOUGradientTest.java"/>
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/CanonicalOUFocusedParityAndCacheTest.java"/>
@@ -487,10 +485,6 @@
             <batchtest fork="yes" todir="${report}">
                 <fileset dir="${src}">
                     <include name="test/dr/evomodel/treedatalikelihood/continuous/Canonical*Test.java"/>
-                    <include name="test/dr/evomodel/treedatalikelihood/continuous/OUDiffusionKernelBridgeValidationTest.java"/>
-                    <include name="test/dr/evomodel/treedatalikelihood/continuous/TreeCanonicalOrthogonalBlockBenchmarkTest.java"/>
-                    <include name="test/dr/inference/timeseries/CanonicalTimeSeriesBehaviorTest.java"/>
-                    <include name="test/dr/inferencexml/timeseries/OUSelectionChartParserHelperTest.java"/>
                 </fileset>
             </batchtest>
         </junit>

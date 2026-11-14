@@ -65,9 +65,6 @@ public final class HierarchicalSubstitutionEvolutionaryProcess implements Evolut
         }
 
         this.substitutionModel = (HierarchicalSubstitutionModel) branchModel.getRootSubstitutionModel();
-        if (!substitutionModel.isBinary()) {
-            throw new IllegalArgumentException("The hierarchical representation needs a binary character tree");
-        }
 
         final String invalid = substitutionModel.getInvalidGeneratorDescription();
         if (invalid != null) {

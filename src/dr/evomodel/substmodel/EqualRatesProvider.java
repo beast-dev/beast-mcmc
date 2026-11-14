@@ -50,12 +50,19 @@ public class EqualRatesProvider extends AbstractHierarchicalRateProvider {
     private final double[] q;
 
     public EqualRatesProvider(TreeModel tree, FrequencyModel frequency, boolean normalised) {
-        this("equalRates", tree, frequency, normalised, null);
+        this("equalRates", tree, frequency, normalised, null, null);
+    }
+
+    /**
+     * Equal rates on a fixed multifurcating character tree (the star is F81's own tree).
+     */
+    public EqualRatesProvider(CharacterTreeContraction contraction, FrequencyModel frequency, boolean normalised) {
+        this("equalRates", contraction.getTree(), frequency, normalised, null, contraction);
     }
 
     private EqualRatesProvider(String name, TreeModel tree, FrequencyModel frequency, boolean normalised,
-                               GeneralSubstitutionModel source) {
-        super(name, tree, frequency);
+                               GeneralSubstitutionModel source, CharacterTreeContraction contraction) {
+        super(name, tree, frequency, contraction);
         this.normalised = normalised;
         this.source = source;
         this.q = source == null ? null : new double[stateCount * stateCount];
@@ -66,12 +73,20 @@ public class EqualRatesProvider extends AbstractHierarchicalRateProvider {
     }
 
     public static EqualRatesProvider of(GeneralSubstitutionModel model, TreeModel tree) {
+        return of(model, tree, null);
+    }
+
+    public static EqualRatesProvider of(GeneralSubstitutionModel model, CharacterTreeContraction contraction) {
+        return of(model, contraction.getTree(), contraction);
+    }
+
+    private static EqualRatesProvider of(GeneralSubstitutionModel model, TreeModel tree, CharacterTreeContraction contraction) {
         if (model instanceof ComplexSubstitutionModel) {
             throw new IllegalArgumentException("ratesFrom needs a reversible model; "
                     + model.getClass().getSimpleName() + " is not");
         }
         return new EqualRatesProvider(model.getId() == null ? "equalRates" : model.getId() + ".equalRates", tree,
-                model.getFrequencyModel(), true, model);
+                model.getFrequencyModel(), true, model, contraction);
     }
 
     @Override

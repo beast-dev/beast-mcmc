@@ -437,7 +437,7 @@ public class HierarchicalProviderTest extends TestCase {
                 assertEquals(n, tree.getExternalNodeCount());
                 HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hrate",
                         new EqualRatesProvider(tree, f, true));
-                assertTrue(model.isBinary());
+                assertEquals(n - 1, model.getContractedInternalNodeCount());
                 assertEquals(type.getDescription(), 0.0, maxDiff(model, dense), 1e-13);
                 checkEqualRates(type.getDescription(), model, pi, true);
 

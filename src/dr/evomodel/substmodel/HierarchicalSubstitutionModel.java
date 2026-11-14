@@ -79,7 +79,6 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private List<Integer> postOrderTraversal;
     private List<Integer> preOrderTraversal;
 
-    private boolean binary;
     private boolean structureKnown = false;
     private final int[] bundleNumber;
     private final int[] internalNodeOfBundleRank;
@@ -98,6 +97,15 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
     private Aggregation aggregation = Aggregation.AUTO;
 
+    // A multifurcating character tree: the binary skeleton (tree) with a collapse state. The upload is the
+    // canonical resolution of the contracted tree; uploadTriples and uploadSources are the last upload's structure, so
+    // a change of the skeleton that leaves the contracted tree as it is (a neutral move) changes nothing.
+    private final CharacterTreeContraction contraction;
+    private double[] uploadTriples;
+    private int[] uploadSources;
+    private double[] storedUploadTriples;
+    private int[] storedUploadSources;
+
     // Logs the rate of each internal node of the character tree, as branch rates are logged on the time tree.
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper(RATE_TRAIT, new TreeTrait.D() {
         public String getTraitName() {
@@ -109,7 +117,11 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         }
 
         public Double getTrait(Tree characterTree, NodeRef node) {
-            return characterTree.isExternal(node) ? null : hierarchicalRates.getRate(tree, node.getNumber());
+            if (characterTree != tree || characterTree.isExternal(node)
+                    || (contraction != null && contraction.isCollapsed(node.getNumber()))) {
+                return null;
+            }
+            return rate(node.getNumber());
         }
     });
 
@@ -121,6 +133,10 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         }
         this.hierarchicalRates = hierarchicalRateProvider;
         this.tree = hierarchicalRateProvider.getTreeModel();
+        this.contraction = hierarchicalRateProvider.getContraction();
+        if (contraction != null && contraction.getTree() != tree) {
+            throw new IllegalArgumentException("the contraction must be of the provider's character tree");
+        }
         this.frequency = frequency;
         this.dataType = frequency.getDataType();
         this.stateCount = tree.getExternalNodeCount();
@@ -160,6 +176,41 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         tree.addModelRestoreListener(this);
         hierarchicalRates.addToModelListener(this);
         addModel(frequency);
+        if (contraction != null) {
+            if (contraction.getKeep() != null) {
+                addVariable(contraction.getKeep());
+            }
+            recordUploadStructure();
+        }
+    }
+
+    public CharacterTreeContraction getContraction() {
+        return contraction;
+    }
+
+    /**
+     * The number of internal nodes of the character tree as the model sees it: the contracted tree's when the tree
+     * is multifurcating, otherwise the tree's (S - 1 for a binary tree).
+     */
+    public int getContractedInternalNodeCount() {
+        return contraction != null ? contraction.getContractedInternalNodeCount() : tree.getInternalNodeCount();
+    }
+
+    private double rate(int nodeNumber) {
+        if (contraction != null && contraction.isCollapsed(nodeNumber)) {
+            return 0.0;
+        }
+        return hierarchicalRates.getRate(tree, nodeNumber);
+    }
+
+    private void recordUploadStructure() {
+        uploadTriples = contraction.getTriples().clone();
+        uploadSources = contraction.getLambdaSource().clone();
+    }
+
+    private boolean uploadStructureUnchanged() {
+        return Arrays.equals(uploadTriples, contraction.getTriples())
+                && Arrays.equals(uploadSources, contraction.getLambdaSource());
     }
 
     public HierarchicalSubstitutionModel(String name, HierarchicalRateProvider hierarchicalRateProvider) {
@@ -182,14 +233,6 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         preOrderTraversal = reversedOrder;
 
         getMRCAs();
-
-        boolean allBinary = true;
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            if (tree.getChildCount(tree.getInternalNode(i)) != 2) {
-                allBinary = false;
-            }
-        }
-        binary = allBinary;
 
         int rank = 0;
         for (int nodeNumber : postOrderTraversal) {
@@ -263,7 +306,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
             if (!tree.isExternal(node)) {
                 final int index = node.getNumber() - externalNodeCount;
-                final double poissonRate = hierarchicalRates.getRate(tree, node.getNumber());
+                final double poissonRate = rate(node.getNumber());
                 probNoEventsOnBranch[index] = Math.exp(-poissonRate * distance);
                 if (tree.isRoot(node)) {
                     probNoEventsFromRoot[node.getNumber()] = 1.0;
@@ -362,11 +405,6 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         return larger - smaller - 1 + (2 * stateCount - smaller - 1) * smaller / 2;
     }
 
-    public boolean isBinary() {
-        ensureStructure();
-        return binary;
-    }
-
     public int getBundleHeaderLength() {
         return 1 + 6 * (stateCount - 1);
     }
@@ -381,11 +419,20 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
     public void getBundleHeader(double[] out) {
         ensureStructure();
-        if (!binary) {
-            throw new IllegalStateException("The hierarchical BEAGLE representation needs a binary character tree");
-        }
         final int internalCount = stateCount - 1;
         out[0] = BUNDLE_VERSION * BUNDLE_VERSION_SHIFT + internalCount;
+        if (contraction != null) {
+            final double[] triples = contraction.getTriples();
+            for (int rank = 0; rank < internalCount; rank++) {
+                final int post = 1 + 3 * rank;
+                final int pre = 1 + 3 * internalCount + 3 * (internalCount - 1 - rank);
+                for (int c = 0; c < 3; c++) {
+                    out[post + c] = triples[3 * rank + c];
+                    out[pre + c] = triples[3 * rank + c];
+                }
+            }
+            return;
+        }
         for (int rank = 0; rank < internalCount; rank++) {
             final NodeRef node = tree.getNode(internalNodeOfBundleRank[rank]);
             final int parent = bundleNumber[node.getNumber()];
@@ -406,8 +453,15 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         ensureStructure();
         getCachedValues(distance);
         final int internalCount = stateCount - 1;
-        for (int rank = 0; rank < internalCount; rank++) {
-            out[offset + rank] = H[internalNodeOfBundleRank[rank]];
+        if (contraction != null) {
+            final int[] sources = contraction.getLambdaSource();
+            for (int rank = 0; rank < internalCount; rank++) {
+                out[offset + rank] = sources[rank] >= 0 ? H[sources[rank]] : 0.0;
+            }
+        } else {
+            for (int rank = 0; rank < internalCount; rank++) {
+                out[offset + rank] = H[internalNodeOfBundleRank[rank]];
+            }
         }
         for (int state = 0; state < stateCount; state++) {
             out[offset + internalCount + state] = probNoEventsFromRoot[nodeOfState[state]];
@@ -456,7 +510,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             if (tree.isExternal(node)) {
                 continue;
             }
-            final double term = hierarchicalRates.getRate(tree, nodeNumber) / pi[nodeNumber];
+            final double term = rate(nodeNumber) / pi[nodeNumber];
             final NodeRef parent = tree.getParent(node);
             sigma[nodeNumber] = (parent == null ? 0.0 : sigma[parent.getNumber()]) + term;
             scale[nodeNumber] = (parent == null ? 0.0 : scale[parent.getNumber()]) + Math.abs(term);
@@ -476,7 +530,8 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         final double[] lambdas = getBeagleModelLambdas();
         for (int rank = 0; rank < stateCount - 1; rank++) {
             if (!(lambdas[1 + rank] >= 0.0)) {
-                return "clade " + cladeName(internalNodeOfBundleRank[rank]) + " has rate " + lambdas[1 + rank];
+                final int node = contraction != null ? contraction.getLambdaSource()[rank] : internalNodeOfBundleRank[rank];
+                return "clade " + cladeName(node) + " has rate " + lambdas[1 + rank];
             }
         }
         return null;
@@ -519,8 +574,15 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         getBundleHeader(header);
         System.arraycopy(header, 1, beagleModelTriples, 0, 3 * internalCount);
         beagleModelLambdas[0] = BUNDLE_VERSION * BUNDLE_VERSION_SHIFT + internalCount;
-        for (int rank = 0; rank < internalCount; rank++) {
-            beagleModelLambdas[1 + rank] = hierarchicalRates.getRate(tree, internalNodeOfBundleRank[rank]);
+        if (contraction != null) {
+            final int[] sources = contraction.getLambdaSource();
+            for (int rank = 0; rank < internalCount; rank++) {
+                beagleModelLambdas[1 + rank] = sources[rank] >= 0 ? rate(sources[rank]) : 0.0;
+            }
+        } else {
+            for (int rank = 0; rank < internalCount; rank++) {
+                beagleModelLambdas[1 + rank] = hierarchicalRates.getRate(tree, internalNodeOfBundleRank[rank]);
+            }
         }
         beagleModelKnown = true;
     }
@@ -533,7 +595,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             if (tree.isExternal(node)) {
                 continue;
             }
-            final double rate = hierarchicalRates.getRate(tree, node.getNumber());
+            final double rate = rate(node.getNumber());
             final double term = divideByPi ? rate / pi[node.getNumber()] : rate;
             cumulative[node.getNumber()] = tree.isRoot(node) ? term : cumulative[tree.getParent(node).getNumber()] + term;
         }
@@ -636,6 +698,14 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 return;
             }
             structureKnown = false;
+            if (contraction != null) {
+                if (uploadStructureUnchanged()) {
+                    return;
+                }
+                recordUploadStructure();
+            }
+        } else if (hierarchicalRates.isCollapsedRateEvent(model, index)) {
+            return;
         }
         eigenDecompositionKnown = false;
         beagleModelKnown = false;
@@ -644,13 +714,20 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
     @Override
     protected void storeState() {
-
+        if (contraction != null) {
+            storedUploadTriples = uploadTriples.clone();
+            storedUploadSources = uploadSources.clone();
+        }
     }
 
     @Override
     protected void restoreState() {
         eigenDecompositionKnown = false;
         beagleModelKnown = false;
+        if (contraction != null) {
+            uploadTriples = storedUploadTriples;
+            uploadSources = storedUploadSources;
+        }
     }
 
     @Override
@@ -667,6 +744,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (contraction != null && variable == contraction.getKeep()) {
+            recordUploadStructure();
+        }
         eigenDecompositionKnown = false;
         beagleModelKnown = false;
         fireModelChanged();
@@ -859,6 +939,22 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             return null;
         }
 
+        /**
+         * The collapse state of a multifurcating character tree, or null for a tree whose internal nodes are all
+         * clades. A provider with a contraction returns rate 0 at its collapsed nodes.
+         */
+        default CharacterTreeContraction getContraction() {
+            return null;
+        }
+
+        /**
+         * True for an event of this provider that changes only the raw rate of a collapsed node, which changes
+         * nothing the model reads.
+         */
+        default boolean isCollapsedRateEvent(Model model, int index) {
+            return false;
+        }
+
         class Default implements HierarchicalRateProvider {
 
             private final TreeParameterModel hierarchicalPoissonRates;
@@ -874,12 +970,34 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             private final double[] lastRates;
             private final double[] lastFrequencies;
             private double normalization = Double.NaN;
+            private final CharacterTreeContraction contraction;
 
             public Default(Parameter rateParameter, TreeModel treeModel) {
                 this(rateParameter, treeModel, null, false);
             }
 
             public Default(Parameter rateParameter, TreeModel treeModel, FrequencyModel frequency, boolean normalised) {
+                this(rateParameter, treeModel, frequency, normalised, null);
+            }
+
+            /**
+             * Rates on a multifurcating character tree held as a binary skeleton with a collapse state: one raw rate
+             * per skeleton node, the effective rate of a collapsed node is 0. With a keep parameter (the topology is
+             * sampled) the raw rates are bounded below by 0; with fixed flags the generator bounds apply. The
+             * normalisation sums the kept clades in the canonical order of the contracted tree and each clade's
+             * states in ascending order, so it does not depend on how the skeleton resolves a multifurcation.
+             */
+            public Default(Parameter rateParameter, CharacterTreeContraction contraction, FrequencyModel frequency,
+                           boolean normalised) {
+                this(rateParameter, contraction.getTree(), frequency, normalised, contraction);
+            }
+
+            private Default(Parameter rateParameter, TreeModel treeModel, FrequencyModel frequency, boolean normalised,
+                            CharacterTreeContraction contraction) {
+                if (contraction != null && contraction.getTree() != treeModel) {
+                    throw new IllegalArgumentException("the contraction must be of the provider's character tree");
+                }
+                this.contraction = contraction;
                 if (rateParameter.getDimension() != treeModel.getInternalNodeCount()) {
                     throw new IllegalArgumentException("ratesParameter has dimension " + rateParameter.getDimension()
                             + " but the character tree has " + treeModel.getInternalNodeCount() + " internal nodes");
@@ -923,9 +1041,27 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                     this.lastRates = null;
                     this.lastFrequencies = null;
                 }
-                rateParameter.addBounds(frequency == null
+                rateParameter.addBounds(frequency == null || (contraction != null && contraction.getKeep() != null)
                         ? new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, rateParameter.getDimension())
                         : new GeneratorBounds());
+            }
+
+            @Override
+            public CharacterTreeContraction getContraction() {
+                return contraction;
+            }
+
+            @Override
+            public boolean isCollapsedRateEvent(Model model, int index) {
+                return contraction != null && model == hierarchicalPoissonRates && index >= tips
+                        && index < tree.getNodeCount() && contraction.isCollapsed(index);
+            }
+
+            private double effectiveRate(int index) {
+                if (contraction != null && contraction.isCollapsed(tips + index)) {
+                    return 0.0;
+                }
+                return rateParameter.getParameterValue(index);
             }
 
             /**
@@ -980,7 +1116,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 }
 
                 private double term(int i) {
-                    return rateParameter.getParameterValue(i) / cladeFrequency(i);
+                    return effectiveRate(i) / cladeFrequency(i);
                 }
 
                 private double minimumBelow(int i, double above) {
@@ -1000,6 +1136,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 @Override
                 public Double getLowerLimit(int dimension) {
                     ensureStructure();
+                    if (contraction != null && contraction.isCollapsed(tips + dimension)) {
+                        return 0.0;
+                    }
                     double sigmaParent = 0.0;
                     for (int k = parentRate[dimension]; k >= 0; k = parentRate[k]) {
                         sigmaParent += term(k);
@@ -1035,7 +1174,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                 ensureStructure();
                 boolean changed = Double.isNaN(normalization);
                 for (int i = 0; i < lastRates.length; i++) {
-                    final double rate = rateParameter.getParameterValue(i);
+                    final double rate = effectiveRate(i);
                     if (rate != lastRates[i]) {
                         lastRates[i] = rate;
                         changed = true;
@@ -1048,7 +1187,18 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                         changed = true;
                     }
                 }
-                if (changed) {
+                if (changed && contraction != null) {
+                    double mu = 0.0;
+                    for (int node : contraction.getKeptInternalNodes()) {
+                        double piClade = 0.0, sumSquares = 0.0;
+                        for (int state : contraction.sortedStatesBelow(node)) {
+                            piClade += lastFrequencies[state];
+                            sumSquares += lastFrequencies[state] * lastFrequencies[state];
+                        }
+                        mu += lastRates[node - tips] * (piClade - sumSquares / piClade);
+                    }
+                    normalization = mu;
+                } else if (changed) {
                     double mu = 0.0;
                     for (int i = 0; i < cladeStates.length; i++) {
                         double piClade = 0.0, sumSquares = 0.0;
@@ -1065,6 +1215,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
             @Override
             public double getRate(TreeModel tree, int node) {
+                if (contraction != null && contraction.isCollapsed(node)) {
+                    return 0.0;
+                }
                 final double rate = hierarchicalPoissonRates.getNodeValue(tree, tree.getNode(node));
                 return normalised ? rate / getNormalization() : rate;
             }

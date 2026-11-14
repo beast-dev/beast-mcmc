@@ -67,14 +67,33 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
     protected final int[][] statesBelow;
     protected final String[] cladeName;
     protected final double[] piNode;
+    protected final CharacterTreeContraction contraction;
 
+    private final int[] keptInternalPreOrder;
     private final double[] lambda;
     private boolean known = false;
     private double normalization = Double.NaN;
     private int computeCount = 0;
 
     protected AbstractHierarchicalRateProvider(String name, TreeModel tree, FrequencyModel frequency) {
+        this(name, tree, frequency, null);
+    }
+
+    /**
+     * With a contraction the character tree is multifurcating: its collapsed nodes must get rate 0 from
+     * computeLambdas (up to rounding), and they are left out of the clade names. Only fixed collapse flags are
+     * accepted, since these providers read the clade structure once.
+     */
+    protected AbstractHierarchicalRateProvider(String name, TreeModel tree, FrequencyModel frequency,
+                                               CharacterTreeContraction contraction) {
         super(name);
+        if (contraction != null && contraction.getTree() != tree) {
+            throw new IllegalArgumentException("the contraction must be of the provider's character tree");
+        }
+        if (contraction != null && contraction.getKeep() != null) {
+            throw new IllegalArgumentException("a character tree whose topology is sampled (keep) needs ratesParameter");
+        }
+        this.contraction = contraction;
         this.tree = tree;
         this.frequency = frequency;
         this.dataType = frequency.getDataType();
@@ -127,6 +146,13 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
             }
         }
         this.internalPreOrder = toArray(pre);
+        final List<Integer> kept = new ArrayList<Integer>();
+        for (int n : internalPreOrder) {
+            if (contraction == null || !contraction.isCollapsed(n)) {
+                kept.add(n);
+            }
+        }
+        this.keptInternalPreOrder = toArray(kept);
         this.piNode = new double[nodeCount];
         this.lambda = new double[nodeCount];
 
@@ -245,9 +271,37 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
             fillPiNode();
             Arrays.fill(lambda, 0.0);
             normalization = computeLambdas(lambda);
+            if (contraction != null) {
+                zeroCollapsedLambdas();
+            }
             computeCount++;
             known = true;
         }
+    }
+
+    private void zeroCollapsedLambdas() {
+        double scale = 1.0;
+        for (int n : keptInternalPreOrder) {
+            scale = Math.max(scale, Math.abs(lambda[n] / piNode[n]));
+        }
+        for (int n : internalPreOrder) {
+            if (contraction.isCollapsed(n)) {
+                if (Math.abs(lambda[n] / piNode[n]) > COLLAPSED_TOLERANCE * scale) {
+                    final int parent = contraction.contractedParent(n);
+                    throw new IllegalArgumentException("exchangeabilities are not tree-structured on the multifurcating "
+                            + "character tree at clade " + cladeName[parent] + ": the pairs below its child "
+                            + cladeName[n] + " exchange at a different rate (lambda " + lambda[n] + ")");
+                }
+                lambda[n] = 0.0;
+            }
+        }
+    }
+
+    public static final double COLLAPSED_TOLERANCE = 1e-10;
+
+    @Override
+    public CharacterTreeContraction getContraction() {
+        return contraction;
     }
 
     private void fillPiNode() {
@@ -292,9 +346,9 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
     }
 
     public final String[] getCladeNames() {
-        final String[] names = new String[internalPreOrder.length];
+        final String[] names = new String[keptInternalPreOrder.length];
         for (int i = 0; i < names.length; i++) {
-            names[i] = cladeName[internalPreOrder[i]];
+            names[i] = cladeName[keptInternalPreOrder[i]];
         }
         return names;
     }
@@ -304,7 +358,7 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
     }
 
     protected final int nodeOfClade(String sortedTipCodes) {
-        for (int n : internalPreOrder) {
+        for (int n : keptInternalPreOrder) {
             if (cladeName[n].equals(sortedTipCodes)) {
                 return n;
             }
@@ -315,7 +369,7 @@ public abstract class AbstractHierarchicalRateProvider extends AbstractModel
 
     protected final String describeClades() {
         final StringBuilder sb = new StringBuilder();
-        for (int n : internalPreOrder) {
+        for (int n : keptInternalPreOrder) {
             if (sb.length() > 0) {
                 sb.append(", ");
             }

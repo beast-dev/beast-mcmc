@@ -69,7 +69,21 @@ public class RelativeRatesProvider extends AbstractHierarchicalRateProvider {
 
     public RelativeRatesProvider(String name, TreeModel tree, FrequencyModel frequency, RelativeRates relativeRates,
                                  boolean normalise, double tolerance, Variable... variables) {
-        super(name, tree, frequency);
+        this(name, tree, frequency, null, relativeRates, normalise, tolerance, variables);
+    }
+
+    /**
+     * Relative rates on a fixed multifurcating character tree: the exchangeabilities must be tied within each class
+     * of the contracted tree, so a collapsed node must get rate 0 (otherwise the rates are refused).
+     */
+    public RelativeRatesProvider(String name, CharacterTreeContraction contraction, FrequencyModel frequency,
+                                 RelativeRates relativeRates, boolean normalise, double tolerance, Variable... variables) {
+        this(name, contraction.getTree(), frequency, contraction, relativeRates, normalise, tolerance, variables);
+    }
+
+    private RelativeRatesProvider(String name, TreeModel tree, FrequencyModel frequency, CharacterTreeContraction contraction,
+                                  RelativeRates relativeRates, boolean normalise, double tolerance, Variable... variables) {
+        super(name, tree, frequency, contraction);
         this.relativeRates = relativeRates;
         this.normalise = normalise;
         this.tolerance = tolerance;
@@ -155,13 +169,27 @@ public class RelativeRatesProvider extends AbstractHierarchicalRateProvider {
 
     public static RelativeRatesProvider gtr(final Parameter sixRates, FrequencyModel frequency, TreeModel tree,
                                             double tolerance) {
+        return gtr(sixRates, frequency, tree, null, tolerance);
+    }
+
+    /**
+     * GTR with rates tied on a fixed multifurcating character tree; rates that are not tied within each class of
+     * the contracted tree are refused.
+     */
+    public static RelativeRatesProvider gtr(final Parameter sixRates, FrequencyModel frequency,
+                                            CharacterTreeContraction contraction, double tolerance) {
+        return gtr(sixRates, frequency, contraction.getTree(), contraction, tolerance);
+    }
+
+    private static RelativeRatesProvider gtr(final Parameter sixRates, FrequencyModel frequency, TreeModel tree,
+                                             CharacterTreeContraction contraction, double tolerance) {
         checkNucleotides(frequency, "gtr rates");
         if (sixRates.getDimension() != 6) {
             throw new IllegalArgumentException("gtr rates need 6 values (AC, AG, AT, CG, CT, GT); found "
                     + sixRates.getDimension());
         }
         sixRates.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 6));
-        final RelativeRatesProvider provider = new RelativeRatesProvider("gtrRates", tree, frequency, new RelativeRates() {
+        final RelativeRatesProvider provider = new RelativeRatesProvider("gtrRates", tree, frequency, contraction, new RelativeRates() {
             public void setup(double[] rates) {
                 for (int k = 0; k < 6; k++) {
                     rates[k] = sixRates.getParameterValue(k);

@@ -1006,4 +1006,136 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
             assertEquals(1.0, row, 1e-12);
         }
     }
+
+    public void testMultifurcatingTreesThroughBeagle() throws Exception {
+        if (skip("testMultifurcatingTreesThroughBeagle")) {
+            return;
+        }
+        FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(alignment.getStateFrequencies()));
+        dr.evomodel.substmodel.CharacterTreeContraction.Built star = dr.evomodel.substmodel.CharacterTreeContraction.build(
+                "characterTree", "(A,C,G,T);", Nucleotides.INSTANCE, true, null);
+        HierarchicalSubstitutionModel f81 = new HierarchicalSubstitutionModel("hierarchical", new EqualRatesProvider(
+                new dr.evomodel.substmodel.CharacterTreeContraction(star.skeleton, Nucleotides.INSTANCE, star.collapsed, null),
+                frequencies, true));
+        HKY hky1 = new HKY(new Parameter.Default(1, 1.0), frequencies);
+        final double expected = likelihood(hky1, gamma(0.5, 4), false).getLogLikelihood();
+        for (HierarchicalSubstitutionModel.Aggregation aggregation : AGGREGATIONS) {
+            f81.setAggregation(aggregation);
+            assertEquals("star = F81, aggregate " + aggregation, expected,
+                    likelihood(f81, gamma(0.5, 4), true).getLogLikelihood(), 1e-10 * Math.abs(expected));
+        }
+        assertEquals("star on the eigen path", expected, likelihood(f81, gamma(0.5, 4), false).getLogLikelihood(),
+                1e-10 * Math.abs(expected));
+
+        dr.evomodel.substmodel.CharacterTreeContraction.Built oneClade = dr.evomodel.substmodel.CharacterTreeContraction.build(
+                "characterTree", "((A,G),C,T);", Nucleotides.INSTANCE, true, null);
+        Parameter rates = new Parameter.Default(oneClade.skeleton.getInternalNodeCount(), 0.0);
+        final double rootRate = 1.1, agRate = 0.8;
+        for (int i = 0; i < rates.getDimension(); i++) {
+            String c = clade(oneClade.skeleton, oneClade.skeleton.getNode(S + i));
+            rates.setParameterValue(i, c.equals("AG") ? agRate : c.equals("ACGT") ? rootRate : 3.3);
+        }
+        HierarchicalSubstitutionModel hierarchical = new HierarchicalSubstitutionModel("hierarchical",
+                new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates,
+                        new dr.evomodel.substmodel.CharacterTreeContraction(oneClade.skeleton, Nucleotides.INSTANCE,
+                                oneClade.collapsed, null), frequencies, true));
+        double[] pi = frequencies.getFrequencies();
+        TN93 tn93 = new TN93(new Parameter.Default(1, (rootRate + agRate / (pi[0] + pi[2])) / rootRate),
+                new Parameter.Default(1, 1.0), frequencies);
+        final double tn93Expected = likelihood(tn93, gamma(0.5, 4), false).getLogLikelihood();
+        assertEquals("((A,G),C,T) = TN93(kappa1, 1)", tn93Expected,
+                likelihood(hierarchical, gamma(0.5, 4), true).getLogLikelihood(), 1e-10 * Math.abs(tn93Expected));
+    }
+
+    private static String randomMultifurcatingNewick(java.util.List<String> codes, java.util.Random random) {
+        java.util.List<String> pieces = new java.util.ArrayList<>(codes);
+        while (pieces.size() > 4) {
+            final int k = 2 + random.nextInt(3);
+            java.util.List<String> chosen = new java.util.ArrayList<>();
+            for (int i = 0; i < k; i++) chosen.add(pieces.remove(random.nextInt(pieces.size())));
+            pieces.add(random.nextInt(pieces.size() + 1), "(" + String.join(",", chosen) + ")");
+        }
+        return "(" + String.join(",", pieces) + ");";
+    }
+
+    private static void exchangeWithUncle(TreeModel tree, NodeRef u, int which) {
+        NodeRef p = tree.getParent(u);
+        NodeRef w = tree.getChild(p, 0) == u ? tree.getChild(p, 1) : tree.getChild(p, 0);
+        NodeRef c = tree.getChild(u, which);
+        tree.beginTreeEdit();
+        tree.removeChild(u, c);
+        tree.removeChild(p, w);
+        tree.addChild(u, w);
+        tree.addChild(p, c);
+        tree.endTreeEdit();
+    }
+
+    public void testNeutralCharacterTreeMovesThroughBeagle() throws Exception {
+        if (skip("testNeutralCharacterTreeMovesThroughBeagle")) {
+            return;
+        }
+        java.util.Random random = new java.util.Random(20261114);
+        for (int states : new int[]{8, 12, 20}) {
+            SparseProblem problem = new SparseProblem(states, 12, random, new String[0][]);
+            Patterns patterns = problem.patterns(120, 0.1, new int[0], 0.0, random);
+            String newick = randomMultifurcatingNewick(Arrays.asList(problem.codes), random);
+            dr.evomodel.substmodel.CharacterTreeContraction.Built built = dr.evomodel.substmodel.CharacterTreeContraction.build(
+                    "characterTree", newick, problem.dataType, false, null);
+            final TreeModel skeleton = built.skeleton;
+            assertTrue(newick, built.isMultifurcating());
+            double[] raw = new double[skeleton.getInternalNodeCount()];
+            for (int i = 0; i < raw.length; i++) raw[i] = 0.3 + random.nextDouble();
+            Parameter rates = new Parameter.Default(raw.clone());
+            dr.evomodel.substmodel.CharacterTreeContraction contraction = new dr.evomodel.substmodel.CharacterTreeContraction(
+                    skeleton, problem.dataType, built.collapsed, null);
+            GammaSiteRateModel sites = gamma(0.7, 3);
+            TreeDataLikelihood[] paths = new TreeDataLikelihood[4];
+            for (int i = 0; i < 4; i++) {
+                HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical-" + i,
+                        new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, contraction, problem.frequencies, true));
+                model.setAggregation(i < 3 ? AGGREGATIONS[i] : HierarchicalSubstitutionModel.Aggregation.AUTO);
+                paths[i] = new TreeDataLikelihood(delegate(problem.phylogeny, patterns, model, sites, false, i < 3),
+                        problem.phylogeny, new DefaultBranchRateModel());
+            }
+            double[] first = new double[4];
+            for (int i = 0; i < 4; i++) first[i] = paths[i].getLogLikelihood();
+            assertPathsAgree("S=" + states + " start", first, first[3]);
+            final String contracted = contraction.contractedNewick(null);
+
+            int neutral = 0;
+            for (int m = 0; m < 40 && neutral < 6; m++) {
+                NodeRef u = skeleton.getNode(states + random.nextInt(states - 1));
+                if (skeleton.isRoot(u)) continue;
+                boolean isNeutral = contraction.isCollapsed(u.getNumber());
+                for (TreeDataLikelihood l : paths) l.storeModelState();
+                exchangeWithUncle(skeleton, u, random.nextInt(2));
+                double[] now = new double[4];
+                for (int i = 0; i < 4; i++) now[i] = paths[i].getLogLikelihood();
+                HierarchicalSubstitutionModel fresh = new HierarchicalSubstitutionModel("fresh",
+                        new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(new Parameter.Default(raw.clone()),
+                                new dr.evomodel.substmodel.CharacterTreeContraction(skeleton, problem.dataType, built.collapsed, null),
+                                problem.frequencies, true));
+                fresh.setAggregation(HierarchicalSubstitutionModel.Aggregation.OFF);
+                final double freshHierarchical = new TreeDataLikelihood(delegate(problem.phylogeny, patterns, fresh, sites, false, true),
+                        problem.phylogeny, new DefaultBranchRateModel()).getLogLikelihood();
+                if (isNeutral) {
+                    neutral++;
+                    assertEquals(contracted, contraction.contractedNewick(null));
+                    for (int i = 0; i < 4; i++) {
+                        assertEquals("S=" + states + " neutral move, path " + i, first[i], now[i], 0.0);
+                    }
+                    assertEquals("S=" + states + " fresh model after a neutral move", first[1], freshHierarchical, 0.0);
+                    for (TreeDataLikelihood l : paths) l.acceptModelState();
+                } else {
+                    assertPathsAgree("S=" + states + " after a move", now, freshHierarchical);
+                    for (TreeDataLikelihood l : paths) l.restoreModelState();
+                    for (int i = 0; i < 4; i++) {
+                        assertEquals("S=" + states + " restored, path " + i, first[i], paths[i].getLogLikelihood(),
+                                i < 3 ? 0.0 : 1e-10 * Math.abs(first[i]));
+                    }
+                }
+            }
+            assertTrue("S=" + states + " neutral moves tried", neutral > 0);
+        }
+    }
 }

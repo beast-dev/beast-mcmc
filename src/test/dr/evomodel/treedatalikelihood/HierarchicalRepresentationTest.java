@@ -1138,4 +1138,116 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
             assertTrue("S=" + states + " neutral moves tried", neutral > 0);
         }
     }
+
+    private static HierarchicalSubstitutionModel sampledModel(dr.evomodel.substmodel.CharacterTreeModel tree, Parameter rates,
+                                                              Parameter keep, FrequencyModel frequencies) {
+        return new HierarchicalSubstitutionModel("hierarchical", new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(
+                rates, new dr.evomodel.substmodel.CharacterTreeContraction(tree.getSkeleton(), tree.getDataType(), null, keep),
+                frequencies, true));
+    }
+
+    public void testSampledCharacterTreeChainThroughBeagle() throws Exception {
+        if (skip("testSampledCharacterTreeChainThroughBeagle")) {
+            return;
+        }
+        java.util.Random random = new java.util.Random(1114);
+        for (int states : new int[]{4, 8}) {
+            final TreeModel phylogeny;
+            final PatternList patterns;
+            final FrequencyModel frequencies;
+            final dr.evolution.datatype.DataType type;
+            final String newick;
+            if (states == 4) {
+                phylogeny = treeModel;
+                patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
+                frequencies = new FrequencyModel(Nucleotides.INSTANCE, new Parameter.Default(alignment.getStateFrequencies()));
+                type = Nucleotides.INSTANCE;
+                newick = "((A,G),(C,T));";
+            } else {
+                SparseProblem problem = new SparseProblem(states, 10, random, new String[0][]);
+                phylogeny = problem.phylogeny;
+                patterns = problem.patterns(100, 0.1, new int[0], 0.0, random);
+                frequencies = problem.frequencies;
+                type = problem.dataType;
+                newick = "((s0,s1,s2),(s3,(s4,s5)),s6,s7);";
+            }
+            Parameter keep = new Parameter.Default(1);
+            dr.evomodel.substmodel.CharacterTreeModel tree = new dr.evomodel.substmodel.CharacterTreeModel("characterTree",
+                    newick, type, true, keep);
+            Parameter rates = new Parameter.Default(states - 1, 1.0);
+            for (int i = 0; i < states - 1; i++) rates.setParameterValue(i, 0.3 + random.nextDouble());
+            HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hierarchical",
+                    new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, tree.getContraction(), frequencies, true));
+            GammaSiteRateModel sites = gamma(0.8, 3);
+            TreeDataLikelihood hierarchical = new TreeDataLikelihood(delegate(phylogeny, patterns, model, sites, false, true),
+                    phylogeny, new DefaultBranchRateModel());
+            TreeDataLikelihood eigen = new TreeDataLikelihood(delegate(phylogeny, patterns, model, sites, false, false),
+                    phylogeny, new DefaultBranchRateModel());
+            final dr.evomodel.tree.DefaultTreeModel skeleton = tree.getSkeleton();
+            final int root = skeleton.getRoot().getNumber();
+            int[] kinds = new int[3];
+            java.util.Set<String> visited = new java.util.HashSet<>();
+            double current = hierarchical.getLogLikelihood();
+            assertEquals(current, eigen.getLogLikelihood(), 1e-10 * Math.abs(current));
+            for (int step = 0; step < 150; step++) {
+                hierarchical.storeModelState();
+                eigen.storeModelState();
+                tree.storeModelState();
+                final int kind = random.nextInt(3);
+                kinds[kind]++;
+                int slot;
+                do {
+                    slot = random.nextInt(states - 1);
+                } while (states + slot == root);
+                if (kind == 0) {
+                    NodeRef u = skeleton.getNode(states + slot);
+                    NodeRef p = skeleton.getParent(u);
+                    NodeRef w = skeleton.getChild(p, 0) == u ? skeleton.getChild(p, 1) : skeleton.getChild(p, 0);
+                    NodeRef c = skeleton.getChild(u, random.nextInt(2));
+                    skeleton.beginTreeEdit();
+                    skeleton.removeChild(u, c);
+                    skeleton.removeChild(p, w);
+                    skeleton.addChild(u, w);
+                    skeleton.addChild(p, c);
+                    tree.resetUnitHeightsQuietly();
+                    skeleton.endTreeEdit();
+                } else if (kind == 1) {
+                    if (keep.getParameterValue(slot) == 0.0) {
+                        rates.setParameterValue(slot, 0.05 + random.nextDouble());
+                        keep.setParameterValue(slot, 1.0);
+                    } else {
+                        keep.setParameterValue(slot, 0.0);
+                        rates.setParameterValue(slot, 0.05 + random.nextDouble());
+                    }
+                } else {
+                    rates.setParameterValue(slot, rates.getParameterValue(slot) * Math.exp(0.5 * (random.nextDouble() - 0.5)));
+                }
+                visited.add(tree.getContractedNewick());
+                final double h = hierarchical.getLogLikelihood();
+                final double e = eigen.getLogLikelihood();
+                Parameter keepCopy = new Parameter.Default(keep.getParameterValues());
+                HierarchicalSubstitutionModel fresh = sampledModel(tree, new Parameter.Default(rates.getParameterValues()), keepCopy,
+                        frequencies);
+                final double expected = new TreeDataLikelihood(delegate(phylogeny, patterns, fresh, sites, false, false),
+                        phylogeny, new DefaultBranchRateModel()).getLogLikelihood();
+                assertEquals("S=" + states + " step " + step + " hierarchical", expected, h, 1e-10 * Math.abs(expected));
+                assertEquals("S=" + states + " step " + step + " eigen", expected, e, 1e-10 * Math.abs(expected));
+                if (random.nextBoolean()) {
+                    hierarchical.acceptModelState();
+                    eigen.acceptModelState();
+                    tree.acceptModelState();
+                    current = h;
+                } else {
+                    hierarchical.restoreModelState();
+                    eigen.restoreModelState();
+                    tree.restoreModelState();
+                    assertEquals("S=" + states + " step " + step + " restored", current, hierarchical.getLogLikelihood(),
+                            1e-10 * Math.abs(current));
+                    assertEquals("S=" + states + " step " + step + " eigen restored", current, eigen.getLogLikelihood(),
+                            1e-10 * Math.abs(current));
+                }
+            }
+            assertTrue("S=" + states + " trees visited " + visited.size(), visited.size() > (states == 4 ? 10 : 20));
+        }
+    }
 }

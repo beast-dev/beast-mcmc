@@ -196,6 +196,13 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
         return contraction != null ? contraction.getContractedInternalNodeCount() : tree.getInternalNodeCount();
     }
 
+    /**
+     * The normalised rate of a character-tree node (skeleton node number); 0 at a collapsed node.
+     */
+    public double getCladeRate(int nodeNumber) {
+        return rate(nodeNumber);
+    }
+
     private double rate(int nodeNumber) {
         if (contraction != null && contraction.isCollapsed(nodeNumber)) {
             return 0.0;

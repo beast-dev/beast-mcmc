@@ -31,6 +31,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.AbstractHierarchicalRateProvider;
 import dr.evomodel.substmodel.CharacterTreeContraction;
+import dr.evomodel.substmodel.CharacterTreeModel;
 import dr.evomodel.substmodel.ContractedRatesProvider;
 import dr.evomodel.substmodel.EqualRatesProvider;
 import dr.evomodel.substmodel.FrequencyModel;
@@ -112,12 +113,46 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
         final boolean anyDataTypeForm = EQUAL_RATES.equals(selector) || borrowedEqualRates;
 
         try {
-            CharacterTreeContraction.Built multifurcating = multifurcatingTree(xo, freqModel, selector, nucleotideForm,
-                    anyDataTypeForm);
-            CharacterTreeContraction contraction = multifurcating == null ? null : new CharacterTreeContraction(
-                    multifurcating.skeleton, freqModel.getDataType(), multifurcating.collapsed, null);
-            TreeModel tree = multifurcating != null ? multifurcating.skeleton
-                    : characterTree(xo, freqModel, selector, nucleotideForm, anyDataTypeForm);
+            final CharacterTreeModel characterTreeModel = xo.hasChildNamed(CHARACTER_TREE)
+                    && xo.getChild(CHARACTER_TREE).getChild(CharacterTreeModel.class) != null
+                    ? (CharacterTreeModel) xo.getChild(CHARACTER_TREE).getChild(CharacterTreeModel.class) : null;
+            final boolean sampled = characterTreeModel != null && characterTreeModel.getKeep() != null;
+            if (sampled && selector != null && !RATES_PARAMETER.equals(selector)) {
+                throw new XMLParseException("hierarchicalSubstitutionModel: the topology of the character tree "
+                        + characterTreeModel.getId() + " is sampled (keep), so its rates must be given with ratesParameter; "
+                        + "found " + selector);
+            }
+            if (characterTreeModel != null && characterTreeModel.getContraction() != null && !sampled && nucleotideForm) {
+                throw new XMLParseException("hierarchicalSubstitutionModel: " + selector + " needs the binary character tree "
+                        + "((A,G),(C,T)); the multifurcating tree " + characterTreeModel.getContractedNewick() + " is written "
+                        + "with ratesParameter (one rate per internal node, in the post-order of the Newick)");
+            }
+            if (characterTreeModel != null && xo.hasAttribute(CHARACTER_TREE_NEWICK)) {
+                throw new XMLParseException("hierarchicalSubstitutionModel: give characterTree or characterTreeNewick, not both");
+            }
+            CharacterTreeContraction contraction;
+            int[] slotOfInternal = null;
+            int contractedInternalCount = 0;
+            TreeModel tree;
+            if (characterTreeModel != null) {
+                contraction = characterTreeModel.getContraction();
+                tree = characterTreeModel.getSkeleton();
+                if (contraction != null && !sampled) {
+                    slotOfInternal = characterTreeModel.getSlotOfInternal();
+                    contractedInternalCount = characterTreeModel.getContractedInternalNodeCount();
+                }
+            } else {
+                CharacterTreeContraction.Built multifurcating = multifurcatingTree(xo, freqModel, selector, nucleotideForm,
+                        anyDataTypeForm);
+                contraction = multifurcating == null ? null : new CharacterTreeContraction(
+                        multifurcating.skeleton, freqModel.getDataType(), multifurcating.collapsed, null);
+                tree = multifurcating != null ? multifurcating.skeleton
+                        : characterTree(xo, freqModel, selector, nucleotideForm, anyDataTypeForm);
+                if (multifurcating != null) {
+                    slotOfInternal = multifurcating.slotOfInternal;
+                    contractedInternalCount = multifurcating.contractedInternalCount;
+                }
+            }
             final String givenLengths = AbstractHierarchicalRateProvider.setUnitBranchLengths(tree);
             if (givenLengths != null) {
                 Logger.getLogger("dr.evomodel").info("WARNING: hierarchical substitution model"
@@ -126,7 +161,20 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             }
             HierarchicalSubstitutionModel.HierarchicalRateProvider provider;
             String form;
-            if (borrowedEqualRates) {
+            if (sampled) {
+                Parameter rates = RATES_PARAMETER.equals(selector) ? (Parameter) xo.getElementFirstChild(RATES_PARAMETER)
+                        : new Parameter.Default(tree.getInternalNodeCount(), 1.0);
+                if (rates.getDimension() == 1 && tree.getInternalNodeCount() > 1) {
+                    final double value = rates.getParameterValue(0);
+                    rates.setDimension(tree.getInternalNodeCount());
+                    for (int i = 0; i < rates.getDimension(); i++) {
+                        rates.setParameterValueQuietly(i, value);
+                    }
+                }
+                provider = new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, contraction, freqModel, true);
+                form = "ratesParameter, one raw rate per internal node of the skeleton of the sampled character tree "
+                        + characterTreeModel.getId();
+            } else if (borrowedEqualRates) {
                 provider = contraction != null ? EqualRatesProvider.of((GeneralSubstitutionModel) borrowed, contraction)
                         : EqualRatesProvider.of((GeneralSubstitutionModel) borrowed, tree);
                 form = "ratesFrom " + borrowed.getModelName() + " (equal rates)";
@@ -135,8 +183,8 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
                 form = "equal rates";
             } else if (contraction != null) {
                 final Parameter rates = RATES_PARAMETER.equals(selector) ? (Parameter) xo.getElementFirstChild(RATES_PARAMETER)
-                        : new Parameter.Default(multifurcating.contractedInternalCount, 1.0);
-                provider = new ContractedRatesProvider(rates, contraction, freqModel, multifurcating.slotOfInternal);
+                        : new Parameter.Default(contractedInternalCount, 1.0);
+                provider = new ContractedRatesProvider(rates, contraction, freqModel, slotOfInternal);
                 form = RATES_PARAMETER.equals(selector) ? "ratesParameter, one rate per internal node of the multifurcating tree"
                         : "no selector: one rate 1.0 per internal node of the multifurcating tree";
             } else if (borrowed != null) {
@@ -164,6 +212,9 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL,
                     provider, freqModel);
             model.setAggregation(HierarchicalSubstitutionModel.Aggregation.parse(xo.getAttribute(AGGREGATE, "auto")));
+            if (characterTreeModel != null) {
+                characterTreeModel.setRateModel(model);
+            }
             Logger.getLogger("dr.evomodel").info("Hierarchical substitution model" + (xo.hasId() ? " '" + xo.getId() + "'" : "")
                     + ": " + form + "; aggregation " + model.getAggregation().name().toLowerCase()
                     + "; character tree " + (contraction == null ? "clades " + clades(tree, freqModel)
@@ -324,7 +375,8 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             new ElementRule(RATES_FROM,
                     new XMLSyntaxRule[]{new ElementRule(SubstitutionModel.class)}, true),
             new ElementRule(CHARACTER_TREE,
-                    new XMLSyntaxRule[]{new ElementRule(TreeModel.class)}, true),
+                    new XMLSyntaxRule[]{new XORRule(new ElementRule(TreeModel.class),
+                            new ElementRule(CharacterTreeModel.class))}, true),
             new ElementRule(RATES_PARAMETER,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(EQUAL_RATES, new XMLSyntaxRule[]{}, true),

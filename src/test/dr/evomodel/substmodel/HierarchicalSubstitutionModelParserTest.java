@@ -493,4 +493,123 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         assertTrue(messages.toString(), messages.isEmpty());
         assertUnitBranches(characterTreeOf(store[0]));
     }
+
+    private static final String F = "  <frequencyModel id=\"f\" dataType=\"nucleotide\"><frequencies><parameter id=\"pi\" value=\"0.1 0.2 0.3 0.4\"/></frequencies></frequencyModel>\n";
+    private static final String HKY1 = "  <HKYModel id=\"f81\"><frequencies><frequencyModel idref=\"f\"/></frequencies><kappa><parameter value=\"1.0\"/></kappa></HKYModel>\n";
+
+    private static String multi(String newick, String body) {
+        return "  <hierarchicalSubstitutionModel id=\"hrate\" characterTreeNewick=\"" + newick + "\">\n"
+                + "    <frequencies><frequencyModel idref=\"f\"/></frequencies>\n" + body + "  </hierarchicalSubstitutionModel>\n";
+    }
+
+    private static double maxDiff(dr.evomodel.substmodel.SubstitutionModel a, dr.evomodel.substmodel.SubstitutionModel b) {
+        double[] x = new double[16], y = new double[16];
+        a.getInfinitesimalMatrix(x);
+        b.getInfinitesimalMatrix(y);
+        double d = 0.0;
+        for (int i = 0; i < 16; i++) d = Math.max(d, Math.abs(x[i] - y[i]));
+        for (double t : new double[]{0.0, 0.05, 0.37, 1.9}) {
+            a.getTransitionProbabilities(t, x);
+            b.getTransitionProbabilities(t, y);
+            for (int i = 0; i < 16; i++) d = Math.max(d, Math.abs(x[i] - y[i]));
+        }
+        return d;
+    }
+
+    private static HierarchicalSubstitutionModel hrateOf(Map<String, XMLObject> store) throws Exception {
+        return (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+    }
+
+    public void testStarIsF81() throws Exception {
+        for (String body : new String[]{"    <equalRates/>\n", "",
+                "    <ratesParameter><parameter id=\"r\" value=\"2.7\"/></ratesParameter>\n"}) {
+            Map<String, XMLObject> store = parse(F + HKY1 + multi("(A,C,G,T);", body));
+            HierarchicalSubstitutionModel star = hrateOf(store);
+            assertEquals(body, 0.0, maxDiff(star, (HKY) store.get("f81").getNativeObject()), 1e-13);
+            assertNotNull(star.getContraction());
+            assertEquals(1, star.getContractedInternalNodeCount());
+            assertEquals("(A,C,G,T);", star.getContraction().contractedNewick(null));
+        }
+    }
+
+    public void testOneCladeTreesAreTN93WithKappa2One() throws Exception {
+        final double kappa1 = (1.1 + 0.8 / 0.4) / 1.1;
+        String tn93 = "  <TN93Model id=\"tn93\"><frequencies><frequencyModel idref=\"f\"/></frequencies><kappa1><parameter value=\""
+                + kappa1 + "\"/></kappa1><kappa2><parameter value=\"1.0\"/></kappa2></TN93Model>\n";
+        for (String newick : new String[]{"((A,G),C,T);", "(T,(G,A),C);", "(C,T,(A:2,G:3):1);"}) {
+            Map<String, XMLObject> store = parse(F + tn93 + multi(newick,
+                    "    <ratesParameter><parameter id=\"r\" value=\"0.8 1.1\"/></ratesParameter>\n"));
+            HierarchicalSubstitutionModel model = hrateOf(store);
+            assertEquals(newick, 0.0, maxDiff(model, (TN93) store.get("tn93").getNativeObject()), 1e-13);
+            assertTrue(model.getRateProvider() instanceof dr.evomodel.substmodel.ContractedRatesProvider);
+            assertEquals("((A,G),C,T);", model.getContraction().contractedNewick(null));
+        }
+    }
+
+    public void testBinaryNewickKeepsTheDefaultProvider() throws Exception {
+        Map<String, XMLObject> store = parse(F + multi("((A,G),(C,T));", RATES) + HKY_MODEL.replace("hky.frequencies", "x"));
+        HierarchicalSubstitutionModel binary = hrateOf(store);
+        assertTrue(binary.getRateProvider() instanceof HierarchicalSubstitutionModel.HierarchicalRateProvider.Default);
+        assertNull(binary.getContraction());
+        assertEquals(0.0, maxPDiff(binary, (HKY) store.get("hky").getNativeObject()), 1e-13);
+    }
+
+    public void testMultifurcatingNewickRefusals() throws Exception {
+        String message = parseFailure(F + multi("((A,G),C,T);", "    <ratesParameter><parameter value=\"0.8 0.5 1.1\"/></ratesParameter>\n"));
+        assertTrue(message, message.contains("ratesParameter has dimension 3 but the character tree has 2 internal nodes"));
+        message = parseFailure(F + multi("((A,G),C,T);", "    <kappa><parameter value=\"2.0\"/></kappa>\n"));
+        assertTrue(message, message.contains("kappa needs the binary character tree ((A,G),(C,T))"));
+        message = parseFailure(F + multi("((A,G),C,T);",
+                "    <kappa1><parameter value=\"2.0\"/></kappa1><kappa2><parameter value=\"1.0\"/></kappa2>\n"));
+        assertTrue(message, message.contains("needs the binary character tree ((A,G),(C,T))"));
+        message = parseFailure(F + HKY1 + "  <hierarchicalSubstitutionModel id=\"hrate\" characterTreeNewick=\"((A,G),C,T);\">\n"
+                + "    <ratesFrom><HKYModel idref=\"f81\"/></ratesFrom>\n  </hierarchicalSubstitutionModel>\n");
+        assertTrue(message, message.contains("needs the binary character tree ((A,G),(C,T))"));
+    }
+
+    public void testNoSelectorTakesOneRatePerInternalNode() throws Exception {
+        HierarchicalSubstitutionModel model = hrateOf(parse(F + multi("(((A,C),G,T));", "")));
+        dr.evomodel.substmodel.ContractedRatesProvider provider = (dr.evomodel.substmodel.ContractedRatesProvider) model.getRateProvider();
+        assertEquals(2, provider.getRatesParameter().getDimension());
+        model = hrateOf(parse(F + multi("(A,C,G,T);", "")));
+        assertEquals(1, ((dr.evomodel.substmodel.ContractedRatesProvider) model.getRateProvider()).getRatesParameter().getDimension());
+    }
+
+    public void testConeBoundsOnTheMultifurcatingTree() throws Exception {
+        HierarchicalSubstitutionModel model = hrateOf(parse(F + multi("((A,G),C,T);",
+                "    <ratesParameter><parameter id=\"r\" value=\"0.8 1.1\"/></ratesParameter>\n")));
+        dr.inference.model.Parameter r = ((dr.evomodel.substmodel.ContractedRatesProvider) model.getRateProvider()).getRatesParameter();
+        assertEquals("AG may go down to -pi_AG sigma(root)", -0.4 * 1.1, r.getBounds().getLowerLimit(0), 1e-15);
+        assertEquals("the root must keep the pairs across it non-negative", 0.0, r.getBounds().getLowerLimit(1), 1e-15);
+        r.setParameterValue(0, -0.3);
+        assertTrue(model.isValidGenerator());
+        assertFalse(model.hasNonNegativeRates());
+    }
+
+    public void testEqualRatesDefaultTreeIsTheStar() throws Exception {
+        Map<String, XMLObject> store = parse(F + HKY1 + "  <hierarchicalSubstitutionModel id=\"hrate\">\n"
+                + "    <frequencies><frequencyModel idref=\"f\"/></frequencies>\n    <equalRates/>\n  </hierarchicalSubstitutionModel>\n");
+        HierarchicalSubstitutionModel model = hrateOf(store);
+        assertEquals("(A,C,G,T);", model.getContraction().contractedNewick(null));
+        assertEquals("[ACGT]", java.util.Arrays.toString(((dr.evomodel.substmodel.AbstractHierarchicalRateProvider) model.getRateProvider()).getCladeNames()));
+        assertEquals(0.0, maxDiff(model, (HKY) store.get("f81").getNativeObject()), 1e-13);
+        store = parse("  <generalSubstitutionModel id=\"gsm\">\n" +
+                "    <frequencies><frequencyModel id=\"gf\" dataType=\"nucleotide\"><frequencies><parameter value=\"0.1 0.2 0.3 0.4\"/></frequencies></frequencyModel></frequencies>\n" +
+                "    <rates><parameter value=\"1 1 1 1 1 1\"/></rates>\n" +
+                "  </generalSubstitutionModel>\n" +
+                hrate("", "    <ratesFrom><generalSubstitutionModel idref=\"gsm\"/></ratesFrom>\n"));
+        assertEquals("(A,C,G,T);", hrateOf(store).getContraction().contractedNewick(null));
+    }
+
+    @SuppressWarnings("unchecked")
+    public void testMultifurcatingTreeModelWarns() throws Exception {
+        Map<String, XMLObject>[] store = new Map[1];
+        String taxa = TAXA_AND_TREE.replace("((A:1,G:1):1,(C:1,T:1):1);", "((A:1,G:1):1,C:1,T:1);");
+        List<String> messages = warnings(taxa + model(CHARACTER_TREE, RATES), store);
+        boolean found = false;
+        for (String m : messages) found |= m.contains("resolves the multifurcation") && m.contains("characterTreeNewick");
+        assertTrue(messages.toString(), found);
+        messages = warnings(TAXA_AND_TREE + model(CHARACTER_TREE, RATES), store);
+        for (String m : messages) assertFalse(m, m.contains("resolves the multifurcation"));
+    }
 }

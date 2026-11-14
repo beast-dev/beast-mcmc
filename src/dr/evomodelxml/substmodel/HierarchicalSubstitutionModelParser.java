@@ -30,6 +30,8 @@ package dr.evomodelxml.substmodel;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.AbstractHierarchicalRateProvider;
+import dr.evomodel.substmodel.CharacterTreeContraction;
+import dr.evomodel.substmodel.ContractedRatesProvider;
 import dr.evomodel.substmodel.EqualRatesProvider;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
@@ -110,7 +112,12 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
         final boolean anyDataTypeForm = EQUAL_RATES.equals(selector) || borrowedEqualRates;
 
         try {
-            TreeModel tree = characterTree(xo, freqModel, selector, nucleotideForm, anyDataTypeForm);
+            CharacterTreeContraction.Built multifurcating = multifurcatingTree(xo, freqModel, selector, nucleotideForm,
+                    anyDataTypeForm);
+            CharacterTreeContraction contraction = multifurcating == null ? null : new CharacterTreeContraction(
+                    multifurcating.skeleton, freqModel.getDataType(), multifurcating.collapsed, null);
+            TreeModel tree = multifurcating != null ? multifurcating.skeleton
+                    : characterTree(xo, freqModel, selector, nucleotideForm, anyDataTypeForm);
             final String givenLengths = AbstractHierarchicalRateProvider.setUnitBranchLengths(tree);
             if (givenLengths != null) {
                 Logger.getLogger("dr.evomodel").info("WARNING: hierarchical substitution model"
@@ -120,8 +127,18 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             HierarchicalSubstitutionModel.HierarchicalRateProvider provider;
             String form;
             if (borrowedEqualRates) {
-                provider = EqualRatesProvider.of((GeneralSubstitutionModel) borrowed, tree);
+                provider = contraction != null ? EqualRatesProvider.of((GeneralSubstitutionModel) borrowed, contraction)
+                        : EqualRatesProvider.of((GeneralSubstitutionModel) borrowed, tree);
                 form = "ratesFrom " + borrowed.getModelName() + " (equal rates)";
+            } else if (contraction != null && EQUAL_RATES.equals(selector)) {
+                provider = new EqualRatesProvider(contraction, freqModel, true);
+                form = "equal rates";
+            } else if (contraction != null) {
+                final Parameter rates = RATES_PARAMETER.equals(selector) ? (Parameter) xo.getElementFirstChild(RATES_PARAMETER)
+                        : new Parameter.Default(multifurcating.contractedInternalCount, 1.0);
+                provider = new ContractedRatesProvider(rates, contraction, freqModel, multifurcating.slotOfInternal);
+                form = RATES_PARAMETER.equals(selector) ? "ratesParameter, one rate per internal node of the multifurcating tree"
+                        : "no selector: one rate 1.0 per internal node of the multifurcating tree";
             } else if (borrowed != null) {
                 provider = RelativeRatesProvider.of(borrowed, tree);
                 form = "ratesFrom " + (borrowed instanceof HKY ? "HKY (kappa)" : "TN93 (kappa1, kappa2)");
@@ -149,11 +166,74 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             model.setAggregation(HierarchicalSubstitutionModel.Aggregation.parse(xo.getAttribute(AGGREGATE, "auto")));
             Logger.getLogger("dr.evomodel").info("Hierarchical substitution model" + (xo.hasId() ? " '" + xo.getId() + "'" : "")
                     + ": " + form + "; aggregation " + model.getAggregation().name().toLowerCase()
-                    + "; character tree clades " + clades(tree, freqModel));
+                    + "; character tree " + (contraction == null ? "clades " + clades(tree, freqModel)
+                    : contraction.contractedNewick(null) + " (multifurcating; clades "
+                    + clades(tree, freqModel, contraction) + ")"));
             return model;
         } catch (IllegalArgumentException e) {
             throw new XMLParseException(!xo.hasId() ? e.getMessage()
                     : "hierarchicalSubstitutionModel '" + xo.getId() + "': " + e.getMessage());
+        }
+    }
+
+    /**
+     * The skeleton of a multifurcating character tree: from a multifurcating characterTreeNewick, or the star (F81's
+     * own tree) for equalRates and equal-rates ratesFrom without a character tree. Null otherwise.
+     */
+    private static CharacterTreeContraction.Built multifurcatingTree(XMLObject xo, FrequencyModel freqModel, String selector,
+                                                                     boolean nucleotideForm, boolean anyDataTypeForm)
+            throws XMLParseException {
+        final boolean hasTree = xo.hasChildNamed(CHARACTER_TREE);
+        final boolean hasNewick = xo.hasAttribute(CHARACTER_TREE_NEWICK);
+        final String newick;
+        if (hasNewick && !hasTree) {
+            newick = xo.getStringAttribute(CHARACTER_TREE_NEWICK);
+            if (!CharacterTreeContraction.isMultifurcating(newick)) {
+                return null;
+            }
+            if (nucleotideForm) {
+                throw new XMLParseException("hierarchicalSubstitutionModel: " + selector + " needs the binary character tree "
+                        + "((A,G),(C,T)); the multifurcating tree " + newick + " is a special case of the hierarchical model "
+                        + "that is written with ratesParameter (one rate per internal node, in the post-order of the Newick)");
+            }
+        } else if (!hasNewick && !hasTree && anyDataTypeForm) {
+            newick = CharacterTreeContraction.starNewick(freqModel.getDataType());
+        } else {
+            if (hasTree) {
+                warnIfMultifurcating(xo);
+            }
+            return null;
+        }
+        final CharacterTreeContraction.Built built = CharacterTreeContraction.build("characterTree", newick,
+                freqModel.getDataType(), true, null);
+        return built.isMultifurcating() ? built : null;
+    }
+
+    private static void warnIfMultifurcating(XMLObject xo) throws XMLParseException {
+        final XMLObject cxo = xo.getChild(CHARACTER_TREE);
+        if (cxo == null || cxo.getChildCount() == 0) {
+            return;
+        }
+        Object raw = cxo.getRawChild(0);
+        if (raw instanceof Reference) {
+            raw = ((Reference) raw).getReferenceObject();
+        }
+        if (!(raw instanceof XMLObject)) {
+            return;
+        }
+        final Object source = ((XMLObject) raw).getChild(dr.evolution.tree.Tree.class);
+        if (!(source instanceof dr.evolution.tree.Tree) || source instanceof TreeModel) {
+            return;
+        }
+        final dr.evolution.tree.Tree written = (dr.evolution.tree.Tree) source;
+        for (int i = 0; i < written.getInternalNodeCount(); i++) {
+            if (written.getChildCount(written.getInternalNode(i)) > 2) {
+                Logger.getLogger("dr.evomodel").info("WARNING: hierarchical substitution model"
+                        + (xo.hasId() ? " '" + xo.getId() + "'" : "") + ": the treeModel under characterTree resolves the "
+                        + "multifurcation of " + dr.evolution.tree.TreeUtils.newick(written) + " into a binary tree with "
+                        + "invented clades; use characterTreeNewick or characterTreeModel to keep a multifurcating character tree");
+                return;
+            }
         }
     }
 
@@ -189,6 +269,24 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             List<String> codes = new ArrayList<String>();
             collectCodes(tree, tree.getInternalNode(i), freqModel, codes);
+            java.util.Collections.sort(codes);
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append('{');
+            for (int k = 0; k < codes.size(); k++) {
+                sb.append(k > 0 ? "," : "").append(codes.get(k));
+            }
+            sb.append('}');
+        }
+        return sb.toString();
+    }
+
+    private static String clades(TreeModel tree, FrequencyModel freqModel, CharacterTreeContraction contraction) {
+        StringBuilder sb = new StringBuilder();
+        for (int node : contraction.getKeptInternalNodes()) {
+            List<String> codes = new ArrayList<String>();
+            collectCodes(tree, tree.getNode(node), freqModel, codes);
             java.util.Collections.sort(codes);
             if (sb.length() > 0) {
                 sb.append(' ');

@@ -325,6 +325,15 @@ public class ContinuousDataLikelihoodDelegateNew extends AbstractModel implement
         sb.append(tree.toString());
         sb.append("\n\n");
 
+        if (cdi == null) {
+            // The canonical-message integrator has no CDI, and the rest of this report
+            // (tree drift, graph drift, conditional means) is built from CDI branch buffers.
+            sb.append("Canonical message integrator; the CDI-based tree/graph diagnostics are not available.\n");
+            sb.append("log likelihood: ").append(callbackLikelihood.getLogLikelihood()).append("\n");
+            sb.append("prior mean: ").append(new dr.math.matrixAlgebra.Vector(rootPrior.getMean())).append("\n\n");
+            return sb.toString();
+        }
+
         final double normalization = rateTransformation.getNormalization();
         final double priorSampleSize = rootProcessDelegate.getPseudoObservations();
 

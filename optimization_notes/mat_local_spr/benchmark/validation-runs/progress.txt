@@ -1,0 +1,25 @@
+mat-local-gibbs seed 11: started Mon Oct 19 02:26:32 BST 2026
+mat-local-gibbs seed 11: finished in 873 s
+mat-local seed 11: started Mon Oct 19 02:41:05 BST 2026
+mat-local seed 11: finished in 1036 s
+baseline seed 11: started Mon Oct 19 02:58:21 BST 2026
+baseline seed 11: finished in 2025 s
+mat-local-gibbs seed 22: started Mon Oct 19 03:32:06 BST 2026
+mat-local-gibbs seed 22: finished in 949 s
+mat-local seed 22: started Mon Oct 19 03:47:55 BST 2026
+mat-local seed 22: finished in 1002 s
+baseline seed 22: started Mon Oct 19 04:04:37 BST 2026
+baseline seed 22: finished in 2130 s
+mat-local-gibbs seed 33: started Mon Oct 19 04:40:07 BST 2026
+mat-local-gibbs seed 33: finished in 4200 s
+mat-local seed 33: started Mon Oct 19 05:50:07 BST 2026
+mat-local seed 33: finished in 845 s
+baseline seed 33: started Mon Oct 19 06:04:12 BST 2026
+baseline seed 33: finished in 2549 s
+mat-local-gibbs seed 44: started Mon Oct 19 06:46:41 BST 2026
+mat-local-gibbs seed 44: finished in 3647 s
+mat-local seed 44: started Mon Oct 19 07:47:28 BST 2026
+mat-local seed 44: finished in 540 s
+baseline seed 44: started Mon Oct 19 07:56:28 BST 2026
+baseline seed 44: finished in 1302 s
+VALIDATION QUEUE DONE

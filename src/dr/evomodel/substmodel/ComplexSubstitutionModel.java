@@ -55,6 +55,8 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
         flat = new double[stateCount];
         Arrays.fill(flat, 1.0);
+        uniform = new double[stateCount];
+        Arrays.fill(uniform, 1.0 / stateCount);
     }
 
     @Override
@@ -118,7 +120,8 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         getTransitionProbabilities(distance, matrix, getEigenDecomposition());
     }
 
-    protected void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
+    public void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
+
         double temp;
         if (eigen == null) {
             Arrays.fill(matrix, 0.0);
@@ -235,9 +238,17 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
         double norm = 1.0;
         if (doNormalization) {
-            norm = super.getNormalizationValue(matrix, pi);
+            // Intended model change (93157adac, BEAST X 10.6.0): with scaleRatesByFrequencies="false", Q is built
+            // with the flat vector and normalized with uniform 1/n weights, not with the root frequencies, so the
+            // likelihood and its gradients (getNormalizationFrequencies) agree. The normalized Q has mean exit rate 1;
+            // with uniform root frequencies (as in BEAUti's backward-in-time discrete-trait models) nothing changes.
+            norm = super.getNormalizationValue(matrix, frequencyScaling ? pi : uniform);
         }
         return norm;
+    }
+
+    public double[] getNormalizationFrequencies() {
+        return frequencyScaling ? getFrequencyModel().getFrequencies() : uniform;
     }
 
     public double getLogLikelihood() {
@@ -361,4 +372,5 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     private boolean doNormalization = true;
     private boolean frequencyScaling = true;
     private final double[] flat;
+    private final double[] uniform;
 }

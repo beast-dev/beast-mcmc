@@ -1,0 +1,17 @@
+mat-local-gibbs seed 44: started Thu Oct 22 16:11:24 WAT 2026
+mat-local-gibbs seed 22: started Thu Oct 22 16:11:24 WAT 2026
+baseline seed 11: started Thu Oct 22 16:11:24 WAT 2026
+mat-local-gibbs seed 33: started Thu Oct 22 16:11:24 WAT 2026
+mat-local-gibbs seed 11: started Thu Oct 22 16:11:24 WAT 2026
+baseline seed 11: finished in 4722 s
+baseline seed 22: started Thu Oct 22 17:30:06 WAT 2026
+mat-local-gibbs seed 22: finished in 6489 s
+mat-local-gibbs seed 11: finished in 6489 s
+mat-local-gibbs seed 33: finished in 6492 s
+mat-local-gibbs seed 44: finished in 6535 s
+baseline seed 22: finished in 3076 s
+baseline seed 33: started Thu Oct 22 18:21:22 WAT 2026
+baseline seed 33: finished in 1797 s
+baseline seed 44: started Thu Oct 22 18:51:19 WAT 2026
+baseline seed 44: finished in 1692 s
+GAMMA VALIDATION DONE

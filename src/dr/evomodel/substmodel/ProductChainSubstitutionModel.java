@@ -210,6 +210,11 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
             }
 
             @Override
+            public void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen) {
+                throw new RuntimeException("Should not be called");
+            }
+
+            @Override
             public EigenDecomposition getEigenDecomposition() {
                 if (eigenDecomposition == null) {
 

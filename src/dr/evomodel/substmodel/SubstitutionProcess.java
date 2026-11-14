@@ -43,6 +43,8 @@ public interface SubstitutionProcess {
      */
     void getTransitionProbabilities(double distance, double[] matrix);
 
+    void getTransitionProbabilities(double distance, double[] matrix, EigenDecomposition eigen);
+
     /**
      * This function returns the Eigen vectors.
      *

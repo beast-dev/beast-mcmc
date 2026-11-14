@@ -43,17 +43,23 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
     private static final String TAXON_NAME_EXPLICIT = "taxonNameExplicit";
     private static final String NODES = "nodes";
     private static final String COLUMN_NAME = "columnName";
+    private static final String USE_LEAF_TRAITS = "useLeafTraits";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree treeModel = (Tree) xo.getChild(Tree.class);
         TreeTrait trait = parseTreeTrait(xo, false);
+
+
         TreeTraitLogger.NodeRestriction nodes = TreeTraitLogger.NodeRestriction.parse(
                 xo.getAttribute(NODES, "all"));
         boolean taxonNameExplicit = xo.getAttribute(TAXON_NAME_EXPLICIT, false);
 
         TaxonList taxonList = (TaxonList) xo.getChild(TaxonList.class);
-        if (taxonList != null) {
+
+        boolean useLeafTraits = xo.getBooleanAttribute(USE_LEAF_TRAITS, false);
+
+        if (taxonList != null && useLeafTraits) {
             TreeTraitLogger logger;
             try {
                 logger = new TreeTraitLogger(treeModel, new TreeTrait[] { trait }, taxonList);
@@ -147,6 +153,7 @@ public class TraitLoggerParser extends AbstractXMLObjectParser {
           new ElementRule(TreeTraitProvider.class),
           new ElementRule(TaxonList.class, true),
           AttributeRule.newStringRule(COLUMN_NAME, true),
+          AttributeRule.newBooleanRule(USE_LEAF_TRAITS, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

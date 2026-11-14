@@ -103,6 +103,18 @@ public class TransformedMultivariateParameter extends TransformedParameter {
         }
     }
 
+    public int getDimension() {
+        return getTransformedDimension();
+    }
+
+    public final int getTransformedDimension() {
+        return transformedValues.length;
+    }
+
+    public final int getUntransformedDimension() {
+        return unTransformedValues.length;
+    }
+
     public void setParameterValueNotifyChangedAll(int dim, double value) {
         setParameterValue(dim, value);
     }

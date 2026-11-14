@@ -151,6 +151,22 @@ public class MathUtils {
         return newArray;
     }
 
+    public static double getInnerProduct(double[] x, double[] y) {
+        double product = 0;
+        for (int i = 0; i < x.length; i++) {
+            product = product + x[i] * y[i];
+        }
+        return product;
+    }
+
+    public static double getInnerProduct(double[] x) {
+        return getInnerProduct(x, x);
+    }
+
+    public static double getL2Norm(double[] x) {
+        return Math.sqrt(getInnerProduct(x));
+    }
+
 
     /**
      * @param array entries to be summed

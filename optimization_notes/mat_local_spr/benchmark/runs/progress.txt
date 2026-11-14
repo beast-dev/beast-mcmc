@@ -1,0 +1,40 @@
+mat-local seed 11: started Sun Oct 18 00:45:44 BST 2026
+mat-local seed 11: finished in 1396 s
+mat-path seed 11: started Sun Oct 18 01:09:00 BST 2026
+mat-path seed 11: finished in 3285 s
+baseline seed 11: started Sun Oct 18 02:03:45 BST 2026
+baseline seed 11: finished in 3471 s
+mat-local seed 22: started Sun Oct 18 03:01:36 BST 2026
+mat-local seed 22: finished in 1376 s
+mat-path seed 22: started Sun Oct 18 03:24:32 BST 2026
+mat-path seed 22: finished in 3450 s
+baseline seed 22: started Sun Oct 18 04:22:02 BST 2026
+baseline seed 22: finished in 3433 s
+mat-local-gibbs seed 11: started Sun Oct 18 17:43:36 BST 2026
+mat-local-gibbs seed 11: finished in 966 s
+mat-local-gibbs seed 22: started Sun Oct 18 17:59:42 BST 2026
+mat-local-gibbs seed 22: finished in 932 s
+mat-local-gibbs seed 33: started Sun Oct 18 18:15:14 BST 2026
+mat-local-gibbs seed 33: finished in 916 s
+mat-local-gibbs seed 44: started Sun Oct 18 18:30:31 BST 2026
+mat-local-gibbs seed 44: finished in 917 s
+mat-local seed 11: started Sun Oct 18 18:45:48 BST 2026
+mat-local seed 11: finished in 921 s
+mat-local seed 22: started Sun Oct 18 19:01:09 BST 2026
+mat-local seed 22: finished in 912 s
+mat-local seed 33: started Sun Oct 18 19:16:21 BST 2026
+mat-local seed 33: finished in 920 s
+mat-local seed 44: started Sun Oct 18 19:31:41 BST 2026
+mat-local seed 44: finished in 905 s
+baseline seed 33: started Sun Oct 18 19:46:46 BST 2026
+baseline seed 33: finished in 3734 s
+baseline seed 44: started Sun Oct 18 20:49:00 BST 2026
+baseline seed 44: finished in 3528 s
+mat-path-gibbs seed 11: started Sun Oct 18 21:47:48 BST 2026
+mat-path-gibbs seed 11: finished in 2872 s
+mat-path-gibbs seed 22: started Sun Oct 18 22:35:40 BST 2026
+mat-path-gibbs seed 22: finished in 2902 s
+mat-path-gibbs seed 33: started Sun Oct 18 23:24:02 BST 2026
+mat-path-gibbs seed 33: finished in 5761 s
+mat-path-gibbs seed 44: started Mon Oct 19 01:00:03 BST 2026
+mat-path-gibbs seed 44: finished in 5162 s

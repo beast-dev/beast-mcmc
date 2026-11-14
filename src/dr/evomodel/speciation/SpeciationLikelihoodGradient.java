@@ -28,9 +28,9 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.birthdeath.EpisodicBirthDeathSamplingModel;
+import dr.evomodel.birthdeath.BirthDeathModelGradientProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -52,7 +52,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
     private final WrtParameter wrtParameter;
     private final TreeModel tree;
 
-    private final SpeciationModelGradientProvider provider;
+    private final BirthDeathModelGradientProvider provider;
 
     private static final boolean DO_IT_RIGHT = false;
 
@@ -104,7 +104,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
     public enum WrtParameter {
         NODE_HEIGHT("nodeHeight") {
             @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
                 double[] gradient = new double[tree.getInternalNodeCount()];
 
                 for (int i = 0; i < tree.getInternalNodeCount(); i++) {
@@ -115,7 +115,7 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
                 return new NodeHeightProxyParameter("nodeHeightProxyParameter", tree, true);
             }
 
@@ -132,12 +132,12 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
         BIRTH_RATE("birthRate") {
             @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
                 return provider.getBirthRateGradient(tree, null);
             }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
                 return provider.getBirthRateParameter();
             }
 
@@ -159,12 +159,12 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
         DEATH_RATE("deathRate") {
             @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
                 return provider.getDeathRateGradient(tree, null);
             }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
                 return provider.getDeathRateParameter();
             }
 
@@ -186,12 +186,12 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
         SAMPLING_RATE("samplingRate") {
             @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
                 return provider.getSamplingRateGradient(tree, null);
             }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
                 return provider.getSamplingRateParameter();
             }
 
@@ -213,12 +213,12 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
         SAMPLING_PROBABILITY("samplingProbability") {
             @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
                 return provider.getSamplingProbabilityGradient(tree, null);
             }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
                 return provider.getSamplingProbabilityParameter();
             }
 
@@ -240,12 +240,12 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
 
         TREATMENT_PROBABILITY("treatmentProbability") {
             @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
                 return provider.getTreatmentProbabilityGradient(tree, null);
             }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
                 return provider.getTreatmentProbabilityParameter();
             }
 
@@ -265,22 +265,116 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             }
         },
 
-        ALL("all") {
+        R0("R0") {
             @Override
-            double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree) {
-                throw new RuntimeException("Not yet implemented");
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
+                return null;
             }
 
             @Override
-            Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree) {
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
+                if (provider instanceof EpisodicBirthDeathSamplingModel) {
+                    EpisodicBirthDeathSamplingModel model = (EpisodicBirthDeathSamplingModel) provider;
+                    if (model.compoundParameters != null) {
+                        return model.compoundParameters.getR0Parameter();
+                    }
+                }
+                throw new RuntimeException("R0 parameter not available");
+            }
 
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[0] }; // Extract R0 component
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad = new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[i * 5]; // Extract R0 component for each interval
+                }
+                return grad;
+            }
+        },
+
+        D("D") {
+            @Override
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
+                return null;
+            }
+
+            @Override
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
+                if (provider instanceof EpisodicBirthDeathSamplingModel) {
+                    EpisodicBirthDeathSamplingModel model = (EpisodicBirthDeathSamplingModel) provider;
+                    if (model.compoundParameters != null) {
+                        return model.compoundParameters.getDParameter();
+                    }
+                }
+                throw new RuntimeException("D parameter not available");
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[1] }; // Extract D component
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad = new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[i * 5 + 1];
+                }
+                return grad;
+            }
+        },
+
+        S("S") {
+            @Override
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
+                return null;
+            }
+
+            @Override
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
+                if (provider instanceof EpisodicBirthDeathSamplingModel) {
+                    EpisodicBirthDeathSamplingModel model = (EpisodicBirthDeathSamplingModel) provider;
+                    if (model.compoundParameters != null) {
+                        return model.compoundParameters.getSParameter();
+                    }
+                }
+                throw new RuntimeException("S parameter not available");
+            }
+
+            @Override
+            double[] filter(double[] input) {
+                return new double[] { input[2] };
+            }
+
+            @Override
+            double[] filter(double[] input, int numIntervals) {
+                double[] grad = new double[numIntervals];
+                for(int i = 0; i < numIntervals; i++) {
+                    grad[i] = input[i * 5 + 2];
+                }
+                return grad;
+            }
+        },
+
+        ALL("all") {
+            @Override
+            double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree) {
+                return provider.getBirthRateGradient(tree, null);
+            }
+
+            @Override
+            Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree) {
                 CompoundParameter cp = new CompoundParameter("allSpeciationParameters");
                 cp.addParameter(provider.getBirthRateParameter());
                 cp.addParameter(provider.getDeathRateParameter());
                 cp.addParameter(provider.getSamplingRateParameter());
                 cp.addParameter(provider.getSamplingProbabilityParameter());
                 cp.addParameter(provider.getTreatmentProbabilityParameter());
-
                 return cp;
             }
 
@@ -299,9 +393,9 @@ public class SpeciationLikelihoodGradient implements GradientWrtParameterProvide
             this.name = name;
         }
 
-        abstract double[] getGradientLogDensity(SpeciationModelGradientProvider provider, Tree tree);
+        abstract double[] getGradientLogDensity(BirthDeathModelGradientProvider provider, Tree tree);
 
-        abstract Parameter getParameter(SpeciationModelGradientProvider provider, TreeModel tree);
+        abstract Parameter getParameter(BirthDeathModelGradientProvider provider, TreeModel tree);
 
         abstract double[] filter(double[] input);
 

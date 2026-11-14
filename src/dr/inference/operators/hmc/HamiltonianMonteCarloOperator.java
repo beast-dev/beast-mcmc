@@ -140,6 +140,11 @@ public HamiltonianMonteCarloOperator(AdaptationMode mode, double weight,
     }
 
     @Override
+    public Parameter getParameter() {
+        return parameter;
+    }
+
+    @Override
     public double doOperation() {
         throw new RuntimeException("Should not be executed");
     }

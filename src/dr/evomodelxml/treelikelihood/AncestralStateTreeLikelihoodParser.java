@@ -31,6 +31,7 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
@@ -71,7 +72,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
             PatternList patternList, //
             MutableTreeModel treeModel, //
             BranchModel branchModel, //
-            GammaSiteRateModel siteRateModel, //
+            SiteRateModel siteRateModel, //
             BranchRateModel branchRateModel, //
             TipStatesModel tipStatesModel, //
             boolean useAmbiguities, //
@@ -123,7 +124,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(MutableTreeModel.class),
-                new ElementRule(GammaSiteRateModel.class),
+                new ElementRule(SiteRateModel.class),
                 new ElementRule(BranchModel.class, true),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(TipStatesModel.class, true),

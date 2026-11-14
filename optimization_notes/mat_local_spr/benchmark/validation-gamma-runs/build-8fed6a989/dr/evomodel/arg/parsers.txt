@@ -1,0 +1,24 @@
+# A list of additional parsers to be loaded at runtime
+# They can be references to an actual XMLObjectParser class or a class which
+# has one or more static instances of XMLObjectParser
+
+# ANCESTRAL RECOMBINATION GRAPHS
+dr.evomodel.arg.coalescent.ARGCoalescentLikelihood
+dr.evomodel.arg.coalescent.ARGUniformPrior
+dr.evomodel.arg.likelihood.ARGLikelihood
+dr.evomodel.arg.operators.SlidingPatternsOperator
+dr.evomodel.arg.branchratemodel.ARGDiscretizedBranchRates
+dr.evomodel.arg.ARGModel
+dr.evomodel.arg.UniformPartitionLikelihood
+dr.evomodel.arg.operators.ARGSubtreeSlideOperator
+dr.evomodel.arg.operators.ARGExchangeOperator
+dr.evomodel.arg.operators.ObsoleteARGAddRemoveEventOperator
+dr.evomodel.arg.operators.ARGPartitioningOperator
+dr.evomodel.arg.operators.ObsoleteARGNewEventOperator
+dr.evomodel.arg.operators.ARGAddRemoveEventOperator
+dr.evomodel.arg.operators.ARGSwapOperator
+dr.evomodel.arg.ARGTreeLogger
+dr.evomodel.arg.ARGLogger
+dr.evomodel.arg.ARGReassortmentNodeCountStatistic
+dr.evomodel.arg.ARGTraceAnalysisParser
+dr.evomodel.arg.ARGReassortmentTimingStatistic

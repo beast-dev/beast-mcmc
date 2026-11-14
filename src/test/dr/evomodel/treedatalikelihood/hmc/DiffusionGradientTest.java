@@ -299,17 +299,17 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
 
         // Data
         Parameter[] dataTraits = new Parameter[6];
-        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0, 4.0, 5.0, -6.0});
+        dataTraits[0] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5, -5.2, 3.1, 1.1});
         dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0, 16.0, 18.0, 20.0});
-        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5, -5.2, 3.1, 1.1});
-        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0, -4.0, 3.2, 3.4});
+        dataTraits[2] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0, -4.0, 3.2, 3.4});
+        dataTraits[3] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0, 4.0, 5.0, -6.0});
         dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5, 2.4, -4.2, 6.0});
         dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0, 4.0, -5.2, 1.0});
         traitParameter = new CompoundParameter("trait", dataTraits);
 
         this.missingIndicators = new boolean[traitParameter.getDimension()];
 
-        traitParameter.setParameterValue(2, 0);
+        traitParameter.setParameterValue(20, 0);
 
         missingIndicators[6] = true;
         missingIndicators[7] = true;
@@ -317,8 +317,8 @@ public class DiffusionGradientTest extends ContinuousTraitTest {
         missingIndicators[9] = true;
         missingIndicators[10] = true;
         missingIndicators[11] = true;
-        missingIndicators[13] = true;
-        missingIndicators[15] = true;
+        missingIndicators[1] = true;
+        missingIndicators[3] = true;
         missingIndicators[25] = true;
         missingIndicators[29] = true;
 

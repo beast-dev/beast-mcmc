@@ -62,7 +62,7 @@ public abstract class ModelOptions implements Serializable {
 
     //+++++++++++++++++++ Abstract Methods ++++++++++++++++++++++++++++++++
 
-    public abstract void initModelParametersAndOpererators();
+    public abstract void initModelParametersAndOperators();
 
     public abstract List<Parameter> selectParameters(List<Parameter> params);
 
@@ -243,6 +243,12 @@ public abstract class ModelOptions implements Serializable {
                 .build(operators);
     }
 
+    public Operator createOperator(String parameterName, String description, OperatorType type, double tuning, double weight) {
+        Parameter parameter = getParameter(parameterName);
+        return new Operator.Builder(parameterName, description, parameter, type, tuning, weight)
+                .build(operators);
+    }
+
     public Operator createOperator(String parameterName, OperatorType type, double tuning, double weight, boolean autoOptimize) {
         Parameter parameter = getParameter(parameterName);
         return new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight)
@@ -300,10 +306,8 @@ public abstract class ModelOptions implements Serializable {
     public Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
         if (parameter == null) {
-            for (String key : parameters.keySet()) {
-                System.err.println(key);
-            }
-            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
+            throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown; known parameters: "
+                    + parameters.keySet());
         }
         return parameter;
     }
@@ -316,10 +320,12 @@ public abstract class ModelOptions implements Serializable {
     public Parameter getStatistic(TaxonList taxonList) {
         Parameter parameter = statistics.get(taxonList);
         if (parameter == null) {
+            List<String> known = new ArrayList<String>();
             for (TaxonList key : statistics.keySet()) {
-                System.err.println("Taxon list: " + key.getId());
+                known.add(key.getId());
             }
-            throw new IllegalArgumentException("Statistic for taxon list, " + taxonList.getId() + ", is unknown");
+            throw new IllegalArgumentException("Statistic for taxon list, " + taxonList.getId() +
+                    ", is unknown; known taxon lists: " + known);
         }
         return parameter;
     }

@@ -30,6 +30,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.*;
 import dr.evolution.tree.Tree;
+import dr.evoxml.TaxaParser;
 
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class PartitionTreeModel extends PartitionOptions {
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
 
-    private TreeAsDataType treeAsDataType = TreeAsDataType.EMPRICAL_TREES;
+    private TreeAsDataType treeAsDataType = TreeAsDataType.EMPIRICAL_TREES;
 
     private boolean isUsingExternalEmpiricalTreeFile = false;
     private String empiricalTreesFilename = null;
@@ -64,7 +65,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
         treePartitionData = null;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public TreePartitionData getTreePartitionData() {
@@ -75,7 +76,7 @@ public class PartitionTreeModel extends PartitionOptions {
         super(options, treePartitionData.getName());
 
         this.treePartitionData = treePartitionData;
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -97,10 +98,10 @@ public class PartitionTreeModel extends PartitionOptions {
         isNewick = source.isNewick;
 //        initialRootHeight = source.initialRootHeight;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
@@ -280,7 +281,7 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public boolean isUsingEmpiricalTrees() {
-        return treePartitionData != null && treeAsDataType == TreeAsDataType.EMPRICAL_TREES;
+        return treePartitionData != null && treeAsDataType == TreeAsDataType.EMPIRICAL_TREES;
     }
 
     public void setUsingExternalEmpiricalTreeFile(boolean isUsingExternalEmpiricalTreeFile) {
@@ -322,9 +323,6 @@ public class PartitionTreeModel extends PartitionOptions {
 //        return getAvgRootAndRate()[0];
     }
 
-//    public void setInitialRootHeight(double initialRootHeight) {
-//        this.initialRootHeight = initialRootHeight;
-//    }
 
 //    private void calculateInitialRootHeightPerTree() {
 //		initialRootHeight = options.clockModelOptions
@@ -338,6 +336,17 @@ public class PartitionTreeModel extends PartitionOptions {
             prefix += getName() + ".";
         }
         return prefix;
+    }
+
+    /**
+     * The id of the taxa element holding the taxa of this tree. This is the complete taxon list
+     * unless the data partitions have different taxa, in which case each tree gets its own.
+     */
+    public String getTaxaId() {
+        if (options.hasIdenticalTaxa()) {
+            return TaxaParser.TAXA;
+        }
+        return getPrefix() + TaxaParser.TAXA;
     }
 
     public int getDimension() { // n-1

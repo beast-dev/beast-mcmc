@@ -46,22 +46,33 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
     private final Tree tree;
 
     private final SimulationTreeTraversal treeTraversalDelegate;
-    private final TreeDataLikelihood treeDataLikelihood;
+    private final ProcessAlongTree treeDataLikelihood;
     private final ProcessSimulationDelegate simulationDelegate;
 
     private final int[] operations;
 
     private boolean validSimulation;
 
-    public ProcessSimulation(TreeDataLikelihood treeDataLikelihood,
+    public ProcessSimulation(ProcessAlongTree treeDataLikelihood,
                              ProcessSimulationDelegate simulationDelegate) {
 
         this.treeDataLikelihood = treeDataLikelihood;
         this.tree = treeDataLikelihood.getTree();
 
         BranchRateModel branchRateModel = treeDataLikelihood.getBranchRateModel();
-        treeTraversalDelegate = new SimulationTreeTraversal(tree, branchRateModel,
-                simulationDelegate.getOptimalTraversalType());
+
+        // with an epoch model, the operations also cover the degree-2 nodes at the epoch transition times
+        final EpochEvolutionaryProcessDelegate epochDelegate = simulationDelegate.getEpochProcessDelegate();
+        final int augmentedNodeCapacity;
+        if (epochDelegate == null) {
+            treeTraversalDelegate = new SimulationTreeTraversal(tree, branchRateModel,
+                    simulationDelegate.getOptimalTraversalType());
+            augmentedNodeCapacity = 0;
+        } else {
+            treeTraversalDelegate = new EpochSimulationTreeTraversal(tree, branchRateModel,
+                    simulationDelegate.getOptimalTraversalType(), epochDelegate);
+            augmentedNodeCapacity = epochDelegate.getAugmentedNodeRegistry().getCapacity();
+        }
 
         treeDataLikelihood.addModelListener(this);
         treeDataLikelihood.addModelRestoreListener(this);
@@ -69,7 +80,8 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         this.simulationDelegate = simulationDelegate;
         simulationDelegate.setCallback(this);
 
-        this.operations = new int[tree.getNodeCount() * simulationDelegate.getSingleOperationSize()];
+        this.operations = new int[(tree.getNodeCount() + augmentedNodeCapacity) *
+                simulationDelegate.getSingleOperationSize()];
 
         validSimulation = false;
     }
@@ -108,10 +120,15 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         }
 
         treeTraversalDelegate.dispatchTreeTraversalCollectBranchAndNodeOperations();
-        int count = simulationDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(), operations);
 
         final NodeRef root = tree.getRoot();
-        simulationDelegate.simulate(operations, count, root.getNumber());
+        if (simulationDelegate.isVectorized()) {
+            int count = simulationDelegate.vectorizeNodeOperations(treeTraversalDelegate.getNodeOperations(),
+                    root.getNumber(), operations);
+            simulationDelegate.simulate(operations, count, root.getNumber());
+        } else {
+            simulationDelegate.simulate(treeTraversalDelegate.getNodeOperations(), root);
+        }
 
         treeTraversalDelegate.setAllNodesUpdated();
     }

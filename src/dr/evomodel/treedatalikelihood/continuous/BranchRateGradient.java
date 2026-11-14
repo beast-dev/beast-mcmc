@@ -68,6 +68,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
     protected final Parameter rateParameter;
     protected final DifferentiableBranchRates branchRateModel;
     private final ContinuousTraitGradientForBranch branchProvider;
+    protected Double numericGradientStepSize = null;
 
     private static int debugCount = 0;
 
@@ -125,6 +126,18 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         this.treeTraitProvider = null;
         this.nTraits = 0;
         this.branchProvider = null;
+    }
+
+    public double getNumericGradientStepSize() {
+        if (numericGradientStepSize == null) {
+            return StepSizeLevel.SMALL.getStepSizeRatio();
+        } else {
+            return numericGradientStepSize.doubleValue();
+        }
+    }
+
+    public void setNumericGradientStepSize(double stepSize) {
+        numericGradientStepSize = stepSize;
     }
 
     @Override
@@ -579,7 +592,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
                 for (int row = 0; row < dim; ++row) {
                     for (int col = 0; col < dim; ++col) {
 
-                        hess3 += delta.unsafe_get(row, 0)
+                        hess3 += 0.5 * delta.unsafe_get(row, 0)
                                 * secondQuadraticComponent.unsafe_get(row, col)
                                 * delta.unsafe_get(col, 0);
                     }

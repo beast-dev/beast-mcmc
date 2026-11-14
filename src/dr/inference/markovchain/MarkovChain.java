@@ -50,7 +50,6 @@ public final class MarkovChain implements Serializable {
     private static final long serialVersionUID = 181L;
 
     private final static boolean DEBUG = false;
-    private final static boolean PROFILE = true;
 
     public static final double EVALUATION_TEST_THRESHOLD = 1e-1;
 
@@ -74,6 +73,8 @@ public final class MarkovChain implements Serializable {
 
     private double evaluationTestThreshold = EVALUATION_TEST_THRESHOLD;
 
+    // the wall-clock profile of the chain, when -Dmcmc.profile=<aspects> (see ChainProfile)
+    private final ChainProfile profile;
 
     public MarkovChain(Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
@@ -92,12 +93,17 @@ public final class MarkovChain implements Serializable {
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
         this.evaluationTestThreshold = evaluationTestThreshold;
 
+        this.profile = new ChainProfile(likelihood);
+
         Likelihood.CONNECTED_LIKELIHOOD_SET.add(likelihood);
         Likelihood.CONNECTED_LIKELIHOOD_SET.addAll(likelihood.getLikelihoodSet());
 
         for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
             if (!Likelihood.CONNECTED_LIKELIHOOD_SET.contains(l)) {
-                System.err.println("WARNING: Likelihood component, " + l.getId() + ", created but not used in the MCMC");
+
+                String id = l.getId();
+                System.err.println("WARNING: Likelihood component, " + l.prettyName() +
+                        (id != null ? " (id: " + id + ")" : " (no ID)") + ", created but not used in the MCMC");
             }
         }
 
@@ -167,6 +173,7 @@ public final class MarkovChain implements Serializable {
 
         pleaseStop = false;
         isStopped = false;
+        profile.reset();
 
         //int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
@@ -181,7 +188,6 @@ public final class MarkovChain implements Serializable {
         Map<String, Double> diagnosticDensities = null;
 
         while (!pleaseStop && (currentState < (currentLength + length))) {
-
             // periodically log states
             fireCurrentModel(currentState, currentModel);
 
@@ -194,20 +200,25 @@ public final class MarkovChain implements Serializable {
             final int op = schedule.getNextOperatorIndex();
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
+            final long stepStartTime = System.nanoTime();
+            if (ChainProfile.ENABLED) {
+                profile.startStep(mcmcOperator);
+            }
+
             double oldScore = currentScore;
             if (usingFullEvaluation) {
                 diagnosticDensities = new HashMap<>();
                 fillDensities(likelihood, diagnosticDensities);
             }
 
-            // assert Profiler.startProfile("Store");
-
             // The current model is stored here in case the proposal fails
             if (currentModel != null) {
                 currentModel.storeModelState();
             }
-
-            // assert Profiler.stopProfile("Store");
+            long phaseStart = stepStartTime;
+            if (ChainProfile.STEPS) {
+                phaseStart = profile.add(mcmcOperator, ChainProfile.Phase.STORE, phaseStart);
+            }
 
             boolean operatorSucceeded = true;
             double hastingsRatio = 1.0;
@@ -216,8 +227,6 @@ public final class MarkovChain implements Serializable {
             logr[0] = -Double.MAX_VALUE;
 
             // The new model is proposed
-            // assert Profiler.startProfile("Operate");
-
             if (DEBUG) {
                 System.out.println("\n>> Iteration: " + currentState);
                 System.out.println("\n&& Operator: " + mcmcOperator.getOperatorName());
@@ -228,8 +237,10 @@ public final class MarkovChain implements Serializable {
             } else {
                 hastingsRatio = mcmcOperator.operate();
             }
+            if (ChainProfile.STEPS) {
+                phaseStart = profile.add(mcmcOperator, ChainProfile.Phase.PROPOSE, phaseStart);
+            }
 
-            // assert Profiler.stopProfile("Operate");
             if (hastingsRatio == Double.NEGATIVE_INFINITY) {
                 // Should the evaluation be short-cutted?
                 // Previously this was set to false if OperatorFailedException was thrown.
@@ -243,34 +254,39 @@ public final class MarkovChain implements Serializable {
             //    System.err.print("" + currentState + ": ");
             if (operatorSucceeded) {
 
-                // The new model is proposed
-                // assert Profiler.startProfile("Evaluate");
-
+                // The new model is evaluated
                 if (DEBUG) {
                     System.out.println("** Evaluate");
                 }
 
-                long elapsedTime = 0;
-                long calculationCount = 0;
-                if (PROFILE) {
-                    elapsedTime = System.nanoTime();
-                    if (likelihood instanceof Profileable) {
-                        calculationCount = ((Profileable) likelihood).getTotalCalculationCount();
-                    }
+                final long evaluationStart = System.nanoTime();
+                score = evaluate(likelihood);
+                mcmcOperator.addEvaluationTime(System.nanoTime() - evaluationStart);
+                if (ChainProfile.STEPS) {
+                    phaseStart = profile.add(mcmcOperator, ChainProfile.Phase.EVALUATE, phaseStart);
                 }
 
-                // The new model is evaluated
-                score = evaluate(likelihood);
 
-                if (PROFILE) {
-                    long duration = System.nanoTime() - elapsedTime;
-                    mcmcOperator.addEvaluationTime(duration);
-                    long newCalculationCount = (likelihood instanceof Profileable) ?
-                            ((Profileable) likelihood).getTotalCalculationCount() : 1;
-                    mcmcOperator.addCalculationCount(newCalculationCount - calculationCount);
+                // extra check from branch `store_restore_bug` put here in case it is needed...
+                final boolean EXTRA_CHECK = false;
+                if (EXTRA_CHECK) {
+                    String before = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
 
-                    if (DEBUG) {
-                        System.out.println("Time: " + duration + "ns");
+                    likelihood.makeDirty();
+                    double newScore = evaluate(likelihood);
+
+                    String after = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+
+                    if (Math.abs(score - newScore) > evaluationTestThreshold) {
+
+                        System.err.println("Latent error:");
+                        System.err.println(before);
+                        System.err.println();
+                        System.err.println(after);
+
+                        System.exit(-1);
                     }
                 }
 
@@ -401,8 +417,6 @@ public final class MarkovChain implements Serializable {
 
                 mcmcOperator.reject();
 
-                // assert Profiler.startProfile("Restore");
-
                 currentModel.restoreModelState();
 
                 if (usingFullEvaluation) {
@@ -439,11 +453,16 @@ public final class MarkovChain implements Serializable {
                     }
                 }
             }
-            // assert Profiler.stopProfile("Restore");
 
+            if (ChainProfile.STEPS) {
+                phaseStart = profile.add(mcmcOperator, ChainProfile.Phase.ACCEPT_RESTORE, phaseStart);
+            }
 
             if (isAdapting(mcmcOperator)) {
                 adaptAcceptanceProbability((AdaptableMCMCOperator) mcmcOperator, logr[0]);
+            }
+            if (ChainProfile.STEPS) {
+                profile.add(mcmcOperator, ChainProfile.Phase.ADAPT, phaseStart);
             }
 
             if (usingFullEvaluation) {
@@ -474,10 +493,12 @@ public final class MarkovChain implements Serializable {
         return currentLength;
     }
 
+    public ChainProfile getProfile() {
+        return profile;
+    }
+
     public void terminateChain() {
         fireFinished(currentLength);
-
-        // Profiler.report();
     }
 
     public Likelihood getLikelihood() {
@@ -532,7 +553,7 @@ public final class MarkovChain implements Serializable {
 
         double logPosterior = 0.0;
 
-        final double logLikelihood = likelihood.getLogLikelihood();
+        final double logLikelihood = ChainProfile.LIKELIHOODS ? ChainProfile.evaluate(likelihood) : likelihood.getLogLikelihood();
 
         if (Double.isNaN(logLikelihood)) {
             return Double.NEGATIVE_INFINITY;

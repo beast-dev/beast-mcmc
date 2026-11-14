@@ -98,21 +98,26 @@ public class ContinuousTraitTest extends TraceCorrelationAssert {
 
         // Data
         nTips = 6;
+        // One row per tip, in the order the tree numbers its tips, which is by taxon name. A real
+        // analysis builds these rows by walking the tree's own taxa (TreeTraitParserUtilities), so they
+        // follow the numbering automatically; here they are written out and so have to match it.
         Parameter[] dataTraits = new Parameter[6];
-        dataTraits[0] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
+        dataTraits[0] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5});
         dataTraits[1] = new Parameter.Default("chimp", new double[]{10.0, 12.0, 14.0});
-        dataTraits[2] = new Parameter.Default("bonobo", new double[]{0.5, -2.0, 5.5});
-        dataTraits[3] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0});
+        dataTraits[2] = new Parameter.Default("gorilla", new double[]{2.0, 5.0, -8.0});
+        dataTraits[3] = new Parameter.Default("human", new double[]{-1.0, 2.0, 3.0});
         dataTraits[4] = new Parameter.Default("orangutan", new double[]{11.0, 1.0, -1.5});
         dataTraits[5] = new Parameter.Default("siamang", new double[]{1.0, 2.5, 4.0});
         traitParameter = new CompoundParameter("trait", dataTraits);
 
+        // the same data as before the tips were renumbered: the third trait of human is zero, all of
+        // chimp is missing, and the second trait of bonobo is missing
         boolean[] missingIndicators = new boolean[traitParameter.getDimension()];
-        traitParameter.setParameterValue(2, 0);
-        missingIndicators[3] = true;
-        missingIndicators[4] = true;
-        missingIndicators[5] = true;
-        missingIndicators[7] = true;
+        traitParameter.setParameterValue(3 * 3 + 2, 0);     // human
+        missingIndicators[1 * 3] = true;                    // chimp
+        missingIndicators[1 * 3 + 1] = true;
+        missingIndicators[1 * 3 + 2] = true;
+        missingIndicators[0 * 3 + 1] = true;                // bonobo
         //// Standard Model //// ***************************************************************************************
 
         // Diffusion

@@ -37,7 +37,7 @@ import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Units;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
+import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.*;
@@ -129,7 +129,7 @@ public abstract class OperatorAssert extends TestCase {
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathGernhard08Model(b, d, null, BirthDeathGernhard08Model.TreeType.UNSCALED,
+        SpeciationModel speciationModel = new Gernhard08BirthDeathModel(b, d, null, Gernhard08BirthDeathModel.TreeType.UNSCALED,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 

@@ -37,12 +37,12 @@ import dr.evomodel.tree.TreeModel;
  */
 public interface AncestralStateTraitProvider {
 
-    public String getId();
+    String getId();
 
-    public MutableTreeModel getTreeModel();
+    MutableTreeModel getTreeModel();
 
-    public TreeTrait getTreeTrait(String key);
+    TreeTrait getTreeTrait(String key);
 
-    public String formattedState(int[] state);
+    String formattedState(int[] state);
 
 }

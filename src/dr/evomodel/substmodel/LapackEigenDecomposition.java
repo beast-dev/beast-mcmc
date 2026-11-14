@@ -46,7 +46,7 @@ public class LapackEigenDecomposition extends EigenDecomposition {
     }
 
     public LapackEigenDecomposition copy() {
-        throw new RuntimeException("Not yet implemented");
+        return new LapackEigenDecomposition(Evec.clone(), Ievc.clone(), Eval.clone(), generator);
     }
 
     public LapackEigenDecomposition transpose() {

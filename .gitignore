@@ -5,8 +5,17 @@ bin/
 build/
 dist/
 out/
+packaging_tools/**/.*
+Testing/
+tests
+test*
+examples/**/.*
+benchmarking
+problem_cases
 .idea
 .DS_Store
+__pycache__
+*.code-workspace
 
 *.log
 *.trees
@@ -15,16 +24,22 @@ out/
 *.jfr
 *.xml
 !examples/**/*.xml
+!examples/data
+benchmarking/Results/
+optimization_notesmat_*
+optimization_notes/mat_local_spr
+
 !tests/**/*.xml
+!build*.xml
 
 zig_zag
 src/revision.txt
+src/version.txt
 *.dmg
 *.zip
 *.tgz
-release/Mac
-release/Linux
-release/Windows
+release*/
+!release.yml
 src/revision.txt
 
 *.citations.txt

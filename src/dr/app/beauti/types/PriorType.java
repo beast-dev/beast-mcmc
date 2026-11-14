@@ -28,7 +28,9 @@
 package dr.app.beauti.types;
 
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionOptions;
 import dr.app.beauti.util.NumberUtil;
+import dr.evolution.datatype.DataType;
 import dr.math.distributions.*;
 
 /**
@@ -54,6 +56,7 @@ public enum PriorType {
     ONE_OVER_X_PRIOR("1/x", true, true, false),
     DIRICHLET_PRIOR("Dirichlet", false, false, false),
     CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
+    HIERARCHICAL_EXPONENTIAL_PRIOR("Exponential with estimated mean", true, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
     EXPONENTIAL_HPM_PRIOR("Exponential HPM", true, false, false),
@@ -115,6 +118,8 @@ public enum PriorType {
             case ONE_OVER_X_PRIOR:
                 break;
             case CTMC_RATE_REFERENCE_PRIOR:
+                break;
+            case HIERARCHICAL_EXPONENTIAL_PRIOR:
                 break;
             case LINKED_PARAMETER:
                 break;
@@ -233,6 +238,10 @@ public enum PriorType {
             case POISSON_PRIOR:
                 buffer.append("Poisson [");
                 buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
+                if (parameter.offset > 0.0) {
+                    buffer.append(", offset ");
+                    buffer.append(NumberUtil.formatDecimal(parameter.offset, 10, 6));
+                }
                 buffer.append("]");
                 break;
             case BETA_PRIOR:
@@ -244,6 +253,9 @@ public enum PriorType {
                 break;
             case CTMC_RATE_REFERENCE_PRIOR:
                 buffer.append("Approx. Reference Prior");
+                break;
+            case HIERARCHICAL_EXPONENTIAL_PRIOR:
+                buffer.append("Exponential [estimated mean]");
                 break;
             case LINKED_PARAMETER:
                 buffer.append("Linked [");
@@ -305,6 +317,18 @@ public enum PriorType {
         return buffer.toString();
     }
 
+    /**
+     * The hierarchical exponential prior of Gao et al. (2023) is defined for the overall rate
+     * scalar of a discrete trait diffusion model under a strict clock, so it is only offered there.
+     */
+    public static boolean isDiscreteTraitClockRate(Parameter parameter) {
+        if (!parameter.isCMTCRate || !parameter.getBaseName().equals("clock.rate")) {
+            return false;
+        }
+        PartitionOptions partitionOptions = parameter.getOptions();
+        return partitionOptions != null && partitionOptions.getDataType().getType() == DataType.GENERAL;
+    }
+
     public static PriorType[] getPriorTypes(Parameter parameter) {
         if (parameter.isDiscrete) {
             return new PriorType[]{
@@ -356,6 +380,20 @@ public enum PriorType {
             }
         }
         if (parameter.isCMTCRate) {
+            if (isDiscreteTraitClockRate(parameter)) {
+                return new PriorType[]{
+                        NONE_FIXED,
+                        CTMC_RATE_REFERENCE_PRIOR,
+                        HIERARCHICAL_EXPONENTIAL_PRIOR,
+                        NONE_IMPROPER,
+                        UNIFORM_PRIOR,
+                        EXPONENTIAL_PRIOR,
+                        NORMAL_PRIOR,
+                        LOGNORMAL_PRIOR,
+                        GAMMA_PRIOR,
+                        INVERSE_GAMMA_PRIOR,
+                        ONE_OVER_X_PRIOR};
+            }
             return new PriorType[]{
                     NONE_FIXED,
                     CTMC_RATE_REFERENCE_PRIOR,

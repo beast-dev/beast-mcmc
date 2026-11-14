@@ -34,8 +34,12 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.util.TaskPool;
 import dr.xml.*;
+import org.ejml.data.DenseMatrix64F;
+import org.ejml.factory.DecompositionFactory;
+import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
@@ -47,6 +51,8 @@ public class IntegratedFactorAnalysisLikelihoodParser extends AbstractXMLObjectP
     public static final String PRECISION = "precision";
     private static final String NUGGET = "nugget";
     private static final String CACHE_PRECISION = "cachePrecision";
+
+    private static final String INITIALIZE = "initialize";
 
 
     @Override
@@ -62,6 +68,8 @@ public class IntegratedFactorAnalysisLikelihoodParser extends AbstractXMLObjectP
         boolean[] missingIndicators = returnValue.getMissingIndicators();
 
         MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getElementFirstChild(LOADINGS);
+
+
         Parameter traitPrecision = (Parameter) xo.getElementFirstChild(PRECISION);
 
         double nugget = xo.getAttribute(NUGGET, 0.0);
@@ -77,13 +85,90 @@ public class IntegratedFactorAnalysisLikelihoodParser extends AbstractXMLObjectP
         }
 
 
-        return new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndicators,
+        IntegratedFactorAnalysisLikelihood factorModel = new IntegratedFactorAnalysisLikelihood(xo.getId(), traitParameter, missingIndicators,
                 loadings, traitPrecision, nugget, taskPool, cacheProvider);
+
+        if (xo.getChild(LOADINGS).hasAttribute(INITIALIZE)) {
+            String initializerName = xo.getChild(LOADINGS).getStringAttribute(INITIALIZE);
+            boolean initializerFound = false;
+            for (Initializer initializer : Initializer.values()) {
+                if (initializer.getName().equalsIgnoreCase(initializerName)) {
+                    initializerFound = true;
+                    initializer.initializeLoadings(factorModel, traitParameter);
+                    break;
+                }
+            }
+            if (!initializerFound) {
+                throw new XMLParseException("Unknown loadings initialization: '" + initializerName + "'");
+            }
+        }
+
+        return factorModel;
+    }
+
+
+    private enum Initializer {
+
+
+        ScaledSVD("scaledSVD") {
+            @Override
+            public void initializeLoadings(IntegratedFactorAnalysisLikelihood factorModel,
+                                           CompoundParameter traitParameter) {
+                MatrixParameterInterface loadings = factorModel.getLoadings();
+
+                int n = factorModel.getNumberOfTaxa();
+                int p = factorModel.getNumberOfTraits();
+                int k = factorModel.getNumberOfFactors();
+
+
+//        DenseMatrix64F traitMatrix = DenseMatrix64F.wrap(n, p, traitParameter.getParameterValues());
+                DenseMatrix64F traitMatrix = new DenseMatrix64F(p, n);
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < p; j++) {
+                        traitMatrix.set(j, i, traitParameter.getParameterValue(j, i));
+                    }
+                }
+
+                SingularValueDecomposition svd = DecompositionFactory.svd(0, 0, true, true, true);
+
+                svd.decompose(traitMatrix);
+
+                DenseMatrix64F loadingsBuffer = new DenseMatrix64F(Math.max(n, p), n);
+                svd.getU(loadingsBuffer, false);
+                double[] singularValues = svd.getSingularValues();
+                for (int i = 0; i < p; i++) {
+                    for (int j = 0; j < k; j++) {
+                        loadings.setParameterValueQuietly(i, j, loadingsBuffer.get(i, j) * singularValues[j] / Math.sqrt(n));
+                    }
+                }
+
+
+                loadings.fireParameterChangedEvent();
+            }
+
+        };
+
+
+        private final String name;
+
+        Initializer(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public abstract void initializeLoadings(IntegratedFactorAnalysisLikelihood factorModel,
+                                                CompoundParameter traitParameter);
+
+
     }
 
     private final static XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameterInterface.class),
+                    AttributeRule.newStringRule(INITIALIZE, true)
             }),
             new ElementRule(PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),

@@ -27,6 +27,10 @@
 
 package dr.evomodelxml.speciation;
 
+import dr.evomodel.birthdeath.BirthDeathEpisodicSeriallySampledModel;
+import dr.evomodel.birthdeath.BirthDeathLikelihoodGradient;
+import dr.evomodel.birthdeath.EfficientBirthDeathLikelihoodGradient;
+import dr.evomodel.birthdeath.EpisodicBirthDeathSamplingModel;
 import dr.evomodel.speciation.*;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
@@ -47,18 +51,22 @@ public class SpeciationLikelihoodGradientParser extends AbstractXMLObjectParser 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         String wrtParamter = (String) xo.getAttribute(WRT_PARAMETER);
 
-        if (! ((likelihood.getSpeciationModel() instanceof BirthDeathGernhard08Model) || (likelihood.getSpeciationModel() instanceof NewBirthDeathSerialSamplingModel) || (likelihood.getSpeciationModel() instanceof BirthDeathEpisodicSeriallySampledModel)) ) {
+        if (! ((likelihood.getSpeciationModel() instanceof Gernhard08BirthDeathModel) ||
+                (likelihood.getSpeciationModel() instanceof EpisodicBirthDeathSamplingModel) ||
+                (likelihood.getSpeciationModel() instanceof BirthDeathEpisodicSeriallySampledModel)) ) {
             throw new RuntimeException("Not yet implemented for other cases.");
         }
 
         SpeciationLikelihoodGradient.WrtParameter type = SpeciationLikelihoodGradient.WrtParameter.factory(wrtParamter);
 
-        boolean newLoop = xo.getAttribute(USE_NEW_LOOP, false);
-        if (newLoop && (likelihood instanceof EfficientSpeciationLikelihood)) {
-            return new EfficientSpeciationLikelihoodGradient((EfficientSpeciationLikelihood) likelihood, type);
-        } else {
-            return new SpeciationLikelihoodGradient(likelihood, tree, type);
+        if (likelihood instanceof EfficientBirthDeathSpeciationLikelihood) {
+            BirthDeathLikelihoodGradient.WrtParameter birthDeathType =
+                    BirthDeathLikelihoodGradient.WrtParameter.factory(wrtParamter);
+            return new EfficientBirthDeathLikelihoodGradient(
+                    ((EfficientBirthDeathSpeciationLikelihood) likelihood).getBirthDeathLikelihood(), birthDeathType);
         }
+
+        return new SpeciationLikelihoodGradient(likelihood, tree, type);
     }
 
     @Override

@@ -77,12 +77,15 @@ public abstract class AbstractDiscreteGradientDelegate extends ProcessSimulation
             ++getTraitCount;
         }
 
-        simulationProcess.cacheSimulatedTraits(node);
+        setupStatistics();
+        substitutionProcessKnown = true;
+
         return gradient.clone();
     }
 
     protected double[] getHessian(Tree tree, NodeRef node) {
-        simulationProcess.cacheSimulatedTraits(node);
+        setupStatistics();
+        substitutionProcessKnown = true;
 
         double[] second = new double[getGradientLength()];
         getNodeDerivatives(tree, null, second);
@@ -116,7 +119,7 @@ public abstract class AbstractDiscreteGradientDelegate extends ProcessSimulation
     }
 
     @Override
-    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
         // No explicit traversal operations are needed here because the discrete
         // delegate computes and caches pre/post-order internally.
         return 0;

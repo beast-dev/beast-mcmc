@@ -85,8 +85,8 @@ public class BastaFactory extends BeagleFactory {
                     Logger.getLogger("beagle").info("  " + beagleException.getMessage());
                 }
             } else {
-                throw new RuntimeException("No acceptable BEAGLE-BASTA library plugin found. " +
-                        "Make sure that BEAGLE-BASTA is properly installed or try changing resource requirements.");
+                throw new RuntimeException("No acceptable BEAGLE-BIT library plugin found. " +
+                        "Make sure that BEAGLE-BIT is properly installed or try changing resource requirements.");
             }
         }
 
@@ -99,7 +99,7 @@ public class BastaFactory extends BeagleFactory {
             try {
                 BastaJNIWrapper.loadBastaLibrary();
             } catch (UnsatisfiedLinkError ule) {
-                System.err.println("Failed to load BEAGLE-BASTA library: " + ule.getMessage());
+                System.err.println("Failed to load BEAGLE-BIT library: " + ule.getMessage());
             }
         }
 

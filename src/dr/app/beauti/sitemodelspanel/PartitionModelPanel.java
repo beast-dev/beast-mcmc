@@ -1,7 +1,7 @@
 /*
  * PartitionModelPanel.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -29,18 +29,20 @@ package dr.app.beauti.sitemodelspanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
+import dr.app.beauti.components.discrete.BASTAModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
+import dr.app.beauti.options.BeautiOptions;
 import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
 import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
-import dr.app.beauti.components.discrete.DiscreteSubstModelType;
-import dr.app.beauti.components.dollo.DolloComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteSubstModelStructureType;
+import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import jam.panels.OptionsPanel;
@@ -48,6 +50,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.logging.Logger;
@@ -58,8 +61,6 @@ import java.util.logging.Logger;
  * @author Walter Xie
  */
 public class PartitionModelPanel extends OptionsPanel {
-
-    private static final boolean ENABLE_STOCHASTIC_DOLLO = true;
 
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
@@ -96,15 +97,31 @@ public class PartitionModelPanel extends OptionsPanel {
     private JButton setYang96Button;
     private JButton setSRD06Button;
 
-    private JCheckBox dolloCheck = new JCheckBox("Use stochastic Dollo model");
-    // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical",
-    // "Sample"});
 
+    //combo box to choose between FIT CTMC and BIT CTMC
     private JComboBox discreteTraitSiteModelCombo = new JComboBox(
             DiscreteSubstModelType.values());
+
+    private JPanel fitPanel = new JPanel();
+    private JTextArea fitTextArea;
+    private JPanel bitPanel = new JPanel();
+
+    //combo box to select approach for BASTA
+    private JComboBox bitModelCombo = new JComboBox(BASTAModelType.values());
+
+    //checkbox for sharing the coalescent model across demes
+    private JCheckBox bitDemeSharing = new JCheckBox("Share coalescent model across demes");
+
+    //combo box to select a model structure for FIT CTMC
+    private JComboBox discreteTraitSiteModelStructureCombo = new JComboBox(
+            DiscreteSubstModelStructureType.values());
+
     private JCheckBox activateBSSVS = new JCheckBox(
             // "Activate BSSVS"
             "Infer social network with BSSVS");
+    private JCheckBox useGaoPriors = new JCheckBox(
+            "Use Gao et al. prior specification");
+    private JLabel gaoPriorNote = new JLabel();
     private JButton setupGLMButton;
     private GLMSettingsDialog glmSettingsDialog = null;
 
@@ -137,7 +154,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
     protected final PartitionSubstitutionModel model;
 
-    final BeautiFrame frame;
+    private final BeautiFrame frame;
 
     public PartitionModelPanel(final BeautiFrame frame, final PartitionSubstitutionModel partitionModel) {
 
@@ -200,7 +217,7 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         useAmbiguitiesTreeLikelihoodCheck
-                .setToolTipText("<html>Detemine useAmbiguities in &lt treeLikelihood &gt .</html>");
+                .setToolTipText("<html>Use the ambiguous states in the tree likelihood of this model.</html>");
 
         PanelUtils.setupComponent(frequencyCombo);
         frequencyCombo.addItemListener(new ItemListener() {
@@ -249,7 +266,7 @@ public class PartitionModelPanel extends OptionsPanel {
         gammaCatCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
 
-                model.setGammaCategories(gammaCatCombo.getSelectedIndex() + 4);
+                model.setRateCategories(gammaCatCombo.getSelectedIndex() + 4);
             }
         });
 
@@ -284,56 +301,81 @@ public class PartitionModelPanel extends OptionsPanel {
         AminoAcidModelType type = (AminoAcidModelType) aaSubstCombo.getSelectedItem();
         citationText.setText(type.getCitation().toString());
 
-        dolloCheck.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                if (dolloCheck.isSelected()) {
-                    binarySubstCombo.setSelectedIndex(0);
-                    binarySubstCombo.setEnabled(false);
-                    useAmbiguitiesTreeLikelihoodCheck.setSelected(true);
-                    useAmbiguitiesTreeLikelihoodCheck.setEnabled(false);
-                    frequencyCombo.setEnabled(false);
-                    frequencyCombo.setSelectedItem(FrequencyPolicyType.EMPIRICAL);
-                    heteroCombo.setSelectedIndex(0);
-                    heteroCombo.setEnabled(false);
-                    model.setBinarySubstitutionModel(BinaryModelType.BIN_DOLLO);
-                    model.setDolloModel(true);
-                    DolloComponentOptions comp = (DolloComponentOptions)
-                            model.getOptions().getComponentOptions(DolloComponentOptions.class);
-                    comp.createParameters(model.getOptions());
-                    comp.setActive(true);
-
-                } else {
-                    binarySubstCombo.setEnabled(true);
-                    useAmbiguitiesTreeLikelihoodCheck.setEnabled(true);
-                    frequencyCombo.setEnabled(true);
-                    heteroCombo.setEnabled(true);
-                    model.setBinarySubstitutionModel((BinaryModelType) binarySubstCombo.getSelectedItem());
-                    model.setDolloModel(false);
-                }
-            }
-        });
-
-        PanelUtils.setupComponent(dolloCheck);
-//        dolloCheck.addChangeListener(new ChangeListener() {
-//            public void stateChanged(ChangeEvent e) {
-//                model.setDolloModel(true);
-//            }
-//        });
-        dolloCheck.setEnabled(true);
-        dolloCheck
-                .setToolTipText("<html>Activates a Stochastic Dollo model as described in<br>"
-                        + "Alekseyenko, Lee & Suchard (2008) <i>Syst Biol</i> <b>57</b>: 772-784.</html>");
-
         PanelUtils.setupComponent(discreteTraitSiteModelCombo);
+        discreteTraitSiteModelCombo.setToolTipText("Select Backward-in-time CTMC for structured coalescent model options.");
         discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                model
-                        .setDiscreteSubstType((DiscreteSubstModelType) discreteTraitSiteModelCombo
-                                .getSelectedItem());
-                activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST);
-                setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST);
+                model.setDiscreteSubstModelType((DiscreteSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
+                setupPanel();
             }
         });
+
+        PanelUtils.setupComponent(discreteTraitSiteModelStructureCombo);
+        discreteTraitSiteModelStructureCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setDiscreteSubstType((DiscreteSubstModelStructureType) discreteTraitSiteModelStructureCombo
+                        .getSelectedItem());
+                activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST);
+                setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST);
+                updateGaoPriorNote();
+            }
+        });
+
+        PanelUtils.setupComponent(bitModelCombo);
+        bitModelCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setBastaModelType((BASTAModelType) bitModelCombo.getSelectedItem());
+            }
+        });
+
+        PanelUtils.setupComponent(bitDemeSharing);
+        bitDemeSharing.setToolTipText("<html>Specify whether to share the coalescent model across all demes.</html>");
+        bitDemeSharing.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setSharedCoalescentModel(bitDemeSharing.isSelected());
+            }
+        });
+        bitDemeSharing.setEnabled(true);
+        bitDemeSharing.setSelected(true);
+
+        fitPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Forward-in-time CTMC"),
+                BorderFactory.createEmptyBorder(5,5,5,5)));
+        fitPanel.setOpaque(false);
+        fitPanel.setLayout(new BoxLayout(fitPanel, BoxLayout.PAGE_AXIS));
+        fitTextArea = new JTextArea();
+        updateFitCitation();
+        fitTextArea.setEditable(false);
+        fitTextArea.setEnabled(false);
+        fitTextArea.setBackground(Color.lightGray);
+        fitTextArea.setOpaque(false);
+        fitPanel.add(fitTextArea);
+
+        PanelUtils.setupComponent(fitPanel);
+
+        bitPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Backward-in-time CTMC"),
+                BorderFactory.createEmptyBorder(5,5,5,5)));
+        bitPanel.setOpaque(false);
+        bitPanel.setLayout(new BoxLayout(bitPanel, BoxLayout.PAGE_AXIS));
+        String bitText = "N. De Maio, C.H. Wu, K.M. O’Reilly, D. Wilson (2015)" +
+                "\nNew routes to phylogeography: a Bayesian structured" +
+                "\ncoalescent approximation." +
+                "\nPLOS Genetics 11(8): e1005421.\n";
+        bitText += "Y. Shao, M.A. Suchard, A. Rambaut, P. Lemey, T. Vasylyeva, G. Baele (2025)" +
+                "\nParallel algorithms for phylogenetic inference" +
+                "\nunder a structured coalescent approximation." +
+                "\nbioRxiv 2025.09.22.677844.";
+        JTextArea bitTextArea = new JTextArea(bitText);
+        bitTextArea.setEditable(false);
+        bitTextArea.setEnabled(false);
+        bitTextArea.setBackground(Color.lightGray);
+        bitTextArea.setOpaque(false);
+        bitPanel.add(bitTextArea);
+
+        PanelUtils.setupComponent(bitPanel);
+
+        partitionModel.getOptions().needCoalescentModel.put(partitionModel.getName(), true);
 
         PanelUtils.setupComponent(continuousTraitSiteModelCombo);
         continuousTraitSiteModelCombo
@@ -349,7 +391,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(treatIndependentCheck);
         treatIndependentCheck
-                .setToolTipText("<html>Specify whether the traits should be treated as independent.");
+                .setToolTipText("<html>Specify whether the traits should be treated as independent.</html>");
 
         treatIndependentCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -357,7 +399,6 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         treatIndependentCheck.setEnabled(true);
-
 
         PanelUtils.setupComponent(latLongCheck);
         latLongCheck
@@ -399,7 +440,6 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
-
         modelExtensionCombo.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -425,6 +465,9 @@ public class PartitionModelPanel extends OptionsPanel {
                     dialog.pack();
                     dialog.setVisible(true);
 
+                    // the dialog is modal, so it has been closed by the time this returns
+                    dialog.dispose();
+
                     Integer value = (Integer) optionPane.getValue();
                     if (value == JOptionPane.CANCEL_OPTION) {
                         modelExtensionCombo.setSelectedIndex(0);
@@ -440,7 +483,6 @@ public class PartitionModelPanel extends OptionsPanel {
                 model.setContinuousExtensionType((ContinuousModelExtensionType) modelExtensionCombo.getSelectedItem());
             }
         });
-
 
         PanelUtils.setupComponent(useLambdaCheck);
         useLambdaCheck.addItemListener(new ItemListener() {
@@ -458,12 +500,32 @@ public class PartitionModelPanel extends OptionsPanel {
         activateBSSVS.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setActivateBSSVS(activateBSSVS.isSelected());
+                updateGaoPriorNote();
             }
         });
         activateBSSVS
                 .setToolTipText("<html>Activates Bayesian stochastic search variable selection on the rates as described in<br>"
                         + "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
-        activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST);
+        activateBSSVS.setEnabled(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST);
+
+        PanelUtils.setupComponent(useGaoPriors);
+        useGaoPriors.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setUseGaoPriors(useGaoPriors.isSelected());
+                updateGaoPriorNote();
+                updateFitCitation();
+                setupPanel();
+            }
+        });
+        useGaoPriors
+                .setToolTipText("<html>Replaces the default priors with the more diffuse specification of<br>"
+                        + "Gao, May, Rannala &amp; Moore (2023) <i>PNAS</i> <b>120</b>: e2213913120:<br>"
+                        + "an exponential prior with an estimated mean on the overall rate scalar,<br>"
+                        + "and, under BSSVS, a Poisson prior on the number of non-zero rates<br>"
+                        + "centred on half of them rather than on the fewest possible.<br>"
+                        + "Under the GLM only the rate scalar is affected, as the number of<br>"
+                        + "non-zero rates is not sampled. Both remain editable in the priors panel.</html>");
+        gaoPriorNote.setFont(gaoPriorNote.getFont().deriveFont(11.0f));
 
         setupGLMButton = new JButton("Setup GLM");
         setupGLMButton.addActionListener(new ActionListener() {
@@ -474,7 +536,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(setupGLMButton);
         setupGLMButton
                 .setToolTipText("<html>Set-up design of phylogenetic GLM.</html>");
-        setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelType.GLM_SUBST);
+        setupGLMButton.setEnabled(model.getDiscreteSubstType() == DiscreteSubstModelStructureType.GLM_SUBST);
 
         setupPanel();
         setOpaque(false);
@@ -519,10 +581,13 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.GENERAL:
-                discreteTraitSiteModelCombo.setSelectedItem(model
+                discreteTraitSiteModelStructureCombo.setSelectedItem(model
                         .getDiscreteSubstType());
-                activateBSSVS.setSelected(model.getDiscreteSubstType() != DiscreteSubstModelType.GLM_SUBST ?
+                activateBSSVS.setSelected(model.getDiscreteSubstType() != DiscreteSubstModelStructureType.GLM_SUBST ?
                         model.isActivateBSSVS() : false);
+                useGaoPriors.setSelected(model.isUseGaoPriors());
+                updateGaoPriorNote();
+                updateFitCitation();
                 break;
 
             case DataType.CONTINUOUS:
@@ -562,7 +627,7 @@ public class PartitionModelPanel extends OptionsPanel {
             heteroCombo.setSelectedIndex(0);
         }
 
-        gammaCatCombo.setSelectedIndex(model.getGammaCategories() - 4);
+        gammaCatCombo.setSelectedIndex(model.getRateCategories() - 4);
 
         if (model.getCodonHeteroPattern() == null) {
             codingCombo.setSelectedIndex(0);
@@ -575,8 +640,6 @@ public class PartitionModelPanel extends OptionsPanel {
         substUnlinkCheck.setSelected(model.isUnlinkedSubstitutionModel());
         heteroUnlinkCheck.setSelected(model.isUnlinkedHeterogeneityModel());
         freqsUnlinkCheck.setSelected(model.isUnlinkedFrequencyModel());
-
-        dolloCheck.setSelected(model.isDolloModel());
     }
 
     /**
@@ -625,6 +688,50 @@ public class PartitionModelPanel extends OptionsPanel {
      * Lays out the appropriate components in the panel for this partition
      * model.
      */
+    /**
+     * The forward-in-time CTMC citation, with the prior specification added when it is selected.
+     */
+    private void updateFitCitation() {
+        String fitText = "P. Lemey, A. Rambaut, A.J. Drummond, M.A. Suchard (2009)" +
+                "\nBayesian phylogeography finds its roots." +
+                "\nPLOS Computational Biology 5(9): e1000520.";
+        if (useGaoPriors.isSelected()) {
+            fitText += "\n";
+            fitText += "J. Gao, M.R. May, B. Rannala, B.R. Moore (2023)" +
+                    "\nModel misspecification misleads inference of the" +
+                    "\nspatial dynamics of disease outbreaks." +
+                    "\nPNAS 120(11): e2213913120.";
+        }
+        fitTextArea.setText(fitText);
+    }
+
+    /**
+     * Explains the one case the Gao et al. specification cannot cover: a symmetric model with so
+     * few states that the minimum number of rates already accounts for half of them.
+     */
+    private void updateGaoPriorNote() {
+        if (!useGaoPriors.isSelected() || !activateBSSVS.isSelected()
+                || DiscreteTraitsComponentOptions.isGaoNonZeroRatesPriorApplicable(model)) {
+            gaoPriorNote.setText("");
+            return;
+        }
+
+        int stateCount = model.getDiscreteStateSet().size();
+        if (stateCount < 2) {
+            // the trait has no states yet, so there is nothing meaningful to say
+            gaoPriorNote.setText("");
+            return;
+        }
+
+        gaoPriorNote.setText("<html>The symmetric model over " + stateCount + " states needs at least "
+                + (stateCount - 1) + " of its<br>"
+                + (stateCount * (stateCount - 1) / 2) + " rates to remain irreducible, which is already half of them<br>"
+                + "or more, so there is no more diffuse Poisson prior to place on<br>"
+                + "the number of non-zero rates. That prior is left at the BEAST<br>"
+                + "default; the overall rate scalar still uses the Gao et al. prior.<br>"
+                + "Both can be edited in the priors panel.</html>");
+    }
+
     private void setupPanel() {
 
         switch (model.getDataType().getType()) {
@@ -683,19 +790,32 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addComponentWithLabel("", useAmbiguitiesTreeLikelihoodCheck);
 
-                // Easy XML specification is currently only available for binary models
-                if (ENABLE_STOCHASTIC_DOLLO) {
-                    addSeparator();
-                    addComponent(dolloCheck);
-                }
-
                 break;
 
             case DataType.GENERAL:
-                addComponentWithLabel("Discrete Trait Substitution Model:",
-                        discreteTraitSiteModelCombo);
+                removeAll();
+                addComponentWithLabel("Discrete Trait Substitution Model:", discreteTraitSiteModelCombo);
+                //use the mapping to the partition tree and not the model name itself for the HashMap
+                String modelName = model.getPartitionData().getPartitionTreeModel().getName();
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    model.getOptions().needCoalescentModel.put(modelName, true);
+                    addComponentWithLabel("Forward-in-time Model Structure:", discreteTraitSiteModelStructureCombo);
+                } else {
+                    model.getOptions().needCoalescentModel.put(modelName, false);
+                    addComponentWithLabel("Backward-in-time Coalescent Model:", bitModelCombo);
+                    addComponentWithLabel("Backward-in-time Model structure:", discreteTraitSiteModelStructureCombo);
+                    addComponent(bitDemeSharing);
+                }
                 addComponent(activateBSSVS);
                 addComponent(setupGLMButton);
+                if (model.getDiscreteSubstModelType() == DiscreteSubstModelType.FIT) {
+                    addSeparator();
+                    addComponent(useGaoPriors);
+                    addComponent(gaoPriorNote);
+                    addComponentWithLabel(useGaoPriors.isSelected() ? "Citations:" : "Citation:", fitPanel);
+                } else {
+                    addComponentWithLabel("Citations:", bitPanel);
+                }
                 break;
 
             case DataType.CONTINUOUS:

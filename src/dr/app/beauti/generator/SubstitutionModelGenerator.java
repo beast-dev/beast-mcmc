@@ -1,7 +1,7 @@
 /*
  * SubstitutionModelGenerator.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -27,30 +27,18 @@
 
 package dr.app.beauti.generator;
 
-import dr.app.beauti.options.*;
-import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.evomodelxml.siteratemodel.SiteModelParser;
-import dr.evomodelxml.substmodel.BinaryCovarionModelParser;
-import dr.evomodelxml.substmodel.BinarySubstitutionModelParser;
-import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
-import dr.evomodelxml.substmodel.FrequencyModelParser;
-import dr.evomodelxml.substmodel.GTRParser;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
-import dr.evomodelxml.substmodel.HKYParser;
-import dr.evomodelxml.substmodel.TN93Parser;
-import dr.inference.model.StatisticParser;
-import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
-import dr.oldevomodel.substmodel.LinearBiasModel;
-import dr.oldevomodel.substmodel.TwoPhaseModel;
+import dr.evomodelxml.substmodel.*;
 import dr.evoxml.AlignmentParser;
-import dr.evoxml.MicrosatelliteParser;
 import dr.inference.model.ParameterParser;
-import dr.oldevomodelxml.substmodel.*;
+import dr.inference.model.StatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -96,7 +84,7 @@ public class SubstitutionModelGenerator extends Generator {
                                 writeGTRModel(i, writer, model);
                                 break;
                             default:
-                                throw new IllegalArgumentException("unknown substition model type");
+                                throw new IllegalArgumentException("unknown substitution model type");
                         }
                     }
                 } else {
@@ -149,8 +137,6 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.COVARION:
 
                 switch (model.getBinarySubstitutionModel()) {
-                    case BIN_DOLLO:
-                        return;
                     case BIN_SIMPLE:
                         writeBinarySimpleModel(writer, model);
                         break;
@@ -171,7 +157,6 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.DUMMY:
                 //Do nothing
                 break;
-
 
             default:
                 throw new IllegalArgumentException("Unknown data type");
@@ -420,10 +405,6 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             List<AbstractPartitionData> partitions = options.getDataPartitions(model);
             Alignment alignment = ((PartitionData) partitions.get(0)).getAlignment();
-//            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
-//            for (int i = 1; i < partitions.size(); i++) {
-//                patterns.addPatterns(partitions.get(i).getAlignment());
-//            }
             double[] frequencies = alignment.getStateFrequencies();
             writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
@@ -445,7 +426,6 @@ public class SubstitutionModelGenerator extends Generator {
     }
 
     // write frequencies for binary data
-
     private void writeFrequencyModelBinary(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         switch (model.getFrequencyPolicy()) {
@@ -460,7 +440,7 @@ public class SubstitutionModelGenerator extends Generator {
                 writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
                 break;
         }
-//        writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
+        // writeParameter(prefix + "frequencies", 2, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
     }
 
@@ -475,10 +455,6 @@ public class SubstitutionModelGenerator extends Generator {
 // single partition use clock.rate, no "mu"; multi-partition use "allmus"
 //                if (codonPartitionCount > 1) {
 //
-//                    for (int i = 1; i <= codonPartitionCount; i++) {
-//                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
-//                    }
-//                }
                 switch (model.getNucSubstitutionModel()) {
                     case HKY:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
@@ -544,7 +520,6 @@ public class SubstitutionModelGenerator extends Generator {
                 String prefix = model.getPrefix();
                 switch (model.getBinarySubstitutionModel()) {
                     case BIN_SIMPLE:
-                    case BIN_DOLLO:
                         break;
                     case BIN_COVARION:
                         writeParameterRef(prefix + "bcov.alpha", writer);
@@ -670,11 +645,12 @@ public class SubstitutionModelGenerator extends Generator {
             }
         }
 
-
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories())
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
+                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
+                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
 
             if (num == -1 || model.isUnlinkedHeterogeneityModel()) {
@@ -731,7 +707,6 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeOpenTag(SiteModelParser.SITE_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL)});
 
-
         writer.writeOpenTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         switch (model.getBinarySubstitutionModel()) {
@@ -742,8 +717,6 @@ public class SubstitutionModelGenerator extends Generator {
             case BIN_COVARION:
                 writer.writeIDref(BinaryCovarionModelParser.COVARION_MODEL, prefix + "bcov");
                 break;
-            case BIN_DOLLO:
-                break; // Handled by component
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");
         }
@@ -753,7 +726,7 @@ public class SubstitutionModelGenerator extends Generator {
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
             String prefix1 = options.getPrefix();
-            if (parameter.getParent() != null && !parameter.getSubParameters().isEmpty()) {
+            if (!parameter.getSubParameters().isEmpty()) {
                 writeNuRelativeRateBlock(writer, prefix1, parameter);
             }
         } else {
@@ -763,7 +736,9 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories())
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
+                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
+                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
             writeParameter(prefix + "alpha", model, writer);
             writer.writeCloseTag(SiteModelParser.GAMMA_SHAPE);
@@ -795,15 +770,16 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeOpenTag(SiteModelParser.SITE_MODEL, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + SiteModelParser.SITE_MODEL)});
 
-
         writer.writeOpenTag(SiteModelParser.SUBSTITUTION_MODEL);
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         if (options.useNuRelativeRates()) {
             Parameter parameter = model.getParameter("nu");
-            if (parameter.getParent() != null && !parameter.getSubParameters().isEmpty()) {
+            if (parameter.getParent() != null) {
                 writeNuRelativeRateBlock(writer, prefix, parameter);
+            } else {
+                writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
             }
         } else {
             writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
@@ -812,7 +788,9 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.isGammaHetero()) {
             writer.writeOpenTag(SiteModelParser.GAMMA_SHAPE,
                     new Attribute[] {
-                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories())
+                            new Attribute.Default<>(SiteModelParser.GAMMA_CATEGORIES, "" + model.getRateCategories()),
+                            new Attribute.Default<>(SiteModelParser.DISCRETIZATION,
+                                    (model.isGammaHeteroEqualWeights() ? "equal" : "quadrature")),
                     });
             writeParameter("alpha", model, writer);
             writer.writeCloseTag(SiteModelParser.GAMMA_SHAPE);
@@ -827,7 +805,6 @@ public class SubstitutionModelGenerator extends Generator {
         if (options.useNuRelativeRates()) {
             writeMuStatistic(writer, prefix, SiteModelParser.SITE_MODEL);
         }
-
 
     }
 

@@ -53,6 +53,8 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
 
     private final PreOrderSettings settings;
 
+    private final BranchModel branchModel;
+
     /**
      * A class which handles substitution models including epoch models where multiple
      * substitution models on a branch are convolved.
@@ -91,6 +93,7 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0, partitionNumber);
 
         this.settings = settings;
+        this.branchModel = branchModel;
 
     }// END: Constructor
 
@@ -113,8 +116,12 @@ public final class HomogenousSubstitutionModelDelegate implements EvolutionaryPr
         nodeCount = 0;
         settings = PreOrderSettings.getDefault();
 
+        branchModel = null;
 
     }// END: Constructor
+
+    @Override
+    public BranchModel getBranchSubstitutionModel() { return branchModel; }
 
     @Override
     public boolean canReturnComplexDiagonalization() {

@@ -6873,6 +6873,19 @@
 		</doublingTime>
 	</exponentialGrowth>
 	
+	<growthRate id="exponential.growthRate">
+		<doublingTime timeUnits="years">
+			<parameter idref="exponential.doublingTime"/>
+		</doublingTime>
+	</growthRate>
+	
+	<r0 id="r0">
+		<doublingTime timeUnits="years">
+			<parameter idref="exponential.doublingTime"/>
+		</doublingTime>
+		<serialInterval mean="6.44" stdev="4.25" />
+	</r0>
+	
 
 	<!-- Generate a random starting tree under the coalescent process            -->
 	<!--
@@ -7026,7 +7039,7 @@
 	
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="500000000" autoOptimize="true" operatorAnalysis="b.1.1.7.ops">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="b.1.1.7_dt.ops">
 		<joint id="joint">
 			<prior id="prior">
 				<logNormalPrior mu="1.0" sigma="1.25" offset="0.0">
@@ -7050,9 +7063,7 @@
 				<gammaPrior shape="0.001" scale="1000.0" offset="0.0">
 					<parameter idref="exponential.doublingTime"/>
 				</gammaPrior>
-				<coalescentLikelihood idref="coalescent"/>
-				
-				
+				<coalescentLikelihood idref="coalescent"/>				
 				<strictClockBranchRates idref="branchRates"/>
 			</prior>
 			<likelihood id="likelihood">
@@ -7062,7 +7073,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="500000">
+		<log id="screenLog" logEvery="1000">
 			<column label="Joint" dp="4" width="12">
 				<joint idref="joint"/>
 			</column>
@@ -7081,7 +7092,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="500000" fileName="b.1.1.7.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="b.1.1.7_dt.log" overwrite="false">
 			<joint idref="joint"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -7090,6 +7101,8 @@
 			<treeLengthStatistic idref="treeLength"/>
 			<parameter idref="exponential.popSize"/>
 			<parameter idref="exponential.doublingTime"/>
+			<growthRate idref="exponential.growthRate"/>
+			<R0 idref="r0"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
 			<parameter idref="alpha"/>
@@ -7102,7 +7115,7 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="500000" nexusFormat="true" fileName="b.1.1.7.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="b.1.1.7_dt.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
 				<strictClockBranchRates idref="branchRates"/>

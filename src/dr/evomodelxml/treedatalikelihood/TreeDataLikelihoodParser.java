@@ -44,8 +44,10 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.RewardsAwarePartialsRepresentation;
-import dr.evomodel.treedatalikelihood.discrete.beastBasedDiscreteTreeLikelihood.representations.SpectralStandardPartialsRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.PostOrderRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.RewardsAwarePartialsRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralRotatedPartialsRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralStandardPartialsRepresentation;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -73,11 +75,15 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
     public static final String USE_PREORDER = "usePreOrder";
+    public static final String USE_SPECTRAL_REPRESENTATION = "useSpectralRepresentation";
     public static final String BRANCHRATE_DERIVATIVE = "branchRateDerivative";
     public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
     public static final String INITIAL_NUM_CATS = "initialNumCats";
     public static final String PARTITION = "partition";
     public static final String PHYLOGEOFAST = "phyloGeoFast";
+    public static final String PHYLOGEOFAST_REPRESENTATION = "phyloGeoFastRepresentation";
+    public static final String PHYLOGEOFAST_REPRESENTATION_STANDARD = "spectralStandard";
+    public static final String PHYLOGEOFAST_REPRESENTATION_ROTATED = "spectralRotated";
 
     public String getParserName() {
         return TREE_DATA_LIKELIHOOD;
@@ -96,7 +102,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   PartialsRescalingScheme scalingScheme,
                                                   boolean delayRescalingUntilUnderflow,
                                                   PreOrderSettings settings,
-                                                  boolean phyloGeoFast/*,
+                                                  boolean phyloGeoFast,
+                                                  String phyloGeoFastRepresentation/*,
                                                   Parameter siteAssignInd,
                                                   List<Parameter> polyaPartitionCategories,
                                                   List<SiteRateModel> polyaSiteRateModels,
@@ -214,7 +221,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             int bic = Math.min(partitionPatterns.getPatternCount(), beagleInstanceCount);
 
             for (int j = 0; j < bic; j++) {
-                PatternList subPatterns = new Patterns(partitionPatterns, j, bic);
+                PatternList subPatterns = new Patterns(partitionPatterns, j, bic, partitionPatterns.areUnique());
                 DataLikelihoodDelegate dataLikelihoodDelegate;
                 if (phyloGeoFast) {
                     final DiscreteDataLikelihoodDelegate.PartialTransform postOrderTransform =
@@ -222,10 +229,20 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     final DiscreteDataLikelihoodDelegate.PartialTransform preOrderTransform =
                             DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
                     final BranchModel branchModel = branchModels.get(i);
+                    final BaseSubstitutionModel substitutionModel = (BaseSubstitutionModel)
+                            branchModel.getSubstitutionModels().get(0); //TODO generalize
 
-                    SpectralStandardPartialsRepresentation SpectralStandardPostOrderRepresentation =
-                            new SpectralStandardPartialsRepresentation((BaseSubstitutionModel)
-                                    branchModel.getSubstitutionModels().get(0)); //TODO generalize
+                    final PostOrderRepresentation postOrderRepresentation;
+                    if (PHYLOGEOFAST_REPRESENTATION_ROTATED.equalsIgnoreCase(phyloGeoFastRepresentation)) {
+                        postOrderRepresentation = new SpectralRotatedPartialsRepresentation(substitutionModel, treeModel.getNodeCount());
+                    } else if (PHYLOGEOFAST_REPRESENTATION_STANDARD.equalsIgnoreCase(phyloGeoFastRepresentation)) {
+                        postOrderRepresentation = new SpectralStandardPartialsRepresentation(substitutionModel, treeModel.getNodeCount());
+                    } else {
+                        throw new XMLParseException("Unknown " + PHYLOGEOFAST_REPRESENTATION + " value '" +
+                                phyloGeoFastRepresentation + "'. Expected '" +
+                                PHYLOGEOFAST_REPRESENTATION_STANDARD + "' or '" +
+                                PHYLOGEOFAST_REPRESENTATION_ROTATED + "'.");
+                    }
 
                     dataLikelihoodDelegate = new DiscreteDataLikelihoodDelegate(
                                 treeModel,
@@ -237,7 +254,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                 scalingScheme,
                                 delayRescalingUntilUnderflow,
                                 settings,
-                                SpectralStandardPostOrderRepresentation,
+                                postOrderRepresentation,
                                 postOrderTransform,
                                 preOrderTransform,
                                 null,
@@ -278,16 +295,22 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                     );
 
                 } else {
-                 dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                        treeModel,
-                        subPatterns,
-                        branchModels.get(i),
-                        siteRateModels.get(i),
-                        useAmbiguities,
-                        preferGPU,
-                        scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        settings);
+                    try {
+                        dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                                treeModel,
+                                subPatterns,
+                                branchModels.get(i),
+                                siteRateModels.get(i),
+                                useAmbiguities,
+                                preferGPU,
+                                scalingScheme,
+                                delayRescalingUntilUnderflow,
+                                settings);
+                    } catch (NumberFormatException nfe) { // a malformed -Dbeagle.* property, not an XML error
+                        throw nfe;
+                    } catch (IllegalArgumentException iae) { // e.g., a feature that the native BEAGLE lacks
+                        throw new XMLParseException(iae.getMessage());
+                    }
                 }
                 TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                         dataLikelihoodDelegate,
@@ -351,13 +374,16 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //        int initialNumCats = xo.getAttribute(INITIAL_NUM_CATS, 3);
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
+        boolean useSpectralRepresentation = xo.getAttribute(USE_SPECTRAL_REPRESENTATION, false);
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
         boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
         boolean useRewardAwareBranchModelDelegate = xo.getAttribute("useRewardAwareBranchModelDelegate", false);
+        boolean useAugmentedEpochNodes = xo.getAttribute("useAugmentedEpochNodes", false);
         if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
             throw new RuntimeException("Need to specify derivative types.");
         }
-        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, useRewardAwareBranchModelDelegate);
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities,
+                useSpectralRepresentation, useRewardAwareBranchModelDelegate, useAugmentedEpochNodes);
 
         int beagleInstanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
         String bic = System.getProperty(BEAGLE_INSTANCE_COUNT);
@@ -495,6 +521,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
         final boolean delayScaling = xo.getAttribute(DELAY_SCALING, true);
         final boolean phyloGeoFast = xo.getAttribute(PHYLOGEOFAST, false);
+        final String phyloGeoFastRepresentation = xo.getAttribute(
+                PHYLOGEOFAST_REPRESENTATION,
+                PHYLOGEOFAST_REPRESENTATION_STANDARD);
 
         if (tipStatesModel != null) {
             throw new XMLParseException("TreeDataLikelihood is not currently compatible with TipStateModel (i.e., a sequence error model).");
@@ -514,7 +543,8 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 scalingScheme,
                 delayScaling,
                 settings,
-                phyloGeoFast/*,
+                phyloGeoFast,
+                phyloGeoFastRepresentation/*,
                 indicators,
                 polyaPartitionCategories,
                 polyaSiteRateModels,
@@ -540,6 +570,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
             AttributeRule.newBooleanRule(PHYLOGEOFAST, true),
+            AttributeRule.newStringRule(PHYLOGEOFAST_REPRESENTATION, true),
 
             // really it should be this set of elements or the PARTITION elements
             new OrRule(

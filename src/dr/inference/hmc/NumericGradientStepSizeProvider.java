@@ -36,8 +36,13 @@ import dr.xml.XMLParseException;
  * @author Marc A. Suchard
  */
 public interface NumericGradientStepSizeProvider {
-    double getNumericGradientStepSize();
-    void setNumericGradientStepSize(double ratio);
+    default double getNumericGradientStepSize() {
+        return StepSizeLevel.MEDIUM.getStepSizeRatio();
+    }
+
+    default void setNumericGradientStepSize(double ratio) {
+
+    }
 
     String NUMERIC_STEP_SIZE = "numericStepSize";
     static double parseStepSizeRatio(XMLObject xo)  throws XMLParseException {

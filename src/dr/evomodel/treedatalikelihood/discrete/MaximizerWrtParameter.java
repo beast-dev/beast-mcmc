@@ -115,6 +115,10 @@ public class MaximizerWrtParameter implements Reportable {
         }
     }
 
+    private long gradientCount = 0;
+    private long gradientTimeNs = 0;
+    private long firstGradientNs = 0;
+
     public static class Settings {
         int numberIterations;
         double stepSize;
@@ -460,6 +464,10 @@ public class MaximizerWrtParameter implements Reportable {
             sb.append("Not yet executed.");
         } else {
 
+            final long reportGradientCount = gradientCount;
+            final long reportGradientTimeNs = gradientTimeNs;
+            final long reportFirstGradientNs = firstGradientNs;
+
             if (transform != null) {
                 sb.append("Gradient is taken with respect to the transformed parameter values.\n");
                 sb.append("Untransformed X: ").append(new dr.math.matrixAlgebra.Vector(transform.inverse(minimumPoint, 0, minimumPoint.length))).append("\n");
@@ -486,6 +494,18 @@ public class MaximizerWrtParameter implements Reportable {
             }
             sb.append("Time: ").append(time).append("s\n");
             sb.append("Count: ").append(count).append("\n");
+
+            sb.append("Gradient evals: ").append(reportGradientCount).append("\n");
+            sb.append("Gradient time: ").append(reportGradientTimeNs / 1.0e9).append("s\n");
+            if (reportGradientCount > 0) {
+                sb.append("Time per gradient: ")
+                        .append((reportGradientTimeNs / (double) reportGradientCount) / 1.0e6).append("ms\n");
+            }
+            if (reportGradientCount > 1) {
+                sb.append("Time per gradient (excl. warmup): ")
+                        .append(((reportGradientTimeNs - reportFirstGradientNs) / (double) (reportGradientCount - 1)) / 1.0e6)
+                        .append("ms\n");
+            }
 
         }
 
@@ -833,6 +853,8 @@ public class MaximizerWrtParameter implements Reportable {
             @Override
             public double[] gradientAt(double[] argument) {
 
+                final long gradStart = System.nanoTime();
+
                 if (transform != null) {
                     argument = transform.inverse(argument, 0, argument.length);
                 }
@@ -854,6 +876,13 @@ public class MaximizerWrtParameter implements Reportable {
                 for (int i = 0; i < result.length; ++i) {
                     result[i] = -result[i];
                 }
+
+                final long gradElapsed = System.nanoTime() - gradStart;
+                if (gradientCount == 0) {
+                    firstGradientNs = gradElapsed;
+                }
+                gradientTimeNs += gradElapsed;
+                ++gradientCount;
 
                 return result;
             }

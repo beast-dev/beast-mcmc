@@ -32,6 +32,7 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.util.CloneModelDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
@@ -72,7 +73,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     private PartitionSubstitutionModel currentModel = null;
     private Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
     private TitledBorder modelBorder;
-    private CloneModelDialog cloneModelDialog = null;
+    private CloneModelDialog<PartitionSubstitutionModel> cloneModelDialog = null;
 
     private final BeautiFrame frame;
     //    CreateModelDialog createModelDialog = null;
@@ -111,9 +112,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(addModelAction);
-//        actionPanel1.setRemoveAction(removeModelAction);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -167,10 +165,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             modelPanelParent.removeAll();
             modelBorder.setTitle("Substitution Model");
 
-//            if (currentDiscreteTraitOption != null) {
-//                this.remove(d_splitPane);
-//                currentDiscreteTraitOption = null;
-//            }
             return;
         }
     }
@@ -308,7 +302,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private void cloneModelSettings() {
         if (cloneModelDialog == null) {
-            cloneModelDialog = new CloneModelDialog(frame);
+            cloneModelDialog = new CloneModelDialog<PartitionSubstitutionModel>(frame, "substitution model");
         }
 
         Set<DataType> dataTypes = new HashSet<DataType>();
@@ -340,6 +334,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 }
             }
 
+            // the panel on the right is still showing the settings the model had
+            selectionChanged();
+            fireModelsChanged();
             repaint();
 
         }
@@ -457,10 +454,13 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                     aHasFocus,
                     aRow, aColumn);
 
-            if (!isUsed(aRow))
-                renderer.setForeground(Color.gray);
-            else
-                renderer.setForeground(Color.black);
+            // an unused row is greyed; the rest take the table's colours, so that a selected row is
+            // still readable (and so that a dark appearance works)
+            if (!isUsed(aRow)) {
+                renderer.setForeground(UIManager.getColor("Label.disabledForeground"));
+            } else {
+                renderer.setForeground(aIsSelected ? aTable.getSelectionForeground() : aTable.getForeground());
+            }
             return this;
         }
 

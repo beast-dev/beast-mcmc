@@ -4,7 +4,6 @@ import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchmodel.RewardsAwareBranchModelGradient;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.preorder.RewardsAwarePartialLikelihoodProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.xml.*;

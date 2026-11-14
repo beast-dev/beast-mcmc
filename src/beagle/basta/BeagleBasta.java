@@ -49,11 +49,36 @@ public interface BeagleBasta extends Beagle {
                                  int coalescentIndex,
                                  double[] result);
 
+    void allocateCoalescentBuffers(int coalescentBufferCount, int maxCoalescentIntervalCount, int partialsBufferCount, int initial, int threadCount);
+
     void getBastaBuffer(int index, double[] buffer);
 
     void updateBastaPartialsGrad(int[] operations, int operationCount, int[] intervals, int intervalCount, int populationSizeIndex, int coalescentProbabilityIndex);
 
     void updateTransitionMatricesGrad(int[] transitionMatrixIndices, double[] branchLengths, int count);
 
-    void accumulateBastaPartialsGrad(int[] operations, int operationCount,  final int[] intervalStarts, int intervalCount, final double[] intervalLengths, int populationSizeIndex, int coalescentProbabilityIndex, double[] result);
+
+    void accumulateBastaPartialsGrad(int[] operations, int operationCount,
+                                     final int[] intervalStarts, int intervalCount,
+                                     final double[] intervalLengths,
+                                     int populationSizeIndex,
+                                     int coalescentProbabilityIndex,
+                                     int eigenIndex,
+                                     int partialAdjointBufferBase,
+                                     int matrixAdjointBufferBase,
+                                     double[] popSizeGradOut,
+                                     double[] result);
+
+    void allocateCoalescentGradBuffers(int partialsCount);
+
+    void accumulateEigenBasisGradient(int eigenIndex,
+                                      int matrixAdjointBufferBase,
+                                      double[] branchLengths,
+                                      int matrixCount, boolean hasComplexEigenvalues,
+                                      double[] outRateGradient);
+
+
+    void uploadBastaSlabMetadata(int[] packed, int packedLen);
+
+    int[] getBastaSlabConstants();
 }

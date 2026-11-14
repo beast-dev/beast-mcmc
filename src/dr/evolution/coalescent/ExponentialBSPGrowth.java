@@ -35,6 +35,8 @@ package dr.evolution.coalescent;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ *
+ * @deprecated
  */
 public class ExponentialBSPGrowth extends DemographicFunction.Abstract {
 

@@ -28,6 +28,7 @@
 package dr.app.beauti.ancestralstatespanel;
 
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
@@ -83,9 +84,11 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             "Reconstruct complete change history on tree");
 
 
-    private JTextArea dNnSText = new JTextArea(
+    private static final String DNDS_REQUIREMENTS =
             "This model requires a 3-partition codon model to be selected in the Site model " +
-                    "for this partition and NO Site Heterogeneity Model before it can be selected.");
+                    "for this partition and NO Site Heterogeneity Model before it can be selected.";
+
+    private JTextArea dNnSText = new JTextArea(DNDS_REQUIREMENTS);
 
     // dNdS robust counting is automatic if RC is turned on for a codon
     // partitioned data set.
@@ -162,16 +165,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 ancestralStatesPanel.fireModelChanged();
 
                 // The following is only necessary is simpleCounting XOR robustCounting
-//                if (itemEvent.getItem() == countingCheck) {
-//                    boolean enableRC = !countingCheck.isSelected() && ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
-//                    dNdSRobustCountingCheck.setEnabled(enableRC);
-//                    dNnSText.setEnabled(enableRC);
-//                }
 //
-//                if (itemEvent.getItem() == dNdSRobustCountingCheck) {
-//                    boolean enableSimpleCounting = !dNdSRobustCountingCheck.isSelected();
-//                    countingCheck.setEnabled(enableSimpleCounting);
-//                }
                 completeHistoryLoggingCheck.setEnabled(countingCheck.isSelected() || dNdSRobustCountingCheck.isSelected());
             }
         };
@@ -245,8 +239,12 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 dNdSRobustCountingAvailable = true; // but will be disabled if not codon partitioned
                 break;
             case DataType.AMINO_ACIDS:
-            case DataType.GENERAL:
             case DataType.TWO_STATES:
+                break;
+            case DataType.GENERAL:
+                if (partition.getPartitionSubstitutionModel().getDiscreteSubstModelType() == DiscreteSubstModelType.BIT) {
+                    countingAvailable = false;
+                }
                 break;
             case DataType.CONTINUOUS:
                 countingAvailable = false;
@@ -271,7 +269,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 // mergedPatterns for codon positions 1&2 will always be compressed...
                 // so cannot do any of this stuff. Disable it and provide an explanation.
                 addSpanningComponent(new JLabel("<html>Unable to provide these options with the 1+2,3 codon<br>" +
-                        "position model. Use a 1,2,3 codon position model instead.<br><html>"));
+                        "position model. Use a 1,2,3 codon position model instead.<br></html>"));
             }
 
 
@@ -354,7 +352,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 PanelUtils.setupComponent(dNnSText);
                 addComponent(dNnSText);
 
-                boolean enableRC = ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
+                String reason = ancestralStatesComponent.dNdSRobustCountingUnavailableReason(partition);
+                dNnSText.setText(reason != null ? reason : DNDS_REQUIREMENTS);
+
+                boolean enableRC = (reason == null);
                 // && !ancestralStatesComponent.isCountingStates(partition);
                 dNdSRobustCountingCheck.setEnabled(enableRC);
 

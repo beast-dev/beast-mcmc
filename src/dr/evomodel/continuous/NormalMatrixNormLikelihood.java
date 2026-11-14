@@ -88,7 +88,7 @@ public class NormalMatrixNormLikelihood extends MultivariateGammaLikelihood impl
 
     @Override
     public int getColumnDimension() {
-        return dim;
+        return columnNorms.getDimension();
     }
 
     public static final AbstractXMLObjectParser PARSER = new AbstractXMLObjectParser() {

@@ -141,6 +141,9 @@ public class CreateTraitDialog {
 
             dialog.setVisible(true);
 
+            // the dialog is modal, so it has been closed by the time this returns
+            dialog.dispose();
+
             Integer value = (Integer) optionPane.getValue();
             if (value != null && value != -1) {
                 result = value;
@@ -168,7 +171,9 @@ public class CreateTraitDialog {
 
         optionPanel.addComponent(importRadio);
         optionPanel.addComponent(exampleButton);
-        exampleButton.putClientProperty("Quaqua.Button.style", "help");
+        // (a round help button on macOS, where the text is not shown)
+        exampleButton.putClientProperty("JButton.buttonType", "help");
+        exampleButton.setToolTipText(exampleButton.getText());
 
         optionPanel.addComponentWithLabel("Type:", typeCombo);
         optionPanel.addComponent(createTraitPartitionCheck);

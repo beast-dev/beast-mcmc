@@ -40,6 +40,9 @@ import java.util.List;
  */
 public class LinkedParameter implements Serializable {
 
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 5883346266653394577L;
     private String name;
     final private Parameter argumentParameter;
     final private Operator argumentOperator;

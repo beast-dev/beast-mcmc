@@ -31,9 +31,9 @@ import dr.app.beauti.types.*;
 import dr.evolution.util.Taxa;
 import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.evomodelxml.speciation.BirthDeathEpidemiologyModelParser;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
-import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
+import dr.evomodelxml.birthdeath.BirthDeathEpidemiologyModelParser;
+import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
+import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
 import dr.math.MathUtils;
 
 import java.util.List;
@@ -56,6 +56,11 @@ public class PartitionTreePrior extends PartitionOptions {
     private double skyGridInterval = Double.NaN;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
+    private boolean doublingTimeLogging = false;
+    private boolean growthRateLogging = false;
+    private boolean r0Logging = false;
+    private double serialIntervalMean = 0.0;
+    private double serialIntervalStdev = 0.0;
     private CalibrationPoints.CorrectionType calibCorrectionType = CalibrationPoints.CorrectionType.EXACT;
     private boolean fixedTree = false;
     private Taxa subtreeTaxonSet = null;
@@ -64,7 +69,7 @@ public class PartitionTreePrior extends PartitionOptions {
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -87,10 +92,14 @@ public class PartitionTreePrior extends PartitionOptions {
 
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.populationSizeModel = source.populationSizeModel;
+        this.doublingTimeLogging = source.doublingTimeLogging;
+        this.r0Logging = source.r0Logging;
+        this.serialIntervalMean = source.serialIntervalMean;
+        this.serialIntervalStdev = source.serialIntervalStdev;
         this.calibCorrectionType = source.calibCorrectionType;
         this.fixedTree = source.fixedTree;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public void alternatePopulationSizePriors() {
@@ -114,7 +123,7 @@ public class PartitionTreePrior extends PartitionOptions {
     }
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
         if (options.useGammaPriorPopSize()) {
             createParameterGammaPrior("constant.popSize", "coalescent population size parameter",
@@ -196,11 +205,11 @@ public class PartitionTreePrior extends PartitionOptions {
 
         /*createNonNegativeParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 0.01, 0.0, 100000.0);*/
-        createParameterLognormalPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
+        createParameterLognormalPrior(Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
                 PriorScaleType.NONE, 2.0, 1.0, 1.5, 0.0);
-        createNonNegativeParameterUniformPrior(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Birth-Death speciation process relative death rate",
+        createNonNegativeParameterUniformPrior(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Birth-Death speciation process relative death rate",
                 PriorScaleType.NONE, 0.5, 0.0, 1.0);
-        createParameterBetaDistributionPrior(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB,
+        createParameterBetaDistributionPrior(Gernhard08BirthDeathModelParser.BIRTH_DEATH + "." + Gernhard08BirthDeathModelParser.SAMPLE_PROB,
                 "Birth-Death the proportion of taxa sampled from birth-death tree",
                 0.01, 1.0, 1.0, 0.0);
         /*createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -261,10 +270,6 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
         //createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
         createOperator("expansion.ancestralProportion", OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
-//        createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);
-//        createOperator("skyline.groupSize", OperatorType.INTEGER_DELTA_EXCHANGE, 1.0, demoWeights * 2);
-//        createOperator("demographic.populationMean", OperatorType.SCALE, 0.9, demoWeights);
-//        createOperator("demographic.indicators", OperatorType.BITFLIP, 1, 2 * treeWeights);
 //
 //        // hack pass distribution in name
 //        createOperatorUsing2Parameters("demographic.popSize", "demographic.populationMeanDist", "", "demographic.popSize",
@@ -282,11 +287,11 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
-        createScaleOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
+        createScaleOperator(Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
         //createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
-        createOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
+        createOperator(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
 
-        createScaleOperator(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB, demoTuning, demoWeights);
+        createScaleOperator(Gernhard08BirthDeathModelParser.BIRTH_DEATH + "." + Gernhard08BirthDeathModelParser.SAMPLE_PROB, demoTuning, demoWeights);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA, demoTuning, 1);
         /*createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -351,11 +356,6 @@ public class PartitionTreePrior extends PartitionOptions {
                 params.add(getParameter("expansion.doublingTime"));
             }
             params.add(getParameter("expansion.ancestralProportion"));
-//        } else if (nodeHeightPrior == TreePriorType.SKYLINE) {
-//            params.add(getParameter("skyline.popSize"));
-//        } else if (nodeHeightPrior == TreePriorType.EXTENDED_SKYLINE) {
-//            params.add(getParameter("demographic.populationSizeChanges"));
-//            params.add(getParameter("demographic.populationMean"));
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             // params.add(getParameter("skyride.popSize")); // force user to use GMRF prior, not allowed to change
             params.add(getParameter("skyride.precision"));
@@ -365,10 +365,10 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
-            params.add(getParameter(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
-            params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+            params.add(getParameter(Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
+            params.add(getParameter(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
             if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING)
-                params.add(getParameter(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB));
+                params.add(getParameter(Gernhard08BirthDeathModelParser.BIRTH_DEATH + "." + Gernhard08BirthDeathModelParser.SAMPLE_PROB));
 
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING) {
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -386,11 +386,6 @@ public class PartitionTreePrior extends PartitionOptions {
 //            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                    + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
 
-//        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.ORIGIN));
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.R0));
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.RECOVERY_RATE));
-//            params.add(getParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
 
         }
 
@@ -436,9 +431,6 @@ public class PartitionTreePrior extends PartitionOptions {
                 ops.add(getOperator("expansion.doublingTime"));
             }
             ops.add(getOperator("expansion.ancestralProportion"));
-//        } else if (nodeHeightPrior == TreePriorType.SKYLINE) {
-//            ops.add(getOperator("skyline.popSize"));
-//            ops.add(getOperator("skyline.groupSize"));
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             ops.add(getOperator("gmrfGibbsOperator"));
         } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
@@ -449,10 +441,10 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             ops.add(getOperator("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
-            ops.add(getOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
-            ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+            ops.add(getOperator(Gernhard08BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
+            ops.add(getOperator(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
             if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING)
-                ops.add(getOperator(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB));
+                ops.add(getOperator(Gernhard08BirthDeathModelParser.BIRTH_DEATH + "." + Gernhard08BirthDeathModelParser.SAMPLE_PROB));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING) {
             ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                     + BirthDeathSerialSamplingModelParser.LAMBDA));
@@ -469,13 +461,6 @@ public class PartitionTreePrior extends PartitionOptions {
 //                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                + BirthDeathSerialSamplingModelParser.R));
 //                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-//                + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE));
-//            }
-//        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.ORIGIN));
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.R0));
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.RECOVERY_RATE));
-//            ops.add(getOperator(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY));
         }
 
         if (options.operatorSetType != OperatorSetType.CUSTOM) {
@@ -519,12 +504,41 @@ public class PartitionTreePrior extends PartitionOptions {
         this.nodeHeightPrior = nodeHeightPrior;
     }
 
+    public void setParameterization(TreePriorParameterizationType parameterization) {
+        this.parameterization = parameterization;
+    }
     public TreePriorParameterizationType getParameterization() {
         return parameterization;
     }
-
-    public void setParameterization(TreePriorParameterizationType parameterization) {
-        this.parameterization = parameterization;
+    public void setDoublingTimeLogging(boolean doublingTimeLogging) {
+        this.doublingTimeLogging = doublingTimeLogging;
+    }
+    public boolean isDoublingTimeLogging() {
+        return doublingTimeLogging;
+    }
+    public void setGrowthRateLogging(boolean growthRateLogging) {
+        this.growthRateLogging = growthRateLogging;
+    }
+    public boolean isGrowthRateLogging() {
+        return growthRateLogging;
+    }
+    public void setR0Logging(boolean r0Logging) {
+        this.r0Logging = r0Logging;
+    }
+    public boolean isR0Logging() {
+        return r0Logging;
+    }
+    public void setSerialIntervalMean(double serialIntervalMean) {
+        this.serialIntervalMean = serialIntervalMean;
+    }
+    public double getSerialIntervalMean() {
+        return serialIntervalMean;
+    }
+    public void setSerialIntervalStdev(double serialIntervalStdev) {
+        this.serialIntervalStdev = serialIntervalStdev;
+    }
+    public double getSerialIntervalStdev() {
+        return serialIntervalStdev;
     }
 
     public int getSkylineGroupCount() {

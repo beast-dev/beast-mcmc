@@ -28,11 +28,13 @@
 package dr.evomodelxml.coalescent.demographicmodel;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ConstantPopulationSizeModel;
+import dr.evomodel.coalescent.piecewise.ConstantPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * Parses an element from an DOM document into a ConstantPopulation.
@@ -57,8 +59,11 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
 
         if (logSpace) {
             // ConstantPopulationSizeModel provides a model with N0 in log space
+            Logger.getLogger("dr.evomodel").info("Constant population size coalescent model (population size in log space).");
+
             return new ConstantPopulationSizeModel(N0Param, units);
         } else {
+            Logger.getLogger("dr.evomodel").info("Constant population size coalescent model.");
             return new ConstantPopulationModel(N0Param, units);
         }
     }

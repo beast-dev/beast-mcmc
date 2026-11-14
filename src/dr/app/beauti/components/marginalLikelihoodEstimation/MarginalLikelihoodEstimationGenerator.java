@@ -521,8 +521,6 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 //                    case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
 //
 //
-//
-//
 //                        //TODO complete
 //
 //                        break;
@@ -786,6 +784,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             case MTINV:
                             case MTDEU:
                             case MTMAM:
+                            case Q_3DI_AF:
+                            case Q_3DI_LLM:
+                            case Q_3DI_FS_LOGODDS:
                                 //do nothing
                                 break;
 

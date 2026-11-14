@@ -1,7 +1,7 @@
 /*
  * LogGenerator.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -31,23 +31,21 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchratemodel.*;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.tree.*;
-import dr.inference.model.Statistic;
+import dr.inference.model.ParameterParser;
 import dr.inference.model.StatisticParser;
 import dr.inferencexml.loggers.CheckpointLoggerParser;
-import dr.oldevomodelxml.clock.ACLikelihoodParser;
-import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.inference.model.ParameterParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
+import dr.oldevomodelxml.clock.ACLikelihoodParser;
 import dr.util.Attribute;
+import dr.util.FileHelpers;
 import dr.xml.XMLParser;
 
 import java.util.ArrayList;
@@ -184,6 +182,9 @@ public class LogGenerator extends Generator {
 
         if (options.logFileName == null) {
             options.logFileName = options.fileNameStem + ".log";
+            if (options.compressLog) {
+                options.logFileName += FileHelpers.ZSTD_EXTENSION;
+            }
         }
         writer.writeOpenTag(LoggerParser.LOG,
                 new Attribute[]{
@@ -303,10 +304,6 @@ public class LogGenerator extends Generator {
             writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
         }
 
-//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-//	        treePriorGenerator.setModelPrefix("");
-//        	treePriorGenerator.writeParameterLog(options.activedSameTreePrior, writer);
-//        } else { // no species
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
 //	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // priorName.treeModel
             treePriorGenerator.writeParameterLog(prior, writer);
@@ -318,10 +315,6 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
-//                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
-//                if (model.getClockType() == ClockType.UNCORRELATED) {
-//                    switch (model.getClockDistributionType()) {
 //                        case LOGNORMAL:
 //                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
 //                            break;
@@ -333,10 +326,6 @@ public class LogGenerator extends Generator {
 ////                            break;
 //                        case EXPONENTIAL:
 //                            // nothing required
-//                            break;
-//                    }
-//                }
-//            }
             clockModelGenerator.writeLog(model, writer);
         }
 
@@ -389,6 +378,9 @@ public class LogGenerator extends Generator {
             if (options.treeFileName.get(0).endsWith(".txt")) {
                 treeLogFileName += ".txt";
             }
+            if (options.compressTreeLog) {
+                treeLogFileName += FileHelpers.ZSTD_EXTENSION;
+            }
 
             writeTreeLogToFile(writer, treeLogFileName, tree);
         }
@@ -400,6 +392,9 @@ public class LogGenerator extends Generator {
                         "(subst).trees";
                 if (options.treeFileName.get(0).endsWith(".txt")) {
                     treeLogFileName += ".txt";
+                }
+                if (options.compressTreeLog) {
+                    treeLogFileName += FileHelpers.ZSTD_EXTENSION;
                 }
 
                 writeSubstTreeLogToFile(writer, treeLogFileName, tree);

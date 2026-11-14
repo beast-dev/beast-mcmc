@@ -180,7 +180,7 @@ public class MultivariateTraitDebugUtilities {
 
     private static double getScaledBranchLength(NodeRef node, Tree tree, BranchRates branchRates, double normalization) {
         double branchLength = tree.getBranchLength(node);
-        if (branchRates != null) {
+        if (branchRates != null && !tree.isRoot(node)) { // rate models need not carry a root rate
             branchLength *= branchRates.getBranchRate(tree, node);
         }
         branchLength *= normalization;

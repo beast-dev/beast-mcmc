@@ -15,12 +15,6 @@ BEAST X is a cross-platform program for Bayesian analysis of molecular sequences
 
 [Older BEAST Downloads](https://code.google.com/p/beast-mcmc/downloads)
 
-## Other Downloads
-
-[BEASTGen v1.0.2 .tgz file](https://drive.google.com/file/d/0B37cqWL7UhTAVFVhQ2o1Y093b1k)
-
-[BEASTGen v1.0.2 .ZIP file](https://drive.google.com/file/d/0B37cqWL7UhTAWm81VklIeUNtQVU)
-
 # Documentation
 
 [BEAST Documentation Website](http://beast.community)

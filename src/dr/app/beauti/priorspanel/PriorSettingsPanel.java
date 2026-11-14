@@ -60,6 +60,7 @@ public class PriorSettingsPanel extends JPanel {
     private JComboBox priorCombo;
 
     private JLabel citationText;
+    private JLabel hierarchicalExponentialText;
     private JLabel oneOverXCaution;
     private JLabel improperCaution;
     private JChart chart;
@@ -81,11 +82,10 @@ public class PriorSettingsPanel extends JPanel {
         optionsPanels.put(PriorType.GAMMA_PRIOR, PriorOptionsPanel.GAMMA);
         optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, PriorOptionsPanel.INVERSE_GAMMA);
         optionsPanels.put(PriorType.BETA_PRIOR, PriorOptionsPanel.BETA);
+        optionsPanels.put(PriorType.POISSON_PRIOR, PriorOptionsPanel.POISSON);
         optionsPanels.put(PriorType.CTMC_RATE_REFERENCE_PRIOR, PriorOptionsPanel.CTMC_RATE_REFERENCE);
+        optionsPanels.put(PriorType.HIERARCHICAL_EXPONENTIAL_PRIOR, PriorOptionsPanel.HIERARCHICAL_EXPONENTIAL);
         optionsPanels.put(PriorType.ONE_OVER_X_PRIOR, PriorOptionsPanel.ONE_OVER_X);
-//        optionsPanels.put(PriorType.NORMAL_HPM_PRIOR, new NormalHPMOptionsPanel());
-//        optionsPanels.put(PriorType.LOGNORMAL_HPM_PRIOR, new LognormalHPMOptionsPanel());
-//        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
         chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
                 new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA));
@@ -112,6 +112,16 @@ public class PriorSettingsPanel extends JPanel {
                 "<html>Approximate continuous time Markov chain rate <br>" +
                         "reference prior developed in Ferreira & Suchard (2008).<br>" +
                         "Use when explicit prior information is unavailable</html>");
+
+        hierarchicalExponentialText = new JLabel();
+        hierarchicalExponentialText.setFont(quantileLabels.getFont().deriveFont(11.0f));
+        hierarchicalExponentialText.setOpaque(false);
+        hierarchicalExponentialText.setText(
+                "<html>Exponential prior whose mean is itself estimated under a <br>" +
+                        "gamma hyperprior, giving a K-distribution on the rate. This is <br>" +
+                        "more diffuse than the CTMC rate reference prior and is <br>" +
+                        "recommended for dispersal rates by Gao et al. (2023).<br>" +
+                        "The hyperprior can be edited via the '.exp.mean' parameter.</html>");
 
         oneOverXCaution = new JLabel();
         oneOverXCaution.setFont(quantileLabels.getFont().deriveFont(11.0f));
@@ -176,15 +186,6 @@ public class PriorSettingsPanel extends JPanel {
     }
 
     public void getArguments(Parameter parameter) {
-//        if (parameter.isNodeHeight || parameter.isStatistic) {
-//            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-//            if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
-//                parameter.initial = Double.NaN;
-//                return;
-//            }
-//        } else {
-//            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-//        }
 //
 //        if (!parameter.isStatistic && initialField.getValue() != null) parameter.initial = initialField.getValue();
 //
@@ -238,6 +239,10 @@ public class PriorSettingsPanel extends JPanel {
             optionsPanel.addSpanningComponent(citationText);
         }
 
+        if (priorType == PriorType.HIERARCHICAL_EXPONENTIAL_PRIOR) {
+            optionsPanel.addSpanningComponent(hierarchicalExponentialText);
+        }
+
         if (priorType == PriorType.ONE_OVER_X_PRIOR) {
             optionsPanel.addSpanningComponent(oneOverXCaution);
         }
@@ -272,8 +277,6 @@ public class PriorSettingsPanel extends JPanel {
         repaint();
     }
 
-    NumberFormatter formatter = new NumberFormatter(4);
-
     void setupChart() {
         chart.removeAllPlots();
 
@@ -297,6 +300,8 @@ public class PriorSettingsPanel extends JPanel {
 
         chart.addPlot(new PDFPlot(distribution, offset));
         if (distribution != null) {
+            int sf = 5;
+            NumberFormatter formatter = new NumberFormatter(sf);
             quantileText.setText(formatter.format(distribution.quantile(0.025)) +
                     "\n" + formatter.format(distribution.quantile(0.05)) +
                     "\n" + formatter.format(distribution.quantile(0.5)) +

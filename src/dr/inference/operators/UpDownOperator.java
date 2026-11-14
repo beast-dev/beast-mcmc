@@ -107,21 +107,38 @@ public class UpDownOperator extends AbstractAdaptableOperator {
     }
 
     public final String getOperatorName() {
-        String name = "";
-        if( upParameter != null ) {
-            name = "up:";
+        StringBuilder name = new StringBuilder();
+        if( upParameter != null && upParameter.length > 0 ) {
+            name = new StringBuilder("up(");
+            boolean first = true;
             for( Scalable up : upParameter ) {
-                name = name + up.getName() + " ";
+                if (!first) {
+                    name.append(" ");
+                } else {
+                    first = false;
+                }
+                name.append(up.getName());
             }
+            name.append(")");
         }
 
         if( downParameter != null ) {
-            name += "down:";
-            for( Scalable dn : downParameter ) {
-                name = name + dn.getName() + " ";
+            if(upParameter != null && upParameter.length > 0 ) {
+                name.append("/");
             }
+            name.append("down(");
+            boolean first = true;
+            for( Scalable dn : downParameter ) {
+                if (!first) {
+                    name.append(" ");
+                } else {
+                    first = false;
+                }
+                name.append(dn.getName());
+            }
+            name.append(")");
         }
-        return name;
+        return name.toString();
     }
 
     @Override

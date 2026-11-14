@@ -1,7 +1,7 @@
 /*
  * Generator.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2025 the BEAST Development Team
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -81,15 +81,6 @@ public abstract class Generator {
      * @param id    the id
      * @param value the value
      */
-//    public void fixParameter(Parameter parameter, double value) {
-////        dr.app.beauti.options.Parameter parameter = options.getParameter(id);
-//        if (parameter == null) {
-//            throw new IllegalArgumentException("parameter with name, " + parameter.getName() + ", is unknown");
-//        }
-//        parameter.isFixed = true;
-//        parameter.initial = value;
-//    }
-
 
     /**
      * write a parameter
@@ -124,7 +115,6 @@ public abstract class Generator {
         }
         writeParameter(prefix + id, parameter, writer);
     }
-
 
     public void writeParameter(int num, String id, PartitionSubstitutionModel model, XMLWriter writer) {
         Parameter parameter = model.getParameter(model.getPrefixCodon(num) + id);
@@ -242,6 +232,22 @@ public abstract class Generator {
         }
     }
 
+    public void writeParameter(String id, double value, XMLWriter writer) {
+        ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
+        if (id != null && id.length() > 0) {
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, id));
+        }
+        if (!Double.isNaN(value)) {
+            attributes.add(new Attribute.Default<String>(ParameterParser.VALUE, "" + value));
+        }
+
+        Attribute[] attrArray = new Attribute[attributes.size()];
+        for (int i = 0; i < attrArray.length; i++) {
+            attrArray[i] = attributes.get(i);
+        }
+
+        writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
+    }
 
     /**
      * write a parameter
@@ -319,7 +325,6 @@ public abstract class Generator {
 
         return multi;
     }
-
 
     /**
      * Write the distribution for *DistributionModel

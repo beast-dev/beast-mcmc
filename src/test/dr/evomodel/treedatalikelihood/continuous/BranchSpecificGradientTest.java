@@ -67,7 +67,7 @@ public class BranchSpecificGradientTest extends ContinuousTraitTest {
 
         // Rates
         ArbitraryBranchRates.BranchRateTransform transform = make(false, true, false, null, null);
-        Parameter branchRates = new Parameter.Default(new double[]{10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
+        Parameter branchRates = new Parameter.Default(new double[]{8, 9, 7, 10, 6, 5, 4, 3, 2, 1});
         ArbitraryBranchRates rateModel = new ArbitraryBranchRates(treeModel, branchRates, transform, false);
 
         ContinuousRateTransformation rateTransformation = new ContinuousRateTransformation.Default(

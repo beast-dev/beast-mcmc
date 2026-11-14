@@ -39,7 +39,6 @@ import dr.util.ComparableDouble;
 import dr.util.HeapSort;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 
 /**
@@ -283,7 +282,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
             this.intervalNodeMapping.initializeMaps();
             for(int i=0; i<intervals.getIntervalCount()+1;i++){
                 intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
-                if(i>0&& i<intervals.getIntervalCount()){ //If the event is not the first but not the last add it again for the start of the next interval
+                if(i>0 && i<intervals.getIntervalCount()){ //If the event is not the first but not the last add it again for the start of the next interval
                     intervalNodeMapping.addNode(intervals.getNodeForEvent(i));
                 }
             }
@@ -508,7 +507,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     }
     public interface IntervalNodeMapping {
 
-        void addNode(int nodeNumbe);
+        void addNode(int nodeNumber);
         void setIntervalStartIndices(int intervalCount);
         void initializeMaps();
 

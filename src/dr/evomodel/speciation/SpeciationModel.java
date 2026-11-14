@@ -30,6 +30,7 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.evomodel.birthdeath.BirthDeathModelGradientProvider;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -56,7 +57,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
 
-    public SpeciationModelGradientProvider getProvider() {
+    public BirthDeathModelGradientProvider getProvider() {
         throw new RuntimeException("Not yet implemented");
     }
 

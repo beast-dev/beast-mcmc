@@ -54,13 +54,24 @@ public class BayesianSkylineGradient implements
     private final BayesianSkylineLikelihood likelihood;
     private final WrtParameter wrtParameter;
     private final Double tolerance;
+    private double numericGradientStepSize;
 
     public BayesianSkylineGradient(BayesianSkylineLikelihood likelihood,
                                    WrtParameter wrtParameter,
-                                   Double tolerance) {
+                                   Double tolerance,
+                                   double numericGradientStepSize) {
         this.likelihood = likelihood;
         this.wrtParameter = wrtParameter;
         this.tolerance = tolerance;
+        this.numericGradientStepSize = numericGradientStepSize;
+    }
+
+    public double getNumericGradientStepSize() {
+        return numericGradientStepSize;
+    }
+
+    public void setNumericGradientStepSize(double numericGradientStepSize) {
+        this.numericGradientStepSize = numericGradientStepSize;
     }
 
     @Override

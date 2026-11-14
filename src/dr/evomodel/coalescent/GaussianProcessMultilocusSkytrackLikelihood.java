@@ -27,19 +27,14 @@
 
 package dr.evomodel.coalescent;
 
-//import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-//import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-//import no.uib.cipr.matrix.DenseVector;
-//import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;
-//import java.util.Arrays;
 import java.util.List;
 
 /**

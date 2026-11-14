@@ -81,14 +81,21 @@ public class TreeLikelihoodGenerator extends Generator {
         }
     }
 
+    /**
+     * The id of the TreeDataLikelihood for the partitions sharing this tree and clock model.
+     * Use this wherever the likelihood is referenced (e.g., by gradients) so the ids stay in sync.
+     */
+    public static String getTreeDataLikelihoodId(PartitionTreeModel treeModel, PartitionClockModel clockModel) {
+        return treeModel.getPrefix() + clockModel.getPrefix() + "treeLikelihood";
+    }
+
     public void writeTreeDataLikelihood(List<PartitionData> partitions, XMLWriter writer) {
 
         PartitionSubstitutionModel substModel = partitions.get(0).getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
         PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-        String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
-        String idString = prefix + "treeLikelihood";
+        String idString = getTreeDataLikelihoodId(treeModel, clockModel);
 
         Attribute[] attributes = new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, idString),
@@ -138,7 +145,6 @@ public class TreeLikelihoodGenerator extends Generator {
         writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModel.getPrefix() + DefaultTreeModel.TREE_MODEL);
         ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
-
         writer.writeCloseTag(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD);
 
     }
@@ -155,10 +161,6 @@ public class TreeLikelihoodGenerator extends Generator {
                 .getComponentOptions(AncestralStatesComponentOptions.class);
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-
-        if (model.isDolloModel()) {
-            return; // DolloComponent will add tree likelihood
-        }
 
         String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
@@ -274,10 +276,7 @@ public class TreeLikelihoodGenerator extends Generator {
             PartitionTreeModel treeModel = partitions.get(0).getPartitionTreeModel();
             PartitionClockModel clockModel = partitions.get(0).getPartitionClockModel();
 
-            String prefix = treeModel.getPrefix() + clockModel.getPrefix(); // use the treemodel prefix
-            String idString = prefix + "treeLikelihood";
-
-            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, idString);
+            writer.writeIDref(TreeDataLikelihoodParser.TREE_DATA_LIKELIHOOD, getTreeDataLikelihoodId(treeModel, clockModel));
         }
 
         for (AbstractPartitionData partition : options.otherPartitions) {
@@ -291,10 +290,6 @@ public class TreeLikelihoodGenerator extends Generator {
 
             if (model == null) {
                 return; // some partitions don't have evolutionary models (i.e., empirical trees)
-            }
-
-            if (model.isDolloModel()) {
-                return; // DolloComponent will add tree likelihood
             }
 
             String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
@@ -314,7 +309,6 @@ public class TreeLikelihoodGenerator extends Generator {
                 for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                     writeTreeLikelihoodRef(treeLikelihoodTag, TreeLikelihoodParser.TREE_LIKELIHOOD, i, partition, writer);
                 }
-
 
             } else {
                 writeTreeLikelihoodRef(treeLikelihoodTag, TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
@@ -350,7 +344,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model == null || model.isDolloModel()) {
+        if (model == null) {
             return false;
         }
 

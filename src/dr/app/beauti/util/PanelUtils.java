@@ -79,8 +79,8 @@ public class PanelUtils {
 //			comp.putClientProperty("JButton.buttonType", "roundRect");
 		}
 		if (comp instanceof JComboBox) {
-			comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
-			// comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
+			// (left as Aqua's pop-up style, the native control for choosing a value; the pull-down style,
+			// JComboBox.isPopDown, is for menus of actions)
 			ComboBoxRenderer renderer= new ComboBoxRenderer();
 			((JComboBox)comp).setRenderer(renderer);
 		}
@@ -105,14 +105,31 @@ public class PanelUtils {
 		return result;
 	}// END: getActiveFrame
 
+	/**
+	 * Pads the items of a combo box, and (like the default renderer) paints the selected item of the
+	 * popup list in the list's selection colours so that it is highlighted under the mouse.
+	 */
 	static class ComboBoxRenderer extends JLabel implements ListCellRenderer<Object> {
+		ComboBoxRenderer() {
+			setOpaque(true);
+		}
+
 		public Component getListCellRendererComponent(JList<? extends Object> list,
 													  Object value, int index, boolean isSelected, boolean cellHasFocus) {
 			if (value instanceof JSeparator){
 				return (Component)value;
 			}else{
-				setText("  " + value.toString() + " ");
+				setText("  " + value + " ");
 			}
+			if (isSelected) {
+				setBackground(list.getSelectionBackground());
+				setForeground(list.getSelectionForeground());
+			} else {
+				setBackground(list.getBackground());
+				setForeground(list.getForeground());
+			}
+			setEnabled(list.isEnabled());
+			setFont(list.getFont());
 			return this;
 		}
 	}

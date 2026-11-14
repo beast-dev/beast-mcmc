@@ -163,9 +163,6 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 if (e.getComponent() instanceof RealNumberField) {
                     String number = ((RealNumberField) e.getComponent()).getText();
                     if (!(number.equals("") || number.endsWith("e") || number.endsWith("E") || number.endsWith("-"))) {
-//                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
-//                        setupChart();
-//                        dialog.repaint();
                         for (Listener listener : listeners) {
                             listener.optionsPanelChanged();
                         }
@@ -192,6 +189,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void addListener(Listener listener) {
         listeners.add(listener);
+    }
+
+    void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
 
     void removeAllListeners() {
@@ -343,8 +344,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         if (dist != null && isTruncatable && isBounded) {
             if (isTruncatedCheck.isSelected()) {
-                lower = lowerField.getValue();
-                upper = upperField.getValue();
+                // (an empty or unparseable field leaves the bound as it was)
+                if (lowerField.getValue() != null) lower = lowerField.getValue();
+                if (upperField.getValue() != null) upper = upperField.getValue();
             }
             dist = new TruncatedDistribution(dist, lower, upper);
         }
@@ -383,8 +385,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();
         if (parameter.isTruncated) {
-            parameter.truncationLower = lowerField.getValue();
-            parameter.truncationUpper = upperField.getValue();
+            if (lowerField.getValue() != null) parameter.truncationLower = lowerField.getValue();
+            if (upperField.getValue() != null) parameter.truncationUpper = upperField.getValue();
         }
 
         getArguments(parameter);
@@ -644,9 +646,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
 
         public boolean getArguments(Parameter parameter) {
-            if (getValue(0) == null ||
-                    getValue(1) == null ||
-                    getValue(2) == null ) {
+            if (getValue(1) == null ||
+                    getValue(2) == null ||
+                    getValue(3) == null ) {
                 return false;
             }
             parameter.mean = getValue(1);
@@ -749,24 +751,6 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 //
 //        public TruncatedNormalOptionsPanel() {
 //
-//            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//            addField("Stdev", 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
-//            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//        }
-//
-//        public Distribution getDistribution() {
-//            return new TruncatedNormalDistribution(getValue(0), getValue(1), getValue(2), getValue(3));
-//        }
-//
-//        public void setParameterPrior(Parameter parameter) {
-//            parameter.mean = getValue(0);
-//            parameter.stdev = getValue(1);
-//            parameter.isTruncated = true;
-//            parameter.truncationLower = getValue(2);
-//            parameter.truncationUpper = getValue(3);
-//        }
-//    }
 
     static final PriorOptionsPanel BETA = new PriorOptionsPanel(true) {
 
@@ -801,6 +785,64 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.shape = getValue(0);
             parameter.shapeB = getValue(1);
             parameter.offset = getValue(2);
+            return true;
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
+    };
+
+    static final PriorOptionsPanel POISSON = new PriorOptionsPanel(false) {
+
+        void setup() {
+            addField("Mean", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
+            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
+        }
+
+        public Distribution getDistribution() {
+            // the Poisson prior is not plottable so no distribution is needed for the chart
+            return null;
+        }
+
+        public void setArguments(Parameter parameter) {
+            getField(0).setValue(parameter.mean != 0.0 ? parameter.mean : 1.0);
+            getField(1).setValue(parameter.offset);
+
+            getField(0).setLabel(parameter.getName() + " " + getArgumentName(0).toLowerCase());
+            getField(1).setLabel(parameter.getName() + " " + getArgumentName(1).toLowerCase());
+        }
+
+        public boolean getArguments(Parameter parameter) {
+            if (getValue(0) == null || getValue(1) == null) {
+                return false;
+            }
+            parameter.mean = getValue(0);
+            parameter.offset = getValue(1);
+            return true;
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
+    };
+
+    static final PriorOptionsPanel HIERARCHICAL_EXPONENTIAL = new PriorOptionsPanel(false) {
+
+        void setup() {
+        }
+
+        public Distribution getDistribution() {
+            // the mean of the exponential is itself estimated so there is no fixed density to plot
+            return null;
+        }
+
+        public void setArguments(Parameter parameter) {
+        }
+
+        public boolean getArguments(Parameter parameter) {
             return true;
         }
 

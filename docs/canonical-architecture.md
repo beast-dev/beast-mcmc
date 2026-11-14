@@ -109,13 +109,8 @@ also used outside the tree-likelihood subsystem — see below):
 - `dr.evomodel.continuous.canonical.contribution` owns branch-local canonical
   contribution strategies (exact tip, partial tip, Gaussian-link tip, internal
   node, missing, fixed-root) assembled from a `BranchGradientMessageBundle`.
-- `dr.evomodel.continuous.canonical.workspace` and `.scheduling` own reusable
-  buffers/workspace factories and parallel chunk-sizing policies, respectively.
-- `dr.evomodel.continuous.ou.canonical.branch` owns OU-specific branch algebra
-  (`OUCanonicalTransitionBuilder`, `OUCanonicalBranchGradientBridge`, etc.) —
-  nested under the pre-existing `ou.canonical` (see below) rather than the
-  process-agnostic `dr.evomodel.continuous.canonical` parent, since this one
-  genuinely is OU-specific.
+- `dr.evomodel.continuous.canonical.workspace` owns reusable buffers and
+  workspace factories.
 
 **Pre-existing, unaffected by the split above:**
 
@@ -147,10 +142,8 @@ split in full, including the consumer-dependency evidence behind each
 package's target location. Status:
 
 - **Moved** (Phase 2): `canonical.math`, `canonical.contribution`,
-  `canonical.workspace`, `BMProcessModel`/
-  `ContinuousProcessModel`, and `canonical.branch` (the one OU-specific
-  package, nested under `ou.canonical.branch` rather than the shared parent)
-  — see "Module Boundaries" above for their new homes.
+  `canonical.workspace`, and `BMProcessModel`/
+  `ContinuousProcessModel` — see "Module Boundaries" above for their new homes.
 - **Deliberately kept in `continuousNew`**: `canonical.message` and
   `observationmodel`. Both are pure math with no tree dependency (and
   `canonical.message` is additionally shared with the

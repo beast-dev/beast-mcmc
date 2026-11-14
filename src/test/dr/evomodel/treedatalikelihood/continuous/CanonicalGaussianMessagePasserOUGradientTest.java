@@ -61,8 +61,6 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
 
     private static final String TRANSITION_CACHE_DIAGNOSTICS_PROPERTY =
             "beast.debug.canonicalTransitionCache";
-    private static final String DENSE_ORTHOGONAL_PULLBACK_PROPERTY =
-            "beast.experimental.orthBlockUseDensePullback";
 
     public CanonicalGaussianMessagePasserOUGradientTest(final String name) {
         super(name);
@@ -325,40 +323,22 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         }
     }
 
-    public void testOrthogonalBlockDenseSelectionPullbackAvoidsLegacyMatrixProjection() {
-        System.out.println("\nTest: canonical OU orthogonal-block dense selection pullback uses flat workspace");
-        final String previous = System.getProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY);
-        try {
-            System.clearProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY);
-            final OrthogonalBlockOUSetup nativeSetup =
-                    buildOrthogonalBlockOUSetup("canonOrthDensePullbackNative_partial", buildPartiallyObservedTips());
-            refreshMessages(nativeSetup.orthogonal);
-            final double[] nativeGradient = new double[nativeSetup.nativeParameter.getDimension()];
-            computeJointGradientA(nativeSetup.orthogonal, nativeGradient);
+    public void testOrthogonalBlockSelectionPullbackAvoidsLegacyMatrixProjection() {
+        System.out.println("\nTest: canonical OU orthogonal-block selection pullback uses flat workspace");
+        CanonicalSelectionGradientProjector.resetInstrumentation();
 
-            System.setProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY, "true");
-            CanonicalSelectionGradientProjector.resetInstrumentation();
+        final OrthogonalBlockOUSetup setup =
+                buildOrthogonalBlockOUSetup("canonOrthSelectionPullback_partial", buildPartiallyObservedTips());
+        refreshMessages(setup.orthogonal);
+        final double[] gradient = new double[setup.nativeParameter.getDimension()];
+        computeJointGradientA(setup.orthogonal, gradient);
 
-            final OrthogonalBlockOUSetup denseSetup =
-                    buildOrthogonalBlockOUSetup("canonOrthDensePullbackAlloc_partial", buildPartiallyObservedTips());
-            refreshMessages(denseSetup.orthogonal);
-            final double[] denseGradient = new double[denseSetup.nativeParameter.getDimension()];
-            computeJointGradientA(denseSetup.orthogonal, denseGradient);
-
-            assertArrayEquals("dense flat pullback vs native specialized",
-                    nativeGradient,
-                    denseGradient,
-                    1.0e-10);
-            assertEquals("legacy matrix block pullback count",
-                    0L,
-                    CanonicalSelectionGradientProjector.getLegacyMatrixPullbackCount());
-        } finally {
-            if (previous == null) {
-                System.clearProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY);
-            } else {
-                System.setProperty(DENSE_ORTHOGONAL_PULLBACK_PROPERTY, previous);
-            }
+        for (double g : gradient) {
+            assertTrue("selection gradient entry must be finite", !Double.isNaN(g) && !Double.isInfinite(g));
         }
+        assertEquals("legacy matrix block pullback count",
+                0L,
+                CanonicalSelectionGradientProjector.getLegacyMatrixPullbackCount());
     }
 
     public void testStandaloneIntegratorReusesOneJointGradientPassAcrossAQMu() {

@@ -33,9 +33,6 @@ import java.util.Arrays;
  *
  * <p>{@code Vtilde} itself is supplied by a cached {@link BlockBasisGlobalSnapshot}
  * and is not recomputed here.</p>
- *
- * <p>The homogeneous canonical OU tree likelihood can use this builder behind
- * the {@code beast.experimental.canonicalOU.blockBasisHomogeneous} opt-in.</p>
  */
 public final class BlockBasisCanonicalTransitionBuilder {
 

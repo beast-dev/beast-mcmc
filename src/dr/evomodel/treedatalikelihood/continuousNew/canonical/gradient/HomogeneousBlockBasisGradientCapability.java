@@ -1,20 +1,17 @@
 package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
 
-import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisCanonicalAdjointBuilder;
-import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisGlobalSnapshot;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
-import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 
 /**
  * Capability exposed by homogeneous block-basis OU transition providers.
+ *
+ * <p>The gradient layer stays independent of the block-diagonal backend: the
+ * provider, which owns the backend snapshot and adjoint builder, creates the
+ * selection-gradient pullback itself.
  */
 public interface HomogeneousBlockBasisGradientCapability {
 
-    BlockBasisGlobalSnapshot getBlockBasisSnapshot();
-
-    BlockBasisCanonicalAdjointBuilder getBlockBasisAdjointBuilder();
-
-    AbstractBlockDiagonalTwoByTwoMatrixParameter getBlockParameter();
+    CanonicalSelectionGradientPullback createBlockBasisSelectionGradientPullback(int dimension);
 
     double contractBranchLengthGradient(double branchLength,
                                         CanonicalLocalTransitionAdjoints localAdjoints);

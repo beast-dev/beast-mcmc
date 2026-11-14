@@ -15,6 +15,7 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedB
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshotProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionCacheDiagnostics;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionPreloader;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionGradientPullback;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.HomogeneousBlockBasisGradientCapability;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
@@ -26,6 +27,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.TaskPool;
+import org.ejml.data.DenseMatrix64F;
 
 import java.util.Arrays;
 
@@ -137,17 +139,34 @@ final class HomogeneousBlockBasisCanonicalOUBranchTransitionProvider extends Abs
     }
 
     @Override
+    public CanonicalSelectionGradientPullback createBlockBasisSelectionGradientPullback(final int dimension) {
+        return new BlockBasisCanonicalSelectionGradientPullback(this, dimension);
+    }
+
+    /** Rotation {@code R} of the current block basis, {@code y = R z + beta}. */
+    DenseMatrix64F getBlockBasisRotation() {
+        return getBlockBasisSnapshot().getRotation();
+    }
+
+    /** Inverse rotation {@code R^{-1}} of the current block basis. */
+    DenseMatrix64F getBlockBasisRotationInverse() {
+        return getBlockBasisSnapshot().getRotationInverse();
+    }
+
+    /** {@code log |det R|} of the current block basis. */
+    double getBlockBasisLogAbsDetRotation() {
+        return getBlockBasisSnapshot().getLogAbsDetR();
+    }
+
     public BlockBasisGlobalSnapshot getBlockBasisSnapshot() {
         ensureCurrentSnapshot();
         return snapshot;
     }
 
-    @Override
     public BlockBasisCanonicalAdjointBuilder getBlockBasisAdjointBuilder() {
         return adjointBuilder;
     }
 
-    @Override
     public AbstractBlockDiagonalTwoByTwoMatrixParameter getBlockParameter() {
         return blockParameter;
     }

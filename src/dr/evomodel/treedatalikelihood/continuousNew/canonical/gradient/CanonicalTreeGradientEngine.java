@@ -95,9 +95,8 @@ public final class CanonicalTreeGradientEngine {
                 ouProvider.getProcessModelCount() == 1 ? processModel : null;
         if (transitionProvider instanceof HomogeneousBlockBasisGradientCapability) {
             final CanonicalSelectionGradientPullback selectionPullback =
-                    new BlockBasisCanonicalSelectionGradientPullback(
-                            (HomogeneousBlockBasisGradientCapability) transitionProvider,
-                            dimension);
+                    ((HomogeneousBlockBasisGradientCapability) transitionProvider)
+                            .createBlockBasisSelectionGradientPullback(dimension);
             CanonicalPhaseTimer.recordGradientShape(inputs.getActiveBranchCount(), 1, false);
             computeSequential(inputs, ouProvider, homogeneousProcessModel, selectionPullback, gradA, gradQ, gradMu);
             return;

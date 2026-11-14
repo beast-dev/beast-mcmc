@@ -1,4 +1,4 @@
-package dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient;
+package dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter;
 
 import dr.evomodel.continuous.canonical.math.MatrixOps;
 import dr.evomodel.continuous.canonical.workspace.BranchAdjointWorkspace;
@@ -7,6 +7,9 @@ import dr.evomodel.continuous.canonical.workspace.GradientPullbackWorkspace;
 import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisCanonicalAdjointBuilder;
 import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisGlobalSnapshot;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.BranchGradientInputs;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionGradientProjector;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalSelectionGradientPullback;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
@@ -19,9 +22,9 @@ import java.util.Arrays;
  * Pulls homogeneous block-basis OU adjoints back to native block, basis, and
  * diffusion parameters.
  */
-final class BlockBasisCanonicalSelectionGradientPullback implements CanonicalSelectionGradientPullback {
+public final class BlockBasisCanonicalSelectionGradientPullback implements CanonicalSelectionGradientPullback {
 
-    private final HomogeneousBlockBasisGradientCapability blockBasis;
+    private final HomogeneousBlockBasisCanonicalOUBranchTransitionProvider blockBasis;
     private final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter;
     private final BlockBasisCanonicalAdjointBuilder adjointBuilder;
     private final int dimension;
@@ -32,8 +35,9 @@ final class BlockBasisCanonicalSelectionGradientPullback implements CanonicalSel
     private final double[] rootMeanGradientDBasis;
     private int observedTipCount;
 
-    BlockBasisCanonicalSelectionGradientPullback(final HomogeneousBlockBasisGradientCapability blockBasis,
-                                                 final int dimension) {
+    BlockBasisCanonicalSelectionGradientPullback(
+            final HomogeneousBlockBasisCanonicalOUBranchTransitionProvider blockBasis,
+            final int dimension) {
         this.blockBasis = blockBasis;
         this.blockParameter = blockBasis.getBlockParameter();
         this.adjointBuilder = blockBasis.getBlockBasisAdjointBuilder();

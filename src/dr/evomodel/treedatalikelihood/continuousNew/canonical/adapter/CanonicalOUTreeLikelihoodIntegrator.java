@@ -31,7 +31,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
-import dr.evomodel.continuous.ou.blockdiagonal.BlockBasisGlobalSnapshot;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
@@ -624,9 +623,8 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
             throw new IllegalStateException("Block-basis tip loading requested for a natural-basis integrator.");
         }
         blockBasisProvider.ensureCurrentSnapshot();
-        final BlockBasisGlobalSnapshot snapshot = blockBasisProvider.getBlockBasisSnapshot();
-        final DenseMatrix64F t = snapshot.getRotationInverse();
-        final DenseMatrix64F r = snapshot.getRotation();
+        final DenseMatrix64F t = blockBasisProvider.getBlockBasisRotationInverse();
+        final DenseMatrix64F r = blockBasisProvider.getBlockBasisRotation();
         blockBasisObservedTipCount = 0;
         for (int tipIdx = 0; tipIdx < naturalTipObservations.length; ++tipIdx) {
             final CanonicalTipObservation natural = naturalTipObservations[tipIdx];
@@ -817,7 +815,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         }
         return cachedLogLikelihood
                 - blockBasisObservedTipCount
-                * blockBasisProvider.getBlockBasisSnapshot().getLogAbsDetR();
+                * blockBasisProvider.getBlockBasisLogAbsDetRotation();
     }
 
     private static boolean useHomogeneousBlockBasisProvider(

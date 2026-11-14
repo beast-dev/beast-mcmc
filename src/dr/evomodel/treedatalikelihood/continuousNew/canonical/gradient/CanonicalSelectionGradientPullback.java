@@ -4,7 +4,7 @@ import dr.evomodel.continuous.ou.OUProcessModel;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
 import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 
-interface CanonicalSelectionGradientPullback {
+public interface CanonicalSelectionGradientPullback {
 
     void initialize(BranchGradientWorkspace workspace,
                     double[] gradA,

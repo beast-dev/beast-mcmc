@@ -46,9 +46,14 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
     }
 
     public void testCanonicalTreeLayerDoesNotImportBlockDiagonalBackend() throws IOException {
+        // The homogeneous block-basis bridge classes in canonical/adapter are the only
+        // canonical-layer files allowed to name the block-diagonal backend; everything else
+        // (traversal, message, gradient, the other adapters and the integrator) must not.
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuousNew/canonical"),
-                BLOCK_DIAGONAL_BACKEND_PACKAGE);
+                BLOCK_DIAGONAL_BACKEND_PACKAGE,
+                null,
+                true);
         assertNoSourceMatch(
                 new File("src/dr/evomodel/treedatalikelihood/continuous"),
                 BLOCK_DIAGONAL_BACKEND_PACKAGE,
@@ -228,26 +233,37 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
     private static void assertNoSourceMatch(final File root,
                                             final String forbidden,
                                             final String fileNamePrefix) throws IOException {
+        assertNoSourceMatch(root, forbidden, fileNamePrefix, false);
+    }
+
+    private static void assertNoSourceMatch(final File root,
+                                            final String forbidden,
+                                            final String fileNamePrefix,
+                                            final boolean allowBlockBasisBridge) throws IOException {
         if (!root.exists()) {
             fail("Source root does not exist: " + root.getPath());
         }
-        scan(root, forbidden, fileNamePrefix);
+        scan(root, forbidden, fileNamePrefix, allowBlockBasisBridge);
     }
 
     private static void scan(final File file,
                              final String forbidden,
-                             final String fileNamePrefix) throws IOException {
+                             final String fileNamePrefix,
+                             final boolean allowBlockBasisBridge) throws IOException {
         if (file.isDirectory()) {
             final File[] children = file.listFiles();
             if (children == null) {
                 return;
             }
             for (File child : children) {
-                scan(child, forbidden, fileNamePrefix);
+                scan(child, forbidden, fileNamePrefix, allowBlockBasisBridge);
             }
             return;
         }
         if (!file.getName().endsWith(".java")) {
+            return;
+        }
+        if (allowBlockBasisBridge && isBlockBasisBridgeFile(file)) {
             return;
         }
         if (fileNamePrefix != null && !file.getName().startsWith(fileNamePrefix)) {
@@ -305,6 +321,13 @@ public final class CanonicalPackageBoundaryTest extends TestCase {
         } finally {
             reader.close();
         }
+    }
+
+    private static boolean isBlockBasisBridgeFile(final File file) {
+        final File parent = file.getParentFile();
+        return parent != null
+                && "adapter".equals(parent.getName())
+                && file.getName().contains("BlockBasis");
     }
 
     private static boolean matches(final String line, final String forbidden) {

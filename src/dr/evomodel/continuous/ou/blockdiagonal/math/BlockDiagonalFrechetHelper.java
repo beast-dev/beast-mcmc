@@ -19,10 +19,6 @@ public final class BlockDiagonalFrechetHelper {
 
     private static final Logger LOGGER = Logger.getLogger("dr.evomodel.continuous.ou.blockdiagonal.math");
 
-    private static final String USE_EQUAL_DIAGONAL_PLAN_PROPERTY =
-            "beast.experimental.useEqualDiagonalFrechetPlan";
-    private static final boolean USE_EQUAL_DIAGONAL_PLAN =
-            Boolean.parseBoolean(System.getProperty(USE_EQUAL_DIAGONAL_PLAN_PROPERTY, "true"));
 
     private static final String QUADRATURE_DEBUG_PROPERTY =
             "beast.experimental.nativeUseQuadratureFrechet";
@@ -106,7 +102,7 @@ public final class BlockDiagonalFrechetHelper {
         this.cachedPlanParameterVersion = 0L;
         this.cachedPlanValid = false;
 
-        this.equalDiagonalStructureCandidate = USE_EQUAL_DIAGONAL_PLAN && isLeadingScalarPlusTwoByTwoStructure(structure);
+        this.equalDiagonalStructureCandidate = isLeadingScalarPlusTwoByTwoStructure(structure);
         this.cachedEqualDiagonalPlan = equalDiagonalStructureCandidate
                 ? BlockDiagonalFrechetEqualDiagonalPlan.createPlan(structure)
                 : null;

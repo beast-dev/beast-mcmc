@@ -10,10 +10,6 @@ import java.util.Arrays;
  */
 public final class BlockDiagonalLyapunovAdjointHelper {
 
-    private static final String USE_EQUAL_DIAGONAL_PLAN_PROPERTY =
-            "beast.experimental.useEqualDiagonalLyapunovPlan";
-    private static final boolean USE_EQUAL_DIAGONAL_PLAN =
-            Boolean.parseBoolean(System.getProperty(USE_EQUAL_DIAGONAL_PLAN_PROPERTY, "true"));
     private static final double EQUAL_DIAGONAL_TOLERANCE = 1.0e-12;
 
     private final int dim;
@@ -41,8 +37,7 @@ public final class BlockDiagonalLyapunovAdjointHelper {
         this.dim = dim;
         this.solver = solver;
         this.blockDTransposeParams = new double[3 * dim - 2];
-        this.equalDiagonalStructureCandidate = USE_EQUAL_DIAGONAL_PLAN
-                && structure != null
+        this.equalDiagonalStructureCandidate = structure != null
                 && isLeadingScalarPlusTwoByTwoStructure(structure);
         this.equalDiagonalPlan = equalDiagonalStructureCandidate
                 ? BlockDiagonalLyapunovEqualDiagonalPlan.createPlan(structure)

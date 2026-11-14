@@ -27,6 +27,7 @@
 
 package test.dr.evomodel.treedatalikelihood.continuous;
 
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.AbstractBranchRateModel;
@@ -62,8 +63,6 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
             "beast.debug.canonicalTransitionCache";
     private static final String DENSE_ORTHOGONAL_PULLBACK_PROPERTY =
             "beast.experimental.orthBlockUseDensePullback";
-    private static final String BLOCK_BASIS_HOMOGENEOUS_PROPERTY =
-            "beast.experimental.canonicalOU.blockBasisHomogeneous";
 
     public CanonicalGaussianMessagePasserOUGradientTest(final String name) {
         super(name);
@@ -641,7 +640,7 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
         final BranchRateModel blockRateModel = new ArrayBranchRateModel(branchScale);
 
         final CanonicalOUTreeLikelihoodIntegrator standardIntegrator =
-                buildIntegratorWithBlockBasisProperty(
+                buildIntegrator(
                         false,
                         elasticModel,
                         localDiffusionModel,
@@ -649,7 +648,7 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
                         stationaryMean,
                         blockRateModel);
         final CanonicalOUTreeLikelihoodIntegrator blockBasisIntegrator =
-                buildIntegratorWithBlockBasisProperty(
+                buildIntegrator(
                         true,
                         elasticModel,
                         localDiffusionModel,
@@ -665,35 +664,22 @@ public class CanonicalGaussianMessagePasserOUGradientTest extends CanonicalOUMes
                 blockBasisIntegrator);
     }
 
-    private CanonicalOUTreeLikelihoodIntegrator buildIntegratorWithBlockBasisProperty(
-            final boolean enabled,
+    private CanonicalOUTreeLikelihoodIntegrator buildIntegrator(
+            final boolean blockBasis,
             final MultivariateElasticModel elasticModel,
             final MultivariateDiffusionModel localDiffusionModel,
             final CanonicalTipObservation[] tips,
             final Parameter stationaryMean,
             final BranchRateModel blockRateModel) {
-        final String previous = System.getProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY);
-        try {
-            if (enabled) {
-                System.setProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY, "true");
-            } else {
-                System.clearProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY);
-            }
-            return new CanonicalOUTreeLikelihoodIntegrator(
-                    treeModel,
-                    elasticModel,
-                    localDiffusionModel,
-                    tips,
-                    rootPrior,
-                    stationaryMean,
-                    blockRateModel);
-        } finally {
-            if (previous == null) {
-                System.clearProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY);
-            } else {
-                System.setProperty(BLOCK_BASIS_HOMOGENEOUS_PROPERTY, previous);
-            }
-        }
+        return new CanonicalOUTreeLikelihoodIntegrator(
+                treeModel,
+                elasticModel,
+                localDiffusionModel,
+                tips,
+                rootPrior,
+                stationaryMean,
+                blockRateModel,
+                blockBasis ? CanonicalOUOptions.homogeneousBlockBasis() : CanonicalOUOptions.natural());
     }
 
     private MatrixParameter copyBasePrecisionMatrix(final String id) {

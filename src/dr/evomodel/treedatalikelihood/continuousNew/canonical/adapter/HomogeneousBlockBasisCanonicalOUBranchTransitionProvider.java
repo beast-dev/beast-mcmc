@@ -42,8 +42,6 @@ final class HomogeneousBlockBasisCanonicalOUBranchTransitionProvider extends Abs
         CanonicalTransitionPreloader,
         HomogeneousBlockBasisGradientCapability {
 
-    static final String ENABLE_PROPERTY = CanonicalOUOptions.BLOCK_BASIS_HOMOGENEOUS_PROPERTY;
-
     private final Tree tree;
     private final MultivariateDiffusionModel diffusionModel;
     private final MultivariateElasticModel elasticModel;
@@ -221,14 +219,11 @@ final class HomogeneousBlockBasisCanonicalOUBranchTransitionProvider extends Abs
 
     @Override
     public void preloadCanonicalTransitions(final int rootNodeIndex,
-                                            final TaskPool taskPool,
-                                            final int chunkSize) {
+                                            final TaskPool taskPool) {
         if (taskPool == null || taskPool.getNumThreads() <= 1) {
             return;
         }
-        taskPool.forkDynamic(
-                entries.length,
-                chunkSize,
+        taskPool.fork(
                 (childNodeIndex, thread) -> {
                     if (childNodeIndex != rootNodeIndex) {
                         ensureTransition(childNodeIndex);

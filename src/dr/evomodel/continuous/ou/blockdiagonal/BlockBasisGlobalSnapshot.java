@@ -29,10 +29,11 @@ import java.util.Arrays;
  * be cached once per likelihood evaluation and reused across all branches,
  * instead of being paid {@code O(p^3)} per branch.</p>
  *
- * <p>Status: not yet wired into the production tree-likelihood traversal;
- * currently consumed only by {@link BlockBasisCanonicalTransitionBuilder},
- * {@link BlockBasisCanonicalAdjointBuilder}, and their tests. See
- * private-code/rotatedOU/rotated_ou_block_basis_plan.md for the wiring plan.</p>
+ * <p>Status: wired into the canonical OU tree likelihood through
+ * {@code HomogeneousBlockBasisCanonicalOUBranchTransitionProvider}.  It is the default
+ * ({@code canonicalOUCoordinates="auto"}) whenever the model supports it: a homogeneous OU process, a
+ * block-diagonal selection matrix, exact or missing tips, and a root prior with finite pseudo-observations.
+ * Other models use natural coordinates; see {@code docs/canonical-architecture.md}.</p>
  */
 public final class BlockBasisGlobalSnapshot {
 

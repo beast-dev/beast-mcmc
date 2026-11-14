@@ -31,9 +31,8 @@ import org.ejml.ops.CommonOps;
  * <p>Stationary-mean ({@code beta}) gradients are out of scope for this
  * class.
  *
- * <p>Status: not yet wired into the production tree-likelihood traversal;
- * see {@link BlockBasisGlobalSnapshot} for the current status and the
- * wiring plan.</p>
+ * <p>Status: wired into the canonical OU tree likelihood as the default coordinates where the model supports
+ * them; see {@link BlockBasisGlobalSnapshot} for the supported models.</p>
  */
 public final class BlockBasisCanonicalAdjointBuilder {
 

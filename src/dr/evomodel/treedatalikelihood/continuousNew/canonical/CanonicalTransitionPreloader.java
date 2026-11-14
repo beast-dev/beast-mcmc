@@ -7,5 +7,5 @@ import dr.util.TaskPool;
  */
 public interface CanonicalTransitionPreloader {
 
-    void preloadCanonicalTransitions(int rootNodeIndex, TaskPool taskPool, int chunkSize);
+    void preloadCanonicalTransitions(int rootNodeIndex, TaskPool taskPool);
 }

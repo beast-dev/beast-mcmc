@@ -32,8 +32,6 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTra
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUProviderSupport;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshot;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalPreparedBranchSnapshotProvider;
-import dr.evomodel.continuous.canonical.scheduling.ChunkSizeStrategy;
-import dr.evomodel.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
 import dr.util.TaskPool;
 
@@ -57,7 +55,6 @@ public final class CanonicalBranchAdjointPreparer {
     private final BranchGradientWorkspace[] workspaces;
     private final BranchGradientMessageProvider messageProvider;
     private final Source source;
-    private final ChunkSizeStrategy chunkSizeStrategy;
 
     public CanonicalBranchAdjointPreparer(final Tree tree,
                                    final int dimension,
@@ -74,8 +71,6 @@ public final class CanonicalBranchAdjointPreparer {
         this.workspaces = workspaces;
         this.messageProvider = messageProvider;
         this.source = source;
-        this.chunkSizeStrategy =
-                new DimensionWeightedChunkSizeStrategy(dimension, Math.max(1, workspaces.length));
     }
 
     public void prepare(final CanonicalBranchTransitionProvider transitionProvider,
@@ -98,9 +93,7 @@ public final class CanonicalBranchAdjointPreparer {
                 out.addBranch(requireSnapshot(snapshotProvider, childIndex), mainWorkspace.adjoints);
             }
         } else {
-            taskPool.forkDynamicBalanced(
-                    nodeCount,
-                    branchGradientPreparationChunkSize(nodeCount),
+            taskPool.fork(
                     (childIndex, thread) -> {
                         if (childIndex == rootIndex) {
                             out.clearStagedBranch(childIndex);
@@ -121,10 +114,6 @@ public final class CanonicalBranchAdjointPreparer {
             out.compactStagedBranches(rootIndex, true);
         }
         messageProvider.fillRootMessages(out);
-    }
-
-    private int branchGradientPreparationChunkSize(final int taskLimit) {
-        return chunkSizeStrategy.chunkSize(taskLimit);
     }
 
     private static CanonicalPreparedBranchSnapshotProvider requirePreparedBranchSnapshotProvider(

@@ -13,20 +13,17 @@ final class CanonicalTraversalRunner {
     private final BranchGradientWorkspace workspace;
     private final int rootIndex;
     private final TaskPool transitionPreloadTaskPool;
-    private final int transitionPreloadChunkSize;
 
     CanonicalTraversalRunner(final CanonicalTreeTraversal treeTraversal,
                              final CanonicalTreeStateStore stateStore,
                              final BranchGradientWorkspace workspace,
                              final int rootIndex,
-                             final TaskPool transitionPreloadTaskPool,
-                             final int transitionPreloadChunkSize) {
+                             final TaskPool transitionPreloadTaskPool) {
         this.treeTraversal = treeTraversal;
         this.stateStore = stateStore;
         this.workspace = workspace;
         this.rootIndex = rootIndex;
         this.transitionPreloadTaskPool = transitionPreloadTaskPool;
-        this.transitionPreloadChunkSize = transitionPreloadChunkSize;
     }
 
     double computePostOrderLogLikelihood(final CanonicalBranchTransitionProvider transitionProvider,
@@ -73,8 +70,7 @@ final class CanonicalTraversalRunner {
         final long timingStart = CanonicalTraversalTimer.start();
         ((CanonicalTransitionPreloader) transitionProvider).preloadCanonicalTransitions(
                 rootIndex,
-                transitionPreloadTaskPool,
-                transitionPreloadChunkSize);
+                transitionPreloadTaskPool);
         CanonicalTraversalTimer.recordPostorderPreload(timingStart);
     }
 

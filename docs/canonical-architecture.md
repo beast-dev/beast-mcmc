@@ -147,7 +147,7 @@ split in full, including the consumer-dependency evidence behind each
 package's target location. Status:
 
 - **Moved** (Phase 2): `canonical.math`, `canonical.contribution`,
-  `canonical.workspace`, `canonical.scheduling`, `BMProcessModel`/
+  `canonical.workspace`, `BMProcessModel`/
   `ContinuousProcessModel`, and `canonical.branch` (the one OU-specific
   package, nested under `ou.canonical.branch` rather than the shared parent)
   — see "Module Boundaries" above for their new homes.
@@ -208,3 +208,31 @@ rotation, compressed-block, native-block, diffusion, and mean gradients all use
 flat row-major `double[]` buffers supplied by the caller or by an explicit
 workspace. Do not introduce `double[][]` into canonical gradient internals, and
 do not add return-array pullback APIs to the canonical tree-gradient path.
+
+## Canonical OU Coordinates
+
+`canonicalOUCoordinates` on `traitDataLikelihood` chooses the coordinates of the canonical OU messages:
+
+- `auto` (default): the homogeneous block basis whenever the model supports it, natural trait coordinates
+  otherwise.
+- `natural`: always natural trait coordinates.
+- `homogeneousBlockBasis`: always the block basis; a model it does not cover is a parse error.
+
+In natural coordinates every branch builds `A = R e^{-Dt} R^{-1}` and the matching covariance with two dense
+rotations. The block basis runs the tree in `z = R^{-1}(y - beta)`: transitions are block-sparse and driftless,
+the stationary covariance in the block basis comes from one Lyapunov solve per model change, tips are rotated once
+per state (with a `log|det R|` correction), and the gradient is pulled back to `R` and `Q` once globally.
+On the avian and Anolis models it is 1.3-1.7x faster per state with the same likelihood.
+
+The block basis covers a homogeneous OU process (no branch-specific processes) with a block-diagonal selection
+matrix, exact or missing tips, and a root prior with finite pseudo-observations. `auto` falls back to natural
+coordinates for:
+
+- diagonal or otherwise non-block-diagonal selection matrices,
+- `canonicalOUBranchProcesses` (regimes, branch-specific processes),
+- tips with observation error (`repeatedMeasuresModel`),
+- a fixed root (infinite `priorSampleSize`); the block-basis selection and mean gradients of a fixed root are not
+  implemented.
+
+To reproduce a run made before `auto` selected the block basis, set `canonicalOUCoordinates="natural"`; the two
+agree to rounding error. The selection logic is `CanonicalOUTreeLikelihoodIntegrator.selectBlockBasis`.

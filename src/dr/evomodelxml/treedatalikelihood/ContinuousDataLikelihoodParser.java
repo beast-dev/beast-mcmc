@@ -628,8 +628,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             AttributeRule.newBooleanRule(INTEGRATE_INTERNAL_TRAITS, true),
             AttributeRule.newStringRule(IMPLEMENTATION, true),
             new StringAttributeRule(CANONICAL_OU_COORDINATES,
-                    "Coordinate system for canonical OU messages. Use homogeneousBlockBasis "
-                            + "for homogeneous block-diagonal OU in the selection basis.",
+                    "Coordinate system for canonical OU messages. The default, auto, uses the "
+                            + "homogeneous block basis (the selection basis) whenever the model supports it "
+                            + "(homogeneous OU, block-diagonal selection matrix, exact or missing tips) and "
+                            + "natural trait coordinates otherwise. natural always uses natural coordinates; "
+                            + "homogeneousBlockBasis requires the block basis.",
                     CanonicalOUOptions.ALLOWED_COORDINATES,
                     true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),

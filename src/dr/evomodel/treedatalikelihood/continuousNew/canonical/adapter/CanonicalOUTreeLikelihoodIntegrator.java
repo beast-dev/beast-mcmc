@@ -106,6 +106,10 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
     private boolean storedTipObservationsDirty;
     private boolean blockBasisTipObservationsDirty;
     private boolean storedBlockBasisTipObservationsDirty;
+    // Block basis only: the natural-coordinate tip copy was refreshed since the last store/accept, so a restore must
+    // bring it back (refill from the restored data model, or copy the saved tips back in standalone mode).
+    private boolean naturalTipsChangedSinceStore;
+    private CanonicalTipObservation[] storedNaturalTipObservations;
     private int blockBasisObservedTipCount;
     private int storedBlockBasisObservedTipCount;
     private int cacheDiagnosticReportCounter;
@@ -121,7 +125,23 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                                                final ConjugateRootTraitPrior conjugatePrior,
                                                final Parameter stationaryMean,
                                                final BranchRateModel rateModel) {
-        this(tree, elasticModel, diffusionModel, tipObservations, conjugatePrior, stationaryMean, rateModel, null);
+        this(tree, elasticModel, diffusionModel, tipObservations, conjugatePrior, stationaryMean, rateModel,
+                (ContinuousRateTransformation) null);
+    }
+
+    /*
+     * Standalone constructor with explicit canonical OU coordinates.
+     */
+    public CanonicalOUTreeLikelihoodIntegrator(final Tree tree,
+                                               final MultivariateElasticModel elasticModel,
+                                               final MultivariateDiffusionModel diffusionModel,
+                                               final CanonicalTipObservation[] tipObservations,
+                                               final ConjugateRootTraitPrior conjugatePrior,
+                                               final Parameter stationaryMean,
+                                               final BranchRateModel rateModel,
+                                               final CanonicalOUOptions canonicalOUOptions) {
+        this(tree, elasticModel, diffusionModel, tipObservations, conjugatePrior, stationaryMean, rateModel,
+                null, null, null, canonicalOUOptions);
     }
 
     /*
@@ -262,7 +282,11 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                                                 final ContinuousTraitPartialsProvider dataModel,
                                                 final CanonicalOUOptions canonicalOUOptions) {
         final int dim = diffusionModel.getDimension();
-        final boolean useBlockBasis = useHomogeneousBlockBasisProvider(
+        final boolean useBlockBasis = selectBlockBasis(
+                tree,
+                dataModel,
+                dim,
+                conjugatePrior,
                 branchProcessSpecification,
                 elasticModel,
                 canonicalOUOptions);
@@ -512,6 +536,10 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
 
     public void reloadTips(final CanonicalTipObservation[] tipObservations) {
         if (blockBasisCoordinates) {
+            if (!naturalTipsChangedSinceStore && ownedTipObservations == null) {
+                saveNaturalTipObservations();
+            }
+            naturalTipsChangedSinceStore = true;
             copyTipObservations(tipObservations, naturalTipObservations);
             blockBasisTipObservationsDirty = true;
             loadBlockBasisTipObservations();
@@ -547,6 +575,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         storedTipObservationsDirty = tipObservationsDirty;
         storedBlockBasisTipObservationsDirty = blockBasisTipObservationsDirty;
         storedBlockBasisObservedTipCount = blockBasisObservedTipCount;
+        naturalTipsChangedSinceStore = false;
         if (!jointGradientCacheDirty) {
             System.arraycopy(cachedGradientA, 0, storedGradientA, 0, cachedGradientA.length);
             System.arraycopy(cachedGradientQ, 0, storedGradientQ, 0, cachedGradientQ.length);
@@ -567,6 +596,15 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         tipObservationsDirty = storedTipObservationsDirty;
         blockBasisTipObservationsDirty = storedBlockBasisTipObservationsDirty;
         blockBasisObservedTipCount = storedBlockBasisObservedTipCount;
+        if (blockBasisCoordinates && naturalTipsChangedSinceStore) {
+            if (ownedTipObservations != null) {
+                tipObservationsDirty = true;
+            } else if (storedNaturalTipObservations != null) {
+                copyTipObservations(storedNaturalTipObservations, naturalTipObservations);
+            }
+            blockBasisTipObservationsDirty = true;
+            naturalTipsChangedSinceStore = false;
+        }
         if (!jointGradientCacheDirty) {
             System.arraycopy(storedGradientA, 0, cachedGradientA, 0, storedGradientA.length);
             System.arraycopy(storedGradientQ, 0, cachedGradientQ, 0, storedGradientQ.length);
@@ -587,6 +625,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         storedTipObservationsDirty = tipObservationsDirty;
         storedBlockBasisTipObservationsDirty = blockBasisTipObservationsDirty;
         storedBlockBasisObservedTipCount = blockBasisObservedTipCount;
+        naturalTipsChangedSinceStore = false;
         if (!jointGradientCacheDirty) {
             System.arraycopy(cachedGradientA, 0, storedGradientA, 0, cachedGradientA.length);
             System.arraycopy(cachedGradientQ, 0, storedGradientQ, 0, cachedGradientQ.length);
@@ -676,6 +715,14 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
         }
     }
 
+    private void saveNaturalTipObservations() {
+        if (storedNaturalTipObservations == null) {
+            storedNaturalTipObservations = copyTipObservations(naturalTipObservations);
+        } else {
+            copyTipObservations(naturalTipObservations, storedNaturalTipObservations);
+        }
+    }
+
     private CanonicalTipObservationModel[] noisyTipModels;
 
     private CanonicalTipObservationModel[] noisyTipModelBuffer() {
@@ -699,6 +746,7 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                     tipTree, tipDataModel, passer.getDimension(), ownedTipObservations, noisyModels);
             tipObservationsDirty = false;
             if (blockBasisCoordinates) {
+                naturalTipsChangedSinceStore = true;
                 blockBasisTipObservationsDirty = true;
             } else {
                 loadTips(ownedTipObservations);
@@ -818,24 +866,55 @@ public final class CanonicalOUTreeLikelihoodIntegrator implements CanonicalOUInt
                 * blockBasisProvider.getBlockBasisLogAbsDetRotation();
     }
 
-    private static boolean useHomogeneousBlockBasisProvider(
+    /**
+     * Chooses the coordinates of the canonical OU messages.
+     *
+     * <p>The homogeneous block basis covers a homogeneous OU process (no branch-specific processes) with a
+     * block-diagonal selection matrix, exact or missing tips, and a root prior with finite pseudo-observations (the
+     * selection and mean gradients of a fixed root are not implemented in the block basis).  {@code auto} uses it
+     * whenever it applies and falls back to natural coordinates otherwise; {@code homogeneousBlockBasis} requires it
+     * and rejects a model it does not cover; {@code natural} never uses it.</p>
+     */
+    private static boolean selectBlockBasis(
+            final Tree tree,
+            final ContinuousTraitPartialsProvider dataModel,
+            final int dim,
+            final ConjugateRootTraitPrior conjugatePrior,
             final CanonicalOUBranchProcessSpecification branchProcessSpecification,
             final MultivariateElasticModel elasticModel,
             final CanonicalOUOptions canonicalOUOptions) {
-        if (!canonicalOUOptions.useHomogeneousBlockBasis()) {
+        if (canonicalOUOptions.requestsNaturalCoordinates()) {
             return false;
         }
+        final boolean required = canonicalOUOptions.requiresHomogeneousBlockBasis();
         if (branchProcessSpecification != null) {
-            throw new UnsupportedOperationException(
-                    canonicalOUOptions.describeSelectionSource()
-                            + " supports homogeneous OU only.");
+            if (required) {
+                throw new UnsupportedOperationException(
+                        canonicalOUOptions.describeSelectionSource()
+                                + " supports homogeneous OU only.");
+            }
+            return false;
         }
         if (!HomogeneousBlockBasisCanonicalOUBranchTransitionProvider.isSupported(elasticModel)) {
-            throw new UnsupportedOperationException(
-                    canonicalOUOptions.describeSelectionSource()
-                            + " requires a block-diagonal selection parametrization.");
+            if (required) {
+                throw new UnsupportedOperationException(
+                        canonicalOUOptions.describeSelectionSource()
+                                + " requires a block-diagonal selection parametrization.");
+            }
+            return false;
         }
-        return true;
+        if (conjugatePrior != null && Double.isInfinite(conjugatePrior.getPseudoObservations())) {
+            if (required) {
+                throw new UnsupportedOperationException(
+                        canonicalOUOptions.describeSelectionSource()
+                                + " does not support a fixed root (infinite priorSampleSize) yet; "
+                                + "use canonicalOUCoordinates=\"natural\".");
+            }
+            return false;
+        }
+        // Tips with observation error are Gaussian-link tips, supported in natural coordinates only.  When the
+        // block basis is required explicitly the exact-tip contract is enforced (with an error) while the tips load.
+        return required || !CanonicalTipObservationAdapter.hasObservationError(tree, dataModel, dim);
     }
 
     private static void copyGradient(final double[] source,

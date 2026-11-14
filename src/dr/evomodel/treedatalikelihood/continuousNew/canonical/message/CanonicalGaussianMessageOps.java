@@ -16,10 +16,6 @@ public final class CanonicalGaussianMessageOps {
 
     private static final double SYMMETRIC_JITTER_RELATIVE = 1.0e-12;
     private static final double SYMMETRIC_JITTER_ABSOLUTE = 1.0e-12;
-    private static final boolean USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT =
-            Boolean.parseBoolean(System.getProperty(
-                    "beast.experimental.canonicalUseCholeskySolveMessageProduct",
-                    "true"));
 
     public static final class Workspace {
         private final int dimension;
@@ -117,16 +113,10 @@ public final class CanonicalGaussianMessageOps {
         }
 
         final double eliminated;
-        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
-            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
-            solveSymmetricFromCholeskyVector(a, h, tempv, d);
-            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, tempv, d);
-            solveSymmetricFromCholeskyMatrix(a, transition.precisionXY, temp, aInvOrSolveScratch, d);
-        } else {
-            eliminated = normalizedLogNormalizer(a, h, d, workspace, aInvOrSolveScratch, tempv);
-            MatrixOps.matMul(aInvOrSolveScratch, transition.precisionXY, temp, d);
-            MatrixOps.matVec(aInvOrSolveScratch, h, tempv, d);
-        }
+        final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+        solveSymmetricFromCholeskyVector(a, h, tempv, d);
+        eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, tempv, d);
+        solveSymmetricFromCholeskyMatrix(a, transition.precisionXY, temp, aInvOrSolveScratch, d);
         MatrixOps.matMul(transition.precisionYX, temp, temp2, d);
 
         final int d2 = d * d;
@@ -165,18 +155,11 @@ public final class CanonicalGaussianMessageOps {
         }
 
         final double eliminated;
-        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
-            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
-            solveSymmetricFromCholeskyVector(a, h, tempv, d);
-            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, tempv, d);
-            solveSymmetricFromCholeskyMatrix(a, transition.precisionYX, temp, aInvOrSolveScratch, d);
-            MatrixOps.matMul(transition.precisionXY, temp, temp2, d);
-        } else {
-            eliminated = normalizedLogNormalizer(a, h, d, workspace, aInvOrSolveScratch, tempv);
-            MatrixOps.matMul(transition.precisionXY, aInvOrSolveScratch, temp, d);
-            MatrixOps.matMul(temp, transition.precisionYX, temp2, d);
-            MatrixOps.matVec(aInvOrSolveScratch, h, tempv, d);
-        }
+        final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+        solveSymmetricFromCholeskyVector(a, h, tempv, d);
+        eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, tempv, d);
+        solveSymmetricFromCholeskyMatrix(a, transition.precisionYX, temp, aInvOrSolveScratch, d);
+        MatrixOps.matMul(transition.precisionXY, temp, temp2, d);
 
         final int d2 = d * d;
         for (int k = 0; k < d2; ++k) {
@@ -219,16 +202,10 @@ public final class CanonicalGaussianMessageOps {
         }
 
         final double eliminated;
-        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
-            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
-            solveSymmetricFromCholeskyVector(a, h, solvedMean, d);
-            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, solvedMean, d);
-            solveSymmetricFromCholeskyMatrix(a, branchPrecision, solvedMatrix, solveScratch, d);
-        } else {
-            eliminated = normalizedLogNormalizer(a, h, d, workspace, solveScratch, solvedMean);
-            MatrixOps.matMul(solveScratch, branchPrecision, solvedMatrix, d);
-            MatrixOps.matVec(solveScratch, h, solvedMean, d);
-        }
+        final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+        solveSymmetricFromCholeskyVector(a, h, solvedMean, d);
+        eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, solvedMean, d);
+        solveSymmetricFromCholeskyMatrix(a, branchPrecision, solvedMatrix, solveScratch, d);
 
         MatrixOps.matMul(branchPrecision, solvedMatrix, matrixProduct, d);
         for (int i = 0; i < d; ++i) {
@@ -285,18 +262,11 @@ public final class CanonicalGaussianMessageOps {
         }
 
         final double eliminated;
-        if (USE_CHOLESKY_SOLVE_MESSAGE_PRODUCT) {
-            final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
-            solveSymmetricFromCholeskyVector(a, h, solvedMean, d);
-            eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, solvedMean, d);
-            fillRowsScaledByDiagonal(branchPrecision, actualizationDiagonal, rhsMatrix, d);
-            solveSymmetricFromCholeskyMatrix(a, rhsMatrix, solvedMatrix, solveScratch, d);
-        } else {
-            eliminated = normalizedLogNormalizer(a, h, d, workspace, solveScratch, solvedMean);
-            fillRowsScaledByDiagonal(branchPrecision, actualizationDiagonal, rhsMatrix, d);
-            MatrixOps.matMul(solveScratch, rhsMatrix, solvedMatrix, d);
-            MatrixOps.matVec(solveScratch, h, solvedMean, d);
-        }
+        final double logDet = factorPositiveDefiniteFlat(a, d, workspace, a);
+        solveSymmetricFromCholeskyVector(a, h, solvedMean, d);
+        eliminated = normalizedLogNormalizerFromSolvedMean(logDet, h, solvedMean, d);
+        fillRowsScaledByDiagonal(branchPrecision, actualizationDiagonal, rhsMatrix, d);
+        solveSymmetricFromCholeskyMatrix(a, rhsMatrix, solvedMatrix, solveScratch, d);
 
         for (int i = 0; i < d; ++i) {
             final int iOff = i * d;

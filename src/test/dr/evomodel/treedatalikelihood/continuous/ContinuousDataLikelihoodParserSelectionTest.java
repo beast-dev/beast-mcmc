@@ -11,6 +11,9 @@ import junit.framework.TestCase;
 
 import java.io.StringReader;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase {
@@ -22,6 +25,11 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
     private static final String HOMOGENEOUS_BLOCK_BASIS_PROVIDER =
             "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter."
                     + "HomogeneousBlockBasisCanonicalOUBranchTransitionProvider";
+    private static final String HOMOGENEOUS_NATURAL_PROVIDER =
+            "dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter."
+                    + "HomogeneousCanonicalOUBranchTransitionProvider";
+    private static final String TIP_OBSERVATION_ERROR_XML =
+            "tests/TestXML/testCanonicalOUTipObservationError.xml";
 
     // The CDI-backed BM engine (ContinuousTreeLikelihoodEngineFactory.cdiBM(...)) has been
     // deprecated in favor of the native moment-form engine; enableCdiBMLikelihood() is now a
@@ -86,6 +94,74 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         assertEquals("XML coordinate switch should select the block-basis transition provider",
                 HOMOGENEOUS_BLOCK_BASIS_PROVIDER,
                 transitionProvider(delegate).getClass().getName());
+    }
+
+    // ---- canonicalOUCoordinates="auto" (the default): block basis where it applies, natural otherwise ----
+
+    public void testParserCanonicalOUDefaultSelectsBlockBasisWhenSupported() throws Exception {
+        final String auto = blockBasisOuXml("canonical", CanonicalOUOptions.COORDINATES_AUTO);
+        assertEquals("auto should select the block basis for a homogeneous block-diagonal OU with exact tips",
+                HOMOGENEOUS_BLOCK_BASIS_PROVIDER,
+                transitionProvider(parseDelegate(auto)).getClass().getName());
+
+        final String omitted = auto.replace(" canonicalOUCoordinates=\"auto\"", "");
+        assertFalse("test setup: the coordinates attribute should have been removed", omitted.equals(auto));
+        assertEquals("omitting canonicalOUCoordinates is the same as auto",
+                HOMOGENEOUS_BLOCK_BASIS_PROVIDER,
+                transitionProvider(parseDelegate(omitted)).getClass().getName());
+    }
+
+    public void testParserCanonicalOUNaturalCoordinatesStayNatural() throws Exception {
+        final CtsCompatibility delegate = parseDelegate(
+                blockBasisOuXml("canonical", CanonicalOUOptions.COORDINATES_NATURAL));
+        assertEquals("natural should never select the block basis",
+                HOMOGENEOUS_NATURAL_PROVIDER,
+                transitionProvider(delegate).getClass().getName());
+    }
+
+    public void testParserCanonicalOUDefaultFallsBackToNaturalForDiagonalSelection() throws Exception {
+        final CtsCompatibility delegate = parseDelegate(ouXml("canonical"));
+        assertFalse("a diagonal selection matrix is not a block-diagonal chart",
+                HOMOGENEOUS_BLOCK_BASIS_PROVIDER.equals(transitionProvider(delegate).getClass().getName()));
+    }
+
+    public void testParserCanonicalOUDefaultFallsBackToNaturalForBranchProcesses() throws Exception {
+        final CtsCompatibility delegate = parseDelegate(heterogeneousOuXml("canonical-message"));
+        assertFalse("branch-specific OU processes are not covered by the homogeneous block basis",
+                HOMOGENEOUS_BLOCK_BASIS_PROVIDER.equals(transitionProvider(delegate).getClass().getName()));
+    }
+
+    public void testParserCanonicalOUDefaultFallsBackToNaturalForFixedRoot() throws Exception {
+        final String fixedRoot = blockBasisOuXml("canonical", CanonicalOUOptions.COORDINATES_AUTO)
+                .replace("<priorSampleSize><parameter value=\"10.0\"/></priorSampleSize>",
+                        "<priorSampleSize><parameter value=\"Infinity\"/></priorSampleSize>");
+        assertTrue("test setup: the root prior should now be fixed", fixedRoot.contains("Infinity"));
+        assertEquals("a fixed root is not covered by the block-basis gradients yet",
+                HOMOGENEOUS_NATURAL_PROVIDER,
+                transitionProvider(parseDelegate(fixedRoot)).getClass().getName());
+    }
+
+    public void testParserRejectsExplicitBlockBasisForFixedRoot() {
+        final String fixedRoot = blockBasisOuXml("canonical", CanonicalOUOptions.COORDINATES_HOMOGENEOUS_BLOCK_BASIS)
+                .replace("<priorSampleSize><parameter value=\"10.0\"/></priorSampleSize>",
+                        "<priorSampleSize><parameter value=\"Infinity\"/></priorSampleSize>");
+        assertParseFails(fixedRoot, "does not support a fixed root");
+    }
+
+    public void testParserCanonicalOUDefaultFallsBackToNaturalForTipObservationError() throws Exception {
+        final String natural = readFile(TIP_OBSERVATION_ERROR_XML);
+        final String auto = natural.replace(
+                "canonicalOUCoordinates=\"natural\"", "canonicalOUCoordinates=\"auto\"");
+        assertFalse("test setup: the coordinates attribute should have changed", auto.equals(natural));
+        final CtsCompatibility delegate = (CtsCompatibility)
+                ((TreeDataLikelihood) parseNativeObject(auto, "blockOULikelihood")).getDataLikelihoodDelegate();
+        assertEquals("tips with observation error are natural-coordinate only",
+                HOMOGENEOUS_NATURAL_PROVIDER,
+                transitionProvider(delegate).getClass().getName());
+
+        final String block = natural.replace(
+                "canonicalOUCoordinates=\"natural\"", "canonicalOUCoordinates=\"homogeneousBlockBasis\"");
+        assertNativeObjectParseFails(block, "blockOULikelihood", "tip observation error");
     }
 
     public void testParserCanonicalMessageOUBranchProcessesSelectsCanonicalMessageBackend() throws Exception {
@@ -197,6 +273,10 @@ public final class ContinuousDataLikelihoodParserSelectionTest extends TestCase 
         final XMLObject object = objects.get(id);
         assertNotNull(id + " object should be stored by id", object);
         return object.getNativeObject();
+    }
+
+    private static String readFile(final String path) throws Exception {
+        return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
     }
 
     private static void assertParseFails(final String xml, final String expectedMessage) {

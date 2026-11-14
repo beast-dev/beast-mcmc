@@ -34,7 +34,6 @@ import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.Canonical
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalBranchLengthGradientEngine;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.CanonicalTreeGradientEngine;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.gradient.StateStoreBranchGradientMessageProvider;
-import dr.evomodel.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeStateStore;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.traversal.CanonicalTreeTraversal;
 import dr.evomodel.continuous.canonical.workspace.BranchGradientWorkspace;
@@ -131,9 +130,7 @@ public final class SequentialCanonicalOUMessagePasser implements CanonicalTreeMe
                 stateStore,
                 mainWorkspace,
                 tree.getRoot().getNumber(),
-                transitionPreloadTaskPool,
-                new DimensionWeightedChunkSizeStrategy(dim, Math.max(1, transitionPreloadTaskPool.getNumThreads()))
-                        .chunkSize(nodeCount));
+                transitionPreloadTaskPool);
         if (gradientSupport) {
             this.preparedBranchGradientInputs = new BranchGradientInputs(Math.max(0, nodeCount - 1), dim);
             final TaskPool branchGradientTaskPool = new TaskPool(nodeCount, Math.max(1, branchGradientParallelism));

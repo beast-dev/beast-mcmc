@@ -50,6 +50,35 @@ public final class CanonicalTipObservationAdapter {
     private CanonicalTipObservationAdapter() { }
 
     /**
+     * True if at least one tip carries observation error, i.e. a finite positive diagonal precision (as supplied by a
+     * repeated-measures data model with a sampling precision).  Only FULL precision partials of a single trait
+     * partition can carry observation error; any other data model reports false.
+     */
+    public static boolean hasObservationError(final Tree tree,
+                                              final ContinuousTraitPartialsProvider dataModel,
+                                              final int dim) {
+        if (tree == null || dataModel == null || dataModel.getTraitCount() != 1) {
+            return false;
+        }
+        final PrecisionType precisionType = dataModel.getPrecisionType();
+        if (precisionType != PrecisionType.FULL) {
+            return false;
+        }
+        final int precisionOffset = precisionType.getPrecisionOffset(dim);
+        final int tipCount = tree.getExternalNodeCount();
+        for (int tipIdx = 0; tipIdx < tipCount; tipIdx++) {
+            final double[] raw = dataModel.getTipPartial(tipIdx, false);
+            for (int i = 0, d = precisionOffset; i < dim; i++, d += dim + 1) {
+                final double precision = raw[d];
+                if (!Double.isInfinite(precision) && precision > 0.0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Like {@link #fillTipObservations(Tree, ContinuousTraitPartialsProvider, int, CanonicalTipObservation[])},
      * but additionally accepts tips observed with finite Gaussian error (finite diagonal precision, as supplied by a
      * repeated-measures data model with a sampling precision).  Such a tip is written to {@code noisyModels[tip]} as a

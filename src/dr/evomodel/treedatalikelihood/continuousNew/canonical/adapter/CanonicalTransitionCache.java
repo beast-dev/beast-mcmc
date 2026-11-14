@@ -114,17 +114,14 @@ final class CanonicalTransitionCache {
     }
 
     void preloadTransitions(final int rootNodeIndex,
-                            final TaskPool taskPool,
-                            final int chunkSize) {
+                            final TaskPool taskPool) {
         if (taskPool == null || taskPool.getNumThreads() <= 1) {
             return;
         }
         if (homogeneousPreparedTransition != null) {
             ensureHomogeneousStationaryMeanSnapshot();
         }
-        taskPool.forkDynamic(
-                entries.length,
-                chunkSize,
+        taskPool.fork(
                 (childNodeIndex, thread) -> {
                     final String previousPhase = pushDiagnosticPhase(CanonicalTransitionCachePhases.POSTORDER);
                     try {

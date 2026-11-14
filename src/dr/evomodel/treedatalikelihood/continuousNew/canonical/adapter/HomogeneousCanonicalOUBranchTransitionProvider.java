@@ -149,10 +149,9 @@ public class HomogeneousCanonicalOUBranchTransitionProvider extends AbstractMode
 
     @Override
     public void preloadCanonicalTransitions(final int rootNodeIndex,
-                                            final TaskPool taskPool,
-                                            final int chunkSize) {
+                                            final TaskPool taskPool) {
         ensureCurrentSnapshot();
-        transitionCache.preloadTransitions(rootNodeIndex, taskPool, chunkSize);
+        transitionCache.preloadTransitions(rootNodeIndex, taskPool);
     }
 
     @Override

@@ -33,8 +33,6 @@ import dr.evomodel.continuous.ou.canonical.SpecializedCanonicalSelectionParamete
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalBranchTransitionProvider;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUProviderSupport;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalOUTransitionProvider;
-import dr.evomodel.continuous.canonical.scheduling.ChunkSizeStrategy;
-import dr.evomodel.continuous.canonical.scheduling.DimensionWeightedChunkSizeStrategy;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
 import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
 import dr.evomodel.continuous.canonical.math.MatrixOps;
@@ -60,7 +58,6 @@ public final class CanonicalTreeGradientEngine {
     private final TaskPool taskPool;
     private final BranchGradientWorkspace mainWorkspace;
     private final BranchGradientWorkspace[] workspaces;
-    private final ChunkSizeStrategy chunkSizeStrategy;
 
     public CanonicalTreeGradientEngine(
             final int dimension,
@@ -73,8 +70,6 @@ public final class CanonicalTreeGradientEngine {
         this.taskPool = taskPool;
         this.mainWorkspace = mainWorkspace;
         this.workspaces = workspaces;
-        this.chunkSizeStrategy =
-                new DimensionWeightedChunkSizeStrategy(dimension, Math.max(1, workspaces.length));
     }
 
     public void computeJointGradients(final CanonicalBranchTransitionProvider transitionProvider,
@@ -162,10 +157,12 @@ public final class CanonicalTreeGradientEngine {
         selectionPullback.initialize(reductionWorkspace, gradA, gradMu);
 
         long timingStart = CanonicalPhaseTimer.start();
-        taskPool.forkDynamicBalanced(
-                inputs.getActiveBranchCount(),
-                branchGradientJointChunkSize(inputs.getActiveBranchCount()),
+        final int activeBranchLimit = inputs.getActiveBranchCount();
+        taskPool.fork(
                 (activeIndex, thread) -> {
+                    if (activeIndex >= activeBranchLimit) {
+                        return;
+                    }
                     final BranchGradientWorkspace workspace = workspaces[thread];
                     final OUProcessModel processModel =
                             processModelFor(ouProvider, homogeneousProcessModel, inputs, activeIndex);
@@ -213,10 +210,6 @@ public final class CanonicalTreeGradientEngine {
                     gradQ,
                     workspace);
         }
-    }
-
-    private int branchGradientJointChunkSize(final int taskLimit) {
-        return chunkSizeStrategy.chunkSize(taskLimit);
     }
 
     private OUProcessModel selectGradientProcessModel(final CanonicalOUTransitionProvider ouProvider,

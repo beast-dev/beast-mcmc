@@ -543,4 +543,47 @@ public class MultifurcatingCharacterTreeTest extends TestCase {
             assertTrue(e.getMessage(), e.getMessage().contains("needs ratesParameter"));
         }
     }
+
+    public void testEqualRatesOnRandomMultifurcatingTrees() throws Exception {
+        Random random = new Random(7);
+        for (int n : new int[]{2, 4, 7, 20}) {
+            GeneralDataType type = letters(n);
+            List<String> codes = new ArrayList<String>();
+            for (int i = 0; i < n; i++) codes.add(type.getCode(i));
+            double[] pi = new double[n];
+            double total = 0.0;
+            for (int i = 0; i < n; i++) total += pi[i] = 0.2 + random.nextDouble();
+            double sumSquares = 0.0;
+            for (int i = 0; i < n; i++) {
+                pi[i] /= total;
+                sumSquares += pi[i] * pi[i];
+            }
+            for (int trial = 0; trial < 5; trial++) {
+                String newick = n == 2 ? "(a,b);" : trial == 0 ? CharacterTreeContraction.starNewick(type)
+                        : randomMultifurcatingNewick(codes, random, 4);
+                CharacterTreeContraction.Built built = CharacterTreeContraction.build("characterTree", newick, type, true, null);
+                FrequencyModel f = frequencies(type, pi);
+                HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel("hrate", built.isMultifurcating()
+                        ? new EqualRatesProvider(new CharacterTreeContraction(built.skeleton, type, built.collapsed, null), f, true)
+                        : new EqualRatesProvider(built.skeleton, f, true));
+                double[] q = new double[n * n];
+                model.getInfinitesimalMatrix(q);
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        if (i != j) {
+                            assertEquals(newick, pi[j] / (1.0 - sumSquares), q[i * n + j], 1e-13);
+                        }
+                    }
+                }
+                double[] p = new double[n * n];
+                model.getTransitionProbabilities(0.7, p);
+                final double e = Math.exp(-0.7 / (1.0 - sumSquares));
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        assertEquals(newick, (i == j ? e : 0.0) + (1.0 - e) * pi[j], p[i * n + j], 1e-13);
+                    }
+                }
+            }
+        }
+    }
 }

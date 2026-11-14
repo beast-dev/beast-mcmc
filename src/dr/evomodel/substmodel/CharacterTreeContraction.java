@@ -128,6 +128,14 @@ public final class CharacterTreeContraction {
         return tree;
     }
 
+    /**
+     * Marks the canonical resolution stale after a change of the skeleton's topology. The contraction also listens to
+     * the skeleton; this makes the order of the listeners irrelevant.
+     */
+    public void topologyChanged() {
+        topologyKnown = false;
+    }
+
     public Parameter getKeep() {
         return keep;
     }

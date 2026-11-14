@@ -1,0 +1,274 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Multifurcating character trees of the hierarchical substitution model: the star (A,C,G,T) is F81 and ((A,G),C,T)
+     is TN93 with kappa2 = 1, through the hierarchical BEAGLE representation against the dense models; a short MCMC
+     samples the character tree over all 26 multifurcating trees on A, C, G, T. -->
+<beast>
+    <taxa id="taxa">
+        <taxon id="human"/>
+        <taxon id="chimp"/>
+        <taxon id="gorilla"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="nucleotide">
+        <sequence>
+            <taxon idref="human"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGGAGCTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATCGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTATACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAATACAGACCAAGAGCCTTCAAAGCCCTCAGTAAGTTG-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="chimp"/>
+            AGAAATATGTCTGATAAAAGAATTACTTTGATAGAGTAAATAATAGGAGTTCAAATCCCCTTATTTCTACTA
+            GGACTATAAGAATCGAACTCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTATCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTTACACCCTTCCCGTACTAAGAAATT
+            TAGGTTAAGCACAGACCAAGAGCCTTCAAAGCCCTCAGCAAGTTA-CAATACTTAATTTCTGTAAGGACTGC
+        </sequence>
+        <sequence>
+            <taxon idref="gorilla"/>
+            AGAAATATGTCTGATAAAAGAGTTACTTTGATAGAGTAAATAATAGAGGTTTAAACCCCCTTATTTCTACTA
+            GGACTATGAGAATTGAACCCATCCCTGAGAATCCAAAATTCTCCGTGCCACCTGTCACACCCCATCCTAAGT
+            AAGGTCAGCTAAATAAGCTATCGGGCCCATACCCCGAAAATGTTGGTCACATCCTTCCCGTACTAAGAAATT
+            TAGGTTAAACATAGACCAAGAGCCTTCAAAGCCCTTAGTAAGTTA-CAACACTTAATTTCTGTAAGGACTGC
+        </sequence>
+    </alignment>
+
+    <patterns id="patterns" from="1" strip="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <newick id="startingTree" usingHeights="true" usingDates="false">
+        ((human:0.1,chimp:0.1):0.1,gorilla:0.2);
+    </newick>
+
+    <treeModel id="treeModel" fixHeights="true">
+        <tree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <frequencyModel id="frequencies" dataType="nucleotide">
+        <frequencies>
+            <parameter id="frequencies.parameter" value="0.1 0.2 0.3 0.4"/>
+        </frequencies>
+    </frequencyModel>
+
+    <HKYModel id="hky1">
+        <frequencies><frequencyModel idref="frequencies"/></frequencies>
+        <kappa><parameter value="1.0"/></kappa>
+    </HKYModel>
+    <TN93Model id="tn93">
+        <frequencies><frequencyModel idref="frequencies"/></frequencies>
+        <kappa1><parameter value="2.818181818181818"/></kappa1>
+        <kappa2><parameter value="1.0"/></kappa2>
+    </TN93Model>
+
+    <hierarchicalSubstitutionModel id="hrate.star" characterTreeNewick="(A,C,G,T);">
+        <frequencies><frequencyModel idref="frequencies"/></frequencies>
+        <ratesParameter><parameter value="2.7"/></ratesParameter>
+    </hierarchicalSubstitutionModel>
+    <hierarchicalSubstitutionModel id="hrate.equal">
+        <frequencies><frequencyModel idref="frequencies"/></frequencies>
+        <equalRates/>
+    </hierarchicalSubstitutionModel>
+    <hierarchicalSubstitutionModel id="hrate.oneClade" characterTreeNewick="((A,G),C,T);">
+        <frequencies><frequencyModel idref="frequencies"/></frequencies>
+        <ratesParameter><parameter value="0.8 1.1"/></ratesParameter>
+    </hierarchicalSubstitutionModel>
+
+    <siteModel id="hky1.siteModel">
+        <substitutionModel>
+            <HKYModel idref="hky1"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter value="0.5"/>
+        </gammaShape>
+    </siteModel>
+    <siteModel id="tn93.siteModel">
+        <substitutionModel>
+            <TN93Model idref="tn93"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter value="0.5"/>
+        </gammaShape>
+    </siteModel>
+    <siteModel id="hrate.star.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.star"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter value="0.5"/>
+        </gammaShape>
+    </siteModel>
+    <siteModel id="hrate.equal.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.equal"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter value="0.5"/>
+        </gammaShape>
+    </siteModel>
+    <siteModel id="hrate.oneClade.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate.oneClade"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter value="0.5"/>
+        </gammaShape>
+    </siteModel>
+    <treeDataLikelihood id="hky1.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hky1.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+    <treeDataLikelihood id="tn93.likelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="tn93.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+    <treeDataLikelihood id="hierarchical.star.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.star.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+    <treeDataLikelihood id="hierarchical.equal.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.equal.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+    <treeDataLikelihood id="hierarchical.oneClade.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.oneClade.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <characterTreeModel id="characterTree" variable="true" newick="((A,G),(C,T));">
+        <keep><parameter id="characterTree.keep"/></keep>
+    </characterTreeModel>
+    <exponentialDistributionModel id="rateSlab"><mean><parameter value="1.0"/></mean></exponentialDistributionModel>
+    <hierarchicalSubstitutionModel id="hrate">
+        <frequencies><frequencyModel idref="frequencies"/></frequencies>
+        <characterTree><characterTreeModel idref="characterTree"/></characterTree>
+        <ratesParameter><parameter id="hrate.rates" value="1.0" lower="0.0"/></ratesParameter>
+    </hierarchicalSubstitutionModel>
+    <maskedParameter id="hrate.nonRootRates" from="1" to="2"><parameter idref="hrate.rates"/></maskedParameter>
+    <characterTreePrior id="characterTree.prior" type="uniform"><characterTreeModel idref="characterTree"/></characterTreePrior>
+    <characterTreeStatistic id="characterTree.stats">
+        <characterTreeModel idref="characterTree"/>
+        <hierarchicalSubstitutionModel idref="hrate"/>
+    </characterTreeStatistic>
+    <siteModel id="hrate.siteModel">
+        <substitutionModel>
+            <hierarchicalSubstitutionModel idref="hrate"/>
+        </substitutionModel>
+        <gammaShape gammaCategories="4">
+            <parameter value="0.5"/>
+        </gammaShape>
+    </siteModel>
+    <treeDataLikelihood id="hierarchical.likelihood" useHierarchicalRepresentation="true">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="hrate.siteModel"/>
+        <strictClockBranchRates idref="branchRates"/>
+    </treeDataLikelihood>
+
+    <report>
+        <treeDataLikelihood idref="hky1.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.star.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.equal.likelihood"/>
+        <treeDataLikelihood idref="tn93.likelihood"/>
+        <treeDataLikelihood idref="hierarchical.oneClade.likelihood"/>
+    </report>
+
+    <assertEqual tolerance="1e-10" toleranceType="relative" verbose="true">
+        <message>
+            Star (A,C,G,T) with one rate: hierarchical BEAGLE representation against HKY with kappa 1 (F81)
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.star.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hky1.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" toleranceType="relative" verbose="true">
+        <message>
+            equalRates without a character tree (the star): hierarchical BEAGLE representation against HKY with kappa 1
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.equal.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hky1.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <assertEqual tolerance="1e-10" toleranceType="relative" verbose="true">
+        <message>
+            ((A,G),C,T): hierarchical BEAGLE representation against TN93 with kappa2 = 1
+        </message>
+        <actual regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="hierarchical.oneClade.likelihood"/>
+        </actual>
+        <expected regex="TreeDataLikelihood\(([^)]*)\)">
+            <treeDataLikelihood idref="tn93.likelihood"/>
+        </expected>
+    </assertEqual>
+
+    <operators id="operators">
+        <characterTreeNNI weight="2"><characterTreeModel idref="characterTree"/></characterTreeNNI>
+        <characterTreeKeepFlip weight="2" nearZeroWeight="0.5" nearZeroScale="0.1">
+            <characterTreeModel idref="characterTree"/>
+            <rates><parameter idref="hrate.rates"/></rates>
+            <slab><exponentialDistributionModel idref="rateSlab"/></slab>
+        </characterTreeKeepFlip>
+        <scaleOperator scaleFactor="0.75" weight="2"><maskedParameter idref="hrate.nonRootRates"/></scaleOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="2000" autoOptimize="true">
+        <posterior id="posterior">
+            <prior id="prior">
+                <distributionLikelihood>
+                    <data><maskedParameter idref="hrate.nonRootRates"/></data>
+                    <distribution><exponentialDistributionModel idref="rateSlab"/></distribution>
+                </distributionLikelihood>
+                <characterTreePrior idref="characterTree.prior"/>
+            </prior>
+            <likelihood id="likelihood"><treeDataLikelihood idref="hierarchical.likelihood"/></likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="500">
+            <column label="Posterior" dp="4" width="12"><posterior idref="posterior"/></column>
+            <column label="q" dp="0" width="4"><characterTreeStatistic idref="characterTree.stats"/></column>
+        </log>
+        <log id="fileLog" logEvery="20" fileName="testHierarchicalMultifurcating.log">
+            <posterior idref="posterior"/>
+            <likelihood idref="likelihood"/>
+            <characterTreeStatistic idref="characterTree.stats"/>
+            <parameter idref="hrate.rates"/>
+            <parameter idref="characterTree.keep"/>
+        </log>
+        <logTree id="treeLog" logEvery="20" nexusFormat="true" fileName="testHierarchicalMultifurcating.characterTree.trees">
+            <characterTreeModel idref="characterTree"/>
+        </logTree>
+    </mcmc>
+</beast>

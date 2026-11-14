@@ -706,6 +706,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
             }
             structureKnown = false;
             if (contraction != null) {
+                contraction.topologyChanged();
                 if (uploadStructureUnchanged()) {
                     return;
                 }
@@ -741,6 +742,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     public void modelRestored(Model model) {
         if (model == tree) {
             structureKnown = false;
+            if (contraction != null) {
+                contraction.topologyChanged();
+            }
         }
     }
 

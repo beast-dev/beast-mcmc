@@ -33,10 +33,10 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.ProcessOnTreeDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 
 import java.util.Arrays;
 import java.util.List;
@@ -54,7 +54,7 @@ public abstract class AbstractRealizedContinuousTraitDelegate extends ProcessSim
                                             ContinuousTraitPartialsProvider dataModel,
                                             ConjugateRootTraitPrior rootPrior,
                                             ContinuousRateTransformation rateTransformation,
-                                            ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                            CtsCompatibility likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
         sample = new double[dimNode * tree.getNodeCount()];

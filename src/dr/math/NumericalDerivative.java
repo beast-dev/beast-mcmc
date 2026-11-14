@@ -126,6 +126,11 @@ public class NumericalDerivative
 			// Centered first derivative
 			grad[i] = (fxplus-fxminus)/(2.0*h);
 		}
+
+		// Ensure side-effecting functions are restored to x at method exit.
+		// Some callers (e.g., parameter-setting wrappers used for gradient checks)
+		// mutate model state inside evaluate(...).
+		f.evaluate(x);
 	}
 
 	/**
@@ -141,8 +146,12 @@ public class NumericalDerivative
 	}
 
 	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad) {
+		gradient4thOrder(f, x, grad, Math.pow(MachineAccuracy.EPSILON, 0.333));
+	}
+
+	public static void gradient4thOrder(MultivariateFunction f, double[] x, double[] grad, double stepSizeRatio) {
 		for (int i = 0; i < f.getNumArguments(); ++i) {
-			double h = Math.pow(MachineAccuracy.EPSILON, 0.333) * Math.max(Math.abs(x[i]), 1.0);
+			double h = stepSizeRatio * Math.max(Math.abs(x[i]), 1.0);
 
 			double oldX = x[i];
 			x[i] = oldX + 2 * h;
@@ -157,6 +166,9 @@ public class NumericalDerivative
 
 			grad[i] = (-fxPlus2H + 8 * fxPlusH - 8 * fxMinusH + fxMinus2H) / (12 * h);
 		}
+
+		// Ensure side-effecting functions are restored to x at method exit.
+		f.evaluate(x);
 	}
 
 	/**

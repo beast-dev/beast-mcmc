@@ -291,7 +291,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
             out.print("lnL\t");
             out.println(lnL);
 
-            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+            for (Parameter parameter : getCheckpointParameters()) {
                 if (!parameter.isImmutable()) {
                     out.print("parameter");
                     out.print("\t");
@@ -541,7 +541,7 @@ public class BeastCheckpointer implements StateLoaderSaver {
                 line = in.readLine();
             }
 
-            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+            for (Parameter parameter : getCheckpointParameters()) {
 
                 if (!parameter.isImmutable()) {
                     fields = removeSavedFields(savedParameters, getParameterCheckpointName(parameter));
@@ -879,6 +879,41 @@ public class BeastCheckpointer implements StateLoaderSaver {
         }
 
         return state;
+    }
+
+    private static List<Parameter> getCheckpointParameters() {
+        final LinkedHashSet<Parameter> parameters = new LinkedHashSet<Parameter>();
+        for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
+            addCheckpointParameter(parameters, parameter, false);
+        }
+        return new ArrayList<Parameter>(parameters);
+    }
+
+    private static void addCheckpointParameter(final Set<Parameter> parameters,
+                                               final Parameter parameter,
+                                               final boolean flattenCompound) {
+        if (parameter == null) {
+            return;
+        }
+        if (parameter instanceof CheckpointableStateProvider) {
+            final Parameter checkpointableState =
+                    ((CheckpointableStateProvider) parameter).getCheckpointableStateParameter();
+            if (checkpointableState != null && checkpointableState != parameter) {
+                addCheckpointParameter(parameters, checkpointableState, true);
+                return;
+            }
+        }
+        if (flattenCompound && parameter instanceof CompoundParameter
+                && !(parameter instanceof MatrixParameterInterface)) {
+            final CompoundParameter compoundParameter = (CompoundParameter) parameter;
+            for (int i = 0; i < compoundParameter.getParameterCount(); i++) {
+                addCheckpointParameter(parameters, compoundParameter.getParameter(i), true);
+            }
+            return;
+        }
+        if (!parameter.isImmutable()) {
+            parameters.add(parameter);
+        }
     }
 
     class CheckpointPrintStream extends PrintStream {

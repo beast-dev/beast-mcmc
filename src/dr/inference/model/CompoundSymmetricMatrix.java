@@ -43,12 +43,15 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
 
     private final boolean asCorrelation;
     private final boolean isCholesky;
+    private final CorrelationToCholesky correlationToCholesky;
 
     public CompoundSymmetricMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation, boolean isCholesky) {
         super(diagonals, offDiagonal, getTransformation(diagonals.getDimension(), isCholesky), true);
         assert asCorrelation || !isCholesky; // cholesky only allowed when used as correlation.
         this.asCorrelation = asCorrelation;
         this.isCholesky = isCholesky;
+        this.correlationToCholesky = isCholesky ?
+                (CorrelationToCholesky) ((TransformedMultivariateParameter) offDiagonalParameter).getTransform() : null;
     }
 
     private static Transform.MultivariableTransform getTransformation(int dim, Boolean isCholesky) {
@@ -164,10 +167,11 @@ public class CompoundSymmetricMatrix extends AbstractTransformedCompoundMatrix {
         if (!isCholesky) {
             return gradient;
         } else {
-            CorrelationToCholesky transform = new CorrelationToCholesky(dim);
-            return transform.updateGradientInverseUnWeightedLogDensity(gradient,
+            double[] updatedGradient = new double[gradient.length];
+            correlationToCholesky.updateGradientInverseUnWeightedLogDensity(gradient,
                     ((TransformedMultivariateParameter) offDiagonalParameter).getParameterUntransformedValues(),
-                    0, gradient.length);
+                    updatedGradient);
+            return updatedGradient;
         }
     }
 

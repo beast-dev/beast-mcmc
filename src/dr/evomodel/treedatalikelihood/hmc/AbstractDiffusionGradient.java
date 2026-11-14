@@ -59,10 +59,53 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
 
     public abstract double[] getGradientLogDensity(double[] gradient);
 
+    /**
+     * Evaluate this gradient using an explicit source offset for this call.
+     * This avoids relying on shared mutable offset state when the same
+     * provider instance is reused across wrappers (e.g. path/source-destination
+     * compositions).
+     */
+    public double[] getGradientLogDensity(double[] gradient, int sourceOffset) {
+        final int previousOffset = this.offset;
+        this.offset = sourceOffset;
+        try {
+            return getGradientLogDensity(gradient);
+        } finally {
+            this.offset = previousOffset;
+        }
+    }
+
+    boolean requiresFreshLikelihoodBeforeSharedBranchGradient() {
+        return false;
+    }
+
     public abstract Parameter getRawParameter();
 
     public void setOffset(int offset) {
         this.offset = offset;
+    }
+
+    protected int getSourceOffset() {
+        return offset;
+    }
+
+    protected double[] extractSourceGradient(double[] fullGradient, int requiredDimension) {
+        final double[] result = new double[requiredDimension];
+        if (fullGradient == null) {
+            return result;
+        }
+        if (offset < 0) {
+            throw new IllegalStateException("Negative source gradient offset: " + offset);
+        }
+        if (offset + requiredDimension > fullGradient.length) {
+            throw new IllegalStateException(
+                    "Source gradient slice out of bounds: offset=" + offset +
+                            ", requiredDimension=" + requiredDimension +
+                            ", fullGradientLength=" + fullGradient.length + "."
+            );
+        }
+        System.arraycopy(fullGradient, offset, result, 0, requiredDimension);
+        return result;
     }
 
     public abstract ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter getDerivationParameter();
@@ -84,7 +127,8 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this,
-                lowerBound, upperBound, TOLERANCE);
+                lowerBound, upperBound, TOLERANCE,
+                GradientWrtParameterProvider.SMALL_NUMBER_THRESHOLD);
     }
 
 //    @Override
@@ -162,7 +206,7 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
     public static class ParameterDiffusionGradient extends AbstractDiffusionGradient implements Reportable {
 
         protected final int dim;
-        private final BranchSpecificGradient branchSpecificGradient;
+        protected final BranchSpecificGradient branchSpecificGradient;
 
         private final Parameter parameter;
         private final Parameter rawParameter;
@@ -200,20 +244,16 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
 
         @Override
         public double[] getGradientLogDensity() {
-            double[] gradient = branchSpecificGradient.getGradientLogDensity();
+            double[] gradient = getFullBranchGradient();
             return getGradientLogDensity(gradient);
         }
 
-        public double[] getGradientLogDensity(double[] gradient) {
-            return extractGradient(gradient);
+        protected double[] getFullBranchGradient() {
+            return branchSpecificGradient.getGradientLogDensity();
         }
 
-        private double[] extractGradient(double[] gradient) {
-            double[] result = new double[dim];
-            for (int i = 0; i < dim; i++) {
-                result[i] = gradient[offset + i];
-            }
-            return result;
+        public double[] getGradientLogDensity(double[] gradient) {
+            return extractSourceGradient(gradient, dim);
         }
 
         @Override
@@ -248,7 +288,7 @@ public abstract class AbstractDiffusionGradient implements GradientWrtParameterP
                     branchSpecificGradient, likelihood,
                     ((DiagonalMatrix) attenuation).getDiagonalParameter(),
                     (DiagonalMatrix) attenuation,
-                    Double.POSITIVE_INFINITY, 0.0);
+                    Double.POSITIVE_INFINITY, 1.0e-12);
         }
     }
 }

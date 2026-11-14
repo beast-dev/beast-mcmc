@@ -32,11 +32,13 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.MultivariateIntegrator;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateActualizedWithDriftIntegrator;
 import dr.evomodel.treedatalikelihood.preorder.BranchSufficientStatistics;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.missingData.MissingOps;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -56,21 +58,36 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
     // Here, branchRateModels represents optimal values
 
     private MultivariateElasticModel elasticModel;
+    private final CanonicalOUBranchProcessSpecification canonicalBranchProcessSpecification;
 
     public OUDiffusionModelDelegate(Tree tree,
                                     MultivariateDiffusionModel diffusionModel,
                                     List<BranchRateModel> branchRateModels,
                                     MultivariateElasticModel elasticModel) {
-        this(tree, diffusionModel, branchRateModels, elasticModel, 0);
+        this(tree, diffusionModel, branchRateModels, elasticModel, null, 0);
+    }
+
+    public OUDiffusionModelDelegate(Tree tree,
+                                    MultivariateDiffusionModel diffusionModel,
+                                    List<BranchRateModel> branchRateModels,
+                                    CanonicalOUBranchProcessSpecification canonicalBranchProcessSpecification) {
+        this(tree,
+                diffusionModel,
+                branchRateModels,
+                canonicalBranchProcessSpecification.getElasticModel(0),
+                canonicalBranchProcessSpecification,
+                0);
     }
 
     private OUDiffusionModelDelegate(Tree tree,
                                      MultivariateDiffusionModel diffusionModel,
                                      List<BranchRateModel> branchRateModels,
                                      MultivariateElasticModel elasticModel,
+                                     CanonicalOUBranchProcessSpecification canonicalBranchProcessSpecification,
                                      int partitionNumber) {
         super(tree, diffusionModel, branchRateModels, partitionNumber);
         this.elasticModel = elasticModel;
+        this.canonicalBranchProcessSpecification = canonicalBranchProcessSpecification;
         addModel(elasticModel);
     }
 
@@ -81,6 +98,19 @@ public class OUDiffusionModelDelegate extends AbstractDriftDiffusionModelDelegat
         } else {
             super.handleModelChangedEvent(model, object, index);
         }
+    }
+
+    // Accessors used by the canonical OU likelihood (continuousNew) to read the XML-defined process.
+    public MultivariateElasticModel getElasticModel() {
+        return elasticModel;
+    }
+
+    public CanonicalOUBranchProcessSpecification getCanonicalBranchProcessSpecification() {
+        return canonicalBranchProcessSpecification;
+    }
+
+    public Parameter getCanonicalStationaryMeanParameter() {
+        return getCanonicalConstantDriftParameter();
     }
 
     @Override

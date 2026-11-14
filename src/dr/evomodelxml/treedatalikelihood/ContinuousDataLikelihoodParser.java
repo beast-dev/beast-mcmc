@@ -37,15 +37,23 @@ import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.MultivariateElasticModel;
 import dr.evomodel.treedatalikelihood.ProcessSimulation;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchProcessSpecification;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
+import dr.evomodel.treedatalikelihood.continuousNew.ContinuousDataLikelihoodDelegateNew;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
 
@@ -61,6 +69,8 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
     private static final String RECIPROCAL_RATES = AbstractMultivariateTraitLikelihood.RECIPROCAL_RATES;
     private static final String DRIFT_MODELS = AbstractMultivariateTraitLikelihood.DRIFT_MODELS;
     private static final String OPTIMAL_TRAITS = AbstractMultivariateTraitLikelihood.OPTIMAL_TRAITS;
+    private static final String REPORT_MULTIVARIATE = AbstractMultivariateTraitLikelihood.REPORT_MULTIVARIATE;
+    private static final String INTEGRATE_INTERNAL_TRAITS = AbstractMultivariateTraitLikelihood.INTEGRATE;
 
     private static final String RECONSTRUCT_TRAITS = "reconstructTraits";
     private static final String ALLOW_SINGULAR = "allowSingular";
@@ -70,8 +80,26 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
     private static final String FORCE_DRIFT = "forceDrift";
     private static final String FORCE_OU = "forceOU";
+    private static final String IMPLEMENTATION = "implementation";
+    private static final String IMPLEMENTATION_LEGACY = "legacy";
+    private static final String IMPLEMENTATION_CANONICAL = "canonical";
+    private static final String IMPLEMENTATION_CDI = "cdi";
+    private static final String IMPLEMENTATION_CDI_MOMENT = "cdi-moment";
+    private static final String IMPLEMENTATION_BM_CDI = "bm-cdi";
+    private static final String IMPLEMENTATION_BM_CDI_MOMENT = "bm-cdi-moment";
+    private static final String IMPLEMENTATION_BM_MOMENT = "bm-moment";
+    private static final String IMPLEMENTATION_NATIVE_MOMENT_BM = "native-moment-bm";
+    private static final String IMPLEMENTATION_CANONICAL_MESSAGE = "canonical-message";
+    private static final String IMPLEMENTATION_OU_CANONICAL = "ou-canonical";
+    private static final String IMPLEMENTATION_OU_CANONICAL_MESSAGE = "ou-canonical-message";
+    private static final String IMPLEMENTATION_NATURAL_CANONICAL_BM = "natural-canonical-bm";
+    private static final String IMPLEMENTATION_BM_NATURAL_CANONICAL = "bm-natural-canonical";
 
     private static final String STRENGTH_OF_SELECTION_MATRIX = "strengthOfSelectionMatrix";
+    private static final String CANONICAL_OU_BRANCH_PROCESSES = "canonicalOUBranchProcesses";
+    private static final String BRANCH_PROCESS_INDEX = "branchProcessIndex";
+    private static final String PROCESS = "process";
+    private static final String CANONICAL_OU_COORDINATES = CanonicalOUOptions.COORDINATES_ATTRIBUTE;
 
     public static final String CONTINUOUS_DATA_LIKELIHOOD = "traitDataLikelihood";
 
@@ -85,6 +113,51 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         HOMOGENOUS
     }
 
+    private enum ImplementationMode {
+        LEGACY,
+        CANONICAL_COMPATIBILITY,
+        CDI_MOMENT_BM,
+        MOMENT_BM,
+        CANONICAL_MESSAGE_OU,
+        NATURAL_CANONICAL_BM;
+
+        static ImplementationMode parse(final String rawImplementation) throws XMLParseException {
+            final String implementation = rawImplementation.trim().toLowerCase(Locale.ROOT);
+            if (IMPLEMENTATION_LEGACY.equals(implementation)) {
+                return LEGACY;
+            }
+            if (IMPLEMENTATION_CANONICAL.equals(implementation)) {
+                return CANONICAL_COMPATIBILITY;
+            }
+            if (IMPLEMENTATION_CDI.equals(implementation)
+                    || IMPLEMENTATION_CDI_MOMENT.equals(implementation)
+                    || IMPLEMENTATION_BM_CDI.equals(implementation)
+                    || IMPLEMENTATION_BM_CDI_MOMENT.equals(implementation)) {
+                return CDI_MOMENT_BM;
+            }
+            if (IMPLEMENTATION_BM_MOMENT.equals(implementation)
+                    || IMPLEMENTATION_NATIVE_MOMENT_BM.equals(implementation)) {
+                return MOMENT_BM;
+            }
+            if (IMPLEMENTATION_CANONICAL_MESSAGE.equals(implementation)
+                    || IMPLEMENTATION_OU_CANONICAL.equals(implementation)
+                    || IMPLEMENTATION_OU_CANONICAL_MESSAGE.equals(implementation)) {
+                return CANONICAL_MESSAGE_OU;
+            }
+            if (IMPLEMENTATION_NATURAL_CANONICAL_BM.equals(implementation)
+                    || IMPLEMENTATION_BM_NATURAL_CANONICAL.equals(implementation)) {
+                return NATURAL_CANONICAL_BM;
+            }
+
+            throw new XMLParseException("traitDataLikelihood implementation must be one of "
+                    + quotedImplementationList() + ", not \"" + rawImplementation + "\".");
+        }
+
+        boolean requiresLikelihoodOnly() {
+            return this != LEGACY;
+        }
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         // Begin Parse Tree and rates
@@ -95,6 +168,9 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
         boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
         boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
+        final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY);
+        final ImplementationMode implementationMode = ImplementationMode.parse(implementation);
+        final CanonicalOUOptions canonicalOUOptions = parseCanonicalOUOptions(xo);
 
         if (reciprocalRates) {
             throw new XMLParseException("Reciprocal rates are not yet implemented.");
@@ -122,6 +198,16 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             if (strengthOfSelectionMatrixParam != null) {
                 elasticModel = new MultivariateElasticModel(strengthOfSelectionMatrixParam);
             }
+        }
+        final CanonicalOUBranchProcessSpecification branchProcessSpecification =
+                parseCanonicalOUBranchProcesses(xo);
+        if (branchProcessSpecification != null) {
+            if (elasticModel != null) {
+                throw new XMLParseException(CONTINUOUS_DATA_LIKELIHOOD + " cannot combine "
+                        + "<" + STRENGTH_OF_SELECTION_MATRIX + "> with <"
+                        + CANONICAL_OU_BRANCH_PROCESSES + ">.");
+            }
+            elasticModel = branchProcessSpecification.getElasticModel(0);
         }
 
 
@@ -174,10 +260,26 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         }
 
         boolean integratedProcess = dataModel instanceof IntegratedProcessTraitDataModel; //TODO: can add to interface if that would be better
+        if (branchProcessSpecification != null) {
+            if (implementationMode == ImplementationMode.LEGACY) {
+                throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                        + "> requires implementation=\"canonical-message\" or implementation=\"canonical\".");
+            }
+            if (integratedProcess) {
+                throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                        + "> is not yet supported for integrated-process OU trait data.");
+            }
+        }
 
         if (delegateProvider == DelegateProvider.OU) {
             if (!integratedProcess) {
-                diffusionProcessDelegate = new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
+                diffusionProcessDelegate = branchProcessSpecification == null
+                        ? new OUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel)
+                        : new OUDiffusionModelDelegate(
+                                treeModel,
+                                diffusionModel,
+                                optimalTraitsModels,
+                                branchProcessSpecification);
             } else {
                 diffusionProcessDelegate = new IntegratedOUDiffusionModelDelegate(treeModel, diffusionModel, optimalTraitsModels, elasticModel);
             }
@@ -188,6 +290,11 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         } else {
             throw new RuntimeException("Unrecognized delegate provider.");
         }
+        validateCanonicalOUOptions(
+                canonicalOUOptions,
+                implementationMode,
+                implementation,
+                delegateProvider);
 
         // End Parse Evolution Model
 
@@ -211,11 +318,48 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
 
 
         boolean forceCompletelyObserved = xo.getAttribute(FORCE_COMPLETELY_OBSERVED, false);
-        ContinuousDataLikelihoodDelegate delegate = new ContinuousDataLikelihoodDelegate(treeModel,
-                diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel, forceCompletelyObserved, allowSingular);
+        final boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
+        // The old ContinuousDataLikelihoodDelegate only ever runs the direct legacy/SafeIntegrator
+        // CDI path (see its calculateLikelihood()); it cannot support any of the newer canonical/
+        // moment-form backends (its enableCanonicalLikelihood()/enableCdiBMLikelihood()/
+        // enableMomentBMLikelihood()/enableCanonicalOULikelihood() all throw
+        // UnsupportedOperationException by design). Those backends live only on
+        // ContinuousDataLikelihoodDelegateNew, so any non-legacy implementationMode must construct
+        // that class instead, or applyImplementationMode's enable*Likelihood() call below always
+        // throws.
+        //
+        // ContinuousDataLikelihoodDelegateNew's own initializeLegacyCdi=true branch is itself
+        // deprecated (it unconditionally throws UnsupportedOperationException) since none of its
+        // enable*Likelihood() methods need an actual legacy cdi/SafeIntegrator instance - they all
+        // build their engine via applyEngineSelection on top of the initializeLegacyCdi=false
+        // baseline. So DelegateNew must always be constructed with initializeLegacyCdi=false,
+        // regardless of implementationMode.
+        final CtsCompatibility delegate = implementationMode == ImplementationMode.LEGACY
+                ? new ContinuousDataLikelihoodDelegate(treeModel,
+                        diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
+                        forceCompletelyObserved, allowSingular)
+                : new ContinuousDataLikelihoodDelegateNew(treeModel,
+                        diffusionProcessDelegate, dataModel, rootPrior, rateTransformation, rateModel,
+                        forceCompletelyObserved, allowSingular, false);
+
+        if (implementationMode!=ImplementationMode.LEGACY) {
+            applyImplementationMode(
+                    implementationMode,
+                    implementation,
+                    delegateProvider,
+                    delegate,
+                    reconstructTraits,
+                    canonicalOUOptions);
+        }
+
+
 
         if (dataModel instanceof IntegratedFactorAnalysisLikelihood) {
-            ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate(delegate);
+            if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+                throw new XMLParseException("traitDataLikelihood implementation=\"" + implementation
+                        + "\" does not yet support a factor-analysis data model; use implementation=\"legacy\".");
+            }
+            ((IntegratedFactorAnalysisLikelihood) dataModel).setLikelihoodDelegate((ContinuousDataLikelihoodDelegate) delegate); //TODO
         }
 
         TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(delegate, treeModel,
@@ -223,7 +367,6 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         // End Assemble Model
 
         // Begin Trait Reconstruction Parsing
-        boolean reconstructTraits = xo.getAttribute(RECONSTRUCT_TRAITS, true);
         if (reconstructTraits) {
 
 //            if (missingIndices != null && missingIndices.size() == 0) {
@@ -275,6 +418,177 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
         return TreeDataLikelihood.class;
     }
 
+    private static void applyImplementationMode(final ImplementationMode implementationMode,
+                                                final String implementation,
+                                                final DelegateProvider delegateProvider,
+                                                final CtsCompatibility delegate,
+                                                final boolean reconstructTraits,
+                                                final CanonicalOUOptions canonicalOUOptions) throws XMLParseException {
+        if (implementationMode.requiresLikelihoodOnly() && reconstructTraits) {
+            throw new XMLParseException(
+                    "traitDataLikelihood implementation=\"" + implementation
+                            + "\" does not yet support reconstructTraits=\"true\".");
+        }
+
+        try {
+            switch (implementationMode) {
+                case LEGACY:
+                    return;
+                case CANONICAL_COMPATIBILITY:
+                    delegate.enableCanonicalLikelihood(canonicalOUOptions);
+                    return;
+                case CDI_MOMENT_BM:
+                    if (delegateProvider != DelegateProvider.HOMOGENOUS) {
+                        throw new XMLParseException(
+                                "traitDataLikelihood implementation=\"" + implementation
+                                        + "\" is the CDI/moment-form BM production backend and supports only homogeneous BM. "
+                                        + "Use implementation=\"legacy\" for legacy CDI OU/drift models or "
+                                        + "implementation=\"canonical-message\" for canonical-message OU.");
+                    }
+                    delegate.enableCdiBMLikelihood();
+                    return;
+                case MOMENT_BM:
+                    if (delegateProvider != DelegateProvider.HOMOGENOUS) {
+                        throw new XMLParseException(
+                                "traitDataLikelihood implementation=\"" + implementation
+                                        + "\" is the native moment-form BM backend and supports only homogeneous BM. "
+                                        + "Use implementation=\"legacy\" for legacy CDI OU/drift models or "
+                                        + "implementation=\"canonical-message\" for canonical-message OU.");
+                    }
+                    delegate.enableMomentBMLikelihood();
+                    return;
+                case CANONICAL_MESSAGE_OU:
+                    if (delegateProvider != DelegateProvider.OU) {
+                        throw new XMLParseException(
+                                "traitDataLikelihood implementation=\"" + implementation
+                                        + "\" is the canonical-message OU backend and supports only OU models. "
+                                        + "Use implementation=\"cdi\" or \"cdi-moment\" for production BM.");
+                    }
+                    delegate.enableCanonicalOULikelihood(canonicalOUOptions);
+                    return;
+                case NATURAL_CANONICAL_BM:
+                    throw new XMLParseException(
+                            "traitDataLikelihood implementation=\"" + implementation
+                                    + "\" names the experimental natural-parameter BM backend. "
+                                    + "It is retained for reference only and is not a production XML backend; "
+                                    + "use implementation=\"cdi\" or \"cdi-moment\" for BM.");
+                default:
+                    throw new XMLParseException(
+                            "Unknown traitDataLikelihood implementation mode for \"" + implementation + "\".");
+            }
+        } catch (UnsupportedOperationException ex) {
+            throw new XMLParseException(
+                    "traitDataLikelihood implementation=\"" + implementation
+                            + "\" is not supported here: " + ex.getMessage());
+        }
+    }
+
+    private static String quotedImplementationList() {
+        return "\"" + IMPLEMENTATION_LEGACY + "\", "
+                + "\"" + IMPLEMENTATION_CANONICAL + "\", "
+                + "\"" + IMPLEMENTATION_CDI + "\", "
+                + "\"" + IMPLEMENTATION_CDI_MOMENT + "\", "
+                + "\"" + IMPLEMENTATION_BM_CDI + "\", "
+                + "\"" + IMPLEMENTATION_BM_CDI_MOMENT + "\", "
+                + "\"" + IMPLEMENTATION_BM_MOMENT + "\", "
+                + "\"" + IMPLEMENTATION_NATIVE_MOMENT_BM + "\", "
+                + "\"" + IMPLEMENTATION_CANONICAL_MESSAGE + "\", "
+                + "\"" + IMPLEMENTATION_OU_CANONICAL + "\", "
+                + "\"" + IMPLEMENTATION_OU_CANONICAL_MESSAGE + "\", "
+                + "\"" + IMPLEMENTATION_NATURAL_CANONICAL_BM + "\", or "
+                + "\"" + IMPLEMENTATION_BM_NATURAL_CANONICAL + "\"";
+    }
+
+    private static CanonicalOUOptions parseCanonicalOUOptions(final XMLObject xo)
+            throws XMLParseException {
+        final String coordinates = xo.getAttribute(
+                CANONICAL_OU_COORDINATES,
+                CanonicalOUOptions.COORDINATES_AUTO);
+        try {
+            return CanonicalOUOptions.parseCoordinates(coordinates);
+        } catch (IllegalArgumentException ex) {
+            throw new XMLParseException(ex.getMessage());
+        }
+    }
+
+    private static void validateCanonicalOUOptions(final CanonicalOUOptions canonicalOUOptions,
+                                                   final ImplementationMode implementationMode,
+                                                   final String implementation,
+                                                   final DelegateProvider delegateProvider)
+            throws XMLParseException {
+        if (!canonicalOUOptions.isExplicit()) {
+            return;
+        }
+        final boolean selectsCanonicalOU =
+                delegateProvider == DelegateProvider.OU
+                        && (implementationMode == ImplementationMode.CANONICAL_COMPATIBILITY
+                        || implementationMode == ImplementationMode.CANONICAL_MESSAGE_OU);
+        if (!selectsCanonicalOU) {
+            throw new XMLParseException(
+                    CANONICAL_OU_COORDINATES + "=\"" + canonicalOUOptions.toXmlString()
+                            + "\" is only valid for canonical OU traitDataLikelihood backends; "
+                            + "implementation=\"" + implementation + "\" selected "
+                            + delegateProvider.name().toLowerCase(Locale.ROOT) + ".");
+        }
+    }
+
+    private static CanonicalOUBranchProcessSpecification parseCanonicalOUBranchProcesses(
+            final XMLObject xo) throws XMLParseException {
+        if (!xo.hasChildNamed(CANONICAL_OU_BRANCH_PROCESSES)) {
+            return null;
+        }
+
+        final XMLObject cxo = xo.getChild(CANONICAL_OU_BRANCH_PROCESSES);
+        if (!cxo.hasChildNamed(BRANCH_PROCESS_INDEX)) {
+            throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                    + "> requires a <" + BRANCH_PROCESS_INDEX + "> child.");
+        }
+
+        final XMLObject branchProcessIndexXO = cxo.getChild(BRANCH_PROCESS_INDEX);
+        final Parameter branchProcessIndex =
+                (Parameter) branchProcessIndexXO.getChild(Parameter.class);
+        if (branchProcessIndex == null) {
+            throw new XMLParseException("<" + BRANCH_PROCESS_INDEX
+                    + "> must contain a branch-process index parameter.");
+        }
+
+        final List<MultivariateElasticModel> elasticModels =
+                new ArrayList<MultivariateElasticModel>();
+        for (int i = 0; i < cxo.getChildCount(); ++i) {
+            final Object child = cxo.getChild(i);
+            if (!(child instanceof XMLObject)) {
+                continue;
+            }
+            final XMLObject processXO = (XMLObject) child;
+            if (!PROCESS.equals(processXO.getName())) {
+                continue;
+            }
+            elasticModels.add(parseBranchProcessElasticModel(processXO));
+        }
+        if (elasticModels.isEmpty()) {
+            throw new XMLParseException("<" + CANONICAL_OU_BRANCH_PROCESSES
+                    + "> requires at least one <" + PROCESS + "> child.");
+        }
+        return new CanonicalOUBranchProcessSpecification(elasticModels, branchProcessIndex);
+    }
+
+    private static MultivariateElasticModel parseBranchProcessElasticModel(
+            final XMLObject processXO) throws XMLParseException {
+        if (!processXO.hasChildNamed(STRENGTH_OF_SELECTION_MATRIX)) {
+            throw new XMLParseException("<" + PROCESS + "> inside <"
+                    + CANONICAL_OU_BRANCH_PROCESSES + "> requires <"
+                    + STRENGTH_OF_SELECTION_MATRIX + ">.");
+        }
+        final XMLObject selectionXO = processXO.getChild(STRENGTH_OF_SELECTION_MATRIX);
+        final MatrixParameterInterface strengthOfSelectionMatrix =
+                (MatrixParameterInterface) selectionXO.getChild(MatrixParameterInterface.class);
+        if (strengthOfSelectionMatrix == null) {
+            throw new XMLParseException("<" + STRENGTH_OF_SELECTION_MATRIX
+                    + "> inside <" + PROCESS + "> must contain a matrix parameter.");
+        }
+        return new MultivariateElasticModel(strengthOfSelectionMatrix);
+    }
+
     public static final XMLSyntaxRule[] rules = {
             new ElementRule(Tree.class),
             new ElementRule(MultivariateDiffusionModel.class),
@@ -292,14 +606,35 @@ public class ContinuousDataLikelihoodParser extends AbstractXMLObjectParser impl
             }, true),
             new ElementRule(STRENGTH_OF_SELECTION_MATRIX,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)}, true),
+            new ElementRule(CANONICAL_OU_BRANCH_PROCESSES, new XMLSyntaxRule[]{
+                    new ElementRule(BRANCH_PROCESS_INDEX,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new ElementRule(PROCESS, new XMLSyntaxRule[]{
+                            new ElementRule(STRENGTH_OF_SELECTION_MATRIX,
+                                    new XMLSyntaxRule[]{new ElementRule(MatrixParameterInterface.class)})
+                    }, 1, Integer.MAX_VALUE)
+            }, true),
             AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
             AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
             AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
             AttributeRule.newBooleanRule(RECONSTRUCT_TRAITS, true),
             AttributeRule.newBooleanRule(ALLOW_SINGULAR, true),
+            AttributeRule.newBooleanRule(FORCE_FULL_PRECISION, true),
+            AttributeRule.newBooleanRule(FORCE_COMPLETELY_MISSING, true),
             AttributeRule.newBooleanRule(FORCE_DRIFT, true),
             AttributeRule.newBooleanRule(FORCE_OU, true),
             AttributeRule.newBooleanRule(FORCE_COMPLETELY_OBSERVED, true),
+            AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),
+            AttributeRule.newBooleanRule(INTEGRATE_INTERNAL_TRAITS, true),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
+            new StringAttributeRule(CANONICAL_OU_COORDINATES,
+                    "Coordinate system for canonical OU messages. The default, auto, uses the "
+                            + "homogeneous block basis (the selection basis) whenever the model supports it "
+                            + "(homogeneous OU, block-diagonal selection matrix, exact or missing tips) and "
+                            + "natural trait coordinates otherwise. natural always uses natural coordinates; "
+                            + "homogeneousBlockBasis requires the block basis.",
+                    CanonicalOUOptions.ALLOWED_COORDINATES,
+                    true),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME, true),
             TreeTraitParserUtilities.jitterRules(true),
     };

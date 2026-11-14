@@ -34,6 +34,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DifferentiableBranchRates;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
@@ -60,12 +61,12 @@ import static dr.math.matrixAlgebra.missingData.MissingOps.*;
  */
 public class BranchRateGradient implements GradientWrtParameterProvider, HessianWrtParameterProvider, Reportable, Loggable {
 
-    private final TreeDataLikelihood treeDataLikelihood;
+    protected final TreeDataLikelihood treeDataLikelihood;
     private final TreeTrait<List<BranchSufficientStatistics>> treeTraitProvider;
-    private final Tree tree;
+    protected final Tree tree;
     private final int nTraits;
-    private final Parameter rateParameter;
-    private final DifferentiableBranchRates branchRateModel;
+    protected final Parameter rateParameter;
+    protected final DifferentiableBranchRates branchRateModel;
     private final ContinuousTraitGradientForBranch branchProvider;
     protected Double numericGradientStepSize = null;
 
@@ -73,7 +74,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
 
     public BranchRateGradient(String traitName,
                               TreeDataLikelihood treeDataLikelihood,
-                              ContinuousDataLikelihoodDelegate likelihoodDelegate,
+                              CtsCompatibility likelihoodDelegate,
                               Parameter rateParameter) {
 
         assert (treeDataLikelihood != null);
@@ -108,6 +109,23 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         } else {
             branchProvider = new ContinuousTraitGradientForBranch.Dense(dim);
         }
+    }
+
+    protected BranchRateGradient(final TreeDataLikelihood treeDataLikelihood,
+                                 final Parameter rateParameter) {
+
+        assert (treeDataLikelihood != null);
+
+        this.treeDataLikelihood = treeDataLikelihood;
+        this.tree = treeDataLikelihood.getTree();
+        this.rateParameter = rateParameter;
+
+        BranchRateModel brm = treeDataLikelihood.getBranchRateModel();
+        this.branchRateModel = (brm instanceof DifferentiableBranchRates) ? (DifferentiableBranchRates) brm : null;
+
+        this.treeTraitProvider = null;
+        this.nTraits = 0;
+        this.branchProvider = null;
     }
 
     public double getNumericGradientStepSize() {
@@ -176,7 +194,7 @@ public class BranchRateGradient implements GradientWrtParameterProvider, Hessian
         return result;
     }
 
-    private int getParameterIndexFromNode(NodeRef node) {
+    protected int getParameterIndexFromNode(NodeRef node) {
         return (branchRateModel == null) ? node.getNumber() : branchRateModel.getParameterIndexFromNode(node);
     }
 

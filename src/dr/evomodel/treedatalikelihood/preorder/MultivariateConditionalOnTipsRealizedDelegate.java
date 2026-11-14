@@ -29,7 +29,9 @@ package dr.evomodel.treedatalikelihood.preorder;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.ReadableVector;
 import dr.math.matrixAlgebra.WrappedMatrix;
@@ -55,7 +57,7 @@ public class MultivariateConditionalOnTipsRealizedDelegate extends ConditionalOn
                                                          ContinuousTraitPartialsProvider dataModel,
                                                          ConjugateRootTraitPrior rootPrior,
                                                          ContinuousRateTransformation rateTransformation,
-                                                         ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                                         CtsCompatibility likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         missingInformation = new PartiallyMissingInformation(tree, dataModel);
     }

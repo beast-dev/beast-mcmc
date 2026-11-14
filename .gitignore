@@ -16,7 +16,6 @@ out/
 *.xml
 !examples/**/*.xml
 !tests/**/*.xml
-!src/test/resources/dr/evomodel/treedatalikelihood/continuous/canonical_ou_hmc_seed666.xml
 
 zig_zag
 src/revision.txt

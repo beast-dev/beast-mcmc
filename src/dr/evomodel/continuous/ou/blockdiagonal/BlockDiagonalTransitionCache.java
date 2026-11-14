@@ -15,9 +15,6 @@ import java.util.Arrays;
  */
 final class BlockDiagonalTransitionCache {
 
-    private static final String DEBUG_NATIVE_R_CONSISTENCY_PROPERTY =
-            "beast.debug.nativeRConsistency";
-
     final BlockDiagonalDecomposition decomposition;
     final double[] rData;
     final double[] rinvData;
@@ -35,8 +32,6 @@ final class BlockDiagonalTransitionCache {
     private final double[] cachedRinvData;
     private final double[] cachedBlockDParams;
     private final double[] workMatrix;
-    private final double[] debugBlockR;
-    private final double[] debugBlockRinv;
     private boolean expCacheValid;
     private boolean basisCacheValid;
     private double cachedExpDt;
@@ -66,8 +61,6 @@ final class BlockDiagonalTransitionCache {
         this.rinvMatrix = DenseMatrix64F.wrap(d, d, rinvData);
         this.transitionMatrix = new DenseMatrix64F(d, d);
         this.workMatrix = new double[d * d];
-        this.debugBlockR = new double[d * d];
-        this.debugBlockRinv = new double[d * d];
         this.expCacheValid = false;
         this.basisCacheValid = false;
         this.cachedExpDt = Double.NaN;
@@ -84,9 +77,6 @@ final class BlockDiagonalTransitionCache {
         blockParameter.fillBlockDiagonalDecomposition(decomposition);
 
         final boolean expNeedsRefresh = expNeedsRefresh(dt);
-        if (Boolean.getBoolean(DEBUG_NATIVE_R_CONSISTENCY_PROPERTY)) {
-            reportNativeRConsistency(dt, d);
-        }
         final int rHash = Arrays.hashCode(rData);
         final int rinvHash = Arrays.hashCode(rinvData);
         final boolean rChanged = rHash != cachedRHash || !Arrays.equals(rData, cachedRData);
@@ -145,29 +135,5 @@ final class BlockDiagonalTransitionCache {
         expParameterVersion++;
         cachedExpDt = dt;
         expCacheValid = true;
-    }
-
-    private void reportNativeRConsistency(final double dt, final int d) {
-        blockParameter.fillRAndRinv(debugBlockR, debugBlockRinv);
-        double maxR = 0.0;
-        double maxRinv = 0.0;
-        double maxRinvVsTranspose = 0.0;
-        for (int i = 0; i < d * d; ++i) {
-            maxR = Math.max(maxR, Math.abs(rData[i] - debugBlockR[i]));
-            maxRinv = Math.max(maxRinv, Math.abs(rinvData[i] - debugBlockRinv[i]));
-        }
-        for (int r = 0; r < d; ++r) {
-            for (int c = 0; c < d; ++c) {
-                final int rc = r * d + c;
-                final int cr = c * d + r;
-                maxRinvVsTranspose = Math.max(
-                        maxRinvVsTranspose,
-                        Math.abs(debugBlockRinv[rc] - debugBlockR[cr]));
-            }
-        }
-        dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalDiagnosticsLog.warning("nativeRConsistencyDebug dt=" + dt
-                + " maxAbsRDiff=" + maxR
-                + " maxAbsRinvDiff=" + maxRinv
-                + " maxAbsRinvVsTranspose=" + maxRinvVsTranspose);
     }
 }

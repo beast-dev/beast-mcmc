@@ -22,62 +22,34 @@ public final class CanonicalGradientFallbackPolicy {
     // Known property names
     // -----------------------------------------------------------------------
 
-    private static final String NUMERIC_LOCAL_SELECTION_PROPERTY          = "beast.experimental.localSelectionNumeric";
-    private static final String FROZEN_LOG_FACTOR_NUMERIC_PROPERTY        = "beast.experimental.localSelectionNumeric.useFrozenLogFactor";
-    private static final String NO_TRANSPOSE_DOMEGA_PROPERTY              = "beast.experimental.noTransposeDOmega";
-    private static final String DENSE_PULLBACK_FOR_ORTHOGONAL_PROPERTY    = "beast.experimental.orthBlockUseDensePullback";
-    private static final String TRANSPOSE_NATIVE_DF_PROPERTY              = "beast.experimental.transposeNativeDF";
-    private static final String NATIVE_FROM_CONTRIBUTION_PROPERTY         = "beast.experimental.nativeFromContribution";
     private static final String BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY  = "beast.experimental.canonicalBranchLengthGradientFiniteDifference";
-    private static final String DISABLE_EXACT_TIP_SHORTCUT_PROPERTY       = "beast.experimental.disableExactTipShortcut";
     private static final String BRANCH_GRADIENT_THREADS_PROPERTY          = "beast.experimental.canonicalBranchGradientThreads";
     private static final String TRANSITION_PRELOAD_THREADS_PROPERTY        = "beast.experimental.canonicalTransitionPreloadThreads";
-    private static final String PREPARED_TRANSITION_MOMENTS_PROPERTY      = "beast.experimental.canonicalUsePreparedTransitionMoments";
     private static final String BLOCK_BASIS_HOMOGENEOUS_PROPERTY          = CanonicalOUOptions.BLOCK_BASIS_HOMOGENEOUS_PROPERTY;
 
     /**
-     * All property names recognized by this class.
+     * All property names recognized by this class, plus the canonical
+     * {@code beast.experimental.*} properties that are read directly by other classes.
      * Used by {@link #reportUnknownProperties()} to detect typos.
      */
     public static final Set<String> KNOWN_PROPERTIES = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(
-                    NUMERIC_LOCAL_SELECTION_PROPERTY,
-                    FROZEN_LOG_FACTOR_NUMERIC_PROPERTY,
-                    NO_TRANSPOSE_DOMEGA_PROPERTY,
-                    DENSE_PULLBACK_FOR_ORTHOGONAL_PROPERTY,
-                    TRANSPOSE_NATIVE_DF_PROPERTY,
-                    NATIVE_FROM_CONTRIBUTION_PROPERTY,
                     BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY,
-                    DISABLE_EXACT_TIP_SHORTCUT_PROPERTY,
                     BRANCH_GRADIENT_THREADS_PROPERTY,
                     TRANSITION_PRELOAD_THREADS_PROPERTY,
-                    PREPARED_TRANSITION_MOMENTS_PROPERTY,
-                    BLOCK_BASIS_HOMOGENEOUS_PROPERTY)));
+                    BLOCK_BASIS_HOMOGENEOUS_PROPERTY,
+                    "beast.experimental.canonicalUseCholeskySolveMessageProduct")));
 
     // -----------------------------------------------------------------------
     // Fields
     // -----------------------------------------------------------------------
 
-    private final boolean numericLocalSelectionGradient;
-    private final boolean numericLocalSelectionFromFrozenLogFactor;
-    private final boolean noTransposeDOmega;
-    private final boolean densePullbackForOrthogonal;
-    private final boolean transposeNativeDF;
-    private final boolean nativeGradientFromContribution;
     private final boolean branchLengthFiniteDifference;
-    private final boolean exactTipShortcutDisabled;
     private final int branchGradientParallelism;
     private final int transitionPreloadParallelism;
 
     private CanonicalGradientFallbackPolicy(final Builder b) {
-        this.numericLocalSelectionGradient           = b.numericLocalSelectionGradient;
-        this.numericLocalSelectionFromFrozenLogFactor= b.numericLocalSelectionFromFrozenLogFactor;
-        this.noTransposeDOmega                       = b.noTransposeDOmega;
-        this.densePullbackForOrthogonal              = b.densePullbackForOrthogonal;
-        this.transposeNativeDF                       = b.transposeNativeDF;
-        this.nativeGradientFromContribution          = b.nativeGradientFromContribution;
         this.branchLengthFiniteDifference            = b.branchLengthFiniteDifference;
-        this.exactTipShortcutDisabled                = b.exactTipShortcutDisabled;
         this.branchGradientParallelism               = b.branchGradientParallelism;
         this.transitionPreloadParallelism            = b.transitionPreloadParallelism;
     }
@@ -100,14 +72,7 @@ public final class CanonicalGradientFallbackPolicy {
         reportUnknownProperties();
         final int branchGradientParallelism = readBranchGradientParallelism();
         return builder()
-                .numericLocalSelectionGradient(Boolean.getBoolean(NUMERIC_LOCAL_SELECTION_PROPERTY))
-                .numericLocalSelectionFromFrozenLogFactor(Boolean.getBoolean(FROZEN_LOG_FACTOR_NUMERIC_PROPERTY))
-                .noTransposeDOmega(Boolean.getBoolean(NO_TRANSPOSE_DOMEGA_PROPERTY))
-                .densePullbackForOrthogonal(Boolean.getBoolean(DENSE_PULLBACK_FOR_ORTHOGONAL_PROPERTY))
-                .transposeNativeDF(Boolean.getBoolean(TRANSPOSE_NATIVE_DF_PROPERTY))
-                .nativeGradientFromContribution(Boolean.getBoolean(NATIVE_FROM_CONTRIBUTION_PROPERTY))
                 .branchLengthFiniteDifference(Boolean.getBoolean(BRANCH_LENGTH_FINITE_DIFFERENCE_PROPERTY))
-                .exactTipShortcutDisabled(Boolean.getBoolean(DISABLE_EXACT_TIP_SHORTCUT_PROPERTY))
                 .branchGradientParallelism(branchGradientParallelism)
                 .transitionPreloadParallelism(readTransitionPreloadParallelism(branchGradientParallelism))
                 .build();
@@ -150,14 +115,7 @@ public final class CanonicalGradientFallbackPolicy {
     // Accessors
     // -----------------------------------------------------------------------
 
-    public boolean useNumericLocalSelectionGradient()          { return numericLocalSelectionGradient; }
-    public boolean useNumericLocalSelectionFromFrozenLogFactor(){ return numericLocalSelectionFromFrozenLogFactor; }
-    public boolean useNoTransposeDOmega()                      { return noTransposeDOmega; }
-    public boolean useDensePullbackForOrthogonal()             { return densePullbackForOrthogonal; }
-    public boolean transposeNativeDF()                         { return transposeNativeDF; }
-    public boolean useNativeGradientFromContribution()         { return nativeGradientFromContribution; }
     public boolean useBranchLengthFiniteDifference()           { return branchLengthFiniteDifference; }
-    public boolean isExactTipShortcutDisabled()                { return exactTipShortcutDisabled; }
 
     /** Number of threads to use for parallel branch-gradient evaluation (>= 1). */
     public int getBranchGradientParallelism()                  { return branchGradientParallelism; }
@@ -171,31 +129,17 @@ public final class CanonicalGradientFallbackPolicy {
 
     /**
      * Fluent builder for {@link CanonicalGradientFallbackPolicy}.
-     * All flags default to {@code false}; {@code branchGradientParallelism} defaults to 1.
+     * All flags default to {@code false}; the parallelism settings default to 1.
      */
     public static final class Builder {
 
-        private boolean numericLocalSelectionGradient            = false;
-        private boolean numericLocalSelectionFromFrozenLogFactor = false;
-        private boolean noTransposeDOmega                        = false;
-        private boolean densePullbackForOrthogonal               = false;
-        private boolean transposeNativeDF                        = false;
-        private boolean nativeGradientFromContribution           = false;
         private boolean branchLengthFiniteDifference             = false;
-        private boolean exactTipShortcutDisabled                 = false;
         private int     branchGradientParallelism                = 1;
         private int     transitionPreloadParallelism             = 1;
 
         private Builder() { }
 
-        public Builder numericLocalSelectionGradient(boolean v)            { numericLocalSelectionGradient = v;            return this; }
-        public Builder numericLocalSelectionFromFrozenLogFactor(boolean v) { numericLocalSelectionFromFrozenLogFactor = v; return this; }
-        public Builder noTransposeDOmega(boolean v)                        { noTransposeDOmega = v;                        return this; }
-        public Builder densePullbackForOrthogonal(boolean v)               { densePullbackForOrthogonal = v;               return this; }
-        public Builder transposeNativeDF(boolean v)                        { transposeNativeDF = v;                        return this; }
-        public Builder nativeGradientFromContribution(boolean v)           { nativeGradientFromContribution = v;           return this; }
         public Builder branchLengthFiniteDifference(boolean v)             { branchLengthFiniteDifference = v;             return this; }
-        public Builder exactTipShortcutDisabled(boolean v)                 { exactTipShortcutDisabled = v;                 return this; }
 
         /** Thread count for parallel branch-gradient evaluation; must be >= 1. */
         public Builder branchGradientParallelism(int v) {

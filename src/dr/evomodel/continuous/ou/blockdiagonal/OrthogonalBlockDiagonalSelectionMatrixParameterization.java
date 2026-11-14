@@ -34,14 +34,11 @@ public final class OrthogonalBlockDiagonalSelectionMatrixParameterization
                 new BlockDiagonalFrechetHelper(expSolver.getStructure());
         final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper =
                 new BlockDiagonalLyapunovAdjointHelper(getDimension(), lyapunovSolver, expSolver.getStructure());
-        final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy =
-                new BlockDiagonalDenseFallbackPolicy();
-
         this.selectionAdjoint = new OrthogonalBlockSelectionAdjoint(
-                blockParameter, orthogonalRotation, frechetHelper, denseFallbackPolicy);
+                blockParameter, orthogonalRotation, frechetHelper);
         this.covarianceAdjoint = new OrthogonalBlockCovarianceAdjoint(
                 blockParameter, lyapunovSolver, lyapunovAdjointHelper,
-                frechetHelper, denseFallbackPolicy);
+                frechetHelper);
         this.nativeBlockGradientScratch = new double[blockParameter.getBlockDiagonalNParameters()];
     }
 

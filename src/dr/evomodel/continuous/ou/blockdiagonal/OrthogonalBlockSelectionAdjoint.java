@@ -18,7 +18,6 @@ final class OrthogonalBlockSelectionAdjoint {
     private final int[] blockSizes;
     private final OrthogonalMatrixProvider orthogonalRotation;
     private final BlockDiagonalFrechetHelper frechetHelper;
-    private final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy;
     private final DenseMatrix64F upstreamF;
     private final DenseMatrix64F upstreamFD;
     private final DenseMatrix64F gradD;
@@ -31,14 +30,12 @@ final class OrthogonalBlockSelectionAdjoint {
 
     OrthogonalBlockSelectionAdjoint(final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                     final OrthogonalMatrixProvider orthogonalRotation,
-                                    final BlockDiagonalFrechetHelper frechetHelper,
-                                    final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy) {
+                                    final BlockDiagonalFrechetHelper frechetHelper) {
         this.blockParameter = blockParameter;
         this.blockStarts = blockParameter.getBlockStarts();
         this.blockSizes = blockParameter.getBlockSizes();
         this.orthogonalRotation = orthogonalRotation;
         this.frechetHelper = frechetHelper;
-        this.denseFallbackPolicy = denseFallbackPolicy;
         final int d = blockParameter.getRowDimension();
         this.upstreamF = new DenseMatrix64F(d, d);
         this.upstreamFD = new DenseMatrix64F(d, d);
@@ -188,19 +185,7 @@ final class OrthogonalBlockSelectionAdjoint {
                                          final DenseMatrix64F gradD,
                                          final double[] scaledNegativeBlockDScratch,
                                          final double[] denseAdjointScratch) {
-        if (denseFallbackPolicy.forceDenseAdjointExp()) {
-            fillDenseAdjointExpGradient(blockDParams, dt, upstreamFD, scaledNegativeBlockDScratch,
-                    denseAdjointScratch, gradD);
-            return;
-        }
-        final DenseMatrix64F frechetInputTransition;
-        if (denseFallbackPolicy.transposeNativeFrechetInput()) {
-            CommonOps.transpose(upstreamFD, temp);
-            frechetInputTransition = temp;
-        } else {
-            frechetInputTransition = upstreamFD;
-        }
-        frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInputTransition, dt, gradD);
+        frechetHelper.frechetAdjointExpInDBasis(blockDParams, upstreamFD, dt, gradD);
         transposeInPlace(gradD);
         if (!isFinite(gradD.data)) {
             fillDenseAdjointExpGradient(blockDParams, dt, upstreamFD, scaledNegativeBlockDScratch,

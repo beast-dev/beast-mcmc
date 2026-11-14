@@ -17,8 +17,7 @@ import dr.inference.model.MatrixParameterInterface;
  */
 public final class CanonicalOUKernel implements CanonicalGaussianBranchTransitionKernel {
 
-    private static final String DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS_PROPERTY =
-            "beast.experimental.ouDiffusionGradientQuadratureSubsteps";
+    private static final int DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS = 2;
 
     public interface InitialMoments {
         void getInitialMean(double[] out);
@@ -215,8 +214,7 @@ public final class CanonicalOUKernel implements CanonicalGaussianBranchTransitio
         selectionMatrixParameterization.fillSelectionMatrixFlat(a);
         fillSymmetricFromFlat(dLogL_dV, transposeAdjoint, d, gSym);
 
-        final int substeps = Math.max(1,
-                Integer.getInteger(DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS_PROPERTY, 2));
+        final int substeps = DIFFUSION_GRADIENT_QUADRATURE_SUBSTEPS;
         final double h = dt / substeps;
         for (int sub = 0; sub < substeps; ++sub) {
             final double t0 = sub * h;

@@ -21,7 +21,6 @@ final class OrthogonalBlockCovarianceAdjoint {
     private final BlockDiagonalLyapunovSolver lyapunovSolver;
     private final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper;
     private final BlockDiagonalFrechetHelper frechetHelper;
-    private final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy;
     private final DenseMatrix64F qMatrix;
     private final DenseMatrix64F qDBasis;
     private final DenseMatrix64F stationaryCovDBasis;
@@ -42,15 +41,13 @@ final class OrthogonalBlockCovarianceAdjoint {
     OrthogonalBlockCovarianceAdjoint(final AbstractBlockDiagonalTwoByTwoMatrixParameter blockParameter,
                                      final BlockDiagonalLyapunovSolver lyapunovSolver,
                                      final BlockDiagonalLyapunovAdjointHelper lyapunovAdjointHelper,
-                                     final BlockDiagonalFrechetHelper frechetHelper,
-                                     final BlockDiagonalDenseFallbackPolicy denseFallbackPolicy) {
+                                     final BlockDiagonalFrechetHelper frechetHelper) {
         this.blockParameter = blockParameter;
         this.blockStarts = blockParameter.getBlockStarts();
         this.blockSizes = blockParameter.getBlockSizes();
         this.lyapunovSolver = lyapunovSolver;
         this.lyapunovAdjointHelper = lyapunovAdjointHelper;
         this.frechetHelper = frechetHelper;
-        this.denseFallbackPolicy = denseFallbackPolicy;
         final int d = blockParameter.getRowDimension();
         this.qMatrix = new DenseMatrix64F(d, d);
         this.qDBasis = new DenseMatrix64F(d, d);
@@ -449,19 +446,7 @@ final class OrthogonalBlockCovarianceAdjoint {
                                             final DenseMatrix64F gradD,
                                             final double[] scaledNegativeBlockDScratch,
                                             final double[] denseAdjointScratch) {
-        if (denseFallbackPolicy.forceDenseAdjointExp()) {
-            fillDenseAdjointExpGradient(blockDParams, dt, gECov, scaledNegativeBlockDScratch,
-                    denseAdjointScratch, gradD);
-            return;
-        }
-        final DenseMatrix64F frechetInputCov;
-        if (denseFallbackPolicy.transposeNativeFrechetInput()) {
-            CommonOps.transpose(gECov, temp);
-            frechetInputCov = temp;
-        } else {
-            frechetInputCov = gECov;
-        }
-        frechetHelper.frechetAdjointExpInDBasis(blockDParams, frechetInputCov, dt, gradD);
+        frechetHelper.frechetAdjointExpInDBasis(blockDParams, gECov, dt, gradD);
         transposeInPlace(gradD);
     }
 

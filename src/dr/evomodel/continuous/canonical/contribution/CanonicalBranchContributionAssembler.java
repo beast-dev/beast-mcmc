@@ -29,11 +29,6 @@ import java.util.Arrays;
  */
 public final class CanonicalBranchContributionAssembler {
 
-    private static final boolean USE_PREPARED_TRANSITION_MOMENTS =
-            Boolean.parseBoolean(System.getProperty(
-                    "beast.experimental.canonicalUsePreparedTransitionMoments",
-                    "true"));
-
     private final int dim;
     private final BranchContributionStrategyFactory strategyFactory;
     private final PartialIdentityTipContribution partialIdentityContribution;
@@ -142,8 +137,7 @@ public final class CanonicalBranchContributionAssembler {
                                                     final CanonicalBranchTransitionProvider transitionProvider,
                                                     final CanonicalGaussianTransition transition,
                                                     final BranchGradientWorkspace workspace) {
-        if (!USE_PREPARED_TRANSITION_MOMENTS
-                || !(transitionProvider instanceof CanonicalOUTransitionProvider)
+        if (!(transitionProvider instanceof CanonicalOUTransitionProvider)
                 || !(transitionProvider instanceof CanonicalPreparedBranchSnapshotProvider)) {
             return false;
         }
@@ -192,8 +186,7 @@ public final class CanonicalBranchContributionAssembler {
                                                     final CanonicalBranchTransitionProvider transitionProvider,
                                                     final CanonicalGaussianTransition transition,
                                                     final BranchGradientWorkspace workspace) {
-        if (!USE_PREPARED_TRANSITION_MOMENTS
-                || !(transitionProvider instanceof CanonicalTransitionMomentProvider)
+        if (!(transitionProvider instanceof CanonicalTransitionMomentProvider)
                 || workspace.transitionMatrixFlat == null
                 || workspace.mean2 == null
                 || workspace.covariance2 == null) {

@@ -120,17 +120,32 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         // Every taxon of a partition must be in the tree. A taxon of the tree that a partition does not have is a
         // ghost in that partition: it has no data there, and nothing is computed for a subtree made only of ghosts.
         boolean hasGhosts = false;
-        for (PatternList patterns : patternLists) {
+        for (int i = 0; i < patternLists.size(); i++) {
+            final PatternList patterns = patternLists.get(i);
             List<String> ghosts = findGhostTaxa(treeModel, patterns);
             if (!ghosts.isEmpty()) {
                 hasGhosts = true;
                 logGhostTaxa(logger, patterns, ghosts, treeModel.getExternalNodeCount());
-            }
-        }
 
-        if (hasGhosts && phyloGeoFast) {
-            throw new XMLParseException("The tree, " + treeModel.getId() + ", has taxa that are not in a pattern " +
-                    "list, which phyloGeoFast does not support");
+                String problem = BeagleDataLikelihoodDelegate.ghostProblem(settings);
+                if (phyloGeoFast) {
+                    problem = "phyloGeoFast does not support that";
+                } else if (branchModels.get(i) instanceof RewardsAwareBranchModel) {
+                    problem = "the rewards-aware branch model, " + branchModels.get(i).getId() +
+                            ", does not support that";
+                }
+                if (problem != null) {
+                    throw new XMLParseException("The tree, " + treeModel.getId() + ", has " + ghosts.size() +
+                            " taxa that are not in the pattern list, " + patterns.getId() + ", but " + problem);
+                }
+
+                final String mergeProblem = BeagleDataLikelihoodDelegate.ghostMergeProblem(branchModels.get(i), settings);
+                if (mergeProblem != null) {
+                    logger.info("  Nodes of the tree with one of them as a child cannot be skipped by joining the " +
+                            "branches through them, because " + mergeProblem + "; they are computed from their other " +
+                            "child instead, which is exact but slower.");
+                }
+            }
         }
 
         boolean useBeagle3MultiPartition = false;

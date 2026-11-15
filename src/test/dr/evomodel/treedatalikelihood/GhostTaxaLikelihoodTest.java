@@ -36,8 +36,11 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.ExternalInternalBranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
+import dr.evolution.tree.Tree;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
@@ -48,6 +51,9 @@ import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.XMLObject;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
@@ -74,7 +80,7 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
 
     private static final double TOLERANCE = 1E-9;
 
-    private enum Arrangement { SINGLES, CHERRY, CLADE, ROOT_SISTER, ONE_REAL, MIXED }
+    private enum Arrangement { SINGLES, CHERRY, CLADE, ROOT_SISTER, ONE_REAL, TWO_REAL, MIXED, HALF }
 
     public GhostTaxaLikelihoodTest(String name) {
         super(name);
@@ -88,6 +94,7 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
     @Override
     protected void tearDown() throws Exception {
         System.clearProperty(BeagleDataLikelihoodDelegate.GHOST_ONE_CHILD_PROPERTY);
+        System.clearProperty(BeagleDataLikelihoodDelegate.GHOST_MERGE_PROPERTY);
         super.tearDown();
     }
 
@@ -113,6 +120,38 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
                 PartialsRescalingScheme.DYNAMIC, PartialsRescalingScheme.ALWAYS});
     }
 
+    /**
+     * Without joining the branches through nodes with one ghost child, each of those nodes is computed.
+     */
+    public void testWithAnAllUnknownTipWithoutJoining() {
+        System.setProperty(BeagleDataLikelihoodDelegate.GHOST_MERGE_PROPERTY, "false");
+        testWithAnAllUnknownTip();
+    }
+
+    public void testWithOneChildOperationsWithoutJoining() {
+        System.setProperty(BeagleDataLikelihoodDelegate.GHOST_MERGE_PROPERTY, "false");
+        testWithOneChildOperations();
+    }
+
+    /**
+     * A branch model with a rate matrix for external branches and another for internal ones: the branches through a
+     * node with one ghost child cannot be joined, so the delegate computes those nodes instead.
+     */
+    public void testTwoSubstitutionModels() {
+        assertNull(BeagleDataLikelihoodDelegate.ghostMergeProblem(
+                new HomogeneousBranchModel(new HKY(2.0, new FrequencyModel(Nucleotides.INSTANCE,
+                        new double[]{0.25, 0.25, 0.25, 0.25}))), PreOrderSettings.getDefault()));
+        externalInternal = true;
+        try {
+            compareThroughProposals(new PartialsRescalingScheme[]{PartialsRescalingScheme.DYNAMIC,
+                    PartialsRescalingScheme.ALWAYS});
+        } finally {
+            externalInternal = false;
+        }
+    }
+
+    private boolean externalInternal = false;
+
     private void compareThroughProposals(PartialsRescalingScheme[] schemes) {
         for (Arrangement arrangement : Arrangement.values()) {
             for (PartialsRescalingScheme scheme : schemes) {
@@ -127,7 +166,7 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
 
                         assertSame(label, allN, ghosts);
 
-                        for (int iteration = 0; iteration < 40; ++iteration) {
+                        for (int iteration = 0; iteration < 60; ++iteration) {
                             final double accepted = allN.likelihood.getLogLikelihood();
 
                             ghosts.store();
@@ -346,6 +385,8 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
 
         final DefaultTreeModel tree;
         final TreeDataLikelihood likelihood;
+        private final HKY hky;
+        private final NodeRates rates;
 
         private final Random proposals;
 
@@ -384,14 +425,31 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
                     new FrequencyModel(Nucleotides.INSTANCE, new double[]{0.3, 0.2, 0.2, 0.3}));
             FrequencyModel rootFrequencies = new FrequencyModel(Nucleotides.INSTANCE,
                     new double[]{0.1, 0.4, 0.4, 0.1});
-            HomogeneousBranchModel branchModel = new HomogeneousBranchModel(hky, rootFrequencies);
+            this.hky = hky;
+            final BranchModel branchModel;
+            if (externalInternal) {
+                HKY internal = new HKY(6.0, new FrequencyModel(Nucleotides.INSTANCE,
+                        new double[]{0.2, 0.3, 0.3, 0.2}));
+                branchModel = new ExternalInternalBranchModel(tree, hky, internal);
+                assertNotNull(BeagleDataLikelihoodDelegate.ghostMergeProblem(branchModel,
+                        PreOrderSettings.getDefault()));
+            } else {
+                branchModel = new HomogeneousBranchModel(hky, rootFrequencies);
+            }
             GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel", 0.5, categories);
+
+            // a rate for each branch, so that the branches joined through a node with one ghost child differ in rate
+            double[] initialRates = new double[tree.getNodeCount()];
+            for (int i = 0; i < initialRates.length; i++) {
+                initialRates[i] = 0.5 + random.nextDouble();
+            }
+            rates = new NodeRates(initialRates);
 
             BeagleDataLikelihoodDelegate delegate = new BeagleDataLikelihoodDelegate(tree, patterns, branchModel,
                     siteRateModel, useAmbiguities, false, scheme, false, PreOrderSettings.getDefault(), null, null,
                     leaveOut);
 
-            likelihood = new TreeDataLikelihood(delegate, tree, new DefaultBranchRateModel());
+            likelihood = new TreeDataLikelihood(delegate, tree, rates);
         }
 
         private Set<String> chooseGhosts(Arrangement arrangement, Random random) {
@@ -422,6 +480,24 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
                         ghosts.add(tree.getTaxonId(i));
                     }
                     ghosts.remove(tree.getTaxonId(random.nextInt(n)));
+                    break;
+                case TWO_REAL: {
+                    // two real tips, with long runs of nodes with one ghost child above each
+                    for (int i = 0; i < n; i++) {
+                        ghosts.add(tree.getTaxonId(i));
+                    }
+                    ghosts.remove(tree.getTaxonId(random.nextInt(n)));
+                    String other;
+                    do {
+                        other = tree.getTaxonId(random.nextInt(n));
+                    } while (!ghosts.contains(other));
+                    ghosts.remove(other);
+                    break;
+                }
+                case HALF:
+                    while (ghosts.size() < n / 2) {
+                        ghosts.add(tree.getTaxonId(random.nextInt(n)));
+                    }
                     break;
                 case MIXED:
                     addTips(cladeOfSize(3, n - 4), ghosts);
@@ -472,7 +548,28 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
          * Exchanges two subtrees, which carries ghosts into and out of ghost subtrees, or moves a node height
          */
         void propose() {
-            if (proposals.nextInt(3) == 0) {
+            final int move = proposals.nextInt(8);
+            if (move == 3) {
+                // a new rate on one branch
+                NodeRef node;
+                do {
+                    node = tree.getNode(proposals.nextInt(tree.getNodeCount()));
+                } while (tree.isRoot(node));
+                rates.setRate(node.getNumber(), 0.5 + proposals.nextDouble());
+                return;
+            }
+            if (move == 4) {
+                // a change to the rate matrix of every branch
+                hky.setKappa(1.5 + 3.0 * proposals.nextDouble());
+                return;
+            }
+            if (move == 5 && moveAboveTheRoot()) {
+                return;
+            }
+            if (move == 6 && moveTheRoot()) {
+                return;
+            }
+            if (move == 0) {
                 NodeRef node;
                 do {
                     node = tree.getInternalNode(proposals.nextInt(tree.getInternalNodeCount()));
@@ -512,6 +609,70 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
             }
         }
 
+        /**
+         * Wilson-Balding to above the root: a subtree with its parent is moved there, so its parent is the new root
+         * and the old root is not the root any more.
+         */
+        private boolean moveAboveTheRoot() {
+            final NodeRef root = tree.getRoot();
+            for (int attempt = 0; attempt < 1000; attempt++) {
+                NodeRef i = tree.getNode(proposals.nextInt(tree.getNodeCount()));
+                if (tree.isRoot(i) || tree.isRoot(tree.getParent(i))) {
+                    continue;
+                }
+                NodeRef iP = tree.getParent(i);
+                NodeRef sibling = tree.getChild(iP, 0) == i ? tree.getChild(iP, 1) : tree.getChild(iP, 0);
+                NodeRef grandparent = tree.getParent(iP);
+
+                tree.beginTreeEdit();
+                tree.setNodeHeight(iP, tree.getNodeHeight(root) + 0.02 + 0.2 * proposals.nextDouble());
+                tree.removeChild(iP, sibling);
+                tree.removeChild(grandparent, iP);
+                tree.addChild(iP, root);
+                tree.addChild(grandparent, sibling);
+                tree.setRoot(iP);
+                tree.endTreeEdit();
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Wilson-Balding of the root: one of its children takes it down to a branch in the other child's subtree, and
+         * the other child is the new root.
+         */
+        private boolean moveTheRoot() {
+            final NodeRef root = tree.getRoot();
+            final NodeRef i = tree.getChild(root, proposals.nextInt(2));
+            final NodeRef other = tree.getChild(root, 0) == i ? tree.getChild(root, 1) : tree.getChild(root, 0);
+            if (tree.isExternal(other)) {
+                return false;
+            }
+            for (int attempt = 0; attempt < 1000; attempt++) {
+                NodeRef j = tree.getNode(proposals.nextInt(tree.getNodeCount()));
+                if (j == other || tree.isRoot(j) || !isAncestor(other, j)) {
+                    continue;
+                }
+                NodeRef k = tree.getParent(j);
+                double low = Math.max(tree.getNodeHeight(j), tree.getNodeHeight(i));
+                double high = tree.getNodeHeight(k);
+                if (low >= high) {
+                    continue;
+                }
+
+                tree.beginTreeEdit();
+                tree.setNodeHeight(root, low + (high - low) * (0.01 + 0.98 * proposals.nextDouble()));
+                tree.removeChild(k, j);
+                tree.removeChild(root, other);
+                tree.addChild(root, j);
+                tree.addChild(k, root);
+                tree.setRoot(other);
+                tree.endTreeEdit();
+                return true;
+            }
+            return false;
+        }
+
         private boolean isAncestor(NodeRef ancestor, NodeRef node) {
             for (NodeRef n = node; n != null; n = tree.getParent(n)) {
                 if (n == ancestor) {
@@ -519,6 +680,64 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
                 }
             }
             return false;
+        }
+    }
+
+    /**
+     * A rate for each branch, indexed by node number, that a proposal can change one at a time.
+     */
+    private static class NodeRates extends AbstractBranchRateModel {
+
+        private final Parameter rates;
+
+        NodeRates(double[] values) {
+            super("nodeRates");
+            rates = new Parameter.Default(values);
+            addVariable(rates);
+        }
+
+        void setRate(int node, double rate) {
+            rates.setParameterValue(node, rate);
+        }
+
+        @Override
+        public double getBranchRate(Tree tree, NodeRef node) {
+            return rates.getParameterValue(node.getNumber());
+        }
+
+        @Override
+        protected void handleModelChangedEvent(Model model, Object object, int index) {
+        }
+
+        @Override
+        protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+            fireModelChanged(null, index);
+        }
+
+        @Override
+        protected void storeState() {
+        }
+
+        @Override
+        protected void restoreState() {
+        }
+
+        @Override
+        protected void acceptState() {
+        }
+
+        @Override
+        public Model getModel() {
+            return this;
+        }
+
+        @Override
+        public double getLogLikelihood() {
+            return 0.0;
+        }
+
+        @Override
+        public void makeDirty() {
         }
     }
 }

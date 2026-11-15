@@ -116,7 +116,7 @@ public class ProbGenericSiteGibbsOperator  extends SimpleMCMCOperator implements
 
      
      //MCMCOperator INTERFACE
-     public final String getOperatorName() {
+     protected final String getBaseOperatorName() {
          return CLASSNAME_OPERATOR;
      }
     

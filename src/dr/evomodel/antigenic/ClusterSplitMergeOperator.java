@@ -224,7 +224,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
 
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return CLUSTER_SPLIT_MERGE_OPERATOR +"(" + allocationParameter.getId() + ")";
     }
 

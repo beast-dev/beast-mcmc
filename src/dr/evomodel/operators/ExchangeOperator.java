@@ -220,7 +220,7 @@ public class ExchangeOperator extends AbstractTreeOperator implements Constraina
         return mode;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange" + "(" + tree.getId() + ")";
     }
 

@@ -78,7 +78,7 @@ public class IndependentGammaSampler extends SimpleMCMCOperator {
 		return "";
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return "independentGamma(" + variable.getVariableName() + ")";
 	}
 

@@ -327,7 +327,7 @@ public class SubtreeSlideOperator extends AbstractAdaptableTreeOperator {
         return "size";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return SubtreeSlideOperatorParser.SUBTREE_SLIDE + "(" + tree.getId() + ")";
     }
 

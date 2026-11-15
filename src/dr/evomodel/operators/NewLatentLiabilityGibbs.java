@@ -453,7 +453,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     }
 
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return NEW_LATENT_LIABILITY_GIBBS_OPERATOR;
     }
 

@@ -65,7 +65,7 @@ public class NoUTurnOperator extends SimpleMCMCOperator implements GibbsOperator
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "No-U-Turn Operator";
     }
 

@@ -454,7 +454,7 @@ public class IrreversibleZigZagOperator extends AbstractZigZagOperator implement
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Irreversible zig-zag operator";
     }
 

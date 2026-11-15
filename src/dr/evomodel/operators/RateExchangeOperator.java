@@ -134,7 +134,7 @@ public class RateExchangeOperator extends SimpleMCMCOperator {
     }
 
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return RateExchangeOperatorParser.RATE_EXCHANGE;
     }
 

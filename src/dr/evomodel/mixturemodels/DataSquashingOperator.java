@@ -2030,7 +2030,7 @@ public class DataSquashingOperator extends SimpleMCMCOperator {
 
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return DataSquashingOperatorParser.DATA_SQUASHING_OPERATOR;
     }
 

@@ -48,7 +48,7 @@ public class LoadingsRotationOperator extends AbstractAdaptableOperator implemen
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return PARSER_NAME + ":" + baseOperator.getOperatorName();
     }
 

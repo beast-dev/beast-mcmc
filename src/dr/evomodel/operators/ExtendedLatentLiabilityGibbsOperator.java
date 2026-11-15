@@ -74,7 +74,7 @@ public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator imp
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return EXTENDED_LATENT_GIBBS;
     }
 

@@ -60,7 +60,7 @@ public class MulTreeSequenceReassignment extends SimpleMCMCOperator {
 	}
 
 	@Override
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return MulTreeSequenceReassignmentParser.MULTREE_SEQUENCE_REASSIGNMENT + "(" + multree.getId() +
 		"," + mulspb.getId() + ")";
 	}

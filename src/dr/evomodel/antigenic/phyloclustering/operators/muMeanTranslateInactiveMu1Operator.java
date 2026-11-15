@@ -122,7 +122,7 @@ public class muMeanTranslateInactiveMu1Operator extends AbstractAdaptableOperato
 
     public final static String muMeanTranslateInactiveMu1OperatorStr = "muMeanTranslateInactiveMu1Operator";
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return muMeanTranslateInactiveMu1OperatorStr;
     }
 

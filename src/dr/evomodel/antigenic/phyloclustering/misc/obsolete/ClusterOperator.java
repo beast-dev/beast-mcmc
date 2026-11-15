@@ -331,7 +331,7 @@ public class ClusterOperator extends SimpleMCMCOperator  {
             
             
             //MCMCOperator INTERFACE
-            public final String getOperatorName() {
+            protected final String getBaseOperatorName() {
                 return CLUSTER_OPERATOR;
             }
 

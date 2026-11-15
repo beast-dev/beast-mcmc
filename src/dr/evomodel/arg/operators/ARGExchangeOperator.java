@@ -278,7 +278,7 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 		return mode;
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return ((mode == NARROW) ? "Narrow" : "Wide") + " Exchange";
 	}
 

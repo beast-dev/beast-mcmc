@@ -54,8 +54,7 @@ public final class OneZeroOneShuffleOperator extends SimpleMCMCOperator {
         setWeight(weight);
     }
 
-    @Override
-    public String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "oneZeroOneShuffleOperator(" + rewardRatesMapping.getParameterName() + ")";
     }
 

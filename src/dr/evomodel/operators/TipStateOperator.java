@@ -139,7 +139,7 @@ public class TipStateOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TIP_STATE_OPERATOR;
     }
 

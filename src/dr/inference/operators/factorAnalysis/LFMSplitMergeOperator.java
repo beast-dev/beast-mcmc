@@ -74,7 +74,7 @@ public class LFMSplitMergeOperator extends AbstractAdaptableOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Latent Factor Model Split-Merge Operator";
     }
 

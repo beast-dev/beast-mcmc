@@ -186,7 +186,7 @@ public class RegressionGibbsEffectOperator extends SimpleMCMCOperator implements
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return GIBBS_OPERATOR;
     }
 

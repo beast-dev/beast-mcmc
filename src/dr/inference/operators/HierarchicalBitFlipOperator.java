@@ -117,7 +117,7 @@ package dr.inference.operators;
 	    }
 
 	    // Interface MCMCOperator
-	    public final String getOperatorName() {
+	    protected final String getBaseOperatorName() {
 	        return "bitFlip(" + hParameter.getParameterName() + ")";
 	    }
 

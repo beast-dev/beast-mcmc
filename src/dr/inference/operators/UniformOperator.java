@@ -77,7 +77,7 @@ public class UniformOperator extends SimpleMCMCOperator {
     }
 
     //MCMCOperator INTERFACE
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "uniform(" + parameter.getParameterName() + ")";
     }
 

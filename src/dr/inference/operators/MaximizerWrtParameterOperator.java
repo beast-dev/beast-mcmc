@@ -52,7 +52,7 @@ public class MaximizerWrtParameterOperator extends SimpleMCMCOperator implements
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return MaximizerWrtParameterOperatorParser.MAXIMIZER_PARAMETER_OPERATOR;
     }
 

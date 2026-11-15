@@ -55,7 +55,7 @@ public class GeodesicHamiltonianMonteCarloOperator extends HamiltonianMonteCarlo
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "GeodesicHMC(" + parameter.getParameterName() + ")";
     }
 

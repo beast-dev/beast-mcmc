@@ -66,7 +66,7 @@ public class RandomWalkGammaPrecisionGibbsOperator extends SimpleMCMCOperator im
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME;
     }
 

@@ -55,7 +55,7 @@ public class SampleNonActiveGibbsOperator extends SimpleMCMCOperator implements 
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "SampleNonActive(" + indicators.getId() + ")";
     }
 

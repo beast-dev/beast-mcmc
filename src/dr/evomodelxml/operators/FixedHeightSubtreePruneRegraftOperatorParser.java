@@ -28,6 +28,7 @@
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
+import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.*;
@@ -48,7 +49,12 @@ public class FixedHeightSubtreePruneRegraftOperatorParser extends AbstractXMLObj
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        return new FixedHeightSubtreePruneRegraftOperator(treeModel, weight);
+        FixedHeightSubtreePruneRegraftOperator operator = new FixedHeightSubtreePruneRegraftOperator(treeModel, weight);
+        if (xo.getChild(MutationHistoryResampler.class) != null) {
+            throw new XMLParseException("The mutationHistoryResampler is attached to the matDataLikelihood, which " +
+                    "resamples the history after any subtree move: remove it from the operator " + xo.getId());
+        }
+        return operator;
     }
 
     public String getParserDescription() {

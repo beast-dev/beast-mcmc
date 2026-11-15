@@ -2087,7 +2087,7 @@ public class HDPDataSquashingOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return HDPDataSquashingOperatorParser.HDP_DATA_SQUASHING_OPERATOR;
     }
 

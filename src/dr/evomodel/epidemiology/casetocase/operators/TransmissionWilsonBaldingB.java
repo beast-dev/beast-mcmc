@@ -238,7 +238,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
                 !=branchMap.get(node.getNumber()));
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TRANSMISSION_WILSON_BALDING_B + " (" + c2cLikelihood.getTreeModel().getId() +")";
     }
 

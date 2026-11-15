@@ -141,7 +141,7 @@ System.err.print("\n");
 //    }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return MVN_GIBBS;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

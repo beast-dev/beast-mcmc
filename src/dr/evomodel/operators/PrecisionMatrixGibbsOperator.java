@@ -431,7 +431,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return VARIANCE_OPERATOR;
     }
 

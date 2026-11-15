@@ -79,7 +79,7 @@ public class RateBitExchangeOperator extends SimpleMCMCOperator {
     }
 
         // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return OPERATOR_NAME + "(" + bitParameter.getParameterName() +"," + rateParameter.getParameterName() + ")";
     }
 

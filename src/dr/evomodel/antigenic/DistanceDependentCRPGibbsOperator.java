@@ -726,7 +726,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	    }
 
 	    //MCMCOperator INTERFACE
-	    public final String getOperatorName() {
+	    protected final String getBaseOperatorName() {
 	        return DDCRP_GIBBS_OPERATOR;
 	    }
 

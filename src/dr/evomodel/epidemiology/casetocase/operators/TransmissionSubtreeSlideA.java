@@ -442,7 +442,7 @@ public class TransmissionSubtreeSlideA extends AbstractAdaptableTreeOperator {
         return "size";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TRANSMISSION_SUBTREE_SLIDE_A + " (" + tree.getId() + ")";
     }
 

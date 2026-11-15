@@ -69,8 +69,8 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String FIX_HEIGHTS = "fixHeights";
     public static final String FIX_TREE = "fixTree";
     public static final String IMPLEMENTATION = "implementation";
-    public static final String DEFAULT_IMPLEMENTATION = "default";
     public static final String FAST_IMPLEMENTATION = "fast";
+    public static final String OLD_IMPLEMENTATION = "old";
     private static final String SIGNAL_COMPONENTS = "signalComponents";
 
     public static final String TAXON = "taxon";
@@ -97,8 +97,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                 AttributeRule.newBooleanRule(FIX_HEIGHTS, true),
                 AttributeRule.newBooleanRule(FIX_TREE, true),
                 AttributeRule.newStringRule(IMPLEMENTATION, true,
-                        "The tree model implementation: '" + DEFAULT_IMPLEMENTATION + "' or '" + FAST_IMPLEMENTATION + "' " +
-                                "(faster on large trees, but without node rates or node traits)"),
+                        "The tree model implementation: '" + FAST_IMPLEMENTATION + "' (the default; without node rates " +
+                                "or node traits) or '" + OLD_IMPLEMENTATION + "' (DefaultTreeModel; the default if node rates " +
+                                "or node traits are given)"),
                 new ElementRule(NODE_HEIGHTS,
                         new XMLSyntaxRule[]{
                                 AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
@@ -146,17 +147,27 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         boolean fixHeights = xo.getAttribute(FIX_HEIGHTS, false);
         boolean fixTree = xo.getAttribute(FIX_TREE, false);
 
-        String implementation = xo.getAttribute(IMPLEMENTATION, DEFAULT_IMPLEMENTATION);
+        // the fast implementation unless asked for the old one, or node rates or node traits (which only the
+        // old one has) are given
+        String implementation;
+        if (xo.hasAttribute(IMPLEMENTATION)) {
+            implementation = xo.getStringAttribute(IMPLEMENTATION);
+        } else if (xo.hasChildNamed(NODE_RATES) || xo.hasChildNamed(NODE_TRAITS) || xo.hasChildNamed(LEAF_TRAIT)) {
+            implementation = OLD_IMPLEMENTATION;
+        } else {
+            implementation = FAST_IMPLEMENTATION;
+        }
         TreeModel treeModel;
         if (implementation.equalsIgnoreCase(FAST_IMPLEMENTATION)) {
             treeModel = new FastTreeModel(xo.getId(), tree, fixHeights, fixTree);
-        } else if (implementation.equalsIgnoreCase(DEFAULT_IMPLEMENTATION)) {
+        } else if (implementation.equalsIgnoreCase(OLD_IMPLEMENTATION)) {
             treeModel = new DefaultTreeModel(xo.getId(), tree, fixHeights, fixTree);
         } else {
             throw new XMLParseException("unknown " + IMPLEMENTATION + " of " + getParserName() + ": " + implementation);
         }
 
-        Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "'");
+        Logger.getLogger("dr.evomodel").info("\nCreating the tree model, '" + xo.getId() + "' (" +
+                (treeModel instanceof FastTreeModel ? FAST_IMPLEMENTATION : OLD_IMPLEMENTATION) + " implementation)");
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             if (xo.getChild(i) instanceof XMLObject) {
@@ -329,12 +340,26 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     }
 
     /**
-     * Node rates and node traits are only available in the default implementation.
+     * Node rates and node traits are only available in the old implementation.
      */
     private DefaultTreeModel getDefaultTreeModel(TreeModel treeModel, XMLObject cxo) throws XMLParseException {
         if (!(treeModel instanceof DefaultTreeModel)) {
             throw new XMLParseException("the " + cxo.getName() + " element is not available with " + IMPLEMENTATION +
-                    "=\"" + FAST_IMPLEMENTATION + "\" in " + getParserName() + " (node rates and node traits need the default implementation)");
+                    "=\"" + FAST_IMPLEMENTATION + "\" in " + getParserName() + " (node rates and node traits need " +
+                    IMPLEMENTATION + "=\"" + OLD_IMPLEMENTATION + "\")");
+        }
+        return (DefaultTreeModel) treeModel;
+    }
+
+    /**
+     * @return the tree model child of the given element, for parsers of components that use features only
+     * the old implementation (DefaultTreeModel) has, with a helpful error if it is the fast one
+     */
+    public static DefaultTreeModel getOldTreeModel(XMLObject xo, String parserName) throws XMLParseException {
+        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        if (!(treeModel instanceof DefaultTreeModel)) {
+            throw new XMLParseException(parserName + " needs a treeModel with " + IMPLEMENTATION + "=\"" +
+                    OLD_IMPLEMENTATION + "\" (it uses features that the fast implementation does not have)");
         }
         return (DefaultTreeModel) treeModel;
     }

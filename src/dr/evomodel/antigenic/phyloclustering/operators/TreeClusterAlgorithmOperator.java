@@ -3149,7 +3149,7 @@ private void loadClusterTreeNodes() {
 
               
             //MCMCOperator INTERFACE
-            public final String getOperatorName() {
+            protected final String getBaseOperatorName() {
                 return TREE_CLUSTERALGORITHM_OPERATOR;
             }
 

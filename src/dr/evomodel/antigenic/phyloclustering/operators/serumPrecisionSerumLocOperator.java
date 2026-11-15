@@ -119,7 +119,7 @@ public class serumPrecisionSerumLocOperator extends AbstractAdaptableOperator {
 
     public final static String SERUMPRECSCALEALLSERUMLOC = "serumPrecScaleAllSerumLoc";
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return SERUMPRECSCALEALLSERUMLOC;
     }
 

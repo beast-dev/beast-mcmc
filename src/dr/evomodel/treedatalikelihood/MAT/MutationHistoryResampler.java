@@ -1260,8 +1260,11 @@ public class MutationHistoryResampler {
             }
         } else {
             final double[] composition = store.getComposition(n);
+            // (a node with only ghosts below it holds no constant states)
+            final boolean constants = delegate.holdsConstantStates(n);
             for (int a = 0; a < stateCount; a++) {
-                counts[a] = (int) Math.round((composition[a] - constantComposition[a]) / variableWeight);
+                counts[a] = (int) Math.round((composition[a] - (constants ? constantComposition[a] : 0.0)) /
+                        variableWeight);
             }
         }
         assert Arrays.equals(counts, countStates(n)) : "state counts of node " + n;

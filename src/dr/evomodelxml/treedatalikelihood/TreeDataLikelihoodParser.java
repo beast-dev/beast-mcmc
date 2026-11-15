@@ -593,7 +593,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
      * @return the ids of the taxa of the tree that are not in the pattern list, in the order of the tree's tips
      * @throws XMLParseException if the pattern list has a taxon that the tree does not, or none that it does
      */
-    private static List<String> findGhostTaxa(Tree tree, PatternList patterns) throws XMLParseException {
+    public static List<String> findGhostTaxa(Tree tree, PatternList patterns) throws XMLParseException {
         Set<String> treeIds = new HashSet<String>();
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             treeIds.add(tree.getTaxonId(i));
@@ -627,7 +627,7 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
      * Says which taxa a partition has no sequences for, since a taxon left out of an alignment by mistake is not an
      * error.
      */
-    private static void logGhostTaxa(Logger logger, PatternList patterns, List<String> ghosts, int taxonCount) {
+    public static void logGhostTaxa(Logger logger, PatternList patterns, List<String> ghosts, int taxonCount) {
         final int shown = 20;
         StringBuilder sb = new StringBuilder("  ");
         sb.append(ghosts.size()).append(" of the ").append(taxonCount).append(" taxa in the tree are not in ")

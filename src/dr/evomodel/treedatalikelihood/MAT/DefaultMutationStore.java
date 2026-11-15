@@ -111,6 +111,17 @@ public final class DefaultMutationStore implements MutationStore {
      * @param patternWeights the weight of each pattern (for the compositions; may be longer than patternCount)
      * @param stateCount     the number of states
      */
+    /**
+     * Marks the constant patterns, which have no events: every node holds their state unless it has only ghosts
+     * below it, and then it holds no state there and contributes nothing, so no ambiguity is recorded either. To
+     * be set before the branches are first computed.
+     */
+    public void setConstantPatterns(boolean[] constantPatterns) {
+        this.constantPatterns = constantPatterns == null ? null : constantPatterns.clone();
+    }
+
+    private boolean[] constantPatterns = null;
+
     public DefaultMutationStore(int[] parents, int patternCount, double[] patternWeights, int stateCount) {
         this.nodeCount = parents.length;
         this.patternCount = patternCount;
@@ -586,7 +597,7 @@ public final class DefaultMutationStore implements MutationStore {
             for (; p < end; p++) {
                 byte a = parentStates[p];
                 byte b = childStates[p];
-                if (a >= 0 && b != a) {
+                if (a >= 0 && b != a && (constantPatterns == null || !constantPatterns[p])) {
                     if (b < 0) {
                         ambiguityEnd--;
                         scratchPatterns[ambiguityEnd] = p;

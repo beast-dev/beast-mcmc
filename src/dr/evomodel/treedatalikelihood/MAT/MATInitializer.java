@@ -69,12 +69,23 @@ public class MATInitializer {
         this.allStates = stateCount == 64 ? -1L : (1L << stateCount) - 1;
     }
 
+    /**
+     * Marks the constant patterns, at which the store records no events (see
+     * {@link DefaultMutationStore#setConstantPatterns}).
+     */
+    public void setConstantPatterns(boolean[] constantPatterns) {
+        this.constantPatterns = constantPatterns;
+    }
+
+    private boolean[] constantPatterns = null;
+
     public DefaultMutationStore buildMutationStore() {
         final int[] parents = getParents(tree);
         final int[][] children = getChildren(tree);
         final int[] postOrder = getPostOrder(tree);
 
         DefaultMutationStore store = new DefaultMutationStore(parents, patternCount, patternList.getPatternWeights(), stateCount);
+        store.setConstantPatterns(constantPatterns);
         for (int n : postOrder) {
             if (children[n].length == 0) {
                 System.arraycopy(getTipStateSets(tree.getNode(n)), 0, store.getWritableFitchSets(n), 0, patternCount);
@@ -232,16 +243,18 @@ public class MATInitializer {
     }
 
     /**
-     * @return the tip's state sets as bitmasks by pattern, with any ambiguous state as 0
+     * @return the tip's state sets as bitmasks by pattern, with any ambiguous state as 0; a tip whose taxon is not
+     * in the pattern list is a ghost, ambiguous at every pattern (the constant ones too, so that a subtree of ghosts
+     * holds no state anywhere and contributes nothing)
      */
     private long[] getTipStateSets(NodeRef tip) {
         DataType dataType = patternList.getDataType();
         String taxonId = tree.getNodeTaxon(tip).getId();
         int taxonIndex = patternList.getTaxonIndex(taxonId);
-        if (taxonIndex < 0) {
-            throw new IllegalArgumentException("Taxon " + taxonId + " is not in the pattern list");
-        }
         long[] sets = new long[patternCount];
+        if (taxonIndex < 0) {
+            return sets;
+        }
         for (int p = 0; p < patternCount; p++) {
             boolean[] stateSet = dataType.getStateSet(patternList.getPatternState(taxonIndex, p));
             long set = 0;

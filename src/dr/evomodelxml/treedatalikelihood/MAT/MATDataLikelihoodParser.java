@@ -40,8 +40,12 @@ import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.SingleHitHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.TimedHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * XML parser for a TreeDataLikelihood using the mutation annotated tree delegate.
@@ -83,6 +87,13 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
                     ": use a site model with rate categories (e.g. gammaCategories), or " + BRANCH_HISTORY + "=\"" +
                     SingleHitHistoryModel.NAME + "\", \"" + ExplicitHitsHistoryModel.NAME + "\" or \"" +
                     TimedHitsHistoryModel.NAME + "\" with the per-site rate parameter");
+        }
+
+        // taxa of the tree that are not in the patterns are ghosts: they have no data, as if all ambiguous
+        List<String> ghosts = TreeDataLikelihoodParser.findGhostTaxa(treeModel, patternList);
+        if (!ghosts.isEmpty()) {
+            TreeDataLikelihoodParser.logGhostTaxa(Logger.getLogger("dr.evomodel"), patternList, ghosts,
+                    treeModel.getExternalNodeCount());
         }
 
         MATDataLikelihoodDelegate delegate;

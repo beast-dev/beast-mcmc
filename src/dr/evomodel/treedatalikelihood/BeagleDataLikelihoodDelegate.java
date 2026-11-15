@@ -1028,6 +1028,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
         int becameRealCount = 0;
         if (nodeStatus != null) {
+            evaluationStamp++;
+            rootInputsChanged = false;
             becameRealCount = updateGhostStatus(nodeOperations, rootNodeNumber);
         }
 
@@ -1060,6 +1062,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             beagle.setCategoryRates(categoryRates);
             // TODO Try beagle.setCategoryWeights() here
             double[] categoryWeights = this.siteRateModel.getCategoryProportions();
+            if (mergeGhostBranches) {
+                rootInputsChanged |= !Arrays.equals(categoryRates, lastCategoryRates) ||
+                        !Arrays.equals(categoryWeights, lastCategoryWeights);
+                lastCategoryRates = categoryRates.clone();
+                lastCategoryWeights = categoryWeights.clone();
+            }
             // these could be set only when they change but store/restore would need to be considered
             beagle.setCategoryWeights(0, categoryWeights); // TODO move
         }
@@ -1067,6 +1075,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         if (updateRootFrequency) {
             double[] frequencies = evolutionaryProcessDelegate.getRootStateFrequencies();
             beagle.setStateFrequencies(0, frequencies); // TODO make lazy?
+            if (mergeGhostBranches) {
+                rootInputsChanged |= !Arrays.equals(frequencies, lastRootFrequencies);
+                lastRootFrequencies = frequencies.clone();
+            }
         }
 
         if (branchUpdateCount > 0) {
@@ -1085,8 +1097,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         if (flip) {
             // Flip all the buffers to be written to first...
             for (NodeOperation op : nodeOperations) {
-                if (nodeStatus == null || isComputed(nodeStatus[op.getNodeNumber()])) {
-                    partialBufferHelper.flipOffset(op.getNodeNumber());
+                final int nodeNum = op.getNodeNumber();
+                if (nodeStatus == null || (mergeGhostBranches ? isRecomputed(nodeNum) : isComputed(nodeStatus[nodeNum]))) {
+                    partialBufferHelper.flipOffset(nodeNum);
                 }
             }
         }
@@ -1106,6 +1119,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 if (status == GHOST || status == PASS) {
                     // nothing below a ghost has any data, so it contributes nothing and is not computed; a node
                     // passed through is not computed either, its parent reading its real child across both branches
+                    continue;
+                }
+                if (mergeGhostBranches && !isRecomputed(nodeNum)) {
+                    // none of its inputs changed, so it keeps its partials, and its scale factor with them
                     continue;
                 }
                 if (mergeGhostBranches) {
@@ -1196,6 +1213,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             }
 
             k += Beagle.OPERATION_TUPLE_SIZE;
+        }
+
+        if (mergeGhostBranches && operationCount == 0 && !isFullRescale() && leavingScaledCount == 0 &&
+                !rootInputsChanged && rootNodeNumber == lastRootNode && !Double.isNaN(lastLogL) && siteAssignInd == null) {
+            // Nothing that is computed changed, so neither would the likelihood: a move that touched ghosts alone.
+            updateSubstitutionModel = false;
+            updateSiteModel = false;
+            updateRootFrequency = false;
+            return lastLogL;
         }
 
         final boolean patchScaleTotal = nodeStatus != null && useScaleFactors && !recomputeScaleFactors &&
@@ -1312,6 +1338,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             firstRescaleAttempt = true;
             recomputeScaleFactors = false;
             flip = true;
+            if (mergeGhostBranches) {
+                lastLogL = logL;
+                lastRootNode = rootNodeNumber;
+            }
 
         }
 
@@ -1410,7 +1440,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             if (mergeGhostBranches) {
                 System.arraycopy(passChild, 0, storedPassChild, 0, passChild.length);
                 System.arraycopy(mergedLength, 0, storedMergedLength, 0, mergedLength.length);
+                System.arraycopy(effectiveLeft, 0, storedEffectiveLeft, 0, effectiveLeft.length);
+                System.arraycopy(effectiveRight, 0, storedEffectiveRight, 0, effectiveRight.length);
                 storedPreviousRoot = previousRoot;
+                storedLastLogL = lastLogL;
+                storedLastRootNode = lastRootNode;
+                storedLastCategoryRates = lastCategoryRates;      // replaced, never changed in place
+                storedLastCategoryWeights = lastCategoryWeights;
+                storedLastRootFrequencies = lastRootFrequencies;
             }
         }
 
@@ -1469,7 +1506,19 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 storedMergedLength = mergedLength;
                 mergedLength = tmpMerged;
 
+                int[] tmpEffective = storedEffectiveLeft;
+                storedEffectiveLeft = effectiveLeft;
+                effectiveLeft = tmpEffective;
+                tmpEffective = storedEffectiveRight;
+                storedEffectiveRight = effectiveRight;
+                effectiveRight = tmpEffective;
+
                 previousRoot = storedPreviousRoot;
+                lastLogL = storedLastLogL;
+                lastRootNode = storedLastRootNode;
+                lastCategoryRates = storedLastCategoryRates;
+                lastCategoryWeights = storedLastCategoryWeights;
+                lastRootFrequencies = storedLastRootFrequencies;
             }
         }
 
@@ -1753,8 +1802,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             Arrays.fill(mergedLength, Double.NaN);
             Arrays.fill(storedMergedLength, Double.NaN);
             effectiveLeft = new int[nodeCount];
+            storedEffectiveLeft = new int[nodeCount];
+            storedEffectiveRight = new int[nodeCount];
+            recomputedAt = new int[nodeCount];
+            statusChangedAt = new int[nodeCount];
             effectiveRight = new int[nodeCount];
-            touchedBranch = new boolean[nodeCount];
+            Arrays.fill(effectiveLeft, -2);
+            Arrays.fill(effectiveRight, -2);
+            Arrays.fill(storedEffectiveLeft, -2);
+            Arrays.fill(storedEffectiveRight, -2);
         }
 
         // One-child operations (a second child of Beagle.NONE) are only in BEAGLE's CPU implementations from 4.2.0,
@@ -1878,6 +1934,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         if (mergeGhostBranches) {
             // its matrix buffer, if it had one in use, may be for another branch or out of date
             mergedLength[nodeNum] = Double.NaN;
+            statusChangedAt[nodeNum] = evaluationStamp;
         }
         nodeStatus[nodeNum] = status;
     }
@@ -1949,38 +2006,71 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
      * matrix of the joined branch from it up to its nearest computed ancestor: its own branch and those of the nodes
      * passed through above it, which, under one rate matrix, is the matrix of their summed length.
      * <p>
-     * A joined branch is listed if its length differs from the one its buffer was made for, or if any branch along it
-     * has a branch operation, which is how a change of the substitution or site model arrives. Every change to a
-     * branch on it brings its top node into the node operations, so nothing is missed.
+     * A joined branch is listed if its length differs from the one its buffer was made for, or if the substitution
+     * model or the category rates changed. Every change to a branch on it brings its top node into the node
+     * operations, so nothing is missed.
+     * <p>
+     * It also decides which of these nodes are recomputed: those whose status, effective children, their partials or
+     * the matrices of their joined branches changed. The others keep their partials.
      *
      * @return the number of branches listed in branchUpdateIndices and branchLengths
      */
     private int collectMergedBranches(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations) {
         for (BranchOperation op : branchOperations) {
-            final int branch = op.getBranchNumber();
-            ghostBranchLengths[branch] = op.getBranchLength();
-            touchedBranch[branch] = true;
+            ghostBranchLengths[op.getBranchNumber()] = op.getBranchLength();
         }
+
+        // A matrix depends only on the length of its branch, the substitution model and the rates of the site
+        // categories, so a joined branch keeps its matrix unless one of these changed. (A branch operation alone is
+        // not a change: one is sent for every child of a node whose children changed.) The category rates are
+        // compared with what BEAGLE has, as every restore flags the site model as changed.
+        if (updateSubstitutionModel) {
+            allMatricesChanged = true;
+        } else if (updateSiteModel) {
+            final double[] categoryRates = siteRateModel.getCategoryRates();
+            allMatricesChanged = categoryRates == null || !Arrays.equals(categoryRates, lastCategoryRates);
+        } else {
+            allMatricesChanged = false;
+        }
+
+        // every computed node is recomputed at a full rescale, and when the substitution model changed (as it has
+        // after makeDirty, so that a full evaluation is one)
+        final boolean recomputeAll = isFullRescale() || updateSubstitutionModel;
 
         int count = 0;
         for (NodeOperation op : nodeOperations) {
             final int nodeNum = op.getNodeNumber();
             final byte status = nodeStatus[nodeNum];
+            if (status != FULL && status != ONE_CHILD) {
+                continue;
+            }
+            final int oldLeft = effectiveLeft[nodeNum];
+            final int oldRight = effectiveRight[nodeNum];
             if (status == FULL) {
                 effectiveLeft[nodeNum] = op.getLeftChild();
                 effectiveRight[nodeNum] = op.getRightChild();
-                count = listJoinedBranch(effectiveLeft, nodeNum, count);
-                count = listJoinedBranch(effectiveRight, nodeNum, count);
-            } else if (status == ONE_CHILD) {
+            } else {
                 effectiveLeft[nodeNum] = passChild[nodeNum];
                 effectiveRight[nodeNum] = NodeOperation.NO_CHILD;
-                count = listJoinedBranch(effectiveLeft, nodeNum, count);
+            }
+            final int before = count;
+            count = listJoinedBranch(effectiveLeft, nodeNum, count);
+            if (status == FULL) {
+                count = listJoinedBranch(effectiveRight, nodeNum, count);
+            }
+            final int left = effectiveLeft[nodeNum];
+            final int right = effectiveRight[nodeNum];
+
+            // A node's partials depend only on its status, its effective children, their partials and the matrices
+            // of their joined branches. If none of these changed, which is so when a move touched ghosts alone, its
+            // partials would come out the same, so it keeps them.
+            final boolean sameChildren = (left == oldLeft && right == oldRight) || (left == oldRight && right == oldLeft);
+            if (recomputeAll || statusChangedAt[nodeNum] == evaluationStamp || !sameChildren || count > before ||
+                    isRecomputed(left) || isRecomputed(right)) {
+                recomputedAt[nodeNum] = evaluationStamp;
             }
         }
 
-        for (BranchOperation op : branchOperations) {
-            touchedBranch[op.getBranchNumber()] = false;
-        }
         return count;
     }
 
@@ -1988,18 +2078,32 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
      * Walks down from the child in effective[top] through any nodes passed through to the first node with data on
      * both sides, or a tip, leaving that node in effective[top], and lists its joined branch if it needs a new matrix.
      */
+    /**
+     * @return whether every computed node must write a new scale factor: a periodic rescale or the retry after an
+     * underflow. With rescaling ALWAYS, factors are recomputed on every evaluation, but only for the nodes that are
+     * computed: a node whose partials do not change keeps the factor that goes with them.
+     */
+    private boolean isFullRescale() {
+        return recomputeScaleFactors && rescalingScheme == PartialsRescalingScheme.DYNAMIC;
+    }
+
+    /**
+     * @return whether a node's partials are being recomputed in this evaluation (never so for a tip or NO_CHILD)
+     */
+    private boolean isRecomputed(int node) {
+        return node >= 0 && recomputedAt[node] == evaluationStamp;
+    }
+
     private int listJoinedBranch(int[] effective, int top, int count) {
         int node = effective[top];
         double length = ghostBranchLengths[node];
-        boolean touched = touchedBranch[node];
         while (nodeStatus[node] == PASS) {
             node = passChild[node];
             length += ghostBranchLengths[node];
-            touched |= touchedBranch[node];
         }
         effective[top] = node;
 
-        if (touched || length != mergedLength[node]) { // a NaN length is never equal, so is always listed
+        if (allMatricesChanged || length != mergedLength[node]) { // a NaN length is never equal, so is always listed
             mergedLength[node] = length;
             branchUpdateIndices[count] = node;
             branchLengths[count] = length;
@@ -2062,11 +2166,27 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private int[] storedPassChild;
     private double[] mergedLength;              // the length a node's matrix buffer was made for, or NaN
     private double[] storedMergedLength;
-    private int[] effectiveLeft;                // scratch: the nearest descendants with data of a computed node
+    private int[] effectiveLeft;                // the nearest descendants with data of a computed node
     private int[] effectiveRight;
-    private boolean[] touchedBranch;            // scratch: branches that have a branch operation
+    private boolean allMatricesChanged;         // scratch: whether the model that every matrix depends on changed
     private int previousRoot = -1;
     private int storedPreviousRoot = -1;
+    private int[] storedEffectiveLeft;
+    private int[] storedEffectiveRight;
+    private int evaluationStamp = 0;            // counts the evaluations, to mark nodes without clearing arrays
+    private int[] recomputedAt;                 // the evaluation in which a computed node was last recomputed
+    private int[] statusChangedAt;              // the evaluation in which a node's status last changed
+    private double lastLogL = Double.NaN;       // the log likelihood of the last evaluation that computed one
+    private double storedLastLogL = Double.NaN;
+    private int lastRootNode = -1;              // and the root it was computed at
+    private int storedLastRootNode = -1;
+    private boolean rootInputsChanged;          // whether the category rates or weights or root frequencies changed
+    private double[] lastCategoryRates;         // what the matrices and the last likelihood were computed with
+    private double[] lastCategoryWeights;
+    private double[] lastRootFrequencies;
+    private double[] storedLastCategoryRates;
+    private double[] storedLastCategoryWeights;
+    private double[] storedLastRootFrequencies;
 
     private final int nodeCount;
     private final int tipCount;

@@ -150,6 +150,74 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
         }
     }
 
+    /**
+     * A move that touches ghosts alone changes nothing that is computed, so it must cost no partials operations and
+     * leave the likelihood as it was; proposals of every kind after it, accepted or rejected, must still match all N,
+     * and a full evaluation must recompute every computed node.
+     */
+    public void testMovesAmongGhostsComputeNothing() {
+        for (boolean oneChild : new boolean[]{true, false}) {
+            if (oneChild && !BeagleFunctionality.IS_MATRIX_VECTOR_SUPPORTED()) {
+                continue;
+            }
+            System.setProperty(BeagleDataLikelihoodDelegate.GHOST_ONE_CHILD_PROPERTY, Boolean.toString(oneChild));
+            for (Arrangement arrangement : Arrangement.values()) {
+                for (PartialsRescalingScheme scheme : new PartialsRescalingScheme[]{PartialsRescalingScheme.NONE,
+                        PartialsRescalingScheme.DYNAMIC, PartialsRescalingScheme.ALWAYS}) {
+                    final String label = arrangement + ", " + scheme.getText() + (oneChild ? ", one child" : ", tip");
+                    Fixture ghosts = new Fixture(0, arrangement, true, scheme, 4, false);
+                    Fixture allN = new Fixture(0, arrangement, false, scheme, 4, false);
+                    assertSame(label, allN, ghosts);
+
+                    int ghostMoves = 0;
+                    for (int iteration = 0; iteration < 80; ++iteration) {
+                        final double accepted = allN.likelihood.getLogLikelihood();
+                        ghosts.store();
+                        allN.store();
+
+                        if (iteration % 2 == 1) {
+                            final long before = ghosts.likelihood.getTotalCalculationCount();
+                            final boolean moved = ghosts.proposeAmongGhosts();
+                            assertEquals(moved, allN.proposeAmongGhosts());
+                            if (moved) {
+                                ghostMoves++;
+                                assertEquals(label + ", iteration " + iteration + ", unchanged", accepted,
+                                        ghosts.likelihood.getLogLikelihood(), TOLERANCE * Math.abs(accepted));
+                                assertEquals(label + ", iteration " + iteration + ", partials computed", before,
+                                        ghosts.likelihood.getTotalCalculationCount());
+                            }
+                        } else {
+                            ghosts.propose();
+                            allN.propose();
+                        }
+                        assertSame(label + ", iteration " + iteration, allN, ghosts);
+
+                        if (iteration % 3 == 0) {
+                            ghosts.likelihood.acceptModelState();
+                            allN.likelihood.acceptModelState();
+                        } else {
+                            ghosts.likelihood.restoreModelState();
+                            allN.likelihood.restoreModelState();
+                            assertEquals(label + ", restored", accepted, ghosts.likelihood.getLogLikelihood(),
+                                    TOLERANCE * Math.abs(accepted));
+                        }
+                    }
+                    if (ghosts.realTipCount() > 1 && ghosts.ghostIds.size() > 1) {
+                        assertTrue(label + ": no move among ghosts was possible", ghostMoves > 0);
+                    }
+
+                    // a full evaluation recomputes every computed node: at least one per real tip less one
+                    final long before = ghosts.likelihood.getTotalCalculationCount();
+                    ghosts.likelihood.makeDirty();
+                    allN.likelihood.makeDirty();
+                    assertSame(label + ", full evaluation", allN, ghosts);
+                    assertTrue(label + ", full evaluation recomputes", ghosts.likelihood.getTotalCalculationCount() -
+                            before >= ghosts.realTipCount() - 1);
+                }
+            }
+        }
+    }
+
     private boolean externalInternal = false;
 
     private void compareThroughProposals(PartialsRescalingScheme[] schemes) {
@@ -385,8 +453,10 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
 
         final DefaultTreeModel tree;
         final TreeDataLikelihood likelihood;
+        final Set<String> ghostIds;
         private final HKY hky;
         private final NodeRates rates;
+        private final GammaSiteRateModel siteRateModel;
 
         private final Random proposals;
 
@@ -398,6 +468,7 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
             tree = new DefaultTreeModel(randomTree(random));
 
             Set<String> ghosts = chooseGhosts(arrangement, random);
+            ghostIds = ghosts;
 
             SimpleAlignment data = new SimpleAlignment();
             data.setDataType(Nucleotides.INSTANCE);
@@ -436,7 +507,7 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
             } else {
                 branchModel = new HomogeneousBranchModel(hky, rootFrequencies);
             }
-            GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel", 0.5, categories);
+            siteRateModel = new GammaSiteRateModel("siteModel", 0.5, categories);
 
             // a rate for each branch, so that the branches joined through a node with one ghost child differ in rate
             double[] initialRates = new double[tree.getNodeCount()];
@@ -559,14 +630,22 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
                 return;
             }
             if (move == 4) {
-                // a change to the rate matrix of every branch
-                hky.setKappa(1.5 + 3.0 * proposals.nextDouble());
+                if (proposals.nextBoolean()) {
+                    // a change to the rate matrix of every branch
+                    hky.setKappa(1.5 + 3.0 * proposals.nextDouble());
+                } else {
+                    // a change to the rates of the site categories, so to the matrices of every branch
+                    siteRateModel.setAlpha(0.2 + proposals.nextDouble());
+                }
                 return;
             }
             if (move == 5 && moveAboveTheRoot()) {
                 return;
             }
             if (move == 6 && moveTheRoot()) {
+                return;
+            }
+            if (move == 7 && proposeAmongGhosts()) {
                 return;
             }
             if (move == 0) {
@@ -667,6 +746,97 @@ public class GhostTaxaLikelihoodTest extends TraceCorrelationAssert {
                 tree.addChild(root, j);
                 tree.addChild(k, root);
                 tree.setRoot(other);
+                tree.endTreeEdit();
+                return true;
+            }
+            return false;
+        }
+
+        int realTipCount() {
+            return tree.getExternalNodeCount() - ghostIds.size();
+        }
+
+        /**
+         * @return whether every tip below a node is a ghost
+         */
+        boolean isGhost(NodeRef node) {
+            if (tree.isExternal(node)) {
+                return ghostIds.contains(tree.getTaxonId(node.getNumber()));
+            }
+            return isGhost(tree.getChild(node, 0)) && isGhost(tree.getChild(node, 1));
+        }
+
+        /**
+         * A move that touches ghosts alone: two ghost subtrees exchanged, the height of a ghost node, the rate of a
+         * ghost branch, or a ghost subtree whose parent is a ghost node moved with it onto another ghost branch.
+         *
+         * @return false if the chosen kind of move was not possible
+         */
+        boolean proposeAmongGhosts() {
+            final int kind = proposals.nextInt(4);
+            final int nodeCount = tree.getNodeCount();
+            for (int attempt = 0; attempt < 1000; attempt++) {
+                final NodeRef i = tree.getNode(proposals.nextInt(nodeCount));
+                if (tree.isRoot(i) || !isGhost(i)) {
+                    continue;
+                }
+                final NodeRef iP = tree.getParent(i);
+                if (kind == 0) {
+                    // the rate of a ghost branch
+                    rates.setRate(i.getNumber(), 0.5 + proposals.nextDouble());
+                    return true;
+                }
+                if (kind == 1) {
+                    // the height of a ghost node
+                    if (tree.isExternal(i)) {
+                        continue;
+                    }
+                    double low = Math.max(tree.getNodeHeight(tree.getChild(i, 0)),
+                            tree.getNodeHeight(tree.getChild(i, 1)));
+                    double high = tree.getNodeHeight(iP);
+                    tree.setNodeHeight(i, low + (high - low) * (0.01 + 0.98 * proposals.nextDouble()));
+                    return true;
+                }
+                final NodeRef j = tree.getNode(proposals.nextInt(nodeCount));
+                if (tree.isRoot(j) || !isGhost(j) || j == i) {
+                    continue;
+                }
+                if (kind == 2) {
+                    // two ghost subtrees exchanged
+                    final NodeRef jP = tree.getParent(j);
+                    if (iP == jP || isAncestor(i, j) || isAncestor(j, i) ||
+                            tree.getNodeHeight(j) >= tree.getNodeHeight(iP) ||
+                            tree.getNodeHeight(i) >= tree.getNodeHeight(jP)) {
+                        continue;
+                    }
+                    tree.beginTreeEdit();
+                    tree.removeChild(iP, i);
+                    tree.removeChild(jP, j);
+                    tree.addChild(jP, i);
+                    tree.addChild(iP, j);
+                    tree.endTreeEdit();
+                    return true;
+                }
+                // a ghost subtree and its parent, a ghost node, moved onto another ghost branch
+                if (tree.isRoot(iP) || !isGhost(iP) || isAncestor(iP, j)) {
+                    continue;
+                }
+                final NodeRef sibling = tree.getChild(iP, 0) == i ? tree.getChild(iP, 1) : tree.getChild(iP, 0);
+                final NodeRef grandparent = tree.getParent(iP);
+                final NodeRef jP = (j == sibling) ? grandparent : tree.getParent(j);
+                final double low = Math.max(tree.getNodeHeight(j), tree.getNodeHeight(i));
+                final double high = tree.getNodeHeight(jP);
+                if (low >= high) {
+                    continue;
+                }
+                tree.beginTreeEdit();
+                tree.removeChild(iP, sibling);
+                tree.removeChild(grandparent, iP);
+                tree.addChild(grandparent, sibling);
+                tree.removeChild(jP, j);
+                tree.addChild(iP, j);
+                tree.addChild(jP, iP);
+                tree.setNodeHeight(iP, low + (high - low) * (0.01 + 0.98 * proposals.nextDouble()));
                 tree.endTreeEdit();
                 return true;
             }

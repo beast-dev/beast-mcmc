@@ -33,14 +33,15 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
+import dr.evomodel.treedatalikelihood.hmc.CanonicalSelectionParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDiagonalAttenuationGradient;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -54,6 +55,9 @@ import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRA
 public class AttenuationGradientParser extends AbstractXMLObjectParser {
     private final static String PRECISION_GRADIENT = "attenuationGradient";
     private final static String PARAMETER = "parameter";
+    private final static String IMPLEMENTATION = "implementation";
+    private final static String IMPLEMENTATION_LEGACY = "legacy";
+    private final static String IMPLEMENTATION_CANONICAL = "canonical";
     private final static String ATTENUATION_CORRELATION = "correlation";
     private final static String ATTENUATION_DIAGONAL = "diagonal";
     private final static String ATTENUATION_BOTH = "both";
@@ -81,7 +85,9 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
             @Override
             public Object factory(BranchSpecificGradient branchSpecificGradient,
                                   TreeDataLikelihood treeDataLikelihood,
-                                  MatrixParameterInterface parameter) {
+                                  MatrixParameterInterface parameter,
+                                  Parameter requestedParameter,
+                                  AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
                 throw new RuntimeException("Gradient wrt full attenuation not yet implemented.");
             }
         },
@@ -89,7 +95,9 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
             @Override
             public Object factory(BranchSpecificGradient branchSpecificGradient,
                                   TreeDataLikelihood treeDataLikelihood,
-                                  MatrixParameterInterface parameter) {
+                                  MatrixParameterInterface parameter,
+                                  Parameter requestedParameter,
+                                  AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
                 throw new RuntimeException("Gradient wrt correlation of attenuation not yet implemented.");
             }
         },
@@ -97,14 +105,18 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
             @Override
             public Object factory(BranchSpecificGradient branchSpecificGradient,
                                   TreeDataLikelihood treeDataLikelihood,
-                                  MatrixParameterInterface parameter) {
+                                  MatrixParameterInterface parameter,
+                                  Parameter requestedParameter,
+                                  AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter) {
                 return createDiagonalAttenuationGradient(branchSpecificGradient, treeDataLikelihood, parameter);
             }
         };
 
         abstract Object factory(BranchSpecificGradient branchSpecificGradient,
                                 TreeDataLikelihood treeDataLikelihood,
-                                MatrixParameterInterface parameter);
+                                MatrixParameterInterface parameter,
+                                Parameter requestedParameter,
+                                AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter);
     }
 
     @Override
@@ -117,21 +129,69 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
 
         DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
+        final AbstractBlockDiagonalTwoByTwoMatrixParameter nativeBlockParameter =
+                parameter instanceof AbstractBlockDiagonalTwoByTwoMatrixParameter
+                        ? (AbstractBlockDiagonalTwoByTwoMatrixParameter) parameter
+                        : null;
+        final Parameter requestedParameter =
+                nativeBlockParameter != null ? nativeBlockParameter.getParameter() : null;
+        final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+        final CtsCompatibility compatibleData =
+                delegate instanceof CtsCompatibility ? (CtsCompatibility) delegate : null;
+        final boolean useCanonicalImplementation =
+                nativeBlockParameter != null
+                        && (IMPLEMENTATION_CANONICAL.equals(implementation)
+                        || (IMPLEMENTATION_LEGACY.equals(implementation)
+                        && compatibleData != null
+                        && compatibleData.usesCanonicalOULikelihood()));
+
+        if (useCanonicalImplementation) {
+            if (compatibleData == null || !compatibleData.usesCanonicalOULikelihood()) {
+                throw new XMLParseException(
+                        "attenuationGradient implementation=\"canonical\" requires "
+                                + "traitDataLikelihood implementation=\"canonical\".");
+            }
+            requestedParameter.setId(parameter.getId());
+            return new CanonicalSelectionParameterGradient(
+                    treeDataLikelihood,
+                    compatibleData,
+                    requestedParameter,
+                    nativeBlockParameter);
+        }
+
+        if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+            throw new XMLParseException(
+                    "attenuationGradient legacy implementation requires a legacy ContinuousDataLikelihoodDelegate.");
+        }
+        ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+        if (nativeBlockParameter != null) {
+            throw new XMLParseException(
+                    "attenuationGradient for a block-diagonal selection matrix requires "
+                            + "traitDataLikelihood implementation=\"canonical\".");
+        }
         int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
         Tree tree = treeDataLikelihood.getTree();
 
-        ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
+        final ContinuousTraitGradientForBranch traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, tree, continuousData,
-                        new ArrayList<ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter>(
-                                Arrays.asList(ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH)
-                        ));
+                        java.util.Collections.singletonList(
+                                ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient.DerivationParameter.WRT_DIAGONAL_SELECTION_STRENGTH));
         BranchSpecificGradient branchSpecificGradient =
-                new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
+                new BranchSpecificGradient(
+                        traitName,
+                        treeDataLikelihood,
+                        continuousData,
+                        traitGradient,
+                        parameter);
 
         ParameterMode parameterMode = parseParameterMode(xo);
-        return parameterMode.factory(branchSpecificGradient, treeDataLikelihood, parameter);
+        return parameterMode.factory(
+                branchSpecificGradient,
+                treeDataLikelihood,
+                parameter,
+                null,
+                null);
     }
 
     @Override
@@ -142,6 +202,9 @@ public class AttenuationGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Likelihood.class),
             new ElementRule(MatrixParameterInterface.class),
+            AttributeRule.newStringRule(PARAMETER, true),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
     };
 
     @Override

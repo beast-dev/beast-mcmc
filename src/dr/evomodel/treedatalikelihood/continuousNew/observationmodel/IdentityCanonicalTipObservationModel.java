@@ -1,0 +1,189 @@
+package dr.evomodel.treedatalikelihood.continuousNew.observationmodel;
+
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.CanonicalTransitionMomentProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianMessageOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianState;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+
+import java.util.Arrays;
+
+public final class IdentityCanonicalTipObservationModel implements CanonicalTipObservationModel {
+
+    private final int dimension;
+    private final double[] values;
+    private final boolean[] observed;
+    private int observedCount;
+
+    public static IdentityCanonicalTipObservationModel fromObservation(
+            final CanonicalTipObservation observation) {
+        final IdentityCanonicalTipObservationModel model = missing(observation.dim);
+        model.copyFromObservation(observation);
+        return model;
+    }
+
+    public static IdentityCanonicalTipObservationModel missing(final int dimension) {
+        return new IdentityCanonicalTipObservationModel(
+                new double[dimension],
+                new boolean[dimension],
+                0);
+    }
+
+    private IdentityCanonicalTipObservationModel(final double[] values,
+                                                final boolean[] observed,
+                                                final int observedCount) {
+        this.dimension = values.length;
+        if (observed.length != dimension) {
+            throw new IllegalArgumentException("observed mask dimension mismatch");
+        }
+        this.values = values.clone();
+        this.observed = observed.clone();
+        this.observedCount = observedCount;
+    }
+
+    public void copyFromObservation(final CanonicalTipObservation observation) {
+        if (observation.dim != dimension) {
+            throw new IllegalArgumentException("Dimension mismatch: "
+                    + observation.dim + " vs " + dimension);
+        }
+        System.arraycopy(observation.values, 0, values, 0, dimension);
+        System.arraycopy(observation.observed, 0, observed, 0, dimension);
+        observedCount = observation.observedCount;
+    }
+
+    public void copyFrom(final IdentityCanonicalTipObservationModel source) {
+        if (source.dimension != dimension) {
+            throw new IllegalArgumentException("Dimension mismatch: "
+                    + source.dimension + " vs " + dimension);
+        }
+        System.arraycopy(source.values, 0, values, 0, dimension);
+        System.arraycopy(source.observed, 0, observed, 0, dimension);
+        observedCount = source.observedCount;
+    }
+
+    @Override
+    public int getLatentDimension() {
+        return dimension;
+    }
+
+    @Override
+    public int getObservationDimension() {
+        return observedCount;
+    }
+
+    @Override
+    public TipObservationMode getMode() {
+        if (observedCount == 0) {
+            return TipObservationMode.MISSING;
+        }
+        return observedCount == dimension
+                ? TipObservationMode.EXACT_IDENTITY
+                : TipObservationMode.PARTIAL_EXACT_IDENTITY;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return observedCount == 0;
+    }
+
+    public void copyTo(final CanonicalTipObservation observation) {
+        if (observation.dim != dimension) {
+            throw new IllegalArgumentException("Dimension mismatch");
+        }
+        System.arraycopy(values, 0, observation.values, 0, dimension);
+        System.arraycopy(observed, 0, observation.observed, 0, dimension);
+        observation.observedCount = observedCount;
+    }
+
+    public double[] getValues() {
+        return values.clone();
+    }
+
+    public boolean[] getObserved() {
+        return observed.clone();
+    }
+
+    public int getObservedCount() {
+        return observedCount;
+    }
+
+    public boolean isTraitObserved(final int trait) {
+        return observed[trait];
+    }
+
+    public double valueAt(final int trait) {
+        return values[trait];
+    }
+
+    @Override
+    public void fillParentMessage(final CanonicalGaussianTransition transition,
+                                  final int childNodeIndex,
+                                  final CanonicalTransitionMomentProvider momentProvider,
+                                  final double branchLength,
+                                  final TipParentMessageWorkspace workspace,
+                                  final CanonicalGaussianMessageOps.Workspace gaussianWorkspace,
+                                  final CanonicalGaussianState out) {
+        switch (getMode()) {
+            case MISSING:
+                CanonicalGaussianMessageOps.clearState(out);
+                return;
+            case EXACT_IDENTITY:
+                CanonicalGaussianMessageOps.conditionOnObservedSecondBlock(transition, values, out);
+                return;
+            case PARTIAL_EXACT_IDENTITY:
+                if (momentProvider == null) {
+                    throw new UnsupportedOperationException(
+                            "Partial exact identity observations require a CanonicalTransitionMomentProvider.");
+                }
+                workspace.partialIdentityProjection.projectObservedChildToParent(
+                        this, childNodeIndex, momentProvider, branchLength, out);
+                return;
+            default:
+                throw new IllegalStateException("Unsupported identity observation mode: " + getMode());
+        }
+    }
+
+    @Override
+    public boolean fillParentMessage(final CanonicalTipBranchMessageProvider branchMessageProvider,
+                                     final int childNodeIndex,
+                                     final TipParentMessageWorkspace workspace,
+                                     final CanonicalGaussianState out) {
+        if (branchMessageProvider == null) {
+            return false;
+        }
+        switch (getMode()) {
+            case MISSING:
+                CanonicalGaussianMessageOps.clearState(out);
+                return true;
+            case EXACT_IDENTITY:
+                return branchMessageProvider.fillBackwardMessageForObservedTip(
+                        childNodeIndex,
+                        values,
+                        out);
+            case PARTIAL_EXACT_IDENTITY:
+                return false;
+            default:
+                throw new IllegalStateException("Unsupported identity observation mode: " + getMode());
+        }
+    }
+
+    @Override
+    public void fillChildCanonicalState(final CanonicalGaussianState out,
+                                        final TipObservationModelWorkspace workspace) {
+        throw new UnsupportedOperationException(
+                "Identity observations cannot be represented as a finite canonical child state; "
+                + "use fillParentMessage instead.");
+    }
+
+    @Override
+    public CanonicalTipObservationModel copy() {
+        return new IdentityCanonicalTipObservationModel(values, observed, observedCount);
+    }
+
+    @Override
+    public String toString() {
+        return "IdentityCanonicalTipObservationModel{"
+                + "mode=" + getMode()
+                + ", values=" + Arrays.toString(values)
+                + '}';
+    }
+}

@@ -180,7 +180,7 @@ public interface RootProcessDelegate extends Model {
 
     class FullyConjugate extends Abstract {
 
-        FullyConjugate(ConjugateRootTraitPrior prior, PrecisionType precisionType,
+        public FullyConjugate(ConjugateRootTraitPrior prior, PrecisionType precisionType,
                               int numTraits, int partialBufferCount, int matrixBufferCount) {
             super(prior, precisionType, numTraits, partialBufferCount, matrixBufferCount);
         }

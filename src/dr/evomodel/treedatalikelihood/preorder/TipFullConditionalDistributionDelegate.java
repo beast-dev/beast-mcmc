@@ -32,9 +32,9 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 
 import java.util.List;
 
@@ -49,7 +49,7 @@ public class TipFullConditionalDistributionDelegate extends AbstractFullConditio
                                                   ContinuousTraitPartialsProvider dataModel,
                                                   ConjugateRootTraitPrior rootPrior,
                                                   ContinuousRateTransformation rateTransformation,
-                                                  ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                                  CtsCompatibility likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
     }
 

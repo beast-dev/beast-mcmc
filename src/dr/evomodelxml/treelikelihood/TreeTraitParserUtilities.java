@@ -41,8 +41,6 @@ import dr.xml.*;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.getTipTraitName;
-
 /**
  * @author Marc A. Suchard
  */

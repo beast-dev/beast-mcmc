@@ -31,13 +31,12 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.continuous.SparseBandedMultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
-import dr.evomodel.treedatalikelihood.continuous.cdi.DiffusionRepresentation;
 import dr.evomodel.treedatalikelihood.continuous.cdi.PrecisionType;
 import dr.evomodel.treedatalikelihood.continuous.cdi.SafeMultivariateIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.WrappedVector;
 
@@ -60,7 +59,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
                                              ContinuousTraitPartialsProvider dataModel,
                                              ConjugateRootTraitPrior rootPrior,
                                              ContinuousRateTransformation rateTransformation,
-                                             ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                             CtsCompatibility likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
 
         this.likelihoodDelegate = likelihoodDelegate;
@@ -271,7 +270,7 @@ public class ConditionalOnTipsRealizedDelegate extends AbstractRealizedContinuou
         }
     }
 
-    final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+    final CtsCompatibility likelihoodDelegate;
     final ContinuousDiffusionIntegrator cdi;
     final double[] partialNodeBuffer;
     final double[] partialPriorBuffer;

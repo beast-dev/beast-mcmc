@@ -20,6 +20,8 @@ __pycache__
 *.log
 *.trees
 *.tree
+*.chkpt
+*.jfr
 *.xml
 !examples/**/*.xml
 !examples/data

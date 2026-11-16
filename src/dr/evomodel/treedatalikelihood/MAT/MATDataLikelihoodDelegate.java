@@ -97,22 +97,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private final int stateCount;
     private final double[] patternWeights;
     private final boolean[] constantPatterns;
-    private final int[] constantPatternNumbers;     // the constant patterns
-    private final int[] constantPatternStates;      // and their states
-    private final double[] constantComposition;     // their summed weights in each state
-    // with ghosts: whether each node has a tip with data below it, journaled since the last store, and the data root
-    private final boolean tracksDataRoot;
-    private final boolean[] dataBelow;
-    private final IndexSet dataBelowJournal;       // the nodes whose dataBelow changed since the last store
-    private final boolean[] savedDataBelow;        // and what it was
-    private final IndexSet refreshCandidates;      // scratch
-    private final boolean[] aboveDataRoot;
-    private final int[] stretch;                   // the nodes above the data root (the root first)
-    private int stretchLength = 0;
-    private final int[] storedStretch;
-    private int storedStretchLength = 0;
-    private int dataRoot;
-    private int storedDataRoot;
 
     private final BranchHistoryModel historyModel;
     private final MATInitializer initializer;
@@ -275,25 +259,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         }
         Logger.getLogger("dr.evomodel").info("  MAT likelihood: " + variableSites + " variable sites, " + constantSites +
                 " constant sites (assumed to have no mutations)");
-
-        // Every node with data below it holds the constant patterns' states. A tree taxon that is not in the
-        // patterns is a ghost, with no state at any pattern, so a node with only ghosts below it holds none.
-        int constantCount = 0;
-        for (int p = 0; p < patternCount; p++) {
-            if (constantPatterns[p]) {
-                constantCount++;
-            }
-        }
-        this.constantPatternNumbers = new int[constantCount];
-        this.constantPatternStates = new int[constantCount];
-        constantCount = 0;
-        for (int p = 0; p < patternCount; p++) {
-            if (constantPatterns[p]) {
-                constantPatternNumbers[constantCount] = p;
-                constantPatternStates[constantCount] = patternList.getPatternState(0, p);
-                constantCount++;
-            }
-        }
         this.siteLogLikelihoods = new double[patternCount];
         int nodeCount = tree.getNodeCount();
         this.patternRates = new double[patternCount];
@@ -326,35 +291,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         Logger.getLogger("dr.evomodel").info("  MAT branch history model: " + this.historyModel.getName());
 
         initializer = new MATInitializer(patternList, tree);
-        initializer.setConstantPatterns(constantPatterns);
         mutationStore = initializer.buildMutationStore();
-        this.constantComposition = new double[stateCount];
-        for (int i = 0; i < constantPatternNumbers.length; i++) {
-            constantComposition[constantPatternStates[i]] += patternWeights[constantPatternNumbers[i]];
-        }
-        this.dataBelow = new boolean[nodeCount];
-        this.savedDataBelow = new boolean[nodeCount];
-        this.dataBelowJournal = new IndexSet(nodeCount);
-        this.refreshCandidates = new IndexSet(nodeCount);
-        this.aboveDataRoot = new boolean[nodeCount];
-        this.stretch = new int[nodeCount];
-        this.storedStretch = new int[nodeCount];
-        boolean everyTipHasData = true;
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            int tip = tree.getExternalNode(i).getNumber();
-            dataBelow[tip] = holdsConstantStates(tip);
-            everyTipHasData &= dataBelow[tip];
-        }
-        this.tracksDataRoot = !everyTipHasData && constantPatternNumbers.length > 0;
-        this.dataRoot = tree.getRoot().getNumber();
-        if (tracksDataRoot) {
-            refreshConstantStates(null);
-            mutationStore.commit();
-            dataBelowJournal.clear();
-            storedDataRoot = dataRoot;
-            System.arraycopy(stretch, 0, storedStretch, 0, stretchLength);
-            storedStretchLength = stretchLength;
-        }
         this.historyModel.initialise(mutationStore);
 
         this.categories = categoryCount > 1 ? new SiteRateCategories(this, siteRateModel, patternList) : null;
@@ -513,13 +450,9 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             final TopologyView oldView = new OldView(reparented);
             lastSubtreeMove = move;
             pendingLogHastingsRatio += resampler.resampleMove(move[0], move[1], move[2], oldView, currentView);
-            // the nodes whose descendants changed: P (the parent of X) and the old parent of P, now S's parent,
-            // with their ancestors
-            refreshConstantStates(new int[]{mutationStore.getParent(move[0]), mutationStore.getParent(move[1])});
             assert mutationStore.hasParents(MATInitializer.getParents(tree)) : "the MAT does not match the topology after resampling";
         } else {
             initializer.update(mutationStore);
-            refreshConstantStates(null);
             historyModel.initialise(mutationStore);
             rebuildCount++;
             if (inStep && historyResampled && !mixingWarningGiven) {
@@ -530,151 +463,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 mixingWarningGiven = true;
             }
         }
-    }
-
-    /**
-     * @return whether the node holds the constant patterns' states: it does if any tip below it has data (or there
-     * are no constant patterns); a node with only ghosts below it does not
-     */
-    public boolean holdsConstantStates(int n) {
-        return constantPatternNumbers.length == 0 || mutationStore.getState(n, constantPatternNumbers[0]) >= 0;
-    }
-
-    /**
-     * With ghosts, the tips with data may all lie below a node short of the root: the data root, their most recent
-     * common ancestor. A constant site is taken to have no mutations, so every node holding data holds its state;
-     * but above the data root that would charge the site for staying unchanged along the branches from the root
-     * down to it, where Felsenstein's likelihood sums over the root's state and is not affected by them at all
-     * (the root frequencies being stationary). So the constant sites have no state above the data root, their root
-     * term is taken at the data root, and the data root's branch leaves them out (see computeLikelihood). Variable
-     * sites keep their sampled states up to the root, as their histories can change there.
-     * <p>
-     * Brings up to date which nodes have data below them (for the nodes given and their ancestors, or all), the data
-     * root, and the constant states of the nodes whose holding of them changed.
-     *
-     * @param starts the nodes whose descendants changed, or null for every node
-     */
-    private void refreshConstantStates(int[] starts) {
-        if (!tracksDataRoot) {
-            return;
-        }
-        final IndexSet candidates = refreshCandidates;
-        candidates.clear();
-        if (starts == null) {
-            for (int n : MATInitializer.getPostOrder(tree)) {
-                if (!tree.isExternal(tree.getNode(n))) {
-                    setDataBelow(n, childHasData(n));
-                }
-                candidates.add(n);
-            }
-        } else {
-            for (int start : starts) {
-                for (int n = start; n >= 0; n = mutationStore.getParent(n)) {
-                    setDataBelow(n, childHasData(n));
-                    candidates.add(n);
-                }
-            }
-        }
-
-        // the nodes that were above the old data root, and the new data root with those above it
-        for (int i = 0; i < stretchLength; i++) {
-            aboveDataRoot[stretch[i]] = false;
-            candidates.add(stretch[i]);
-        }
-        stretchLength = 0;
-        int newDataRoot = tree.getRoot().getNumber();
-        while (true) {
-            final NodeRef node = tree.getNode(newDataRoot);
-            int withData = -1;
-            int count = 0;
-            for (int i = 0; i < tree.getChildCount(node); i++) {
-                final int child = tree.getChild(node, i).getNumber();
-                if (dataBelow[child]) {
-                    withData = child;
-                    count++;
-                }
-            }
-            if (count != 1) {
-                break;
-            }
-            aboveDataRoot[newDataRoot] = true;
-            stretch[stretchLength++] = newDataRoot;
-            candidates.add(newDataRoot);
-            newDataRoot = withData;
-        }
-        candidates.add(newDataRoot);
-        candidates.add(dataRoot);
-        dataRoot = newDataRoot;
-
-        for (int i = 0; i < candidates.size(); i++) {
-            final int n = candidates.get(i);
-            final boolean holds = dataBelow[n] && !aboveDataRoot[n];
-            if (holds != holdsConstantStates(n)) {
-                for (int c = 0; c < constantPatternNumbers.length; c++) {
-                    mutationStore.setState(n, constantPatternNumbers[c], holds ? constantPatternStates[c] : -1);
-                }
-                mutationStore.updateBranch(n);
-                final NodeRef node = tree.getNode(n);
-                for (int c = 0; c < tree.getChildCount(node); c++) {
-                    mutationStore.updateBranch(tree.getChild(node, c).getNumber());
-                }
-            }
-        }
-    }
-
-    private boolean childHasData(int n) {
-        final NodeRef node = tree.getNode(n);
-        for (int i = 0; i < tree.getChildCount(node); i++) {
-            if (dataBelow[tree.getChild(node, i).getNumber()]) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void setDataBelow(int n, boolean value) {
-        if (dataBelow[n] != value) {
-            if (dataBelowJournal.add(n)) {
-                savedDataBelow[n] = dataBelow[n];
-            }
-            dataBelow[n] = value;
-        }
-    }
-
-    /**
-     * @return the most recent common ancestor of the tips with data (the root, unless there are ghosts)
-     */
-    public int getDataRoot() {
-        return tracksDataRoot ? dataRoot : tree.getRoot().getNumber();
-    }
-
-    /**
-     * @return the root term of the constant sites, at the data root: when it is not the root, which then holds no
-     * constant states
-     */
-    private double getConstantRootTerm() {
-        final double[] frequencies = rootFrequencyModel.getFrequencies();
-        double term = 0.0;
-        for (int a = 0; a < stateCount; a++) {
-            if (constantComposition[a] > 0.0) {
-                term += constantComposition[a] * Math.log(frequencies[a]);
-            }
-        }
-        return term;
-    }
-
-    /**
-     * @return the constant sites' part of the term of the data root's branch, which they are left out of
-     */
-    private double getConstantBranchTerm(int n) {
-        double exitRate = 0.0;
-        if (historyModel.needsExitRate()) {
-            for (int c = 0; c < constantPatternNumbers.length; c++) {
-                exitRate += patternWeightRates[constantPatternNumbers[c]] * exitRates[constantPatternStates[c]];
-            }
-        }
-        return historyModel.getBranchLogLikelihood(BranchMutations.EMPTY, getBranchLength(tree.getNode(n)), exitRate,
-                constantComposition, patternWeights, patternRates);
     }
 
     /**
@@ -1011,17 +799,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 total += branchTerms[n];
             }
         }
-        final int dataRoot = getDataRoot();
-        if (dataRoot != rootNumber) {
-            // the constant sites start at the data root (see refreshConstantStates)
-            total += getConstantRootTerm();
-            if (categories == null) {
-                total -= getConstantBranchTerm(dataRoot);
-            }
-        }
         if (categories != null) {
-            total += categories.getConstantTerm(rootNumber, dataRoot, ratesVersion) +
-                    categories.getPriorTerm(modelVersion);
+            total += categories.getConstantTerm(rootNumber, ratesVersion) + categories.getPriorTerm(modelVersion);
         }
         MATProfile.stop(MATProfile.Phase.LIK_SUM, profileStart);
 
@@ -1038,9 +817,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         BranchMutations mutations = mutationStore.getBranchMutations(n);
         long stateVersion = mutationStore.getStateVersion(n);
         if (categories != null) {
-            // (the constant sites have no state on the branch above a node with only ghosts below it, nor above the
-            // data root)
-            categories.updateUnchangedTerm(n, length, ratesVersion, holdsConstantStates(n));
+            categories.updateUnchangedTerm(n, length, ratesVersion);
         }
         if (branchTermModelVersions[n] != modelVersion || branchTermLengths[n] != length ||
                 branchTermStateVersions[n] != stateVersion || branchTermMutations[n] != mutations) {
@@ -1107,38 +884,10 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                         rate += patternWeightRates[p] * (exitRates[mutations.getToState(k)] - exitRates[a]);
                     }
                 }
-                final boolean constants = holdsConstantStates(node);
-                if (constants != holdsConstantStates(parent)) {
-                    // the constant patterns have no events: a node with only ghosts below it holds none of them, nor
-                    // do the nodes above the data root
-                    for (int c = 0; c < constantPatternNumbers.length; c++) {
-                        final double r = patternWeightRates[constantPatternNumbers[c]] * exitRates[constantPatternStates[c]];
-                        rate += constants ? r : -r;
-                    }
-                }
-                if (hasNoStates(node)) {
-                    // (exactly, rather than what is left of the parent's after rounding: a ghost's branch, or
-                    // one above only ghosts, contributes nothing)
-                    rate = 0.0;
-                }
             }
             setExitRate(node, rate);
         }
         return exitRateSums[n];
-    }
-
-    /**
-     * @return whether the node has no state at any pattern (an all-ambiguous tip, a ghost, or a node with only
-     * such tips below it)
-     */
-    private boolean hasNoStates(int n) {
-        final double[] composition = mutationStore.getComposition(n);
-        for (double c : composition) {
-            if (c != 0.0) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private boolean isExitRateKnown(int n) {
@@ -1204,7 +953,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             int a = rootStates[p];
             siteLogLikelihoods[p] = a < 0 ? 0.0 : Math.log(frequencies[a]);
         }
-
         int[] eventStart = new int[patternCount];
         int[] eventEnd = new int[patternCount];
         for (int n = 0; n < tree.getNodeCount(); n++) {
@@ -1213,7 +961,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             }
             double length = getBranchLength(tree.getNode(n));
             byte[] states = mutationStore.getStates(n);
-            byte[] parentStates = mutationStore.getStates(mutationStore.getParent(n));
             BranchMutations mutations = mutationStore.getBranchMutations(n);
             Arrays.fill(eventStart, -1);
             int k = 0;
@@ -1227,19 +974,13 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 if (states[p] < 0) {
                     continue;
                 }
-                if (parentStates[p] < 0) {
-                    // the highest node with the site's state (the data root, for a constant site)
-                    siteLogLikelihoods[p] += Math.log(frequencies[states[p]]);
-                    continue;
-                }
                 siteLogLikelihoods[p] += eventStart[p] < 0 ?
                         historyModel.getUnchangedSiteLogLikelihood(states[p], length, patternRates[p]) :
                         historyModel.getSiteLogLikelihood(mutations, eventStart[p], eventEnd[p], length, patternRates[p]);
             }
         }
         if (categories != null) {
-            categories.completeSiteLogLikelihoods(siteLogLikelihoods, frequencies,
-                    mutationStore.getStates(getDataRoot()), getDataRoot());
+            categories.completeSiteLogLikelihoods(siteLogLikelihoods, frequencies, rootStates, rootNumber);
         }
         for (int p = 0; p < patternCount; p++) {
             siteLogLikelihoods[p] *= patternWeights[p];
@@ -1396,12 +1137,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         assert lengthsKnown() : "the MAT's branch lengths of the accepted state do not match the tree and clock";
         touchedNodes.clear();
         allTouched = false;
-        dataBelowJournal.clear();
-        storedDataRoot = dataRoot;
-        if (tracksDataRoot) {
-            System.arraycopy(stretch, 0, storedStretch, 0, stretchLength);
-            storedStretchLength = stretchLength;
-        }
         inStep = true;
         movesThisStep = 0;
         pendingLogHastingsRatio = 0.0;
@@ -1430,22 +1165,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         }
         recomputedNodes.clear();
         mutationStore.revert();
-        for (int i = 0; i < dataBelowJournal.size(); i++) {
-            final int n = dataBelowJournal.get(i);
-            dataBelow[n] = savedDataBelow[n];
-        }
-        dataBelowJournal.clear();
-        if (tracksDataRoot) {
-            for (int i = 0; i < stretchLength; i++) {
-                aboveDataRoot[stretch[i]] = false;
-            }
-            dataRoot = storedDataRoot;
-            System.arraycopy(storedStretch, 0, stretch, 0, storedStretchLength);
-            stretchLength = storedStretchLength;
-            for (int i = 0; i < stretchLength; i++) {
-                aboveDataRoot[stretch[i]] = true;
-            }
-        }
         logLikelihood = storedLogLikelihood;
         siteLogLikelihoodsKnown = false;
         if (modelChangedSinceStore) {

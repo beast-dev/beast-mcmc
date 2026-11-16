@@ -26,9 +26,7 @@
 
 package test.dr.evomodel.treedatalikelihood;
 
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.sequence.Sequence;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.parsimony.FitchParsimony;
 import dr.evolution.tree.NodeRef;
@@ -46,7 +44,6 @@ import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treedatalikelihood.MAT.BranchHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.DefaultMutationStore;
 import dr.evomodel.treedatalikelihood.MAT.IntegratedHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
@@ -64,10 +61,7 @@ import test.dr.inference.trace.TraceCorrelationAssert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Tests the MAT likelihood, its incremental parsimony and the mutation history resampler.
@@ -88,8 +82,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     // with site rate categories (setUpSparseData with a site model with more than one category)
     private SiteRateModel categoryModel = null;
     private SiteRateCategoryGibbsOperator categoryOperator = null;
-    // taxa of the tree left out of the patterns by setUpSparseData: ghosts, with no data
-    private Set<String> ghostTaxa = Collections.emptySet();
 
     public MATDataLikelihoodDelegateTest(String name) {
         super(name);
@@ -1079,8 +1071,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         }
         createAlignment(taxaSequence, Nucleotides.INSTANCE);
         treeModel = createPrimateTreeModel();
-        patterns = new SitePatterns(ghostTaxa.isEmpty() ? alignment : realAlignment(), null, 0, -1, 1, true,
-                SitePatterns.CompressionType.CONSTANT_ONLY);
+        patterns = new SitePatterns(alignment, null, 0, -1, 1, true, SitePatterns.CompressionType.CONSTANT_ONLY);
         branchRates = new StrictClockBranchRates(clockRate);
         delegate = new MATDataLikelihoodDelegate(treeModel, patterns, new HomogeneousBranchModel(hky),
                 siteRateModel, branchRates, null, integrated ? new IntegratedHitsHistoryModel(4) : null);
@@ -1659,337 +1650,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         }
     }
 
-    // ---- ghost taxa: taxa of the tree that are not in the patterns ------------------------------------------------
-
-    /**
-     * Arrangements of ghosts on the primate tree (((human,(chimp,bonobo)),gorilla),orangutan),siamang): a single
-     * tip, a cherry, a clade, the root's sister, and all but two tips.
-     */
-    private static final String[][] GHOST_SETS = {
-            {"chimp"},
-            {"chimp", "bonobo"},
-            {"human", "chimp", "bonobo"},
-            {"siamang"},
-            {"human", "chimp", "bonobo", "gorilla"}
-    };
-
-    /**
-     * @return the alignment without the ghosts' sequences
-     */
-    private SimpleAlignment realAlignment() {
-        SimpleAlignment real = new SimpleAlignment();
-        real.setDataType(alignment.getDataType());
-        for (int i = 0; i < alignment.getSequenceCount(); i++) {
-            Sequence sequence = alignment.getSequence(i);
-            if (!ghostTaxa.contains(sequence.getTaxon().getId())) {
-                real.addSequence(sequence);
-            }
-        }
-        return real;
-    }
-
-    /**
-     * @return the state of the highest node holding one at the pattern (the root's, or for a constant site with
-     * ghosts the data root's), or -1 if none does
-     */
-    private int topState(int p) {
-        MutationStore store = delegate.getMutationStore();
-        for (int n = 0; n < treeModel.getNodeCount(); n++) {
-            NodeRef parent = treeModel.getParent(treeModel.getNode(n));
-            int b = store.getState(n, p);
-            if (b >= 0 && (parent == null || store.getState(parent.getNumber(), p) < 0)) {
-                return b;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * @return for each node, whether it is above the data root, the most recent common ancestor of the tips that are
-     * not ghosts (worked out from the tree and the ghosts, independently of the delegate)
-     */
-    private boolean[] oracleAboveDataRoot() {
-        boolean[] dataBelow = new boolean[treeModel.getNodeCount()];
-        markDataBelow(treeModel.getRoot(), dataBelow);
-        boolean[] above = new boolean[treeModel.getNodeCount()];
-        NodeRef node = treeModel.getRoot();
-        while (!treeModel.isExternal(node)) {
-            NodeRef withData = null;
-            int count = 0;
-            for (int i = 0; i < treeModel.getChildCount(node); i++) {
-                if (dataBelow[treeModel.getChild(node, i).getNumber()]) {
-                    withData = treeModel.getChild(node, i);
-                    count++;
-                }
-            }
-            if (count != 1) {
-                break;
-            }
-            above[node.getNumber()] = true;
-            node = withData;
-        }
-        return above;
-    }
-
-    private boolean markDataBelow(NodeRef node, boolean[] dataBelow) {
-        boolean any;
-        if (treeModel.isExternal(node)) {
-            any = !ghostTaxa.contains(treeModel.getNodeTaxon(node).getId());
-        } else {
-            any = false;
-            for (int i = 0; i < treeModel.getChildCount(node); i++) {
-                any |= markDataBelow(treeModel.getChild(node, i), dataBelow);
-            }
-        }
-        dataBelow[node.getNumber()] = any;
-        return any;
-    }
-
-    /**
-     * @return what the all-N version (in which every site constant among the taxa with data is a variable pattern,
-     * holding its state up to the root) adds for those sites on the branches from the root down to the data root,
-     * which the ghost version leaves out
-     */
-    private double rootStretchConstantTerm(MATDataLikelihoodDelegate ghostDelegate, SitePatterns ghostPatterns,
-                                           boolean integrated) {
-        boolean[] above = oracleAboveDataRoot();
-        boolean[] dataBelow = new boolean[treeModel.getNodeCount()];
-        markDataBelow(treeModel.getRoot(), dataBelow);
-        double[] q = new double[16];
-        hky.getInfinitesimalMatrix(q);
-        double[] transition = new double[16];
-        double term = 0.0;
-        for (int n = 0; n < treeModel.getNodeCount(); n++) {
-            NodeRef node = treeModel.getNode(n);
-            NodeRef parent = treeModel.getParent(node);
-            if (parent == null || !above[parent.getNumber()] || !dataBelow[n]) {
-                continue;
-            }
-            // the branch above n, which is the data root or above it
-            double length = (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(node)) *
-                    branchRates.getBranchRate(treeModel, node);
-            hky.getTransitionProbabilities(length, transition);
-            for (int p = 0; p < ghostPatterns.getPatternCount(); p++) {
-                if (ghostDelegate.isConstantPattern(p)) {
-                    int a = ghostPatterns.getPatternState(0, p);
-                    double unchanged = integrated ? Math.log(transition[a * 4 + a]) : q[a * 4 + a] * length;
-                    term += ghostPatterns.getPatternWeight(p) * unchanged;
-                }
-            }
-        }
-        return term;
-    }
-
-    /**
-     * Each node holds the constant patterns' states exactly when it has a tip with data below it and is not above
-     * the data root.
-     */
-    private void assertConstantStatesHeldAtDataRoot() {
-        boolean[] above = oracleAboveDataRoot();
-        boolean[] dataBelow = new boolean[treeModel.getNodeCount()];
-        markDataBelow(treeModel.getRoot(), dataBelow);
-        assertEquals("the data root", delegate.getDataRoot(), dataRootOf(above));
-        for (int n = 0; n < treeModel.getNodeCount(); n++) {
-            assertEquals("node " + n + " holds the constant states", dataBelow[n] && !above[n],
-                    delegate.holdsConstantStates(n));
-        }
-    }
-
-    private int dataRootOf(boolean[] above) {
-        NodeRef node = treeModel.getRoot();
-        while (above[node.getNumber()]) {
-            NodeRef next = null;
-            boolean[] dataBelow = new boolean[treeModel.getNodeCount()];
-            markDataBelow(treeModel.getRoot(), dataBelow);
-            for (int i = 0; i < treeModel.getChildCount(node); i++) {
-                if (dataBelow[treeModel.getChild(node, i).getNumber()]) {
-                    next = treeModel.getChild(node, i);
-                }
-            }
-            node = next;
-        }
-        return node.getNumber();
-    }
-
-    private static Set<String> setOf(String[] ids) {
-        return new HashSet<String>(Arrays.asList(ids));
-    }
-
-    /**
-     * A ghost is treated as an all-N sequence that contributes nothing at any site, so at the same (parsimony)
-     * histories the likelihood equals that with the ghosts' sequences written as N (each site then its own pattern,
-     * as no site is constant across all rows), except on the branches from the root down to the data root (the most
-     * recent common ancestor of the tips with data): there the all-N version keeps the sites that are constant among
-     * the tips with data in their state, and charges them for it, while the ghost version leaves them out, as
-     * Felsenstein's likelihood is not affected by those branches. Checked for each arrangement of ghosts, each branch history model
-     * without random hits, the ghost side's patterns pooled by constant state or not compressed at all, through
-     * subtree moves and parameter changes that are accepted or rejected.
-     */
-    public void testGhostTaxaMatchAllN() {
-        final String[] histories = {"singleHit", "integratedHits"};
-        for (String[] ghostSet : GHOST_SETS) {
-            for (String history : histories) {
-                for (SitePatterns.CompressionType ghostCompression : new SitePatterns.CompressionType[]{
-                        SitePatterns.CompressionType.CONSTANT_ONLY, SitePatterns.CompressionType.UNCOMPRESSED}) {
-                    checkGhostTaxaMatchAllN(setOf(ghostSet), history, ghostCompression);
-                }
-            }
-        }
-    }
-
-    private void checkGhostTaxaMatchAllN(Set<String> ghosts, String history,
-                                         SitePatterns.CompressionType ghostCompression) {
-        final String label = ghosts + ", " + history + ", " + ghostCompression;
-        MathUtils.setSeed(17);
-        ghostTaxa = ghosts;
-        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
-        treeModel = createPrimateTreeModel();
-        branchRates = new StrictClockBranchRates(clockRate);
-
-        SitePatterns ghostPatterns = new SitePatterns(realAlignment(), null, 0, -1, 1, true, ghostCompression);
-        SimpleAlignment allN = new SimpleAlignment();
-        allN.setDataType(Nucleotides.INSTANCE);
-        for (int i = 0; i < alignment.getSequenceCount(); i++) {
-            Sequence sequence = alignment.getSequence(i);
-            if (ghosts.contains(sequence.getTaxon().getId())) {
-                Sequence n = new Sequence(sequence.getSequenceString().replaceAll(".", "N"));
-                n.setTaxon(sequence.getTaxon());
-                n.setDataType(Nucleotides.INSTANCE);
-                allN.addSequence(n);
-            } else {
-                allN.addSequence(sequence);
-            }
-        }
-        SitePatterns allNPatterns = new SitePatterns(allN, null, 0, -1, 1, true,
-                SitePatterns.CompressionType.CONSTANT_ONLY);
-
-        MATDataLikelihoodDelegate ghostDelegate = new MATDataLikelihoodDelegate(treeModel, ghostPatterns,
-                new HomogeneousBranchModel(hky), null, branchRates, null, BranchHistoryModel.create(history, 4));
-        MATDataLikelihoodDelegate allNDelegate = new MATDataLikelihoodDelegate(treeModel, allNPatterns,
-                new HomogeneousBranchModel(hky), null, branchRates, null, BranchHistoryModel.create(history, 4));
-        TreeDataLikelihood ghostLikelihood = new TreeDataLikelihood(ghostDelegate, treeModel, branchRates);
-        TreeDataLikelihood allNLikelihood = new TreeDataLikelihood(allNDelegate, treeModel, branchRates);
-
-        final boolean integrated = history.equals("integratedHits");
-        assertGhostsMatch(label + ", start", allNLikelihood, ghostLikelihood,
-                rootStretchConstantTerm(ghostDelegate, ghostPatterns, integrated));
-
-        List<AbstractTreeOperator> operators = subtreeOperators();
-        final double kappa = hky.getKappa();
-        try {
-            for (int iteration = 0; iteration < 120; iteration++) {
-                final double before = ghostLikelihood.getLogLikelihood();
-                ghostLikelihood.storeModelState();
-                allNLikelihood.storeModelState();
-
-                final int move = iteration % 5;
-                if (move == 3) {
-                    hky.setKappa(2.0 + 4.0 * MathUtils.nextDouble());
-                } else if (move == 4) {
-                    clockRate.setParameterValue(0, CLOCK_RATE * (0.5 + MathUtils.nextDouble()));
-                } else {
-                    operators.get(move).doOperation();
-                }
-                assertGhostsMatch(label + ", iteration " + iteration, allNLikelihood, ghostLikelihood,
-                        rootStretchConstantTerm(ghostDelegate, ghostPatterns, integrated));
-
-                if (iteration % 3 == 0) {
-                    ghostLikelihood.acceptModelState();
-                    allNLikelihood.acceptModelState();
-                } else {
-                    ghostLikelihood.restoreModelState();
-                    allNLikelihood.restoreModelState();
-                    assertEquals(label + ", restored", before, ghostLikelihood.getLogLikelihood(),
-                            1E-10 * Math.abs(before));
-                    assertGhostsMatch(label + ", restored", allNLikelihood, ghostLikelihood,
-                            rootStretchConstantTerm(ghostDelegate, ghostPatterns, integrated));
-                }
-            }
-        } finally {
-            hky.setKappa(kappa);
-            clockRate.setParameterValue(0, CLOCK_RATE);
-            ghostTaxa = Collections.emptySet();
-        }
-    }
-
-    private static void assertGhostsMatch(String label, TreeDataLikelihood allN, TreeDataLikelihood ghosts,
-                                          double rootStretchTerm) {
-        final double expected = allN.getLogLikelihood() - rootStretchTerm;
-        assertEquals(label, expected, ghosts.getLogLikelihood(), 1E-9 * Math.abs(expected));
-    }
-
-    /**
-     * The samplers with ghosts: every arrangement through the path and local blocks, the history Gibbs operator and
-     * the site rate categories, each checked as without ghosts (exact draws against enumeration where the test
-     * has them, the MAT consistent with the topology and the likelihood with its direct computation after every
-     * move; the direct computation also checks that a node holds a state, the constant ones included, exactly
-     * where a child does).
-     */
-    public void testGhostTaxaWithResampling() {
-        for (String[] ghostSet : GHOST_SETS) {
-            ghostTaxa = setOf(ghostSet);
-            try {
-                setUpSparseData();
-                siteRates = new Parameter.Default(patterns.getPatternCount(), 1.0);
-                checkResamplingMovesKeepMATConsistent();
-            } finally {
-                ghostTaxa = Collections.emptySet();
-            }
-        }
-    }
-
-    public void testGhostTaxaWithLocalBlock() {
-        for (String[] ghostSet : GHOST_SETS) {
-            ghostTaxa = setOf(ghostSet);
-            try {
-                checkLocalBlockAgainstEnumeration(false, null);
-                checkLocalBlockDrawsExactly(false, null);
-                checkLocalBlockMovesKeepMATConsistent(false, null);
-                checkLocalBlockMovesKeepMATConsistent(true, null);
-            } finally {
-                ghostTaxa = Collections.emptySet();
-            }
-        }
-    }
-
-    public void testGhostTaxaWithLocalBlockAndCategories() {
-        for (String[] ghostSet : GHOST_SETS) {
-            ghostTaxa = setOf(ghostSet);
-            try {
-                checkLocalBlockAgainstEnumeration(true, gammaCategories());
-                checkLocalBlockDrawsExactly(true, gammaCategories());
-                checkLocalBlockMovesKeepMATConsistent(true, gammaCategories());
-            } finally {
-                ghostTaxa = Collections.emptySet();
-            }
-        }
-    }
-
-    public void testGhostTaxaWithHistoryGibbs() {
-        for (String[] ghostSet : GHOST_SETS) {
-            ghostTaxa = setOf(ghostSet);
-            try {
-                checkHistoryGibbsDrawsExactly(false, null);
-                checkHistoryGibbsDrawsExactly(true, null);
-                checkHistoryGibbsDrawsExactly(true, gammaCategories());
-            } finally {
-                ghostTaxa = Collections.emptySet();
-            }
-        }
-    }
-
-    public void testGhostTaxaWithCategories() throws Exception {
-        for (String[] ghostSet : GHOST_SETS) {
-            ghostTaxa = setOf(ghostSet);
-            try {
-                testCategoryLikelihoodMatchesDirect();
-                testCategoryGibbsDrawsExactly();
-            } finally {
-                ghostTaxa = Collections.emptySet();
-            }
-        }
-    }
-
     private byte[] currentCategories() {
         DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
         byte[] categories = new byte[patterns.getPatternCount()];
@@ -2005,14 +1665,13 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      */
     private double directCategoryLogLikelihood(SiteRateModel siteRateModel) {
         DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
-        assertConstantStatesHeldAtDataRoot();
         double[] pi = hky.getFrequencyModel().getFrequencies();
         int root = treeModel.getRoot().getNumber();
         double logL = 0.0;
         for (int p = 0; p < patterns.getPatternCount(); p++) {
             double w = patterns.getPatternWeight(p);
             if (delegate.isConstantPattern(p)) {
-                int a = topState(p);
+                int a = store.getState(root, p);
                 double max = Double.NEGATIVE_INFINITY;
                 double[] logW = new double[siteRateModel.getCategoryCount()];
                 for (int c = 0; c < logW.length; c++) {
@@ -2044,12 +1703,12 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         hky.getInfinitesimalMatrix(q);
         double[] pi = hky.getFrequencyModel().getFrequencies();
         double[] transition = new double[16];
-        int top = topState(site);
-        if (top < 0) {
+        int root = treeModel.getRoot().getNumber();
+        if (store.getState(root, site) < 0) {
             // no data at the site
             return 0.0;
         }
-        double logL = Math.log(pi[top]);
+        double logL = Math.log(pi[store.getState(root, site)]);
         for (int n = 0; n < treeModel.getNodeCount(); n++) {
             NodeRef node = treeModel.getNode(n);
             NodeRef parent = treeModel.getParent(node);
@@ -2061,10 +1720,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 continue;
             }
             int a = store.getState(parent.getNumber(), site);
-            if (a < 0) {
-                // the highest node holding the state (the data root, for a constant site)
-                continue;
-            }
             double length = (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(node)) *
                     branchRates.getBranchRate(treeModel, node);
             if (integratedHits) {
@@ -2443,12 +2098,11 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
 
         double logL = 0;
         for (int p = 0; p < patternCount; p++) {
-            int a = topState(p);
+            int a = store.getState(root.getNumber(), p);
             if (a >= 0) {
                 logL += patterns.getPatternWeight(p) * Math.log(pi[a]);
             }
         }
-        final boolean[] above = oracleAboveDataRoot();
 
         for (int n = 0; n < nodeCount; n++) {
             NodeRef node = treeModel.getNode(n);
@@ -2468,12 +2122,8 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 double siteLogL;
                 if (b < 0) {
                     siteLogL = 0;
-                } else if (a < 0) {
-                    // only a constant site, at the data root (it has no state above it)
-                    assertTrue("unambiguous child below ambiguous parent", delegate.isConstantPattern(p) &&
-                            parent != null && above[parent.getNumber()] && !above[n]);
-                    siteLogL = 0;
                 } else {
+                    assertTrue("unambiguous child below ambiguous parent", a >= 0);
                     if (a == b) {
                         siteLogL = -nu * -q[a * 4 + a] * length;
                     } else {
@@ -2513,9 +2163,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                     for (int i = 0; i < treeModel.getChildCount(node); i++) {
                         anyChild |= store.getState(treeModel.getChild(node, i).getNumber(), p) >= 0;
                     }
-                    // (constant sites have no state above the data root)
-                    boolean expected = anyChild && !(delegate.isConstantPattern(p) && above[n]);
-                    assertEquals("node " + n + " pattern " + p + " state " + store.getState(n, p) + " children " + treeModel.getChildCount(node), expected, store.getState(n, p) >= 0);
+                    assertEquals("node " + n + " pattern " + p + " state " + store.getState(n, p) + " children " + treeModel.getChildCount(node), anyChild, store.getState(n, p) >= 0);
                 }
             }
         }
@@ -2525,10 +2173,6 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             NodeRef tip = treeModel.getExternalNode(i);
             int taxonIndex = patterns.getTaxonIndex(treeModel.getNodeTaxon(tip).getId());
             for (int p = 0; p < patternCount; p++) {
-                if (taxonIndex < 0) {
-                    assertEquals("a ghost has no state", -1, store.getState(tip.getNumber(), p));
-                    continue;
-                }
                 int observed = patterns.getPatternState(taxonIndex, p);
                 assertEquals(observed < 4 ? observed : -1, store.getState(tip.getNumber(), p));
             }

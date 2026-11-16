@@ -69,8 +69,7 @@ final class SiteRateCategories {
     private final long[] unchangedTermModelVersions;
     private final boolean[] unchangedTermIncluded;
     private final double[] unchangedTotals;
-    // the root and the data root, whose terms were taken out of the totals
-    private final int[] unchangedExcludedNodes = {-1, -1};
+    private int unchangedExcludedNode = -1;        // the root when its term was taken out of the totals
 
     private double priorTerm;
     private long priorModelVersion = -1;
@@ -184,8 +183,7 @@ final class SiteRateCategories {
     void resetTotals() {
         Arrays.fill(unchangedTotals, 0.0);
         Arrays.fill(unchangedTermIncluded, false);
-        unchangedExcludedNodes[0] = -1;
-        unchangedExcludedNodes[1] = -1;
+        unchangedExcludedNode = -1;
     }
 
     /**
@@ -196,30 +194,8 @@ final class SiteRateCategories {
      *                     depend on the states or the categories)
      */
     void updateUnchangedTerm(int n, double length, long ratesVersion) {
-        updateUnchangedTerm(n, length, ratesVersion, true);
-    }
-
-    /**
-     * Brings the node's unchanged-site terms up to date (its branch term needs them for its variable sites), and
-     * includes them in the totals of the constant sites or leaves them out.
-     *
-     * @param include whether the constant sites have a state on the branch (not if the node has only ghosts below
-     *                it, or is above the data root)
-     */
-    void updateUnchangedTerm(int n, double length, long ratesVersion, boolean include) {
         final double[] terms = unchangedTerms[n];
         final boolean stale = unchangedTermModelVersions[n] != ratesVersion || unchangedTermLengths[n] != length;
-        if (!include) {
-            excludeUnchangedTerm(n);
-            if (stale) {
-                for (int c = 0; c < categoryCount; c++) {
-                    historyModel.getUnchangedSiteLogLikelihoods(length, rates[c], terms, c * stateCount);
-                }
-                unchangedTermLengths[n] = length;
-                unchangedTermModelVersions[n] = ratesVersion;
-            }
-            return;
-        }
         if (unchangedTermIncluded[n] && !stale) {
             return;
         }
@@ -242,20 +218,6 @@ final class SiteRateCategories {
     }
 
     /**
-     * Takes the node's unchanged-site terms out of the totals: the constant sites have no state on the branch
-     * above a node with only ghosts below it.
-     */
-    void excludeUnchangedTerm(int n) {
-        if (unchangedTermIncluded[n]) {
-            final double[] terms = unchangedTerms[n];
-            for (int i = 0; i < terms.length; i++) {
-                unchangedTotals[i] -= terms[i];
-            }
-            unchangedTermIncluded[n] = false;
-        }
-    }
-
-    /**
      * @return the node's unchanged-site terms, [category * stateCount + state] (after {@link #updateUnchangedTerm})
      */
     double[] getUnchangedTerms(int n) {
@@ -266,23 +228,21 @@ final class SiteRateCategories {
      * @return the log likelihood of the constant patterns, summed over the site rate categories: each has no
      * events, so in category c and state a it is the sum of the unchanged-site terms over the branches
      */
-    double getConstantTerm(int rootNumber, int dataRoot, long ratesVersion) {
-        // the totals cover every branch on which the constant sites have a state: not the root's (former) branch,
-        // nor that of the data root, the highest node holding them (see MATDataLikelihoodDelegate), which are taken
-        // out, while a former root's or data root's is put back
-        for (int k = 0; k < 2; k++) {
-            int n = unchangedExcludedNodes[k];
-            if (n >= 0 && n != rootNumber && n != dataRoot) {
-                unchangedExcludedNodes[k] = -1;
-                if (delegate.holdsConstantStates(n)) {
-                    updateUnchangedTerm(n, delegate.getBranchLength(tree.getNode(n)), ratesVersion);
-                }
-            }
+    double getConstantTerm(int rootNumber, long ratesVersion) {
+        // the totals cover every branch: the root's (former) branch is taken out, and a former root's put back
+        if (unchangedExcludedNode >= 0 && unchangedExcludedNode != rootNumber) {
+            int n = unchangedExcludedNode;
+            unchangedExcludedNode = -1;
+            updateUnchangedTerm(n, delegate.getBranchLength(tree.getNode(n)), ratesVersion);
         }
-        excludeUnchangedTerm(rootNumber);
-        excludeUnchangedTerm(dataRoot);
-        unchangedExcludedNodes[0] = rootNumber;
-        unchangedExcludedNodes[1] = dataRoot;
+        if (unchangedTermIncluded[rootNumber]) {
+            final double[] terms = unchangedTerms[rootNumber];
+            for (int i = 0; i < terms.length; i++) {
+                unchangedTotals[i] -= terms[i];
+            }
+            unchangedTermIncluded[rootNumber] = false;
+        }
+        unchangedExcludedNode = rootNumber;
 
         double term = 0.0;
         for (int a = 0; a < stateCount; a++) {
@@ -343,7 +303,7 @@ final class SiteRateCategories {
                                     int rootNumber) {
         double[] totals = new double[categoryCount * stateCount];
         for (int n = 0; n < tree.getNodeCount(); n++) {
-            if (n != rootNumber && delegate.holdsConstantStates(n)) {
+            if (n != rootNumber) {
                 double length = delegate.getBranchLength(tree.getNode(n));
                 double[] terms = new double[categoryCount * stateCount];
                 for (int c = 0; c < categoryCount; c++) {

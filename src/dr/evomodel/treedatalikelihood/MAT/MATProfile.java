@@ -71,7 +71,6 @@ public final class MATProfile {
         // the store
         STORE_JOURNAL_CLONE("store.journalClone", "copy-on-write clone of a node's states (in any phase that writes)"),
         STORE_FITCH_CLONE("store.fitchClone", "copy-on-write clone of a node's Fitch sets (in parsimony)"),
-        STORE_SET_CATEGORY("store.setCategory", "change of a site's rate category (in categories.resample)"),
         STORE_COMMIT("store.commit", "commit of the journal (in the chain's store phase)"),
         STORE_REVERT("store.revert", "revert of the journal (in the chain's restore phase)"),
         // the likelihood

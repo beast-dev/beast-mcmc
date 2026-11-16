@@ -86,7 +86,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
 
     private final PatternList patternList;
     private final Tree tree;
-    private final BranchModel branchModel;
     private final SubstitutionModel substitutionModel;
     private final FrequencyModel rootFrequencyModel;
     private final SiteRateModel siteRateModel;
@@ -201,7 +200,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         super(NAME);
         this.tree = tree;
         this.patternList = patternList;
-        this.branchModel = branchModel;
         this.siteRateModel = siteRateModel;
         this.branchRateModel = branchRateModel == null ? new DefaultBranchRateModel() : branchRateModel;
         this.siteRates = siteRates;
@@ -401,14 +399,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         return patternList;
     }
 
-    public BranchModel getBranchModel() {
-        return branchModel;
-    }
-
-    public SiteRateModel getSiteRateModel() {
-        return siteRateModel;
-    }
-
     public BranchRateModel getBranchRateModel() {
         return branchRateModel;
     }
@@ -591,11 +581,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         }
 
         @Override
-        public int getRoot() {
-            return tree.getRoot().getNumber();
-        }
-
-        @Override
         public double getBranchLength(int node) {
             return MATDataLikelihoodDelegate.this.getBranchLength(tree.getNode(node));
         }
@@ -663,16 +648,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         @Override
         public boolean isExternal(int node) {
             return tree.isExternal(tree.getNode(node));
-        }
-
-        @Override
-        public int getRoot() {
-            for (int i = 0; i < reparented.length; i++) {
-                if (oldParents[i] < 0) {
-                    return reparented[i];
-                }
-            }
-            return tree.getRoot().getNumber();
         }
 
         @Override
@@ -1079,10 +1054,6 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      */
     public boolean isConstantPattern(int pattern) {
         return constantPatterns[pattern];
-    }
-
-    SubstitutionModel getSubstitutionModel() {
-        return substitutionModel;
     }
 
     FrequencyModel getRootFrequencyModel() {

@@ -45,7 +45,6 @@ final class BlockSampler {
     private final MATDataLikelihoodDelegate delegate;
     private final DefaultMutationStore store;
     private final BranchHistoryModel historyModel;
-    private final Tree tree;
     private final int stateCount;
     private final double[] patternWeights;
     // patterns grouped by weight, so conditionals can be looked up by [state][weight class]
@@ -64,7 +63,7 @@ final class BlockSampler {
         this.delegate = delegate;
         this.store = delegate.getMutableMutationStore();
         this.historyModel = delegate.getHistoryModel();
-        this.tree = delegate.getTree();
+        final Tree tree = delegate.getTree();
         this.stateCount = delegate.getPatternList().getDataType().getStateCount();
         this.patternWeights = delegate.getPatternWeights();
         this.weightClass = weightClass;

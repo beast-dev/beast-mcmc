@@ -99,7 +99,6 @@ public class MutationHistoryResampler {
     private final Tree tree;
     private final int stateCount;
     private final int patternCount;
-    private final double[] patternWeights;
     private final boolean localBlock;
     // the local block alone barely mixes the history away from the moves: it needs a MutationHistoryGibbsOperator
     private boolean hasGibbsOperator = false;
@@ -174,8 +173,7 @@ public class MutationHistoryResampler {
         this.newMarks = new int[patternCount];
         this.hotMarks = new int[patternCount];
 
-        this.patternWeights = delegate.getPatternWeights();
-        final double[] weights = patternWeights;
+        final double[] weights = delegate.getPatternWeights();
         // patterns grouped by weight, so that the block sampler can look conditionals up by weight class
         Map<Double, Integer> classes = new HashMap<Double, Integer>();
         final int[] weightClass = new int[patternCount];
@@ -223,10 +221,6 @@ public class MutationHistoryResampler {
                     "hits, no per-site rate parameter (site rate categories are supported) and equal pattern weights");
         }
         delegate.setResampler(this);
-    }
-
-    public boolean isLocalBlock() {
-        return localBlock;
     }
 
     /**
@@ -1264,11 +1258,11 @@ public class MutationHistoryResampler {
                 counts[a] = (int) Math.round((composition[a] - constantComposition[a]) / variableWeight);
             }
         }
-        assert Arrays.equals(counts, countStates(n)) : "state counts of node " + n;
+        assert Arrays.equals(counts, recountStates(n)) : "state counts of node " + n;
         return counts;
     }
 
-    private int[] countStates(int n) {
+    private int[] recountStates(int n) {
         final int[] counts = new int[rateClassCount * stateCount];
         final byte[] states = store.getStates(n);
         for (int p : variableSites) {

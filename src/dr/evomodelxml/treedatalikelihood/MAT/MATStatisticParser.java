@@ -26,12 +26,10 @@
 
 package dr.evomodelxml.treedatalikelihood.MAT;
 
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MAT.MATStatistic;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Statistic;
 import dr.xml.*;
-import dr.evomodel.treedatalikelihood.MAT.MATStatistic;
 
 /**
  * Parses a statistic reporting the number of mutations and ambiguities in a MAT.

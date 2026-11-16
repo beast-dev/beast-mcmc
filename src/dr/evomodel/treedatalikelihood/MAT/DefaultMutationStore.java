@@ -323,13 +323,6 @@ public final class DefaultMutationStore implements MutationStore {
     }
 
     /**
-     * @return the number of site rate categories (1 without them)
-     */
-    public int getCategoryCount() {
-        return categoryCount;
-    }
-
-    /**
      * @return the site rate category of the pattern (-1 for a constant pattern; 0 without categories)
      */
     public int getCategory(int pattern) {
@@ -344,49 +337,8 @@ public final class DefaultMutationStore implements MutationStore {
     }
 
     /**
-     * Changes the site rate category of a variable pattern, keeping the nodes' category compositions up
-     * to date (in O(nodes)).
-     */
-    public void setCategory(int pattern, int category) {
-        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, categories[pattern] == category ? 0 : 1);
-        final long profileStart = MATProfile.start();
-        try {
-            setCategoryImpl(pattern, category);
-        } finally {
-            MATProfile.stop(MATProfile.Phase.STORE_SET_CATEGORY, profileStart);
-        }
-    }
-
-    private void setCategoryImpl(int pattern, int category) {
-        final int old = categories[pattern];
-        if (old == category) {
-            return;
-        }
-        if (old < 0 || category < 0) {
-            throw new IllegalArgumentException("Constant patterns have no site rate category");
-        }
-        if (savedCategories == null) {
-            savedCategories = categories.clone();
-        }
-        categories[pattern] = (byte) category;
-        final double weight = patternWeights[pattern];
-        for (int n = 0; n < nodeCount; n++) {
-            if (categoryCompositions[n] != null) {
-                int state = states[n][pattern];
-                if (state >= 0) {
-                    journalCategoryComposition(n);
-                    double[] categoryComposition = categoryCompositions[n];
-                    categoryComposition[old * stateCount + state] -= weight;
-                    categoryComposition[category * stateCount + state] += weight;
-                }
-            }
-        }
-    }
-
-    /**
      * Replaces the site rate categories of all patterns (journaled), with the nodes' category compositions
-     * for them, which the caller has computed (null entries are computed when next asked for). For changing
-     * many categories at once: {@link #setCategory} updates every node for each pattern.
+     * for them, which the caller has computed (null entries are computed when next asked for).
      */
     public void replaceCategories(byte[] patternCategories, double[][] nodeCategoryCompositions) {
         int changes = 0;
@@ -419,13 +371,7 @@ public final class DefaultMutationStore implements MutationStore {
                 // computed from states or categories changed since the commit: revert must discard it
                 journalCategoryComposition(nodeNumber);
             }
-            categoryComposition = new double[categoryCount * stateCount];
-            byte[] nodeStates = states[nodeNumber];
-            for (int p = 0; p < patternCount; p++) {
-                if (nodeStates[p] >= 0 && categories[p] >= 0) {
-                    categoryComposition[categories[p] * stateCount + nodeStates[p]] += patternWeights[p];
-                }
-            }
+            categoryComposition = countCategoryComposition(nodeNumber);
             categoryCompositions[nodeNumber] = categoryComposition;
         }
         return categoryComposition;

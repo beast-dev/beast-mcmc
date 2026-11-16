@@ -31,6 +31,7 @@ import dr.inference.hmc.PrecisionColumnProvider;
 import dr.inference.hmc.ReversibleHMCProvider;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.hmc.NoUTurnOperator;
+import dr.inference.operators.hmc.ReflectiveHamiltonianMonteCarloOperator;
 import dr.xml.*;
 
 import static dr.evomodelxml.continuous.hmc.TaskPoolParser.THREAD_COUNT;
@@ -55,6 +56,9 @@ public class NoUTurnOperatorParser extends AbstractXMLObjectParser {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         ReversibleHMCProvider reversibleHMCprovider = (ReversibleHMCProvider) xo.getChild(ReversibleHMCProvider.class);
+        if (reversibleHMCprovider instanceof ReflectiveHamiltonianMonteCarloOperator) {
+            throw new XMLParseException(NUTS + " does not support reflective HMC, which cannot integrate backwards in time");
+        }
         boolean adaptiveStepsize = xo.getAttribute(ADAPTIVE_STEPSIZE_FLG, true);
         int adaptiveDelay = xo.getAttribute(ADAPTIVE_STEPSIZE_DELAY, -1);
         return new NoUTurnOperator(reversibleHMCprovider, adaptiveStepsize, adaptiveDelay, weight);

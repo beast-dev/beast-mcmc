@@ -38,6 +38,7 @@ import dr.util.Transform;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 
 /**
@@ -48,7 +49,18 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
     private final GeneralBoundsProvider parameterBound;
     private boolean isAtBoundary = false;
+    private long boundsRejectionCount = 0;
+    private long zeroTimeCapCount = 0;
+    // true only inside leapFrogGivenMomentum, so split HMC (reversiblePositionMomentumUpdate) is never checked
+    private boolean checkBoundsInTrajectory = false;
+    private boolean tiedConstraintsChecked = false;
     private static final boolean DEBUG = false;
+
+    // The cap on one run of consecutive events that do not advance the drift, which stops an endless sequence of
+    // them. Away from exact ties a run is at most a few events; from a tied start it is as long as the start
+    // requires (about k^2 / 2 for a fully tied chain of k nodes resolved one wall per event, about pi * sqrt(r) for
+    // a two-wall wedge with inverse-mass ratio r), so a start whose run exceeds the cap cannot be left.
+    private static final long ZERO_TIME_EVENT_CAP = 1000000L;
 
 
     public ReflectiveHamiltonianMonteCarloOperator(AdaptationMode mode,
@@ -62,6 +74,16 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                                                    GeneralBoundsProvider bounds) {
 
         super(mode, weight, gradientProvider, parameter, transform, maskParameter, runtimeOptions, preconditioner);
+
+        if (maskParameter != null) {
+            throw new IllegalArgumentException("Reflective HMC does not support masks");
+        }
+
+        if (bounds instanceof GraphicalParameterBound) {
+            final GraphicalParameterBound graphicalBounds = (GraphicalParameterBound) bounds;
+            graphicalBounds.checkParameterMapping();
+            graphicalBounds.checkParameterMapping(parameter);
+        }
 
         this.parameterBound = bounds;
         this.leapFrogEngine = constructLeapFrogEngine(transform);
@@ -88,12 +110,71 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
 
     @Override
     public String getReport() {
-        return "operator type: " + ReflectiveHamiltonianMonteCarloOperatorParser.OPERATOR_NAME + "\n\n";
+        return "operator type: " + ReflectiveHamiltonianMonteCarloOperatorParser.OPERATOR_NAME + "\n" +
+                "bounds-check rejections: " + boundsRejectionCount + "\n" +
+                "zero-time event cap hits: " + zeroTimeCapCount + "\n\n";
+    }
+
+    public long getBoundsRejectionCount() {
+        return boundsRejectionCount;
+    }
+
+    public long getZeroTimeCapCount() {
+        return zeroTimeCapCount;
     }
 
     @Override
     public String getOperatorName() {
         return "ReflectiveHMC(" + parameter.getParameterName() + ")";
+    }
+
+    @Override
+    public void reversiblePositionMomentumUpdate(WrappedVector position, WrappedVector momentum,
+                                                 WrappedVector gradient, int direction, double time) {
+        if (direction != 1) {
+            throw new UnsupportedOperationException(
+                    "Reflective HMC cannot integrate backwards in time, so it does not support NUTS");
+        }
+        super.reversiblePositionMomentumUpdate(position, momentum, gradient, direction, time);
+    }
+
+    @Override
+    protected double leapFrogGivenMomentum(WrappedVector momentum) throws NumericInstabilityException {
+
+        final double[] currentValues = parameter.getParameterValues();
+        if (!parameterBound.isWithinBounds(currentValues)) {
+            throw new IllegalStateException("The current value of " + parameter.getParameterName() +
+                    " is outside the bounds, so reflective HMC cannot start from it");
+        }
+
+        if (!tiedConstraintsChecked) {
+            tiedConstraintsChecked = true;
+            final int tied = parameterBound.countTiedConstraints(currentValues);
+            if (tied > 0) {
+                Logger.getLogger("dr.inference").info("WARNING: The value of " +
+                        parameter.getParameterName() + " at reflective HMC's first proposal has " + tied +
+                        (tied == 1 ? " tied constraint" : " tied constraints") +
+                        " (equal parent and child heights, or values exactly on a bound). Reflective HMC resolves" +
+                        " such ties by reflecting at time zero; long chains of tied nodes or very unequal masses can" +
+                        " take many such events, and an unusually long run of them rejects the proposal.");
+            }
+        }
+
+        checkBoundsInTrajectory = true;
+        try {
+            return super.leapFrogGivenMomentum(momentum);
+        } finally {
+            checkBoundsInTrajectory = false;
+        }
+    }
+
+    private static boolean isFinite(double[] values) {
+        for (double value : values) {
+            if (!Double.isFinite(value)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 
@@ -109,17 +190,32 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
         protected abstract ReflectionEvent nextEvent(double[] position, WrappedVector momentum, double intervalLength,
                                                      boolean isAtBoundary) throws NumericInstabilityException;
 
-
         @Override
         public void updatePosition(double[] position, WrappedVector momentum,
                                    double functionalStepSize) throws NumericInstabilityException {
 
+            long zeroTimeEvents = 0;
             double collapsedTime = 0.0;
             while (collapsedTime < functionalStepSize) {
                 ReflectionEvent event = nextEvent(position, momentum, functionalStepSize - collapsedTime, isAtBoundary);
 
                 isAtBoundary = event.doReflection(position, momentum);
-                collapsedTime += event.getEventTime();
+                final double advancedTime = collapsedTime + event.getEventTime();
+
+                // An event that does not advance the drift (time zero, or too short to change collapsedTime) counts
+                // toward the cap; an event that advances it resets the count
+                if (advancedTime > collapsedTime) {
+                    zeroTimeEvents = 0;
+                } else if (++zeroTimeEvents > ZERO_TIME_EVENT_CAP) {
+                    ++zeroTimeCapCount;
+                    throw new NumericInstabilityException();
+                }
+                collapsedTime = advancedTime;
+            }
+
+            if (checkBoundsInTrajectory && (!isFinite(position) || !parameterBound.isWithinBounds(position))) {
+                ++boundsRejectionCount;
+                throw new NumericInstabilityException();
             }
             setParameter(position);
         }
@@ -205,19 +301,9 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             return (reflectionEventAtFixedBound.getEventTime() < collisionEvent.getEventTime()) ? reflectionEventAtFixedBound : collisionEvent;
         }
 
-        private boolean isReflected(double position, double intendedNewPosition, double bound) {
-            return (bound - position) * (intendedNewPosition - bound) > 0;
-        }
-
-        private boolean isCollision(double position1, double intendedPosition1,
-                                    double position2, double intendedPosition2) {
-            return (position1 - position2) * (intendedPosition1 - intendedPosition2) < 0 || intendedPosition1 == intendedPosition2;
-        }
-
         private ReflectionEvent firstCollision(double[] position, ReadableVector momentum, double intervalLength) {
 
             final int dim = position.length;
-            double[] intendedNewPosition = getIntendedPosition(position, momentum, intervalLength);
             double firstCollisionTime = intervalLength;
             double collisionLocation = -1.0;
             ReflectionType type = ReflectionType.None;
@@ -230,8 +316,22 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
                     for (int j : graphicalParameterBound.getConnectedParameterIndices(i)) {
                         if (j > i) {
                             final double velocity2 = preconditioning.getVelocity(j, momentum);
-                            if (isCollision(position[i], intendedNewPosition[i], position[j], intendedNewPosition[j])) {
-                                final double collisionTime = (position[j] - position[i]) / (velocity1 - velocity2);
+                            // The wall x_i == x_j is hit only when the motion points out of the constrained space
+                            // (closing > 0); on the wall (gap == 0), or past it by rounding, that is an event at time 0.
+                            // Motion inward or along the wall is no event, and so is a NaN gap (a NaN coordinate, or
+                            // two infinite ones of the same sign).
+                            final boolean iBelow = graphicalParameterBound.isBelow(i, j);
+                            final double gap = iBelow ? position[j] - position[i] : position[i] - position[j];
+                            final double closing = iBelow ? velocity1 - velocity2 : velocity2 - velocity1;
+                            if (closing > 0) {
+                                final double collisionTime;
+                                if (gap > 0) {
+                                    collisionTime = (position[j] - position[i]) / (velocity1 - velocity2);
+                                } else if (gap <= 0) {
+                                    collisionTime = 0.0;
+                                } else {
+                                    continue;
+                                }
                                 if (collisionTime < firstCollisionTime) {
                                     firstCollisionTime = collisionTime;
                                     collisionLocation = collisionTime * velocity1 + position[i];
@@ -247,42 +347,46 @@ public class ReflectiveHamiltonianMonteCarloOperator extends HamiltonianMonteCar
             return new ReflectionEvent(type, firstCollisionTime, collisionLocation, new int[]{index1, index2});
         }
 
-        private double[] getIntendedPosition(double[] position, ReadableVector momentum, double intervalLength) {
-            final int dim = position.length;
-            double[] intendedNewPosition = new double[dim];
-            for (int i = 0; i < dim; i++) {
-                final double velocity = preconditioning.getVelocity(i, momentum);
-                intendedNewPosition[i] = position[i] + intervalLength * velocity;
-            }
-            return intendedNewPosition;
-        }
-
         private ReflectionEvent firstReflectionAtFixedBounds(double[] position, ReadableVector momentum, double intervalLength) {
             final int dim = position.length;
-            double[] intendedNewPosition = getIntendedPosition(position, momentum, intervalLength);
             double firstReflection = intervalLength;
             double reflectionLocation = -1.0;
             ReflectionType type = ReflectionType.None;
             int reflectionIndex = -1;
             for (int i = 0; i < dim; i++) {
                 final double velocity = preconditioning.getVelocity(i, momentum);
-                final double upperBound = graphicalParameterBound.getFixedUpperBound(i);
-                final double lowerBound = graphicalParameterBound.getFixedLowerBound(i);
-                if (isReflected(position[i], intendedNewPosition[i], upperBound)) {
-                    final double reflectionTime = (upperBound - position[i]) / velocity;
-                    if (reflectionTime < 0.0) {
-                        throw new RuntimeException("Check isReflected() function plz.");
-                    } else if (reflectionTime < firstReflection) {
+                // The velocity picks the bound that can be hit; on that bound, or past it by rounding, the
+                // reflection is an event at time 0. An infinite bound gives an infinite time, so no event, and a
+                // NaN gap (a NaN coordinate, or an infinite one at an infinite bound) is no event either.
+                if (velocity > 0) {
+                    final double upperBound = graphicalParameterBound.getFixedUpperBound(i);
+                    final double gap = upperBound - position[i];
+                    final double reflectionTime;
+                    if (gap > 0) {
+                        reflectionTime = (upperBound - position[i]) / velocity;
+                    } else if (gap <= 0) {
+                        reflectionTime = 0.0;
+                    } else {
+                        continue;
+                    }
+                    if (reflectionTime < firstReflection) {
                         firstReflection = reflectionTime;
                         type = ReflectionType.Reflection;
                         reflectionIndex = i;
                         reflectionLocation = upperBound;
                     }
-                } else if (isReflected(position[i], intendedNewPosition[i], lowerBound)) {
-                    final double reflectionTime = (lowerBound - position[i]) / velocity;
-                    if (reflectionTime < 0.0) {
-                        throw new RuntimeException("Check isReflected() function plz.");
-                    } else if (reflectionTime < firstReflection) {
+                } else if (velocity < 0) {
+                    final double lowerBound = graphicalParameterBound.getFixedLowerBound(i);
+                    final double gap = position[i] - lowerBound;
+                    final double reflectionTime;
+                    if (gap > 0) {
+                        reflectionTime = (lowerBound - position[i]) / velocity;
+                    } else if (gap <= 0) {
+                        reflectionTime = 0.0;
+                    } else {
+                        continue;
+                    }
+                    if (reflectionTime < firstReflection) {
                         firstReflection = reflectionTime;
                         type = ReflectionType.Reflection;
                         reflectionIndex = i;

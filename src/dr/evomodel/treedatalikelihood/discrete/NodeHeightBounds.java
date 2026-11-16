@@ -103,4 +103,56 @@ public class NodeHeightBounds implements GraphicalParameterBound {
         return Double.POSITIVE_INFINITY;
     }
 
+    @Override
+    public boolean isBelow(int i, int j) {
+        NodeRef nodeRef = treeModel.getNode(i + externalNodeCount);
+        return !treeModel.isRoot(nodeRef) && treeModel.getParent(nodeRef).getNumber() - externalNodeCount == j;
+    }
+
+    @Override
+    public void checkParameterMapping() {
+        checkParameterMapping(nodeHeight, "the parameter inside graphicalParameterBounds");
+    }
+
+    @Override
+    public void checkParameterMapping(Parameter parameter) {
+        checkParameterMapping(parameter, "the operator's parameter");
+    }
+
+    private void checkParameterMapping(Parameter parameter, String role) {
+        // Coordinate i is taken to be the height of node i + externalNodeCount (the internal nodes in node-number
+        // order, root included). That holds for a nodeHeightProxyParameter with rootNode="true" on this tree only.
+        final int internalNodeCount = treeModel.getInternalNodeCount();
+        if (!(parameter instanceof NodeHeightProxyParameter)
+                || ((NodeHeightProxyParameter) parameter).getTree() != treeModel
+                || parameter.getDimension() != internalNodeCount) {
+            final String rule = "graphicalParameterBounds on tree '" + treeModel.getId() +
+                    "' take coordinate i to be the height of node i + " + externalNodeCount +
+                    " (the internal nodes, root included), which holds only for a nodeHeightProxyParameter with" +
+                    " rootNode=\"true\" on that tree";
+            if (parameter == null) {
+                throw new IllegalArgumentException(rule + ", but " + role + " is missing");
+            }
+            throw new IllegalArgumentException(rule + ", but " + role + ", " + parameter.getParameterName() +
+                    (parameter instanceof NodeHeightProxyParameter ?
+                            " on tree '" + ((NodeHeightProxyParameter) parameter).getTree().getId() + "'" : "") +
+                    " (dimension " + parameter.getDimension() + "; '" + treeModel.getId() + "' has " +
+                    internalNodeCount + " internal nodes), is not one: treeModel.allInternalNodeHeights and" +
+                    " nodeHeightProxyParameter with rootNode=\"false\" map coordinates to the wrong nodes");
+        }
+    }
+
+    @Override
+    public boolean isWithinBounds(double[] values) {
+        for (int i = 0; i < values.length; i++) {
+            NodeRef nodeRef = treeModel.getNode(i + externalNodeCount);
+            double upperBound = treeModel.isRoot(nodeRef) ? Double.POSITIVE_INFINITY :
+                    values[treeModel.getParent(nodeRef).getNumber() - externalNodeCount];
+            if (!(values[i] >= getFixedLowerBound(i) && values[i] <= upperBound)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

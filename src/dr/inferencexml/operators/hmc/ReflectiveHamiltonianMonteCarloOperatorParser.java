@@ -53,7 +53,24 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        if (xo.hasChildNamed(MASK)) {
+            throw new XMLParseException(OPERATOR_NAME + " does not support a mask; remove the <" + MASK + "> element");
+        }
         this.bounds = (GeneralBoundsProvider) xo.getChild(GeneralBoundsProvider.class);
+        if (bounds instanceof GraphicalParameterBound) {
+            // the operator's parameter, found as HamiltonianMonteCarloOperatorParser.parseXMLObject finds it
+            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+            if (parameter == null) {
+                parameter = ((GradientWrtParameterProvider) xo.getChild(GradientWrtParameterProvider.class))
+                        .getParameter();
+            }
+            try {
+                ((GraphicalParameterBound) bounds).checkParameterMapping();
+                ((GraphicalParameterBound) bounds).checkParameterMapping(parameter);
+            } catch (IllegalArgumentException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+        }
         return super.parseXMLObject(xo);
     }
 

@@ -28,4 +28,20 @@
 package dr.inference.model;
 
 public interface GeneralBoundsProvider {
+
+    /**
+     * @param values parameter values to check
+     * @return true iff values satisfy every constraint of this provider; a value exactly on a bound is within
+     * the bounds (the check is not strict), and NaN is never within the bounds
+     */
+    boolean isWithinBounds(double[] values);
+
+    /**
+     * @param values parameter values
+     * @return the number of constraints that hold with equality at values (two connected coordinates equal, or a
+     * coordinate exactly on a fixed bound); a provider that does not count them returns 0
+     */
+    default int countTiedConstraints(double[] values) {
+        return 0;
+    }
 }

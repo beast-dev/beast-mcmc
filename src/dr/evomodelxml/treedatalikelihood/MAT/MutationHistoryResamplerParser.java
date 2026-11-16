@@ -26,17 +26,16 @@
 
 package dr.evomodelxml.treedatalikelihood.MAT;
 
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.xml.*;
 
 import java.util.logging.Logger;
-import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 
 /**
- * Parses a mutation history resampler, which can be given to subtreeLeap, subtreeJump and
- * fixedHeightSubtreePruneRegraft operators to resample the MAT along with their topology moves.
+ * Parses a mutation history resampler, which attaches itself to its matDataLikelihood and resamples the
+ * MAT after each subtree prune-and-regraft move of the tree operators.
  */
 public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
 
@@ -60,7 +59,7 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("The " + SITE_SELECTION + " attribute of " + xo.getId() + " must be " +
                         "'all' (every site is resampled; 'hybrid' is no longer supported)");
             }
-            MATDataLikelihoodDelegate delegate = getDelegate(xo);
+            MATDataLikelihoodDelegate delegate = MATDataLikelihoodParser.getDelegate(xo);
             boolean local;
             if (xo.hasAttribute(BLOCK)) {
                 String block = xo.getStringAttribute(BLOCK);
@@ -84,16 +83,6 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
         } catch (IllegalArgumentException iae) {
             throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
         }
-    }
-
-    static MATDataLikelihoodDelegate getDelegate(XMLObject xo) throws XMLParseException {
-        TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        DataLikelihoodDelegate delegate = likelihood.getDataLikelihoodDelegate();
-        if (!(delegate instanceof MATDataLikelihoodDelegate)) {
-            throw new XMLParseException("Element " + xo.getId() + " requires a " +
-                    MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD + " but " + likelihood.getId() + " is not one");
-        }
-        return (MATDataLikelihoodDelegate) delegate;
     }
 
     @Override

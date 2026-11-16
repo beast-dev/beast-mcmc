@@ -35,6 +35,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.BranchHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.ExplicitHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.IntegratedHitsHistoryModel;
@@ -123,6 +124,19 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         return new TreeDataLikelihood(delegate, treeModel, delegate.getBranchRateModel());
+    }
+
+    /**
+     * @return the MAT delegate of the tree data likelihood that is a child of the element
+     */
+    static MATDataLikelihoodDelegate getDelegate(XMLObject xo) throws XMLParseException {
+        TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        DataLikelihoodDelegate delegate = likelihood.getDataLikelihoodDelegate();
+        if (!(delegate instanceof MATDataLikelihoodDelegate)) {
+            throw new XMLParseException("Element " + xo.getId() + " requires a " + MAT_DATA_LIKELIHOOD + " but " +
+                    likelihood.getId() + " is not one");
+        }
+        return (MATDataLikelihoodDelegate) delegate;
     }
 
     @Override

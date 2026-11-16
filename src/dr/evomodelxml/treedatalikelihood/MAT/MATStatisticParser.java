@@ -46,7 +46,7 @@ public class MATStatisticParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String name = xo.getAttribute(Statistic.NAME, xo.getId());
-        return new MATStatistic(name, MutationHistoryResamplerParser.getDelegate(xo));
+        return new MATStatistic(name, MATDataLikelihoodParser.getDelegate(xo));
     }
 
     @Override

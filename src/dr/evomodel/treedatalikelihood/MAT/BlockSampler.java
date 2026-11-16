@@ -51,8 +51,7 @@ final class BlockSampler {
     private final int[] weightClass;
     private final double[] classWeights;
     private final int defaultWeightClass;   // of the variable patterns, when sites are handled sparsely
-    // the sites' rate classes: their site rate categories (0 with a single category), or none (-1) with
-    // per-site rates
+    // the number of rate classes of the sites (see rateClassOf)
     private final int rateClassCount;
     // the nodes of the current block (see Block), and each one's index in it
     private final boolean[] inBlock;

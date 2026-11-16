@@ -35,6 +35,7 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
@@ -58,22 +59,22 @@ import java.util.logging.Logger;
  *
  * Rather than integrating over all ancestral states, the likelihood is that of an explicit
  * mutational history: a root sequence plus a set of mutations on each branch, reconstructed by
- * parsimony ({@link MATInitializer}). The ancestral states can then be sampled jointly with the
- * topology by SPR operators carrying a {@link MutationHistoryResampler}. If the topology is changed by
- * any other operator, the MAT is brought up to date by (incremental) parsimony, which makes the
- * likelihood a deterministic function of the tree. The two should not be mixed in one analysis.
+ * parsimony ({@link MATInitializer}).
  *
  * How each site's history along a branch is represented and scored is delegated to a
- * {@link BranchHistoryModel}: by default {@link SingleHitHistoryModel} (at most one substitution per
- * site per branch, its time integrated out); alternatives allow multiple hits, summed analytically or
- * as explicit (optionally timed) paths. The root sequence has prior sum_l log pi_a.
+ * {@link BranchHistoryModel}: at most one substitution per site per branch with its time integrated out
+ * ({@link SingleHitHistoryModel}, used when none is given), or multiple hits, summed analytically
+ * ({@link IntegratedHitsHistoryModel}, the default in XML) or as explicit (optionally timed) paths. The
+ * root sequence has prior sum_l log pi_a.
  *
- * The topology is changed by the tree operators alone: when the likelihood is next evaluated the delegate
- * finds the subtree prune-and-regraft move from the nodes whose parent changed, has the resampler draw the
- * states the move changes (scoring the old ones under the old topology, which it keeps as the store's
- * parents and the heights of the last accepted state), and reports the log Hastings ratio of that
- * proposal to the Markov chain ({@link HastingsRatioContributor}). Without a resampler the MAT is brought up
- * to date by parsimony instead.
+ * The topology is changed by the tree operators alone. With a {@link MutationHistoryResampler} attached,
+ * when the likelihood is next evaluated the delegate finds the subtree prune-and-regraft move from the
+ * nodes whose parent changed, has the resampler draw the states the move changes (scoring the old ones
+ * under the old topology, which it keeps as the store's parents and the heights of the last accepted
+ * state), and reports the log Hastings ratio of that proposal to the Markov chain
+ * ({@link HastingsRatioContributor}). Without a resampler the MAT is brought up to date by (incremental)
+ * parsimony instead, which makes the likelihood a deterministic function of the tree. The two should not
+ * be mixed in one analysis.
  *
  * The likelihood is a root term plus a term for each branch, each cached against what it depends on.
  * Only the terms of branches whose states, events or length may have changed are recomputed (the store
@@ -154,7 +155,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     private final IndexSet dirtyNodes;
     private boolean allNodesDirty = true;
     private long termsModelVersion = -1;
-    // nodes whose terms were recomputed since storeState (the tree restores their lengths silently)
+    // nodes whose terms were brought up to date since storeState (the tree restores their lengths silently)
     private final IndexSet recomputedNodes;
     // whether the topology may have changed since the MAT was last checked against it
     private boolean treeChangedSinceCheck = true;
@@ -178,7 +179,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     // variable pattern's category is sampled, and the constant patterns are summed over the categories.
     private final SiteRateCategories categories;
 
-    public MATDataLikelihoodDelegate(Tree tree,
+    public MATDataLikelihoodDelegate(TreeModel tree,
                                      PatternList patternList,
                                      BranchModel branchModel,
                                      SiteRateModel siteRateModel,
@@ -190,7 +191,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
     /**
      * @param historyModel how histories along branches are represented (null for single hits)
      */
-    public MATDataLikelihoodDelegate(Tree tree,
+    public MATDataLikelihoodDelegate(TreeModel tree,
                                      PatternList patternList,
                                      BranchModel branchModel,
                                      SiteRateModel siteRateModel,
@@ -302,10 +303,8 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         if (siteRates != null) {
             addVariable(siteRates);
         }
-        if (tree instanceof Model) {
-            // a listener only (not a sub-model): to learn which branch lengths, and when the topology, change
-            ((Model) tree).addModelListener(this);
-        }
+        // a listener only (not a sub-model): to learn which branch lengths, and when the topology, change
+        tree.addModelListener(this);
     }
 
     public MutationStore getMutationStore() {
@@ -514,15 +513,11 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
             }
             final int g = mutationStore.getParent(p);
             final int n = treeParent(p);
+            if (reparented.length != (g != n ? 3 : 2) || (g != n && !contains(reparented, p))) {
+                continue;
+            }
             for (int d : reparented) {
                 if (d == s || treeParent(d) != p || mutationStore.getParent(d) == p || n != mutationStore.getParent(d)) {
-                    continue;
-                }
-                final int expected = g != n ? 3 : 2;
-                if (reparented.length != expected) {
-                    continue;
-                }
-                if (g != n && !contains(reparented, p)) {
                     continue;
                 }
                 if (p < bestP) {
@@ -697,7 +692,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         if (cachedModelVersion != modelVersion) {
             substitutionModel.getInfinitesimalMatrix(newInfinitesimalMatrix);
             // (the history model's caches stay valid if the rate matrix is unchanged)
-            final boolean matrixChanged = !ratesKnown || !java.util.Arrays.equals(newInfinitesimalMatrix, infinitesimalMatrix);
+            final boolean matrixChanged = !ratesKnown || !Arrays.equals(newInfinitesimalMatrix, infinitesimalMatrix);
             if (matrixChanged) {
                 System.arraycopy(newInfinitesimalMatrix, 0, infinitesimalMatrix, 0, infinitesimalMatrix.length);
                 for (int a = 0; a < stateCount; a++) {
@@ -1040,8 +1035,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         categories.resample();
         modelVersion++;
         modelChangedSinceStore = true;
-        // index -1: TreeDataLikelihood would otherwise read the index as a node number
-        fireModelChanged(mutationStore, -1);
+        fireHistoryChanged();
     }
 
     double[] getPatternWeights() {

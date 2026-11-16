@@ -65,9 +65,8 @@ import dr.evomodel.treedatalikelihood.MAT.BlockSampler.UniformConditional;
  * data there come only from X (whose presence the move changes), as in the subtree moves of Varilly et
  * al. (Nature, 2026). Its cost does not grow with the distance moved.</li>
  * </ul>
- * The local block is the default in XML wherever the model allows it ({@link #supportsLocalBlock}): on big-3
- * it gave two to three times the ESS per minute of the path block and of BEAGLE, with the same posterior
- * (optimization_notes/mat_local_spr/benchmark).
+ * The local block is the default in XML wherever the model allows it ({@link #supportsLocalBlock}); the
+ * two are compared in optimization_notes/mat_local_spr/benchmark.
  *
  * Without per-site rates, explicit hits or unequal pattern weights, sites are handled sparsely (see
  * {@link SparsePass}): a site with no events around the block has the same state a throughout, and its
@@ -104,8 +103,8 @@ public class MutationHistoryResampler {
     private boolean hasGibbsOperator = false;
     private boolean gibbsWarningGiven = false;
 
-    // the sites' rate classes: their site rate categories (0 with a single category), or none (-1) with
-    // per-site rates; sparse passes count and group sites by (rate class, state)
+    // the number of rate classes of the sites, which are their site rate categories (one class with a
+    // single category); sparse passes count and group sites by (rate class, state)
     private final int rateClassCount;
     private final int[] variableSites;
     // scores and draws the states of a block, site by site
@@ -113,8 +112,6 @@ public class MutationHistoryResampler {
     // sites are handled sparsely (see SparsePass) without per-site rates, explicit hits or unequal weights
     private final boolean sparse;
 
-    // the candidate sites of the current path move or Gibbs update (set by makePathPass)
-    private int[] candidateSites = null;
     private int lastChangedUniformCount = 0;
 
     // per-site work arrays
@@ -303,7 +300,6 @@ public class MutationHistoryResampler {
         int[] movedNodes;              // S, P and D: the nodes whose parents the move may change
         int[] block;                   // P and the internal nodes on the old S-D path
         PathPass oldPass;              // the sparse pass of the old phase, or null
-        int[] candidateSites;
         double logProposalOfOldHistories;
     }
 
@@ -331,33 +327,34 @@ public class MutationHistoryResampler {
             sampleBlock(move.block, false, siteClasses, move.oldPass.substitutionSites, oldSiteLogProbabilities,
                     move.oldPass, oldView);
         } else {
-            candidateSites = getVariableSites(move.block, oldView);
-            move.oldPass = null;
+            // every variable site is a candidate
+            setSiteClasses(move.block, oldView);
             MATProfile.stop(MATProfile.Phase.PATH_CANDIDATES, profileStart);
             profileStart = MATProfile.start();
-            sampleBlock(move.block, false, siteClasses, candidateSites, oldSiteLogProbabilities, null, oldView);
+            sampleBlock(move.block, false, siteClasses, variableSites, oldSiteLogProbabilities, null, oldView);
         }
-        move.candidateSites = candidateSites;
         MATProfile.stop(MATProfile.Phase.PATH_SCORE_OLD, profileStart);
-        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, candidateSites.length);
+        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, move.oldPass == null ? variableSites.length :
+                move.oldPass.substitutionSites.length + move.oldPass.ambiguitySites.length);
         if (historyModel.hasExplicitHistories()) {
-            // every candidate is resampled, so score all their hits around the block
+            // every variable site is resampled (explicit hits are not handled sparsely), so score all their
+            // hits around the block
             profileStart = MATProfile.start();
-            move.logProposalOfOldHistories = scoreHistories(getIncidentBranches(move.block, oldView), candidateSites, oldView);
+            move.logProposalOfOldHistories = scoreHistories(getIncidentBranches(move.block, oldView), variableSites, oldView);
             MATProfile.stop(MATProfile.Phase.PATH_HISTORIES, profileStart);
         }
         return move;
     }
 
     /**
-     * Finds the sites with events around the block (setting candidateSites; the others are handled together,
-     * see SparsePass) and makes the sparse pass for them.
+     * Finds the sites with events around the block (the others are handled together, see SparsePass) and
+     * makes the sparse pass for them.
      *
      * @param referenceNode a neighbour of the block whose states do not change (the uniform sites' states are
      *                      read there)
      */
     private PathPass makePathPass(int[] blockNodes, int referenceNode, TopologyView view) {
-        candidateSites = getCandidateSites(blockNodes, view);
+        final int[] candidateSites = getCandidateSites(blockNodes, view);
         final int[] uniformCounts = getStateCounts(referenceNode);
         int substitutionCount = 0;
         int ambiguityCount = 0;
@@ -414,7 +411,8 @@ public class MutationHistoryResampler {
             resampled = pass.substitutionSites;
             changedSites.addAll(pass.otherChangedSites);
         } else {
-            resampled = getVariableSites(blockNodes, view);
+            setSiteClasses(blockNodes, view);
+            resampled = variableSites;
             sampleBlock(blockNodes, true, siteClasses, resampled, null, null, view);
         }
         changedSites.addAll(resampled, resampled.length);
@@ -433,7 +431,6 @@ public class MutationHistoryResampler {
             // (no parent has changed)
             updateBranchesAroundBlock(blockNodes, null, view);
         }
-        candidateSites = null;
         delegate.fireHistoryChanged();
     }
 
@@ -467,7 +464,7 @@ public class MutationHistoryResampler {
         final IntBuffer reparented = syncParents(move.movedNodes, newView);
 
         // every candidate is resampled (the others are handled together when sampling sparsely)
-        final int[] resampled = oldPass != null ? oldPass.substitutionSites : move.candidateSites;
+        final int[] resampled = oldPass != null ? oldPass.substitutionSites : variableSites;
         changedSites.addAll(resampled, resampled.length);
 
         double logProposalOfOldStates = oldPass != null ?
@@ -506,12 +503,10 @@ public class MutationHistoryResampler {
             double logProposalOfNewHistories = sampleHistories(branches, resampled, newView);
             MATProfile.stop(MATProfile.Phase.PATH_HISTORIES, profileStart);
             changedSites.clear();
-            candidateSites = null;
             return logProposalOfOldStates - logProposalOfNewStates + move.logProposalOfOldHistories - logProposalOfNewHistories;
         }
 
         updateBranchesAroundBlock(currentBlock, reparented, newView);
-        candidateSites = null;
 
         return logProposalOfOldStates - logProposalOfNewStates;
     }
@@ -554,10 +549,6 @@ public class MutationHistoryResampler {
     }
 
     /**
-     * @return the regrafted parent plus the internal nodes on the path between a and b, in the order of the
-     * set (which fixes the order in which the candidate sites are found, and so drawn)
-     */
-    /**
      * @return the path block of a move of the subtree below the child of parent that is not a (a is its
      * sibling) to the branch above b, in the current tree
      */
@@ -565,7 +556,11 @@ public class MutationHistoryResampler {
         return getBlock(parent.getNumber(), a.getNumber(), b.getNumber(), delegate.currentView());
     }
 
-    int[] getBlock(int parent, int a, int b, TopologyView view) {
+    /**
+     * @return the regrafted parent plus the internal nodes on the path between a and b, in the order of the
+     * set (which fixes the order in which the candidate sites are found, and so drawn)
+     */
+    private int[] getBlock(int parent, int a, int b, TopologyView view) {
         Set<Integer> ancestorsOfA = new HashSet<Integer>();
         for (int n = a; n >= 0; n = view.getParent(n)) {
             ancestorsOfA.add(n);
@@ -601,7 +596,7 @@ public class MutationHistoryResampler {
      * neighbourhood (the branches above the block nodes and their children), with their classes set in
      * siteClasses and stamped in siteStamps. Every other site has the same state throughout the neighbourhood.
      */
-    int[] getCandidateSites(int[] blockNodes, TopologyView view) {
+    private int[] getCandidateSites(int[] blockNodes, TopologyView view) {
         stamp++;
         int[] sites = new int[16];
         int count = 0;
@@ -627,19 +622,13 @@ public class MutationHistoryResampler {
     }
 
     /**
-     * @return every non-constant site, with its class around the block set in siteClasses
+     * Sets the class of every variable site around the block in siteClasses.
      */
-    private int[] getVariableSites(int[] blockNodes, TopologyView view) {
+    private void setSiteClasses(int[] blockNodes, TopologyView view) {
         byte[] classes = getPatternClasses(blockNodes, view);
-        int[] sites = new int[patternCount];
-        int count = 0;
-        for (int p = 0; p < patternCount; p++) {
-            if (!delegate.isConstantPattern(p)) {
-                siteClasses[p] = classes[p];
-                sites[count++] = p;
-            }
+        for (int p : variableSites) {
+            siteClasses[p] = classes[p];
         }
-        return Arrays.copyOf(sites, count);
     }
 
     /**
@@ -656,7 +645,7 @@ public class MutationHistoryResampler {
         return getPatternClasses(blockNodes, delegate.currentView());
     }
 
-    byte[] getPatternClasses(int[] blockNodes, TopologyView view) {
+    private byte[] getPatternClasses(int[] blockNodes, TopologyView view) {
         byte[] classes = new byte[patternCount];
         for (int p = 0; p < patternCount; p++) {
             classes[p] = delegate.isConstantPattern(p) ? CONSTANT : NO_EVENTS;
@@ -917,7 +906,7 @@ public class MutationHistoryResampler {
         changedSites.addAll(move.oldHotSites, move.oldHotSites.length);
         changedSites.addAll(newHotSites, newHotSites.length);
 
-        // the nodes whose states changed: P (whose children now include X) and the chains
+        // the nodes whose states changed: P (whose other child is now D) and the chains
         final int[] changedNodes = new int[1 + move.oldChain.length + newChain.length];
         changedNodes[0] = move.parent;
         System.arraycopy(move.oldChain, 0, changedNodes, 1, move.oldChain.length);
@@ -1063,7 +1052,7 @@ public class MutationHistoryResampler {
         final TopologyView view = delegate.currentView();
         double logProbability = sampleBlock(getInternalNodes(), false);
         if (historyModel.hasExplicitHistories()) {
-            logProbability += scoreHistories(getNonRootNodes(), getVariableSites(getInternalNodes(), view), view);
+            logProbability += scoreHistories(getNonRootNodes(), variableSites, view);
         }
         return logProbability;
     }
@@ -1079,7 +1068,7 @@ public class MutationHistoryResampler {
         int[] internal = getInternalNodes();
         sampleBlock(internal, true);
         if (historyModel.hasExplicitHistories()) {
-            int[] sites = getVariableSites(internal, view);
+            int[] sites = variableSites;
             changedSites.addAll(sites, sites.length);
             List<Integer> branches = new ArrayList<Integer>();
             for (int n : getNonRootNodes()) {
@@ -1865,8 +1854,8 @@ public class MutationHistoryResampler {
                         final byte[] states = neighbourStates[first];
                         Arrays.fill(segmentCounts, 0);
                         countStates(states, start, end, segmentCounts);
-                        // the groups of the segment's states, in the order of their first sites (the order in
-                        // which new groups are created, as when the sites were taken one at a time)
+                        // the groups of the segment's states, in the order of their first sites: the order in
+                        // which new groups are created is their order in the map, and so the order they are drawn
                         int stateCountInSegment = 0;
                         Arrays.fill(firstSites, -1);
                         for (int i = 0; i < classCount; i++) {

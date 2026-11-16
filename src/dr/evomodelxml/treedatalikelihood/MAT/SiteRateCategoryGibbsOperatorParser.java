@@ -26,7 +26,6 @@
 
 package dr.evomodelxml.treedatalikelihood.MAT;
 
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.SiteRateCategoryGibbsOperator;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
@@ -47,14 +46,10 @@ public class SiteRateCategoryGibbsOperatorParser extends AbstractXMLObjectParser
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        DataLikelihoodDelegate delegate = likelihood.getDataLikelihoodDelegate();
-        if (!(delegate instanceof MATDataLikelihoodDelegate)) {
-            throw new XMLParseException("The likelihood of " + xo.getId() + " must be a MAT likelihood (matDataLikelihood)");
-        }
+        MATDataLikelihoodDelegate delegate = MATDataLikelihoodParser.getDelegate(xo);
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         try {
-            return new SiteRateCategoryGibbsOperator((MATDataLikelihoodDelegate) delegate, weight);
+            return new SiteRateCategoryGibbsOperator(delegate, weight);
         } catch (IllegalArgumentException iae) {
             throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
         }

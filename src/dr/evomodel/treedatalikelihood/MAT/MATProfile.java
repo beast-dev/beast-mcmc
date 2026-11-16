@@ -44,7 +44,7 @@ import java.util.function.Supplier;
  */
 public final class MATProfile {
 
-    public static final boolean ENABLED = ChainProfile.isEnabled("mat");
+    static final boolean ENABLED = ChainProfile.isEnabled("mat");
 
     public enum Phase {
         // a subtree move with the local block
@@ -74,9 +74,9 @@ public final class MATProfile {
         STORE_COMMIT("store.commit", "commit of the journal (in the chain's store phase)"),
         STORE_REVERT("store.revert", "revert of the journal (in the chain's restore phase)"),
         // the likelihood
-        LIK_UPDATE_MAT("lik.updateMAT", "updateMAT: topology check (in lik.calculate and the resampler)"),
+        LIK_UPDATE_MAT("lik.updateMAT", "updateMAT: topology check (wherever the MAT is read)"),
         PARSIMONY("parsimony", "  parsimony update of the MAT (in lik.updateMAT)"),
-        LIK_ENSURE_RATES("lik.ensureRates", "rates brought up to date (in lik.calculate and the resampler)"),
+        LIK_ENSURE_RATES("lik.ensureRates", "rates brought up to date (wherever they are read)"),
         LIK_CALCULATE("lik.calculate", "calculateLikelihood (whole; the chain's evaluate phase)"),
         LIK_BRANCH_TERMS("lik.branchTerms", "  recomputing the dirty branch terms (in lik.calculate)"),
         LIK_SUM("lik.sum", "  sum over all branch terms (in lik.calculate)"),
@@ -197,7 +197,7 @@ public final class MATProfile {
         }
     }
 
-    public static void reset() {
+    private static void reset() {
         java.util.Arrays.fill(nanos, 0L);
         java.util.Arrays.fill(calls, 0L);
         java.util.Arrays.fill(counts, 0L);
@@ -206,7 +206,7 @@ public final class MATProfile {
         lastOperatorTimes = null;
     }
 
-    public static String report() {
+    private static String report() {
         final StringBuilder sb = new StringBuilder();
         sb.append("\nMAT profile (wall clock; the steps of the step profile, i.e. after the adaptation delay)\n");
         sb.append(String.format("%-26s %12s %12s %12s  %s%n", "Phase", "Calls", "Total(s)", "us/call", "Description"));

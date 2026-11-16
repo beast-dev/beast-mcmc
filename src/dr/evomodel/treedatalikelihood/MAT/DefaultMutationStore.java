@@ -73,8 +73,8 @@ public final class DefaultMutationStore implements MutationStore {
     private final long[] stateVersions;
     private long lastStateVersion = 0;
     private final double[][] compositions; // null where not yet computed from the states
-    // site rate categories: the category of each pattern (-1 for constant patterns), or null without them
     private int categoryCount = 1;
+    // site rate categories: the category of each pattern (-1 for constant patterns), or null without them
     private byte[] categories;
     private double[][] categoryCompositions; // [node][category * stateCount + state]; null where not computed
     private int[] scratchPatterns;         // work arrays of updateBranch
@@ -86,8 +86,8 @@ public final class DefaultMutationStore implements MutationStore {
 
     // The journal: the first change to a node after commit() keeps what it replaces, so that revert() can
     // put it back. Per node (each with a flag saying whether it is in the journal): the parent, the states
-    // with their version and composition, the Fitch sets and the branch events; then the root, the
-    // categories and the stale flag.
+    // with their version and composition, the Fitch sets, the branch events and the category composition;
+    // then the root, the categories and the stale flag.
     private final IndexSet journaledNodes;   // the nodes with anything in the journal
     private final boolean[] parentDirty;
     private final int[] savedParents;
@@ -341,13 +341,15 @@ public final class DefaultMutationStore implements MutationStore {
      * for them, which the caller has computed (null entries are computed when next asked for).
      */
     public void replaceCategories(byte[] patternCategories, double[][] nodeCategoryCompositions) {
-        int changes = 0;
-        for (int p = 0; p < patternCount; p++) {
-            if (patternCategories[p] != categories[p]) {
-                changes++;
+        if (MATProfile.ENABLED) {
+            int changes = 0;
+            for (int p = 0; p < patternCount; p++) {
+                if (patternCategories[p] != categories[p]) {
+                    changes++;
+                }
             }
+            MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, changes);
         }
-        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, changes);
         if (savedCategories == null) {
             savedCategories = categories;
         }
@@ -782,6 +784,6 @@ public final class DefaultMutationStore implements MutationStore {
         if (fitchSetsStaleChanged) {
             fitchSetsStale = savedFitchSetsStale;
         }
-        commit();
+        commitImpl();
     }
 }

@@ -26,22 +26,20 @@
 
 package dr.evomodelxml.treedatalikelihood.MAT;
 
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.xml.*;
 
 import java.util.logging.Logger;
-import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 
 /**
- * Parses a mutation history resampler, which can be given to subtreeLeap, subtreeJump and
- * fixedHeightSubtreePruneRegraft operators to resample the MAT along with their topology moves.
+ * Parses a mutation history resampler, which attaches itself to its matDataLikelihood and resamples the
+ * MAT after each subtree prune-and-regraft move of the tree operators.
  */
 public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
 
     public static final String MUTATION_HISTORY_RESAMPLER = "mutationHistoryResampler";
-    public static final String SITE_SELECTION = "siteSelection";
     public static final String BLOCK = "block";
     public static final String PATH_BLOCK = "path";
     public static final String LOCAL_BLOCK = "local";
@@ -54,13 +52,7 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         try {
-            if (xo.hasAttribute(SITE_SELECTION) && !xo.getStringAttribute(SITE_SELECTION).equalsIgnoreCase("all")) {
-                // the hybrid selection (only sites varying around the block) could not create back-mutations
-                // at sites that looked uniform around every block, so it was not irreducible
-                throw new XMLParseException("The " + SITE_SELECTION + " attribute of " + xo.getId() + " must be " +
-                        "'all' (every site is resampled; 'hybrid' is no longer supported)");
-            }
-            MATDataLikelihoodDelegate delegate = getDelegate(xo);
+            MATDataLikelihoodDelegate delegate = MATDataLikelihoodParser.getDelegate(xo);
             boolean local;
             if (xo.hasAttribute(BLOCK)) {
                 String block = xo.getStringAttribute(BLOCK);
@@ -86,21 +78,9 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
         }
     }
 
-    static MATDataLikelihoodDelegate getDelegate(XMLObject xo) throws XMLParseException {
-        TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
-        DataLikelihoodDelegate delegate = likelihood.getDataLikelihoodDelegate();
-        if (!(delegate instanceof MATDataLikelihoodDelegate)) {
-            throw new XMLParseException("Element " + xo.getId() + " requires a " +
-                    MATDataLikelihoodParser.MAT_DATA_LIKELIHOOD + " but " + likelihood.getId() + " is not one");
-        }
-        return (MATDataLikelihoodDelegate) delegate;
-    }
-
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                AttributeRule.newStringRule(SITE_SELECTION, true, "Which sites a move resamples: only 'all' " +
-                        "(kept for older files)"),
                 AttributeRule.newStringRule(BLOCK, true, "Which states a move resamples: 'local' (the regrafted " +
                         "parent, and the nodes whose data at a site come only from the moved subtree; the default where " +
                         "the model allows it) or 'path' (the regrafted parent and the nodes on the path between its old " +

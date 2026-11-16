@@ -42,15 +42,13 @@ final class IndexSet {
     }
 
     /**
-     * @return true if the index was not already a member
+     * Adds the index if it is not already a member.
      */
-    boolean add(int index) {
-        if (flags[index]) {
-            return false;
+    void add(int index) {
+        if (!flags[index]) {
+            flags[index] = true;
+            members[size++] = index;
         }
-        flags[index] = true;
-        members[size++] = index;
-        return true;
     }
 
     void addAll(int[] indices, int count) {

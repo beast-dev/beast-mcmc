@@ -59,11 +59,6 @@ public class ExplicitHitsHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
-    public void getLogTransitionDensities(double length, double nu, double[] out) {
-        System.arraycopy(getLogTransitionProbabilities(nu * length), 0, out, 0, stateCount * stateCount);
-    }
-
-    @Override
     public double getBranchLogLikelihood(BranchMutations mutations, double length, double exitRateSum, double[] composition,
                                          double[] patternWeights, double[] patternRates) {
         double term = -exitRateSum * length;
@@ -81,11 +76,6 @@ public class ExplicitHitsHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
-    public double getUnchangedSiteLogLikelihood(int a, double length, double nu) {
-        return -nu * exitRates[a] * length;
-    }
-
-    @Override
     public double getSiteLogLikelihood(BranchMutations mutations, int start, int end, double length, double nu) {
         int k = end - start;
         int[] states = new int[k + 1];
@@ -93,7 +83,7 @@ public class ExplicitHitsHistoryModel extends AbstractBranchHistoryModel {
         states[0] = mutations.getFromState(start);
         for (int i = 0; i < k; i++) {
             states[i + 1] = mutations.getToState(start + i);
-            times[i + 1] = mutations.hasTimes() ? mutations.getTime(start + i) : (i + 1.0) / (k + 1.0);
+            times[i + 1] = mutations.getTime(start + i, start, end);
         }
         return pathLogDensity(states, times, k, length, nu);
     }

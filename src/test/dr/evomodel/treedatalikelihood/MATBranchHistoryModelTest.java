@@ -403,7 +403,7 @@ public class MATBranchHistoryModelTest extends TraceCorrelationAssert {
         return total;
     }
 
-    private static int countMultipleHitSites(MutationStore store) {
+    private static int countMultipleHitSites(DefaultMutationStore store) {
         int count = 0;
         for (int n = 0; n < store.getNodeCount(); n++) {
             BranchMutations mutations = store.getBranchMutations(n);

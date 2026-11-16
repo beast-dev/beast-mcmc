@@ -66,7 +66,7 @@ final class SiteRateCategories {
     // their running totals over the branches (each node's terms are included at most once)
     private final double[][] unchangedTerms;
     private final double[] unchangedTermLengths;
-    private final long[] unchangedTermModelVersions;
+    private final long[] unchangedTermRatesVersions;
     private final boolean[] unchangedTermIncluded;
     private final double[] unchangedTotals;
     private int unchangedExcludedNode = -1;        // the root when its term was taken out of the totals
@@ -83,7 +83,7 @@ final class SiteRateCategories {
         this.delegate = delegate;
         this.siteRateModel = siteRateModel;
         this.tree = delegate.getTree();
-        this.store = delegate.getMutableMutationStore();
+        this.store = delegate.getMutationStore();
         this.historyModel = delegate.getHistoryModel();
         this.categoryCount = siteRateModel.getCategoryCount();
         this.stateCount = patternList.getDataType().getStateCount();
@@ -114,8 +114,8 @@ final class SiteRateCategories {
         final int nodeCount = tree.getNodeCount();
         this.unchangedTerms = new double[nodeCount][categoryCount * stateCount];
         this.unchangedTermLengths = new double[nodeCount];
-        this.unchangedTermModelVersions = new long[nodeCount];
-        Arrays.fill(unchangedTermModelVersions, -1);
+        this.unchangedTermRatesVersions = new long[nodeCount];
+        Arrays.fill(unchangedTermRatesVersions, -1);
         this.unchangedTermIncluded = new boolean[nodeCount];
         this.unchangedTotals = new double[categoryCount * stateCount];
         Logger.getLogger("dr.evomodel").info("  MAT site rate categories: " + categoryCount +
@@ -187,6 +187,16 @@ final class SiteRateCategories {
     }
 
     /**
+     * Fills terms with the log probabilities that a site in each category and state stays unchanged along a
+     * branch of the given length, indexed by category * stateCount + state.
+     */
+    private void fillUnchangedTerms(double length, double[] terms) {
+        for (int c = 0; c < categoryCount; c++) {
+            historyModel.getUnchangedSiteLogLikelihoods(length, rates[c], terms, c * stateCount);
+        }
+    }
+
+    /**
      * Brings the node's unchanged-site terms (for the branch above it) up to date, and includes them in the
      * totals.
      *
@@ -195,7 +205,7 @@ final class SiteRateCategories {
      */
     void updateUnchangedTerm(int n, double length, long ratesVersion) {
         final double[] terms = unchangedTerms[n];
-        final boolean stale = unchangedTermModelVersions[n] != ratesVersion || unchangedTermLengths[n] != length;
+        final boolean stale = unchangedTermRatesVersions[n] != ratesVersion || unchangedTermLengths[n] != length;
         if (unchangedTermIncluded[n] && !stale) {
             return;
         }
@@ -205,11 +215,9 @@ final class SiteRateCategories {
             }
         }
         if (stale) {
-            for (int c = 0; c < categoryCount; c++) {
-                historyModel.getUnchangedSiteLogLikelihoods(length, rates[c], terms, c * stateCount);
-            }
+            fillUnchangedTerms(length, terms);
             unchangedTermLengths[n] = length;
-            unchangedTermModelVersions[n] = ratesVersion;
+            unchangedTermRatesVersions[n] = ratesVersion;
         }
         for (int i = 0; i < terms.length; i++) {
             unchangedTotals[i] += terms[i];
@@ -306,9 +314,7 @@ final class SiteRateCategories {
             if (n != rootNumber) {
                 double length = delegate.getBranchLength(tree.getNode(n));
                 double[] terms = new double[categoryCount * stateCount];
-                for (int c = 0; c < categoryCount; c++) {
-                    historyModel.getUnchangedSiteLogLikelihoods(length, rates[c], terms, c * stateCount);
-                }
+                fillUnchangedTerms(length, terms);
                 for (int i = 0; i < terms.length; i++) {
                     totals[i] += terms[i];
                 }
@@ -353,9 +359,7 @@ final class SiteRateCategories {
             }
             if (n != rootNumber) {
                 lengths[n] = delegate.getBranchLength(node);
-                for (int c = 0; c < categoryCount; c++) {
-                    historyModel.getUnchangedSiteLogLikelihoods(lengths[n], rates[c], unchanged[n], c * stateCount);
-                }
+                fillUnchangedTerms(lengths[n], unchanged[n]);
             }
         }
 

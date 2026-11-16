@@ -45,15 +45,13 @@ final class BlockSampler {
     private final MATDataLikelihoodDelegate delegate;
     private final DefaultMutationStore store;
     private final BranchHistoryModel historyModel;
-    private final Tree tree;
     private final int stateCount;
     private final double[] patternWeights;
     // patterns grouped by weight, so conditionals can be looked up by [state][weight class]
     private final int[] weightClass;
     private final double[] classWeights;
     private final int defaultWeightClass;   // of the variable patterns, when sites are handled sparsely
-    // the sites' rate classes: their site rate categories (0 with a single category), or none (-1) with
-    // per-site rates
+    // the number of rate classes of the sites (see rateClassOf)
     private final int rateClassCount;
     // the nodes of the current block (see Block), and each one's index in it
     private final boolean[] inBlock;
@@ -62,9 +60,9 @@ final class BlockSampler {
     BlockSampler(MATDataLikelihoodDelegate delegate, int[] weightClass, double[] classWeights,
                  int defaultWeightClass, int rateClassCount) {
         this.delegate = delegate;
-        this.store = delegate.getMutableMutationStore();
+        this.store = delegate.getMutationStore();
         this.historyModel = delegate.getHistoryModel();
-        this.tree = delegate.getTree();
+        final Tree tree = delegate.getTree();
         this.stateCount = delegate.getPatternList().getDataType().getStateCount();
         this.patternWeights = delegate.getPatternWeights();
         this.weightClass = weightClass;

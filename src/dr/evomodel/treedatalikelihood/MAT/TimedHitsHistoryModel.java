@@ -67,13 +67,13 @@ public class TimedHitsHistoryModel extends ExplicitHitsHistoryModel {
         for (int n = 0; n < store.getNodeCount(); n++) {
             BranchMutations mutations = store.getBranchMutations(n);
             if (mutations.getSubstitutionCount() > 0 && !mutations.hasTimes()) {
-                BranchMutations.Builder builder = new BranchMutations.Builder(true);
+                BranchMutations.Builder builder = new BranchMutations.Builder();
                 int start = 0;
                 while (start < mutations.getSubstitutionCount()) {
                     int end = mutations.getSiteEnd(start);
                     for (int i = start; i < end; i++) {
                         builder.addSubstitution(mutations.getPattern(i), mutations.getFromState(i), mutations.getToState(i),
-                                (i - start + 1.0) / (end - start + 1.0));
+                                mutations.getTime(i, start, end));
                     }
                     start = end;
                 }

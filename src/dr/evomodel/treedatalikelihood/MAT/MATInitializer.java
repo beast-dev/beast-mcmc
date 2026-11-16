@@ -93,20 +93,18 @@ public class MATInitializer {
     /**
      * Brings the store up to date with the current topology of the tree, recomputing Fitch sets only
      * on paths from changed nodes to the root and states only where their inputs changed.
-     *
-     * @return the number of nodes whose states changed
      */
-    public int update(DefaultMutationStore store) {
+    public void update(DefaultMutationStore store) {
         MATProfile.count(store.isFitchSetsStale() ? MATProfile.Counter.PARSIMONY_FULL : MATProfile.Counter.PARSIMONY_INCREMENTAL, 1);
         final long profileStart = MATProfile.start();
         try {
-            return updateImpl(store);
+            updateImpl(store);
         } finally {
             MATProfile.stop(MATProfile.Phase.PARSIMONY, profileStart);
         }
     }
 
-    private int updateImpl(DefaultMutationStore store) {
+    private void updateImpl(DefaultMutationStore store) {
         final int nodeCount = tree.getNodeCount();
         // stale Fitch sets (the topology was changed without parsimony) force a full reconstruction
         final boolean full = store.isFitchSetsStale();
@@ -156,22 +154,17 @@ public class MATInitializer {
         }
 
         final boolean[] statesChanged = new boolean[nodeCount];
-        int changedCount = 0;
         for (int i = postOrder.length - 1; i >= 0; i--) {
             int n = postOrder[i];
             int parent = parents[n];
             boolean parentStatesChanged = parent >= 0 && statesChanged[parent];
             if (setsChanged[n] || parentChanged[n] || parentStatesChanged) {
                 statesChanged[n] = updateStates(store, n, parent);
-                if (statesChanged[n]) {
-                    changedCount++;
-                }
             }
             if (parentChanged[n] || parentStatesChanged || statesChanged[n]) {
                 store.updateBranch(n);
             }
         }
-        return changedCount;
     }
 
     /**

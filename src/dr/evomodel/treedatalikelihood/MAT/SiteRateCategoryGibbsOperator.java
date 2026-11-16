@@ -39,8 +39,7 @@ import dr.inference.operators.SimpleMCMCOperator;
  * the site rate model. The categories only change through this operator.
  * <p>
  * Each update draws every site's category and makes the whole likelihood be recomputed, and the categories
- * mix quickly, so a small weight is enough: about 1% of the subtree moves' weight (on small-2, 10% of it
- * took nearly half the run time for no gain).
+ * mix quickly, so a small weight is enough: about 1% of the subtree moves' weight.
  */
 public class SiteRateCategoryGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 

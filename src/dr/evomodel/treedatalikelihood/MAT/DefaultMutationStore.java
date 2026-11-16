@@ -33,6 +33,10 @@ import java.util.Arrays;
 /**
  * A mutable mutation annotated tree with store/restore support.
  *
+ * A mutation annotated tree: the state of every pattern at every node, and the mutations (including
+ * ambiguities) this implies on each branch. Node numbers refer to the tree the store was built for, and
+ * the store records that tree's topology as it was when the states were last made consistent with it.
+ *
  * For each node it holds the states of all patterns and, for reconstruction by parsimony, the
  * Fitch state sets (as bitmasks, 0 meaning ambiguous). The mutations (including ambiguities) on the
  * branch above each node are derived from the states of the node and its parent by {@link #updateBranch}.
@@ -56,7 +60,7 @@ import java.util.Arrays;
  * variable patterns in each (category, state), kept up to date as states and categories change. Both are
  * journaled.
  */
-public final class DefaultMutationStore implements MutationStore {
+public final class DefaultMutationStore {
 
     private final int nodeCount;
     private final int patternCount;
@@ -73,8 +77,8 @@ public final class DefaultMutationStore implements MutationStore {
     private final long[] stateVersions;
     private long lastStateVersion = 0;
     private final double[][] compositions; // null where not yet computed from the states
-    // site rate categories: the category of each pattern (-1 for constant patterns), or null without them
     private int categoryCount = 1;
+    // site rate categories: the category of each pattern (-1 for constant patterns), or null without them
     private byte[] categories;
     private double[][] categoryCompositions; // [node][category * stateCount + state]; null where not computed
     private int[] scratchPatterns;         // work arrays of updateBranch
@@ -86,8 +90,8 @@ public final class DefaultMutationStore implements MutationStore {
 
     // The journal: the first change to a node after commit() keeps what it replaces, so that revert() can
     // put it back. Per node (each with a flag saying whether it is in the journal): the parent, the states
-    // with their version and composition, the Fitch sets and the branch events; then the root, the
-    // categories and the stale flag.
+    // with their version and composition, the Fitch sets, the branch events and the category composition;
+    // then the root, the categories and the stale flag.
     private final IndexSet journaledNodes;   // the nodes with anything in the journal
     private final boolean[] parentDirty;
     private final int[] savedParents;
@@ -148,22 +152,21 @@ public final class DefaultMutationStore implements MutationStore {
         throw new IllegalArgumentException("No root in parent array");
     }
 
-    @Override
     public int getNodeCount() {
         return nodeCount;
     }
 
-    @Override
     public int getPatternCount() {
         return patternCount;
     }
 
-    @Override
+    /**
+     * @return the parent of the node in the topology the store currently describes, -1 for the root
+     */
     public int getParent(int nodeNumber) {
         return parents[nodeNumber];
     }
 
-    @Override
     public int getRoot() {
         return root;
     }
@@ -214,32 +217,17 @@ public final class DefaultMutationStore implements MutationStore {
         }
     }
 
-    @Override
+    /**
+     * @return the state of the pattern at the node, or -1 if it is ambiguous in every tip below the node
+     */
     public int getState(int nodeNumber, int pattern) {
         return states[nodeNumber][pattern];
     }
 
     /**
-     * @return the node's states; callers must not modify the array (use {@link #getWritableStates})
+     * @return the node's states; callers must not modify the array (use {@link #setState})
      */
     public byte[] getStates(int nodeNumber) {
-        return states[nodeNumber];
-    }
-
-    /**
-     * @return the node's states for writing directly (each call counts as a change of the states, and the
-     * node's composition is recomputed in full when next asked for); to change a few states, use
-     * {@link #setState}
-     */
-    public byte[] getWritableStates(int nodeNumber) {
-        journalStates(nodeNumber);
-        stateVersions[nodeNumber] = ++lastStateVersion;
-        compositions[nodeNumber] = null;
-        if (categories != null) {
-            journalCategoryComposition(nodeNumber);
-            categoryCompositions[nodeNumber] = null;
-        }
-        changedNodes.add(nodeNumber);
         return states[nodeNumber];
     }
 
@@ -323,13 +311,6 @@ public final class DefaultMutationStore implements MutationStore {
     }
 
     /**
-     * @return the number of site rate categories (1 without them)
-     */
-    public int getCategoryCount() {
-        return categoryCount;
-    }
-
-    /**
      * @return the site rate category of the pattern (-1 for a constant pattern; 0 without categories)
      */
     public int getCategory(int pattern) {
@@ -344,58 +325,19 @@ public final class DefaultMutationStore implements MutationStore {
     }
 
     /**
-     * Changes the site rate category of a variable pattern, keeping the nodes' category compositions up
-     * to date (in O(nodes)).
-     */
-    public void setCategory(int pattern, int category) {
-        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, categories[pattern] == category ? 0 : 1);
-        final long profileStart = MATProfile.start();
-        try {
-            setCategoryImpl(pattern, category);
-        } finally {
-            MATProfile.stop(MATProfile.Phase.STORE_SET_CATEGORY, profileStart);
-        }
-    }
-
-    private void setCategoryImpl(int pattern, int category) {
-        final int old = categories[pattern];
-        if (old == category) {
-            return;
-        }
-        if (old < 0 || category < 0) {
-            throw new IllegalArgumentException("Constant patterns have no site rate category");
-        }
-        if (savedCategories == null) {
-            savedCategories = categories.clone();
-        }
-        categories[pattern] = (byte) category;
-        final double weight = patternWeights[pattern];
-        for (int n = 0; n < nodeCount; n++) {
-            if (categoryCompositions[n] != null) {
-                int state = states[n][pattern];
-                if (state >= 0) {
-                    journalCategoryComposition(n);
-                    double[] categoryComposition = categoryCompositions[n];
-                    categoryComposition[old * stateCount + state] -= weight;
-                    categoryComposition[category * stateCount + state] += weight;
-                }
-            }
-        }
-    }
-
-    /**
      * Replaces the site rate categories of all patterns (journaled), with the nodes' category compositions
-     * for them, which the caller has computed (null entries are computed when next asked for). For changing
-     * many categories at once: {@link #setCategory} updates every node for each pattern.
+     * for them, which the caller has computed (null entries are computed when next asked for).
      */
     public void replaceCategories(byte[] patternCategories, double[][] nodeCategoryCompositions) {
-        int changes = 0;
-        for (int p = 0; p < patternCount; p++) {
-            if (patternCategories[p] != categories[p]) {
-                changes++;
+        if (MATProfile.ENABLED) {
+            int changes = 0;
+            for (int p = 0; p < patternCount; p++) {
+                if (patternCategories[p] != categories[p]) {
+                    changes++;
+                }
             }
+            MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, changes);
         }
-        MATProfile.count(MATProfile.Counter.CATEGORY_CHANGES, changes);
         if (savedCategories == null) {
             savedCategories = categories;
         }
@@ -419,13 +361,7 @@ public final class DefaultMutationStore implements MutationStore {
                 // computed from states or categories changed since the commit: revert must discard it
                 journalCategoryComposition(nodeNumber);
             }
-            categoryComposition = new double[categoryCount * stateCount];
-            byte[] nodeStates = states[nodeNumber];
-            for (int p = 0; p < patternCount; p++) {
-                if (nodeStates[p] >= 0 && categories[p] >= 0) {
-                    categoryComposition[categories[p] * stateCount + nodeStates[p]] += patternWeights[p];
-                }
-            }
+            categoryComposition = countCategoryComposition(nodeNumber);
             categoryCompositions[nodeNumber] = categoryComposition;
         }
         return categoryComposition;
@@ -518,12 +454,16 @@ public final class DefaultMutationStore implements MutationStore {
         return fitchSets[nodeNumber];
     }
 
-    @Override
+    /**
+     * @return the substitutions and ambiguities on the branch above the node
+     */
     public BranchMutations getBranchMutations(int nodeNumber) {
         return mutations[nodeNumber];
     }
 
-    @Override
+    /**
+     * @return the total number of substitutions (excluding ambiguities)
+     */
     public int getMutationCount() {
         int count = 0;
         for (BranchMutations m : mutations) {
@@ -532,7 +472,9 @@ public final class DefaultMutationStore implements MutationStore {
         return count;
     }
 
-    @Override
+    /**
+     * @return the total number of ambiguities
+     */
     public int getAmbiguityCount() {
         int count = 0;
         for (BranchMutations m : mutations) {
@@ -632,7 +574,7 @@ public final class DefaultMutationStore implements MutationStore {
             from[substitutionCount + i] = scratchFrom[patternCount - 1 - i];
             to[substitutionCount + i] = -1;
         }
-        return new BranchMutations(patterns, from, to, substitutionCount);
+        return new BranchMutations(patterns, from, to, substitutionCount, null);
     }
 
     /**
@@ -836,6 +778,6 @@ public final class DefaultMutationStore implements MutationStore {
         if (fitchSetsStaleChanged) {
             fitchSetsStale = savedFitchSetsStale;
         }
-        commit();
+        commitImpl();
     }
 }

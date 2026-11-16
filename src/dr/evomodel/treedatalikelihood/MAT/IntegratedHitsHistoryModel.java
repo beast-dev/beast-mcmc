@@ -26,6 +26,10 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
+import dr.evomodel.substmodel.BaseSubstitutionModel;
+import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.SubstitutionModel;
+
 /**
  * Any number of hits per site per branch, summed analytically: a site going from state a to state b
  * along a branch contributes log P_ab(nu L), the transition probability of the substitution model.
@@ -50,6 +54,12 @@ public class IntegratedHitsHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
+    public void setRates(SubstitutionModel substitutionModel, double[] infinitesimalMatrix, double[] exitRates) {
+        super.setRates(substitutionModel, infinitesimalMatrix, exitRates);
+        setEigenDecomposition(substitutionModel);
+    }
+
+    @Override
     public void checkCompatibility(MATDataLikelihoodDelegate delegate) {
         if (delegate.hasSiteRates()) {
             throw new IllegalArgumentException("The " + NAME + " branch history model does not support per-site rates");
@@ -57,23 +67,8 @@ public class IntegratedHitsHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
-    public boolean hasExplicitHistories() {
-        return false;
-    }
-
-    @Override
     public boolean needsComposition() {
         return true;
-    }
-
-    @Override
-    public boolean needsExitRate() {
-        return false;
-    }
-
-    @Override
-    public void getLogTransitionDensities(double length, double nu, double[] out) {
-        System.arraycopy(getLogTransitionProbabilities(nu * length), 0, out, 0, stateCount * stateCount);
     }
 
     @Override
@@ -100,9 +95,8 @@ public class IntegratedHitsHistoryModel extends AbstractBranchHistoryModel {
 
     @Override
     public double getCategoryBranchLogLikelihood(BranchMutations mutations, double length, double exitRateSum,
-                                                 double[] categoryComposition, double[] categoryRates,
-                                                 double[] unchangedTerms, double[] patternWeights,
-                                                 double[] patternRates) {
+                                                 double[] categoryComposition, double[] unchangedTerms,
+                                                 double[] patternWeights, double[] patternRates) {
         // the unchanged sites: the diagonals log P_aa(r_c t)
         double term = 0.0;
         for (int i = 0; i < categoryComposition.length; i++) {
@@ -152,17 +146,76 @@ public class IntegratedHitsHistoryModel extends AbstractBranchHistoryModel {
         return getLogTransitionProbabilities(nu * length)[mutations.getFromState(start) * stateCount + mutations.getToState(end - 1)];
     }
 
-    @Override
-    public double getHistoryLogProposal(BranchMutations mutations, int start, int end, int fromState, int toState,
-                                        double length, double nu) {
-        return 0.0;
+    // ---------------------------------------------------------------------------------------------
+    // Transition probabilities from the eigen decomposition (without the cache), for the site rate
+    // categories' terms
+    // ---------------------------------------------------------------------------------------------
+
+    // the rate matrix's eigen decomposition, when the substitution model computes its transition
+    // probabilities from it as BaseSubstitutionModel does (otherwise null)
+    private double[] eigenValues;
+    private double[] eigenVectors;
+    private double[] inverseEigenVectors;
+    private double[] eigenExp;
+
+    private void setEigenDecomposition(SubstitutionModel substitutionModel) {
+        eigenValues = null;
+        if (!(substitutionModel instanceof BaseSubstitutionModel)) {
+            return;
+        }
+        try {
+            if (substitutionModel.getClass().getMethod("getTransitionProbabilities", double.class, double[].class)
+                    .getDeclaringClass() != BaseSubstitutionModel.class) {
+                return;
+            }
+        } catch (NoSuchMethodException e) {
+            return;
+        }
+        EigenDecomposition eigen = substitutionModel.getEigenDecomposition();
+        if (eigen == null || eigen.getEigenValues().length != stateCount ||
+                eigen.getEigenVectors().length != stateCount * stateCount) {
+            return;
+        }
+        eigenValues = eigen.getEigenValues().clone();
+        eigenVectors = eigen.getEigenVectors().clone();
+        inverseEigenVectors = eigen.getInverseEigenVectors().clone();
+        eigenExp = new double[stateCount];
     }
 
-    @Override
-    public double sampleHistory(int pattern, int fromState, int toState, double length, double nu, BranchMutations.Builder builder) {
-        if (fromState != toState) {
-            builder.addSubstitution(pattern, fromState, toState, 0.0);
+    /**
+     * @return true if transition probabilities can be computed directly ({@link #getLogTransitionDiagonal},
+     * {@link #getLogTransitionProbability})
+     */
+    private boolean hasDirectTransitionProbabilities() {
+        return eigenValues != null;
+    }
+
+    /**
+     * Sets out[offset + a] to log P_aa(distance) for every state a: the same values as the diagonal of
+     * {@link #getLogTransitionProbabilities} (computed with the same arithmetic as BaseSubstitutionModel),
+     * for S exponentials and logarithms rather than a whole matrix.
+     */
+    private void getLogTransitionDiagonal(double distance, double[] out, int offset) {
+        for (int i = 0; i < stateCount; i++) {
+            eigenExp[i] = Math.exp(distance * eigenValues[i]);
         }
-        return 0.0;
+        for (int a = 0; a < stateCount; a++) {
+            double p = 0.0;
+            for (int k = 0; k < stateCount; k++) {
+                p += eigenVectors[a * stateCount + k] * (inverseEigenVectors[k * stateCount + a] * eigenExp[k]);
+            }
+            out[offset + a] = Math.log(Math.abs(p));
+        }
+    }
+
+    /**
+     * @return log P_ab(distance), as {@link #getLogTransitionProbabilities} gives it
+     */
+    private double getLogTransitionProbability(double distance, int a, int b) {
+        double p = 0.0;
+        for (int k = 0; k < stateCount; k++) {
+            p += eigenVectors[a * stateCount + k] * (inverseEigenVectors[k * stateCount + b] * Math.exp(distance * eigenValues[k]));
+        }
+        return Math.log(Math.abs(p));
     }
 }

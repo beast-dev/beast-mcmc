@@ -35,8 +35,9 @@ import java.util.Arrays;
  *
  * With a single-hit branch history model there is at most one substitution per site. Models with
  * explicit multiple hits store a site's hits contiguously, in order along the branch (from the parent
- * end), so that the hits of a site form a path from the parent's state to the child's. Models with
- * timed hits also store each hit's position as a fraction of the branch length from the parent end.
+ * end), so that the hits of a site form a path from the parent's state to the child's, each with its
+ * position as a fraction of the branch length from the parent end (which only the timed hits model
+ * scores). Events built by parsimony have no positions.
  */
 public final class BranchMutations {
 
@@ -47,10 +48,6 @@ public final class BranchMutations {
     private final byte[] toStates;
     private final int substitutionCount;
     private final double[] times;
-
-    BranchMutations(int[] patterns, byte[] fromStates, byte[] toStates, int substitutionCount) {
-        this(patterns, fromStates, toStates, substitutionCount, null);
-    }
 
     BranchMutations(int[] patterns, byte[] fromStates, byte[] toStates, int substitutionCount, double[] times) {
         this.patterns = patterns;
@@ -112,6 +109,14 @@ public final class BranchMutations {
     }
 
     /**
+     * @return the position of substitution i, one of the hits [siteStart, siteEnd) of a site: where there are
+     * no positions, the site's hits are spaced evenly along the branch
+     */
+    public double getTime(int i, int siteStart, int siteEnd) {
+        return times != null ? times[i] : (i - siteStart + 1.0) / (siteEnd - siteStart + 1.0);
+    }
+
+    /**
      * @return the index after the last substitution at the same site as substitution i (the hits of a
      * site are contiguous)
      */
@@ -124,36 +129,18 @@ public final class BranchMutations {
     }
 
     /**
-     * @return the events as Mutation objects (a convenience; not for use in tight loops)
-     */
-    public Mutation[] toMutations(int nodeNumber) {
-        Mutation[] mutations = new Mutation[patterns.length];
-        for (int i = 0; i < patterns.length; i++) {
-            mutations[i] = isAmbiguity(i) ?
-                    Mutation.ambiguity(nodeNumber, patterns[i], fromStates[i]) :
-                    new Mutation(nodeNumber, patterns[i], fromStates[i], toStates[i]);
-        }
-        return mutations;
-    }
-
-    /**
-     * Accumulates a branch's events: the hits of each site must be added together, in path order.
+     * Accumulates a branch's events, with the positions of its substitutions: the hits of each site must be
+     * added together, in path order.
      */
     public static final class Builder {
-        private final boolean timed;
         private int[] subPatterns = new int[16];
         private byte[] subFrom = new byte[16];
         private byte[] subTo = new byte[16];
-        private double[] subTimes;
+        private double[] subTimes = new double[16];
         private int subCount = 0;
         private int[] ambPatterns = new int[16];
         private byte[] ambFrom = new byte[16];
         private int ambCount = 0;
-
-        public Builder(boolean timed) {
-            this.timed = timed;
-            this.subTimes = timed ? new double[16] : null;
-        }
 
         public void addSubstitution(int pattern, int from, int to, double time) {
             if (subCount == subPatterns.length) {
@@ -161,16 +148,12 @@ public final class BranchMutations {
                 subPatterns = Arrays.copyOf(subPatterns, n);
                 subFrom = Arrays.copyOf(subFrom, n);
                 subTo = Arrays.copyOf(subTo, n);
-                if (timed) {
-                    subTimes = Arrays.copyOf(subTimes, n);
-                }
+                subTimes = Arrays.copyOf(subTimes, n);
             }
             subPatterns[subCount] = pattern;
             subFrom[subCount] = (byte) from;
             subTo[subCount] = (byte) to;
-            if (timed) {
-                subTimes[subCount] = time;
-            }
+            subTimes[subCount] = time;
             subCount++;
         }
 
@@ -200,7 +183,7 @@ public final class BranchMutations {
             System.arraycopy(ambPatterns, 0, patterns, subCount, ambCount);
             System.arraycopy(ambFrom, 0, from, subCount, ambCount);
             Arrays.fill(to, subCount, size, (byte) -1);
-            double[] times = timed ? Arrays.copyOf(subTimes, size) : null;
+            double[] times = Arrays.copyOf(subTimes, size);
             return new BranchMutations(patterns, from, to, subCount, times);
         }
 

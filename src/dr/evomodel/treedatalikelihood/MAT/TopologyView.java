@@ -42,8 +42,6 @@ interface TopologyView {
 
     boolean isExternal(int node);
 
-    int getRoot();
-
     /** @return the length of the branch above the node in expected substitutions (0 for the root) */
     double getBranchLength(int node);
 }

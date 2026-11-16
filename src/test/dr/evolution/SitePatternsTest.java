@@ -167,6 +167,72 @@ public class SitePatternsTest extends TraceCorrelationAssert {
         return pattern[0];
     }
 
+    public void testUnknownTaxaMatchAllUnknownSequences() {
+        // taxa added with withUnknownTaxa are compressed exactly as if their sequences, all unknown, were in the alignment
+        String[] taxa = PRIMATES_TAXON_SEQUENCE[0];
+        String[] sequences = PRIMATES_TAXON_SEQUENCE[1];
+        int[][] ghostSets = {{1}, {0, 4}, {2, 3, 5}, {1, 2, 3, 4, 5}};
+        int[][] ranges = {{0, -1, 1}, {10, 400, 3}};
+        for (int[] ghosts : ghostSets) {
+            java.util.Set<Integer> ghostSet = new java.util.HashSet<>();
+            for (int g : ghosts) {
+                ghostSet.add(g);
+            }
+            java.util.List<String> realTaxa = new java.util.ArrayList<>();
+            java.util.List<String> realSequences = new java.util.ArrayList<>();
+            String[] allNSequences = sequences.clone();
+            for (int t = 0; t < taxa.length; t++) {
+                if (ghostSet.contains(t)) {
+                    allNSequences[t] = sequences[t].replaceAll(".", "?"); // the unknown state (N is equivalent)
+                } else {
+                    realTaxa.add(taxa[t]);
+                    realSequences.add(sequences[t]);
+                }
+            }
+            createAlignment(new Object[][]{taxa, allNSequences}, Nucleotides.INSTANCE);
+            dr.evolution.alignment.SimpleAlignment allN = alignment;
+            createAlignment(new Object[][]{realTaxa.toArray(new String[0]), realSequences.toArray(new String[0])},
+                    Nucleotides.INSTANCE);
+            dr.evolution.alignment.SimpleAlignment real = alignment;
+            java.util.List<dr.evolution.util.Taxon> ghostTaxa = new java.util.ArrayList<>();
+            for (int g : ghosts) {
+                ghostTaxa.add(allN.getTaxon(g));
+            }
+
+            for (SitePatterns.CompressionType compression : SitePatterns.CompressionType.values()) {
+                for (int[] range : ranges) {
+                    for (boolean strip : new boolean[]{true, false}) {
+                        String label = compression + " ghosts " + java.util.Arrays.toString(ghosts) + " sites " +
+                                java.util.Arrays.toString(range) + " strip " + strip;
+                        SitePatterns expected = new SitePatterns(allN, null, range[0], range[1], range[2], strip,
+                                null, compression, 0.6);
+                        SitePatterns withGhosts = new SitePatterns(real, null, range[0], range[1], range[2], strip,
+                                null, compression, 0.6).withUnknownTaxa(ghostTaxa);
+                        assertSamePatterns(label, expected, withGhosts);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void assertSamePatterns(String label, SitePatterns expected, SitePatterns actual) {
+        assertEquals(label + ": taxa", expected.getTaxonCount(), actual.getTaxonCount());
+        assertEquals(label + ": patterns", expected.getPatternCount(), actual.getPatternCount());
+        int[] taxonMap = new int[expected.getTaxonCount()];
+        for (int t = 0; t < taxonMap.length; t++) {
+            taxonMap[t] = actual.getTaxonIndex(expected.getTaxonId(t));
+            assertTrue(label + ": taxon " + expected.getTaxonId(t), taxonMap[t] >= 0);
+        }
+        for (int p = 0; p < expected.getPatternCount(); p++) {
+            assertEquals(label + ": weight of pattern " + p, expected.getPatternWeight(p), actual.getPatternWeight(p), 0.0);
+            int[] e = expected.getPattern(p);
+            int[] a = actual.getPattern(p);
+            for (int t = 0; t < e.length; t++) {
+                assertEquals(label + ": pattern " + p + " taxon " + t, e[t], a[taxonMap[t]]);
+            }
+        }
+    }
+
     public void testCodonSitePatterns() {
         SitePatterns patterns = new SitePatterns(alignment, null, 2, -1, 3);
         System.out.println("2nd position unique site patterns = " + patterns.getPatternCount());

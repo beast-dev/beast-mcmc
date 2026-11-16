@@ -44,13 +44,12 @@ import dr.evomodel.operators.SubtreeLeapOperator;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.MAT.BranchMutations;
 import dr.evomodel.treedatalikelihood.MAT.DefaultMutationStore;
 import dr.evomodel.treedatalikelihood.MAT.IntegratedHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.MAT.Mutation;
 import dr.evomodel.treedatalikelihood.MAT.MutationHistoryGibbsOperator;
 import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
-import dr.evomodel.treedatalikelihood.MAT.MutationStore;
 import dr.evomodel.treedatalikelihood.MAT.SiteRateCategoryGibbsOperator;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -247,7 +246,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      */
     private void checkResamplerAgainstEnumeration(String moved, String destination, boolean expectNoEventSites) {
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate);
-        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
 
         NodeRef node = findTip(moved);
         NodeRef parent = treeModel.getParent(node);
@@ -299,7 +298,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                     code /= 4;
                 }
                 for (int i : free) {
-                    store.getWritableStates(block[i])[p] = (byte) assignment[i];
+                    store.setState(block[i], p, assignment[i]);
                 }
                 updateBranches(store, block);
                 likelihood.makeDirty();
@@ -308,7 +307,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 logTotal = logAdd(logTotal, siteLogL);
             }
             for (int i : free) {
-                store.getWritableStates(block[i])[p] = originalStates[i][p];
+                store.setState(block[i], p, originalStates[i][p]);
             }
             enumeratedLogProbability += original[p] - logTotal;
         }
@@ -895,7 +894,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 null, branchRates, null);
         likelihood = new TreeDataLikelihood(delegate, treeModel, branchRates);
         MutationHistoryResampler resampler = new MutationHistoryResampler(delegate);
-        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
 
         NodeRef x = findTip("chimp");
         NodeRef destination = findTip("human");
@@ -969,7 +968,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                     }
                     int state = code % 4;
                     code /= 4;
-                    store.getWritableStates(block[i])[p] = (byte) state;
+                    store.setState(block[i], p, state);
                     unchanged &= state == uniformState[p];
                 }
                 double logQ = resampler.sampleBlock(block, false);
@@ -980,7 +979,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             }
             for (int i = 0; i < block.length; i++) {
                 if (free[p][i]) {
-                    store.getWritableStates(block[i])[p] = (byte) uniformState[p];
+                    store.setState(block[i], p, uniformState[p]);
                 }
             }
             probabilityChanged[p] = -Math.expm1(logUnchanged - logTotal);
@@ -1624,7 +1623,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
 
             final int repeats = 2000;
             final int[] observed = new int[sites.length * categoryCount];
-            DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+            DefaultMutationStore store = delegate.getMutationStore();
             for (int r = 0; r < repeats; r++) {
                 likelihood.storeModelState();
                 categories.doOperation();
@@ -1651,7 +1650,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     private byte[] currentCategories() {
-        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         byte[] categories = new byte[patterns.getPatternCount()];
         for (int p = 0; p < categories.length; p++) {
             categories[p] = (byte) store.getCategory(p);
@@ -1664,7 +1663,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * category's rate (plus the log of the category's proportion), each constant site summed over the categories
      */
     private double directCategoryLogLikelihood(SiteRateModel siteRateModel) {
-        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         double[] pi = hky.getFrequencyModel().getFrequencies();
         int root = treeModel.getRoot().getNumber();
         double logL = 0.0;
@@ -1698,7 +1697,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * hits log P(r t)), including the root frequency
      */
     private double directSiteLogLikelihood(int site, double rate) {
-        MutationStore store = delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         double[] q = new double[16];
         hky.getInfinitesimalMatrix(q);
         double[] pi = hky.getFrequencyModel().getFrequencies();
@@ -1759,7 +1758,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * @return [node][site]: whether a tip below the node (in the topology given by parents) has data
      */
     private boolean[][] presence(int[] parents) {
-        MutationStore store = delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         boolean[][] present = new boolean[parents.length][patterns.getPatternCount()];
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             int tip = treeModel.getExternalNode(i).getNumber();
@@ -1775,7 +1774,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     private int[][] snapshotStates() {
-        MutationStore store = delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         int[][] states = new int[treeModel.getNodeCount()][patterns.getPatternCount()];
         for (int n = 0; n < states.length; n++) {
             for (int site = 0; site < states[n].length; site++) {
@@ -1880,7 +1879,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
             double length = (treeModel.getNodeHeight(treeModel.getNode(parents[n])) -
                     treeModel.getNodeHeight(treeModel.getNode(n))) * branchRates.getBranchRate(treeModel, treeModel.getNode(n));
             double nu = categoryModel == null ? 1.0 : categoryModel.getRateForCategory(
-                    ((DefaultMutationStore) delegate.getMutationStore()).getCategory(site));
+                    delegate.getMutationStore().getCategory(site));
             if (integratedHits) {
                 double[] transition = new double[16];
                 hky.getTransitionProbabilities(nu * length, transition);
@@ -1990,13 +1989,12 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     private double weightedMutationCount() {
-        MutationStore store = delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         double count = 0;
         for (int n = 0; n < store.getNodeCount(); n++) {
-            for (Mutation m : store.getMutationsForNode(n)) {
-                if (!m.isAmbiguity()) {
-                    count += patterns.getPatternWeight(m.getPattern());
-                }
+            BranchMutations events = store.getBranchMutations(n);
+            for (int k = 0; k < events.getSubstitutionCount(); k++) {
+                count += patterns.getPatternWeight(events.getPattern(k));
             }
         }
         return count;
@@ -2021,14 +2019,14 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
     }
 
     private String describeStates() {
-        MutationStore store = delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         StringBuilder sb = new StringBuilder(treeModel.getNewick());
         for (int n = 0; n < store.getNodeCount(); n++) {
             sb.append('|').append(store.getParent(n)).append(':');
             for (int p = 0; p < store.getPatternCount(); p++) {
                 sb.append(store.getState(n, p));
             }
-            sb.append(':').append(store.getMutationsForNode(n).length);
+            sb.append(':').append(store.getBranchMutations(n).size());
         }
         return sb.toString();
     }
@@ -2037,7 +2035,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * The store's node summaries must equal those computed from the states.
      */
     private void assertCompositionsMatchStates() {
-        DefaultMutationStore store = (DefaultMutationStore) delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         for (int n = 0; n < treeModel.getNodeCount(); n++) {
             double[] expected = new double[4];
             for (int p = 0; p < patterns.getPatternCount(); p++) {
@@ -2053,13 +2051,13 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
         }
     }
 
-    private void assertSameStates(MutationStore expected, MutationStore actual) {
+    private void assertSameStates(DefaultMutationStore expected, DefaultMutationStore actual) {
         for (int n = 0; n < expected.getNodeCount(); n++) {
             assertEquals(expected.getParent(n), actual.getParent(n));
             for (int p = 0; p < expected.getPatternCount(); p++) {
                 assertEquals("node " + n + " pattern " + p, expected.getState(n, p), actual.getState(n, p));
             }
-            assertEquals(expected.getMutationsForNode(n).length, actual.getMutationsForNode(n).length);
+            assertEquals(expected.getBranchMutations(n).size(), actual.getBranchMutations(n).size());
         }
     }
 
@@ -2084,7 +2082,7 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
      * are consistent with its topology, its branch lists and the data.
      */
     private double directLogLikelihood() {
-        MutationStore store = delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         int nodeCount = treeModel.getNodeCount();
         int patternCount = patterns.getPatternCount();
 
@@ -2141,15 +2139,9 @@ public class MATDataLikelihoodDelegateTest extends TraceCorrelationAssert {
                 }
                 logL += patterns.getPatternWeight(p) * siteLogL;
             }
-            int storedMutationCount = 0;
-            for (Mutation m : store.getMutationsForNode(n)) {
-                if (!m.isAmbiguity()) {
-                    storedMutationCount++;
-                }
-            }
-            assertEquals("mutation list of node " + n, mutationCount, storedMutationCount);
             // the events of a branch are in pattern order (substitutions, then ambiguities)
-            dr.evomodel.treedatalikelihood.MAT.BranchMutations events = store.getBranchMutations(n);
+            BranchMutations events = store.getBranchMutations(n);
+            assertEquals("mutation list of node " + n, mutationCount, events.getSubstitutionCount());
             for (int k = 1; k < events.size(); k++) {
                 if (k != events.getSubstitutionCount()) {
                     assertTrue("events of node " + n + " out of pattern order", events.getPattern(k - 1) <= events.getPattern(k));

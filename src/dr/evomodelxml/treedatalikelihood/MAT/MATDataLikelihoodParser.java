@@ -27,12 +27,15 @@
 package dr.evomodelxml.treedatalikelihood.MAT;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.SitePatterns;
+import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.BranchHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.ExplicitHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.IntegratedHitsHistoryModel;
@@ -40,8 +43,13 @@ import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MAT.SingleHitHistoryModel;
 import dr.evomodel.treedatalikelihood.MAT.TimedHitsHistoryModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * XML parser for a TreeDataLikelihood using the mutation annotated tree delegate.
@@ -85,6 +93,26 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
                     TimedHitsHistoryModel.NAME + "\" with the per-site rate parameter");
         }
 
+        // taxa of the tree that are not in the patterns are ghosts: they have no data. They are given sequences
+        // that are entirely unknown, and the patterns are compressed again as if those had been in the alignment.
+        List<String> ghosts = TreeDataLikelihoodParser.findGhostTaxa(treeModel, patternList);
+        if (!ghosts.isEmpty()) {
+            if (!(patternList instanceof SitePatterns) || !((SitePatterns) patternList).canAddUnknownTaxa()) {
+                throw new XMLParseException("The tree, " + treeModel.getId() + ", has taxa that are not in the " +
+                        "patterns, " + patternList.getId() + " (e.g. " + ghosts.get(0) + "): in " + xo.getId() +
+                        " this needs patterns made directly from an alignment");
+            }
+            TreeDataLikelihoodParser.logGhostTaxa(Logger.getLogger("dr.evomodel"), patternList, ghosts,
+                    treeModel.getExternalNodeCount());
+            List<Taxon> ghostTaxa = new ArrayList<>();
+            for (String id : ghosts) {
+                ghostTaxa.add(treeModel.getTaxon(treeModel.getTaxonIndex(id)));
+            }
+            patternList = ((SitePatterns) patternList).withUnknownTaxa(ghostTaxa);
+            Logger.getLogger("dr.evomodel").info("  they are given sequences that are entirely unknown: " +
+                    patternList.getPatternCount() + " patterns with them");
+        }
+
         MATDataLikelihoodDelegate delegate;
         try {
             BranchHistoryModel historyModel = BranchHistoryModel.create(historyName,
@@ -96,6 +124,19 @@ public class MATDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         return new TreeDataLikelihood(delegate, treeModel, delegate.getBranchRateModel());
+    }
+
+    /**
+     * @return the MAT delegate of the tree data likelihood that is a child of the element
+     */
+    static MATDataLikelihoodDelegate getDelegate(XMLObject xo) throws XMLParseException {
+        TreeDataLikelihood likelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
+        DataLikelihoodDelegate delegate = likelihood.getDataLikelihoodDelegate();
+        if (!(delegate instanceof MATDataLikelihoodDelegate)) {
+            throw new XMLParseException("Element " + xo.getId() + " requires a " + MAT_DATA_LIKELIHOOD + " but " +
+                    likelihood.getId() + " is not one");
+        }
+        return (MATDataLikelihoodDelegate) delegate;
     }
 
     @Override

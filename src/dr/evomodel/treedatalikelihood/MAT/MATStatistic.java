@@ -29,8 +29,7 @@ package dr.evomodel.treedatalikelihood.MAT;
 import dr.inference.model.Statistic;
 
 /**
- * Logs the number of mutations and ambiguities in the current MAT, counted per site (i.e. weighted
- * by pattern weight).
+ * Logs the number of mutations and ambiguities in the current MAT.
  */
 public class MATStatistic extends Statistic.Abstract {
 
@@ -55,17 +54,8 @@ public class MATStatistic extends Statistic.Abstract {
 
     @Override
     public double getStatisticValue(int dim) {
-        MutationStore store = delegate.getMutationStore();
-        double[] weights = delegate.getPatternWeights();
-        double count = 0.0;
-        for (int n = 0; n < store.getNodeCount(); n++) {
-            BranchMutations mutations = store.getBranchMutations(n);
-            for (int k = 0; k < mutations.size(); k++) {
-                if (mutations.isAmbiguity(k) == (dim == 1)) {
-                    count += weights[mutations.getPattern(k)];
-                }
-            }
-        }
-        return count;
+        // (events are only at variable patterns, each of which is one site)
+        DefaultMutationStore store = delegate.getMutationStore();
+        return dim == 0 ? store.getMutationCount() : store.getAmbiguityCount();
     }
 }

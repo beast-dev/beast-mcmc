@@ -83,23 +83,17 @@ public interface BranchHistoryModel {
 
     /**
      * @return true if within-branch histories (paths of hits) are part of the sampled state, so that the
-     * resampler must draw them along with the ancestral states
+     * resampler must draw them along with the ancestral states ({@link #sampleHistory}) and score them
+     * ({@link #getHistoryLogProposal})
      */
     boolean hasExplicitHistories();
 
     /**
      * @return true if branch terms need the state composition of each node (the summed weights of the
-     * sites in each state)
+     * sites in each state) rather than its exit rate (lambda: the sum of w_p nu_p q(state of p) over its
+     * sites)
      */
     boolean needsComposition();
-
-    /**
-     * @return true if branch terms need the exit rate of each node (lambda: the sum of w_p nu_p q(state of
-     * p) over its sites)
-     */
-    default boolean needsExitRate() {
-        return true;
-    }
 
     /**
      * The log density of going from state a to state b along a branch, summed over any part of the
@@ -110,7 +104,8 @@ public interface BranchHistoryModel {
     void getLogTransitionDensities(double length, double nu, double[] out);
 
     /**
-     * @param exitRateSum   lambda: the sum of w_p nu_p q(state of p) over the sites present at the node
+     * @param exitRateSum   lambda: the sum of w_p nu_p q(state of p) over the sites present at the node (unless
+     *                      {@link #needsComposition()})
      * @param composition   the summed weights of the sites present at the node in each state (only if
      *                      {@link #needsComposition()})
      * @return the log density of the histories of all sites present at the node on the branch above it
@@ -126,14 +121,12 @@ public interface BranchHistoryModel {
      * @param categoryComposition the summed weights of the variable sites present at the node in each
      *                            category and state, [category * stateCount + state] (only if
      *                            {@link #needsComposition()})
-     * @param categoryRates       the rate of each category
      * @param unchangedTerms      {@link #getUnchangedSiteLogLikelihoods} for each category, [category * stateCount + state]
      * @param patternRates        the rate of each pattern's category
      */
     default double getCategoryBranchLogLikelihood(BranchMutations mutations, double length, double exitRateSum,
-                                                  double[] categoryComposition, double[] categoryRates,
-                                                  double[] unchangedTerms, double[] patternWeights,
-                                                  double[] patternRates) {
+                                                  double[] categoryComposition, double[] unchangedTerms,
+                                                  double[] patternWeights, double[] patternRates) {
         if (needsComposition()) {
             throw new UnsupportedOperationException("The " + getName() + " branch history model does not support " +
                     "site rate categories");
@@ -150,16 +143,7 @@ public interface BranchHistoryModel {
     /**
      * Sets out[offset + a] to {@link #getUnchangedSiteLogLikelihood} for every state a.
      */
-    default void getUnchangedSiteLogLikelihoods(double length, double nu, double[] out, int offset) {
-        for (int a = 0; a < getStateCount(); a++) {
-            out[offset + a] = getUnchangedSiteLogLikelihood(a, length, nu);
-        }
-    }
-
-    /**
-     * @return the number of states
-     */
-    int getStateCount();
+    void getUnchangedSiteLogLikelihoods(double length, double nu, double[] out, int offset);
 
     /**
      * @return the log density of the history of a site given by its substitutions [start, end) on a branch
@@ -168,14 +152,14 @@ public interface BranchHistoryModel {
 
     /**
      * @return the log probability of a site's history on a branch given its end states (start == end
-     * for no substitutions); 0 for models without explicit histories
+     * for no substitutions)
      */
     double getHistoryLogProposal(BranchMutations mutations, int start, int end, int fromState, int toState,
                                  double length, double nu);
 
     /**
      * Draws a history for a site on a branch from fromState to toState, adding its substitutions to the
-     * builder (models without explicit histories add the single substitution if the states differ).
+     * builder.
      *
      * @return the log probability of the drawn history given its end states
      */

@@ -31,6 +31,7 @@ import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.Pair;
@@ -138,6 +139,33 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     private Map<PatternKey, Integer> patternIndices = null;
 
     /**
+     * How these patterns were made from an alignment, so that they can be made again with more taxa
+     * (see withUnknownTaxa). Null if they were not made by the alignment constructor.
+     */
+    private Construction construction = null;
+
+    private static final class Construction {
+        final Alignment alignment; // with only the selected taxa
+        final int from, to, every;
+        final boolean strip;
+        final int[] constantSiteCounts;
+        final CompressionType compression;
+        final double ambiguityThreshold;
+
+        Construction(Alignment alignment, int from, int to, int every, boolean strip, int[] constantSiteCounts,
+                     CompressionType compression, double ambiguityThreshold) {
+            this.alignment = alignment;
+            this.from = from;
+            this.to = to;
+            this.every = every;
+            this.strip = strip;
+            this.constantSiteCounts = constantSiteCounts;
+            this.compression = compression;
+            this.ambiguityThreshold = ambiguityThreshold;
+        }
+    }
+
+    /**
      * Constructor
      */
     public SitePatterns(Alignment alignment) {
@@ -212,7 +240,56 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             }
         }
 
+        construction = new Construction(alignment, from, to, every, strip, constantSiteCounts, compression,
+                ambiguityThreshold);
+
         addPatterns(alignment, from, to, every, strip, constantSiteCounts, compression, ambiguityThreshold);
+    }
+
+    /**
+     * Whether withUnknownTaxa can make these patterns again with more taxa.
+     */
+    public boolean canAddUnknownTaxa() {
+        return construction != null && !uncertainSites;
+    }
+
+    /**
+     * These patterns made again with the given extra taxa, each with a sequence that is entirely unknown, using
+     * the same sites and compression: exactly the patterns had those sequences been in the alignment.
+     */
+    public SitePatterns withUnknownTaxa(List<Taxon> extraTaxa) {
+        if (!canAddUnknownTaxa()) {
+            throw new UnsupportedOperationException("These site patterns were not made from an alignment of " +
+                    "certain sites, so taxa cannot be added to them");
+        }
+        final Alignment alignment = construction.alignment;
+        final DataType dataType = alignment.getDataType();
+
+        SimpleAlignment extended = new SimpleAlignment();
+        extended.setDataType(dataType);
+        for (int i = 0; i < alignment.getSequenceCount(); i++) {
+            extended.addSequence(alignment.getSequence(i));
+        }
+
+        final String unknownCode = dataType.getCode(dataType.getUnknownState());
+        StringBuilder unknown = new StringBuilder();
+        for (int i = 0; i < alignment.getSiteCount(); i++) {
+            unknown.append(unknownCode);
+        }
+        for (Taxon taxon : extraTaxa) {
+            if (alignment.getTaxonIndex(taxon.getId()) >= 0) {
+                throw new IllegalArgumentException("Taxon " + taxon.getId() + " is already in the site patterns");
+            }
+            Sequence sequence = new Sequence(taxon, unknown.toString());
+            sequence.setDataType(dataType);
+            extended.addSequence(sequence);
+        }
+
+        SitePatterns patterns = new SitePatterns(extended, null, construction.from, construction.to,
+                construction.every, construction.strip, construction.constantSiteCounts, construction.compression,
+                construction.ambiguityThreshold);
+        patterns.setId(getId());
+        return patterns;
     }
 
     /**

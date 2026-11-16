@@ -76,7 +76,7 @@ public class MutationHistoryGibbsOperator extends SimpleMCMCOperator implements 
     /**
      * @return a random internal node and up to size - 1 of its ancestors
      */
-    int[] chooseBlock() {
+    private int[] chooseBlock() {
         NodeRef node = tree.getInternalNode(MathUtils.nextInt(tree.getInternalNodeCount()));
         int[] block = new int[size];
         int count = 0;

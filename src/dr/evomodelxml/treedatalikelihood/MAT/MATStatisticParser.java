@@ -26,12 +26,10 @@
 
 package dr.evomodelxml.treedatalikelihood.MAT;
 
-import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
-import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MAT.MATStatistic;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Statistic;
 import dr.xml.*;
-import dr.evomodel.treedatalikelihood.MAT.MATStatistic;
 
 /**
  * Parses a statistic reporting the number of mutations and ambiguities in a MAT.
@@ -48,7 +46,7 @@ public class MATStatisticParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String name = xo.getAttribute(Statistic.NAME, xo.getId());
-        return new MATStatistic(name, MutationHistoryResamplerParser.getDelegate(xo));
+        return new MATStatistic(name, MATDataLikelihoodParser.getDelegate(xo));
     }
 
     @Override

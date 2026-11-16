@@ -209,4 +209,9 @@ public class BeautiXmlSnapshotTest {
         BeautiHeadlessHarness.run("dengue4aa_blosum62_gamma_ucld_yule");
     }
 
+    @Test
+    public void apes_mat_hky_strict_constant() throws Exception {
+        BeautiHeadlessHarness.run("apes_mat_hky_strict_constant");
+    }
+
 }

@@ -579,5 +579,7 @@ public final class BeautiHeadlessHarness {
             clockModel(options).setClockType(ClockType.UNCORRELATED);
             treePrior(options).setNodeHeightPrior(TreePriorType.YULE);
         });
+        add("apes_mat_hky_strict_constant", "examples/Data/apes.nex", options ->
+                options.likelihoodEngineType = dr.app.beauti.types.LikelihoodEngineType.MAT);
     }
 }

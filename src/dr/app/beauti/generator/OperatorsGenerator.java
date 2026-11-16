@@ -210,6 +210,9 @@ public class OperatorsGenerator extends Generator {
             case SUBTREE_LEAP:
                 writeSubtreeLeapOperator(operator, prefix, writer);
                 break;
+            case SUBTREE_LEAP_WIDE:
+                writeSubtreeLeapWideOperator(operator, prefix, writer);
+                break;
             case FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT:
                 writeFHSPROperator(operator, prefix, writer);
                 break;
@@ -742,6 +745,23 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(SubtreeLeapOperatorParser.SUBTREE_LEAP,
                 new Attribute[]{
                         new Attribute.Default<Double>("size", operator.getTuning()),
+                        getWeightAttribute(operator.getWeight())
+                }
+        );
+        writer.writeIDref(DefaultTreeModel.TREE_MODEL, treeModelPrefix + DefaultTreeModel.TREE_MODEL);
+        writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
+    }
+
+    /**
+     * A second SubtreeLeap for MAT analyses: low targetAcceptance (0.05) → wide leaps for large-scale
+     * topology exploration (~10% of main STL weight). See optimization_notes/stl_operator_study/RESULTS.md.
+     */
+    private void writeSubtreeLeapWideOperator(Operator operator, String treeModelPrefix, XMLWriter writer) {
+        writer.writeOpenTag(SubtreeLeapOperatorParser.SUBTREE_LEAP,
+                new Attribute[]{
+                        new Attribute.Default<String>("id", treeModelPrefix + "subtreeLeap2"),
+                        new Attribute.Default<Double>("size", operator.getTuning()),
+                        new Attribute.Default<Double>("targetAcceptance", 0.05),
                         getWeightAttribute(operator.getWeight())
                 }
         );

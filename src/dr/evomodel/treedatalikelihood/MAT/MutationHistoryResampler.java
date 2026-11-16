@@ -1176,14 +1176,14 @@ public class MutationHistoryResampler {
             }
             double length = view.getBranchLength(n);
             BranchMutations old = store.getBranchMutations(n);
-            BranchMutations.Builder builder = new BranchMutations.Builder(true);
+            BranchMutations.Builder builder = new BranchMutations.Builder();
             int k = 0;
             while (k < old.getSubstitutionCount()) {
                 int siteEnd = old.getSiteEnd(k);
                 if (!changedSites.contains(old.getPattern(k))) {
                     for (int i = k; i < siteEnd; i++) {
                         builder.addSubstitution(old.getPattern(i), old.getFromState(i), old.getToState(i),
-                                old.hasTimes() ? old.getTime(i) : (i - k + 1.0) / (siteEnd - k + 1.0));
+                                old.getTime(i, k, siteEnd));
                     }
                 }
                 k = siteEnd;

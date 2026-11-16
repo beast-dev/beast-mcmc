@@ -26,8 +26,6 @@
 
 package dr.evomodel.treedatalikelihood.MAT;
 
-import dr.evomodel.substmodel.BaseSubstitutionModel;
-import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.math.MathUtils;
 
@@ -41,7 +39,7 @@ import java.util.Arrays;
 public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
 
     protected final int stateCount;
-    protected SubstitutionModel substitutionModel;
+    private SubstitutionModel substitutionModel;
     protected double[] infinitesimalMatrix;
     protected double[] exitRates;
 
@@ -49,8 +47,8 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
     // U = I + Q / mu of the uniformized chain, for the current rates; and work arrays
     private double uniformizationRate;
     private final double[] uniformizedMatrix;
-    private double[] jumpRow;
-    private double[] nextJumpRow;
+    private final double[] jumpRow;
+    private final double[] nextJumpRow;
     private final double[] stateWeights;
 
     // cache of transition probability matrices (and their logs) by distance, for the current rates: an
@@ -89,84 +87,6 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
                         i == j ? 1.0 - exitRates[i] / mu : infinitesimalMatrix[i * stateCount + j] / mu;
             }
         }
-        setEigenDecomposition(substitutionModel);
-    }
-
-    @Override
-    public int getStateCount() {
-        return stateCount;
-    }
-
-    // ---------------------------------------------------------------------------------------------
-    // Transition probabilities from the eigen decomposition (without the cache)
-    // ---------------------------------------------------------------------------------------------
-
-    // the rate matrix's eigen decomposition, when the substitution model computes its transition
-    // probabilities from it as BaseSubstitutionModel does (otherwise null)
-    private double[] eigenValues;
-    private double[] eigenVectors;
-    private double[] inverseEigenVectors;
-    private double[] eigenExp;
-
-    private void setEigenDecomposition(SubstitutionModel substitutionModel) {
-        eigenValues = null;
-        if (!(substitutionModel instanceof BaseSubstitutionModel)) {
-            return;
-        }
-        try {
-            if (substitutionModel.getClass().getMethod("getTransitionProbabilities", double.class, double[].class)
-                    .getDeclaringClass() != BaseSubstitutionModel.class) {
-                return;
-            }
-        } catch (NoSuchMethodException e) {
-            return;
-        }
-        EigenDecomposition eigen = substitutionModel.getEigenDecomposition();
-        if (eigen == null || eigen.getEigenValues().length != stateCount ||
-                eigen.getEigenVectors().length != stateCount * stateCount) {
-            return;
-        }
-        eigenValues = eigen.getEigenValues().clone();
-        eigenVectors = eigen.getEigenVectors().clone();
-        inverseEigenVectors = eigen.getInverseEigenVectors().clone();
-        eigenExp = new double[stateCount];
-    }
-
-    /**
-     * @return true if transition probabilities can be computed directly ({@link #getLogTransitionDiagonal},
-     * {@link #getLogTransitionProbability})
-     */
-    protected boolean hasDirectTransitionProbabilities() {
-        return eigenValues != null;
-    }
-
-    /**
-     * Sets out[offset + a] to log P_aa(distance) for every state a: the same values as the diagonal of
-     * {@link #getLogTransitionProbabilities} (computed with the same arithmetic as BaseSubstitutionModel),
-     * for S exponentials and logarithms rather than a whole matrix.
-     */
-    protected void getLogTransitionDiagonal(double distance, double[] out, int offset) {
-        for (int i = 0; i < stateCount; i++) {
-            eigenExp[i] = Math.exp(distance * eigenValues[i]);
-        }
-        for (int a = 0; a < stateCount; a++) {
-            double p = 0.0;
-            for (int k = 0; k < stateCount; k++) {
-                p += eigenVectors[a * stateCount + k] * (inverseEigenVectors[k * stateCount + a] * eigenExp[k]);
-            }
-            out[offset + a] = Math.log(Math.max(Math.abs(p), 0.0));
-        }
-    }
-
-    /**
-     * @return log P_ab(distance), as {@link #getLogTransitionProbabilities} gives it
-     */
-    protected double getLogTransitionProbability(double distance, int a, int b) {
-        double p = 0.0;
-        for (int k = 0; k < stateCount; k++) {
-            p += eigenVectors[a * stateCount + k] * (inverseEigenVectors[k * stateCount + b] * Math.exp(distance * eigenValues[k]));
-        }
-        return Math.log(Math.max(Math.abs(p), 0.0));
     }
 
     private void clearTransitionProbabilityCache() {
@@ -185,6 +105,54 @@ public abstract class AbstractBranchHistoryModel implements BranchHistoryModel {
     @Override
     public boolean needsComposition() {
         return false;
+    }
+
+    @Override
+    public boolean hasExplicitHistories() {
+        return false;
+    }
+
+    /**
+     * The transition probabilities: the densities summed over the hits.
+     */
+    @Override
+    public void getLogTransitionDensities(double length, double nu, double[] out) {
+        System.arraycopy(getLogTransitionProbabilities(nu * length), 0, out, 0, stateCount * stateCount);
+    }
+
+    /**
+     * No hit: the site leaves state a at rate nu q_a.
+     */
+    @Override
+    public double getUnchangedSiteLogLikelihood(int a, double length, double nu) {
+        return -nu * exitRates[a] * length;
+    }
+
+    @Override
+    public void getUnchangedSiteLogLikelihoods(double length, double nu, double[] out, int offset) {
+        for (int a = 0; a < stateCount; a++) {
+            out[offset + a] = getUnchangedSiteLogLikelihood(a, length, nu);
+        }
+    }
+
+    /**
+     * Without explicit histories there is nothing to score.
+     */
+    @Override
+    public double getHistoryLogProposal(BranchMutations mutations, int start, int end, int fromState, int toState,
+                                        double length, double nu) {
+        return 0.0;
+    }
+
+    /**
+     * Without explicit histories the history is the single substitution, if the states differ.
+     */
+    @Override
+    public double sampleHistory(int pattern, int fromState, int toState, double length, double nu, BranchMutations.Builder builder) {
+        if (fromState != toState) {
+            builder.addSubstitution(pattern, fromState, toState, 0.0);
+        }
+        return 0.0;
     }
 
     @Override

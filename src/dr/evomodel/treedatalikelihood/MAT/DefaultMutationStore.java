@@ -580,7 +580,7 @@ public final class DefaultMutationStore implements MutationStore {
             from[substitutionCount + i] = scratchFrom[patternCount - 1 - i];
             to[substitutionCount + i] = -1;
         }
-        return new BranchMutations(patterns, from, to, substitutionCount);
+        return new BranchMutations(patterns, from, to, substitutionCount, null);
     }
 
     /**

@@ -45,11 +45,6 @@ public class SingleHitHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
-    public boolean hasExplicitHistories() {
-        return false;
-    }
-
-    @Override
     public void getLogTransitionDensities(double length, double nu, double[] out) {
         for (int a = 0; a < stateCount; a++) {
             for (int b = 0; b < stateCount; b++) {
@@ -79,26 +74,7 @@ public class SingleHitHistoryModel extends AbstractBranchHistoryModel {
     }
 
     @Override
-    public double getUnchangedSiteLogLikelihood(int a, double length, double nu) {
-        return -nu * exitRates[a] * length;
-    }
-
-    @Override
     public double getSiteLogLikelihood(BranchMutations mutations, int start, int end, double length, double nu) {
         return substitutionLogDensity(mutations.getFromState(start), mutations.getToState(start), length, nu);
-    }
-
-    @Override
-    public double getHistoryLogProposal(BranchMutations mutations, int start, int end, int fromState, int toState,
-                                        double length, double nu) {
-        return 0.0;
-    }
-
-    @Override
-    public double sampleHistory(int pattern, int fromState, int toState, double length, double nu, BranchMutations.Builder builder) {
-        if (fromState != toState) {
-            builder.addSubstitution(pattern, fromState, toState, 0.0);
-        }
-        return 0.0;
     }
 }

@@ -782,7 +782,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
      * Recomputes the term of the branch above node n if anything it depends on has changed.
      */
     private void updateBranchTerm(int n) {
-        double exitRate = historyModel.needsExitRate() ? getExitRate(n) : 0.0;
+        double exitRate = historyModel.needsComposition() ? 0.0 : getExitRate(n);
         double length = getBranchLength(tree.getNode(n));
         BranchMutations mutations = mutationStore.getBranchMutations(n);
         long stateVersion = mutationStore.getStateVersion(n);
@@ -795,8 +795,7 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
                 double[] categoryComposition = historyModel.needsComposition() ?
                         mutationStore.getCategoryComposition(n) : null;
                 branchTerms[n] = historyModel.getCategoryBranchLogLikelihood(mutations, length, exitRate,
-                        categoryComposition, categories.getRates(), categories.getUnchangedTerms(n),
-                        patternWeights, patternRates);
+                        categoryComposition, categories.getUnchangedTerms(n), patternWeights, patternRates);
             } else {
                 double[] composition = historyModel.needsComposition() ? mutationStore.getComposition(n) : null;
                 branchTerms[n] = historyModel.getBranchLogLikelihood(mutations, length, exitRate, composition,

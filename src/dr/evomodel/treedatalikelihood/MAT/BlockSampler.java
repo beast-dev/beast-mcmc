@@ -60,7 +60,7 @@ final class BlockSampler {
     BlockSampler(MATDataLikelihoodDelegate delegate, int[] weightClass, double[] classWeights,
                  int defaultWeightClass, int rateClassCount) {
         this.delegate = delegate;
-        this.store = delegate.getMutableMutationStore();
+        this.store = delegate.getMutationStore();
         this.historyModel = delegate.getHistoryModel();
         final Tree tree = delegate.getTree();
         this.stateCount = delegate.getPatternList().getDataType().getStateCount();

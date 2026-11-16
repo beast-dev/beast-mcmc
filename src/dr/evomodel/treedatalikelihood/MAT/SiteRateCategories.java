@@ -83,7 +83,7 @@ final class SiteRateCategories {
         this.delegate = delegate;
         this.siteRateModel = siteRateModel;
         this.tree = delegate.getTree();
-        this.store = delegate.getMutableMutationStore();
+        this.store = delegate.getMutationStore();
         this.historyModel = delegate.getHistoryModel();
         this.categoryCount = siteRateModel.getCategoryCount();
         this.stateCount = patternList.getDataType().getStateCount();

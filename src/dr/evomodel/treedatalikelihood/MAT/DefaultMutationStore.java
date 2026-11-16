@@ -33,6 +33,10 @@ import java.util.Arrays;
 /**
  * A mutable mutation annotated tree with store/restore support.
  *
+ * A mutation annotated tree: the state of every pattern at every node, and the mutations (including
+ * ambiguities) this implies on each branch. Node numbers refer to the tree the store was built for, and
+ * the store records that tree's topology as it was when the states were last made consistent with it.
+ *
  * For each node it holds the states of all patterns and, for reconstruction by parsimony, the
  * Fitch state sets (as bitmasks, 0 meaning ambiguous). The mutations (including ambiguities) on the
  * branch above each node are derived from the states of the node and its parent by {@link #updateBranch}.
@@ -56,7 +60,7 @@ import java.util.Arrays;
  * variable patterns in each (category, state), kept up to date as states and categories change. Both are
  * journaled.
  */
-public final class DefaultMutationStore implements MutationStore {
+public final class DefaultMutationStore {
 
     private final int nodeCount;
     private final int patternCount;
@@ -148,22 +152,21 @@ public final class DefaultMutationStore implements MutationStore {
         throw new IllegalArgumentException("No root in parent array");
     }
 
-    @Override
     public int getNodeCount() {
         return nodeCount;
     }
 
-    @Override
     public int getPatternCount() {
         return patternCount;
     }
 
-    @Override
+    /**
+     * @return the parent of the node in the topology the store currently describes, -1 for the root
+     */
     public int getParent(int nodeNumber) {
         return parents[nodeNumber];
     }
 
-    @Override
     public int getRoot() {
         return root;
     }
@@ -214,32 +217,17 @@ public final class DefaultMutationStore implements MutationStore {
         }
     }
 
-    @Override
+    /**
+     * @return the state of the pattern at the node, or -1 if it is ambiguous in every tip below the node
+     */
     public int getState(int nodeNumber, int pattern) {
         return states[nodeNumber][pattern];
     }
 
     /**
-     * @return the node's states; callers must not modify the array (use {@link #getWritableStates})
+     * @return the node's states; callers must not modify the array (use {@link #setState})
      */
     public byte[] getStates(int nodeNumber) {
-        return states[nodeNumber];
-    }
-
-    /**
-     * @return the node's states for writing directly (each call counts as a change of the states, and the
-     * node's composition is recomputed in full when next asked for); to change a few states, use
-     * {@link #setState}
-     */
-    public byte[] getWritableStates(int nodeNumber) {
-        journalStates(nodeNumber);
-        stateVersions[nodeNumber] = ++lastStateVersion;
-        compositions[nodeNumber] = null;
-        if (categories != null) {
-            journalCategoryComposition(nodeNumber);
-            categoryCompositions[nodeNumber] = null;
-        }
-        changedNodes.add(nodeNumber);
         return states[nodeNumber];
     }
 
@@ -466,12 +454,16 @@ public final class DefaultMutationStore implements MutationStore {
         return fitchSets[nodeNumber];
     }
 
-    @Override
+    /**
+     * @return the substitutions and ambiguities on the branch above the node
+     */
     public BranchMutations getBranchMutations(int nodeNumber) {
         return mutations[nodeNumber];
     }
 
-    @Override
+    /**
+     * @return the total number of substitutions (excluding ambiguities)
+     */
     public int getMutationCount() {
         int count = 0;
         for (BranchMutations m : mutations) {
@@ -480,7 +472,9 @@ public final class DefaultMutationStore implements MutationStore {
         return count;
     }
 
-    @Override
+    /**
+     * @return the total number of ambiguities
+     */
     public int getAmbiguityCount() {
         int count = 0;
         for (BranchMutations m : mutations) {

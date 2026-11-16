@@ -151,7 +151,7 @@ public class MutationHistoryResampler {
      */
     public MutationHistoryResampler(MATDataLikelihoodDelegate delegate, boolean localBlock) {
         this.delegate = delegate;
-        this.store = delegate.getMutableMutationStore();
+        this.store = delegate.getMutationStore();
         this.historyModel = delegate.getHistoryModel();
         this.tree = delegate.getTree();
         this.stateCount = delegate.getPatternList().getDataType().getStateCount();

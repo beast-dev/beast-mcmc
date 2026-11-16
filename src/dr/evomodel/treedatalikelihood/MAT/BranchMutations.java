@@ -129,19 +129,6 @@ public final class BranchMutations {
     }
 
     /**
-     * @return the events as Mutation objects (a convenience; not for use in tight loops)
-     */
-    public Mutation[] toMutations(int nodeNumber) {
-        Mutation[] mutations = new Mutation[patterns.length];
-        for (int i = 0; i < patterns.length; i++) {
-            mutations[i] = isAmbiguity(i) ?
-                    Mutation.ambiguity(nodeNumber, patterns[i], fromStates[i]) :
-                    new Mutation(nodeNumber, patterns[i], fromStates[i], toStates[i]);
-        }
-        return mutations;
-    }
-
-    /**
      * Accumulates a branch's events, with the positions of its substitutions: the hits of each site must be
      * added together, in path order.
      */

@@ -307,16 +307,12 @@ public class MATDataLikelihoodDelegate extends AbstractModel implements DataLike
         tree.addModelListener(this);
     }
 
-    public MutationStore getMutationStore() {
+    public DefaultMutationStore getMutationStore() {
         return mutationStore;
     }
 
     public BranchHistoryModel getHistoryModel() {
         return historyModel;
-    }
-
-    DefaultMutationStore getMutableMutationStore() {
-        return mutationStore;
     }
 
     /**

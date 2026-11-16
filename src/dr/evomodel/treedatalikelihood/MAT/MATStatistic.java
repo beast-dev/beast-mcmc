@@ -55,7 +55,7 @@ public class MATStatistic extends Statistic.Abstract {
     @Override
     public double getStatisticValue(int dim) {
         // (events are only at variable patterns, each of which is one site)
-        MutationStore store = delegate.getMutationStore();
+        DefaultMutationStore store = delegate.getMutationStore();
         return dim == 0 ? store.getMutationCount() : store.getAmbiguityCount();
     }
 }

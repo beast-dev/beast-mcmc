@@ -118,7 +118,6 @@ public class MutationHistoryResampler {
     private final byte[] siteClasses;
     private final int[] siteStamps;    // candidate sites of the current path move are stamped with stamp
     private int stamp = 0;
-    private final double[] oldSiteLogProbabilities;
     private final IndexSet changedSites;     // the sites at which the current move changed any state
     private final IndexSet passChangedSites; // those changed by the current sparse pass (see SparsePass)
     private final long[] siteBits;     // work bits of sortSites
@@ -162,7 +161,6 @@ public class MutationHistoryResampler {
         this.ambiguousRunsVersion = new long[nodeCount];
         this.siteClasses = new byte[patternCount];
         this.siteStamps = new int[patternCount];
-        this.oldSiteLogProbabilities = new double[patternCount];
         this.changedSites = new IndexSet(patternCount);
         this.passChangedSites = new IndexSet(patternCount);
         this.siteBits = new long[(patternCount + 63) / 64];
@@ -308,19 +306,20 @@ public class MutationHistoryResampler {
         long profileStart = MATProfile.start();
         final int[] block = getBlock(p, s, d, oldView);
         final PathPass oldPass;
+        final double logProposalOfOldStates;
         if (sparse) {
             oldPass = makePathPass(block, x, oldView);
             MATProfile.stop(MATProfile.Phase.PATH_CANDIDATES, profileStart);
             profileStart = MATProfile.start();
-            sampleBlock(block, false, siteClasses, oldPass.substitutionSites, oldSiteLogProbabilities,
-                    oldPass, oldView);
+            logProposalOfOldStates = sampleBlock(block, false, siteClasses, oldPass.substitutionSites, oldPass,
+                    oldView);
         } else {
             // every variable site is a candidate
             oldPass = null;
             setSiteClasses(block, oldView);
             MATProfile.stop(MATProfile.Phase.PATH_CANDIDATES, profileStart);
             profileStart = MATProfile.start();
-            sampleBlock(block, false, siteClasses, variableSites, oldSiteLogProbabilities, null, oldView);
+            logProposalOfOldStates = sampleBlock(block, false, siteClasses, variableSites, null, oldView);
         }
         MATProfile.stop(MATProfile.Phase.PATH_SCORE_OLD, profileStart);
         MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, oldPass == null ? variableSites.length :
@@ -343,16 +342,11 @@ public class MutationHistoryResampler {
         final int[] resampled = oldPass != null ? oldPass.substitutionSites : variableSites;
         changedSites.addAll(resampled, resampled.length);
 
-        double logProposalOfOldStates = oldPass != null ?
-                oldPass.uniformLogProbability + oldPass.ambiguityLogProbability : 0.0;
-        for (int site : resampled) {
-            logProposalOfOldStates += oldSiteLogProbabilities[site];
-        }
         final PathPass newPass = oldPass == null ? null :
                 new PathPass(oldPass.referenceNode, oldPass.uniformCounts, oldPass.substitutionSites,
                         oldPass.ambiguitySites, oldPass.candidateStamp);
         profileStart = MATProfile.start();
-        double logProposalOfNewStates = sampleBlock(block, true, siteClasses, resampled, null, newPass, newView);
+        double logProposalOfNewStates = sampleBlock(block, true, siteClasses, resampled, newPass, newView);
         MATProfile.stop(MATProfile.Phase.PATH_SAMPLE_NEW, profileStart);
         lastChangedUniformCount = newPass == null ? 0 : newPass.changedUniformCount;
         delegate.setHistoryResampled();
@@ -449,13 +443,13 @@ public class MutationHistoryResampler {
         final int[] resampled;
         if (sparse) {
             final PathPass pass = makePathPass(blockNodes, getOutsideChild(blockNodes, view), view);
-            sampleBlock(blockNodes, true, siteClasses, pass.substitutionSites, null, pass, view);
+            sampleBlock(blockNodes, true, siteClasses, pass.substitutionSites, pass, view);
             resampled = pass.substitutionSites;
             changedSites.addAll(pass.otherChangedSites);
         } else {
             setSiteClasses(blockNodes, view);
             resampled = variableSites;
-            sampleBlock(blockNodes, true, siteClasses, resampled, null, null, view);
+            sampleBlock(blockNodes, true, siteClasses, resampled, null, view);
         }
         changedSites.addAll(resampled, resampled.length);
         delegate.setHistoryResampled();
@@ -732,7 +726,7 @@ public class MutationHistoryResampler {
         profileStart = MATProfile.start();
         final LocalPass pass = new LocalPass(x, oldUniformCounts, oldSubstitutionSites, oldChain.hotSites);
         final int[] substitutionSites = withoutMarked(oldSubstitutionSites, hotMarks, markStamp);
-        double logProposalOfOldStates = sampleBlock(new int[]{p}, false, null, substitutionSites, null, pass, oldView);
+        double logProposalOfOldStates = sampleBlock(new int[]{p}, false, null, substitutionSites, pass, oldView);
         logProposalOfOldStates += sampleChains(p, oldChain, false, oldView);
         MATProfile.stop(MATProfile.Phase.LOCAL_SCORE_OLD, profileStart);
         MATProfile.stop(MATProfile.Phase.LOCAL_BEFORE, beforeStart);
@@ -768,7 +762,7 @@ public class MutationHistoryResampler {
                 getUniformCounts(x, newSubstitutionSites, newHotSites, newMarks, markStamp),
                 newSubstitutionSites, newHotSites);
         final int[] newSites = withoutMarked(newSubstitutionSites, hotMarks, newHotStamp);
-        double logProposalOfNewStates = sampleBlock(new int[]{p}, true, null, newSites, null, newPass, newView);
+        double logProposalOfNewStates = sampleBlock(new int[]{p}, true, null, newSites, newPass, newView);
         logProposalOfNewStates += sampleChains(p, newChain, true, newView);
         MATProfile.stop(MATProfile.Phase.LOCAL_SAMPLE_NEW, profileStart);
         lastChangedUniformCount = newPass.changedUniformCount;
@@ -903,7 +897,7 @@ public class MutationHistoryResampler {
             int[] chainBlock = new int[k + 2];
             chainBlock[0] = p;
             System.arraycopy(chain, 0, chainBlock, 1, k + 1);
-            logProbability += sampleBlock(chainBlock, sample, null, sites, null, null, view);
+            logProbability += sampleBlock(chainBlock, sample, null, sites, null, view);
         }
         return logProbability;
     }
@@ -1286,7 +1280,7 @@ public class MutationHistoryResampler {
      * @return the log probability of the drawn (or existing) states under that distribution
      */
     public double sampleBlock(int[] blockNodes, boolean sample) {
-        return sampleBlock(blockNodes, sample, null, null, null, null, delegate.currentView());
+        return sampleBlock(blockNodes, sample, null, null, null, delegate.currentView());
     }
 
     /**
@@ -1294,17 +1288,17 @@ public class MutationHistoryResampler {
      * block (see {@link #getPatternClasses}) handled by a fast exact path.
      */
     public double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses) {
-        return sampleBlock(blockNodes, sample, patternClasses, null, null, null, delegate.currentView());
+        return sampleBlock(blockNodes, sample, patternClasses, null, null, delegate.currentView());
     }
 
     /**
      * As {@link #sampleBlock(int[], boolean)} but only for the given sites (all sites if null), with the
      * patterns that have no substitutions around the block (see {@link #getPatternClasses}) handled by a
-     * fast exact path, optionally recording each site's log probability, and then, if a sparse pass is
-     * given, for the sites it handles (those with no events, or only ambiguities, around the block).
+     * fast exact path, and then, if a sparse pass is given, for the sites it handles (those with no events,
+     * or only ambiguities, around the block).
      */
     private double sampleBlock(int[] blockNodes, boolean sample, byte[] patternClasses,
-                               int[] sites, double[] siteLogProbabilities, SparsePass pass, TopologyView view) {
+                               int[] sites, SparsePass pass, TopologyView view) {
         delegate.ensureRates();
         final Block block = blocks.newBlock(blockNodes, sample, view);
         double logProbability = 0.0;
@@ -1312,13 +1306,9 @@ public class MutationHistoryResampler {
         for (int siteIndex = 0; siteIndex < siteCount; siteIndex++) {
             final int p = sites == null ? siteIndex : sites[siteIndex];
             // constant sites are assumed to have no mutations: their states are never changed
-            final double before = logProbability;
             if (!delegate.isConstantPattern(p)) {
                 logProbability = blocks.sampleSite(block, p, patternClasses == null ? HAS_SUBSTITUTIONS : patternClasses[p],
                         logProbability);
-            }
-            if (siteLogProbabilities != null) {
-                siteLogProbabilities[p] = logProbability - before;
             }
         }
         if (pass != null) {

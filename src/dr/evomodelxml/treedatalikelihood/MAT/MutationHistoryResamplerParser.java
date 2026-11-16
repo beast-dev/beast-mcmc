@@ -40,7 +40,6 @@ import java.util.logging.Logger;
 public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
 
     public static final String MUTATION_HISTORY_RESAMPLER = "mutationHistoryResampler";
-    public static final String SITE_SELECTION = "siteSelection";
     public static final String BLOCK = "block";
     public static final String PATH_BLOCK = "path";
     public static final String LOCAL_BLOCK = "local";
@@ -53,12 +52,6 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         try {
-            if (xo.hasAttribute(SITE_SELECTION) && !xo.getStringAttribute(SITE_SELECTION).equalsIgnoreCase("all")) {
-                // the hybrid selection (only sites varying around the block) could not create back-mutations
-                // at sites that looked uniform around every block, so it was not irreducible
-                throw new XMLParseException("The " + SITE_SELECTION + " attribute of " + xo.getId() + " must be " +
-                        "'all' (every site is resampled; 'hybrid' is no longer supported)");
-            }
             MATDataLikelihoodDelegate delegate = MATDataLikelihoodParser.getDelegate(xo);
             boolean local;
             if (xo.hasAttribute(BLOCK)) {
@@ -88,8 +81,6 @@ public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                AttributeRule.newStringRule(SITE_SELECTION, true, "Which sites a move resamples: only 'all' " +
-                        "(kept for older files)"),
                 AttributeRule.newStringRule(BLOCK, true, "Which states a move resamples: 'local' (the regrafted " +
                         "parent, and the nodes whose data at a site come only from the moved subtree; the default where " +
                         "the model allows it) or 'path' (the regrafted parent and the nodes on the path between its old " +

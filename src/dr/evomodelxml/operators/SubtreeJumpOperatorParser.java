@@ -30,7 +30,6 @@ package dr.evomodelxml.operators;
 import dr.evomodel.bigfasttree.thorney.ConstrainedTreeModel;
 import dr.evomodel.bigfasttree.thorney.ConstrainedTreeOperator;
 import dr.evomodel.operators.FixedHeightSubtreePruneRegraftOperator;
-import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
 import dr.evomodel.operators.SubtreeJumpOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -81,10 +80,6 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
         SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, targetAcceptance, uniform, mode);
 //        operator.setTargetAcceptanceProbability(targetAcceptance);
-        if (xo.getChild(MutationHistoryResampler.class) != null) {
-            throw new XMLParseException("The mutationHistoryResampler is attached to the matDataLikelihood, which " +
-                    "resamples the history after any subtree move: remove it from the operator " + xo.getId());
-        }
 
         if(treeModel instanceof ConstrainedTreeModel){
             return ConstrainedTreeOperator.parse((ConstrainedTreeModel) treeModel, weight, operator,xo);

@@ -37,6 +37,7 @@ import dr.inference.operators.hmc.MassPreconditionScheduler;
 import dr.inference.operators.hmc.MassPreconditioner;
 import dr.inference.operators.hmc.ReflectiveHamiltonianMonteCarloOperator;
 import dr.util.Transform;
+import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -49,7 +50,11 @@ import dr.xml.XMLSyntaxRule;
 public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMonteCarloOperatorParser {
 
     public final static String OPERATOR_NAME = "reflectiveHamiltonianMonteCarloOperator";
+    public final static String REFLECTION_RULE = "reflectionRule";
+    public final static String MAX_EVENTS_PER_STEP = "maxEventsPerStep";
     private GeneralBoundsProvider bounds;
+    private ReflectiveHamiltonianMonteCarloOperator.ReflectionRule reflectionRule;
+    private long maxEventsPerStep;
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -57,6 +62,18 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
             throw new XMLParseException(OPERATOR_NAME + " does not support a mask; remove the <" + MASK + "> element");
         }
         this.bounds = (GeneralBoundsProvider) xo.getChild(GeneralBoundsProvider.class);
+        try {
+            this.reflectionRule = ReflectiveHamiltonianMonteCarloOperator.ReflectionRule.parse(xo.getAttribute(
+                    REFLECTION_RULE, ReflectiveHamiltonianMonteCarloOperator.DEFAULT_REFLECTION_RULE.getName()));
+        } catch (IllegalArgumentException e) {
+            throw new XMLParseException(e.getMessage());
+        }
+        final double maxEvents = xo.getAttribute(MAX_EVENTS_PER_STEP,
+                (double) ReflectiveHamiltonianMonteCarloOperator.DEFAULT_MAX_EVENTS_PER_STEP);
+        if (!(maxEvents >= 1) || maxEvents > Long.MAX_VALUE || maxEvents != Math.floor(maxEvents)) {
+            throw new XMLParseException(MAX_EVENTS_PER_STEP + " must be a whole number of at least 1");
+        }
+        this.maxEventsPerStep = (long) maxEvents;
         if (bounds instanceof GraphicalParameterBound) {
             // the operator's parameter, found as HamiltonianMonteCarloOperatorParser.parseXMLObject finds it
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
@@ -82,15 +99,17 @@ public class ReflectiveHamiltonianMonteCarloOperatorParser extends HamiltonianMo
 
         return new ReflectiveHamiltonianMonteCarloOperator(adaptationMode, weight, derivative,
                 parameter, transform, mask,
-                runtimeOptions, preconditioner, bounds);
+                runtimeOptions, preconditioner, bounds, reflectionRule, maxEventsPerStep);
     }
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        XMLSyntaxRule[] extendedRules = new XMLSyntaxRule[rules.length + 1];
+        XMLSyntaxRule[] extendedRules = new XMLSyntaxRule[rules.length + 3];
         extendedRules[0] = new ElementRule(GeneralBoundsProvider.class);
+        extendedRules[1] = AttributeRule.newStringRule(REFLECTION_RULE, true);
+        extendedRules[2] = AttributeRule.newDoubleRule(MAX_EVENTS_PER_STEP, true);
         for (int i = 0; i < rules.length; i++) {
-            extendedRules[i + 1] = rules[i];
+            extendedRules[i + 3] = rules[i];
         }
         return extendedRules;
     }

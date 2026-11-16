@@ -84,8 +84,9 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
         }
 
         double randomStepFraction = Math.abs(xo.getAttribute(RANDOM_STEP_FRACTION, 0.0));
-        if (randomStepFraction > 1) {
-            throw new XMLParseException("Random step count fraction must be < 1.0");
+        // up to 2: at 2 the number of steps is about uniform on 1, ..., 2n - 1, with Pr(1) = 1/n
+        if (randomStepFraction > 2) {
+            throw new XMLParseException("Random step count fraction must be at most 2.0");
         }
 
         AdaptationMode adaptationMode = AdaptationMode.parseMode(xo);

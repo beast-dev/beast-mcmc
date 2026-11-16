@@ -61,6 +61,7 @@ public enum OperatorType {
     SUBTREE_SLIDE("subtreeSlide"),
     FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT("fixedHeightSPR"),
     SUBTREE_LEAP("subtreeLeap"),
+    SUBTREE_LEAP_WIDE("subtreeLeapWide"),
     ADAPTIVE_MULTIVARIATE("adaptiveMultivariate"),
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),

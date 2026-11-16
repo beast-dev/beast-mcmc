@@ -141,6 +141,11 @@ public class PartitionTreeModel extends PartitionOptions {
             createOperator("mutationHistoryGibbs", "Mutation history",
                     "Resamples the mutation history of a random node and up to two of its ancestors (MAT likelihood)",
                     null, OperatorType.MUTATION_HISTORY_GIBBS, -1.0, weight);
+
+            // second SubtreeLeap for MAT: low target acceptance (0.05) → wide leaps for large-scale
+            // topology exploration; same weight as FHSPR (~10% of main STL); only enabled when isMAT()
+            createOperator("subtreeLeap2", "Tree", "Wide-leap subtree-leap rearrangement (MAT)", "tree",
+                    OperatorType.SUBTREE_LEAP_WIDE, 1.0, weight);
         } else {
             double weight = Math.max(options.taxonList.getTaxonCount(), 30);
             createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
@@ -154,6 +159,11 @@ public class PartitionTreeModel extends PartitionOptions {
             createOperator("mutationHistoryGibbs", "Mutation history",
                     "Resamples the mutation history of a random node and up to two of its ancestors (MAT likelihood)",
                     null, OperatorType.MUTATION_HISTORY_GIBBS, -1.0, weight);
+
+            // second SubtreeLeap for MAT: low target acceptance (0.05) → wide leaps for large-scale
+            // topology exploration; same weight as FHSPR (~10% of main STL); only enabled when isMAT()
+            createOperator("subtreeLeap2", "Tree", "Wide-leap subtree-leap rearrangement (MAT)", "tree",
+                    OperatorType.SUBTREE_LEAP_WIDE, 1.0, weight);
         }
 
         createOperator("empiricalTreeSwap", "Tree", "Sets the current tree from the empirical set", "tree",
@@ -220,6 +230,7 @@ public class PartitionTreeModel extends PartitionOptions {
                 operators.add(getOperator("FHSPR"));
                 if (mat) {
                     operators.add(getOperator("mutationHistoryGibbs"));
+                    operators.add(getOperator("subtreeLeap2"));
                 }
 
                 if (options.operatorSetType != OperatorSetType.CUSTOM) {
@@ -261,6 +272,7 @@ public class PartitionTreeModel extends PartitionOptions {
                     getOperator("FHSPR").setUsed(newTreeOperatorsInUse);
                     // the history must mix even when the tree is fixed
                     getOperator("mutationHistoryGibbs").setUsed(mat);
+                    getOperator("subtreeLeap2").setUsed(mat && newTreeOperatorsInUse);
                 }
             } else {
                 getOperator("subtreeLeap").setUsed(true);
@@ -268,6 +280,8 @@ public class PartitionTreeModel extends PartitionOptions {
                 if (options.isMAT()) {
                     operators.add(getOperator("mutationHistoryGibbs"));
                     getOperator("mutationHistoryGibbs").setUsed(true);
+                    operators.add(getOperator("subtreeLeap2"));
+                    getOperator("subtreeLeap2").setUsed(true);
                 }
             }
         }

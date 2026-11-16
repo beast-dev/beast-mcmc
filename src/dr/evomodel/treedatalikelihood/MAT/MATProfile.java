@@ -48,18 +48,18 @@ public final class MATProfile {
 
     public enum Phase {
         // a subtree move with the local block
-        LOCAL_BEFORE("local.before", "old phase of a move with the local block (whole)"),
+        LOCAL_BEFORE("local.before", "old states of a move with the local block (whole)"),
         LOCAL_RUNS("local.runs", "  ambiguous runs of a node recomputed (in local.before/after, gibbs)"),
         LOCAL_CHAINS("local.chains", "  old chain and candidate sites (in local.before)"),
         LOCAL_SCORE_OLD("local.scoreOld", "  scoring the old states of P and the old chain (in local.before)"),
-        LOCAL_AFTER("local.after", "new phase of a move with the local block (whole)"),
+        LOCAL_AFTER("local.after", "new states of a move with the local block (whole)"),
         LOCAL_NEW_CHAIN("local.newChain", "  new chain and clearing the old chain's states (in local.after)"),
         LOCAL_SAMPLE_NEW("local.sampleNew", "  drawing the new states of P and the new chain (in local.after)"),
         // a subtree move with the path block
-        PATH_BEFORE("path.before", "old phase of a move with the path block (whole)"),
+        PATH_BEFORE("path.before", "old states of a move with the path block (whole)"),
         PATH_CANDIDATES("path.candidates", "  block and candidate sites (in path.before)"),
         PATH_SCORE_OLD("path.scoreOld", "  scoring the old states of the block (in path.before)"),
-        PATH_AFTER("path.after", "new phase of a move with the path block (whole)"),
+        PATH_AFTER("path.after", "new states of a move with the path block (whole)"),
         PATH_SAMPLE_NEW("path.sampleNew", "  drawing the new states of the block (in path.after)"),
         PATH_HISTORIES("path.histories", "  scoring and drawing explicit hits (in path.before/after)"),
         // Gibbs update of a block in place

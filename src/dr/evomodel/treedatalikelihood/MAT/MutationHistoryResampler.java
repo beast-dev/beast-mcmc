@@ -61,7 +61,7 @@ import dr.evomodel.treedatalikelihood.MAT.BlockSampler.UniformConditional;
  * <ul>
  * <li>the path block: P and the internal nodes on the path between S and D in the pruned tree, at every
  * variable site, which contains every node whose ambiguity can change;</li>
- * <li>the local block ({@link LocalMove}): P at every variable site, and at each site only the nodes whose
+ * <li>the local block ({@link #resampleLocalMove}): P at every variable site, and at each site only the nodes whose
  * data there come only from X (whose presence the move changes), as in the subtree moves of Varilly et
  * al. (Nature, 2026). Its cost does not grow with the distance moved.</li>
  * </ul>
@@ -275,9 +275,9 @@ public class MutationHistoryResampler {
                         "operators (with a weight of about 10% of the subtree moves' weight).");
                 gibbsWarningGiven = true;
             }
-            return afterLocalMove(beforeLocalMove(x, s, d, oldView, newView), newView);
+            return resampleLocalMove(x, s, d, oldView, newView);
         } else {
-            return afterPathMove(beforePathMove(x, s, d, oldView), newView);
+            return resamplePathMove(x, s, d, oldView, newView);
         }
     }
 
@@ -293,57 +293,99 @@ public class MutationHistoryResampler {
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * What a path move carries from the old phase (the old states scored under the old topology) to the
-     * new (the new states drawn under the new one).
+     * A move with the path block: scores the block's old states under the old topology, then draws its new
+     * states under the new one.
+     *
+     * @return the log Hastings ratio
      */
-    private static final class PathMove {
-        int[] movedNodes;              // S, P and D: the nodes whose parents the move may change
-        int[] block;                   // P and the internal nodes on the old S-D path
-        PathPass oldPass;              // the sparse pass of the old phase, or null
-        double logProposalOfOldHistories;
-    }
-
-    private PathMove beforePathMove(int x, int s, int d, TopologyView oldView) {
+    private double resamplePathMove(int x, int s, int d, TopologyView oldView, TopologyView newView) {
         MATProfile.count(MATProfile.Counter.PATH_MOVES, 1);
-        final long profileStart = MATProfile.start();
-        try {
-            return beforePathMoveImpl(x, s, d, oldView);
-        } finally {
-            MATProfile.stop(MATProfile.Phase.PATH_BEFORE, profileStart);
-        }
-    }
 
-    private PathMove beforePathMoveImpl(int x, int s, int d, TopologyView oldView) {
+        // the old states, under the old topology
+        final long beforeStart = MATProfile.start();
         delegate.ensureRates();
-        final PathMove move = new PathMove();
         final int p = oldView.getParent(x);
-        move.movedNodes = new int[]{s, p, d};
         long profileStart = MATProfile.start();
-        move.block = getBlock(p, s, d, oldView);
+        final int[] block = getBlock(p, s, d, oldView);
+        final PathPass oldPass;
         if (sparse) {
-            move.oldPass = makePathPass(move.block, x, oldView);
+            oldPass = makePathPass(block, x, oldView);
             MATProfile.stop(MATProfile.Phase.PATH_CANDIDATES, profileStart);
             profileStart = MATProfile.start();
-            sampleBlock(move.block, false, siteClasses, move.oldPass.substitutionSites, oldSiteLogProbabilities,
-                    move.oldPass, oldView);
+            sampleBlock(block, false, siteClasses, oldPass.substitutionSites, oldSiteLogProbabilities,
+                    oldPass, oldView);
         } else {
             // every variable site is a candidate
-            setSiteClasses(move.block, oldView);
+            oldPass = null;
+            setSiteClasses(block, oldView);
             MATProfile.stop(MATProfile.Phase.PATH_CANDIDATES, profileStart);
             profileStart = MATProfile.start();
-            sampleBlock(move.block, false, siteClasses, variableSites, oldSiteLogProbabilities, null, oldView);
+            sampleBlock(block, false, siteClasses, variableSites, oldSiteLogProbabilities, null, oldView);
         }
         MATProfile.stop(MATProfile.Phase.PATH_SCORE_OLD, profileStart);
-        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, move.oldPass == null ? variableSites.length :
-                move.oldPass.substitutionSites.length + move.oldPass.ambiguitySites.length);
+        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, oldPass == null ? variableSites.length :
+                oldPass.substitutionSites.length + oldPass.ambiguitySites.length);
+        double logProposalOfOldHistories = 0.0;
         if (historyModel.hasExplicitHistories()) {
             // every variable site is resampled (explicit hits are not handled sparsely), so score all their
             // hits around the block
             profileStart = MATProfile.start();
-            move.logProposalOfOldHistories = scoreHistories(getIncidentBranches(move.block, oldView), variableSites, oldView);
+            logProposalOfOldHistories = scoreHistories(getIncidentBranches(block, oldView), variableSites, oldView);
             MATProfile.stop(MATProfile.Phase.PATH_HISTORIES, profileStart);
         }
-        return move;
+        MATProfile.stop(MATProfile.Phase.PATH_BEFORE, beforeStart);
+
+        // the new states, under the new topology
+        final long afterStart = MATProfile.start();
+        final IntBuffer reparented = syncParents(new int[]{s, p, d}, newView);
+
+        // every candidate is resampled (the others are handled together when sampling sparsely)
+        final int[] resampled = oldPass != null ? oldPass.substitutionSites : variableSites;
+        changedSites.addAll(resampled, resampled.length);
+
+        double logProposalOfOldStates = oldPass != null ?
+                oldPass.uniformLogProbability + oldPass.ambiguityLogProbability : 0.0;
+        for (int site : resampled) {
+            logProposalOfOldStates += oldSiteLogProbabilities[site];
+        }
+        final PathPass newPass = oldPass == null ? null :
+                new PathPass(oldPass.referenceNode, oldPass.uniformCounts, oldPass.substitutionSites,
+                        oldPass.ambiguitySites, oldPass.candidateStamp);
+        profileStart = MATProfile.start();
+        double logProposalOfNewStates = sampleBlock(block, true, siteClasses, resampled, null, newPass, newView);
+        MATProfile.stop(MATProfile.Phase.PATH_SAMPLE_NEW, profileStart);
+        lastChangedUniformCount = newPass == null ? 0 : newPass.changedUniformCount;
+        delegate.setHistoryResampled();
+
+        if (newPass != null) {
+            // the other sites whose block states changed also need their branches updated
+            changedSites.addAll(newPass.otherChangedSites);
+        }
+
+        // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
+        store.setFitchSetsStale(true);
+
+        if (historyModel.hasExplicitHistories()) {
+            // draw the hits of the resampled sites on every branch touching the block, given their end states
+            Set<Integer> branches = new HashSet<Integer>();
+            for (int i = 0; i < reparented.count; i++) {
+                branches.add(reparented.values[i]);
+            }
+            for (int n : getIncidentBranches(block, newView)) {
+                branches.add(n);
+            }
+            profileStart = MATProfile.start();
+            MATProfile.count(MATProfile.Counter.CHANGED_SITES, changedSites.size());
+            double logProposalOfNewHistories = sampleHistories(branches, resampled, newView);
+            MATProfile.stop(MATProfile.Phase.PATH_HISTORIES, profileStart);
+            changedSites.clear();
+            MATProfile.stop(MATProfile.Phase.PATH_AFTER, afterStart);
+            return logProposalOfOldStates - logProposalOfNewStates + logProposalOfOldHistories - logProposalOfNewHistories;
+        }
+
+        updateBranchesAroundBlock(block, reparented, newView);
+        MATProfile.stop(MATProfile.Phase.PATH_AFTER, afterStart);
+        return logProposalOfOldStates - logProposalOfNewStates;
     }
 
     /**
@@ -447,68 +489,6 @@ public class MutationHistoryResampler {
             }
         }
         throw new IllegalArgumentException("The block has no children outside it");
-    }
-
-    private double afterPathMove(PathMove move, TopologyView newView) {
-        final long profileStart = MATProfile.start();
-        try {
-            return afterPathMoveImpl(move, newView);
-        } finally {
-            MATProfile.stop(MATProfile.Phase.PATH_AFTER, profileStart);
-        }
-    }
-
-    private double afterPathMoveImpl(PathMove move, TopologyView newView) {
-        final int[] currentBlock = move.block;
-        final PathPass oldPass = move.oldPass;
-        final IntBuffer reparented = syncParents(move.movedNodes, newView);
-
-        // every candidate is resampled (the others are handled together when sampling sparsely)
-        final int[] resampled = oldPass != null ? oldPass.substitutionSites : variableSites;
-        changedSites.addAll(resampled, resampled.length);
-
-        double logProposalOfOldStates = oldPass != null ?
-                oldPass.uniformLogProbability + oldPass.ambiguityLogProbability : 0.0;
-        for (int p : resampled) {
-            logProposalOfOldStates += oldSiteLogProbabilities[p];
-        }
-        final PathPass newPass = oldPass == null ? null :
-                new PathPass(oldPass.referenceNode, oldPass.uniformCounts, oldPass.substitutionSites,
-                        oldPass.ambiguitySites, oldPass.candidateStamp);
-        long profileStart = MATProfile.start();
-        double logProposalOfNewStates = sampleBlock(currentBlock, true, siteClasses, resampled, null, newPass, newView);
-        MATProfile.stop(MATProfile.Phase.PATH_SAMPLE_NEW, profileStart);
-        lastChangedUniformCount = newPass == null ? 0 : newPass.changedUniformCount;
-        delegate.setHistoryResampled();
-
-        if (newPass != null) {
-            // the other sites whose block states changed also need their branches updated
-            changedSites.addAll(newPass.otherChangedSites);
-        }
-
-        // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
-        store.setFitchSetsStale(true);
-
-        if (historyModel.hasExplicitHistories()) {
-            // draw the hits of the resampled sites on every branch touching the block, given their end states
-            Set<Integer> branches = new HashSet<Integer>();
-            for (int i = 0; i < reparented.count; i++) {
-                branches.add(reparented.values[i]);
-            }
-            for (int n : getIncidentBranches(currentBlock, newView)) {
-                branches.add(n);
-            }
-            profileStart = MATProfile.start();
-            MATProfile.count(MATProfile.Counter.CHANGED_SITES, changedSites.size());
-            double logProposalOfNewHistories = sampleHistories(branches, resampled, newView);
-            MATProfile.stop(MATProfile.Phase.PATH_HISTORIES, profileStart);
-            changedSites.clear();
-            return logProposalOfOldStates - logProposalOfNewStates + move.logProposalOfOldHistories - logProposalOfNewHistories;
-        }
-
-        updateBranchesAroundBlock(currentBlock, reparented, newView);
-
-        return logProposalOfOldStates - logProposalOfNewStates;
     }
 
     /**
@@ -684,10 +664,10 @@ public class MutationHistoryResampler {
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * What a local move carries from before the topology change to after it.
+     * A move with the local block.
      * <p>
-     * The subtree below X ({@code node}) moves, with its parent P, from beside S ({@code sibling}) to the
-     * branch above D ({@code destination}). Before the move P's neighbours are its parent G, S and X; after
+     * The subtree below X moves, with its parent P, from beside S to the
+     * branch above D. Before the move P's neighbours are its parent G, S and X; after
      * it they are its new parent N, D and X. P's states are resampled at every variable site, given its
      * neighbours. At a site where some of X's ancestors have data only from X (a hot site), their states
      * change too: on the old side G, and each ancestor above it whose other children have no data there,
@@ -701,101 +681,150 @@ public class MutationHistoryResampler {
      * runs of ambiguous patterns of the neighbours (see {@link LocalPass}), so a move costs
      * O(events near P + runs + changes), whatever the distance moved
      * (see optimization_notes/mat_local_spr/DESIGN.md).
+     *
+     * @return the log Hastings ratio
      */
-    private static final class LocalMove {
-        int node;                      // X
-        int parent;                    // P
-        int sibling;                   // S
-        int destination;               // D
-        int newParent;                 // N: -1 if P becomes the root
-        int[] presentX;                // runs of patterns at which X has data
-        int[] oldChain;                // G and the ancestors above it, as far as any site's old chain reaches
-        int[][] oldChainLevels;        // [i]: runs of patterns at which the old chain reaches oldChain[i]
-        int[] oldHotSites;             // the variable sites at which the old chain is not empty
-        int[] newSubstitutionSites;
-        int newStamp;
-        double logProposalOfOldStates;
-    }
-
-    private LocalMove beforeLocalMove(int x, int s, int d, TopologyView oldView, TopologyView newView) {
+    private double resampleLocalMove(int x, int s, int d, TopologyView oldView, TopologyView newView) {
         MATProfile.count(MATProfile.Counter.LOCAL_MOVES, 1);
-        final long profileStart = MATProfile.start();
-        try {
-            return beforeLocalMoveImpl(x, s, d, oldView, newView);
-        } finally {
-            MATProfile.stop(MATProfile.Phase.LOCAL_BEFORE, profileStart);
-        }
-    }
 
-    private LocalMove beforeLocalMoveImpl(int x, int s, int d, TopologyView oldView, TopologyView newView) {
+        // the old states, under the old topology
+        final long beforeStart = MATProfile.start();
         delegate.ensureRates();
         localStamp++;
         final int markStamp = localStamp;
 
-        final LocalMove move = new LocalMove();
         final int p = oldView.getParent(x);
         final int g = oldView.getParent(p);
-        move.node = x;
-        move.parent = p;
-        move.sibling = s;
-        move.destination = d;
-        move.newParent = newView.getParent(p);
+        final int newParent = newView.getParent(p);  // N: -1 if P becomes the root
         long profileStart = MATProfile.start();
-        move.presentX = SiteRuns.complement(getAmbiguousRuns(move.node), patternCount);
-        findOldChain(move, g, move.newParent, oldView);
-        for (int site : move.oldHotSites) {
+        // the runs of patterns at which X has data
+        final int[] presentX = SiteRuns.complement(getAmbiguousRuns(x), patternCount);
+        final Chain oldChain = findOldChain(p, s, g, newParent, presentX, oldView);
+        for (int site : oldChain.hotSites) {
             hotMarks[site] = markStamp;
         }
 
         // The old pass: P with neighbours G, S and X.
         // (the sites at which a neighbour is ambiguous are found from their runs when P is scored or drawn)
         final IntBuffer oldSubstitutions = new IntBuffer();
-        collectSubstitutionSites(g < 0 ? new int[]{move.node, move.sibling} :
-                new int[]{move.node, move.sibling, move.parent}, oldMarks, markStamp, oldSubstitutions);
+        collectSubstitutionSites(g < 0 ? new int[]{x, s} :
+                new int[]{x, s, p}, oldMarks, markStamp, oldSubstitutions);
         final int[] oldSubstitutionSites = oldSubstitutions.toArray();
-        final int[] oldUniformCounts = getUniformCounts(move.node, oldSubstitutionSites, move.oldHotSites, oldMarks, markStamp);
+        final int[] oldUniformCounts = getUniformCounts(x, oldSubstitutionSites, oldChain.hotSites, oldMarks, markStamp);
 
         // The new pass: P with neighbours N, D and X. P's state there is affected by the substitutions
         // between X and N (in the old topology, where they are on the path between them) and between D and
         // N, and by the runs of ambiguous patterns of X, D and N (after the old chain loses its states, since
         // D may be in it).
-        final int anchor = move.newParent >= 0 ? move.newParent : d;
+        final int anchor = newParent >= 0 ? newParent : d;
         final IntBuffer pathBranches = getBranchesBetween(x, anchor, oldView);
-        if (move.newParent >= 0) {
-            pathBranches.add(move.destination);
+        if (newParent >= 0) {
+            pathBranches.add(d);
         }
         final IntBuffer newSubstitutions = new IntBuffer();
         collectSubstitutionSites(pathBranches.toArray(), newMarks, markStamp, newSubstitutions);
-        move.newSubstitutionSites = newSubstitutions.toArray();
-        move.newStamp = markStamp;
+        final int[] newSubstitutionSites = newSubstitutions.toArray();
         MATProfile.stop(MATProfile.Phase.LOCAL_CHAINS, profileStart);
-        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, oldSubstitutionSites.length + move.oldHotSites.length);
-        MATProfile.count(MATProfile.Counter.HOT_SITES, move.oldHotSites.length);
+        MATProfile.count(MATProfile.Counter.CANDIDATE_SITES, oldSubstitutionSites.length + oldChain.hotSites.length);
+        MATProfile.count(MATProfile.Counter.HOT_SITES, oldChain.hotSites.length);
 
         // score P's current states (and the old chain's) under the old topology
         profileStart = MATProfile.start();
-        final LocalPass pass = new LocalPass(move.node, oldUniformCounts, oldSubstitutionSites, move.oldHotSites);
+        final LocalPass pass = new LocalPass(x, oldUniformCounts, oldSubstitutionSites, oldChain.hotSites);
         final int[] substitutionSites = withoutMarked(oldSubstitutionSites, hotMarks, markStamp);
-        double logProbability = sampleBlock(new int[]{move.parent}, false, null, substitutionSites, null, pass, oldView);
-        logProbability += sampleChains(move.parent, move.oldChain, move.oldChainLevels, false, oldView);
+        double logProposalOfOldStates = sampleBlock(new int[]{p}, false, null, substitutionSites, null, pass, oldView);
+        logProposalOfOldStates += sampleChains(p, oldChain, false, oldView);
         MATProfile.stop(MATProfile.Phase.LOCAL_SCORE_OLD, profileStart);
-        move.logProposalOfOldStates = logProbability;
-        return move;
+        MATProfile.stop(MATProfile.Phase.LOCAL_BEFORE, beforeStart);
+
+        // the new states, under the new topology
+        final long afterStart = MATProfile.start();
+        profileStart = MATProfile.start();
+        final IntBuffer reparented = syncParents(new int[]{s, p, d}, newView);
+
+        // The new chain: N, and each ancestor above it that had no data, gain states where X has data
+        // (read before the old chain loses its states, so as states before the move).
+        final Chain newChain = findNewChain(newParent, presentX, newView);
+        final int[] newHotSites = newChain.hotSites;
+        localStamp++;
+        final int newHotStamp = localStamp;
+        for (int site : newHotSites) {
+            hotMarks[site] = newHotStamp;
+        }
+
+        // the old chain loses its states at its hot sites
+        for (int i = 0; i < oldChain.nodes.length; i++) {
+            for (int site : variableSitesIn(oldChain.levels[i])) {
+                store.setState(oldChain.nodes[i], site, -1);
+            }
+        }
+
+        MATProfile.stop(MATProfile.Phase.LOCAL_NEW_CHAIN, profileStart);
+        MATProfile.count(MATProfile.Counter.HOT_SITES, newHotSites.length);
+
+        // draw P's states (and the new chain's) under the new topology
+        profileStart = MATProfile.start();
+        final LocalPass newPass = new LocalPass(x,
+                getUniformCounts(x, newSubstitutionSites, newHotSites, newMarks, markStamp),
+                newSubstitutionSites, newHotSites);
+        final int[] newSites = withoutMarked(newSubstitutionSites, hotMarks, newHotStamp);
+        double logProposalOfNewStates = sampleBlock(new int[]{p}, true, null, newSites, null, newPass, newView);
+        logProposalOfNewStates += sampleChains(p, newChain, true, newView);
+        MATProfile.stop(MATProfile.Phase.LOCAL_SAMPLE_NEW, profileStart);
+        lastChangedUniformCount = newPass.changedUniformCount;
+        delegate.setHistoryResampled();
+        // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
+        store.setFitchSetsStale(true);
+
+        // the sites at which any state changed
+        changedSites.addAll(newSites, newSites.length);
+        changedSites.addAll(newPass.otherChangedSites);
+        changedSites.addAll(oldChain.hotSites, oldChain.hotSites.length);
+        changedSites.addAll(newHotSites, newHotSites.length);
+
+        // the nodes whose states changed: P (whose other child is now D) and the chains
+        final int[] changedNodes = new int[1 + oldChain.nodes.length + newChain.nodes.length];
+        changedNodes[0] = p;
+        System.arraycopy(oldChain.nodes, 0, changedNodes, 1, oldChain.nodes.length);
+        System.arraycopy(newChain.nodes, 0, changedNodes, 1 + oldChain.nodes.length, newChain.nodes.length);
+        updateBranchesAroundBlock(changedNodes, reparented, newView);
+        MATProfile.stop(MATProfile.Phase.LOCAL_AFTER, afterStart);
+        return logProposalOfOldStates - logProposalOfNewStates;
+    }
+
+    /**
+     * Ancestors of X whose states a local move changes at the sites where X is their only data.
+     */
+    private static final class Chain {
+        final int[] nodes;     // from the lowest up, as far as any site's chain reaches
+        final int[][] levels;  // [i]: the runs of patterns at which the chain reaches nodes[i]
+        final int[] hotSites;  // the variable sites at which the chain is not empty
+
+        Chain(int[] nodes, int[][] levels, int[] hotSites) {
+            this.nodes = nodes;
+            this.levels = levels;
+            this.hotSites = hotSites;
+        }
+    }
+
+    private Chain makeChain(IntBuffer nodes, List<int[]> levels) {
+        return new Chain(nodes.toArray(), levels.toArray(new int[levels.size()][]),
+                levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0)));
     }
 
     /**
      * Finds the old chain: G and each ancestor above it lose their states where X was their only data, up to
      * the first node that is above X's new position too.
      */
-    private void findOldChain(LocalMove move, int g, int newParent, TopologyView oldView) {
+    private Chain findOldChain(int p, int s, int g, int newParent, int[] presentX, TopologyView oldView) {
         final int newAncestorStamp = nextNodeStamp();
         for (int n = newParent; n >= 0; n = oldView.getParent(n)) {
             nodeMarks[n] = newAncestorStamp;
         }
         final IntBuffer chain = new IntBuffer();
         final List<int[]> levels = new ArrayList<int[]>();
-        int[] hot = SiteRuns.intersect(move.presentX, getAmbiguousRuns(move.sibling));
-        int previous = move.parent;
+        int[] hot = SiteRuns.intersect(presentX, getAmbiguousRuns(s));
+        int previous = p;
         for (int n = g; n >= 0 && hot.length > 0 && nodeMarks[n] != newAncestorStamp; n = oldView.getParent(n)) {
             for (int i = 0; i < oldView.getChildCount(n); i++) {
                 int c = oldView.getChild(n, i);
@@ -810,9 +839,30 @@ public class MutationHistoryResampler {
             levels.add(hot);
             previous = n;
         }
-        move.oldChain = chain.toArray();
-        move.oldChainLevels = levels.toArray(new int[levels.size()][]);
-        move.oldHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
+        return makeChain(chain, levels);
+    }
+
+    /**
+     * Finds the new chain: N, and each ancestor above it that has no data, gain states where X has data.
+     */
+    private Chain findNewChain(int newParent, int[] presentX, TopologyView newView) {
+        final IntBuffer chain = new IntBuffer();
+        final List<int[]> levels = new ArrayList<int[]>();
+        if (newParent >= 0) {
+            int[] hot = SiteRuns.intersect(presentX, getAmbiguousRuns(newParent));
+            int n = newParent;
+            while (hot.length > 0) {
+                chain.add(n);
+                levels.add(hot);
+                int parent = newView.getParent(n);
+                if (parent < 0) {
+                    break;
+                }
+                hot = SiteRuns.intersect(hot, getAmbiguousRuns(parent));
+                n = parent;
+            }
+        }
+        return makeChain(chain, levels);
     }
 
     /**
@@ -836,91 +886,13 @@ public class MutationHistoryResampler {
         return branches;
     }
 
-    private double afterLocalMove(LocalMove move, TopologyView newView) {
-        final long profileStart = MATProfile.start();
-        try {
-            return afterLocalMoveImpl(move, newView);
-        } finally {
-            MATProfile.stop(MATProfile.Phase.LOCAL_AFTER, profileStart);
-        }
-    }
-
-    private double afterLocalMoveImpl(LocalMove move, TopologyView newView) {
-        long profileStart = MATProfile.start();
-        final IntBuffer reparented = syncParents(new int[]{move.sibling, move.parent, move.destination}, newView);
-
-        // The new chain: N, and each ancestor above it that had no data, gain states where X has data
-        // (read before the old chain loses its states, so as states before the move).
-        final IntBuffer chain = new IntBuffer();
-        final List<int[]> levels = new ArrayList<int[]>();
-        if (move.newParent >= 0) {
-            int[] hot = SiteRuns.intersect(move.presentX, getAmbiguousRuns(move.newParent));
-            int n = move.newParent;
-            while (hot.length > 0) {
-                chain.add(n);
-                levels.add(hot);
-                int parent = newView.getParent(n);
-                if (parent < 0) {
-                    break;
-                }
-                hot = SiteRuns.intersect(hot, getAmbiguousRuns(parent));
-                n = parent;
-            }
-        }
-        final int[] newChain = chain.toArray();
-        final int[][] newChainLevels = levels.toArray(new int[levels.size()][]);
-        final int[] newHotSites = levels.isEmpty() ? new int[0] : variableSitesIn(levels.get(0));
-        localStamp++;
-        final int newHotStamp = localStamp;
-        for (int site : newHotSites) {
-            hotMarks[site] = newHotStamp;
-        }
-
-        // the old chain loses its states at its hot sites
-        for (int i = 0; i < move.oldChain.length; i++) {
-            for (int site : variableSitesIn(move.oldChainLevels[i])) {
-                store.setState(move.oldChain[i], site, -1);
-            }
-        }
-
-        MATProfile.stop(MATProfile.Phase.LOCAL_NEW_CHAIN, profileStart);
-        MATProfile.count(MATProfile.Counter.HOT_SITES, newHotSites.length);
-
-        // draw P's states (and the new chain's) under the new topology
-        profileStart = MATProfile.start();
-        final LocalPass pass = new LocalPass(move.node,
-                getUniformCounts(move.node, move.newSubstitutionSites, newHotSites, newMarks, move.newStamp),
-                move.newSubstitutionSites, newHotSites);
-        final int[] substitutionSites = withoutMarked(move.newSubstitutionSites, hotMarks, newHotStamp);
-        double logProposalOfNewStates = sampleBlock(new int[]{move.parent}, true, null, substitutionSites, null, pass, newView);
-        logProposalOfNewStates += sampleChains(move.parent, newChain, newChainLevels, true, newView);
-        MATProfile.stop(MATProfile.Phase.LOCAL_SAMPLE_NEW, profileStart);
-        lastChangedUniformCount = pass.changedUniformCount;
-        delegate.setHistoryResampled();
-        // the Fitch sets no longer match the topology; parsimony will recompute them if it is ever needed
-        store.setFitchSetsStale(true);
-
-        // the sites at which any state changed
-        changedSites.addAll(substitutionSites, substitutionSites.length);
-        changedSites.addAll(pass.otherChangedSites);
-        changedSites.addAll(move.oldHotSites, move.oldHotSites.length);
-        changedSites.addAll(newHotSites, newHotSites.length);
-
-        // the nodes whose states changed: P (whose other child is now D) and the chains
-        final int[] changedNodes = new int[1 + move.oldChain.length + newChain.length];
-        changedNodes[0] = move.parent;
-        System.arraycopy(move.oldChain, 0, changedNodes, 1, move.oldChain.length);
-        System.arraycopy(newChain, 0, changedNodes, 1 + move.oldChain.length, newChain.length);
-        updateBranchesAroundBlock(changedNodes, reparented, newView);
-
-        return move.logProposalOfOldStates - logProposalOfNewStates;
-    }
-
     /**
      * Scores or draws the states of the chains {P, chain[0], ..., chain[k]} at the sites where the chain
-     * has length k + 1 (levels[i] are the runs of patterns at which it reaches chain[i]).
+     * has length k + 1.
      */
-    private double sampleChains(int p, int[] chain, int[][] levels, boolean sample, TopologyView view) {
+    private double sampleChains(int p, Chain c, boolean sample, TopologyView view) {
+        final int[] chain = c.nodes;
+        final int[][] levels = c.levels;
         double logProbability = 0.0;
         for (int k = 0; k < chain.length; k++) {
             int[] exact = k + 1 < chain.length ? SiteRuns.subtract(levels[k], levels[k + 1], patternCount) : levels[k];

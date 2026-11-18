@@ -151,6 +151,11 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
+            if (storeRequired) {
+                // lazy store
+                doStoreState();
+            }
+
             // treeModel has changed so recalculate the intervals
             eventsKnown = false;
         }
@@ -190,25 +195,38 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      * Stores the precalculated state: in this case the intervals
      */
     protected void storeState() {
+        // flag a lazy store is required
+        storeRequired = true;
+    }
+
+    private void doStoreState() {
         // copy the intervals into the storedIntervals
         storedIntervals.copyIntervals(intervals);
         storedEventsKnown = eventsKnown;
         this.intervalNodeMapping.storeMapping();
+
+        storeRequired = false;
+        restoreRequired = true;
     }
+
 
     /**
      * Restores the precalculated state: that is the intervals of the tree.
      */
     protected void restoreState() {
-        // swap the intervals back
-        MutableIntervalList tmp = storedIntervals;
-        storedIntervals = intervals;
-        intervals = tmp;
+        if (restoreRequired) {
+            // swap the intervals back
+            MutableIntervalList tmp = storedIntervals;
+            storedIntervals = intervals;
+            intervals = tmp;
 
-        eventsKnown = storedEventsKnown;
-        this.intervalNodeMapping.restoreMapping();
+            eventsKnown = storedEventsKnown;
+            this.intervalNodeMapping.restoreMapping();
 
-        assert isMonophyly();
+            assert isMonophyly();
+
+            restoreRequired = false;
+        }
     }
 
     protected final void acceptState() {
@@ -505,6 +523,7 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
         }
 
     }
+
     public interface IntervalNodeMapping {
 
         void addNode(int nodeNumber);
@@ -794,6 +813,9 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
     /**
      * The stored values for intervals.
      */
+    private boolean storeRequired = false;
+    private boolean restoreRequired = false;
+
     private MutableIntervalList storedIntervals = null;
 
     private boolean eventsKnown = false;

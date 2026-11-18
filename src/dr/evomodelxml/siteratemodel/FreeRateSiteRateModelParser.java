@@ -147,8 +147,11 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(CATEGORIES, true),
+            AttributeRule.newIntegerRule(CATEGORIES),
 //            AttributeRule.newStringRule(PARAMETERIZATION, true),
+            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                    new ElementRule(SubstitutionModel.class)
+            }, true),
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
@@ -165,7 +168,11 @@ public class FreeRateSiteRateModelParser extends AbstractXMLObjectParser {
 
             new ElementRule(WEIGHTS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
-            }, false)
+            }, false),
+
+            new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true)
     };
 
 }//END: class

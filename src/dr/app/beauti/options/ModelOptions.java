@@ -236,6 +236,11 @@ public abstract class ModelOptions implements Serializable {
     public Parameter createNonNegativeStatistic(String name, String description) {
         return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).isNonNegative(true).build(parameters);
     }
+
+    public Parameter createStatisticDirichletPrior(String name, String description, PartitionOptions options, double maintainedSum) {
+        return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.DIRICHLET_PRIOR)
+                .isNonNegative(true).maintainedSum(maintainedSum).partitionOptions(options).build(parameters);
+    }
     //+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
     public Operator createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);

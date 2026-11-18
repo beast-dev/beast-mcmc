@@ -238,6 +238,10 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
             return getCategoryCount();
         }
 
+        public String getDimensionName(int dim) {
+            return getColumnName("rates", dim);
+        }
+
         public double getStatisticValue(int dim) {
             if(!ratesKnown){
                 calculateCategoryRates();
@@ -256,6 +260,10 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
 
         public int getDimension() {
             return getCategoryCount();
+        }
+
+        public String getDimensionName(int dim) {
+            return getColumnName("weights", dim);
         }
 
         public double getStatisticValue(int dim) {
@@ -279,6 +287,10 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
             return getCategoryCount();
         }
 
+        public String getDimensionName(int dim) {
+            return getColumnName("rates_x_weights", dim);
+        }
+
         public double getStatisticValue(int dim) {
             if(!ratesKnown){
                 calculateCategoryRates();
@@ -289,6 +301,15 @@ public class DiscretizedSiteRateModel extends AbstractModel implements SiteRateM
         }
 
     };
+
+    /**
+     * @return the log column name of one dimension of a per-category statistic: the statistic name and
+     * category number, prefixed by this model's id when it has one so that models logged together stay apart
+     */
+    private String getColumnName(String statisticName, int dim) {
+        String prefix = (getId() != null ? getId() + "." : "");
+        return prefix + statisticName + (dim + 1);
+    }
 
     /**
      * mutation rate parameter

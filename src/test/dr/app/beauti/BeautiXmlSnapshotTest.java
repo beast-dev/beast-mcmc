@@ -208,5 +208,29 @@ public class BeautiXmlSnapshotTest {
     public void dengue4aa_blosum62_gamma_ucld_yule() throws Exception {
         BeautiHeadlessHarness.run("dengue4aa_blosum62_gamma_ucld_yule");
     }
+    @Test
+    public void apes_hky_freerates_strict_constant() throws Exception {
+        BeautiHeadlessHarness.run("apes_hky_freerates_strict_constant");
+    }
+
+    @Test
+    public void apes_hky_freerates3_strict_constant() throws Exception {
+        BeautiHeadlessHarness.run("apes_hky_freerates3_strict_constant");
+    }
+
+    @Test
+    public void apes_hky_codon123_freerates_strict_yule() throws Exception {
+        BeautiHeadlessHarness.run("apes_hky_codon123_freerates_strict_yule");
+    }
+
+    @Test
+    public void apes_hky_codon112_freerates_linked_strict_constant() throws Exception {
+        BeautiHeadlessHarness.run("apes_hky_codon112_freerates_linked_strict_constant");
+    }
+
+    @Test
+    public void dengue4aa_blosum62_freerates_ucld_yule() throws Exception {
+        BeautiHeadlessHarness.run("dengue4aa_blosum62_freerates_ucld_yule");
+    }
 
 }

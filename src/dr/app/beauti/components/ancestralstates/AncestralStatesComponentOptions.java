@@ -120,7 +120,8 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
             throw new IllegalArgumentException("dNdS Robust Counting can only be used with 3 codon partition models.");
         }
         if (dNdSRobustCounting && (partition.getPartitionSubstitutionModel().isGammaHetero() ||
-                partition.getPartitionSubstitutionModel().isInvarHetero())) {
+                partition.getPartitionSubstitutionModel().isInvarHetero() ||
+                partition.getPartitionSubstitutionModel().isFreeRatesHetero())) {
             throw new IllegalArgumentException("dNdS Robust Counting can only be when site-specific rate heterogeneity is off.");
         }
         if (dNdSRobustCounting && !isWholeNumberOfCodons(partition)) {
@@ -146,7 +147,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
     public String dNdSRobustCountingUnavailableReason(final AbstractPartitionData partition) {
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model.getCodonPartitionCount() != 3 || model.isGammaHetero() || model.isInvarHetero()) {
+        if (model.getCodonPartitionCount() != 3 || model.isGammaHetero() || model.isInvarHetero() || model.isFreeRatesHetero()) {
             return "This model requires a 3-partition codon model to be selected in the Site model " +
                     "for this partition and NO Site Heterogeneity Model before it can be selected.";
         }

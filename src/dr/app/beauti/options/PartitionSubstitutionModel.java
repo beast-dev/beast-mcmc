@@ -40,6 +40,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +57,23 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     // Instance variables
 
     public static final String GTR_RATES = "gtr.rates";
+    public static final String FREE_RATES_WEIGHTS = "freeRates.weights";
+    public static final String FREE_RATES_RATES = "freeRates.rates";
+    public static final String FREE_RATES_WEIGHTED_RATES = "freeRates.weightedRates";
+    // the concentration of the symmetric Dirichlet prior on the free rates weights: above one it keeps
+    // a category from shrinking to a weight so small that its rate is unidentifiable and the likelihood
+    // becomes numerically unstable
+    public static final double FREE_RATES_WEIGHTS_ALPHA = 2.0;
+
+    // the codon position prefixes a site heterogeneity parameter is created under, with the
+    // suffix for its description
+    private static final String[][] CODON_PREFIXES = {
+            {"", ""},
+            {"CP1.", " for codon position 1"},
+            {"CP2.", " for codon position 2"},
+            {"CP1+2.", " for codon positions 1 & 2"},
+            {"CP3.", " for codon position 3"}
+    };
     public static final String[] GTR_RATE_NAMES = {"gtr.AC", "gtr.AG", "gtr.AT", "gtr.CG", "gtr.GT"};
     private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
 
@@ -81,6 +100,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public boolean useAmbiguitiesTreeLikelihood = false;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
+    // freeRatesHetero is exclusive of gammaHetero and invarHetero (the panel clears them)
     private boolean freeRatesHetero = false;
     private boolean gammaHetero = false;
     private int rateCategories = 4;
@@ -281,6 +301,20 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             createZeroOneParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", 0.5, true);
             createZeroOneParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3", 0.5, true);
 
+            // Free rates model: the category weights sum to one and the rates have a weighted mean of one.
+            // The two free rates operators move them together to keep those constraints, so neither joins
+            // the adaptive multivariate kernel. The rates get their prior through the per-category share
+            // of the total rate (weight x rate), a statistic defined with the site model, so the rates
+            // parameter itself carries no prior and is not offered in the priors table.
+            for (String[] cp : CODON_PREFIXES) {
+                createNonNegativeParameterDirichletPrior(cp[0] + FREE_RATES_WEIGHTS,
+                        "free rates category weights" + cp[1], this, 1.0, false).shape = FREE_RATES_WEIGHTS_ALPHA;
+                createNonNegativeParameterInfinitePrior(cp[0] + FREE_RATES_RATES,
+                        "free rates category rates" + cp[1], this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, false);
+                createStatisticDirichletPrior(cp[0] + FREE_RATES_WEIGHTED_RATES,
+                        "free rates share of the total rate in each category" + cp[1], this, 1.0);
+            }
+
             // nu parameters are an alternative parameterization of relative rates suitable for using with a Dirichlet prior.
             // They sum to 1 and their product with the evolutionary rate is weighted by the partitions size.
             createZeroOneParameterUniformPrior("nu", "relative rate parameter", 1.0, true);
@@ -368,6 +402,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
             createOperator("CP1+2.uniformPInv", "CP1+2.uniformPInv", "Random walk on pInv in logit space", "CP1+2.pInv", OperatorType.UNIFORM, demoTuning, substWeights);
             // }
+
+            for (String[] cp : CODON_PREFIXES) {
+                createOperatorUsing2Parameters(cp[0] + "freeRates.deltaExchange", cp[0] + FREE_RATES_WEIGHTS,
+                        "Moves weight between two free rates categories, adjusting a rate to keep the mean rate at one",
+                        cp[0] + FREE_RATES_WEIGHTS, cp[0] + FREE_RATES_RATES,
+                        OperatorType.FREE_RATE_DELTA_EXCHANGE, 0.01, substWeights);
+                createOperatorUsing2Parameters(cp[0] + "freeRates.upDown", cp[0] + FREE_RATES_RATES,
+                        "Scales two free rates category rates in opposite directions, keeping the mean rate at one",
+                        cp[0] + FREE_RATES_WEIGHTS, cp[0] + FREE_RATES_RATES,
+                        OperatorType.FREE_RATE_UP_DOWN, demoTuning, substWeights);
+            }
         } else if (dataType == DataType.COVARION) {
             createZeroOneParameterUniformPrior("nu", "relative rate parameter", 1.0, true);
             createNonNegativeParameterInfinitePrior("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
@@ -524,7 +569,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
 
         if (freeRatesHetero) {
-            assert false : "Implement";
+            for (String prefix : getHeterogeneityPrefixes(includeRelativeRates)) {
+                params.add(getParameter(prefix + FREE_RATES_WEIGHTS));
+                params.add(getParameter(prefix + FREE_RATES_WEIGHTED_RATES));
+            }
         } else {
             // if gamma do shape move
             if (gammaHetero) {
@@ -562,6 +610,23 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
         return params;
+    }
+
+    /**
+     * @return the codon position prefixes of the site heterogeneity parameters in use: one per codon
+     * partition when the heterogeneity model is unlinked across them, otherwise the single unprefixed set
+     */
+    private List<String> getHeterogeneityPrefixes(boolean hasCodonPartitions) {
+        if (hasCodonPartitions && unlinkedHeterogeneityModel) {
+            if (codonHeteroPattern.equals("123")) {
+                return Arrays.asList("CP1.", "CP2.", "CP3.");
+            } else if (codonHeteroPattern.equals("112")) {
+                return Arrays.asList("CP1+2.", "CP3.");
+            } else {
+                throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+            }
+        }
+        return Collections.singletonList("");
     }
 
     public List<Parameter> getRelativeRateParameters() {
@@ -773,7 +838,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
 
         if (freeRatesHetero) {
-            assert false : "Implement";
+            for (String prefix : getHeterogeneityPrefixes(hasCodonPartitions())) {
+                ops.add(getOperator(prefix + "freeRates.deltaExchange"));
+                ops.add(getOperator(prefix + "freeRates.upDown"));
+            }
         } else {
             // if gamma do shape move
             if (gammaHetero) {

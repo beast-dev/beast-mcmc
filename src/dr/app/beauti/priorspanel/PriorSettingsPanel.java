@@ -86,6 +86,7 @@ public class PriorSettingsPanel extends JPanel {
         optionsPanels.put(PriorType.CTMC_RATE_REFERENCE_PRIOR, PriorOptionsPanel.CTMC_RATE_REFERENCE);
         optionsPanels.put(PriorType.HIERARCHICAL_EXPONENTIAL_PRIOR, PriorOptionsPanel.HIERARCHICAL_EXPONENTIAL);
         optionsPanels.put(PriorType.ONE_OVER_X_PRIOR, PriorOptionsPanel.ONE_OVER_X);
+        optionsPanels.put(PriorType.DIRICHLET_PRIOR, PriorOptionsPanel.DIRICHLET);
 
         chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
                 new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA));

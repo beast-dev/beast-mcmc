@@ -109,6 +109,17 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             }
         }
 
+        //++++++++++++++++ Working priors not yet written for the free rates model ++++++++++++++++++
+        if (mleOptions.performMLEGSS) {
+            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+                if (model.isFreeRatesHetero()) {
+                    throw new GeneratorException("Generalized stepping stone sampling has no working prior for the\n" +
+                            "Free Rates site heterogeneity model yet. Please check the Site Models panel.",
+                            BeautiFrame.SITE_MODELS);
+                }
+            }
+        }
+
         //++++++++++++++++ Coalescent Events available for GSS ++++++++++++++++++
         if (mleOptions.performMLEGSS) {
             EnumSet<TreePriorType> allowedTypes = EnumSet.of(

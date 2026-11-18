@@ -230,7 +230,9 @@ public enum PriorType {
                 buffer.append("]");
                 break;
             case DIRICHLET_PRIOR:
-                buffer.append("Dirichlet [1,1]");
+                buffer.append("Dirichlet [");
+                buffer.append(NumberUtil.formatDecimal(parameter.shape, 10, 6));
+                buffer.append("]");
                 break;
             case ONE_OVER_X_PRIOR:
                 buffer.append("1/x");
@@ -358,6 +360,11 @@ public enum PriorType {
             }
         }
         if (parameter.isStatistic) {
+            if (parameter.isMaintainedSum) {
+                // a statistic on a simplex (the free rates share of the total rate per category): a
+                // Dirichlet is the one prior that applies, so the dialog cannot replace it with another
+                return new PriorType[]{DIRICHLET_PRIOR};
+            }
             if (parameter.isCalibratedYule) {
                 return new PriorType[]{
                         NONE_STATISTIC,

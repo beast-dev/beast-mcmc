@@ -393,7 +393,8 @@ public class ParameterPriorGenerator extends Generator {
             case DIRICHLET_PRIOR:
                 writer.writeOpenTag(PriorParsers.DIRICHLET_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.ALPHA, "1.0"),
+                                // the concentration shared by every component (the parameter's shape)
+                                new Attribute.Default<Double>(PriorParsers.ALPHA, parameter.shape),
                                 new Attribute.Default<Double>(PriorParsers.SUMS_TO, parameter.maintainedSum)
                         }
                 );

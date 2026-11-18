@@ -144,7 +144,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      */
     private Construction construction = null;
 
-    private static final class Construction {
+    // serializable because BEAUti saves its documents by serializing its options, patterns included
+    private static final class Construction implements java.io.Serializable {
+        private static final long serialVersionUID = 1L;
+
         final Alignment alignment; // with only the selected taxa
         final int from, to, every;
         final boolean strip;

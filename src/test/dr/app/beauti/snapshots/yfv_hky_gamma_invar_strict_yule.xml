@@ -516,7 +516,7 @@
 		<randomWalkOperator windowSize="0.75" weight="1" boundaryCondition="logit">
 			<parameter idref="pInv"/>
 		</randomWalkOperator>
-		<subtreeLeap size="1.0" weight="71">
+		<subtreeLeap size="1.0" weight="100">
 			<treeModel idref="treeModel"/>
 		</subtreeLeap>
 		<fixedHeightSubtreePruneRegraft weight="7.1">

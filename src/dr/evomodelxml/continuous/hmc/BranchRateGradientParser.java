@@ -32,7 +32,8 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchRateGradient;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -116,9 +117,21 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
             DataLikelihoodDelegate delegate = treeDataLikelihood.getDataLikelihoodDelegate();
 
-            if (delegate instanceof ContinuousDataLikelihoodDelegate) {
+            if (delegate instanceof CtsCompatibility) {
 
-                ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
+                CtsCompatibility continuousData = (CtsCompatibility) delegate;
+                if (continuousData.usesCanonicalOULikelihood()) {
+                    if (useHessian) {
+                        throw new XMLParseException(
+                                "Canonical OU branch-rate Hessians are not implemented.");
+                    }
+                    if (branchRates == null) {
+                        throw new XMLParseException(
+                                "Canonical OU branchRateGradient requires a branch-rate model with an explicit rate parameter.");
+                    }
+                    return new CanonicalOUBranchRateGradient(
+                            treeDataLikelihood, continuousData, branchRates);
+                }
                 return new BranchRateGradient(traitName, treeDataLikelihood, continuousData, branchRates);
 
             } else if (delegate instanceof BeagleDataLikelihoodDelegate) {
@@ -146,6 +159,7 @@ public class BranchRateGradientParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TRAIT_NAME),
+            AttributeRule.newBooleanRule(USE_HESSIAN, true),
             new XORRule(
                     new ElementRule(TreeDataLikelihood.class),
                     new ElementRule(CompoundLikelihood.class)

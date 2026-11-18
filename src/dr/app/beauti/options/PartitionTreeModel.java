@@ -43,6 +43,10 @@ public class PartitionTreeModel extends PartitionOptions {
     private static final long serialVersionUID = 4829401415152235625L;
     private static final String DEFAULT_EMPIRICAL_TREES_FILENAME = "empirical.trees";
 
+    // the minimum default weights of the tree operators (the weights otherwise scale with the number of taxa)
+    private static final double MIN_SUBTREE_LEAP_WEIGHT = 100.0;
+    private static final double MIN_FHSPR_WEIGHT = 3.0;
+
     private PartitionTreePrior treePrior;
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
@@ -129,11 +133,13 @@ public class PartitionTreeModel extends PartitionOptions {
             createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                     OperatorType.WILSON_BALDING, -1, demoWeights);
 
-            double weight = Math.max(options.taxonList.getTaxonCount(), 30);
+            // the weights scale with the number of taxa but have a minimum for small trees
+            int taxonCount = options.taxonList.getTaxonCount();
             createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
-                    OperatorType.SUBTREE_LEAP, 1.0, weight);
+                    OperatorType.SUBTREE_LEAP, 1.0, Math.max(taxonCount, MIN_SUBTREE_LEAP_WEIGHT));
 
-            weight = Math.max(weight / 10, 3);
+            // the FHSPR weight is also the weight of the MAT operators below
+            double weight = Math.max(taxonCount / 10.0, MIN_FHSPR_WEIGHT);
             createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
                     OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
 
@@ -147,11 +153,13 @@ public class PartitionTreeModel extends PartitionOptions {
             createOperator("subtreeLeap2", "Tree", "Wide-leap subtree-leap rearrangement (MAT)", "tree",
                     OperatorType.SUBTREE_LEAP_WIDE, 1.0, weight);
         } else {
-            double weight = Math.max(options.taxonList.getTaxonCount(), 30);
+            // the weights scale with the number of taxa but have a minimum for small trees
+            int taxonCount = options.taxonList.getTaxonCount();
             createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
-                    OperatorType.SUBTREE_LEAP, 1.0, weight);
+                    OperatorType.SUBTREE_LEAP, 1.0, Math.max(taxonCount, MIN_SUBTREE_LEAP_WEIGHT));
 
-            weight = Math.max(weight / 10, 3);
+            // the FHSPR weight is also the weight of the MAT operators below
+            double weight = Math.max(taxonCount / 10.0, MIN_FHSPR_WEIGHT);
             createOperator("FHSPR", "Tree", "Performs the fixed-height subtree prune/regraft of the tree", "tree",
                     OperatorType.FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT, 1.0, weight);
 

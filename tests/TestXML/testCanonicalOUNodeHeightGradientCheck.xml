@@ -1,0 +1,131 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="X">11 12</attr>
+        </taxon>
+        <taxon id="B">
+            <attr name="X">1 2</attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="X">3 3</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree">
+        ((A:1,B:1):1,C:2);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="precisionMatrix">
+                <parameter id="precision.col1" value="1.00 0.25"/>
+                <parameter id="precision.col2" value="0.25 1.50"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <traitDataLikelihood id="canonicalOULikelihood" traitName="X"
+                         implementation="canonical-message" reconstructTraits="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+        <strictClockBranchRates idref="branchRates"/>
+        <optimalTraits>
+            <strictClockBranchRates>
+                <rate>
+                    <parameter id="canonical.optimum.1" value="1.0"/>
+                </rate>
+            </strictClockBranchRates>
+            <strictClockBranchRates>
+                <rate>
+                    <parameter id="canonical.optimum.2" value="2.0"/>
+                </rate>
+            </strictClockBranchRates>
+        </optimalTraits>
+        <strengthOfSelectionMatrix>
+            <diagonalMatrix id="canonical.selection">
+                <parameter id="canonical.selection.diagonal" value="1.0 1.5" lower="0.0 0.0"/>
+            </diagonalMatrix>
+        </strengthOfSelectionMatrix>
+    </traitDataLikelihood>
+
+    <graphicalParameterBounds id="nodeHeightBounds">
+        <nodeHeightProxyParameter id="nodeHeightProxyParameter" rootNode="true">
+            <tree idref="treeModel"/>
+        </nodeHeightProxyParameter>
+        <tree idref="treeModel"/>
+    </graphicalParameterBounds>
+
+    <operators id="operators">
+        <reflectiveHamiltonianMonteCarloOperator id="canonicalNodeHeightHMC" weight="1.0"
+                                                 nSteps="1" stepSize="1.0E-5"
+                                                 autoOptimize="false"
+                                                 gradientCheckCount="100" gradientCheckTolerance="1e-4">
+            <nodeHeightGradient id="canonical.nodeHeight.gradient" traitName="X">
+                <traitDataLikelihood idref="canonicalOULikelihood"/>
+            </nodeHeightGradient>
+            <nodeHeightProxyParameter idref="nodeHeightProxyParameter"/>
+            <graphicalParameterBounds idref="nodeHeightBounds"/>
+        </reflectiveHamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="100" autoOptimize="false" fullEvaluation="0" autoOptimizeDelay="0">
+        <posterior id="posterior">
+            <prior id="prior">
+                <uniformPrior lower="0.0" upper="10.0">
+                    <parameter idref="treeModel.allInternalNodeHeights"/>
+                </uniformPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="canonicalOULikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="1">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="OU" dp="4" width="12">
+                <traitDataLikelihood idref="canonicalOULikelihood"/>
+            </column>
+            <column label="root" dp="4" width="12">
+                <parameter idref="treeModel.rootHeight"/>
+            </column>
+        </log>
+    </mcmc>
+
+</beast>

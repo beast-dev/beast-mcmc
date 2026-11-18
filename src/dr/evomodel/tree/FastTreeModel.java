@@ -553,7 +553,7 @@ public class FastTreeModel extends TreeModel {
         throw new UnsupportedOperationException("FastTreeModel does not allow taxa to be changed");
     }
 
-    private static final String UNSUPPORTED = "FastTreeModel does not support node rates or node traits: use a treeModel with implementation=\"old\"";
+    private static final String UNSUPPORTED = "FastTreeModel does not support node rates or node traits: use a treeModel without implementation=\"fast\"";
 
     // *****************************************************************
     // Interface ModelComponent: copy-on-write store

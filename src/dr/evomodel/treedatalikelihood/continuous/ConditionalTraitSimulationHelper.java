@@ -29,6 +29,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
@@ -50,7 +51,7 @@ public class ConditionalTraitSimulationHelper implements Reportable {
 
     public ConditionalTraitSimulationHelper(TreeDataLikelihood treeLikelihood) {
         this.treeLikelihood = treeLikelihood;
-        ContinuousDataLikelihoodDelegate delegate = (ContinuousDataLikelihoodDelegate) treeLikelihood.getDataLikelihoodDelegate();
+        CtsCompatibility delegate = (CtsCompatibility) treeLikelihood.getDataLikelihoodDelegate();
         this.topDataModel = delegate.getDataModel();
 
         this.parentMap = new HashMap<>();

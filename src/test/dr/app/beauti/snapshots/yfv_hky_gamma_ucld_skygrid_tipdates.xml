@@ -704,7 +704,7 @@
 		<uniformIntegerOperator weight="10">
 			<parameter idref="branchRates.categories"/>
 		</uniformIntegerOperator>
-		<subtreeLeap size="1.0" weight="71">
+		<subtreeLeap size="1.0" weight="100">
 			<treeModel idref="treeModel"/>
 		</subtreeLeap>
 		<fixedHeightSubtreePruneRegraft weight="7.1">

@@ -176,10 +176,10 @@
 		<deltaExchange delta="0.01" weight="1">
 			<parameter idref="frequencies"/>
 		</deltaExchange>
-		<subtreeLeap size="1.0" weight="30">
+		<subtreeLeap size="1.0" weight="100">
 			<treeModel idref="treeModel"/>
 		</subtreeLeap>
-		<fixedHeightSubtreePruneRegraft weight="3">
+		<fixedHeightSubtreePruneRegraft weight="2">
 			<treeModel idref="treeModel"/>
 		</fixedHeightSubtreePruneRegraft>
 		<scaleOperator scaleFactor="0.75" weight="3">

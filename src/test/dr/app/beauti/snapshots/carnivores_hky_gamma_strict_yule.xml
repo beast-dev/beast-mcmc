@@ -465,7 +465,7 @@
 		<scaleOperator scaleFactor="0.75" weight="1">
 			<parameter idref="alpha"/>
 		</scaleOperator>
-		<subtreeLeap size="1.0" weight="62">
+		<subtreeLeap size="1.0" weight="100">
 			<treeModel idref="treeModel"/>
 		</subtreeLeap>
 		<fixedHeightSubtreePruneRegraft weight="6.2">

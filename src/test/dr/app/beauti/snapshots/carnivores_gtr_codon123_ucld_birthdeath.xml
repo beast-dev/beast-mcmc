@@ -604,7 +604,7 @@
 		<deltaExchange delta="0.01" weight="3">
 			<parameter idref="allNus"/>
 		</deltaExchange>
-		<subtreeLeap size="1.0" weight="62">
+		<subtreeLeap size="1.0" weight="100">
 			<treeModel idref="treeModel"/>
 		</subtreeLeap>
 		<fixedHeightSubtreePruneRegraft weight="6.2">

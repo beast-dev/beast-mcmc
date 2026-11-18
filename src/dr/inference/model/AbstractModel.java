@@ -241,6 +241,8 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
             }
 
             if (useLazyStore) {
+                // the previous store/restore or store/accept cycle will have cleared this
+                assert !restoreRequired;
                 storeRequired = true;
             } else {
                 storeState();
@@ -261,9 +263,13 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
             }
 
             if (!useLazyStore || restoreRequired) {
+                // storeRequired should be false at this point
+                assert !storeRequired;
                 restoreState();
                 restoreRequired = false;
             }
+            // the step is over so a change outside of a store/restore cycle must not trigger a store
+            storeRequired = false;
             isValidState = true;
 
             listenerHelper.fireModelRestored(this);
@@ -283,6 +289,10 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
             }
 
             acceptState();
+
+            // the state is accepted so the stored state is no longer needed
+            storeRequired = false;
+            restoreRequired = false;
 
             isValidState = true;
         }

@@ -196,6 +196,8 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
      */
     protected void storeState() {
         // flag a lazy store is required
+        // the previous store/restore or store/accept cycle will have cleared this
+        assert !restoreRequired;
         storeRequired = true;
     }
 
@@ -227,10 +229,15 @@ public class TreeIntervals extends AbstractModel implements Units, TreeIntervalL
 
             restoreRequired = false;
         }
+        // the step is over so a change outside of a store/restore cycle must not trigger a store
+        storeRequired = false;
     }
 
     protected final void acceptState() {
-    } // nothing to do
+        // the state is accepted so the stored state is no longer needed
+        storeRequired = false;
+        restoreRequired = false;
+    }
 
     // **************************************************************
     // Likelihood IMPLEMENTATION

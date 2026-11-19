@@ -961,6 +961,144 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
         }
     }
 
+    // Blocked aggregation at 4 states under a sampled character tree: NNI, keep and rate moves on block-sized data,
+    // with the patterns sorted for the starting tree and unsorted. Aggregation on must match off at every step.
+    public void testBlockedCharacterTreeChainThroughBeagle() throws Exception {
+        if (skip("testBlockedCharacterTreeChainThroughBeagle")) {
+            return;
+        }
+        java.util.Random random = new java.util.Random(20261120);
+        TreeModel phylogeny = randomPhylogeny(40, random);
+        final int[][] pools = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}, {0, 1, 2}, {0, 1, 3}, {0, 2, 3}, {1, 2, 3},
+                {0, 1, 2, 3}};
+        Patterns patterns = new Patterns(Nucleotides.INSTANCE, phylogeny);
+        for (int k = 0; k < 2400; k++) {
+            int[] pool = pools[random.nextInt(pools.length)];
+            int[] pattern = new int[phylogeny.getTaxonCount()];
+            for (int t = 0; t < pattern.length; t++) {
+                pattern[t] = random.nextDouble() < 0.05 ? Nucleotides.INSTANCE.getUnknownState()
+                        : pool[random.nextInt(pool.length)];
+            }
+            patterns.addPattern(pattern, 1.0 + random.nextInt(3));
+        }
+        final FrequencyModel frequencies = new FrequencyModel(Nucleotides.INSTANCE,
+                new Parameter.Default(new double[]{0.3, 0.2, 0.25, 0.25}));
+        Parameter keep = new Parameter.Default(1);
+        dr.evomodel.substmodel.CharacterTreeModel tree = new dr.evomodel.substmodel.CharacterTreeModel("characterTree",
+                "((A,G),(C,T));", Nucleotides.INSTANCE, true, keep);
+        Parameter rates = new Parameter.Default(new double[]{1.4, 0.7, 1.1});
+        final HierarchicalSubstitutionModel.Aggregation[] aggregations = {HierarchicalSubstitutionModel.Aggregation.ON,
+                HierarchicalSubstitutionModel.Aggregation.ON, HierarchicalSubstitutionModel.Aggregation.OFF};
+        HierarchicalSubstitutionModel[] models = new HierarchicalSubstitutionModel[3];
+        for (int i = 0; i < 3; i++) {
+            models[i] = new HierarchicalSubstitutionModel("hierarchical-" + i,
+                    new HierarchicalSubstitutionModel.HierarchicalRateProvider.Default(rates, tree.getContraction(), frequencies, true));
+            models[i].setAggregation(aggregations[i]);
+        }
+        HierarchicalRateAggregatedPattern sorted = new HierarchicalRateAggregatedPattern(patterns, models[0].getBeagleModelTriples());
+        int[] sizes = sorted.getBlockSizes();
+        assertTrue("both reduced blocks hold at least 150 patterns: " + Arrays.toString(sizes),
+                sizes[0] >= 150 && sizes[2] >= 150);
+        final PatternList[] lists = {sorted, patterns, patterns};
+        GammaSiteRateModel sites = gamma(0.6, 4);
+        TreeDataLikelihood[] paths = new TreeDataLikelihood[3];
+        for (int i = 0; i < 3; i++) {
+            paths[i] = new TreeDataLikelihood(delegate(phylogeny, lists[i], models[i], sites, false, true), phylogeny,
+                    new DefaultBranchRateModel());
+        }
+        final String[] names = {"aggregate=on, sorted", "aggregate=on, unsorted", "aggregate=off"};
+        final dr.evomodel.tree.DefaultTreeModel skeleton = tree.getSkeleton();
+        final int root = skeleton.getRoot().getNumber();
+        java.util.Set<String> visited = new java.util.HashSet<>();
+        int[] kinds = new int[4];
+        final String start = tree.getContractedNewick();
+        int left = 0, returned = 0, atStart = 0;
+        double current = paths[2].getLogLikelihood();
+        for (int i = 0; i < 2; i++) {
+            assertEquals(names[i] + " start", current, paths[i].getLogLikelihood(), 1e-10 * Math.abs(current));
+        }
+        for (int step = 0; step < 300; step++) {
+            final String before = tree.getContractedNewick();
+            for (TreeDataLikelihood l : paths) l.storeModelState();
+            tree.storeModelState();
+            final int kind = random.nextInt(4);
+            kinds[kind]++;
+            int slot;
+            do {
+                slot = random.nextInt(S - 1);
+            } while (S + slot == root);
+            if (kind == 0) {
+                NodeRef u = skeleton.getNode(S + slot);
+                NodeRef p = skeleton.getParent(u);
+                NodeRef w = skeleton.getChild(p, 0) == u ? skeleton.getChild(p, 1) : skeleton.getChild(p, 0);
+                NodeRef c = skeleton.getChild(u, random.nextInt(2));
+                skeleton.beginTreeEdit();
+                skeleton.removeChild(u, c);
+                skeleton.removeChild(p, w);
+                skeleton.addChild(u, w);
+                skeleton.addChild(p, c);
+                tree.resetUnitHeightsQuietly();
+                skeleton.endTreeEdit();
+            } else if (kind == 1) {
+                if (keep.getParameterValue(slot) == 0.0) {
+                    rates.setParameterValue(slot, 0.05 + random.nextDouble());
+                    keep.setParameterValue(slot, 1.0);
+                } else {
+                    keep.setParameterValue(slot, 0.0);
+                    rates.setParameterValue(slot, 0.05 + random.nextDouble());
+                }
+            } else if (kind == 2) {
+                final int r = random.nextInt(S - 1);
+                rates.setParameterValue(r, rates.getParameterValue(r) * Math.exp(0.5 * (random.nextDouble() - 0.5)));
+            } else {
+                NodeRef node = phylogeny.getNode(phylogeny.getExternalNodeCount() + random.nextInt(
+                        phylogeny.getInternalNodeCount() - 1));
+                double height = phylogeny.getNodeHeight(node);
+                double low = 0.0;
+                for (int c = 0; c < phylogeny.getChildCount(node); c++) {
+                    low = Math.max(low, phylogeny.getNodeHeight(phylogeny.getChild(node, c)));
+                }
+                phylogeny.setNodeHeight(node, low + (0.8 + 0.15 * random.nextDouble()) * (height - low));
+            }
+            final String now = tree.getContractedNewick();
+            visited.add(now);
+            final double expected = paths[2].getLogLikelihood();
+            HierarchicalSubstitutionModel fresh = sampledModel(tree, new Parameter.Default(rates.getParameterValues()),
+                    new Parameter.Default(keep.getParameterValues()), frequencies);
+            fresh.setAggregation(HierarchicalSubstitutionModel.Aggregation.OFF);
+            final double reference = new TreeDataLikelihood(delegate(phylogeny, patterns, fresh, sites, false, true),
+                    phylogeny, new DefaultBranchRateModel()).getLogLikelihood();
+            assertEquals("step " + step + " aggregate=off against a fresh model", reference, expected,
+                    1e-10 * Math.abs(reference));
+            for (int i = 0; i < 2; i++) {
+                assertEquals("step " + step + " " + names[i], expected, paths[i].getLogLikelihood(),
+                        1e-10 * Math.abs(expected));
+            }
+            if (now.equals(start) || (before.equals(start) ? random.nextDouble() < 0.4 : kind >= 2 && random.nextBoolean())) {
+                for (TreeDataLikelihood l : paths) l.acceptModelState();
+                tree.acceptModelState();
+                current = expected;
+                if (now.equals(start)) {
+                    atStart++;
+                    if (!before.equals(start)) returned++;
+                } else if (before.equals(start)) {
+                    left++;
+                }
+            } else {
+                for (TreeDataLikelihood l : paths) l.restoreModelState();
+                tree.restoreModelState();
+                for (int i = 0; i < 3; i++) {
+                    assertEquals("step " + step + " " + names[i] + " restored", current, paths[i].getLogLikelihood(),
+                            1e-10 * Math.abs(current));
+                }
+            }
+        }
+        assertTrue("character trees visited " + visited, visited.size() >= 8);
+        assertTrue("left the starting tree " + left + " times, returned " + returned + ", accepted there " + atStart,
+                left >= 10 && returned >= 10 && atStart >= 50);
+        for (int k : kinds) assertTrue("every move kind ran " + Arrays.toString(kinds), k > 20);
+    }
+
     public void testAggregationSummary() throws Exception {
         String[] codes = new String[8];
         for (int i = 0; i < 8; i++) {

@@ -106,7 +106,7 @@ public class UpDownOperator extends AbstractAdaptableOperator {
         return "scaleFactor";
     }
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         StringBuilder name = new StringBuilder();
         if( upParameter != null && upParameter.length > 0 ) {
             name = new StringBuilder("up(");

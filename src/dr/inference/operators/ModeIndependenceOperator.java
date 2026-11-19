@@ -139,7 +139,7 @@ public class ModeIndependenceOperator extends AbstractAdaptableOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return parameter.getParameterName();
     }
 

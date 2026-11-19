@@ -80,7 +80,7 @@ public class ShrinkageAugmentedGibbsOperator extends SimpleMCMCOperator implemen
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "ShrinkageAugmentedGibbsOperator";
     }
 

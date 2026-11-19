@@ -54,7 +54,7 @@ public class MatrixVonMisesFisherGibbsOperator extends SimpleMCMCOperator implem
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return MATRIX_VONMISES_FISHER_GIBBS;
     }
 

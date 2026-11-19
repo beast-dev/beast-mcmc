@@ -31,6 +31,7 @@ import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.Pair;
@@ -58,7 +59,27 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         // compressed - unique patterns and ambiguous matches stored with weights
         AMBIGUOUS_UNIQUE,
         // compressed - unique patterns and ambiguous constant patterns stored with weights
-        AMBIGUOUS_CONSTANT
+        AMBIGUOUS_CONSTANT,
+        // only constant sites compressed - the first stateCount patterns are the constant sites for each
+        // state (weighted by their number) followed by every variable site, in order, with a weight of 1
+        CONSTANT_ONLY,
+        // as CONSTANT_ONLY but sites that are constant apart from ambiguities (at no more than the ambiguity
+        // threshold proportion of sequences) are also counted as constant sites
+        AMBIGUOUS_CONSTANT_ONLY;
+
+        /**
+         * @return true if the first stateCount patterns are reserved for the constant sites of each state
+         */
+        public boolean hasConstantPatterns() {
+            return this == AMBIGUOUS_CONSTANT || this == AMBIGUOUS_UNIQUE || this == CONSTANT_ONLY || this == AMBIGUOUS_CONSTANT_ONLY;
+        }
+
+        /**
+         * @return true if only constant sites are compressed (variable sites keep their own patterns)
+         */
+        public boolean isConstantOnly() {
+            return this == CONSTANT_ONLY || this == AMBIGUOUS_CONSTANT_ONLY;
+        }
     }
 
     public static final CompressionType DEFAULT_COMPRESSION_TYPE = UNIQUE_ONLY;
@@ -116,6 +137,36 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * populated while the patterns are being added.
      */
     private Map<PatternKey, Integer> patternIndices = null;
+
+    /**
+     * How these patterns were made from an alignment, so that they can be made again with more taxa
+     * (see withUnknownTaxa). Null if they were not made by the alignment constructor.
+     */
+    private Construction construction = null;
+
+    // serializable because BEAUti saves its documents by serializing its options, patterns included
+    private static final class Construction implements java.io.Serializable {
+        private static final long serialVersionUID = 1L;
+
+        final Alignment alignment; // with only the selected taxa
+        final int from, to, every;
+        final boolean strip;
+        final int[] constantSiteCounts;
+        final CompressionType compression;
+        final double ambiguityThreshold;
+
+        Construction(Alignment alignment, int from, int to, int every, boolean strip, int[] constantSiteCounts,
+                     CompressionType compression, double ambiguityThreshold) {
+            this.alignment = alignment;
+            this.from = from;
+            this.to = to;
+            this.every = every;
+            this.strip = strip;
+            this.constantSiteCounts = constantSiteCounts;
+            this.compression = compression;
+            this.ambiguityThreshold = ambiguityThreshold;
+        }
+    }
 
     /**
      * Constructor
@@ -192,7 +243,56 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             }
         }
 
+        construction = new Construction(alignment, from, to, every, strip, constantSiteCounts, compression,
+                ambiguityThreshold);
+
         addPatterns(alignment, from, to, every, strip, constantSiteCounts, compression, ambiguityThreshold);
+    }
+
+    /**
+     * Whether withUnknownTaxa can make these patterns again with more taxa.
+     */
+    public boolean canAddUnknownTaxa() {
+        return construction != null && !uncertainSites;
+    }
+
+    /**
+     * These patterns made again with the given extra taxa, each with a sequence that is entirely unknown, using
+     * the same sites and compression: exactly the patterns had those sequences been in the alignment.
+     */
+    public SitePatterns withUnknownTaxa(List<Taxon> extraTaxa) {
+        if (!canAddUnknownTaxa()) {
+            throw new UnsupportedOperationException("These site patterns were not made from an alignment of " +
+                    "certain sites, so taxa cannot be added to them");
+        }
+        final Alignment alignment = construction.alignment;
+        final DataType dataType = alignment.getDataType();
+
+        SimpleAlignment extended = new SimpleAlignment();
+        extended.setDataType(dataType);
+        for (int i = 0; i < alignment.getSequenceCount(); i++) {
+            extended.addSequence(alignment.getSequence(i));
+        }
+
+        final String unknownCode = dataType.getCode(dataType.getUnknownState());
+        StringBuilder unknown = new StringBuilder();
+        for (int i = 0; i < alignment.getSiteCount(); i++) {
+            unknown.append(unknownCode);
+        }
+        for (Taxon taxon : extraTaxa) {
+            if (alignment.getTaxonIndex(taxon.getId()) >= 0) {
+                throw new IllegalArgumentException("Taxon " + taxon.getId() + " is already in the site patterns");
+            }
+            Sequence sequence = new Sequence(taxon, unknown.toString());
+            sequence.setDataType(dataType);
+            extended.addSequence(sequence);
+        }
+
+        SitePatterns patterns = new SitePatterns(extended, null, construction.from, construction.to,
+                construction.every, construction.strip, construction.constantSiteCounts, construction.compression,
+                construction.ambiguityThreshold);
+        patterns.setId(getId());
+        return patterns;
     }
 
     /**
@@ -249,7 +349,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
         siteCount = ((to - from) / every) + 1;
 
-        if (compression == AMBIGUOUS_CONSTANT || compression == AMBIGUOUS_UNIQUE) {
+        if (compression.hasConstantPatterns()) {
             // add some space for the set of constant sites
             siteCount += siteList.getStateCount();
         }
@@ -276,7 +376,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             System.err.println("Creating SitePatterns using compression type: " + compression.toString());
         }
 
-        if (compression == AMBIGUOUS_CONSTANT || compression == AMBIGUOUS_UNIQUE) {
+        if (compression.hasConstantPatterns()) {
             // if the patterns are to be compressed then create the constant sites initially
             for (int i = 0; i < siteList.getStateCount(); i++) {
                 int[] pattern = new int[siteList.getPatternLength()];
@@ -303,7 +403,19 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                                 !isAmbiguous(pattern) &&
                                 !isUnknown(pattern))) {
 
-                    sitePatternIndices[site] = addPattern(pattern, weight, compression);
+                    if (compression.isConstantOnly()) {
+                        // constant sites are added to the constant pattern for their state, variable sites
+                        // are added as their own pattern
+                        int state = getConstantState(pattern, compression == AMBIGUOUS_CONSTANT_ONLY, ambiguityThreshold);
+                        if (state >= 0) {
+                            weights[state] += weight;
+                            sitePatternIndices[site] = state;
+                        } else {
+                            sitePatternIndices[site] = addPattern(pattern, weight, UNCOMPRESSED);
+                        }
+                    } else {
+                        sitePatternIndices[site] = addPattern(pattern, weight, compression);
+                    }
 
                     count += 1;
                 } else {
@@ -334,11 +446,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             }
         }
 
-
         // the indices are only valid while patterns are being added
         patternIndices = null;
 
-        if (compression != UNCOMPRESSED && compression != UNIQUE_ONLY) {
+        if (compression != UNCOMPRESSED && compression != UNIQUE_ONLY && !compression.isConstantOnly()) {
 //            sortPatternsByWeight();
             compressAmbiguousPatterns(compression == AMBIGUOUS_CONSTANT, ambiguityThreshold);
 
@@ -458,8 +569,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     private void compressAmbiguousPatterns(boolean constantOnly, double ambiguityThreshold) {
-        int minimumUnambiguous = (int)((1.0 - ambiguityThreshold) * getPatternLength());
-        minimumUnambiguous = Math.min(minimumUnambiguous, 2);
+        int minimumUnambiguous = getMinimumUnambiguous(ambiguityThreshold, getPatternLength());
 
         // the first stateCount patterns are the constant ones
         for (int i = getStateCount(); i < patternCount; i++) {
@@ -501,6 +611,53 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
             }
             i++;
         }
+    }
+
+    /**
+     * @return the number of unambiguous states a pattern needs for it to be compressed ignoring ambiguity:
+     * no more than the threshold proportion may be ambiguous, and at least MINIMUM_UNAMBIGUOUS must not be
+     */
+    private static int getMinimumUnambiguous(double ambiguityThreshold, int patternLength) {
+        return Math.max(MINIMUM_UNAMBIGUOUS, (int) Math.ceil((1.0 - ambiguityThreshold) * patternLength));
+    }
+
+    /**
+     * Determines whether a site is constant. If ignoreAmbiguity is false, every sequence must have the
+     * same, unambiguous state. If it is true, the unambiguous states must all be the same, any ambiguous
+     * states must be compatible with it, and the proportion of ambiguous sequences must be no more than
+     * the threshold (with at least MINIMUM_UNAMBIGUOUS unambiguous sequences).
+     *
+     * @return the constant state, or -1 if the site is not constant
+     */
+    private int getConstantState(int[] pattern, boolean ignoreAmbiguity, double ambiguityThreshold) {
+        final int stateCount = getDataType().getStateCount();
+        int constantState = -1;
+        int unambiguousCount = 0;
+        for (int state : pattern) {
+            if (state < stateCount) {
+                if (constantState >= 0 && state != constantState) {
+                    return -1;
+                }
+                constantState = state;
+                unambiguousCount++;
+            } else if (!ignoreAmbiguity) {
+                return -1;
+            }
+        }
+        if (constantState < 0) {
+            return -1;
+        }
+        if (ignoreAmbiguity) {
+            if (unambiguousCount < getMinimumUnambiguous(ambiguityThreshold, pattern.length)) {
+                return -1;
+            }
+            for (int state : pattern) {
+                if (state >= stateCount && getDataType().areUnambiguouslyDifferent(constantState, state)) {
+                    return -1;
+                }
+            }
+        }
+        return constantState;
     }
 
     /**

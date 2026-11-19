@@ -132,7 +132,7 @@ public class ARGReassortmentOperator extends SimpleMCMCOperator {
         return 0;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return ARG_REASSORTMENT_OPERATOR;
     }
 

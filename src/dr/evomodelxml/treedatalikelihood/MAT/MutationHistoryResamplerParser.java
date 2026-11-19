@@ -1,0 +1,104 @@
+/*
+ * MutationHistoryResamplerParser.java
+ *
+ * Copyright © 2026, the BEAST Development Team.
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.evomodelxml.treedatalikelihood.MAT;
+
+import dr.evomodel.treedatalikelihood.MAT.MATDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.MAT.MutationHistoryResampler;
+import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
+import dr.xml.*;
+
+import java.util.logging.Logger;
+
+/**
+ * Parses a mutation history resampler, which attaches itself to its matDataLikelihood and resamples the
+ * MAT after each subtree prune-and-regraft move of the tree operators.
+ */
+public class MutationHistoryResamplerParser extends AbstractXMLObjectParser {
+
+    public static final String MUTATION_HISTORY_RESAMPLER = "mutationHistoryResampler";
+    public static final String BLOCK = "block";
+    public static final String PATH_BLOCK = "path";
+    public static final String LOCAL_BLOCK = "local";
+
+    @Override
+    public String getParserName() {
+        return MUTATION_HISTORY_RESAMPLER;
+    }
+
+    @Override
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        try {
+            MATDataLikelihoodDelegate delegate = MATDataLikelihoodParser.getDelegate(xo);
+            boolean local;
+            if (xo.hasAttribute(BLOCK)) {
+                String block = xo.getStringAttribute(BLOCK);
+                if (!block.equalsIgnoreCase(PATH_BLOCK) && !block.equalsIgnoreCase(LOCAL_BLOCK)) {
+                    throw new XMLParseException("The " + BLOCK + " attribute of " + xo.getId() + " must be '" +
+                            PATH_BLOCK + "' or '" + LOCAL_BLOCK + "'");
+                }
+                local = block.equalsIgnoreCase(LOCAL_BLOCK);
+            } else {
+                // the local block where the model allows it (it is faster and mixes as well), else the path block
+                local = MutationHistoryResampler.supportsLocalBlock(delegate);
+            }
+            if (delegate.getResampler() != null) {
+                throw new XMLParseException("The MAT likelihood already has a mutation history resampler: " + xo.getId() +
+                        " would be a second one (one resampler, attached to the likelihood, serves every subtree move)");
+            }
+            MutationHistoryResampler resampler = new MutationHistoryResampler(delegate, local);
+            Logger.getLogger("dr.evomodel").info("  Mutation history resampler " + xo.getId() + ": the " +
+                    (local ? LOCAL_BLOCK : PATH_BLOCK) + " block");
+            return resampler;
+        } catch (IllegalArgumentException iae) {
+            throw new XMLParseException(iae.getMessage() + " in " + xo.getId());
+        }
+    }
+
+    @Override
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return new XMLSyntaxRule[] {
+                AttributeRule.newStringRule(BLOCK, true, "Which states a move resamples: 'local' (the regrafted " +
+                        "parent, and the nodes whose data at a site come only from the moved subtree; the default where " +
+                        "the model allows it) or 'path' (the regrafted parent and the nodes on the path between its old " +
+                        "and new positions; the default for branch history models with explicit hits, per-site rates " +
+                        "or unequal pattern weights, which the local block does not support). The local block needs a " +
+                        "mutationHistoryGibbsOperator with this resampler, to mix the history away from the moves"),
+                new ElementRule(TreeDataLikelihood.class)
+        };
+    }
+
+    @Override
+    public String getParserDescription() {
+        return "Resamples the ancestral states of a mutation annotated tree jointly with subtree prune-and-regraft moves.";
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes")
+    public Class getReturnType() {
+        return MutationHistoryResampler.class;
+    }
+}

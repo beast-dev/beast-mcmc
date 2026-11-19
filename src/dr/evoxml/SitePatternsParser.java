@@ -57,6 +57,10 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
     // Specifies whether constant sites that differ only in the pattern of ambiguities are treated as unique
     public static final String AMBIGUOUS_CONSTANT = "ambiguousConstant";
     public static final String AMBIGUITY_THRESHOLD = "ambiguityThreshold";
+    // Specifies that only constant sites are compressed (into the first stateCount patterns) and each
+    // variable site is kept as its own pattern (with ambiguousConstant, sites that are constant apart from
+    // ambiguities are also treated as constant)
+    public static final String CONSTANT_ONLY = "constantOnly";
 
     public static final String CONSTANT_PATTERNS = "constantPatterns";
 
@@ -80,6 +84,14 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             if (xo.hasAttribute(AMBIGUOUS_UNIQUE) && xo.getBooleanAttribute(AMBIGUOUS_UNIQUE)) {
                 compression = SitePatterns.CompressionType.AMBIGUOUS_UNIQUE;
             }
+            if (xo.hasAttribute(CONSTANT_ONLY) && xo.getBooleanAttribute(CONSTANT_ONLY)) {
+                if (xo.hasAttribute(AMBIGUOUS_UNIQUE) && xo.getBooleanAttribute(AMBIGUOUS_UNIQUE)) {
+                    throw new XMLParseException("The " + CONSTANT_ONLY + " and " + AMBIGUOUS_UNIQUE + " options cannot be combined");
+                }
+                compression = xo.getAttribute(AMBIGUOUS_CONSTANT, false) ?
+                        SitePatterns.CompressionType.AMBIGUOUS_CONSTANT_ONLY :
+                        SitePatterns.CompressionType.CONSTANT_ONLY;
+            }
         }
         double ambiguityThreshold = xo.getDoubleAttribute(AMBIGUITY_THRESHOLD, 0.5);
 
@@ -93,7 +105,11 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             } else if (property.equalsIgnoreCase("ambiguous_constant")) {
                 compression = SitePatterns.CompressionType.AMBIGUOUS_CONSTANT;
             } else if (property.equalsIgnoreCase("ambiguous_all")) {
-                compression = SitePatterns.CompressionType.AMBIGUOUS_CONSTANT;
+                compression = SitePatterns.CompressionType.AMBIGUOUS_UNIQUE;
+            } else if (property.equalsIgnoreCase("constant_only")) {
+                compression = SitePatterns.CompressionType.CONSTANT_ONLY;
+            } else if (property.equalsIgnoreCase("ambiguous_constant_only")) {
+                compression = SitePatterns.CompressionType.AMBIGUOUS_CONSTANT_ONLY;
             } else {
                 throw new IllegalArgumentException("Unknown `patterns.compression` system property value: " + System.getProperty("patterns.compression"));
             }
@@ -177,6 +193,12 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
                 case AMBIGUOUS_CONSTANT:
                     logger.info("  compressed to unique site patterns allowing ambiguity for constant sites");
                     break;
+                case CONSTANT_ONLY:
+                    logger.info("  constant sites compressed, variable sites uncompressed");
+                    break;
+                case AMBIGUOUS_CONSTANT_ONLY:
+                    logger.info("  constant sites (allowing ambiguity) compressed, variable sites uncompressed");
+                    break;
             }
             logger.info("  pattern count = " + patterns.getPatternCount());
         }
@@ -205,7 +227,8 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(UNIQUE, true, "Return a weight list of unique patterns"),
             AttributeRule.newBooleanRule(AMBIGUOUS_UNIQUE, true, "Ignore ambiguity when determining unique patterns"),
             AttributeRule.newBooleanRule(AMBIGUOUS_CONSTANT, true, "Ignore ambiguity when determining unique constant patterns"),
-            AttributeRule.newDoubleRule(AMBIGUITY_THRESHOLD, true, "Threshold max proportion of ambiguous characters to allow compression")
+            AttributeRule.newDoubleRule(AMBIGUITY_THRESHOLD, true, "Threshold max proportion of ambiguous characters to allow compression"),
+            AttributeRule.newBooleanRule(CONSTANT_ONLY, true, "Only compress constant sites: the first patterns are the constant sites for each state, followed by each variable site with a weight of 1 (combine with " + AMBIGUOUS_CONSTANT + " to count sites that are constant apart from ambiguities as constant)")
     };
 
     public String getParserDescription() {

@@ -61,7 +61,7 @@ public class NewTransformedParameterOperator extends AbstractAdaptableOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return NEW_TRANSFORMED_OPERATOR + "." + subOperator.getOperatorName();
     }
 

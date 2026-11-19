@@ -170,7 +170,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     }
 
     //MCMCOperator INTERFACE
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "randomWalkInteger(" + parameter.getId() + ")";
     }
 

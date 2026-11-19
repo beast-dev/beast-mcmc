@@ -90,7 +90,7 @@ public class CategoryOperator extends SimpleMCMCOperator {
 
 
     // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return CATEGORY_OPERATOR;
     }
 

@@ -87,7 +87,7 @@ public class SlidingPatternsOperator extends AbstractAdaptableOperator {
         // todo need to implement for a variable number of partitions
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return OPERATOR_NAME;
     }
 

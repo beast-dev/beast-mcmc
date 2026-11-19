@@ -75,7 +75,7 @@ public class MulTreeNodeSlide extends SimpleMCMCOperator {
         return "none";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TreeNodeSlideParser.TREE_NODE_REHEIGHT + "(" + multree.getId() + "," + species.getId() + ")";
     }
 

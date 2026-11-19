@@ -159,7 +159,7 @@ public class DirichletProcessGibbsOperator extends SimpleMCMCOperator implements
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return DIRICHLET_PROCESS_OPERATOR+"(" + clusteringParameter.getId() + "|" + chiParameter.getId() + ")";
     }
 

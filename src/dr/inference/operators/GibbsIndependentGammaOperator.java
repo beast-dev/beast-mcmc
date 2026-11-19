@@ -83,7 +83,7 @@ public class GibbsIndependentGammaOperator extends SimpleMCMCOperator implements
 		return "";
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return "GibbsIndependentGamma(" + variable.getVariableName() + ")";
 	}
 	

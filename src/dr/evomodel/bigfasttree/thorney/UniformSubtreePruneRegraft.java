@@ -56,7 +56,7 @@ public class UniformSubtreePruneRegraft extends AbstractTreeOperator implements 
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return UNIFORM_SUBTREE_PRUNE_REGRAFT;
     }
 

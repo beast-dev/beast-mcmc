@@ -86,7 +86,7 @@ public class SwapOperator extends SimpleMCMCOperator {
         return 0.0;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return SwapOperatorParser.SWAP_OPERATOR + "(" + parameter.getParameterName() + ")";
     }
 

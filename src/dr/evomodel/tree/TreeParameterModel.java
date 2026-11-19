@@ -210,7 +210,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
                     final double oldValue = parameter.getParameterValue(newRootNodeNumber);
 
-                    final int end = Math.min(parameter.getDimension() - 1, oldRootNodeNumber);
+                    final int end = oldRootNodeNumber - 1;
                     for (int i = newRootNodeNumber; i < end; i++) {
                         parameter.setParameterValue(i, parameter.getParameterValue(i + 1));
                     }
@@ -219,7 +219,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
                 } else if (oldRootNodeNumber < newRootNodeNumber) {
 
-                    final int end = Math.min(parameter.getDimension() - 1, newRootNodeNumber);
+                    final int end = newRootNodeNumber - 1;
 
                     final double oldValue = parameter.getParameterValue(end);
 

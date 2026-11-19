@@ -33,6 +33,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -306,6 +307,11 @@ public class BeastGenerator extends Generator {
 
             checkComponentOptions();
 
+            //++++++++++++++++ MAT likelihood engine ++++++++++++++++++
+            if (options.isMAT()) {
+                checkMATOptions();
+            }
+
             // add other tests and warnings here
             // Speciation model with dated tips
             // Sampling rates without dated tips or priors on rate or nodes
@@ -337,6 +343,75 @@ public class BeastGenerator extends Generator {
             if (!isBifurcatingTree(tree, tree.getChild(node, i))) return false;
         }
         return true;
+    }
+
+    /**
+     * The MAT (mutation-annotated tree) likelihood takes one pattern list per tree, resamples the mutation
+     * history only along with the subtree-leap and fixed-height SPR moves, has no invariant sites, treats
+     * ambiguous states as missing, provides no gradients and has been validated with the strict and
+     * uncorrelated relaxed clocks only.
+     */
+    private void checkMATOptions() throws GeneratorException {
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
+        SequenceErrorModelComponentOptions sequenceErrorOptions = (SequenceErrorModelComponentOptions) options
+                .getComponentOptions(SequenceErrorModelComponentOptions.class);
+
+        final String engine = "The MAT likelihood engine (see the " + BeautiFrame.SITE_MODELS + " panel) ";
+        for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+            int sequencePartitions = 0;
+            for (AbstractPartitionData partition : options.getDataPartitions(treeModel)) {
+                PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+                if (model == null) {
+                    continue;
+                }
+                int dataType = model.getDataType().getType();
+                if (dataType != DataType.NUCLEOTIDES && dataType != DataType.AMINO_ACIDS) {
+                    continue;
+                }
+                sequencePartitions++;
+                if (model.getCodonHeteroPattern() != null) {
+                    throw new GeneratorException(engine + "takes one pattern list per tree, so partition " +
+                            partition.getName() + " cannot be split into codon positions.", BeautiFrame.SITE_MODELS);
+                }
+                if (model.isInvarHetero()) {
+                    throw new GeneratorException(engine + "has no invariant sites model (partition " +
+                            partition.getName() + ").", BeautiFrame.SITE_MODELS);
+                }
+                if (ancestralStatesOptions.usingAncestralStates(partition)) {
+                    throw new GeneratorException(engine + "cannot reconstruct ancestral states or count changes (partition " +
+                            partition.getName() + ").", BeautiFrame.ANCESTRAL_STATES);
+                }
+                if (sequenceErrorOptions.usingSequenceErrorModel(partition)) {
+                    throw new GeneratorException(engine + "cannot be used with a sequence error model (partition " +
+                            partition.getName() + ").", BeautiFrame.ANCESTRAL_STATES);
+                }
+                ClockType clockType = partition.getPartitionClockModel().getClockType();
+                if (clockType == ClockType.HMC_CLOCK || clockType == ClockType.SHRINKAGE_LOCAL_CLOCK) {
+                    throw new GeneratorException(engine + "provides no gradients, so it cannot be used with the " +
+                            clockType + " (partition " + partition.getName() + ").", BeautiFrame.CLOCK_MODELS);
+                }
+                if (clockType != ClockType.STRICT_CLOCK && clockType != ClockType.UNCORRELATED) {
+                    throw new GeneratorException(engine + "has been validated with the strict and uncorrelated " +
+                            "relaxed clocks only; the " + clockType + " is not yet supported (partition " +
+                            partition.getName() + ").", BeautiFrame.CLOCK_MODELS);
+                }
+            }
+            if (sequencePartitions > 1) {
+                throw new GeneratorException(engine + "takes one sequence partition per tree, but " + sequencePartitions +
+                        " share " + treeModel.getName() + ": give each its own tree, merge them, or use BEAGLE.",
+                        BeautiFrame.DATA_PARTITIONS);
+            }
+            if (treeModel.isUsingEmpiricalTrees()) {
+                throw new GeneratorException(engine + "cannot be used with empirical trees (" + treeModel.getName() + ").",
+                        BeautiFrame.TREES);
+            }
+        }
+        if (options.operatorSetType == OperatorSetType.CLASSIC) {
+            throw new GeneratorException(engine + "resamples the mutation history only with the subtree-leap and " +
+                    "fixed-height subtree prune/regraft moves: the classic tree operators cannot be used.",
+                    BeautiFrame.OPERATORS);
+        }
     }
 
     /**

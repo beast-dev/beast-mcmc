@@ -170,7 +170,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         return "Not implemented";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Transmission tree exchange operator type B (" + c2cLikelihood.getTreeModel().getId() +")";
     }
 

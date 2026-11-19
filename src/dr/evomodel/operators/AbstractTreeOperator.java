@@ -44,7 +44,6 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator implements
     private final static int WINDOW_SIZE = 1000;
     private final Deque<Integer> topologyChanged = new ArrayDeque<>();
     private final Deque<Double> delta = new ArrayDeque<>();
-
     /* exchange sub-trees whose root are i and j */
     protected void exchangeNodes(TreeModel tree, NodeRef i, NodeRef j,
                                  NodeRef iP, NodeRef jP) {

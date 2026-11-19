@@ -364,6 +364,19 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         return (DefaultTreeModel) treeModel;
     }
 
+    /**
+     * @return the tree model child of the given element, for parsers of components that use features only
+     * the original implementation (DefaultTreeModel) has, with a helpful error if it is the fast one
+     */
+    public static DefaultTreeModel getOldTreeModel(XMLObject xo, String parserName) throws XMLParseException {
+        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        if (!(treeModel instanceof DefaultTreeModel)) {
+            throw new XMLParseException(parserName + " needs a treeModel with " + IMPLEMENTATION + "=\"" +
+                    DEFAULT_IMPLEMENTATION + "\" (it uses features that the fast implementation does not have)");
+        }
+        return (DefaultTreeModel) treeModel;
+    }
+
     public static void parseNodeTraits(XMLObject cxo, DefaultTreeModel treeModel) throws XMLParseException {
 
         boolean rootNode = cxo.getAttribute(ROOT_NODE, false);

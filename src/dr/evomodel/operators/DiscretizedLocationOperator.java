@@ -247,7 +247,7 @@ public class DiscretizedLocationOperator extends AbstractAdaptableOperator {
     }
 
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return GIBBS_OPERATOR;
     }
 

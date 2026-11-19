@@ -85,7 +85,7 @@ public class RandomWalkIntegerSetSizeWeightedOperator extends RandomWalkIntegerO
     }
 
     //MCMCOperator INTERFACE
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "randomWalkIntegerSetSizeWeighted(" + parameter.getId() + ")";
     }
 

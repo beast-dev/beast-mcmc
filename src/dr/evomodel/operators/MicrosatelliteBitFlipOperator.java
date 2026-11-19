@@ -61,7 +61,7 @@ public class MicrosatelliteBitFlipOperator extends SimpleMCMCOperator {
         setWeight(weight);
     }
 
-    public String getOperatorName(){
+    protected String getBaseOperatorName(){
         return "msatModelSwitch(" + parameter.getParameterName() + ")";
     }
 

@@ -81,7 +81,7 @@ public class BitSwapOperator extends SimpleMCMCOperator {
         return "";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "bitSwap(" + data.getParameterName() + ")";
     }
 

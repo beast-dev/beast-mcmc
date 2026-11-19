@@ -83,7 +83,7 @@ public class UniformTipFromPrecisionOperator extends UniformOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "uniformTipFromPrecision(" + parameter.getParameterName() + ")";
     }
 

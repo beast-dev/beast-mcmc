@@ -122,7 +122,7 @@ public class serumDriftScalingMuOperator extends AbstractAdaptableOperator {
 
     public final static String SERUMDRIFTSCALINGMUOperator = "serumDriftScalingMuOperator";
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return SERUMDRIFTSCALINGMUOperator;
     }
 

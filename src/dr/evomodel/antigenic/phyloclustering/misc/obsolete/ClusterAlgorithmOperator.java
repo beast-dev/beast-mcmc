@@ -483,7 +483,7 @@ public class ClusterAlgorithmOperator extends SimpleMCMCOperator  {
 
               
             //MCMCOperator INTERFACE
-            public final String getOperatorName() {
+            protected final String getBaseOperatorName() {
                 return CLUSTERALGORITHM_OPERATOR;
             }
 

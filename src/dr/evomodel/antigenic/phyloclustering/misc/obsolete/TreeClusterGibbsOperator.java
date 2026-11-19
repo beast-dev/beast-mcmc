@@ -942,7 +942,7 @@ public class TreeClusterGibbsOperator extends SimpleMCMCOperator implements Gibb
 
               
             //MCMCOperator INTERFACE
-            public final String getOperatorName() {
+            protected final String getBaseOperatorName() {
                 return TREE_CLUSTERGIBBS_OPERATOR;
             }
 

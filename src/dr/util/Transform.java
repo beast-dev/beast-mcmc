@@ -704,7 +704,7 @@ public interface Transform {
         @Override
         public Transform inverseTransform() {
             if (inverse == null) {
-                inverse = new PowerTransform(1/2);
+                inverse = new PowerTransform(0.5);
             }
             return inverse;
         }

@@ -111,6 +111,16 @@ public class ProcessSimulation implements ModelListener, TreeTraitProvider {
         }
     }
 
+    /**
+     * Computes the likelihood at every node and then the simulated traits again, e.g. after the likelihood delegate
+     * has been asked for fresh scale factors.
+     */
+    public final void recomputeSimulatedTraits(final NodeRef node) {
+        treeDataLikelihood.makeDirty();
+        validSimulation = false;
+        cacheSimulatedTraits(node);
+    }
+
     private void simulateTraits(final NodeRef targetNode) {
 
         if (targetNode == null) {

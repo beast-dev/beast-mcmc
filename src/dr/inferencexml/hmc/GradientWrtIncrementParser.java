@@ -28,7 +28,7 @@
 package dr.inferencexml.hmc;
 
 import dr.evomodel.speciation.SpeciationLikelihoodGradient;
-import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
+import dr.evomodel.treelikelihood.utilities.SequenceDistanceStatistic;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.hmc.CompoundDerivative;

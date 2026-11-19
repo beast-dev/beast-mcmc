@@ -25,9 +25,10 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood;
+package dr.evomodel.treelikelihood;
 
 
+import dr.evomodel.treedatalikelihood.*;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.SitePatterns;
@@ -49,7 +50,6 @@ import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.evomodelxml.siteratemodel.SiteModelParser;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;

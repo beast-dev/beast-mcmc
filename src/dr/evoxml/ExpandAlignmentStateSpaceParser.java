@@ -35,7 +35,7 @@ import dr.evolution.datatype.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
+import dr.evomodel.treelikelihood.utilities.SequenceDistanceStatistic;
 import dr.evoxml.util.DataTypeUtils;
 import dr.xml.*;
 

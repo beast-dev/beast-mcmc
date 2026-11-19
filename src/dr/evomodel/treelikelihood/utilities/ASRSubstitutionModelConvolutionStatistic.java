@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.treedatalikelihood.discrete;
+package dr.evomodel.treelikelihood.utilities;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;

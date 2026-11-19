@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodelxml.treedatalikelihood;
+package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.TreeUtils;
@@ -34,9 +34,9 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treedatalikelihood.discrete.ASRSubstitutionModelConvolutionStatistic;
-import dr.evomodel.treedatalikelihood.discrete.ASRBranchSubstitutionMatrix;
-import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
+import dr.evomodel.treelikelihood.utilities.ASRSubstitutionModelConvolutionStatistic;
+import dr.evomodel.treelikelihood.utilities.ASRBranchSubstitutionMatrix;
+import dr.evomodel.treelikelihood.utilities.SequenceDistanceStatistic;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.distribution.ParametricDistributionModel;

@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodelxml.treedatalikelihood;
+package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.Nucleotides;
@@ -37,7 +37,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treedatalikelihood.discrete.SequenceDistanceStatistic;
+import dr.evomodel.treelikelihood.utilities.SequenceDistanceStatistic;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.inference.model.Statistic;
 import dr.oldevomodel.sitemodel.SiteModel;

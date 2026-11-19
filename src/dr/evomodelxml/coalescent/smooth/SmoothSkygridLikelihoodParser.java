@@ -150,6 +150,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(IMPLEMENTATION, true),
+            AttributeRule.newBooleanRule(OLD, true),
             new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),

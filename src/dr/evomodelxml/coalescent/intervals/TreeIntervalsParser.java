@@ -105,7 +105,7 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newBooleanRule("oldIntervals", true),
+            AttributeRule.newBooleanRule("fastIntervals", true),
             new ElementRule(TreeModel.class),
             new ElementRule(INCLUDE, new XMLSyntaxRule[]{
                     new ElementRule(Taxa.class)

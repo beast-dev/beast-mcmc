@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.skyline;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import dr.evolution.coalescent.demographic.ConstantPopulation;
@@ -185,7 +187,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
 
                 eg.setup(startGroupPopSize, endGroupPopSize, endTime - startTime);
 
-                if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
+                if (getIntervalType(j) == IntervalType.COALESCENT) {
                     subIndex += 1;
                     if (subIndex >= groupSizes[groupIndex]) {
                         groupIndex += 1;
@@ -200,7 +202,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                 for (int k = 0; k < diff; k++) {
                     eg.setup(startGroupPopSize, startGroupPopSize, endTime - startTime);
                     logL += calculateIntervalLikelihood(eg, 0.0, currentTime, lineageCounts[j]-k-1,
-                            CoalescentEventType.COALESCENT);
+                            IntervalType.COALESCENT);
                     subIndex += 1;
                     if (subIndex >= groupSizes[groupIndex]) {
                         groupIndex += 1;
@@ -218,7 +220,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                 // set the population size to the size of the middle of the current interval
                 final double ps = getPopSize(groupIndex, currentTime + (intervals[j]/2.0), groupEnds);
                 cp.setN0(ps);
-                if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
+                if (getIntervalType(j) == IntervalType.COALESCENT) {
                     subIndex += 1;
                     if (subIndex >= groupSizes[groupIndex]) {
                         groupIndex += 1;
@@ -233,7 +235,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                 for (int k = 0; k < diff; k++) {
                     cp.setN0(getPopSize(groupIndex, currentTime, groupEnds));
                     logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j]-k-1,
-                            CoalescentEventType.COALESCENT);
+                            IntervalType.COALESCENT);
                     subIndex += 1;
                     if (subIndex >= groupSizes[groupIndex]) {
                         groupIndex += 1;
@@ -316,7 +318,7 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
 
             timeEnd += intervals[i];
 
-            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+            if (getIntervalType(i) == IntervalType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= getGroupSize(groupIndex)) {
                     groupEnds[groupIndex] = timeEnd;

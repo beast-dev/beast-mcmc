@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.skytrack;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import dr.evolution.tree.NodeRef;
@@ -518,7 +520,7 @@ protected void restoreState() {
             GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1.0) / 2.0;
             constlik+=GPcoalfactor[i]*getInterval(i);
 
-            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+            if (getIntervalType(i) == IntervalType.COALESCENT) {
                 CoalPosIndicator[countcoal]=i;
                 count=0;
                 for (int s=pointer2;s<changePoints.getSize();s++){
@@ -564,7 +566,7 @@ protected void restoreState() {
               GPcounts.setParameterValue(i,0.0);
               GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1.0) / 2.0;
               constlik+=GPcoalfactor[i]*getInterval(i);
-              if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+              if (getIntervalType(i) == IntervalType.COALESCENT) {
                     GPcounts.setParameterValue(i,1.0);
                     GPtype.setParameterValue(countcoal,1.0);
                     CoalPosIndicator[countcoal]=i;

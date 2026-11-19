@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.legacy;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.gmrf.GMRFSkyrideLikelihood;
 
 import dr.evolution.coalescent.TreeIntervalList;
@@ -108,7 +110,7 @@ public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 //        for (int i = 0; i < getIntervalCount(); i++) {
 //            length += getInterval(i);
 //            weight += getInterval(i) * getLineageCount(i) * (getLineageCount(i) - 1);
-//            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+//            if (getIntervalType(i) == IntervalType.COALESCENT) {
 //                coalescentIntervals[index] = length;
 //                sufficientStatistics[index] = weight / 2.0;
 //                index++;

@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.legacy;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.gmrf.GMRFSkyrideLikelihood;
 
 import dr.evolution.coalescent.TreeIntervalList;
@@ -116,12 +118,12 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		NodeRef x;
 		for (int i = 0; i < tree.getInternalNodeCount(); i++) {
 			x = tree.getInternalNode(i);
-			intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, 0, CoalescentEventType.COALESCENT));
+			intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, 0, IntervalType.COALESCENT));
 		}
 		for (int i = 0; i < tree.getExternalNodeCount(); i++) {
 			x = tree.getExternalNode(i);
 			if (tree.getNodeHeight(x) > 1E-5){
-				intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, 0, CoalescentEventType.NEW_SAMPLE));
+				intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, 0, IntervalType.SAMPLE));
 			}
 		}
 				
@@ -134,7 +136,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		
 		for (int i = 0; i < covariateTimes.getDimension(); i++) {
 			intervals.add(new CoalescentIntervalWithData(covariateTimes.getParameterValue(i),
-					covariateData.getParameterValue(i), 0, CoalescentEventType.NOTHING));
+					covariateData.getParameterValue(i), 0, IntervalType.NOTHING));
 		}
 		dr.util.HeapSort.sort(intervals);
 		
@@ -149,11 +151,11 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		
 				
 		for(int i = 0; i < intervals.size(); i++){
-			if(intervals.get(i).type.equals(CoalescentEventType.NOTHING)){
+			if(intervals.get(i).type.equals(IntervalType.NOTHING)){
 				int j = i - 1;
 				double temp = intervals.get(i).datum;
 				while(j > -1 && 
-						!intervals.get(j).type.equals(CoalescentEventType.NOTHING)){
+						!intervals.get(j).type.equals(IntervalType.NOTHING)){
 					intervals.get(j).datum = temp;
 					j--;
 				} 
@@ -161,10 +163,10 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		}
 		
 		for(int i = 0; i < intervals.size(); i++){
-			if(!intervals.get(i).type.equals(CoalescentEventType.NOTHING)){
+			if(!intervals.get(i).type.equals(IntervalType.NOTHING)){
 				int lcount = intervals.get(i).lineage;
 				int j = i - 1;
-				while(j > -1 && intervals.get(j).type.equals(CoalescentEventType.NOTHING)){
+				while(j > -1 && intervals.get(j).type.equals(IntervalType.NOTHING)){
 					intervals.get(j).lineage = lcount;
 					j--;
 				}
@@ -192,7 +194,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 						
 				logLike += -lineageChoose2*Math.exp(-interval.datum)*interval.length;
 				
-				if(interval.type.equals(CoalescentEventType.COALESCENT)){
+				if(interval.type.equals(IntervalType.COALESCENT)){
 					logLike += -interval.datum;
 				}
 				
@@ -243,12 +245,12 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 	}*/
 
 	/*public class CoalescentIntervalWithData implements Comparable<CoalescentIntervalWithData>, Cloneable {
-		public CoalescentEventType type;
+		public IntervalType type;
 		public double length;
 		public int lineage;
 		public double datum;
 
-		public CoalescentIntervalWithData(double length, double datum, int lineage, CoalescentEventType type) {
+		public CoalescentIntervalWithData(double length, double datum, int lineage, IntervalType type) {
 			this.length = length;
 			this.type = type;
 			this.datum = datum;

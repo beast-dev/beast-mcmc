@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.workingprior;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import dr.evomodel.tree.TreeModel;
@@ -88,7 +90,7 @@ public class ExponentialProductSufficientStatisticsLikelihood extends OldAbstrac
         	//System.err.println(getInterval(i));
             length += getInterval(i);
             weight += getInterval(i) * getLineageCount(i) * (getLineageCount(i) - 1);
-            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+            if (getIntervalType(i) == IntervalType.COALESCENT) {
                 coalescentIntervals[index] = length;
                 sufficientStatistics[index] = weight / 2.0;
                 index++;

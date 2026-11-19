@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.legacy;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.gmrf.GMRFSkyrideLikelihood;
 
 import dr.evolution.coalescent.TreeIntervalList;
@@ -71,17 +73,17 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 		NodeRef x;
 		for (int i = 0; i < tree.getInternalNodeCount(); i++) {
 			x = tree.getInternalNode(i);
-			intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, CoalescentEventType.COALESCENT));
+			intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, IntervalType.COALESCENT));
 		}
 		for (int i = 0; i < tree.getExternalNodeCount(); i++) {
 			x = tree.getExternalNode(i);
 			if (tree.getNodeHeight(x) > 0.0) {
-				intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, CoalescentEventType.NEW_SAMPLE));
+				intervals.add(new CoalescentIntervalWithData(tree.getNodeHeight(x), Double.NaN, IntervalType.SAMPLE));
 			}
 		}
 		for (int i = 0; i < covariateTimes.getDimension(); i++) {
 			intervals.add(new CoalescentIntervalWithData(covariateTimes.getParameterValue(i),
-					covariateData.getParameterValue(i), CoalescentEventType.NOTHING));
+					covariateData.getParameterValue(i), IntervalType.NOTHING));
 		}
 		dr.util.HeapSort.sort(intervals);
 
@@ -114,11 +116,11 @@ public class CovariateGMRFSkylineLikelihood extends GMRFSkyrideLikelihood {
 	}
 /*
 	private class CoalescentIntervalWithData implements Comparable<CoalescentIntervalWithData>, Cloneable {
-		public final CoalescentEventType type;
+		public final IntervalType type;
 		public double length;
 		public final double datum;
 
-		public CoalescentIntervalWithData(double length, double datum, CoalescentEventType type) {
+		public CoalescentIntervalWithData(double length, double datum, IntervalType type) {
 			this.length = length;
 			this.type = type;
 			this.datum = datum;

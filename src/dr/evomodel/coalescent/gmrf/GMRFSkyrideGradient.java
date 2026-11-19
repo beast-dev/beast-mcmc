@@ -25,6 +25,8 @@
 
 package dr.evomodel.coalescent.gmrf;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import dr.evomodel.tree.TreeModel;
@@ -203,7 +205,7 @@ public class GMRFSkyrideGradient implements GradientWrtParameterProvider, Hessia
 
             int index = 0;
             for (int i = 0; i < skyrideLikelihood.getIntervalCount(); i++) {
-                if (skyrideLikelihood.getIntervalType(i) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+                if (skyrideLikelihood.getIntervalType(i) == IntervalType.COALESCENT) {
                     double weight = -Math.exp(-gamma[index]) * skyrideLikelihood.getLineageCount(i) * (skyrideLikelihood.getLineageCount(i) - 1);
                     if (index < skyrideLikelihood.getCoalescentIntervalDimension() - 1 && i < skyrideLikelihood.getIntervalCount() - 1) {
                         weight -= -Math.exp(-gamma[index + 1]) * skyrideLikelihood.getLineageCount(i + 1) * (skyrideLikelihood.getLineageCount(i + 1) - 1);

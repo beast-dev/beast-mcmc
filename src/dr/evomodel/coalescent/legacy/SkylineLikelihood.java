@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.legacy;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import dr.evolution.coalescent.demographic.ConstantPopulation;
@@ -101,7 +103,7 @@ public class SkylineLikelihood extends OldAbstractCoalescentLikelihood implement
 		for (int j = 0; j < intervalCount; j++) {
 
 			cp.setN0(popSizeParameter.getParameterValue(popIndex));
-			if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
+			if (getIntervalType(j) == IntervalType.COALESCENT) {
 				popIndex += 1;
 			}
 
@@ -112,7 +114,7 @@ public class SkylineLikelihood extends OldAbstractCoalescentLikelihood implement
 			for (int k = 0; k < diff; k++) {
 				cp.setN0(popSizeParameter.getParameterValue(popIndex));
 				logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j]-k-1,
-                        CoalescentEventType.COALESCENT);
+                        IntervalType.COALESCENT);
 				popIndex += 1;
 			}
 

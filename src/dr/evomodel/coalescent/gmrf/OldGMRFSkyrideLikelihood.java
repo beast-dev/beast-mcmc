@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.gmrf;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.CoalescentIntervalProvider;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
@@ -291,7 +293,7 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
                 }
                 lastNodeNumber = nodeNumbers[nodeNumbers.length - 1];
             }
-            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+            if (getIntervalType(i) == IntervalType.COALESCENT) {
                 coalescentIntervals[index] = length;
                 sufficientStatistics[index] = weight / 2.0;
                 coalesentIntervalNodeMapping.addNode(lastNodeNumber);

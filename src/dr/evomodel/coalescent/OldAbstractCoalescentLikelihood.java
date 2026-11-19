@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.intervals.MultiLociTreeSet;
 
 import dr.evolution.coalescent.Coalescent;
@@ -73,24 +75,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     //    public static final String POPULATION_FACTOR = "factor";
     protected MultiLociTreeSet treesSet = null;
     protected boolean buildIntervalNodeMapping = false;
-
-    public enum CoalescentEventType {
-        /**
-         * Denotes an interval after which a coalescent event is observed
-         * (i.e. the number of lineages is smaller in the next interval)
-         */
-        COALESCENT,
-        /**
-         * Denotes an interval at the end of which a new sample addition is
-         * observed (i.e. the number of lineages is larger in the next interval).
-         */
-        NEW_SAMPLE,
-        /**
-         * Denotes an interval at the end of which nothing is
-         * observed (i.e. the number of lineages is the same in the next interval).
-         */
-        NOTHING
-    }
 
     public OldAbstractCoalescentLikelihood(Tree tree, DemographicModel demoModel) {
         this(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, tree, demoModel, true);
@@ -292,7 +276,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             final int diff = getCoalescentEvents(j) - 1;
             for (int k = 0; k < diff; k++) {
                 logL += calculateIntervalLikelihood(demoFunction, 0.0, currentTime, lineageCounts[j] - k - 1,
-                        CoalescentEventType.COALESCENT);
+                        IntervalType.COALESCENT);
             }
 
             currentTime += intervals[j];
@@ -322,7 +306,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                                                     double timeOfPrevCoal, int lineageCount) {
 
         return calculateIntervalLikelihood(demoFunction, width, timeOfPrevCoal, lineageCount,
-                CoalescentEventType.COALESCENT);
+                IntervalType.COALESCENT);
     }
 
     /**
@@ -349,7 +333,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
      */
     public static double calculateIntervalLikelihood(DemographicFunction demogFunction,
                                                      double width, double timeOfPrevCoal, int lineageCount,
-                                                     CoalescentEventType type) {
+                                                     IntervalType type) {
         final double timeOfThisCoal = width + timeOfPrevCoal;
 
         final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
@@ -362,7 +346,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
                 like += -demographic;
 
                 break;
-            case NEW_SAMPLE:
+            case SAMPLE:
                 break;
         }
 
@@ -374,11 +358,11 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
      *         likelihood for this interval, coalescent or otherwise
      */
     public final double calculateIntervalShapeParameter(DemographicFunction demogFunction,
-                                                        double width, double timeOfPrevCoal, int lineageCount, CoalescentEventType type) {
+                                                        double width, double timeOfPrevCoal, int lineageCount, IntervalType type) {
         switch (type) {
             case COALESCENT:
                 return 1.0;
-            case NEW_SAMPLE:
+            case SAMPLE:
                 return 0.0;
         }
         throw new Error("Unknown event found");
@@ -389,7 +373,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
      *         associated to the likelihood for this interval, coalescent or otherwise
      */
     public final double calculateIntervalRateParameter(DemographicFunction demogFunction, double width,
-                                                       double timeOfPrevCoal, int lineageCount, CoalescentEventType type) {
+                                                       double timeOfPrevCoal, int lineageCount, IntervalType type) {
         final double timeOfThisCoal = width + timeOfPrevCoal;
         final double intervalArea = demogFunction.getIntegral(timeOfPrevCoal, timeOfThisCoal);
         return Binomial.choose2(lineageCount) * intervalArea;
@@ -804,14 +788,14 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
      * @param i interval index
      * @return the type of interval observed.
      */
-    public final CoalescentEventType getIntervalType(int i) {
+    public final IntervalType getIntervalType(int i) {
 
         if (i >= intervalCount) throw new IllegalArgumentException();
         int numEvents = getCoalescentEvents(i);
 
-        if (numEvents > 0) return CoalescentEventType.COALESCENT;
-        else if (numEvents < 0) return CoalescentEventType.NEW_SAMPLE;
-        else return CoalescentEventType.NOTHING;
+        if (numEvents > 0) return IntervalType.COALESCENT;
+        else if (numEvents < 0) return IntervalType.SAMPLE;
+        else return IntervalType.NOTHING;
     }
 
     /**

@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.skytrack;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.skytrack.GaussianProcessSkytrackLikelihood;
@@ -326,9 +328,9 @@ public class GaussianProcessSkytrackTreeOperator extends AbstractAdaptableOperat
 		}
 	}
 
-//        if (numEvents > 0) return CoalescentEventType.COALESCENT;
-//        else if (numEvents < 0) return CoalescentEventType.NEW_SAMPLE;
-//        else return CoalescentEventType.NOTHING;
+//        if (numEvents > 0) return IntervalType.COALESCENT;
+//        else if (numEvents < 0) return IntervalType.SAMPLE;
+//        else return IntervalType.NOTHING;
 
 
 	public double doOperation() {

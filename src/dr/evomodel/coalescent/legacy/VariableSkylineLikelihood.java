@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.legacy;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import dr.evolution.coalescent.demographic.ConstantPopulation;
@@ -135,8 +137,8 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                 pop[0] = getPopSize(groupIndex, currentTime + intervals[j]);
             }
             cp.setN0(getPopSize(groupIndex, currentTime + (intervals[j] / 2.0)));
-            final CoalescentEventType iType = getIntervalType(j);
-            if (iType == CoalescentEventType.COALESCENT) {
+            final IntervalType iType = getIntervalType(j);
+            if (iType == IntervalType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= groupSizes.get(groupIndex)) {
                     groupIndex += 1;
@@ -159,7 +161,7 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood i
                 pop[0] = getPopSize(groupIndex, currentTime);
                 cp.setN0(pop[0]);
                 logL += calculateIntervalLikelihood(cp, 0.0, currentTime, lineageCounts[j] - k - 1,
-                        CoalescentEventType.COALESCENT);
+                        IntervalType.COALESCENT);
                 subIndex += 1;
                 if (subIndex >= groupSizes.get(groupIndex)) {
                     groupIndex += 1;

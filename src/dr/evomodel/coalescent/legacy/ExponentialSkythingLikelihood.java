@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.legacy;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
 import dr.evolution.coalescent.demographic.ExponentialBSPGrowth;
@@ -122,7 +124,7 @@ public class ExponentialSkythingLikelihood extends OldAbstractCoalescentLikeliho
 
             eg.setupN1(endGroupPopSize, slopeParameter.getParameterValue(j), endTime - startTime);
 
-            if (getIntervalType(j) == CoalescentEventType.COALESCENT) {
+            if (getIntervalType(j) == IntervalType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= groupSizes[groupIndex]) {
                     groupIndex += 1;
@@ -137,7 +139,7 @@ public class ExponentialSkythingLikelihood extends OldAbstractCoalescentLikeliho
             for (int k = 0; k < diff; k++) {
                 eg.setup(startGroupPopSize, startGroupPopSize, endTime - startTime);
                 logL += calculateIntervalLikelihood(eg, 0.0, currentTime, lineageCounts[j]-k-1,
-                        CoalescentEventType.COALESCENT);
+                        IntervalType.COALESCENT);
                 subIndex += 1;
                 if (subIndex >= groupSizes[groupIndex]) {
                     groupIndex += 1;
@@ -202,7 +204,7 @@ public class ExponentialSkythingLikelihood extends OldAbstractCoalescentLikeliho
 
             timeEnd += intervals[i];
 
-            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+            if (getIntervalType(i) == IntervalType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= getGroupSize(groupIndex)) {
                     groupEnds[groupIndex] = timeEnd;

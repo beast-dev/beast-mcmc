@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.skyline;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evomodel.coalescent.gmrf.GMRFGradient;
 
 import dr.evolution.coalescent.demographic.ConstantPopulation;
@@ -165,7 +167,7 @@ public class BayesianSkylineGradient implements
 
                     final double ps = likelihood.getPopSize(groupIndex, currentTime + (likelihood.getInterval(j)/2.0), groupEnds);
                     cp.setN0(ps);
-                    if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+                    if (likelihood.getIntervalType(j) == IntervalType.COALESCENT) {
                         subIndex += 1;
                         if (subIndex >= groupSizes[groupIndex]) {
                             groupIndex += 1;
@@ -174,7 +176,7 @@ public class BayesianSkylineGradient implements
                     }
                     currentTime += likelihood.getInterval(j);
 
-                    if (likelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+                    if (likelihood.getIntervalType(j) == IntervalType.COALESCENT) {
                         currentHeight = sortedValues[nodeIndex];
                         while(currentHeight < currentTime) {
                             nodeIndex++;
@@ -197,7 +199,7 @@ public class BayesianSkylineGradient implements
 
             private double getIntervalGradient(DemographicFunction demogFunction,
                                                double timeOfThisCoal, int lineageCount,
-                                               OldAbstractCoalescentLikelihood.CoalescentEventType type) {
+                                               IntervalType type) {
                 final double intensityDeriv = demogFunction.getIntensityGradient(timeOfThisCoal);
                 final double kchoose2 = Binomial.choose2(lineageCount);
                 final double gradient = -kchoose2 * intensityDeriv;

@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.skyline;
 
+import dr.evolution.coalescent.IntervalType;
+
 import dr.evolution.coalescent.demographic.ConstantPopulation;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.skyline.BayesianSkylineLikelihood;
@@ -321,7 +323,7 @@ public class BayesianSkylineGibbsOperator extends SimpleMCMCOperator {
                     bayesianSkylineLikelihood.getIntervalType(j))
                     * curpopsize;
 
-            if (bayesianSkylineLikelihood.getIntervalType(j) == OldAbstractCoalescentLikelihood.CoalescentEventType.COALESCENT) {
+            if (bayesianSkylineLikelihood.getIntervalType(j) == IntervalType.COALESCENT) {
                 subIndex += 1;
                 if (subIndex >= groupSizes[groupIndex]) {
 

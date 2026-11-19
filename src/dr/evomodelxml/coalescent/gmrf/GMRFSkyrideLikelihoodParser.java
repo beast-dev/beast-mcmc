@@ -37,6 +37,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.glm.ExperimentalGeneralizedLinearModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.DesignMatrix;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -413,6 +414,10 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                     lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight, buildIntervalNodeMapping);
 
         } else {
+            if (xo.getChild(GRID_POINTS) == null && (cutOff == null || numGridPoints == null)) {
+                throw new XMLParseException("The skygrid needs either a " + GRID_POINTS + " element or both " +
+                        NUM_GRID_POINTS + " and " + CUT_OFF + " elements");
+            }
             if (intervalsList.size() > 0) {
                 if (xo.getChild(GRID_POINTS) != null) {
                     return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
@@ -445,7 +450,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType() {
-        return GMRFSkyrideLikelihood.class;
+        // one of OldGMRFSkyrideLikelihood, GMRFSkygridLikelihood or GMRFMultilocusSkyrideLikelihood
+        return Likelihood.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -476,6 +482,56 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(SINGLE_BETA, new XMLSyntaxRule[] {
                     new ElementRule(Parameter.class),
             }, true),
+            new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(GRID_POINTS, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(NUM_GRID_POINTS, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(CUT_OFF, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(PLOIDY, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(REC_INDICES, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(DIST_INDICES, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(FIRST_OBSERVED_INDEX, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(LAST_OBSERVED_INDEX, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(BETA_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(DELTA_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(COV_PREC_PARAM, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(COV_PREC_REC, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(COV_PREC_DIST, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(COVARIATE_MATRIX, new XMLSyntaxRule[]{
+                    new ElementRule(MatrixParameter.class)
+            }, true),
+            new ElementRule(COVARIATES, new XMLSyntaxRule[]{
+                    new ElementRule(MatrixParameter.class, 1, Integer.MAX_VALUE)
+            }, true),
+            new ElementRule(ExperimentalGeneralizedLinearModel.class, true),
+            AttributeRule.newBooleanRule(USE_GLM_MODEL, true),
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_ISSUE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
             AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),

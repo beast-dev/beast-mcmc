@@ -26,7 +26,6 @@
  */
 package dr.inferencexml.distribution.shrinkage;
 
-import dr.evomodel.branchratemodel.AutoCorrelatedBranchRatesDistribution;
 import dr.inference.distribution.shrinkage.BayesianBridgeDistributionModel;
 import dr.inference.distribution.shrinkage.BayesianBridgeStatisticsProvider;
 import dr.inference.distribution.shrinkage.JointBayesianBridgeStatistics;

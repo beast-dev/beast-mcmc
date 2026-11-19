@@ -28,7 +28,6 @@
 package dr.inference.multidimensionalscaling.mm;
 
 import dr.inference.multidimensionalscaling.MultiDimensionalScalingLikelihood;
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.xml.*;
 
 /**

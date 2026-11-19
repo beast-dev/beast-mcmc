@@ -27,7 +27,6 @@
 
 package dr.inferencexml.operators;
 
-import dr.evomodel.continuous.MatrixShrinkageLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;

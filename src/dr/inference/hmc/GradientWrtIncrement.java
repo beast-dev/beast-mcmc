@@ -27,7 +27,6 @@
 
 package dr.inference.hmc;
 
-import dr.evomodel.speciation.SpeciationLikelihoodGradient;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.MachineAccuracy;

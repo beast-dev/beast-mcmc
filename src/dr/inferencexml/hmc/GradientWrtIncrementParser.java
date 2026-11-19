@@ -27,19 +27,11 @@
 
 package dr.inferencexml.hmc;
 
-import dr.evomodel.speciation.SpeciationLikelihoodGradient;
-import dr.evomodel.treelikelihood.utilities.SequenceDistanceStatistic;
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.GradientWrtIncrement;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.util.Transform;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Andy Magee

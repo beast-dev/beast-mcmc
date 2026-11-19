@@ -27,7 +27,6 @@
 
 package dr.inference.operators;
 
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.IndianBuffetProcessPrior;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;

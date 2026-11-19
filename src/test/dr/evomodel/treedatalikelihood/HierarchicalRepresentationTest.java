@@ -71,6 +71,7 @@ import java.util.Locale;
 
 /**
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
 

@@ -46,6 +46,7 @@ import java.util.List;
  * multifurcating tree (docs/generator-constraints), so negative rates are allowed where the generator stays valid.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class ContractedRatesProvider extends AbstractModel implements HierarchicalSubstitutionModel.HierarchicalRateProvider {
 

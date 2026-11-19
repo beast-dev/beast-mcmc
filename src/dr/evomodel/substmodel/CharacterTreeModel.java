@@ -61,6 +61,7 @@ import java.util.Map;
  * branch length is refused.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeModel extends AbstractModel implements Tree, TreeTraitProvider {
 

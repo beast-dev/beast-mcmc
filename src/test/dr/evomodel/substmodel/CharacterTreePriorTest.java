@@ -49,6 +49,7 @@ import java.util.Map;
  * The topology prior of a sampled character tree, and prior-only chains of the character-tree moves.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreePriorTest extends TestCase {
 

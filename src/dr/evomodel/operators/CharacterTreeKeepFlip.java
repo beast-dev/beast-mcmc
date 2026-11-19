@@ -42,6 +42,7 @@ import dr.math.MathUtils;
  * log f(a) - log h(b) for a restore and log h(b) - log f(a') for a collapse; the prior on the rates supplies f(b)/f(a).
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeKeepFlip extends SimpleMCMCOperator {
 

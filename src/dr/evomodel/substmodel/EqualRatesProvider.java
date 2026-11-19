@@ -40,6 +40,7 @@ import dr.evomodel.tree.TreeModel;
  * generator after every change and refuses unequal rates.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class EqualRatesProvider extends AbstractHierarchicalRateProvider {
 

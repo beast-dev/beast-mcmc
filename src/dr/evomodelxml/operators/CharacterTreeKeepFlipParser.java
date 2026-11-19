@@ -38,6 +38,7 @@ import dr.xml.*;
  * Parses characterTreeKeepFlip, which collapses or restores a node of a sampled character tree.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeKeepFlipParser extends AbstractXMLObjectParser {
 

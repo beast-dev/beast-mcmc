@@ -36,6 +36,7 @@ import dr.xml.*;
  * Parses characterTreeSPR, a root-preserving subtree prune and regraft.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeSPRParser extends AbstractXMLObjectParser {
 

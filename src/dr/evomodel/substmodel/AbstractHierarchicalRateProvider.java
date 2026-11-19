@@ -50,6 +50,7 @@ import java.util.List;
  * once after any change of a parameter, the frequencies or a sub-model.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public abstract class AbstractHierarchicalRateProvider extends AbstractModel
         implements HierarchicalSubstitutionModel.HierarchicalRateProvider {

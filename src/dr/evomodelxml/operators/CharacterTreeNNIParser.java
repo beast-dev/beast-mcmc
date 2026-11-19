@@ -36,6 +36,7 @@ import dr.xml.*;
  * Parses characterTreeNNI, a rooted nearest-neighbour interchange.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeNNIParser extends AbstractXMLObjectParser {
 

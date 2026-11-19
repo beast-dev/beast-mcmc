@@ -45,6 +45,7 @@ import java.util.Set;
  * The columns of characterTreeStatistic on the 26 four-state trees.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeStatisticTest extends TestCase {
 

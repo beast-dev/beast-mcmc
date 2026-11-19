@@ -42,6 +42,7 @@ import java.util.logging.Logger;
  * Parses a characterTreeModel: a character tree that may be multifurcating and whose topology may be sampled.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeModelParser extends AbstractXMLObjectParser {
 

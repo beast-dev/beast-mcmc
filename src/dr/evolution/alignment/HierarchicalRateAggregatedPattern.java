@@ -46,6 +46,7 @@ import java.util.TreeSet;
  * @author Tae-Kun Seo
  * @author Sangchul Choi
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class HierarchicalRateAggregatedPattern extends Patterns {
 

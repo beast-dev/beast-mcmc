@@ -59,6 +59,7 @@ import java.util.logging.Logger;
  * Parser round trip and error paths of hierarchicalSubstitutionModel.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class HierarchicalSubstitutionModelParserTest extends TestCase {
 

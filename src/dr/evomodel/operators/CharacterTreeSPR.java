@@ -43,6 +43,7 @@ import java.util.List;
  * the log Hastings ratio is 0. Node heights are reset to unit depth in the same edit.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeSPR extends SimpleMCMCOperator {
 

@@ -60,6 +60,7 @@ import java.util.Set;
  * ordered by smallest state, and internal nodes are numbered S + post-order rank.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public final class CharacterTreeContraction {
 

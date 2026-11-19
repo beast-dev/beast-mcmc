@@ -50,6 +50,7 @@ import java.util.List;
  * cone; only the hierarchical BEAGLE plugin, which needs non-negative clade rates, excludes them.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class RelativeRatesProvider extends AbstractHierarchicalRateProvider {
 

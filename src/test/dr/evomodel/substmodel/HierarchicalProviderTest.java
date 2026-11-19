@@ -52,6 +52,7 @@ import java.util.Arrays;
  * Rate providers of the hierarchical substitution model against the dense models they represent.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class HierarchicalProviderTest extends TestCase {
 

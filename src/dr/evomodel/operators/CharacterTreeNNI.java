@@ -40,6 +40,7 @@ import dr.math.MathUtils;
  * connects all binary trees; at a collapsed u the contracted tree does not change.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeNNI extends SimpleMCMCOperator {
 

@@ -37,6 +37,7 @@ import java.util.logging.Logger;
  * Parses a characterTreePrior: the prior on the topology of a sampled character tree.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreePriorParser extends AbstractXMLObjectParser {
 

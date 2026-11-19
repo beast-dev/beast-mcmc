@@ -40,6 +40,7 @@ import dr.inference.model.Likelihood;
  * Tree counts by q come from T(n + 1, k) = k T(n, k) + (n + k - 1) T(n, k - 1), T(2, 1) = 1, in log space.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreePrior extends Likelihood.Abstract {
 

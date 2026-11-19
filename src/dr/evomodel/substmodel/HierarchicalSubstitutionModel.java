@@ -50,6 +50,7 @@ import java.util.List;
  * @author Tae-Kun Seo
  * @author Sangchul Choi
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class HierarchicalSubstitutionModel extends AbstractModel implements SubstitutionModel, TreeTraitProvider {
 

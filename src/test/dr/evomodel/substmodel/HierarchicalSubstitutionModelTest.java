@@ -44,6 +44,7 @@ import java.util.Map;
 
 /**
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class HierarchicalSubstitutionModelTest extends TestCase {
 

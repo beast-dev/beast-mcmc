@@ -39,6 +39,7 @@ import java.util.logging.Logger;
  * Parses a characterTreeStatistic; at S <= 5 it prints the list of trees that the model column indexes.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeStatisticParser extends AbstractXMLObjectParser {
 

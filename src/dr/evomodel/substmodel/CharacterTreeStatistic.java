@@ -49,6 +49,7 @@ import java.util.Set;
  * default at S <= 20, the normalised exchangeabilities sigma(mrca(i, j)) = Q_ij / pi_j, defined on every tree.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeStatistic extends Statistic.Abstract {
 

@@ -58,6 +58,7 @@ import java.util.logging.Logger;
  * @author Tae-Kun Seo
  * @author Sangchul Choi
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser {
 

@@ -67,6 +67,7 @@ import java.util.regex.Pattern;
  * The character-tree model: its contracted view, events, counts, guard and parsing.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class CharacterTreeModelTest extends TestCase {
 

@@ -61,6 +61,7 @@ import java.util.Set;
  * Multifurcating character trees held as a binary skeleton with a collapse state.
  *
  * @author Xiang Ji
+ * @author Marc A. Suchard
  */
 public class MultifurcatingCharacterTreeTest extends TestCase {
 

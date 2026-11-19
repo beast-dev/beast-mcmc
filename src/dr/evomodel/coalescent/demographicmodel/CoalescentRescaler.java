@@ -27,8 +27,8 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.ConstantPopulation;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evolution.coalescent.demographic.ConstantPopulation;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
 import dr.evomodel.coalescent.demographicmodel.RescaleAwareDemographic;
 import dr.evomodel.tree.TreeModel;

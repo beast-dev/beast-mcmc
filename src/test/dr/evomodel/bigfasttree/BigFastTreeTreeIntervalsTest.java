@@ -34,7 +34,7 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeModel;
 import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.evomodel.operators.ScaleNodeHeightOperator;

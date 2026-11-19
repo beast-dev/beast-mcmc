@@ -27,6 +27,8 @@
 
 package dr.app.seqgen;
 
+import dr.evolution.coalescent.demographic.ConstantPopulation;
+
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.coalescent.*;

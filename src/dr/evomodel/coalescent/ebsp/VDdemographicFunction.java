@@ -27,7 +27,7 @@
 
 package dr.evomodel.coalescent.ebsp;
 
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;

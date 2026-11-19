@@ -27,6 +27,14 @@
 
 package dr.app.coalgen;
 
+import dr.evolution.coalescent.demographic.ConstantPopulation;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.Expansion;
+import dr.evolution.coalescent.demographic.ExponentialGrowth;
+import dr.evolution.coalescent.demographic.LogisticGrowth;
+import dr.evolution.coalescent.demographic.PiecewiseConstantPopulation;
+import dr.evolution.coalescent.demographic.PiecewiseLinearPopulation;
+
 import dr.evolution.coalescent.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;

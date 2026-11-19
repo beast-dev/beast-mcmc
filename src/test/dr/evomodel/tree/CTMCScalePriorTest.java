@@ -28,7 +28,7 @@
 package test.dr.evomodel.tree;
 
 import dr.evolution.coalescent.CoalescentSimulator;
-import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.demographic.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Date;

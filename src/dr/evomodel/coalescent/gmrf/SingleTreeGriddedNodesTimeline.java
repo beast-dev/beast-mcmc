@@ -1,6 +1,6 @@
 package dr.evomodel.coalescent.gmrf;
 
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.inference.model.Parameter;
 
 import java.util.Arrays;

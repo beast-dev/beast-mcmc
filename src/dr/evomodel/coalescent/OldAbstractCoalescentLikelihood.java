@@ -30,8 +30,8 @@ package dr.evomodel.coalescent;
 import dr.evomodel.coalescent.intervals.MultiLociTreeSet;
 
 import dr.evolution.coalescent.Coalescent;
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ScaledDemographic;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.ScaledDemographic;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;

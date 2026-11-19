@@ -29,7 +29,7 @@ package dr.evomodel.coalescent.legacy;
 
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
-import dr.evolution.coalescent.ExponentialBSPGrowth;
+import dr.evolution.coalescent.demographic.ExponentialBSPGrowth;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.skyline.BayesianSkylineLikelihoodParser;

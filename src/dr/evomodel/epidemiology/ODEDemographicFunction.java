@@ -31,6 +31,8 @@
 */
 package dr.evomodel.epidemiology;
 
+import dr.evolution.coalescent.demographic.DemographicFunction;
+
 import dr.evolution.coalescent.*;
 
 

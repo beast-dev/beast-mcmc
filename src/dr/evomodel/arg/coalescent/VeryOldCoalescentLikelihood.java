@@ -27,7 +27,7 @@
 
 package dr.evomodel.arg.coalescent;
 
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;

@@ -29,7 +29,7 @@ package dr.evomodel.coalescent.legacy;
 
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 
-import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.demographic.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;

@@ -27,7 +27,7 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evolution.util.Units;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;

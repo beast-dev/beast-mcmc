@@ -27,7 +27,7 @@
 
 package dr.evolution.coalescent.legacy.structure;
 
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evolution.colouring.ColourChangeMatrix;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;

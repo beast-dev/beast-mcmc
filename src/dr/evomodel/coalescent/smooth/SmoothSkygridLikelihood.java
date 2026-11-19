@@ -30,7 +30,7 @@ package dr.evomodel.coalescent.smooth;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;

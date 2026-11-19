@@ -27,8 +27,8 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.CataclysmicDemographic;
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.CataclysmicDemographic;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evomodelxml.coalescent.demographicmodel.CataclysmicDemographicModelParser;
 import dr.inference.model.Parameter;
 import dr.util.Author;

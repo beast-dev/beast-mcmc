@@ -28,7 +28,7 @@
 package test.dr.calibration;
 
 
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;

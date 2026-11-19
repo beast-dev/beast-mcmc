@@ -27,7 +27,7 @@
 
 package dr.evomodel.coalescent.skyline;
 
-import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.demographic.ConstantPopulation;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.skyline.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;

@@ -27,8 +27,8 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.LinearGrowth;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.LinearGrowth;
 import dr.evomodelxml.coalescent.demographicmodel.LinearGrowthModelParser;
 import dr.inference.model.Parameter;
 

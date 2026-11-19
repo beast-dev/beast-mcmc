@@ -28,7 +28,7 @@ package dr.evomodel.basta;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
-import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;

@@ -27,8 +27,8 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.ExponentialGrowth;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.demographicmodel.EmergingEpidemicModelParser;
 import dr.inference.model.Parameter;

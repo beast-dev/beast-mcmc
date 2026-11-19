@@ -26,7 +26,7 @@
 package dr.evomodelxml.coalescent.gmrf;
 
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.coalescent.gmrf.MultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.coalescent.smooth.SkyGlideLikelihood;
 import dr.evomodel.tree.TreeModel;

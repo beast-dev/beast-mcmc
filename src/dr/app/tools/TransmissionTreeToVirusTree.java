@@ -29,9 +29,9 @@ package dr.app.tools;
 
 import dr.app.util.Arguments;
 import dr.evolution.coalescent.CoalescentSimulator;
-import dr.evolution.coalescent.ConstantPopulation;
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evolution.coalescent.demographic.ConstantPopulation;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.ExponentialGrowth;
 import dr.evolution.tree.*;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;

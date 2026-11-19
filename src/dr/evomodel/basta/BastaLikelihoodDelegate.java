@@ -28,7 +28,7 @@ package dr.evomodel.basta;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;

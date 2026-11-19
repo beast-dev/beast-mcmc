@@ -28,14 +28,14 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evolution.coalescent.CoalescentGradient;
+import dr.evomodel.coalescent.CoalescentGradient;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;
 import dr.xml.*;
 
-import static dr.evolution.coalescent.CoalescentGradient.Wrt;
+import static dr.evomodel.coalescent.CoalescentGradient.Wrt;
 
 /**
  * @author Xiang Ji

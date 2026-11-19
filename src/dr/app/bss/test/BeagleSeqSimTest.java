@@ -57,7 +57,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.coalescent.CoalescentSimulator;
-import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evolution.coalescent.demographic.ExponentialGrowth;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;

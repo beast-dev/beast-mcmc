@@ -28,7 +28,7 @@
 package dr.app.vcs;
 
 import dr.evolution.coalescent.CoalescentSimulator;
-import dr.evolution.coalescent.PiecewiseLinearPopulation;
+import dr.evolution.coalescent.demographic.PiecewiseLinearPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Date;

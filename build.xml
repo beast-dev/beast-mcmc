@@ -305,7 +305,7 @@ ${extra_release_tag}</echo>
             <fileset dir="${build}">
                 <include name="dr/app/gui/**/*.class"/>
                 <include name="dr/app/util/*.class"/>
-                <include name="dr/evolution/coalescent/*.class"/>
+                <include name="dr/evolution/coalescent/**/*.class"/>
                 <include name="dr/evolution/util/*.class"/>
                 <include name="dr/inference/trace/*.class"/>
                 <include name="dr/inference/model/**/*.class"/>

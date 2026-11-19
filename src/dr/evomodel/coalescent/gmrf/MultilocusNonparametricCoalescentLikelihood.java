@@ -24,7 +24,7 @@
  */
 
 package dr.evomodel.coalescent.gmrf;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;

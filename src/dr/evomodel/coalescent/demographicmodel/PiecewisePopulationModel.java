@@ -27,10 +27,10 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.PiecewiseConstantPopulation;
-import dr.evolution.coalescent.PiecewiseExponentialPopulation;
-import dr.evolution.coalescent.PiecewiseLinearPopulation;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.PiecewiseConstantPopulation;
+import dr.evolution.coalescent.demographic.PiecewiseExponentialPopulation;
+import dr.evolution.coalescent.demographic.PiecewiseLinearPopulation;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;

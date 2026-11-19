@@ -27,8 +27,8 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ExponentialSawtooth;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.ExponentialSawtooth;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialSawtoothModelParser;
 import dr.inference.model.Parameter;
 

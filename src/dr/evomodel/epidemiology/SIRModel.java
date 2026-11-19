@@ -27,7 +27,7 @@
 
 package dr.evomodel.epidemiology;
 
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;

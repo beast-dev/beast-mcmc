@@ -27,8 +27,8 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.PowerLawGrowth;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.PowerLawGrowth;
 import dr.evomodelxml.coalescent.demographicmodel.PowerLawGrowthModelParser;
 import dr.inference.model.Parameter;
 

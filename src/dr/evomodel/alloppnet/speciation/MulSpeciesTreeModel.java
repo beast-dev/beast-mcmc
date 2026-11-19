@@ -27,7 +27,7 @@
 
 package dr.evomodel.alloppnet.speciation;
 
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;

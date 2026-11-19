@@ -27,6 +27,8 @@
 
 package dr.evolution.coalescent;
 
+import dr.evolution.coalescent.demographic.DemographicFunction;
+
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.math.Binomial;

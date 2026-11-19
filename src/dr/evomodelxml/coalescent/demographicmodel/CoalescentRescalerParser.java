@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.demographic.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.demographicmodel.CoalescentRescaler;

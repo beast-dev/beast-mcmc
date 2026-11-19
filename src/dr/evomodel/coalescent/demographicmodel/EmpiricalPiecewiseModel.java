@@ -27,8 +27,8 @@
 
 package dr.evomodel.coalescent.demographicmodel;
 
-import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.EmpiricalPiecewiseConstant;
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.EmpiricalPiecewiseConstant;
 import dr.evomodelxml.coalescent.demographicmodel.EmpiricalPiecewiseModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

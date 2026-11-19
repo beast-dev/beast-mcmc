@@ -29,8 +29,8 @@ package dr.evomodel.coalescent.skyline;
 
 import dr.evomodel.coalescent.gmrf.GMRFGradient;
 
-import dr.evolution.coalescent.ConstantPopulation;
-import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.demographic.ConstantPopulation;
+import dr.evolution.coalescent.demographic.DemographicFunction;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.skyline.BayesianSkylineLikelihood;

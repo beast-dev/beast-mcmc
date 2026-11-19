@@ -27,6 +27,9 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.evolution.coalescent.demographic.DemographicFunction;
+import dr.evolution.coalescent.demographic.LinearGrowth;
+
 import dr.app.tools.NexusExporter;
 import dr.evolution.coalescent.*;
 import dr.evolution.tree.FlexibleNode;

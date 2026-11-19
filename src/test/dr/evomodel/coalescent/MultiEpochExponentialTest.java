@@ -27,9 +27,9 @@
 
 package test.dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.ExponentialExponential;
-import dr.evolution.coalescent.ExponentialGrowth;
-import dr.evolution.coalescent.MultiEpochExponential;
+import dr.evolution.coalescent.demographic.ExponentialExponential;
+import dr.evolution.coalescent.demographic.ExponentialGrowth;
+import dr.evolution.coalescent.demographic.MultiEpochExponential;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.ebsp.VDdemographicFunction;
 import dr.evomodel.coalescent.ebsp.VariableDemographicModel;

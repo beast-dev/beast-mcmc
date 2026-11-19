@@ -37,7 +37,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.xml.*;
 
 import static dr.evomodel.continuous.ContinuousDiffusionStatistic.getGreatCircleDistance;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
 /**
  * @author Marc A. Suchard

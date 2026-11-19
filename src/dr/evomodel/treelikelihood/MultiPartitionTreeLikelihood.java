@@ -27,6 +27,7 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import beagle.*;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchmodel.BranchModel;

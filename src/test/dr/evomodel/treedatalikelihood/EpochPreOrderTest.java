@@ -54,7 +54,7 @@ import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrai
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightGradientForDiscreteTrait;
 import dr.evomodel.treedatalikelihood.preorder.AbstractBeagleGradientDelegate;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
 

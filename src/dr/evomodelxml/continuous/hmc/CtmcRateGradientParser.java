@@ -35,10 +35,10 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient;
 import dr.evomodel.treedatalikelihood.discrete.CtmcRateGradient;
 import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.xml.*;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * Parses the gradient with respect to the rates of a generalSubstitutionModel with a rateIndicator, or with respect

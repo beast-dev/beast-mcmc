@@ -42,7 +42,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.MultiPartitionDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.xml.*;
 
 import java.util.ArrayList;

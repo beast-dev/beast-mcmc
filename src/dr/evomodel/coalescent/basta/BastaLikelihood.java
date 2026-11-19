@@ -39,7 +39,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;
-import dr.evomodel.treelikelihood.AncestralStateTraitProvider;
+import dr.evomodel.treedatalikelihood.AncestralStateTraitProvider;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.WrappedVector;

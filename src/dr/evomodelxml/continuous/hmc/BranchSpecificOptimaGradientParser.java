@@ -34,7 +34,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.BranchSpecificOptimaGradient;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranch;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.xml.*;
 
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * @author Alexander Fisher

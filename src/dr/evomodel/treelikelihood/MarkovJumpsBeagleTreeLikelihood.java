@@ -27,6 +27,8 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evomodel.treedatalikelihood.MarkovJumpsTraitProvider;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.EpochBranchModel;

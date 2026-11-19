@@ -29,7 +29,7 @@ package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;

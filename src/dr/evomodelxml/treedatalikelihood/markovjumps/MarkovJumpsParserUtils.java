@@ -5,7 +5,7 @@ import dr.evomodel.coalescent.basta.BastaLikelihood;
 import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryAddOn;
 import dr.evomodel.treedatalikelihood.markovjumps.MarkovJumpRewardAddOn;
 import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;
-import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
+import dr.evomodel.treedatalikelihood.MarkovJumpsTraitProvider;
 import dr.inference.model.Parameter;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;

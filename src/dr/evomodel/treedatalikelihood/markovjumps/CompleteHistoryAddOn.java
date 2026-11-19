@@ -9,7 +9,7 @@ import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.UniformizedSubstitutionModel;
 import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;
-import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
+import dr.evomodel.treedatalikelihood.MarkovJumpsTraitProvider;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.markovjumps.StateHistory;
 

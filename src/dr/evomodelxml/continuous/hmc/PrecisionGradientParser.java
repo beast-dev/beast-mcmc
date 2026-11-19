@@ -34,7 +34,7 @@ import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.*;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
@@ -43,7 +43,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * @author Paul Bastide

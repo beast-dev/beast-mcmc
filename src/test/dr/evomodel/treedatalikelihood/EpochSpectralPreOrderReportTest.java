@@ -49,7 +49,7 @@ import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.DiscretePreOrderReport;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
 

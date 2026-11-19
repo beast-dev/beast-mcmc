@@ -34,7 +34,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.*;
 import dr.evomodel.treedatalikelihood.TreeTraversal.TraversalType;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;

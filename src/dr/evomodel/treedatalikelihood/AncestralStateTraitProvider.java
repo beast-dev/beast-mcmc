@@ -1,5 +1,5 @@
 /*
- * MarkovJumpsTraitProvider.java
+ * AncestralStateTraitProvider.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -25,19 +25,24 @@
  *
  */
 
-package dr.evomodel.treelikelihood;
+package dr.evomodel.treedatalikelihood;
+
+import dr.evolution.tree.MutableTreeModel;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evomodel.tree.TreeModel;
 
 /**
  * @author Marc A. Suchard
  */
-public interface MarkovJumpsTraitProvider extends AncestralStateTraitProvider {
+public interface AncestralStateTraitProvider {
 
-    int getPatternCount();
+    String getId();
 
-    double getLogLikelihood();
+    MutableTreeModel getTreeModel();
 
-    enum ValueScaling {
-        RAW,
-        BY_TIME
-    }
+    TreeTrait getTreeTrait(String key);
+
+    String formattedState(int[] state);
+
 }

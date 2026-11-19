@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.treelikelihood;
 
-import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
+import dr.evomodel.treedatalikelihood.MarkovJumpsTraitProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;

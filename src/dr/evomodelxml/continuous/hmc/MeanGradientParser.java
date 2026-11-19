@@ -34,14 +34,14 @@ import dr.evomodel.treedatalikelihood.continuous.*;
 import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDriftGradient;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 
 /**

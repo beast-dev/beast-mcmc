@@ -28,7 +28,7 @@
 package dr.evomodel.treelikelihood.utilities;
 
 import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
-import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
+import dr.evomodel.treedatalikelihood.MarkovJumpsTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;

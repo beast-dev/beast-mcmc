@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodelxml.treelikelihood;
+package dr.evomodelxml.treedatalikelihood;
 
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;

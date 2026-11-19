@@ -28,7 +28,7 @@
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.*;
-import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
+import dr.evomodel.treedatalikelihood.MarkovJumpsTraitProvider;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;

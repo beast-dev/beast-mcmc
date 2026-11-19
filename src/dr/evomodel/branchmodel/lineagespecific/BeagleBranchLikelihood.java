@@ -40,7 +40,7 @@ import dr.evomodel.substmodel.FrequencyModel;
 //import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.treedatalikelihood.BufferIndexHelper;
 //import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
-//import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+//import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.evomodel.treelikelihood.SubstitutionModelDelegate;
 //import dr.app.beagle.tools.BeagleSequenceSimulator;
 //import dr.app.beagle.tools.Partition;

@@ -36,7 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranc
 import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodel.treedatalikelihood.hmc.CanonicalSelectionParameterGradient;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.AbstractBlockDiagonalTwoByTwoMatrixParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameterInterface;
@@ -44,7 +44,7 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDiagonalAttenuationGradient;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * @author Paul Bastide

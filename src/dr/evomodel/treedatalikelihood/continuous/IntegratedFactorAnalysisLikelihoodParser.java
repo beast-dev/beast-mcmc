@@ -30,7 +30,7 @@ package dr.evomodel.treedatalikelihood.continuous;
 import dr.app.beauti.components.BeautiModelIDProvider;
 import dr.app.beauti.components.BeautiParameterIDProvider;
 import dr.evolution.tree.MutableTreeModel;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
@@ -41,8 +41,8 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.DecompositionFactory;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.STANDARDIZE;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TARGET_SD;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.STANDARDIZE;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.TARGET_SD;
 
 public class IntegratedFactorAnalysisLikelihoodParser extends AbstractXMLObjectParser implements BeautiModelIDProvider {
 

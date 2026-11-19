@@ -28,7 +28,7 @@
 package dr.inference.hawkes;
 
 import dr.evolution.util.Taxa;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;
 import dr.util.HeapSort;

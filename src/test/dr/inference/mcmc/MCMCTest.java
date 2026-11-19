@@ -43,7 +43,7 @@ import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.treelikelihood.TreeLikelihood;

@@ -33,7 +33,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 //import dr.inference.operators.OperatorFailedException;
@@ -44,8 +44,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 //import static dr.evomodel.treedatalikelihood.preorder.ConditionalOnPartiallyMissingTipsRealizedDelegate.PARTIAL;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.MISSING;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.MISSING;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
 /**
  * @author Marc A. Suchard

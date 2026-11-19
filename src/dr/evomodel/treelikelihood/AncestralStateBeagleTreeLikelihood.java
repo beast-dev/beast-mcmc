@@ -27,6 +27,8 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evomodel.treedatalikelihood.AncestralStateTraitProvider;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
 import dr.evomodel.branchmodel.BranchModel;

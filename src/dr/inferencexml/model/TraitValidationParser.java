@@ -28,7 +28,7 @@
 package dr.inferencexml.model;
 
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CrossValidationProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.TraitValidationProvider;

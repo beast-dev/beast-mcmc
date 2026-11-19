@@ -36,7 +36,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitGradientForBranc
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
 import dr.evomodel.treedatalikelihood.hmc.DiffusionParametersGradient;
 import dr.evomodel.treedatalikelihood.hmc.PrecisionGradient;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.CompoundDerivative;
 import dr.inference.hmc.CompoundGradient;
 import dr.inference.hmc.GradientWrtParameterProvider;
@@ -46,7 +46,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 
 /**

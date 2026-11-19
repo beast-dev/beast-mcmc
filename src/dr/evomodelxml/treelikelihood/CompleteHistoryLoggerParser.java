@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.treelikelihood;
 
-import dr.evomodel.treelikelihood.MarkovJumpsTraitProvider;
+import dr.evomodel.treedatalikelihood.MarkovJumpsTraitProvider;
 import dr.evomodel.treelikelihood.utilities.CompleteHistoryLogger;
 import dr.evomodel.treelikelihood.utilities.HistoryFilter;
 import dr.inference.loggers.Logger;

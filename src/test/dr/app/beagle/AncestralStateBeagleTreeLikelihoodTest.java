@@ -47,7 +47,7 @@ import dr.inference.model.Parameter;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 
 

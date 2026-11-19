@@ -51,7 +51,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.discrete.AbstractLogAdditiveSubstitutionModelGradient.ApproximationMode;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
 import dr.evomodel.treedatalikelihood.discrete.LogCtmcRateGradient;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
 

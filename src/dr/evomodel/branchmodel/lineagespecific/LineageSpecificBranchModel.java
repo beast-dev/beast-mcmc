@@ -39,7 +39,7 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.codon.MG94K80CodonModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 //import dr.app.beagle.tools.BeagleSequenceSimulator;
 //import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;

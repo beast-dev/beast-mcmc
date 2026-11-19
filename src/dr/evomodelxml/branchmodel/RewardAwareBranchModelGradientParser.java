@@ -4,11 +4,11 @@ import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchmodel.RewardsAwareBranchModelGradient;
 import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * XML sketch:

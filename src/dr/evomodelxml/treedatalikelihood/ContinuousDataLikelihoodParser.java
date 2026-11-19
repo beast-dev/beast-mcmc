@@ -46,7 +46,6 @@ import dr.evomodel.treedatalikelihood.continuousNew.ContinuousDataLikelihoodDele
 import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.preorder.*;
 import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.xml.*;

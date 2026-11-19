@@ -28,7 +28,7 @@
 package dr.inferencexml.model;
 
 import dr.evomodelxml.continuous.DataFromTreeTipsParser;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.xml.*;
 

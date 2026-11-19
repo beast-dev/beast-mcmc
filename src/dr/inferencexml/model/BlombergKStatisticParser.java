@@ -31,7 +31,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.BlombergKStatistic;
 import dr.xml.*;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
 public class BlombergKStatisticParser extends AbstractXMLObjectParser {
     @Override

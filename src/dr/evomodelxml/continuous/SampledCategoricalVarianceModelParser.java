@@ -29,7 +29,7 @@ package dr.evomodelxml.continuous;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.SampledCategoricalVarianceModel;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;

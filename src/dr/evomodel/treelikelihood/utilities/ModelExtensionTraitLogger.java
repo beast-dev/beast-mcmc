@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodel.treedatalikelihood.preorder.AbstractRealizedContinuousTraitDelegate.REALIZED_TIP_TRAIT;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
 /**
  * ModelExtensionTraitLogger - logs traits under extended models (i.e. repeated measures or factor models).

@@ -40,7 +40,6 @@ import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel.EpochTimeProvider;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.*;
 import dr.util.Citable;
 import dr.util.Citation;

@@ -35,7 +35,7 @@ import dr.evomodel.treedatalikelihood.continuous.BranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUBranchRateGradient;
 import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.discrete.BranchRateGradientForDiscreteTrait;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.JointBranchRateGradient;
 import dr.inference.model.CompoundLikelihood;
@@ -46,7 +46,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 /**
  * @author Marc A. Suchard

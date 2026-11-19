@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;

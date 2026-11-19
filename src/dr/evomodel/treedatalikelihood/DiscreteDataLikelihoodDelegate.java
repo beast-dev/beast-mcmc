@@ -11,7 +11,6 @@ import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.*;
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.*;
 import dr.evomodel.treedatalikelihood.preorder.DiscretePartialsType;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

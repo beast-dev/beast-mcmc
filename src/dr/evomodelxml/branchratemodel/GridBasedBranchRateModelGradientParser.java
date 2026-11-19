@@ -8,7 +8,7 @@ import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 public class GridBasedBranchRateModelGradientParser extends AbstractXMLObjectParser {
     public final String PARSER_NAME = "gridBasedBranchRateModelGradient";

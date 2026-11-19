@@ -35,7 +35,7 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegat
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.preorder.ContinuousExtensionDelegate;
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
@@ -47,7 +47,7 @@ import org.ejml.data.DenseMatrix64F;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.*;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.*;
 
 public class ExtendedLatentLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator, Reportable {
 

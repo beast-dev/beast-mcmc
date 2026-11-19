@@ -25,7 +25,7 @@
  *
  */
 
-package dr.evomodel.treelikelihood;
+package dr.evomodel.treedatalikelihood;
 
 /**
  * @author Marc Suchard

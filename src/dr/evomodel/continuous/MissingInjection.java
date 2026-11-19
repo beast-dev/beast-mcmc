@@ -30,7 +30,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -47,7 +47,7 @@ public class MissingInjection {
     private static final String MISSING_PROBABILITY = "missingProbability";
     private static final String MISSING_COUNT = "maxMissingCount";
     private static final String DIMENSION = "dimension";
-    private static final String TRAIT_NAME = dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.TRAIT_NAME;
+    private static final String TRAIT_NAME = dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.TRAIT_NAME;
 
     private final List<TaxonInformation> taxonInformation;
     private final String traitName;

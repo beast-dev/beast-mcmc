@@ -27,7 +27,6 @@
 
 package dr.evomodel.treedatalikelihood;
 
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.Model;
 import dr.inference.model.Profileable;
 import dr.xml.Reportable;

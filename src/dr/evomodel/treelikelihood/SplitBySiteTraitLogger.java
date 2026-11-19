@@ -27,6 +27,7 @@
 
 package dr.evomodel.treelikelihood;
 
+import dr.evomodel.treedatalikelihood.AncestralStateTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;

@@ -38,7 +38,7 @@ import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.discrete.*;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.JointGradient;
 import dr.inference.model.BranchParameter;
@@ -51,7 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dr.evomodelxml.continuous.hmc.BranchRateGradientParser.checkBranchRateModels;
-import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+import static dr.evomodelxml.treedatalikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
 public class LocationScaleGradientParser extends AbstractXMLObjectParser {
 

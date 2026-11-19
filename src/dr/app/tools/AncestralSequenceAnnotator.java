@@ -67,7 +67,7 @@ import dr.util.Version;
 
 
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 
 import java.io.*;

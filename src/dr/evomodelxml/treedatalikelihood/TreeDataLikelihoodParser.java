@@ -47,7 +47,7 @@ import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.repres
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.RewardsAwarePartialsRepresentation;
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralRotatedPartialsRepresentation;
 import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralStandardPartialsRepresentation;
-import dr.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evomodel.treedatalikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;

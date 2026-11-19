@@ -42,11 +42,23 @@ import java.util.List;
  */
 public abstract class AbstractModel implements Model, ModelListener, VariableListener, StatisticList, Keywordable {
 
+    private final boolean useLazyStore;
+    private boolean storeRequired = false;
+    private boolean restoreRequired = false;
+
     /**
      * @param name Model Name
      */
     public AbstractModel(String name) {
+        this(name, false);
+    }
+
+    /**
+     * @param name Model Name
+     */
+    public AbstractModel(String name, boolean useLazyStore) {
         this.name = name;
+        this.useLazyStore = useLazyStore;
     }
 
     /**
@@ -167,6 +179,11 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
 //			message += " index: " + index;
 //		}
 //		System.out.println(message);
+        if (useLazyStore && storeRequired) {
+            storeState();
+            storeRequired = false;
+            restoreRequired = true;
+        }
 
         handleModelChangedEvent(model, object, index);
     }
@@ -182,9 +199,14 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
     // **************************************************************
 
     public final void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (useLazyStore && storeRequired) {
+            storeState();
+            storeRequired = false;
+            restoreRequired = true;
+        }
         handleVariableChangedEvent(variable, index, type);
 
-        // todo AR - I am not sure this is required and may be overruling modelChange events on parts of the
+        // @todo AR - I am not sure this is required and may be overruling modelChange events on parts of the
         // model. If a parameter changes it should be handleVariableChangedEvent() job to fireModelChanged
         // events
         listenerHelper.fireModelChanged(this, variable, index);
@@ -218,7 +240,13 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
                 variable.storeVariableValues();
             }
 
-            storeState();
+            if (useLazyStore) {
+                // the previous store/restore or store/accept cycle will have cleared this
+                assert !restoreRequired;
+                storeRequired = true;
+            } else {
+                storeState();
+            }
             isValidState = false;
         }
     }
@@ -234,7 +262,14 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
                 m.restoreModelState();
             }
 
-            restoreState();
+            if (!useLazyStore || restoreRequired) {
+                // storeRequired should be false at this point
+                assert !storeRequired;
+                restoreState();
+                restoreRequired = false;
+            }
+            // the step is over so a change outside of a store/restore cycle must not trigger a store
+            storeRequired = false;
             isValidState = true;
 
             listenerHelper.fireModelRestored(this);
@@ -254,6 +289,10 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
             }
 
             acceptState();
+
+            // the state is accepted so the stored state is no longer needed
+            storeRequired = false;
+            restoreRequired = false;
 
             isValidState = true;
         }

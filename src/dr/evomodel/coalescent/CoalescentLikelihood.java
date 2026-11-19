@@ -60,7 +60,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	public CoalescentLikelihood(IntervalList intervalList,
 								DemographicModel demographicModel) {
 
-		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, intervalList);
+		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, intervalList, true);
 
 		this.populationSizeModel = null;
 		this.demographicModel = demographicModel;

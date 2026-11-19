@@ -34,7 +34,6 @@ import dr.evomodel.tree.AncestralTraitTreeModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
-import dr.evomodel.treelikelihood.utilities.TreeTraitLogger;
 import dr.evomodelxml.branchratemodel.NewContinuousTraitBranchRateModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;

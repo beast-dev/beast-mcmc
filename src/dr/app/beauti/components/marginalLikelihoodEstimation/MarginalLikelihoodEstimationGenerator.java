@@ -27,6 +27,8 @@
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
+import dr.evomodelxml.coalescent.gmrf.GMRFSkyrideLikelihoodParser;
+
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.generator.TreePriorGenerator;
@@ -40,7 +42,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.evomodel.tree.DefaultTreeModel;
-import dr.evomodelxml.TreeWorkingPriorParsers;
+import dr.evomodelxml.coalescent.workingprior.TreeWorkingPriorParsers;
 import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser;

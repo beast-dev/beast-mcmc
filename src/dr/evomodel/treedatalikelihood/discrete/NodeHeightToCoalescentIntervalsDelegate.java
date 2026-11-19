@@ -28,7 +28,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evolution.coalescent.TreeIntervalList;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.gmrf.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Bounds;
 import dr.inference.model.Model;

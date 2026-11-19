@@ -27,7 +27,7 @@
 
 package dr.math.distributions;
 
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.gmrf.OldGMRFSkyrideLikelihood;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

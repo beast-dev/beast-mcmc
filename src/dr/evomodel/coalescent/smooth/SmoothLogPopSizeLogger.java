@@ -1,10 +1,8 @@
 package dr.evomodel.coalescent.smooth;
 
-import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
-import dr.xml.*;
 
 
 /**
@@ -39,45 +37,4 @@ public class SmoothLogPopSizeLogger implements Loggable {
 
         return array;
     }
-
-    private static final String SMOOTH_LOG_POP_SIZE_PARAMETER = "smoothLogPopSizeParameter";
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        @Override
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            Object likelihood = xo.getChild(AbstractCoalescentLikelihood.class);
-            // <smoothSkygridLikelihood> builds a NewSmoothSkygridLikelihood only with implementation="new"
-            if (!(likelihood instanceof NewSmoothSkygridLikelihood)) {
-                throw new XMLParseException("This element needs a <smoothSkygridLikelihood> with implementation=\"new\"");
-            }
-            return new SmoothLogPopSizeLogger((NewSmoothSkygridLikelihood) likelihood);
-        }
-
-        @Override
-        public String getParserName() {
-            return SMOOTH_LOG_POP_SIZE_PARAMETER;
-        }
-
-        @Override
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(AbstractCoalescentLikelihood.class)
-        };
-
-        @Override
-        public String getParserDescription() {
-            return "Logs the log of smoothed pop sizes of smooth Skygrid model";
-        }
-
-        @Override
-        public Class getReturnType() {
-            return SmoothLogPopSizeLogger.class;
-        }
-    };
-
-
-
 }

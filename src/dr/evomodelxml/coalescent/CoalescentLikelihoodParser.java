@@ -27,6 +27,9 @@
 
 package dr.evomodelxml.coalescent;
 
+import dr.evomodel.coalescent.intervals.MultiLociTreeSet;
+import dr.evomodel.coalescent.intervals.TreeIntervals;
+
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;

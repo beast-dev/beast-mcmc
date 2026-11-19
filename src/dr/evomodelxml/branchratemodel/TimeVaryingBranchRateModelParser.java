@@ -29,7 +29,7 @@ package dr.evomodelxml.branchratemodel;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.gmrf.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.evomodel.branchratemodel.TimeVaryingBranchRateModel.FunctionalForm.Type;
 import dr.math.IntegratedTransformedSplines;

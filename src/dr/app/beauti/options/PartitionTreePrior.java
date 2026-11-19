@@ -30,7 +30,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.*;
 import dr.evolution.util.Taxa;
 import dr.evomodel.speciation.CalibrationPoints;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.gmrf.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.birthdeath.BirthDeathEpidemiologyModelParser;
 import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
 import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;

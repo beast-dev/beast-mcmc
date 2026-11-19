@@ -28,7 +28,7 @@
 package dr.evomodel.treedatalikelihood.discrete;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.gmrf.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.continuous.hmc.NodeHeightTransformParser;
 import dr.inference.model.Parameter;

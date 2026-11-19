@@ -27,7 +27,7 @@
 
 package dr.inferencexml.distribution;
 
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.gmrf.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.math.distributions.GmrfDistributionLikelihood;

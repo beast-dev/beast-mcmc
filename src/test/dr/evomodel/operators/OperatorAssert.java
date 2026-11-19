@@ -41,7 +41,7 @@ import dr.evomodel.speciation.Gernhard08BirthDeathModel;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.evomodel.tree.*;
-import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.simulation.OldCoalescentSimulatorParser;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;

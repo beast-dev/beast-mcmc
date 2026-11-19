@@ -36,7 +36,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeModel;
-import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.evomodel.operators.ScaleNodeHeightOperator;
 import dr.evomodel.operators.UniformNodeHeightOperator;
 import dr.evomodel.operators.SubtreeLeapOperator;

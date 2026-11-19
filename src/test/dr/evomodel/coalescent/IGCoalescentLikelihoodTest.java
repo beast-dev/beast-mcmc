@@ -33,7 +33,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evomodel.coalescent.IGCoalescentLikelihood;
-import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
 import junit.framework.TestCase;
 

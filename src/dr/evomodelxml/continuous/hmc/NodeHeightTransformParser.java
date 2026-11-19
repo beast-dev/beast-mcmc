@@ -32,7 +32,6 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.coalescent.gmrf.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.gmrf.OldGMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;
 import dr.inference.model.Parameter;
@@ -137,7 +136,7 @@ public class NodeHeightTransformParser extends AbstractXMLObjectParser {
                 new XORRule(
                         new ElementRule(RATIO, Parameter.class, "The ratio parameter"),
                         new AndRule(
-                                new ElementRule(COALESCENT_INTERVAL, OldGMRFSkyrideLikelihood.class,
+                                new ElementRule(COALESCENT_INTERVAL, GMRFSkyrideLikelihood.class,
                                         "Construct a proxy parameter for coalescent intervals from the Skyride likelihood."),
                                 new ElementRule(NODEHEIGHT, Parameter.class, "The nodeHeight parameter")
                         )

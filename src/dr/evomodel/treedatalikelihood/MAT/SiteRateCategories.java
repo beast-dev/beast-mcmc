@@ -36,8 +36,7 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
- * The discrete site rate categories of a MAT likelihood whose site rate model has more than one category
- * (see optimization_notes/mat_site_rate_categories/DESIGN.md).
+ * The discrete site rate categories of a MAT likelihood whose site rate model has more than one category.
  * <p>
  * Each variable pattern's category is part of the sampled state (kept by the store, journaled, and drawn
  * by {@link #resample}, a Gibbs update), so that the variable sites' terms still decompose by branch, each

@@ -65,8 +65,7 @@ import dr.evomodel.treedatalikelihood.MAT.BlockSampler.UniformConditional;
  * data there come only from X (whose presence the move changes), as in the subtree moves of Varilly et
  * al. (Nature, 2026). Its cost does not grow with the distance moved.</li>
  * </ul>
- * The local block is the default in XML wherever the model allows it ({@link #supportsLocalBlock}); the
- * two are compared in optimization_notes/mat_local_spr/benchmark.
+ * The local block is the default in XML wherever the model allows it ({@link #supportsLocalBlock}).
  *
  * Without per-site rates, explicit hits or unequal pattern weights, sites are handled sparsely (see
  * {@link SparsePass}): a site with no events around the block has the same state a throughout, and its
@@ -673,8 +672,7 @@ public class MutationHistoryResampler {
      * <p>
      * The sites are found from the substitutions on the few branches that relate P's neighbours and from the
      * runs of ambiguous patterns of the neighbours (see {@link LocalPass}), so a move costs
-     * O(events near P + runs + changes), whatever the distance moved
-     * (see optimization_notes/mat_local_spr/DESIGN.md).
+     * O(events near P + runs + changes), whatever the distance moved.
      *
      * @return the log Hastings ratio
      */

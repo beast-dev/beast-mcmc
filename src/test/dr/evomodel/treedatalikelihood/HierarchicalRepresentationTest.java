@@ -32,6 +32,7 @@ import beagle.BeagleFactory;
 import beagle.BeagleFlag;
 import beagle.InstanceDetails;
 import beagle.ResourceDetails;
+import dr.evolution.alignment.HierarchicalRateAggregatedPattern;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
@@ -60,6 +61,7 @@ import dr.evomodel.treedatalikelihood.PreOrderSettings;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evomodelxml.substmodel.HKYParser;
+import dr.evomodelxml.substmodel.HierarchicalSubstitutionModelParser;
 import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
@@ -877,6 +879,86 @@ public class HierarchicalRepresentationTest extends TraceCorrelationAssert {
             patterns.addPattern(column);
         }
         checkSparseChain("S=64 uncertain columns", problem, patterns, true, random);
+    }
+
+    // Blocked aggregation at 4 states: BEAST orders the patterns by aggregated block (HierarchicalRateAggregatedPattern)
+    // and the plugin runs each block with a reduced kernel. The log-likelihood must not change.
+    public void testBlockSortedPatternsThroughBeagle() throws Exception {
+        if (skip("testBlockSortedPatternsThroughBeagle")) {
+            return;
+        }
+        java.util.Random random = new java.util.Random(20261119);
+        TreeModel phylogeny = randomPhylogeny(40, random);
+        final int[][] pools = {{0, 2}, {1, 3}, {0, 1, 2, 3}};
+        Patterns patterns = new Patterns(Nucleotides.INSTANCE, phylogeny);
+        for (int k = 0; k < 900; k++) {
+            int[] pool = pools[random.nextInt(3)];
+            int[] pattern = new int[phylogeny.getTaxonCount()];
+            for (int t = 0; t < pattern.length; t++) {
+                pattern[t] = random.nextDouble() < 0.05 ? Nucleotides.INSTANCE.getUnknownState()
+                        : pool[random.nextInt(pool.length)];
+            }
+            patterns.addPattern(pattern, 1.0 + random.nextInt(3));
+        }
+        final double[] pi = {0.3, 0.2, 0.25, 0.25};
+        final String tn93 = "((A:1,G:1):1,(C:1,T:1):1);";
+        HierarchicalSubstitutionModel on = hierarchical(tn93, pi, 1.2, 2.3, 0.9);
+        on.setAggregation(HierarchicalSubstitutionModel.Aggregation.ON);
+        HierarchicalSubstitutionModel off = hierarchical(tn93, pi, 1.2, 2.3, 0.9);
+        off.setAggregation(HierarchicalSubstitutionModel.Aggregation.OFF);
+
+        HierarchicalRateAggregatedPattern sorted = new HierarchicalRateAggregatedPattern(patterns, on.getBeagleModelTriples());
+        int[] sizes = sorted.getBlockSizes();
+        assertEquals(patterns.getPatternCount(), sorted.getPatternCount());
+        assertEquals(patterns.getPatternCount(), sizes[0] + sizes[1] + sizes[2]);
+        assertTrue("both reduced blocks are present", sizes[0] > 0 && sizes[2] > 0);
+        java.util.Map<String, Double> before = new java.util.HashMap<>(), after = new java.util.HashMap<>();
+        for (int k = 0; k < patterns.getPatternCount(); k++) {
+            before.merge(Arrays.toString(patterns.getPattern(k)), patterns.getPatternWeight(k), Double::sum);
+            after.merge(Arrays.toString(sorted.getPattern(k)), sorted.getPatternWeight(k), Double::sum);
+        }
+        assertEquals("same patterns and weights", before, after);
+        int group = 0;
+        for (int k = 0; k < sorted.getPatternCount(); k++) {
+            int seen = 0;
+            for (int state : sorted.getPattern(k)) {
+                if (state < S) {
+                    seen |= 1 << state;
+                }
+            }
+            int g = seen != 0 && (seen & ~5) == 0 ? 0 : seen != 0 && (seen & ~10) == 0 ? 2 : 1;
+            assertTrue("blocks are contiguous and ordered at pattern " + k, g >= group);
+            group = g;
+        }
+
+        assertSame(patterns, HierarchicalSubstitutionModelParser.aggregatedPatterns(patterns, new HomogeneousBranchModel(off)));
+        assertTrue(HierarchicalSubstitutionModelParser.aggregatedPatterns(patterns, new HomogeneousBranchModel(on))
+                instanceof HierarchicalRateAggregatedPattern);
+
+        GammaSiteRateModel sites = gamma(0.5, 4);
+        TreeDataLikelihood reference = new TreeDataLikelihood(delegate(phylogeny, patterns, off, sites, false, true),
+                phylogeny, new DefaultBranchRateModel());
+        TreeDataLikelihood blocked = new TreeDataLikelihood(delegate(phylogeny, sorted, on, sites, false, true),
+                phylogeny, new DefaultBranchRateModel());
+        TreeDataLikelihood unsorted = new TreeDataLikelihood(delegate(phylogeny, patterns, on, sites, false, true),
+                phylogeny, new DefaultBranchRateModel());
+        for (int round = 0; round < 3; round++) {
+            if (round > 0) {
+                NodeRef node = phylogeny.getNode(phylogeny.getExternalNodeCount() + random.nextInt(
+                        phylogeny.getInternalNodeCount() - 1));
+                double height = phylogeny.getNodeHeight(node);
+                double low = 0.0;
+                for (int c = 0; c < phylogeny.getChildCount(node); c++) {
+                    low = Math.max(low, phylogeny.getNodeHeight(phylogeny.getChild(node, c)));
+                }
+                phylogeny.setNodeHeight(node, low + 0.9 * (height - low));
+            }
+            double expected = reference.getLogLikelihood();
+            assertEquals("sorted, aggregation on, round " + round, expected, blocked.getLogLikelihood(),
+                    1e-10 * Math.abs(expected));
+            assertEquals("unsorted, aggregation on, round " + round, expected, unsorted.getLogLikelihood(),
+                    1e-10 * Math.abs(expected));
+        }
     }
 
     public void testAggregationSummary() throws Exception {

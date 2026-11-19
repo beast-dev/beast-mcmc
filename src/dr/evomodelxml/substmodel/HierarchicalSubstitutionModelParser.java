@@ -27,6 +27,8 @@
 
 package dr.evomodelxml.substmodel;
 
+import dr.evolution.alignment.HierarchicalRateAggregatedPattern;
+import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.substmodel.AbstractHierarchicalRateProvider;
@@ -425,5 +427,31 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
                 }
             }
         }
+    }
+
+    /**
+     * With aggregation forced on and a 4-state character tree, returns the patterns ordered by aggregated block (a
+     * {@link HierarchicalRateAggregatedPattern}), so BEAGLE can run each block with one reduced kernel; otherwise
+     * returns the patterns unchanged. The order follows the first hierarchical model's character tree at parse time.
+     */
+    public static PatternList aggregatedPatterns(PatternList patterns, BranchModel branchModel) {
+        for (SubstitutionModel model : branchModel.getSubstitutionModels()) {
+            if (!(model instanceof HierarchicalSubstitutionModel)) {
+                continue;
+            }
+            HierarchicalSubstitutionModel hierarchical = (HierarchicalSubstitutionModel) model;
+            if (hierarchical.getAggregation() != HierarchicalSubstitutionModel.Aggregation.ON
+                    || patterns.getStateCount() != 4 || patterns.areUncertain()) {
+                return patterns;
+            }
+            HierarchicalRateAggregatedPattern sorted =
+                    new HierarchicalRateAggregatedPattern(patterns, hierarchical.getBeagleModelTriples());
+            sorted.setId(patterns.getId());
+            int[] sizes = sorted.getBlockSizes();
+            Logger.getLogger("dr.evomodel").info("    Patterns ordered by aggregated block: " + sizes[0] + " + "
+                    + sizes[1] + " (full and all-missing) + " + sizes[2]);
+            return sorted;
+        }
+        return patterns;
     }
 }

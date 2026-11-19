@@ -1101,6 +1101,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             k += Beagle.OPERATION_TUPLE_SIZE;
         }
 
+        if (useScaleFactors && recomputeScaleFactors) {
+            ++scaleFactorsVersion; // this call writes individual scale factors (see isNegAncestorScaleBufferCurrent)
+        }
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
         if (COUNT_CALCULATIONS) {
@@ -1434,6 +1437,56 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
         return scaleBufferIndices[nodeNumber - tipCount];
     }
 
+    /**
+     * Whether gradient scale buffer slot (from getScaleBufferCount() on) still holds what
+     * AbstractBeagleGradientDelegate.buildNegAncestorCumulativeScaleBuffer would build into it from source (a slot, or
+     * Beagle.NONE for a reset) less individual (a node's individual scale buffer): true if it was last built from the
+     * same two, source has not been rebuilt since, and no individual scale factors have been written since. Every
+     * delegate on this likelihood shares the slots, so this record of them lives here, with the BEAGLE instance.
+     */
+    public final boolean isNegAncestorScaleBufferCurrent(int slot, int source, int individual) {
+        final int i = slot - getScaleBufferCount();
+        if (i < 0 || i >= negAncestorBuild.length || negAncestorBuild[i] == 0) {
+            return false;
+        }
+        final long sourceBuild;
+        if (source == Beagle.NONE) {
+            sourceBuild = 0;
+        } else {
+            final int j = source - getScaleBufferCount();
+            if (j < 0 || j >= negAncestorBuild.length) {
+                return false;
+            }
+            sourceBuild = negAncestorBuild[j];
+        }
+        return negAncestorSource[i] == source && negAncestorIndividual[i] == individual &&
+                negAncestorVersion[i] == scaleFactorsVersion && negAncestorSourceBuild[i] == sourceBuild;
+    }
+
+    /**
+     * Records that slot was just built from source less individual (see isNegAncestorScaleBufferCurrent).
+     */
+    public final void markNegAncestorScaleBufferBuilt(int slot, int source, int individual) {
+        final int i = slot - getScaleBufferCount();
+        if (i < 0) {
+            return;
+        }
+        if (i >= negAncestorBuild.length) {
+            final int n = Math.max(i + 1, 2 * negAncestorBuild.length);
+            negAncestorSource = Arrays.copyOf(negAncestorSource, n);
+            negAncestorIndividual = Arrays.copyOf(negAncestorIndividual, n);
+            negAncestorVersion = Arrays.copyOf(negAncestorVersion, n);
+            negAncestorSourceBuild = Arrays.copyOf(negAncestorSourceBuild, n);
+            negAncestorBuild = Arrays.copyOf(negAncestorBuild, n);
+        }
+        final int j = source - getScaleBufferCount();
+        negAncestorSource[i] = source;
+        negAncestorIndividual[i] = individual;
+        negAncestorVersion[i] = scaleFactorsVersion;
+        negAncestorSourceBuild[i] = (source == Beagle.NONE || j < 0 || j >= negAncestorBuild.length) ? 0 : negAncestorBuild[j];
+        negAncestorBuild[i] = ++negAncestorBuildCount;
+    }
+
 
     public final int getPartialBufferCount() {
         return partialBufferHelper.getBufferCount();
@@ -1573,6 +1626,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private boolean useAutoScaling = false;
 
     private boolean recomputeScaleFactors = false;
+    // incremented by each likelihood evaluation that writes individual scale factors
+    private long scaleFactorsVersion = 0;
+    // per gradient scale buffer slot (isNegAncestorScaleBufferCurrent): its source and individual buffers, the version
+    // and the source's build it was made from, and its own build (a count over all slots; 0: never built)
+    private int[] negAncestorSource = new int[0];
+    private int[] negAncestorIndividual = new int[0];
+    private long[] negAncestorVersion = new long[0];
+    private long[] negAncestorSourceBuild = new long[0];
+    private long[] negAncestorBuild = new long[0];
+    private long negAncestorBuildCount = 0;
     private boolean everUnderflowed = false;
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;

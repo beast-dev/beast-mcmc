@@ -247,6 +247,11 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         return norm;
     }
 
+    /**
+     * The weights that normalize Q: the root frequencies when rates are scaled by frequencies, otherwise uniform
+     * weights 1/stateCount. Either way they sum to one, so the normalization is a weighted mean of the row sums.
+     * The array may be shared with the model and must not be modified.
+     */
     public double[] getNormalizationFrequencies() {
         return frequencyScaling ? getFrequencyModel().getFrequencies() : uniform;
     }
@@ -371,6 +376,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     private boolean doNormalization = true;
     private boolean frequencyScaling = true;
+    // flat (all ones) builds Q; uniform (1/stateCount, sums to one) weights the normalization
     private final double[] flat;
     private final double[] uniform;
 }

@@ -171,7 +171,7 @@ final class LogAdditiveSubstitutionModelHessian {
         }
         gradient.substitutionModel.getInfinitesimalMatrix(generator);
 
-        frequencies = gradient.substitutionModel.getFrequencyModel().getFrequencies();
+        frequencies = gradient.substitutionModel.getNormalizationFrequencies();
         normalize = gradient.substitutionModel.getNormalization();
         transform = (gradient.substitutionModel instanceof LogRateSubstitutionModel) ?
                 ((LogRateSubstitutionModel) gradient.substitutionModel).getTransform() : null;

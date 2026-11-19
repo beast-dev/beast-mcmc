@@ -30,6 +30,7 @@ package dr.inference.distribution.shrinkage;
 import dr.inference.model.Parameter;
 import dr.math.distributions.LaplaceDistribution;
 import dr.math.distributions.MarginalizedAlphaStableDistribution;
+import dr.math.distributions.NormalDistribution;
 
 /**
  * @author Marc A. Suchard
@@ -42,7 +43,21 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
                                                    Parameter exponent,
                                                    int dim,
                                                    boolean includeNormalizingConstant) {
+        this(globalScale, exponent, null, dim, includeNormalizingConstant);
+    }
+
+    /**
+     * @param slabWidth optional slab width c. Each coefficient gets the extra factor N(x; 0, c): this is the local-scale
+     *                  marginal of the joint bridge's product form N(x; 0, tau lambda) N(x; 0, c) (productFormSlab),
+     *                  since only the first factor depends on lambda. The global-scale term -log(tau) is unchanged.
+     */
+    public MarginalBayesianBridgeDistributionModel(Parameter globalScale,
+                                                   Parameter exponent,
+                                                   Parameter slabWidth,
+                                                   int dim,
+                                                   boolean includeNormalizingConstant) {
         super(globalScale, exponent, dim, includeNormalizingConstant);
+        this.slabWidth = slabWidth;
     }
 
     @Override
@@ -57,7 +72,7 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
 
     @Override
     public Parameter getSlabWidth() {
-        return null;
+        return slabWidth;
     }
 
     @Override
@@ -74,6 +89,13 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
         } else {
             for (int i = 0; i < dim; ++i) {
                 gradient[i] = LaplaceDistribution.gradLogPdf(x[i], 0, scale);
+            }
+        }
+
+        if (slabWidth != null) {
+            final double c = slabWidth.getParameterValue(0);
+            for (int i = 0; i < dim; ++i) {
+                gradient[i] += NormalDistribution.gradLogPdf(x[i], 0, c);
             }
         }
 
@@ -96,6 +118,13 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
             }
         }
 
+        if (slabWidth != null) {
+            final double c = slabWidth.getParameterValue(0);
+            for (double x : v) {
+                sum += NormalDistribution.logPdf(x, 0, c);
+            }
+        }
+
         if (includeNormalizingConstant) {
             // TODO Add
             throw new RuntimeException("Not yet implemented");
@@ -108,4 +137,6 @@ public class MarginalBayesianBridgeDistributionModel extends BayesianBridgeDistr
     public double[] hessianLogPdf(double[] x) {
         throw new RuntimeException("Not yet implemented");
     }
+
+    private final Parameter slabWidth;
 }

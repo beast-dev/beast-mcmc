@@ -41,6 +41,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String EXPONENT = "exponent";
     public static final String SLAB_WIDTH = "slabWidth";
     public static final String NORMALIZATION_CONSTANT = "includeNormalization";
+    public static final String PRODUCT_FORM_SLAB = "productFormSlab";
 
     private static final String RESET_DIMENSIONS = "resetDimensions";
     private static final String OLD = "old";
@@ -74,10 +75,6 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
         Parameter slabWidth = ParameterParser.getOptionalParameter(xo, SLAB_WIDTH);
 
-        if (localScale == null && slabWidth != null) {
-            throw new XMLParseException("Slab-regularization is only available under the joint Bayesian bridge");
-        }
-
         XMLObject exponentXo = xo.getChild(EXPONENT);
         Parameter exponent = (Parameter) exponentXo.getChild(Parameter.class);
 
@@ -85,20 +82,28 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
 
         boolean old = xo.getAttribute(OLD, false);
 
+        boolean productFormSlab = xo.getAttribute(PRODUCT_FORM_SLAB, false);
+        if (productFormSlab && slabWidth == null) {
+            throw new XMLParseException(PRODUCT_FORM_SLAB + " needs a " + SLAB_WIDTH);
+        }
+
         if (localScale != null) {
             if (old) {
                 return new OldJointBayesianBridge(coefficients, globalScale, localScale, exponent);
             } else {
                 return new BayesianBridgeLikelihood(coefficients,
                         new JointBayesianBridgeDistributionModel(globalScale, localScale, exponent, slabWidth,
-                                coefficients.getDimension(), includeNormalizingConstant));
+                                coefficients.getDimension(), includeNormalizingConstant, productFormSlab));
             }
         } else {
             if (old) {
+                if (slabWidth != null) {
+                    throw new XMLParseException("Slab-regularization is not available under the old marginal Bayesian bridge");
+                }
                 return new OldMarginalBayesianBridge(coefficients, globalScale, exponent);
             } else {
                 return new BayesianBridgeLikelihood(coefficients,
-                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent,
+                        new MarginalBayesianBridgeDistributionModel(globalScale, exponent, slabWidth,
                                 coefficients.getDimension(), includeNormalizingConstant));
             }
         }
@@ -124,6 +129,7 @@ public class BayesianBridgeLikelihoodParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             AttributeRule.newBooleanRule(OLD, true),
             AttributeRule.newBooleanRule(RESET_DIMENSIONS, true),
+            AttributeRule.newBooleanRule(PRODUCT_FORM_SLAB, true),
     };
 
     public String getParserDescription() {

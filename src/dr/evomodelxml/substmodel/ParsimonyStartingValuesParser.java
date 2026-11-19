@@ -30,19 +30,23 @@ package dr.evomodelxml.substmodel;
 import dr.evolution.alignment.PatternList;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.substmodel.LogAdditiveCtmcRateProvider;
+import dr.evomodel.substmodel.LogRateSubstitutionModel;
 import dr.evomodel.substmodel.ParsimonyStartingValues;
 import dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.*;
 
 import java.util.logging.Logger;
 
 /**
  * Sets parsimony-based starting values for the rates, BSSVS indicators and clock rate of an asymmetric
- * (ComplexSubstitutionModel) or reversible (GeneralSubstitutionModel) CTMC.
+ * (ComplexSubstitutionModel) or reversible (GeneralSubstitutionModel) CTMC. For a transformedRateSubstitutionModel
+ * (LogRateSubstitutionModel) the transformed-rate parameter is set to the inverse transform of each rate.
  * <pre>
  * &lt;parsimonyStartingValues setClock="true" setIndicators="true" setRelativeRates="true"&gt;
  *     &lt;treeDataLikelihood idref="treeDataLikelihood"/&gt;
@@ -96,8 +100,20 @@ public class ParsimonyStartingValuesParser extends AbstractXMLObjectParser {
         }
 
         Parameter rates = null;
+        Transform transform = null;
         if (setRates) {
-            rates = substitutionModel.getRatesParameter();
+            if (substitutionModel instanceof LogRateSubstitutionModel) {
+                LogAdditiveCtmcRateProvider provider =
+                        ((LogRateSubstitutionModel) substitutionModel).getRateProvider();
+                if (!(provider instanceof LogAdditiveCtmcRateProvider.DataAugmented)) {
+                    throw new XMLParseException("Substitution model " + substitutionModel.getId() +
+                            " has no rate parameter to set (e.g. a GLM)");
+                }
+                rates = ((LogAdditiveCtmcRateProvider.DataAugmented) provider).getLogRateParameter();
+                transform = provider.getTransform() != null ? provider.getTransform() : Transform.LOG;
+            } else {
+                rates = substitutionModel.getRatesParameter();
+            }
             if (rates == null) {
                 throw new XMLParseException("Substitution model " + substitutionModel.getId() +
                         " has no rates parameter to set");
@@ -124,7 +140,13 @@ public class ParsimonyStartingValuesParser extends AbstractXMLObjectParser {
                 values.setIndicators(indicators, reversible);
             }
             if (rates != null) {
-                values.setRates(rates, setIndicators, reversible);
+                values.setRates(rates, setIndicators, reversible, transform);
+                if (!substitutionModel.getNormalization()) {
+                    // An unnormalized Q carries the rate scale: make clock * (rate of Q) the parsimony clock rate
+                    double clock = setClock ? values.getClockRate() :
+                            (clockRate != null ? clockRate.getParameterValue(0) : 1.0);
+                    values.scaleRates(rates, values.getClockRate() / (clock * rateOf(substitutionModel)), transform);
+                }
             }
             if (setClock) {
                 values.setClockRate(clockRate);
@@ -137,6 +159,21 @@ public class ParsimonyStartingValuesParser extends AbstractXMLObjectParser {
                 describe(setRates, setIndicators, setClock) + "): " + values.getSummary());
 
         return values;
+    }
+
+    // Expected substitutions per unit time of an unnormalized Q, with the weights the model would normalize by
+    private static double rateOf(GeneralSubstitutionModel model) {
+        int stateCount = model.getDataType().getStateCount();
+        double[] q = new double[stateCount * stateCount];
+        model.getInfinitesimalMatrix(q);
+        double[] weights = model instanceof ComplexSubstitutionModel ?
+                ((ComplexSubstitutionModel) model).getNormalizationFrequencies() :
+                model.getFrequencyModel().getFrequencies();
+        double rate = 0.0;
+        for (int i = 0; i < stateCount; ++i) {
+            rate -= weights[i] * q[i * stateCount + i];
+        }
+        return rate;
     }
 
     private static String describe(boolean rates, boolean indicators, boolean clock) {

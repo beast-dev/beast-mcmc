@@ -32,6 +32,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -55,6 +56,10 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 public class ParsimonyStartingValues implements Reportable {
+
+    // Tied rates give repeated eigenvalues of Q, which break the eigen decomposition; jitter each rate by < 1%
+    private static final double JITTER = 0.01;
+    private static final double GOLDEN = 0.6180339887498949;
 
     private final int stateCount;
     private final double[] counts; // directed counts, [i * stateCount + j]
@@ -292,6 +297,14 @@ public class ParsimonyStartingValues implements Reportable {
      * @param reversible one rate per unordered pair, set from n_ij + n_ji
      */
     public void setRates(Parameter rates, boolean useSupport, boolean reversible) {
+        setRates(rates, useSupport, reversible, null);
+    }
+
+    /**
+     * @param transform if not null, rates holds transformed values (rate = transform.transform(value)), so each entry
+     *                  is set to transform.inverse(rate)
+     */
+    public void setRates(Parameter rates, boolean useSupport, boolean reversible, Transform transform) {
         int[][] pairs = ratePairs(reversible);
         checkDimension(rates, pairs.length);
         double[] pairCounts = new double[pairs.length];
@@ -310,7 +323,19 @@ public class ParsimonyStartingValues implements Reportable {
         for (int k = 0; k < pairs.length; ++k) {
             boolean inSupport = on[pairs[k][0] * stateCount + pairs[k][1]];
             rateValues[k] = (useSupport && !inSupport) ? 1.0 : Math.max(pairCounts[k], 1.0) / meanCount;
-            rates.setParameterValueQuietly(k, rateValues[k]);
+            rateValues[k] *= 1.0 + JITTER * ((k * GOLDEN) % 1.0);
+            rates.setParameterValueQuietly(k, transform == null ? rateValues[k] : transform.inverse(rateValues[k]));
+        }
+        rates.fireParameterChangedEvent();
+    }
+
+    /**
+     * Multiplies the rates last set by setRates by factor (e.g. to give an unnormalized Q a target rate)
+     */
+    public void scaleRates(Parameter rates, double factor, Transform transform) {
+        for (int k = 0; k < rateValues.length; ++k) {
+            rateValues[k] *= factor;
+            rates.setParameterValueQuietly(k, transform == null ? rateValues[k] : transform.inverse(rateValues[k]));
         }
         rates.fireParameterChangedEvent();
     }

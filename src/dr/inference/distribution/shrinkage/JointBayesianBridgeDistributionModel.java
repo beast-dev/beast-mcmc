@@ -45,9 +45,27 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
                                                 Parameter slabWidth,
                                                 int dim,
                                                 boolean includeNormalizingConstant) {
+        this(globalScale, localScale, exponent, slabWidth, dim, includeNormalizingConstant, false);
+    }
+
+    /**
+     * @param productFormSlab with a slab, score each coefficient as N(x; 0, tau lambda) N(x; 0, c), the
+     *                        product form that bayesianBridgeGibbsOperator (and the collapsed HMC) sample from,
+     *                        instead of N(x; 0, s) with s = tau lambda / sqrt(1 + (tau lambda / c)^2). The two
+     *                        agree in x and differ by -1/2 log(tau^2 lambda^2 + c^2), so only moves of tau (and
+     *                        of lambda by Metropolis-Hastings) see the change.
+     */
+    public JointBayesianBridgeDistributionModel(Parameter globalScale,
+                                                Parameter localScale,
+                                                Parameter exponent,
+                                                Parameter slabWidth,
+                                                int dim,
+                                                boolean includeNormalizingConstant,
+                                                boolean productFormSlab) {
         super(globalScale, exponent, dim, includeNormalizingConstant);
         this.localScale = localScale;
         this.slabWidth = slabWidth;
+        this.productFormSlab = productFormSlab && slabWidth != null;
 
         if (dim != localScale.getDimension()) {
             throw new IllegalArgumentException("Invalid dimensions");
@@ -81,8 +99,17 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
     public double logPdf(double[] x) {
 
         double pdf = 0.0;
-        for (int i = 0; i < dim; ++i) {
-            pdf += NormalDistribution.logPdf(x[i], 0, getStandardDeviation(i));
+        if (productFormSlab) {
+            final double tau = globalScale.getParameterValue(0);
+            final double c = slabWidth.getParameterValue(0);
+            for (int i = 0; i < dim; ++i) {
+                pdf += NormalDistribution.logPdf(x[i], 0, tau * localScale.getParameterValue(i))
+                        + NormalDistribution.logPdf(x[i], 0, c);
+            }
+        } else {
+            for (int i = 0; i < dim; ++i) {
+                pdf += NormalDistribution.logPdf(x[i], 0, getStandardDeviation(i));
+            }
         }
 
         if (includeNormalizingConstant) {
@@ -126,4 +153,5 @@ public class JointBayesianBridgeDistributionModel extends BayesianBridgeDistribu
 
     private final Parameter localScale;
     private final Parameter slabWidth;
+    private final boolean productFormSlab;
 }

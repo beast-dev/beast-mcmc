@@ -31,12 +31,12 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.evolution.datatype.GeneralDataType;
-import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
+import dr.evomodelxml.basta.StructuredCoalescentLikelihoodParser;
 import dr.inference.operators.RateBitExchangeOperator;
 
 import java.util.List;
 
-import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
+import static dr.evomodelxml.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
 
 /**
  * @author Andrew Rambaut

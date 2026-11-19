@@ -32,8 +32,6 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
-import dr.evomodel.coalescent.piecewise.PopulationSizeFunction;
-import dr.evomodel.coalescent.piecewise.PopulationSizeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.math.Binomial;
 
@@ -52,8 +50,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	// PUBLIC STUFF
 
 	/**
-	 * A constructor that takes an IntervalList. This uses the older DemographicModel which
-	 * is no deprecated but left here for backwards compatibility
+	 * A constructor that takes an IntervalList.
 	 * @param intervalList the interval list
 	 * @param demographicModel a demographic model
 	 */
@@ -62,30 +59,11 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, intervalList);
 
-		this.populationSizeModel = null;
 		this.demographicModel = demographicModel;
 
 		this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
 
 		addModel(demographicModel);
-	}
-
-	/**
-	 * A constructor that takes an IntervalList
-	 * @param intervalList the interval list
-	 * @param populationSizeModel a population size model
-	 */
-	public CoalescentLikelihood(IntervalList intervalList,
-								PopulationSizeModel populationSizeModel) {
-
-		super(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, intervalList);
-
-		this.populationSizeModel = populationSizeModel;
-		this.demographicModel = null;
-
-		this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
-
-		addModel(populationSizeModel);
 	}
 
 	// **************************************************************
@@ -98,16 +76,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	 */
 	protected double calculateLogLikelihood() {
 
-		double lnL;
-
-		if (populationSizeModel != null) {
-			PopulationSizeFunction popFunction = populationSizeModel.getPopulationSizeFunction();
-
-			lnL = calculateLogLikelihood(popFunction);
-
-		} else {
-			lnL = calculateLogLikelihood(demographicModel);
-		}
+		double lnL = calculateLogLikelihood(demographicModel);
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
 			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demographicModel.getId() +
 					" is " + Double.toString(lnL) + " (likely to be extreme model parameter values - " +
@@ -178,51 +147,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		return logL;
 	}
 
-	protected double calculateLogLikelihood(PopulationSizeFunction populationSizeFunction) {
-
-		double logL = 0.0;
-
-		IntervalList intervals = getIntervalList();
-
-		final int n = intervals.getIntervalCount();
-
-		if (n == 0) {
-			return 0.0;
-		}
-
-		double absoluteStartTime = intervals.getStartTime();
-		demographicModel.setTimeOffset(absoluteStartTime);
-
-		double startTime = 0;
-
-		for (int i = 0; i < n; i++) {
-
-			final double duration = intervals.getInterval(i);
-			final double finishTime = startTime + duration;
-
-			final double intervalArea = populationSizeFunction.getIntegral(startTime, finishTime);
-			if( intervalArea == 0 && duration != 0 ) {
-				return Double.NEGATIVE_INFINITY;
-			}
-			final int lineageCount = intervals.getLineageCount(i);
-
-			final double kChoose2 = Binomial.choose2(lineageCount);
-
-			// common part
-			logL += -kChoose2 * intervalArea;
-
-			if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
-
-				logL -= populationSizeFunction.getLogDemographic(finishTime);
-			}
-
-			startTime = finishTime;
-		}
-
-		return logL;
-	}
-
-
 	public DemographicModel getDemoModel() {
 		return demographicModel;
 	}
@@ -257,10 +181,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		return coalescentEventStatisticValues[i];
 	}
 
-	public PopulationSizeModel getPopulationSizeModel() {
-		return populationSizeModel;
-	}
-
 	// **************************************************************
 	// Units IMPLEMENTATION
 	// **************************************************************
@@ -286,9 +206,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	// ****************************************************************
 	// Private and protected stuff
 	// ****************************************************************
-
-	/** the population size model */
-	private final PopulationSizeModel populationSizeModel;
 
 	/** The demographic model. */
 	private final DemographicModel demographicModel;

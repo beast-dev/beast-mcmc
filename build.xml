@@ -255,6 +255,7 @@ ${extra_release_tag}</echo>
                 <include name="dr/evolution/sequence/**/*.class"/>
                 <include name="dr/evolution/tree/**/*.class"/>
                 <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/evomodel/basta/**/*.class"/>
                 <include name="dr/evomodel/branchratemodel/**/*.class"/>
                 <include name="dr/evomodel/clock/**/*.class"/>
                 <include name="dr/evomodel/coalescent/**/*.class"/>

@@ -27,7 +27,7 @@
 
 package dr.evolution.colouring;
 
-import dr.evolution.coalescent.structure.MetaPopulation;
+import dr.evolution.coalescent.legacy.structure.MetaPopulation;
 import dr.evolution.tree.Tree;
 
 /**

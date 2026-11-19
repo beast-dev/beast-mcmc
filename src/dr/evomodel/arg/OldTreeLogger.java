@@ -31,7 +31,7 @@ import dr.evolution.colouring.TreeColouring;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.structure.ColourSamplerModel;
+import dr.evomodel.coalescent.legacy.structure.ColourSamplerModel;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.model.Likelihood;

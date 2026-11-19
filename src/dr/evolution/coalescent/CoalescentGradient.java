@@ -117,10 +117,6 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
 
     @Override
     public double[] getDiagonalHessianLogDensity() {
-        if (likelihood.getPopulationSizeModel() != null) {
-            throw new RuntimeException("Not yet implemented!");
-        }
-
         return provider.getDiagonalHessianLogDensity(null);
     }
 
@@ -192,10 +188,6 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
 
     @Override
     public double[] getGradientLogDensity() {
-
-        if (likelihood.getPopulationSizeModel() != null) {
-            throw new RuntimeException("Not yet implemented!");
-        }
 
         return provider.getGradientLogDensity(null);
     }

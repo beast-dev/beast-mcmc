@@ -1,7 +1,7 @@
 package dr.evomodelxml.treedatalikelihood.markovjumps;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.basta.BastaLikelihood;
+import dr.evomodel.basta.BastaLikelihood;
 import dr.evomodel.treedatalikelihood.markovjumps.CompleteHistoryAddOn;
 import dr.evomodel.treedatalikelihood.markovjumps.MarkovJumpRewardAddOn;
 import dr.evomodel.treedatalikelihood.preorder.AbstractRealizedDiscreteTraitDelegate;

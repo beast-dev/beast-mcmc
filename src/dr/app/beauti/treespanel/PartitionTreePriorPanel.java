@@ -37,7 +37,7 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
-import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihood;
+import dr.evomodel.basta.BastaLikelihood;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
 import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
@@ -400,8 +400,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //                break;
 
             case SET_BY_BIT:
-                citation = StructuredCoalescentLikelihood.CITATIONS[0].toString() + "\n" +
-                        StructuredCoalescentLikelihood.CITATIONS[1].toString();
+                citation = BastaLikelihood.CITATIONS[0].toString() + "\n" +
+                        BastaLikelihood.CITATIONS[1].toString();
                 break;
 
             default:

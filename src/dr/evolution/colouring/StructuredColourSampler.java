@@ -28,7 +28,7 @@
 package dr.evolution.colouring;
 
 import dr.evolution.alignment.Alignment;
-import dr.evolution.coalescent.structure.MetaPopulation;
+import dr.evolution.coalescent.legacy.structure.MetaPopulation;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;

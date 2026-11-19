@@ -28,7 +28,6 @@
 package dr.evomodelxml.coalescent.demographicmodel;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.piecewise.ConstantPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
@@ -43,7 +42,6 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
 
     public static String CONSTANT_POPULATION_MODEL = "constantSize";
     public static String POPULATION_SIZE = "populationSize";
-    public static String LOG_SPACE = "logSpace";
 
     public String getParserName() {
         return CONSTANT_POPULATION_MODEL;
@@ -54,18 +52,10 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         XMLObject cxo = xo.getChild(POPULATION_SIZE);
-        boolean logSpace = cxo.getAttribute(LOG_SPACE, false);
         Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
 
-        if (logSpace) {
-            // ConstantPopulationSizeModel provides a model with N0 in log space
-            Logger.getLogger("dr.evomodel").info("Constant population size coalescent model (population size in log space).");
-
-            return new ConstantPopulationSizeModel(N0Param, units);
-        } else {
-            Logger.getLogger("dr.evomodel").info("Constant population size coalescent model.");
-            return new ConstantPopulationModel(N0Param, units);
-        }
+        Logger.getLogger("dr.evomodel").info("Constant population size coalescent model.");
+        return new ConstantPopulationModel(N0Param, units);
     }
 
 
@@ -89,7 +79,6 @@ public class ConstantPopulationModelParser extends AbstractXMLObjectParser {
             XMLUnits.UNITS_RULE,
             new ElementRule(POPULATION_SIZE,
                     new XMLSyntaxRule[]{
-                            AttributeRule.newBooleanRule(LOG_SPACE, true, "Is this parameter in log space?"),
                             new ElementRule(Parameter.class)
                     }
             )

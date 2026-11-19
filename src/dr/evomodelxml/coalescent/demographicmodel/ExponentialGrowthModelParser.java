@@ -28,7 +28,6 @@
 package dr.evomodelxml.coalescent.demographicmodel;
 
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.piecewise.ExponentialPopulationSizeModel;
 import dr.evomodel.coalescent.demographicmodel.ExponentialGrowthModel;
 import dr.evoxml.util.XMLUnits;
 import dr.inference.model.Parameter;
@@ -36,7 +35,6 @@ import dr.xml.*;
 
 import java.util.logging.Logger;
 
-import static dr.evomodelxml.coalescent.demographicmodel.ConstantPopulationModelParser.LOG_SPACE;
 
 /**
  * Parses an element from an DOM document into a ExponentialGrowth.
@@ -59,7 +57,6 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
         XMLObject cxo = xo.getChild(POPULATION_SIZE);
-        boolean logSpace = cxo.getAttribute(LOG_SPACE, false);
         Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
 
         Parameter rParam;
@@ -74,21 +71,12 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
             usingGrowthRate = false;
         }
 
-        if (logSpace) {
-            if (!usingGrowthRate) {
-                throw new XMLParseException("Doubling time parameterization is not compatible with log population size");
-            }
-            // ExponentialPopulationSizeModel provides a model with N0 in log space
-            Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model (population size in log space).");
-            return new ExponentialPopulationSizeModel(N0Param, rParam, units);
+        if (usingGrowthRate) {
+            Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model.");
         } else {
-            if (usingGrowthRate) {
-                Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model.");
-            } else {
-                Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model (doubling time parameterization).");
-            }
-            return new ExponentialGrowthModel(N0Param, rParam, units, usingGrowthRate);
+            Logger.getLogger("dr.evomodel").info("Exponential growth coalescent model (doubling time parameterization).");
         }
+        return new ExponentialGrowthModel(N0Param, rParam, units, usingGrowthRate);
     }
 
     //************************************************************************
@@ -110,7 +98,6 @@ public class ExponentialGrowthModelParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(POPULATION_SIZE,
                     new XMLSyntaxRule[] {
-                            AttributeRule.newBooleanRule(LOG_SPACE, true, "Is this parameter in log space?"),
                             new ElementRule(Parameter.class)}),
             new XORRule(
 

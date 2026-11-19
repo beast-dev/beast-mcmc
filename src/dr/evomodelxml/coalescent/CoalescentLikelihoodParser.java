@@ -36,7 +36,6 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
-import dr.evomodel.coalescent.piecewise.PopulationSizeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
@@ -63,12 +62,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         XMLObject cxo = xo.getChild(MODEL);
-        PopulationSizeModel populationSizeModel = (PopulationSizeModel) cxo.getChild(PopulationSizeModel.class);
-
-        DemographicModel demographicModel = null;
-        if (populationSizeModel == null) {
-            demographicModel = (DemographicModel) cxo.getChild(DemographicModel.class);
-        }
+        DemographicModel demographicModel = (DemographicModel) cxo.getChild(DemographicModel.class);
 
         List<TreeModel> trees = new ArrayList<TreeModel>();
         List<Double> popFactors = new ArrayList<Double>();
@@ -138,11 +132,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         if (intervalList != null) {
-            if (demographicModel != null) {
-                return new CoalescentLikelihood(intervalList, demographicModel);
-            }
-
-            return new CoalescentLikelihood(intervalList, populationSizeModel);
+            return new CoalescentLikelihood(intervalList, demographicModel);
         } else {
             // a multilocus treeset is being used...
             // needs updating...
@@ -176,10 +166,7 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(MODEL, new XMLSyntaxRule[] {
-                    new XORRule(
-                            new ElementRule(DemographicModel.class),
-                            new ElementRule(PopulationSizeModel.class)
-                    )
+                    new ElementRule(DemographicModel.class)
             }, "The demographic model which describes the effective population size over time"),
 
             new ElementRule(INTERVALS, new XMLSyntaxRule[]{

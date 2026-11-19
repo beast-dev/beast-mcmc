@@ -29,7 +29,7 @@ package dr.evomodel.arg;
 
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.structure.ColourSamplerModel;
+import dr.evomodel.coalescent.legacy.structure.ColourSamplerModel;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MLLogger;
 import dr.inference.loggers.TabDelimitedFormatter;

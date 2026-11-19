@@ -27,6 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
+import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.coalescent.LineageCountStatistic;
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
 import dr.xml.*;
@@ -48,13 +50,26 @@ public class LineageCountStatisticParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(OldAbstractCoalescentLikelihood.class),
+                new XORRule(new XMLSyntaxRule[]{
+                        new ElementRule(IntervalList.class),
+                        new ElementRule(AbstractCoalescentLikelihood.class),
+                        new ElementRule(OldAbstractCoalescentLikelihood.class)
+                })
         };
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        return new LineageCountStatistic(
-                (OldAbstractCoalescentLikelihood) xo.getChild(OldAbstractCoalescentLikelihood.class));
+        OldAbstractCoalescentLikelihood old =
+                (OldAbstractCoalescentLikelihood) xo.getChild(OldAbstractCoalescentLikelihood.class);
+        if (old != null) {
+            return new LineageCountStatistic(old);
+        }
+        AbstractCoalescentLikelihood likelihood =
+                (AbstractCoalescentLikelihood) xo.getChild(AbstractCoalescentLikelihood.class);
+        if (likelihood != null) {
+            return new LineageCountStatistic(likelihood.getIntervalList());
+        }
+        return new LineageCountStatistic((IntervalList) xo.getChild(IntervalList.class));
     }
 
     public String getParserName() {

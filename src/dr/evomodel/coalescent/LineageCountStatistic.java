@@ -27,21 +27,34 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalList;
 import dr.inference.model.Statistic;
 
-public class LineageCountStatistic extends Statistic.Abstract{
-	private OldAbstractCoalescentLikelihood acl;
-	
-	public LineageCountStatistic(OldAbstractCoalescentLikelihood acl){
-		this.acl = acl;
-	}
-	
-	public int getDimension() {
-		return acl.getIntervalCount();
-	}
+/**
+ * The number of lineages in each interval, of an interval list or of a likelihood that builds its
+ * own intervals (OldAbstractCoalescentLikelihood).
+ */
+public class LineageCountStatistic extends Statistic.Abstract {
 
-	public double getStatisticValue(int dim) {
-			return acl.getLineageCount(dim);
-	}
+    private final IntervalList intervalList;
+    private final OldAbstractCoalescentLikelihood acl;
+
+    public LineageCountStatistic(IntervalList intervalList) {
+        this.intervalList = intervalList;
+        this.acl = null;
+    }
+
+    public LineageCountStatistic(OldAbstractCoalescentLikelihood acl) {
+        this.intervalList = null;
+        this.acl = acl;
+    }
+
+    public int getDimension() {
+        return intervalList != null ? intervalList.getIntervalCount() : acl.getIntervalCount();
+    }
+
+    public double getStatisticValue(int dim) {
+        return intervalList != null ? intervalList.getLineageCount(dim) : acl.getLineageCount(dim);
+    }
 
 }

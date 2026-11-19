@@ -137,7 +137,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
         addStatistic(new DeltaStatistic());
     }
 
-    OldAbstractCoalescentLikelihood(String name) {
+    protected OldAbstractCoalescentLikelihood(String name) {
         super(name);
     }
 
@@ -1037,30 +1037,30 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     /**
      * The tree.
      */
-    Tree tree = null;
+    protected Tree tree = null;
 
     /**
      * The widths of the intervals.
      */
-    double[] intervals;
+    protected double[] intervals;
     private double[] storedIntervals;
 
     /**
      * The number of uncoalesced lineages within a particular interval.
      */
-    int[] lineageCounts;
+    protected int[] lineageCounts;
     private int[] storedLineageCounts;
 
-    IntervalNodeMapping intervalNodeMapping;
+    protected IntervalNodeMapping intervalNodeMapping;
 
-    boolean intervalsKnown = false;
+    protected boolean intervalsKnown = false;
     private boolean storedIntervalsKnown = false;
 
-    double logLikelihood;
+    protected double logLikelihood;
     private double storedLogLikelihood;
-    boolean likelihoodKnown = false;
+    protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
 
-    int intervalCount = 0;
+    protected int intervalCount = 0;
     private int storedIntervalCount = 0;
 }

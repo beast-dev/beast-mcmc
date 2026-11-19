@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.skytrack;
 
+import dr.evomodel.coalescent.gmrf.GMRFUtils;
+
 import dr.evolution.coalescent.IntervalType;
 
 import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
@@ -60,7 +62,6 @@ import java.util.List;
 public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
 //    protected Parameter groupSizeParameter;
-    public static final double LOG_TWO_TIMES_PI = 1.837877;
 	protected Parameter precisionParameter;
     protected Parameter lambda_boundParameter;
 //    protected Parameter numGridPoints;
@@ -403,7 +404,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
            DenseVector diagonal1 = new DenseVector(popSizeParameter.getSize());
            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
            currentQ.mult(currentGamma, diagonal1);
-           currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (popSizeParameter.getSize() - 1) * LOG_TWO_TIMES_PI;
+           currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (popSizeParameter.getSize() - 1) * GMRFUtils.LOG_TWO_TIMES_PI;
 //          System.err.println("the GP prior on f"+currentLike+" determinant"+logGeneralizedDeterminant(currentQ)+" size"+changePoints.getSize());
         return currentLike;
        }
@@ -473,28 +474,6 @@ protected void restoreState() {
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Palacios, Suchard (XXXX), AAA");
 
 	}
-
-    public static void checkTree(TreeModel treeModel) {
-
-            // todo Should only be run if there exists a zero-length interval - I don't actually understand why this is here
-
-//        TreeModel treeModel = (TreeModel) tree;
-            for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
-                NodeRef node = treeModel.getInternalNode(i);
-                if (node != treeModel.getRoot()) {
-                    double parentHeight = treeModel.getNodeHeight(treeModel.getParent(node));
-                    double childHeight0 = treeModel.getNodeHeight(treeModel.getChild(node, 0));
-                    double childHeight1 = treeModel.getNodeHeight(treeModel.getChild(node, 1));
-                    double maxChild = childHeight0;
-                    if (childHeight1 > maxChild)
-                        maxChild = childHeight1;
-                    double newHeight = maxChild + MathUtils.nextDouble() * (parentHeight - maxChild);
-                    treeModel.setNodeHeight(node, newHeight);
-                }
-            }
-            treeModel.pushTreeChangedEvent();
-
-        }
 
     protected void recomputeValues() {
         double length = 0.0;

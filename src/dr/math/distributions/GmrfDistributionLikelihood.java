@@ -27,7 +27,8 @@
 
 package dr.math.distributions;
 
-import dr.evomodel.coalescent.gmrf.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.gmrf.GMRFUtils;
+
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -52,7 +53,7 @@ public class GmrfDistributionLikelihood extends AbstractModelLikelihood implemen
     private Parameter data;
     private SymmTridiagMatrix weightMatrix;
 
-    private static final double LOG_TWO_TIMES_PI = OldGMRFSkyrideLikelihood.LOG_TWO_TIMES_PI;
+    private static final double LOG_TWO_TIMES_PI = GMRFUtils.LOG_TWO_TIMES_PI;
 
 
     public GmrfDistributionLikelihood(String name,

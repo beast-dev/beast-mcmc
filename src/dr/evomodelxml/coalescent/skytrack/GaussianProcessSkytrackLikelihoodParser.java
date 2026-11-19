@@ -27,6 +27,8 @@
 
 package dr.evomodelxml.coalescent.skytrack;
 
+import dr.evomodel.coalescent.gmrf.GMRFUtils;
+
 import dr.evolution.tree.Tree;
 //import dr.evomodel.coalescent.gmrf.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.skytrack.GaussianProcessMultilocusSkytrackLikelihood;
@@ -280,7 +282,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
         if (xo.getAttribute(RANDOMIZE_TREE, false)) {
             for (Tree tree : treeList) {
                 if (tree instanceof TreeModel) {
-                    GaussianProcessSkytrackLikelihood.checkTree((TreeModel) tree);
+                    GMRFUtils.checkTree((TreeModel) tree);
                 } else {
                     throw new XMLParseException("Can not randomize a fixed tree");
                 }

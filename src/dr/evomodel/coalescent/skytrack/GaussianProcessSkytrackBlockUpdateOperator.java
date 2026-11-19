@@ -27,6 +27,8 @@
 
 package dr.evomodel.coalescent.skytrack;
 
+import dr.evomodel.coalescent.gmrf.GMRFUtils;
+
 
 //import com.sun.servicetag.SystemEnvironment;
 import dr.evomodel.coalescent.skytrack.GaussianProcessSkytrackLikelihood;
@@ -1259,18 +1261,6 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 //    }
 
 
-    public static double logGeneralizedDeterminant(UpperTriangBandMatrix Matrix) {
-        double returnValue = 0;
-
-        for (int i = 0; i < Matrix.numColumns(); i++) {
-            if (Matrix.get(i, i) > 0.0000001) {
-                returnValue += Math.log(Matrix.get(i, i));
-            }
-        }
-
-        return returnValue;
-    }
-
 //    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException {
 //        return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
 //    }
@@ -1500,8 +1490,8 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 ////        backwardQW.mult(diagonal1, diagonal3);
 ////
 ////        // Removed 0.5 * 2
-////        hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-////        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
+////        hRatio += GMRFUtils.logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
+////        hRatio -= GMRFUtils.logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
 //
 //
 ////        return hRatio;

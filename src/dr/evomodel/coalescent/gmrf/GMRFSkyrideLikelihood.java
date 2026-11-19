@@ -60,7 +60,6 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
 
     // PUBLIC STUFF
 
-    public static final double LOG_TWO_TIMES_PI = 1.837877;
     public static final boolean TIME_AWARE_IS_ON_BY_DEFAULT = true;
 
     // PRIVATE STUFF
@@ -268,28 +267,6 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
         System.out.println("Creating a GMRF smoothed skyride model:");
         System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
         System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471.");
-    }
-
-    public static void checkTree(TreeModel treeModel) {
-
-        // todo Should only be run if there exists a zero-length interval
-
-//        TreeModel treeModel = (TreeModel) tree;
-        for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
-            NodeRef node = treeModel.getInternalNode(i);
-            if (node != treeModel.getRoot()) {
-                double parentHeight = treeModel.getNodeHeight(treeModel.getParent(node));
-                double childHeight0 = treeModel.getNodeHeight(treeModel.getChild(node, 0));
-                double childHeight1 = treeModel.getNodeHeight(treeModel.getChild(node, 1));
-                double maxChild = childHeight0;
-                if (childHeight1 > maxChild)
-                    maxChild = childHeight1;
-                double newHeight = maxChild + MathUtils.nextDouble() * (parentHeight - maxChild);
-                treeModel.setNodeHeight(node, newHeight);
-            }
-        }
-        treeModel.pushTreeChangedEvent();
-
     }
 
     // **************************************************************
@@ -548,9 +525,9 @@ public class GMRFSkyrideLikelihood extends AbstractCoalescentLikelihood implemen
 
         currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
         if (lambdaParameter.getParameterValue(0) == 1) {
-            currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
+            currentLike -= (fieldLength - 1) / 2.0 * GMRFUtils.LOG_TWO_TIMES_PI;
         } else {
-            currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
+            currentLike -= fieldLength / 2.0 * GMRFUtils.LOG_TWO_TIMES_PI;
         }
 
         return currentLike;

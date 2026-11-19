@@ -1178,9 +1178,9 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 
             currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
             if (lambdaParameter.getParameterValue(0) == 1) {
-                currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
+                currentLike -= (fieldLength - 1) / 2.0 * GMRFUtils.LOG_TWO_TIMES_PI;
             } else {
-                currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
+                currentLike -= fieldLength / 2.0 * GMRFUtils.LOG_TWO_TIMES_PI;
             }
 
             return currentLike;

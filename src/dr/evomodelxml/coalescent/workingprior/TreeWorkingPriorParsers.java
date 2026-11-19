@@ -41,7 +41,6 @@ import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.TreeTrace;
 import dr.evomodel.coalescent.workingprior.CoalescentConstantLikelihood;
 import dr.evomodel.coalescent.workingprior.ExponentialProductLikelihood;
-import dr.evomodel.coalescent.workingprior.ExponentialProductPosteriorMeansLikelihood;
 import dr.evomodel.coalescent.workingprior.ExponentialProductSufficientStatisticsLikelihood;
 import dr.evomodel.coalescent.workingprior.GammaProductLikelihood;
 import dr.evomodel.tree.ConditionalCladeFrequency;
@@ -291,7 +290,7 @@ public class TreeWorkingPriorParsers {
                 //posteriorMean = Math.log(posteriorMean);
                 //System.err.println("Log transformed: " + posteriorMean);
 
-                //return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
+                //return new ExponentialProductLikelihood(treeModel, posteriorMeans);
                 return new GammaProductLikelihood(treeModel, posteriorMean, dimension);
 
             } catch (FileNotFoundException fnfe) {
@@ -424,7 +423,7 @@ public class TreeWorkingPriorParsers {
                     posteriorMeans[i] = Math.log(mean);
                 }
 
-                return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
+                return new ExponentialProductLikelihood(treeModel, posteriorMeans);
 
             } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
@@ -589,7 +588,7 @@ public class TreeWorkingPriorParsers {
                     e.printStackTrace();
                 }
 
-                return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
+                return new ExponentialProductLikelihood(treeModel, posteriorMeans);
 
                 /*for (int i = 0; i < posteriorMeans.length; i++) {
 					posteriorMeans[i] = Math.exp(posteriorMeans[i]);

@@ -31,76 +31,71 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 
 /**
- * Calculates a product of exponential densities and exponential tail probabilities.
+ * Calculates a product of exponential densities and exponential tail probabilities: an exponential
+ * density for each interval that ends in a coalescent event and a tail probability for each that
+ * ends in a sampling event. The log population size is either the same throughout or changes at
+ * each coalescent event (the posterior means of the coalescentEventsStatistic).
  *
  * @author Guy Baele
  */
-
 public class ExponentialProductLikelihood extends Likelihood.Abstract {
-	
-	private TreeModel treeModel;
-	private double logPopSize;
 
-	//make sure to provide a log(popSize)
+	private final TreeModel treeModel;
+	// the log population size before each coalescent event, or one value for them all
+	private final double[] logPopSizes;
+
+	/**
+	 * @param logPopSize the log population size, used for every interval
+	 */
 	public ExponentialProductLikelihood(TreeModel treeModel, double logPopSize) {
+		this(treeModel, new double[] { logPopSize });
+	}
+
+	/**
+	 * @param logPopSizes the log population size before each coalescent event (use in combination
+	 *                    with the coalescentEventsStatistic), or a single value
+	 */
+	public ExponentialProductLikelihood(TreeModel treeModel, double[] logPopSizes) {
 		super(treeModel);
 		this.treeModel = treeModel;
-		this.logPopSize = logPopSize;
+		this.logPopSizes = logPopSizes;
 	}
-	
+
 	public double calculateLogLikelihood() {
-		
-		//System.err.println(treeModel);
-		
+
 		double logPDF = 0.0;
-		
-		//System.err.println("log(popSize) = " + this.popSize);
-		
+
 		CoalescentTreeIntervalStatistic ctis = new CoalescentTreeIntervalStatistic(treeModel);
-		
+		int coalescentIntervalCounter = 0;
+
 		for (int i = 0; i < ctis.getDimension(); i++) {
-			
+
 			int combinations = (int)ctis.getLineageCount(i)*((int)ctis.getLineageCount(i)-1)/2;
 			double branchLength = ctis.getStatisticValue(i);
-			
-			//System.err.println("combinations = " + combinations);
-			//System.err.println("branchLength = " + branchLength);
-			
-			//System.err.println(ctis.getLineageCount(i));
-			
+
 			//single-lineage intervals are not counted
 			if (ctis.getLineageCount(i) != 1) {
-				
-				//System.err.println(i + " -> lineage count: " + ctis.getLineageCount(i));
-				
+
+				final double logPopSize = logPopSizes.length == 1 ? logPopSizes[0] : logPopSizes[coalescentIntervalCounter];
+
 				if (i == ctis.getDimension()-1) {
 					//coalescent event at root: exponential density
-					//System.err.print("coalescent event at root: ");
-					double logContribution = -logPopSize - combinations*branchLength*Math.exp(-logPopSize);
-					logPDF += logContribution;
-					//System.err.println(logContribution);
+					logPDF += -logPopSize - combinations*branchLength*Math.exp(-logPopSize);
 				} else if (ctis.getLineageCount(i) > ctis.getLineageCount(i+1)) {
 					//coalescent event: exponential density
-					//System.err.print("coalescent event (not at root): ");
-					double logContribution = -logPopSize - combinations*branchLength*Math.exp(-logPopSize);
-					logPDF += logContribution;
-					//System.err.println(logContribution);
+					logPDF += -logPopSize - combinations*branchLength*Math.exp(-logPopSize);
+					coalescentIntervalCounter++;
 				} else {
 					//sampling event: exponential tail probability
-					//System.err.print("sampling event: ");
-					double logContribution = -combinations*branchLength*Math.exp(-logPopSize);
-					logPDF += logContribution;
-					//System.err.println(logContribution);
+					logPDF += -combinations*branchLength*Math.exp(-logPopSize);
 				}
-				
+
 			}
-			
+
 		}
-		
-		//System.err.println("expoLike = " + logPDF + "\n");
-		
+
 		return logPDF;
-		
+
 	}
 
 	/**

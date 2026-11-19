@@ -108,12 +108,12 @@
 	</patterns>
 
 	<!-- first set to be reconstructed -->
-	<patterns id="patterns2" from="1">
+	<patterns id="patterns2" from="1" unique="false">
 		<alignment idref="alignment2"/>
 	</patterns>
 
 	<!-- second set to be reconstructed -->
-	<patterns id="patterns3" from="1">
+	<patterns id="patterns3" from="1" unique="false">
 		<alignment idref="alignment3"/>
 	</patterns>
 
@@ -198,9 +198,10 @@
 	</ancestralTreeLikelihood>
 
 	<operators id="operators">
-		<scaleOperator scaleFactor="0.5" weight="1">
+		<!-- kappa has finite bounds, which the scale operator no longer accepts -->
+		<randomWalkOperator windowSize="0.5" weight="1" boundaryCondition="reflecting">
 			<parameter idref="hky.kappa"/>
-		</scaleOperator>
+		</randomWalkOperator>
 		<scaleOperator scaleFactor="0.5" weight="1">
 			<parameter idref="treeModel.rootHeight"/>
 		</scaleOperator>

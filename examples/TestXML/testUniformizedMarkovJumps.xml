@@ -13,7 +13,7 @@
 		<!--<sequence> <taxon idref="C"/> N </sequence>		-->
 	</alignment>
 	
-	<patterns id="patterns" strip="false">
+	<patterns id="patterns" strip="false" unique="false">
 		<alignment idref="alignment"/>
 	</patterns>
 	

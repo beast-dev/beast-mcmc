@@ -20,5 +20,7 @@ public interface ProcessAlongTree extends TreeTraitProvider {
 
     double getLogLikelihood();
 
+    void makeDirty();
+
     void addTrait(TreeTrait treeTrait);
 }

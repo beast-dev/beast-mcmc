@@ -90,6 +90,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     public static final String GHOST_ONE_CHILD_PROPERTY = "beagle.ghost.one.child";
     // set to false to compute nodes with one ghost child instead of joining the branches through them
     public static final String GHOST_MERGE_PROPERTY = "beagle.ghost.merge";
+    // with useSpectralRepresentation, ask BEAGLE to reuse post-order messages and pre-order push-downs
+    private static final String SPECTRAL_CACHE_PROPERTY = "beagle.spectral.cache";
+    private static final long SPECTRAL_CACHE_FLAG = 1L << 43; // BEAGLE_FLAG_SPECTRAL_CACHE; BeagleFlag.SPECTRAL_CACHE
+                                                              // once lib/beagle.jar has it
+    // on CPU, ask BEAGLE to compute the adjoint derivative for all branches at once
+    private static final String ADJOINT_BATCHED_PROPERTY = "beagle.adjoint.batched";
+    private static final long ADJOINT_BATCHED_FLAG = 1L << 42; // BEAGLE_FLAG_ADJOINT_BATCHED; BeagleFlag.ADJOINT_BATCHED
+                                                                // once lib/beagle.jar has it
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -525,6 +533,14 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
 
             if (settings.usePreOrder && stateCount > 4) {
                 requirementFlags |= BeagleFlag.PREORDER_TRANSPOSE_AUTO.getMask();
+            }
+
+            // after the default preferences above, which apply only while preferenceFlags is 0
+            if (settings.useSpectralRepresentation && Boolean.getBoolean(SPECTRAL_CACHE_PROPERTY)) {
+                preferenceFlags |= SPECTRAL_CACHE_FLAG;
+            }
+            if (Boolean.getBoolean(ADJOINT_BATCHED_PROPERTY)) {
+                preferenceFlags |= ADJOINT_BATCHED_FLAG;
             }
 
             // start auto resource selection
@@ -1230,6 +1246,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             removeOldScaleFactors();
         }
 
+        if (useScaleFactors && recomputeScaleFactors) {
+            ++scaleFactorsVersion; // this call writes individual scale factors (see isNegAncestorScaleBufferCurrent)
+        }
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
         if (COUNT_CALCULATIONS) {
@@ -1602,6 +1621,21 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     }
 
     /**
+     * Asks the next likelihood evaluation for fresh scale factors at the nodes it updates. The dynamic scheme
+     * otherwise reuses those of an earlier evaluation; after a large change (a different tree, say), partials scaled
+     * with them can grow so large that a pre-order traversal from them overflows, though the likelihood is finite.
+     *
+     * @return false if the scale factors are always fresh or there are none, so that asking changes nothing
+     */
+    public final boolean recomputeScaleFactorsNextEvaluation() {
+        if (rescalingScheme != PartialsRescalingScheme.DYNAMIC || !useScaleFactors) {
+            return false;
+        }
+        recomputeScaleFactors = true;
+        return true;
+    }
+
+    /**
      * @return the scale buffer holding internal node nodeNumber's own individual
      * (not cumulative) scale factor from the last likelihood evaluation, or
      * Beagle.NONE if nodeNumber is a tip or rescaling was not applied. Callers
@@ -1615,6 +1649,56 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
             return Beagle.NONE;
         }
         return scaleBufferIndices[nodeNumber - tipCount];
+    }
+
+    /**
+     * Whether gradient scale buffer slot (from getScaleBufferCount() on) still holds what
+     * AbstractBeagleGradientDelegate.buildNegAncestorCumulativeScaleBuffer would build into it from source (a slot, or
+     * Beagle.NONE for a reset) less individual (a node's individual scale buffer): true if it was last built from the
+     * same two, source has not been rebuilt since, and no individual scale factors have been written since. Every
+     * delegate on this likelihood shares the slots, so this record of them lives here, with the BEAGLE instance.
+     */
+    public final boolean isNegAncestorScaleBufferCurrent(int slot, int source, int individual) {
+        final int i = slot - getScaleBufferCount();
+        if (i < 0 || i >= negAncestorBuild.length || negAncestorBuild[i] == 0) {
+            return false;
+        }
+        final long sourceBuild;
+        if (source == Beagle.NONE) {
+            sourceBuild = 0;
+        } else {
+            final int j = source - getScaleBufferCount();
+            if (j < 0 || j >= negAncestorBuild.length) {
+                return false;
+            }
+            sourceBuild = negAncestorBuild[j];
+        }
+        return negAncestorSource[i] == source && negAncestorIndividual[i] == individual &&
+                negAncestorVersion[i] == scaleFactorsVersion && negAncestorSourceBuild[i] == sourceBuild;
+    }
+
+    /**
+     * Records that slot was just built from source less individual (see isNegAncestorScaleBufferCurrent).
+     */
+    public final void markNegAncestorScaleBufferBuilt(int slot, int source, int individual) {
+        final int i = slot - getScaleBufferCount();
+        if (i < 0) {
+            return;
+        }
+        if (i >= negAncestorBuild.length) {
+            final int n = Math.max(i + 1, 2 * negAncestorBuild.length);
+            negAncestorSource = Arrays.copyOf(negAncestorSource, n);
+            negAncestorIndividual = Arrays.copyOf(negAncestorIndividual, n);
+            negAncestorVersion = Arrays.copyOf(negAncestorVersion, n);
+            negAncestorSourceBuild = Arrays.copyOf(negAncestorSourceBuild, n);
+            negAncestorBuild = Arrays.copyOf(negAncestorBuild, n);
+        }
+        final int j = source - getScaleBufferCount();
+        negAncestorSource[i] = source;
+        negAncestorIndividual[i] = individual;
+        negAncestorVersion[i] = scaleFactorsVersion;
+        negAncestorSourceBuild[i] = (source == Beagle.NONE || j < 0 || j >= negAncestorBuild.length) ? 0 : negAncestorBuild[j];
+        negAncestorBuild[i] = ++negAncestorBuildCount;
     }
 
 
@@ -2225,6 +2309,16 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
     private boolean useAutoScaling = false;
 
     private boolean recomputeScaleFactors = false;
+    // incremented by each likelihood evaluation that writes individual scale factors
+    private long scaleFactorsVersion = 0;
+    // per gradient scale buffer slot (isNegAncestorScaleBufferCurrent): its source and individual buffers, the version
+    // and the source's build it was made from, and its own build (a count over all slots; 0: never built)
+    private int[] negAncestorSource = new int[0];
+    private int[] negAncestorIndividual = new int[0];
+    private long[] negAncestorVersion = new long[0];
+    private long[] negAncestorSourceBuild = new long[0];
+    private long[] negAncestorBuild = new long[0];
+    private long negAncestorBuildCount = 0;
     private boolean everUnderflowed = false;
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;

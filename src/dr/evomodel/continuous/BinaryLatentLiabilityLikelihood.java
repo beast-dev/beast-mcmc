@@ -30,7 +30,6 @@ package dr.evomodel.continuous;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.TwoStates;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 import dr.math.distributions.Distribution;
@@ -40,9 +39,7 @@ import dr.util.CommonCitations;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 

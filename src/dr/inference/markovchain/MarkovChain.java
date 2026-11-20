@@ -172,8 +172,8 @@ public final class MarkovChain implements Serializable {
             if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
             } else if (likelihood instanceof PathLikelihood) {
-                message += ": " + ((CompoundLikelihood)((PathLikelihood) likelihood).getSourceLikelihood()).getDiagnosis();
-                message += ": " + ((CompoundLikelihood)((PathLikelihood) likelihood).getDestinationLikelihood()).getDiagnosis();
+                message += ": " + ((CompoundLikelihood) ((PathLikelihood) likelihood).getSourceLikelihood()).getDiagnosis();
+                message += ": " + ((CompoundLikelihood) ((PathLikelihood) likelihood).getDestinationLikelihood()).getDiagnosis();
             } else {
                 message += ".";
             }
@@ -293,7 +293,6 @@ public final class MarkovChain implements Serializable {
                 }
 
 
-
                 // extra check from branch `store_restore_bug` put here in case it is needed...
                 final boolean EXTRA_CHECK = false;
                 if (EXTRA_CHECK) {
@@ -324,34 +323,16 @@ public final class MarkovChain implements Serializable {
                 }
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
-                    if (!(mcmcOperator instanceof GibbsIndependentNormalDistributionOperator) && !(mcmcOperator instanceof GibbsIndependentGammaOperator) && !(mcmcOperator instanceof GibbsIndependentCoalescentOperator) && !(mcmcOperator instanceof GibbsIndependentJointNormalGammaOperator)) {
-                        if (DEBUG) {
-                            if (likelihood instanceof CompoundLikelihood) {
-                                CompoundLikelihood cpl = (CompoundLikelihood) likelihood;
-                                System.out.println("\nDEBUG CompoundLikelihood:");
-                                for (Likelihood l : cpl.getLikelihoods()) {
-                                    if (l instanceof CompoundLikelihood) {
-                                        CompoundLikelihood l2 = (CompoundLikelihood)l;
-                                        for (Likelihood lTwo : l2.getLikelihoods()) {
-                                            System.out.println("\t" + lTwo.prettyName() + " = " + lTwo.getLogLikelihood());
-                                        }
-                                    }
-                                    System.out.println(l.prettyName() + " = " + l.getLogLikelihood());
-                                }
-                                System.out.println("Total likelihood = " + cpl.getLogLikelihood() + "\n");
-                            }
-                        }
-                        Logger.getLogger("error").severe("State " + currentState + ": A Gibbs operator, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
-                    }
+                    Logger.getLogger("error").severe("State " + currentState + ": A Gibbs operator, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
                 }
 
                 if (score == Double.POSITIVE_INFINITY ||
-                        Double.isNaN(score) ) {
+                        Double.isNaN(score)) {
                     if (likelihood instanceof CompoundLikelihood) {
-                        Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error:\n" +
-                                ((CompoundLikelihood)likelihood).getDiagnosis());
+                        Logger.getLogger("error").severe("State " + currentState + ": A likelihood returned with a numerical error:\n" +
+                                ((CompoundLikelihood) likelihood).getDiagnosis());
                     } else {
-                        Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error.");
+                        Logger.getLogger("error").severe("State " + currentState + ": A likelihood returned with a numerical error.");
                     }
 
                     if (DEBUG) {
@@ -394,7 +375,7 @@ public final class MarkovChain implements Serializable {
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();
-                        sb.append("State "+currentState+": State was not correctly calculated after an operator move.\n"
+                        sb.append("State " + currentState + ": State was not correctly calculated after an operator move.\n"
                                 + "Likelihood evaluation: " + score
                                 + "\nFull Likelihood evaluation: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator
@@ -459,7 +440,7 @@ public final class MarkovChain implements Serializable {
 
                     if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
                         StringBuilder sb = new StringBuilder();
-                        sb.append("State "+currentState+": State was not correctly restored after reject step.\n"
+                        sb.append("State " + currentState + ": State was not correctly restored after reject step.\n"
                                 + "Likelihood before: " + oldScore
                                 + " Likelihood after: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator

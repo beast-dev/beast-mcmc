@@ -1,7 +1,7 @@
 /*
  * SoftThresholdLikelihood.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,10 +22,9 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
-package dr.evomodel.continuous;
+package dr.inference.model;
 
 /**
  * Created by max on 11/20/14.

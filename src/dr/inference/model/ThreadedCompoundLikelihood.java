@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-
-import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.util.NumberFormatter;
 
 /**
@@ -103,7 +101,7 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
 		boolean knownLikelihoods = true;
 		for (Likelihood likelihood : likelihoods) {
-			if (!((BeagleTreeLikelihood)likelihood).isLikelihoodKnown()) {
+			if (!((ThreadAwareLikelihood)likelihood).isLikelihoodKnown()) {
 				knownLikelihoods = false;
 				break;
 			} else {

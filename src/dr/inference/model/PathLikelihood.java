@@ -27,7 +27,6 @@
 
 package dr.inference.model;
 
-import dr.evomodel.continuous.SoftThresholdLikelihood;
 import dr.xml.*;
 
 import java.util.ArrayList;

@@ -48,13 +48,15 @@ import java.util.logging.Logger;
  * (ComplexSubstitutionModel) or reversible (GeneralSubstitutionModel) CTMC. For a transformedRateSubstitutionModel
  * (LogRateSubstitutionModel) the transformed-rate parameter is set to the inverse transform of each rate.
  * <pre>
- * &lt;parsimonyStartingValues setClock="true" setIndicators="true" setRelativeRates="true"&gt;
+ * &lt;parsimonyStartingValues setClock="true" setIndicators="true" setRelativeRates="true" unobservedRate="1E-4"&gt;
  *     &lt;treeDataLikelihood idref="treeDataLikelihood"/&gt;
  *     &lt;generalSubstitutionModel idref="sm"/&gt;
  *     &lt;parameter idref="clock.rate"/&gt;    (only for setClock="true")
  *     &lt;attributePatterns idref="patterns"/&gt; (optional; default: the likelihood's BEAGLE patterns)
  * &lt;/parsimonyStartingValues&gt;
  * </pre>
+ * unobservedRate (optional) is the starting rate of every pair with no parsimony changes, relative to the observed
+ * rates, which average 1; by default it is 1 / (mean changes per observed pair), as if each had one change.
  *
  * @author Marc A. Suchard
  */
@@ -64,6 +66,7 @@ public class ParsimonyStartingValuesParser extends AbstractXMLObjectParser {
     private static final String SET_CLOCK = "setClock";
     private static final String SET_INDICATORS = "setIndicators";
     private static final String SET_RELATIVE_RATES = "setRelativeRates";
+    private static final String UNOBSERVED_RATE = "unobservedRate";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -74,6 +77,10 @@ public class ParsimonyStartingValuesParser extends AbstractXMLObjectParser {
         boolean setClock = xo.getAttribute(SET_CLOCK, true);
         boolean setIndicators = xo.getAttribute(SET_INDICATORS, true);
         boolean setRates = xo.getAttribute(SET_RELATIVE_RATES, true);
+        double unobservedRate = xo.getAttribute(UNOBSERVED_RATE, Double.NaN);
+        if (!Double.isNaN(unobservedRate) && !(unobservedRate > 0.0 && unobservedRate < Double.POSITIVE_INFINITY)) {
+            throw new XMLParseException(UNOBSERVED_RATE + " must be positive and finite");
+        }
 
         TreeDataLikelihood treeDataLikelihood = (TreeDataLikelihood) xo.getChild(TreeDataLikelihood.class);
         PatternList patterns = (PatternList) xo.getChild(PatternList.class);
@@ -140,7 +147,7 @@ public class ParsimonyStartingValuesParser extends AbstractXMLObjectParser {
                 values.setIndicators(indicators, reversible);
             }
             if (rates != null) {
-                values.setRates(rates, setIndicators, reversible, transform);
+                values.setRates(rates, setIndicators, reversible, transform, unobservedRate);
                 if (!substitutionModel.getNormalization()) {
                     // An unnormalized Q carries the rate scale: make clock * (rate of Q) the parsimony clock rate
                     double clock = setClock ? values.getClockRate() :
@@ -192,6 +199,7 @@ public class ParsimonyStartingValuesParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SET_CLOCK, true),
             AttributeRule.newBooleanRule(SET_INDICATORS, true),
             AttributeRule.newBooleanRule(SET_RELATIVE_RATES, true),
+            AttributeRule.newDoubleRule(UNOBSERVED_RATE, true),
             new ElementRule(TreeDataLikelihood.class),
             new ElementRule(GeneralSubstitutionModel.class),
             new ElementRule(Parameter.class, true),

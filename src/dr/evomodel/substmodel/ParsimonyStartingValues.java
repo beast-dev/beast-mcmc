@@ -48,8 +48,9 @@ import java.util.List;
  * <li>Indicators: on for every observed transition and its reverse, plus both-way links between a hub state and every
  * strongly connected component that the observed transitions leave unreachable. The symmetric support keeps the
  * eigenvectors of Q well conditioned.</li>
- * <li>Rates: max(n, 1) / mean(n) for rates that are on, where n = n_ij (asymmetric) or n_ij + n_ji (reversible) and
- * the mean is over observed pairs; 1 (a neutral value) for rates that are off.</li>
+ * <li>Rates: max(n, 1) / mean(n) for observed rates that are on, where n = n_ij (asymmetric) or n_ij + n_ji
+ * (reversible) and the mean is over observed pairs, so observed rates average 1; 1 / mean(n) (as if n = 1), or a
+ * given value, for unobserved rates that are on; 1 (a neutral value) for rates that are off.</li>
  * <li>Clock rate: parsimony changes per site / total tree length.</li>
  * </ul>
  *
@@ -305,6 +306,15 @@ public class ParsimonyStartingValues implements Reportable {
      *                  is set to transform.inverse(rate)
      */
     public void setRates(Parameter rates, boolean useSupport, boolean reversible, Transform transform) {
+        setRates(rates, useSupport, reversible, transform, Double.NaN);
+    }
+
+    /**
+     * @param unobservedRate the rate for pairs with no parsimony changes, relative to the observed rates (which
+     *                       average 1); NaN for 1 / mean(n), as if each had one change
+     */
+    public void setRates(Parameter rates, boolean useSupport, boolean reversible, Transform transform,
+                         double unobservedRate) {
         int[][] pairs = ratePairs(reversible);
         checkDimension(rates, pairs.length);
         double[] pairCounts = new double[pairs.length];
@@ -319,10 +329,12 @@ public class ParsimonyStartingValues implements Reportable {
             }
         }
         double meanCount = observed > 0 ? total / observed : 1.0;
+        double unobserved = Double.isNaN(unobservedRate) ? 1.0 / meanCount : unobservedRate;
         rateValues = new double[pairs.length];
         for (int k = 0; k < pairs.length; ++k) {
             boolean inSupport = on[pairs[k][0] * stateCount + pairs[k][1]];
-            rateValues[k] = (useSupport && !inSupport) ? 1.0 : Math.max(pairCounts[k], 1.0) / meanCount;
+            rateValues[k] = (useSupport && !inSupport) ? 1.0 :
+                    (pairCounts[k] > 0 ? Math.max(pairCounts[k], 1.0) / meanCount : unobserved);
             rateValues[k] *= 1.0 + JITTER * ((k * GOLDEN) % 1.0);
             rates.setParameterValueQuietly(k, transform == null ? rateValues[k] : transform.inverse(rateValues[k]));
         }

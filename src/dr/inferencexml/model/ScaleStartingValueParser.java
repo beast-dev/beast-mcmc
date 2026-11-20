@@ -36,9 +36,14 @@ import java.util.logging.Logger;
  * Sets a scale parameter to the root mean square, sqrt(mean x^2), of every element of the other parameters, e.g. a
  * shrinkage prior's global scale from starting values of the parameters it shrinks. Place it after whatever sets
  * those starting values.
+ * <p>
+ * With an exponent a, the scale is instead (a * mean |x|^a)^(1/a), the mode of the scale tau given x under
+ * independent exp(-|x / tau|^a) priors (a Bayesian bridge, ignoring its local scales and slab) and a flat prior on
+ * tau^-a.
  * <pre>
  * &lt;scaleStartingValue&gt;
  *     &lt;scale&gt;&lt;parameter idref="globalScale"/&gt;&lt;/scale&gt;
+ *     &lt;exponent&gt;&lt;parameter idref="exponent"/&gt;&lt;/exponent&gt;  (optional)
  *     &lt;parameter idref="rates"/&gt;
  * &lt;/scaleStartingValue&gt;
  * </pre>
@@ -49,6 +54,7 @@ public class ScaleStartingValueParser extends AbstractXMLObjectParser {
 
     private static final String PARSER_NAME = "scaleStartingValue";
     private static final String SCALE = "scale";
+    private static final String EXPONENT = "exponent";
 
     public String getParserName() {
         return PARSER_NAME;
@@ -58,20 +64,27 @@ public class ScaleStartingValueParser extends AbstractXMLObjectParser {
 
         Parameter scale = (Parameter) xo.getChild(SCALE).getChild(Parameter.class);
 
-        double sumOfSquares = 0.0;
+        double exponent = xo.hasChildNamed(EXPONENT) ?
+                ((Parameter) xo.getChild(EXPONENT).getChild(Parameter.class)).getParameterValue(0) : Double.NaN;
+        if (!Double.isNaN(exponent) && !(exponent > 0.0)) {
+            throw new XMLParseException(EXPONENT + " must be positive");
+        }
+        double power = Double.isNaN(exponent) ? 2.0 : exponent;
+
+        double sumOfPowers = 0.0;
         int count = 0;
         for (int i = 0; i < xo.getChildCount(); ++i) {
             if (xo.getChild(i) instanceof Parameter) {
                 Parameter parameter = (Parameter) xo.getChild(i);
                 for (int j = 0; j < parameter.getDimension(); ++j) {
-                    double x = parameter.getParameterValue(j);
-                    sumOfSquares += x * x;
+                    sumOfPowers += Math.pow(Math.abs(parameter.getParameterValue(j)), power);
                 }
                 count += parameter.getDimension();
             }
         }
 
-        double value = Math.sqrt(sumOfSquares / count);
+        double mean = sumOfPowers / count;
+        double value = Double.isNaN(exponent) ? Math.sqrt(mean) : Math.pow(exponent * mean, 1.0 / exponent);
         if (!(value > 0.0) || Double.isInfinite(value)) {
             throw new XMLParseException("Cannot set " + scale.getId() + " to " + value);
         }
@@ -81,8 +94,9 @@ public class ScaleStartingValueParser extends AbstractXMLObjectParser {
         }
         scale.fireParameterChangedEvent();
 
-        Logger.getLogger("dr.inference").info("Set starting value of " + scale.getId() + " to " + value +
-                ", the root mean square of " + count + " values");
+        Logger.getLogger("dr.inference").info("Set starting value of " + scale.getId() + " to " + value + ", " +
+                (Double.isNaN(exponent) ? "the root mean square" : "the bridge scale mode (exponent " + exponent + ")") +
+                " of " + count + " values");
 
         return value; // not the scale parameter: XMLParser would overwrite its id
     }
@@ -93,11 +107,12 @@ public class ScaleStartingValueParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(SCALE, Parameter.class),
+            new ElementRule(EXPONENT, Parameter.class, "bridge exponent; default: root mean square", true),
             new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
     };
 
     public String getParserDescription() {
-        return "Sets a scale parameter to the root mean square of other parameters";
+        return "Sets a scale parameter to the root mean square, or the bridge scale mode, of other parameters";
     }
 
     public Class getReturnType() {

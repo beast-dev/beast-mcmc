@@ -28,8 +28,8 @@
 package test.dr.evomodel.coalescent;
 
 import junit.framework.TestCase;
-import dr.evomodel.coalescent.VDdemographicFunction;
-import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.coalescent.legacy.VDdemographicFunction;
+import dr.evomodel.coalescent.legacy.VariableDemographicModel;
 import dr.evolution.util.Units;
 
 /**

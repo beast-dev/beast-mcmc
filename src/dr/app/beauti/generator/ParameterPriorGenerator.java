@@ -36,7 +36,7 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchSpecificFixedEffects;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchratemodel.BranchSpecificFixedEffectsParser;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.tree.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.distribution.DistributionLikelihood;

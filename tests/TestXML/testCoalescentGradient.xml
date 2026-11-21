@@ -3048,9 +3048,9 @@
 			<parameter id="exponential.growthRate" value="1E-4"/>
 		</growthRate>
 		<intervals>
-            <bigFastTreeIntervals>
+            <fastTreeIntervals>
                 <treeModel idref="treeModel"/>
-            </bigFastTreeIntervals>
+            </fastTreeIntervals>
 		</intervals>
 	</exponentialGrowth>
 
@@ -3063,9 +3063,9 @@
 			<treeModel idref="treeModel"/>
 		</populationTree>
 		<intervals>
-            <bigFastTreeIntervals id="bigFastTreeIntervals">
+            <fastTreeIntervals id="fastTreeIntervals">
                 <treeModel idref="treeModel"/>
-            </bigFastTreeIntervals>
+            </fastTreeIntervals>
 		</intervals>
 	</coalescentLikelihood>
 

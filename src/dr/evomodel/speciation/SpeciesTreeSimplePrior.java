@@ -29,7 +29,7 @@ package dr.evomodel.speciation;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.coalescent.VDdemographicFunction;
+import dr.evomodel.coalescent.legacy.VDdemographicFunction;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.CompoundModel;
 import dr.inference.model.Likelihood;

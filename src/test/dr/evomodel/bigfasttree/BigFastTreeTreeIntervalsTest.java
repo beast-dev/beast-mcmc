@@ -34,9 +34,9 @@ import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.bigfasttree.BigFastTreeModel;
-import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.evomodel.operators.ScaleNodeHeightOperator;
 import dr.evomodel.operators.UniformNodeHeightOperator;
 import dr.evomodel.operators.SubtreeLeapOperator;
@@ -60,7 +60,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         NewickImporter importer = new NewickImporter("(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0,(4:2.0,5:1.51)n9:1.5)n10;");
         MathUtils.setSeed(7);
         tree = new BigFastTreeModel(importer.importTree(null));
-        treeIntervals = new BigFastTreeIntervals(tree);
+        treeIntervals = new FastTreeIntervals(tree);
         treeIntervals.calculateIntervals();
 
     }
@@ -218,7 +218,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
     public void testOrderChange() throws TreeUtils.MissingTaxonException, IOException, Importer.ImportException {
         NewickImporter importer = new NewickImporter("(((0:0.5,(1:1.0,2:1.0)n6:1.0)n7:1.0,3:1.5)n8:1.0,(4:2.0,5:1.51)n9:1.5)n10;");
         tree = new BigFastTreeModel(importer.importTree(null));
-        IntervalList bigFastIntervals = new BigFastTreeIntervals(tree);
+        IntervalList bigFastIntervals = new FastTreeIntervals(tree);
         IntervalList intervals = new TreeIntervals(tree, null, null);
 
 
@@ -268,7 +268,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         tree = new DefaultTreeModel(importer.importTree(null));
 
         IntervalList intervals = new TreeIntervals(tree, null, null);
-        BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
+        FastTreeIntervals fastTreeIntervals = new FastTreeIntervals(tree);
 
         SubtreeLeapOperator op = new SubtreeLeapOperator (tree,1,0.0001,SubtreeLeapOperator.DistanceKernelType.NORMAL,AdaptationMode.ADAPTATION_OFF,0.2);
         UniformNodeHeightOperator nh = new UniformNodeHeightOperator(tree,1);
@@ -281,28 +281,28 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
 
             intervals.calculateIntervals();
 //            bigFastIntervals.makeDirty();
-            bigFastTreeIntervals.calculateIntervals();
-            for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
-                if (intervals.getInterval(j) != bigFastTreeIntervals.getInterval(j)) {
+            fastTreeIntervals.calculateIntervals();
+            for (int j = 0; j < fastTreeIntervals.getIntervalCount(); j++) {
+                if (intervals.getInterval(j) != fastTreeIntervals.getInterval(j)) {
                     System.out.println(i);
                     System.out.println("interval wrong");
                     pass = false;
                     break;
                 }
             }
-            for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
-                if (intervals.getLineageCount(j) != bigFastTreeIntervals.getLineageCount(j)) {
+            for (int j = 0; j < fastTreeIntervals.getIntervalCount(); j++) {
+                if (intervals.getLineageCount(j) != fastTreeIntervals.getLineageCount(j)) {
                     System.out.println(i);
                     System.out.println("lineage Counts wrong: " + j);
                     System.out.println("expected: " + intervals.getLineageCount(j));
-                    System.out.println("got " + bigFastTreeIntervals.getLineageCount(j));
+                    System.out.println("got " + fastTreeIntervals.getLineageCount(j));
 
                     pass = false;
                     break;
                 }
             }
-            for (int j = 0; j < bigFastTreeIntervals.getIntervalCount(); j++) {
-                if (intervals.getIntervalTime(j) != bigFastTreeIntervals.getIntervalTime(j + 1)) {
+            for (int j = 0; j < fastTreeIntervals.getIntervalCount(); j++) {
+                if (intervals.getIntervalTime(j) != fastTreeIntervals.getIntervalTime(j + 1)) {
                     System.out.println(i);
                     System.out.println("times wrong");
                     pass = false;
@@ -324,24 +324,24 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
         DefaultTreeModel tree = new DefaultTreeModel(new NewickImporter(
                 "(((((((t0:1.0,t1:1.0):1.0,t2:2.0):1.0,t3:3.0):1.0,t4:4.0):1.0,t5:5.0):1.0,t6:6.0):1.0,t7:7.0);")
                 .importTree(null));
-        BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
+        FastTreeIntervals fastTreeIntervals = new FastTreeIntervals(tree);
         MathUtils.setSeed(11);
 
-        bigFastTreeIntervals.storeModelState();
+        fastTreeIntervals.storeModelState();
         for (int i = 0; i < tree.getNodeCount() + 3; i++) {
             NodeRef node = tree.getInternalNode(MathUtils.nextInt(tree.getInternalNodeCount()));
             double lower = Math.max(tree.getNodeHeight(tree.getChild(node, 0)), tree.getNodeHeight(tree.getChild(node, 1)));
             double upper = tree.isRoot(node) ? lower + 1.0 : tree.getNodeHeight(tree.getParent(node));
             tree.setNodeHeight(node, lower + MathUtils.nextDouble() * (upper - lower));
         }
-        bigFastTreeIntervals.acceptModelState();
+        fastTreeIntervals.acceptModelState();
 
-        bigFastTreeIntervals.storeModelState();
+        fastTreeIntervals.storeModelState();
         tree.setNodeHeight(tree.getRoot(), tree.getNodeHeight(tree.getRoot()) + 0.5);
-        bigFastTreeIntervals.calculateIntervals();
-        bigFastTreeIntervals.restoreModelState();
+        fastTreeIntervals.calculateIntervals();
+        fastTreeIntervals.restoreModelState();
 
-        assertSameIntervals(tree, bigFastTreeIntervals);
+        assertSameIntervals(tree, fastTreeIntervals);
     }
 
     /**
@@ -350,7 +350,7 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
      */
     public void testTipHeightChangesAfterFullRebuild() throws Exception {
         DefaultTreeModel tree = new DefaultTreeModel(new NewickImporter("((A:1.0,B:0.9):0.5,C:1.3);").importTree(null));
-        BigFastTreeIntervals bigFastTreeIntervals = new BigFastTreeIntervals(tree);
+        FastTreeIntervals fastTreeIntervals = new FastTreeIntervals(tree);
         NodeRef a = null, b = null, c = null;
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef tip = tree.getExternalNode(i);
@@ -365,29 +365,29 @@ public class BigFastTreeTreeIntervalsTest extends TestCase {
             tree.setNodeHeight(b, 0.1);
             tree.setNodeHeight(c, 0.2);
             if (rebuild > 0) {
-                bigFastTreeIntervals.makeDirty();
+                fastTreeIntervals.makeDirty();
             }
-            assertSameIntervals(tree, bigFastTreeIntervals);
+            assertSameIntervals(tree, fastTreeIntervals);
 
             tree.setNodeHeight(a, 0.15);
-            assertSameIntervals(tree, bigFastTreeIntervals);
+            assertSameIntervals(tree, fastTreeIntervals);
 
             tree.setNodeHeight(b, 0.18);
-            assertSameIntervals(tree, bigFastTreeIntervals);
+            assertSameIntervals(tree, fastTreeIntervals);
 
             tree.setNodeHeight(c, 0.05);
-            assertSameIntervals(tree, bigFastTreeIntervals);
+            assertSameIntervals(tree, fastTreeIntervals);
         }
     }
 
-    private static void assertSameIntervals(DefaultTreeModel tree, BigFastTreeIntervals bigFastTreeIntervals)
+    private static void assertSameIntervals(DefaultTreeModel tree, FastTreeIntervals fastTreeIntervals)
             throws TreeUtils.MissingTaxonException {
         IntervalList expected = new TreeIntervals(tree, null, null);
-        bigFastTreeIntervals.calculateIntervals();
-        assertEquals(expected.getIntervalCount(), bigFastTreeIntervals.getIntervalCount());
+        fastTreeIntervals.calculateIntervals();
+        assertEquals(expected.getIntervalCount(), fastTreeIntervals.getIntervalCount());
         for (int i = 0; i < expected.getIntervalCount(); i++) {
-            assertEquals("interval " + i, expected.getInterval(i), bigFastTreeIntervals.getInterval(i), 1E-12);
-            assertEquals("lineage count " + i, expected.getLineageCount(i), bigFastTreeIntervals.getLineageCount(i));
+            assertEquals("interval " + i, expected.getInterval(i), fastTreeIntervals.getInterval(i), 1E-12);
+            assertEquals("lineage count " + i, expected.getLineageCount(i), fastTreeIntervals.getLineageCount(i));
         }
     }
 

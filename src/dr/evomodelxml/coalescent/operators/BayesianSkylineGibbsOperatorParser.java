@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent.operators;
 
-import dr.evomodel.coalescent.BayesianSkylineLikelihood;
+import dr.evomodel.coalescent.legacy.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.operators.BayesianSkylineGibbsOperator;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;

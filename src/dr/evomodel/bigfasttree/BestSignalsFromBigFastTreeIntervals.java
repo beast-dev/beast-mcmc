@@ -28,13 +28,14 @@
 package dr.evomodel.bigfasttree;
 
 import dr.evolution.tree.MutableTreeModel;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 
 /**
  * @author Marc A. Suchard
  * @author Guy Baele
  */
-public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
+public class BestSignalsFromBigFastTreeIntervals extends FastTreeIntervals {
 
     private final Events originalEvents;
 

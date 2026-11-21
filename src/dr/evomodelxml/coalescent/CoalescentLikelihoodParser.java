@@ -33,6 +33,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.*;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.evomodel.coalescent.legacy.MultiLociTreeSet;
 import dr.evomodel.coalescent.legacy.OldAbstractCoalescentLikelihood;
@@ -108,11 +109,13 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         if (treeModel != null) {
+            boolean useFastTreeIntervals = true;
 
             TaxonList includeSubtree = null;
 
             if (xo.hasChildNamed(INCLUDE)) {
                 includeSubtree = (TaxonList) xo.getElementFirstChild(INCLUDE);
+                useFastTreeIntervals = false;
             }
 
             List<TaxonList> excludeSubtrees = new ArrayList<TaxonList>();
@@ -122,12 +125,17 @@ public class CoalescentLikelihoodParser extends AbstractXMLObjectParser {
                 for (int i = 0; i < cxo.getChildCount(); i++) {
                     excludeSubtrees.add((TaxonList) cxo.getChild(i));
                 }
+                useFastTreeIntervals = false;
             }
 
 
             try {
                 if (intervalList == null) {
-                    intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees, false);
+                    if (useFastTreeIntervals) {
+                        intervalList = new FastTreeIntervals(treeModel);
+                    } else {
+                        intervalList = new TreeIntervals(treeModel, includeSubtree, excludeSubtrees, false);
+                    }
                 }
                 // TreeIntervals now deals with all the interval stuff
 //                return new CoalescentLikelihood(treeModel, includeSubtree, excludeSubtrees, demoModel);

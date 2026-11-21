@@ -30,7 +30,7 @@ package dr.evomodel.coalescent.structured;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.treedatalikelihood.TreeTraversal;
 
@@ -60,7 +60,7 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
         }
     }
 
-    private final BigFastTreeIntervals treeIntervals;
+    private final FastTreeIntervals treeIntervals;
     private final int numberSubIntervals;
     private final boolean checkForZeroLengthIntervals;
 
@@ -150,14 +150,14 @@ public class CoalescentIntervalTraversal extends TreeTraversal {
     }
 
     protected CoalescentIntervalTraversal(final Tree tree,
-                                          final BigFastTreeIntervals treeIntervals,
+                                          final FastTreeIntervals treeIntervals,
                                           final BranchRateModel branchRateModel,
                                           final int numberSubIntervals) {
         this(tree, treeIntervals, branchRateModel, numberSubIntervals, true);
     }
 
     protected CoalescentIntervalTraversal(final Tree tree,
-                                          final BigFastTreeIntervals treeIntervals,
+                                          final FastTreeIntervals treeIntervals,
                                           final BranchRateModel branchRateModel,
                                           final int numberSubIntervals,
                                           final boolean checkForZeroLengthIntervals) {

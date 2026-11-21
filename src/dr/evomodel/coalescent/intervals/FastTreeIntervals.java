@@ -47,11 +47,12 @@ import java.util.*;
  * Smart intervals that don't need a full recalculation. 
  * author: JT
  */
-public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIntervalList {
-    public BigFastTreeIntervals(TreeModel tree) {
-        this("bigFastIntervals",tree);
+public class FastTreeIntervals extends AbstractModel implements Units, TreeIntervalList {
+    public FastTreeIntervals(TreeModel tree) {
+        this("FastTreeIntervals",tree);
     }
-    public BigFastTreeIntervals(String name, TreeModel tree) {
+
+    public FastTreeIntervals(String name, TreeModel tree) {
         super(name);
         int maxEventCount = tree.getNodeCount();
 
@@ -70,11 +71,11 @@ public class BigFastTreeIntervals extends AbstractModel implements Units, TreeIn
         addModel(tree);
     }
 
-    public BigFastTreeIntervals(MutableTreeModel tree) {
+    public FastTreeIntervals(MutableTreeModel tree) {
         this("bigFastIntervals", tree);
     }
 
-    public BigFastTreeIntervals(String name, MutableTreeModel tree) {
+    public FastTreeIntervals(String name, MutableTreeModel tree) {
         super(name);
         int maxEventCount = tree.getNodeCount();
 

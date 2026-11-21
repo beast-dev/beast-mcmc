@@ -27,10 +27,12 @@
 
 package dr.evomodelxml.coalescent;
 
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
@@ -54,10 +56,14 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
 
         Tree tree = (Tree) xo.getChild(Tree.class);
 
+        boolean useFastTreeIntervals = tree instanceof TreeModel;
+
         TaxonList includeSubtree = null;
 
         if (xo.hasChildNamed(INCLUDE)) {
             includeSubtree = (TaxonList) xo.getElementFirstChild(INCLUDE);
+            // FastTreeIntervals doesn't support include/exclude
+            useFastTreeIntervals = false;
         }
 
         List<TaxonList> excludeSubtrees = new ArrayList<>();
@@ -67,20 +73,21 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
             for (int i = 0; i < cxo.getChildCount(); i++) {
                 excludeSubtrees.add((TaxonList) cxo.getChild(i));
             }
-        }
-
-        boolean useFastIntervals = USE_FAST_INTERVALS;
-        if (xo.hasAttribute("fastIntervals")) {
-            useFastIntervals = xo.getBooleanAttribute("fastIntervals");
+            // FastTreeIntervals doesn't support include/exclude
+            useFastTreeIntervals = false;
         }
 
         try {
-            TreeIntervals intervals = new TreeIntervals(tree, includeSubtree, excludeSubtrees, !useFastIntervals);
-            if (!intervals.isMonophyly()) {
-                throw new XMLParseException("The included or excluded clades in TreeLineages with id, " + xo.getId() + ", are not monophyletic..");
+            if (useFastTreeIntervals) {
+                return new FastTreeIntervals((TreeModel)tree);
+            } else {
+                TreeIntervals intervals = new TreeIntervals(tree, includeSubtree, excludeSubtrees, false);
+                if (!intervals.isMonophyly()) {
+                    throw new XMLParseException("The included or excluded clades in TreeLineages with id, " + xo.getId() + ", are not monophyletic..");
+                }
+                return intervals;
             }
 
-            return intervals;
         } catch (TreeUtils.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
         }
@@ -95,7 +102,7 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
     }
 
     public Class getReturnType() {
-        return TreeIntervals.class;
+        return TreeIntervalList.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -103,7 +110,6 @@ public class TreeIntervalsParser extends AbstractXMLObjectParser{
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newBooleanRule("oldIntervals", true),
             new ElementRule(TreeModel.class),
             new ElementRule(INCLUDE, new XMLSyntaxRule[]{
                     new ElementRule(Taxa.class)

@@ -29,7 +29,7 @@ package dr.evomodelxml.coalescent.smooth;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.coalescent.smooth.NewSmoothSkygridLikelihood;
 import dr.evomodel.coalescent.smooth.OldSmoothSkygridLikelihood;
@@ -79,7 +79,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
                 XMLObject cxo = xo.getChild(POPULATION_TREE);
                 for (int i = 0; i < cxo.getChildCount(); ++i) {
                     TreeModel tree = (TreeModel) cxo.getChild(i);
-                    intervalList.add(new BigFastTreeIntervals(tree));
+                    intervalList.add(new FastTreeIntervals(tree));
                     debugIntervalList.add(new TreeIntervals(tree));
                 }
             }

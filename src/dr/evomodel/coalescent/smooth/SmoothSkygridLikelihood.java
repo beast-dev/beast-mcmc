@@ -30,7 +30,7 @@ package dr.evomodel.coalescent.smooth;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -64,7 +64,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
 
     private final GlobalSigmoidSmoothFunction smoothFunction;
 
-    private final List<BigFastTreeIntervals> intervalsList;
+    private final List<FastTreeIntervals> intervalsList;
 
     public SmoothSkygridLikelihood(String name,
                                    List<TreeModel> trees,
@@ -96,7 +96,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         this.tmpSumsKnown = false;
 
         for (int i = 0; i < trees.size(); i++) {
-            intervalsList.add(new BigFastTreeIntervals(trees.get(i)));
+            intervalsList.add(new FastTreeIntervals(trees.get(i)));
             addModel(intervalsList.get(i));
         }
 
@@ -185,7 +185,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
     public double[] getGradientWrtNodeHeight() {
         assert(trees.size() == 1);
         Tree tree = trees.get(0);
-        BigFastTreeIntervals intervals = intervalsList.get(0);
+        FastTreeIntervals intervals = intervalsList.get(0);
 
         double[] gradient = new double[tree.getInternalNodeCount()];
 
@@ -264,7 +264,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
         return gradient;
     }
 
-    private double getLineageCountDifference(int intervalIndex, BigFastTreeIntervals intervals) {
+    private double getLineageCountDifference(int intervalIndex, FastTreeIntervals intervals) {
         if (intervalIndex == 0) {
             return ((double) intervals.getLineageCount(0) * (intervals.getLineageCount(0) - 1)) / 2.0;
         } else if (intervalIndex == intervals.getIntervalCount()) {
@@ -670,7 +670,7 @@ public class SmoothSkygridLikelihood extends AbstractCoalescentLikelihood implem
             intervalsKnown = true;
         }
         Tree tree = trees.get(0);
-        BigFastTreeIntervals intervals = intervalsList.get(0);
+        FastTreeIntervals intervals = intervalsList.get(0);
         double logPopulationSizeInverse = 0;
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef node = tree.getNode(tree.getExternalNodeCount() + i);

@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.nonparametric.MultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
@@ -71,9 +71,9 @@ public class MultilocusNonParametricCoalescentLikelihoodParser extends AbstractX
             trees.add((TreeModel) cxo.getChild(i));
         }
 
-        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();
+        List<FastTreeIntervals> intervalLists = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
+            FastTreeIntervals treeIntervals = new FastTreeIntervals(trees.get(i));
             intervalLists.add(treeIntervals);
         }
         //        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();

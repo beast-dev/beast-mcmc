@@ -28,7 +28,7 @@ package dr.evomodel.coalescent.structured;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.inference.model.*;
 import dr.util.Citable;
@@ -180,7 +180,7 @@ public interface BastaLikelihoodDelegate extends ProcessOnCoalescentIntervalDele
         }
 
         public int getMaxNumberOfCoalescentIntervals(Tree tree) {
-            BigFastTreeIntervals intervals = new BigFastTreeIntervals((MutableTreeModel) tree); // TODO fix BFTI to take a Tree
+            FastTreeIntervals intervals = new FastTreeIntervals((MutableTreeModel) tree); // TODO fix BFTI to take a Tree
             int zeroLengthSampling = 0;
             for (int i = 0; i < intervals.getIntervalCount(); ++i) {
                 if (intervals.getIntervalType(i) == IntervalType.SAMPLE && intervals.getIntervalTime(i) == 0.0) {

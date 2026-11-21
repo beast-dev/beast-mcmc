@@ -28,14 +28,14 @@
 package dr.inference.distribution;
 
 
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
 
 public class Weights extends AbstractModel implements RandomField.WeightProvider {
 
     private final TreeModel tree;
-    private BigFastTreeIntervals intervals;
+    private FastTreeIntervals intervals;
     private final boolean rescaleByRootHeight;
 
     private boolean indicesKnown;
@@ -50,7 +50,7 @@ public class Weights extends AbstractModel implements RandomField.WeightProvider
         super("just work");
         this.tree = tree;
         this.rescaleByRootHeight = rescaleByRootHeight;
-        intervals = new BigFastTreeIntervals((TreeModel) tree);
+        intervals = new FastTreeIntervals((TreeModel) tree);
         addModel(intervals);
 
         indicesKnown = false;

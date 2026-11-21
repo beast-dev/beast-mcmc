@@ -1,16 +1,16 @@
 package dr.evomodelxml.coalescent;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 
 // this builds a timeline with coalescent and sampling events for a single tree
 public class SingleTreeNodesTimeline {
     private final int nNodes;
-    private final BigFastTreeIntervals treeIntervals;
+    private final FastTreeIntervals treeIntervals;
 
     private final double[] timeLine;
     private final boolean[] flagCoalescentEvent;
     private int[] numLineages;
 
-    public SingleTreeNodesTimeline(BigFastTreeIntervals treeIntervals) {
+    public SingleTreeNodesTimeline(FastTreeIntervals treeIntervals) {
         this.treeIntervals = treeIntervals;
         this.nNodes = treeIntervals.getIntervalCount() + 1;
         this.timeLine = new double[nNodes];

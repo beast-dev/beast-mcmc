@@ -25,7 +25,7 @@
  */
 
 package dr.evomodel.coalescent.nonparametric;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.zoo.SingleTreeGriddedNodesTimeline;
 import dr.inference.model.*;
 import dr.util.Author;
@@ -56,7 +56,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private double[][] ploidySums;
     private double[][] storedPloidySums;
 
-    private final List<BigFastTreeIntervals> intervalsList;
+    private final List<FastTreeIntervals> intervalsList;
 
     private final Parameter logPopSizes;
     private final Parameter gridPoints;
@@ -69,7 +69,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     private boolean likelihoodKnown;
 
 
-    public MultilocusNonparametricCoalescentLikelihood(List<BigFastTreeIntervals> intervalLists,
+    public MultilocusNonparametricCoalescentLikelihood(List<FastTreeIntervals> intervalLists,
                                                        Parameter logPopSizes,
                                                        Parameter gridPoints,
                                                        Parameter ploidyFactors) {
@@ -93,7 +93,7 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
         addVariable(gridPoints);
         addVariable(ploidyFactors);
 
-        for (BigFastTreeIntervals intervals : intervalLists) {
+        for (FastTreeIntervals intervals : intervalLists) {
             addModel(intervals);
         }
 
@@ -113,8 +113,8 @@ public class MultilocusNonparametricCoalescentLikelihood extends AbstractModelLi
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model instanceof BigFastTreeIntervals) {
-            BigFastTreeIntervals treeModel = (BigFastTreeIntervals) model;
+        if (model instanceof FastTreeIntervals) {
+            FastTreeIntervals treeModel = (FastTreeIntervals) model;
             int tn = intervalsList.indexOf(treeModel);
             if (tn >= 0) {
                 intervalsKnown = false; // TODO This should only fire the change for one tree model

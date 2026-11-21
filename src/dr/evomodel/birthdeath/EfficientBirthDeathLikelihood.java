@@ -30,7 +30,7 @@ package dr.evomodel.birthdeath;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -46,7 +46,7 @@ import java.util.Set;
  */
 public class EfficientBirthDeathLikelihood extends BirthDeathLikelihood implements TreeTraitProvider {
 
-    private final BigFastTreeIntervals treeIntervals;
+    private final FastTreeIntervals treeIntervals;
     private final TreeTraitProvider.Helper treeTraits = new TreeTraitProvider.Helper();
 
     public static final boolean MEASURE_RUN_TIME = false;
@@ -71,7 +71,7 @@ public class EfficientBirthDeathLikelihood extends BirthDeathLikelihood implemen
             fixTimes();
         }
 
-        treeIntervals = new BigFastTreeIntervals((TreeModel)tree);
+        treeIntervals = new FastTreeIntervals((TreeModel)tree);
 
         addModel(treeIntervals);
     }
@@ -88,7 +88,7 @@ public class EfficientBirthDeathLikelihood extends BirthDeathLikelihood implemen
         return (TreeModel) tree;
     }
 
-    final BigFastTreeIntervals getTreeIntervals() {
+    final FastTreeIntervals getTreeIntervals() {
         return treeIntervals;
     }
 

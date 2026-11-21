@@ -25,18 +25,18 @@
  */
 
 package dr.evomodel.coalescent.zoo;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 
 // this builds a timeline with coalescent and sampling events for a single tree
 public abstract class SingleTreeTimeline {
-    protected final BigFastTreeIntervals treeIntervals;
+    protected final FastTreeIntervals treeIntervals;
     final int nNodes;
 
-    public SingleTreeTimeline(BigFastTreeIntervals treeIntervals) {
+    public SingleTreeTimeline(FastTreeIntervals treeIntervals) {
         this.treeIntervals = treeIntervals;
         this.nNodes = treeIntervals.getIntervalCount() + 1;
     }
 
     protected int getnNodes() { return nNodes; }
-    protected BigFastTreeIntervals getTreeIntervals() { return treeIntervals; }
+    protected FastTreeIntervals getTreeIntervals() { return treeIntervals; }
 }

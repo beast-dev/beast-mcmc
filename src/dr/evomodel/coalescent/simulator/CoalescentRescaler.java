@@ -27,7 +27,7 @@
 package dr.evomodel.coalescent.simulator;
 
 import dr.evolution.coalescent.ConstantPopulation;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.demographicmodel.ConstantPopulationModel;
 import dr.evomodel.coalescent.demographicmodel.RescaleAwareDemographic;
 import dr.evomodel.tree.TreeModel;
@@ -47,20 +47,20 @@ public class CoalescentRescaler {
 
     private RescaleAwareDemographic rescaleAwareDemographic;
 
-    private BigFastTreeIntervals bigFastTreeIntervals;
+    private FastTreeIntervals fastTreeIntervals;
 
     public CoalescentRescaler(TreeModel tree, ConstantPopulationModel constantPopulationModel, RescaleAwareDemographic rescaleAwareDemographic) {
         this.tree = tree;
         this.constantPopulationModel = constantPopulationModel;
         this.rescaleAwareDemographic = rescaleAwareDemographic;
-        this.bigFastTreeIntervals = new BigFastTreeIntervals("constant.population.size.tree", tree);
+        this.fastTreeIntervals = new FastTreeIntervals("constant.population.size.tree", tree);
     }
 
     public TreeModel rescaleTree() {
-        double[] intensityTimeProducts = new double[bigFastTreeIntervals.getIntervalCount()];
-        double[] intervals = new double[bigFastTreeIntervals.getIntervalCount()];
-        for (int i = 0; i < bigFastTreeIntervals.getIntervalCount(); i++) {
-            intervals[i] = bigFastTreeIntervals.getInterval(i);
+        double[] intensityTimeProducts = new double[fastTreeIntervals.getIntervalCount()];
+        double[] intervals = new double[fastTreeIntervals.getIntervalCount()];
+        for (int i = 0; i < fastTreeIntervals.getIntervalCount(); i++) {
+            intervals[i] = fastTreeIntervals.getInterval(i);
             intensityTimeProducts[i] = intervals[i] / ((ConstantPopulation) constantPopulationModel.getDemographicFunction()).getN0();
         }
         double[] scaledIntervals = rescaleAwareDemographic.rescaleInterval(intervals, intensityTimeProducts);
@@ -68,7 +68,7 @@ public class CoalescentRescaler {
         double height = 0;
         for (int i = 0; i < scaledIntervals.length; i++) {
             height += scaledIntervals[i];
-            int[] intervalNodeNumbers = bigFastTreeIntervals.getNodeNumbersForInterval(i);
+            int[] intervalNodeNumbers = fastTreeIntervals.getNodeNumbersForInterval(i);
             tree.setNodeHeightQuietly(tree.getNode(intervalNodeNumbers[1]), height);
         }
         tree.pushTreeChangedEvent();

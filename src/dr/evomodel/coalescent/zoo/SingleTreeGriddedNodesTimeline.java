@@ -26,7 +26,7 @@
 
 package dr.evomodel.coalescent.zoo;
 
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.inference.model.Parameter;
 
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class SingleTreeGriddedNodesTimeline extends SingleTreeTimeline {
     private int[] mergedNumLineages;
     private int[] numCoalEvents;
 
-    public SingleTreeGriddedNodesTimeline(BigFastTreeIntervals treeIntervals, Parameter gridPoints) {
+    public SingleTreeGriddedNodesTimeline(FastTreeIntervals treeIntervals, Parameter gridPoints) {
         super(treeIntervals);
         this.nNodes = getnNodes();
         this.gridPoints = gridPoints;

@@ -28,7 +28,7 @@
 package dr.evomodel.birthdeath;
 
 import dr.evolution.tree.TreeTrait;
-import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
@@ -53,7 +53,7 @@ public class EfficientBirthDeathLikelihoodGradient extends AbstractModel
     private final BirthDeathLikelihoodGradient.WrtParameter wrtParameter;
     private final TreeModel tree;
     private final BirthDeathModel birthDeathModel;
-    private final BigFastTreeIntervals treeIntervals;
+    private final FastTreeIntervals treeIntervals;
     private final BirthDeathModelGradientProvider provider;
 
     private final TreeTrait gradientProvider;

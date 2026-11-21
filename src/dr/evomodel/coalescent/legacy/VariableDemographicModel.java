@@ -30,7 +30,7 @@ import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.VariableDemographicModelParser;
+import dr.evomodelxml.coalescent.legacy.VariableDemographicModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;

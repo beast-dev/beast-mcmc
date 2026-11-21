@@ -30,7 +30,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
+import dr.evomodelxml.coalescent.legacy.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

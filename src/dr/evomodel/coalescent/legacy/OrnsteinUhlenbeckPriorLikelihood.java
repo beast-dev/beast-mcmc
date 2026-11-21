@@ -26,7 +26,7 @@
 
 package dr.evomodel.coalescent.legacy;
 
-import dr.evomodelxml.coalescent.OrnsteinUhlenbeckPriorLikelihoodParser;
+import dr.evomodelxml.coalescent.legacy.OrnsteinUhlenbeckPriorLikelihoodParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;

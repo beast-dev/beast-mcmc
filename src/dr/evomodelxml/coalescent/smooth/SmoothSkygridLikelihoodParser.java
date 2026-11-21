@@ -35,7 +35,7 @@ import dr.evomodel.coalescent.smooth.NewSmoothSkygridLikelihood;
 import dr.evomodel.coalescent.smooth.OldSmoothSkygridLikelihood;
 import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

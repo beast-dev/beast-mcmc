@@ -30,7 +30,7 @@ import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.coalescent.intervals.CoalescentIntervalProvider;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;

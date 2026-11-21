@@ -35,7 +35,7 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.branchratemodel.*;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.tree.*;
 import dr.inference.model.ParameterParser;
 import dr.inference.model.StatisticParser;

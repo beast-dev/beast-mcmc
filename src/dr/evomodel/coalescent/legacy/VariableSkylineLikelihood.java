@@ -30,7 +30,7 @@ import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.VariableSkylineLikelihoodParser;
+import dr.evomodelxml.coalescent.legacy.VariableSkylineLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Author;

@@ -45,7 +45,7 @@ import dr.evomodelxml.branchratemodel.LocalClockModelParser;
 import dr.evomodelxml.branchratemodel.MixtureModelBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.demographicmodel.ExponentialGrowthModelParser;
 import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
 import dr.inference.distribution.GammaDistributionModel;

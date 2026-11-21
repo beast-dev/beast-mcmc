@@ -29,7 +29,7 @@ package dr.evomodel.coalescent.legacy;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
+import dr.evomodelxml.coalescent.legacy.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 

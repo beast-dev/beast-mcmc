@@ -1,5 +1,5 @@
 /*
- * BigFastTreeIntervals.java
+ * FastTreeIntervals.java
  *
  * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
@@ -32,80 +32,148 @@ import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
-import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
-import dr.util.ComparableDouble;
-import dr.util.HeapSort;
 
-import java.util.*;
+import java.util.Arrays;
 
 /**
- * Smart intervals that don't need a full recalculation. 
- * author: JT
+ * The coalescent intervals of a tree, kept up to date as the tree changes without recalculating them all.
+ *
+ * Every node of the tree is an event: a tip is a sample and an internal node a coalescence. The events are
+ * held in order of time (node height). Interval i lies between event i and event i + 1, so there is one
+ * fewer interval than events, interval i starts at the time of event i, and its type and its node are
+ * those of the event that ends it, event i + 1. The lineage count of an interval is the number of lineages
+ * in the tree during it.
+ *
+ * The tree's change events say what has to be done before the intervals are next asked for:
+ * <ul>
+ * <li>the height of a node changed: that node's event is moved to its new place in the order;</li>
+ * <li>many, or all, heights changed: every height is read again and the events are put back in order;</li>
+ * <li>anything else that changes the nodes: the events are made again from the tree.</li>
+ * </ul>
+ * A change of topology alone moves no event.
+ *
+ * Nodes are assumed to be numbered with the tips first, as they are in every tree model.
+ *
+ * @author JT
+ * @author Andrew Rambaut
  */
 public class FastTreeIntervals extends AbstractModel implements Units, TreeIntervalList {
-    public FastTreeIntervals(TreeModel tree) {
-        this("FastTreeIntervals",tree);
+
+    /**
+     * What has to be done to the events before they describe the tree, in increasing order of the work
+     * involved. A later one takes in the earlier ones.
+     */
+    private enum Pending {
+        NOTHING,
+        CHANGED_NODES,
+        ALL_TIMES,
+        REBUILD
     }
 
-    public FastTreeIntervals(String name, TreeModel tree) {
-        super(name);
-        int maxEventCount = tree.getNodeCount();
+    private final Tree tree;
+    private final int intervalCount;
 
-        this.tree = tree;
-        intervalsKnown = false;
+    protected Events events;
+    private Events storedEvents;
 
-        updatedNodes = new ArrayList<>(maxEventCount);
-        storedUpdatedNodes = new ArrayList<>(maxEventCount);
+    private Pending pending;
+    private Pending storedPending;
 
-        events = new Events(maxEventCount);
-        storedEvents = new Events(maxEventCount);
+    // the nodes whose heights have changed since the events were last brought up to date
+    private int[] changedNodes;
+    private int changedNodeCount;
+    private int[] storedChangedNodes;
+    private int storedChangedNodeCount;
 
-        dirty = true;
-        onlyUpdateTimes = false;
-        calculateIntervals();
-        addModel(tree);
-    }
+    private Type units = Type.GENERATIONS;
 
     public FastTreeIntervals(MutableTreeModel tree) {
-        this("bigFastIntervals", tree);
+        this("FastTreeIntervals", tree);
     }
 
     public FastTreeIntervals(String name, MutableTreeModel tree) {
-        super(name);
-        int maxEventCount = tree.getNodeCount();
+        // the state is only stored when the tree changes (see AbstractModel)
+        super(name, true);
 
         this.tree = tree;
-        intervalsKnown = false;
 
-        updatedNodes = new ArrayList<>(maxEventCount);
-        storedUpdatedNodes = new ArrayList<>(maxEventCount);
+        final int eventCount = tree.getNodeCount();
+        intervalCount = eventCount - 1;
 
-        events = new Events(maxEventCount);
-        storedEvents = new Events(maxEventCount);
+        events = new Events(eventCount, tree.getExternalNodeCount());
+        storedEvents = new Events(eventCount, tree.getExternalNodeCount());
 
-        dirty = true;
-        onlyUpdateTimes = false;
+        // Beyond this many changed nodes it is cheaper to read all the heights again than to move the
+        // events one at a time.
+        final int maxChangedNodes = Math.max(8, eventCount / 16);
+        changedNodes = new int[maxChangedNodes];
+        storedChangedNodes = new int[maxChangedNodes];
+
+        pending = Pending.REBUILD;
         calculateIntervals();
-        addModel((Model) tree);
+
+        addModel(tree);
     }
 
-
+    /**
+     * The events will be made again from the tree.
+     */
     public void makeDirty() {
-        dirty = true;
-        intervalsKnown=false;
-        updatedNodes.clear();
+        pending = Pending.REBUILD;
+        changedNodeCount = 0;
     }
+
+    /**
+     * @return whether the events describe the tree as it is now
+     */
+    protected final boolean isIntervalsKnown() {
+        return pending == Pending.NOTHING;
+    }
+
+    /**
+     * Brings the events up to date with the tree. Every getter does this first, if it is needed.
+     */
+    @Override
+    public void calculateIntervals() {
+        switch (pending) {
+            case REBUILD:
+                events.rebuild(tree);
+                break;
+            case ALL_TIMES:
+                events.updateAllTimes(tree);
+                break;
+            case CHANGED_NODES:
+                for (int i = 0; i < changedNodeCount; i++) {
+                    final int node = changedNodes[i];
+                    events.updateNode(node, tree.getNodeHeight(tree.getNode(node)));
+                }
+                break;
+            case NOTHING:
+                break;
+        }
+        pending = Pending.NOTHING;
+        changedNodeCount = 0;
+    }
+
+    private Events currentEvents() {
+        if (pending != Pending.NOTHING) {
+            calculateIntervals();
+        }
+        return events;
+    }
+
+    // **************************************************************
+    // IntervalList IMPLEMENTATION
+    // **************************************************************
 
     @Override
     public int getIntervalCount() {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
+        currentEvents();
         return intervalCount;
     }
 
@@ -114,51 +182,36 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
         return tree.getTaxonCount();
     }
 
-
+    /**
+     * @return the time of the first event
+     */
     @Override
     public double getStartTime() {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        return events.getTime(0);
+        return currentEvents().getTime(0);
     }
 
     @Override
     public double getInterval(int i) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        return events.getInterval(i + 1);
+        return currentEvents().getInterval(i + 1);
     }
 
-    public int getIntervalIndexForNode(int nodeNum) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        return events.getNodePosition(nodeNum);
-    }
-
+    /**
+     * @return the time of the start of interval i, which is the time of event i. The time of the end of
+     * the last interval is given by i = getIntervalCount().
+     */
     @Override
     public double getIntervalTime(int i) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        return events.getTime(i);
+        return currentEvents().getTime(i);
     }
 
     @Override
     public int getLineageCount(int i) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        return events.getLineageCount(i + 1);
+        return currentEvents().getLineageCount(i + 1);
     }
 
     @Override
     public int getCoalescentEvents(int i) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
+        final Events events = currentEvents();
         if (i < intervalCount - 1) {
             return events.getLineageCount(i + 1) - events.getLineageCount(i + 2);
         } else {
@@ -166,20 +219,21 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
         }
     }
 
+    /**
+     * @return the type of the event that ends interval i
+     */
     @Override
     public IntervalType getIntervalType(int i) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        return events.getType(i + 1);
+        return currentEvents().getType(i + 1);
     }
 
+    /**
+     * @return the time of the last event (the height of the root). This is the duration of the intervals
+     * only when the first event is at time zero.
+     */
     @Override
     public double getTotalDuration() {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        return events.getTime(events.size() - 1);
+        return currentEvents().getTime(intervalCount);
     }
 
     @Override
@@ -192,65 +246,51 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
         return true;
     }
 
-    // Interval Node mapping
+    // **************************************************************
+    // TreeIntervalList IMPLEMENTATION
+    // **************************************************************
 
-    @Override
     /**
-     *
      * @param nodeNumber the node number
-     * @return int[] of interval indices for which the node is a member.
-     *
-     * If the node is the most recent tip or root it is only
-     * present in one interval and so the array only has one entry. But there might be better ways to communicate that fact.
-     *
-     * In this interval implementation there is always 1 more node than interval.
-     * The 0th node is the start of the 0th interval. The index 1 node ends the index 0 interval and begins the index 1
-     * interval.
-     * The last node (the root) ends the last interval.
-     *
-     *
-     * Nodes:           4 ------- 3 ------- 2 ------- 1 ------- 0
-     * Intervals:            3         2         1         0
-     *IntervalsForNode: [3]     [2,3]     [1,2]     [0,1]       [0]
+     * @return the position of the node's event in the order of time. The node ends the interval before
+     * this index (if there is one) and starts the interval with this index (if there is one).
      */
-    public int[] getIntervalsForNode(int nodeNumber) {
-        if(!intervalsKnown){
-            calculateIntervals();
-        }
-        int first=-1;
-        int second=-1;
-
-        int order = this.events.getNodePosition(nodeNumber); // the index of the node when sorted by height.
-        if(order>0){
-            first = order-1; // the interval that ends in this node
-            if(order<this.intervalCount){
-                second=order;//interval that begins with this node
-            }
-        }else{
-            first=0;
-        }
-        int[] intervals;
-        if(second==-1){ // this true if order ==0 or if order>0 && order == interval count (this is the last node)
-            intervals=new int[1];
-            intervals[0]=first;
-        }else{
-            intervals=new int[2];
-            intervals[0]=first;
-            intervals[1]=second;
-        }
-
-        return intervals;
+    public int getIntervalIndexForNode(int nodeNumber) {
+        return currentEvents().getNodePosition(nodeNumber);
     }
 
+    /**
+     * The first node starts interval 0, each later node ends one interval and starts the next, and the
+     * last node (the root) ends the last interval:
+     * <pre>
+     * Nodes:            4 ------- 3 ------- 2 ------- 1 ------- 0
+     * Intervals:             3         2         1         0
+     * IntervalsForNode: [3]     [2,3]     [1,2]     [0,1]      [0]
+     * </pre>
+     *
+     * @param nodeNumber the node number
+     * @return the indices of the intervals that the node ends and starts: one index for the first and
+     * last nodes, otherwise two.
+     */
+    @Override
+    public int[] getIntervalsForNode(int nodeNumber) {
+        final int position = currentEvents().getNodePosition(nodeNumber);
+        if (position == 0) {
+            return new int[]{0};
+        } else if (position == intervalCount) {
+            return new int[]{position - 1};
+        } else {
+            return new int[]{position - 1, position};
+        }
+    }
+
+    /**
+     * @return the numbers of the nodes that start and end interval i
+     */
     @Override
     public int[] getNodeNumbersForInterval(int i) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
-        int[] nodes =new int[2];
-        nodes[0] = events.getNode(i);
-        nodes[1] = events.getNode(i + 1);
-        return nodes;
+        final Events events = currentEvents();
+        return new int[]{events.getNode(i), events.getNode(i + 1)};
     }
 
     @Override
@@ -258,146 +298,65 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
         return true;
     }
 
-//    @Override
-//    public void setBuildIntervalNodeMapping(boolean buildIntervalNodeMapping) {
-//        // nothing done this is done by default with this tree model
-//    }
-
     @Override
     public NodeRef getCoalescentNode(int interval) {
-        if(!intervalsKnown){
-            calculateIntervals();
-        }
-        if (events.getType(interval+1) != IntervalType.COALESCENT){
+        final Events events = currentEvents();
+        if (events.getType(interval + 1) != IntervalType.COALESCENT) {
             throw new IllegalArgumentException("interval is not a coalescent interval");
         }
         return tree.getNode(events.getNode(interval + 1));
     }
 
     public NodeRef getSamplingNode(int interval) {
-        if (!intervalsKnown) {
-            calculateIntervals();
-        }
+        final Events events = currentEvents();
         if (events.getType(interval + 1) != IntervalType.SAMPLE) {
             throw new IllegalArgumentException("interval is not a sampling interval");
         }
         return tree.getNode(events.getNode(interval + 1));
     }
 
+    /**
+     * @param byIntervalOrder a value for each internal node, in the order of their coalescent events
+     * @return the same values in the order of the internal nodes' numbers
+     */
     @Override
-    //Sort array by node order in tree I think. Taken from oldAbstract likelihood.
-    //TODO leverage the fact that we already know the order mapping
-
     public double[] sortByNodeNumbers(double[] byIntervalOrder) {
-        if(!intervalsKnown){
-            calculateIntervals();
-        }
+        final Events events = currentEvents();
+        final int tipCount = tree.getExternalNodeCount();
         double[] sortedValues = new double[byIntervalOrder.length];
-        int[] nodeIndices = new int[byIntervalOrder.length];
-        ArrayList<ComparableDouble> mappedIntervals = new ArrayList<ComparableDouble>();
-        for (int i = 0; i < nodeIndices.length; i++) {
-            mappedIntervals.add(new ComparableDouble(getIntervalsForNode(i + tree.getExternalNodeCount())[0]));
-        }
-        HeapSort.sort(mappedIntervals, nodeIndices);
-        for (int i = 0; i < nodeIndices.length; i++) {
-            sortedValues[nodeIndices[i]] = byIntervalOrder[i];
+        int next = 0;
+        for (int i = 0; i < events.size(); i++) {
+            final int internalNode = events.getNode(i) - tipCount;
+            if (internalNode >= 0 && internalNode < sortedValues.length) {
+                sortedValues[internalNode] = byIntervalOrder[next];
+                next++;
+            }
         }
         return sortedValues;
     }
 
-
     @Override
     public double[] getCoalescentIntervals() {
-        double[] coalIntervals = new double[tree.getInternalNodeCount()];
-        int currentIndex = 0;
-        for (int i = 0; i < this.intervalCount; i++) {
-            if (this.getIntervalType(i)==IntervalType.COALESCENT) {
-                coalIntervals[currentIndex] = this.getInterval(i);
-                currentIndex+=1;
+        final Events events = currentEvents();
+        double[] coalescentIntervals = new double[tree.getInternalNodeCount()];
+        int next = 0;
+        for (int i = 0; i < intervalCount; i++) {
+            if (events.getType(i + 1) == IntervalType.COALESCENT) {
+                coalescentIntervals[next] = events.getInterval(i + 1);
+                next++;
             }
         }
-        return coalIntervals;
+        return coalescentIntervals;
     }
 
     @Override
     public Tree getTree() {
-        return this.tree;
+        return tree;
     }
 
-    @Override
-    public void calculateIntervals() {
-        //If dirty we rebuild the evens and sort them using parallel sort
-        if (dirty) {
-            // Resort nodes by heights
-            // will this update the tree nodes?
-
-            NodeRef[] nodes = new NodeRef[tree.getNodeCount()];
-
-            if (tree instanceof EmpiricalTreeDistributionModel) {
-                for (int i = 0; i < tree.getNodeCount(); ++i) {
-                    nodes[i] = tree.getNode(i);
-                }
-            } else if (tree instanceof TreeModel) {
-                System.arraycopy(((TreeModel) tree).getNodes(), 0, nodes, 0, tree.getNodeCount());
-            } else {
-                int idx = 0;
-                for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-                    nodes[idx++] = tree.getExternalNode(i);
-                }
-                for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                    nodes[idx++] = tree.getInternalNode(i);
-                }
-            }
-            Arrays.parallelSort(nodes, (a, b) -> {
-                if (tree.getNodeHeight(a) == tree.getNodeHeight(b)) return Boolean.compare(tree.isRoot(a), tree.isRoot(b));
-                else
-                    return Double.compare(tree.getNodeHeight(a), tree.getNodeHeight(b));
-            });
-
-            intervalCount = nodes.length - 1;
-
-            double lastTime = tree.getNodeHeight(nodes[0]);
-            if (!tree.isExternal(nodes[0])) {
-                throw new IllegalArgumentException("The first event is not a sample event");
-            }
-            events.setEvent(lastTime, IntervalType.SAMPLE, nodes[0].getNumber(), -1, 0, 0);
-            events.setNodeOrder(nodes[0].getNumber(), 0);
-
-            int lineages = 1;
-            for (int i = 1; i < nodes.length; i++) {
-                NodeRef node = nodes[i];
-                double time = tree.getNodeHeight(node);
-                double interval = time - lastTime;
-                IntervalType type = tree.isExternal(node) ? IntervalType.SAMPLE : IntervalType.COALESCENT;
-                int lineageCount = lineages;
-                events.setEvent(time, type, node.getNumber(), interval, lineageCount, i);
-                events.setNodeOrder(node.getNumber(), i);
-
-                if (type == IntervalType.SAMPLE) {
-                    lineages++;
-                } else {
-                    lineages--;
-                }
-                lastTime = time;
-            }
-            intervalsKnown = true;
-
-        } else if (onlyUpdateTimes) {
-            // every height may have changed, and with them the order of the events
-            events.updateAllTimes(tree);
-        } else {
-            for (int node : updatedNodes) {
-                events.updateForChangedNode(node, tree.getNodeHeight(tree.getNode(node)));
-            }
-        }
-
-        intervalsKnown = true;
-        dirty = false;
-        onlyUpdateTimes = false;
-        updatedNodes = new ArrayList<>();
-    }
-
-    private Type units = Type.GENERATIONS;
+    // **************************************************************
+    // Units IMPLEMENTATION
+    // **************************************************************
 
     public final Type getUnits() {
         return units;
@@ -407,388 +366,308 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
         this.units = units;
     }
 
-
     // **************************************************************
-    // ModelListener IMPLEMENTATION
+    // Model IMPLEMENTATION
     // **************************************************************
 
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model != tree) {
+            return;
+        }
 
-        if (model == tree) {
-            if (!(tree instanceof TreeModel)) {
-                makeDirty();
-                fireModelChanged(object);
-                return;
+        if (!(tree instanceof TreeModel)) {
+            // nothing is known about the events of other kinds of tree
+            makeDirty();
+        } else if (object instanceof TreeChangedEvent) {
+            final TreeChangedEvent event = (TreeChangedEvent) object;
+            if (event.isNodeChanged()) {
+                // A node event is sent when a node is added to or removed from a branch, or when its
+                // height, rate or trait changes. Only a change of height moves an event.
+                if (event.isHeightChanged()) {
+                    nodeHeightChanged(event.getNode().getNumber());
+                }
+            } else if (event.isTreeChanged()) {
+                if (event.isNodeOrderChanged()) {
+                    // the whole tree has changed (this is what an empirical tree distribution sends)
+                    makeDirty();
+                } else {
+                    // The heights have changed but not the nodes or the topology. The order of the
+                    // events in time can still have changed (heights scaled past a tip, or set from
+                    // height ratios).
+                    allHeightsChanged();
+                }
             }
-            if (object instanceof TreeChangedEvent) {
-                TreeChangedEvent treeChangedEvent = (TreeChangedEvent) object;
-                if (treeChangedEvent.isNodeChanged()) {
+        }
 
-                    //  A node event is fired if a node is added to a branch, removed from a branch or its height or
-                    // rate changes.
-                    if (treeChangedEvent.isHeightChanged()) {
-                        NodeRef node = ((TreeChangedEvent) object).getNode();
-                        if (onlyUpdateTimes) {
-                            // every height is already going to be read again, this node's among them
-                        } else if (updatedNodes.size() >= tree.getNodeCount()) {
-                            makeDirty();
-                        } else {
-                            updatedNodes.add(node.getNumber());
-                        }
-                        intervalsKnown = false;
-                    }
+        fireModelChanged(object);
+    }
 
-                } else if (treeChangedEvent.isTreeChanged()) {
-                    if (!treeChangedEvent.isNodeOrderChanged()) {
-                        // The heights have changed but not the nodes or the topology. The order of the
-                        // events in time can still have changed (heights scaled past a tip, or set from
-                        // height ratios), so all the times are read again and put back in order. This
-                        // takes in any single node changes that are waiting.
-                        onlyUpdateTimes = true;
-                        updatedNodes.clear();
-                        intervalsKnown=false;
-                    } else {
-                        // Full tree events result in a complete updating of the tree likelihood
-                        // This event type is now used for EmpiricalTreeDistributions.
-//                    System.err.println("Full tree update event - these events currently aren't used\n" +
-//                            "so either this is in error or a new feature is using them so remove this message.");
-                        makeDirty();
-                    }
+    private void nodeHeightChanged(int node) {
+        if (pending == Pending.ALL_TIMES || pending == Pending.REBUILD) {
+            // this node's height is going to be read again with all the others
+            return;
+        }
+        if (changedNodeCount == changedNodes.length) {
+            allHeightsChanged();
+        } else {
+            changedNodes[changedNodeCount] = node;
+            changedNodeCount++;
+            pending = Pending.CHANGED_NODES;
+        }
+    }
 
-                }  // Other event types are ignored (probably trait changes).
-                //System.err.println("Another tree event has occured (possibly a trait change).");
-            }
-
-            fireModelChanged(object);
+    private void allHeightsChanged() {
+        if (pending != Pending.REBUILD) {
+            pending = Pending.ALL_TIMES;
+            changedNodeCount = 0;
         }
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int i, Variable.ChangeType changeType) {
-
+        // there are no variables
     }
 
+    /**
+     * Called before the first change to the tree in a step, not at the start of every step.
+     */
     @Override
     protected void storeState() {
-        storedUpdatedNodes.clear();
-        storedUpdatedNodes.addAll(updatedNodes);
-//        Collections.copy(storedUpdatedNodes, updatedNodes);
-        storedIntervalsKnown = intervalsKnown;
         storedEvents.copyEvents(events);
-        storedOnlyUpdateTimes = onlyUpdateTimes;
-        storedDirty = dirty;
+        storedPending = pending;
+        System.arraycopy(changedNodes, 0, storedChangedNodes, 0, changedNodeCount);
+        storedChangedNodeCount = changedNodeCount;
     }
 
     @Override
     protected void restoreState() {
+        Events tmpEvents = storedEvents;
+        storedEvents = events;
+        events = tmpEvents;
 
-        List<Integer> tmp2 = storedUpdatedNodes;
-        storedUpdatedNodes = updatedNodes;
-        updatedNodes = tmp2;
-        events.copyEvents(storedEvents);
-        intervalsKnown = storedIntervalsKnown;
+        int[] tmpChangedNodes = storedChangedNodes;
+        storedChangedNodes = changedNodes;
+        changedNodes = tmpChangedNodes;
+        changedNodeCount = storedChangedNodeCount;
 
-        onlyUpdateTimes = storedOnlyUpdateTimes;
-        dirty = storedDirty;
-
+        pending = storedPending;
     }
 
     @Override
     protected void acceptState() {
-
+        // nothing to do
     }
 
-
     /**
-     * A private classs that wraps an array of events and provides some a higher level api for updated an event when
-     * the associated node's height changes.
+     * The events of a tree in order of time, with the number of lineages before each.
      */
-    protected class Events {
+    protected static class Events {
 
-        public Events(int numberOfEvents) {
-            nodes = new int[numberOfEvents];
-            nodeOrder = new int[numberOfEvents];
-            lineageCounts = new int[numberOfEvents];
-            intervals = new double[numberOfEvents]; //TODO number of events-1? right now indexing magic done in getters
-            times = new double[numberOfEvents];
-            intervalTypes = new IntervalType[numberOfEvents];
-            this.numberOfEvents = numberOfEvents;
-        }
+        private final int eventCount;
+        private final int tipCount;
 
-        /**
-         * returns the position of the node when sorted by time
-         * @param nodeNum
-         * @return
-         */
-        public int getNodePosition(int nodeNum) {
-            return nodeOrder[nodeNum];
-        }
+        // the node of each event, in order of time
+        private final int[] nodes;
+        // the position of each node's event in that order
+        private final int[] positions;
+        // the time of each event
+        private final double[] times;
+        // the number of lineages in the interval that ends with each event (0 for the first event)
+        private final int[] lineageCounts;
 
-        public IntervalType getType(int i) {
-            return intervalTypes[i];
-        }
-
-        /**
-         * Returns the start time of the ith interval
-         * @param i
-         * @return
-         */
-        public double getTime(int i) {
-            return times[i];
+        public Events(int eventCount, int tipCount) {
+            this.eventCount = eventCount;
+            this.tipCount = tipCount;
+            nodes = new int[eventCount];
+            positions = new int[eventCount];
+            times = new double[eventCount];
+            lineageCounts = new int[eventCount];
         }
 
         public int size() {
-            return numberOfEvents;
-        }
-
-        public void setEvent(double time, IntervalType type, int node, double interval, int lineageCount, int i) {
-            times[i] = time;
-            intervalTypes[i] = type;
-            nodes[i] = node;
-            intervals[i] = interval;
-            lineageCounts[i] = lineageCount;
-        }
-
-        public void updateForChangedNode(int node, double newTime) {
-            int oldPostion = nodeOrder[node];
-            double oldHieght = times[oldPostion];
-
-            int newPosition = oldPostion;
-            if (newTime > oldHieght) {
-                int firstHeigher = findFirstGreater(times, newTime, oldPostion, numberOfEvents - 1);
-                newPosition = firstHeigher - 1;
-
-            } else if (newTime < oldHieght) {
-                newPosition = findFirstGreater(times, newTime, 0, oldPostion - 1);
-            }
-
-
-            if (newPosition != oldPostion) {
-                // Borrowed from SortableArray
-                int lineageCount = lineageCounts[oldPostion];
-                double interval = intervals[oldPostion];
-                double time = times[oldPostion];
-                IntervalType type = intervalTypes[oldPostion];
-
-                if (newPosition > oldPostion) {
-                    int len = newPosition - oldPostion;
-                    // move everything from the src to the dest down one spot (opening up a gap at dest)
-                    System.arraycopy(intervals, oldPostion + 1, intervals, oldPostion, len);
-                    System.arraycopy(times, oldPostion + 1, times, oldPostion, len);
-                    System.arraycopy(intervalTypes, oldPostion + 1, intervalTypes, oldPostion, len);
-                    System.arraycopy(nodes, oldPostion + 1, nodes, oldPostion, len); //TODO need this?
-                    System.arraycopy(lineageCounts, oldPostion + 1, lineageCounts, oldPostion, len); //TODO need this?
-
-                } else {
-                    int len = oldPostion - newPosition;
-                    // move everything from dest to src up one spot (opening up a gap at dest)
-                    System.arraycopy(intervals, newPosition, intervals, newPosition + 1, len);
-                    System.arraycopy(times, newPosition, times, newPosition + 1, len);
-                    System.arraycopy(intervalTypes, newPosition, intervalTypes, newPosition + 1, len);
-                    System.arraycopy(nodes, newPosition, nodes, newPosition + 1, len);//TODO need this?
-                    System.arraycopy(lineageCounts, newPosition, lineageCounts, newPosition + 1, len);//TODO need this?
-                }
-
-                lineageCounts[newPosition] = lineageCount;
-                intervals[newPosition] = interval;
-                times[newPosition] = time;
-                intervalTypes[newPosition] = type;
-                nodes[newPosition] = node;
-
-                // update node postions
-
-                for (int i = Math.min(oldPostion, newPosition); i < Math.max(oldPostion, newPosition) + 1; i++) {
-                    nodeOrder[nodes[i]] = i;
-                }
-
-                //update lineage counts
-                // This current updated lineage counts separately from the changed intervals. Those could be done at the same time
-
-                if (intervalTypes[newPosition] == IntervalType.COALESCENT) {
-                    int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
-                    if (newPosition > oldPostion) {
-                        for (int i = oldPostion; i < newPosition; i++) {
-                            lineageCounts[i]++;
-                        }
-                        lineageCounts[newPosition] = lineageCounts[newPosition - 1] + difference;
-                        // need to increment the lineage counts by 1
-                    } else {
-                        lineageCounts[newPosition] = lineageCounts[newPosition - 1] + difference;
-                        for (int i = newPosition + 1; i < oldPostion + 1; i++) {
-                            lineageCounts[i]--;
-                        }
-                    }
-                } else { // was a sampling event
-                    if (newPosition > oldPostion) {
-                        int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
-                        for (int i = oldPostion; i < newPosition; i++) {
-                            lineageCounts[i]--;
-                        }
-                        lineageCounts[newPosition] = lineageCounts[newPosition - 1] +difference;
-                        // need to increment the lineage counts by 1
-                    } else {
-
-                        if (newPosition == 0) {
-                            lineageCounts[newPosition] = 0;
-                        } else {
-                            int difference = intervalTypes[newPosition - 1] == IntervalType.COALESCENT ? -1 : 1;
-                            lineageCounts[newPosition] = lineageCounts[newPosition-1] + difference;
-                        }
-                        for (int i = newPosition + 1; i < oldPostion + 1; i++) {
-                            lineageCounts[i]++;
-                        }
-                    }
-                }
-
-                updateTimeAndIntervals(times[oldPostion], oldPostion);
-            }
-
-
-            updateTimeAndIntervals(newTime, newPosition);
-
-        }
-
-        public void copyEvents(Events source) {
-            System.arraycopy(source.nodeOrder, 0, nodeOrder, 0, numberOfEvents);
-            System.arraycopy(source.nodes, 0, nodes, 0, numberOfEvents);
-            System.arraycopy(source.times, 0, times, 0, numberOfEvents);
-            System.arraycopy(source.lineageCounts, 0, lineageCounts, 0, numberOfEvents);
-            System.arraycopy(source.intervalTypes, 0, intervalTypes, 0, numberOfEvents);
-            System.arraycopy(source.intervals, 0, intervals, 0, numberOfEvents);
+            return eventCount;
         }
 
         /**
-         * A pivate method that uses a binary search algorithm to find the first entry in the sorted event array
-         * with a time greater than the proved value
-         *
-         * @param arr
-         * @param value
-         * @param startPos
-         * @param endPos
-         * @return
+         * @return the number of the node of event i
          */
-        private int findFirstGreater(double[] arr, double value, int startPos, int endPos) {
-            //https://stackoverflow.com/questions/6553970/find-the-first-element-in-a-sorted-array-that-is-greater-than-the-target
-            //https://www.geeksforgeeks.org/first-strictly-greater-element-in-a-sorted-array-in-java/
-            int low = startPos, high = endPos;
-            int ans = -1;
-            while (low <= high) {
-
-                int mid = (low + high) / 2;
-                if (arr[mid] <= value) {
-                    /* This index, and everything below it, must not be the first element
-                     * greater than what we're looking for because this element is no greater
-                     * than the element.
-                     */
-                    low = mid + 1;
-                } else {
-
-                    ans = mid;
-                    high = mid - 1;
-                }
-
-            }
-            if (ans == -1) {
-                // There is no greater element so the "first greater" is outside the array. This is handeled by
-                // updateEventForNode
-                ans = endPos + 1;
-            }
-            return ans;
-        }
-
         public int getNode(int i) {
             return nodes[i];
         }
 
-        public void updateTimeAndIntervals(double newTime, int i) {
-            double newInterval = i == 0 ? -1 : newTime - times[i - 1];
-            times[i] = newTime;
-            intervals[i] = newInterval;
+        /**
+         * @return the position of the node's event in the order of time
+         */
+        public int getNodePosition(int node) {
+            return positions[node];
+        }
 
-            if (i < numberOfEvents - 1) {
-                double newNeighborInterval = times[i+1] - newTime;
-                intervals[i+1] = newNeighborInterval;
-            }
+        public double getTime(int i) {
+            return times[i];
+        }
+
+        public IntervalType getType(int i) {
+            return isSample(nodes[i]) ? IntervalType.SAMPLE : IntervalType.COALESCENT;
         }
 
         /**
-         * Reads the height of every node again, puts the events back in order of time and recalculates the
-         * intervals and lineage counts. The events are sorted by insertion, which takes a single pass when
-         * the order has not changed and keeps the existing order of events at the same time.
+         * @return the number of lineages in the interval that ends with event i
          */
-        public void updateAllTimes(Tree tree) {
-            for (int i = 0; i < numberOfEvents; i++) {
-                times[i] = tree.getNodeHeight(tree.getNode(nodes[i]));
-            }
-
-            for (int i = 1; i < numberOfEvents; i++) {
-                final double time = times[i];
-                if (times[i - 1] > time) {
-                    final int node = nodes[i];
-                    final IntervalType type = intervalTypes[i];
-                    int j = i;
-                    while (j > 0 && times[j - 1] > time) {
-                        times[j] = times[j - 1];
-                        nodes[j] = nodes[j - 1];
-                        intervalTypes[j] = intervalTypes[j - 1];
-                        j--;
-                    }
-                    times[j] = time;
-                    nodes[j] = node;
-                    intervalTypes[j] = type;
-                }
-            }
-
-            int lineages = 0;
-            for (int i = 0; i < numberOfEvents; i++) {
-                intervals[i] = i == 0 ? -1 : times[i] - times[i - 1];
-                lineageCounts[i] = lineages;
-                nodeOrder[nodes[i]] = i;
-                lineages += intervalTypes[i] == IntervalType.SAMPLE ? 1 : -1;
-            }
-        }
-
         public int getLineageCount(int i) {
             return lineageCounts[i];
         }
 
+        /**
+         * @return the length of the interval that ends with event i (-1 for the first event, which ends
+         * no interval)
+         */
         public double getInterval(int i) {
-            return intervals[i];
+            return i == 0 ? -1 : times[i] - times[i - 1];
         }
 
-        public void setNodeOrder(int nodeNum, int position) {
-            nodeOrder[nodeNum] = position;
+        public void copyEvents(Events source) {
+            System.arraycopy(source.nodes, 0, nodes, 0, eventCount);
+            System.arraycopy(source.positions, 0, positions, 0, eventCount);
+            System.arraycopy(source.times, 0, times, 0, eventCount);
+            System.arraycopy(source.lineageCounts, 0, lineageCounts, 0, eventCount);
         }
 
-        //The nodes ordered by time
-        private final int[] nodes;
-        // the index of each node in the nodes array
-        private final int[] nodeOrder;
-        private final int[] lineageCounts;
-        private final double[] intervals;
-        private final double[] times;
-        private final IntervalType[] intervalTypes;
-        private final int numberOfEvents;
+        private boolean isSample(int node) {
+            return node < tipCount;
+        }
 
+        /**
+         * The number of lineages after an event is this much more than before it.
+         */
+        private int lineageChange(int node) {
+            return isSample(node) ? 1 : -1;
+        }
 
+        /**
+         * Makes the events from the tree. Events at the same time are put in the order of their node
+         * numbers, apart from the root, which is last.
+         */
+        void rebuild(Tree tree) {
+            final double[] heights = new double[eventCount];
+            Integer[] order = new Integer[eventCount];
+            for (int i = 0; i < eventCount; i++) {
+                final NodeRef node = tree.getNode(i);
+                if (tree.isExternal(node) != isSample(i)) {
+                    throw new IllegalArgumentException("The tips of the tree are not numbered before the internal nodes");
+                }
+                heights[i] = tree.getNodeHeight(node);
+                order[i] = i;
+            }
+            final int root = tree.getRoot().getNumber();
+            // a stable sort, so nodes at the same time stay in the order of their numbers
+            Arrays.sort(order, (a, b) -> heights[a] == heights[b] ?
+                    Boolean.compare(a == root, b == root) :
+                    Double.compare(heights[a], heights[b]));
+
+            if (!isSample(order[0])) {
+                throw new IllegalArgumentException("The first event is not a sample event");
+            }
+            for (int i = 0; i < eventCount; i++) {
+                nodes[i] = order[i];
+                times[i] = heights[order[i]];
+            }
+            countLineages();
+        }
+
+        /**
+         * Reads the height of every node again and puts the events back in order of time. The events are
+         * sorted by insertion, which takes a single pass when the order has not changed and keeps the
+         * existing order of events at the same time.
+         */
+        void updateAllTimes(Tree tree) {
+            for (int i = 0; i < eventCount; i++) {
+                times[i] = tree.getNodeHeight(tree.getNode(nodes[i]));
+            }
+
+            for (int i = 1; i < eventCount; i++) {
+                final double time = times[i];
+                if (times[i - 1] > time) {
+                    final int node = nodes[i];
+                    int j = i;
+                    while (j > 0 && times[j - 1] > time) {
+                        times[j] = times[j - 1];
+                        nodes[j] = nodes[j - 1];
+                        j--;
+                    }
+                    times[j] = time;
+                    nodes[j] = node;
+                }
+            }
+            countLineages();
+        }
+
+        /**
+         * Sets the lineage counts and the positions of the nodes from the order of the events.
+         */
+        private void countLineages() {
+            int lineages = 0;
+            for (int i = 0; i < eventCount; i++) {
+                lineageCounts[i] = lineages;
+                positions[nodes[i]] = i;
+                lineages += lineageChange(nodes[i]);
+            }
+        }
+
+        /**
+         * Moves the event of a node whose height has changed to its place in the order. An event that
+         * arrives at the time of others is put after them.
+         */
+        void updateNode(int node, double newTime) {
+            final int from = positions[node];
+            final double oldTime = times[from];
+
+            int to = from;
+            if (newTime > oldTime) {
+                to = findFirstLater(newTime, from + 1, eventCount) - 1;
+            } else if (newTime < oldTime) {
+                to = findFirstLater(newTime, 0, from);
+            }
+
+            // The events between the old and new positions each move one place towards the old one.
+            // The moved event is now on the other side of them, which changes their lineage counts.
+            final int change = lineageChange(node);
+            if (to > from) {
+                for (int i = from; i < to; i++) {
+                    setEvent(i, nodes[i + 1], times[i + 1], lineageCounts[i + 1] - change);
+                }
+            } else {
+                for (int i = from; i > to; i--) {
+                    setEvent(i, nodes[i - 1], times[i - 1], lineageCounts[i - 1] + change);
+                }
+            }
+            setEvent(to, node, newTime,
+                    to == 0 ? 0 : lineageCounts[to - 1] + lineageChange(nodes[to - 1]));
+        }
+
+        private void setEvent(int i, int node, double time, int lineageCount) {
+            nodes[i] = node;
+            positions[node] = i;
+            times[i] = time;
+            lineageCounts[i] = lineageCount;
+        }
+
+        /**
+         * @return the position of the first event from start (inclusive) to end (exclusive) with a time
+         * later than the one given, or end if there is none. A binary search.
+         */
+        private int findFirstLater(double time, int start, int end) {
+            int low = start;
+            int high = end;
+            while (low < high) {
+                final int mid = (low + high) >>> 1;
+                if (times[mid] <= time) {
+                    low = mid + 1;
+                } else {
+                    high = mid;
+                }
+            }
+            return low;
+        }
     }
-
-    protected final Events events;
-    private final Events storedEvents;
-
-    protected List<Integer> updatedNodes;
-    private List<Integer> storedUpdatedNodes;
-
-    protected boolean intervalsKnown;
-    private boolean storedIntervalsKnown;
-
-    protected boolean onlyUpdateTimes;
-    private boolean storedOnlyUpdateTimes;
-
-    private final Tree tree;
-    protected boolean dirty;
-    private boolean storedDirty;
-    private int intervalCount = 0;
-
-
 }

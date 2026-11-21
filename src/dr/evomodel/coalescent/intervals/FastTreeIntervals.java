@@ -383,11 +383,8 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
             intervalsKnown = true;
 
         } else if (onlyUpdateTimes) {
-            for (int i = 0; i < events.size(); i++) {
-                double newTime = tree.getNodeHeight(tree.getNode(events.getNode(i)));
-                events.updateEventTime(newTime, i);
-            }
-            onlyUpdateTimes = false;
+            // every height may have changed, and with them the order of the events
+            events.updateAllTimes(tree);
         } else {
             for (int node : updatedNodes) {
                 events.updateForChangedNode(node, tree.getNodeHeight(tree.getNode(node)));
@@ -396,6 +393,7 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
 
         intervalsKnown = true;
         dirty = false;
+        onlyUpdateTimes = false;
         updatedNodes = new ArrayList<>();
     }
 
@@ -430,18 +428,24 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
                     // rate changes.
                     if (treeChangedEvent.isHeightChanged()) {
                         NodeRef node = ((TreeChangedEvent) object).getNode();
-                        if (updatedNodes.size() >= tree.getNodeCount()) {
+                        if (onlyUpdateTimes) {
+                            // every height is already going to be read again, this node's among them
+                        } else if (updatedNodes.size() >= tree.getNodeCount()) {
                             makeDirty();
                         } else {
                             updatedNodes.add(node.getNumber());
                         }
                         intervalsKnown = false;
-                        onlyUpdateTimes = false;
                     }
 
                 } else if (treeChangedEvent.isTreeChanged()) {
                     if (!treeChangedEvent.isNodeOrderChanged()) {
+                        // The heights have changed but not the nodes or the topology. The order of the
+                        // events in time can still have changed (heights scaled past a tip, or set from
+                        // height ratios), so all the times are read again and put back in order. This
+                        // takes in any single node changes that are waiting.
                         onlyUpdateTimes = true;
+                        updatedNodes.clear();
                         intervalsKnown=false;
                     } else {
                         // Full tree events result in a complete updating of the tree likelihood
@@ -707,10 +711,41 @@ public class FastTreeIntervals extends AbstractModel implements Units, TreeInter
             }
         }
 
-        public void updateEventTime(double newTime, int i) {
-            double newInterval = i == 0 ? -1 : newTime - times[i - 1];
-            times[i] = newTime;
-            intervals[i] = newInterval;
+        /**
+         * Reads the height of every node again, puts the events back in order of time and recalculates the
+         * intervals and lineage counts. The events are sorted by insertion, which takes a single pass when
+         * the order has not changed and keeps the existing order of events at the same time.
+         */
+        public void updateAllTimes(Tree tree) {
+            for (int i = 0; i < numberOfEvents; i++) {
+                times[i] = tree.getNodeHeight(tree.getNode(nodes[i]));
+            }
+
+            for (int i = 1; i < numberOfEvents; i++) {
+                final double time = times[i];
+                if (times[i - 1] > time) {
+                    final int node = nodes[i];
+                    final IntervalType type = intervalTypes[i];
+                    int j = i;
+                    while (j > 0 && times[j - 1] > time) {
+                        times[j] = times[j - 1];
+                        nodes[j] = nodes[j - 1];
+                        intervalTypes[j] = intervalTypes[j - 1];
+                        j--;
+                    }
+                    times[j] = time;
+                    nodes[j] = node;
+                    intervalTypes[j] = type;
+                }
+            }
+
+            int lineages = 0;
+            for (int i = 0; i < numberOfEvents; i++) {
+                intervals[i] = i == 0 ? -1 : times[i] - times[i - 1];
+                lineageCounts[i] = lineages;
+                nodeOrder[nodes[i]] = i;
+                lineages += intervalTypes[i] == IntervalType.SAMPLE ? 1 : -1;
+            }
         }
 
         public int getLineageCount(int i) {

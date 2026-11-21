@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.bigfasttree;
 
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 

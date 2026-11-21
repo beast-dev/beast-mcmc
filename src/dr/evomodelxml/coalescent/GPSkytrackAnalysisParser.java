@@ -28,9 +28,9 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.io.Importer;
-import dr.evomodel.coalescent.GPSkytrackAnalysis;
+import dr.evomodel.coalescent.legacy.GPSkytrackAnalysis;
 import dr.inference.model.Parameter;
-//import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
+//import dr.evomodel.coalescent.legacy.GaussianProcessSkytrackLikelihood;
 import dr.inference.trace.TraceException;
 import dr.util.FileHelpers;
 import dr.xml.*;
@@ -87,7 +87,7 @@ public class GPSkytrackAnalysisParser extends AbstractXMLObjectParser {
             final File log = FileHelpers.getFile(getElementText(xo, LOG_FILE_NAME));
 
 
-            return new dr.evomodel.coalescent.GPSkytrackAnalysis(log,burnin,numGridPoints);
+            return new GPSkytrackAnalysis(log,burnin,numGridPoints);
 
         } catch (java.io.IOException ioe) {
             throw new XMLParseException(ioe.getMessage());

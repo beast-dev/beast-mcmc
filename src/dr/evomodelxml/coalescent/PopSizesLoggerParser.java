@@ -1,10 +1,9 @@
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.GMRFSkygridLikelihood;
-import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
-import dr.evomodel.coalescent.PopSizesLogger;
-import dr.inference.model.Parameter;
+import dr.evomodel.coalescent.legacy.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFSkygridLikelihood;
+import dr.evomodel.coalescent.nonparametric.MultilocusNonparametricCoalescentLikelihood;
+import dr.evomodel.coalescent.nonparametric.PopSizesLogger;
 import dr.util.Transform;
 import dr.xml.*;
 

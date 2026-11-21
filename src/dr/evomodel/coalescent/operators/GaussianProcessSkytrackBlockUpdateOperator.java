@@ -29,7 +29,7 @@ package dr.evomodel.coalescent.operators;
 
 
 //import com.sun.servicetag.SystemEnvironment;
-import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
+import dr.evomodel.coalescent.legacy.GaussianProcessSkytrackLikelihood;
 
 import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperatorParser;
 //import dr.inference.mcmc.MCMCOptions;

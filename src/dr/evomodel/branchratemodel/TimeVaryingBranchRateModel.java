@@ -31,7 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.TimeVaryingBranchRateModelParser;
 import dr.inference.model.AbstractModel;

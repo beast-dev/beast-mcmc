@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.BNPRSamplingLikelihood;
+import dr.evomodel.coalescent.zoo.BNPRSamplingLikelihood;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;

@@ -25,10 +25,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evolution.coalescent.TreeIntervals;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
-import dr.evomodel.coalescent.smooth.SkyGlideLikelihood;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
+import dr.evomodel.coalescent.nonparametric.MultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
 import dr.inference.model.Parameter;

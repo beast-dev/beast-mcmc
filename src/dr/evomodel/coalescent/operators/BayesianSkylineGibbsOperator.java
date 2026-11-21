@@ -29,8 +29,8 @@ package dr.evomodel.coalescent.operators;
 
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.BayesianSkylineLikelihood;
-import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.legacy.BayesianSkylineLikelihood;
+import dr.evomodel.coalescent.legacy.OldAbstractCoalescentLikelihood;
 import dr.evomodelxml.coalescent.operators.BayesianSkylineGibbsOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.SimpleMCMCOperator;

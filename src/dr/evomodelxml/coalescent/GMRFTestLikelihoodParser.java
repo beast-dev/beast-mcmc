@@ -27,11 +27,6 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.GMRFTestLikelihood;
-import dr.inference.model.DesignMatrix;
-import dr.inference.model.Parameter;
-import dr.xml.*;
-
 /**
  *
  */

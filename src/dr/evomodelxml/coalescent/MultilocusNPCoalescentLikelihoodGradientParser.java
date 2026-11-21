@@ -1,7 +1,7 @@
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.MultilocusNPCoalescentLikelihoodGradient;
-import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
+import dr.evomodel.coalescent.nonparametric.MultilocusNPCoalescentLikelihoodGradient;
+import dr.evomodel.coalescent.nonparametric.MultilocusNonparametricCoalescentLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

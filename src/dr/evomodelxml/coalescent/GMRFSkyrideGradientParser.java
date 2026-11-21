@@ -26,9 +26,9 @@
 package dr.evomodelxml.coalescent;
 
 
-import dr.evomodel.coalescent.GMRFSkyrideGradient;
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFSkyrideGradient;
+import dr.evomodel.coalescent.legacy.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.legacy.OldGMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.hmc.GMRFGradient;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightTransform;

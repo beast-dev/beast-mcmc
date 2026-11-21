@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.GMRFBivariateCurveAnalysis;
+import dr.evomodel.coalescent.skyride.GMRFBivariateCurveAnalysis;
 import dr.inferencexml.trace.TraceAnalysisParser;
 import dr.xml.*;
 

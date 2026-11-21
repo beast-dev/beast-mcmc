@@ -26,8 +26,11 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
-import dr.evomodel.coalescent.*;
 import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.legacy.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.legacy.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFSkygridLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.glm.ExperimentalGeneralizedLinearModel;
 import dr.inference.model.MatrixParameter;

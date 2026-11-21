@@ -38,7 +38,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
+import dr.evomodel.coalescent.structured.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideGradientParser;

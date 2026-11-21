@@ -28,9 +28,9 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.tree.Tree;
-//import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.GaussianProcessMultilocusSkytrackLikelihood;
-import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
+//import dr.evomodel.coalescent.skyride.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.legacy.GaussianProcessMultilocusSkytrackLikelihood;
+import dr.evomodel.coalescent.legacy.GaussianProcessSkytrackLikelihood;
 import dr.evomodel.tree.TreeModel;
 //import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;

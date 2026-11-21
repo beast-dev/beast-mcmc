@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.PopulationSizeGraph;
-import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.coalescent.legacy.PopulationSizeGraph;
+import dr.evomodel.coalescent.legacy.VariableDemographicModel;
 import dr.xml.*;
 
 /**

@@ -28,11 +28,8 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.*;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.coalescent.legacy.MultiTreeIntervals;
 import dr.xml.*;
 
 import java.util.ArrayList;

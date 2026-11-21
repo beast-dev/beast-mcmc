@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.BayesianSkylineLikelihood;
+import dr.evomodel.coalescent.legacy.BayesianSkylineLikelihood;
 import dr.evomodel.coalescent.hmc.BayesianSkylineGradient;
 import dr.inference.hmc.NumericGradientStepSizeProvider;
 import dr.inferencexml.operators.hmc.HamiltonianMonteCarloOperatorParser;

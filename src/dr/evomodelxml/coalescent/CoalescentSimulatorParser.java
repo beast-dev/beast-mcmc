@@ -30,7 +30,7 @@ package dr.evomodelxml.coalescent;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.CoalescentSimulator;
+import dr.evomodel.coalescent.simulator.CoalescentSimulator;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.xml.*;
 

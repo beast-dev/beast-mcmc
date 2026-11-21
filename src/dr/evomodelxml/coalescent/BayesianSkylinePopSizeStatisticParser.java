@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.BayesianSkylineLikelihood;
-import dr.evomodel.coalescent.BayesianSkylinePopSizeStatistic;
+import dr.evomodel.coalescent.legacy.BayesianSkylineLikelihood;
+import dr.evomodel.coalescent.legacy.BayesianSkylinePopSizeStatistic;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;

@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFSkyrideFixedEffectsGibbsOperator;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;

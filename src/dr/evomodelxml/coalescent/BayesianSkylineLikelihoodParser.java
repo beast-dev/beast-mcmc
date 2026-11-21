@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.BayesianSkylineLikelihood;
+import dr.evomodel.coalescent.legacy.BayesianSkylineLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;

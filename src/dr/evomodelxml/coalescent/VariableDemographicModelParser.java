@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.coalescent.legacy.VariableDemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.speciation.SpeciesBindingsParser;
 import dr.inference.model.Parameter;

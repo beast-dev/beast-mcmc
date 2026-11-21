@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.LineageCountStatistic;
-import dr.evomodel.coalescent.OldAbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.legacy.LineageCountStatistic;
+import dr.evomodel.coalescent.legacy.OldAbstractCoalescentLikelihood;
 import dr.xml.*;
 
 /**

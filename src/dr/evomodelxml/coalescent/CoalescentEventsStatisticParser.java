@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.CoalescentEventsStatistic;
-import dr.evomodel.coalescent.CoalescentIntervalProvider;
+import dr.evomodel.coalescent.intervals.CoalescentEventsStatistic;
+import dr.evomodel.coalescent.intervals.CoalescentIntervalProvider;
 import dr.xml.*;
 
 /**

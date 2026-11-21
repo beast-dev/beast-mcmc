@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.BMPriorLikelihood;
-import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.coalescent.legacy.BMPriorLikelihood;
+import dr.evomodel.coalescent.legacy.VariableDemographicModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;

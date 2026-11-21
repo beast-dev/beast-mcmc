@@ -28,8 +28,8 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.io.Importer;
-import dr.evomodel.coalescent.EBSPAnalysis;
-import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.coalescent.legacy.EBSPAnalysis;
+import dr.evomodel.coalescent.legacy.VariableDemographicModel;
 import dr.inference.trace.TraceException;
 import dr.util.FileHelpers;
 import dr.xml.*;

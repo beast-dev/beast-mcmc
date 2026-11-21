@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.GMRFPopSizeStatistic;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFPopSizeStatistic;
+import dr.evomodel.coalescent.skyride.GMRFSkyrideLikelihood;
 import dr.xml.*;
 
 /**

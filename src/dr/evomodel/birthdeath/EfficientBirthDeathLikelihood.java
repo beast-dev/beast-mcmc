@@ -30,7 +30,7 @@ package dr.evomodel.birthdeath;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;

@@ -29,7 +29,7 @@ package dr.evolution.coalescent;
 
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
@@ -37,7 +37,6 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.GradientProvider;
 import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;

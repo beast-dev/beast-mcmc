@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent;
 
-import dr.evomodel.coalescent.GMRFIntervalHeightsStatistic;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFIntervalHeightsStatistic;
+import dr.evomodel.coalescent.skyride.GMRFSkyrideLikelihood;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 

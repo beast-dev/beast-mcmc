@@ -30,7 +30,7 @@ package test.dr.evomodel.coalescent;
 import dr.evolution.coalescent.TreeIntervalList;
 import dr.evolution.io.NewickImporter;
 
-import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;

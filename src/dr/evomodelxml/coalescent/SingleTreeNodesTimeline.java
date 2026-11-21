@@ -1,5 +1,5 @@
 package dr.evomodelxml.coalescent;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 
 // this builds a timeline with coalescent and sampling events for a single tree
 public class SingleTreeNodesTimeline {

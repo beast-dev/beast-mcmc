@@ -30,14 +30,13 @@ package dr.evomodel.bigfasttree;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.util.Units;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class ModelCompressedBigFastTreeIntervals extends AbstractModel implements Units, IntervalList {
 

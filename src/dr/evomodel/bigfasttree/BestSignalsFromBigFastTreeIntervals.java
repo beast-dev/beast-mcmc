@@ -28,6 +28,7 @@
 package dr.evomodel.bigfasttree;
 
 import dr.evolution.tree.MutableTreeModel;
+import dr.evomodel.coalescent.intervals.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 
 /**

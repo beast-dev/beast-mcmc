@@ -32,7 +32,7 @@
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.CoalescentTreeIntervalStatistic;
+import dr.evomodel.coalescent.treeworkingpriors.CoalescentTreeIntervalStatistic;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;

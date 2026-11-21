@@ -1,7 +1,7 @@
 /*
  * ModelCompressedBigFastTreeIntervals.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,22 +22,20 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
-package dr.evomodel.bigfasttree;
+package dr.evomodel.coalescent.zoo;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.util.Units;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class ModelCompressedBigFastTreeIntervals extends AbstractModel implements Units, IntervalList {
 

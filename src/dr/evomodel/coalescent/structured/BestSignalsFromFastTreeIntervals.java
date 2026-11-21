@@ -1,7 +1,7 @@
 /*
  * BestSignalsFromBigFastTreeIntervals.java
  *
- * Copyright © 2002-2024 the BEAST Development Team
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -22,12 +22,12 @@
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
  */
 
-package dr.evomodel.bigfasttree;
+package dr.evomodel.coalescent.structured;
 
 import dr.evolution.tree.MutableTreeModel;
+import dr.evomodel.bigfasttree.IntervalChangedEvent;
 import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 
@@ -35,21 +35,21 @@ import dr.evomodel.tree.TreeModel;
  * @author Marc A. Suchard
  * @author Guy Baele
  */
-public class BestSignalsFromBigFastTreeIntervals extends FastTreeIntervals {
+public class BestSignalsFromFastTreeIntervals extends FastTreeIntervals {
 
     private final Events originalEvents;
 
-    public BestSignalsFromBigFastTreeIntervals(TreeModel tree) {
+    public BestSignalsFromFastTreeIntervals(TreeModel tree) {
         super("signalsFromBigFastIntervals", tree);
         originalEvents = new Events(tree.getNodeCount(), tree.getExternalNodeCount());
     }
 
-    public BestSignalsFromBigFastTreeIntervals(String name, TreeModel tree) {
+    public BestSignalsFromFastTreeIntervals(String name, TreeModel tree) {
         super(name, tree);
         originalEvents = new Events(tree.getNodeCount(), tree.getExternalNodeCount());
     }
 
-    public BestSignalsFromBigFastTreeIntervals(String name, MutableTreeModel tree) {
+    public BestSignalsFromFastTreeIntervals(String name, MutableTreeModel tree) {
         super(name, tree);
         originalEvents = new Events(tree.getNodeCount(), tree.getExternalNodeCount());
     }

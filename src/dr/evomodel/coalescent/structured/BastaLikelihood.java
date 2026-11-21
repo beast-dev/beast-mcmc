@@ -28,7 +28,6 @@ package dr.evomodel.coalescent.structured;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.*;
 import dr.evolution.tree.*;
-import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -79,7 +78,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
     private final Helper treeTraits = new Helper();
 
     private final CoalescentIntervalTraversal treeTraversalDelegate;
-    public final BestSignalsFromBigFastTreeIntervals treeIntervals;
+    public final BestSignalsFromFastTreeIntervals treeIntervals;
 
     private double logLikelihood;
     private double storedLogLikelihood;
@@ -177,10 +176,10 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
 
 
         if (tree instanceof TreeModel) {
-            treeIntervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) treeModel);
+            treeIntervals = new BestSignalsFromFastTreeIntervals((TreeModel) treeModel);
             addModel(treeIntervals);
         } else if (tree instanceof MutableTreeModel) {
-            treeIntervals = new BestSignalsFromBigFastTreeIntervals("intervals", (MutableTreeModel) treeModel);
+            treeIntervals = new BestSignalsFromFastTreeIntervals("intervals", (MutableTreeModel) treeModel);
             addModel(treeIntervals);
         } else {
             throw new RuntimeException("Not yet implemented");
@@ -239,7 +238,7 @@ public class BastaLikelihood extends AbstractModelLikelihood implements
      * Initialize storage for sub-interval states
      */
 
-    private void initializeSubIntervalStates(BestSignalsFromBigFastTreeIntervals treeIntervals, int numberSubIntervals) {
+    private void initializeSubIntervalStates(BestSignalsFromFastTreeIntervals treeIntervals, int numberSubIntervals) {
         int totalSubIntervals = treeIntervals.getIntervalCount() * numberSubIntervals;
         int nodeCount = tree.getNodeCount();
         int patternCount = getPatternCount();

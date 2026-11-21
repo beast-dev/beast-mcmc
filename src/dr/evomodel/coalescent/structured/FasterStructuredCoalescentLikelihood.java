@@ -35,7 +35,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.bigfasttree.BestSignalsFromBigFastTreeIntervals;
 import dr.evomodel.bigfasttree.IntervalChangedEvent;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -87,7 +86,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
         if (tree instanceof TreeModel) {
             //System.out.println("initial tree = " + (TreeModel) tree);
             //this.intervals = new BigFastTreeIntervals((TreeModel) tree);
-            this.intervals = new BestSignalsFromBigFastTreeIntervals((TreeModel) tree);
+            this.intervals = new BestSignalsFromFastTreeIntervals((TreeModel) tree);
             addModel(intervals);
             //addModel((TreeModel) tree);
         } else {
@@ -909,7 +908,7 @@ public class FasterStructuredCoalescentLikelihood extends AbstractModelLikelihoo
     protected boolean storedAreStatesRedrawn = false;
 
     //private BigFastTreeIntervals intervals;
-    private BestSignalsFromBigFastTreeIntervals intervals;
+    private BestSignalsFromFastTreeIntervals intervals;
 
     //probability densities at the start and end of each coalescent interval
     //first index is the number of the coalescent interval

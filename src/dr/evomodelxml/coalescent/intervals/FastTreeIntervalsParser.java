@@ -1,5 +1,5 @@
 /*
- * BigFastTreeIntervalsParser.java
+ * FastTreeIntervalsParser.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -25,21 +25,28 @@
  *
  */
 
-package dr.evomodelxml.bigfasttree;
+package dr.evomodelxml.coalescent.intervals;
 
 import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.*;
 
 
-public class BigFastTreeIntervalsParser extends AbstractXMLObjectParser {
+public class FastTreeIntervalsParser extends AbstractXMLObjectParser {
 
-    public static final String TREE_INTERVALS = "bigFastTreeIntervals";
+    public static final String TREE_INTERVALS = "fastTreeIntervals";
+    // the name used before BigFastTreeIntervals was renamed to FastTreeIntervals
+    public static final String OLD_TREE_INTERVALS = "bigFastTreeIntervals";
     public static final String TREE = "tree";
 
     public String getParserName() {
         return TREE_INTERVALS;
     }
+
+    public String[] getParserNames() {
+        return new String[]{TREE_INTERVALS, OLD_TREE_INTERVALS};
+    }
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
@@ -52,7 +59,7 @@ public class BigFastTreeIntervalsParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "Parser for bigFastTreeIntervals.";
+        return "Parser for fastTreeIntervals.";
     }
 
     public Class getReturnType() {

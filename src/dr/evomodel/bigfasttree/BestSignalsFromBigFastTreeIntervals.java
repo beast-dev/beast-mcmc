@@ -28,38 +28,37 @@
 package dr.evomodel.bigfasttree;
 
 import dr.evolution.tree.MutableTreeModel;
-import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 
 /**
  * @author Marc A. Suchard
  * @author Guy Baele
  */
-public class BestSignalsFromBigFastTreeIntervals extends FastTreeIntervals {
+public class BestSignalsFromBigFastTreeIntervals extends BigFastTreeIntervals {
 
     private final Events originalEvents;
 
     public BestSignalsFromBigFastTreeIntervals(TreeModel tree) {
         super("signalsFromBigFastIntervals", tree);
-        originalEvents = new Events(tree.getNodeCount(), tree.getExternalNodeCount());
+        originalEvents = new Events(tree.getNodeCount());
     }
 
     public BestSignalsFromBigFastTreeIntervals(String name, TreeModel tree) {
         super(name, tree);
-        originalEvents = new Events(tree.getNodeCount(), tree.getExternalNodeCount());
+        originalEvents = new Events(tree.getNodeCount());
     }
 
     public BestSignalsFromBigFastTreeIntervals(String name, MutableTreeModel tree) {
         super(name, tree);
-        originalEvents = new Events(tree.getNodeCount(), tree.getExternalNodeCount());
+        originalEvents = new Events(tree.getNodeCount());
     }
 
     @Override
     public void calculateIntervals() {
 
-        boolean changed = !isIntervalsKnown();
+        boolean changed = !intervalsKnown;
 
-        if (changed && (originalEvents != null)) {
+        if (!intervalsKnown && (originalEvents != null)) {
             originalEvents.copyEvents(events);
         }
 

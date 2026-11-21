@@ -30,17 +30,18 @@ package dr.evomodel.bigfasttree;
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.intervals.FastTreeIntervals;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class ModelCompressedBigFastTreeIntervals extends AbstractModel implements Units, IntervalList {
 
-    public ModelCompressedBigFastTreeIntervals(FastTreeIntervals treeIntervals, double[] modelIntervals, double tolerance) {
+    public ModelCompressedBigFastTreeIntervals(BigFastTreeIntervals treeIntervals, double[] modelIntervals, double tolerance) {
         super("modelCompressedBigFastIntervals");
         this.treeIntervals = treeIntervals;
         this.modelIntervals = modelIntervals;
@@ -195,7 +196,7 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
                 tmpStartTimes[compressedIndex] = treeIntervalStartTime;
                 tmpWaitTimes[compressedIndex] = waitTime;
             }
-            
+
             if (treeIntervals.getIntervalType(treeIndex) == IntervalType.SAMPLE) {
                 nLineages++;
                 tmpSampleCounts[compressedIndex]++;
@@ -207,7 +208,7 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
             } else {
 //                throw new RuntimeException("Tree includes unexpected event type.");
             }
-            
+
             tmpLineageCounts[compressedIndex] = nLineages + tmpCoalescentCounts[compressedIndex] - tmpSampleCounts[compressedIndex];
 
         }
@@ -285,7 +286,7 @@ public class ModelCompressedBigFastTreeIntervals extends AbstractModel implement
     private boolean dirty;
     private int intervalCount = 0;
 
-    private FastTreeIntervals treeIntervals;
+    private BigFastTreeIntervals treeIntervals;
     private double[] modelIntervals;
     private double epsilon;
 }

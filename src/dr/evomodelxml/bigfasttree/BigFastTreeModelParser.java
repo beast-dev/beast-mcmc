@@ -193,7 +193,11 @@ public class BigFastTreeModelParser extends AbstractXMLObjectParser {
                 // taxon date not specified to exact value so add appropriate bounds
                 double upper = Taxon.getHeightFromDate(date);
                 double lower = Taxon.getHeightFromDate(date);
-                if (date.isBackwards()) {
+                if (date.isUncertaintyCentred()) {
+                    // the date is the middle of the window
+                    upper += uncertainty / 2;
+                    lower -= uncertainty / 2;
+                } else if (date.isBackwards()) {
                     upper += uncertainty;
                 } else {
                     lower -= uncertainty;

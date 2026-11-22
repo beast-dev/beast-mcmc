@@ -13,14 +13,14 @@
         <taxon id="C"/>
         <taxon id="E"/>
     </taxa>
-    <date id="B90" value="07/05/1990" units="years"/>
-    <date id="B96" value="14/08/1996" units="years"/>
-    <date id="C94" value="10/01/1994" units="years"/>
-    <date id="C02" value="21/01/2002" units="years"/>
-    <date id="C03" value="15/12/2003" units="years"/>
-    <date id="E01" value="21/02/2001" units="years"/>
-    <date id="E05" value="26/01/2005" units="years"/>
-    <date id="E06" value="22/02/2006" units="years"/>
+    <date id="B90" value="1990-05-07" units="years"/>
+    <date id="B96" value="1996-08-14" units="years"/>
+    <date id="C94" value="1994-01-10" units="years"/>
+    <date id="C02" value="2002-01-21" units="years"/>
+    <date id="C03" value="2003-12-15" units="years"/>
+    <date id="E01" value="2001-02-21" units="years"/>
+    <date id="E05" value="2005-01-26" units="years"/>
+    <date id="E06" value="2006-02-22" units="years"/>
 <!-- dates are as follows:
 
 date        year        age

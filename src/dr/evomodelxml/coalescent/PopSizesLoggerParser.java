@@ -4,6 +4,7 @@ import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkygridLikelihood;
 import dr.evomodel.coalescent.MultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.coalescent.PopSizesLogger;
+import dr.evomodel.coalescent.nonparametric.NonParametricCoalescentLikelihood;
 import dr.inference.model.Parameter;
 import dr.util.Transform;
 import dr.xml.*;
@@ -23,6 +24,10 @@ public class PopSizesLoggerParser extends AbstractXMLObjectParser {
         if (xo.getChild(MultilocusNonparametricCoalescentLikelihood.class) != null) {
             MultilocusNonparametricCoalescentLikelihood likelihood = (MultilocusNonparametricCoalescentLikelihood) xo.getChild(MultilocusNonparametricCoalescentLikelihood.class);
             return new PopSizesLogger(likelihood, transform, order);
+        } else if (xo.getChild(NonParametricCoalescentLikelihood.class) != null) {
+            // this likelihood has its own logger, in its own package
+            NonParametricCoalescentLikelihood likelihood = (NonParametricCoalescentLikelihood) xo.getChild(NonParametricCoalescentLikelihood.class);
+            return new dr.evomodel.coalescent.nonparametric.PopSizesLogger(likelihood, transform, order);
         } else if (xo.getChild(GMRFSkygridLikelihood.class) != null) {
             GMRFSkygridLikelihood likelihood = (GMRFSkygridLikelihood) xo.getChild(GMRFSkygridLikelihood.class);
             return new PopSizesLogger(likelihood, transform, order);
@@ -44,8 +49,10 @@ public class PopSizesLoggerParser extends AbstractXMLObjectParser {
             new XORRule(
                     new ElementRule(MultilocusNonparametricCoalescentLikelihood.class),
                     new XORRule(
-                            new ElementRule(GMRFSkygridLikelihood.class),
-                            new ElementRule(GMRFMultilocusSkyrideLikelihood.class))
+                            new ElementRule(NonParametricCoalescentLikelihood.class),
+                            new XORRule(
+                                    new ElementRule(GMRFSkygridLikelihood.class),
+                                    new ElementRule(GMRFMultilocusSkyrideLikelihood.class)))
             ),
 
             new ElementRule(Transform.ParsedTransform.class, true)

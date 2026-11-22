@@ -355,21 +355,6 @@ public class CompoundLikelihood implements Likelihood, Profileable, Reportable, 
         }
     }
 
-    public long[] getEvaluationTimes() {
-        return evaluationTimes;
-    }
-
-    public int[] getEvaluationCounts() {
-        return evaluationCounts;
-    }
-
-    public void resetEvaluationTimes() {
-        for (int i = 0; i < evaluationTimes.length; i++) {
-            evaluationTimes[i] = 0;
-            evaluationCounts[i] = 0;
-        }
-    }
-    
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************

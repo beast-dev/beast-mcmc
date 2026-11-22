@@ -492,8 +492,7 @@ public class XMLParser {
                 throw new XMLParseException("The specified file name prefix is illegal.");
             }
         }
-
-        return FileHelpers.getFile(fileName, fileNamePrefix);
+        return fileNamePrefix;
     }
 
     /**
@@ -549,7 +548,6 @@ public class XMLParser {
             // each chain of a multi-chain run writes its own files
             logFile = context.addSuffix(logFile);
         }
-        final File logFile = getOutputFileHandle(xo, attributeName);
         boolean allowOverwrite = false;
 
         if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {

@@ -534,22 +534,21 @@ public class BeastMain {
                         new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", null, "BEAGLE: use double precision if available"),
                         new Arguments.Option("beagle_async", null, "BEAGLE: use asynchronous kernels if available"),
+                        new Arguments.Option("beagle_low_memory", null, "BEAGLE: ignored, kept for old command lines (no native BEAGLE has low-memory pre-order kernels)"),
                         new Arguments.StringOption("beagle_extra_buffer_count", null, "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
                         new Arguments.StringOption("beagle_scaling", "bs", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
 
-                        new Arguments.Section("Tempered MCMC"),
-                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains"),
-                        new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
-
+                        new Arguments.Section("Multiple chains"),
                         new Arguments.IntegerOption("chains", null, 1, Integer.MAX_VALUE, "number of independent chains to run (default 1)"),
                         new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "maximum number of chains computing at once (default: one per processor)"),
                         new Arguments.StringOption("thread_scheme", null, new String[]{"serial", "split", "auto"}, false,
                                 "how each chain uses its threads: likelihoods one after another (serial), in parallel (split) or chosen from the data (auto, the default with several chains)"),
                         new Arguments.IntegerOption("convergence_every", null, 0, Integer.MAX_VALUE, "seconds between convergence reports for multiple chains (default 60, 0 for none)"),
 
+                        new Arguments.Section("Tempered MCMC"),
                         new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains in each parallel tempering set (1 cold plus heated chains)"),
                         new Arguments.RealOption("mc3_delta", null, 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", null, -1, "a comma-separated list of the hot chain temperatures"),
@@ -762,6 +761,12 @@ public class BeastMain {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
         }
 
+        if (arguments.hasOption("beagle_low_memory")) {
+            // no native BEAGLE (4.0.x to 4.2.x) defines this flag's bit, so it would only be an unknown preference bit
+            System.err.println("Warning: -beagle_low_memory is ignored: no native BEAGLE has low-memory pre-order kernels");
+            System.err.println();
+        }
+
         if (arguments.hasOption("beagle_order")) {
             System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_order"));
         }
@@ -938,7 +943,7 @@ public class BeastMain {
         // the about box, laid out as BEAUti's: the icon beside the title, then this below
         final String aboutTitle = "BEAST X";
         final String aboutString = "<html>" +
-                "<div style=\"font-family:HelveticaNeue, Helvetica, Arial, sans-serif; " +
+                "<div style=\"font-family:sans-serif; " +
                 "background-color: " + BeastConsoleApp.backgroundColor + "; color: " + BeastConsoleApp.foregroundColor + ";" +
                 "\">" +
                 "<center>" +

@@ -1,5 +1,5 @@
 /*
- * FixedEpochProviderTest.java
+ * DefaultEpochProviderTest.java
  *
  * Copyright © 2002-2024 the BEAST Development Team
  * http://beast.community/about
@@ -29,14 +29,17 @@ package test.dr.evomodel.epochs;
 
 import dr.evolution.util.Units;
 import dr.evomodel.epochs.EpochProvider;
-import dr.evomodel.epochs.FixedEpochProvider;
-import dr.evomodelxml.epochs.FixedEpochProviderParser;
+import dr.evomodel.epochs.DefaultEpochProvider;
+import dr.evomodelxml.epochs.DefaultEpochProviderParser;
+import dr.inference.model.Model;
+import dr.inference.model.ModelListener;
+import dr.inference.model.Parameter;
 import junit.framework.TestCase;
 
-public class FixedEpochProviderTest extends TestCase {
+public class DefaultEpochProviderTest extends TestCase {
 
     public void testEqualDurations() {
-        EpochProvider epochs = FixedEpochProvider.equalDurations(5, 0.5);
+        EpochProvider epochs = DefaultEpochProvider.equalDurations(5, 0.5);
         assertEquals(5, epochs.getEpochCount());
         assertEquals(4, epochs.getTransitionTimes().length);
         for (int i = 0; i < 4; i++) {
@@ -45,7 +48,7 @@ public class FixedEpochProviderTest extends TestCase {
     }
 
     public void testOneEpoch() {
-        EpochProvider epochs = FixedEpochProvider.equalDurations(1, 2.0);
+        EpochProvider epochs = DefaultEpochProvider.equalDurations(1, 2.0);
         assertEquals(1, epochs.getEpochCount());
         assertEquals(0, epochs.getTransitionTimes().length);
         assertEquals(0, epochs.getTransitionTimeParameter().getDimension());
@@ -55,7 +58,7 @@ public class FixedEpochProviderTest extends TestCase {
 
     public void testGivenTransitionTimes() {
         double[] times = {0.1, 0.25, 1.0, 7.5};
-        EpochProvider epochs = new FixedEpochProvider(times);
+        EpochProvider epochs = new DefaultEpochProvider(times);
         assertEquals(5, epochs.getEpochCount());
         for (int i = 0; i < times.length; i++) {
             assertEquals(times[i], epochs.getTransitionTimes()[i], 0.0);
@@ -66,7 +69,7 @@ public class FixedEpochProviderTest extends TestCase {
     }
 
     public void testParameterMatchesTimes() {
-        EpochProvider epochs = new FixedEpochProvider(new double[]{0.1, 0.25, 1.0});
+        EpochProvider epochs = new DefaultEpochProvider(new double[]{0.1, 0.25, 1.0});
         assertEquals(3, epochs.getTransitionTimeParameter().getDimension());
         for (int i = 0; i < 3; i++) {
             assertEquals(epochs.getTransitionTimes()[i], epochs.getTransitionTimeParameter().getParameterValue(i), 0.0);
@@ -74,7 +77,7 @@ public class FixedEpochProviderTest extends TestCase {
     }
 
     public void testEpochIndex() {
-        EpochProvider epochs = new FixedEpochProvider(new double[]{1.0, 2.0, 4.0});
+        EpochProvider epochs = new DefaultEpochProvider(new double[]{1.0, 2.0, 4.0});
         assertEquals(0, epochs.getEpochIndex(0.0));
         assertEquals(0, epochs.getEpochIndex(0.999));
         // a transition time is in the older epoch
@@ -97,12 +100,12 @@ public class FixedEpochProviderTest extends TestCase {
 
     public void testBadEqualDurations() {
         try {
-            FixedEpochProvider.equalDurations(0, 1.0);
+            DefaultEpochProvider.equalDurations(0, 1.0);
             fail("no epochs should be rejected");
         } catch (IllegalArgumentException expected) {
         }
         try {
-            FixedEpochProvider.equalDurations(3, 0.0);
+            DefaultEpochProvider.equalDurations(3, 0.0);
             fail("a duration of zero should be rejected");
         } catch (IllegalArgumentException expected) {
         }
@@ -121,20 +124,69 @@ public class FixedEpochProviderTest extends TestCase {
         assertEquals(1.0 / 7.0, convert(one, Units.Type.DAYS, Units.Type.WEEKS), 1E-15);
 
         // 12 epochs of a month in a tree in years
-        double[] months = FixedEpochProvider.equalDurationTransitionTimes(12, 1.0);
-        double[] years = FixedEpochProviderParser.convert(months, Units.Type.MONTHS, Units.Type.YEARS);
+        double[] months = DefaultEpochProvider.equalDurationTransitionTimes(12, 1.0);
+        double[] years = DefaultEpochProviderParser.convert(months, Units.Type.MONTHS, Units.Type.YEARS);
         assertEquals(11, years.length);
         assertEquals(0.5, years[5], 1E-15);
         assertEquals(11.0 / 12.0, years[10], 1E-15);
     }
 
+    public void testParameterWithValues() {
+        Parameter parameter = new Parameter.Default("times", new double[]{0.5, 1.0, 2.0});
+        EpochProvider epochs = new DefaultEpochProvider(parameter);
+        assertSame(parameter, epochs.getTransitionTimeParameter());
+        assertEquals(4, epochs.getEpochCount());
+        assertEquals(1.0, epochs.getTransitionTimes()[1], 0.0);
+
+        try {
+            new DefaultEpochProvider(new Parameter.Default("times", new double[]{1.0, 0.5}));
+            fail("unordered values should be rejected");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    public void testParameterGivenTimes() {
+        // as it comes from the XML with no values: one dimension
+        Parameter parameter = new Parameter.Default(1);
+        EpochProvider epochs = new DefaultEpochProvider(parameter, new double[]{0.25, 0.5, 0.75, 1.0});
+        assertSame(parameter, epochs.getTransitionTimeParameter());
+        assertEquals(4, parameter.getDimension());
+        assertEquals(0.75, parameter.getParameterValue(2), 0.0);
+        assertEquals(5, epochs.getEpochCount());
+    }
+
+    public void testChangingTheParameter() {
+        Parameter parameter = new Parameter.Default("times", new double[]{0.5, 1.0, 2.0});
+        DefaultEpochProvider epochs = new DefaultEpochProvider(parameter);
+        final int[] changes = {0};
+        epochs.addModelListener(new ModelListener() {
+            public void modelChangedEvent(Model model, Object object, int index) {
+                changes[0]++;
+            }
+
+            public void modelRestored(Model model) {
+            }
+        });
+        assertEquals(1, epochs.getEpochIndex(0.75));
+
+        epochs.storeModelState();
+        parameter.setParameterValue(0, 0.8);
+        assertEquals(1, changes[0]);
+        assertEquals(0.8, epochs.getTransitionTimes()[0], 0.0);
+        assertEquals(0, epochs.getEpochIndex(0.75));
+
+        epochs.restoreModelState();
+        assertEquals(0.5, epochs.getTransitionTimes()[0], 0.0);
+        assertEquals(1, epochs.getEpochIndex(0.75));
+    }
+
     private static double convert(double[] times, Units.Type from, Units.Type to) {
-        return FixedEpochProviderParser.convert(times, from, to)[0];
+        return DefaultEpochProviderParser.convert(times, from, to)[0];
     }
 
     private static void assertRejected(double[] transitionTimes) {
         try {
-            new FixedEpochProvider(transitionTimes);
+            new DefaultEpochProvider(transitionTimes);
             fail("should be rejected: " + java.util.Arrays.toString(transitionTimes));
         } catch (IllegalArgumentException expected) {
         }

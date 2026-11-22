@@ -1,5 +1,5 @@
 /*
- * FixedEpochProvider.java
+ * DefaultEpochProvider.java
  *
  * Copyright © 2002-2026 the BEAST Development Team
  * http://beast.community/about
@@ -33,26 +33,68 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 /**
- * Epochs with transition times that are given when it is made and do not change.
+ * Epochs with transition times held in a parameter. They are given when it is made, as an array or as the
+ * values of a parameter, and change only if something changes the parameter.
+ *
+ * Given its own parameter, the provider does not change. Given one from outside, operators can be applied
+ * to it; the provider tells its listeners when it changes but does not check that the times stay positive
+ * and in order, which is for the bounds and operators on the parameter to see to.
  *
  * @author Andrew Rambaut
  */
-public class FixedEpochProvider extends AbstractModel implements EpochProvider {
+public class DefaultEpochProvider extends AbstractModel implements EpochProvider {
 
-    public static final String FIXED_EPOCHS = "fixedEpochs";
+    public static final String EPOCHS = "epochs";
     public static final String TRANSITION_TIMES = "transitionTimes";
 
-    private final double[] transitionTimes;
     private final Parameter transitionTimeParameter;
+
+    // the values of the parameter, copied when they are asked for after a change
+    private double[] transitionTimes;
+    private boolean transitionTimesKnown = false;
 
     /**
      * @param transitionTimes the times at which one epoch gives way to the next: positive heights in
      *                        increasing order, in years. There is one more epoch
      *                        than transition times.
      */
-    public FixedEpochProvider(double[] transitionTimes) {
-        super(FIXED_EPOCHS);
+    public DefaultEpochProvider(double[] transitionTimes) {
+        this(new Parameter.Default(TRANSITION_TIMES, transitionTimes.clone()));
+    }
 
+    /**
+     * @param transitionTimeParameter a parameter whose values are the transition times
+     */
+    public DefaultEpochProvider(Parameter transitionTimeParameter) {
+        super(EPOCHS);
+
+        checkTransitionTimes(transitionTimeParameter.getParameterValues());
+
+        this.transitionTimeParameter = transitionTimeParameter;
+        addVariable(transitionTimeParameter);
+    }
+
+    /**
+     * @param transitionTimeParameter a parameter that is given the transition times: its dimension is set to
+     *                                their number and its values to them
+     * @param transitionTimes         the transition times
+     */
+    public DefaultEpochProvider(Parameter transitionTimeParameter, double[] transitionTimes) {
+        this(setValues(transitionTimeParameter, transitionTimes));
+    }
+
+    private static Parameter setValues(Parameter parameter, double[] values) {
+        checkTransitionTimes(values);
+        if (parameter.getDimension() != values.length) {
+            parameter.setDimension(values.length);
+        }
+        for (int i = 0; i < values.length; i++) {
+            parameter.setParameterValueQuietly(i, values[i]);
+        }
+        return parameter;
+    }
+
+    private static void checkTransitionTimes(double[] transitionTimes) {
         for (int i = 0; i < transitionTimes.length; i++) {
             final double previous = i == 0 ? 0.0 : transitionTimes[i - 1];
             // written so that a NaN fails too
@@ -62,9 +104,6 @@ public class FixedEpochProvider extends AbstractModel implements EpochProvider {
                         (i == 0 ? ")" : ", after " + previous + ")"));
             }
         }
-
-        this.transitionTimes = transitionTimes.clone();
-        this.transitionTimeParameter = new Parameter.Default(TRANSITION_TIMES, this.transitionTimes.clone());
     }
 
     /**
@@ -74,8 +113,8 @@ public class FixedEpochProvider extends AbstractModel implements EpochProvider {
      * @param duration   the duration of each epoch, in years
      * @return epochs with transition times at duration, 2 x duration ... (epochCount - 1) x duration
      */
-    public static FixedEpochProvider equalDurations(int epochCount, double duration) {
-        return new FixedEpochProvider(equalDurationTransitionTimes(epochCount, duration));
+    public static DefaultEpochProvider equalDurations(int epochCount, double duration) {
+        return new DefaultEpochProvider(equalDurationTransitionTimes(epochCount, duration));
     }
 
     public static double[] equalDurationTransitionTimes(int epochCount, double duration) {
@@ -94,11 +133,15 @@ public class FixedEpochProvider extends AbstractModel implements EpochProvider {
 
     @Override
     public int getEpochCount() {
-        return transitionTimes.length + 1;
+        return transitionTimeParameter.getDimension() + 1;
     }
 
     @Override
     public double[] getTransitionTimes() {
+        if (!transitionTimesKnown) {
+            transitionTimes = transitionTimeParameter.getParameterValues();
+            transitionTimesKnown = true;
+        }
         return transitionTimes;
     }
 
@@ -108,23 +151,28 @@ public class FixedEpochProvider extends AbstractModel implements EpochProvider {
     }
 
     // **************************************************************
-    // Model IMPLEMENTATION: nothing changes, so there is nothing to do
+    // Model IMPLEMENTATION
     // **************************************************************
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // there are no models
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        // the transition times have changed (AbstractModel tells the listeners)
+        transitionTimesKnown = false;
     }
 
     @Override
     protected void storeState() {
+        // the parameter stores its own values
     }
 
     @Override
     protected void restoreState() {
+        transitionTimesKnown = false;
     }
 
     @Override

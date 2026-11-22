@@ -41,7 +41,7 @@ import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedBranchRatesDistributionParser;
 import dr.evomodelxml.branchratemodel.AutoCorrelatedGradientWrtIncrementsParser;
 import dr.evomodelxml.branchratemodel.BranchRateGradientWrtIncrementsParser;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.SampleNonActiveGibbsOperatorParser;
 import dr.evomodelxml.continuous.hmc.BranchRateGradientParser;

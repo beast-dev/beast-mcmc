@@ -25,8 +25,8 @@
 
 package dr.evomodelxml.coalescent.nonparametric;
 
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.epochs.EpochProvider;
 import dr.evomodel.coalescent.nonparametric.NonParametricCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
@@ -89,15 +89,15 @@ public class NonParametricCoalescentLikelihoodParser extends AbstractXMLObjectPa
             trees.add((TreeModel) cxo.getChild(i));
         }
 
-        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();
+        List<FastTreeIntervals> intervalLists = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
+            FastTreeIntervals treeIntervals = new FastTreeIntervals(trees.get(i));
             intervalLists.add(treeIntervals);
         }
-        //        List<BigFastTreeIntervals> intervalLists = new ArrayList<>();
+        //        List<FastTreeIntervals> intervalLists = new ArrayList<>();
         //        for (int i = 0; i < trees.size(); i++) {
-        //            BigFastTreeIntervals treeIntervals = new BigFastTreeIntervals(trees.get(i));
-        //            intervalLists.add((BigFastTreeIntervals) treeIntervals);
+        //            FastTreeIntervals treeIntervals = new FastTreeIntervals(trees.get(i));
+        //            intervalLists.add((FastTreeIntervals) treeIntervals);
         //        }
 
         Parameter ploidyFactors = parsePloidyFactors(xo, trees, nGridPoints);

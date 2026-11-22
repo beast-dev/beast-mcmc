@@ -32,7 +32,7 @@ import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.*;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
-import dr.evomodel.coalescent.VDdemographicFunction;
+import dr.evomodel.coalescent.legacy.VDdemographicFunction;
 import dr.evomodel.operators.TreeNodeSlide;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;

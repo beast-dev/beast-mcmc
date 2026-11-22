@@ -26,8 +26,8 @@
 
 package dr.evomodel.coalescent.nonparametric;
 
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.GMRFSkygridLikelihood;
+import dr.evomodel.coalescent.legacy.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFSkygridLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;

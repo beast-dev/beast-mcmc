@@ -29,7 +29,7 @@ package dr.evomodelxml.coalescent.smooth;
 
 import dr.evomodel.coalescent.smooth.SkyGlideLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

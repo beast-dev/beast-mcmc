@@ -29,8 +29,6 @@ package dr.evomodel.bigfasttree;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;

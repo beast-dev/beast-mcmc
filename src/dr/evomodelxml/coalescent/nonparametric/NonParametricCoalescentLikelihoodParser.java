@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.coalescent.nonparametric;
 
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.epochs.EpochProvider;
@@ -76,7 +77,7 @@ public class NonParametricCoalescentLikelihoodParser extends AbstractXMLObjectPa
             // the transition times between the epochs are the grid points
             gridPoints = epochs.getTransitionTimeParameter();
         } else {
-            gridPoints = SmoothSkygridLikelihoodParser.getGridPoints(xo); //TODO should I call this parser?
+            gridPoints = parseGridPoints(xo);
         }
         int nGridPoints = gridPoints.getDimension();
 
@@ -89,22 +90,35 @@ public class NonParametricCoalescentLikelihoodParser extends AbstractXMLObjectPa
             trees.add((TreeModel) cxo.getChild(i));
         }
 
-        List<FastTreeIntervals> intervalLists = new ArrayList<>();
+        List<TreeIntervalList> intervalLists = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            FastTreeIntervals treeIntervals = new FastTreeIntervals(trees.get(i));
-            intervalLists.add(treeIntervals);
+            intervalLists.add(new FastTreeIntervals(trees.get(i)));
         }
-        //        List<FastTreeIntervals> intervalLists = new ArrayList<>();
-        //        for (int i = 0; i < trees.size(); i++) {
-        //            FastTreeIntervals treeIntervals = new FastTreeIntervals(trees.get(i));
-        //            intervalLists.add((FastTreeIntervals) treeIntervals);
-        //        }
 
         Parameter ploidyFactors = parsePloidyFactors(xo, trees, nGridPoints);
 
         NonParametricCoalescentLikelihood likelihood = new NonParametricCoalescentLikelihood(intervalLists, logPopSizes, gridPoints, ploidyFactors);
+
         return likelihood;
     }
+
+    public static Parameter parseGridPoints(XMLObject xo) throws XMLParseException {
+        Parameter gridPoints;
+        if (xo.getChild(GRID_POINTS) != null) {
+            gridPoints = (Parameter) xo.getElementFirstChild(GRID_POINTS);
+        } else {
+            int numGridPoints = (int) ((Parameter) xo.getElementFirstChild(NUM_GRID_POINTS)).getParameterValue(0);
+            double cutOff = ((Parameter) xo.getElementFirstChild(CUT_OFF)).getParameterValue(0);
+            double[] gridLocations = new double[numGridPoints];
+
+            for (int pt = 0; pt < gridLocations.length; pt++) {
+                gridLocations[pt] = (pt + 1) * (cutOff / numGridPoints);
+            }
+            gridPoints = new Parameter.Default(gridLocations);
+        }
+        return gridPoints;
+    }
+
 
     protected Parameter parsePloidyFactors(XMLObject xo, List<TreeModel> trees, int nGridPoints) {
         Parameter ploidyFactors = null;

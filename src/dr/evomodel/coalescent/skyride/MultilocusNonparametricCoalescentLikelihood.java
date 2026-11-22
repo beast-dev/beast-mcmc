@@ -26,7 +26,6 @@
 
 package dr.evomodel.coalescent.skyride;
 import dr.evomodel.coalescent.intervals.FastTreeIntervals;
-import dr.evomodel.coalescent.zoo.SingleTreeGriddedNodesTimeline;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;

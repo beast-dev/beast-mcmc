@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent.zoo;
+package dr.evomodel.coalescent.skyride;
 import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 
 // this builds a timeline with coalescent and sampling events for a single tree

@@ -1,7 +1,7 @@
 /*
- * MultilocusNonparametricCoalescentLikelihood.java
+ * NonParametricCoalescentLikelihood.java
  *
- * Copyright © 2026, the BEAST Development Team.
+ * Copyright © 2002-2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -25,8 +25,8 @@
  */
 
 package dr.evomodel.coalescent.nonparametric;
-import dr.evomodel.coalescent.intervals.FastTreeIntervals;
-import dr.evomodel.coalescent.zoo.SingleTreeGriddedNodesTimeline;
+
+import dr.evolution.coalescent.TreeIntervalList;
 import dr.inference.model.*;
 import dr.util.Author;
 import dr.util.Citable;
@@ -56,7 +56,7 @@ public class NonParametricCoalescentLikelihood extends AbstractModelLikelihood i
     private double[][] ploidySums;
     private double[][] storedPloidySums;
 
-    private final List<FastTreeIntervals> intervalsList;
+    private final List<TreeIntervalList> intervalsList;
 
     private final Parameter logPopSizes;
     private final Parameter gridPoints;
@@ -69,12 +69,12 @@ public class NonParametricCoalescentLikelihood extends AbstractModelLikelihood i
     private boolean likelihoodKnown;
 
 
-    public NonParametricCoalescentLikelihood(List<FastTreeIntervals> intervalLists,
+    public NonParametricCoalescentLikelihood(List<TreeIntervalList> intervalLists,
                                              Parameter logPopSizes,
                                              Parameter gridPoints,
                                              Parameter ploidyFactors) {
 
-        super("NonparametricCoalescentLikelihood");
+        super("NonParametricCoalescentLikelihood", true);
 
         // adding the key word to the model means the keyword will be logged in the
         // header of the logfile.
@@ -93,8 +93,10 @@ public class NonParametricCoalescentLikelihood extends AbstractModelLikelihood i
         addVariable(gridPoints);
         addVariable(ploidyFactors);
 
-        for (FastTreeIntervals intervals : intervalLists) {
-            addModel(intervals);
+        for (TreeIntervalList intervals : intervalLists) {
+            if (intervals instanceof Model) {
+                addModel((Model)intervals);
+            }
         }
 
         if (ploidyFactors.getDimension() != intervalLists.size()) {
@@ -113,9 +115,9 @@ public class NonParametricCoalescentLikelihood extends AbstractModelLikelihood i
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model instanceof FastTreeIntervals) {
-            FastTreeIntervals treeModel = (FastTreeIntervals) model;
-            int tn = intervalsList.indexOf(treeModel);
+        if (model instanceof TreeIntervalList) {
+            TreeIntervalList treeIntervalModel = (TreeIntervalList) model;
+            int tn = intervalsList.indexOf(treeIntervalModel);
             if (tn >= 0) {
                 intervalsKnown = false; // TODO This should only fire the change for one tree model
                 likelihoodKnown = false;

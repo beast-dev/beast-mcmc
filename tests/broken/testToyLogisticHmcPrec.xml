@@ -203,9 +203,9 @@
 			<treeModel idref="treeModel"/>
 		</populationTree>
 		<intervals>
-			<bigFastTreeIntervals id="bigFastTreeIntervals">
+			<fastTreeIntervals id="fastTreeIntervals">
 				<treeModel idref="treeModel"/>
-			</bigFastTreeIntervals>
+			</fastTreeIntervals>
 		</intervals>
 	</coalescentLikelihood>
 

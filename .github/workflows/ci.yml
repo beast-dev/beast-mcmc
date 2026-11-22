@@ -28,6 +28,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
+              id: setup-java
+              continue-on-error: true
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
+            - uses: actions/setup-java@v4
+              if: steps.setup-java.outcome == 'failure'
               with:
                   java-version: ${{ env.JAVA_VERSION }}
                   distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -90,6 +97,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
+              id: setup-java
+              continue-on-error: true
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
+            - uses: actions/setup-java@v4
+              if: steps.setup-java.outcome == 'failure'
               with:
                   java-version: ${{ env.JAVA_VERSION }}
                   distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -112,6 +126,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
+              id: setup-java
+              continue-on-error: true
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
+            - uses: actions/setup-java@v4
+              if: steps.setup-java.outcome == 'failure'
               with:
                   java-version: ${{ env.JAVA_VERSION }}
                   distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -155,6 +176,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
+              id: setup-java
+              continue-on-error: true
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
+            - uses: actions/setup-java@v4
+              if: steps.setup-java.outcome == 'failure'
               with:
                   java-version: ${{ env.JAVA_VERSION }}
                   distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -183,6 +211,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
+              id: setup-java
+              continue-on-error: true
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
+            - uses: actions/setup-java@v4
+              if: steps.setup-java.outcome == 'failure'
               with:
                   java-version: ${{ env.JAVA_VERSION }}
                   distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -214,6 +249,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
+              id: setup-java
+              continue-on-error: true
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
+            - uses: actions/setup-java@v4
+              if: steps.setup-java.outcome == 'failure'
               with:
                   java-version: ${{ env.JAVA_VERSION }}
                   distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -248,6 +290,13 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-java@v4
+              id: setup-java
+              continue-on-error: true
+              with:
+                  java-version: ${{ env.JAVA_VERSION }}
+                  distribution: ${{ env.JAVA_DISTRIBUTION }}
+            - uses: actions/setup-java@v4
+              if: steps.setup-java.outcome == 'failure'
               with:
                   java-version: ${{ env.JAVA_VERSION }}
                   distribution: ${{ env.JAVA_DISTRIBUTION }}

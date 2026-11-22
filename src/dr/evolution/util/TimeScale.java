@@ -188,19 +188,29 @@ public class TimeScale implements Units {
 		switch (currentUnits) {
 			case DAYS:
 				switch (newUnits) {
+					case WEEKS: return 1.0/DAYS_PER_WEEK;
 					case MONTHS: return 1.0/DAYS_PER_MONTH;
 					case YEARS: return 1.0/DAYS_PER_YEAR;
+					default: throw new IllegalArgumentException();
+				}
+			case WEEKS:
+				switch (newUnits) {
+					case DAYS: return DAYS_PER_WEEK;
+					case MONTHS: return DAYS_PER_WEEK/DAYS_PER_MONTH;
+					case YEARS: return DAYS_PER_WEEK/DAYS_PER_YEAR;
 					default: throw new IllegalArgumentException();
 				}
 			case MONTHS:
 				switch (newUnits) {
 					case DAYS: return DAYS_PER_MONTH;
+					case WEEKS: return DAYS_PER_MONTH/DAYS_PER_WEEK;
 					case YEARS: return 1.0/MONTHS_PER_YEAR;
 					default: throw new IllegalArgumentException();
 				}
 			case YEARS:
 				switch (newUnits) {
 					case DAYS: return DAYS_PER_YEAR;
+					case WEEKS: return DAYS_PER_YEAR/DAYS_PER_WEEK;
 					case MONTHS: return MONTHS_PER_YEAR;
 					default: throw new IllegalArgumentException();
 				}
@@ -219,6 +229,7 @@ public class TimeScale implements Units {
 	
 	protected static double MILLIS_PER_DAY = 86400000.0;
 	public static double DAYS_PER_YEAR = 365.25;
+	protected static double DAYS_PER_WEEK = 7.0;
 	protected static double MONTHS_PER_YEAR = 12.0;
 	protected static double DAYS_PER_MONTH = DAYS_PER_YEAR / MONTHS_PER_YEAR;
 }

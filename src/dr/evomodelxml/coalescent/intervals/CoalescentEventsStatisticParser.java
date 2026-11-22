@@ -1,0 +1,71 @@
+/*
+ * CoalescentEventsStatisticParser.java
+ *
+ * Copyright © 2002-2024 the BEAST Development Team
+ * http://beast.community/about
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ *
+ */
+
+package dr.evomodelxml.coalescent.intervals;
+
+import dr.evomodel.coalescent.intervals.CoalescentEventsStatistic;
+import dr.evomodel.coalescent.intervals.CoalescentIntervalProvider;
+import dr.xml.*;
+
+/**
+* @author Guy Baele
+*/
+public class CoalescentEventsStatisticParser extends AbstractXMLObjectParser {
+
+    public static final String COALESCENT_EVENTS_STATISTIC = "coalescentEventsStatistic";
+    public static final boolean DEBUG = false;
+
+    public String getParserDescription() {
+        return "";
+    }
+
+    public Class getReturnType() {
+        return CoalescentEventsStatistic.class;
+    }
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return new XMLSyntaxRule[]{
+                new ElementRule(CoalescentIntervalProvider.class)//,
+                //new ElementRule(TreeModel.class)
+        };
+    }
+
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        if (DEBUG) {
+            System.err.println("Parsing coalescentEventsStatistic");
+        }
+        CoalescentIntervalProvider coalescent = (CoalescentIntervalProvider) xo.getChild(CoalescentIntervalProvider.class);
+        //TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        //return new CoalescentEventsStatistic(coalescent, treeModel);
+        return new CoalescentEventsStatistic(coalescent);
+    }
+
+    public String getParserName() {
+        return COALESCENT_EVENTS_STATISTIC;
+    }
+
+}

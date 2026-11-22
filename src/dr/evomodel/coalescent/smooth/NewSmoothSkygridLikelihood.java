@@ -28,7 +28,7 @@
 package dr.evomodel.coalescent.smooth;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
@@ -55,7 +55,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
     private final Parameter logPopSizeParameter;
     private final Parameter gridPointParameter;
     private final Parameter smoothRate;
-    private final List<BigFastTreeIntervals> intervals;
+    private final List<FastTreeIntervals> intervals;
     private final double magicSmallThreshold = 1E-4; // XJ: about 1-hour difference if time in years
     private boolean cacheKnown = false;
     private boolean highPrecisionCacheKnown = false;
@@ -75,7 +75,7 @@ public class NewSmoothSkygridLikelihood extends AbstractCoalescentLikelihood imp
         this.smoothRate = smoothRate;
         this.intervals = new ArrayList<>();
         for (int i = 0; i < trees.size(); i++) {
-            intervals.add(new BigFastTreeIntervals(trees.get(i)));
+            intervals.add(new FastTreeIntervals(trees.get(i)));
             addModel(intervals.get(i));
             addModel(trees.get(i));
         }

@@ -38,7 +38,7 @@ import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.simulator.OldCoalescentSimulatorParser;
 import dr.inference.loggers.ArrayLogFormatter;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;

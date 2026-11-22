@@ -3061,9 +3061,9 @@
             <parameter id="skygrid.cutOff" value="0.7226775956285"/>
         </cutOff>
         <intervals>
-            <bigFastTreeIntervals>
+            <fastTreeIntervals>
                 <treeModel idref="treeModel"/>
-            </bigFastTreeIntervals>
+            </fastTreeIntervals>
         </intervals>
     </gmrfSkyGridLikelihood>
 	

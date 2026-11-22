@@ -27,7 +27,6 @@
 
 package dr.app.beauti.treespanel;
 
-import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.types.PopulationSizeModelType;
@@ -37,14 +36,13 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
-import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihood;
+import dr.evomodel.coalescent.structured.StructuredCoalescentLikelihood;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.speciation.Gernhard08BirthDeathModelParser;
 import dr.evomodelxml.birthdeath.BirthDeathSerialSamplingModelParser;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.EnumSet;
 

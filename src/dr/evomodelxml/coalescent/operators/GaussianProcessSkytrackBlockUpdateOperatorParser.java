@@ -27,7 +27,7 @@
 
 package dr.evomodelxml.coalescent.operators;
 
-import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
+import dr.evomodel.coalescent.legacy.GaussianProcessSkytrackLikelihood;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
 import dr.inference.operators.AdaptableMCMCOperator;
 import dr.inference.operators.AdaptationMode;

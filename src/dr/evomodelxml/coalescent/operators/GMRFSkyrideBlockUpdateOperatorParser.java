@@ -27,8 +27,8 @@
 
 package dr.evomodelxml.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.legacy.GMRFMultilocusSkyrideLikelihood;
+import dr.evomodel.coalescent.legacy.OldGMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.inference.operators.AdaptableMCMCOperator;

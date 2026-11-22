@@ -33,7 +33,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.coalescent.demographicmodel.PiecewisePopulationModel;
-import dr.evomodel.coalescent.TreeIntervals;
+import dr.evomodel.coalescent.intervals.TreeIntervals;
 import dr.inference.model.*;
 import dr.inference.operators.repeatedMeasures.GammaGibbsProvider;
 import dr.inferencexml.distribution.RandomWalkGeneratorParser;

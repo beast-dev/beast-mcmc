@@ -33,7 +33,7 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.EmpiricalTreeDistributionModel;
-import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.simulator.OldCoalescentSimulatorParser;
 import dr.evomodelxml.tree.*;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.UPGMATreeParser;

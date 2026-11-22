@@ -49,11 +49,11 @@ public class TreeModelOptions extends ModelOptions {
     public TreeModelOptions(BeautiOptions options) {
         this.options = options;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
 
     }
 

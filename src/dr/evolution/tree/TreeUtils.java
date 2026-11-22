@@ -41,6 +41,38 @@ import java.util.*;
 public class TreeUtils {
 
     /**
+     * Matches a taxon name that must be quoted when written to a Newick or NEXUS file:
+     * one containing whitespace or any of the characters . ( ) [ ] : ; , = ' "
+     */
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.\\(\\)\\[\\]:;,=\"\'].*";
+
+    private static final String SPECIAL_CHARACTERS = ".()[]:;,=\'\"";
+
+    /**
+     * Returns the taxon name as it should be written in a Newick or NEXUS file: unchanged
+     * if it contains only safe characters, otherwise wrapped in double quotes. Double
+     * quotes are used as the delimiter so that names containing apostrophes can be written.
+     *
+     * @param name the taxon name
+     * @return the name, quoted if necessary
+     * @throws IllegalArgumentException if the name contains a double quote character,
+     *                                  which cannot be represented
+     */
+    public static String quoteTaxonName(String name) {
+        boolean needsQuotes = false;
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '"') {
+                throw new IllegalArgumentException("Taxon name contains a double quote (\") and cannot be written: " + name);
+            }
+            if (Character.isWhitespace(c) || SPECIAL_CHARACTERS.indexOf(c) >= 0) {
+                needsQuotes = true;
+            }
+        }
+        return needsQuotes ? "\"" + name + "\"" : name;
+    }
+
+    /**
      * Count number of leaves in subtree whose root is node.
      *
      * @param tree the tree
@@ -963,14 +995,7 @@ public class TreeUtils {
                     buffer.append((k + 1));
                 }
             } else {
-                String label = tree.getTaxonId(node.getNumber());
-                if (label.contains(" ") || label.contains(":") || label.contains(";") || label.contains(",")) {
-                    buffer.append("\"");
-                    buffer.append(label);
-                    buffer.append("\"");
-                } else {
-                    buffer.append(label);
-                }
+                buffer.append(quoteTaxonName(tree.getTaxonId(node.getNumber())));
             }
         } else {
             buffer.append("(");

@@ -61,6 +61,12 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
     }
 
     protected void getNodeDerivatives(Tree tree, double[] first, double[] second) {
+
+        if (epochProcessDelegate != null) {
+            getEpochNodeDerivatives(tree, first, second);
+            return;
+        }
+
         double[] branchGradient = new double[tree.getNodeCount() - 1];
         double[] branchDiagonalHessian = second == null ? null : new double[tree.getNodeCount() - 1];
 //        double[] branchDiagonalHessian = new double[first.length];
@@ -222,6 +228,37 @@ public class DiscreteTraitNodeHeightDelegate extends DiscreteTraitBranchRateDele
 
     }
 
+
+    /**
+     * With degree-2 nodes at the epoch transition times, raising a node lengthens the highest segment of each branch
+     * below it and shortens the lowest segment of the branch above it; the segments in between do not change.
+     */
+    private void getEpochNodeDerivatives(Tree tree, double[] first, double[] second) {
+
+        if (second != null) {
+            throw new UnsupportedOperationException("Node-height second derivatives are not yet supported with " +
+                    "augmented epoch nodes");
+        }
+
+        final double[] bottom = new double[tree.getNodeCount() - 1];
+        final double[] top = new double[tree.getNodeCount() - 1];
+        getEndSegmentDerivatives(tree, bottom, top);
+
+        Arrays.fill(first, 0.0);
+
+        for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
+
+            final NodeRef node = tree.getNode(i + tree.getExternalNodeCount());
+
+            for (int j = 0; j < tree.getChildCount(node); j++) {
+                NodeRef childNode = tree.getChild(node, j);
+                first[i] += top[getParameterIndex(childNode, tree)] * branchRates.getBranchRate(tree, childNode);
+            }
+            if (!tree.isRoot(node)) {
+                first[i] -= bottom[getParameterIndex(node, tree)] * branchRates.getBranchRate(tree, node);
+            }
+        }
+    }
 
     private int getParameterIndex(NodeRef node, Tree tree) {
         return node.getNumber() < tree.getRoot().getNumber() ? node.getNumber() : node.getNumber() - 1;

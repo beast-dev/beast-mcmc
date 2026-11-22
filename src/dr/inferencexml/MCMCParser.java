@@ -36,6 +36,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorSchedule;
+import dr.inference.mcmc.RuntimeOverrides;
 import dr.inference.smc.SMC;
 import dr.inference.smc.SMCOptions;
 import dr.inference.state.Factory;
@@ -74,7 +75,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     private MCMC parseMCMC(String id, XMLObject xo) throws XMLParseException {
         MCMC mcmc = new MCMC(id);
 
-        long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
+        long chainLength = RuntimeOverrides.getChainLength(xo.getLongIntegerAttribute(CHAIN_LENGTH));
         boolean useAdaptation =
                 xo.getAttribute(ADAPTATION, true) ||
                         xo.getAttribute(AUTO_OPTIMIZE, true);
@@ -241,7 +242,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         SMC smc = new SMC(id, particleStates);
 
-        long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
+        long chainLength = RuntimeOverrides.getChainLength(xo.getLongIntegerAttribute(CHAIN_LENGTH));
 
         SMCOptions options = new SMCOptions(chainLength);
 

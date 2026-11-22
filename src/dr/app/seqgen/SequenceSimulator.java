@@ -38,18 +38,18 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
-import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
-import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.oldevomodel.substmodel.HKY;
 import dr.oldevomodel.substmodel.SubstitutionEpochModel;
-import dr.inference.model.Parameter;
-import dr.math.MathUtils;
 import dr.xml.*;
 
 /** Class for performing random sequence generation for a given site model.
@@ -363,10 +363,16 @@ public class SequenceSimulator {
 
 			private BranchModel branchModel;
 			private SiteRateModel siteRateModel;
+			double[] stepMatrix;
+			double[] productMatrix;
+			double[] resultMatrix;
 
 			BranchSpecific(BranchModel branchModel, SiteRateModel siteRateModel) {
 				this.branchModel = branchModel;
 				this.siteRateModel = siteRateModel;
+				this.stepMatrix = new double[getStateCount() * getStateCount()];
+				this.productMatrix = new double[getStateCount() * getStateCount()];
+				this.resultMatrix = new double[getStateCount() * getStateCount()];
 			}
 
 			@Override
@@ -402,11 +408,29 @@ public class SequenceSimulator {
 			@Override
 			public void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double branchRate, double[] probs) {
 				int[] substitutionModelIndices = branchModel.getBranchModelMapping(node).getOrder();
+				double[] weights = branchModel.getBranchModelMapping(node).getWeights();
 				if (substitutionModelIndices.length > 1) {
-					throw new RuntimeException("Not yet implemented");
+					final int stateCount = getStateCount();
+					branchModel.getSubstitutionModels().get(substitutionModelIndices[0]).getTransitionProbabilities(weights[0] * getRateForCategory(rateCategory) * branchRate, resultMatrix);
+					for (int m = 1; m < substitutionModelIndices.length; m++) {
+						branchModel.getSubstitutionModels().get(substitutionModelIndices[m]).getTransitionProbabilities(weights[m] * getRateForCategory(rateCategory) * branchRate, stepMatrix);
+						for (int i = 0; i < stateCount; i++) {
+							for (int j = 0; j < stateCount; j++) {
+								 productMatrix[i * stateCount + j] = 0;
+								for (int k = 0; k < stateCount; k++) {
+									productMatrix[i * stateCount + j] += resultMatrix[i * stateCount + k] * stepMatrix[k * stateCount + j];
+								}
+							}
+						}
+						double[] tmpMatrix = resultMatrix;
+						resultMatrix = productMatrix;
+						productMatrix = tmpMatrix;
+					}
+					System.arraycopy(resultMatrix, 0, probs, 0, probs.length);
+				} else {
+					final double branchLength = getRateForCategory(rateCategory) * branchRate * (tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node));
+					branchModel.getSubstitutionModels().get(substitutionModelIndices[0]).getTransitionProbabilities(branchLength, probs);
 				}
-				final double branchLength = getRateForCategory(rateCategory) * branchRate * (tree.getNodeHeight(tree.getParent(node)) - tree.getNodeHeight(node));
-				branchModel.getSubstitutionModels().get(substitutionModelIndices[0]).getTransitionProbabilities(branchLength, probs);
 			}
 		}
 	}
@@ -447,8 +471,11 @@ public class SequenceSimulator {
 
 			SequenceSimulator s;
 			if (siteModel == null) {
-				BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
 				SiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+				BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
+				if (branchModel == null) {
+					branchModel = new HomogeneousBranchModel(((GammaSiteRateModel) siteRateModel).getSubstitutionModel());
+				}
 				s = new SequenceSimulator(tree, siteRateModel, branchModel, rateModel, nReplications);
 			} else {
 				s = new SequenceSimulator(tree, siteModel, rateModel, nReplications);
@@ -480,7 +507,8 @@ public class SequenceSimulator {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(Tree.class),
 				new XORRule(new ElementRule(SiteModel.class),
-						new AndRule(new ElementRule(GammaSiteRateModel.class), new ElementRule(BranchModel.class))),
+						new ElementRule(GammaSiteRateModel.class)),
+//						new AndRule(new ElementRule(GammaSiteRateModel.class), new ElementRule(BranchModel.class))),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(Sequence.class, true),
                 AttributeRule.newIntegerRule(REPLICATIONS)

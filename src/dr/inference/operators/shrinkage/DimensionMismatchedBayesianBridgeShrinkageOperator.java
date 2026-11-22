@@ -70,7 +70,7 @@ public class DimensionMismatchedBayesianBridgeShrinkageOperator extends SimpleMC
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "dimensionMismatchedBayesianBridgeGibbsOperator";
     }
 

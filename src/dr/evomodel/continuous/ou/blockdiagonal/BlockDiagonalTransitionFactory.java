@@ -1,0 +1,113 @@
+package dr.evomodel.continuous.ou.blockdiagonal;
+
+import dr.evomodel.continuous.ou.blockdiagonal.math.BlockDiagonalLyapunovSolver;
+import dr.evomodel.continuous.canonical.math.MatrixOps;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalBranchMessageContribution;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalGaussianTransition;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalLocalTransitionAdjoints;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.message.CanonicalTransitionAdjointUtils;
+import dr.inference.model.MatrixParameterInterface;
+import org.ejml.data.DenseMatrix64F;
+
+/**
+ * Forward-path transition and canonical-message builder for block-diagonal OU.
+ */
+final class BlockDiagonalTransitionFactory {
+
+    private final BlockDiagonalLyapunovSolver lyapunovSolver;
+    private final DenseMatrix64F qMatrix;
+    private final DenseMatrix64F qDBasis;
+    private final DenseMatrix64F stationaryCovDBasis;
+    private final DenseMatrix64F transitionCovDBasis;
+    private final DenseMatrix64F transitionCovariance;
+    private final DenseMatrix64F temp;
+    private final double[] transitionCovarianceScratch;
+    private final double[] precisionScratch;
+    private final double[] transitionOffsetScratch;
+    private final double[] choleskyScratch;
+    private final double[] lowerInverseScratch;
+    private final CanonicalTransitionAdjointUtils.Workspace canonicalAdjointWorkspace;
+
+    BlockDiagonalTransitionFactory(final int dimension,
+                                   final BlockDiagonalLyapunovSolver lyapunovSolver) {
+        this.lyapunovSolver = lyapunovSolver;
+        this.qMatrix = new DenseMatrix64F(dimension, dimension);
+        this.qDBasis = new DenseMatrix64F(dimension, dimension);
+        this.stationaryCovDBasis = new DenseMatrix64F(dimension, dimension);
+        this.transitionCovDBasis = new DenseMatrix64F(dimension, dimension);
+        this.transitionCovariance = new DenseMatrix64F(dimension, dimension);
+        this.temp = new DenseMatrix64F(dimension, dimension);
+        this.transitionCovarianceScratch = new double[dimension * dimension];
+        this.precisionScratch = new double[dimension * dimension];
+        this.transitionOffsetScratch = new double[dimension];
+        this.choleskyScratch = new double[dimension * dimension];
+        this.lowerInverseScratch = new double[dimension * dimension];
+        this.canonicalAdjointWorkspace = new CanonicalTransitionAdjointUtils.Workspace(dimension);
+    }
+
+    void fillTransitionCovarianceFlat(final MatrixParameterInterface diffusionMatrix,
+                                      final BlockDiagonalTransitionCache basis,
+                                      final double[] out) {
+        fillTransitionCovarianceMatrix(diffusionMatrix, basis);
+        MatrixOps.toFlat(transitionCovariance, out, transitionCovariance.numRows);
+    }
+
+    void fillCanonicalTransition(final MatrixParameterInterface diffusionMatrix,
+                                 final double[] stationaryMean,
+                                 final BlockDiagonalTransitionCache basis,
+                                 final CanonicalGaussianTransition out) {
+        fillTransitionCovarianceMatrix(diffusionMatrix, basis);
+        BlockDiagonalCanonicalTransitionAssembler.fillCanonicalTransition(
+                basis.transitionMatrix,
+                transitionCovariance,
+                stationaryMean,
+                transitionOffsetScratch,
+                transitionCovarianceScratch,
+                choleskyScratch,
+                lowerInverseScratch,
+                out);
+    }
+
+    void fillCanonicalLocalAdjoints(final MatrixParameterInterface diffusionMatrix,
+                                    final double[] stationaryMean,
+                                    final BlockDiagonalTransitionCache basis,
+                                    final CanonicalBranchMessageContribution contribution,
+                                    final CanonicalLocalTransitionAdjoints out) {
+        fillTransitionCovarianceMatrix(diffusionMatrix, basis);
+        BlockDiagonalCanonicalTransitionAssembler.fillTransitionOffset(
+                basis.transitionMatrix, stationaryMean, transitionOffsetScratch);
+        BlockDiagonalPositiveDefiniteInverter.copyAndInvertFlat(
+                transitionCovariance,
+                transitionCovarianceScratch,
+                precisionScratch,
+                choleskyScratch,
+                lowerInverseScratch);
+        CanonicalTransitionAdjointUtils.fillFromMoments(
+                precisionScratch,
+                transitionCovarianceScratch,
+                basis.transitionMatrix.data,
+                transitionOffsetScratch,
+                contribution,
+                canonicalAdjointWorkspace,
+                out);
+    }
+
+    private void fillTransitionCovarianceMatrix(final MatrixParameterInterface diffusionMatrix,
+                                                final BlockDiagonalTransitionCache basis) {
+        BlockDiagonalTransitionCovarianceSolver.fillTransitionCovariance(
+                diffusionMatrix,
+                basis.rMatrix,
+                basis.rinvMatrix,
+                basis.expD,
+                basis.blockDParams,
+                lyapunovSolver,
+                qMatrix,
+                qDBasis,
+                stationaryCovDBasis,
+                transitionCovDBasis,
+                temp,
+                transitionCovariance,
+                basis.blockStarts,
+                basis.blockSizes);
+    }
+}

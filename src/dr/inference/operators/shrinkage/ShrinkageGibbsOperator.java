@@ -54,7 +54,7 @@ public class ShrinkageGibbsOperator extends SimpleMCMCOperator implements GibbsO
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "ShrinkageGibbsOperator";
     }
 

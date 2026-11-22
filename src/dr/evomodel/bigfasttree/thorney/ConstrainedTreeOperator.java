@@ -87,7 +87,7 @@ public class ConstrainedTreeOperator extends AbstractAdaptableTreeOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "Constrained  " + operator.getOperatorName();
     }
 

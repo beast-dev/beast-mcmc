@@ -132,10 +132,17 @@ public class TraceCorrelationAssert extends MathTestCase {
      * @param v     the expected value for the statistic
      */
     protected void assertExpectation(String name, TraceCorrelation stats, double v) {
+        assertExpectation(name, stats, v, 2);
+    }
+
+    /**
+     * As assertExpectation(name, stats, v), within the given number of standard errors of the mean
+     */
+    protected void assertExpectation(String name, TraceCorrelation stats, double v, double standardErrors) {
         double mean = stats.getMean();
         double stderr = stats.getStdErrorOfMean();
-        double upper = mean + 2 * stderr;
-        double lower = mean - 2 * stderr;
+        double upper = mean + standardErrors * stderr;
+        double lower = mean - standardErrors * stderr;
 
         assertTrue("Expected " + name + " is " + v + " but got " + mean + " +/- " + stderr,
                 upper > v && lower < v);

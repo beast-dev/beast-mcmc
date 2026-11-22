@@ -34,7 +34,6 @@ import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider
 import dr.evomodel.treedatalikelihood.preorder.ModelExtensionProvider;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CrossValidationProvider;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.TraitValidationProvider;
 import dr.xml.*;

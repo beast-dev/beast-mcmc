@@ -275,7 +275,7 @@ public class ContinuousTraitDataModel extends AbstractModel implements Continuou
         return partial;
     }
 
-    double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
+    public double[] getTipObservation(int taxonIndex, final PrecisionType precisionType) {
         final int offsetInc = precisionType.getPartialsDimension(dimTrait);
 
         final double[] partial = getTipPartial(taxonIndex, precisionType);

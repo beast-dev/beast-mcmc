@@ -278,7 +278,7 @@ public class ConvexSpaceRandomWalkOperator extends AbstractAdaptableOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return CONVEX_RW;
     }
 

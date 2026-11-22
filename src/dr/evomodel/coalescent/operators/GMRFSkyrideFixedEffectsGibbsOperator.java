@@ -27,7 +27,7 @@
 
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.skyride.GMRFSkyrideLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideFixedEffectsGibbsOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
@@ -119,7 +119,7 @@ public class GMRFSkyrideFixedEffectsGibbsOperator extends SimpleMCMCOperator imp
 
     //MCMCOperator INTERFACE
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return GMRFSkyrideFixedEffectsGibbsOperatorParser.GMRF_GIBBS_OPERATOR;
     }
 

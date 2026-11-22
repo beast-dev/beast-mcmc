@@ -847,37 +847,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     }
 
     private void calculateHeights() {
-
-        options.maximumTipHeight = 0.0;
-        if (options.taxonList == null || options.taxonList.getTaxonCount() == 0) return;
-
-        heights = null;
-
-        dr.evolution.util.Date mostRecent = options.originDate;
-        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-            Date date = options.taxonList.getTaxon(i).getDate();
-            if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
-                mostRecent = date;
-            }
-        }
-
-        if (mostRecent != null) {
-            heights = new double[options.taxonList.getTaxonCount()];
-
-            TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
-            double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
-
-            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                Taxon taxon = options.taxonList.getTaxon(i);
-                Date date = taxon.getDate();
-                if (date != null) {
-                    heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
-                    taxon.setAttribute("_height", heights[i]);
-                    if (heights[i] > options.maximumTipHeight) options.maximumTipHeight = heights[i];
-                }
-            }
-        }
-
+        heights = options.calculateTipHeights();
         frame.setStatusMessage();
     }
 

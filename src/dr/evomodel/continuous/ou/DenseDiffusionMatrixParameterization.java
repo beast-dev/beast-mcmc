@@ -1,0 +1,79 @@
+package dr.evomodel.continuous.ou;
+
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
+
+/**
+ * Default dense OU diffusion-matrix parametrization.
+ */
+public final class DenseDiffusionMatrixParameterization implements DiffusionMatrixParameterization {
+
+    private final MatrixParameterInterface matrixParameter;
+    private final int dimension;
+    private final double diffusionFloor;
+
+    public DenseDiffusionMatrixParameterization(final MatrixParameterInterface matrixParameter) {
+        this(matrixParameter, 0.0);
+    }
+
+    public DenseDiffusionMatrixParameterization(final MatrixParameterInterface matrixParameter,
+                                                final double diffusionFloor) {
+        if (matrixParameter == null) {
+            throw new IllegalArgumentException("matrixParameter must not be null");
+        }
+        if (matrixParameter.getRowDimension() != matrixParameter.getColumnDimension()) {
+            throw new IllegalArgumentException("diffusion matrix must be square");
+        }
+        if (!Double.isFinite(diffusionFloor) || diffusionFloor < 0.0) {
+            throw new IllegalArgumentException("diffusionFloor must be finite and non-negative");
+        }
+        this.matrixParameter = matrixParameter;
+        this.dimension = matrixParameter.getRowDimension();
+        this.diffusionFloor = diffusionFloor;
+    }
+
+    public double getDiffusionFloor() {
+        return diffusionFloor;
+    }
+
+    @Override
+    public MatrixParameterInterface getMatrixParameter() {
+        return matrixParameter;
+    }
+
+    @Override
+    public int getDimension() {
+        return dimension;
+    }
+
+    @Override
+    public void fillDiffusionMatrixFlat(final double[] out) {
+        for (int i = 0; i < dimension; ++i) {
+            final int rowOffset = i * dimension;
+            for (int j = 0; j < dimension; ++j) {
+                out[rowOffset + j] = matrixParameter.getParameterValue(i, j);
+            }
+            out[rowOffset + i] += diffusionFloor;
+        }
+    }
+
+    @Override
+    public boolean supportsParameter(final Parameter parameter) {
+        return parameter == matrixParameter;
+    }
+
+    @Override
+    public double[] pullBackGradient(final Parameter parameter, final double[] denseGradient) {
+        if (parameter != matrixParameter) {
+            throw new IllegalArgumentException("Unsupported dense diffusion parameter");
+        }
+        final double[] out = new double[parameter.getDimension()];
+        for (int row = 0; row < dimension; ++row) {
+            final int rowOffset = row * dimension;
+            for (int col = 0; col < dimension; ++col) {
+                out[matrixParameter.index(row, col)] = denseGradient[rowOffset + col];
+            }
+        }
+        return out;
+    }
+}

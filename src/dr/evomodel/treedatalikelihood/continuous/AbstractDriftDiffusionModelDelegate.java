@@ -33,6 +33,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
 import org.ejml.data.DenseMatrix64F;
@@ -49,6 +51,7 @@ import java.util.List;
 public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffusionModelDelegate {
 
     private final List<BranchRateModel> branchRateModels;
+    private Parameter canonicalConstantDriftParameter;
 
     AbstractDriftDiffusionModelDelegate(Tree tree,
                                         MultivariateDiffusionModel diffusionModel,
@@ -124,6 +127,29 @@ public abstract class AbstractDriftDiffusionModelDelegate extends AbstractDiffus
             if (!(branchRateModels.get(model) instanceof StrictClockBranchRates)) return false;
         }
         return true;
+    }
+
+    public Parameter getCanonicalConstantDriftParameter() {
+        if (branchRateModels == null) {
+            if (canonicalConstantDriftParameter == null) {
+                canonicalConstantDriftParameter = new Parameter.Default("zeroDrift", new double[dim]);
+            }
+            return canonicalConstantDriftParameter;
+        }
+
+        if (!isConstantDrift()) {
+            throw new UnsupportedOperationException(
+                    "Canonical OU XML wiring currently supports only constant optima encoded through StrictClockBranchRates.");
+        }
+
+        if (canonicalConstantDriftParameter == null) {
+            final CompoundParameter compound = new CompoundParameter("canonicalConstantDrift");
+            for (int i = 0; i < dim; ++i) {
+                compound.addParameter(((StrictClockBranchRates) branchRateModels.get(i)).getRateParameter());
+            }
+            canonicalConstantDriftParameter = compound;
+        }
+        return canonicalConstantDriftParameter;
     }
 
     DenseMatrix64F getGradientDisplacementWrtDrift(NodeRef node,

@@ -46,6 +46,13 @@ public abstract class AbstractModelLikelihood extends AbstractModel implements L
         super(name);
     }
 
+    /**
+     * @param name Model Name
+     */
+    public AbstractModelLikelihood(String name, boolean useLazyStore) {
+        super(name, useLazyStore);
+    }
+
     public String prettyName() {
         return Likelihood.Abstract.getPrettyName(this);
     }

@@ -1,4 +1,0 @@
-<#list alignment.sequences as sequence>
->${sequence.taxon.id}
-${sequence.data}
-</#list>

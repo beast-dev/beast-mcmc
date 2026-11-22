@@ -31,8 +31,6 @@ import dr.evolution.coalescent.ExponentialExponential;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.coalescent.MultiEpochExponential;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.VDdemographicFunction;
-import dr.evomodel.coalescent.VariableDemographicModel;
 import junit.framework.TestCase;
 
 /**

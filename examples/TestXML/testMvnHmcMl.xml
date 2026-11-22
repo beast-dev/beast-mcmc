@@ -1,0 +1,88 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+	<parameter id="draw" value="1 2 3 4 5 6 7 8 9 10"/>
+
+	<multivariateNormalDistributionModel id="normal">
+		<meanParameter>
+   			<parameter id="mu" value="10 9 8 7 6 5 4 3 2 1"/>
+ 		</meanParameter>
+ 		<precisionParameter>
+ 			<matrixParameter>
+				<parameter value="2.56080650520739 2.29971059339517 -1.46660288265402 1.94190906373727 -1.47304986640106 5.73800481230492 -3.42757214050313 1.38023505531852 2.73594002861004 -3.88504322712838"/>
+				<parameter value="2.29971059339518 8.3047433837855 1.01632761670971 -1.66635185586538 -3.70292357072299 5.57429824130936 -1.31196260543776 0.999168419650946 0.26013592123774 -1.58516840021119"/>
+				<parameter value="-1.46660288265402 1.01632761670972 2.44068583707679 -2.7029300146619 0.454881999216938 -4.08661873902925 3.09561015291054 -0.713982045506212 -2.57817702989478 3.48581769961422"/>
+				<parameter value="1.94190906373727 -1.66635185586539 -2.7029300146619 3.91944768125092 0.102373615297518 4.54144965091747 -3.81651071938563 1.2354165922108 3.42456159270693 -4.06119610981782"/>
+				<parameter value="-1.47304986640107 -3.70292357072298 0.45488199921694 0.102373615297515 2.29448363698785 -4.24678026314519 1.7145273004787 -0.583492825470015 -0.895196661522286 2.04308202306436"/>
+				<parameter value="5.73800481230492 5.57429824130934 -4.08661873902926 4.54144965091748 -4.24678026314519 14.5517828152262 -8.49510747026092 2.76990421051643 6.39908007303101 -9.70153620301488"/>
+				<parameter value="-3.42757214050312 -1.31196260543774 3.09561015291055 -3.81651071938563 1.71452730047869 -8.49510747026091 5.75534895313463 -1.78599943198344 -4.58901183630936 6.4226816885871"/>
+				<parameter value="1.38023505531852 0.99916841965094 -0.713982045506215 1.2354165922108 -0.583492825470015 2.76990421051643 -1.78599943198345 1.07899333583511 1.54942829225465 -1.86555949224669"/>
+				<parameter value="2.73594002861004 0.260135921237729 -2.57817702989479 3.42456159270693 -0.895196661522284 6.399080073031 -4.58901183630936 1.54942829225465 3.94719781846939 -5.16104006099744"/>
+				<parameter value="-3.88504322712838 -1.58516840021118 3.48581769961422 -4.06119610981782 2.04308202306436 -9.70153620301487 6.4226816885871 -1.86555949224668 -5.16104006099744 7.52787509173555"/>
+			</matrixParameter>
+		</precisionParameter>
+	</multivariateNormalDistributionModel>
+
+	<multivariateDistributionLikelihood id="distribution">
+		<distribution>
+			<multivariateNormalDistributionModel idref="normal"/>
+		</distribution>
+		<data>
+			<parameter idref="draw"/>
+ 		</data>
+	</multivariateDistributionLikelihood>
+
+	<normalPrior id="muPrior" mean="0" stdev="10">
+		<parameter idref="mu"/>
+	</normalPrior>
+
+	<operators id="operators.hmc">
+
+ 		<hamiltonianMonteCarloOperator weight="1" nSteps="10" stepSize="0.1" mode="vanilla"
+ 			drawVariance="1.0" autoOptimize="true">
+ 			<gradient>
+ 				<jointGradient>
+					<distributionLikelihood idref="distribution"/>
+					<normalPrior idref="muPrior"/>
+				</jointGradient>
+			</gradient>
+			<parameter idref="mu"/>
+ 		</hamiltonianMonteCarloOperator>
+
+	</operators>
+
+	<mcmc id="mcmc.hmc" chainLength="100000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.hmc">
+	            <distributionLikelihood idref="distribution"/>
+            </likelihood>
+            <prior id="prior.hmc">
+            	<normalPrior idref="muPrior"/>
+            </prior>
+        </posterior>
+        <operators idref="operators.hmc"/>
+		<log logEvery="100">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.hmc"/>
+			</column>
+			<column label="Draw" sf="6" width="12">
+				<parameter idref="mu"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testMvnHmcMl.log">
+			<likelihood idref="likelihood.hmc"/>
+			<parameter idref="mu"/>
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc.hmc"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testMvnHmcMl.log" stdError="true"/>
+
+
+</beast>

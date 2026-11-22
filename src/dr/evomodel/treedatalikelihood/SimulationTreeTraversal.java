@@ -47,7 +47,7 @@ public class SimulationTreeTraversal extends TreeTraversal {
     }
 
     @Override
-    public final void dispatchTreeTraversalCollectBranchAndNodeOperations() {
+    public void dispatchTreeTraversalCollectBranchAndNodeOperations() {
         branchNodeOperations.clear();
         nodeOperations.clear();
 
@@ -121,9 +121,9 @@ public class SimulationTreeTraversal extends TreeTraversal {
         return update;
     }
 
-    private final List<DataLikelihoodDelegate.BranchNodeOperation> branchNodeOperations =
+    protected final List<DataLikelihoodDelegate.BranchNodeOperation> branchNodeOperations =
             new ArrayList<DataLikelihoodDelegate.BranchNodeOperation>();
 
-    private final List<DataLikelihoodDelegate.NodeOperation> nodeOperations =
+    protected final List<DataLikelihoodDelegate.NodeOperation> nodeOperations =
             new ArrayList<DataLikelihoodDelegate.NodeOperation>();
 }

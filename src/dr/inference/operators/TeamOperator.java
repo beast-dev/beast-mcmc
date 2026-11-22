@@ -202,7 +202,7 @@ public class TeamOperator extends SimpleMCMCOperator /*implements AdaptableMCMCO
         }
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
        StringBuffer sb = new StringBuffer("Team " + nPick + " (");
        for( MCMCOperator operation : operators ) {
            sb.append(operation.getOperatorName()+",");

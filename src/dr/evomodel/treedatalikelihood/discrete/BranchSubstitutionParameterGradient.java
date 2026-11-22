@@ -45,6 +45,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.MultivariateFunction;
 import dr.xml.Reportable;
 
 import java.util.ArrayList;
@@ -213,9 +214,100 @@ public class BranchSubstitutionParameterGradient
         return true;
     }
 
+    private String getRevisionReport() {
+
+        final MultivariateFunction numeric = new MultivariateFunction() {
+
+            @Override
+            public double evaluate(double[] argument) {
+                for (int i = 0; i < argument.length; ++i) {
+                    getParameter().setParameterValueQuietly(i, argument[i]);
+                }
+                getParameter().fireParameterChangedEvent();
+                return getLikelihood().getLogLikelihood();
+            }
+
+            @Override
+            public int getNumArguments() {
+                return getParameter().getDimension();
+            }
+
+            @Override
+            public double getLowerBound(int n) {
+                return Double.NEGATIVE_INFINITY;
+            }
+
+            @Override
+            public double getUpperBound(int n) {
+                return Double.POSITIVE_INFINITY;
+            }
+        };
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(new dr.math.matrixAlgebra.Vector(getGradientLogDensity())).append('\n');
+
+        double[] analytic = this.getGradientLogDensity();
+        double[] numericGradient = new double[analytic.length];
+        double[] oldNumericGradient = new double[analytic.length];
+
+        final double lowerRatio = 1E-4;
+        final double upperRatio = 1E6;
+        final int nPoints = 101;
+
+        double[] relativeRatios = new double[nPoints];
+        for (int i = 0; i < nPoints; ++i) {
+            relativeRatios[i] = Math.exp((Math.log(upperRatio) - Math.log(lowerRatio)) / (nPoints - 1) * i) * lowerRatio * SQRT_EPSILON;
+            gradient(numeric, getParameter().getParameterValues(), numericGradient, relativeRatios[i]);
+            oldGradient(numeric, getParameter().getParameterValues(), oldNumericGradient, relativeRatios[i]);
+
+            sb.append(relativeRatios[i]).append("\n");
+            sb.append(new dr.math.matrixAlgebra.Vector(numericGradient)).append("\n");
+            sb.append(new dr.math.matrixAlgebra.Vector(oldNumericGradient)).append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private void gradient(MultivariateFunction f, double[] x, double[] grad, double relativeStepSize)
+    {
+        for (int i = 0; i < f.getNumArguments(); i++)
+        {
+            double h = relativeStepSize * Math.max(Math.abs(x[i]), 1.0);
+
+            double oldx = x[i];
+            x[i] = oldx + h;
+            double fxplus = f.evaluate(x);
+            x[i] = oldx - h;
+            double fxminus = f.evaluate(x);
+            x[i] = oldx;
+
+            // Centered first derivative
+            grad[i] = (fxplus-fxminus)/(2.0*h);
+        }
+    }
+
+    private void oldGradient(MultivariateFunction f, double[] x, double[] grad, double relativeStepSize)
+    {
+        for (int i = 0; i < f.getNumArguments(); i++)
+        {
+            double h = relativeStepSize*(Math.abs(x[i]) + 1.0);
+
+            double oldx = x[i];
+            x[i] = oldx + h;
+            double fxplus = f.evaluate(x);
+            x[i] = oldx - h;
+            double fxminus = f.evaluate(x);
+            x[i] = oldx;
+
+            // Centered first derivative
+            grad[i] = (fxplus-fxminus)/(2.0*h);
+        }
+    }
+
     @Override
     public String getReport() {
         return GradientWrtParameterProvider.getReportAndCheckForError(this, 0.0, Double.POSITIVE_INFINITY, null);
+//        return getRevisionReport();
 
 //        BranchSpecificSubstitutionParameterBranchModel branchModel = (BranchSpecificSubstitutionParameterBranchModel)
 //                ((BeagleDataLikelihoodDelegate) treeDataLikelihood.getDataLikelihoodDelegate()).getBranchModel();

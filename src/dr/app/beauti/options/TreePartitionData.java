@@ -39,6 +39,9 @@ import dr.evolution.util.TaxonList;
  * @author Andrew Rambaut
  */
 public class TreePartitionData extends AbstractPartitionData {
+
+    // explicit, so that files saved by this version still load after an unrelated change
+    private static final long serialVersionUID = 4651308887184754718L;
     public TreePartitionData(BeautiOptions options, String name, String fileName, TreeHolder trees) {
         super(options, name, fileName);
 

@@ -48,7 +48,6 @@ import dr.evomodel.treedatalikelihood.preorder.WrappedNormalSufficientStatistics
 import dr.evomodel.treedatalikelihood.preorder.WrappedTipFullConditionalDistributionDelegate;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
@@ -453,7 +452,7 @@ public class NewLatentLiabilityGibbs extends SimpleMCMCOperator {
     }
 
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return NEW_LATENT_LIABILITY_GIBBS_OPERATOR;
     }
 

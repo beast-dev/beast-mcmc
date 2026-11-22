@@ -282,4 +282,12 @@ public class AminoAcids extends DataType
 	public boolean isStopState(final int state) {
 		return state == getStopState();
 	}
+
+	/**
+	 * @return the singleton, so that a deserialized data type is still identical (==) to it
+	 */
+	private Object readResolve() {
+		return INSTANCE;
+	}
+
 }

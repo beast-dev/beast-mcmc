@@ -31,6 +31,8 @@ import dr.app.tools.BaseTreeTool;
 import dr.app.tools.NexusExporter;
 import dr.app.tools.logcombiner.LogCombiner;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
+import dr.app.util.OSType;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
@@ -43,6 +45,7 @@ import dr.evolution.tree.treemetrics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.util.Version;
+import dr.util.FileHelpers;
 import jam.console.ConsoleApplication;
 
 import javax.swing.*;
@@ -273,7 +276,7 @@ public class TreeAnnotator extends BaseTreeTool {
 
     private void countTrees(String inputFileName) throws IOException {
         progressStream.println("Counting trees...");
-        Reader reader = new BufferedReader(new FileReader(inputFileName));
+        Reader reader = FileHelpers.getReader(inputFileName);
         TreeImporter importer = new BEASTTreesImporter(reader);
         totalTrees = importer.countTrees();
         if (totalTrees == 0) {
@@ -308,7 +311,7 @@ public class TreeAnnotator extends BaseTreeTool {
 //            BEASTTreesImporter importer = new BEASTTreesImporter(reader, false);
 //            importer.setTaxonList(taxa);
 
-            Reader reader = new BufferedReader(new FileReader(inputFileName));
+            Reader reader = FileHelpers.getReader(inputFileName);
             NexusImporter importer = new NexusImporter(reader, true);
 
             ExecutorService pool;
@@ -418,7 +421,7 @@ public class TreeAnnotator extends BaseTreeTool {
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
 
-        Reader reader = new BufferedReader(new FileReader(inputFileName));
+        Reader reader = FileHelpers.getReader(inputFileName);
 //         TreeImporter importer = new BEASTTreesImporter(reader, true);
         TreeImporter importer = new NexusImporter(reader, false);
 
@@ -533,12 +536,12 @@ public class TreeAnnotator extends BaseTreeTool {
 
 
     private static MutableTree readTreeFile(String treeFileName) throws IOException {
-        NexusImporter importer = new NexusImporter(new FileReader(treeFileName));
+        NexusImporter importer = new NexusImporter(FileHelpers.getReader(treeFileName));
         Tree tree = null;
         try {
             tree = importer.importNextTree();
             if (tree == null) {
-                NewickImporter x = new NewickImporter(new FileReader(treeFileName));
+                NewickImporter x = new NewickImporter(FileHelpers.getReader(treeFileName));
                 tree = x.importNextTree();
             }
             if (tree == null) {
@@ -570,7 +573,7 @@ public class TreeAnnotator extends BaseTreeTool {
         int counter = 0;
         int bestTreeNumber = 0;
 //        TreeImporter importer = new BEASTTreesImporter(new FileReader(inputFileName), false);
-        TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
+        TreeImporter importer = new NexusImporter(FileHelpers.getReader(inputFileName), true);
         try {
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
@@ -769,7 +772,7 @@ public class TreeAnnotator extends BaseTreeTool {
             if (stepSize < 1) stepSize = 1;
 
             int counter = 0;
-            TreeImporter importer = new NexusImporter(new FileReader(inputFileName), true);
+            TreeImporter importer = new NexusImporter(FileHelpers.getReader(inputFileName), true);
             try {
                 stream.print("tree");
                 for (TreeMetric treeMetric : treeMetrics) {
@@ -924,9 +927,9 @@ public class TreeAnnotator extends BaseTreeTool {
 //        boolean computeESS = false;
 
         if (args.length == 0) {
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.application.name", "TreeAnnotator");
 
             java.net.URL url = LogCombiner.class.getResource("/images/utility.png");
             Icon icon = null;
@@ -948,7 +951,11 @@ public class TreeAnnotator extends BaseTreeTool {
                     "<a href=\"http://beast.community\">http://beast.community</a></p>" +
                     "</center></html>";
 
-            new ConsoleApplication(nameString, aboutString, icon, true);
+            ConsoleApplication consoleApp = new ConsoleApplication(nameString, aboutString, icon, true);
+            if (OSType.isMac()) {
+                // the application menu and Dock icon (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(consoleApp, icon);
+            }
 
             // The ConsoleApplication will have overridden System.out so set progressStream
             // to capture the output to the window:

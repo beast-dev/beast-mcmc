@@ -32,11 +32,14 @@ import beagle.BeagleInfo;
 import dr.app.checkpoint.BeastCheckpointer;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
+import dr.app.util.MacDesktopIntegration;
+import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.ChainSet;
 import dr.inference.mcmcmc.IndependentChainSet;
+import dr.inference.mcmc.RuntimeOverrides;
 import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.inference.mcmcmc.MultiChainRunner;
 import dr.inference.mcmcmc.TemperedChainSet;
@@ -45,6 +48,7 @@ import dr.inference.state.Factory;
 import dr.math.MathUtils;
 import dr.util.*;
 import dr.xml.XMLParser;
+import dr.app.util.SimpleAboutDialog;
 import jam.util.IconUtils;
 
 import javax.swing.*;
@@ -164,7 +168,8 @@ public class BeastMain {
                     citationFileName = fileNamePrefix + fileName.substring(0, fileName.toLowerCase().indexOf(".xml")) + CITATION_FILE_SUFFIX;
                 }
 
-                FileOutputStream citationStream = new FileOutputStream(FileHelpers.getFile(citationFileName));
+                FileOutputStream citationStream = new FileOutputStream(OutputFileHelper.resolveOutputFile(
+                        citationFileName, null, OutputFileHelper.getExplicitOutputDirectory()));
                 //Handler citationHandler = new MessageLogHandler(citationStream);
                 Handler citationHandler = CitationLogHandler.getHandler(citationStream);
                 citationLogger.addHandler(citationHandler);
@@ -310,7 +315,7 @@ public class BeastMain {
 
         try {
             dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.releaseAllBeagleInstances();
-            dr.evomodel.coalescent.basta.BeagleBastaLikelihoodDelegate.releaseAllBeagleBastaInstances();
+            dr.evomodel.coalescent.structured.BeagleBastaLikelihoodDelegate.releaseAllBeagleBastaInstances();
         } catch (Throwable e) {
            throw new RuntimeException("Terminate");
         }
@@ -441,6 +446,19 @@ public class BeastMain {
 
     }
 
+    /**
+     * Place a relative output file name (or file name stem) given on the command line in the
+     * directory requested with the -output option. Absolute names and names given without
+     * -output are returned unchanged.
+     */
+    private static String resolveOutputPath(String fileName) {
+        File outputDirectory = OutputFileHelper.getExplicitOutputDirectory();
+        if (outputDirectory == null || new File(fileName).isAbsolute()) {
+            return fileName;
+        }
+        return new File(outputDirectory, fileName).getPath();
+    }
+
     public static void printUsage(Arguments arguments) {
 
         arguments.printUsage("beast", "[<input-file-name>]");
@@ -450,6 +468,7 @@ public class BeastMain {
         System.out.println("  Example: beast -help");
         System.out.println();
     }
+
 
     //Main method
     public static void main(String[] args) throws java.io.IOException {
@@ -461,6 +480,7 @@ public class BeastMain {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
+                        new Arguments.Section("General"),
                         new Arguments.Option("verbose","vb","Give verbose XML parsing messages"),
                         new Arguments.Option("warnings", null, "Show warning messages about BEAST XML file"),
                         new Arguments.Option("strict", "sx", "Fail on non-conforming BEAST XML file"),
@@ -469,23 +489,29 @@ public class BeastMain {
                         new Arguments.Option("working", "wd", "Change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "s", "Specify a random number generator seed"),
                         new Arguments.StringOption("prefix","p",  "PREFIX", "Specify a prefix for all output log filenames"),
+                        new Arguments.StringOption("output", "out", "DIRECTORY", "Specify an existing directory where output files should be written"),
                         new Arguments.Option("overwrite", "ow", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "e", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "nt", "The maximum number of computational threads to use (default auto)"),
                         new Arguments.Option("fail_threads", "ft", "Exit with error on uncaught exception in thread"),
                         new Arguments.Option("ignore_versions", "i", "Ignore mismatches between XML and BEAST versions"),
                         new Arguments.Option("java", null, "Use Java only, no native implementations"),
+
+                        new Arguments.Section("The chain"),
+                        new Arguments.LongOption("chain_length", "cl", 1, Long.MAX_VALUE, "Run for this many states, whatever the XML file says"),
+                        new Arguments.LongOption("log_every", "le", 1, Long.MAX_VALUE, "Log every this many states, whatever the XML file says"),
+                        new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
+                        new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
                         new Arguments.LongOption("tests", null, "The number of full evaluation tests to perform (default 1000)"),
                         new Arguments.RealOption("threshold", null, 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
                         new Arguments.Option(OperatorSchedule.SHOW_OPERATORS, "op", "Print transition kernel performance to file"),
 
-                        new Arguments.Option("adaptation_off", null, "Don't adapt operator sizes"),
-                        new Arguments.RealOption("adaptation_target", null, 0.0, 1.0, "Target acceptance rate for adaptive operators (default 0.234)"),
-
+                        new Arguments.Section("Site patterns"),
                         new Arguments.StringOption("pattern_compression", "pc", new String[]{"off", "unique", "ambiguous_constant", "ambiguous_all"},
                                 false, "Site pattern compression mode - unique | ambiguous_constant | ambiguous_all (default unique)"),
                         new Arguments.RealOption("ambiguous_threshold", "at", 0.0, 1.0, "Maximum proportion of ambiguous characters to allow compression (default 0.25)"),
 
+                        new Arguments.Section("BEAGLE"),
                         new Arguments.Option("beagle", "b", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "bi", "BEAGLE: show information on available resources"),
                         new Arguments.Option("beagle_auto", "ba", "BEAGLE: automatically select fastest resource for analysis"),
@@ -508,13 +534,14 @@ public class BeastMain {
                         new Arguments.Option("beagle_single", null, "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", null, "BEAGLE: use double precision if available"),
                         new Arguments.Option("beagle_async", null, "BEAGLE: use asynchronous kernels if available"),
-                        new Arguments.Option("beagle_low_memory", null, "BEAGLE: use lower memory pre-order traversal kernels"),
                         new Arguments.StringOption("beagle_extra_buffer_count", null, "buffer_count", "BEAGLE: reserve extra transition matrix buffers for convolutions"),
                         new Arguments.StringOption("beagle_scaling", "bs", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("beagle_delay_scaling_off", null, "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", null, "BEAGLE: frequency of rescaling (dynamic scaling only)"),
 
+                        new Arguments.Section("Tempered MCMC"),
+                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.StringOption("particles", null, "FOLDER", "Specify a folder of particle start states"),
 
                         new Arguments.IntegerOption("chains", null, 1, Integer.MAX_VALUE, "number of independent chains to run (default 1)"),
@@ -529,6 +556,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("mc3_swap", null, 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
                         new Arguments.StringOption("mc3_scheme", null, "NAME", "Specify parallel tempering swap scheme"),
 
+                        new Arguments.Section("Checkpointing"),
                         new Arguments.StringOption("load_state", null, "FILENAME", "Specify a filename to load a saved state from"),
                         new Arguments.StringOption("save_stem", null, "FILENAME", "Specify a stem for the filenames to save states to"),
                         new Arguments.LongOption("save_at", null, "Specify a state at which to save a state file"),
@@ -539,10 +567,12 @@ public class BeastMain {
                         new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
                         new Arguments.LongOption("checkpoint_seed", null, "Seed specified for checkpoint restart"),
 
+                        new Arguments.Section("Citations and plugins"),
                         new Arguments.StringOption("citations_file", null, "FILENAME", "Specify a filename to write a citation list to"),
                         new Arguments.Option("citations_off", null, "Turn off writing citations to file"),
                         new Arguments.StringOption("plugins_dir",null,  "FILENAME", "Specify a directory to load plugins from, multiple can be separated with ':' "),
 
+                        new Arguments.Section("Information"),
                         new Arguments.Option("version", "v", "Print the version and credits and stop"),
                         new Arguments.Option("help", "h", "Print this information and stop"),
                 });
@@ -640,6 +670,19 @@ public class BeastMain {
                 fileNamePrefix = arguments.getStringOption("prefix");
             }
 
+            if (arguments.hasOption("output")) {
+                File outputDirectory = new File(arguments.getStringOption("output")).getAbsoluteFile();
+                try {
+                    OutputFileHelper.validateOutputDirectory(outputDirectory);
+                } catch (IOException ioe) {
+                    System.err.println(ioe.getMessage());
+                    System.err.println();
+                    printUsage(arguments);
+                    System.exit(1);
+                }
+                System.setProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY, outputDirectory.getPath());
+            }
+
             // ============= Evaluation approximations =============
 
             if (arguments.hasOption("pattern_compression")) {
@@ -719,12 +762,20 @@ public class BeastMain {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
         }
 
-        if (arguments.hasOption("beagle_low_memory")) {
-            beagleFlags |= BeagleFlag.PREORDER_TRANSPOSE_LOW_MEMORY.getMask();
-        }
-
         if (arguments.hasOption("beagle_order")) {
             System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_order"));
+        }
+
+        // these override what the XML file says, so that a file can be run short, or sampled more or
+        // less often, without being edited
+        if (arguments.hasOption("chain_length")) {
+            System.setProperty(RuntimeOverrides.CHAIN_LENGTH_PROPERTY,
+                    Long.toString(arguments.getLongOption("chain_length")));
+        }
+
+        if (arguments.hasOption("log_every")) {
+            System.setProperty(RuntimeOverrides.LOG_EVERY_PROPERTY,
+                    Long.toString(arguments.getLongOption("log_every")));
         }
 
         if (arguments.hasOption("beagle_instances")) {
@@ -837,12 +888,12 @@ public class BeastMain {
 
             if (arguments.hasOption("save_state")) {
                 String stateFile = arguments.getStringOption("save_state");
-                System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, stateFile);
+                System.setProperty(BeastCheckpointer.SAVE_STATE_FILE, resolveOutputPath(stateFile));
             }
 
             if (arguments.hasOption("save_stem")) {
                 String stemName = arguments.getStringOption("save_stem");
-                System.setProperty(BeastCheckpointer.SAVE_STEM, stemName);
+                System.setProperty(BeastCheckpointer.SAVE_STEM, resolveOutputPath(stemName));
             }
 
             if (arguments.hasOption("full_checkpoint_precision")) {
@@ -878,30 +929,35 @@ public class BeastMain {
         // don't include the pre-release commit in the window title bar
         String nameString = "BEAST X v" + version.getVersion();
 
-        if (window) {
-            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+        if (window || options) {
+            // the menu bar at the top of the screen, and the application's name in it when run from a jar
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            System.setProperty("apple.awt.showGrowBox", "true");
+            System.setProperty("apple.awt.application.name", "BEAST");
+        }
 
-            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+        // the about box, laid out as BEAUti's: the icon beside the title, then this below
+        final String aboutTitle = "BEAST X";
+        final String aboutString = "<html>" +
+                "<div style=\"font-family:HelveticaNeue, Helvetica, Arial, sans-serif; " +
+                "background-color: " + BeastConsoleApp.backgroundColor + "; color: " + BeastConsoleApp.foregroundColor + ";" +
+                "\">" +
+                "<center>" +
+                "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                "<hr><div style=\"font-size:11;\">" +
+                version.getHTMLCredits() +
+                "</div></center></div></html>";
 
-            String titleString = "<html>" +
-                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
-                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST X</p>" +
-                    "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
-                    "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
-                    "</div></html>";
+        if (window) {
+            javax.swing.Icon fullIcon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            javax.swing.Icon icon = IconUtils.resize(fullIcon, 128, 128);
 
-            String aboutString = "<html>" +
-                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; " +
-                    "font-weight: 100;" +
-                    "background: #35484F; color: #CBB944\">" +
-                    "<center>" +
-                    version.getHTMLCredits() +
-                    "</div></center></div></html>";
-
-            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString,  icon);
+            consoleApp = new BeastConsoleApp(nameString, aboutTitle, aboutString,  icon);
             consoleApp.initialize();
+            if (OSType.isMac()) {
+                // the application menu and Dock icon (jam's own adapter needs com.apple.eawt)
+                MacDesktopIntegration.register(consoleApp, fullIcon);
+            }
 
         }
 
@@ -919,12 +975,27 @@ public class BeastMain {
                     "<div style=\"font-weight: 300; font-size: 10px\"><a href=\"" + version.getBuildString() + "\">" +
                     version.getBuildString() + "</a></div>" +
                     "</div></html>";
-            javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+            final javax.swing.Icon icon = IconUtils.resize(IconUtils.getIcon(BeastMain.class, "images/beast.png"), 128, 128);
+
+            if (OSType.isMac() && !window) {
+                // About and the Dock icon for the dialog alone (with a window the console application has them)
+                final javax.swing.Icon fullIcon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+                MacDesktopIntegration.registerAbout(new Runnable() {
+                    public void run() {
+                        new SimpleAboutDialog(aboutTitle, aboutString, fullIcon, Color.decode(BeastConsoleApp.backgroundColor),
+                                Color.decode(BeastConsoleApp.foregroundColor)).setVisible(true);
+                    }
+                }, fullIcon);
+            }
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
             dialog.setAllowOverwrite(allowOverwrite);
             dialog.setSeed(seed);
+
+            if (System.getProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY) != null) {
+                dialog.setOutputDirectory(new File(System.getProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY)));
+            }
 
             //dialog.setUseBeagle(useBeagle);
 
@@ -939,7 +1010,9 @@ public class BeastMain {
             }
 
             if (!dialog.showDialog(nameString)) {
-                return;
+                // Quit was pressed or the dialog was closed: the hidden dialog windows would
+                // otherwise keep the application alive after main returns
+                System.exit(0);
             }
 
             if (dialog.allowOverwrite()) {
@@ -969,10 +1042,18 @@ public class BeastMain {
             }
             System.setProperty("beagle.scaling", dialog.scalingScheme());
 
+            File outputDirectory = dialog.getOutputDirectory();
+            if (outputDirectory != null) {
+                // the dialog has already checked that the folder exists and is writable
+                System.setProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY, outputDirectory.getPath());
+            } else {
+                System.clearProperty(OutputFileHelper.OUTPUT_DIR_PROPERTY);
+            }
+
             inputFile = dialog.getInputFile();
             if (!beagleShowInfo && inputFile == null) {
                 System.err.println("No input file specified");
-                return;
+                System.exit(1);
             }
 
         }

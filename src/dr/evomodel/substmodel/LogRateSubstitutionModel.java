@@ -67,8 +67,7 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
     }
 
     protected void setupRelativeRates(double[] rates) {
-        double[] transformedRates = lrm.getRates();
-        System.arraycopy(transformedRates,0,rates,0,rates.length);
+        lrm.fillRates(rates);
     }
 
     @Override
@@ -136,6 +135,13 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
             Qknown = true;
         }
     }
+
+    @Override
+    protected void restoreState() {
+        super.restoreState();
+        Qknown = false;
+    }
+
     @Override
     public WrappedMatrix getInfinitesimalDifferentialMatrix(DifferentialMassProvider.DifferentialWrapper.WrtParameter wrt) { // TODO this is duplicated code from DifferentialMassProvider
 
@@ -249,8 +255,9 @@ public class LogRateSubstitutionModel extends ComplexSubstitutionModel implement
         double derivative = 0;
 
         if (getNormalization()) {
+            final double[] normalizationFrequencies = getNormalizationFrequencies();
             for (int i = 0; i < stateCount; ++i) {
-                derivative -= differentialMassMatrix[i][i] * getFrequencyModel().getFrequency(i); // TODO CHECK THIS
+                derivative -= differentialMassMatrix[i][i] * normalizationFrequencies[i];
             }
         }
         return derivative;

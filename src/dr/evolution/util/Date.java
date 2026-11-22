@@ -44,6 +44,7 @@ public class Date extends TimeScale implements Attribute {
 
     public static final String DATE = "date";
     private double uncertainty = 0.0;
+    private boolean uncertaintyCentred = false;
 
     /**
      * Constructor for relative to origin
@@ -269,8 +270,28 @@ public class Date extends TimeScale implements Attribute {
 
 	private NumberFormatter formatter = new NumberFormatter(5);
 
+    /**
+     * Sets the uncertainty of the date as a window that starts at the date and runs forwards in time (so
+     * for a date that runs forwards, from the value to the value plus the uncertainty).
+     */
     public void setUncertainty(double uncertainty) {
+        setUncertainty(uncertainty, false);
+    }
+
+    /**
+     * @param uncertainty the width of the window the date lies in
+     * @param centred     true if the date is the middle of the window, false if it is the start of it
+     */
+    public void setUncertainty(double uncertainty, boolean centred) {
         this.uncertainty = uncertainty;
+        this.uncertaintyCentred = centred;
+    }
+
+    /**
+     * @return true if the date is the middle of its window of uncertainty, false if it is the start
+     */
+    public boolean isUncertaintyCentred() {
+        return uncertaintyCentred;
     }
 
     public double getUncertainty() {

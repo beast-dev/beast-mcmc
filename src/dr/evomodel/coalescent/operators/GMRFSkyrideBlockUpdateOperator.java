@@ -27,7 +27,7 @@
 
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.OldGMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.legacy.OldGMRFSkyrideLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
@@ -346,7 +346,7 @@ public class GMRFSkyrideBlockUpdateOperator extends AbstractAdaptableOperator {
 
     //MCMCOperator INTERFACE
 
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 

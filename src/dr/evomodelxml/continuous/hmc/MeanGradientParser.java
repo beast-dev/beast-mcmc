@@ -31,14 +31,14 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.treedatalikelihood.DataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.TreeDataLikelihood;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient;
+import dr.evomodel.treedatalikelihood.hmc.CanonicalMeanParameterGradient;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import static dr.evomodel.treedatalikelihood.hmc.AbstractDiffusionGradient.ParameterDiffusionGradient.createDriftGradient;
 import static dr.evomodelxml.treelikelihood.TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -57,6 +57,9 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     private final static String DRIFT = "drift";
     private final static String OPT = "opt";
     private final static String BOTH = "both";
+    private final static String IMPLEMENTATION = "implementation";
+    private final static String IMPLEMENTATION_LEGACY = "legacy";
+    private final static String IMPLEMENTATION_CANONICAL = "canonical";
     private static final String TRAIT_NAME = TreeTraitParserUtilities.TRAIT_NAME;
 
     @Override
@@ -65,22 +68,73 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     }
 
     private ParameterMode parseParameterMode(XMLObject xo,
-                                             ContinuousDataLikelihoodDelegate continuousData,
+                                             CtsCompatibility continuousData,
                                              Parameter parameter) throws XMLParseException {
         // Choose which parameter(s) to update.
         ParameterMode mode = ParameterMode.WRT_DRIFT;
         String parameterString = xo.getAttribute(PARAMETER, DRIFT).toLowerCase();
+        Parameter rootMeanParameter = continuousData.getRootPrior() != null
+                ? continuousData.getRootPrior().getMeanParameter()
+                : null;
         if (parameterString.compareTo(ROOT) == 0) {
             mode = ParameterMode.WRT_ROOT;
         } else if (parameterString.compareTo(BOTH) == 0) {
             mode = ParameterMode.WRT_BOTH;
+        } else if (parameterString.compareTo(OPT) == 0) {
+            if (sharesRootMeanParameter(rootMeanParameter, parameter)) {
+                mode = ParameterMode.WRT_BOTH;
+            } else {
+                mode = ParameterMode.WRT_DRIFT;
+            }
+        } else if (parameterString.compareTo(DRIFT) == 0) {
+            mode = ParameterMode.WRT_DRIFT;
         } else {
             DiffusionProcessDelegate diffusionDelegate = continuousData.getDiffusionProcessDelegate();
             assert diffusionDelegate instanceof AbstractDriftDiffusionModelDelegate : "Model does not have drift.";
             assert ((AbstractDriftDiffusionModelDelegate) diffusionDelegate).isConstantDrift() : "Model does not have constant drift.";
-            if (continuousData.getRootPrior().getMeanParameter() == parameter) mode = ParameterMode.WRT_BOTH;
+            if (sharesRootMeanParameter(rootMeanParameter, parameter)) {
+                mode = ParameterMode.WRT_BOTH;
+            }
         }
         return mode;
+    }
+
+    private boolean sharesRootMeanParameter(final Parameter rootMeanParameter, final Parameter candidateParameter) {
+        if (rootMeanParameter == candidateParameter) {
+            return true;
+        }
+        if (rootMeanParameter == null || candidateParameter == null) {
+            return false;
+        }
+
+        final String rootId = rootMeanParameter.getId();
+        final String candidateId = candidateParameter.getId();
+        if (rootId != null && rootId.equals(candidateId)) {
+            return true;
+        }
+
+        if (rootMeanParameter instanceof CompoundParameter && candidateParameter instanceof CompoundParameter) {
+            final CompoundParameter rootCompound = (CompoundParameter) rootMeanParameter;
+            final CompoundParameter candidateCompound = (CompoundParameter) candidateParameter;
+            if (rootCompound.getParameterCount() != candidateCompound.getParameterCount()) {
+                return false;
+            }
+            for (int i = 0; i < rootCompound.getParameterCount(); ++i) {
+                final Parameter rootPart = rootCompound.getParameter(i);
+                final Parameter candidatePart = candidateCompound.getParameter(i);
+                if (rootPart == candidatePart) {
+                    continue;
+                }
+                final String rootPartId = rootPart.getId();
+                final String candidatePartId = candidatePart.getId();
+                if (rootPartId == null || !rootPartId.equals(candidatePartId)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
     enum ParameterMode {
@@ -119,16 +173,43 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
         int dim = treeDataLikelihood.getDataLikelihoodDelegate().getTraitDim();
         Tree tree = treeDataLikelihood.getTree();
 
+        final CtsCompatibility compatibleData;
+        if (delegate instanceof CtsCompatibility) {
+            compatibleData = (CtsCompatibility) delegate;
+        } else {
+            throw new XMLParseException("meanGradient requires a continuous trait likelihood delegate.");
+        }
+
+        ParameterMode parameterMode = parseParameterMode(xo, compatibleData, parameter);
+
+        final String implementation = xo.getAttribute(IMPLEMENTATION, IMPLEMENTATION_LEGACY).toLowerCase();
+        final boolean useCanonicalImplementation =
+                IMPLEMENTATION_CANONICAL.equals(implementation)
+                        || (IMPLEMENTATION_LEGACY.equals(implementation) && compatibleData.usesCanonicalOULikelihood());
+
+        if (useCanonicalImplementation) {
+            if (!compatibleData.usesCanonicalOULikelihood()) {
+                throw new XMLParseException(
+                        "meanGradient implementation=\"canonical\" requires "
+                                + "traitDataLikelihood implementation=\"canonical\".");
+            }
+            return new CanonicalMeanParameterGradient(
+                    treeDataLikelihood,
+                    compatibleData,
+                    parameter,
+                    parameterMode != ParameterMode.WRT_ROOT,
+                    parameterMode != ParameterMode.WRT_DRIFT);
+        }
+
+        if (!(delegate instanceof ContinuousDataLikelihoodDelegate)) {
+            throw new XMLParseException(
+                    "meanGradient legacy implementation requires a legacy ContinuousDataLikelihoodDelegate.");
+        }
         ContinuousDataLikelihoodDelegate continuousData = (ContinuousDataLikelihoodDelegate) delegate;
-
-        ParameterMode parameterMode = parseParameterMode(xo, continuousData, parameter);
-
-        ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient traitGradient =
+        final ContinuousTraitGradientForBranch traitGradient =
                 new ContinuousTraitGradientForBranch.ContinuousProcessParameterGradient(
                         dim, tree, continuousData,
-                        new ArrayList<>(
-                                Arrays.asList(parameterMode.getDerivationParameter())
-                        ));
+                        java.util.Collections.singletonList(parameterMode.getDerivationParameter()));
         BranchSpecificGradient branchSpecificGradient =
                 new BranchSpecificGradient(traitName, treeDataLikelihood, continuousData, traitGradient, parameter);
 
@@ -143,6 +224,9 @@ public class MeanGradientParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Likelihood.class),
             new ElementRule(Parameter.class),
+            AttributeRule.newStringRule(PARAMETER, true),
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
+            AttributeRule.newStringRule(TRAIT_NAME, true),
     };
 
     @Override

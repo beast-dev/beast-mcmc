@@ -423,7 +423,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         pathParameter=beta;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return EllipticalSliceOperatorParser.ELLIPTICAL_SLICE_SAMPLER;
     }
 

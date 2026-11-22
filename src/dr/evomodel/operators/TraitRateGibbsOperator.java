@@ -157,7 +157,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return GIBBS_OPERATOR;
     }
 

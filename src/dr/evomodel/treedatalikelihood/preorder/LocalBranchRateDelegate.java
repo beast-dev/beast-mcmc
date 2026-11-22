@@ -91,7 +91,7 @@ public class LocalBranchRateDelegate extends ProcessSimulationDelegate.AbstractD
     }
 
     @Override
-    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
         int k = 0;
         for (NodeOperation tmpNodeOperation : nodeOperations) {
             operations[k++] = tmpNodeOperation.getLeftChild();

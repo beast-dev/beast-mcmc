@@ -27,13 +27,14 @@
 
 package dr.app.beauti.taxonsetspanel;
 
-import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.table.TableEditorStopper;
+import dr.app.beauti.util.VectorIcons;
 import dr.app.gui.table.DateCellEditor;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -42,7 +43,6 @@ import dr.util.DataTable;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
-import jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -222,13 +222,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         includedTaxonSetsComboBox.setOpaque(false);
         panel2.add(includedTaxonSetsComboBox);
 
-        Icon includeIcon = null, excludeIcon = null;
-        try {
-            includeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/include.png"));
-            excludeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/exclude.png"));
-        } catch (Exception e) {
-            // do nothing
-        }
+        Icon includeIcon = VectorIcons.circleArrow(12, new Color(0x4B, 0xA3, 0x4B), true);
+        Icon excludeIcon = VectorIcons.circleArrow(12, new Color(0xD0, 0x40, 0x40), false);
 
         JPanel buttonPanel = createAddRemoveButtonPanel(includeTaxonAction, includeIcon, "Include selected "
                         + TAXA.toLowerCase() + " in the " + TAXON.toLowerCase(),
@@ -240,14 +235,13 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetEditingPanel.setOpaque(false);
         taxonSetEditingPanel.setLayout(new GridBagLayout());
 
+        // (Aqua draws these as small round search fields; other look and feels ignore the properties)
         excludedTaxaSearchField.setColumns(12);
-//        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
-        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
-        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        excludedTaxaSearchField.putClientProperty("JComponent.sizeVariant", "small");
         includedTaxaSearchField.setColumns(12);
-//        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
-        includedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
-        includedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        includedTaxaSearchField.putClientProperty("JComponent.sizeVariant", "small");
 
         GridBagConstraints c = new GridBagConstraints();
 
@@ -372,15 +366,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         add(toolBar1, BorderLayout.NORTH);
         add(panel3, BorderLayout.CENTER);
 
-//		taxonSetsTable.addMouseListener(new MouseAdapter() {
-//			public void mouseClicked(MouseEvent e) {
-//				if (e.getClickCount() == 2) {
-//					JTable target = (JTable)e.getSource();
-//					int row = target.getSelectedRow();
-//					taxonSetsTableDoubleClicked(row);
-//				}
-//			}
-//		});
 
         includedTaxaSearchField.getDocument().addDocumentListener(new DocumentListener() {
                                                                       public void changedUpdate(DocumentEvent e) {
@@ -578,6 +563,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 taxonSetsTableSelectionChanged();
             }
         });
+        // a name being typed is taken when the table loses the focus (e.g. to the Generate button)
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxonSetsTable);
+
         taxonSetsTable.doLayout();
     }
 
@@ -631,9 +619,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-//		options.datesUnits = unitsCombo.getSelectedIndex();
-//		options.datesDirection = directionCombo.getSelectedIndex();
-//		options.translation = translationCombo.getSelectedIndex();
     }
 
     public JComponent getExportableComponent() {
@@ -664,9 +649,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 //
 //		setCurrentTaxonSet(currentTaxonSet);
 //
-//		int sel = taxonSets.indexOf(currentTaxonSet);
-//		taxonSetsTable.setRowSelectionInterval(sel, sel);
-//	}
 
     Action addTaxonSetAction = new AbstractAction("+") {
 
@@ -711,6 +693,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 Taxa taxa = options.taxonSets.remove(row);
                 options.taxonSetsMono.remove(taxa);
                 options.taxonSetsIncludeStem.remove(taxa);
+                // these two were left behind, so the removed set still had a tree and a height
+                options.taxonSetsTreeModel.remove(taxa);
+                options.taxonSetsHeights.remove(taxa);
             }
             taxonSetChanged();
 
@@ -848,6 +833,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             taxa.setId(name);
             options.taxonSets.add(taxa);
             options.taxonSetsTreeModel.put(taxa, options.getPartitionTreeModels().get(0));
+            options.taxonSetsMono.put(taxa, false);
+            options.taxonSetsIncludeStem.put(taxa, false);
+            options.taxonSetsHeights.put(taxa, 0.0);
         } else {
             // assume column one is the taxon labels and column two is the set names
             String[] taxonSetNames = dataTable.getColumn(0);

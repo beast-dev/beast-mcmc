@@ -84,7 +84,7 @@ public class SubstitutionModelGenerator extends Generator {
                                 writeGTRModel(i, writer, model);
                                 break;
                             default:
-                                throw new IllegalArgumentException("unknown substition model type");
+                                throw new IllegalArgumentException("unknown substitution model type");
                         }
                     }
                 } else {
@@ -137,8 +137,6 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.COVARION:
 
                 switch (model.getBinarySubstitutionModel()) {
-                    case BIN_DOLLO:
-                        return;
                     case BIN_SIMPLE:
                         writeBinarySimpleModel(writer, model);
                         break;
@@ -407,10 +405,6 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             List<AbstractPartitionData> partitions = options.getDataPartitions(model);
             Alignment alignment = ((PartitionData) partitions.get(0)).getAlignment();
-//            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
-//            for (int i = 1; i < partitions.size(); i++) {
-//                patterns.addPatterns(partitions.get(i).getAlignment());
-//            }
             double[] frequencies = alignment.getStateFrequencies();
             writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
@@ -461,10 +455,6 @@ public class SubstitutionModelGenerator extends Generator {
 // single partition use clock.rate, no "mu"; multi-partition use "allmus"
 //                if (codonPartitionCount > 1) {
 //
-//                    for (int i = 1; i <= codonPartitionCount; i++) {
-//                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
-//                    }
-//                }
                 switch (model.getNucSubstitutionModel()) {
                     case HKY:
                         if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
@@ -530,7 +520,6 @@ public class SubstitutionModelGenerator extends Generator {
                 String prefix = model.getPrefix();
                 switch (model.getBinarySubstitutionModel()) {
                     case BIN_SIMPLE:
-                    case BIN_DOLLO:
                         break;
                     case BIN_COVARION:
                         writeParameterRef(prefix + "bcov.alpha", writer);
@@ -574,6 +563,39 @@ public class SubstitutionModelGenerator extends Generator {
             } else {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "pInv");
             }
+        }
+    }
+
+    /**
+     * Writes an idref to the partition model's substitution model (for the MAT likelihood, which takes the
+     * model directly; the model is not partitioned into codon positions).
+     */
+    public static void writeSubstitutionModelRef(PartitionSubstitutionModel model, XMLWriter writer) {
+        String prefix = model.getPrefix();
+        switch (model.getDataType().getType()) {
+            case DataType.NUCLEOTIDES:
+                switch (model.getNucSubstitutionModel()) {
+                    case JC:
+                        writer.writeIDref(NucModelType.HKY.getXMLName(), prefix + "jc");
+                        break;
+                    case HKY:
+                        writer.writeIDref(NucModelType.HKY.getXMLName(), prefix + "hky");
+                        break;
+                    case GTR:
+                        writer.writeIDref(GTRParser.GTR_MODEL, prefix + "gtr");
+                        break;
+                    case TN93:
+                        writer.writeIDref(NucModelType.TN93.getXMLName(), prefix + "tn93");
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unknown substitution model.");
+                }
+                break;
+            case DataType.AMINO_ACIDS:
+                writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
+                break;
+            default:
+                throw new IllegalArgumentException("The MAT likelihood supports nucleotide and amino acid data only.");
         }
     }
 
@@ -728,8 +750,6 @@ public class SubstitutionModelGenerator extends Generator {
             case BIN_COVARION:
                 writer.writeIDref(BinaryCovarionModelParser.COVARION_MODEL, prefix + "bcov");
                 break;
-            case BIN_DOLLO:
-                break; // Handled by component
             default:
                 throw new IllegalArgumentException("Unknown substitution model.");
         }

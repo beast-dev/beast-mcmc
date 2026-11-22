@@ -61,6 +61,7 @@ public enum OperatorType {
     SUBTREE_SLIDE("subtreeSlide"),
     FIXED_HEIGHT_SUBTREE_PRUNE_REGRAFT("fixedHeightSPR"),
     SUBTREE_LEAP("subtreeLeap"),
+    SUBTREE_LEAP_WIDE("subtreeLeapWide"),
     ADAPTIVE_MULTIVARIATE("adaptiveMultivariate"),
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
@@ -73,7 +74,9 @@ public enum OperatorType {
     RELAXED_CLOCK_HMC_RATE_OPERATOR("relaxedClockHMCRateOperator"),
     RELAXED_CLOCK_HMC_SCALE_OPERATOR("relaxedClockHMCScaleOperator"),
     SHRINKAGE_CLOCK_HMC_OPERATOR("shrinkageClockHMCOperator"),
-    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator");
+    SHRINKAGE_CLOCK_GIBBS_OPERATOR("relaxedClockGibbsOperator"),
+    MUTATION_HISTORY_GIBBS("mutationHistoryGibbs"),
+    SITE_RATE_CATEGORY_GIBBS("siteRateCategoryGibbs");
 
     OperatorType(String displayName) {
         this.displayName = displayName;

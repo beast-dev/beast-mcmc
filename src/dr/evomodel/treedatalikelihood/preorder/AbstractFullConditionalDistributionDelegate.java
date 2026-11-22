@@ -30,10 +30,10 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
 import dr.evomodel.treedatalikelihood.continuous.ConjugateRootTraitPrior;
-import dr.evomodel.treedatalikelihood.continuous.ContinuousDataLikelihoodDelegate;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousRateTransformation;
 import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.cdi.ContinuousDiffusionIntegrator;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.math.matrixAlgebra.WrappedVector;
 
 import java.util.List;
@@ -49,7 +49,7 @@ public abstract class AbstractFullConditionalDistributionDelegate
                                                 ContinuousTraitPartialsProvider dataModel,
                                                 ConjugateRootTraitPrior rootPrior,
                                                 ContinuousRateTransformation rateTransformation,
-                                                ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                                CtsCompatibility likelihoodDelegate) {
 
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         this.likelihoodDelegate = likelihoodDelegate;
@@ -59,7 +59,9 @@ public abstract class AbstractFullConditionalDistributionDelegate
         this.partialRootBuffer = new double[numTraits * dimPartial];
     }
 
+    @Override
     public int vectorizeNodeOperations(final List<NodeOperation> nodeOperations,
+                                       final int rootNodeNumber,
                                        final int[] operations) {
         return likelihoodDelegate.vectorizeNodeOperations(nodeOperations, operations);
     }
@@ -68,7 +70,7 @@ public abstract class AbstractFullConditionalDistributionDelegate
         return false;
     }
 
-    protected final ContinuousDataLikelihoodDelegate likelihoodDelegate;
+    protected final CtsCompatibility likelihoodDelegate;
     protected final ContinuousDiffusionIntegrator cdi;
     protected final int dimPartial;
     final double[] partialNodeBuffer;

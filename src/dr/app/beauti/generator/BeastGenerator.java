@@ -31,6 +31,9 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -59,6 +62,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
@@ -172,14 +178,6 @@ public class BeastGenerator extends Generator {
 
             //++++++++++++++++ Traits ++++++++++++++++++
             // missing data is not necessarily an issue...
-//        for (TraitData trait : options.traits) {
-//            for (int i = 0; i < trait.getTaxaCount(); i++) {
-////                System.out.println("Taxon " + trait.getTaxon(i).getId() + " : [" + trait.getTaxon(i).getAttribute(trait.getName()) + "]");
-//                if (!trait.hasValue(i))
-//                    throw new IllegalArgumentException("Taxon " + trait.getTaxon(i).getId() +
-//                            " has no value for Trait " + trait.getName());
-//            }
-//        }
 
             //++++++++++++++++ Tree Prior ++++++++++++++++++
 //        if (options.isShareSameTreePrior()) {
@@ -239,6 +237,32 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            //++++++++++++++++ Robust Counting ++++++++++++++++++
+            // the three codon positions are compared site by site, so they must be the same length
+            AncestralStatesComponentOptions ancestralStates = (AncestralStatesComponentOptions)
+                    options.getComponentOptions(AncestralStatesComponentOptions.class);
+            for (AbstractPartitionData partition : options.getDataPartitions()) {
+                if (ancestralStates.dNdSRobustCounting(partition)) {
+                    String reason = ancestralStates.dNdSRobustCountingUnavailableReason(partition);
+                    if (reason != null) {
+                        throw new GeneratorException("Renaissance counting cannot be used for partition \"" +
+                                partition.getName() + "\":\n" + reason, BeautiFrame.ANCESTRAL_STATES);
+                    }
+                }
+            }
+
+            //++++++++++++++++ Hierarchical Models ++++++++++++++++++
+            // a hierarchical model holds its parameters directly, so one built before the analysis was
+            // changed can be left over parameters that are no longer in it; such a model would be written
+            // out referring to parameters that the file does not declare
+            HierarchicalModelComponentOptions hpmOptions = (HierarchicalModelComponentOptions)
+                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
+            String prunedHPMs = hpmOptions.pruneToActiveParameters(options.selectParameters());
+            if (prunedHPMs != null) {
+                throw new GeneratorException(prunedHPMs +
+                        "\n\nCheck the Priors panel, then generate the file again.", BeautiFrame.PRIORS);
+            }
+
             //++++++++++++++++ Prior Bounds ++++++++++++++++++
             for (Parameter param : options.selectParameters()) {
                 if (!Double.isNaN(param.getInitial()) ) {
@@ -263,12 +287,38 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            //++++++++++++++++ Clock Model ++++++++++++++++++
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                if (model.getClockType() == ClockType.HMC_CLOCK &&
+                        model.getClockDistributionType() != ClockDistributionType.LOGNORMAL) {
+                    throw new GeneratorException("The HMC relaxed clock of " + model.getName() +
+                            " is only available with a lognormal distribution.", BeautiFrame.CLOCK_MODELS);
+                }
+            }
+
+            //++++++++++++++++ Priors ++++++++++++++++++
+            for (Parameter param : options.selectParameters()) {
+                if (param.priorType == PriorType.UNIFORM_PRIOR && param.isPriorImproper()) {
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\na uniform prior cannot have an infinite bound." +
+                            "\nGive it bounds, or choose the improper uniform prior.", BeautiFrame.PRIORS);
+                }
+            }
+
             checkComponentOptions();
+
+            //++++++++++++++++ MAT likelihood engine ++++++++++++++++++
+            if (options.isMAT()) {
+                checkMATOptions();
+            }
 
             // add other tests and warnings here
             // Speciation model with dated tips
             // Sampling rates without dated tips or priors on rate or nodes
 
+        } catch (GeneratorException ge) {
+            // thrown by a check above, with the panel the user should be taken to
+            throw ge;
         } catch (Exception e) {
             // catch any other exceptions here and rethrow to generate messages
             throw new GeneratorException(e.getMessage());
@@ -296,6 +346,75 @@ public class BeastGenerator extends Generator {
     }
 
     /**
+     * The MAT (mutation-annotated tree) likelihood takes one pattern list per tree, resamples the mutation
+     * history only along with the subtree-leap and fixed-height SPR moves, has no invariant sites, treats
+     * ambiguous states as missing, provides no gradients and has been validated with the strict and
+     * uncorrelated relaxed clocks only.
+     */
+    private void checkMATOptions() throws GeneratorException {
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
+        SequenceErrorModelComponentOptions sequenceErrorOptions = (SequenceErrorModelComponentOptions) options
+                .getComponentOptions(SequenceErrorModelComponentOptions.class);
+
+        final String engine = "The MAT likelihood engine (see the " + BeautiFrame.SITE_MODELS + " panel) ";
+        for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+            int sequencePartitions = 0;
+            for (AbstractPartitionData partition : options.getDataPartitions(treeModel)) {
+                PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+                if (model == null) {
+                    continue;
+                }
+                int dataType = model.getDataType().getType();
+                if (dataType != DataType.NUCLEOTIDES && dataType != DataType.AMINO_ACIDS) {
+                    continue;
+                }
+                sequencePartitions++;
+                if (model.getCodonHeteroPattern() != null) {
+                    throw new GeneratorException(engine + "takes one pattern list per tree, so partition " +
+                            partition.getName() + " cannot be split into codon positions.", BeautiFrame.SITE_MODELS);
+                }
+                if (model.isInvarHetero()) {
+                    throw new GeneratorException(engine + "has no invariant sites model (partition " +
+                            partition.getName() + ").", BeautiFrame.SITE_MODELS);
+                }
+                if (ancestralStatesOptions.usingAncestralStates(partition)) {
+                    throw new GeneratorException(engine + "cannot reconstruct ancestral states or count changes (partition " +
+                            partition.getName() + ").", BeautiFrame.ANCESTRAL_STATES);
+                }
+                if (sequenceErrorOptions.usingSequenceErrorModel(partition)) {
+                    throw new GeneratorException(engine + "cannot be used with a sequence error model (partition " +
+                            partition.getName() + ").", BeautiFrame.ANCESTRAL_STATES);
+                }
+                ClockType clockType = partition.getPartitionClockModel().getClockType();
+                if (clockType == ClockType.HMC_CLOCK || clockType == ClockType.SHRINKAGE_LOCAL_CLOCK) {
+                    throw new GeneratorException(engine + "provides no gradients, so it cannot be used with the " +
+                            clockType + " (partition " + partition.getName() + ").", BeautiFrame.CLOCK_MODELS);
+                }
+                if (clockType != ClockType.STRICT_CLOCK && clockType != ClockType.UNCORRELATED) {
+                    throw new GeneratorException(engine + "has been validated with the strict and uncorrelated " +
+                            "relaxed clocks only; the " + clockType + " is not yet supported (partition " +
+                            partition.getName() + ").", BeautiFrame.CLOCK_MODELS);
+                }
+            }
+            if (sequencePartitions > 1) {
+                throw new GeneratorException(engine + "takes one sequence partition per tree, but " + sequencePartitions +
+                        " share " + treeModel.getName() + ": give each its own tree, merge them, or use BEAGLE.",
+                        BeautiFrame.DATA_PARTITIONS);
+            }
+            if (treeModel.isUsingEmpiricalTrees()) {
+                throw new GeneratorException(engine + "cannot be used with empirical trees (" + treeModel.getName() + ").",
+                        BeautiFrame.TREES);
+            }
+        }
+        if (options.operatorSetType == OperatorSetType.CLASSIC) {
+            throw new GeneratorException(engine + "resamples the mutation history only with the subtree-leap and " +
+                    "fixed-height subtree prune/regraft moves: the classic tree operators cannot be used.",
+                    BeautiFrame.OPERATORS);
+        }
+    }
+
+    /**
      * Generate a beast xml file from these beast options
      *
      * @param file File
@@ -304,8 +423,36 @@ public class BeastGenerator extends Generator {
      *                             ArgumentException
      */
     public void generateXML(File file) throws GeneratorException, IOException, Arguments.ArgumentException {
+        // write to a temporary file and move it into place, so that a failure part way through leaves
+        // neither a half-written file nor a destroyed previous one
+        File directory = file.getAbsoluteFile().getParentFile();
+        File temporaryFile = File.createTempFile(file.getName(), ".tmp", directory);
+        boolean complete = false;
+        try {
+            XMLWriter writer = new XMLWriter(new BufferedWriter(new FileWriter(temporaryFile)));
+            try {
+                writeXML(writer);
+            } finally {
+                writer.close();
+            }
+            if (writer.checkError()) {
+                throw new IOException("The file could not be written in full (the disk may be full).");
+            }
+            try {
+                Files.move(temporaryFile.toPath(), file.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporaryFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            complete = true;
+        } finally {
+            if (!complete) {
+                temporaryFile.delete();
+            }
+        }
+    }
 
-        XMLWriter writer = new XMLWriter(new BufferedWriter(new FileWriter(file)));
+    private void writeXML(XMLWriter writer) throws GeneratorException, Arguments.ArgumentException {
 
         writer.writeText("<?xml version=\"1.0\" standalone=\"yes\"?>");
         writer.writeComment("Generated by BEAUTi " + VERSION.getVersionString(),
@@ -335,6 +482,13 @@ public class BeastGenerator extends Generator {
             writeTaxa(options.taxonList, writer);
 
             writer.writeText("");
+
+            // partitions with different taxa have separate trees, each needing its own taxon list
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                if (!model.getTaxaId().equals(TaxaParser.TAXA)) {
+                    writeTreeTaxa(model, writer);
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -563,6 +717,10 @@ public class BeastGenerator extends Generator {
 
             treeLikelihoodGenerator.writeAllTreeLikelihoods(writer);
 
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                clockModelGenerator.writeHMCClockGradients(model, writer);
+            }
+
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
         } catch (Exception e) {
             e.printStackTrace();
@@ -611,7 +769,6 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag("beast");
         writer.flush();
-        writer.close();
     }
 
     /**
@@ -713,6 +870,27 @@ public class BeastGenerator extends Generator {
 
         if (hasDate || hasAttr) writer.writeCloseTag(TaxonParser.TAXON);
 
+    }
+
+    private void writeTreeTaxa(PartitionTreeModel model, XMLWriter writer) {
+        Taxa taxa = new Taxa();
+        for (AbstractPartitionData partition : options.getDataPartitions(model)) {
+            if (partition.getTaxonList() != null) {
+                for (Taxon taxon : partition.getTaxonList()) {
+                    if (!taxa.contains(taxon)) {
+                        taxa.addTaxon(taxon);
+                    }
+                }
+            }
+        }
+
+        writer.writeComment("The taxa in tree " + model.getName(), "ntax=" + taxa.getTaxonCount());
+        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getTaxaId())});
+        for (Taxon taxon : taxa) {
+            writer.writeIDref(TaxonParser.TAXON, taxon.getId());
+        }
+        writer.writeCloseTag(TaxaParser.TAXA);
+        writer.writeText("");
     }
 
     /**

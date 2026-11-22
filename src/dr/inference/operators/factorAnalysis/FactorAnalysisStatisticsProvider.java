@@ -33,7 +33,6 @@ import dr.inference.model.Variable;
 import dr.inference.model.VariableListener;
 import org.ejml.data.DenseMatrix64F;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 

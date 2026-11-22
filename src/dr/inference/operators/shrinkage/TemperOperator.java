@@ -66,7 +66,7 @@ public class TemperOperator extends SimpleMCMCOperator implements GibbsOperator 
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return BAYESIAN_BRIDGE_PARSER;
     }
 

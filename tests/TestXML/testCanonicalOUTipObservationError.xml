@@ -1,0 +1,167 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <!--
+        Tip observation error in the canonical OU backend: partial/missing tips
+        observed with independent Gaussian error (repeatedMeasuresModel with a
+        diagonal sampling precision), natural coordinates.  The branch-rate
+        gradient is checked against finite differences inside HMC
+        (gradientCheckCount="100").  Tip error is not supported in block-basis
+        coordinates, which keep the exact-tip contract.
+    -->
+
+    <taxa id="taxa">
+        <taxon id="A">
+            <attr name="X">11 ? -2</attr>
+        </taxon>
+        <taxon id="B">
+            <attr name="X">? 2 5</attr>
+        </taxon>
+        <taxon id="C">
+            <attr name="X">? ? ?</attr>
+        </taxon>
+    </taxa>
+
+    <newick id="tree">
+        ((A:1,B:1):1,C:2);
+    </newick>
+
+    <treeModel id="treeModel">
+        <newick idref="tree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+        <nodeTraits name="X" rootNode="false" internalNodes="false" leafNodes="true" traitDimension="3">
+            <parameter id="leafTraits"/>
+        </nodeTraits>
+    </treeModel>
+
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="clock.rate" value="1.0" lower="0.1" upper="10.0"/>
+        </rate>
+    </strictClockBranchRates>
+
+    <multivariateDiffusionModel id="diffusionModel">
+        <precisionMatrix>
+            <matrixParameter id="precisionMatrix">
+                <parameter id="precision.col1" value="1.00 0.20 0.05"/>
+                <parameter id="precision.col2" value="0.20 1.20 0.10"/>
+                <parameter id="precision.col3" value="0.05 0.10 0.90"/>
+            </matrixParameter>
+        </precisionMatrix>
+    </multivariateDiffusionModel>
+
+    <repeatedMeasuresModel id="tipErrorModel" traitName="X">
+        <treeModel idref="treeModel"/>
+        <traitParameter>
+            <parameter idref="leafTraits"/>
+        </traitParameter>
+        <samplingPrecision>
+            <diagonalMatrix>
+                <parameter id="tipError.precision" value="4.0 5.0 6.0" lower="0.0 0.0 0.0"/>
+            </diagonalMatrix>
+        </samplingPrecision>
+    </repeatedMeasuresModel>
+
+    <traitDataLikelihood id="blockOULikelihood" traitName="X"
+                         implementation="canonical-message"
+                         canonicalOUCoordinates="natural" reconstructTraits="false">
+        <multivariateDiffusionModel idref="diffusionModel"/>
+        <treeModel idref="treeModel"/>
+        <repeatedMeasuresModel idref="tipErrorModel"/>
+        <conjugateRootPrior>
+            <meanParameter>
+                <parameter value="0.0 0.0 0.0"/>
+            </meanParameter>
+            <priorSampleSize>
+                <parameter value="10.0"/>
+            </priorSampleSize>
+        </conjugateRootPrior>
+        <strictClockBranchRates idref="branchRates"/>
+        <optimalTraits>
+            <strictClockBranchRates>
+                <rate>
+                    <parameter id="block.optimum.1" value="1.0"/>
+                </rate>
+            </strictClockBranchRates>
+            <strictClockBranchRates>
+                <rate>
+                    <parameter id="block.optimum.2" value="2.0"/>
+                </rate>
+            </strictClockBranchRates>
+            <strictClockBranchRates>
+                <rate>
+                    <parameter id="block.optimum.3" value="-1.0"/>
+                </rate>
+            </strictClockBranchRates>
+        </optimalTraits>
+        <strengthOfSelectionMatrix>
+            <blockDiagonalPolarStableMatrixParameter id="blockSelection">
+                <rotationMatrix>
+                    <matrixParameter id="R.block">
+                        <parameter id="R.block.col1" value="1.00 0.10 0.05"/>
+                        <parameter id="R.block.col2" value="0.20 1.10 0.10"/>
+                        <parameter id="R.block.col3" value="0.05 0.15 0.95"/>
+                    </matrixParameter>
+                </rotationMatrix>
+                <scalarBlock>
+                    <parameter id="block.scalar" value="-2.2" upper="0.0"/>
+                </scalarBlock>
+                <blockRho>
+                    <parameter id="block.rho" value="-1.8" upper="0.0"/>
+                </blockRho>
+                <blockTheta>
+                    <parameter id="block.theta" value="0.2" lower="-0.785398" upper="0.785398"/>
+                </blockTheta>
+                <blockT>
+                    <parameter id="block.t" value="0.15"/>
+                </blockT>
+            </blockDiagonalPolarStableMatrixParameter>
+        </strengthOfSelectionMatrix>
+    </traitDataLikelihood>
+
+    <operators id="operators">
+        <hamiltonianMonteCarloOperator id="blockClockHMC" weight="1.0"
+                                       nSteps="1" stepSize="1.0E-4"
+                                       autoOptimize="false"
+                                       gradientCheckCount="100" gradientCheckTolerance="1e-4">
+            <branchRateGradient id="block.clock.gradient" traitName="X" useHessian="false">
+                <traitDataLikelihood idref="blockOULikelihood"/>
+            </branchRateGradient>
+            <parameter idref="clock.rate"/>
+        </hamiltonianMonteCarloOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="20" autoOptimize="false" fullEvaluation="0" autoOptimizeDelay="0">
+        <posterior id="posterior">
+            <prior id="prior">
+                <uniformPrior lower="0.1" upper="10.0">
+                    <parameter idref="clock.rate"/>
+                </uniformPrior>
+            </prior>
+            <likelihood id="likelihood">
+                <traitDataLikelihood idref="blockOULikelihood"/>
+            </likelihood>
+        </posterior>
+        <operators idref="operators"/>
+        <log id="screenLog" logEvery="20">
+            <column label="Posterior" dp="4" width="12">
+                <posterior idref="posterior"/>
+            </column>
+            <column label="OU" dp="4" width="12">
+                <traitDataLikelihood idref="blockOULikelihood"/>
+            </column>
+            <column label="clock" dp="4" width="12">
+                <parameter idref="clock.rate"/>
+            </column>
+        </log>
+    </mcmc>
+
+</beast>

@@ -1,6 +1,7 @@
 *.iml
 *.ipr
 *.iws
+*.code-workspace
 bin/
 build/
 dist/
@@ -8,20 +9,27 @@ out/
 packaging_tools/**/.*
 Testing/
 tests
-test*
+/test*
 examples/**/.*
 benchmarking
 problem_cases
 .idea
 .DS_Store
+__pycache__
+*.code-workspace
 
 *.log
 *.trees
 *.tree
+*.chkpt
+*.jfr
 *.xml
 !examples/**/*.xml
 !examples/data
 benchmarking/Results/
+optimization_notesmat_*
+optimization_notes/mat_local_spr
+
 !tests/**/*.xml
 !build*.xml
 
@@ -31,10 +39,11 @@ src/version.txt
 *.dmg
 *.zip
 *.tgz
-release*
+release*/
 !release.yml
 src/revision.txt
 
 *.citations.txt
 *.ops
 *.MLE
+.Rproj.user

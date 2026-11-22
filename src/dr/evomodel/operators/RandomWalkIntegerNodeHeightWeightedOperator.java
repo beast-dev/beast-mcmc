@@ -59,7 +59,7 @@ public class RandomWalkIntegerNodeHeightWeightedOperator extends RandomWalkInteg
     }
 
     //MCMCOperator INTERFACE
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "randomWalkIntegerNodeHeightWeighted(" + parameter.getId() + ")";
     }
 

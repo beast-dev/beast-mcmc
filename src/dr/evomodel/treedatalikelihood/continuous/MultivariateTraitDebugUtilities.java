@@ -180,7 +180,7 @@ public class MultivariateTraitDebugUtilities {
 
     private static double getScaledBranchLength(NodeRef node, Tree tree, BranchRates branchRates, double normalization) {
         double branchLength = tree.getBranchLength(node);
-        if (branchRates != null) {
+        if (branchRates != null && !tree.isRoot(node)) { // rate models need not carry a root rate
             branchLength *= branchRates.getBranchRate(tree, node);
         }
         branchLength *= normalization;
@@ -225,9 +225,8 @@ public class MultivariateTraitDebugUtilities {
         }
     }
 
-    public static double[][] getTreeDrift(Tree tree, double[] priorMean, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
+    public static double[][] getTreeDrift(Tree tree, double[] priorMean, int dim, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
-        final int dim = cdi.getDimTrait();
         final double[][] drift = new double[tree.getExternalNodeCount()][dim];
 
         for (int tip = 0; tip < tree.getExternalNodeCount(); ++tip) {
@@ -237,9 +236,8 @@ public class MultivariateTraitDebugUtilities {
         return drift;
     }
 
-    public static double[][] getGraphDrift(Tree tree, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
+    public static double[][] getGraphDrift(Tree tree, int dim, ContinuousDiffusionIntegrator cdi, DiffusionProcessDelegate diffusion) {
 
-        final int dim = cdi.getDimTrait();
         final double[][] drift = new double[tree.getNodeCount()][dim];
 
         final double[] temp = new double[dim];

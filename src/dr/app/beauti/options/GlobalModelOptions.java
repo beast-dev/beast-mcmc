@@ -46,12 +46,12 @@ public class GlobalModelOptions extends ModelOptions {
     public GlobalModelOptions(BeautiOptions options) {
         this.options = options;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
 
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
         createOperator("dataLikelihoodMultivariate", "Multiple", "Adaptive Multivariate Normal", null,
                 OperatorType.ADAPTIVE_MULTIVARIATE, 1.0, treeWeights);
 //        createOperator("treePriorMultivariate", "Multiple", "Adaptive Multivariate Normal", null,

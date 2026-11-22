@@ -77,6 +77,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private final TraitData traitData;
 
     private boolean activateBSSVS = false;
+    private boolean useGaoPriors = false;
     public boolean useAmbiguitiesTreeLikelihood = false;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
@@ -90,7 +91,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private boolean unlinkedHeterogeneityModel = true;
     private boolean unlinkedFrequencyModel = true;
 
-    private boolean dolloModel = false;
 
     private boolean isLatitudeLongitude = false;
     private boolean isIndependent = false;
@@ -118,7 +118,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
 
         dataType = partition.getDataType().getType();
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     /**
@@ -131,36 +131,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         super(options, name);
 
-        nucSubstitutionModel = source.nucSubstitutionModel;
-        aaSubstitutionModel = source.aaSubstitutionModel;
-        binarySubstitutionModel = source.binarySubstitutionModel;
-        discreteSubstType = source.discreteSubstType;
-        continuousSubstModelType = source.continuousSubstModelType;
-        continuousExtensionType = source.continuousExtensionType;
-
         continuousTraitCount = source.continuousTraitCount;
         extendedTraitCount = source.extendedTraitCount;
         dataType = source.dataType;
 
         traitData = source.traitData;
+        partition = source.partition;
 
-        activateBSSVS = source.activateBSSVS;
-        useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
+        copySettingsFrom(source);
 
-        frequencyPolicy = source.frequencyPolicy;
-        freeRatesHetero = source.freeRatesHetero;
-        gammaHetero = source.gammaHetero;
-        rateCategories = source.rateCategories;
-        equalWeights = source.equalWeights;
-        invarHetero = source.invarHetero;
-        codonHeteroPattern = source.codonHeteroPattern;
-        unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
-        unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
-        unlinkedFrequencyModel = source.unlinkedFrequencyModel;
-
-        dolloModel = source.dolloModel;
-
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
@@ -172,7 +152,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         dataType = DataType.NUCLEOTIDES;
 
-        initModelParametersAndOpererators();
+        initModelParametersAndOperators();
     }
 
     public TraitData getTraitData() {
@@ -181,7 +161,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     // only init in PartitionSubstitutionModel
     @Override
-    public void initModelParametersAndOpererators() {
+    public void initModelParametersAndOperators() {
         double substWeights = 1.0;
         if (dataType == DataType.NUCLEOTIDES || dataType == DataType.AMINO_ACIDS) {
             //Substitution model parameters
@@ -233,11 +213,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             createParameterLognormalPrior("CP3.kappa2", "TN93 2nd transition-transversion parameter for codon position 3",
                     PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, true);
 
-//        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP2.frequencies", "GTR base frequencies for codon position 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP1+2.frequencies", "GTR base frequencies for codon positions 1 & 2", UNITY_SCALE, 0.25, 0.0, 1.0);
-//        createParameter("CP3.frequencies", "GTR base frequencies for codon position 3", UNITY_SCALE, 0.25, 0.0, 1.0);
 
             // create the relative rate parameters for the GTR rate matrix
 
@@ -403,6 +378,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             createZeroOneParameterUniformPrior("nu", "relative rate parameter", 1.0, true);
             createNonNegativeParameterInfinitePrior("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, true);
         }
+
+        // for the MAT likelihood engine with gamma rate heterogeneity: about 1% of the subtree moves' weight
+        // (see SiteRateCategoryGibbsOperator); it has no parameter, and the generator finds the partition
+        // through the partition options
+        double categoryWeight = Math.max(options.taxonList.getTaxonCount(), 30) / 100.0;
+        operators.put("siteRateCategoryGibbs", new Operator.Builder("Site rate categories",
+                "Resamples the site rate category of every variable site (MAT likelihood)", null,
+                OperatorType.SITE_RATE_CATEGORY_GIBBS, -1.0, categoryWeight).partitionOptions(this).build());
     }
 
     ////////////////////////////////////////////////////////////////
@@ -508,16 +491,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.AMINO_ACIDS:
-//                if (includeRelativeRates) {
-//                    params.add(getParameter("mu"));
-//                }
                 break;
 
             case DataType.TWO_STATES:
             case DataType.COVARION:
                 switch (binarySubstitutionModel) {
                     case BIN_SIMPLE:
-                    case BIN_DOLLO:
                         break;
 
                     case BIN_COVARION:
@@ -530,9 +509,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     default:
                         throw new IllegalArgumentException("Unknown binary substitution model");
                 }
-//                if (includeRelativeRates) {
-//                    params.add(getParameter("mu"));
-//                }
 
                 // only AMINO_ACIDS not addFrequency
                 addFrequencyParams(params, includeRelativeRates);
@@ -773,7 +749,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             case DataType.COVARION:
                 switch (binarySubstitutionModel) {
                     case BIN_SIMPLE:
-                    case BIN_DOLLO:
                         break;
 
                     case BIN_COVARION:
@@ -852,6 +827,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
                 }
             }
+        }
+
+        if (options.isMAT() && isGammaHetero() &&
+                (dataType == DataType.NUCLEOTIDES || dataType == DataType.AMINO_ACIDS)) {
+            // the MAT likelihood samples each variable site's rate category (it has no parameter)
+            Operator op = getOperator("siteRateCategoryGibbs");
+            if (options.operatorSetType != OperatorSetType.CUSTOM) {
+                op.setUsed(true);
+            }
+            ops.add(op);
         }
 
         operators.addAll(ops);
@@ -1045,6 +1030,34 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.activateBSSVS = activateBSSVS;
     }
 
+    /**
+     * Whether to use the diffuse prior specification of Gao et al. (2023) for this discrete trait
+     * diffusion model: a hierarchical exponential prior on the overall rate scalar, and a Poisson
+     * prior on the number of non-zero rates centred on half of them. Both recommendations are made
+     * for the forward-in-time CTMC, so the option does not apply to the backward-in-time model.
+     * Under the GLM only the rate scalar is affected, since the number of non-zero rates is not
+     * sampled there; that falls out of BSSVS being unavailable for the GLM.
+     */
+    public boolean isUseGaoPriors() {
+        return discreteSubstModelType == DiscreteSubstModelType.FIT && useGaoPriors;
+    }
+
+    public void setUseGaoPriors(boolean useGaoPriors) {
+        if (this.useGaoPriors == useGaoPriors) {
+            return;
+        }
+        this.useGaoPriors = useGaoPriors;
+
+        // discard any hand-edited values so the newly selected specification takes effect
+        String nonZeroRates = getName() + ".nonZeroRates";
+        if (options.parameterExists(nonZeroRates)) {
+            options.getParameter(nonZeroRates).setPriorEdited(false);
+        }
+        for (AbstractPartitionData partition : options.getDataPartitions(this)) {
+            partition.getPartitionClockModel().getParameter("clock.rate").setPriorEdited(false);
+        }
+    }
+
     public FrequencyPolicyType getFrequencyPolicy() {
         return frequencyPolicy;
     }
@@ -1128,14 +1141,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.unlinkedFrequencyModel = unlinkedFrequencyModel;
     }
 
-    public boolean isDolloModel() {
-        return dolloModel;
-    }
-
-    public void setDolloModel(boolean dolloModel) {
-        this.dolloModel = dolloModel;
-    }
-
     public boolean isUseAmbiguitiesTreeLikelihood() {
         return useAmbiguitiesTreeLikelihood;
     }
@@ -1205,13 +1210,27 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public void copyFrom(PartitionSubstitutionModel source) {
+        copySettingsFrom(source);
+    }
+
+    /**
+     * Copies every model choice, which is what both the copy constructor (unlinking a partition) and
+     * copyFrom (cloning the settings of one model onto another) need; the data the model describes, and
+     * the partition it belongs to, are not settings and are not copied here.
+     */
+    private void copySettingsFrom(PartitionSubstitutionModel source) {
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
+        discreteSubstModelType = source.discreteSubstModelType;
         discreteSubstType = source.discreteSubstType;
+        bastaModelType = source.bastaModelType;
+        sharedCoalescentModel = source.sharedCoalescentModel;
         continuousSubstModelType = source.continuousSubstModelType;
+        continuousExtensionType = source.continuousExtensionType;
 
         activateBSSVS = source.activateBSSVS;
+        useGaoPriors = source.useGaoPriors;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
@@ -1225,7 +1244,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
 
-        dolloModel = source.dolloModel;
+        isLatitudeLongitude = source.isLatitudeLongitude;
+        isIndependent = source.isIndependent;
+        jitterWindow = source.jitterWindow;
     }
 
     @Override

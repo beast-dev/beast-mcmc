@@ -45,6 +45,11 @@ public interface LogAdditiveCtmcRateProvider extends Model {
         return rates;
     }
 
+    default void fillRates(double[] rates) {
+        double[] source = getRates();
+        System.arraycopy(source, 0, rates, 0, rates.length);
+    }
+
     default Transform getTransform() {
         return null;
     }
@@ -71,6 +76,13 @@ public interface LogAdditiveCtmcRateProvider extends Model {
             @Override
             public double[] getXBeta() {
                 return getLogRateParameter().getParameterValues();
+            }
+
+            @Override
+            public void fillRates(double[] rates) {
+                for (int i = 0; i < rates.length; ++i) {
+                    rates[i] = Math.exp(transformedRateParameter.getParameterValue(i));
+                }
             }
 
             @Override
@@ -120,6 +132,13 @@ public interface LogAdditiveCtmcRateProvider extends Model {
                     rates[i] = transform.transform(rates[i]);
                 }
                 return rates;
+            }
+
+            @Override
+            public void fillRates(double[] rates) {
+                for (int i = 0; i < rates.length; ++i) {
+                    rates[i] = transform.transform(transformedRateParameter.getParameterValue(i));
+                }
             }
 
             @Override @Deprecated

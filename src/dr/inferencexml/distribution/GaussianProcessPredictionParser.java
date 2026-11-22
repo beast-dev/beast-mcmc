@@ -30,7 +30,7 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.RandomField;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Parameter;
-import dr.math.distributions.gp.AdditiveGaussianProcessDistribution;
+import dr.math.distributions.gp.GaussianProcessField;
 import dr.math.distributions.gp.GaussianProcessPrediction;
 import dr.xml.*;
 
@@ -46,8 +46,8 @@ public class GaussianProcessPredictionParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        AdditiveGaussianProcessDistribution gp = (AdditiveGaussianProcessDistribution)
-                xo.getChild(AdditiveGaussianProcessDistribution.class);
+        GaussianProcessField gp = (GaussianProcessField)
+                xo.getChild(GaussianProcessField.class);
 
         Parameter realizedValues = (Parameter) xo.getChild(Parameter.class);
         List<DesignMatrix> predictiveDesigns = new ArrayList<>(xo.getChild(BASES).getAllChildren(DesignMatrix.class));
@@ -59,7 +59,7 @@ public class GaussianProcessPredictionParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(AdditiveGaussianProcessDistribution.class),
+            new ElementRule(GaussianProcessField.class),
             new ElementRule(Parameter.class),
             new ElementRule(BASES, new XMLSyntaxRule[] {
                     new ElementRule(DesignMatrix.class, 1, Integer.MAX_VALUE)

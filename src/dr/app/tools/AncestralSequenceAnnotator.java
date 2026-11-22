@@ -971,13 +971,27 @@ public class AncestralSequenceAnnotator {
 
         flexTree.setAttribute(LIKELIHOOD, logLikelihood);
 
+        // The tree model numbers its tips by taxon name, while adoptTreeModelOrdering() numbers them by
+        // their position in a postorder traversal. The two therefore agree on the internal nodes but not
+        // on the tips, so the tips have to be matched by taxon rather than by number; pairing them by
+        // number would read the gap mask from one taxon and write the sequence to another.
+        Map<String, Integer> tipNumberInFlexTree = new HashMap<String, Integer>();
+        for (int i = 0; i < flexTree.getExternalNodeCount(); i++) {
+            NodeRef tip = flexTree.getExternalNode(i);
+            tipNumberInFlexTree.put(flexTree.getNodeTaxon(tip).getId(), tip.getNumber());
+        }
+
         TreeTrait ancestralStates = likelihood.getTreeTrait(TAG);
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
 
             NodeRef node = treeModel.getNode(i);
             String sample = ancestralStates.getTraitString(treeModel, node);
 
-            String oldSeq = (String) flexTree.getNodeAttribute(flexTree.getNode(i), SEQ_STRING);
+            final int flexIndex = treeModel.isExternal(node)
+                    ? tipNumberInFlexTree.get(treeModel.getNodeTaxon(node).getId())
+                    : i;
+
+            String oldSeq = (String) flexTree.getNodeAttribute(flexTree.getNode(flexIndex), SEQ_STRING);
 
             if (oldSeq != null) {
 
@@ -998,7 +1012,7 @@ public class AncestralSequenceAnnotator {
 //					System.exit(-1);
 //				}
 
-                finalTree.setNodeAttribute(finalTree.getNode(i), NEW_SEQ, newSeq);
+                finalTree.setNodeAttribute(finalTree.getNode(flexIndex), NEW_SEQ, newSeq);
 
             }
 

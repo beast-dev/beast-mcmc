@@ -176,7 +176,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel implements Dif
         }
     }
 
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) { }
 
     protected void storeState() { }
 

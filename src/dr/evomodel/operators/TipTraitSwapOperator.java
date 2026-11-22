@@ -79,7 +79,7 @@ public class TipTraitSwapOperator extends SimpleMCMCOperator {
         swap(index1, index2);
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return TIP_TRAIT_SWAP_OPERATOR;
     }
 

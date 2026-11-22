@@ -32,8 +32,6 @@ import dr.inference.model.Parameter;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.math.MathUtils;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
-import dr.math.distributions.LogitTransformedNormalKDEDistribution;
 import dr.math.distributions.NormalKDEDistribution;
 import dr.math.distributions.TransformedNormalKDEDistribution;
 import dr.math.matrixAlgebra.Vector;
@@ -104,13 +102,6 @@ public class KDEDistributionTest extends MathTestCase {
         System.out.println("cdfLog(1.96) = " + cdf);
         assertEquals(cdf, 0.9500042, cdfTolerance);
 
-        // Old is NOT working
-        LogTransformedNormalKDEDistribution distributionOld = new LogTransformedNormalKDEDistribution(values);
-        double cdfOld = distributionOld.cdf(1E-3);
-        System.out.println("cdfLogOld(0.00) = " + cdfOld);
-        cdfOld = distributionOld.cdf(1.96);
-        System.out.println("cdfLogOld(1.96) = " + cdfOld);
-
     }
 
     public void testLogitNormalCDF() {
@@ -137,15 +128,6 @@ public class KDEDistributionTest extends MathTestCase {
         cdf = distribution.cdf(0.25);
         System.out.println("cdfLogit(0.25) = " + cdf);
         assertEquals(cdf, 0.1359686, cdfTolerance); // `R pnorm(logit(0.25))`
-
-        // Old is NOT working
-        LogitTransformedNormalKDEDistribution distributionOld = new LogitTransformedNormalKDEDistribution(values, 1.0);
-        double cdfOld = distributionOld.cdf(0.5);
-        System.out.println("cdfLogitOld(0.00) = " + cdfOld);
-        cdfOld = distributionOld.cdf(0.75);
-        System.out.println("cdfLogitOld(0.75) = " + cdfOld);
-        cdfOld = distributionOld.cdf(0.25);
-        System.out.println("cdfLogitOld(0.25) = " + cdfOld);
 
     }
 
@@ -232,7 +214,6 @@ public class KDEDistributionTest extends MathTestCase {
 
         // Estimations
         NormalKDEDistribution nKDE = new NormalKDEDistribution(samples, null, null, null, 2048);
-        LogTransformedNormalKDEDistribution ltnOld = new LogTransformedNormalKDEDistribution(samples);
         TransformedNormalKDEDistribution ltnNew = getLogTransformedNormalKDEDistribution(samples);
 
         // R estimations
@@ -248,7 +229,6 @@ public class KDEDistributionTest extends MathTestCase {
 
         System.out.println("bw(normal) = " + nKDE.getBandWidth());
         System.out.println("bw(logNormal) = " + ltnNew.getBandWidth());
-        System.out.println("bw(logNormalOLD) = " + ltnOld.getBandWidth());
 
         // cdf normal (Fails)
         double cdf = nKDE.cdf(0.00005);
@@ -271,17 +251,6 @@ public class KDEDistributionTest extends MathTestCase {
         cdf = ltnNew.cdf(0.001);
         System.out.println("cdfLog(0.001) = " + cdf);
         assertEquals(cdf, 0.6321206, cdfTolerance);
-
-        // cdf log normal old (Fails)
-        cdf = ltnOld.cdf(0.00005);
-        System.out.println("cdfLogOld(0.00005) = " + cdf);
-//        assertEquals(cdf, 0.04877058, cdfTolerance);
-        cdf = ltnOld.cdf(0.0001);
-        System.out.println("cdfLogOld(0.0001) = " + cdf);
-//        assertEquals(cdf, 0.09516258, cdfTolerance);
-        cdf = ltnOld.cdf(0.001);
-        System.out.println("cdfLogOld(0.001) = " + cdf);
-//        assertEquals(cdf, 0.6321206, cdfTolerance);
 
     }
 
@@ -314,7 +283,7 @@ public class KDEDistributionTest extends MathTestCase {
             }
 
             Double[] parameterSamples = new Double[traces.getStateCount()];
-            DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
+            DistributionLikelihood likelihood = new DistributionLikelihood(getLogTransformedNormalKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
             //DistributionLikelihood likelihood = new DistributionLikelihood(new NormalKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
             //DistributionLikelihood likelihood = new DistributionLikelihood(new GammaKDEDistribution((Double[]) traces.getValues(traceIndexParameter).toArray(parameterSamples)));
 

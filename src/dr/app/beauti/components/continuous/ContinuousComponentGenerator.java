@@ -221,11 +221,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 //        String distributionLikelihood = "distributionLikelihood";
 //        writer.writeOpenTag(distributionLikelihood);
 //
-//        String data = "data";
-//        writer.writeOpenTag(data);
-//        writer.writeIDref("parameter", parameterId);
-//        writer.writeCloseTag(data);
-//        writer.writeCloseTag(distributionLikelihood);
         XMLWriterObject param = new XMLWriterObject("parameter", parameterId);
         param.setAlreadyWritten(true);
         XMLWriterObject data = new XMLWriterObject("data", param);
@@ -245,12 +240,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     }
 
     private XMLWriterObject getNormalDistribution(double mean, double stdev) {
-//        writer.writeOpenTag("distribution");
-//        writer.writeOpenTag("mean");
-//        writer.writeCloseTag("mean");
-//        writer.writeOpenTag("stdev");
-//        writer.writeCloseTag("stdev");
-//        writer.writeCloseTag("");
         XMLWriterObject distribution = new XMLWriterObject(
                 "normalDistributionModel",
                 null,
@@ -583,10 +572,18 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         String prefix = partitionData.getName() + ".";
 
+        // The gamma (and Cauchy) RRW place the gamma on a branch scalar of the precision: the branch
+        // rates are reciprocals of these scalars, which gives a Student-t (Cauchy for half DF = 0.5)
+        // displacement. The lognormal is closed under reciprocation, so it keeps scaling the variance.
+        ContinuousSubstModelType substModelType = partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType();
+        boolean reciprocal = substModelType == ContinuousSubstModelType.CAUCHY_RRW ||
+                substModelType == ContinuousSubstModelType.GAMMA_RRW;
+
         writer.writeOpenTag("arbitraryBranchRates",
                 new Attribute[]{
                         new Attribute.Default<String>("id",
                                 prefix + "diffusion.branchRates"),
+                        new Attribute.Default<Boolean>("reciprocal", reciprocal)
                 });
 
         writer.writeIDref("treeModel", treeModelId);
@@ -1031,9 +1028,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
                 if (partitionData.getTraits().size() == 2) {
                     writer.writeIDref("correlation", prefix + "correlation");
-//            writer.writeIDref("treeLengthStatistic", prefix + "treeLength");
-//            writer.writeIDref("productStatistic", prefix + "treeLengthPrecision1");
-//            writer.writeIDref("productStatistic", prefix + "treeLengthPrecision2");
                 }
                 writer.writeIDref("matrixInverse", prefix + "varCovar");
             }

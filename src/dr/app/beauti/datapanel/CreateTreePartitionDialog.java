@@ -92,6 +92,9 @@ public class CreateTreePartitionDialog {
 
         dialog.setVisible(true);
 
+        // the dialog is modal, so it has been closed by the time this returns
+        dialog.dispose();
+
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
         if (value != null && value != -1) {

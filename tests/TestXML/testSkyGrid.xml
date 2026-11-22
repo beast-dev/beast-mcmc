@@ -2722,7 +2722,7 @@
 <!--     </report>-->
 <!--    </actual>-->
     <expected>
-        -2516.826653299598  <!-- from 10.4 release -->
+        -2518.524550585871  <!-- tips numbered by taxon name (PR 1284), so the one MCMC move slides another node; 10.4 release gave -2516.826653299598 -->
     </expected>
 </assertEqual>
 

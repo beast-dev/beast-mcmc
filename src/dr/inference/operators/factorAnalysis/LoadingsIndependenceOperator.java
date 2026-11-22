@@ -274,7 +274,7 @@ public class LoadingsIndependenceOperator extends AbstractAdaptableOperator {
 //    }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "loadingsGibbsOperator";  //To change body of implemented methods use File | Settings | File Templates.
     }
 

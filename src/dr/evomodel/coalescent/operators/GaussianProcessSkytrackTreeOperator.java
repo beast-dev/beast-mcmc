@@ -29,13 +29,12 @@ package dr.evomodel.coalescent.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
+import dr.evomodel.coalescent.legacy.GaussianProcessSkytrackLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackTreeOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractAdaptableOperator;
 import dr.inference.operators.AdaptationMode;
-import dr.inference.operators.OperatorUtils;
 import dr.math.MathUtils;
 import dr.util.ComparableDouble;
 import dr.util.HeapSort;
@@ -667,7 +666,7 @@ public class GaussianProcessSkytrackTreeOperator extends AbstractAdaptableOperat
 
 	//MCMCOperator INTERFACE
 
-	public final String getOperatorName() {
+	protected final String getBaseOperatorName() {
 		return GaussianProcessSkytrackTreeOperatorParser.BLOCK_UPDATE_OPERATOR;
 	}
 

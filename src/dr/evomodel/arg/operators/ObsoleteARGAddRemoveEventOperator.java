@@ -953,7 +953,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractAdaptableOperator
         return "size";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return SUBTREE_SLIDE;
     }
 

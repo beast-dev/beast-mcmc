@@ -148,7 +148,7 @@ public class TransformedNormalKDEDistribution extends NormalKDEDistribution {
 //            System.out.println("max: " + samples[samples.length - 1] + "\n");
 //        }
 //
-//        LogTransformedNormalKDEDistribution ltn = new LogTransformedNormalKDEDistribution(samples);
+//        TransformedNormalKDEDistribution ltn = getLogTransformedNormalKDEDistribution(samples);
 //        NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
 
 //        if (DEBUG) {
@@ -203,7 +203,6 @@ public class TransformedNormalKDEDistribution extends NormalKDEDistribution {
             System.out.println("max: " + samples[samples.length - 1] + "\n");
         }
 
-        LogTransformedNormalKDEDistribution ltnOld = new LogTransformedNormalKDEDistribution(samples);
         TransformedNormalKDEDistribution ltnNew = getLogTransformedNormalKDEDistribution(samples);
         NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
 
@@ -230,15 +229,7 @@ public class TransformedNormalKDEDistribution extends NormalKDEDistribution {
         }
         System.out.println(nKDE.evaluateKernel(((double) 2 * size - 1) / ((double) size)) + ")\n");
 
-        System.out.print("TransKDEOld <- c(");
-        for (int i = 0; i < 2 * size - 1; i++) {
-            Double test = testPoints[i];
-            System.out.print(ltnOld.evaluateKernel(test) + ",");
-            if (i % 10 == 0) System.out.print("\n");
-        }
-        System.out.println(ltnOld.evaluateKernel(((double) 2 * size - 1) / ((double) size)) + ")\n");
-
-        System.out.print("TransKDENew <- c(");
+        System.out.print("TransKDE <- c(");
         for (int i = 0; i < 2 * size - 1; i++) {
             Double test = testPoints[i];
             System.out.print(ltnNew.evaluateKernel(test) + ",");
@@ -250,10 +241,7 @@ public class TransformedNormalKDEDistribution extends NormalKDEDistribution {
         System.out.println("plot(index,normalKDE,type=\"l\",xlab=\"Bandwidth=" + nKDE.bandWidth + "\")\nabline(v=minimum,col=2,lty=2)");
         System.out.println("lines(ii, dgamma(ii, shape=1,scale=" + scale + "),col=\"green\")");
 
-        System.out.println("plot(index,TransKDEOld,type=\"l\",xlab=\"Bandwidth=" + ltnOld.bandWidth + "\")\nabline(v=minimum,col=2,lty=2)");
-        System.out.println("lines(ii, dgamma(ii, shape=1,scale=" + scale + "),col=\"green\")");
-
-        System.out.println("plot(index,TransKDENew,type=\"l\",xlab=\"Bandwidth=" + ltnNew.bandWidth + "\")\nabline(v=minimum,col=2,lty=2)");
+        System.out.println("plot(index,TransKDE,type=\"l\",xlab=\"Bandwidth=" + ltnNew.bandWidth + "\")\nabline(v=minimum,col=2,lty=2)");
         System.out.println("lines(ii, dgamma(ii, shape=1,scale=" + scale + "),col=\"green\")");
 
         // Timing

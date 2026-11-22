@@ -27,6 +27,8 @@
 
 package dr.inferencexml.loggers;
 
+import dr.inference.mcmc.RuntimeOverrides;
+
 import dr.app.beast.BeastVersion;
 import dr.inference.loggers.*;
 import dr.math.MathUtils;
@@ -76,7 +78,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         // You must say how often you want to log
-        final int logEvery = xo.getIntegerAttribute(LOG_EVERY);
+        final int logEvery = RuntimeOverrides.getLogEvery(xo.getIntegerAttribute(LOG_EVERY));
 
         final PrintWriter pw = getLogFile(xo, getParserName());
 

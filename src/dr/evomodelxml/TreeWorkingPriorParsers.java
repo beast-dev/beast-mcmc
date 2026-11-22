@@ -39,11 +39,11 @@ import org.apache.commons.math.analysis.interpolation.LoessInterpolator;
 
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.TreeTrace;
-import dr.evomodel.coalescent.CoalescentConstantLikelihood;
-import dr.evomodel.coalescent.ExponentialProductLikelihood;
-import dr.evomodel.coalescent.ExponentialProductPosteriorMeansLikelihood;
-import dr.evomodel.coalescent.ExponentialProductSufficientStatisticsLikelihood;
-import dr.evomodel.coalescent.GammaProductLikelihood;
+import dr.evomodel.coalescent.treeworkingpriors.CoalescentConstantLikelihood;
+import dr.evomodel.coalescent.treeworkingpriors.ExponentialProductLikelihood;
+import dr.evomodel.coalescent.treeworkingpriors.ExponentialProductPosteriorMeansLikelihood;
+import dr.evomodel.coalescent.legacy.ExponentialProductSufficientStatisticsLikelihood;
+import dr.evomodel.coalescent.treeworkingpriors.GammaProductLikelihood;
 import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.ConditionalCladeProbability;

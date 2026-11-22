@@ -223,7 +223,7 @@ public class NewLoadingsGibbsOperator extends SimpleMCMCOperator implements Gibb
 //    }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "newLoadingsGibbsOperator";
     }
 

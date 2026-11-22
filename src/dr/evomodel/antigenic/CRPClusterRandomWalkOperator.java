@@ -190,7 +190,7 @@ public class CRPClusterRandomWalkOperator extends AbstractAdaptableOperator {
 
 
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return CRP_CLUSTER_RW_OPERATOR;
     }
 

@@ -742,7 +742,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         } while (getLastDelimiter() != ';');
 
         if (taxa.getTaxonCount() != taxonCount) {
-            throw new BadFormatException("Number of taxa doesn't match NTAXA field");
+            throw new BadFormatException("Number of taxa (" + taxa.getTaxonCount() + ") doesn't match NTAXA field (" + taxonCount + ")");
         }
 
         findEndBlock();

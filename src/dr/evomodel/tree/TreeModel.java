@@ -386,40 +386,83 @@ public abstract class TreeModel extends AbstractModel implements MutableTreeMode
     public abstract void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames);
 
     /**
+     * As adoptTreeStructure(edges, nodeHeights, childOrder, taxaNames), and also gives each internal node back the
+     * height parameter it held (see getNodeHeightParameterName), so that operators that pick node height parameters
+     * by position move the same nodes as in the chain that wrote the checkpoint
+     * @param heightParameterNames Name of the height parameter of each internal node, by node number; null keeps
+     *                             the current height parameters
+     */
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames,
+                                   String[] heightParameterNames) {
+        adoptTreeStructure(edges, nodeHeights, childOrder, taxaNames);
+    }
+
+    /**
+     * @return the name of the height parameter that a node holds, for tree models that move height parameters
+     * between internal nodes when the root changes (null otherwise). Checkpoints record it for each internal node.
+     */
+    public String getNodeHeightParameterName(NodeRef node) {
+        return null;
+    }
+
+    /**
+     * Matches checkpointed height parameter names to the internal nodes that hold those parameters now.
+     * @return for each internal node, by node number, the internal node that holds the parameter named for it;
+     * null (with a warning) if the names do not match this tree's internal node height parameters one to one
+     */
+    protected int[] findHeightParameterHolders(String[] heightParameterNames) {
+        int nodeCount = getNodeCount();
+        Map<String, Integer> holderOfName = new HashMap<String, Integer>();
+        for (int i = getExternalNodeCount(); i < nodeCount; i++) {
+            holderOfName.put(getNodeHeightParameterName(getNode(i)), i);
+        }
+
+        int[] holders = new int[nodeCount];
+        boolean[] matched = new boolean[nodeCount];
+        boolean oneToOne = heightParameterNames.length == nodeCount && holderOfName.size() == getInternalNodeCount();
+        for (int i = getExternalNodeCount(); oneToOne && i < nodeCount; i++) {
+            Integer holder = holderOfName.get(heightParameterNames[i]);
+            oneToOne = holder != null && !matched[holder];
+            if (oneToOne) {
+                holders[i] = holder;
+                matched[holder] = true;
+            }
+        }
+
+        if (!oneToOne) {
+            System.err.println("WARNING: the node height parameter names in the checkpoint do not match those of tree " +
+                    getId() + "; keeping its current height parameters");
+            return null;
+        }
+        return holders;
+    }
+
+    /**
      * Imports trait information from a file
-     * @param edges Edges are provided as index: child number; parent: array entry
-     * @param traitModels List of TreeParameterModel object that contain trait information
-     * @param traitValues Values to be copied into the List of TreeParameterModel objects
+     * @param edges Edges are provided as index: child number; parent: array entry (-1 for the root)
+     * @param traitModels List of TreeParameterModel object that contain trait information; those
+     *                    belonging to other trees are skipped
+     * @param traitValues Values to be copied into the TreeParameterModel objects of this tree, one
+     *                    row per model (in the order of traitModels) indexed by the saved node number
      */
     public void adoptTraitData(int[] edges, ArrayList<TreeParameterModel> traitModels, double[][] traitValues, String[] taxaNames) {
+        // Saved node i is this tree's external node nodeMap[i] (matched by taxon name) or internal
+        // node i. TreeParameterModel maps a node to its parameter index itself, so the values are
+        // simply set node by node. The root carries no value and is not in the file.
         int[] nodeMap = createNodeMap(taxaNames);
         int index = 0;
 
         for (TreeParameterModel tpm : traitModels) {
+            if (tpm.getTreeModel() != this) {
+                continue;
+            }
 
-            for (int i = 0; i < this.getRoot().getNumber(); i++) {
-                if (i < this.getExternalNodeCount()) {
-                    tpm.setNodeValue(this, this.getExternalNode(nodeMap[i]), traitValues[index][i]);
-                    System.out.println("Setting external node " + this.getExternalNode(nodeMap[i]) + " to " + traitValues[index][i]);
-
-                } else {
-                    tpm.setNodeValue(this, this.getNode(i), traitValues[index][i]);
-                    System.out.println("Setting internal node " + this.getNode(i ) + " to " + traitValues[index][i]);
+            for (int i = 0; i < edges.length; i++) {
+                if (edges[i] == -1) {
+                    continue;
                 }
-            }
-
-            // In TreeParameterModel, when this.getRoot.getNumber() and rootNodeNumber.getValue(0) are not equal,
-            // handleRootMove() will get called and move parameter/trait values to different indices.  Here, we
-            // preemptively move around trait values (if necessary) so that if handleRootMove() gets called, the
-            // trait values end up in the correct indices.
-            if(this.getRoot().getNumber() < edges.length-1){
-                tpm.setNodeValue(this, this.getNode(this.getRoot().getNumber()+1), traitValues[index][this.getNodeCount()-1]);
-                // System.out.println("Setting node " + this.getNode(this.getRoot().getNumber()+1) + " " + " to " + traitValues[index][this.getNodeCount()-1]);
-            }
-
-            for (int i = this.getRoot().getNumber()+2; i < edges.length; i++) {
-                tpm.setNodeValue(this, this.getNode(i), traitValues[index][i-1]);
-                // System.out.println("Setting node " + this.getNode(i ) + " to " + traitValues[index][i-1]);
+                NodeRef node = (i < getExternalNodeCount() ? getExternalNode(nodeMap[i]) : getNode(i));
+                tpm.setNodeValue(this, node, traitValues[index][i]);
             }
 
             index++;

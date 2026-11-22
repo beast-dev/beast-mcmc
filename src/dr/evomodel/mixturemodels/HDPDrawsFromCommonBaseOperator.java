@@ -282,7 +282,7 @@ public class HDPDrawsFromCommonBaseOperator extends SimpleMCMCOperator implement
         pathWeight = beta;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return HDP_DRAWS_OPERATOR;
     }
 

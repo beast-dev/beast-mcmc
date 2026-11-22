@@ -30,10 +30,11 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeUtils;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.CoalescentSimulator;
+import dr.evomodel.coalescent.simulator.CoalescentSimulator;
 import dr.evomodel.coalescent.demographicmodel.DemographicModel;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -78,7 +79,7 @@ public class CoalescentTreeRejectionSampler extends SimpleMCMCOperator implement
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "CoalescentTreeRejectionSampler";
     }
 
@@ -117,7 +118,7 @@ public class CoalescentTreeRejectionSampler extends SimpleMCMCOperator implement
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-            DefaultTreeModel treeModel = (DefaultTreeModel) xo.getChild(TreeModel.class);
+            DefaultTreeModel treeModel = TreeModelParser.getOldTreeModel(xo, getParserName());
             DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
 
             List<TaxonList> allTaxa = new ArrayList<TaxonList>();

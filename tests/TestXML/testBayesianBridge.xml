@@ -71,7 +71,7 @@
 	 <arbitraryBranchRates id="substBranchRates" centerAtOne="false">
 		<treeModel idref="treeModel"/>
 		<rates>
-            <parameter id="substBranchRates.rates" value="1 2 3 4 5 6" lower="0"/>
+            <parameter id="substBranchRates.rates" value="2 3 1 4 5 6" lower="0"/>
         </rates>
 	</arbitraryBranchRates>
 
@@ -95,7 +95,7 @@
  			<parameter id="exponent" value="0.25"/>
  		</exponent>
 		<localScale>
-				<parameter id="localScale" value="0.1 0.2 0.3 0.4 0.5 0.6" lower="0.0" dimension="6"/>
+				<parameter id="localScale" value="0.2 0.3 0.1 0.4 0.5 0.6" lower="0.0" dimension="6"/>
 		</localScale>
 	</bayesianBridgeDistribution>
 
@@ -229,7 +229,7 @@
 		    <branchRateGradientWrtIncrements idref="branchRateGradientWrtIncrements"/>
         </actual>
         <expected>
-            -2.6958145120177606, 1.7200589055116071, 4.08099586323557, -46.94728027568798, 10.051349957385199, -9.554880995568947
+            1.7200589055116071, 4.08099586323557, -2.6958145120177606, -46.94728027568798, 10.051349957385199, -9.554880995568947
         </expected>
     </assertEqual>
 
@@ -247,7 +247,7 @@
 		   <gradientWrtIncrements idref="incrementGradient"/>
         </actual>
         <expected>
-            80.2581273215782, 23.053874813953737, 5.757572363869119, -3.1417273498166933, 0.37922883813142577, -3.0390512384618753
+            23.053874813953737, 5.757572363869119, 80.2581273215782, -3.1417273498166933, 0.37922883813142577, -3.0390512384618753
         </expected>
     </assertEqual>
 
@@ -263,7 +263,7 @@
             <gradientWrtIncrements idref="incrementGradientForRates"/>
         </actual>
         <expected>
-            78.02205934407841, 22.053874813953737, 4.757572363869119, -5.970154474562884, -5.620771161868574, -11.69930527630626
+            22.053874813953737, 4.757572363869119, 78.02205934407841, -5.970154474562884, -5.620771161868574, -11.69930527630626
         </expected>
     </assertEqual>
 

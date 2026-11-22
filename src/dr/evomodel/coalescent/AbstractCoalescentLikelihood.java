@@ -29,6 +29,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.util.Units;
+import dr.evomodel.coalescent.intervals.CoalescentIntervalProvider;
 import dr.inference.model.*;
 
 
@@ -42,8 +43,12 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     // PUBLIC STUFF
 
-    public AbstractCoalescentLikelihood( String name, IntervalList intervalList){
-        super(name);
+    public AbstractCoalescentLikelihood( String name, IntervalList intervalList) {
+        this(name, intervalList, false);
+    }
+
+    public AbstractCoalescentLikelihood( String name, IntervalList intervalList, boolean useLazyStore) {
+        super(name, useLazyStore);
 
         this.intervalList = intervalList;
 

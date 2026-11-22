@@ -29,11 +29,13 @@ package dr.evomodelxml.coalescent.smooth;
 
 import dr.evolution.coalescent.IntervalList;
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
+import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
+import dr.evomodel.coalescent.smooth.NewSmoothSkygridLikelihood;
 import dr.evomodel.coalescent.smooth.OldSmoothSkygridLikelihood;
 import dr.evomodel.coalescent.smooth.SmoothSkygridLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
+import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -53,6 +55,8 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
 
     private static final String CUT_OFF = GMRFSkyrideLikelihoodParser.CUT_OFF;
     private static final String OLD = "old";
+    private static final String IMPLEMENTATION = "implementation";
+    private static final String NEW_IMPLEMENTATION = "new";
     private static final String SMOOTH_RATE = "smoothRate";
 
     @Override
@@ -75,7 +79,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
                 XMLObject cxo = xo.getChild(POPULATION_TREE);
                 for (int i = 0; i < cxo.getChildCount(); ++i) {
                     TreeModel tree = (TreeModel) cxo.getChild(i);
-                    intervalList.add(new BigFastTreeIntervals(tree));
+                    intervalList.add(new FastTreeIntervals(tree));
                     debugIntervalList.add(new TreeIntervals(tree));
                 }
             }
@@ -94,8 +98,16 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
                 trees.add((TreeModel) cxo.getChild(i));
             }
             Parameter smoothRate = (Parameter) xo.getElementFirstChild(SMOOTH_RATE);
-            SmoothSkygridLikelihood likelihood = new SmoothSkygridLikelihood(xo.getId(), trees, logPopSizes, gridPoints, smoothRate);
-            return likelihood;
+            // NewSmoothSkygridLikelihood is opt-in until it has a gradient: <smoothSkygridGradient> needs a
+            // SmoothSkygridLikelihood
+            String implementation = xo.getAttribute(IMPLEMENTATION, "");
+            if (NEW_IMPLEMENTATION.equalsIgnoreCase(implementation)) {
+                return new NewSmoothSkygridLikelihood(xo.getId(), trees, logPopSizes, gridPoints, smoothRate);
+            } else if (!implementation.isEmpty()) {
+                throw new XMLParseException("Unknown " + IMPLEMENTATION + " '" + implementation + "'; use '" +
+                        NEW_IMPLEMENTATION + "' or leave it out");
+            }
+            return new SmoothSkygridLikelihood(xo.getId(), trees, logPopSizes, gridPoints, smoothRate);
         }
     }
 
@@ -128,7 +140,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return OldSmoothSkygridLikelihood.class;
+        return AbstractCoalescentLikelihood.class; // OldSmoothSkygridLikelihood, SmoothSkygridLikelihood or NewSmoothSkygridLikelihood
     }
 
     @Override
@@ -137,6 +149,7 @@ public class SmoothSkygridLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newStringRule(IMPLEMENTATION, true),
             new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),

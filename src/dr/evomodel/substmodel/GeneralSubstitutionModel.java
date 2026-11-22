@@ -121,6 +121,10 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         this.doNormalization = doNormalization;
     }
 
+    public boolean getNormalization() {
+        return doNormalization;
+    }
+
     protected String getDimensionString(int i, int j, String prefix) {
         String codes =  dataType.getCode(i) + "." + dataType.getCode(j);
         if (prefix == null) {
@@ -167,6 +171,10 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
      * Parses an element from an DOM document into a DemographicModel. Recognises
      * ConstantPopulation and ExponentialGrowth.
      */
+
+    public Parameter getRatesParameter() {
+        return ratesParameter;
+    }
 
     protected Parameter ratesParameter = null;
     private boolean doNormalization = true;

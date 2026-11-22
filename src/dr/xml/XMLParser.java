@@ -445,16 +445,46 @@ public class XMLParser {
 
 
     /**
-     * Get filename and path from BEAST XML object
+     * Get an input file's name and path from a BEAST XML object.
+     * Relative names are resolved against the working directory (or the directory of the
+     * XML file for names starting with "./").
      *
      * @param xo
      * @return
      */
     private static File getFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
         String fileName = xo.getStringAttribute(attributeName);
+        return FileHelpers.getFile(fileName, getFileNamePrefix());
+    }
 
-        // Check to see if a filename prefix has been specified, check it doesn't contain directory
-        // separator characters and then prefix it.
+    /**
+     * Get an output file's name and path from a BEAST XML object.
+     * Relative names are placed in the output directory requested with the -output command line
+     * option when there is one; otherwise they are resolved like input files. The directory of
+     * the first output file is remembered so that checkpoint files can follow the log files.
+     *
+     * @param xo
+     * @return
+     */
+    private static File getOutputFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
+        String fileName = xo.getStringAttribute(attributeName);
+
+        File resolvedFile = OutputFileHelper.resolveOutputFile(fileName, getFileNamePrefix(),
+                OutputFileHelper.getExplicitOutputDirectory());
+
+        File parentDir = resolvedFile.getParentFile();
+        if (parentDir != null) {
+            OutputFileHelper.setDefaultOutputDirectory(parentDir);
+        }
+
+        return resolvedFile;
+    }
+
+    /**
+     * @return the file name prefix given with the -prefix command line option, or null
+     * @throws XMLParseException if the prefix is empty or contains a directory separator
+     */
+    private static String getFileNamePrefix() throws XMLParseException {
         final String fileNamePrefix = System.getProperty("file.name.prefix");
         final String fileSeparator = System.getProperty("file.separator");
         if (fileNamePrefix != null) {
@@ -490,10 +520,13 @@ public class XMLParser {
             File logFile = getLogFile(xo, attributeName);
 
             try {
-                return new PrintWriter(new FileOutputStream(logFile));
+                // compressed with Zstandard if the file name ends in ".zst"
+                return FileHelpers.getPrintWriter(logFile);
             } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + logFile.getAbsolutePath() +
                         "' can not be opened for " + parserName + " element.");
+            } catch (IOException ioe) {
+                throw new XMLParseException(ioe.getMessage());
             }
 
         }
@@ -511,11 +544,12 @@ public class XMLParser {
             return ChainContext.getDiscardFile(xo.getStringAttribute(attributeName));
         }
 
-        File logFile = getFileHandle(xo, attributeName);
+        File logFile = getOutputFileHandle(xo, attributeName);
         if (context != null) {
             // each chain of a multi-chain run writes its own files
             logFile = context.addSuffix(logFile);
         }
+        final File logFile = getOutputFileHandle(xo, attributeName);
         boolean allowOverwrite = false;
 
         if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
@@ -528,7 +562,7 @@ public class XMLParser {
         }
 
         if (logFile.exists() && !allowOverwrite) {
-            throw new XMLParseException("\nThe log file " + logFile.getName() + " already exists in the working directory." +
+            throw new XMLParseException("\nThe log file " + logFile.getAbsolutePath() + " already exists." +
                     "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
                     "\nBEAST or select the option in the Run Options dialog box as appropriate.");
         }

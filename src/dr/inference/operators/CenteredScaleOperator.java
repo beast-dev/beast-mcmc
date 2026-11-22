@@ -96,7 +96,7 @@ public class CenteredScaleOperator extends AbstractAdaptableOperator {
     }
 
     // Interface MCMCOperator
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return parameter.getParameterName();
     }
 

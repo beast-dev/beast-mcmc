@@ -27,7 +27,6 @@
 
 package dr.evomodel.tree;
 
-import dr.app.tools.NexusExporter;
 import dr.evolution.tree.*;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.MCLogger;
@@ -183,18 +182,7 @@ public class TreeLogger extends MCLogger {
     }
 
     private String cleanTaxonName(String taxaId) {
-        if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-            if (taxaId.contains("\'")) {
-                if (taxaId.contains("\"")) {
-                    throw new RuntimeException("Illegal taxon name - contains both single and double quotes");
-                }
-
-                return "\"" + taxaId + "\"";
-            }
-
-            return "\'" + taxaId + "\'";
-        }
-        return taxaId;
+        return TreeUtils.quoteTaxonName(taxaId);
     }
 
     public void log(long state) {

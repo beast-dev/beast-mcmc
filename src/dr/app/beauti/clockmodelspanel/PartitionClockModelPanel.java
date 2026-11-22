@@ -27,21 +27,23 @@
 
 package dr.app.beauti.clockmodelspanel;
 
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
+import dr.evolution.util.Taxa;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Vector;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -64,6 +66,8 @@ public class PartitionClockModelPanel extends OptionsPanel {
             ClockDistributionType.LOGNORMAL
     });
     private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
+
+    private final JTextArea localClocksText = new JTextArea();
 
     private JLabel modelAveragingInfo = new JLabel(
             "<html>Using the Bayesian Model Averaging (BMA) approach on the<br>" +
@@ -124,7 +128,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
         continuousQuantileCheck.setToolTipText("<html>" +
                 "Select this option to use the continuous quantile form of the relaxed<br>" +
                 "clock model described by Li & Drummond (2012) MBE 29:751-61 instead of<br>" +
-                "the discretized categorical form.<html>");
+                "the discretized categorical form.</html>");
         continuousQuantileCheck.setSelected(model.isContinuousQuantile());
         continuousQuantileCheck.addItemListener(
                 new ItemListener() {
@@ -133,9 +137,51 @@ public class PartitionClockModelPanel extends OptionsPanel {
                     }
                 });
 
+        localClocksText.setEditable(false);
+        localClocksText.setLineWrap(true);
+        localClocksText.setWrapStyleWord(true);
+        localClocksText.setOpaque(false);
+        localClocksText.setFont(getFont());
+        localClocksText.setColumns(40);
+
         setupPanel();
         setOpaque(false);
 
+    }
+
+    /**
+     * Describes which clades the fixed local clock will give their own rate: every taxon set
+     * marked as monophyletic in the Taxa panel (the same rule ClockModelGenerator uses).
+     */
+    private void updateLocalClocksText() {
+        BeautiOptions options = model.getOptions();
+        List<String> clades = new ArrayList<>();
+        boolean severalTrees = options.getPartitionTreeModels().size() > 1;
+        for (Taxa taxonSet : options.taxonSets) {
+            if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
+                StringBuilder clade = new StringBuilder("\u2022 ").append(taxonSet.getId());
+                if (Boolean.TRUE.equals(options.taxonSetsIncludeStem.get(taxonSet))) {
+                    clade.append(" (including stem)");
+                }
+                if (severalTrees && options.taxonSetsTreeModel.get(taxonSet) != null) {
+                    clade.append(" on tree ").append(options.taxonSetsTreeModel.get(taxonSet).getName());
+                }
+                clades.add(clade.toString());
+            }
+        }
+
+        String text;
+        if (clades.isEmpty()) {
+            text = "No monophyletic taxon sets defined. \n" +
+                    "In the '" + BeautiFrame.TAXON_SETS + "' panel, define a taxon set for each clade that should " +
+                    "have its own rate and select its 'Mono?' box.";
+        } else {
+            text = "A separate rate will be estimated for " +
+                    (clades.size() == 1 ? "taxon set:" : "taxon sets:") +
+                    "\n" + String.join("\n", clades);
+        }
+        localClocksText.setText(text);
+        localClocksText.setRows(Math.max(2, clades.size() + 1));
     }
 
     /**
@@ -153,7 +199,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(new JLabel(
                         "<html>" +
                                 "Using the uncorrelated relaxed clock model of Drummond, Ho, Phillips & <br>" +
-                                "Rambaut (2006) PLoS Biology 4, e88.<html>"));
+                                "Rambaut (2006) PLoS Biology 4, e88.</html>"));
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 addComponent(continuousQuantileCheck);
                 break;
@@ -162,7 +208,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponent(new JLabel(
                         "<html>" +
                                 "Using the Hamiltonian Monte Carlo relaxed clock model of Ji, Zhang, Holbrook,<br>" +
-                                "Nishimura, Baele, Rambaut, Lemey & Suchard (2020) Mol Biol Evol 37, 3047–3060.<html>"));
+                                "Nishimura, Baele, Rambaut, Lemey & Suchard (2020) Mol Biol Evol 37, 3047–3060.</html>"));
                 addComponentWithLabel("Relaxed Distribution:", clockHMCDistributionCombo);
                 break;
 
@@ -170,9 +216,17 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 break;
 
+            case FIXED_LOCAL_CLOCK:
+                addComponent(new JLabel(
+                        "<html>" +
+                                "Using the a priori local clock model of Yoder & Yang (2000)<br>" +
+                                "Mol Biol Evol 17, 1081\u20131090.</html>"));
+                updateLocalClocksText();
+                addComponentWithLabel("Local clocks:", localClocksText);
+                break;
+
             case SHRINKAGE_LOCAL_CLOCK:
             case RANDOM_LOCAL_CLOCK:
-            case FIXED_LOCAL_CLOCK:
             case MIXED_EFFECTS_CLOCK:
                 break;
 

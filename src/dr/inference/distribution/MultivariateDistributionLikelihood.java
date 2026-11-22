@@ -879,6 +879,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         private final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
+                    AttributeRule.newIntegerRule(DIMENSION),
                     AttributeRule.newDoubleRule(LKJ_SHAPE, true),
                     new ElementRule(DATA,
                             new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}

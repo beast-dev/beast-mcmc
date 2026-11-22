@@ -55,6 +55,8 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
         flat = new double[stateCount];
         Arrays.fill(flat, 1.0);
+        uniform = new double[stateCount];
+        Arrays.fill(uniform, 1.0 / stateCount);
     }
 
     @Override
@@ -236,15 +238,22 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
         double norm = 1.0;
         if (doNormalization) {
-            norm = super.getNormalizationValue(matrix, pi);
+            // Intended model change (93157adac, BEAST X 10.6.0): with scaleRatesByFrequencies="false", Q is built
+            // with the flat vector and normalized with uniform 1/n weights, not with the root frequencies, so the
+            // likelihood and its gradients (getNormalizationFrequencies) agree. The normalized Q has mean exit rate 1;
+            // with uniform root frequencies (as in BEAUti's backward-in-time discrete-trait models) nothing changes.
+            norm = super.getNormalizationValue(matrix, frequencyScaling ? pi : uniform);
         }
-//            return super.getNormalizationValue(matrix, pi);
-//        } else {
-//            return 1.0;
-//        }
-//        System.err.println("norm = " + doNormalization + " " + norm);
-//        System.err.println(new Matrix(matrix));
         return norm;
+    }
+
+    /**
+     * The weights that normalize Q: the root frequencies when rates are scaled by frequencies, otherwise uniform
+     * weights 1/stateCount. Either way they sum to one, so the normalization is a weighted mean of the row sums.
+     * The array may be shared with the model and must not be modified.
+     */
+    public double[] getNormalizationFrequencies() {
+        return frequencyScaling ? getFrequencyModel().getFrequencies() : uniform;
     }
 
     public double getLogLikelihood() {
@@ -311,7 +320,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     private boolean isUsed = false;
-    private final double[] probability;
+    protected final double[] probability;
 
     public Model getModel() {
         return this;
@@ -367,5 +376,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     private boolean doNormalization = true;
     private boolean frequencyScaling = true;
+    // flat (all ones) builds Q; uniform (1/stateCount, sums to one) weights the normalization
     private final double[] flat;
+    private final double[] uniform;
 }

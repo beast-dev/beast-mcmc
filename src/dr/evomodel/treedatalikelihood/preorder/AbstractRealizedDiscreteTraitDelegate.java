@@ -38,10 +38,10 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.coalescent.basta.BastaLikelihood;
-import dr.evomodel.coalescent.basta.BastaLikelihoodDelegate;
-import dr.evomodel.coalescent.basta.CoalescentIntervalTraversal;
-import dr.evomodel.coalescent.basta.ProcessOnCoalescentIntervalDelegate;
+import dr.evomodel.coalescent.structured.BastaLikelihood;
+import dr.evomodel.coalescent.structured.BastaLikelihoodDelegate;
+import dr.evomodel.coalescent.structured.CoalescentIntervalTraversal;
+import dr.evomodel.coalescent.structured.ProcessOnCoalescentIntervalDelegate;
 import dr.evomodel.siteratemodel.SiteRateModel;
 import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.SubstitutionModel;
@@ -176,12 +176,23 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
             CoalescentIntervalTraversal traversal = likelihood.getTraversalDelegate();
             traversal.dispatchTreeTraversalCollectBranchAndNodeOperations();
 
+            Map<Integer, Integer> nodeToBufferMap = new HashMap<>();
+
+            if (traversal.isSlabMetadataRecording()) {
+                for (int n = 0; n < tree.getNodeCount(); ++n) {
+                    int buffer = traversal.bufferForNode(n);
+                    if (buffer >= 0) {
+                        nodeToBufferMap.put(n, buffer);
+                    }
+                }
+                return nodeToBufferMap;
+            }
+
             List<ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation> originalOps = traversal.getBranchIntervalOperations();
 
             int maxNumCoalescentIntervals = likelihoodDelegate.getMaxNumberOfCoalescentIntervals();
 
             ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation.initializeMap(tree, maxNumCoalescentIntervals);
-            Map<Integer, Integer> nodeToBufferMap = new HashMap<>();
             for (ProcessOnCoalescentIntervalDelegate.BranchIntervalOperation originalOp : originalOps) {
                 int input1NodeNumber = originalOp.inputBuffer1 % tree.getNodeCount();
                 int input2NodeNumber = originalOp.inputBuffer2 % tree.getNodeCount();
@@ -747,7 +758,7 @@ public abstract class AbstractRealizedDiscreteTraitDelegate extends ProcessSimul
     }
 
     @Override
-    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int[] operations) {
+    public int vectorizeNodeOperations(List<NodeOperation> nodeOperations, int rootNodeNumber, int[] operations) {
 
         int k = 0;
         for (ProcessOnTreeDelegate.NodeOperation op : nodeOperations) {

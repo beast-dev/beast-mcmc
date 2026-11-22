@@ -50,7 +50,7 @@ public abstract class InvariantOperator extends SimpleMCMCOperator implements Gi
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return DirtyLikelihoodOperatorParser.TOUCH_OPERATOR;
     }
 

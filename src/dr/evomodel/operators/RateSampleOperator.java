@@ -140,7 +140,7 @@ public class RateSampleOperator extends SimpleMCMCOperator {
     }
 
     //MCMCOperator INTERFACE
-    public final String getOperatorName() {
+    protected final String getBaseOperatorName() {
         return "rateSample";
     }
 

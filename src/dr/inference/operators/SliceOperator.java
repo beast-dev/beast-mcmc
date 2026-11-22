@@ -80,7 +80,7 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
         return 1;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "genericSliceSampler";
     }
 

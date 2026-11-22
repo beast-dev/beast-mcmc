@@ -238,6 +238,21 @@
         </expected>
     </assertEqual>
 
+    <assertEqual tolerance="1e-12" verbose="true">
+        <message>
+            Check LogRateSubstitutionModel restore invalidates derivative cache
+        </message>
+        <actual regex="maxAbsDifference: (.*?)\n">
+            <logRateSubstitutionModelRestoreTest dim="0" proposalOffset="1.0">
+                <logRateSubstitutionModel idref="loc.model"/>
+                <parameter idref="loc.coefficients0"/>
+            </logRateSubstitutionModelRestoreTest>
+        </actual>
+        <expected>
+            0.0
+        </expected>
+    </assertEqual>
+
     <report id = "report.prediction">
         <gaussianProcessPrediction idref="test.prediction"/>
     </report>

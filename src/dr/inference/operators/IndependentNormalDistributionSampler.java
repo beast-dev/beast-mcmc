@@ -93,7 +93,7 @@ public class IndependentNormalDistributionSampler extends SimpleMCMCOperator {
 		return "";
 	}
 
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return "independentNormalDistribution(" + variable.getVariableName() + ")";
 	}
 

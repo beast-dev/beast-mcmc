@@ -344,7 +344,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 	 * @see dr.evomodel.operators.SimpleGibbsOperator#getOperatorName()
 	 */
 	@Override
-	public String getOperatorName() {
+	protected String getBaseOperatorName() {
 		return GibbsPruneAndRegraftParser.GIBBS_PRUNE_AND_REGRAFT;
 	}
 

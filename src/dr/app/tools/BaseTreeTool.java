@@ -33,6 +33,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.util.FileHelpers;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public class BaseTreeTool {
         progressPrinter.printReadingTrees();
 
 
-        FileReader fileReader = new FileReader(inputFileName);
+        Reader fileReader = FileHelpers.getReader(inputFileName);
         TreeImporter importer = new NexusImporter(fileReader, false);
 
         try {

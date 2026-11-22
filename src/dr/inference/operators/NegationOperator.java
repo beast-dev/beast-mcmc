@@ -44,7 +44,7 @@ public class NegationOperator extends SimpleMCMCOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return "NegationOperator";
     }
 

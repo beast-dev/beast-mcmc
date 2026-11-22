@@ -227,14 +227,12 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
             throw new IllegalArgumentException("height error");
         }
 
-        boolean topologyChanged = true;
+        // if j == parent or jParent == parent the subtree is not actually moving but the height will change
+        final boolean topologyChanged = !(j == parent || jParent == parent);
 
         tree.beginTreeEdit();
 
-        if (j == parent || jParent == parent) {
-            // the subtree is not actually moving but the height will change
-            topologyChanged = false;
-        } else {
+        if (topologyChanged) {
             if (grandParent == null) {
                 // if the parent of the original node is the root then the sibling becomes
                 // the root.
@@ -287,6 +285,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
 
         // hastings ratio = reverse Prob / forward Prob
         logq = Math.log(reverseProbability) - Math.log(forwardProbability);
+
         return logq;
     }
 
@@ -407,7 +406,7 @@ public class SubtreeLeapOperator extends AbstractAdaptableTreeOperator {
         return "size";
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         if (tips == null) {
             return SubtreeLeapOperatorParser.SUBTREE_LEAP + "(" + tree.getId() + ")";
         } else {

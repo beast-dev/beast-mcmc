@@ -149,6 +149,9 @@ public class CreateTraitPartitionDialog {
         do {
             dialog.setVisible(true);
 
+            // the dialog is modal, so it has been closed by the time this returns
+            dialog.dispose();
+
             isValid = true;
             result = JOptionPane.CANCEL_OPTION;
 

@@ -29,15 +29,39 @@ package dr.inference.operators;
 
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.util.Identifiable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public abstract class SimpleMCMCOperator implements MCMCOperator {
+public abstract class SimpleMCMCOperator implements MCMCOperator, Identifiable {
+
+    private String id = null;
 
     private final static int SMOOTHED_ACCEPTANCE_WINDOW_SIZE = 100;
 
-    public abstract String getOperatorName();
+    /**
+     * @return the operator's name: its XML id, if it has one, then its own description,
+     * e.g. "stl1:subtreeLeap(treeModel)". Final so that every caller sees the id, which is
+     * what tells apart two operators of the same kind on the same model.
+     */
+    public final String getOperatorName() {
+        final String name = getBaseOperatorName();
+        return id == null ? name : id + ":" + name;
+    }
+
+    /**
+     * @return the operator's own description, e.g. "subtreeLeap(treeModel)", without its id.
+     */
+    protected abstract String getBaseOperatorName();
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public SimpleMCMCOperator() {
     }
@@ -111,6 +135,7 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         rejectCount = 0;
         lastDeviation = 0.0;
         sumDeviation = 0.0;
+        sumEvaluationTime = 0;
 
         windowAcceptance.clear();
     }
@@ -209,21 +234,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
         sumEvaluationTime += time;
     }
 
-    @Override
-    public double getMeanCalculationCount() {
-        return (double) sumCalculationCount / (double) (acceptCount + rejectCount);
-    }
-
-    @Override
-    public void addCalculationCount(long count) {
-        sumCalculationCount += count;
-    }
-
-    @Override
-    public long getTotalCalculationCount() {
-        return sumCalculationCount;
-    }
-
     /**
      * Called by operate(), does the actual operation.
      *
@@ -245,7 +255,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
     private boolean operateAllowed = true;
 
     private long sumEvaluationTime = 0;
-    private long sumCalculationCount = 0;
 
     private final Deque<Integer> windowAcceptance = new ArrayDeque<>();
 }

@@ -101,7 +101,7 @@ public class RegressionGibbsPrecisionOperator extends SimpleMCMCOperator impleme
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return GIBBS_OPERATOR;
     }
 

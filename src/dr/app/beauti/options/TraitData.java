@@ -83,9 +83,6 @@ public class TraitData implements Serializable {
         this.traitType = traitType;
     }
 
-//    public TraitOptions getTraitOptions() {
-//        return traitOptions;
-//    }
 
     public int getSiteCount() {
         return 0;

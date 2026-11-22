@@ -37,6 +37,9 @@ package dr.evomodel.treedatalikelihood.continuous;
  * @author Philippe Lemey
  */
 
+import dr.evomodel.treedatalikelihood.continuousNew.CanonicalOUOptions;
+import dr.evomodel.treedatalikelihood.continuousNew.canonical.adapter.CanonicalOUGradientAdapter;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.evolution.tree.MutableTreeModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -67,8 +70,8 @@ import java.util.Deque;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class ContinuousDataLikelihoodDelegate extends AbstractModel implements DataLikelihoodDelegate,
-        ConjugateWishartStatisticsProvider, Citable {
+public class ContinuousDataLikelihoodDelegate extends AbstractModel implements
+        ConjugateWishartStatisticsProvider, Citable, CtsCompatibility {
 
     private final int numTraits;
     private final int dimTrait;
@@ -463,7 +466,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         sb.append(new Matrix(getTreeTraitPrecision()));
         sb.append("\n\n");
 
-        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, cdi, diffusionProcessDelegate);
+        double[][] treeDrift = MultivariateTraitDebugUtilities.getTreeDrift(tree, priorMean, cdi.getDimTrait(), cdi, diffusionProcessDelegate);
 
         if (diffusionProcessDelegate.hasDrift()) {
             sb.append("Tree drift (including root mean):\n");
@@ -569,7 +572,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
             double[] rawDatumJoint = new double[dimProcess * (2 * tipCount - 1)];
             System.arraycopy(rawDatum, 0, rawDatumJoint, 0, rawDatum.length);
 
-            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, cdi, diffusionProcessDelegate);
+            double[][] driftJointMatrix = MultivariateTraitDebugUtilities.getGraphDrift(tree, cdi.getDimTrait(), cdi, diffusionProcessDelegate);
             double[] driftJoint = KroneckerOperation.vectorize(driftJointMatrix);
 
             for (int idx = 0; idx < driftJoint.length / dimProcess; ++idx) {
@@ -667,7 +670,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         return cdi;
     }
 
-    final ContinuousRateTransformation getRateTransformation() {
+    public final ContinuousRateTransformation getRateTransformation() {
         return rateTransformation;
     }
 
@@ -1112,7 +1115,7 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         getCallbackLikelihood().addTraits(traitProvider.getTreeTraits());
     }
 
-    void addBranchConditionalDensityTrait(String traitName) {
+    public void addBranchConditionalDensityTrait(String traitName) {
 
         ProcessSimulationDelegate gradientDelegate = new BranchConditionalDistributionDelegate(traitName,
                 getCallbackLikelihood().getTree(),
@@ -1186,5 +1189,74 @@ public class ContinuousDataLikelihoodDelegate extends AbstractModel implements D
         System.arraycopy(partial, type.getMeanOffset(dimProcess), mean, 0, dimProcess);
 
         return mean;
+    }
+
+    // ---- CtsCompatibility ----
+    // This delegate only runs the direct (legacy) CDI integrators. Canonical, moment-form and
+    // canonical-message likelihoods are provided by ContinuousDataLikelihoodDelegateNew.
+
+    private static UnsupportedOperationException requiresNewDelegate(final String what) {
+        return new UnsupportedOperationException(what
+                + " requires ContinuousDataLikelihoodDelegateNew (traitDataLikelihood implementation other than \"legacy\").");
+    }
+
+    @Override
+    public void enableCanonicalLikelihood() {
+        throw requiresNewDelegate("The canonical likelihood");
+    }
+
+    @Override
+    public void enableCanonicalLikelihood(final CanonicalOUOptions canonicalOUOptions) {
+        throw requiresNewDelegate("The canonical likelihood");
+    }
+
+    @Override
+    public void enableCdiBMLikelihood() {
+        throw requiresNewDelegate("The CDI Brownian-motion likelihood");
+    }
+
+    @Override
+    public void enableMomentBMLikelihood() {
+        throw requiresNewDelegate("The moment-form Brownian-motion likelihood");
+    }
+
+    @Override
+    public void enableCanonicalOULikelihood() {
+        throw requiresNewDelegate("The canonical OU likelihood");
+    }
+
+    @Override
+    public void enableCanonicalOULikelihood(final CanonicalOUOptions canonicalOUOptions) {
+        throw requiresNewDelegate("The canonical OU likelihood");
+    }
+
+    @Override
+    public boolean usesCanonicalOULikelihood() {
+        return false;
+    }
+
+    @Override
+    public boolean usesCdiBMLikelihood() {
+        return false;
+    }
+
+    @Override
+    public boolean usesMomentBMLikelihood() {
+        return false;
+    }
+
+    @Override
+    public boolean hasCanonicalPostOrderMessageProvider() {
+        return false;
+    }
+
+    @Override
+    public boolean hasCanonicalPreOrderMessageProvider() {
+        return false;
+    }
+
+    @Override
+    public CanonicalOUGradientAdapter getCanonicalOUGradientAdapter() {
+        return null;
     }
 }

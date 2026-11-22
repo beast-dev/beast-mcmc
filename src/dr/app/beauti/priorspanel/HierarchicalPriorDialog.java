@@ -73,13 +73,11 @@ public class HierarchicalPriorDialog {
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
 
-//    private final SpecialNumberPanel specialNumberPanel;
 
     private JTextField nameField;
     private JPanel panel;
 
-    //    private final SpecialNumberPanel specialNumberPanel;
-    private JChart[] chart;
+        private JChart[] chart;
     private JPanel[] quantilePanel;
     private JTextArea[] quantileText;
 
@@ -128,7 +126,6 @@ public class HierarchicalPriorDialog {
             quantilePanel[i].add(quantileText[i]);
         }
 
-//        specialNumberPanel = new SpecialNumberPanel(this);
 //        specialNumberPanel.setEnabled(false);
     }
 
@@ -169,9 +166,6 @@ public class HierarchicalPriorDialog {
 //            System.err.println("Model name exists");
             return false;
 
-//            if (option == JOptionPane.NO_OPTION) {
-//                return false;
-//            }
         }
 
         return true;
@@ -230,23 +224,26 @@ public class HierarchicalPriorDialog {
 
         final JDialog dialog = optionPane.createDialog(frame, "Phylogenetic Hierarchical Model Setup");
 
-        priorCombo.addItemListener(new ItemListener() {
+        // these listeners hold this dialog, so they are taken off again when it closes (below)
+        ItemListener priorListener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setupComponents();
                 dialog.validate();
                 dialog.repaint();
                 dialog.pack();
             }
-        });
+        };
+        priorCombo.addItemListener(priorListener);
 
+        PriorOptionsPanel.Listener optionsListener = new PriorOptionsPanel.Listener() {
+            public void optionsPanelChanged() {
+                setupChart();
+                dialog.validate();
+                dialog.repaint();
+            }
+        };
         for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
-            optionsPanel.addListener(new PriorOptionsPanel.Listener() {
-                public void optionsPanelChanged() {
-                    setupChart();
-                    dialog.validate();
-                    dialog.repaint();
-                }
-            });
+            optionsPanel.addListener(optionsListener);
         }
 
         dialog.pack();
@@ -269,15 +266,18 @@ public class HierarchicalPriorDialog {
         dialog.setResizable(true);
         dialog.setVisible(true);
 
+        priorCombo.removeItemListener(priorListener);
+        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            optionsPanel.removeListener(optionsListener);
+        }
+        dialog.dispose();
+
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();
         if (value != null && value != -1) {
             result = value;
         }
 
-//        if (result == JOptionPane.OK_OPTION) {
-//            getArguments();
-//        }
 
         return result;
     }
@@ -370,13 +370,6 @@ public class HierarchicalPriorDialog {
         mainPanel.repaint();
     }
 
-//    public void setSelectedField(RealNumberField selectedField) {
-//        this.selectedField = selectedField;
-//    }
-//
-//    public RealNumberField getSelectedField() {
-//        return selectedField;
-//    }
 
     NumberFormatter formatter = new NumberFormatter(4);
 

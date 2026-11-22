@@ -32,6 +32,9 @@ import dr.evolution.util.Taxon;
 import dr.inference.model.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -100,7 +103,7 @@ public class DefaultTreeModel extends TreeModel {
         nodes = new Node[nodeCount];
         storedNodes = new Node[nodeCount];
 
-        int i = 0;
+        List<Node> externalNodes = new ArrayList<Node>();
         int j = externalNodeCount;
 
         root = node;
@@ -109,14 +112,7 @@ public class DefaultTreeModel extends TreeModel {
             node = (Node) TreeUtils.postorderSuccessor(this, node);
 
             if (node.isExternal()) {
-                node.number = i;
-
-                nodes[i] = node;
-                storedNodes[i] = new Node();
-                storedNodes[i].taxon = node.taxon;
-                storedNodes[i].number = i;
-
-                i++;
+                externalNodes.add(node);
             } else {
                 node.number = j;
 
@@ -127,6 +123,31 @@ public class DefaultTreeModel extends TreeModel {
                 j++;
             }
         } while (node != root);
+
+        // Number the external nodes by taxon name rather than by their position in the starting
+        // tree. Node numbers index the parameters that live on the tree (rate categories, tip
+        // dates, traits) and are used by operators to pick nodes, so with a random starting tree
+        // the numbering would otherwise differ between runs and a run resumed from a checkpoint
+        // could not follow the same path as the run that wrote it.
+        Collections.sort(externalNodes, new Comparator<Node>() {
+            public int compare(Node node1, Node node2) {
+                String id1 = node1.taxon != null ? node1.taxon.getId() : "";
+                String id2 = node2.taxon != null ? node2.taxon.getId() : "";
+                return id1.compareTo(id2);
+            }
+        });
+
+        int i = 0;
+        for (Node external : externalNodes) {
+            external.number = i;
+
+            nodes[i] = external;
+            storedNodes[i] = new Node();
+            storedNodes[i].taxon = external.taxon;
+            storedNodes[i].number = i;
+
+            i++;
+        }
 
         // must be done here to allow programmatic running of BEAST
         setupHeightBounds();
@@ -590,6 +611,23 @@ public class DefaultTreeModel extends TreeModel {
             }
         }
 
+        int newRootIndex = -1;
+        for (int i = 0; i < edges.length; i++) {
+            if (edges[i] == -1) {
+                newRootIndex = i;
+            }
+        }
+        if (newRootIndex < 0) {
+            throw new RuntimeException("No root node (a node without a parent) in the provided edges.");
+        }
+
+        // Set the root before anything else. Changing a node height below notifies the tree's
+        // listeners at once, even inside the edit transaction, and a TreeParameterModel (such as the
+        // relaxed clock's rate categories) then compares the root's number with the one restored
+        // from the checkpoint: if the root were still the starting tree's it would permute its
+        // parameter values, and permute them again when the edit ends.
+        this.setRoot(nodes[newRootIndex]);
+
         //start with setting the external node heights
         for (int i = 0; i < this.getExternalNodeCount(); i++) {
             this.setNodeHeight(this.getExternalNode(nodeMap[i]), nodeHeights[i]);
@@ -600,7 +638,6 @@ public class DefaultTreeModel extends TreeModel {
             this.setNodeHeight(this.getInternalNode(i), nodeHeights[this.getExternalNodeCount() + i]);
         }
 
-        int newRootIndex = -1;
         //now add the parent-child links again to ALL the nodes
         for (int i = 0; i < edges.length; i++) {
             if (edges[i] != -1) {
@@ -608,14 +645,10 @@ public class DefaultTreeModel extends TreeModel {
                 if (i < this.getExternalNodeCount()) {
                     //external node
                     this.addChild(this.getNode(edges[i]), this.getExternalNode(nodeMap[i]));
-                    System.out.println("external: " + edges[i] + " > " + nodeMap[i]);
                 } else {
                     //internal node
                     this.addChild(this.getNode(edges[i]), this.getNode(i));
-                    System.out.println("internal: " + edges[i] + " > " + i);
                 }
-            } else {
-                newRootIndex = i;
             }
         }
 
@@ -646,7 +679,56 @@ public class DefaultTreeModel extends TreeModel {
         }
 
         remapParameterNodes();
-        this.setRoot(nodes[newRootIndex]);
+    }
+
+    @Override
+    public void adoptTreeStructure(int[] edges, double[] nodeHeights, int[] childOrder, String[] taxaNames,
+                                   String[] heightParameterNames) {
+        if (heightParameterNames != null) {
+            int[] holders = findHeightParameterHolders(heightParameterNames);
+            if (holders != null) {
+                adoptHeightParameters(holders);
+            }
+        }
+        adoptTreeStructure(edges, nodeHeights, childOrder, taxaNames);
+    }
+
+    @Override
+    public String getNodeHeightParameterName(NodeRef node) {
+        return ((Node) node).heightParameter.getParameterName();
+    }
+
+    /**
+     * Gives each internal node i the height, rate and trait parameters of internal node holders[i]; the parameters
+     * keep their values. A running chain permutes these among the internal nodes, as endTreeEdit swaps them between
+     * the old and new root at each root change.
+     */
+    private void adoptHeightParameters(int[] holders) {
+
+        if (!inEdit) throw new RuntimeException("Must be in edit transaction to call this method!");
+
+        Parameter rootHeightParameter = oldRoot.heightParameter;
+
+        Parameter[] heightParameters = new Parameter[nodeCount];
+        Parameter[] rateParameters = new Parameter[nodeCount];
+        ArrayList<Map<String, Parameter>> traitParameters = new ArrayList<Map<String, Parameter>>();
+        for (int i = 0; i < nodeCount; i++) {
+            heightParameters[i] = nodes[i].heightParameter;
+            rateParameters[i] = nodes[i].rateParameter;
+            traitParameters.add(nodes[i].traitParameters);
+        }
+
+        for (int i = externalNodeCount; i < nodeCount; i++) {
+            nodes[i].heightParameter = heightParameters[holders[i]];
+            nodes[i].rateParameter = rateParameters[holders[i]];
+            nodes[i].traitParameters = traitParameters.get(holders[i]);
+        }
+        remapParameterNodes();
+
+        // endTreeEdit swaps the root's parameters from oldRoot to the new root, so point it at their new node
+        oldRoot = getNodeOfParameter(rootHeightParameter);
+
+        pushTreeChangedEvent();
     }
 
     /**

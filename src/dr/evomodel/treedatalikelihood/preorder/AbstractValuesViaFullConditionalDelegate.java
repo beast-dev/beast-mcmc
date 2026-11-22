@@ -30,7 +30,9 @@ package dr.evomodel.treedatalikelihood.preorder;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.continuous.MultivariateDiffusionModel;
+import dr.evomodel.treedatalikelihood.continuous.ContinuousTraitPartialsProvider;
 import dr.evomodel.treedatalikelihood.continuous.*;
+import dr.evomodel.treedatalikelihood.continuousNew.CtsCompatibility;
 import dr.math.matrixAlgebra.WrappedVector;
 import org.ejml.data.DenseMatrix64F;
 
@@ -53,7 +55,7 @@ public abstract class AbstractValuesViaFullConditionalDelegate extends TipFullCo
                                                     ConjugateRootTraitPrior rootPrior,
                                                     ContinuousRateTransformation rateTransformation,
 //                                                    BranchRateModel rateModel,
-                                                    ContinuousDataLikelihoodDelegate likelihoodDelegate) {
+                                                    CtsCompatibility likelihoodDelegate) {
         super(name, tree, diffusionModel, dataModel, rootPrior, rateTransformation, likelihoodDelegate);
         missingInformation = new PartiallyMissingInformation(tree, dataModel);
     }

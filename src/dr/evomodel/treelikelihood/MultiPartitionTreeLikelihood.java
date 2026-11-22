@@ -52,6 +52,7 @@ import dr.inference.model.ThreadAwareLikelihood;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static dr.evomodel.treedatalikelihood.BeagleDataLikelihoodDelegate.instanceCount;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyIntegerArray;
 import static dr.evomodel.treedatalikelihood.BeagleFunctionality.parseSystemPropertyStringArray;
 
@@ -81,7 +82,8 @@ public class MultiPartitionTreeLikelihood extends AbstractTreeLikelihood impleme
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
-    private static int instanceCount = 0;
+    // the count of BEAGLE instances is shared with the other implementations, so that the resource order
+    // hands out devices across all of them rather than starting again for each (see issue #1079)
     private static List<Integer> resourceOrder = null;
     private static List<Integer> preferredOrder = null;
     private static List<Integer> requiredOrder = null;

@@ -297,7 +297,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         return null;
     }
 
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return GIBBS_OPERATOR;
     }
 

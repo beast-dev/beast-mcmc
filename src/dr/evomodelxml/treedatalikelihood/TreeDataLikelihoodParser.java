@@ -30,18 +30,23 @@ package dr.evomodelxml.treedatalikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.branchmodel.RewardsAwareBranchModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.siteratemodel.DiscretizedSiteRateModel;
 import dr.evomodel.siteratemodel.GammaSiteRateModel;
 import dr.evomodel.siteratemodel.SiteRateModel;
+import dr.evomodel.substmodel.BaseSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tipstatesmodel.TipStatesModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.*;
+import dr.evomodel.treedatalikelihood.DiscreteDataLikelihoodDelegate;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.PostOrderRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.RewardsAwarePartialsRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralRotatedPartialsRepresentation;
+import dr.evomodel.treedatalikelihood.discrete.discretetreedataLikelihood.representations.SpectralStandardPartialsRepresentation;
 import dr.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
@@ -49,7 +54,9 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -69,10 +76,15 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String DELAY_SCALING = "delayScaling";
     public static final String USE_PREORDER = "usePreOrder";
+    public static final String USE_SPECTRAL_REPRESENTATION = "useSpectralRepresentation";
     public static final String BRANCHRATE_DERIVATIVE = "branchRateDerivative";
     public static final String BRANCHINFINITESIMAL_DERIVATIVE = "branchInfinitesimalDerivative";
     public static final String INITIAL_NUM_CATS = "initialNumCats";
     public static final String PARTITION = "partition";
+    public static final String PHYLOGEOFAST = "phyloGeoFast";
+    public static final String PHYLOGEOFAST_REPRESENTATION = "phyloGeoFastRepresentation";
+    public static final String PHYLOGEOFAST_REPRESENTATION_STANDARD = "spectralStandard";
+    public static final String PHYLOGEOFAST_REPRESENTATION_ROTATED = "spectralRotated";
 
     public String getParserName() {
         return TREE_DATA_LIKELIHOOD;
@@ -90,7 +102,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                                                   boolean preferGPU,
                                                   PartialsRescalingScheme scalingScheme,
                                                   boolean delayRescalingUntilUnderflow,
-                                                  PreOrderSettings settings/*,
+                                                  PreOrderSettings settings,
+                                                  boolean phyloGeoFast,
+                                                  String phyloGeoFastRepresentation/*,
                                                   Parameter siteAssignInd,
                                                   List<Parameter> polyaPartitionCategories,
                                                   List<SiteRateModel> polyaSiteRateModels,
@@ -103,20 +117,41 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Tip State Error models are not supported yet with TreeDataLikelihood");
         }
 
-        List<Taxon> treeTaxa = treeModel.asList();
-        List<Taxon> patternTaxa = patternLists.get(0).asList();
+        // Every taxon of a partition must be in the tree. A taxon of the tree that a partition does not have is a
+        // ghost in that partition: it has no data there, and nothing is computed for a subtree made only of ghosts.
+        boolean hasGhosts = false;
+        for (int i = 0; i < patternLists.size(); i++) {
+            final PatternList patterns = patternLists.get(i);
+            List<String> ghosts = findGhostTaxa(treeModel, patterns);
+            if (!ghosts.isEmpty()) {
+                hasGhosts = true;
+                logGhostTaxa(logger, patterns, ghosts, treeModel.getExternalNodeCount());
 
-        if (!patternTaxa.containsAll(treeTaxa)) {
-            throw new XMLParseException("TreeModel "+ treeModel.getId() + " contains more taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() + ").");
-        }
+                String problem = BeagleDataLikelihoodDelegate.ghostProblem(settings);
+                if (phyloGeoFast) {
+                    problem = "phyloGeoFast does not support that";
+                } else if (branchModels.get(i) instanceof RewardsAwareBranchModel) {
+                    problem = "the rewards-aware branch model, " + branchModels.get(i).getId() +
+                            ", does not support that";
+                }
+                if (problem != null) {
+                    throw new XMLParseException("The tree, " + treeModel.getId() + ", has " + ghosts.size() +
+                            " taxa that are not in the pattern list, " + patterns.getId() + ", but " + problem);
+                }
 
-        if (!treeTaxa.containsAll(patternTaxa)) {
-            throw new XMLParseException("TreeModel " + treeModel.getId() + " contains fewer taxa (" + treeModel.getExternalNodeCount() + ") than the partition pattern list (" + patternTaxa.size() +").");
+                final String mergeProblem = BeagleDataLikelihoodDelegate.ghostMergeProblem(branchModels.get(i), settings);
+                if (mergeProblem != null) {
+                    logger.info("  Nodes of the tree with one of them as a child cannot be skipped by joining the " +
+                            "branches through them, because " + mergeProblem + "; they are computed from their other " +
+                            "child instead, which is exact but slower.");
+                }
+            }
         }
 
         boolean useBeagle3MultiPartition = false;
 
-        if (patternLists.size() > 1) {
+        // the multi-partition delegate has no ghosts
+        if (patternLists.size() > 1 && !hasGhosts) {
             // will currently recommend true if using GPU, CUDA or OpenCL.
             useBeagle3MultiPartition = MultiPartitionDataLikelihoodDelegate.IS_MULTI_PARTITION_RECOMMENDED();
 
@@ -209,24 +244,105 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 
             for (int j = 0; j < bic; j++) {
                 PatternList subPatterns = new Patterns(partitionPatterns, j, bic, partitionPatterns.areUnique());
-                DataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
-                        treeModel,
-                        subPatterns,
-                        branchModels.get(i),
-                        siteRateModels.get(i),
-                        useAmbiguities,
-                        preferGPU,
-                        scalingScheme,
-                        delayRescalingUntilUnderflow,
-                        settings);
+                DataLikelihoodDelegate dataLikelihoodDelegate;
+                if (phyloGeoFast) {
+                    final DiscreteDataLikelihoodDelegate.PartialTransform postOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final DiscreteDataLikelihoodDelegate.PartialTransform preOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final BranchModel branchModel = branchModels.get(i);
+                    final BaseSubstitutionModel substitutionModel = (BaseSubstitutionModel)
+                            branchModel.getSubstitutionModels().get(0); //TODO generalize
 
+                    final PostOrderRepresentation postOrderRepresentation;
+                    if (PHYLOGEOFAST_REPRESENTATION_ROTATED.equalsIgnoreCase(phyloGeoFastRepresentation)) {
+                        postOrderRepresentation = new SpectralRotatedPartialsRepresentation(substitutionModel, treeModel.getNodeCount());
+                    } else if (PHYLOGEOFAST_REPRESENTATION_STANDARD.equalsIgnoreCase(phyloGeoFastRepresentation)) {
+                        postOrderRepresentation = new SpectralStandardPartialsRepresentation(substitutionModel, treeModel.getNodeCount());
+                    } else {
+                        throw new XMLParseException("Unknown " + PHYLOGEOFAST_REPRESENTATION + " value '" +
+                                phyloGeoFastRepresentation + "'. Expected '" +
+                                PHYLOGEOFAST_REPRESENTATION_STANDARD + "' or '" +
+                                PHYLOGEOFAST_REPRESENTATION_ROTATED + "'.");
+                    }
+
+                    dataLikelihoodDelegate = new DiscreteDataLikelihoodDelegate(
+                                treeModel,
+                                subPatterns,
+                                branchModel,
+                                siteRateModels.get(i),
+                                useAmbiguities,
+                                preferGPU,
+                                scalingScheme,
+                                delayRescalingUntilUnderflow,
+                                settings,
+                                postOrderRepresentation,
+                                postOrderTransform,
+                                preOrderTransform,
+                                null,
+                                null
+                        );
+
+                } else if (branchModels.get(i) instanceof RewardsAwareBranchModel) {
+
+                    final DiscreteDataLikelihoodDelegate.PartialTransform postOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final DiscreteDataLikelihoodDelegate.PartialTransform preOrderTransform =
+                            DiscreteDataLikelihoodDelegate.PartialTransform.IDENTITY;
+                    final Parameter siteAssignInd = null;
+                    final Parameter partitionCat = null;
+                    final BranchModel branchModel = branchModels.get(i);
+                    if (!(branchModel instanceof RewardsAwareBranchModel)) {
+                        throw new XMLParseException(
+                                "DiscreteDataLikelihoodDelegate currently only supports RewardsAwareBranchModel in this parser branch."
+                        );
+                    }
+                    RewardsAwarePartialsRepresentation rewardsAwarePartialsRepresentation =
+                            new RewardsAwarePartialsRepresentation((RewardsAwareBranchModel) branchModel);
+                    dataLikelihoodDelegate = new DiscreteDataLikelihoodDelegate(
+                            treeModel,
+                            subPatterns,
+                            branchModel,
+                            siteRateModels.get(i),
+                            useAmbiguities,
+                            preferGPU,
+                            scalingScheme,
+                            delayRescalingUntilUnderflow,
+                            settings,
+                            rewardsAwarePartialsRepresentation,
+                            postOrderTransform,
+                            preOrderTransform,
+                            siteAssignInd,
+                            partitionCat
+                    );
+
+                } else {
+                    try {
+                        dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
+                                treeModel,
+                                subPatterns,
+                                branchModels.get(i),
+                                siteRateModels.get(i),
+                                useAmbiguities,
+                                preferGPU,
+                                scalingScheme,
+                                delayRescalingUntilUnderflow,
+                                settings,
+                                null,
+                                null,
+                                true);
+                    } catch (NumberFormatException nfe) { // a malformed -Dbeagle.* property, not an XML error
+                        throw nfe;
+                    } catch (IllegalArgumentException iae) { // e.g., a feature that the native BEAGLE lacks
+                        throw new XMLParseException(iae.getMessage());
+                    }
+                }
                 TreeDataLikelihood treeDataLikelihood = new TreeDataLikelihood(
                         dataLikelihoodDelegate,
                         treeModel,
                         branchRateModel);
 
                 treeDataLikelihood.setId(id + "_" + (j + 1));
-
                 treeDataLikelihoods.add(treeDataLikelihood);
             }
         }
@@ -283,13 +399,16 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
 //        int initialNumCats = xo.getAttribute(INITIAL_NUM_CATS, 3);
         boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
         boolean usePreOrder = xo.getAttribute(USE_PREORDER, false);
+        boolean useSpectralRepresentation = xo.getAttribute(USE_SPECTRAL_REPRESENTATION, false);
         boolean branchRateDerivative = xo.getAttribute(BRANCHRATE_DERIVATIVE, usePreOrder);
         boolean branchInfinitesimalDerivative = xo.getAttribute(BRANCHINFINITESIMAL_DERIVATIVE, false);
         boolean useRewardAwareBranchModelDelegate = xo.getAttribute("useRewardAwareBranchModelDelegate", false);
+        boolean useAugmentedEpochNodes = xo.getAttribute("useAugmentedEpochNodes", false);
         if (usePreOrder != (branchRateDerivative || branchInfinitesimalDerivative)) {
             throw new RuntimeException("Need to specify derivative types.");
         }
-        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities, useRewardAwareBranchModelDelegate);
+        PreOrderSettings settings = new PreOrderSettings(usePreOrder, branchRateDerivative, branchInfinitesimalDerivative, useAmbiguities,
+                useSpectralRepresentation, useRewardAwareBranchModelDelegate, useAugmentedEpochNodes);
 
         int beagleInstanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
         String bic = System.getProperty(BEAGLE_INSTANCE_COUNT);
@@ -426,6 +545,10 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         }
 
         final boolean delayScaling = xo.getAttribute(DELAY_SCALING, true);
+        final boolean phyloGeoFast = xo.getAttribute(PHYLOGEOFAST, false);
+        final String phyloGeoFastRepresentation = xo.getAttribute(
+                PHYLOGEOFAST_REPRESENTATION,
+                PHYLOGEOFAST_REPRESENTATION_STANDARD);
 
         if (tipStatesModel != null) {
             throw new XMLParseException("TreeDataLikelihood is not currently compatible with TipStateModel (i.e., a sequence error model).");
@@ -444,7 +567,9 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
                 preferGPU,
                 scalingScheme,
                 delayScaling,
-                settings/*,
+                settings,
+                phyloGeoFast,
+                phyloGeoFastRepresentation/*,
                 indicators,
                 polyaPartitionCategories,
                 polyaSiteRateModels,
@@ -464,11 +589,66 @@ public class TreeDataLikelihoodParser extends AbstractXMLObjectParser {
         return Likelihood.class;
     }
 
+    /**
+     * @return the ids of the taxa of the tree that are not in the pattern list, in the order of the tree's tips
+     * @throws XMLParseException if the pattern list has a taxon that the tree does not, or none that it does
+     */
+    public static List<String> findGhostTaxa(Tree tree, PatternList patterns) throws XMLParseException {
+        Set<String> treeIds = new HashSet<String>();
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            treeIds.add(tree.getTaxonId(i));
+        }
+
+        Set<String> patternIds = new HashSet<String>();
+        for (int i = 0; i < patterns.getTaxonCount(); i++) {
+            String id = patterns.getTaxonId(i);
+            if (!treeIds.contains(id)) {
+                throw new XMLParseException("The pattern list, " + patterns.getId() + ", has a taxon, " + id +
+                        ", that is not in the tree, " + tree.getId());
+            }
+            patternIds.add(id);
+        }
+
+        List<String> ghosts = new ArrayList<String>();
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            if (!patternIds.contains(tree.getTaxonId(i))) {
+                ghosts.add(tree.getTaxonId(i));
+            }
+        }
+
+        if (ghosts.size() == tree.getExternalNodeCount()) {
+            throw new XMLParseException("The pattern list, " + patterns.getId() + ", has none of the taxa in the " +
+                    "tree, " + tree.getId());
+        }
+        return ghosts;
+    }
+
+    /**
+     * Says which taxa a partition has no sequences for, since a taxon left out of an alignment by mistake is not an
+     * error.
+     */
+    public static void logGhostTaxa(Logger logger, PatternList patterns, List<String> ghosts, int taxonCount) {
+        final int shown = 20;
+        StringBuilder sb = new StringBuilder("  ");
+        sb.append(ghosts.size()).append(" of the ").append(taxonCount).append(" taxa in the tree are not in ")
+                .append(patterns.getId() != null ? patterns.getId() : "a partition")
+                .append(" and have no data in it: ");
+        for (int i = 0; i < Math.min(shown, ghosts.size()); i++) {
+            sb.append(i > 0 ? ", " : "").append(ghosts.get(i));
+        }
+        if (ghosts.size() > shown) {
+            sb.append(" and ").append(ghosts.size() - shown).append(" more");
+        }
+        logger.info(sb.toString());
+    }
+
     public static final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
             AttributeRule.newBooleanRule(PREFER_GPU, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             AttributeRule.newIntegerRule(INSTANCE_COUNT, true),
+            AttributeRule.newBooleanRule(PHYLOGEOFAST, true),
+            AttributeRule.newStringRule(PHYLOGEOFAST_REPRESENTATION, true),
 
             // really it should be this set of elements or the PARTITION elements
             new OrRule(

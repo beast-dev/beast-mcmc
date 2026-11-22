@@ -47,7 +47,7 @@ public class MatrixRotationOperator extends AbstractAdaptableOperator {
     }
 
     @Override
-    public String getOperatorName() {
+    protected String getBaseOperatorName() {
         return MATRIX_ROTATION_OPERATOR;
     }
 

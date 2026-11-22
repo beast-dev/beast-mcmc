@@ -28,6 +28,7 @@
 package dr.inferencexml.operators.hmc;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
+import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.model.Parameter;
 import dr.inference.model.PriorPreconditioningProvider;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -174,18 +175,29 @@ public class HamiltonianMonteCarloOperatorParser extends AbstractXMLObjectParser
             AttributeRule.newDoubleRule(STEP_SIZE),
             AttributeRule.newBooleanRule(AdaptableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newStringRule(PRECONDITIONING, true),
+            AttributeRule.newStringRule(MODE, true),
+            AttributeRule.newDoubleRule(DRAW_VARIANCE, true),
             AttributeRule.newDoubleRule(RANDOM_STEP_FRACTION, true),
+            AttributeRule.newIntegerRule(GRADIENT_CHECK_COUNT, true),
+            AttributeRule.newDoubleRule(GRADIENT_CHECK_TOLERANCE, true),
+            AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
+            AttributeRule.newDoubleRule(REDUCTION_FACTOR, true),
             AttributeRule.newDoubleRule(TARGET_ACCEPTANCE_PROBABILITY, true),
+            AttributeRule.newStringRule(INSTABILITY_HANDLER, true),
             new ElementRule(Parameter.class, true),
             new ElementRule(Transform.MultivariableTransformWithParameter.class, true),
+            new ElementRule(Transform.MultivariateTransform.class, true),
             new ElementRule(GradientWrtParameterProvider.class),
             new ElementRule(MASK, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),
             }, true),
             new ElementRule(PRECONDITIONER, new XMLSyntaxRule[]{
                     new XORRule(
-                            new ElementRule(MassPreconditioner.class),
-                            new ElementRule(PriorPreconditioningProvider.class)
+                            new XMLSyntaxRule[]{
+                                    new ElementRule(MassPreconditioner.class),
+                                    new ElementRule(PriorPreconditioningProvider.class),
+                                    new ElementRule(HessianWrtParameterProvider.class)
+                            }
                     ),
             }, true),
 

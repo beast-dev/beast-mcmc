@@ -27,7 +27,7 @@
 
 package dr.app.beauti.components.discrete;
 
-import dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser;
+import dr.evomodel.coalescent.structured.StructuredCoalescentLikelihoodParser;
 import dr.evomodel.tree.DefaultTreeModel;
 import dr.evomodelxml.substmodel.GlmSubstitutionModelParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
@@ -73,7 +73,7 @@ import dr.xml.XMLParser;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static dr.evomodel.coalescent.basta.StructuredCoalescentLikelihoodParser.BACKWARD;
+import static dr.evomodel.coalescent.structured.StructuredCoalescentLikelihoodParser.BACKWARD;
 import static dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.ROOT_FREQUENCIES;
 
 /**

@@ -25,21 +25,17 @@
 
 package dr.evomodel.branchratemodel;
 
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
 import dr.evomodel.tree.TreeModel;
 import dr.math.IntegratedSquaredGPApproximation;
 
 
-import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;

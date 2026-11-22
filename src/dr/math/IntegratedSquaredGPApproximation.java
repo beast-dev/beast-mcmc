@@ -25,28 +25,6 @@
 
 package dr.math;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTraitProvider;
-import dr.evolution.tree.TreeUtils;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
-import dr.evomodel.tree.TreeModel;
-import dr.math.distributions.GaussianProcessBasisApproximation;
-
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.math.distributions.NormalDistribution;
-import dr.math.distributions.RandomFieldDistribution;
-import dr.util.Author;
-import dr.util.Citable;
-import dr.util.Citation;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import static dr.math.distributions.GaussianProcessBasisApproximation.getSpectralDensityEigenValue;
 import static dr.math.distributions.GaussianProcessBasisApproximation.getSpectralDensity;
 

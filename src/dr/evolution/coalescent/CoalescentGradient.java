@@ -29,7 +29,7 @@ package dr.evolution.coalescent;
 
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.bigfasttree.BigFastTreeIntervals;
+import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treedatalikelihood.discrete.NodeHeightProxyParameter;
@@ -37,7 +37,6 @@ import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.hmc.HessianWrtParameterProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.model.GradientProvider;
 import dr.inference.model.HessianProvider;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -135,34 +134,34 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
         }
 
         IntervalList intervals = likelihood.getIntervalList();
-        BigFastTreeIntervals bigFastTreeIntervals = (BigFastTreeIntervals) intervals;
+        FastTreeIntervals fastTreeIntervals = (FastTreeIntervals) intervals;
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 
         int numSameHeightNodes = 1;
         double thisSecondDerivative = 0;
-        for (int i = 0; i < bigFastTreeIntervals.getIntervalCount(); i++) {
-            if (bigFastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                final double time = bigFastTreeIntervals.getIntervalTime(i + 1);
-                final int lineageCount = bigFastTreeIntervals.getLineageCount(i);
+        for (int i = 0; i < fastTreeIntervals.getIntervalCount(); i++) {
+            if (fastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                final double time = fastTreeIntervals.getIntervalTime(i + 1);
+                final int lineageCount = fastTreeIntervals.getLineageCount(i);
                 final double kChoose2 = Binomial.choose2(lineageCount);
                 final double intensitySecondDerivative = demographicFunction.getIntensitySecondDerivative(time);
                 thisSecondDerivative += demographicFunction.getLogDemographicSecondDerivative(time);
 
-                if (bigFastTreeIntervals.getInterval(i) != 0) {
+                if (fastTreeIntervals.getInterval(i) != 0) {
                     thisSecondDerivative -= kChoose2 * intensitySecondDerivative;
                 } else {
                     numSameHeightNodes++;
                 }
 
-                if ( i < bigFastTreeIntervals.getIntervalCount() - 1
-                        && bigFastTreeIntervals.getInterval(i + 1) != 0) {
+                if ( i < fastTreeIntervals.getIntervalCount() - 1
+                        && fastTreeIntervals.getInterval(i + 1) != 0) {
 
-                    final int nextLineageCount = bigFastTreeIntervals.getLineageCount(i + 1);
+                    final int nextLineageCount = fastTreeIntervals.getLineageCount(i + 1);
                     thisSecondDerivative += Binomial.choose2(nextLineageCount) * intensitySecondDerivative;
 
                     for (int j = 0; j < numSameHeightNodes; j++) {
-                        final int nodeIndex = bigFastTreeIntervals.getNodeNumbersForInterval(i - j)[1];
+                        final int nodeIndex = fastTreeIntervals.getNodeNumbersForInterval(i - j)[1];
                         diagonalHessian[nodeIndex - tree.getExternalNodeCount()] = thisSecondDerivative / (double) numSameHeightNodes;
                     }
 
@@ -173,10 +172,10 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
         }
 
         int j = numSameHeightNodes;
-        int v = bigFastTreeIntervals.getIntervalCount() - 1;
+        int v = fastTreeIntervals.getIntervalCount() - 1;
         while(j > 0) {
-            if (bigFastTreeIntervals.getIntervalType(v) == IntervalType.COALESCENT) {
-                diagonalHessian[bigFastTreeIntervals.getNodeNumbersForInterval(v)[1] - tree.getExternalNodeCount()] = thisSecondDerivative / (double) numSameHeightNodes;
+            if (fastTreeIntervals.getIntervalType(v) == IntervalType.COALESCENT) {
+                diagonalHessian[fastTreeIntervals.getNodeNumbersForInterval(v)[1] - tree.getExternalNodeCount()] = thisSecondDerivative / (double) numSameHeightNodes;
                 j--;
             }
             v--;
@@ -211,36 +210,36 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
         }
 
         IntervalList intervals = likelihood.getIntervalList();
-        BigFastTreeIntervals bigFastTreeIntervals = (BigFastTreeIntervals) intervals;
+        FastTreeIntervals fastTreeIntervals = (FastTreeIntervals) intervals;
 
         DemographicFunction demographicFunction = likelihood.getDemoModel().getDemographicFunction();
 
         int numSameHeightNodes = 1;
         double thisGradient = 0;
         boolean first = true;
-        for (int i = 0; i < bigFastTreeIntervals.getIntervalCount(); i++) {
-            if (bigFastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
-                final double time = bigFastTreeIntervals.getIntervalTime(i + 1);
-                final int lineageCount = bigFastTreeIntervals.getLineageCount(i);
+        for (int i = 0; i < fastTreeIntervals.getIntervalCount(); i++) {
+            if (fastTreeIntervals.getIntervalType(i) == IntervalType.COALESCENT) {
+                final double time = fastTreeIntervals.getIntervalTime(i + 1);
+                final int lineageCount = fastTreeIntervals.getLineageCount(i);
                 final double kChoose2 = Binomial.choose2(lineageCount);
                 final double intensityGradient = demographicFunction.getIntensityGradient(time);
                 thisGradient += demographicFunction.getLogDemographicGradient(time);
 
-                if (bigFastTreeIntervals.getInterval(i) != 0 || first) {
+                if (fastTreeIntervals.getInterval(i) != 0 || first) {
                     thisGradient -= kChoose2 * intensityGradient;
                     first = false;
                 } else {
                     numSameHeightNodes++;
                 }
 
-                if ( i < bigFastTreeIntervals.getIntervalCount() - 1
-                        && bigFastTreeIntervals.getInterval(i + 1) != 0) {
+                if ( i < fastTreeIntervals.getIntervalCount() - 1
+                        && fastTreeIntervals.getInterval(i + 1) != 0) {
 
-                    final int nextLineageCount = bigFastTreeIntervals.getLineageCount(i + 1);
+                    final int nextLineageCount = fastTreeIntervals.getLineageCount(i + 1);
                     thisGradient += Binomial.choose2(nextLineageCount) * intensityGradient;
 
                     for (int j = 0; j < numSameHeightNodes; j++) {
-                        final int nodeIndex = bigFastTreeIntervals.getNodeNumbersForInterval(i - j)[1];
+                        final int nodeIndex = fastTreeIntervals.getNodeNumbersForInterval(i - j)[1];
                         gradient[nodeIndex - tree.getExternalNodeCount()] = thisGradient / (double) numSameHeightNodes;
                     }
 
@@ -252,10 +251,10 @@ public class CoalescentGradient implements GradientWrtParameterProvider, Hessian
         }
 
         int j = numSameHeightNodes;
-        int v = bigFastTreeIntervals.getIntervalCount() - 1;
+        int v = fastTreeIntervals.getIntervalCount() - 1;
         while(j > 0) {
-            if (bigFastTreeIntervals.getIntervalType(v) == IntervalType.COALESCENT) {
-                gradient[bigFastTreeIntervals.getNodeNumbersForInterval(v)[1] - tree.getExternalNodeCount()] = thisGradient / (double) numSameHeightNodes;
+            if (fastTreeIntervals.getIntervalType(v) == IntervalType.COALESCENT) {
+                gradient[fastTreeIntervals.getNodeNumbersForInterval(v)[1] - tree.getExternalNodeCount()] = thisGradient / (double) numSameHeightNodes;
                 j--;
             }
             v--;

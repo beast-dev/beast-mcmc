@@ -32,6 +32,7 @@ import dr.evomodel.tree.EmpiricalTreeDistributionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.markovchain.MarkovChain;
+import dr.inference.mcmc.ChainContext;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.*;
 import dr.inference.operators.AdaptableMCMCOperator;
@@ -189,12 +190,21 @@ public class BeastCheckpointer implements StateLoaderSaver {
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
             fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
         }
-        return writeStateToFile(new File(fileName), state, lnL, markovChain);
+        return writeStateToFile(getChainFile(fileName), state, lnL, markovChain);
+    }
+
+    /**
+     * @return the file for the chain being run on this thread: each chain of a multi-chain
+     * run saves and loads its own state file
+     */
+    private static File getChainFile(String fileName) {
+        ChainContext context = ChainContext.current();
+        return new File(context != null ? context.addSuffix(fileName) : fileName);
     }
 
     @Override
     public long loadState(MarkovChain markovChain, double[] savedLnL) {
-        return readStateFromFile(new File(loadStateFileName), markovChain, savedLnL);
+        return readStateFromFile(getChainFile(loadStateFileName), markovChain, savedLnL);
     }
 
     @Override

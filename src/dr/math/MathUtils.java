@@ -53,7 +53,42 @@ public class MathUtils {
      * MersenneTwisterFast class for access to a single instance of the class, that
      * has synchronization.
      */
-    private static final MersenneTwisterFast random = MersenneTwisterFast.DEFAULT_INSTANCE;
+    private static final MersenneTwisterFast defaultRandom = MersenneTwisterFast.DEFAULT_INSTANCE;
+
+    /**
+     * A generator bound to the current thread, used in place of the default one. Each chain of
+     * a multi-chain run binds its own so that the chains draw independent, reproducible streams.
+     */
+    private static final ThreadLocal<MersenneTwisterFast> threadRandom = new ThreadLocal<MersenneTwisterFast>();
+
+    private static MersenneTwisterFast random() {
+        MersenneTwisterFast random = threadRandom.get();
+        return random != null ? random : defaultRandom;
+    }
+
+    /**
+     * An independent random number stream that can be bound to a thread.
+     */
+    public static final class RandomStream {
+        public RandomStream(long seed) {
+            random = new MersenneTwisterFast();
+            random.setSeed(seed);
+        }
+
+        private final MersenneTwisterFast random;
+    }
+
+    /**
+     * Binds a stream to the current thread: all the static methods of this class called
+     * from this thread will use it. Pass null to go back to the default generator.
+     */
+    public static void setThreadRandom(RandomStream stream) {
+        if (stream == null) {
+            threadRandom.remove();
+        } else {
+            threadRandom.set(stream.random);
+        }
+    }
 
     // Chooses one category if a cumulative probability distribution is given
     public static int randomChoice(double[] cf) {
@@ -197,6 +232,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static long getSeed() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.getSeed();
         }
@@ -206,6 +242,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static void setSeed(long seed) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             random.setSeed(seed);
         }
@@ -215,6 +252,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static byte nextByte() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextByte();
         }
@@ -224,6 +262,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static boolean nextBoolean() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextBoolean();
         }
@@ -233,6 +272,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static void nextBytes(byte[] bs) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             random.nextBytes(bs);
         }
@@ -242,6 +282,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static char nextChar() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextChar();
         }
@@ -251,6 +292,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static double nextGaussian() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextGaussian();
         }
@@ -260,6 +302,7 @@ public class MathUtils {
     //Variance = alpha / (lambda*lambda)
 
     public static double nextGamma(double alpha, double lambda) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextGamma(alpha, lambda);
         }
@@ -281,6 +324,7 @@ public class MathUtils {
      * @return a pseudo random double precision floating point number in [01)
      */
     public static double nextDouble() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextDouble();
         }
@@ -297,6 +341,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static double nextExponential(double lambda) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return -1.0 * Math.log(1 - random.nextDouble()) / lambda;
         }
@@ -306,6 +351,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static double nextInverseGaussian(double mu, double lambda) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             /* CODE TAKEN FROM WIKIPEDIA. TESTING DONE WITH RESULTS GENERATED IN R AND LOOK COMPARABLE */
             double v = random.nextGaussian();   // sample from a normal distribution with a mean of 0 and 1 standard deviation
@@ -325,6 +371,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static float nextFloat() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextFloat();
         }
@@ -334,6 +381,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static long nextLong() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextLong();
         }
@@ -343,6 +391,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static short nextShort() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextShort();
         }
@@ -352,6 +401,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static int nextInt() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextInt();
         }
@@ -361,6 +411,7 @@ public class MathUtils {
      * Access a default instance of this class, access is synchronized
      */
     public static int nextInt(int n) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.nextInt(n);
         }
@@ -379,6 +430,7 @@ public class MathUtils {
      * Shuffles an array.
      */
     public static void shuffle(int[] array) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             random.shuffle(array);
         }
@@ -388,6 +440,7 @@ public class MathUtils {
      * Shuffles an array. Shuffles numberOfShuffles times
      */
     public static void shuffle(int[] array, int numberOfShuffles) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             random.shuffle(array, numberOfShuffles);
         }
@@ -399,6 +452,7 @@ public class MathUtils {
      * @param l length of the array required.
      */
     public static int[] shuffled(int l) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.shuffled(l);
         }
@@ -406,6 +460,7 @@ public class MathUtils {
 
 
     public static int[] sampleIndicesWithReplacement(int length) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             int[] result = new int[length];
             for (int i = 0; i < length; i++)
@@ -418,6 +473,7 @@ public class MathUtils {
      * Permutes an array.
      */
     public static void permute(int[] array) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             random.permute(array);
         }
@@ -429,6 +485,7 @@ public class MathUtils {
      * @param l length of the array required.
      */
     public static int[] permuted(int l) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.permuted(l);
         }
@@ -474,12 +531,14 @@ public class MathUtils {
     }
 
     public static int[] getRandomState() {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             return random.getRandomState();
         }
     }
 
     public static void setRandomState(int[] rngState) {
+        final MersenneTwisterFast random = random();
         synchronized (random) {
             random.setRandomState(rngState);
         }

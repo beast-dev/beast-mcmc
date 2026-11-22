@@ -236,7 +236,8 @@ public interface Likelihood extends Loggable, Identifiable {
 
 
     // set to store all created likelihoods
-    final static Set<Likelihood> FULL_LIKELIHOOD_SET = new HashSet<Likelihood>();
-    final static Set<Likelihood> CONNECTED_LIKELIHOOD_SET = new HashSet<Likelihood>();
+    // views of the current thread's ModelRegistry
+    final static Set<Likelihood> FULL_LIKELIHOOD_SET = ModelRegistry.view(ModelRegistry::getFullLikelihoodSet);
+    final static Set<Likelihood> CONNECTED_LIKELIHOOD_SET = ModelRegistry.view(ModelRegistry::getConnectedLikelihoodSet);
 
 }

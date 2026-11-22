@@ -171,8 +171,9 @@ public interface Model extends Identifiable, Serializable {
 
 
     // set to store all created models
-    final static Set<Model> FULL_MODEL_SET = new LinkedHashSet<Model>();
-	final static Set<Model> CONNECTED_MODEL_SET = new LinkedHashSet<Model>();
+    // views of the current thread's ModelRegistry
+    final static Set<Model> FULL_MODEL_SET = ModelRegistry.view(ModelRegistry::getFullModelSet);
+	final static Set<Model> CONNECTED_MODEL_SET = ModelRegistry.view(ModelRegistry::getConnectedModelSet);
 
 }
 

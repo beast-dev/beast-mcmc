@@ -53,6 +53,8 @@ public interface ParallelTempering {
 
     String getReport();
 
+    ParallelTemperingStatistics getStatistics();
+
     // TODO implement various swapping approaches
 
     class IndexPair {
@@ -97,6 +99,10 @@ public interface ParallelTempering {
 
         public String getReport() {
             return statistics.getReport();
+        }
+
+        public ParallelTemperingStatistics getStatistics() {
+            return statistics;
         }
 
         private int getNewColdChain(IndexPair pair, int coldChain) {
@@ -201,7 +207,6 @@ public interface ParallelTempering {
         private final ParitySelector paritySelector;
         private final HalfIndexSelector indexSelector;
         private final int K;
-        private final int halfK;
         private boolean evenStep;
 
         public New(MarkovChain[] chains, OperatorSchedule[] schedules, MCMCMCOptions options,
@@ -211,9 +216,7 @@ public interface ParallelTempering {
             this.paritySelector = directionSelector;
             this.indexSelector = indexSelector;
 
-            int length = options.getChainTemperatures().length;
-            this.K = length;
-            this.halfK = length / 2;
+            this.K = options.getChainTemperatures().length;
             this.mapRankToChain = new int[K];
 
             this.evenStep = MathUtils.nextBoolean();
@@ -235,16 +238,20 @@ public interface ParallelTempering {
             }
 
             evenStep = paritySelector.next(evenStep);
-            int[] halfIndices = indexSelector.indices(halfK);
+
+            // non-reversible (DEO) scheme: neighbouring ranks (0,1), (2,3), ... on even steps
+            // and (1,2), (3,4), ... on odd steps. There is no wrap from the hottest rank back
+            // to the cold one.
+            int offset = evenStep ? 0 : 1;
+            int pairCount = (K - offset) / 2;
 
             List<IndexPair> pairs = new ArrayList<>();
-            for (int halfIndex : halfIndices) {
-                int rank1 = 2 * halfIndex + (evenStep ? 0 : 1);
+            if (pairCount == 0) {
+                return pairs;
+            }
+            for (int halfIndex : indexSelector.indices(pairCount)) {
+                int rank1 = 2 * halfIndex + offset;
                 int rank2 = rank1 + 1;
-                if (rank2 >= K) {
-                    rank2 = 0;
-                }
-
                 pairs.add(new IndexPair(mapRankToChain[rank1], mapRankToChain[rank2]));
             }
 
@@ -303,18 +310,14 @@ public interface ParallelTempering {
         ALL {
             @Override
             int[] indices(int size) {
-                if (all == null) {
-                    all = new int[size];
-                    for (int i = 0; i < size; ++i) {
-                        all[i] = i;
-                    }
+                int[] all = new int[size];
+                for (int i = 0; i < size; ++i) {
+                    all[i] = i;
                 }
                 return all;
             }
         };
 
         abstract int[] indices(int size);
-
-        private static int[] all = null;
     }
 }

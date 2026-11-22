@@ -23,11 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.coalescent.nonparametric;
+package dr.evomodelxml.coalescent.skyride;
 
-import dr.evomodelxml.coalescent.skyride.GMRFSkyrideLikelihoodParser;
 import dr.evomodel.coalescent.intervals.FastTreeIntervals;
-import dr.evomodel.coalescent.nonparametric.MultilocusNonparametricCoalescentLikelihood;
+import dr.evomodel.coalescent.skyride.MultilocusNonparametricCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.smooth.SmoothSkygridLikelihoodParser;
 import dr.inference.model.Parameter;

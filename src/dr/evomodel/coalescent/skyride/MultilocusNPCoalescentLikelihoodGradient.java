@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent.nonparametric;
+package dr.evomodel.coalescent.skyride;
 
 import dr.inference.hmc.GradientWrtParameterProvider;
 import dr.inference.model.*;

@@ -1,7 +1,7 @@
-package dr.evomodelxml.coalescent.nonparametric;
+package dr.evomodelxml.coalescent.skyride;
 
-import dr.evomodel.coalescent.nonparametric.MultilocusNPCoalescentLikelihoodGradient;
-import dr.evomodel.coalescent.nonparametric.MultilocusNonparametricCoalescentLikelihood;
+import dr.evomodel.coalescent.skyride.MultilocusNPCoalescentLikelihoodGradient;
+import dr.evomodel.coalescent.skyride.MultilocusNonparametricCoalescentLikelihood;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent.nonparametric;
+package dr.evomodel.coalescent.skyride;
 import dr.evomodel.coalescent.intervals.FastTreeIntervals;
 import dr.evomodel.coalescent.zoo.SingleTreeGriddedNodesTimeline;
 import dr.inference.model.*;

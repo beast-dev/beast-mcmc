@@ -24,10 +24,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.coalescent.nonparametric;
+package dr.evomodel.coalescent.skyride;
 
 import dr.evomodel.coalescent.legacy.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodel.coalescent.skyride.GMRFSkygridLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;

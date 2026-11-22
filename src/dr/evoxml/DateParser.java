@@ -65,9 +65,6 @@ public class DateParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        java.text.DateFormat dateFormat = java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT, java.util.Locale.UK);
-        dateFormat.setLenient(true);
-
         if (xo.getChildCount() > 0) {
             throw new XMLParseException("No child elements allowed in date element.");
         }
@@ -88,15 +85,8 @@ public class DateParser extends AbstractXMLObjectParser {
             try {
                 value = xo.getDoubleAttribute(VALUE);
             } catch (XMLParseException e) {
-                String dateString = xo.getStringAttribute(VALUE);
-
-                try {
-
-                    dateValue = dateFormat.parse(dateString);
-
-                } catch (Exception ex) {
-                    throw new XMLParseException("value=" + dateString + " not recognised as a date, use DD/MM/YYYY");
-                }
+                // not a number, so it has to be a calendar date
+                dateValue = parseCalendarDay(xo.getStringAttribute(VALUE), VALUE);
             }
         } else {
             throw new XMLParseException("Value attribute missing from date element.");
@@ -117,14 +107,7 @@ public class DateParser extends AbstractXMLObjectParser {
 
         if (xo.hasAttribute(ORIGIN)) {
 
-            String originString = (String) xo.getAttribute(ORIGIN);
-            java.util.Date origin;
-
-            try {
-                origin = dateFormat.parse(originString);
-            } catch (Exception e) {
-                throw new XMLParseException("origin=" + originString + " not recognised as a date, use DD/MM/YYYY");
-            }
+            java.util.Date origin = parseCalendarDay(xo.getStringAttribute(ORIGIN), ORIGIN);
 
             if (dateValue != null) {
                 date = new Date(dateValue, units, origin);
@@ -134,8 +117,11 @@ public class DateParser extends AbstractXMLObjectParser {
 
         } else {
 
-            // No origin specified so use default (1st Jan 1970)
-            if (dateValue != null) {
+            if (dateValue != null && units == Units.Type.YEARS) {
+                // a calendar date in years is its decimal year, as it is when given with no other attributes
+                date = new Date(new Date(dateValue).getTimeValue(), units, false);
+            } else if (dateValue != null) {
+                // in other units, the time since the default origin (1st Jan 1970)
                 date = new Date(dateValue, units);
             } else {
                 date = new Date(value, units, backwards);
@@ -182,7 +168,7 @@ public class DateParser extends AbstractXMLObjectParser {
             final int year = Integer.parseInt(value.substring(0, 4));
             final int month = Integer.parseInt(value.substring(5, 7));
             if (month < 1 || month > 12) {
-                throw new XMLParseException("value=" + value + " is not a month, use YYYY-MM");
+                throw new XMLParseException(VALUE + "=\"" + value + "\" is not a month: use YYYY-MM");
             }
             final double start = calendarDateToDecimalYear(value + "-01");
             final double end = month == 12 ? year + 1.0 :
@@ -212,14 +198,30 @@ public class DateParser extends AbstractXMLObjectParser {
      * uses for the dates of tips.
      */
     public static double calendarDateToDecimalYear(String value) throws XMLParseException {
-        final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        format.setLenient(false);
-        format.setTimeZone(TimeZone.getTimeZone("GMT"));
-        try {
-            return new Date(format.parse(value)).getTimeValue();
-        } catch (ParseException pe) {
-            throw new XMLParseException("value=" + value + " is not a calendar date, use YYYY-MM-DD");
+        return new Date(parseCalendarDay(value, VALUE)).getTimeValue();
+    }
+
+    /**
+     * Reads a calendar date. The only form read is YYYY-MM-DD.
+     *
+     * @param value     the calendar date
+     * @param attribute the name of the attribute it is the value of, for the message if it is not a date
+     * @return the start of that day (in GMT, so that the date does not depend on where it is read)
+     */
+    private static java.util.Date parseCalendarDay(String value, String attribute) throws XMLParseException {
+        value = value.trim();
+        if (value.matches("\\d\\d\\d\\d-\\d\\d-\\d\\d")) {
+            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            format.setLenient(false);
+            format.setTimeZone(TimeZone.getTimeZone("GMT"));
+            try {
+                return format.parse(value);
+            } catch (ParseException pe) {
+                // the right form but not a day there has been (2021-02-30)
+            }
         }
+        throw new XMLParseException(attribute + "=\"" + value + "\" is not a calendar date: use YYYY-MM-DD" +
+                (value.matches("\\d+/\\d+/\\d+") ? " (dates as DD/MM/YYYY are no longer read)" : ""));
     }
 
     private static Date createDate(double decimalYear, double uncertainty) {
@@ -240,7 +242,7 @@ public class DateParser extends AbstractXMLObjectParser {
                         "<date value=\"10.0\" units=\"years\" direction=\"backwards\"/>\n" +
                         "\n" +
                         "<!-- a date representing 300 days after Jan 1st 1989                          -->\n" +
-                        "<date value=\"300.0\" origin=\"01/01/89\" units=\"days\" direction=\"forwards\"/>\n" +
+                        "<date value=\"300.0\" origin=\"1989-01-01\" units=\"days\" direction=\"forwards\"/>\n" +
                         "\n" +
                         "<!-- calendar dates and decimal years, given as a value alone                 -->\n" +
                         "<date value=\"2020-03-23\"/>\n" +
@@ -258,7 +260,7 @@ public class DateParser extends AbstractXMLObjectParser {
                     "The value of this date. With no other attributes it can be a calendar date (YYYY-MM-DD), " +
                             "a month (YYYY-MM), a year (YYYY) or a decimal year (YYYY.x)"),
             new StringAttributeRule(ORIGIN,
-                    "The origin of this time scale, which must be a valid calendar date", "01/01/01", true),
+                    "The origin of this time scale, which must be a calendar date as YYYY-MM-DD", "2001-01-01", true),
             new StringAttributeRule(UNITS, "The units of the timescale", new String[]{YEARS, MONTHS, DAYS}, true),
             new StringAttributeRule(DIRECTION, "The direction of the timescale", new String[]{FORWARDS, BACKWARDS}, true),
             new XORRule(

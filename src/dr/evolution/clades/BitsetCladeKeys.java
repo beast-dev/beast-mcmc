@@ -26,6 +26,8 @@
 
 package dr.evolution.clades;
 
+import dr.evolution.util.Taxon;
+
 /**
  * @author Andrew Rambaut
  * @version $
@@ -65,8 +67,8 @@ public class BitsetCladeKeys implements CladeKeys {
     }
 
     @Override
-    public Object getTaxonKey(int taxon) {
-        return taxon;
+    public Object getTaxonKey(int index, Taxon taxon) {
+        return index;
     }
 
     private int getMaxIndex(Object key) {

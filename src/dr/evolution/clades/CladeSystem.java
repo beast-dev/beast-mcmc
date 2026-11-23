@@ -137,7 +137,12 @@ public final class CladeSystem {
             }
             BiClade clade = new BiClade(index, taxon);
             tipClades.put(index, clade);
-            tipCladeMap.put(clade.getKey(), clade);
+            BiClade sameKey = tipCladeMap.put(clade.getKey(), clade);
+            if (sameKey != null) {
+                // the keys are hashes of the names so there is nothing else to try
+                throw new IllegalArgumentException("Taxa '" + sameKey.getTaxon().getId() + "' and '" +
+                        taxon.getId() + "' have the same clade key");
+            }
         }
     }
 
@@ -269,7 +274,7 @@ public final class CladeSystem {
         if (tree.isExternal(node)) {
             final int index = (taxonNumberMap != null ?
                     taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
-            key = BiClade.getTaxonKey(index);
+            key = tipClades.get(index).getKey();
         } else {
             assert tree.getChildCount(node) == 2;
 
@@ -487,7 +492,7 @@ private Object collectTipHeight(Tree tree, NodeRef node) {
     final int index = (taxonNumberMap != null ?
             taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
 
-    Object key = BiClade.getTaxonKey(index);
+    Object key = tipClades.get(index).getKey();
 
     BiClade tip = (BiClade) getClade(key);
     tip.addHeightValue(tree.getNodeHeight(node));

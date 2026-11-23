@@ -52,7 +52,7 @@ public class BiClade implements Clade {
         credibility = 1.0;
         size = 1;
 
-        key = getTaxonKey(index);
+        key = cladeKeys.getTaxonKey(index, taxon);
 
         this.taxon = taxon;
     }
@@ -239,10 +239,6 @@ public class BiClade implements Clade {
         return key;
     }
 
-    public static Object getTaxonKey(int index) {
-        return cladeKeys.getTaxonKey(index);
-    }
-
     public static Object getParentKey(Object key1, Object key2) {
         return cladeKeys.getParentKey(key1, key2);
     }
@@ -291,7 +287,7 @@ public class BiClade implements Clade {
         if (USE_BITSET_CLADE_KEYS) {
             cladeKeys = BitsetCladeKeys.INSTANCE;
         } else {
-            cladeKeys = FingerprintCladeKeys.INSTANCE;
+            cladeKeys = TaxonHashCladeKeys.INSTANCE;
         }
     }
 }

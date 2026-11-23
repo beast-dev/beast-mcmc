@@ -499,6 +499,10 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         chainPreparer = preparer;
     }
 
+    public static ChainPreparer getChainPreparer() {
+        return chainPreparer;
+    }
+
     private static volatile ChainPreparer chainPreparer = null;
 
     public void setId(String id) {

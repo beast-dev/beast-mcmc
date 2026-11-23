@@ -68,6 +68,22 @@ public class RunConfiguration {
     }
 
     /**
+     * @param diagnostics true to show the convergence diagnostics when there is one independent
+     *                    chain (they are always shown when there are several, unless turned off)
+     */
+    public void setSingleChainDiagnostics(boolean diagnostics) {
+        this.singleChainDiagnostics = diagnostics;
+    }
+
+    /**
+     * @return true if the run's convergence diagnostics should be computed and shown in the
+     * screen log
+     */
+    public boolean hasDiagnostics() {
+        return convergenceInterval > 0 && (independentChainCount > 1 || singleChainDiagnostics);
+    }
+
+    /**
      * @param scheme how each chain uses its threads (null for BEAST's usual threading with a
      *               single chain, auto with several)
      */
@@ -159,6 +175,9 @@ public class RunConfiguration {
         if (arguments.hasOption("convergence_every")) {
             configuration.setConvergenceInterval(arguments.getIntegerOption("convergence_every"));
         }
+        if (arguments.hasOption("convergence")) {
+            configuration.setSingleChainDiagnostics(true);
+        }
         if (arguments.hasOption("thread_scheme")) {
             configuration.setThreadingScheme(ThreadingScheme.Type.parse(arguments.getStringOption("thread_scheme")));
         }
@@ -227,5 +246,6 @@ public class RunConfiguration {
     private final MCMCMCOptions.SwapScheme swapScheme;
     private final int chainThreads;
     private int convergenceInterval = DEFAULT_CONVERGENCE_INTERVAL;
+    private boolean singleChainDiagnostics = false;
     private ThreadingScheme.Type threadingScheme = null;
 }

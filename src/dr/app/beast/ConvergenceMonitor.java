@@ -39,7 +39,8 @@ import java.io.PrintWriter;
 import java.util.*;
 
 /**
- * Compares independent chains while they run. The chains share one burn-in, estimated from
+ * Compares independent chains while they run (or the two halves of a single chain, in which
+ * case there is no ASDSF). The chains share one burn-in, estimated from
  * their agreement: the smallest burn-in after which the split R-hat of the posterior across
  * the chains stays below 1.01 (for that burn-in and every larger one tried, as the initial
  * transient can make R-hat look small when nothing is discarded). After that burn-in it gives
@@ -60,6 +61,10 @@ public class ConvergenceMonitor {
     public static final double MAX_BURNIN = 0.5;
     public static final double RHAT_THRESHOLD = 1.01;
 
+    /**
+     * @param sets the sets the collectors are for, for their status in the final report (can
+     *             be null)
+     */
     public ConvergenceMonitor(List<ChainSet> sets, List<SampleCollector> collectors, File logFile) {
         this.sets = sets;
         this.collectors = collectors;
@@ -126,6 +131,10 @@ public class ConvergenceMonitor {
 
     private synchronized void report(String title) {
         int chainCount = collectors.size();
+        if (chainCount == 0) {
+            // no chain was run
+            return;
+        }
         SampleCollector.Snapshot[] snapshots = new SampleCollector.Snapshot[chainCount];
         long minState = Long.MAX_VALUE;
         for (int k = 0; k < chainCount; k++) {
@@ -137,9 +146,9 @@ public class ConvergenceMonitor {
         Burnin burnin = diagnostics.burnin;
 
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%n%s at state %d (%d chains):%n", title, minState, chainCount));
+        sb.append(String.format("%n%s at state %d (%d chain%s):%n", title, minState, chainCount, chainCount > 1 ? "s" : ""));
         for (int k = 0; k < chainCount; k++) {
-            String status = sets.get(k).getStatus();
+            String status = (sets != null ? sets.get(k).getStatus() : "");
             sb.append(String.format("  %-10s state %-12d posterior %-16.4f %s%n",
                     collectors.get(k).getName(), snapshots[k].state, snapshots[k].posterior, status));
         }
@@ -204,7 +213,7 @@ public class ConvergenceMonitor {
         }
         int steps = (int) Math.round(MAX_BURNIN / BURNIN_STEP);
         // need at least a few samples in each half chain after the largest burn-in
-        if (snapshots.length < 2 || n * (1.0 - MAX_BURNIN) < 8) {
+        if (n * (1.0 - MAX_BURNIN) < 8) {
             return burnin;
         }
         burnin.tried = true;
@@ -328,7 +337,8 @@ public class ConvergenceMonitor {
                     diagnostics.minESSLabel = labels[j];
                 }
 
-                if (chainCount > 1) {
+                // also for a single chain, whose two halves are compared
+                {
                     double rhat = splitRhat(values);
                     if (!Double.isNaN(rhat) && (diagnostics.maxRhatLabel == null || rhat > diagnostics.maxRhat)) {
                         diagnostics.maxRhat = rhat;

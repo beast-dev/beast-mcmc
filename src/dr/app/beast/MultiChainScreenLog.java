@@ -40,7 +40,8 @@ import java.util.TreeMap;
 import java.util.function.LongFunction;
 
 /**
- * Shows the screen logs of several independent chains as one. Each chain's screen log is sent
+ * Shows the screen logs of several independent chains as one (or that of a single chain with
+ * its convergence diagnostics). Each chain's screen log is sent
  * here. When every chain has logged a state, that state is printed as a block: a row for each
  * chain under the usual column headings and, if the run has convergence diagnostics, a row with
  * the split R-hat of each column across the chains and a row with its effective sample size
@@ -92,6 +93,11 @@ public class MultiChainScreenLog {
             @Override
             public boolean hasDiagnostics() {
                 return hasDiagnostics;
+            }
+
+            @Override
+            public int getChainCount() {
+                return chainCount;
             }
 
             @Override

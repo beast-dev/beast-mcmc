@@ -213,8 +213,17 @@ public class BeastMain {
 
             if (runConfiguration.isSingleChain()) {
 
+                ConvergenceMonitor monitor = null;
+                if (runConfiguration.hasDiagnostics()) {
+                    monitor = prepareSingleChainDiagnostics(fileName);
+                }
+
                 // just parse the file running all threads...
                 parser.parse(chainFactory.getDocument(), true);
+
+                if (monitor != null) {
+                    monitor.stop();
+                }
 
             } else {
 
@@ -364,10 +373,10 @@ public class BeastMain {
             driverContexts[k] = new ChainContext(name + " driver", fileSuffix, false, false, nextChainSeed());
         }
 
-        if (independentChainCount > 1) {
+        if (independentChainCount > 1 || runConfiguration.hasDiagnostics()) {
             // the screen logs of the independent chains are shown as one
             multiChainScreenLog = new MultiChainScreenLog(independentChainCount,
-                    runConfiguration.getConvergenceInterval() > 0, System.out);
+                    runConfiguration.hasDiagnostics(), System.out);
             for (int k = 0; k < independentChainCount; k++) {
                 // the screen log of a tempering set comes from whichever member is cold
                 for (int i = 0; i < temperedChainCount; i++) {
@@ -395,7 +404,7 @@ public class BeastMain {
                 } else {
                     sets.add(new IndependentChainSet(k, chains[0], contexts[k][0], driverContexts[k]));
                 }
-                if (independentChainCount > 1 && runConfiguration.getConvergenceInterval() > 0) {
+                if (runConfiguration.hasDiagnostics()) {
                     // keep the samples to compare the chains
                     SampleCollector collector = new SampleCollector("Chain " + (k + 1), chains);
                     collector.attach(chains);
@@ -417,6 +426,40 @@ public class BeastMain {
     }
 
     private MultiChainScreenLog multiChainScreenLog = null;
+
+    /**
+     * Sets up the convergence diagnostics of a plain single chain, which is built and run by
+     * parsing the XML. Its screen log is sent to a combined screen log (of one chain) and its
+     * samples are collected from when it starts.
+     *
+     * @return the monitor, to be stopped after the run (it then gives its final report)
+     */
+    private ConvergenceMonitor prepareSingleChainDiagnostics(String fileName) {
+        final MultiChainScreenLog screenLog = new MultiChainScreenLog(1, true, System.out);
+        ChainContext.setSingleChainScreenFormatter(screenLog.getFormatter(0));
+
+        final List<SampleCollector> collectors = new ArrayList<SampleCollector>();
+        final ConvergenceMonitor monitor = new ConvergenceMonitor(null, collectors, getConvergenceLogFile(fileName));
+        monitor.start();
+
+        final MCMC.ChainPreparer preparer = MCMC.getChainPreparer();
+        MCMC.setChainPreparer(mcmc -> {
+            if (preparer != null) {
+                preparer.prepare(mcmc);
+            }
+            synchronized (collectors) {
+                // only the first chain to start (there is usually only one)
+                if (collectors.isEmpty()) {
+                    MCMC[] chains = {mcmc};
+                    SampleCollector collector = new SampleCollector("Chain 1", chains);
+                    collector.attach(chains);
+                    collectors.add(collector);
+                    screenLog.setDiagnosticsSource(monitor::getDiagnostics);
+                }
+            }
+        });
+        return monitor;
+    }
 
     /**
      * @return the file for the convergence reports, named after the XML file
@@ -561,6 +604,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "maximum number of chains computing at once (default: one per processor)"),
                         new Arguments.StringOption("thread_scheme", null, new String[]{"serial", "split", "auto"}, false,
                                 "how each chain uses its threads: likelihoods one after another (serial), in parallel (split) or chosen from the data (auto, the default with several chains)"),
+                        new Arguments.Option("convergence", null, "Show convergence diagnostics (max R-hat, min ESS) in the screen log of a single chain (they are always shown for multiple chains)"),
                         new Arguments.IntegerOption("convergence_every", null, 0, Integer.MAX_VALUE, "0 for no convergence diagnostics of multiple chains (they are shown with each line of the screen log)"),
 
                         new Arguments.Section("Tempered MCMC"),

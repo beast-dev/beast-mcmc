@@ -28,8 +28,8 @@
 package dr.inference.loggers;
 
 /**
- * The destination of the screen log of one chain when several chains are run together and
- * their screen logs are shown as one.
+ * The destination of the screen log of one chain when it is shown with convergence diagnostics
+ * or when several chains are run together and their screen logs are shown as one.
  *
  * @author Andrew Rambaut
  */
@@ -40,6 +40,11 @@ public interface ChainScreenFormatter extends LogFormatter {
      * {@link ChainDiagnosticColumn}s can be shown
      */
     boolean hasDiagnostics();
+
+    /**
+     * @return the number of independent chains being run
+     */
+    int getChainCount();
 
     /**
      * Gives the columns of the chain's screen log, in order (without the state).

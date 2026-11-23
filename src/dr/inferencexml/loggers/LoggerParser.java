@@ -97,12 +97,15 @@ public class LoggerParser extends AbstractXMLObjectParser {
             ChainContext context = ChainContext.current();
             if (context != null) {
                 chainFormatter = context.takeScreenFormatter();
+            } else {
+                // a single chain being shown with its convergence diagnostics
+                chainFormatter = ChainContext.takeSingleChainScreenFormatter();
             }
         }
 
         final LogFormatter formatter = (chainFormatter != null ? chainFormatter : new TabDelimitedFormatter(pw));
 
-        // convergence diagnostics need several chains: otherwise they are left out
+        // without the run's convergence diagnostics (a plain single chain) they are left out
         final boolean showDiagnostics = chainFormatter != null && chainFormatter.hasDiagnostics();
 
         // added a performance measurement delay to avoid the full evaluation period.
@@ -178,14 +181,18 @@ public class LoggerParser extends AbstractXMLObjectParser {
             }
             if (showDiagnostics && !hasDiagnosticColumn) {
                 // none were asked for: show the usual ones
-                LogColumn[] defaults = {
-                        new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.ASDSF, false),
-                        new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.MAX_RHAT, true),
-                        new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.MIN_ESS, true)
-                };
+                List<LogColumn> defaults = new ArrayList<LogColumn>();
+                if (chainFormatter.getChainCount() > 1) {
+                    // clade frequencies can only be compared between chains
+                    defaults.add(new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.ASDSF, false));
+                }
+                LogColumn maxRhat = new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.MAX_RHAT, true);
+                LogColumn minESS = new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.MIN_ESS, true);
                 // room for the names of the logged values
-                defaults[1].setMinimumWidth(24);
-                defaults[2].setMinimumWidth(24);
+                maxRhat.setMinimumWidth(24);
+                minESS.setMinimumWidth(24);
+                defaults.add(maxRhat);
+                defaults.add(minESS);
                 for (LogColumn column : defaults) {
                     logger.addColumn(column);
                     columns.add(column);

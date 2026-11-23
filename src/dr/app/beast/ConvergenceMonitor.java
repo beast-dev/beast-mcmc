@@ -146,61 +146,277 @@ public class ConvergenceMonitor {
             return;
         }
         SampleCollector.Snapshot[] snapshots = new SampleCollector.Snapshot[chainCount];
+        long[] states = new long[chainCount];
+        String[] names = new String[chainCount];
+        String[] statuses = new String[chainCount];
         long minState = Long.MAX_VALUE;
         for (int k = 0; k < chainCount; k++) {
             snapshots[k] = collectors.get(k).snapshot();
-            minState = Math.min(minState, snapshots[k].state);
+            // the collector does not see the very last state
+            states[k] = (sets != null ? sets.get(k).getCurrentState() : snapshots[k].state);
+            names[k] = collectors.get(k).getName();
+            statuses[k] = (sets != null ? sets.get(k).getStatus() : "");
+            minState = Math.min(minState, states[k]);
         }
 
         Diagnostics diagnostics = getDiagnostics(snapshots);
-        Burnin burnin = diagnostics.burnin;
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("%n%s at state %d (%d chain%s):%n", title, minState, chainCount, chainCount > 1 ? "s" : ""));
+        // each chain on its own, after the same burn-in
+        Diagnostics[] chainDiagnostics = new Diagnostics[chainCount];
         for (int k = 0; k < chainCount; k++) {
-            String status = (sets != null ? sets.get(k).getStatus() : "");
-            sb.append(String.format("  %-10s state %-12d posterior %-16.4f %s%n",
-                    collectors.get(k).getName(), snapshots[k].state, snapshots[k].posterior, status));
-        }
-        if (burnin.found) {
-            sb.append(String.format("  common burn-in %d states (%.0f%%): posterior R-hat %.4f%n",
-                    burnin.states, burnin.proportion * 100, burnin.posteriorRhat));
-        } else if (burnin.tried) {
-            sb.append(String.format("  no common burn-in yet: posterior R-hat %.4f after %.0f%% (needs < %.2f); below is after %.0f%%%n",
-                    burnin.posteriorRhat, MAX_BURNIN * 100, RHAT_THRESHOLD, MAX_BURNIN * 100));
-        } else {
-            sb.append(String.format("  too few samples to estimate the burn-in (below is after %.0f%%)%n", MAX_BURNIN * 100));
-        }
-        if (diagnostics.minESSLabel != null) {
-            sb.append(String.format("  min ESS %.1f (%s)", diagnostics.minESS, diagnostics.minESSLabel));
-        } else {
-            sb.append("  min ESS -");
-        }
-        if (diagnostics.maxRhatLabel != null) {
-            sb.append(String.format("   max R-hat %.4f (%s)", diagnostics.maxRhat, diagnostics.maxRhatLabel));
-        } else {
-            sb.append("   max R-hat -");
-        }
-        if (diagnostics.cladeCount > 0) {
-            sb.append(String.format("   ASDSF %.4f (%d clades)", diagnostics.asdsf, diagnostics.cladeCount));
-        }
-        sb.append(String.format("%n"));
-        sb.append(String.format("  R-hat is the split potential scale reduction factor:%n"));
-        for (String citation : RHAT_CITATIONS) {
-            sb.append(String.format("    %s%n", citation));
-        }
-        if (diagnostics.cladeCount > 0) {
-            sb.append(String.format("  ASDSF is the average standard deviation of clade frequencies between the chains:%n"));
-            for (String citation : ASDSF_CITATIONS) {
-                sb.append(String.format("    %s%n", citation));
-            }
+            chainDiagnostics[k] = computeDiagnostics(collectors.get(0).getLabels(),
+                    new SampleCollector.Snapshot[]{snapshots[k]}, diagnostics.burninProportion);
         }
 
         // print in one go so the lines are not split by other output
-        System.out.print(sb);
+        System.out.print(formatReport(title, names, states, statuses, snapshots, diagnostics, chainDiagnostics));
         System.out.flush();
 
         writeLog(minState, diagnostics);
+    }
+
+    // what the final report asks of the diagnostics
+    public static final double ESS_TARGET = 200.0;
+    public static final double ESS_BORDERLINE = 100.0;
+    public static final double RHAT_BORDERLINE = 1.05;
+    public static final double ASDSF_GOOD = 0.01;
+    public static final double ASDSF_ACCEPTABLE = 0.05;
+
+    private static final String GOOD = "good";
+    private static final String BORDERLINE = "borderline";
+    private static final String POOR = "poor";
+    private static final String UNKNOWN = "-";
+
+    private static String assessRhat(double rhat) {
+        if (Double.isNaN(rhat)) {
+            return UNKNOWN;
+        }
+        return rhat < RHAT_THRESHOLD ? GOOD : (rhat < RHAT_BORDERLINE ? BORDERLINE : POOR);
+    }
+
+    private static String assessESS(double ess) {
+        if (Double.isNaN(ess)) {
+            return UNKNOWN;
+        }
+        return ess >= ESS_TARGET ? GOOD : (ess >= ESS_BORDERLINE ? BORDERLINE : POOR);
+    }
+
+    private static String assessASDSF(double asdsf) {
+        if (Double.isNaN(asdsf)) {
+            return UNKNOWN;
+        }
+        return asdsf < ASDSF_GOOD ? GOOD : (asdsf < ASDSF_ACCEPTABLE ? "acceptable" : POOR);
+    }
+
+    private static String number(double value, String format) {
+        return Double.isNaN(value) ? "-" : String.format(format, value);
+    }
+
+    private static String name(String label) {
+        return label == null ? "" : label.trim();
+    }
+
+    /**
+     * @return the number of states rounded up to two significant figures
+     */
+    static long roundUp(double states) {
+        if (states <= 0) {
+            return 0;
+        }
+        double unit = Math.pow(10, Math.floor(Math.log10(states)) - 1);
+        return (long) (Math.ceil(states / unit - 1E-9) * unit);
+    }
+
+    static String formatReport(String title, String[] names, long[] states, String[] statuses,
+                               SampleCollector.Snapshot[] snapshots,
+                               Diagnostics diagnostics, Diagnostics[] chainDiagnostics) {
+        final int chainCount = names.length;
+        final Burnin burnin = diagnostics.burnin;
+        final String nl = String.format("%n");
+
+        long chainLength = Long.MAX_VALUE;
+        int sampleCount = Integer.MAX_VALUE;
+        for (int k = 0; k < chainCount; k++) {
+            chainLength = Math.min(chainLength, states[k]);
+            sampleCount = Math.min(sampleCount, snapshots[k].rows.size());
+        }
+        final int burninSamples = getBurninSamples(sampleCount, diagnostics.burninProportion);
+        final long burninStates = (burnin.found ? burnin.states : burninSamples * snapshots[0].logEvery);
+        final String all = (chainCount > 1 ? "every chain" : "the chain");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(nl).append(String.format("%s at state %d (%d chain%s)", title, chainLength, chainCount, chainCount > 1 ? "s" : "")).append(nl);
+
+        // the burn-in
+        sb.append(nl).append("Burn-in").append(nl);
+        if (burnin.found) {
+            sb.append(String.format("  The first %d states (%.0f%%) of %s are left out of everything below.",
+                    burninStates, burnin.proportion * 100, all)).append(nl);
+            sb.append(String.format("  After that the posterior%s (R-hat %.4f, which should be below %.2f).",
+                    chainCount > 1 ? "s of the chains agree" : " is the same in the two halves of the chain",
+                    burnin.posteriorRhat, RHAT_THRESHOLD)).append(nl);
+        } else if (burnin.tried) {
+            sb.append(String.format("  No burn-in of up to %.0f%% makes the posterior%s (R-hat %.4f after %.0f%%, which should be below %.2f).",
+                    MAX_BURNIN * 100, chainCount > 1 ? "s of the chains agree" : " the same in the two halves of the chain",
+                    burnin.posteriorRhat, MAX_BURNIN * 100, RHAT_THRESHOLD)).append(nl);
+            sb.append(String.format("  The first %d states (%.0f%%) of %s are left out of everything below.",
+                    burninStates, MAX_BURNIN * 100, all)).append(nl);
+        } else {
+            sb.append(String.format("  There are too few samples to estimate a burn-in. The first %.0f%% of %s is left out of everything below.",
+                    MAX_BURNIN * 100, all)).append(nl);
+        }
+
+        // each chain
+        int nameWidth = 9;
+        int essWidth = 9;
+        for (int k = 0; k < chainCount; k++) {
+            nameWidth = Math.max(nameWidth, names[k].length());
+            essWidth = Math.max(essWidth, name(chainDiagnostics[k].minESSLabel).length());
+        }
+        String rowFormat = "  %-" + nameWidth + "s  %-12s  %-14s  %-8s  %-8s  %-" + essWidth + "s  %-9s  %s";
+        sb.append(nl).append(chainCount > 1 ? "Each chain on its own, after the burn-in" : "The chain, after the burn-in").append(nl);
+        sb.append(String.format(rowFormat, "chain", "state", "posterior", "samples", "min ESS", "of", "max R-hat", "of").replaceAll("\\s+$", "")).append(nl);
+        double lowestChainESS = Double.NaN;
+        for (int k = 0; k < chainCount; k++) {
+            Diagnostics chain = chainDiagnostics[k];
+            String row = String.format(rowFormat, names[k], Long.toString(states[k]),
+                    String.format("%.4f", snapshots[k].posterior),
+                    Integer.toString(Math.max(0, snapshots[k].rows.size() - getBurninSamples(snapshots[k].rows.size(), diagnostics.burninProportion))),
+                    number(chain.minESS, "%.0f"), name(chain.minESSLabel),
+                    number(chain.maxRhat, "%.3f"), name(chain.maxRhatLabel));
+            if (!statuses[k].isEmpty()) {
+                row += "   " + statuses[k];
+            }
+            sb.append(row.replaceAll("\\s+$", "")).append(nl);
+            if (!Double.isNaN(chain.minESS) && !(chain.minESS >= lowestChainESS)) {
+                lowestChainESS = chain.minESS;
+            }
+        }
+        sb.append("  Within a chain, R-hat compares the first half of the chain with the second.").append(nl);
+
+        // the chains together
+        final String posteriorAssessment = assessRhat(burnin.posteriorRhat);
+        final String rhatAssessment = assessRhat(diagnostics.maxRhat);
+        final String essAssessment = assessESS(diagnostics.minESS);
+        final String asdsfAssessment = assessASDSF(diagnostics.asdsf);
+        final boolean hasClades = chainCount > 1 && diagnostics.cladeCount > 0;
+
+        int ofWidth = Math.max(10, Math.max(name(diagnostics.minESSLabel).length(), name(diagnostics.maxRhatLabel).length()));
+        String tableFormat = "  %-15s  %-8s  %-" + ofWidth + "s  %-28s  %s";
+        if (chainCount > 1) {
+            sb.append(nl).append("All chains together, after the burn-in").append(nl);
+            sb.append(String.format(tableFormat, "statistic", "value", "of", "wanted", "assessment")).append(nl);
+            sb.append(String.format(tableFormat, "posterior R-hat", number(burnin.posteriorRhat, "%.4f"), "",
+                    String.format("below %.2f", RHAT_THRESHOLD), posteriorAssessment)).append(nl);
+            sb.append(String.format(tableFormat, "max R-hat", number(diagnostics.maxRhat, "%.4f"), name(diagnostics.maxRhatLabel),
+                    String.format("below %.2f", RHAT_THRESHOLD), rhatAssessment)).append(nl);
+            sb.append(String.format(tableFormat, "min ESS", number(diagnostics.minESS, "%.0f"), name(diagnostics.minESSLabel),
+                    String.format("at least %.0f", ESS_TARGET), essAssessment)).append(nl);
+            if (hasClades) {
+                sb.append(String.format(tableFormat, "ASDSF", number(diagnostics.asdsf, "%.4f"), diagnostics.cladeCount + " clades",
+                        String.format("below %.2f (%.2f acceptable)", ASDSF_GOOD, ASDSF_ACCEPTABLE), asdsfAssessment)).append(nl);
+            }
+            sb.append(nl);
+            sb.append("  R-hat compares the chains with each other, and the two halves of each chain. Close to 1 means").append(nl);
+            sb.append("  they are sampling the same distribution; larger means they are not, or not yet. The largest over").append(nl);
+            sb.append("  everything in the log is given, with what it is of.").append(nl);
+            sb.append("  ESS is the effective number of independent samples, added up over the chains. The smallest").append(nl);
+            sb.append("  over everything in the log is given. It only means something if the chains agree.").append(nl);
+            if (hasClades) {
+                sb.append(String.format("  ASDSF is how much the chains differ in how often they sample each clade, averaged over the clades%n" +
+                        "  in at least %.0f%% of some chain's trees. Close to 0 means the chains sample the same trees.", MIN_CLADE_FREQUENCY * 100)).append(nl);
+            }
+        }
+
+        // what to do
+        sb.append(nl).append("Recommendations").append(nl);
+
+        final boolean agree = GOOD.equals(posteriorAssessment) && GOOD.equals(rhatAssessment) &&
+                (!hasClades || !POOR.equals(asdsfAssessment));
+        final boolean nearly = !agree && !POOR.equals(posteriorAssessment) && !UNKNOWN.equals(posteriorAssessment) &&
+                !POOR.equals(rhatAssessment) && !UNKNOWN.equals(rhatAssessment) &&
+                (!hasClades || !POOR.equals(asdsfAssessment));
+
+        List<String> problems = new ArrayList<String>();
+        if (!GOOD.equals(posteriorAssessment) && !UNKNOWN.equals(posteriorAssessment)) {
+            problems.add(String.format("the R-hat of the posterior is %.3f", burnin.posteriorRhat));
+        }
+        if (!GOOD.equals(rhatAssessment) && !UNKNOWN.equals(rhatAssessment)) {
+            problems.add(String.format("the R-hat of %s is %.3f", name(diagnostics.maxRhatLabel), diagnostics.maxRhat));
+        }
+        if (hasClades && POOR.equals(asdsfAssessment)) {
+            problems.add(String.format("the ASDSF is %.3f", diagnostics.asdsf));
+        }
+        String because = "";
+        for (int i = 0; i < problems.size(); i++) {
+            because += (i == 0 ? "" : (i == problems.size() - 1 ? " and " : ", ")) + problems.get(i);
+        }
+
+        if (!burnin.tried || UNKNOWN.equals(rhatAssessment)) {
+            sb.append("  There are too few samples to say whether " + (chainCount > 1 ? "the chains agree" : "the chain has settled") + ". Run for longer.").append(nl);
+        } else if (chainCount > 1) {
+            if (agree) {
+                sb.append(String.format("  Combining: the chains agree, so their samples can be combined after removing the first %d%n" +
+                        "  states of each (in LogCombiner, a burn-in of %d states).", burninStates, burninStates)).append(nl);
+            } else if (nearly) {
+                sb.append(String.format("  Combining: the chains nearly agree (%s). Their samples can be combined after%n" +
+                        "  removing the first %d states of each, but running for longer would be safer.", because, burninStates)).append(nl);
+            } else {
+                sb.append(String.format("  Combining: the chains should not be combined: %s.%n" +
+                        "  They are not sampling the same distribution, or not yet. Run them for longer; if they still%n" +
+                        "  disagree, the posterior may have separate modes that the chains do not move between.", because)).append(nl);
+            }
+        } else {
+            if (agree) {
+                sb.append("  The two halves of the chain agree, so there is no sign that it is still settling.").append(nl);
+                sb.append("  A single chain cannot show whether another start would end up in the same place: for that run several (-chains).").append(nl);
+            } else {
+                sb.append(String.format("  The two halves of the chain %s (%s), so it %s. Run for longer.",
+                        nearly ? "nearly agree" : "differ", because, nearly ? "may still be settling" : "has not settled")).append(nl);
+            }
+        }
+
+        if (burnin.tried && !UNKNOWN.equals(rhatAssessment) && !Double.isNaN(diagnostics.minESS)) {
+            final double sampled = chainLength - burninStates;
+            if (!agree && !nearly) {
+                sb.append("  Chain length: the effective sample sizes cannot be trusted until " +
+                        (chainCount > 1 ? "the chains agree" : "the chain has settled") + ", so they give no" + nl +
+                        "  chain length. As a start, run for at least twice as long.").append(nl);
+            } else if (diagnostics.minESS >= ESS_TARGET) {
+                String line = String.format("  Chain length: enough. The smallest ESS is %.0f (%s)%s, above the%n  %.0f usually wanted.",
+                        diagnostics.minESS, name(diagnostics.minESSLabel), chainCount > 1 ? " with the chains combined" : "", ESS_TARGET);
+                sb.append(line).append(nl);
+                if (chainCount > 1 && !Double.isNaN(lowestChainESS)) {
+                    if (lowestChainESS >= ESS_TARGET) {
+                        sb.append(String.format("  Each chain would also be enough on its own (the smallest ESS in any one chain is %.0f).", lowestChainESS)).append(nl);
+                    } else {
+                        sb.append(String.format("  No single chain would be enough on its own (the smallest ESS in any one chain is %.0f).", lowestChainESS)).append(nl);
+                    }
+                }
+            } else if (sampled > 0 && diagnostics.minESS > 0) {
+                final double factor = ESS_TARGET / diagnostics.minESS;
+                final long recommended = roundUp(burninStates + sampled * factor);
+                sb.append(String.format("  Chain length: too short. The smallest ESS is %.0f (%s)%s, below the%n  %.0f usually wanted.",
+                        diagnostics.minESS, name(diagnostics.minESSLabel), chainCount > 1 ? " with the chains combined" : "", ESS_TARGET)).append(nl);
+                sb.append(String.format("  ESS grows in proportion to the states sampled after the burn-in, so to reach %.0f run %s for about%n" +
+                        "  %d states (%.1f times the sampling after the burn-in)%s.",
+                        ESS_TARGET, chainCount > 1 ? "each chain" : "the chain", recommended, factor,
+                        chainCount > 1 ? String.format(", or run about %d chains of this length", (int) Math.ceil(chainCount * factor - 1E-9)) : "")).append(nl);
+            }
+        }
+
+        sb.append(nl).append("References").append(nl);
+        sb.append("  R-hat, the split potential scale reduction factor:").append(nl);
+        for (String citation : RHAT_CITATIONS) {
+            sb.append("    ").append(citation).append(nl);
+        }
+        if (hasClades) {
+            sb.append("  ASDSF, the average standard deviation of clade frequencies between the chains:").append(nl);
+            for (String citation : ASDSF_CITATIONS) {
+                sb.append("    ").append(citation).append(nl);
+            }
+        }
+        return sb.toString();
     }
 
     private static String format(double value) {

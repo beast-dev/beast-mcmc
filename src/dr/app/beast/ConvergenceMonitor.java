@@ -64,8 +64,7 @@ public class ConvergenceMonitor {
     public static final double RHAT_THRESHOLD = 1.01;
 
     public static final String[] RHAT_CITATIONS = {
-            "Gelman A, Rubin DB (1992) Inference from iterative simulation using multiple sequences. Statistical Science 7, 457-472.",
-            "Gelman A, Carlin JB, Stern HS, Dunson DB, Vehtari A, Rubin DB (2013) Bayesian Data Analysis, 3rd edition. Chapman & Hall/CRC."
+            "Gelman A, Rubin DB (1992) Inference from iterative simulation using multiple sequences. Statistical Science 7, 457-472."
     };
 
     /**

@@ -53,6 +53,18 @@ public abstract class Factory {
      */
     public abstract StateLoaderSaver getStateLoaderSaver(File loadFile, File saveFile);
 
+    /**
+     * The state number of the saved state that a chain will start from, read before the state is
+     * loaded. Log files are opened before the state is loaded and need to know where they will
+     * carry on from.
+     *
+     * @param chainSuffix the suffix of the chain's files (".chainN"), or "" for a single chain
+     * @return the state number, or -1 if the chain does not start from a saved state
+     */
+    public long getInitialStateNumber(String chainSuffix) {
+        return -1;
+    }
+
     // Set this to a concrete instance to provide these classes to the MarkovChain
     public static Factory INSTANCE;
 }

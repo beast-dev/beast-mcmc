@@ -35,6 +35,7 @@ import dr.app.util.Arguments;
 import dr.app.util.MacDesktopIntegration;
 import dr.app.util.OSType;
 import dr.app.util.Utils;
+import dr.inference.loggers.ResumedLogFile;
 import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 import dr.inference.mcmcmc.ChainSet;
@@ -237,7 +238,8 @@ public class BeastMain {
 
                 ConvergenceMonitor monitor = null;
                 if (!collectors.isEmpty()) {
-                    monitor = new ConvergenceMonitor(sets, collectors, getConvergenceLogFile(fileName));
+                    monitor = new ConvergenceMonitor(sets, collectors, getConvergenceLogFile(fileName,
+                            runConfiguration.getIndependentChainCount() > 1 ? ".chain1" : ""));
                     monitor.start();
                     // the diagnostics are shown with each line of the screen log
                     multiChainScreenLog.setDiagnosticsSource(monitor::getDiagnostics);
@@ -451,7 +453,7 @@ public class BeastMain {
         ChainContext.setSingleChainScreenFormatter(screenLog.getFormatter(0));
 
         final List<SampleCollector> collectors = new ArrayList<SampleCollector>();
-        final ConvergenceMonitor monitor = new ConvergenceMonitor(null, collectors, getConvergenceLogFile(fileName));
+        final ConvergenceMonitor monitor = new ConvergenceMonitor(null, collectors, getConvergenceLogFile(fileName, ""));
         monitor.start();
 
         final MCMC.ChainPreparer preparer = MCMC.getChainPreparer();
@@ -474,14 +476,22 @@ public class BeastMain {
     }
 
     /**
+     * @param chainSuffix the suffix of the first chain's files, to find the state a resumed run starts from
      * @return the file for the convergence reports, named after the XML file
      */
-    private static File getConvergenceLogFile(String xmlFileName) {
+    private static File getConvergenceLogFile(String xmlFileName, String chainSuffix) {
         String stem = xmlFileName;
         if (stem.toLowerCase().endsWith(".xml")) {
             stem = stem.substring(0, stem.length() - 4);
         }
         File file = FileHelpers.getFile(stem + ".convergence.log", System.getProperty("file.name.prefix"));
+        if (Factory.INSTANCE != null && Factory.INSTANCE.getInitialStateLoader() != null) {
+            // a run resumed from saved states
+            if (Boolean.getBoolean(XMLParser.LOG_APPEND)) {
+                return file; // added to by the convergence monitor
+            }
+            file = ResumedLogFile.renamed(file, Factory.INSTANCE.getInitialStateNumber(chainSuffix));
+        }
         if (file.exists() && !Boolean.parseBoolean(System.getProperty("log.allow.overwrite", "false"))) {
             throw new RuntimeException("The convergence log file " + file.getName() + " already exists in the working directory." +
                     "\nTo allow it to be overwritten, use the '--overwrite' command line option.");
@@ -635,6 +645,8 @@ public class BeastMain {
                         new Arguments.StringOption("save_state", null, "FILENAME", "Specify a filename to save state to"),
                         new Arguments.Option("full_checkpoint_precision", null, "Use hex-encoded doubles in checkpoint files"),
                         new Arguments.Option("force_resume", null, "Force resuming from a saved state"),
+                        new Arguments.Option("append", null, "When loading a saved state, append to the existing log files (the default is to write new files)"),
+                        new Arguments.Option("force_append", null, "As --append, first removing any states logged after the saved state"),
                         new Arguments.LongOption("checkpoint_seed", null, "Seed specified for checkpoint restart"),
 
                         new Arguments.Section("Citations and plugins"),
@@ -978,6 +990,19 @@ public class BeastMain {
 
             if (arguments.hasOption("force_resume")) {
                 System.setProperty("force.resume", Boolean.TRUE.toString());
+            }
+
+            if (arguments.hasOption("append") || arguments.hasOption("force_append")) {
+                if (!arguments.hasOption("load_state")) {
+                    System.err.println("The --append and --force_append options need a saved state to resume from (--load_state)");
+                    System.err.println();
+                    printUsage(arguments);
+                    System.exit(1);
+                }
+                System.setProperty(XMLParser.LOG_APPEND, Boolean.TRUE.toString());
+                if (arguments.hasOption("force_append")) {
+                    System.setProperty(XMLParser.LOG_APPEND_FORCE, Boolean.TRUE.toString());
+                }
             }
 
             if (arguments.hasOption("checkpoint_seed")) {

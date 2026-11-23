@@ -145,6 +145,14 @@ public class BeastCheckpointer implements StateLoaderSaver {
             }
 
             @Override
+            public long getInitialStateNumber(String chainSuffix) {
+                if (loadStateFileName == null) {
+                    return -1;
+                }
+                return readStateNumber(findLoadStateFile(loadStateFileName, chainSuffix));
+            }
+
+            @Override
             public MarkovChainListener[] getStateSaverChainListeners() {
                 return listeners.toArray(new MarkovChainListener[0]);
             }
@@ -246,6 +254,28 @@ public class BeastCheckpointer implements StateLoaderSaver {
             MathUtils.setRandomState(ownRandomState);
         }
         return state;
+    }
+
+    /**
+     * @return the state number that a state file was saved at, from the lines at its top
+     */
+    static long readStateNumber(File file) {
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line;
+            int count = 0;
+            while ((line = in.readLine()) != null && count < 10) {
+                final String[] fields = line.split("\t");
+                if (fields.length > 1 && fields[0].equals("state")) {
+                    return Long.parseLong(fields[1].trim());
+                }
+                count++;
+            }
+        } catch (IOException ioe) {
+            throw new RuntimeException("Unable to read file: " + ioe.getMessage());
+        } catch (NumberFormatException nfe) {
+            // falls through
+        }
+        throw new RuntimeException("Unable to read state number from state file, " + file.getPath());
     }
 
     /**

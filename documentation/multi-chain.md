@@ -137,6 +137,28 @@ only its own chain's state, including its random number stream.
 Chains that start from the same file take the state from it but keep their own random
 number streams, so they go their separate ways from there.
 
+### Log files of a resumed run
+
+A run started with `--load_state` does not touch the log and trees files of the run before.
+It writes the states that follow to new files, named after the state it carries on from:
+`run.log` becomes `run.from3000.log`, and for chain K `run.chainK.from3000.log`. Each new file
+has the usual header and starts with the state resumed from.
+
+With `--append` the new states are added to the end of the existing files instead, with no
+second header. Each file is checked first: its last state must be the one the saved state
+carries on from.
+
+- If a file goes past the saved state (the run carried on after the state was saved), BEAST
+  stops and the file is left as it is. `--force_append` removes the later states from the file
+  and then appends.
+- If states are missing between the end of a file and the saved state, BEAST stops; this
+  cannot be forced.
+- Compressed (`.zst`) files cannot be appended to.
+- A file that does not exist yet is started as a new file.
+
+Other output files, such as an operator analysis, are not appended to: a resumed run writes
+them under the `.from<state>` name.
+
 Checkpointing is not yet available with parallel tempering (`-mc3_chains` > 1). BEAST stops
 with an error if you ask for both.
 

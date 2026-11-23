@@ -28,6 +28,9 @@
 package dr.xml;
 
 import dr.inference.mcmc.ChainContext;
+import dr.inference.loggers.ResumedLogFile;
+import dr.inference.loggers.ResumedLogWriter;
+import dr.inference.state.Factory;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -558,11 +561,98 @@ public class XMLParser {
             return ChainContext.getDiscardFile(xo.getStringAttribute(attributeName));
         }
 
+        File logFile = getChainOutputFile(xo, attributeName);
+
+        final long resumeState = getResumeState();
+        if (resumeState >= 0) {
+            // a chain resumed from a saved state writes new files, named after the state it
+            // carries on from, and leaves the files it wrote before as they are
+            logFile = ResumedLogFile.renamed(logFile, resumeState);
+        }
+
+        checkOverwrite(xo, logFile);
+
+        return logFile;
+    }
+
+    /**
+     * Get the writer for a file that states are logged to every logEvery states (a log or a
+     * trees file). When the chain is resumed from a saved state and appending was asked for,
+     * the writer adds to the end of the existing file, which is first checked to end at the
+     * state the chain carries on from. Otherwise as getFilePrintWriter.
+     *
+     * @param xo         element
+     * @param parserName for error messages
+     * @param logEvery   how often states are logged to the file
+     */
+    public static PrintWriter getLogPrintWriter(XMLObject xo, String parserName, long logEvery) throws XMLParseException {
+
+        if (xo.hasAttribute(FileHelpers.FILE_NAME) && Boolean.getBoolean(LOG_APPEND)) {
+            ChainContext context = ChainContext.current();
+            if (context != null && !context.writesFiles()) {
+                return ChainContext.getDiscardWriter();
+            }
+
+            final long resumeState = getResumeState();
+            if (resumeState >= 0) {
+                final File logFile = getChainOutputFile(xo, FileHelpers.FILE_NAME);
+                try {
+                    if (!logFile.exists()) {
+                        java.util.logging.Logger.getLogger("dr.app.beast").info("The file " + logFile.getPath() +
+                                " does not exist to be appended to, so it is started from state " + resumeState);
+                        return FileHelpers.getPrintWriter(logFile);
+                    }
+                    if (FileHelpers.isZstdFileName(logFile)) {
+                        throw new XMLParseException("\nThe file " + logFile.getPath() + " is compressed and " +
+                                "cannot be appended to.\nResume without --append to write the new states to new files.");
+                    }
+                    final int removed = ResumedLogFile.prepareForAppend(logFile, resumeState, logEvery,
+                            Boolean.getBoolean(LOG_APPEND_FORCE));
+                    java.util.logging.Logger.getLogger("dr.app.beast").info("Appending to " + logFile.getPath() +
+                            " after state " + ResumedLogFile.expectedLastState(resumeState, logEvery) +
+                            (removed > 0 ? " (" + removed + " later state" + (removed > 1 ? "s" : "") + " removed)" : ""));
+                    return ResumedLogWriter.open(logFile);
+                } catch (IllegalStateException ise) {
+                    throw new XMLParseException("\n" + ise.getMessage());
+                } catch (IOException ioe) {
+                    throw new XMLParseException("File '" + logFile.getAbsolutePath() +
+                            "' can not be opened for " + parserName + " element: " + ioe.getMessage());
+                }
+            }
+        }
+
+        return getFilePrintWriter(xo, parserName);
+    }
+
+    /**
+     * @return the output file named by the attribute, with the suffix of the chain being built
+     */
+    private static File getChainOutputFile(XMLObject xo, String attributeName) throws XMLParseException {
         File logFile = getOutputFileHandle(xo, attributeName);
+        ChainContext context = ChainContext.current();
         if (context != null) {
             // each chain of a multi-chain run writes its own files
             logFile = context.addSuffix(logFile);
         }
+        return logFile;
+    }
+
+    /**
+     * @return the state that the chain being built is resumed from, or -1 if it is not resumed
+     */
+    private static long getResumeState() throws XMLParseException {
+        if (Factory.INSTANCE == null) {
+            return -1;
+        }
+        final ChainContext context = ChainContext.current();
+        try {
+            return Factory.INSTANCE.getInitialStateNumber(context != null ? context.getFileSuffix() : "");
+        } catch (RuntimeException rte) {
+            throw new XMLParseException("\n" + rte.getMessage());
+        }
+    }
+
+    private static void checkOverwrite(XMLObject xo, File logFile) throws XMLParseException {
         boolean allowOverwrite = false;
 
         if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
@@ -579,10 +669,12 @@ public class XMLParser {
                     "\nTo allow it to be overwritten, use the '--overwrite' command line option when running" +
                     "\nBEAST or select the option in the Run Options dialog box as appropriate.");
         }
-
-
-        return logFile;
     }
+
+    // system properties: append to the log files of a chain resumed from a saved state, and
+    // remove states logged after the saved state to do so
+    public static final String LOG_APPEND = "log.append";
+    public static final String LOG_APPEND_FORCE = "log.append.force";
 
     public Map<String, XMLObject> getObjectStore() {
         return objectStore;

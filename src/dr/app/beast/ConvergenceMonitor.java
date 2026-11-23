@@ -33,6 +33,9 @@ import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceType;
 
 import java.io.File;
+import dr.inference.state.Factory;
+import dr.xml.XMLParser;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -84,8 +87,13 @@ public class ConvergenceMonitor {
     public void start() {
         if (logFile != null) {
             try {
-                log = new PrintWriter(new FileWriter(logFile));
-                log.println("state\tburnin\tposteriorRhat\tminESS\tminESS.parameter\tmaxRhat\tmaxRhat.parameter\tASDSF\tclades");
+                // a run resumed from saved states can add to the report of the run before
+                final boolean append = Boolean.getBoolean(XMLParser.LOG_APPEND) && Factory.INSTANCE != null &&
+                        Factory.INSTANCE.getInitialStateLoader() != null && logFile.exists();
+                log = new PrintWriter(new FileWriter(logFile, append));
+                if (!append) {
+                    log.println("state\tburnin\tposteriorRhat\tminESS\tminESS.parameter\tmaxRhat\tmaxRhat.parameter\tASDSF\tclades");
+                }
                 log.flush();
             } catch (IOException e) {
                 throw new RuntimeException("Unable to write the convergence log, " + logFile + ": " + e.getMessage());

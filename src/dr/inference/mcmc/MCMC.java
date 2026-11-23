@@ -32,6 +32,7 @@ import dr.inference.state.StateLoader;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
+import dr.inference.loggers.ResumedLogWriter;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.ChainProfile;
 import dr.inference.markovchain.MarkovChainListener;
@@ -165,12 +166,19 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
         timer.start();
 
         if (loggers != null) {
-            for (Logger logger : loggers) {
-                logger.startLogging();
+            // a log file that is being appended to already has its header
+            ResumedLogWriter.setSuppressed(true);
+            try {
+                for (Logger logger : loggers) {
+                    logger.startLogging();
+                }
+            } finally {
+                ResumedLogWriter.setSuppressed(false);
             }
         }
 
         long loadedState = 0;
+        resumedState = -1;
 
         if (Factory.INSTANCE != null) {
             StateLoader initialStateLoader = Factory.INSTANCE.getInitialStateLoader();
@@ -184,6 +192,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 double lnL = mc.evaluate();
 
                 initialStateLoader.checkLoadState(savedLnL[0], lnL);
+
+                resumedState = loadedState;
             }
         }
 
@@ -265,6 +275,9 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
     private boolean finalStateLogged = false;
 
+    // the saved state the chain was started from, until that state has been logged (or -1)
+    private long resumedState = -1;
+
     /**
      * Cleans up after the chain has finished (possibly early): closes the loggers and
      * reports the operator analysis.
@@ -320,8 +333,20 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             currentState = state;
 
             if (loggers != null) {
-                for (Logger logger : loggers) {
-                    logger.log(state);
+                // a log file that is being appended to already has the state the chain is resumed from
+                final boolean resumed = (state == resumedState);
+                resumedState = -1;
+                if (resumed) {
+                    ResumedLogWriter.setSuppressed(true);
+                }
+                try {
+                    for (Logger logger : loggers) {
+                        logger.log(state);
+                    }
+                } finally {
+                    if (resumed) {
+                        ResumedLogWriter.setSuppressed(false);
+                    }
                 }
             }
         }

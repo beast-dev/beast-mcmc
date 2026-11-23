@@ -205,6 +205,11 @@ public class LoggerParser extends AbstractXMLObjectParser {
     }
 
     public static PrintWriter getLogFile(XMLObject xo, String parserName) throws XMLParseException {
+        if (xo.hasAttribute(LOG_EVERY)) {
+            // a file that states are logged to, which a resumed chain may append to
+            return XMLParser.getLogPrintWriter(xo, parserName,
+                    RuntimeOverrides.getLogEvery(xo.getIntegerAttribute(LOG_EVERY)));
+        }
         return XMLParser.getFilePrintWriter(xo, parserName);
     }
 

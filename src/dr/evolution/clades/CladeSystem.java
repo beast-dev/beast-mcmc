@@ -35,8 +35,18 @@ import dr.stats.DiscreteStatistics;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * The clades of a set of trees on the same taxa, with how many of the trees each is in.
+ *
+ * Trees can be added ({@link #add}) and their heights and attributes collected
+ * ({@link #collectCladeHeights}, {@link #traverseTree}) from any number of threads at once.
+ * The summaries (credibilities, the top clades and so on) are for when that has finished.
+ *
+ * Clades are identified by the keys of {@link CladeKeys}, by default hashes of the taxon
+ * names, so the same clade has the same key in every clade system.
+ *
  * @author Andrew Rambaut
  * @version $
  */
@@ -44,7 +54,7 @@ public final class CladeSystem {
 
     private final boolean keepSubClades;
     private final boolean keepParents;
-    private double treeCount = 0;
+    private final AtomicInteger treeCount = new AtomicInteger(0);
 
     /**
      * Constructor starting with an empty clade system
@@ -87,91 +97,121 @@ public final class CladeSystem {
      * adds all the clades in the tree
      */
     public void add(Tree tree, boolean storeBitsets) {
-        synchronized (taxonNumberMap) {
-            if (taxonList == null) {
-                setTaxonList(tree);
-            }
-        }
-
-        if (treeCount == 0) {
-            // these will always be the same so create them once
-            synchronized (tipClades) {
-                addTipClades(tree);
-            }
-        }
+        // the first tree gives the taxa if they have not been set
+        final Tips tips = getTips(tree);
 
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
-        Clade rootClade = addClades(tree, tree.getRoot(), storeBitsets);
+        Clade rootClade = addClades(tree, tree.getRoot(), tips, storeBitsets);
+
         if (this.rootClade == null) {
+            // every thread would set the same clade
             this.rootClade = rootClade;
         }
         assert rootClade == this.rootClade;
+
         assert rootClade.getSize() == tree.getExternalNodeCount();
 
-        treeCount += 1;
+        treeCount.incrementAndGet();
     }
 
+    /**
+     * Sets the taxa, which gives each its index. If this is not called the taxa are taken from
+     * the first tree to be added, which with several threads could be any of them, so call
+     * this first if the indices should not depend on that.
+     *
+     * @throws IllegalStateException if the taxa have already been set
+     */
     public void setTaxonList(TaxonList taxonList) {
-        this.taxonList = taxonList;
-        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            taxonNumberMap.put(taxonList.getTaxon(i), i);
+        synchronized (tipsLock) {
+            if (tips != null) {
+                throw new IllegalStateException("The taxa of the clade system have already been set");
+            }
+            tips = new Tips(taxonList);
         }
+    }
+
+    /**
+     * @return the number of trees added
+     */
+    public int getTreeCount() {
+        return treeCount.get();
     }
 
     public Clade getRootClade() {
         return rootClade;
     }
 
+    private Tips getTips(TaxonList defaultTaxonList) {
+        Tips tips = this.tips;
+        if (tips == null) {
+            synchronized (tipsLock) {
+                if (this.tips == null) {
+                    this.tips = new Tips(defaultTaxonList);
+                }
+                tips = this.tips;
+            }
+        }
+        return tips;
+    }
+
     /**
-     * add all the tips in a tree
+     * The taxa and their tip clades: made once and never changed.
      */
-    private void addTipClades(Tree tree) {
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            NodeRef tip = tree.getExternalNode(i);
-            int index = tip.getNumber();
-            Taxon taxon = tree.getNodeTaxon(tip);
-            if (taxonNumberMap != null) {
-                index = taxonNumberMap.get(taxon);
+    private static final class Tips {
+        private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+        // the tip clades by taxon index
+        private final BiClade[] tipClades;
+        private final Map<Object, BiClade> tipCladeMap = new HashMap<>();
+
+        private Tips(TaxonList taxonList) {
+            tipClades = new BiClade[taxonList.getTaxonCount()];
+            for (int i = 0; i < tipClades.length; i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                taxonNumberMap.put(taxon, i);
+                BiClade clade = new BiClade(i, taxon);
+                tipClades[i] = clade;
+                BiClade sameKey = tipCladeMap.put(clade.getKey(), clade);
+                if (sameKey != null) {
+                    // the keys are hashes of the names so there is nothing else to try
+                    throw new IllegalArgumentException("Taxa '" + sameKey.getTaxon().getId() + "' and '" +
+                            taxon.getId() + "' have the same clade key");
+                }
             }
-            BiClade clade = new BiClade(index, taxon);
-            tipClades.put(index, clade);
-            BiClade sameKey = tipCladeMap.put(clade.getKey(), clade);
-            if (sameKey != null) {
-                // the keys are hashes of the names so there is nothing else to try
-                throw new IllegalArgumentException("Taxa '" + sameKey.getTaxon().getId() + "' and '" +
-                        taxon.getId() + "' have the same clade key");
+        }
+
+        private BiClade getTipClade(Tree tree, NodeRef node) {
+            Integer index = taxonNumberMap.get(tree.getNodeTaxon(node));
+            if (index == null) {
+                throw new IllegalArgumentException("Taxon '" + tree.getNodeTaxon(node).getId() +
+                        "' is not among the taxa of the clade system");
             }
+            return tipClades[index];
         }
     }
 
     /**
      * recursively add all the clades in a tree
      */
-    private BiClade addClades(Tree tree, NodeRef node, boolean storeBitsets) {
+    private BiClade addClades(Tree tree, NodeRef node, Tips tips, boolean storeBitsets) {
+
         BiClade clade;
         if (tree.isExternal(node)) {
-            // all tip clades should already be there
-            final int index = (taxonNumberMap != null ?
-                    taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
-            clade = tipClades.get(index);
+            clade = tips.getTipClade(tree, node);
 
-            assert clade != null && clade.getTaxon().equals(tree.getNodeTaxon(node));
-
-            if (storeBitsets) {
+            if (storeBitsets && !bitsetKeyMap.containsKey(clade.getKey())) {
                 BitsetKey bitset = new BitsetKey(tree.getExternalNodeCount());
-                bitset.set(index);
-                bitsetKeyMap.put(clade.getKey(), bitset);
+                bitset.set(clade.getIndex());
+                bitsetKeyMap.putIfAbsent(clade.getKey(), bitset);
             }
         } else {
             assert tree.getChildCount(node) == 2 : "requires a strictly bifurcating tree";
 
-            BiClade clade1 = addClades(tree, tree.getChild(node, 0), storeBitsets);
-            BiClade clade2 = addClades(tree, tree.getChild(node, 1), storeBitsets);
-            synchronized (cladeMap) {
-                clade = getOrAddClade(clade1, clade2);
-            }
+            BiClade clade1 = addClades(tree, tree.getChild(node, 0), tips, storeBitsets);
+            BiClade clade2 = addClades(tree, tree.getChild(node, 1), tips, storeBitsets);
+
+            clade = getOrAddClade(clade1, clade2);
 
             if (keepParents) {
                 clade1.addParent(clade);
@@ -184,9 +224,7 @@ public final class CladeSystem {
         }
         assert clade != null;
 
-        synchronized (clade) {
-            clade.setCount(clade.getCount() + 1);
-        }
+        clade.incrementCount();
 
         return clade;
     }
@@ -231,55 +269,63 @@ public final class CladeSystem {
     /**
      * see if a clade exists otherwise create it
      */
-    private BiClade getOrAddClade(Clade child1, Clade child2) {
+    private BiClade getOrAddClade(BiClade child1, BiClade child2) {
         Object key = BiClade.getParentKey(child1.getKey(), child2.getKey());
         BiClade clade = cladeMap.get(key);
         if (clade == null) {
+            BiClade newClade;
             if (keepSubClades) {
-                clade = new BiClade(child1, child2);
+                newClade = new BiClade(child1, child2);
             } else {
-                clade = new BiClade(key, child1.getSize() + child2.getSize());
+                newClade = new BiClade(key, child1.getSize() + child2.getSize());
             }
-            cladeMap.put(clade.getKey(), clade);
-            requiresMrcaKeyList = null;
-        } else {
-            synchronized (clade) {
-                if (keepSubClades) {
-                    clade.addSubClades(child1, child2);
-                }
+            clade = cladeMap.putIfAbsent(key, newClade);
+            if (clade == null) {
+                // this thread's clade is the one that was added
+                requiresMrcaKeyList = null;
+                return newClade;
             }
-//            }
         }
-
+        if (keepSubClades) {
+            clade.addSubClades(child1, child2);
+        }
         return clade;
     }
 
+    /**
+     * @return the clade with this key (a tip clade or not), or null if there is none
+     */
     public Clade getClade(Object key) {
         Clade clade = cladeMap.get(key);
         if (clade == null) {
-            clade = tipCladeMap.get(key);
+            Tips tips = this.tips;
+            if (tips != null) {
+                clade = tips.tipCladeMap.get(key);
+            }
         }
-//        assert clade != null;
         return clade;
     }
 
+    /**
+     * Calls the action for each node of the tree whose clade is in this clade system. The
+     * action is called on this thread, so it must be safe to call from several threads if
+     * this method is.
+     */
     public void traverseTree(Tree tree, CladeAction action) {
-        traverseTree(tree, tree.getRoot(), action);
+        traverseTree(tree, tree.getRoot(), getTips(tree), action);
     }
 
-    private Object traverseTree(Tree tree, NodeRef node, CladeAction action) {
+    private Object traverseTree(Tree tree, NodeRef node, Tips tips, CladeAction action) {
 
         Object key;
 
         if (tree.isExternal(node)) {
-            final int index = (taxonNumberMap != null ?
-                    taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
-            key = tipClades.get(index).getKey();
+            key = tips.getTipClade(tree, node).getKey();
         } else {
             assert tree.getChildCount(node) == 2;
 
-            Object key1 = traverseTree(tree, tree.getChild(node, 0), action);
-            Object key2 = traverseTree(tree, tree.getChild(node, 1), action);
+            Object key1 = traverseTree(tree, tree.getChild(node, 0), tips, action);
+            Object key2 = traverseTree(tree, tree.getChild(node, 1), tips, action);
 
             key = BiClade.getParentKey(key1, key2);
         }
@@ -339,22 +385,29 @@ public final class CladeSystem {
             return;
         }
 
-        if (requiresMrcaKeyList == null) {
-            requiresMrcaKeyList = new ArrayList<>(cladeMap.values());
-            // sort in descending size
-            requiresMrcaKeyList.sort(Comparator.comparingInt((BiClade clade) -> clade.getSize()).reversed());
+        // the list is shared by every thread: it is made once and then only read
+        List<BiClade> clades = requiresMrcaKeyList;
+        if (clades == null) {
+            synchronized (mrcaLock) {
+                clades = requiresMrcaKeyList;
+                if (clades == null) {
+                    clades = new ArrayList<>(cladeMap.values());
+                    // sort in descending size
+                    clades.sort(Comparator.comparingInt((BiClade clade) -> clade.getSize()).reversed());
+                    requiresMrcaKeyList = clades;
+                }
+            }
         }
-
-        final Set<BiClade> unresolved = new LinkedHashSet<>(requiresMrcaKeyList);
 
         if (MRCA_COLLECTION_BY_NODE) {
             // older slower algorithm
+            final Set<BiClade> unresolved = new LinkedHashSet<>(clades);
             collectCladeHeightsByNode(tree, tree.getRoot(), true, unresolved);
             assert unresolved.isEmpty();
             return;
         }
 
-        collectCladeHeightsByClade(tree);
+        collectCladeHeightsByClade(tree, clades);
     }
 
 
@@ -432,19 +485,20 @@ public final class CladeSystem {
      *
      * @param tree
      */
-    private void collectCladeHeightsByClade(Tree tree) {
+    private void collectCladeHeightsByClade(Tree tree, List<BiClade> clades) {
         final List<NodeSummary> nodeSummaries = new ArrayList<>(tree.getInternalNodeCount());
 
         collectCladeHeightsByClade(tree, tree.getRoot(), nodeSummaries);
 
         nodeSummaries.sort(Comparator.comparingInt(summary -> summary.cladeSize));
 
-        for (BiClade clade : requiresMrcaKeyList) {
+        for (BiClade clade : clades) {
             final BitsetKey cladeBitset = bitsetKeyMap.get(clade.getKey());
             findMrcaHeight(nodeSummaries, clade, cladeBitset);
 
         }
     }
+
     private void findMrcaHeight(List<NodeSummary> nodeSummaries, BiClade clade, BitsetKey cladeBitset) {
         for (NodeSummary nodeSummary : nodeSummaries) {
             if (nodeSummary.cladeSize < clade.getSize()) {
@@ -488,17 +542,12 @@ public final class CladeSystem {
         return key;
 }
 
-private Object collectTipHeight(Tree tree, NodeRef node) {
-    final int index = (taxonNumberMap != null ?
-            taxonNumberMap.get(tree.getNodeTaxon(node)) : node.getNumber());
+    private Object collectTipHeight(Tree tree, NodeRef node) {
+        BiClade tip = getTips(tree).getTipClade(tree, node);
+        tip.addHeightValue(tree.getNodeHeight(node));
 
-    Object key = tipClades.get(index).getKey();
-
-    BiClade tip = (BiClade) getClade(key);
-    tip.addHeightValue(tree.getNodeHeight(node));
-
-    return key;
-}
+        return tip.getKey();
+    }
 
 private static final class NodeSummary {
     private final BitsetKey bitset;
@@ -512,7 +561,10 @@ private static final class NodeSummary {
     }
 }
 
-private List<BiClade> requiresMrcaKeyList = null;
+    // the clades in descending order of size, made when first needed and discarded when a
+    // clade is added
+    private final Object mrcaLock = new Object();
+    private volatile List<BiClade> requiresMrcaKeyList = null;
 
 
 public void calculateCladeCredibilities(int totalTreesUsed) {
@@ -714,31 +766,40 @@ public int getCommonCladeCount(CladeSystem referenceCladeSystem) {
     return count;
 }
 
-public Collection<BiClade> getTipClades() {
-    return tipClades.values();
-}
+    /**
+     * @return the tip clades, in the order of the taxa (none if no taxa have been set)
+     */
+    public Collection<BiClade> getTipClades() {
+        Tips tips = this.tips;
+        if (tips == null) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(Arrays.asList(tips.tipClades));
+    }
 
-public Collection<BiClade> getClades() {
-    return cladeMap.values();
-}
+    /**
+     * @return the clades (excluding the tip clades)
+     */
+    public Collection<BiClade> getClades() {
+        return cladeMap.values();
+    }
 
-public Map<Object, BiClade> getCladeMap() {
-    return cladeMap;
-}
+    public Map<Object, BiClade> getCladeMap() {
+        return cladeMap;
+    }
 
-//
-// Private stuff
-//
-TaxonList taxonList = null;
-private final Map<Taxon, Integer> taxonNumberMap = new HashMap<>();
+    //
+    // Private stuff
+    //
 
-// a map of taxon index to clade
-private final Map<Integer, BiClade> tipClades = new HashMap<>();
-private final Map<Object, BiClade> tipCladeMap = new HashMap<>();
+    // the taxa and their tip clades: set once, under the lock
+    private final Object tipsLock = new Object();
+    private volatile Tips tips = null;
 
-// a map of clade key to clade (excluding tip clades)
-private final Map<Object, BiClade> cladeMap = new HashMap<>();
+    // a map of clade key to clade (excluding tip clades)
+    private final Map<Object, BiClade> cladeMap = new ConcurrentHashMap<>();
 
-Clade rootClade;
+    // the same clade whichever tree it is taken from
+    private volatile Clade rootClade;
 
 }

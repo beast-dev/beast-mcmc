@@ -390,10 +390,19 @@ public class BeastMain {
         }
 
         List<ChainSet> sets = new ArrayList<ChainSet>();
+        int built = 0;
         try {
             for (int k = 0; k < independentChainCount; k++) {
                 MCMC[] chains = new MCMC[temperedChainCount];
                 for (int i = 0; i < temperedChainCount; i++) {
+                    // Building a model can take a while, so say which is being built. Printed, not
+                    // logged, as the logger is off after the first.
+                    built++;
+                    System.out.println((built == 1 ? "\n" : "") + "Constructing chain " + built + " of " +
+                            runConfiguration.getTotalChainCount() + ": " + contexts[k][i].getName() +
+                            (built == 1 ? " (its messages follow; the others are the same)" : ""));
+                    System.out.flush();
+
                     if (k > 0 || i > 0) {
                         // turn off all messages for subsequent parses (they will be the same as the
                         // first time).

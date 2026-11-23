@@ -58,7 +58,9 @@ Each chain is built from the same XML file, but each has:
   starting trees).
 - **its own output files.** A `.chainK` suffix goes before the extension:
   `run.chain1.log`, `run.chain1.trees`, `run.chain2.log`, and so on. Checkpoint files get
-  the same suffix.
+  the same suffix. LogCombiner takes the name without the suffix for all of them:
+  `logcombiner --burninPercent 10 run combined.log` combines
+  `run.chain1.log`, `run.chain2.log`, and so on, and with `--trees` the `.trees` files.
 - **its own model objects.** Nothing is shared between chains.
 
 Only chain 1 prints its screen log; the other chains report through the convergence

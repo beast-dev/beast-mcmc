@@ -776,6 +776,60 @@ public class LogCombiner {
     }
 
 
+    /**
+     * Replaces the stem of a multi-chain run's output by the files its chains wrote. A name
+     * that is not a file is taken as a stem: "run" stands for run.chain1.log, run.chain2.log,
+     * ... (or .trees when combining trees), if there are any. The chain and the extension are
+     * added to the whole name, so "run.log" is only ever the file of that name.
+     *
+     * @return the input file names with any such name replaced by its chains' files, in order
+     */
+    static String[] expandChainFiles(String[] inputFileNames, boolean treeFiles) {
+        final java.util.List<String> expanded = new java.util.ArrayList<String>();
+
+        for (String name : inputFileNames) {
+            final File file = new File(name);
+            if (file.exists()) {
+                expanded.add(name);
+                continue;
+            }
+
+            // the name is a stem: the chain and the extension are added to it, never put inside it
+            final String stem = file.getName();
+            final File directory = (file.getParentFile() != null ? file.getParentFile() : new File("."));
+            final String[] extensions = new String[]{(treeFiles ? ".trees" : ".log"),
+                    (treeFiles ? ".trees" : ".log") + FileHelpers.ZSTD_EXTENSION};
+
+            final java.util.TreeMap<Integer, String> chainFiles = new java.util.TreeMap<Integer, String>();
+            final String[] candidates = directory.list();
+            if (candidates != null) {
+                for (String candidate : candidates) {
+                    for (String ext : extensions) {
+                        final Matcher matcher = Pattern.compile(
+                                Pattern.quote(stem) + "\\.chain(\\d+)" + Pattern.quote(ext)).matcher(candidate);
+                        if (matcher.matches() && new File(directory, candidate).isFile()) {
+                            final int chain = Integer.parseInt(matcher.group(1));
+                            if (!chainFiles.containsKey(chain)) {
+                                chainFiles.put(chain, file.getParentFile() != null ?
+                                        new File(file.getParentFile(), candidate).getPath() : candidate);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (chainFiles.isEmpty()) {
+                expanded.add(name); // reported as not existing when it is read
+            } else {
+                System.out.println("Combining the " + chainFiles.size() + " chain file" +
+                        (chainFiles.size() > 1 ? "s" : "") + " of '" + name + "'");
+                expanded.addAll(chainFiles.values());
+            }
+        }
+
+        return expanded.toArray(new String[0]);
+    }
+
     public static void printUsage(Arguments arguments) {
 
         arguments.printUsage("logcombiner", "<input-file-name1> [<input-file-name2> ...] <output-file-name>");
@@ -783,6 +837,8 @@ public class LogCombiner {
         System.out.println("  Example: logcombiner test1.log test2.log combined.log");
         System.out.println("  Example: logcombiner --burnin 10000 test1.log test2.log combined.log");
         System.out.println("  Example: logcombiner --trees --burninPercent 10 test1.trees test2.trees combined.trees");
+        System.out.println("  Example: logcombiner --burninPercent 10 run combined.log");
+        System.out.println("           (combines run.chain1.log, run.chain2.log, ... of a run with several chains)");
         System.out.println();
 
     }
@@ -962,6 +1018,7 @@ public class LogCombiner {
 
             String[] inputFileNames = new String[args2.length - 1];
             System.arraycopy(args2, 0, inputFileNames, 0, inputFileNames.length);
+            inputFileNames = expandChainFiles(inputFileNames, treeFiles);
             String outputFileName = args2[args2.length - 1];
             if (arguments.hasOption("zstd") && !FileHelpers.isZstdFileName(new File(outputFileName))) {
                 outputFileName += FileHelpers.ZSTD_EXTENSION;

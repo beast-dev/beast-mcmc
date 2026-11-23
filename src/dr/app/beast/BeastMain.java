@@ -332,10 +332,10 @@ public class BeastMain {
     }
 
     /**
-     * Builds the models for every chain, one at a time. The first chain uses the parser that
-     * has already been set up; parsing messages are only shown for that one.
+     * Builds the models for every chain, one at a time, all with the one parser that has
+     * already been set up. Parsing messages are only shown for the first chain.
      */
-    private List<ChainSet> buildChainSets(ChainFactory chainFactory, XMLParser firstParser,
+    private List<ChainSet> buildChainSets(ChainFactory chainFactory, XMLParser parser,
                                           RunConfiguration runConfiguration,
                                           Logger logger,
                                           List<SampleCollector> collectors) throws dr.xml.XMLParseException {
@@ -390,14 +390,13 @@ public class BeastMain {
             for (int k = 0; k < independentChainCount; k++) {
                 MCMC[] chains = new MCMC[temperedChainCount];
                 for (int i = 0; i < temperedChainCount; i++) {
-                    if (k == 0 && i == 0) {
-                        chains[i] = chainFactory.buildChain(firstParser, contexts[k][i]);
-                    } else {
+                    if (k > 0 || i > 0) {
                         // turn off all messages for subsequent parses (they will be the same as the
                         // first time).
                         logger.setLevel(Level.OFF);
-                        chains[i] = chainFactory.buildChain(contexts[k][i]);
                     }
+                    // the one parser builds every chain, each from the same document
+                    chains[i] = chainFactory.buildChain(parser, contexts[k][i]);
                 }
                 if (temperedChainCount > 1) {
                     sets.add(new TemperedChainSet(k, chains, contexts[k], driverContexts[k], mc3Options));

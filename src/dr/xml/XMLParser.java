@@ -114,6 +114,21 @@ public class XMLParser {
         XMLObject xo = new XMLObject(null, null /*, objectStore*/);
         xo.setNativeObject(object);
         objectStore.put(name, xo);
+        // kept when the parser is reset
+        storedObjects.put(name, xo);
+    }
+
+    /**
+     * Forgets every object parsed so far, so the same document (or another) can be parsed again
+     * to build a separate set of objects with the same ids, as for each chain of a multi-chain
+     * run. The element parsers, the objects given to {@link #storeObject} and the citations
+     * are kept. Anything built by an earlier parse is not affected: it keeps its own objects.
+     */
+    public void reset() {
+        // a new map rather than clearing the old one, in case something built earlier holds it
+        objectStore = new LinkedHashMap<String, XMLObject>(storedObjects);
+        root = null;
+        concurrent = false;
     }
 
     /**
@@ -673,7 +688,8 @@ public class XMLParser {
 
     //    private final Hashtable<String, XMLObject> store = new Hashtable<String, XMLObject>();
     private final Map<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
-    private final Map<String, XMLObject> objectStore = new LinkedHashMap<String, XMLObject>();
+    private Map<String, XMLObject> objectStore = new LinkedHashMap<String, XMLObject>();
+    private final Map<String, XMLObject> storedObjects = new LinkedHashMap<String, XMLObject>();
     private final Map<Pair<String, String>, List<Citation>> citationStore = new LinkedHashMap<Pair<String, String>, List<Citation>>();
     private boolean concurrent = false;
     private XMLObject root = null;

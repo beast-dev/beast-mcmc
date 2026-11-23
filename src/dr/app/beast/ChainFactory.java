@@ -27,7 +27,6 @@
 
 package dr.app.beast;
 
-import dr.app.plugin.PluginLoader;
 import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.MCMC;
 import dr.util.Version;
@@ -73,31 +72,26 @@ public class ChainFactory {
     }
 
     /**
-     * @return a new parser without plugins loaded
+     * @return a new parser without plugins loaded. One parser is enough for a run: it can
+     * build every chain.
      */
     public XMLParser newParser() {
         return new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML, version);
     }
 
     /**
-     * Builds the model for a chain from a new parser (with plugins loaded).
-     */
-    public MCMC buildChain(ChainContext context) throws XMLParseException {
-        XMLParser parser = newParser();
-        PluginLoader.loadPlugins(parser);
-        return buildChain(parser, context);
-    }
-
-    /**
-     * Builds the model for a chain using the given parser. Elements after the MCMC element
-     * are not parsed and nothing is run. The context is bound while parsing so the chain's
-     * random number stream is used (e.g., for a random starting tree) and its output files
-     * are named for it.
+     * Builds the model for a chain using the given parser. The same parser can be used for
+     * every chain: it is reset first, so each chain gets its own objects. Elements after the
+     * MCMC element are not parsed and nothing is run. The context is bound while parsing so
+     * the chain's random number stream is used (e.g., for a random starting tree) and its
+     * output files are named for it.
      */
     public MCMC buildChain(XMLParser parser, ChainContext context) throws XMLParseException {
         if (document == null) {
             throw new IllegalStateException("readDocument must be called before building chains");
         }
+        // forget the objects of any chain built before
+        parser.reset();
         context.bind();
         try {
             MCMC mcmc = (MCMC) parser.parse(document, MCMC.class);

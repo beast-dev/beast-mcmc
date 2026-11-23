@@ -26,6 +26,9 @@
 
 package dr.app.tools.treeannotator;
 
+import dr.evolution.clades.BiClade;
+import dr.evolution.clades.CladeSystem;
+
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.MutableTree;

@@ -1,7 +1,7 @@
 /*
- * CladeAction.java
+ * CladeKeys.java
  *
- * Copyright © 2002-2026, the BEAST Development Team.
+ * Copyright © 2026, the BEAST Development Team.
  * http://beast.community/about
  *
  * This file is part of BEAST.
@@ -24,13 +24,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools.treeannotator;
+package dr.evolution.clades;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+/**
+ * @author Andrew Rambaut
+ * @version $
+ */
+public interface CladeKeys {
+    Object getParentKey(Object key1, Object key2);
 
-interface CladeAction {
-    void actOnClade(Clade clade, Tree tree, NodeRef node);
-
-    boolean expectAllClades();
+    Object getTaxonKey(int taxon);
 }

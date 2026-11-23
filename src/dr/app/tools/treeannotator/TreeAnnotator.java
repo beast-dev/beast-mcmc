@@ -26,6 +26,10 @@
 
 package dr.app.tools.treeannotator;
 
+import dr.evolution.clades.Clade;
+import dr.evolution.clades.BiClade;
+import dr.evolution.clades.CladeSystem;
+
 import dr.app.beast.BeastVersion;
 import dr.app.tools.BaseTreeTool;
 import dr.app.tools.NexusExporter;

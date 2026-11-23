@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools.treeannotator;
+package dr.evolution.clades;
 
 import dr.evolution.util.Taxon;
 import dr.util.Pair;
@@ -35,7 +35,7 @@ import java.util.*;
  * @author Andrew Rambaut
  * @version $
  */
-class BiClade implements Clade {
+public class BiClade implements Clade {
 
     private static final boolean USE_BITSET_CLADE_KEYS = false;
 
@@ -103,14 +103,14 @@ class BiClade implements Clade {
         subClades.add(new Pair<>(left, right));
     }
 
-    void addParent(BiClade parentClade) {
+    public void addParent(BiClade parentClade) {
         if (parentClades == null) {
             parentClades = new HashSet<>();
         }
         parentClades.add(parentClade);
     }
 
-    void addChild(BiClade childClade) {
+    public void addChild(BiClade childClade) {
         if (childClades == null) {
             childClades = new HashSet<>();
         }
@@ -204,6 +204,22 @@ class BiClade implements Clade {
     @Override
     public Clade getBestRight() {
         return bestRight;
+    }
+
+    public void setBestLeft(BiClade bestLeft) {
+        this.bestLeft = bestLeft;
+    }
+
+    public void setBestRight(BiClade bestRight) {
+        this.bestRight = bestRight;
+    }
+
+    public double getBestSubTreeScore() {
+        return bestSubTreeScore;
+    }
+
+    public void setBestSubTreeScore(double bestSubTreeScore) {
+        this.bestSubTreeScore = bestSubTreeScore;
     }
 
     public Set<Pair<BiClade, BiClade>> getSubClades() {

@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools.treeannotator;
+package dr.evolution.clades;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -709,15 +709,15 @@ public int getCommonCladeCount(CladeSystem referenceCladeSystem) {
     return count;
 }
 
-Collection<BiClade> getTipClades() {
+public Collection<BiClade> getTipClades() {
     return tipClades.values();
 }
 
-Collection<BiClade> getClades() {
+public Collection<BiClade> getClades() {
     return cladeMap.values();
 }
 
-Map<Object, BiClade> getCladeMap() {
+public Map<Object, BiClade> getCladeMap() {
     return cladeMap;
 }
 

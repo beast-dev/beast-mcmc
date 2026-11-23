@@ -26,6 +26,10 @@
 
 package dr.app.tools.treeannotator;
 
+import dr.evolution.clades.Clade;
+import dr.evolution.clades.BiClade;
+import dr.evolution.clades.CladeSystem;
+
 import dr.util.Author;
 import dr.util.Citation;
 
@@ -150,8 +154,8 @@ public class Embiggulator {
                     for (int j = from; j < to; j++) {
                         BiClade clade2 = clades[j];
 
-                        Object parentKey = BiClade.cladeKeys.getParentKey(key1, clade2.getKey());
-                        int size = clade1.size + clade2.size;
+                        Object parentKey = BiClade.getParentKey(key1, clade2.getKey());
+                        int size = clade1.getSize() + clade2.getSize();
                         BiClade clade = getCladeBySizeBin(parentKey, size);
                         if (clade != null && clade.getSize() == size) {
                             clade.addSubClades(clade1, clade2);
@@ -191,8 +195,8 @@ public class Embiggulator {
         for (int j = from; j < to; j++) {
             BiClade clade2 = clades[j];
 
-            Object parentKey = BiClade.cladeKeys.getParentKey(key1, clade2.getKey());
-            int size = clade1.size + clade2.size;
+            Object parentKey = BiClade.getParentKey(key1, clade2.getKey());
+            int size = clade1.getSize() + clade2.getSize();
             BiClade clade = getCladeBySizeBin(parentKey, size);
             if (clade != null && clade.getSize() == size) {
                 clade.addSubClades(clade1, clade2);
@@ -212,8 +216,8 @@ public class Embiggulator {
 
         for (Map.Entry<Object, BiClade> entry : cladeSystem.getCladeMap().entrySet()) {
             BiClade clade = (BiClade) entry.getValue();
-            if (clade.size > 1) {
-                int bin = clade.size / binWidth;
+            if (clade.getSize() > 1) {
+                int bin = clade.getSize() / binWidth;
                 if (cladeMapBySize[bin] == null) {
                     cladeMapBySize[bin] = new HashMap<Object, BiClade>();
                 }
@@ -301,8 +305,8 @@ public class Embiggulator {
                 for (int j = from; j < to; j++) {
                     BiClade clade2 = clades[j];
 
-                    Object parentKey = BiClade.cladeKeys.getParentKey(key1, clade2.getKey());
-                    int size = clade1.size + clade2.size;
+                    Object parentKey = BiClade.getParentKey(key1, clade2.getKey());
+                    int size = clade1.getSize() + clade2.getSize();
                     BiClade clade = getCladeBySizeBin(parentKey, size);
                     if (clade != null && clade.getSize() == size) {
                         clade.addSubClades(clade1, clade2);

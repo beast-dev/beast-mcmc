@@ -26,6 +26,10 @@
 
 package dr.app.tools.treeannotator;
 
+import dr.evolution.clades.Clade;
+import dr.evolution.clades.BiClade;
+import dr.evolution.clades.CladeSystem;
+
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -69,7 +73,7 @@ public class HIPSTRTreeBuilder {
         if (USE_ITERATIVE_ALGORITHM) {
             // use the loop algorithm to find the best tree
             List<BiClade> clades = new ArrayList<>(cladeSystem.getClades());
-            clades.sort(Comparator.comparingInt(o -> o.size));
+            clades.sort(Comparator.comparingInt(o -> o.getSize()));
 
             findHIPSTRTree(clades, majorityRule);
 //            findHIPSTRTreeMajRule(clades);
@@ -134,11 +138,11 @@ public class HIPSTRTreeBuilder {
                                 bestSubtreeScore = leftScore + rightScore;
                                 if (left.getSize() < right.getSize()) {
                                     // sort by clade size because why not...
-                                    clade.bestLeft = left;
-                                    clade.bestRight = right;
+                                    clade.setBestLeft(left);
+                                    clade.setBestRight(right);
                                 } else {
-                                    clade.bestLeft = right;
-                                    clade.bestRight = left;
+                                    clade.setBestLeft(right);
+                                    clade.setBestRight(left);
                                 }
                                 ties.put(new Pair<>(left, right), left.getCredibility() + right.getCredibility());
                             }
@@ -148,11 +152,11 @@ public class HIPSTRTreeBuilder {
                             bestSubtreeScore = leftScore + rightScore;
                             if (left.getSize() < right.getSize()) {
                                 // sort by clade size because why not...
-                                clade.bestLeft = left;
-                                clade.bestRight = right;
+                                clade.setBestLeft(left);
+                                clade.setBestRight(right);
                             } else {
-                                clade.bestLeft = right;
-                                clade.bestRight = left;
+                                clade.setBestLeft(right);
+                                clade.setBestRight(left);
                             }
                         }
                     }
@@ -162,8 +166,8 @@ public class HIPSTRTreeBuilder {
                         for (Pair<BiClade, BiClade> key : ties.keySet()) {
                             double value = ties.get(key);
                             if (value > best) {
-                                clade.bestLeft = key.first;
-                                clade.bestRight = key.second;
+                                clade.setBestLeft(key.first);
+                                clade.setBestRight(key.second);
                                 best = value;
                             }
                         }
@@ -176,17 +180,17 @@ public class HIPSTRTreeBuilder {
                 assert clade.getSubClades().size() == 1;
                 Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
                 if (subClade.first.getIndex() < subClade.second.getIndex()) {
-                    clade.bestLeft = subClade.first;
-                    clade.bestRight = subClade.second;
+                    clade.setBestLeft(subClade.first);
+                    clade.setBestRight(subClade.second);
                 } else {
-                    clade.bestRight = subClade.first;
-                    clade.bestLeft = subClade.second;
+                    clade.setBestRight(subClade.first);
+                    clade.setBestLeft(subClade.second);
                 }
                 cladeScore += 2 * Math.log(1.0);  // yes, I know this is zero - just spelling out why
             } else {
                 assert clade.getSize() == 1;
             }
-            clade.bestSubTreeScore = cladeScore;
+            clade.setBestSubTreeScore(cladeScore);
 
             credibilityCache.put(clade, cladeScore);
         }
@@ -242,11 +246,11 @@ public class HIPSTRTreeBuilder {
                             bestSubtreeScore = leftScore + rightScore;
                             if (left.getSize() < right.getSize()) {
                                 // sort by clade size because why not...
-                                clade.bestLeft = left;
-                                clade.bestRight = right;
+                                clade.setBestLeft(left);
+                                clade.setBestRight(right);
                             } else {
-                                clade.bestLeft = right;
-                                clade.bestRight = left;
+                                clade.setBestLeft(right);
+                                clade.setBestRight(left);
                             }
                             ties.put(new Pair<>(left, right), left.getCredibility() + right.getCredibility());
                         }
@@ -256,11 +260,11 @@ public class HIPSTRTreeBuilder {
                         bestSubtreeScore = leftScore + rightScore;
                         if (left.getSize() < right.getSize()) {
                             // sort by clade size because why not...
-                            clade.bestLeft = left;
-                            clade.bestRight = right;
+                            clade.setBestLeft(left);
+                            clade.setBestRight(right);
                         } else {
-                            clade.bestLeft = right;
-                            clade.bestRight = left;
+                            clade.setBestLeft(right);
+                            clade.setBestRight(left);
                         }
                     }
                 }
@@ -270,8 +274,8 @@ public class HIPSTRTreeBuilder {
                     for (Pair<BiClade, BiClade> key : ties.keySet()) {
                         double value = ties.get(key);
                         if (value > best) {
-                            clade.bestLeft = key.first;
-                            clade.bestRight = key.second;
+                            clade.setBestLeft(key.first);
+                            clade.setBestRight(key.second);
                             best = value;
                         }
                     }
@@ -283,12 +287,12 @@ public class HIPSTRTreeBuilder {
             // two tips so there will only be one pair and their sum log cred will be 0.0
             assert clade.getSubClades().size() == 1;
             Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
-            clade.bestLeft = subClade.first;
-            clade.bestRight = subClade.second;
+            clade.setBestLeft(subClade.first);
+            clade.setBestRight(subClade.second);
             cladeScore += 2 * Math.log(1.0);  // yes, I know this is zero - just spelling out why
         }
 
-        clade.bestSubTreeScore = cladeScore;
+        clade.setBestSubTreeScore(cladeScore);
 
         return cladeScore;
     }
@@ -356,11 +360,11 @@ public class HIPSTRTreeBuilder {
                         bestSubtreeScore = leftScore + rightScore;
                         if (left.getSize() < right.getSize()) {
                             // sort by clade size because why not...
-                            clade.bestLeft = left;
-                            clade.bestRight = right;
+                            clade.setBestLeft(left);
+                            clade.setBestRight(right);
                         } else {
-                            clade.bestLeft = right;
-                            clade.bestRight = left;
+                            clade.setBestLeft(right);
+                            clade.setBestRight(left);
                         }
                     }
                 }
@@ -371,15 +375,15 @@ public class HIPSTRTreeBuilder {
                 assert clade.getSubClades().size() == 1;
                 Pair<BiClade, BiClade> subClade = clade.getSubClades().stream().findFirst().get();
                 if (subClade.first.getIndex() < subClade.second.getIndex()) {
-                    clade.bestLeft = subClade.first;
-                    clade.bestRight = subClade.second;
+                    clade.setBestLeft(subClade.first);
+                    clade.setBestRight(subClade.second);
                 } else {
-                    clade.bestRight = subClade.first;
-                    clade.bestLeft = subClade.second;
+                    clade.setBestRight(subClade.first);
+                    clade.setBestLeft(subClade.second);
                 }
                 cladeScore += 2 * Math.log(1.0);  // yes, I know this is zero - just spelling out why
             }
-            clade.bestSubTreeScore = cladeScore;
+            clade.setBestSubTreeScore(cladeScore);
 
             credibilityCache.put(clade, cladeScore);
         }

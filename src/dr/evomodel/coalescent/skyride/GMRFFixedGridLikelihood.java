@@ -85,8 +85,9 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 		//sSetupIntervals();
 	}
 	
-	public void initializationReport() {
-		
+	@Override
+	public String getInitializationReport() {
+		return "";
 	}
 
 	public GMRFFixedGridLikelihood(TreeIntervalList intervalList, Parameter popParameter, Parameter precParameter,

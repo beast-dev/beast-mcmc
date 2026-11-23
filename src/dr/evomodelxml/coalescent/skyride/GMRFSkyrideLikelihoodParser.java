@@ -407,31 +407,44 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
         if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
-            return new OldGMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight, buildIntervalNodeMapping);
+            return logged(new OldGMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight, buildIntervalNodeMapping));
 
         } else {
             if (intervalsList.size() > 0) {
                 if (xo.getChild(GRID_POINTS) != null) {
-                    return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
+                    return logged(new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
                             lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList);
+                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList));
                 } else {
-                    return new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
-                            lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+                    return logged(new GMRFSkygridLikelihood(intervalsList, popParameter, groupParameter, precParameter,
+                            lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors));
                 }
 
             } else {
                 if (xo.getChild(GRID_POINTS) != null) {
-                    return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                    return logged(new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                             lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
-                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList, deltaList);
+                            firstObservedIndex, lastObservedIndex, covPrecParamRecent, covPrecParamDistant, recentIndices, distantIndices, betaList, deltaList));
                 } else {
-                    return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                            lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+                    return logged(new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                            lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors));
                 }
             }
         }
+    }
+
+    // The models say what they are through the logger, not by printing as they are constructed,
+    // so that it is said once when the same model is built for each of several chains.
+
+    private static OldGMRFSkyrideLikelihood logged(OldGMRFSkyrideLikelihood likelihood) {
+        Logger.getLogger("dr.evomodel").info(likelihood.getInitializationReport());
+        return likelihood;
+    }
+
+    private static GMRFSkyrideLikelihood logged(GMRFSkyrideLikelihood likelihood) {
+        Logger.getLogger("dr.evomodel").info(likelihood.getInitializationReport());
+        return likelihood;
     }
 
     //************************************************************************

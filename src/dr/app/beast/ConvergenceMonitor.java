@@ -63,6 +63,11 @@ public class ConvergenceMonitor {
     public static final double MAX_BURNIN = 0.5;
     public static final double RHAT_THRESHOLD = 1.01;
 
+    public static final String[] RHAT_CITATIONS = {
+            "Gelman A, Rubin DB (1992) Inference from iterative simulation using multiple sequences. Statistical Science 7, 457-472.",
+            "Gelman A, Carlin JB, Stern HS, Dunson DB, Vehtari A, Rubin DB (2013) Bayesian Data Analysis, 3rd edition. Chapman & Hall/CRC."
+    };
+
     /**
      * @param sets the sets the collectors are for, for their status in the final report (can
      *             be null)
@@ -177,6 +182,10 @@ public class ConvergenceMonitor {
             sb.append(String.format("   ASDSF %.4f (%d clades)", diagnostics.asdsf, diagnostics.cladeCount));
         }
         sb.append(String.format("%n"));
+        sb.append(String.format("  R-hat is the split potential scale reduction factor:%n"));
+        for (String citation : RHAT_CITATIONS) {
+            sb.append(String.format("    %s%n", citation));
+        }
 
         // print in one go so the lines are not split by other output
         System.out.print(sb);

@@ -27,6 +27,7 @@
 
 package dr.inference.mcmc;
 
+import dr.inference.loggers.ChainScreenFormatter;
 import dr.inference.model.ModelRegistry;
 import dr.math.MathUtils;
 import dr.util.ErrorLogHandler;
@@ -113,6 +114,44 @@ public final class ChainContext {
         return writesScreen;
     }
 
+    /**
+     * @param formatter where this chain's screen log should go when the screen logs of several
+     *                  chains are shown as one
+     */
+    public void setScreenFormatter(ChainScreenFormatter formatter) {
+        this.screenFormatter = formatter;
+    }
+
+    /**
+     * @return where this chain's screen log should go, or null if it should go where it
+     * usually does. Only the first screen log of a chain is given it.
+     */
+    public ChainScreenFormatter takeScreenFormatter() {
+        ChainScreenFormatter formatter = screenFormatter;
+        screenFormatter = null;
+        return formatter;
+    }
+
+    /**
+     * @param formatter where the screen log of a single chain that has no context should go
+     *                  (null for where it usually does)
+     */
+    public static synchronized void setSingleChainScreenFormatter(ChainScreenFormatter formatter) {
+        singleChainScreenFormatter = formatter;
+    }
+
+    /**
+     * @return where the screen log should go when no context is bound, or null if it should go
+     * where it usually does. Only the first screen log is given it.
+     */
+    public static synchronized ChainScreenFormatter takeSingleChainScreenFormatter() {
+        ChainScreenFormatter formatter = singleChainScreenFormatter;
+        singleChainScreenFormatter = null;
+        return formatter;
+    }
+
+    private static ChainScreenFormatter singleChainScreenFormatter = null;
+
     public String getFileSuffix() {
         return fileSuffix;
     }
@@ -190,4 +229,5 @@ public final class ChainContext {
     private final MathUtils.RandomStream random;
     private final ModelRegistry registry = new ModelRegistry();
     private final AtomicInteger errorCount = new AtomicInteger(0);
+    private ChainScreenFormatter screenFormatter = null;
 }

@@ -62,7 +62,14 @@ public class IndependentChainSet extends AbstractChainSet {
 
     @Override
     public boolean step() {
-        return runOnChains(Collections.<Callable<Boolean>>singletonList(() -> mcmc.runSegment(segmentLength))).get(0);
+        return runOnChains(Collections.<Callable<Boolean>>singletonList(() -> {
+            boolean more = mcmc.runSegment(segmentLength);
+            if (!more) {
+                // so the chains' last states are shown together, before any of their reports
+                mcmc.logFinalState();
+            }
+            return more;
+        })).get(0);
     }
 
     @Override

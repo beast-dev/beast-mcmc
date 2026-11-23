@@ -143,6 +143,16 @@ public class TemperedChainSet extends AbstractChainSet {
             if (coldChain != oldColdChain) {
                 moveLogDestinations(oldColdChain, coldChain);
             }
+        } else {
+            // so the last states of independent sets are shown together, before their reports
+            List<Callable<Boolean>> finalTasks = new ArrayList<>();
+            for (final MCMC mcmc : mcmcs) {
+                finalTasks.add(() -> {
+                    mcmc.logFinalState();
+                    return true;
+                });
+            }
+            runOnChains(finalTasks);
         }
 
         return more;

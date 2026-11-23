@@ -197,6 +197,7 @@ public class SampleCollector implements MarkovChainListener {
             if (row != null) {
                 rows.add(row);
                 scores.add(score);
+                rowStates.add(state);
             }
             if (clades != null) {
                 if (currentBlock == null || currentBlockSize >= treeSamplesPerBlock) {
@@ -284,15 +285,28 @@ public class SampleCollector implements MarkovChainListener {
     /**
      * A copy of the samples collected so far, safe to use on another thread.
      */
-    public synchronized Snapshot snapshot() {
+    public Snapshot snapshot() {
+        return snapshot(Long.MAX_VALUE);
+    }
+
+    /**
+     * A copy of the samples collected up to and including a state, safe to use on another
+     * thread. The clade frequencies are not cut off at the state: they are whatever has been
+     * collected.
+     */
+    public synchronized Snapshot snapshot(long upToState) {
+        int count = rows.size();
+        while (count > 0 && rowStates.get(count - 1) > upToState) {
+            count--;
+        }
         List<Map<Long, Integer>> blocks = new ArrayList<Map<Long, Integer>>(treeBlocks);
         if (!blocks.isEmpty()) {
             // only the last block is still being added to
             int last = blocks.size() - 1;
             blocks.set(last, new HashMap<Long, Integer>(blocks.get(last)));
         }
-        return new Snapshot(lastState, coldChain.getCurrentScore(), new ArrayList<double[]>(rows),
-                new ArrayList<Double>(scores), blocks, new ArrayList<Integer>(treeBlockSizes), logEvery);
+        return new Snapshot(lastState, coldChain.getCurrentScore(), new ArrayList<double[]>(rows.subList(0, count)),
+                new ArrayList<Double>(scores.subList(0, count)), blocks, new ArrayList<Integer>(treeBlockSizes), logEvery);
     }
 
     public static class Snapshot {
@@ -334,6 +348,7 @@ public class SampleCollector implements MarkovChainListener {
     // guarded by this
     private final List<double[]> rows = new ArrayList<double[]>();
     private final List<Double> scores = new ArrayList<Double>();
+    private final List<Long> rowStates = new ArrayList<Long>();
     private final List<Map<Long, Integer>> treeBlocks = new ArrayList<Map<Long, Integer>>();
     private final List<Integer> treeBlockSizes = new ArrayList<Integer>();
     private Map<Long, Integer> currentBlock = null;

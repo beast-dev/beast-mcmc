@@ -59,10 +59,28 @@ public class RunConfiguration {
     }
 
     /**
-     * @param seconds the interval between convergence reports (0 for none)
+     * @param seconds 0 for no convergence diagnostics. They were once reported at this interval
+     *                but are now shown with each line of the screen log, so any other value just
+     *                leaves them on.
      */
     public void setConvergenceInterval(int seconds) {
         this.convergenceInterval = seconds;
+    }
+
+    /**
+     * @param diagnostics true to show the convergence diagnostics when there is one independent
+     *                    chain (they are always shown when there are several, unless turned off)
+     */
+    public void setSingleChainDiagnostics(boolean diagnostics) {
+        this.singleChainDiagnostics = diagnostics;
+    }
+
+    /**
+     * @return true if the run's convergence diagnostics should be computed and shown in the
+     * screen log
+     */
+    public boolean hasDiagnostics() {
+        return convergenceInterval > 0 && (independentChainCount > 1 || singleChainDiagnostics);
     }
 
     /**
@@ -81,8 +99,8 @@ public class RunConfiguration {
     }
 
     /**
-     * @return the interval in seconds between convergence reports when there are several
-     * independent chains (0 for none)
+     * @return 0 if there should be no convergence diagnostics when there are several
+     * independent chains
      */
     public int getConvergenceInterval() {
         return convergenceInterval;
@@ -157,6 +175,9 @@ public class RunConfiguration {
         if (arguments.hasOption("convergence_every")) {
             configuration.setConvergenceInterval(arguments.getIntegerOption("convergence_every"));
         }
+        if (arguments.hasOption("convergence")) {
+            configuration.setSingleChainDiagnostics(true);
+        }
         if (arguments.hasOption("thread_scheme")) {
             configuration.setThreadingScheme(ThreadingScheme.Type.parse(arguments.getStringOption("thread_scheme")));
         }
@@ -225,5 +246,6 @@ public class RunConfiguration {
     private final MCMCMCOptions.SwapScheme swapScheme;
     private final int chainThreads;
     private int convergenceInterval = DEFAULT_CONVERGENCE_INTERVAL;
+    private boolean singleChainDiagnostics = false;
     private ThreadingScheme.Type threadingScheme = null;
 }

@@ -35,7 +35,7 @@ beast -chains 2 -mc3_chains 3 -chain_threads 4 run.xml
 | Option | Default | Meaning |
 |---|---|---|
 | `-chains K` | 1 | Number of independent chains (or independent tempering sets). |
-| `-chain_threads T` | one per processor | Maximum number of chains computing at the same time. |
+| `-chain_threads T` | all the chains, up to one per processor | How many chains compute at the same time, counting every chain in the run: the independent chains times the chains in each tempering set. With fewer than there are chains, the chains take turns. |
 | `-convergence_every S` | 60 | Seconds between convergence reports when K > 1 (0 for none). |
 | `-mc3_chains N` | 1 | Chains in each tempering set: one cold chain plus N−1 heated ones. |
 | `-mc3_delta d` | 1.0 | Heating increment: chain *i* gets temperature 1/(1 + d·*i*). |

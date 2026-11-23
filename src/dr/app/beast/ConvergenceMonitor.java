@@ -63,6 +63,10 @@ public class ConvergenceMonitor {
     public static final double MAX_BURNIN = 0.5;
     public static final double RHAT_THRESHOLD = 1.01;
 
+    public static final String[] ASDSF_CITATIONS = {
+            "Lakner C, van der Mark P, Huelsenbeck JP, Larget B, Ronquist F (2008) Efficiency of Markov chain Monte Carlo tree proposals in Bayesian phylogenetics. Systematic Biology 57, 86-103."
+    };
+
     public static final String[] RHAT_CITATIONS = {
             "Gelman A, Rubin DB (1992) Inference from iterative simulation using multiple sequences. Statistical Science 7, 457-472."
     };
@@ -184,6 +188,12 @@ public class ConvergenceMonitor {
         sb.append(String.format("  R-hat is the split potential scale reduction factor:%n"));
         for (String citation : RHAT_CITATIONS) {
             sb.append(String.format("    %s%n", citation));
+        }
+        if (diagnostics.cladeCount > 0) {
+            sb.append(String.format("  ASDSF is the average standard deviation of split frequencies between the chains:%n"));
+            for (String citation : ASDSF_CITATIONS) {
+                sb.append(String.format("    %s%n", citation));
+            }
         }
 
         // print in one go so the lines are not split by other output

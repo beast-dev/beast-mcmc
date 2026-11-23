@@ -160,6 +160,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
         stopping = false;
         currentState = 0;
+        finalStateLogged = false;
 
         timer.start();
 
@@ -246,6 +247,25 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
     }
 
     /**
+     * Logs the state the chain ended on, which finish would otherwise do. When several chains
+     * are run together this lets them all log their last state before any of them reports.
+     * Call after the last runSegment, on the chain's thread.
+     */
+    public void logFinalState() {
+        if (!finalStateLogged) {
+            currentState = mc.getCurrentLength();
+            if (loggers != null) {
+                for (Logger logger : loggers) {
+                    logger.log(currentState);
+                }
+            }
+            finalStateLogged = true;
+        }
+    }
+
+    private boolean finalStateLogged = false;
+
+    /**
      * Cleans up after the chain has finished (possibly early): closes the loggers and
      * reports the operator analysis.
      */
@@ -321,7 +341,9 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
             if (loggers != null) {
                 for (Logger logger : loggers) {
-                    logger.log(currentState);
+                    if (!finalStateLogged) {
+                        logger.log(currentState);
+                    }
                     logger.stopLogging();
                 }
             }

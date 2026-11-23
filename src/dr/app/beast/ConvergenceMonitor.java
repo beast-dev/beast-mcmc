@@ -27,6 +27,7 @@
 
 package dr.app.beast;
 
+import dr.inference.loggers.ChainDiagnostics;
 import dr.inference.mcmcmc.ChainSet;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceType;
@@ -36,19 +37,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Periodically compares independent chains while they run. The chains share one burn-in,
- * estimated from their agreement: the smallest burn-in after which the split R-hat of the
- * posterior across the chains stays below 1.01 (for that burn-in and every larger one tried,
- * as the initial transient can make R-hat look small when nothing is discarded). After that
- * burn-in it reports the effective sample size of each logged value (summed over the chains),
- * the split potential scale reduction factor (R-hat) and the average standard deviation of
- * clade frequencies (ASDSF). Reports go to the screen and to a log file. This only reports; it
- * never stops the chains.
+ * Compares independent chains while they run. The chains share one burn-in, estimated from
+ * their agreement: the smallest burn-in after which the split R-hat of the posterior across
+ * the chains stays below 1.01 (for that burn-in and every larger one tried, as the initial
+ * transient can make R-hat look small when nothing is discarded). After that burn-in it gives
+ * the effective sample size of each logged value (summed over the chains), the split potential
+ * scale reduction factor (R-hat) and the average standard deviation of clade frequencies
+ * (ASDSF). The diagnostics are asked for by the screen log each time every chain has reached
+ * the next logged state, and are also written to a log file. A final report goes to the screen.
+ * This only reports; it never stops the chains.
  *
  * @author Andrew Rambaut
  */
@@ -61,11 +60,9 @@ public class ConvergenceMonitor {
     public static final double MAX_BURNIN = 0.5;
     public static final double RHAT_THRESHOLD = 1.01;
 
-    public ConvergenceMonitor(List<ChainSet> sets, List<SampleCollector> collectors,
-                              long intervalSeconds, File logFile) {
+    public ConvergenceMonitor(List<ChainSet> sets, List<SampleCollector> collectors, File logFile) {
         this.sets = sets;
         this.collectors = collectors;
-        this.intervalSeconds = intervalSeconds;
         this.logFile = logFile;
     }
 
@@ -79,39 +76,51 @@ public class ConvergenceMonitor {
                 throw new RuntimeException("Unable to write the convergence log, " + logFile + ": " + e.getMessage());
             }
         }
+    }
 
-        if (intervalSeconds > 0) {
-            scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread thread = new Thread(r, "convergence-monitor");
-                thread.setDaemon(true);
-                return thread;
-            });
-            scheduler.scheduleAtFixedRate(() -> {
-                try {
-                    report("Convergence");
-                } catch (RuntimeException e) {
-                    // a failed report must not stop the run
-                    System.err.println("Convergence report failed: " + e.getMessage());
-                }
-            }, intervalSeconds, intervalSeconds, TimeUnit.SECONDS);
+    /**
+     * Writes the final report.
+     */
+    public void stop() {
+        report("Final convergence diagnostics");
+        if (log != null) {
+            log.close();
         }
     }
 
     /**
-     * Stops the periodic reports and writes the final one.
+     * The diagnostics of the samples up to and including a state, which every chain should
+     * have reached. Adds a line to the convergence log.
      */
-    public void stop() {
-        if (scheduler != null) {
-            scheduler.shutdownNow();
-            try {
-                scheduler.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+    public synchronized Diagnostics getDiagnostics(long state) {
+        SampleCollector.Snapshot[] snapshots = new SampleCollector.Snapshot[collectors.size()];
+        for (int k = 0; k < snapshots.length; k++) {
+            snapshots[k] = collectors.get(k).snapshot(state);
         }
-        report("Final convergence diagnostics");
+        Diagnostics diagnostics = getDiagnostics(snapshots);
+        writeLog(state, diagnostics);
+        return diagnostics;
+    }
+
+    private Diagnostics getDiagnostics(SampleCollector.Snapshot[] snapshots) {
+        Burnin burnin = estimateBurnin(snapshots);
+        // without a common burn-in, give the diagnostics after the largest one tried
+        double proportion = burnin.found ? burnin.proportion : MAX_BURNIN;
+        Diagnostics diagnostics = computeDiagnostics(collectors.get(0).getLabels(), snapshots, proportion);
+        diagnostics.burnin = burnin;
+        diagnostics.burninProportion = proportion;
+        return diagnostics;
+    }
+
+    private void writeLog(long state, Diagnostics diagnostics) {
         if (log != null) {
-            log.close();
+            Burnin burnin = diagnostics.burnin;
+            log.println(state + "\t" + (burnin.found ? Long.toString(burnin.states) : "NA") +
+                    "\t" + format(burnin.posteriorRhat) +
+                    "\t" + format(diagnostics.minESS) + "\t" + format(diagnostics.minESSLabel) +
+                    "\t" + format(diagnostics.maxRhat) + "\t" + format(diagnostics.maxRhatLabel) +
+                    "\t" + format(diagnostics.asdsf) + "\t" + diagnostics.cladeCount);
+            log.flush();
         }
     }
 
@@ -124,10 +133,8 @@ public class ConvergenceMonitor {
             minState = Math.min(minState, snapshots[k].state);
         }
 
-        Burnin burnin = estimateBurnin(snapshots);
-        // without a common burn-in, show the diagnostics after the largest one tried
-        double proportion = burnin.found ? burnin.proportion : MAX_BURNIN;
-        Diagnostics diagnostics = computeDiagnostics(collectors.get(0).getLabels(), snapshots, proportion);
+        Diagnostics diagnostics = getDiagnostics(snapshots);
+        Burnin burnin = diagnostics.burnin;
 
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("%n%s at state %d (%d chains):%n", title, minState, chainCount));
@@ -164,14 +171,7 @@ public class ConvergenceMonitor {
         System.out.print(sb);
         System.out.flush();
 
-        if (log != null) {
-            log.println(minState + "\t" + (burnin.found ? Long.toString(burnin.states) : "NA") +
-                    "\t" + format(burnin.posteriorRhat) +
-                    "\t" + format(diagnostics.minESS) + "\t" + format(diagnostics.minESSLabel) +
-                    "\t" + format(diagnostics.maxRhat) + "\t" + format(diagnostics.maxRhatLabel) +
-                    "\t" + format(diagnostics.asdsf) + "\t" + diagnostics.cladeCount);
-            log.flush();
-        }
+        writeLog(minState, diagnostics);
     }
 
     private static String format(double value) {
@@ -239,18 +239,56 @@ public class ConvergenceMonitor {
         return burnin;
     }
 
-    private static int getBurninSamples(int sampleCount, double proportion) {
+    public static int getBurninSamples(int sampleCount, double proportion) {
         // round first so steps like 3 * 0.02 do not fall just above a whole number
         return (int) Math.ceil(Math.round(sampleCount * proportion * 1e6) / 1e6);
     }
 
-    static class Diagnostics {
+    static class Diagnostics implements ChainDiagnostics {
         double minESS = Double.NaN;
         String minESSLabel = null;
         double maxRhat = Double.NaN;
         String maxRhatLabel = null;
         double asdsf = Double.NaN;
         int cladeCount = 0;
+        Burnin burnin = new Burnin();
+        // the burn-in the diagnostics are after: the common one, or MAX_BURNIN if there is none
+        double burninProportion = MAX_BURNIN;
+
+        @Override
+        public double getMinESS() {
+            return minESS;
+        }
+
+        @Override
+        public String getMinESSLabel() {
+            return minESSLabel;
+        }
+
+        @Override
+        public double getMaxRhat() {
+            return maxRhat;
+        }
+
+        @Override
+        public String getMaxRhatLabel() {
+            return maxRhatLabel;
+        }
+
+        @Override
+        public double getASDSF() {
+            return asdsf;
+        }
+
+        @Override
+        public double getBurnin() {
+            return burnin.found ? burnin.states : Double.NaN;
+        }
+
+        @Override
+        public double getBurninProportion() {
+            return burninProportion;
+        }
     }
 
     static Diagnostics computeDiagnostics(String[] labels, SampleCollector.Snapshot[] snapshots, double burnin) {
@@ -306,7 +344,7 @@ public class ConvergenceMonitor {
         return diagnostics;
     }
 
-    private static double getESS(double[] values, long stepSize) {
+    public static double getESS(double[] values, long stepSize) {
         List<Double> list = new ArrayList<Double>(values.length);
         for (double value : values) {
             list.add(value);
@@ -319,7 +357,7 @@ public class ConvergenceMonitor {
      * edition): each chain is split in half, so that a trend within a chain is detected as well
      * as disagreement between chains.
      */
-    static double splitRhat(double[][] chains) {
+    public static double splitRhat(double[][] chains) {
         int half = chains[0].length / 2;
         if (half < 2) {
             return Double.NaN;
@@ -445,9 +483,7 @@ public class ConvergenceMonitor {
 
     private final List<ChainSet> sets;
     private final List<SampleCollector> collectors;
-    private final long intervalSeconds;
     private final File logFile;
 
-    private ScheduledExecutorService scheduler = null;
     private PrintWriter log = null;
 }

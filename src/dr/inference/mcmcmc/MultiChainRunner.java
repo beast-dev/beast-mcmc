@@ -63,12 +63,21 @@ public class MultiChainRunner {
 
         timer.start();
 
+        // The sets finish (closing their loggers and printing their reports) once all of them
+        // have run, so the reports follow the last of the screen log.
+        final CountDownLatch running = new CountDownLatch(sets.size());
+
         for (final ChainSet set : sets) {
             completion.submit(() -> {
-                set.start(permits);
-                while (set.step()) {
-                    // the set reports its own progress through its loggers
+                try {
+                    set.start(permits);
+                    while (set.step()) {
+                        // the set reports its own progress through its loggers
+                    }
+                } finally {
+                    running.countDown();
                 }
+                running.await();
                 set.finish();
                 return set;
             });

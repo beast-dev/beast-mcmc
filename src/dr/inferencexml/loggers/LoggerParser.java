@@ -27,6 +27,7 @@
 
 package dr.inferencexml.loggers;
 
+import dr.inference.mcmc.ChainContext;
 import dr.inference.mcmc.RuntimeOverrides;
 
 import dr.app.beast.BeastVersion;
@@ -40,7 +41,9 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -82,14 +85,25 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
         final PrintWriter pw = getLogFile(xo, getParserName());
 
-        final LogFormatter formatter = new TabDelimitedFormatter(pw);
-
         boolean performanceReport = false;
+
+        // when several independent chains are run their screen logs are shown as one
+        ChainScreenFormatter chainFormatter = null;
 
         if (!xo.hasAttribute(FILE_NAME)) {
             // is a screen log
             performanceReport = true;
+
+            ChainContext context = ChainContext.current();
+            if (context != null) {
+                chainFormatter = context.takeScreenFormatter();
+            }
         }
+
+        final LogFormatter formatter = (chainFormatter != null ? chainFormatter : new TabDelimitedFormatter(pw));
+
+        // convergence diagnostics need several chains: otherwise they are left out
+        final boolean showDiagnostics = chainFormatter != null && chainFormatter.hasDiagnostics();
 
         // added a performance measurement delay to avoid the full evaluation period.
         final MCLogger logger = new MCLogger(formatter, logEvery, performanceReport, 10000);
@@ -125,7 +139,17 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
             if(child instanceof Columns) {
 
-                logger.addColumns(((Columns) child).getColumns());
+                for (LogColumn column : ((Columns) child).getColumns()) {
+                    if (showDiagnostics || !(column instanceof ChainDiagnosticColumn)) {
+                        logger.addColumn(column);
+                    }
+                }
+
+            } else if (child instanceof ChainDiagnosticColumn) {
+
+                if (showDiagnostics) {
+                    logger.addColumn((ChainDiagnosticColumn) child);
+                }
 
             } else if (child instanceof Loggable) {
 
@@ -141,6 +165,33 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
                 logger.addColumn(new LogColumn.Default(child.getClass().toString(), child));
             }
+        }
+
+        if (chainFormatter != null) {
+            List<LogColumn> columns = new ArrayList<LogColumn>();
+            boolean hasDiagnosticColumn = false;
+            for (int i = 0; i < logger.getColumnCount(); i++) {
+                columns.add(logger.getColumn(i));
+                if (logger.getColumn(i) instanceof ChainDiagnosticColumn) {
+                    hasDiagnosticColumn = true;
+                }
+            }
+            if (showDiagnostics && !hasDiagnosticColumn) {
+                // none were asked for: show the usual ones
+                LogColumn[] defaults = {
+                        new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.ASDSF, false),
+                        new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.MAX_RHAT, true),
+                        new ChainDiagnosticColumn(ChainDiagnosticColumn.Type.MIN_ESS, true)
+                };
+                // room for the names of the logged values
+                defaults[1].setMinimumWidth(24);
+                defaults[2].setMinimumWidth(24);
+                for (LogColumn column : defaults) {
+                    logger.addColumn(column);
+                    columns.add(column);
+                }
+            }
+            chainFormatter.setColumns(columns.toArray(new LogColumn[0]));
         }
 
         return logger;

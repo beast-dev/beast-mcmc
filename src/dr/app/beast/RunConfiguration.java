@@ -59,7 +59,9 @@ public class RunConfiguration {
     }
 
     /**
-     * @param seconds the interval between convergence reports (0 for none)
+     * @param seconds 0 for no convergence diagnostics. They were once reported at this interval
+     *                but are now shown with each line of the screen log, so any other value just
+     *                leaves them on.
      */
     public void setConvergenceInterval(int seconds) {
         this.convergenceInterval = seconds;
@@ -81,8 +83,8 @@ public class RunConfiguration {
     }
 
     /**
-     * @return the interval in seconds between convergence reports when there are several
-     * independent chains (0 for none)
+     * @return 0 if there should be no convergence diagnostics when there are several
+     * independent chains
      */
     public int getConvergenceInterval() {
         return convergenceInterval;

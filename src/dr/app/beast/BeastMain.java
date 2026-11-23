@@ -228,9 +228,10 @@ public class BeastMain {
 
                 ConvergenceMonitor monitor = null;
                 if (!collectors.isEmpty()) {
-                    monitor = new ConvergenceMonitor(sets, collectors, runConfiguration.getConvergenceInterval(),
-                            getConvergenceLogFile(fileName));
+                    monitor = new ConvergenceMonitor(sets, collectors, getConvergenceLogFile(fileName));
                     monitor.start();
+                    // the diagnostics are shown with each line of the screen log
+                    multiChainScreenLog.setDiagnosticsSource(monitor::getDiagnostics);
                 }
 
                 runner.run();
@@ -363,6 +364,18 @@ public class BeastMain {
             driverContexts[k] = new ChainContext(name + " driver", fileSuffix, false, false, nextChainSeed());
         }
 
+        if (independentChainCount > 1) {
+            // the screen logs of the independent chains are shown as one
+            multiChainScreenLog = new MultiChainScreenLog(independentChainCount,
+                    runConfiguration.getConvergenceInterval() > 0, System.out);
+            for (int k = 0; k < independentChainCount; k++) {
+                // the screen log of a tempering set comes from whichever member is cold
+                for (int i = 0; i < temperedChainCount; i++) {
+                    contexts[k][i].setScreenFormatter(multiChainScreenLog.getFormatter(k));
+                }
+            }
+        }
+
         List<ChainSet> sets = new ArrayList<ChainSet>();
         try {
             for (int k = 0; k < independentChainCount; k++) {
@@ -402,6 +415,8 @@ public class BeastMain {
 
         return sets;
     }
+
+    private MultiChainScreenLog multiChainScreenLog = null;
 
     /**
      * @return the file for the convergence reports, named after the XML file
@@ -546,7 +561,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "maximum number of chains computing at once (default: one per processor)"),
                         new Arguments.StringOption("thread_scheme", null, new String[]{"serial", "split", "auto"}, false,
                                 "how each chain uses its threads: likelihoods one after another (serial), in parallel (split) or chosen from the data (auto, the default with several chains)"),
-                        new Arguments.IntegerOption("convergence_every", null, 0, Integer.MAX_VALUE, "seconds between convergence reports for multiple chains (default 60, 0 for none)"),
+                        new Arguments.IntegerOption("convergence_every", null, 0, Integer.MAX_VALUE, "0 for no convergence diagnostics of multiple chains (they are shown with each line of the screen log)"),
 
                         new Arguments.Section("Tempered MCMC"),
                         new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains in each parallel tempering set (1 cold plus heated chains)"),

@@ -567,7 +567,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         }
 
-        if (partitionTreePrior.getOptions().needCoalescentModel.get(this.partitionTreePrior.getName())) {
+        // a tree without an entry (one that only has continuous traits, for example) is not one
+        // that a backward-in-time discrete trait model sets the prior of
+        final Boolean needCoalescentModel =
+                partitionTreePrior.getOptions().needCoalescentModel.get(this.partitionTreePrior.getName());
+        if (needCoalescentModel == null || needCoalescentModel) {
             //if FIT model, then remove the SET_BY_BIT option / TreePriorType
             treePriorCombo.removeItem(TreePriorType.SET_BY_BIT);
             treePriorCombo.setEnabled(true);

@@ -24,18 +24,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools.treeannotator;
+package dr.evolution.clades;
 
 import dr.evolution.util.Taxon;
 import dr.util.Pair;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * A clade of a bifurcating tree: a tip, or a set of taxa that can be split into two clades
+ * (in one or more ways, if the pairs of sub-clades are being kept).
+ *
+ * A clade can be counted, given sub-clades, parents and children, and given height and
+ * attribute values from any number of threads at once. Its credibility and its best pair of
+ * sub-clades are set by whatever summarises the clade system once the counting is done.
+ *
  * @author Andrew Rambaut
  * @version $
  */
-class BiClade implements Clade {
+public class BiClade implements Clade {
 
     private static final boolean USE_BITSET_CLADE_KEYS = false;
 
@@ -48,18 +56,16 @@ class BiClade implements Clade {
     public BiClade(int index, Taxon taxon) {
         this.index = index;
 
-        count = 0;
         credibility = 1.0;
         size = 1;
 
-        key = getTaxonKey(index);
+        key = cladeKeys.getTaxonKey(index, taxon);
 
         this.taxon = taxon;
     }
 
     public BiClade(Object key, int size) {
         this.index = -1;
-        count = 0;
         credibility = 1.0;
         this.size = size;
         this.key = key;
@@ -70,7 +76,6 @@ class BiClade implements Clade {
         assert child1 instanceof BiClade;
         assert child2 instanceof BiClade;
 
-        count = 0;
         credibility = 0.0;
         BiClade left = (BiClade)child1;
         BiClade right = (BiClade)child2;
@@ -87,7 +92,7 @@ class BiClade implements Clade {
         this.taxon = null;
     }
 
-    public void addSubClades(Clade child1, Clade child2) {
+    public synchronized void addSubClades(Clade child1, Clade child2) {
         if (subClades == null) {
             subClades = new HashSet<>();
         }
@@ -103,14 +108,14 @@ class BiClade implements Clade {
         subClades.add(new Pair<>(left, right));
     }
 
-    void addParent(BiClade parentClade) {
+    public synchronized void addParent(BiClade parentClade) {
         if (parentClades == null) {
             parentClades = new HashSet<>();
         }
         parentClades.add(parentClade);
     }
 
-    void addChild(BiClade childClade) {
+    public synchronized void addChild(BiClade childClade) {
         if (childClades == null) {
             childClades = new HashSet<>();
         }
@@ -127,12 +132,19 @@ class BiClade implements Clade {
 
     @Override
     public int getCount() {
-        return count;
+        return count.get();
+    }
+
+    /**
+     * Counts one more tree with this clade.
+     */
+    public void incrementCount() {
+        count.incrementAndGet();
     }
 
     @Override
     public void setCount(int count) {
-        this.count = count;
+        this.count.set(count);
     }
 
     @Override
@@ -206,25 +218,37 @@ class BiClade implements Clade {
         return bestRight;
     }
 
-    public Set<Pair<BiClade, BiClade>> getSubClades() {
+    public void setBestLeft(BiClade bestLeft) {
+        this.bestLeft = bestLeft;
+    }
+
+    public void setBestRight(BiClade bestRight) {
+        this.bestRight = bestRight;
+    }
+
+    public double getBestSubTreeScore() {
+        return bestSubTreeScore;
+    }
+
+    public void setBestSubTreeScore(double bestSubTreeScore) {
+        this.bestSubTreeScore = bestSubTreeScore;
+    }
+
+    public synchronized Set<Pair<BiClade, BiClade>> getSubClades() {
         return subClades;
     }
 
-    public Set<BiClade> getParentClades() {
+    public synchronized Set<BiClade> getParentClades() {
         return parentClades;
     }
 
-    public Set<BiClade> getChildClades() {
+    public synchronized Set<BiClade> getChildClades() {
         return childClades;
     }
 
     @Override
     public Object getKey() {
         return key;
-    }
-
-    public static Object getTaxonKey(int index) {
-        return cladeKeys.getTaxonKey(index);
     }
 
     public static Object getParentKey(Object key1, Object key2) {
@@ -247,27 +271,26 @@ class BiClade implements Clade {
         return "clade " + key;
     }
 
-    int count;
-    double credibility;
-    final int size;
-    final int index;
+    private final AtomicInteger count = new AtomicInteger(0);
+    private volatile double credibility;
+    private final int size;
+    private final int index;
 
-    final Object key;
+    private final Object key;
 
     private final Taxon taxon;
 
-    public BiClade majorityRuleParent = null;
+    private volatile BiClade majorityRuleParent = null;
 
     private Set<Pair<BiClade, BiClade>> subClades = null;
-    BiClade bestLeft = null;
-    BiClade bestRight = null;
+    private volatile BiClade bestLeft = null;
+    private volatile BiClade bestRight = null;
     private Set<BiClade> parentClades = null;
     private Set<BiClade> childClades = null;
 
 
-    double bestSubTreeScore = Double.NaN;
+    private volatile double bestSubTreeScore = Double.NaN;
 
-    private final List<Object[]> attributeValues = new ArrayList<>();
     private final Map<String, List<Object>> attributeValueMap = new HashMap<>();
     private final List<Double> heightValues = new ArrayList<>();
 
@@ -275,7 +298,7 @@ class BiClade implements Clade {
         if (USE_BITSET_CLADE_KEYS) {
             cladeKeys = BitsetCladeKeys.INSTANCE;
         } else {
-            cladeKeys = FingerprintCladeKeys.INSTANCE;
+            cladeKeys = TaxonHashCladeKeys.INSTANCE;
         }
     }
 }

@@ -27,6 +27,7 @@
 
 package dr.app.beast;
 
+import dr.evolution.clades.TaxonHashCladeKeys;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeLogger;
@@ -46,8 +47,8 @@ import java.util.*;
  * Keeps the samples of one chain in memory for convergence diagnostics: the chain's posterior,
  * the numeric columns of its main log, and the frequencies of the clades of its logged tree.
  *
- * Trees are not stored. Each clade is identified by a 64-bit hash (the sum of random keys of
- * its taxa, which needs O(n) per tree) and counted in blocks of consecutive samples, so a
+ * Trees are not stored. Each clade is identified by a 64-bit key (that of
+ * {@link TaxonHashCladeKeys}: the exclusive-or of hashes of its taxa's names, which needs O(n) per tree) and counted in blocks of consecutive samples, so a
  * burn-in can be dropped later with memory that does not grow with the chain length.
  *
  * For a parallel tempering set it listens to every member and records only the one at
@@ -252,9 +253,10 @@ public class SampleCollector implements MarkovChainListener {
             if (tree.isExternal(node)) {
                 keys[n] = getTaxonKey(tree.getNodeTaxon(node).getId());
             } else {
-                long key = 0;
-                for (int j = 0; j < tree.getChildCount(node); j++) {
-                    key += keys[tree.getChild(node, j).getNumber()];
+                // the same keys as a CladeSystem gives its clades
+                long key = keys[tree.getChild(node, 0).getNumber()];
+                for (int j = 1; j < tree.getChildCount(node); j++) {
+                    key = TaxonHashCladeKeys.getParentKey(key, keys[tree.getChild(node, j).getNumber()]);
                 }
                 keys[n] = key;
                 if (node != root && cladeCount < clades.length) {
@@ -268,15 +270,8 @@ public class SampleCollector implements MarkovChainListener {
     private long getTaxonKey(String id) {
         Long key = taxonKeys.get(id);
         if (key == null) {
-            // FNV-1a then a SplitMix64 finaliser: the same for the same id in every chain
-            long h = 0xcbf29ce484222325L;
-            for (int i = 0; i < id.length(); i++) {
-                h ^= id.charAt(i);
-                h *= 0x100000001b3L;
-            }
-            h = (h ^ (h >>> 30)) * 0xbf58476d1ce4e5b9L;
-            h = (h ^ (h >>> 27)) * 0x94d049bb133111ebL;
-            key = h ^ (h >>> 31);
+            // a hash of the name: the same for the same taxon in every chain
+            key = TaxonHashCladeKeys.getTaxonKey(id);
             taxonKeys.put(id, key);
         }
         return key;

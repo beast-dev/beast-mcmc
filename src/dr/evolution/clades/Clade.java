@@ -24,7 +24,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools.treeannotator;
+package dr.evolution.clades;
 
 import dr.evolution.util.Taxon;
 

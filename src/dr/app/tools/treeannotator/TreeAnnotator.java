@@ -26,6 +26,10 @@
 
 package dr.app.tools.treeannotator;
 
+import dr.evolution.clades.Clade;
+import dr.evolution.clades.BiClade;
+import dr.evolution.clades.CladeSystem;
+
 import dr.app.beast.BeastVersion;
 import dr.app.tools.BaseTreeTool;
 import dr.app.tools.NexusExporter;
@@ -358,17 +362,16 @@ public class TreeAnnotator extends BaseTreeTool {
                     }
 
                     if (firstTree) {
-                        // for the first tree do it outside a thread
-                        cladeSystem.add(tree);
+                        // the taxa are numbered as in the first tree, whichever tree a thread adds first
+                        cladeSystem.setTaxonList(tree);
                         firstTree = false;
-                    } else {
-                        if (THREADED_READING) {
-                            futures.add(pool.submit(() -> {
-                                cladeSystem.add(tree);
-                            }));
-                        } else {
+                    }
+                    if (THREADED_READING) {
+                        futures.add(pool.submit(() -> {
                             cladeSystem.add(tree);
-                        }
+                        }));
+                    } else {
+                        cladeSystem.add(tree);
                     }
                     totalTreesUsed += 1;
                 }

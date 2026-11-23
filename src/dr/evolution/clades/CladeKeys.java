@@ -24,7 +24,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools.treeannotator;
+package dr.evolution.clades;
+
+import dr.evolution.util.Taxon;
 
 /**
  * @author Andrew Rambaut
@@ -33,5 +35,10 @@ package dr.app.tools.treeannotator;
 public interface CladeKeys {
     Object getParentKey(Object key1, Object key2);
 
-    Object getTaxonKey(int taxon);
+    /**
+     * @param index the index of the taxon in the taxon list
+     * @param taxon the taxon
+     * @return the key of the clade of just this taxon
+     */
+    Object getTaxonKey(int index, Taxon taxon);
 }

@@ -24,12 +24,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.tools.treeannotator;
+package dr.evolution.clades;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 
-interface CladeAction {
+public interface CladeAction {
     void actOnClade(Clade clade, Tree tree, NodeRef node);
 
     boolean expectAllClades();

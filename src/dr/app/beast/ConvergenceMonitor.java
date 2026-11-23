@@ -190,7 +190,7 @@ public class ConvergenceMonitor {
             sb.append(String.format("    %s%n", citation));
         }
         if (diagnostics.cladeCount > 0) {
-            sb.append(String.format("  ASDSF is the average standard deviation of split frequencies between the chains:%n"));
+            sb.append(String.format("  ASDSF is the average standard deviation of clade frequencies between the chains:%n"));
             for (String citation : ASDSF_CITATIONS) {
                 sb.append(String.format("    %s%n", citation));
             }

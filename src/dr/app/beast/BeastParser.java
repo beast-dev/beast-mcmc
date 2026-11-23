@@ -101,6 +101,8 @@ public class BeastParser extends XMLParser {
             if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
                 // load the development parsers
                 if (parsers.equalsIgnoreCase(DEV)) {
+                    // printed, as this is before the log handlers are set up (one parser builds every chain,
+                    // so it is said once)
                     System.out.println("Loading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
                             + ", which is additional set of parsers only available for development version ...");
                 }

@@ -30,6 +30,9 @@ package dr.app.beast;
 import dr.app.util.Arguments;
 import dr.inference.mcmcmc.MCMCMCOptions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * How the chains of a run are arranged: the number of independent chains, the parallel
  * tempering set run for each of them (a single chain when there are no heated chains) and
@@ -217,11 +220,67 @@ public class RunConfiguration {
      * as there are processors
      */
     public int getChainThreads() {
+        return getChainThreads(Runtime.getRuntime().availableProcessors());
+    }
+
+    private int getChainThreads(int processors) {
         int total = getTotalChainCount();
         if (chainThreads > 0) {
             return Math.min(chainThreads, total);
         }
-        return Math.min(total, Runtime.getRuntime().availableProcessors());
+        return Math.min(total, processors);
+    }
+
+    /**
+     * @return true if the number of chains computing at once was given (-chain_threads)
+     */
+    public boolean isChainThreadsSet() {
+        return chainThreads > 0;
+    }
+
+    /**
+     * Describes, for the start of a run, how the chains share the processors.
+     *
+     * @param processors the number of processors available
+     * @return the lines of the description
+     */
+    public List<String> getThreadingDescription(int processors) {
+        final int total = getTotalChainCount();
+        final int slots = getChainThreads(processors);
+        final int threadsPerChain = Math.max(1, processors / slots);
+        final String on = ", on " + processors + " processor" + (processors > 1 ? "s" : "") + ".";
+
+        List<String> lines = new ArrayList<String>();
+        lines.add("Threading:");
+        if (slots >= total) {
+            lines.add("  " + (total > 1 ? "All " + total + " chains compute at once" : "The chain computes on its own") +
+                    (isChainThreadsSet() ? " (--chain_threads " + chainThreads + ")" : "") + on);
+        } else {
+            lines.add("  " + slots + " of the " + total + " chains compute" + (slots > 1 ? "" : "s") + " at a time (" +
+                    (isChainThreadsSet() ? "--chain_threads " + chainThreads : "one per processor") + ")" + on);
+            lines.add("  The chains take turns, so each computes about " +
+                    Math.round(100.0 * slots / total) + "% of the time." +
+                    (isChainThreadsSet() ? " For all of them to compute at once" : ""));
+            if (isChainThreadsSet()) {
+                lines.add("  use --chain_threads " + total + ", or leave the option out.");
+            }
+        }
+        if (slots > processors) {
+            lines.add("  More chains compute at once than there are processors, so they share them.");
+        }
+        if (getTemperedChainCount() > 1) {
+            lines.add("  A tempering set advances at the pace of its slowest chain: its chains each run " +
+                    swapChainsEvery + " states");
+            lines.add("  (--mc3_swap) and then wait for one another to swap.");
+        }
+        if (threadsPerChain > 1) {
+            lines.add("  Each chain has up to " + threadsPerChain + " threads for its likelihoods while it computes (--thread_scheme " +
+                    (threadingScheme != null ? threadingScheme : ThreadingScheme.Type.AUTO).toString().toLowerCase() + "),");
+            lines.add("  unless --threads or --beagle_threads is given.");
+        } else {
+            lines.add("  Each chain has one thread for its likelihoods, unless --threads or --beagle_threads is given.");
+        }
+        return lines;
     }
 
     /**

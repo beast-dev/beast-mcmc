@@ -174,8 +174,6 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
 
         addStatistic(new DeltaStatistic());
 
-        initializationReport();
-
         /* Force all entries in groupSizeParameter = 1 for compatibility with Tracer */
         if (groupSizeParameter != null) {
             for (int i = 0; i < groupSizeParameter.getDimension(); i++)
@@ -211,10 +209,13 @@ public class OldGMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood im
         return coalescentIntervals;
     }
 
-    public void initializationReport() {
-        System.out.println("Creating a GMRF smoothed skyride model:");
-        System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
-        System.out.println("\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471.");
+    /**
+     * @return what to tell the user when the model is created (for the parser to log)
+     */
+    public String getInitializationReport() {
+        return "Creating a GMRF smoothed skyride model:" +
+                "\n\tPopulation sizes: " + popSizeParameter.getDimension() +
+                "\n\tIf you publish results using this model, please reference: Minin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471.";
     }
 
     public static void checkTree(TreeModel treeModel) {

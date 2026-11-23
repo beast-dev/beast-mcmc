@@ -195,8 +195,6 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 
         addStatistic(new DeltaStatistic());
 
-        initializationReport();
-
         /* Force all entries in groupSizeParameter = 1 for compatibility with Tracer */
         if (groupSizeParameter != null) {
             for (int i = 0; i < groupSizeParameter.getDimension(); i++)
@@ -410,8 +408,6 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
 
         addStatistic(new DeltaStatistic());
 
-        initializationReport();
-
         phiParameter = null;
 
         this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
@@ -469,9 +465,10 @@ public class GMRFMultilocusSkyrideLikelihood extends OldGMRFSkyrideLikelihood
         }
     }
 
-    public void initializationReport() {
-        System.out.println("Creating a GMRF smoothed skyride model for multiple loci (SkyGrid)");
-        System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
+    @Override
+    public String getInitializationReport() {
+        return "Creating a GMRF smoothed skyride model for multiple loci (SkyGrid)" +
+                "\n\tPopulation sizes: " + popSizeParameter.getDimension();
     }
 
     public void wrapSetupIntervals() {

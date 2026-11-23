@@ -332,10 +332,10 @@ public class BeastMain {
     }
 
     /**
-     * Builds the models for every chain, one at a time. The first chain uses the parser that
-     * has already been set up; parsing messages are only shown for that one.
+     * Builds the models for every chain, one at a time, all with the one parser that has
+     * already been set up. Parsing messages are only shown for the first chain.
      */
-    private List<ChainSet> buildChainSets(ChainFactory chainFactory, XMLParser firstParser,
+    private List<ChainSet> buildChainSets(ChainFactory chainFactory, XMLParser parser,
                                           RunConfiguration runConfiguration,
                                           Logger logger,
                                           List<SampleCollector> collectors) throws dr.xml.XMLParseException {
@@ -348,13 +348,17 @@ public class BeastMain {
         infoLogger.info("Running " + independentChainCount + " independent chain" +
                 (independentChainCount > 1 ? "s" : "") +
                 (temperedChainCount > 1 ? ", each with " + (temperedChainCount - 1) + " heated chain" +
-                        (temperedChainCount > 2 ? "s" : "") : "") +
-                ", " + runConfiguration.getChainThreads() + " at a time");
+                        (temperedChainCount > 2 ? "s" : "") +
+                        " (" + runConfiguration.getTotalChainCount() + " chains in all)" : ""));
         if (temperedChainCount > 1) {
             infoLogger.info("Hot chain temperatures: ");
             for (int i = 1; i < chainTemperatures.length; i++) {
                 infoLogger.info("Hot Chain " + i + ": " + chainTemperatures[i]);
             }
+        }
+        // how the chains share the processors
+        for (String line : runConfiguration.getThreadingDescription(Runtime.getRuntime().availableProcessors())) {
+            infoLogger.info(line);
         }
 
         // Each chain gets its own random number stream, seeded from the run's seed, so the
@@ -386,18 +390,26 @@ public class BeastMain {
         }
 
         List<ChainSet> sets = new ArrayList<ChainSet>();
+        int built = 0;
         try {
             for (int k = 0; k < independentChainCount; k++) {
                 MCMC[] chains = new MCMC[temperedChainCount];
                 for (int i = 0; i < temperedChainCount; i++) {
-                    if (k == 0 && i == 0) {
-                        chains[i] = chainFactory.buildChain(firstParser, contexts[k][i]);
-                    } else {
+                    // Building a model can take a while, so say which is being built. Printed, not
+                    // logged, as the logger is off after the first.
+                    built++;
+                    System.out.println((built == 1 ? "\n" : "") + "Constructing chain " + built + " of " +
+                            runConfiguration.getTotalChainCount() + ": " + contexts[k][i].getName() +
+                            (built == 1 ? " (its messages follow; the others are the same)" : ""));
+                    System.out.flush();
+
+                    if (k > 0 || i > 0) {
                         // turn off all messages for subsequent parses (they will be the same as the
                         // first time).
                         logger.setLevel(Level.OFF);
-                        chains[i] = chainFactory.buildChain(contexts[k][i]);
                     }
+                    // the one parser builds every chain, each from the same document
+                    chains[i] = chainFactory.buildChain(parser, contexts[k][i]);
                 }
                 if (temperedChainCount > 1) {
                     sets.add(new TemperedChainSet(k, chains, contexts[k], driverContexts[k], mc3Options));
@@ -601,14 +613,14 @@ public class BeastMain {
 
                         new Arguments.Section("Multiple chains"),
                         new Arguments.IntegerOption("chains", null, 1, Integer.MAX_VALUE, "number of independent chains to run (default 1)"),
-                        new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "maximum number of chains computing at once (default: one per processor)"),
+                        new Arguments.IntegerOption("chain_threads", null, 1, Integer.MAX_VALUE, "how many chains compute at once, counting every chain in the run: the independent chains times the chains in each tempering set (default: all of them, up to one per processor). With fewer than there are chains, the chains take turns"),
                         new Arguments.StringOption("thread_scheme", null, new String[]{"serial", "split", "auto"}, false,
                                 "how each chain uses its threads: likelihoods one after another (serial), in parallel (split) or chosen from the data (auto, the default with several chains)"),
                         new Arguments.Option("convergence", null, "Show convergence diagnostics (max R-hat, min ESS) in the screen log of a single chain (they are always shown for multiple chains)"),
                         new Arguments.IntegerOption("convergence_every", null, 0, Integer.MAX_VALUE, "0 for no convergence diagnostics of multiple chains (they are shown with each line of the screen log)"),
 
                         new Arguments.Section("Tempered MCMC"),
-                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains in each parallel tempering set (1 cold plus heated chains)"),
+                        new Arguments.IntegerOption("mc3_chains", null, 1, Integer.MAX_VALUE, "number of chains in each parallel tempering set (1 cold plus heated chains). Each of them counts towards --chain_threads"),
                         new Arguments.RealOption("mc3_delta", null, 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", null, -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", null, 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),

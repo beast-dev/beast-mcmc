@@ -86,7 +86,7 @@ public class ChainDiagnosticParser extends AbstractXMLObjectParser {
                 MIN_ESS + " is the smallest effective sample size (summed over the chains) of the values in the main log, " +
                 MAX_RHAT + " the largest split R-hat of those values, " +
                 ASDSF + " the average standard deviation of clade frequencies and " +
-                COMMON_BURNIN + " the burn-in (in states) after which the chains' posteriors agree. " +
+                COMMON_BURNIN + " the burn-in (in states, at least 10% of the chain) after which the chains' posteriors agree. " +
                 "All are computed after that burn-in.";
     }
 

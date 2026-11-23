@@ -41,7 +41,7 @@ import java.util.*;
 /**
  * Compares independent chains while they run (or the two halves of a single chain, in which
  * case there is no ASDSF). The chains share one burn-in, estimated from
- * their agreement: the smallest burn-in after which the split R-hat of the posterior across
+ * their agreement: the smallest burn-in (of at least 10%) after which the split R-hat of the posterior across
  * the chains stays below 1.01 (for that burn-in and every larger one tried, as the initial
  * transient can make R-hat look small when nothing is discarded). After that burn-in it gives
  * the effective sample size of each logged value (summed over the chains), the split potential
@@ -58,6 +58,8 @@ public class ConvergenceMonitor {
 
     // burn-ins tried, as proportions of the samples (the step matches the tree blocks)
     public static final double BURNIN_STEP = 1.0 / SampleCollector.TREE_BLOCK_COUNT;
+    // at least this much is always left out, as the posterior can settle before everything else
+    public static final double MIN_BURNIN = 0.1;
     public static final double MAX_BURNIN = 0.5;
     public static final double RHAT_THRESHOLD = 1.01;
 
@@ -201,7 +203,7 @@ public class ConvergenceMonitor {
     }
 
     /**
-     * Finds the smallest burn-in (from 0 to MAX_BURNIN in steps of BURNIN_STEP) for which the
+     * Finds the smallest burn-in (from MIN_BURNIN to MAX_BURNIN in steps of BURNIN_STEP) for which the
      * split R-hat of the chains' posteriors is below RHAT_THRESHOLD, for that burn-in and every
      * larger one tried.
      */
@@ -231,7 +233,8 @@ public class ConvergenceMonitor {
         }
 
         int found = -1;
-        for (int i = steps; i >= 0; i--) {
+        int minStep = (int) Math.round(MIN_BURNIN / BURNIN_STEP);
+        for (int i = steps; i >= minStep; i--) {
             if (!(rhats[i] < RHAT_THRESHOLD)) {
                 break;
             }

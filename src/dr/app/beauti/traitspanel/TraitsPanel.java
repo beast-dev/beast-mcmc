@@ -461,6 +461,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         boolean success = dataPanel.createPartitionFromTraits(traits, null, TraitsPanel.this);
 
         if (success) {
+            // the other panels depend on the partitions
+            frame.setAllOptions();
             frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
         }
     }

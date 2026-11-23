@@ -1220,6 +1220,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             }
 
+            // the other panels, and whether the tabs can be used, depend on the partitions
+            frame.setAllOptions();
+
             selectDataPanel();
         }
 

@@ -345,6 +345,14 @@ public class BeautiFrame extends DocumentFrame {
             iae.printStackTrace(System.err);
             JOptionPane.showMessageDialog(this, iae.getMessage(),
                     "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+        } catch (RuntimeException re) {
+            // say so, and carry on to enable the tabs: left to escape, an error in one panel
+            // leaves every tab disabled with nothing to show why
+            re.printStackTrace(System.err);
+            JOptionPane.showMessageDialog(this,
+                    "An error occurred while updating the panels:\n" + re +
+                            "\n\nSome settings may not be shown correctly. Please report this to the authors.",
+                    "Unexpected error", JOptionPane.ERROR_MESSAGE);
         }
 
         // enable/disable the other tabs and generate option depending on whether any
@@ -449,9 +457,13 @@ public class BeautiFrame extends DocumentFrame {
         options.registerComponents(components);
         generator = new BeastGenerator(options, components);
 
-        // the panels are still showing the document this window had before
-        setAllOptions();
-        setStatusMessage();
+        if (dataPanel != null) {
+            // the panels are still showing the document this window had before
+            setAllOptions();
+            setStatusMessage();
+        }
+        // otherwise this is a new window, opened for the file, whose panels have not been made
+        // yet: they are given the options when they are (see initializeComponents)
 
         return true;
     }

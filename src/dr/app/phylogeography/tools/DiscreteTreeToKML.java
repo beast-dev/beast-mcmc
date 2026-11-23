@@ -90,7 +90,7 @@ public class DiscreteTreeToKML {
 
         arguments.printUsage(commandName, "[<inputTree-file-name>] [<output-file-name>]"); //TODO: set this right
         progressStream.println();
-        progressStream.println("  Example: " + commandName + " -coordinates coordinates.txt input.tre");
+        progressStream.println("  Example: " + commandName + " --coordinates coordinates.txt input.tre");
         progressStream.println();
     }
 

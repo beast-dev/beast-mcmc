@@ -606,7 +606,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements
                 } catch (BeagleException e) {
                     if (beagle instanceof GeneralBeagleImpl) { // -java: it cannot do degree-2 operations either
                         throw new IllegalStateException("Degree-2 nodes at the epoch transition times need a " +
-                                "native BEAGLE CPU instance, not the Java implementation (-java)", e);
+                                "native BEAGLE CPU instance, not the Java implementation (--java)", e);
                     }
                     throw new IllegalStateException("BEAGLE " + BeagleInfo.getVersion() + " cannot grow buffers (" +
                             e.getMessage() + "); check the native BEAGLE libraries or run with -D" +

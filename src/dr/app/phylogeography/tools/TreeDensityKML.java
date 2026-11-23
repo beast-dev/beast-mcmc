@@ -307,7 +307,7 @@ public class TreeDensityKML {
 
         arguments.printUsage("TreeDensityKML", "<input-file-name> [<output-file-name>]");
         System.out.println();
-        System.out.println("  Example: TreeDensityKML -burnin 100 test.trees test.kml");
+        System.out.println("  Example: TreeDensityKML --burnin 100 test.trees test.kml");
         System.out.println();
     }
 

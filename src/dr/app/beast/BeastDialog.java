@@ -153,7 +153,7 @@ public class BeastDialog {
                 "<html>By default, log, tree and checkpoint files are written to the<br>" +
                         "folder containing the BEAST XML file (or to the folders named<br>" +
                         "in the XML). Select this to write them all to a chosen folder<br>" +
-                        "instead (equivalent to the -output command line option).</html>");
+                        "instead (equivalent to the --output command line option).</html>");
         optionPanel.addComponent(outputDirectoryCheckBox);
 
         outputDirectoryButton.addActionListener(new ActionListener() {

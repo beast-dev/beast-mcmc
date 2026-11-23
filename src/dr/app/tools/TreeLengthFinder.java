@@ -171,7 +171,7 @@ public class TreeLengthFinder {
         arguments.printUsage("treelengthfinder", "[-burnin <burnin>][<input-file-name> [<output-file-name>]]");
         System.out.println();
         System.out.println("  Example: treelengthfinder test.tree");
-        System.out.println("  Example: treelengthfinder -burnin 10000 trees.log out.txt");
+        System.out.println("  Example: treelengthfinder --burnin 10000 trees.log out.txt");
         System.out.println();
 
     }

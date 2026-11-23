@@ -886,7 +886,7 @@ public class TreeAnnotator extends BaseTreeTool {
         progressStream.println("  Example: treeannotator test.trees out.tree");
         progressStream.println("  Example: treeannotator --burnin 100 --heights mean test.trees out.tree");
         progressStream.println("  Example: treeannotator --type hipstr --burnin 100 --heights mean test.trees out.tree");
-        progressStream.println("  Example: treeannotator -b 100 -tf map.tree test.trees out.tree");
+        progressStream.println("  Example: treeannotator -b 100 -tt map.tree test.trees out.tree");
         progressStream.println();
     }
 

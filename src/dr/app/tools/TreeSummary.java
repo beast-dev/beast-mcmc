@@ -723,7 +723,7 @@ public class TreeSummary {
         arguments.printUsage("treesummary", "<input-file-name> [<output-file-name>]");
         progressStream.println();
         progressStream.println("  Example: treesummary test.trees out.txt");
-        progressStream.println("  Example: treesummary -burnin 100 -heights mean test.trees out.txt");
+        progressStream.println("  Example: treesummary --burnin 100 -heights mean test.trees out.txt");
         progressStream.println();
     }
 

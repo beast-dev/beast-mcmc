@@ -144,7 +144,7 @@ public class TreeLogToEmpiricalDistributionConverter extends BaseTreeTool {
     public static void printUsage(Arguments arguments) {
         arguments.printUsage("CoalescentEventSummarizer", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: CoalescentEventSummarizer -startTime 10.0 -endTime 2.0 input.trees output.log");
+        progressStream.println("  Example: CoalescentEventSummarizer --startTime 10.0 --endTime 2.0 input.trees output.log");
         progressStream.println();
     }
 

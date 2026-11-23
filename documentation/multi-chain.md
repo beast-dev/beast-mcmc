@@ -119,10 +119,23 @@ state   burnin  posteriorRhat  minESS  minESS.parameter  maxRhat  maxRhat.parame
 
 ### Checkpointing
 
-`-save_every`, `-save_at`, `-save_state` and `-load_state` work per chain. With
-`-save_state run.state`, chain K saves to `run.chainK.state`. With `-load_state run.state`,
-chain K loads `run.chainK.state`. Each checkpoint contains only its own chain's state,
-including its random number stream.
+`--save_every`, `--save_at` and `--save_state` work per chain. With `--save_state run` or
+`--save_state run.chkpt`, chain K saves to `run.chainK.chkpt` (a single chain saves to
+`run.chkpt`). With `--save_stem run`, a file is kept for each saved state:
+`run_<state>.chainK.chkpt` (a single chain: `run_<state>.chkpt`). Each checkpoint contains
+only its own chain's state, including its random number stream.
+
+`--load_state` takes either a file or a stem:
+
+- A name ending in `.chkpt` is the file itself, and every chain starts from it:
+  `--load_state run.chkpt` loads `run.chkpt` into all the chains. This is how to start
+  several chains from the checkpoint of a single-chain run.
+- A name without the extension is a stem. With `--load_state run`, chain K loads its own
+  file, `run.chainK.chkpt`. This is how to resume a multi-chain run. If a chain has no file
+  of its own but there is a `run.chkpt`, it starts from that one.
+
+Chains that start from the same file take the state from it but keep their own random
+number streams, so they go their separate ways from there.
 
 Checkpointing is not yet available with parallel tempering (`-mc3_chains` > 1). BEAST stops
 with an error if you ask for both.

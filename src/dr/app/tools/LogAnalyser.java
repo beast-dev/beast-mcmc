@@ -177,7 +177,7 @@ public class LogAnalyser {
         arguments.printUsage("loganalyser", "[-burnin <burnin>] [-short][-hpd] [-std] [<input-file-name> [<output-file-name>]]");
         System.out.println();
         System.out.println("  Example: loganalyser test.log");
-        System.out.println("  Example: loganalyser -burnin 10000 trees.log out.txt");
+        System.out.println("  Example: loganalyser --burnin 10000 trees.log out.txt");
         System.out.println();
 
     }

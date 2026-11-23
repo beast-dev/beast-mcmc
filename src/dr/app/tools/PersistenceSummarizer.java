@@ -435,7 +435,7 @@ public class PersistenceSummarizer extends BaseTreeTool {
 
         arguments.printUsage("PersistVsIntroSummarizer", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: PersistVsIntroSummarizer -burnIn 1000 -evaluationTime 0.5 -ancestralTime 1.0 -nodeStateAnnotation states input.trees output.trees");
+        progressStream.println("  Example: PersistVsIntroSummarizer --burnIn 1000 --evaluationTime 0.5 --ancestralTime 1.0 --nodeStateAnnotation states input.trees output.trees");
         progressStream.println();
     }
 

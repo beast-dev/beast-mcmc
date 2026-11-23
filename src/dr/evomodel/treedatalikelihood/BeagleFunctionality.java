@@ -70,7 +70,7 @@ public class BeagleFunctionality {
     public static void checkMatrixVectorSupported(String feature) {
         if (!IS_MATRIX_VECTOR_SUPPORTED()) {
             throw new IllegalArgumentException(feature + " needs native BEAGLE 4.2.0 or later" +
-                    (Boolean.getBoolean("java.only") ? ", not the Java implementation (-java)" :
+                    (Boolean.getBoolean("java.only") ? ", not the Java implementation (--java)" :
                             "; found " + BeagleInfo.getVersion()));
         }
     }

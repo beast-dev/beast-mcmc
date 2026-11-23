@@ -80,7 +80,7 @@ public class BeautiApp extends MultiDocApplication {
         arguments.printUsage("beauti", "[<input-file-name> ...]");
         System.out.println();
         System.out.println("  Example: beauti test.nex");
-        System.out.println("  Example: beauti -help");
+        System.out.println("  Example: beauti --help");
         System.out.println();
     }
 

@@ -134,7 +134,7 @@ public class RunConfiguration {
         double delta = DEFAULT_DELTA;
         if (arguments.hasOption("mc3_delta")) {
             if (arguments.hasOption("mc3_temperatures")) {
-                throw new IllegalArgumentException("Either the -mc3_delta or the -mc3_temperatures option should be used, not both");
+                throw new IllegalArgumentException("Either the --mc3_delta or the --mc3_temperatures option should be used, not both");
             }
             delta = arguments.getRealOption("mc3_delta");
         }
@@ -144,7 +144,7 @@ public class RunConfiguration {
         if (arguments.hasOption("mc3_temperatures")) {
             double[] hotChainTemperatures = arguments.getRealArrayOption("mc3_temperatures");
             if (hotChainTemperatures.length != temperedChainCount - 1) {
-                throw new IllegalArgumentException("The number of -mc3_temperatures should be one less than -mc3_chains");
+                throw new IllegalArgumentException("The number of --mc3_temperatures should be one less than --mc3_chains");
             }
             System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, temperedChainCount - 1);
         } else {

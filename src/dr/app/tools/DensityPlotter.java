@@ -209,7 +209,7 @@ public class DensityPlotter {
 
 		arguments.printUsage("densityplotter", "<input-file-name> [<output-file-name>]");
 		System.out.println();
-		System.out.println("  Example: densityplotter -burnin 100 -trait rate test.trees density.plot");
+		System.out.println("  Example: densityplotter --burnin 100 --trait rate test.trees density.plot");
 		System.out.println();
 	}
 

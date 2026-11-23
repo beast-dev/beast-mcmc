@@ -190,7 +190,7 @@ public class ThreadingScheme implements MCMC.ChainPreparer {
             }
             sb.append(", ").append(threadBudget).append(" thread").append(threadBudget > 1 ? "s" : "").append(" per chain\n");
             if (fixedLikelihoodThreads) {
-                sb.append("  likelihood threads as set by -threads\n");
+                sb.append("  likelihood threads as set by --threads\n");
             } else if (likelihoodThreads > 1) {
                 sb.append("  likelihoods computed in parallel (").append(likelihoodThreads).append(" threads)\n");
             } else {
@@ -198,7 +198,7 @@ public class ThreadingScheme implements MCMC.ChainPreparer {
             }
             sb.append("  BEAGLE: ").append(cpuInstances.size()).append(" CPU instance").append(cpuInstances.size() != 1 ? "s" : "");
             if (fixedBeagleThreads) {
-                sb.append(" (threads as set by -beagle_threads)");
+                sb.append(" (threads as set by --beagle_threads)");
             } else if (!cpuInstances.isEmpty()) {
                 sb.append(" with ").append(beagleThreads).append(" thread").append(beagleThreads > 1 ? "s" : "")
                         .append(cpuInstances.size() > 1 ? " each" : "");

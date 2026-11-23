@@ -47,6 +47,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * A state loader / saver
@@ -61,6 +62,8 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
     // A debugging flag to do a check that the state gives the same likelihood after loading
     private static final boolean CHECK_LOAD_STATE = true;
+
+    public final static String STATE_FILE_EXTENSION = ".chkpt";
 
     public final static String LOAD_STATE_FILE = "load.state.file";
     public final static String SAVE_STATE_FILE = "save.state.file";
@@ -181,21 +184,40 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
     @Override
     public boolean saveState(MarkovChain markovChain, long state, double lnL) {
-        String fileName = "";
+        final File file;
         if (stemFileName != null && this.saveStateFileName == null) {
-            fileName = stemFileName + "_" + state;
+            // a file for each saved state: stem_<state>.chkpt, or stem_<state>.chainN.chkpt
+            ChainContext context = ChainContext.current();
+            file = new File(stemFileName + "_" + state +
+                    (context != null ? context.getFileSuffix() : "") + STATE_FILE_EXTENSION);
         } else if (stemFileName != null) {
-            fileName = stemFileName + "_" + this.saveStateFileName;
+            file = getSaveStateFile(stemFileName + "_" + this.saveStateFileName);
+        } else if (this.saveStateFileName != null) {
+            file = getSaveStateFile(this.saveStateFileName);
         } else {
             String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
-            fileName = (this.saveStateFileName != null ? this.saveStateFileName : "beast_state_" + timeStamp);
+            file = getChainFile("beast_state_" + timeStamp);
         }
-        return writeStateToFile(getChainFile(fileName), state, lnL, markovChain);
+        return writeStateToFile(file, state, lnL, markovChain);
+    }
+
+    /**
+     * @return the file to save the state of the chain being run on this thread to. A name
+     * without an extension is a stem, which is given the chain's suffix (if there are several
+     * chains) and the state file extension: stem.chainN.chkpt. A name with an extension is
+     * used as it is, with the chain's suffix before the extension.
+     */
+    private static File getSaveStateFile(String fileName) {
+        if (new File(fileName).getName().indexOf('.') >= 0) {
+            return getChainFile(fileName);
+        }
+        ChainContext context = ChainContext.current();
+        return new File(fileName + (context != null ? context.getFileSuffix() : "") + STATE_FILE_EXTENSION);
     }
 
     /**
      * @return the file for the chain being run on this thread: each chain of a multi-chain
-     * run saves and loads its own state file
+     * run saves its own state file
      */
     private static File getChainFile(String fileName) {
         ChainContext context = ChainContext.current();
@@ -204,7 +226,68 @@ public class BeastCheckpointer implements StateLoaderSaver {
 
     @Override
     public long loadState(MarkovChain markovChain, double[] savedLnL) {
-        return readStateFromFile(getChainFile(loadStateFileName), markovChain, savedLnL);
+        final ChainContext context = ChainContext.current();
+        final String chainSuffix = (context != null ? context.getFileSuffix() : "");
+
+        final File file = findLoadStateFile(loadStateFileName, chainSuffix);
+
+        // A state file that is not this chain's own is the starting point of every chain of a
+        // multi-chain run. The chains must not also share its random number stream, or they
+        // would all be the same chain, so each keeps the stream it was given.
+        final boolean shared = !chainSuffix.isEmpty() && !file.getName().contains(chainSuffix);
+        final int[] ownRandomState = (shared ? MathUtils.getRandomState() : null);
+
+        Logger.getLogger("dr.app.beast").info((context != null ? context.getName() + ": l" : "L") +
+                "oading state from " + file.getPath() + (shared ? " (shared by all chains)" : ""));
+
+        final long state = readStateFromFile(file, markovChain, savedLnL);
+
+        if (shared) {
+            MathUtils.setRandomState(ownRandomState);
+        }
+        return state;
+    }
+
+    /**
+     * Finds the state file to load for a chain. A name with the extension is the file itself,
+     * for every chain. Otherwise the name is a stem: the chain's own file (stem.chainN.chkpt)
+     * if there is one, or else the one file with that stem (stem.chkpt), for every chain.
+     *
+     * @param fileName    the name given with the load state option
+     * @param chainSuffix the suffix of the chain's files (".chainN"), or "" for a single chain
+     */
+    static File findLoadStateFile(String fileName, String chainSuffix) {
+        if (fileName.toLowerCase().endsWith(STATE_FILE_EXTENSION)) {
+            return new File(fileName);
+        }
+
+        final List<File> candidates = new ArrayList<File>();
+        if (chainSuffix.isEmpty()) {
+            candidates.add(new File(fileName));
+            candidates.add(new File(fileName + STATE_FILE_EXTENSION));
+        } else {
+            candidates.add(new File(fileName + chainSuffix + STATE_FILE_EXTENSION));
+            // saved under a name with another extension, or by a version that did not add one
+            final int dot = new File(fileName).getName().lastIndexOf('.');
+            if (dot > 0) {
+                final int at = fileName.length() - (new File(fileName).getName().length() - dot);
+                candidates.add(new File(fileName.substring(0, at) + chainSuffix + fileName.substring(at)));
+            }
+            candidates.add(new File(fileName + chainSuffix));
+            candidates.add(new File(fileName + STATE_FILE_EXTENSION));
+            candidates.add(new File(fileName));
+        }
+        for (File candidate : candidates) {
+            if (candidate.isFile()) {
+                return candidate;
+            }
+        }
+
+        final StringBuilder sb = new StringBuilder("No state file found for '" + fileName + "'. Looked for:");
+        for (File candidate : candidates) {
+            sb.append("\n  ").append(candidate.getPath());
+        }
+        throw new RuntimeException(sb.toString());
     }
 
     @Override

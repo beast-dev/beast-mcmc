@@ -352,8 +352,8 @@ public class JumpHistoryAnalyser {
 
         arguments.printUsage("jumphistoryanalyser", "<input-file-name> [<output-file-name>]");
         System.out.println();
-        System.out.println("  Example: jumphistoryanalyser -burnin 100000 -min 1950 -max 2010 -mrsd 2009.9 jumps.txt");
-        System.out.println("  Example: jumphistoryanalyser -burnin 100000 -from \"usa\" -to \"uk,fr\" -min 1950 -max 2010 -mrsd 2009.9 jumps.txt");
+        System.out.println("  Example: jumphistoryanalyser --burnin 100000 --min 1950 --max 2010 --mrsd 2009.9 jumps.txt");
+        System.out.println("  Example: jumphistoryanalyser --burnin 100000 --from \"usa\" --to \"uk,fr\" --min 1950 --max 2010 --mrsd 2009.9 jumps.txt");
         System.out.println();
     }
 

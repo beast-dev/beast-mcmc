@@ -219,7 +219,7 @@ public class NodeStateAnalyser {
         arguments.printUsage("nodestateanalyser", "[-burnin <burnin>][<input-file-name> [<output-file-name>]]");
         System.out.println();
         System.out.println("  Example: nodestateanalyser test.tree");
-        System.out.println("  Example: nodestateanalyser -burnin 10000 trees.log out.txt");
+        System.out.println("  Example: nodestateanalyser --burnin 10000 trees.log out.txt");
         System.out.println();
 
     }

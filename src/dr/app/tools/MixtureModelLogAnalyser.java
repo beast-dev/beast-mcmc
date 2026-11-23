@@ -275,7 +275,7 @@ public class MixtureModelLogAnalyser {
         arguments.printUsage("mixturemodelloganalyser", "[-burnin <burnin>][<input-file-name> [<output-file-name>]]");
         System.out.println();
         System.out.println("  Example: treelengthfinder test.log");
-        System.out.println("  Example: treelengthfinder -burnin 10000 -discreteVariable branchRates.distributionIndex trees.log out.txt");
+        System.out.println("  Example: treelengthfinder --burnin 10000 --discreteVariable branchRates.distributionIndex trees.log out.txt");
         System.out.println();
 
     }

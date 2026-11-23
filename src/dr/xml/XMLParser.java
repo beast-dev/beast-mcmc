@@ -219,7 +219,7 @@ public class XMLParser {
                 throw new XMLParseException("The version of BEAUti that generated this XML (" + xmlVersion + ") is more recent than \n" +
                         "the version of BEAST running it (" + version.getVersion() + "). \n" +
                         "This may be incompatible and cause unpredictable errors. \n" +
-                        "To override this behaviour use the `-ignore_versions` command line option." );
+                        "To override this behaviour use the `--ignore_versions` command line option." );
             }
         }
         return e;
@@ -576,7 +576,7 @@ public class XMLParser {
 
         if (logFile.exists() && !allowOverwrite) {
             throw new XMLParseException("\nThe log file " + logFile.getAbsolutePath() + " already exists." +
-                    "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
+                    "\nTo allow it to be overwritten, use the '--overwrite' command line option when running" +
                     "\nBEAST or select the option in the Run Options dialog box as appropriate.");
         }
 

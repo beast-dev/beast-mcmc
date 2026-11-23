@@ -369,7 +369,7 @@ public class ConvergenceMonitor {
         } else {
             if (agree) {
                 sb.append("  The two halves of the chain agree, so there is no sign that it is still settling.").append(nl);
-                sb.append("  A single chain cannot show whether another start would end up in the same place: for that run several (-chains).").append(nl);
+                sb.append("  A single chain cannot show whether another start would end up in the same place: for that run several (--chains).").append(nl);
             } else {
                 sb.append(String.format("  The two halves of the chain %s (%s), so it %s. Run for longer.",
                         nearly ? "nearly agree" : "differ", because, nearly ? "may still be settling" : "has not settled")).append(nl);

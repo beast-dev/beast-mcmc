@@ -105,7 +105,7 @@ public class BEASTGen {
         arguments.printUsage("beastgen", "<template-file-name> <input-file-name> [<output-file-name>]");
         System.out.println();
         System.out.println("  Example: beastgen template.beast test.nex test.xml");
-        System.out.println("  Example: beastgen -help");
+        System.out.println("  Example: beastgen --help");
         System.out.println();
     }
 

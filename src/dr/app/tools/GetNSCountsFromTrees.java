@@ -483,7 +483,7 @@ public class GetNSCountsFromTrees {
         //arguments.printUsage("loganalyser", "[-burnin <burnin>] [-short][-hpd] [-std] [<input-file-name> [<output-file-name>]]");
         arguments.printUsage("GetNSCountsFromTrees", "[-burnin <burnin>][<input-file-name> [<output-file-name>]]");
         progressStream.println();
-        progressStream.println("  Example: GetNSCountsFromTrees -burnin 10000 trees.log out.txt");
+        progressStream.println("  Example: GetNSCountsFromTrees --burnin 10000 trees.log out.txt");
         progressStream.println();
 
     }

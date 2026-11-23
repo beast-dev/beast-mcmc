@@ -281,7 +281,7 @@ public class NStoAAannotator extends BaseTreeTool {
 
         arguments.printUsage("NStoAAannotator", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: NStoAAannotator -sitesToAnnotate site1,site2 input.trees output.trees");
+        progressStream.println("  Example: NStoAAannotator --sitesToAnnotate site1,site2 input.trees output.trees");
         progressStream.println();
     }
 

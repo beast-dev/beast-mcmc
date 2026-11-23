@@ -232,7 +232,7 @@ public class TreePruner extends BaseTreeTool {
 
         arguments.printUsage("treepruner", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: treepruner -taxaToPrune taxon1,taxon2 input.trees output.trees");
+        progressStream.println("  Example: treepruner --taxaToPrune taxon1,taxon2 input.trees output.trees");
         progressStream.println();
     }
 

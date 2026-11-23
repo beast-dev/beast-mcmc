@@ -431,7 +431,7 @@ public class BeastMain {
         // Checkpointing is set up by the command line options or by a checkpoint element in
         // the XML. A tempered set would also need its temperature permutation saved.
         if (temperedChainCount > 1 && Factory.INSTANCE != null) {
-            throw new RuntimeException("Checkpointing is not yet available with parallel tempering (-mc3_chains)");
+            throw new RuntimeException("Checkpointing is not yet available with parallel tempering (--mc3_chains)");
         }
 
         return sets;
@@ -484,7 +484,7 @@ public class BeastMain {
         File file = FileHelpers.getFile(stem + ".convergence.log", System.getProperty("file.name.prefix"));
         if (file.exists() && !Boolean.parseBoolean(System.getProperty("log.allow.overwrite", "false"))) {
             throw new RuntimeException("The convergence log file " + file.getName() + " already exists in the working directory." +
-                    "\nTo allow it to be overwritten, use the '-overwrite' command line option.");
+                    "\nTo allow it to be overwritten, use the '--overwrite' command line option.");
         }
         return file;
     }
@@ -534,8 +534,8 @@ public class BeastMain {
         arguments.printUsage("beast", "[<input-file-name>]");
         System.out.println();
         System.out.println("  Example: beast test.xml");
-        System.out.println("  Example: beast -window test.xml");
-        System.out.println("  Example: beast -help");
+        System.out.println("  Example: beast --window test.xml");
+        System.out.println("  Example: beast --help");
         System.out.println();
     }
 
@@ -834,7 +834,7 @@ public class BeastMain {
 
         if (arguments.hasOption("beagle_low_memory")) {
             // no native BEAGLE (4.0.x to 4.2.x) defines this flag's bit, so it would only be an unknown preference bit
-            System.err.println("Warning: -beagle_low_memory is ignored: no native BEAGLE has low-memory pre-order kernels");
+            System.err.println("Warning: --beagle_low_memory is ignored: no native BEAGLE has low-memory pre-order kernels");
             System.err.println();
         }
 

@@ -153,7 +153,7 @@ public class TreeMRCASummarizer extends BaseTreeTool {
 
         arguments.printUsage("treemrcasummarizer", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: treemrcasummarizer -pairs 100 input.trees output.log");
+        progressStream.println("  Example: treemrcasummarizer --pairs 100 input.trees output.log");
         progressStream.println();
     }
 

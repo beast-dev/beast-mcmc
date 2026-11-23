@@ -817,7 +817,7 @@ public class AntigenicPlotter {
 
         arguments.printUsage("antigenicplotter", "<input-file-name> [<output-file-name>]");
         System.out.println();
-        System.out.println("  Example: antigenicplotter -burnin 100 locations.log locations.kml");
+        System.out.println("  Example: antigenicplotter --burnin 100 locations.log locations.kml");
         System.out.println();
     }
 

@@ -781,8 +781,8 @@ public class LogCombiner {
         arguments.printUsage("logcombiner", "<input-file-name1> [<input-file-name2> ...] <output-file-name>");
         System.out.println();
         System.out.println("  Example: logcombiner test1.log test2.log combined.log");
-        System.out.println("  Example: logcombiner -burnin 10000 test1.log test2.log combined.log");
-        System.out.println("  Example: logcombiner -trees -burninPercent 10 test1.trees test2.trees combined.trees");
+        System.out.println("  Example: logcombiner --burnin 10000 test1.log test2.log combined.log");
+        System.out.println("  Example: logcombiner --trees --burninPercent 10 test1.trees test2.trees combined.trees");
         System.out.println();
 
     }

@@ -258,7 +258,7 @@ public class TaxaMarkovJumpHistoryAnalyzer extends BaseTreeTool {
 
         arguments.printUsage("TaxonMarkovJumpHistory", "<input-file-name> [<output-file-name>]");
         progressStream.println();
-        progressStream.println("  Example: taxonMarkovJumpHistory -taxaToProcess taxon1,taxon2 input.trees output.trees");
+        progressStream.println("  Example: taxonMarkovJumpHistory --taxaToProcess taxon1,taxon2 input.trees output.trees");
         progressStream.println();
     }
 

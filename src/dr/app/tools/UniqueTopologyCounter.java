@@ -99,7 +99,7 @@ public class UniqueTopologyCounter {
     public static void printUsage(Arguments arguments) {
         arguments.printUsage("UniqueTopologyCounter", "<input-file-name>");
         System.out.println();
-        System.out.println("  Example: UniqueTopologyCounter -burninTrees 1000 test.trees");
+        System.out.println("  Example: UniqueTopologyCounter --burninTrees 1000 test.trees");
         System.out.println();
     }
 

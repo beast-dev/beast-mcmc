@@ -132,7 +132,7 @@ public class MixtureModelsTreeDataLikelihoodParser extends AbstractXMLObjectPars
             logger.info("\nCreating multi-partition tree data likelihood for " + patternLists.size() + " partition" + plural);
 
             if ( beagleInstanceCount > 1) {
-                logger.warning("  -beagle_instances option is not compatible with BEAGLE multi-partition extensions");
+                logger.warning("  --beagle_instances option is not compatible with BEAGLE multi-partition extensions");
             }
 
             try {

@@ -25,8 +25,6 @@ BEAST X is a cross-platform program for Bayesian analysis of molecular sequences
 
 [BEAST Documentation Website](http://beast.community)
 
-[Hierarchical substitution model eigensystem selection](examples/hierarchical-eigensystem.md)
-
 # Development software
 
 We use IntelliJ IDEA and java profiling via [JProfile](https://www.ej-technologies.com/products/jprofiler/overview.html) and YourKit

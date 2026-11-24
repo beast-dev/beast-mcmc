@@ -616,8 +616,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     public EigenDecomposition getEigenDecomposition() {
         if (!eigenDecompositionKnown) {
-            eigenDecomposition = eigenSystemType == EigenSystemType.NUMERICAL
-                    ? computeNumericalEigenDecomposition() : computeAnalyticalEigenDecomposition();
+            eigenDecomposition = eigenSystemType.getEigenDecomposition(this);
             eigenDecompositionKnown = true;
         }
         return eigenDecomposition;
@@ -837,7 +836,20 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
      * How to obtain the eigensystem for conventional dense pruning of this model's rate matrix.
      */
     public enum EigenSystemType {
-        ANALYTICAL, NUMERICAL;
+        ANALYTICAL {
+            @Override
+            public EigenDecomposition getEigenDecomposition(HierarchicalSubstitutionModel model) {
+                return model.computeAnalyticalEigenDecomposition();
+            }
+        },
+        NUMERICAL {
+            @Override
+            public EigenDecomposition getEigenDecomposition(HierarchicalSubstitutionModel model) {
+                return model.computeNumericalEigenDecomposition();
+            }
+        };
+
+        public abstract EigenDecomposition getEigenDecomposition(HierarchicalSubstitutionModel model);
 
         public static EigenSystemType parse(String value) {
             for (EigenSystemType type : values()) {

@@ -28,7 +28,6 @@
 
 package dr.evomodel.substmodel;
 
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -38,7 +37,6 @@ import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,6 +84,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private final int[] bundleNumber;
     private final int[] internalNodeOfBundleRank;
 
+    private final EigenSystem numericalEigenSystem;
     private EigenDecomposition eigenDecomposition;
     private boolean eigenDecompositionKnown = false;
     private EigenSystemType eigenSystemType = EigenSystemType.ANALYTICAL;
@@ -151,6 +150,9 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                     + dataType.getStateCount() + " states");
         }
 
+        // Repeated eigenvalues can yield valid bases above Colt's default condition-number cutoff.
+        this.numericalEigenSystem = new ColtEigenSystem(stateCount, false,
+                ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
         this.probNoEventsOnBranch = new double[tree.getInternalNodeCount()];
         this.probNoEventsFromRoot = new double[tree.getNodeCount()];
         this.H = new double[tree.getNodeCount()];
@@ -644,37 +646,11 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private EigenDecomposition computeNumericalEigenDecomposition() {
         final double[] q = new double[stateCount * stateCount];
         getInfinitesimalMatrix(q);
-        final double[] sqrtPi = new double[stateCount];
+        final double[][] qMatrix = new double[stateCount][stateCount];
         for (int i = 0; i < stateCount; i++) {
-            final double probability = frequency.getFrequency(i);
-            if (!Double.isFinite(probability) || probability <= 0.0) {
-                throw new IllegalArgumentException("Numerical eigensystem requires finite, strictly positive stationary frequencies");
-            }
-            sqrtPi[i] = Math.sqrt(probability);
+            System.arraycopy(q, i * stateCount, qMatrix[i], 0, stateCount);
         }
-
-        // Reversibility makes D^(1/2) Q D^(-1/2) symmetric. Mirror each off-diagonal entry so
-        // roundoff cannot select the nonsymmetric solver, especially at repeated eigenvalues.
-        final double[][] symmetric = new double[stateCount][stateCount];
-        for (int i = 0; i < stateCount; i++) {
-            symmetric[i][i] = q[i * stateCount + i];
-            for (int j = i + 1; j < stateCount; j++) {
-                final double value = q[i * stateCount + j] * sqrtPi[i] / sqrtPi[j];
-                symmetric[i][j] = value;
-                symmetric[j][i] = value;
-            }
-        }
-        final RobustEigenDecomposition numerical = new RobustEigenDecomposition(new DenseDoubleMatrix2D(symmetric));
-        final double[][] vectors = numerical.getV().toArray();
-        final double[] evec = new double[stateCount * stateCount];
-        final double[] ievc = new double[stateCount * stateCount];
-        for (int i = 0; i < stateCount; i++) {
-            for (int k = 0; k < stateCount; k++) {
-                evec[i * stateCount + k] = vectors[i][k] / sqrtPi[i];
-                ievc[k * stateCount + i] = vectors[i][k] * sqrtPi[i];
-            }
-        }
-        return new EigenDecomposition(evec, ievc, numerical.getRealEigenvalues().toArray());
+        return numericalEigenSystem.decomposeMatrix(qMatrix);
     }
 
     private EigenDecomposition computeAnalyticalEigenDecomposition() {

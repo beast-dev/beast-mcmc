@@ -84,7 +84,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     private final int[] bundleNumber;
     private final int[] internalNodeOfBundleRank;
 
-    private final EigenSystem numericalEigenSystem;
+    private EigenSystem numericalEigenSystem = null;
     private EigenDecomposition eigenDecomposition;
     private boolean eigenDecompositionKnown = false;
     private EigenSystemType eigenSystemType = EigenSystemType.ANALYTICAL;
@@ -150,9 +150,6 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
                     + dataType.getStateCount() + " states");
         }
 
-        // Repeated eigenvalues can yield valid bases above Colt's default condition-number cutoff.
-        this.numericalEigenSystem = new ColtEigenSystem(stateCount, false,
-                ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
         this.probNoEventsOnBranch = new double[tree.getInternalNodeCount()];
         this.probNoEventsFromRoot = new double[tree.getNodeCount()];
         this.H = new double[tree.getNodeCount()];
@@ -644,6 +641,11 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     }
 
     private EigenDecomposition computeNumericalEigenDecomposition() {
+        if (numericalEigenSystem == null) {
+            // Repeated eigenvalues can yield valid bases above Colt's default condition-number cutoff.
+            numericalEigenSystem = new ColtEigenSystem(stateCount, false,
+                    ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+        }
         final double[] q = new double[stateCount * stateCount];
         getInfinitesimalMatrix(q);
         final double[][] qMatrix = new double[stateCount][stateCount];

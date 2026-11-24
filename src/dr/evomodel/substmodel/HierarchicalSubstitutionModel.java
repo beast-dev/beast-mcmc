@@ -28,6 +28,7 @@
 
 package dr.evomodel.substmodel;
 
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -37,6 +38,7 @@ import dr.evomodel.tree.TreeChangedEvent;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.*;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,6 +88,7 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
 
     private EigenDecomposition eigenDecomposition;
     private boolean eigenDecompositionKnown = false;
+    private EigenSystemType eigenSystemType = EigenSystemType.ANALYTICAL;
 
     // The model as BEAGLE's hierarchical representation reads it from an eigen buffer (see
     // BEAGLE_FLAG_HIERARCHICAL_REPRESENTATION in beagle.h): eigenValues[0] = version word,
@@ -613,13 +616,69 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     public EigenDecomposition getEigenDecomposition() {
         if (!eigenDecompositionKnown) {
-            eigenDecomposition = computeEigenDecomposition();
+            eigenDecomposition = eigenSystemType == EigenSystemType.NUMERICAL
+                    ? computeNumericalEigenDecomposition() : computeAnalyticalEigenDecomposition();
             eigenDecompositionKnown = true;
         }
         return eigenDecomposition;
     }
 
-    private EigenDecomposition computeEigenDecomposition() {
+    public EigenSystemType getEigenSystemType() {
+        return eigenSystemType;
+    }
+
+    /**
+     * Selects the eigensystem supplied to the ordinary dense BEAGLE representation. The hierarchical
+     * representation and the closed-form transition probabilities do not use this eigensystem.
+     */
+    public void setEigenSystemType(EigenSystemType eigenSystemType) {
+        if (eigenSystemType == null) {
+            throw new IllegalArgumentException("eigenSystem must be analytical or numerical");
+        }
+        if (this.eigenSystemType != eigenSystemType) {
+            this.eigenSystemType = eigenSystemType;
+            eigenDecompositionKnown = false;
+            fireModelChanged();
+        }
+    }
+
+    private EigenDecomposition computeNumericalEigenDecomposition() {
+        final double[] q = new double[stateCount * stateCount];
+        getInfinitesimalMatrix(q);
+        final double[] sqrtPi = new double[stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            final double probability = frequency.getFrequency(i);
+            if (!Double.isFinite(probability) || probability <= 0.0) {
+                throw new IllegalArgumentException("Numerical eigensystem requires finite, strictly positive stationary frequencies");
+            }
+            sqrtPi[i] = Math.sqrt(probability);
+        }
+
+        // Reversibility makes D^(1/2) Q D^(-1/2) symmetric. Mirror each off-diagonal entry so
+        // roundoff cannot select the nonsymmetric solver, especially at repeated eigenvalues.
+        final double[][] symmetric = new double[stateCount][stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            symmetric[i][i] = q[i * stateCount + i];
+            for (int j = i + 1; j < stateCount; j++) {
+                final double value = q[i * stateCount + j] * sqrtPi[i] / sqrtPi[j];
+                symmetric[i][j] = value;
+                symmetric[j][i] = value;
+            }
+        }
+        final RobustEigenDecomposition numerical = new RobustEigenDecomposition(new DenseDoubleMatrix2D(symmetric));
+        final double[][] vectors = numerical.getV().toArray();
+        final double[] evec = new double[stateCount * stateCount];
+        final double[] ievc = new double[stateCount * stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            for (int k = 0; k < stateCount; k++) {
+                evec[i * stateCount + k] = vectors[i][k] / sqrtPi[i];
+                ievc[k * stateCount + i] = vectors[i][k] * sqrtPi[i];
+            }
+        }
+        return new EigenDecomposition(evec, ievc, numerical.getRealEigenvalues().toArray());
+    }
+
+    private EigenDecomposition computeAnalyticalEigenDecomposition() {
         final double[] cumulativeRates = getCumulativeRates(false);
         final double[] evec = new double[stateCount * stateCount];
         final double[] ievc = new double[stateCount * stateCount];
@@ -772,6 +831,22 @@ public class HierarchicalSubstitutionModel extends AbstractModel implements Subs
     @Override
     public TreeTrait getTreeTrait(String key) {
         return treeTraits.getTreeTrait(key);
+    }
+
+    /**
+     * How to obtain the eigensystem for conventional dense pruning of this model's rate matrix.
+     */
+    public enum EigenSystemType {
+        ANALYTICAL, NUMERICAL;
+
+        public static EigenSystemType parse(String value) {
+            for (EigenSystemType type : values()) {
+                if (type.name().equalsIgnoreCase(value)) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("eigenSystem must be analytical or numerical; found '" + value + "'");
+        }
     }
 
     /**

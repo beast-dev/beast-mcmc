@@ -72,6 +72,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     public static final String RATES_FROM = "ratesFrom";
     public static final String EQUAL_RATES = "equalRates";
     public static final String AGGREGATE = "aggregate";
+    public static final String EIGEN_SYSTEM = "eigenSystem";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -214,12 +215,15 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
             }
             HierarchicalSubstitutionModel model = new HierarchicalSubstitutionModel(HIERARCHICAL_SUBSTITUTION_MODEL,
                     provider, freqModel);
+            model.setEigenSystemType(HierarchicalSubstitutionModel.EigenSystemType.parse(
+                    xo.getAttribute(EIGEN_SYSTEM, "analytical")));
             model.setAggregation(HierarchicalSubstitutionModel.Aggregation.parse(xo.getAttribute(AGGREGATE, "auto")));
             if (characterTreeModel != null) {
                 characterTreeModel.setRateModel(model);
             }
             Logger.getLogger("dr.evomodel").info("Hierarchical substitution model" + (xo.hasId() ? " '" + xo.getId() + "'" : "")
                     + ": " + form + "; aggregation " + model.getAggregation().name().toLowerCase()
+                    + "; eigensystem " + model.getEigenSystemType().name().toLowerCase(java.util.Locale.ROOT)
                     + "; character tree " + (contraction == null ? "clades " + clades(tree, freqModel)
                     : contraction.contractedNewick(null) + " (multifurcating; clades "
                     + clades(tree, freqModel, contraction) + ")"));
@@ -373,6 +377,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(CHARACTER_TREE_NEWICK, true),
             AttributeRule.newStringRule(AGGREGATE, true),
+            AttributeRule.newStringRule(EIGEN_SYSTEM, true),
             new ElementRule(FrequencyModelParser.FREQUENCIES,
                     new XMLSyntaxRule[]{new ElementRule(FrequencyModel.class)}, true),
             new ElementRule(RATES_FROM,
@@ -393,7 +398,7 @@ public class HierarchicalSubstitutionModelParser extends AbstractXMLObjectParser
 
     @Override
     public String getParserDescription() {
-        return "";
+        return "A hierarchical substitution model with an analytical (default) or numerical eigensystem.";
     }
 
     @Override

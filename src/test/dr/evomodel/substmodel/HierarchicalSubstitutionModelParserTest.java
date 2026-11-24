@@ -29,6 +29,7 @@ package test.dr.evomodel.substmodel;
 
 import dr.evomodel.branchmodel.BranchModel;
 import dr.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.evomodel.substmodel.EigenDecomposition;
 import dr.evomodel.substmodel.HierarchicalSubstitutionModel;
 import dr.evomodel.substmodel.RelativeRatesProvider;
 import dr.evomodel.substmodel.nucleotide.HKY;
@@ -170,6 +171,35 @@ public class HierarchicalSubstitutionModelParserTest extends TestCase {
         }
         String message = parseFailure(TAXA_AND_TREE + hrate(" aggregate=\"yes\"", FREQUENCIES + CHARACTER_TREE + RATES));
         assertTrue(message, message.contains("aggregate must be auto, on or off; found 'yes'"));
+    }
+
+    public void testEigenSystemAttribute() throws Exception {
+        String[][] cases = {{"", "ANALYTICAL"}, {" eigenSystem=\"analytical\"", "ANALYTICAL"},
+                {" eigenSystem=\"AnAlYtIcAl\"", "ANALYTICAL"},
+                {" eigenSystem=\"numerical\"", "NUMERICAL"}, {" eigenSystem=\"NUMERICAL\"", "NUMERICAL"}};
+        for (String[] c : cases) {
+            Map<String, XMLObject> store = parse(TAXA_AND_TREE + hrate(c[0], FREQUENCIES + CHARACTER_TREE + RATES));
+            HierarchicalSubstitutionModel model = (HierarchicalSubstitutionModel) store.get("hrate").getNativeObject();
+            assertEquals(c[0], HierarchicalSubstitutionModel.EigenSystemType.valueOf(c[1]), model.getEigenSystemType());
+
+            EigenDecomposition eigen = model.getEigenDecomposition();
+            double[] expected = new double[16];
+            model.getTransitionProbabilities(0.37, expected);
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    double actual = 0.0;
+                    for (int k = 0; k < 4; k++) {
+                        actual += eigen.getEigenVectors()[i * 4 + k]
+                                * Math.exp(0.37 * eigen.getEigenValues()[k])
+                                * eigen.getInverseEigenVectors()[k * 4 + j];
+                    }
+                    assertEquals(c[0] + " P[" + i + "," + j + "]", expected[i * 4 + j], actual, 1e-12);
+                }
+            }
+        }
+        String message = parseFailure(TAXA_AND_TREE + hrate(" eigenSystem=\"fast\"", FREQUENCIES + CHARACTER_TREE + RATES));
+        assertTrue(message, message.contains("eigenSystem") && message.contains("analytical")
+                && message.contains("numerical") && message.contains("fast"));
     }
 
     public void testOneAggregationPerLikelihood() throws Exception {

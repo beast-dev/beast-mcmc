@@ -30,6 +30,7 @@ package dr.app.beauti.components.hpm;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.ParameterParser;
@@ -248,7 +249,9 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
         writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
         writer.writeOpenTag(getModelTagName(hpm), getModelAttributes(hpm));
         
-        writeParameter(NormalDistributionModelParser.MU,
+        // the normal model's parser takes "mean", the lognormal's takes "mu" with a precision
+        writeParameter(hpm.getPriorType() == PriorType.NORMAL_HPM_PRIOR ?
+                        NormalDistributionModelParser.MEAN : LogNormalDistributionModelParser.MU,
                 hpm.getConditionalParameterList().get(0).getName(), 1, hpm.getConditionalParameterList().get(0).getInitial(),
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, writer);
         writeParameter(NormalDistributionModelParser.PREC,

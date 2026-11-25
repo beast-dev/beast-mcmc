@@ -145,6 +145,26 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            //++++++++++++++++ Tip Dates ++++++++++++++++++
+            // the dates are all written in the units of the first, so they have to be in the same units
+            if (taxonList != null && options.useTipDates) {
+                Units.Type units = null;
+                for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                    dr.evolution.util.Date date = taxonList.getTaxon(i).getDate();
+                    if (date != null) {
+                        if (units == null) {
+                            units = date.getUnits();
+                        } else if (units != date.getUnits()) {
+                            throw new GeneratorException("The tip dates are not all in the same units: taxon \"" +
+                                    taxonList.getTaxon(i).getId() + "\" is in " +
+                                    Units.Utils.getDefaultUnitName(date.getUnits()) + " and others are in " +
+                                    Units.Utils.getDefaultUnitName(units) +
+                                    ".\nPlease set the units in the Tips panel.", BeautiFrame.TIP_DATES);
+                        }
+                    }
+                }
+            }
+
             //++++++++++++++++ Taxon Sets ++++++++++++++++++
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 // should be only 1 calibrated internal node with a proper prior and monophyletic for each tree at moment
@@ -835,7 +855,8 @@ public class BeastGenerator extends Generator {
                     firstDate = false;
                 } else {
                     if (options.units != date.getUnits()) {
-                        System.err.println("Error: Units in dates do not match.");
+                        // (checkOptions refuses this, with a message for the user)
+                        throw new IllegalArgumentException("Units in dates do not match.");
                     }
                 }
             }

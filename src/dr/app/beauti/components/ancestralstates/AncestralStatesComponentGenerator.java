@@ -74,9 +74,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         for (AbstractPartitionData partition : options.getDataPartitions()) {
             if (component.reconstructAtNodes(partition)) reconstructAtNodes = true;
             if (component.reconstructAtMRCA(partition)) reconstructAtMRCA = true;
-            if (component.isCountingStates(partition)) countingStates = true;
+            if (countsWithMarkovJumps(component, partition)) countingStates = true;
             if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
-            if (component.isCountingStates(partition) && component.isCompleteHistoryLogging(partition))
+            if (countsWithMarkovJumps(component, partition) && component.isCompleteHistoryLogging(partition))
                 completeHistory = true;
         }
 
@@ -141,10 +141,19 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     }// END: generate
 
+    /**
+     * Whether the partition's state changes are counted by a markovJumpsTreeLikelihood. dN/dS robust counting
+     * does its own counting on plain ancestral state likelihoods (see TreeLikelihoodGenerator), one for each
+     * codon position, which take no count parameter and provide no count traits or history.
+     */
+    private static boolean countsWithMarkovJumps(AncestralStatesComponentOptions component, AbstractPartitionData partition) {
+        return component.isCountingStates(partition) && !component.dNdSRobustCounting(partition);
+    }
+
     private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition, String prefix) {
         AncestralStatesComponentOptions component = (AncestralStatesComponentOptions) options
                 .getComponentOptions(AncestralStatesComponentOptions.class);
-        if (!component.isCountingStates(partition)) {
+        if (!countsWithMarkovJumps(component, partition)) {
             return;
         }
 
@@ -310,7 +319,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                     }
                 }
 
-                if (component.isCountingStates(partition)) {
+                if (countsWithMarkovJumps(component, partition)) {
                     if (partition.getDataType().getType() == DataType.CONTINUOUS) {
                         throw new RuntimeException("Can't do counting on Continuous data partition");
                     }
@@ -371,7 +380,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writeStateLogger(writer, partition, component.getMRCATaxonSet(partition));
             }
 
-            if (component.isCountingStates(partition) && component.isCompleteHistoryLogging(partition)) {
+            if (countsWithMarkovJumps(component, partition) && component.isCompleteHistoryLogging(partition)) {
                 writeCompleteHistoryTreeLogToFile(writer, partition);
             }
         }

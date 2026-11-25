@@ -115,13 +115,14 @@ public class ParameterPriorGenerator extends Generator {
 
         boolean first = true;
 
-        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
-            if (taxaBooleanEntry.getValue()) {
+        // (in the order of the taxon sets, not of the hash map, so that the file is the same every time)
+        for (Taxa taxonSet : options.taxonSets) {
+            if (Boolean.TRUE.equals(options.taxonSetsMono.get(taxonSet))) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
                     first = false;
                 }
-                final String taxaRef = "monophyly(" + taxaBooleanEntry.getKey().getId() + ")";
+                final String taxaRef = "monophyly(" + taxonSet.getId() + ")";
                 writer.writeIDref(MonophylyStatisticParser.MONOPHYLY_STATISTIC, taxaRef);
             }
         }

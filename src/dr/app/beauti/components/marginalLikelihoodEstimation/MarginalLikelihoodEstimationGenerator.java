@@ -560,13 +560,14 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
             //copy all monophyletic constraints for GSS
             boolean first = true;
-            for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : beautiOptions.taxonSetsMono.entrySet()) {
-                if (taxaBooleanEntry.getValue()) {
+            // (in the order of the taxon sets, not of the hash map, so that the file is the same every time)
+            for (Taxa taxonSet : beautiOptions.taxonSets) {
+                if (Boolean.TRUE.equals(beautiOptions.taxonSetsMono.get(taxonSet))) {
                     if (first) {
                         writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
                         first = false;
                     }
-                    final String taxaRef = "monophyly(" + taxaBooleanEntry.getKey().getId() + ")";
+                    final String taxaRef = "monophyly(" + taxonSet.getId() + ")";
                     writer.writeIDref(MonophylyStatisticParser.MONOPHYLY_STATISTIC, taxaRef);
                 }
             }

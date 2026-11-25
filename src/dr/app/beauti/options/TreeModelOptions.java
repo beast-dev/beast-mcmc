@@ -89,16 +89,18 @@ public class TreeModelOptions extends ModelOptions {
         }
         if (isNodeCalibrated(treeModel.getParameter("treeModel.rootHeight"))) {
             return 0; // root node
-        } else if (options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 0) {
-            Taxa taxonSet = (Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).get(0);
-            Parameter tmrca = options.statistics.get(taxonSet);
-            if (tmrca != null && isNodeCalibrated(tmrca)) {
-                return 1; // internal node (tmrca) with a proper prior
-            }
-            return -1;
-        } else {
-            return -1;
         }
+        // any of the tree's taxon sets (this looked only at whichever the hash map gave first, so with
+        // several sets the answer, and with it whether the clock rate is estimated, varied from run to run)
+        for (Taxa taxonSet : options.taxonSets) {
+            if (treeModel.equals(options.taxonSetsTreeModel.get(taxonSet))) {
+                Parameter tmrca = options.statistics.get(taxonSet);
+                if (tmrca != null && isNodeCalibrated(tmrca)) {
+                    return 1; // internal node (tmrca) with a proper prior
+                }
+            }
+        }
+        return -1;
     }
 
     public boolean isNodeCalibrated(Parameter parameter) {

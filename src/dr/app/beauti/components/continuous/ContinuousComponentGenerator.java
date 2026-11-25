@@ -401,12 +401,15 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         int p = model.getExtendedTraitCount();
 
 
-        writer.writeOpenTag("repeatedMeasuresModel",
-                new Attribute[]{
-                        new Attribute.Default<String>("id", repeatedMeasuresTraitDataModelParser.getId(
-                                model.getName())),
-                        new Attribute.Default<String>("traitName", partitionData.getName())
-                });
+        List<Attribute> attributes = new ArrayList<Attribute>();
+        attributes.add(new Attribute.Default<String>("id", repeatedMeasuresTraitDataModelParser.getId(model.getName())));
+        attributes.add(new Attribute.Default<String>("traitName", partitionData.getName()));
+        if (p == 1 && model.getContinuousSubstModelType() == ContinuousSubstModelType.DRIFT) {
+            // a single trait gets a scalar precision by default, which only the plain diffusion can use: the
+            // drift model's likelihood needs the full form
+            attributes.add(new Attribute.Default<Boolean>(ContinuousTraitDataModelParser.FORCE_FULL_PRECISION, true));
+        }
+        writer.writeOpenTag("repeatedMeasuresModel", attributes);
 
         writer.writeIDref("treeModel", treeModelId);
 

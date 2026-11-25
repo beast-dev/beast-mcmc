@@ -360,6 +360,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         if (specifyOriginDate.isSelected()) {
             String text = originDateText.getText();
             DateGuesser guesser = options.dateGuesser;
+            if (guessDatesDialog == null) {
+                // (it is otherwise made when the dates are first parsed or imported)
+                guessDatesDialog = new GuessDatesDialog(frame);
+            }
             guessDatesDialog.setupGuesser(guesser);
 
             try {
@@ -372,8 +376,11 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         }
         if ( options.originDate != null) {
             originDateLabel.setText(" date value: " + options.originDate.getTimeValue());
-        } else {
+        } else if (specifyOriginDate.isSelected() && originDateText.getText().trim().length() > 0) {
             originDateLabel.setText(" unable to parse date");
+        } else {
+            // nothing has been entered, so there is nothing that failed to parse
+            originDateLabel.setText("");
         }
 
         calculateHeights();

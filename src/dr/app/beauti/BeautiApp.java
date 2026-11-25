@@ -106,7 +106,6 @@ public class BeautiApp extends MultiDocApplication {
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.Option("advanced", "a", "Enable advanced & developer features"),
                         new Arguments.Option("version", "v", "Print the version and credits and stop"),
                         new Arguments.Option("help", "h", "Print this information and stop"),
                 });
@@ -132,9 +131,8 @@ public class BeautiApp extends MultiDocApplication {
 
         if (arguments.hasOption("version")) {
             printTitle();
+            System.exit(0);
         }
-
-        advanced = arguments.hasOption("advanced");
 
         String[] args2 = arguments.getLeftoverArguments();
 
@@ -234,6 +232,4 @@ public class BeautiApp extends MultiDocApplication {
         }
 //        }
     }
-
-    public static boolean advanced = false;
 }

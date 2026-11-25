@@ -337,7 +337,8 @@ public abstract class Generator {
 
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
-                String id = parameter.taxaId + "-uniformDist";
+                // (the root height has no taxon set)
+                String id = (parameter.taxaId != null ? parameter.taxaId : parameter.getName()) + "-uniformDist";
                 if (isRef) {
                     writer.writeIDref(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL, id);
                 } else {

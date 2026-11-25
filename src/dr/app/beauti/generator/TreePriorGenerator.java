@@ -552,7 +552,8 @@ public class TreePriorGenerator extends Generator {
 
                         writer.writeIDref(TaxaParser.TAXA, model.getTaxaId());
 
-                        writeDistribution(model.getParameter("treeModel.rootHeight"), true, writer);
+                        // (written in full: nothing earlier in the file defines the distribution)
+                        writeDistribution(model.getParameter("treeModel.rootHeight"), false, writer);
 
                         writer.writeCloseTag(SpeciationLikelihoodParser.POINT);
                         writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
@@ -569,7 +570,7 @@ public class TreePriorGenerator extends Generator {
                         writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
 
                         writer.writeIDref(TaxaParser.TAXA, t.getId());
-                        writeDistribution(nodeCalib, true, writer);
+                        writeDistribution(nodeCalib, false, writer);
 
                         writer.writeCloseTag(SpeciationLikelihoodParser.POINT);
                         writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);

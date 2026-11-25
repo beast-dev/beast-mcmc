@@ -1115,7 +1115,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class UnlinkModelsAction extends AbstractAction {
         public UnlinkModelsAction() {
             super("Unlink Subst. Models");
-            setToolTipText("Use this tool to use a different substitution model for each selected data partition");
+            putValue(SHORT_DESCRIPTION, "Use this tool to use a different substitution model for each selected data partition");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1127,7 +1127,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class LinkModelsAction extends AbstractAction {
         public LinkModelsAction() {
             super("Link Subst. Models");
-            setToolTipText("Use this tool to set all the selected partitions to the same substitution model");
+            putValue(SHORT_DESCRIPTION, "Use this tool to set all the selected partitions to the same substitution model");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1138,7 +1138,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class UnlinkClocksAction extends AbstractAction {
         public UnlinkClocksAction() {
             super("Unlink Clock Models");
-            setToolTipText("Use this tool to use a different clock model for each selected data partition");
+            putValue(SHORT_DESCRIPTION, "Use this tool to use a different clock model for each selected data partition");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1150,7 +1150,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class LinkClocksAction extends AbstractAction {
         public LinkClocksAction() {
             super("Link Clock Models");
-            setToolTipText("Use this tool to set all the selected partitions to the same clock model");
+            putValue(SHORT_DESCRIPTION, "Use this tool to set all the selected partitions to the same clock model");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1161,7 +1161,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class UnlinkTreesAction extends AbstractAction {
         public UnlinkTreesAction() {
             super("Unlink Trees");
-            setToolTipText("Use this tool to use a different tree for each selected data partition");
+            putValue(SHORT_DESCRIPTION, "Use this tool to use a different tree for each selected data partition");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1173,7 +1173,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class LinkTreesAction extends AbstractAction {
         public LinkTreesAction() {
             super("Link Trees");
-            setToolTipText("Use this tool to set all the selected partitions to the same tree");
+            putValue(SHORT_DESCRIPTION, "Use this tool to set all the selected partitions to the same tree");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1184,7 +1184,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class ViewPartitionAction extends AbstractAction {
         public ViewPartitionAction() {
             super("View Partition ...");
-            setToolTipText("View alignment in a window.");
+            putValue(SHORT_DESCRIPTION, "View alignment in a window.");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1195,7 +1195,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class CreateTraitPartitionAction extends AbstractAction {
         public CreateTraitPartitionAction() {
             super("Create partition from trait ...");
-            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
+            putValue(SHORT_DESCRIPTION, "Create a data partition from a trait. Traits can be defined in the Traits panel.");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1232,7 +1232,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class CreateTreePartitionAction extends AbstractAction {
         public CreateTreePartitionAction() {
             super("Create partition from a tree ...");
-            setToolTipText("Create a data partition from a tree. The tree should be imported first.");
+            putValue(SHORT_DESCRIPTION, "Create a data partition from a tree. The tree should be imported first.");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -1246,7 +1246,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public class CompressPatternsAction extends AbstractAction {
         public CompressPatternsAction() {
             super("Compress patterns...");
-            setToolTipText("Compress an alignment into a weighted set of unique site patterns.");
+            putValue(SHORT_DESCRIPTION, "Compress an alignment into a weighted set of unique site patterns.");
         }
 
         public void actionPerformed(ActionEvent ae) {

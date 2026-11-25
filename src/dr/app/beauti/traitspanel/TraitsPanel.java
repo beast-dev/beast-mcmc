@@ -535,7 +535,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public SetValueAction() {
             super("Set trait values");
-            setToolTipText("Use this button to set the trait values of selected taxa");
+            putValue(SHORT_DESCRIPTION, "Use this button to set the trait values of selected taxa");
         }
 
         public void actionPerformed(ActionEvent ae) {

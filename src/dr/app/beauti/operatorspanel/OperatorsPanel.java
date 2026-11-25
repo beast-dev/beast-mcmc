@@ -329,11 +329,10 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             } else {
                 renderer.setForeground(aIsSelected ? aTable.getSelectionForeground() : aTable.getForeground());
             }
-            if (op.isParameterFixed()) {
-                setToolTipText(
-                        "This parameter is set to a fixed value. To turn \r" +
-                                "this move on, select a prior in the Priors tab");
-            }
+            // (set for every cell: the renderer is shared, so a tip that is only ever set stays on all rows)
+            setToolTipText(op.isParameterFixed() ?
+                    "This parameter is set to a fixed value. To turn " +
+                            "this move on, select a prior in the Priors tab" : null);
 
             return this;
         }

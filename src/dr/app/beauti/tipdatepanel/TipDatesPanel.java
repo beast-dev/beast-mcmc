@@ -780,7 +780,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         SetDatesAction() {
             super("Set Dates");
-            setToolTipText("Use this tool to set sampling date values for the selected taxa");
+            putValue(SHORT_DESCRIPTION, "Use this tool to set sampling date values for the selected taxa");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -796,7 +796,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         ClearDatesAction() {
             super("Clear Dates");
-            setToolTipText("Use this tool to remove sampling dates from each taxon");
+            putValue(SHORT_DESCRIPTION, "Use this tool to remove sampling dates from each taxon");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -812,7 +812,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         GuessDatesAction() {
             super("Parse Dates");
-            setToolTipText("Use this tool to parse the sampling dates from the taxon labels");
+            putValue(SHORT_DESCRIPTION, "Use this tool to parse the sampling dates from the taxon labels");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -828,7 +828,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         ImportDatesAction() {
             super("Import Dates");
-            setToolTipText("Use this tool to import the sampling dates from a file");
+            putValue(SHORT_DESCRIPTION, "Use this tool to import the sampling dates from a file");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -844,7 +844,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         SetUncertaintyAction() {
             super("Set Uncertainty");
-            setToolTipText("Use this tool to set uncertainty in the date for the selected taxa");
+            putValue(SHORT_DESCRIPTION, "Use this tool to set uncertainty in the date for the selected taxa");
         }
 
         public void actionPerformed(ActionEvent ae) {

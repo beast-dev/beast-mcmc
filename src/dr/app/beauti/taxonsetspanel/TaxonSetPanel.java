@@ -1141,7 +1141,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         public ImportTaxonSetsAction() {
             super("Import Taxon Sets");
-            setToolTipText("Use this tool to import the taxon sets from a file");
+            putValue(SHORT_DESCRIPTION, "Use this tool to import the taxon sets from a file");
         }
 
         public void actionPerformed(ActionEvent ae) {

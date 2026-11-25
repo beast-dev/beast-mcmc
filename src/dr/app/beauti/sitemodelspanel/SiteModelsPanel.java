@@ -504,7 +504,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     public class CloneModelsAction extends AbstractAction {
         public CloneModelsAction() {
             super("Clone Settings...");
-            setToolTipText("Use this tool to copy settings to selected models");
+            putValue(SHORT_DESCRIPTION, "Use this tool to copy settings to selected models");
         }
 
         public void actionPerformed(ActionEvent ae) {

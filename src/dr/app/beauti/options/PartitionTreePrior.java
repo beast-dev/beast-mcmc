@@ -291,7 +291,8 @@ public class PartitionTreePrior extends PartitionOptions {
         //createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
         createOperator(Gernhard08BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
 
-        createScaleOperator(Gernhard08BirthDeathModelParser.BIRTH_DEATH + "." + Gernhard08BirthDeathModelParser.SAMPLE_PROB, demoTuning, demoWeights);
+        // a probability, so a scale operator (which needs an unbounded side) cannot be used
+        createOperator(Gernhard08BirthDeathModelParser.BIRTH_DEATH + "." + Gernhard08BirthDeathModelParser.SAMPLE_PROB, OperatorType.RANDOM_WALK_LOGIT, demoTuning, demoWeights);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA, demoTuning, 1);
         /*createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."

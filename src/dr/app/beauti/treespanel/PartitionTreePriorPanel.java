@@ -528,14 +528,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC ||
                 treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) &&
                 r0CheckBox.isSelected()) {
-            double mean = serialIntervalMean.getValue();
-            double stdev = serialIntervalStdev.getValue();
-            if (mean <= 0.0 || stdev <= 0.0) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid mean and standard deviation for the serial interval to log R0.");
-                return;
-            }
-            partitionTreePrior.setSerialIntervalMean(mean);
-            partitionTreePrior.setSerialIntervalStdev(stdev);
+            // whatever has been entered so far: this is called on every change of tab, so it is not the place
+            // to complain about fields that are not filled in yet (BeastGenerator.checkOptions does that, when
+            // the XML is generated)
+            Double mean = serialIntervalMean.getValue();
+            Double stdev = serialIntervalStdev.getValue();
+            partitionTreePrior.setSerialIntervalMean(mean == null ? 0.0 : mean);
+            partitionTreePrior.setSerialIntervalStdev(stdev == null ? 0.0 : stdev);
         }
 //        partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
 

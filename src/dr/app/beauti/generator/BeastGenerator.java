@@ -212,6 +212,16 @@ public class BeastGenerator extends Generator {
             }
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                TreePriorType type = prior.getNodeHeightPrior();
+                if (prior.isR0Logging()
+                        && (type == TreePriorType.EXPONENTIAL || type == TreePriorType.LOGISTIC || type == TreePriorType.EXPANSION)
+                        && !(prior.getSerialIntervalMean() > 0.0 && prior.getSerialIntervalStdev() > 0.0)) {
+                    throw new GeneratorException("Please enter a valid mean and standard deviation for the serial" +
+                            "\ninterval to log R0.", BeautiFrame.TREES);
+                }
+            }
+
+            for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)
                         && !(prior.getSkyGridInterval() > 0.0)) { // (unset is NaN)
                     throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", BeautiFrame.TREES);

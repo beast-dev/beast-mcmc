@@ -110,6 +110,38 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             }
         }
 
+        //++++++++++++++++ Models that cannot be used ++++++++++++++++++
+        if (mleOptions.performMLE || mleOptions.performMLEGSS) {
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                if (model.getClockType() == ClockType.SHRINKAGE_LOCAL_CLOCK) {
+                    // its Bayesian bridge Gibbs operator has no power-posterior form, and BEAST stops on it
+                    throw new GeneratorException("The marginal likelihood cannot be estimated with the " +
+                            model.getClockType() + " (clock model \"" + model.getName() + "\"):" +
+                            "\none of its operators cannot sample from a power posterior." +
+                            "\nPlease check the Clocks panel or the MCMC panel.", BeautiFrame.MCMC);
+                }
+                if (mleOptions.performMLEGSS && model.getClockType() == ClockType.HMC_CLOCK) {
+                    // there are no working priors for its branch rates
+                    throw new GeneratorException("Generalized stepping-stone sampling is not available with the " +
+                            model.getClockType() + " (clock model \"" + model.getName() + "\")." +
+                            "\nUse path sampling/stepping-stone sampling instead, via the MCMC panel.",
+                            BeautiFrame.MCMC);
+                }
+            }
+        }
+        if (mleOptions.performMLEGSS) {
+            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+                int type = model.getDataType().getType();
+                if (type != DataType.NUCLEOTIDES && type != DataType.AMINO_ACIDS) {
+                    // there are working priors for the nucleotide and amino acid models only
+                    throw new GeneratorException("Generalized stepping-stone sampling is available for nucleotide" +
+                            "\nand amino acid partitions only (not \"" + model.getName() + "\")." +
+                            "\nUse path sampling/stepping-stone sampling instead, via the MCMC panel.",
+                            BeautiFrame.MCMC);
+                }
+            }
+        }
+
         //++++++++++++++++ Coalescent Events available for GSS ++++++++++++++++++
         if (mleOptions.performMLEGSS) {
             EnumSet<TreePriorType> allowedTypes = EnumSet.of(

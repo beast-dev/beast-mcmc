@@ -869,84 +869,94 @@ public class OperatorsGenerator extends Generator {
 
         if (NEW_AVMVN) {
 
-            try {
-                //determine how many parameters will be part of the AVMVN transition kernel
-                int parameterCount = 0;
-                for (Parameter parameter : options.selectParameters()) {
-                    if (!parameter.isFixed() && parameter.isAdaptiveMultivariateCompatible) {
-                        parameterCount++;
-                    }
+            //determine how many parameters will be part of the AVMVN transition kernel
+            int parameterCount = 0;
+            for (Parameter parameter : options.selectParameters()) {
+                if (!parameter.isFixed() && parameter.isAdaptiveMultivariateCompatible) {
+                    parameterCount++;
                 }
-
-                if (parameterCount > 0) {
-                    //options set according to recommendations in AVMVN paper
-                    int initial = 200 * parameterCount;
-                    int burnin = initial / 2;
-
-                    writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
-                            new Attribute[]{
-                                    getWeightAttribute(operator.getWeight()),
-                                    new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
-                                    new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
-                                    new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
-                                    new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
-                                    new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
-                                    new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
-                                    new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
-                            });
-
-                    ArrayList<Parameter> logList = new ArrayList<Parameter>();
-                    ArrayList<Parameter> noList = new ArrayList<Parameter>();
-                    ArrayList<Parameter> constrainedList = new ArrayList<Parameter>();
-
-                    for (Parameter parameter : options.selectParameters()) {
-                        if (parameter.isAdaptiveMultivariateCompatible && !parameter.isFixed()) {
-                            //System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
-                            if (parameter.isNonNegative && !parameter.isMaintainedSum) {
-                                logList.add(parameter);
-                            } else if (parameter.isInRealSpace()) {
-                                noList.add(parameter);
-                            } else if (parameter.isMaintainedSum) {
-                                constrainedList.add(parameter);
-                            } else {
-                                throw new UnsupportedOperationException("Parameter " + parameter.getName() +
-                                        " has no transformation for the adaptive multivariate operator" +
-                                        " (it may need a Dirichlet prior).");
-                            }
-                        }
-                    }
-
-                    if (logList.size() > 0) {
-                        writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName())});
-                        for (Parameter parameter : logList) {
-                            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-                        }
-                        writer.writeCloseTag(TransformParsers.TRANSFORM);
-                    }
-
-                    if (noList.size() > 0) {
-                        writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName())});
-                        for (Parameter parameter : noList) {
-                            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-                        }
-                        writer.writeCloseTag(TransformParsers.TRANSFORM);
-                    }
-
-                    for (Parameter parameter : constrainedList) {
-                        writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName()),
-                                new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
-                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
-                        writer.writeCloseTag(TransformParsers.TRANSFORM);
-                    }
-
-                    writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
-
-                }
-
-            } catch (UnsupportedOperationException unSup) {
-                // the adaptive multivariate operator is left out for these parameters
-                unSup.printStackTrace(System.err);
             }
+
+            if (parameterCount > 0) {
+                //options set according to recommendations in AVMVN paper
+                int initial = 200 * parameterCount;
+                int burnin = initial / 2;
+
+                // sort the parameters by transform before anything is written: one with no transform
+                // stops the generation (it used to be caught after the operator's tag was open, which left
+                // the tag unclosed and the parameter with no operator at all)
+                ArrayList<Parameter> logList = new ArrayList<Parameter>();
+                ArrayList<Parameter> noList = new ArrayList<Parameter>();
+                ArrayList<Parameter> constrainedList = new ArrayList<Parameter>();
+                ArrayList<Parameter> logitList = new ArrayList<Parameter>();
+
+                for (Parameter parameter : options.selectParameters()) {
+                    if (parameter.isAdaptiveMultivariateCompatible && !parameter.isFixed()) {
+                        //System.out.println(parameter.getName() + "   " + parameter.isMaintainedSum + " " + parameter.maintainedSum);
+                        if (parameter.isZeroOne && !parameter.isMaintainedSum) {
+                            // a proportion, such as the proportion of invariant sites
+                            logitList.add(parameter);
+                        } else if (parameter.isNonNegative && !parameter.isMaintainedSum) {
+                            logList.add(parameter);
+                        } else if (parameter.isInRealSpace()) {
+                            noList.add(parameter);
+                        } else if (parameter.isMaintainedSum) {
+                            constrainedList.add(parameter);
+                        } else {
+                            throw new UnsupportedOperationException("Parameter " + parameter.getName() +
+                                    " has no transformation for the adaptive multivariate operator" +
+                                    " (it may need a Dirichlet prior).");
+                        }
+                    }
+                }
+
+                writer.writeOpenTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR,
+                        new Attribute[]{
+                                getWeightAttribute(operator.getWeight()),
+                                new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.SCALE_FACTOR, operator.getTuning()),
+                                new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.INITIAL, initial),
+                                new Attribute.Default<Integer>(AdaptableVarianceMultivariateNormalOperator.BURNIN, burnin),
+                                new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.BETA, 0.05),
+                                new Attribute.Default<Double>(AdaptableVarianceMultivariateNormalOperator.COEFFICIENT, 1.0),
+                                new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.AUTO_OPTIMIZE, true),
+                                new Attribute.Default<Boolean>(AdaptableVarianceMultivariateNormalOperator.FORM_XTX, false)
+                        });
+
+                if (logList.size() > 0) {
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogTransform().getTransformName())});
+                    for (Parameter parameter : logList) {
+                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    }
+                    writer.writeCloseTag(TransformParsers.TRANSFORM);
+                }
+
+                if (logitList.size() > 0) {
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogitTransform().getTransformName())});
+                    for (Parameter parameter : logitList) {
+                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    }
+                    writer.writeCloseTag(TransformParsers.TRANSFORM);
+                }
+
+                if (noList.size() > 0) {
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.NoTransform().getTransformName())});
+                    for (Parameter parameter : noList) {
+                        writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    }
+                    writer.writeCloseTag(TransformParsers.TRANSFORM);
+                }
+
+                for (Parameter parameter : constrainedList) {
+                    writer.writeOpenTag(TransformParsers.TRANSFORM, new Attribute[]{new Attribute.Default<String>(TransformParsers.TYPE, new Transform.LogConstrainedSumTransform().getTransformName()),
+                            new Attribute.Default<Double>(TransformParsers.SUM, parameter.maintainedSum)});
+                    writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+                    writer.writeCloseTag(TransformParsers.TRANSFORM);
+                }
+
+                writer.writeCloseTag(AdaptableVarianceMultivariateNormalOperator.AVMVN_OPERATOR);
+
+            }
+
 
         } else {
 
